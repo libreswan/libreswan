@@ -369,7 +369,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 * bind the socket; somewhat convoluted as BSD as size field.
 	 */
 	{
-		ip_address any = address_any(&ipv4_info);
+		ip_address any = ipv4_info.address.any;
 		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(IKE_UDP_PORT));
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {

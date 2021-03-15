@@ -299,9 +299,9 @@ static void check_address_is(void)
 		}
 
 		CHECK_COND(address, is_unset);
-		CHECK_COND(address, is_any);
-		CHECK_COND(address, is_specified);
-		CHECK_COND(address, is_loopback);
+		CHECK_COND2(address, is_any);
+		CHECK_COND2(address, is_specified);
+		CHECK_COND2(address, is_loopback);
 	}
 }
 

@@ -137,7 +137,7 @@ bool subnet_contains_all_addresses(const ip_subnet subnet)
 		return false;
 	}
 	ip_address network = subnet_prefix(subnet);
-	return address_is_any(&network);
+	return address_is_any(network);
 }
 
 bool subnet_contains_no_addresses(const ip_subnet subnet)
@@ -153,7 +153,7 @@ bool subnet_contains_no_addresses(const ip_subnet subnet)
 	}
 
 	ip_address network = subnet_prefix(subnet);
-	return address_is_any(&network);
+	return address_is_any(network);
 }
 
 bool subnet_contains_one_address(const ip_subnet subnet)

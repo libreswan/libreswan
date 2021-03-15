@@ -249,10 +249,10 @@ bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
 		l->hport == r->hport);
 }
 
-bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)
+bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address)
 {
-	ip_address ea = endpoint_address(endpoint);
-	return address_eq(&ea, address);
+	ip_address ea = endpoint_address(&endpoint);
+	return address_eq_address(ea, address);
 }
 
 void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)

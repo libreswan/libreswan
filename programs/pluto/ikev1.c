@@ -999,7 +999,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				ip_address new_peer = address_from_in_addr(&in);
 
 				/* is all zeros? */
-				if (address_is_any(&new_peer)) {
+				if (address_is_any(new_peer)) {
 					ipstr_buf b;
 
 					log_state(RC_LOG_SERIOUS, st,
@@ -1084,7 +1084,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				tmp_c->spd.that.id.ip_addr = new_peer;
 
 				/* update things that were the old peer */
-				if (address_eq(&tmp_c->spd.this.host_nexthop, &old_addr)) {
+				if (address_eq_address(tmp_c->spd.this.host_nexthop, old_addr)) {
 					address_buf ob, nb;
 					dbg("local next hop %s is the same as the old remote addr, changing local next hop to %s",
 					    str_address(&old_addr, &ob),
@@ -1092,7 +1092,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					tmp_c->spd.this.host_nexthop = new_peer;
 				}
 
-				if (address_eq(&tmp_c->spd.that.host_srcip, &old_addr)) {
+				if (address_eq_address(tmp_c->spd.that.host_srcip, old_addr)) {
 					address_buf ob, nb;
 					dbg("remote host's srcip %s is the same as the old remote addr, changing remote host's srcip to %s",
 					    str_address(&old_addr, &ob),
@@ -1105,7 +1105,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 * the client is a single address?
 				 */
 				ip_address client_prefix = selector_prefix(&tmp_c->spd.that.client);
-				if (address_eq(&client_prefix, &old_addr)) {
+				if (address_eq_address(client_prefix, old_addr)) {
 					address_buf ob, nb;
 					dbg("old remote client's ip %s is the same as the old remote address, changing remote client ip to %s",
 					    str_address(&old_addr, &ob),

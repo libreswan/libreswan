@@ -285,7 +285,7 @@ bool selector_contains_all_addresses(const ip_selector *selector)
 		return false;
 	}
 	ip_address network = selector_prefix(selector);
-	return address_is_any(&network);
+	return address_is_any(network);
 }
 
 bool selector_is_one_address(const ip_selector *selector)
@@ -306,7 +306,7 @@ bool selector_is_one_address(const ip_selector *selector)
 	/* ignore port */
 	ip_address network = selector_prefix(selector);
 	/* address_is_set(&network) implied as afi non-NULL */
-	return !address_is_any(&network); /* i.e., non-zero */
+	return !address_is_any(network); /* i.e., non-zero */
 }
 
 bool selector_is_address(const ip_selector *selector, const ip_address *address)
@@ -332,7 +332,7 @@ bool selector_contains_no_addresses(const ip_selector *selector)
 	}
 
 	ip_address network = selector_prefix(selector);
-	return address_is_any(&network);
+	return address_is_any(network);
 }
 
 bool selector_in_selector(const ip_selector *l, const ip_selector *r)
@@ -358,7 +358,7 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 	}
 	/* exclude any(zero), other than for any/0 */
 	ip_address ra = selector_prefix(r);
-	if (address_is_any(&ra) && r->maskbits > 0) {
+	if (address_is_any(ra) && r->maskbits > 0) {
 		return false;
 	}
 	/* more maskbits => more prefix & smaller subnet */
@@ -373,7 +373,7 @@ bool selector_in_selector(const ip_selector *l, const ip_selector *r)
 					  /*host-identifier*/&clear_bits,
 					  /*RIGHT*/r->maskbits);
 	ip_address rp = selector_prefix(r);
-	if (!address_eq(&lp,&rp)) {
+	if (!address_eq_address(lp, rp)) {
 		return false;
 	}
 	return true;
@@ -502,7 +502,7 @@ err_t numeric_to_selector(shunk_t input,
 					    /*routing-prefix*/&clear_bits,
 					    /*host-identifier*/&keep_bits,
 					    prefix_bits);
-	if (!address_eq(&host, &afi->address.any)) {
+	if (!address_eq_address(host, afi->address.any)) {
 		return "host-identifier must be zero";
 	}
 

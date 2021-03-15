@@ -549,7 +549,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    ( remote_id_was_instantiated(c) &&
 	      !(c->policy & POLICY_AGGRESSIVE) &&
 	      (address_is_unset(&c->spd.that.host_addr) ||
-	       address_is_any(&c->spd.that.host_addr)) ) ||
+	       address_is_any(c->spd.that.host_addr)) ) ||
 
 	    /* case 2 */
 	    ( (c->policy & POLICY_PSK) &&
@@ -560,11 +560,11 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		  id_is_ipaddr(&c->spd.that.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		  (address_is_unset(&c->spd.that.host_addr) ||
-		   address_is_any(&c->spd.that.host_addr)) ) ) )
+		   address_is_any(c->spd.that.host_addr)) ) ) )
 		) {
 		/* roadwarrior: replace that with %ANYADDR */
 		rw_id.kind = address_type(&c->spd.that.host_addr)->id_ip_addr;
-		rw_id.ip_addr = address_any(address_type(&c->spd.that.host_addr));
+		rw_id.ip_addr = address_type(&c->spd.that.host_addr)->address.any;
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
 		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));

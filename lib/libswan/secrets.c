@@ -1195,13 +1195,13 @@ static void add_secret(struct secret **slist,
 		idl->next = NULL;
 		idl->id = empty_id;
 		idl->id.kind = ID_NONE;
-		idl->id.ip_addr = address_any(&ipv4_info);
+		idl->id.ip_addr = ipv4_info.address.any;
 
 		struct id_list *idl2 = alloc_bytes(sizeof(struct id_list), "id list");
 		idl2->next = idl;
 		idl2->id = empty_id;
 		idl2->id.kind = ID_NONE;
-		idl2->id.ip_addr = address_any(&ipv4_info);
+		idl2->id.ip_addr = ipv4_info.address.any;
 
 		s->ids = idl2;
 	}
@@ -1377,12 +1377,12 @@ static void process_secret_records(struct file_lex_position *flp,
 				if (tokeq("%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
-					id.ip_addr = address_any(&ipv4_info);
+					id.ip_addr = ipv4_info.address.any;
 					ugh = NULL;
 				} else if (tokeq("%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
-					id.ip_addr = address_any(&ipv6_info);
+					id.ip_addr = ipv6_info.address.any;
 					ugh = NULL;
 				} else {
 					ugh = atoid(flp->tok, &id);

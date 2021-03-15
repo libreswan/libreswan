@@ -148,7 +148,7 @@ void ip_endpoint_check()
 		/*
 		 * endpoint_address_eq()
 		 */
-		if (!endpoint_address_eq(&e, &a)) {
+		if (!endpoint_address_eq_address(e, a)) {
 			FAIL("endpoint_address_eq(e, a) failed");
 		}
 

@@ -1556,7 +1556,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			str_selector_subnet(&c->spd.this.client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
-			if (!address_is_specified(&c->spd.this.host_srcip)) {
+			if (!address_is_specified(c->spd.this.host_srcip)) {
 				log_state(RC_LOG, st, "setting ip source address to %s",
 					  caddr.buf);
 				c->spd.this.host_srcip = a;
@@ -1717,7 +1717,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					  "Received IPv4 address: %s",
 					  caddr.buf);
 
-				if (!address_is_specified(&c->spd.this.host_srcip)) {
+				if (!address_is_specified(c->spd.this.host_srcip)) {
 					dbg("setting ip source address to %s",
 					    caddr.buf);
 					c->spd.this.host_srcip = a;

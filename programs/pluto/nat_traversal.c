@@ -296,7 +296,7 @@ static void natd_lookup_common(struct state *st,
 			       const ip_endpoint *sender,
 			       bool found_me, bool found_peer)
 {
-	st->hidden_variables.st_natd = address_any(&ipv4_info);
+	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->encaps) {
@@ -468,7 +468,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
-	hv->st_nat_oa = address_any(&ipv4_info);
+	hv->st_nat_oa = ipv4_info.address.any;
 
 	/* Count NAT-OA */
 	const struct payload_digest *p;
@@ -529,7 +529,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	ipstr_buf b;
 	dbg("received NAT-OA: %s", ipstr(&ip, &b));
 
-	if (address_is_any(&ip)) {
+	if (address_is_any(ip)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
 	} else {

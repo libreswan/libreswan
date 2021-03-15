@@ -384,7 +384,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		return;
 	}
 
-	if (address_is_any(&this->host_addr)) {
+	if (address_is_any(this->host_addr)) {
 		dbg("%s.host_addr's is %%any; skipping default_end()",
 		    this->leftright);
 		return;
@@ -393,7 +393,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	dbg("updating connection from %s.host_addr", this->leftright);
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
-	if (this->id.kind == ID_NONE && address_is_specified(&this->host_addr)) {
+	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
 		this->id.kind = afi->id_ip_addr;
 		this->id.ip_addr = this->host_addr;
 		this->has_id_wildcards = FALSE;
@@ -401,7 +401,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 
 	/* propagate this HOST_ADDR to that. */
 	if (address_is_unset(&that->host_nexthop) ||
-	    address_is_any(&that->host_nexthop)) {
+	    address_is_any(that->host_nexthop)) {
 		that->host_nexthop = this->host_addr;
 		address_buf ab;
 		dbg("%s host_nexthop %s",
@@ -459,7 +459,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	bool dohost_name;
 	bool dohost_port;
 	if (address_is_unset(&this->host_addr) ||
-	    address_is_any(&this->host_addr)) {
+	    address_is_any(this->host_addr)) {
 		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {
 			dohost_name = true;
@@ -1107,13 +1107,13 @@ static bool check_connection_end(const struct whack_end *this,
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
 	if (that->host_type != KH_IPHOSTNAME &&
-	    (address_is_unset(&that->host_addr) || address_is_any(&that->host_addr))) {
+	    (address_is_unset(&that->host_addr) || address_is_any(that->host_addr))) {
 		/*
 		 * Other side is wildcard: we must check if other conditions
 		 * met.
 		 */
 		if (this->host_type != KH_IPHOSTNAME &&
-		    (address_is_unset(&this->host_addr) || address_is_any(&this->host_addr))) {
+		    (address_is_unset(&this->host_addr) || address_is_any(this->host_addr))) {
 			llog(RC_ORIENT, logger,
 				    "connection %s must specify host IP address for our side",
 				    wm->name);
@@ -1936,7 +1936,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * or any wildcard ID to _that_ end
 	 */
 	if (address_is_unset(&c->spd.this.host_addr) ||
-	    address_is_any(&c->spd.this.host_addr) ||
+	    address_is_any(c->spd.this.host_addr) ||
 	    c->spd.this.has_port_wildcard ||
 	    c->spd.this.has_id_wildcards) {
 		struct end t = c->spd.this;
@@ -1990,7 +1990,7 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->policy & POLICY_GROUP) {
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(&c->spd.that.host_addr)) &&
+	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
 		    !NEVER_NEGOTIATE(c->policy)) ||
 		c->spd.that.has_port_wildcard ||
 		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
@@ -2029,7 +2029,7 @@ static bool extract_connection(const struct whack_message *wm,
 		 * This now happens with wildcards on
 		 * non-instantiations, such as rightsubnet=vnet:%priv
 		 * or rightprotoport=17/%any
-		 * passert(address_is_unset(&c->spd.that.host_addr) || address_is_any(&c->spd.that.host_addr));
+		 * passert(address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr));
 		 */
 		passert(c->spd.that.virt == NULL);
 		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
@@ -2160,7 +2160,7 @@ struct connection *add_group_instance(struct connection *group,
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	t->kind = (address_is_unset(&t->spd.that.host_addr) || address_is_any(&t->spd.that.host_addr)) &&
+	t->kind = (address_is_unset(&t->spd.that.host_addr) || address_is_any(t->spd.that.host_addr)) &&
 		!NEVER_NEGOTIATE(t->policy) ?
 		CK_TEMPLATE : CK_INSTANCE;
 
@@ -2543,6 +2543,8 @@ struct connection *oppo_instantiate(struct connection *c,
 				    const ip_address *local_address,
 				    const ip_address *remote_address)
 {
+	passert(local_address != NULL);
+	passert(remote_address != NULL);
 	address_buf lb, rb;
 	dbg("oppo instantiating c=\"%s\" with c->routing %s between %s -> %s",
 	    c->name, enum_name(&routing_story, c->spd.routing),
@@ -2566,7 +2568,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * narrow it(?), ...
 			*/
 			d->spd.this.client = selector_from_address(local_address);
-		} else if (address_eq(local_address, &d->spd.this.host_addr)) {
+		} else if (address_eq_address(*local_address, d->spd.this.host_addr)) {
 			/*
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
@@ -2581,7 +2583,7 @@ struct connection *oppo_instantiate(struct connection *c,
 		 * There was no client in the abstract connection so
 		 * we demand that the required client be the host.
 		 */
-		passert(address_eq(local_address, &d->spd.this.host_addr));
+		passert(address_eq_address(*local_address, d->spd.this.host_addr));
 	}
 
 	/*
@@ -2592,7 +2594,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	passert(address_in_selector(remote_address, &d->spd.that.client));
 	d->spd.that.client = selector_from_address(remote_address);
 
-	if (address_eq(remote_address, &d->spd.that.host_addr))
+	if (address_eq_address(*remote_address, d->spd.that.host_addr))
 		d->spd.that.has_client = false;
 
 	/*
@@ -3913,7 +3915,7 @@ static void show_one_sr(struct show *s,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
 
-#define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(h, &ipb) : "unset")
+#define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
@@ -3922,8 +3924,8 @@ static void show_one_sr(struct show *s,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
-		OPT_HOST(&c->spd.this.host_srcip, thisipb),
-		OPT_HOST(&c->spd.that.host_srcip, thatipb),
+		OPT_HOST(c->spd.this.host_srcip, thisipb),
+		OPT_HOST(c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
 		OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
 		(sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) ?

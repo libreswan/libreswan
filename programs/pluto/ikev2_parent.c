@@ -816,7 +816,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * - if not, check if we support redirect mechanism
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
-	if (address_is_specified(&c->temp_vars.redirect_ip)) {
+	if (address_is_specified(c->temp_vars.redirect_ip)) {
 		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, &rbody))
 			return false;
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
@@ -6176,7 +6176,7 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 	if (!mobike_check_established(st))
 		return;
 
-	if (address_is_specified(&st->st_deleted_local_addr)) {
+	if (address_is_specified(st->st_deleted_local_addr)) {
 		/*
 		 * A work around for delay between new address and new route
 		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE

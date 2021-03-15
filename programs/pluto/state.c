@@ -417,8 +417,8 @@ static struct state *new_state(struct connection *c,
 	st->st_logger = alloc_logger(st, &logger_state_vec, HERE);
 	st->st_logger->object_whackfd = dup_any(whackfd);
 
-	st->hidden_variables.st_nat_oa = address_any(&ipv4_info);
-	st->hidden_variables.st_natd = address_any(&ipv4_info);
+	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
+	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);
@@ -1428,7 +1428,8 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 			    str_endpoint(&this->st_remote_endpoint, &b),
 			    peerstr);
 
-			if (endpoint_address_eq(&this->st_remote_endpoint, peer)) {
+			if (peer != NULL /* ever false? */ &&
+			    endpoint_address_eq_address(this->st_remote_endpoint, *peer)) {
 				if (ph1 == 0 && IS_IKE_SA(this)) {
 					whack_log(RC_COMMENT, whackfd,
 						  "peer %s for connection %s crashed; replacing",
@@ -1877,7 +1878,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    c->ike_version == st->st_connection->ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
-		    endpoint_address_eq(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
+		    endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
 		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
@@ -2672,8 +2673,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */
 		migration_up(child->sa.st_connection, &child->sa);
-		ike->sa.st_deleted_local_addr = address_any(&ipv4_info);
-		child->sa.st_deleted_local_addr = address_any(&ipv4_info);
+		ike->sa.st_deleted_local_addr = ipv4_info.address.any;
+		child->sa.st_deleted_local_addr = ipv4_info.address.any;
 		if (dpd_active_locally(&child->sa) && child->sa.st_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay, deltatime(MIN_LIVENESS));

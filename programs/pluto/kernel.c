@@ -431,7 +431,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
 	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
-	if (address_is_specified(&sr->this.host_nexthop)) {
+	if (address_is_specified(sr->this.host_nexthop)) {
 		jam(buf, "PLUTO_NEXT_HOP='");
 		jam_address(buf, &sr->this.host_nexthop);
 		jam(buf, "' ");
@@ -547,7 +547,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	if (address_is_specified(&sr->this.host_srcip)) {
+	if (address_is_specified(sr->this.host_srcip)) {
 		jam(buf, "PLUTO_MY_SOURCEIP='");
 		jam_address(buf, &sr->this.host_srcip);
 		jam(buf, "' ");
@@ -1553,7 +1553,7 @@ bool eroute_connection(const struct spd_route *sr,
 		"eroute_connection %s", opname);
 
 	if (sa_proto == &ip_protocol_internal)
-		peer = address_any(address_type(&peer));
+		peer = address_type(&peer)->address.any;
 
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(&sr->this.host_addr);
@@ -2401,8 +2401,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 */
 
 	ip_address effective_remote_address = c->spd.that.host_addr;
-	if (!endpoint_address_eq(&st->st_remote_endpoint, &effective_remote_address) &&
-	    address_is_specified(&c->temp_vars.redirect_ip)) {
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
+	    address_is_specified(c->temp_vars.redirect_ip)) {
 		effective_remote_address = endpoint_address(&st->st_remote_endpoint);
 	}
 
@@ -3320,8 +3320,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	bool redirected = false;
 	ip_address tmp_host_addr = unset_address;
 	unsigned tmp_host_port = 0;
-	if (!endpoint_address_eq(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
-	    address_is_specified(&c->temp_vars.redirect_ip)) {
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
+	    address_is_specified(c->temp_vars.redirect_ip)) {
 		redirected = true;
 		tmp_host_addr = c->spd.that.host_addr;
 		tmp_host_port = c->spd.that.host_port; /* XXX: needed? */

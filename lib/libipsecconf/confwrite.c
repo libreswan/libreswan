@@ -363,7 +363,7 @@ static void confwrite_side(FILE *out,
 	if (end->certx != NULL)
 		fprintf(out, "\t%scert=%s\n", side, end->certx);
 
-	if (address_is_specified(&end->sourceip)) {
+	if (address_is_specified(end->sourceip)) {
 		ipstr_buf as;
 
 		fprintf(out, "\t%ssourceip=%s\n",

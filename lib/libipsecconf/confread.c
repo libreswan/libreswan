@@ -187,14 +187,14 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
 	d->left.host_family = &ipv4_info;
-	d->left.addr = address_any(&ipv4_info);
+	d->left.addr = ipv4_info.address.any;
 	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = address_any(&ipv4_info);
+	d->left.nexthop = ipv4_info.address.any;
 
 	d->right.host_family = &ipv4_info;
-	d->right.addr = address_any(&ipv4_info);
+	d->right.addr = ipv4_info.address.any;
 	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = address_any(&ipv4_info);
+	d->right.nexthop = ipv4_info.address.any;
 
 	d->xfrm_if_id = UINT32_MAX;
 
@@ -441,7 +441,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addrtype = end->options[KNCF_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = address_any(hostfam);
+		end->addr = hostfam->address.any;
 		break;
 
 	case KH_IFACE:
@@ -551,7 +551,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = address_any(hostfam);
+	end->nexthop = hostfam->address.any;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
@@ -584,7 +584,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = address_any(hostfam);
+		end->nexthop = hostfam->address.any;
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;

@@ -306,7 +306,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (remote_host != NULL && (address_is_unset(&c->spd.that.host_addr) ||
-				    address_is_any(&c->spd.that.host_addr))) {
+				    address_is_any(c->spd.that.host_addr))) {
 		ip_address remote_ip;
 
 		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
@@ -365,7 +365,7 @@ bool initiate_connection_2(struct connection *c,
 
 	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (address_is_unset(&c->spd.that.host_addr) ||
-		    address_is_any(&c->spd.that.host_addr)) {
+		    address_is_any(c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -386,7 +386,7 @@ bool initiate_connection_2(struct connection *c,
 	}
 
 	if ((address_is_unset(&c->spd.that.host_addr) ||
-	     address_is_any(&c->spd.that.host_addr)) &&
+	     address_is_any(c->spd.that.host_addr)) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
 			esb_buf b;
@@ -762,7 +762,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (address_eq(&b->local.host_addr, &b->remote.host_addr)) {
+	if (address_eq_address(b->local.host_addr, b->remote.host_addr)) {
 		/*
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
@@ -1147,7 +1147,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(&c->spd.that.host_addr)) {
+	if (address_is_specified(c->spd.that.host_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" has address",
 		    pri_connection(c, &cib));
@@ -1171,7 +1171,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	if (address_is_unset(&new_addr) || address_is_any(&new_addr)) {
+	if (address_is_unset(&new_addr) || address_is_any(new_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		    pri_connection(c, &cib), c->dnshostname);

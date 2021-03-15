@@ -1369,7 +1369,7 @@ int main(int argc, char **argv)
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = true;
 			opt_to_address(&host_family, &msg.whack_crash_peer);
-			if (address_is_any(&msg.whack_crash_peer)) {
+			if (address_is_any(msg.whack_crash_peer)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1510,7 +1510,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo.local.address), optarg);
 			if (address_is_unset(&msg.oppo.local.address) ||
-			    address_is_any(&msg.oppo.local.address)) {
+			    address_is_any(msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1521,7 +1521,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo.remote.address), optarg);
 			if (address_is_unset(&msg.oppo.remote.address) ||
-			    address_is_any(&msg.oppo.remote.address)) {
+			    address_is_any(msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}

@@ -378,13 +378,13 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 	ipstr_buf ipb;
 	jam_string(buf,
 		   (address_is_unset(&st->hidden_variables.st_nat_oa) ||
-		    address_is_any(&st->hidden_variables.st_nat_oa)) ? "none" :
+		    address_is_any(st->hidden_variables.st_nat_oa)) ? "none" :
 		   ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
 	jam_string(buf, " NATD=");
 
 	if (address_is_unset(&st->hidden_variables.st_natd) ||
-	    address_is_any(&st->hidden_variables.st_natd)) {
+	    address_is_any(st->hidden_variables.st_natd)) {
 		jam_string(buf, "none");
 	} else {
 		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */

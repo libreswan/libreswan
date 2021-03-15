@@ -27,11 +27,42 @@
 
 #include "ipcheck.h"
 
+#define CHECK_OP(L,OP,R)						\
+	for (size_t tl = 0; tl < elemsof(L##_tests); tl++) {		\
+		/*hack*/const typeof(L##_tests[0]) *t = &L##_tests[tl];	\
+		/*hack*/size_t ti = tl;					\
+		const ip_##L *l = L##_tests[tl].L;			\
+		if (l == NULL) continue;				\
+		for (size_t tr = 0; tr < elemsof(R##_tests); tr++) {	\
+			const ip_##R *r = R##_tests[tr].R;		\
+			if (r == NULL) continue;			\
+			int expected = 0;				\
+			for (size_t to = 0; to < elemsof(L##_op_##R); to++) { \
+				const typeof(L##_op_##R[0]) *op = &L##_op_##R[to]; \
+				if (l == op->l && r == op->r) {		\
+					expected = op->OP;		\
+					break;				\
+				}					\
+			}						\
+			int b = L##_##OP##_##R(*l, *r);			\
+			/* work with int *cmp() */			\
+			if ((b > 0 && expected <= 0) ||			\
+			    (b == 0 && expected != 0) ||		\
+			    (b < 0 && expected >= 0)) {			\
+				L##_buf lb;				\
+				R##_buf rb;				\
+				FAIL(#L "_" #OP "_" #R "(%s,%s) returned %d, expected %d", \
+				     str_##L(l, &lb),			\
+				     str_##R(r, &rb),			\
+				     b, expected);			\
+			}						\
+		}							\
+	}
+
 /*
  * Check equality.  First form assumes NULL allowed, second does
  * not.
  */
-
 
 #define CHECK_EQ(T)							\
 	for (size_t ti = 0; ti < elemsof(T##_tests); ti++) {		\
@@ -178,25 +209,25 @@ static void check_ip_info_address(void)
 		CHECK_TYPE(address_type(address));
 
 		CHECK_COND(address, is_unset);
-		CHECK_COND(address, is_any);
-		CHECK_COND(address, is_specified);
-		CHECK_COND(address, is_loopback);
+		CHECK_COND2(address, is_any);
+		CHECK_COND2(address, is_specified);
+		CHECK_COND2(address, is_loopback);
 	}
 
-	/* must match table above */
-	bool eq[elemsof(address_tests)][elemsof(address_tests)] = {
-		/* unset/NULL */
-		[0][0] = true,
-		[0][1] = true,
-		[1][1] = true,
-		[1][0] = true,
-		/* other */
-		[2][2] = true,
-		[3][3] = true,
-		[4][4] = true,
-		[5][5] = true,
+	static const struct {
+		const ip_address *l;
+		const ip_address *r;
+		int eq;
+	} address_op_address[] = {
+		/* any */
+		{ &unset_address,              &unset_address,        .eq = true, },
+		{ &ipv4_info.address.any,      &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.address.any,      &ipv6_info.address.any, .eq = true, },
+		{ &ipv4_info.address.loopback, &ipv4_info.address.loopback, .eq = true, },
+		{ &ipv6_info.address.loopback, &ipv6_info.address.loopback, .eq = true, },
 	};
-	CHECK_EQ(address);
+
+	CHECK_OP(address, eq, address);
 }
 
 static void check_ip_info_endpoint(void)
@@ -257,38 +288,6 @@ static void check_ip_info_subnet(void)
 		CHECK_COND2(subnet, contains_one_address);
 		CHECK_COND2(subnet, contains_all_addresses);
 
-	}
-
-#define CHECK_OP(L,OP,R)						\
-	for (size_t tl = 0; tl < elemsof(L##_tests); tl++) {		\
-		/*hack*/const typeof(L##_tests[0]) *t = &L##_tests[tl];	\
-		/*hack*/size_t ti = tl;					\
-		const ip_##L *l = L##_tests[tl].L;			\
-		if (l == NULL) continue;				\
-		for (size_t tr = 0; tr < elemsof(R##_tests); tr++) {	\
-			const ip_##R *r = R##_tests[tr].R;		\
-			if (r == NULL) continue;			\
-			int expected = 0;				\
-			for (size_t to = 0; to < elemsof(L##_op_##R); to++) { \
-				const typeof(L##_op_##R[0]) *op = &L##_op_##R[to]; \
-				if (l == op->l && r == op->r) {		\
-					expected = op->OP;		\
-					break;				\
-				}					\
-			}						\
-			int b = L##_##OP##_##R(*l, *r);			\
-			/* work with int *cmp() */			\
-			if ((b > 0 && expected <= 0) ||			\
-			    (b == 0 && expected != 0) ||		\
-			    (b < 0 && expected >= 0)) {			\
-				L##_buf lb;				\
-				R##_buf rb;				\
-				FAIL(#L "_" #OP "_" #R "(%s,%s) returned %d, expected %d", \
-				     str_##L(l, &lb),			\
-				     str_##R(r, &rb),			\
-				     b, expected);			\
-			}						\
-		}							\
 	}
 
 	static const struct {

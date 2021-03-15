@@ -187,27 +187,6 @@ const char *str_address_reversed(const ip_address *src,
 	return dst->buf;
 }
 
-ip_address address_any(const struct ip_info *info)
-{
-	passert(info != NULL);
-	if (info == NULL) {
-		/*
-		 * XXX: Loudly reject AF_UNSPEC, but don't crash.
-		 * Callers know the protocol of the "any" (IPv[46]
-		 * term) or "unspecified" (alternative IPv6 term)
-		 * address required.
-		 *
-		 * If there's a need for a function that also allows
-		 * AF_UNSPEC, then call that function
-		 * address_unspecified().
-		 */
-		log_pexpect(HERE, "AF_UNSPEC unexpected");
-		return unset_address;
-	} else {
-		return info->address.any;
-	}
-}
-
 bool address_is_unset(const ip_address *address)
 {
 	if (address == NULL) {
@@ -216,55 +195,55 @@ bool address_is_unset(const ip_address *address)
 	return !address->is_set;
 }
 
-bool address_is_specified(const ip_address *address)
+bool address_is_specified(const ip_address address)
 {
-	const struct ip_info *afi = address_type(address);
+	const struct ip_info *afi = address_type(&address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
 	}
 
 	/* exclude any address */
-	if (address_eq(address, &afi->address.any)) {
+	if (address_eq_address(address, afi->address.any)) {
 		return false;
 	}
 	return true;
 }
 
-bool address_eq(const ip_address *l, const ip_address *r)
+bool address_eq_address(const ip_address l, const ip_address r)
 {
-	if (address_is_unset(l) && address_is_unset(r)) {
+	if (address_is_unset(&l) && address_is_unset(&r)) {
 		/* unset/NULL addresses are equal */
 		return true;
 	}
-	if (address_is_unset(l) || address_is_unset(r)) {
+	if (address_is_unset(&l) || address_is_unset(&r)) {
 		return false;
 	}
 	/* must compare individual fields */
-	return (l->version == r->version &&
-		thingeq(l->bytes, r->bytes));
+	return (l.version == r.version &&
+		thingeq(l.bytes, r.bytes));
 }
 
-bool address_is_loopback(const ip_address *address)
+bool address_is_loopback(const ip_address address)
 {
-	const struct ip_info *afi = address_type(address);
+	const struct ip_info *afi = address_type(&address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
 	}
 
-	return address_eq(address, &afi->address.loopback);
+	return address_eq_address(address, afi->address.loopback);
 }
 
-bool address_is_any(const ip_address *address)
+bool address_is_any(const ip_address address)
 {
-	const struct ip_info *afi = address_type(address);
+	const struct ip_info *afi = address_type(&address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
 	}
 
-	return address_eq(address, &afi->address.any);
+	return address_eq_address(address, afi->address.any);
 }
 
 ip_address address_from_blit(const struct ip_info *afi,
@@ -291,7 +270,7 @@ void pexpect_address(const ip_address *a, const char *s, where_t where)
 	}
 
 	/* more strict than is_unset() */
-	if (address_eq(a, &unset_address)) {
+	if (address_eq_address(*a, unset_address)) {
 		return;
 	}
 

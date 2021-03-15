@@ -107,7 +107,7 @@ const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoi
  */
 
 bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r);
-bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address);
+bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address);
 
 /*
  * Magic values.
