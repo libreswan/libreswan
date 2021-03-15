@@ -2285,7 +2285,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				deltatime(0),
 				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
-				0 /* xfrm_if_id needed for shunt? */,
+				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 				op, buf2,
 				&sr->this.sec_label,
 				logger))
