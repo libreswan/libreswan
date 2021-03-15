@@ -21,8 +21,6 @@
 #include "ip_info.h"
 #include "passert.h"
 
-static bool samenbits(const ip_address *a, const ip_address *b, int n);
-
 /*
  * addrcmp - compare two addresses
  * Caution, the order of the tests is subtle:  doing type test before
@@ -54,80 +52,4 @@ addrcmp(const ip_address *l, const ip_address *r)
 bool sameaddr(const ip_address *a, const ip_address *b)
 {
 	return addrcmp(a, b) == 0;
-}
-
-/*
- * samesubnet - are two subnets the same?
- */
-bool samesubnet(const ip_subnet *l, const ip_subnet *r)
-{
-	ip_address la = subnet_prefix(l);
-	ip_address ra = subnet_prefix(r);
-	return (l->maskbits == r->maskbits &&
-		/* also does type check */
-		sameaddr(&la, &ra));
-}
-
-/*
- * subnetishost - is a subnet in fact a single host?
- */
-bool subnetishost(const ip_subnet *a)
-{
-	const struct ip_info *afi = subnet_type(a);
-	return a->maskbits == afi->mask_cnt;
-}
-
-/*
- * addrinsubnet - is this address in this subnet?
- */
-bool addrinsubnet(const ip_address *a, const ip_subnet *s)
-{
-	ip_address sp = subnet_prefix(s);
-	return (address_type(a) == subnet_type(s) &&
-		samenbits(a, &sp, s->maskbits));
-}
-
-/*
- * subnetinsubnet - is one subnet within another?
- */
-bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b)
-{
-	ip_address ap = subnet_prefix(a);
-	return (/* a's prefix is longer than b */
-		a->maskbits >= b->maskbits &&
-		/* a's prefix is within B; also type checks */
-		addrinsubnet(&ap, b));
-}
-
-/*
- * samenbits - do two addresses have the same first n bits?
- */
-static bool samenbits(const ip_address *a, const ip_address *b, int nbits)
-{
-	const struct ip_info *at = address_type(a);
-	const struct ip_info *bt = address_type(b);
-	if (at == NULL || bt == NULL) {
-		return false;
-	}
-	if (at != bt) {
-		return false;
-	}
-
-	shunk_t as = address_as_shunk(a);
-	const uint8_t *ap = as.ptr; /* cast const void * */
-	passert(as.len > 0);
-	int n = as.len;
-
-	shunk_t bs = address_as_shunk(b);
-	const uint8_t *bp = bs.ptr; /* cast const void * */
-	passert(as.len == bs.len);
-
-	if (nbits > (int)n * 8)
-		return false;	/* "can't happen" */
-
-	for (; nbits >= 8 && *ap == *bp; nbits -= 8, ap++, bp++)
-		continue;
-
-	return nbits < 8 &&
-		(*ap ^ *bp) >> (8 - nbits) == 0x00;
 }

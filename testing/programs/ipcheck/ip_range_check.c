@@ -512,8 +512,8 @@ static void check_range_op2(void)
 		int family;
 		const char *l;
 		const char *r;
-		bool range_eq;
-		bool range_in;
+		bool range_eq_range;
+		bool range_in_range;
 		bool range_overlap;
 		bool address_in_range;
 	} tests[] = {
@@ -576,8 +576,8 @@ static void check_range_op2(void)
 				     bool_str(t->OP));			\
 			}						\
 		}
-		T(range_eq, l, r);
-		T(range_in, l, r);
+		T(range_eq_range, l, r);
+		T(range_in_range, l, r);
 		T(range_overlap, l, r);
 		ip_address a = range_start(l);
 		T(address_in_range,a,r);

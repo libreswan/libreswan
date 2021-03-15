@@ -332,8 +332,7 @@ static void confwrite_side(FILE *out,
 	}
 
 	if (end->has_client) {
-		if (!subnetishost(&end->subnet) ||
-		     !addrinsubnet(&end->addr, &end->subnet)) {
+		if (!subnet_eq_address(end->subnet, end->addr)) {
 			subnet_buf as;
 			fprintf(out, "\t%ssubnet=%s\n", side,
 				str_subnet(&end->subnet, &as));

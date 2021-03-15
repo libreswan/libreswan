@@ -759,17 +759,17 @@ static int score_address_range(const struct end *end,
 	ip_range range = selector_range(&end->client);
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (range_eq(range, ts->net)) {
+		if (range_eq_range(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (range_in(range, ts->net)) {
+		if (range_in_range(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (range_in(ts->net, range)) {
+		if (range_in_range(ts->net, range)) {
 			f = fitbits;
 		}
 		break;

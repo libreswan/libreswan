@@ -43,8 +43,6 @@ err_t range_to_subnet(const ip_range range, ip_subnet *subnet) MUST_USE_RESULT;
 
 err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst) MUST_USE_RESULT;
 
-bool range_contains_all_addresses(const ip_range);
-
 /*
  * Formatting
  */
@@ -76,10 +74,21 @@ const struct ip_info *range_type(const ip_range *r);
 
 bool range_is_specified(const ip_range r);
 
-bool range_eq(const ip_range l, const ip_range r);
+#if 0
+bool range_contains_no_addresses(const ip_range r);
+bool range_contains_one_address(const ip_range r);
+#endif
+bool range_contains_all_addresses(const ip_range r);
+
+bool range_eq_range(const ip_range l, const ip_range r);
+#if 0
+bool range_eq_subnet(const ip_range range, const ip_subnet subnet);
+bool range_eq_address(const ip_range range, const ip_address address);
+#endif
+bool range_in_range(const ip_range inner, const ip_range outer);
 bool address_in_range(const ip_address address, const ip_range range);
-bool range_in(const ip_range inner, const ip_range outer);
 bool range_overlap(const ip_range l, const ip_range r);
+
 
 /*
  * Calculate the number of significant bits in the size of the range.

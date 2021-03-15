@@ -365,7 +365,7 @@ static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
 			int len)
 {
 	for (int i = 0; i < len; i++)
-		if (subnetinsubnet(&peer_net, &list[i]))
+		if (subnet_in_subnet(peer_net, list[i]))
 			return TRUE;
 
 	return FALSE;
@@ -382,13 +382,14 @@ static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
  */
 err_t check_virtual_net_allowed(const struct connection *c,
 				const ip_subnet peer_net,
-				const ip_address *peers_addr)
+				const ip_address peers_addr)
 {
 	const struct virtual_ip *virt = c->spd.that.virt;
 	if (virt == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_HOST && !subnetishost(&peer_net)) {
+	if (virt->flags & F_VIRTUAL_HOST &&
+	    !subnet_contains_one_address(peer_net)) {
 		return "only virtual host single IPs are allowed";
 	}
 
@@ -396,8 +397,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 		return NULL;
 
 	if (virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(&peer_net) && addrinsubnet(peers_addr, &peer_net))
-		{
+		if (subnet_eq_address(peer_net, peers_addr)) {
 			return NULL;
 		}
 		/* ??? why isn't this case an error? */

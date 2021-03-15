@@ -81,18 +81,18 @@ err_t address_mask_to_subnet(const ip_address address,
 	return NULL;
 }
 
-ip_address subnet_prefix(const ip_subnet *subnet)
+ip_address subnet_prefix(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
+	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
 	}
 
-	return address_from_blit(afi, subnet->bytes,
+	return address_from_blit(afi, subnet.bytes,
 				 /*routing-prefix*/&keep_bits,
 				 /*host-identifier*/&clear_bits,
-				 subnet->maskbits);
+				 subnet.maskbits);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
@@ -113,47 +113,63 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	return !subnet->is_set;
 }
 
-bool subnet_is_specified(const ip_subnet *subnet)
+bool subnet_is_specified(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
+	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false; /* need IPv4 or IPv6 */
 	}
 
-	if (thingeq(subnet->bytes, afi->address.any.bytes)) {
+	if (thingeq(subnet.bytes, afi->address.any.bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}
 	return true;
 }
 
-bool subnet_contains_all_addresses(const ip_subnet *subnet)
+bool subnet_contains_all_addresses(const ip_subnet subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	if (subnet_is_unset(&subnet)) {
 		return false;
 	}
-	if (subnet->maskbits != 0) {
+	if (subnet.maskbits != 0) {
 		return false;
 	}
 	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
 }
 
-bool subnet_contains_no_addresses(const ip_subnet *subnet)
+bool subnet_contains_no_addresses(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
+	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
 	}
 
-	if (subnet->maskbits != afi->mask_cnt) {
+	if (subnet.maskbits != afi->mask_cnt) {
 		return false;
 	}
 
 	ip_address network = subnet_prefix(subnet);
 	return address_is_any(&network);
+}
+
+bool subnet_contains_one_address(const ip_subnet subnet)
+{
+	const struct ip_info *afi = subnet_type(&subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return false;
+	}
+
+	if (subnet.maskbits != afi->mask_cnt) {
+		return false;
+	}
+
+	/* any non-zero address */
+	return !thingeq(subnet.bytes, unset_bytes);
 }
 
 /*
@@ -162,18 +178,18 @@ bool subnet_contains_no_addresses(const ip_subnet *subnet)
  * For instance 1.2.3.4/24 -> 255.255.255.0.
  */
 
-ip_address subnet_prefix_mask(const ip_subnet *subnet)
+ip_address subnet_prefix_mask(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
+	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
 	}
 
-	return address_from_blit(afi, subnet->bytes,
+	return address_from_blit(afi, subnet.bytes,
 				 /*routing-prefix*/ &set_bits,
 				 /*host-identifier*/ &clear_bits,
-				 subnet->maskbits);
+				 subnet.maskbits);
 }
 
 unsigned subnet_prefix_bits(const ip_subnet subnet)
@@ -193,7 +209,7 @@ size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 	}
 
 	size_t s = 0;
-	ip_address sa = subnet_prefix(subnet);
+	ip_address sa = subnet_prefix(*subnet);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", subnet->maskbits);
 	return s;
@@ -213,7 +229,7 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 	}
 
 	/* more strict than is_unset() */
-	if (subnet_eq(s, &unset_subnet)) {
+	if (subnet_eq_subnet(*s, unset_subnet)) {
 		return;
 	}
 
@@ -225,24 +241,83 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 	}
 }
 
-bool subnet_eq(const ip_subnet *l, const ip_subnet *r)
+bool subnet_eq_subnet(const ip_subnet l, const ip_subnet r)
 {
-	if (subnet_is_unset(l) && subnet_is_unset(r)) {
+	if (subnet_is_unset(&l) && subnet_is_unset(&r)) {
 		/* NULL/unset subnets are equal */
 		return true;
 	}
-	if (subnet_is_unset(l) || subnet_is_unset(r)) {
+	if (subnet_is_unset(&l) || subnet_is_unset(&r)) {
 		return false;
 	}
 	/* must compare individual fields */
-	return (l->version == r->version &&
-		thingeq(l->bytes, r->bytes) &&
-		l->maskbits == r->maskbits);
+	return (l.version == r.version &&
+		thingeq(l.bytes, r.bytes) &&
+		l.maskbits == r.maskbits);
 }
 
-bool subnet_in(const ip_subnet *l, const ip_subnet *r)
+bool subnet_eq_address(const ip_subnet subnet, const ip_address address)
 {
-	return subnetinsubnet(l, r);
+	const struct ip_info *afi = subnet_type(&subnet);
+	if (afi == NULL) {
+		return false;
+	}
+
+	/* XXX: reject any? */
+	/* must compare individual fields */
+	return (subnet.version == address.version &&
+		thingeq(subnet.bytes, address.bytes) &&
+		subnet.maskbits == afi->mask_cnt);
+}
+
+bool subnet_in_subnet(const ip_subnet l, const ip_subnet r)
+{
+	const struct ip_info *afi = subnet_type(&l);
+	if (afi == NULL) {
+		return false;
+	}
+
+	if (subnet_type(&r) != afi) {
+		return false;
+	}
+
+	/* l's prefix needs to be longer than r's */
+	if (l.maskbits < r.maskbits) {
+		return false;
+	}
+
+	/* L.prefix[0 .. R.bits] == R.prefix[0.. R.bits] */
+	struct ip_bytes lb = bytes_from_blit(afi,
+					     /*LEFT*/l.bytes,
+					     /*routing-prefix*/&keep_bits,
+					     /*host-identifier*/&clear_bits,
+					     /*RIGHT*/r.maskbits);
+	return thingeq(lb, r.bytes);
+}
+
+bool address_in_subnet(const ip_address l, const ip_subnet r)
+{
+	const struct ip_info *afi = address_type(&l);
+	if (afi == NULL) {
+		return false;
+	}
+
+	if (subnet_type(&r) != afi) {
+		return false;
+	}
+
+	/* never true */
+	if (subnet_eq_subnet(r, afi->subnet.none)) {
+		return false;
+	}
+
+	/* L.prefix[0 .. R.bits] == R.prefix[0.. R.bits] */
+	struct ip_bytes lb = bytes_from_blit(afi,
+					     /*LEFT*/l.bytes,
+					     /*routing-prefix*/&keep_bits,
+					     /*host-identifier*/&clear_bits,
+					     /*RIGHT*/r.maskbits);
+	return thingeq(lb, r.bytes);
 }
 
 err_t addresses_to_subnet(const ip_address start, const ip_address end, ip_subnet *dst)

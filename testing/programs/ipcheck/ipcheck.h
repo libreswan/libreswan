@@ -149,7 +149,7 @@ extern bool use_dns;
 		if (T != NULL) {					\
 			bool cond = T##_##COND(*T);			\
 			if (cond != t->COND) {				\
-				range_buf b;				\
+				T##_buf b;				\
 				FAIL(#T"_"#COND"(%s) returned %s, expecting %s", \
 				     str_##T(T, &b),			\
 				     bool_str(cond),			\

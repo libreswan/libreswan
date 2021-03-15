@@ -284,7 +284,7 @@ bool range_size(const ip_range range, uint32_t *size)
 	return false;
 }
 
-bool range_eq(const ip_range l, const ip_range r)
+bool range_eq_range(const ip_range l, const ip_range r)
 {
 	if (range_is_unset(&l) && range_is_unset(&r)) {
 		/* unset/NULL ranges are equal */
@@ -312,7 +312,7 @@ bool address_in_range(const ip_address address, const ip_range range)
 			  range.version, range.end) <= 0);
 }
 
-bool range_in(const ip_range inner, const ip_range outer)
+bool range_in_range(const ip_range inner, const ip_range outer)
 {
 	if (range_is_unset(&inner) || range_is_unset(&outer)) {
 		return false;
@@ -496,5 +496,5 @@ bool range_contains_all_addresses(const ip_range range)
 		return false;
 	}
 
-	return range_eq(range, afi->range.all);
+	return range_eq_range(range, afi->range.all);
 }

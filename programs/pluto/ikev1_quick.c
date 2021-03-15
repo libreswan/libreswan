@@ -167,7 +167,7 @@ static bool emit_subnet_id(const ip_subnet net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = subnet_prefix(&net);
+	ip_address tp = subnet_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -175,7 +175,7 @@ static bool emit_subnet_id(const ip_subnet net,
 	}
 
 	if (!usehost) {
-		ip_address tm = subnet_prefix_mask(&net);
+		ip_address tm = subnet_prefix_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
@@ -450,7 +450,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		}
 
 		err_t ughmsg = address_mask_to_subnet(temp_address, temp_mask, &net);
-		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
+		if (ughmsg == NULL && subnet_contains_no_addresses(net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
 		}
@@ -540,7 +540,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	/* toss the proto/port */
 	ip_subnet subnet_temp = selector_subnet(selector_temp);
 
-	if (!samesubnet(&net, &subnet_temp)) {
+	if (!subnet_eq_subnet(net, subnet_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,

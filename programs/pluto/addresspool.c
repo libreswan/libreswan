@@ -735,7 +735,7 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
 
-		if (range_eq(*pool_range, h->r)) {
+		if (range_eq_range(*pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
 			break;

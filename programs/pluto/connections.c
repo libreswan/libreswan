@@ -1092,8 +1092,8 @@ static bool check_connection_end(const struct whack_end *this,
 		}
 	}
 
-	if (subnet_is_specified(&this->client) &&
-	    subnet_is_specified(&that->client)) {
+	if (subnet_is_specified(this->client) &&
+	    subnet_is_specified(that->client)) {
 		/* IPv4 vs IPv6? */
 		if (subnet_type(&this->client) != subnet_type(&that->client)) {
 			/*
@@ -3607,7 +3607,7 @@ static struct connection *fc_try(const struct connection *c,
 
 				virtualwhy = check_virtual_net_allowed(d,
 								       selector_subnet(*remote_client),
-								       &sr->that.host_addr);
+								       sr->that.host_addr);
 
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
