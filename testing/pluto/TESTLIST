@@ -1229,5 +1229,5 @@ kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
 # crossing the stream race conditions
 kvmplutotest	ikev2-crossing-streams-01		wip
 kvmplutotest	ikev2-crossing-streams-02		wip
-kvmplutotest	ikev2-crossing-streams-03-iface		wip
+kvmplutotest	ikev2-crossing-streams-03-iface		good
 
