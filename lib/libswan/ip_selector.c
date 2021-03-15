@@ -75,7 +75,7 @@ const char *str_selector_sensitive(const ip_selector *selector, selector_buf *ou
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
 	ip_address address = selector_prefix(selector);
-	int prefix_bits = selector_prefix_bits(selector);
+	unsigned prefix_bits = selector_prefix_bits(selector);
 	ip_subnet subnet = subnet_from_address_prefix_bits(address, prefix_bits);
 	return jam_subnet(buf, &subnet);
 }
@@ -561,7 +561,7 @@ err_t numeric_to_selector(shunk_t input,
 ip_subnet selector_subnet(const ip_selector selector)
 {
 	ip_address address = selector_prefix(&selector);
-	int prefix_bits = selector_prefix_bits(&selector);
+	unsigned prefix_bits = selector_prefix_bits(&selector);
 	return subnet_from_address_prefix_bits(address, prefix_bits);
 }
 
