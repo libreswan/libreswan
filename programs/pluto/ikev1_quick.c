@@ -424,7 +424,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return false;
 		}
-		net = subnet_from_address(&temp_address);
+		net = subnet_from_address(temp_address);
 		subnet_buf b;
 		dbg("%s is %s", which, str_subnet(&net, &b));
 		break;
@@ -449,7 +449,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, &net);
+		err_t ughmsg = address_mask_to_subnet(temp_address, temp_mask, &net);
 		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";

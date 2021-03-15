@@ -76,7 +76,7 @@ size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
 	ip_address address = selector_prefix(selector);
 	int prefix_bits = selector_prefix_bits(selector);
-	ip_subnet subnet = subnet_from_address_prefix_bits(&address, prefix_bits);
+	ip_subnet subnet = subnet_from_address_prefix_bits(address, prefix_bits);
 	return jam_subnet(buf, &subnet);
 }
 
@@ -140,7 +140,7 @@ ip_selector selector_from_address_protocol_port(const ip_address *address,
 	if (address_is_unset(address)) {
 		return unset_selector;
 	}
-	ip_subnet subnet = subnet_from_address(address);
+	ip_subnet subnet = subnet_from_address(*address);
 	return selector_from_subnet_protocol_port(&subnet, protocol, port);
 }
 
@@ -150,7 +150,7 @@ ip_selector selector_from_endpoint(const ip_endpoint *endpoint)
 		return unset_selector;
 	}
 	ip_address address = endpoint_address(endpoint);
-	ip_subnet subnet = subnet_from_address(&address);
+	ip_subnet subnet = subnet_from_address(address);
 	const ip_protocol *protocol = endpoint_protocol(endpoint);
 	ip_port port = endpoint_port(endpoint);
 	return selector_from_subnet_protocol_port(&subnet, protocol, port);
@@ -183,7 +183,10 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
 ip_selector selector_from_address_protoport(const ip_address *address,
 					    const ip_protoport *protoport)
 {
-	ip_subnet subnet = subnet_from_address(address);
+	if (address_is_unset(address)) {
+		return unset_selector;
+	}
+	ip_subnet subnet = subnet_from_address(*address);
 	return selector_from_subnet_protoport(&subnet, protoport);
 }
 
@@ -550,7 +553,7 @@ err_t numeric_to_selector(shunk_t input,
 		return "missing port following protocol/";
 	}
 
-	ip_subnet subnet = subnet_from_address_prefix_bits(&address, prefix_bits);
+	ip_subnet subnet = subnet_from_address_prefix_bits(address, prefix_bits);
 	*dst = selector_from_subnet_protocol_port(&subnet, protocol, port);
 	return NULL;
 }
@@ -559,7 +562,7 @@ ip_subnet selector_subnet(const ip_selector selector)
 {
 	ip_address address = selector_prefix(&selector);
 	int prefix_bits = selector_prefix_bits(&selector);
-	return subnet_from_address_prefix_bits(&address, prefix_bits);
+	return subnet_from_address_prefix_bits(address, prefix_bits);
 }
 
 bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs)

@@ -318,7 +318,7 @@ static void check_subnet_from_address(void)
 		if (oops != NULL) {
 			FAIL("numeric_to_address() failed: %s", oops);
 		}
-		ip_subnet s = subnet_from_address(&a);
+		ip_subnet s = subnet_from_address(a);
 
 		CHECK_TYPE(subnet_type(&s));
 
@@ -401,7 +401,7 @@ static void check_address_mask_to_subnet(void)
 		}
 
 		ip_subnet subnet;
-		err = address_mask_to_subnet(&address, &mask, &subnet);
+		err = address_mask_to_subnet(address, mask, &subnet);
 		if (err != NULL) {
 			if (t->subnet != NULL) {
 				FAIL("address_mask_to_subnet() unexpectedly failed: %s", err);

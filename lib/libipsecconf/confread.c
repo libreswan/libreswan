@@ -668,7 +668,7 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			end->subnet = subnet_from_address(&end->sourceip);
+			end->subnet = subnet_from_address(end->sourceip);
 			end->has_client = TRUE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {

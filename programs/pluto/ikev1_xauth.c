@@ -1804,7 +1804,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					ip_address base = address_from_in_addr(&i.cs_addr);
 					ip_address mask = address_from_in_addr(&i.cs_mask);
 					ip_subnet wire_subnet;
-					err_t ugh = address_mask_to_subnet(&base, &mask, &wire_subnet);
+					err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
 					if (ugh != NULL) {
 						log_state(RC_INFORMATIONAL, st,
 							  "ignoring malformed CISCO_SPLIT_INC subnet: %s",

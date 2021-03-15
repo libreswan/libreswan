@@ -56,6 +56,6 @@ err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst
 		return "invalid subnet";
 	}
 
-	*dst = subnet_from_address_prefix_bits(from, prefix_bits);
+	*dst = subnet_from_address_prefix_bits(*from, prefix_bits);
 	return NULL;
 }
