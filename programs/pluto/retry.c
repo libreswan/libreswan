@@ -181,7 +181,7 @@ void retransmit_v2_msg(struct state *st)
 		log_state(RC_LOG, st,
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
 			  c->newest_isakmp_sa, st->st_try);
-		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
+		pstat_sa_failed(st, REASON_SUPERSEDED_BY_NEW_SA);
 		delete_state(st);
 		return;
 	} else if (st->st_establishing_sa == IPSEC_SA &&
@@ -189,7 +189,7 @@ void retransmit_v2_msg(struct state *st)
 		log_state(RC_LOG, st,
 			  "suppressing retransmit because CHILD SA was superseded by #%lu try=%lu; drop this negotiation",
 			  c->newest_ipsec_sa, st->st_try);
-		pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
+		pstat_sa_failed(st, REASON_SUPERSEDED_BY_NEW_SA);
 		delete_state(st);
 		return;
 	}
