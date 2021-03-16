@@ -339,13 +339,13 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
-	if (cidr_is_specified(&end->vti_ip)) {
+	if (cidr_is_specified(end->vti_ip)) {
 		cidr_buf as;
 		fprintf(out, "\t%svti=%s\n", side,
 			str_cidr(&end->vti_ip, &as));
 	}
 
-	if (cidr_is_specified(&end->ifaceip)) {
+	if (cidr_is_specified(end->ifaceip)) {
 		cidr_buf as;
 		fprintf(out, "\t%sinterface-ip=%s\n", side,
 			str_cidr(&end->ifaceip, &as));

@@ -114,7 +114,7 @@ static void check_cidr_is()
 			FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 		}
 
-		bool specified = cidr_is_specified(&cidr);
+		bool specified = cidr_is_specified(cidr);
 		if (specified != t->specified) {
 			FAIL("cidr_is_specified() returned %s, expecting %s",
 			     bool_str(specified), bool_str(t->specified));

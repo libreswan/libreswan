@@ -517,7 +517,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
 		}
-		oops = cidr_specified(&end->vti_ip);
+		oops = cidr_specified(end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
@@ -743,7 +743,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
 		}
-		oops = cidr_specified(&end->ifaceip);
+		oops = cidr_specified(end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
