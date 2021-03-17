@@ -71,10 +71,10 @@ struct ip_bytes bytes_from_blit(const struct ip_info *afi,
 				const struct ip_blit *host_id,
 				unsigned nr_prefix_bits);
 
-/* Calculate |h-l| */
-struct ip_bytes bytes_diff(const struct ip_info *afi,
-			   const struct ip_bytes lo,
-			   const struct ip_bytes hi);
+/* Calculate l-r using unsigned arithmetic */
+struct ip_bytes bytes_sub(const struct ip_info *afi,
+			  const struct ip_bytes l,
+			  const struct ip_bytes r);
 
 /* find first non-zero bit from left */
 int bytes_first_set_bit(const struct ip_info *afi,

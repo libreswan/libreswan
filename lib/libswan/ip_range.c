@@ -58,7 +58,7 @@ int range_host_bits(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, range.end, range.start);
+	struct ip_bytes diff = bytes_sub(afi, range.end, range.start);
 	int fsb = bytes_first_set_bit(afi, diff);
 	return (afi->ip_size * 8) - fsb;
 }
@@ -255,7 +255,7 @@ bool range_size(const ip_range range, uint32_t *size)
 		return true; /*return what?!?!?*/
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, range.start, range.end);
+	struct ip_bytes diff = bytes_sub(afi, range.end, range.start);
 
 	/* more than 32-bits of host-prefix always overflows. */
 	unsigned prefix_bits = bytes_first_set_bit(afi, diff);
@@ -478,7 +478,7 @@ err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t 
 		return "address out-of-bounds";
 	}
 
-	struct ip_bytes diff = bytes_diff(afi, address.bytes, range.start);
+	struct ip_bytes diff = bytes_sub(afi, address.bytes, range.start);
 
 	*offset = ntoh_bytes(diff.byte, afi->ip_size);
 
