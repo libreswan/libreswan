@@ -1125,8 +1125,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 
 	dbg("looking for better host pair");
-	const struct connection *best_until_now = best_connection;
-	for (unsigned rpass = 0; rpass < 2  && best_until_now == best_connection; rpass++) {
+	for (unsigned rpass = 0; rpass < 2; rpass++) {
 		/*
 		 * First time through, look for local:remote, the
 		 * second time local:<unset>.
