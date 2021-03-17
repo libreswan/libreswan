@@ -177,6 +177,9 @@ struct pending **host_pair_first_pending(const struct connection *c)
 struct host_pair *find_host_pair(const ip_address local,
 				 const ip_address remote)
 {
+	address_buf lb, rb;
+	dbg("looking for host pair matching %s->%s",
+	    str_address(&local, &lb), str_address(&remote, &rb));
 	hash_t hash = hp_hasher(local, remote);
 	struct host_pair *hp = NULL;
 	struct list_head *bucket = hash_table_bucket(&host_pairs, hash);

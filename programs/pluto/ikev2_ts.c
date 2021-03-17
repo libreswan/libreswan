@@ -36,6 +36,7 @@
 #include "security_selinux.h"
 #include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
 #include "ip_range.h"
+#include "iface.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -1124,19 +1125,15 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 
 	dbg("looking for better host pair");
-	const struct host_pair *hp = NULL;
-	for (const struct spd_route *sra = &c->spd;
-	     hp == NULL && sra != NULL; sra = sra->spd_next) {
-		hp = find_host_pair(sra->this.host_addr, sra->that.host_addr);
-
-		if (DBGP(DBG_BASE)) {
-			selector_buf s2;
-			selector_buf d2;
-			DBG_log("  checking hostpair %s -> %s is %s",
-				str_selector(&sra->this.client, &s2),
-				str_selector(&sra->that.client, &d2),
-				hp == NULL ? "not found" : "found");
-		}
+	const struct connection *best_until_now = best_connection;
+	for (unsigned rpass = 0; rpass < 2  && best_until_now == best_connection; rpass++) {
+		/*
+		 * First time through, look for local:remote, the
+		 * second time local:<unset>.
+		 */
+		const ip_address local = md->iface->ip_dev->id_address;
+		const ip_address remote = (rpass == 0 ? endpoint_address(&md->sender) : unset_address);
+		const struct host_pair *hp = find_host_pair(local, remote);
 
 		if (hp == NULL)
 			continue;
