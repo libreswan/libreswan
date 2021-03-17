@@ -349,7 +349,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
-	FOR_EACH_HOST_PAIR_CONNECTION(&md->iface->ip_dev->id_address, &unset_address, d) {
+	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
 		if (NEVER_NEGOTIATE(d->policy)) {
 			continue;

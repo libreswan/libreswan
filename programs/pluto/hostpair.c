@@ -83,11 +83,15 @@ static void jam_host_pair(struct jambuf *buf, const void *data)
 	jam_address(buf, &hp->remote);
 }
 
-static hash_t hp_hasher(const ip_address *local, const ip_address *remote)
+static hash_t hp_hasher(const ip_address local, const ip_address remote)
 {
 	hash_t hash = zero_hash;
-	hash = hash_table_hasher(address_as_shunk(local), hash);
-	hash = hash_table_hasher(address_as_shunk(remote), hash);
+	if (pexpect(address_is_specified(local))) {
+		hash = hash_table_hasher(address_as_shunk(&local), hash);
+	}
+	if (address_is_specified(remote)) {
+		hash = hash_table_hasher(address_as_shunk(&remote), hash);
+	}
 	return hash;
 }
 
@@ -95,7 +99,7 @@ static hash_t host_pair_hasher(const void *data)
 {
 	const struct host_pair *hp = data;
 	passert(hp->magic == host_pair_magic);
-	return hp_hasher(&hp->local, &hp->remote);
+	return hp_hasher(hp->local, hp->remote);
 }
 
 static struct list_entry *host_pair_list_entry(void *data)
@@ -164,29 +168,15 @@ struct pending **host_pair_first_pending(const struct connection *c)
 	return &c->host_pair->pending;
 }
 
-/** returns a host pair based upon addresses.
+/*
+ * Returns a host-pair based upon addresses.
  *
- * find_host_pair is given a pair of addresses, plus UDP ports, and
- * returns a host_pair entry that covers it. It also moves the relevant
- * pair description to the beginning of the list, so that it can be
- * found faster next time.
+ * REMOTE can either be a valid address or UNSET_ADDRESS.
  */
 
-struct host_pair *find_host_pair(const ip_address *local,
-				 const ip_address *remote)
+struct host_pair *find_host_pair(const ip_address local,
+				 const ip_address remote)
 {
-	/*
-	 * Force unset/NULL to 'any' a.k.a. zero; so hash is
-	 * consistent and comparisons work.
-	 */
-	if (remote == NULL || address_is_unset(remote)) {
-		remote = &address_type(local)->address.any;
-	}
-
-	/*
-	 * look for a host-pair that has the right set of ports/address.
-	 *
-	 */
 	hash_t hash = hp_hasher(local, remote);
 	struct host_pair *hp = NULL;
 	struct list_head *bucket = hash_table_bucket(&host_pairs, hash);
@@ -203,17 +193,33 @@ struct host_pair *find_host_pair(const ip_address *local,
 			continue;
 		}
 
-		address_buf b1;
-		address_buf b2;
-		dbg("host_pair: comparing to %s->%s",
-		    str_address(&hp->local, &b1),
-		    str_address(&hp->remote, &b2));
-
-		/* XXX: same addr does not compare ports.  */
-		if (sameaddr(&hp->local, local) &&
-		    sameaddr(&hp->remote, remote)) {
+		if (!address_eq_address(hp->local, local)) {
+			address_buf lb;
 			connection_buf cb;
-			dbg("host_pair: match connection="PRI_CONNECTION,
+			dbg("host_pair: local %s does not match connection="PRI_CONNECTION,
+			    str_address(&local, &lb),
+			    pri_connection(hp->connections, &cb));
+			continue;
+		}
+
+		/* now try to match */
+
+		if (address_is_specified(remote) &&
+		    address_eq_address(remote, hp->remote)) {
+			connection_buf cb;
+			address_buf lb, rb;
+			dbg("host_pair: %s->%s exactly matches connection "PRI_CONNECTION,
+			    str_address(&local, &lb), str_address(&remote, &rb),
+			    pri_connection(hp->connections, &cb));
+			return hp;
+		}
+
+		if (!address_is_specified(remote) &&
+		    !address_is_specified(hp->remote)) {
+			connection_buf cb;
+			address_buf lb, rb;
+			dbg("host_pair: %s->%s any matched connection="PRI_CONNECTION,
+			    str_address(&local, &lb), str_address(&remote, &rb),
 			    pri_connection(hp->connections, &cb));
 			return hp;
 		}
@@ -247,8 +253,8 @@ static void free_host_pair(struct host_pair **hp, where_t where)
 	*hp = NULL;
 }
 
-struct connection *next_host_pair_connection(const ip_address *local,
-					     const ip_address *remote,
+struct connection *next_host_pair_connection(const ip_address local,
+					     const ip_address remote,
 					     struct connection **next,
 					     bool first,
 					     where_t where)
@@ -258,7 +264,7 @@ struct connection *next_host_pair_connection(const ip_address *local,
 	if (first) {
 		address_buf lb, rb;
 		dbg("FOR_EACH_HOST_PAIR_CONNECTION(%s->%s) in "PRI_WHERE,
-		    str_address(local, &lb), str_address(remote, &rb),
+		    str_address(&local, &lb), str_address(&remote, &rb),
 		    pri_where(where));
 		struct host_pair *hp = find_host_pair(local, remote);
 		c = (hp != NULL) ? hp->connections : NULL;
@@ -272,9 +278,9 @@ struct connection *next_host_pair_connection(const ip_address *local,
 void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(*c)) {
-		struct host_pair *hp = find_host_pair(&c->spd.this.host_addr,
+		struct host_pair *hp = find_host_pair(c->spd.this.host_addr,
 						      /* remote could be unset OR any */
-						      &c->spd.that.host_addr);
+						      c->spd.that.host_addr);
 
 		address_buf b1, b2;
 		dbg("connect_to_host_pair: %s->%s -> hp@%p: %s",
@@ -609,7 +615,7 @@ static struct connection *find_host_connection(enum ike_version ike_version,
 	/* strip port */
 	ip_address local_address = endpoint_address(local_endpoint);
 	ip_address remote_address = endpoint_address(remote_endpoint);/*could return unset OR any*/
-	struct host_pair *hp = find_host_pair(&local_address, &remote_address);
+	struct host_pair *hp = find_host_pair(local_address, remote_address);
 	if (hp == NULL) {
 		return NULL;
 	}
@@ -894,7 +900,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
 	 */
-	FOR_EACH_HOST_PAIR_CONNECTION(&md->iface->ip_dev->id_address, NULL, tmp) {
+	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, tmp) {
 		if ((tmp->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
 			continue;
 		}

@@ -2705,7 +2705,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 		 *
 		 * XXX: the port doesn't matter!
 		 */
-		FOR_EACH_HOST_PAIR_CONNECTION(&p->ip_dev->id_address, &unset_address, c) {
+		FOR_EACH_HOST_PAIR_CONNECTION(p->ip_dev->id_address, unset_address, c) {
 
 			dbg("checking %s", c->name);
 			if (c->kind == CK_GROUP)
@@ -3180,7 +3180,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Peer IP.
 		 */
 		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(&st->st_remote_endpoint);
-		FOR_EACH_HOST_PAIR_CONNECTION(&c->interface->ip_dev->id_address, &remote, d) {
+		FOR_EACH_HOST_PAIR_CONNECTION(c->interface->ip_dev->id_address, remote, d) {
 
 			int wildcards;
 			bool matching_peer_id = match_id(peer_id,
@@ -3837,7 +3837,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		const struct host_pair *hp = NULL;
 		for (const struct spd_route *sra = &c->spd;
 		     sra != NULL && hp == NULL; sra = sra->spd_next) {
-			hp = find_host_pair(&sra->this.host_addr, NULL);
+			hp = find_host_pair(sra->this.host_addr, unset_address);
 			if (DBGP(DBG_BASE)) {
 				selector_buf s2;
 				selector_buf d2;
