@@ -384,7 +384,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * membership in the range.
 	 */
 	struct ip_pool *pool = c->pool;
-	ip_address prefix = selector_prefix(&c->spd.that.client);
+	ip_address prefix = selector_prefix(c->spd.that.client);
 	uintmax_t offset;
 	err_t err = range_to_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
@@ -644,7 +644,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	ip_address ia = lease_address(pool, new_lease);
 	c->spd.that.has_lease = true;
 	c->spd.that.has_client = true;
-	c->spd.that.client = selector_from_address(&ia);
+	c->spd.that.client = selector_from_address(ia);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {

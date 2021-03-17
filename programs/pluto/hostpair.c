@@ -461,7 +461,7 @@ void update_host_pairs(struct connection *c)
 			 * client info
 			 */
 			if (!d->spd.that.has_client) {
-				d->spd.that.client = selector_from_address(&new_addr);
+				d->spd.that.client = selector_from_address(new_addr);
 			}
 
 			d->spd.that.host_addr = new_addr;
@@ -751,9 +751,9 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			 * Opportunistic or Shunt: keep searching
 			 * selecting the tightest match.
 			 */
-			if (address_in_selector(&remote_address, &d->spd.that.client) &&
-			    (c == NULL || !selector_in_selector(&c->spd.that.client,
-								&d->spd.that.client))) {
+			if (address_in_selector_subnet(remote_address, d->spd.that.client) &&
+			    (c == NULL || !selector_in_selector(c->spd.that.client,
+								d->spd.that.client))) {
 
 				c = d;
 				/* keep looking */
@@ -902,7 +902,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 			continue;
 		}
 		ip_address sender = endpoint_address(&md->sender);
-		if (!address_in_selector(&sender, &tmp->spd.that.client)) {
+		if (!address_in_selector_subnet(sender, tmp->spd.that.client)) {
 			continue;
 		}
 		dbgl(md->md_logger,

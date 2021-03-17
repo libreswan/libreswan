@@ -514,7 +514,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	}
 
 	ip_port port = ip_hport(id->isaiid_port);
-	*client = selector_from_subnet_protocol_port(&net, protocol, port);
+	*client = selector_from_subnet_protocol_port(net, protocol, port);
 
 	return true;
 }
@@ -965,7 +965,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
-			remote_client = selector_from_address_protocol_port(&c->spd.that.host_addr,
+			remote_client = selector_from_address_protocol_port(c->spd.that.host_addr,
 									    remote_protocol,
 									    remote_port);
 		}
@@ -1007,7 +1007,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
 			if (address_is_specified(hv.st_nat_oa)) {
-				remote_client = selector_from_address_protocol_port(&hv.st_nat_oa,
+				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
 				selector_buf buf;
@@ -1023,8 +1023,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (address_type(&c->spd.this.host_addr) != address_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
-		local_client = selector_from_address(&c->spd.this.host_addr);
-		remote_client = selector_from_address(&c->spd.that.host_addr);
+		local_client = selector_from_address(c->spd.this.host_addr);
+		remote_client = selector_from_address(c->spd.that.host_addr);
 	}
 
 	struct crypt_mac new_iv;
@@ -1087,18 +1087,18 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct end local = c->spd.this;
 				local.client = *local_client;
-				local.has_client = !selector_is_address(local_client, &local.host_addr);
-				local.protocol = selector_protocol(local_client)->ipproto;
-				local.port = selector_port(local_client).hport;
+				local.has_client = !selector_eq_address(*local_client, local.host_addr);
+				local.protocol = selector_protocol(*local_client)->ipproto;
+				local.port = selector_port(*local_client).hport;
 				jam_end(buf, &local, NULL, /*left?*/true, LEMPTY, oriented(*c));
 
 				jam(buf, "...");
 
 				struct end remote = c->spd.that;
 				remote.client = *remote_client;
-				remote.has_client = !selector_is_address(remote_client, &remote.host_addr);
-				remote.protocol = selector_protocol(remote_client)->ipproto;
-				remote.port = selector_port(remote_client).hport;
+				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
+				remote.protocol = selector_protocol(*remote_client)->ipproto;
+				remote.port = selector_port(*remote_client).hport;
 				jam_end(buf, &remote, NULL, /*left?*/false, LEMPTY, oriented(*c));
 			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1140,7 +1140,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
-			int port = selector_port(remote_client).hport;
+			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
 			c->spd.that.port = port;
 			c->spd.that.has_port_wildcard = false;
@@ -1152,7 +1152,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (selector_is_address(remote_client, &c->spd.that.host_addr)) {
+			if (selector_eq_address(*remote_client, c->spd.that.host_addr)) {
 				c->spd.that.has_client = false;
 			}
 
@@ -1610,7 +1610,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				idfqdn[idlen] = '\0';
 
 				st->st_connection->spd.that.client =
-					selector_from_address(&st->hidden_variables.st_nat_oa);
+					selector_from_address(st->hidden_variables.st_nat_oa);
 				subnet_buf buf;
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
@@ -1622,8 +1622,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 * No IDci, IDcr: we must check that the
 			 * defaults match our proposal.
 			 */
-			if (!selector_is_address(&c->spd.this.client, &c->spd.this.host_addr) ||
-			    !selector_is_address(&c->spd.that.client, &c->spd.that.host_addr)) {
+			if (!selector_eq_address(c->spd.this.client, c->spd.this.host_addr) ||
+			    !selector_eq_address(c->spd.that.client, c->spd.that.host_addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;

@@ -1104,13 +1104,13 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 * XXX: should this also check that
 				 * the client is a single address?
 				 */
-				ip_address client_prefix = selector_prefix(&tmp_c->spd.that.client);
+				ip_address client_prefix = selector_prefix(tmp_c->spd.that.client);
 				if (address_eq_address(client_prefix, old_addr)) {
 					address_buf ob, nb;
 					dbg("old remote client's ip %s is the same as the old remote address, changing remote client ip to %s",
 					    str_address(&old_addr, &ob),
 					    str_address(&new_peer, &nb));
-					tmp_c->spd.that.client = selector_from_address(&new_peer);
+					tmp_c->spd.that.client = selector_from_address(new_peer);
 				}
 
 				/*

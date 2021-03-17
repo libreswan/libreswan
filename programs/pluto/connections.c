@@ -426,8 +426,8 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		this->client = selector_from_address_protoport(&this->host_addr,
-							       &this->raw.client.protoport);
+		this->client = selector_from_address_protoport(this->host_addr,
+							       this->raw.client.protoport);
 	}
 
 	if (this->sendcert == 0) {
@@ -525,7 +525,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	if (selector_is_unset(&this->client)) {
 		return;
 	}
-	bool boring = (selector_contains_all_addresses(&this->client) &&
+	bool boring = (selector_contains_all_addresses(this->client) &&
 		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
 	if (!boring && !is_left) {
@@ -539,7 +539,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 			jam_string(buf, "vhost:?");
 		else
 			jam_string(buf,  "vnet:?");
-	} else if (selector_contains_no_addresses(&this->client)) {
+	} else if (selector_contains_no_addresses(this->client)) {
 		jam_string(buf, "?");
 	} else {
 		jam_selector_subnet(buf, &this->client);
@@ -988,8 +988,8 @@ static int extract_end(struct end *dst,
 	dst->has_client = src->has_client;
 	if (src->has_client) {
 		pexpect(!subnet_is_unset(&src->client));
-		dst->client = selector_from_subnet_protoport(&src->client,
-							     &src->protoport);
+		dst->client = selector_from_subnet_protoport(src->client,
+							     src->protoport);
 	}
 
 	dst->protocol = src->protoport.ipproto;
@@ -2294,7 +2294,7 @@ struct connection *rw_instantiate(struct connection *c,
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
-		if (selector_is_address(peer_subnet, peer_addr))
+		if (selector_eq_address(*peer_subnet, *peer_addr))
 			d->spd.that.has_client = FALSE;
 	}
 
@@ -2349,18 +2349,20 @@ void set_policy_prio(struct connection *c)
 
 static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
-				    const ip_selector *client,
-				    const ip_address *host_addr)
+				    const ip_selector client,
+				    const ip_address host_addr)
 {
 	size_t s = 0;
-	if (selector_subnet_is_address(client, host_addr)) {
+	if (selector_subnet_eq_address(client, host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (selector_contains_no_addresses(client)) {
+		if (selector_is_unset(&client)) {
+			s += jam_string(b, "?");
+		} else if (selector_contains_no_addresses(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
-			s += jam_selector_subnet(b, client);
+			s += jam_selector_subnet(b, &client);
 		}
 		s += jam_string(b, suffix);
 	}
@@ -2379,13 +2381,13 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		s += jam_connection_client(buf, " ", "===",
-					   &c->spd.this.client,
-					   &c->spd.this.host_addr);
+					   c->spd.this.client,
+					   c->spd.this.host_addr);
 		s += jam_string(buf, " ...");
 		s += jam_address(buf, &c->spd.that.host_addr);
 		s += jam_connection_client(buf, "===", "",
-					   &c->spd.that.client,
-					   &c->spd.that.host_addr);
+					   c->spd.that.client,
+					   c->spd.that.host_addr);
 	} else {
 		s += jam_string(buf, " ");
 		s += jam_address_sensitive(buf, &c->spd.that.host_addr);
@@ -2462,8 +2464,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
 			if ( (routed(sr->routing) || c->instance_initiation_ok || sec_label.len != 0) &&
-			    endpoint_in_selector(local_client, &sr->this.client) &&
-			    endpoint_in_selector(remote_client, &sr->that.client)
+			    endpoint_in_selector(*local_client, sr->this.client) &&
+			    endpoint_in_selector(*remote_client, sr->that.client)
 #ifdef HAVE_LABELED_IPSEC
 			     && se_label_match(sec_label, sr->this.sec_label, logger)
 #endif
@@ -2562,12 +2564,12 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 
 		/* opportunistic connections do not use port selectors */
-		if (address_in_selector(local_address, &d->spd.this.client)) {
+		if (address_in_selector_subnet(*local_address, d->spd.this.client)) {
 			/*
 			 * the required client is within that subnet
 			 * narrow it(?), ...
 			*/
-			d->spd.this.client = selector_from_address(local_address);
+			d->spd.this.client = selector_from_address(*local_address);
 		} else if (address_eq_address(*local_address, d->spd.this.host_addr)) {
 			/*
 			 * or that it is our private ip in case we are
@@ -2591,8 +2593,8 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If the client is the peer, excise the client from the connection.
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(address_in_selector(remote_address, &d->spd.that.client));
-	d->spd.that.client = selector_from_address(remote_address);
+	passert(address_in_selector_subnet(*remote_address, d->spd.that.client));
+	d->spd.that.client = selector_from_address(*remote_address);
 
 	if (address_eq_address(*remote_address, d->spd.that.host_addr))
 		d->spd.that.has_client = false;
@@ -2720,10 +2722,10 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 				if (!routed(sr->routing)) {
 					continue;
 				}
-				if (!endpoint_in_selector(local_client, &sr->this.client)) {
+				if (!endpoint_in_selector(*local_client, sr->this.client)) {
 					continue;
 				}
-				if (!endpoint_in_selector(remote_client, &sr->that.client)) {
+				if (!endpoint_in_selector(*remote_client, sr->that.client)) {
 					continue;
 				}
 
@@ -2746,7 +2748,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 				 */
 
 				if (best_spd_route != NULL &&
-				    selector_in_selector(&best_spd_route->this.client, &sr->this.client)) {
+				    selector_in_selector(best_spd_route->this.client, sr->this.client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -2756,8 +2758,8 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 					continue;
 				}
 				if (best_spd_route != NULL &&
-				    selector_eq(&best_spd_route->this.client, &sr->this.client) &&
-				    selector_in_selector(&best_spd_route->that.client, &sr->that.client)) {
+				    selector_eq_selector(best_spd_route->this.client, sr->this.client) &&
+				    selector_in_selector(best_spd_route->that.client, sr->that.client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -2854,7 +2856,7 @@ struct connection *route_owner(struct connection *c,
 				if (src == srd)
 					continue;
 
-				if (!selector_subnet_eq(&src->that.client, &srd->that.client) ||
+				if (!selector_subnet_eq_subnet(src->that.client, srd->that.client) ||
 				    src->that.protocol != srd->that.protocol ||
 				    src->that.port != srd->that.port ||
 				    !sameaddr(&src->this.host_addr,
@@ -2867,7 +2869,7 @@ struct connection *route_owner(struct connection *c,
 					best_routing = srd->routing;
 				}
 
-				if (selector_subnet_eq(&src->this.client, &srd->this.client) &&
+				if (selector_subnet_eq_subnet(src->this.client, srd->this.client) &&
 				    src->this.protocol == srd->this.protocol &&
 				    src->this.port == srd->this.port &&
 				    srd->routing > best_erouting)
@@ -3419,8 +3421,8 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
-			if ((selector_subnet_in(peer_net, &d->spd.that.client) ||
-			     selector_subnet_in(&d->spd.that.client, peer_net)) &&
+			if ((selector_subnet_in_subnet(*peer_net, d->spd.that.client) ||
+			     selector_subnet_in_subnet(d->spd.that.client, *peer_net)) &&
 			    !same_id(&d->spd.that.id, peer_id))
 			{
 				id_buf idb;
@@ -3521,8 +3523,8 @@ static struct connection *fc_try(const struct connection *c,
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	const bool remote_is_host = selector_is_address(remote_client,
-							&c->spd.that.host_addr);
+	const bool remote_is_host = selector_eq_address(*remote_client,
+							c->spd.that.host_addr);
 
 	err_t virtualwhy = NULL;
 	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
@@ -3539,10 +3541,10 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		unsigned local_protocol = selector_protocol(local_client)->ipproto;
-		unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
-		unsigned local_port = hport(selector_port(local_client));
-		unsigned remote_port = hport(selector_port(remote_client));
+		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(*local_client));
+		unsigned remote_port = hport(selector_port(*remote_client));
 		if (!(d->spd.this.protocol == local_protocol &&
 		      d->spd.that.protocol == remote_protocol &&
 		      (d->spd.this.port == 0 || d->spd.this.port == local_port) &&
@@ -3584,7 +3586,7 @@ static struct connection *fc_try(const struct connection *c,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
-			if (!selector_subnet_eq(&sr->this.client, local_client)) {
+			if (!selector_subnet_eq_subnet(sr->this.client, *local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in local_net (%s)",
@@ -3596,7 +3598,7 @@ static struct connection *fc_try(const struct connection *c,
 
 			if (sr->that.has_client) {
 
-				if (!selector_subnet_eq(&sr->that.client, remote_client) &&
+				if (!selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
@@ -3684,10 +3686,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		unsigned local_protocol = selector_protocol(local_client)->ipproto;
-		unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
-		unsigned local_port = hport(selector_port(local_client));
-		unsigned remote_port = hport(selector_port(remote_client));
+		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(*local_client));
+		unsigned remote_port = hport(selector_port(*remote_client));
 		if (d->spd.this.protocol != local_protocol ||
 			(d->spd.this.port && d->spd.this.port != local_port) ||
 			d->spd.that.protocol != remote_protocol ||
@@ -3719,8 +3721,8 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					str_selector(&sr->that.client, &d3));
 			}
 
-			if (!selector_subnet_in(local_client, &sr->this.client) ||
-			    !selector_subnet_in(remote_client, &sr->that.client))
+			if (!selector_subnet_in_subnet(*local_client, sr->this.client) ||
+			    !selector_subnet_in_subnet(*remote_client, sr->that.client))
 				continue;
 
 			/*
@@ -3797,12 +3799,12 @@ struct connection *find_v1_client_connection(struct connection *const c,
 					str_selector(&sr->that.client, &d2));
 			}
 
-			unsigned local_protocol = selector_protocol(local_client)->ipproto;
-			unsigned local_port = selector_port(local_client).hport;
-			unsigned remote_protocol = selector_protocol(remote_client)->ipproto;
-			unsigned remote_port = selector_port(remote_client).hport;
-			if (selector_subnet_eq(&sr->this.client, local_client) &&
-			    selector_subnet_eq(&sr->that.client, remote_client) &&
+			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+			unsigned local_port = selector_port(*local_client).hport;
+			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+			unsigned remote_port = selector_port(*remote_client).hport;
+			if (selector_subnet_eq_subnet(sr->this.client, *local_client) &&
+			    selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
 			    sr->this.protocol == local_protocol &&
 			    (!sr->this.port || sr->this.port == local_port) &&
 			    (sr->that.protocol == remote_protocol) &&
@@ -3851,8 +3853,8 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			d = fc_try(c, hp, local_client, remote_client);
 
 			if (d == NULL &&
-			    selector_is_one_address(local_client) &&
-			    selector_is_one_address(remote_client)) {
+			    selector_contains_one_address(*local_client) &&
+			    selector_contains_one_address(*remote_client)) {
 				/*
 				 * Opportunistic match?
 				 * Always use abstract remote_id.
@@ -4387,8 +4389,8 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 			for (src = &c->spd; src != NULL; src = src->spd_next) {
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
-				    selector_subnet_eq(&src->this.client, &srue->this.client) &&
-				    selector_subnet_eq(&src->that.client, &srue->that.client))
+				    selector_subnet_eq_subnet(src->this.client, srue->this.client) &&
+				    selector_subnet_eq_subnet(src->that.client, srue->that.client))
 				{
 					dbg("%s eclipsed %s", c->name, ue->name);
 					*esrp = srue;

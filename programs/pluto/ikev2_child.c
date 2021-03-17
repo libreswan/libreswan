@@ -444,7 +444,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	if (c->spd.this.cat) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
-		ip_address this_client_prefix = selector_prefix(&c->spd.this.client);
+		ip_address this_client_prefix = selector_prefix(c->spd.this.client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
 			 * The address we received is same as this
@@ -454,12 +454,12 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			    st->st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			c->spd.this.client = selector_from_address(&ip);
+			c->spd.this.client = selector_from_address(ip);
 			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
 			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {
-		c->spd.this.client = selector_from_address(&ip);
+		c->spd.this.client = selector_from_address(ip);
 		/* only set sourceip= value if unset in configuration */
 		if (address_is_unset(&c->spd.this.host_srcip) ||
 		    address_is_any(c->spd.this.host_srcip)) {

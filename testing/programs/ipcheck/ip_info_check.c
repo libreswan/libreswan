@@ -152,8 +152,8 @@ static const struct subnet_test {
 	{ LN, 0, &unset_subnet,           "<unset-subnet>", .is_unset = true, },
 	{ LN, 4, &ipv4_info.subnet.none,  "0.0.0.0/32",     .contains_no_addresses = true, },
 	{ LN, 6, &ipv6_info.subnet.none,  "::/128",         .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .is_specified = true, .contains_all_addresses = true, },
 };
 
 static const struct range_test {
@@ -171,8 +171,8 @@ static const struct range_test {
 	{ LN, 0, &unset_range,          "<unset-range>", .is_unset = true, },
 	{ LN, 4, &ipv4_info.range.none, "0.0.0.0-0.0.0.0",  .contains_no_addresses = true, },
 	{ LN, 6, &ipv6_info.range.none, "::-::",            .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-255.255.255.255",    .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.range.all,  "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-255.255.255.255",                    .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 6, &ipv6_info.range.all,  "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", .is_specified = true, .contains_all_addresses = true, },
 };
 
 static const struct endpoint_test {
@@ -197,15 +197,15 @@ static const struct selector_test {
 	bool is_unset;
 	bool is_specified;
 	bool contains_all_addresses;
-	bool is_one_address;
+	bool contains_one_address;
 	bool contains_no_addresses;
 } selector_tests[] = {
 	{ LN, 0, NULL,                     "<unset-selector>", .is_unset = true, },
 	{ LN, 0, &unset_selector,          "<unset-selector>", .is_unset = true, },
 	{ LN, 4, &ipv4_info.selector.none, "0.0.0.0/32",       .contains_no_addresses = true, },
 	{ LN, 6, &ipv6_info.selector.none, "::/128",           .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .is_specified = true, .contains_all_addresses = true, },
 };
 
 static void check_ip_info_address(void)
@@ -394,8 +394,10 @@ static void check_ip_info_selector(void)
 		CHECK_STR2(selector);
 
 		CHECK_COND(selector, is_unset);
-		CHECK_COND(selector, contains_no_addresses);
-		CHECK_COND(selector, contains_all_addresses);
+		CHECK_COND2(selector, is_specified);
+		CHECK_COND2(selector, contains_no_addresses);
+		CHECK_COND2(selector, contains_one_address);
+		CHECK_COND2(selector, contains_all_addresses);
 	}
 
 	/* must match table above */
@@ -411,7 +413,7 @@ static void check_ip_info_selector(void)
 		[4][4] = true,
 		[5][5] = true,
 	};
-	CHECK_EQ(selector);
+	CHECK_EQ2(selector);
 }
 
 void ip_info_check(void)

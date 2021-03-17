@@ -252,8 +252,8 @@ static void check_subnet_contains(struct logger *logger)
 		{ LN, 4, "127.0.0.0/31", .is_specified = true, },
 		{ LN, 6, "1::/127",      .is_specified = true, },
 		/* all addresses */
-		{ LN, 4, "0.0.0.0/0",    .contains_all_addresses = true, },
-		{ LN, 6, "::/0",         .contains_all_addresses = true, },
+		{ LN, 4, "0.0.0.0/0",    .is_specified = true, .contains_all_addresses = true, },
+		{ LN, 6, "::/0",         .is_specified = true, .contains_all_addresses = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -279,6 +279,7 @@ static void check_subnet_contains(struct logger *logger)
 		CHECK_COND2(subnet, is_specified);
 		CHECK_COND2(subnet, contains_no_addresses);
 		CHECK_COND2(subnet, contains_one_address);
+		CHECK_COND2(subnet, contains_all_addresses);
 		CHECK_COND2(subnet, contains_all_addresses);
 	}
 }

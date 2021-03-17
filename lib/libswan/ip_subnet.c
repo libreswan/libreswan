@@ -121,10 +121,11 @@ bool subnet_is_specified(const ip_subnet subnet)
 		return false; /* need IPv4 or IPv6 */
 	}
 
-	if (thingeq(subnet.bytes, afi->address.any.bytes)) {
-		/* any address (but we know it is zero) */
+	/* don't allow ::/128 */
+	if (thingeq(subnet, afi->subnet.none)) {
 		return false;
 	}
+
 	return true;
 }
 

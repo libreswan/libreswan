@@ -93,11 +93,11 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
 	/* XXX: check port range valid */
 	ip_port port = ip_hport(ts->startport);
-	end->client = selector_from_subnet_protocol_port(&subnet, protocol, port);
+	end->client = selector_from_subnet_protocol_port(subnet, protocol, port);
 	/* redundant */
 	end->port = ts->startport;
 	end->protocol = ts->ipprotoid;
-	end->has_client = !selector_is_address(&end->client, &end->host_addr);
+	end->has_client = !selector_eq_address(end->client, end->host_addr);
 	/* also save in state */
 	*st_ts = *ts;
 }
@@ -122,7 +122,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state 
 	}
 
 	/* subnet => range */
-	ts.net = selector_range(&e->client);
+	ts.net = selector_range(e->client);
 	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
@@ -756,7 +756,7 @@ static int score_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
-	ip_range range = selector_range(&end->client);
+	ip_range range = selector_range(end->client);
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (range_eq_range(range, ts->net)) {
@@ -1331,13 +1331,13 @@ bool v2_process_ts_request(struct child_sa *child,
 			}
 
 			/* require initiator's subnet <= T; why? */
-			if (!selector_in_selector(&c->spd.that.client, &t->spd.that.client)) {
+			if (!selector_in_selector(c->spd.that.client, t->spd.that.client)) {
 				dbg("    skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
-			ip_address c_this_client_address = selector_prefix(&c->spd.this.client);
-			ip_address t_this_client_address = selector_prefix(&t->spd.this.client);
+			ip_address c_this_client_address = selector_prefix(c->spd.this.client);
+			ip_address t_this_client_address = selector_prefix(t->spd.this.client);
 			if (!address_eq_address(c_this_client_address, t_this_client_address)) {
 				dbg("    skipping; responder addresses don't match");
 				continue;

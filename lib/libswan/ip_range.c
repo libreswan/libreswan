@@ -239,12 +239,11 @@ bool range_is_specified(const ip_range range)
 	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
-		return false;
+		return false; /* need IPv4 or IPv6 */
 	}
 
-	/* don't allow 0 aka %any aka unspecified */
-	if (thingeq(range.start, afi->address.any.bytes) ||
-	    thingeq(range.end, afi->address.any.bytes)) {
+	/* don't allow 0-0 aka unspecified */
+	if (range_eq_range(range, afi->range.none)) {
 		return false;
 	}
 
@@ -302,7 +301,16 @@ bool range_eq_range(const ip_range l, const ip_range r)
 
 bool address_in_range(const ip_address address, const ip_range range)
 {
-	if (address_is_unset(&address) || range_is_unset(&range)) {
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		return false;
+	}
+
+	if (range_type(&range) != afi) {
+		return false;
+	}
+
+	if (range_eq_range(range, afi->range.none)) {
 		return false;
 	}
 

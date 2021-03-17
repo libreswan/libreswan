@@ -76,19 +76,19 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			FAIL("str_range() was %s, expected %s", sb.buf, t->subnet);
 		}
 
-		ip_range range = selector_range(&selector);
+		ip_range range = selector_range(selector);
 		range_buf rb;
 		str_range(&range, &rb);
 		if (!streq(rb.buf, t->range)) {
 			FAIL("range was %s, expected %s", rb.buf, t->range);
 		}
 
-		const ip_protocol *protocol = selector_protocol(&selector);
+		const ip_protocol *protocol = selector_protocol(selector);
 		if (protocol->ipproto != t->ipproto) {
 			FAIL("ipproto was %u, expected %u", protocol->ipproto, t->ipproto);
 		}
 
-		ip_port port = selector_port(&selector);
+		ip_port port = selector_port(selector);
 
 		uint16_t hp = hport(port);
 		if (!memeq(&hp, &t->hport, sizeof(hport))) {
@@ -125,7 +125,7 @@ static err_t do_selector_from_address(const struct selector *s,
 		return err;
 	}
 
-	*selector = selector_from_address_protoport(&address, &protoport);
+	*selector = selector_from_address_protoport(address, protoport);
 	return NULL;
 }
 
@@ -161,7 +161,7 @@ static err_t do_selector_from_subnet_protoport(const struct selector *s,
 		return err;
 	}
 
-	*selector = selector_from_subnet_protoport(&subnet, &protoport);
+	*selector = selector_from_subnet_protoport(subnet, protoport);
 	return NULL;
 }
 
@@ -256,7 +256,7 @@ static void check_selector_contains(struct logger *logger)
 		bool is_unset;
 		bool is_specified;
 		bool contains_no_addresses;
-		bool is_one_address;
+		bool contains_one_address;
 		bool contains_some_addresses;
 		bool contains_all_addresses;
 	} tests[] = {
@@ -269,8 +269,8 @@ static void check_selector_contains(struct logger *logger)
 		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_specified = true, },
 		{ LN, { 6, "8000::/127", "0/0", },   .is_specified = true, },
 		/* one */
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, .is_specified = true, .is_one_address = true, },
-		{ LN, { 6, "8000::/128", "0/0", },   .is_specified = true, .is_one_address = true, },
+		{ LN, { 4, "127.0.0.1/32", "0/0", }, .is_specified = true, .contains_one_address = true, },
+		{ LN, { 6, "8000::/128", "0/0", },   .is_specified = true, .contains_one_address = true, },
 		/* none */
 		{ LN, { 4, "0.0.0.0/32", "0/0", },   .contains_no_addresses = true, },
 		{ LN, { 6, "::/128", "0/0", },       .contains_no_addresses = true, },
@@ -286,7 +286,7 @@ static void check_selector_contains(struct logger *logger)
 		      bool_str(t->is_unset),
 		      bool_str(t->contains_all_addresses),
 		      bool_str(t->contains_some_addresses),
-		      bool_str(t->is_one_address),
+		      bool_str(t->contains_one_address),
 		      bool_str(t->contains_no_addresses));
 
 		ip_selector tmp, *selector = &tmp;
@@ -296,9 +296,9 @@ static void check_selector_contains(struct logger *logger)
 		}
 
 		CHECK_COND(selector, is_unset);
-		CHECK_COND(selector, is_one_address);
-		CHECK_COND(selector, contains_no_addresses);
-		CHECK_COND(selector, contains_all_addresses);
+		CHECK_COND2(selector, contains_one_address);
+		CHECK_COND2(selector, contains_no_addresses);
+		CHECK_COND2(selector, contains_all_addresses);
 	}
 }
 
@@ -374,6 +374,22 @@ static void check_in_selector(struct logger *logger)
 		{ LN, { 4, "127.0.0.1/32", "udp/10", }, { 4, "127.0.0.1/32", "tcp/10", }, false, true, false, },
 		{ LN, { 6, "8000::/128", "udp/10", },   { 6, "8000::/128", "tcp/10", },   false, true, false, },
 
+		/* allow ::/N:udp/10 provided it isn't ::/128 */
+
+		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/31", "0/0", },         false, false, false, },
+		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/127", "0/0", },             true,  true,  true, },
+
+		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/31", "udp/10", },   false, false, false, },
+		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/127", "udp/10", },       true,  true,  true, },
+
+		/* these a non-sensical - rhs has no addresses yet udp */
+
+		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "udp/10", },      false, false, false, },
+		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/128", "udp/10", },          false, false, false, },
+
+		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "udp/10", },   false, false, false, },
+		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/128", "udp/10", },       false, false, false, },
+
 		/* none - so nothing can match */
 
 		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "0/0", },         false, false, false, },
@@ -387,22 +403,6 @@ static void check_in_selector(struct logger *logger)
 
 		{ LN, { 4, "0.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "0/0", },        false, false, false, },
 		{ LN, { 6, "::/128", "udp/10", },      { 6, "::/128", "0/0", },           false, false, false, },
-
-		/* these a non-sensical - rhs has no addresses yet udp */
-
-		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "udp/10", },      false, false, false, },
-		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/128", "udp/10", },          false, false, false, },
-
-		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "udp/10", },   false, false, false, },
-		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/128", "udp/10", },       false, false, false, },
-
-		/* these a non-sensical - rhs has zero addresses */
-
-		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/31", "0/0", },         false, false, false, },
-		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/127", "0/0", },             false, false, false, },
-
-		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/31", "udp/10", },   false, false, false, },
-		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/127", "udp/10", },       false, false, false, },
 
 	};
 
@@ -427,26 +427,37 @@ static void check_in_selector(struct logger *logger)
 		if (err != NULL) {
 			FAIL("inner-selector failed: %s", err);
 		}
-		bool selector = selector_in_selector(&inner_selector, &outer_selector);
+		bool selector = selector_in_selector(inner_selector, outer_selector);
 		if (selector != t->selector) {
-			FAIL("selector_in_selector() returned %s, expecting %s",
+			selector_buf si, so;
+			FAIL("selector_in_selector(%s, %s) returned %s, expecting %s",
+			     str_selector(&inner_selector, &si),
+			     str_selector(&outer_selector, &so),
 			     bool_str(selector), bool_str(t->selector));
 		}
 
-		ip_address inner_address = selector_prefix(&inner_selector);
-		bool address = address_in_selector(&inner_address, &outer_selector);
+		ip_address inner_address = selector_prefix(inner_selector);
+		bool address = address_in_selector_subnet(inner_address, outer_selector);
 		if (address != t->address) {
-			FAIL("address_in_selector() returned %s, expecting %s",
+			address_buf ab;
+			selector_buf sb;
+			FAIL("address_in_selector_subnet(%s, %s) returned %s, expecting %s",
+			     str_address(&inner_address, &ab),
+			     str_selector(&outer_selector, &sb),
 			     bool_str(address), bool_str(t->address));
 		}
 
-		const ip_protocol *protocol = selector_protocol(&inner_selector);
-		ip_port port = selector_port(&inner_selector);
+		const ip_protocol *protocol = selector_protocol(inner_selector);
+		ip_port port = selector_port(inner_selector);
 		if (protocol != &ip_protocol_unset && port.hport != 0) {
 			ip_endpoint inner_endpoint = endpoint_from_address_protocol_port(&inner_address, protocol, port);
-			bool endpoint = endpoint_in_selector(&inner_endpoint, &outer_selector);
+			bool endpoint = endpoint_in_selector(inner_endpoint, outer_selector);
 			if (endpoint != t->endpoint) {
-				FAIL("endpoint_in_selector() returned %s, expecting %s",
+				endpoint_buf eb;
+				selector_buf sb;
+				FAIL("endpoint_in_selector(%s, %s) returned %s, expecting %s",
+				     str_endpoint(&inner_endpoint, &eb),
+				     str_selector(&outer_selector, &sb),
 				     bool_str(endpoint), bool_str(t->endpoint));
 			}
 		}

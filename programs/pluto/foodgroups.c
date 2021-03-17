@@ -78,7 +78,7 @@ static struct fg_targets *targets = NULL;
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
  */
-static int subnetcmp(const ip_selector *a, const ip_selector *b)
+static int subnetcmp(const ip_selector a, const ip_selector b)
 {
 	int r;
 
@@ -133,7 +133,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = selector_from_address(&t);
+			sn = selector_from_address(t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			ip_subnet snn;
@@ -145,7 +145,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = selector_from_subnet(&snn);
+			sn = selector_from_subnet(snn);
 		}
 
 		const struct ip_info *type = selector_type(&sn);
@@ -225,10 +225,9 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(lsn,
-				      &(*pp)->group->connection->spd.this.client);
+			r = subnetcmp(*lsn, (*pp)->group->connection->spd.this.client);
 			if (r == 0) {
-				r = subnetcmp(&sn, &(*pp)->subnet);
+				r = subnetcmp(sn, (*pp)->subnet);
 			}
 			if (r != 0)
 				break;
@@ -335,10 +334,10 @@ void load_groups(struct logger *logger)
 				r = -1; /* no more new; next is old */
 			}
 			if (r == 0)
-				r = subnetcmp(&op->group->connection->spd.this.client,
-					      &np->group->connection->spd.this.client);
+				r = subnetcmp(op->group->connection->spd.this.client,
+					      np->group->connection->spd.this.client);
 			if (r == 0)
-				r = subnetcmp(&op->subnet, &np->subnet);
+				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)
 				r = op->proto - np->proto;
 			if (r == 0)

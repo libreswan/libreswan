@@ -212,10 +212,10 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 #define SELECTOR_TO_XFRM(CLIENT, REQ, L)				\
 	{								\
 		ip_selector client_ = *(CLIENT);			\
-		ip_address address = selector_prefix(&client_);		\
+		ip_address address = selector_prefix(client_);		\
 		(REQ).L##addr = xfrm_from_address(&address);		\
-		(REQ).prefixlen_##L = selector_prefix_bits(&client_);	\
-		(REQ).L##port = nport(selector_port(&client_));		\
+		(REQ).prefixlen_##L = selector_prefix_bits(client_);	\
+		(REQ).L##port = nport(selector_port(client_));		\
 	}
 
 static void init_netlink_route_fd(struct logger *logger)
@@ -615,12 +615,12 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		int local_port;
 
 		if (dir == XFRM_POLICY_OUT) {
-			local_port = selector_hport(that_client);
-			local_client = selector_from_address(that_host);
+			local_port = selector_hport(*that_client);
+			local_client = selector_from_address(*that_host);
 			that_client = &local_client;
 		} else {
-			local_port = selector_hport(this_client);
-			local_client = selector_from_address(this_host);
+			local_port = selector_hport(*this_client);
+			local_client = selector_from_address(*this_host);
 			this_client = &local_client;
 		}
 		update_selector_hport(&local_client, local_port);
@@ -1250,13 +1250,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 */
 		if (sa->inbound) {
 			/* inbound; fix this end */
-			ip_port port = selector_port(sa->src.client);
-			src = selector_from_address_protocol_port(sa->src.address,
+			ip_port port = selector_port(*sa->src.client);
+			src = selector_from_address_protocol_port(*sa->src.address,
 								  protocol, port);
 		} else {
 			/* outbound; fix other end */
-			ip_port port = selector_port(sa->dst.client);
-			dst = selector_from_address_protocol_port(sa->dst.address,
+			ip_port port = selector_port(*sa->dst.client);
+			dst = selector_from_address_protocol_port(*sa->dst.address,
 								  protocol, port);
 		}
 

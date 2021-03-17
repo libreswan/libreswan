@@ -217,7 +217,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_SUBNET:
 	{
-		ip_address client_addr = selector_prefix(&c->spd.this.client);
+		ip_address client_addr = selector_prefix(c->spd.this.client);
 		diag_t d = pbs_out_address(&attrval, client_addr, "IP4_subnet");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
@@ -300,8 +300,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case CISCO_SPLIT_INC:
 	{
 		/* XXX: bitstomask(c->spd.this.client.maskbits), */
-		ip_address mask = selector_prefix_mask(&c->spd.this.client);
-		ip_address addr = selector_prefix(&c->spd.this.client);
+		ip_address mask = selector_prefix_mask(c->spd.this.client);
+		ip_address addr = selector_prefix(c->spd.this.client);
 		struct CISCO_split_item i = {
 			.cs_addr = { htonl(ntohl_address(&addr)), },
 			.cs_mask = { htonl(ntohl_address(&mask)), },
@@ -393,12 +393,12 @@ static stf_status modecfg_resp(struct state *st,
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
 			}
-			ia = selector_prefix(&c->spd.that.client);
+			ia = selector_prefix(c->spd.that.client);
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));
 		} else {
 			pexpect(!selector_is_unset(&c->spd.that.client));
-			ia = selector_prefix(&c->spd.that.client);
+			ia = selector_prefix(c->spd.that.client);
 			address_buf iab;
 			dbg("a client %s", str_address(&ia, &iab));
 		}
@@ -447,7 +447,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		if (selector_is_unset(&c->spd.this.client) ||
-		    selector_contains_all_addresses(&c->spd.this.client)) {
+		    selector_contains_all_addresses(c->spd.this.client)) {
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");
@@ -1549,7 +1549,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
-			c->spd.this.client = selector_from_address(&a);
+			c->spd.this.client = selector_from_address(a);
 
 			c->spd.this.has_client = TRUE;
 			subnet_buf caddr;
@@ -1708,7 +1708,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				c->spd.this.client = selector_from_address(&a);
+				c->spd.this.client = selector_from_address(a);
 
 				c->spd.this.has_client = TRUE;
 				subnet_buf caddr;
@@ -1811,7 +1811,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							  ugh);
 						break;
 					}
-					ip_selector wire_selector = selector_from_subnet(&wire_subnet);
+					ip_selector wire_selector = selector_from_subnet(wire_subnet);
 
 					subnet_buf pretty_subnet;
 					str_subnet(&wire_subnet, &pretty_subnet);
@@ -1822,7 +1822,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 					struct spd_route *sr;
 					for (sr = &c->spd; ; sr = sr->spd_next) {
-						if (selector_subnet_eq(&wire_selector, &sr->that.client)) {
+						if (selector_subnet_eq_subnet(wire_selector, sr->that.client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
 								  "Subnet %s already has an spd_route - ignoring",

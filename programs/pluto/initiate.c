@@ -714,7 +714,7 @@ static ip_selector shunt_from_traffic_end(const char *what,
 		pexpect(end->port == hport(shunt_port));
 		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
 	}
-	return selector_from_address_protocol_port(&shunt_address,
+	return selector_from_address_protocol_port(shunt_address,
 						   shunt_protocol,
 						   shunt_port);
 }
@@ -951,8 +951,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	ip_selector local_shunt = shunt_from_traffic_end("local", &b->local.client, &c->spd.this);
 	ip_selector remote_shunt = shunt_from_traffic_end("remote", &b->remote.client, &c->spd.that);
 
-	const ip_protocol *shunt_protocol = selector_protocol(&local_shunt);
-	pexpect(shunt_protocol == selector_protocol(&remote_shunt));
+	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
+	pexpect(shunt_protocol == selector_protocol(remote_shunt));
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
@@ -1110,8 +1110,8 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
-			    selector_subnet_eq(ours, &sr->this.client) &&
-			    selector_subnet_eq(peers, &sr->that.client))
+			    selector_subnet_eq_subnet(*ours, sr->this.client) &&
+			    selector_subnet_eq_subnet(*peers, sr->that.client))
 				return c;
 		}
 	}
