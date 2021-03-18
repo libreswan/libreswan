@@ -1,0 +1,8 @@
+Test connection switching on east with two roadwarrior type conns,
+with different IDs and different authby policy
+
+This is a negative test of https://bugs.libreswan.org/show_bug.cgi?id=301
+
+The incoming connection _does_ have a different authby= and the connection
+MUST NOT switch to it. There is no other connection that can be used and
+so this second connection MUST fail.
