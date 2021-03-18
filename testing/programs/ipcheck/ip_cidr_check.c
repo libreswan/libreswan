@@ -27,7 +27,7 @@ static void check_numeric_to_cidr(void)
 		int line;
 		int family;
 		const char *in;
-		const char *out;
+		const char *str;
 	} tests[] = {
 		{ LN, 4, "128.0.0.0/0", "128.0.0.0/0", },
 		{ LN, 6, "8000::/0", "8000::/0", },
@@ -56,27 +56,21 @@ static void check_numeric_to_cidr(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s %s ", t->in, t->out != NULL ? t->out : "ERROR");
+		PRINT("%s %s ", t->in, t->str != NULL ? t->str : "ERROR");
 
-		ip_cidr cidr;
-		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), &cidr);
+		ip_cidr tmp, *cidr = &tmp;
+		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), cidr);
 		if (err != NULL) {
-			if (t->out != NULL) {
+			if (t->str != NULL) {
 				FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 			}
 			continue;
-		} else if (t->out == NULL) {
+		} else if (t->str == NULL) {
 			FAIL("numeric_to_cidr() unexpectedly succeeded");
 		}
 
-		CHECK_TYPE(cidr_type(&cidr));
-
-		cidr_buf outb;
-		const char *out = str_cidr(&cidr, &outb);
-		if (!streq(out, t->out)) {
-			FAIL("str_cidr() returned '%s', expected '%s'",
-			     out, t->out);
-		}
+		CHECK_TYPE(cidr);
+		CHECK_STR2(cidr);
 	}
 }
 

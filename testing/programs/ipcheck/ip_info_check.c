@@ -24,8 +24,6 @@
 #include "ip_address.h"
 #include "ip_selector.h"
 #include "ip_range.h"
-#include "jambuf.h"
-
 #include "ipcheck.h"
 
 #define CHECK_OP(L,OP,R)						\
@@ -56,65 +54,6 @@
 				     str_##L(l, &lb),			\
 				     str_##R(r, &rb),			\
 				     b, expected);			\
-			}						\
-		}							\
-	}
-
-/*
- * Check equality.  First form assumes NULL allowed, second does
- * not.
- */
-
-#define CHECK_EQ(T)							\
-	for (size_t ti = 0; ti < elemsof(T##_tests); ti++) {		\
-		const struct T##_test *t = &T##_tests[ti];		\
-		const ip_##T *ai = t->T;				\
-		for (size_t tj = 0; tj < elemsof(T##_tests); tj++) {	\
-			const ip_##T *aj = T##_tests[tj].T;		\
-			T##_buf bi, bj;					\
-			bool expected = eq[ti][tj];			\
-			PRINT("[%zu][%zu] "#T"_eq(%s,%s) == %s",	\
-			      ti, tj,					\
-			      str_##T(ai, &bi),				\
-			      str_##T(aj, &bj),				\
-			      bool_str(expected));			\
-			bool actual = T##_eq(ai, aj);			\
-			if (expected != actual) {			\
-				FAIL("[%zu][%zu] "#T"_eq(%s,%s) returned %s, expecting %s", \
-				     ti, tj,				\
-				     str_##T(ai, &bi),			\
-				     str_##T(aj, &bj),			\
-				     bool_str(actual),			\
-				     bool_str(expected));		\
-			}						\
-		}							\
-	}
-
-#define CHECK_EQ2(T)							\
-	for (size_t ti = 0; ti < elemsof(T##_tests); ti++) {		\
-		const struct T##_test *t = &T##_tests[ti];		\
-		const ip_##T *ai = (T##_tests[ti].T == NULL		\
-				    ? &unset_##T			\
-				    : T##_tests[ti].T);			\
-		for (size_t tj = 0; tj < elemsof(T##_tests); tj++) {	\
-			const ip_##T *aj = (T##_tests[tj].T == NULL	\
-					    ? &unset_##T		\
-					    : T##_tests[tj].T);		\
-			T##_buf bi, bj;					\
-			bool expected = eq[ti][tj];			\
-			PRINT("[%zu][%zu] "#T"_eq(%s,%s) == %s",	\
-			      ti, tj,					\
-			      str_##T(ai, &bi),				\
-			      str_##T(aj, &bj),				\
-			      bool_str(expected));			\
-			bool actual = T##_eq_##T(*ai, *aj);		\
-			if (expected != actual) {			\
-				FAIL("[%zu][%zu] "#T"_eq(%s,%s) returned %s, expecting %s", \
-				     ti, tj,				\
-				     str_##T(ai, &bi),			\
-				     str_##T(aj, &bj),			\
-				     bool_str(actual),			\
-				     bool_str(expected));		\
 			}						\
 		}							\
 	}
@@ -215,10 +154,9 @@ static void check_ip_info_address(void)
 		PRINT("%s", pri_family(t->family));
 
 		const ip_address *address = t->address;
-		CHECK_TYPE(address_type(address));
 
+		CHECK_TYPE(address);
 		CHECK_STR2(address);
-
 		CHECK_COND(address, is_unset);
 		CHECK_COND2(address, is_any);
 		CHECK_COND2(address, is_specified);
@@ -248,10 +186,9 @@ static void check_ip_info_endpoint(void)
 		PRINT("%s", pri_family(t->family));
 
 		const ip_endpoint *endpoint = t->endpoint;
-		CHECK_TYPE(endpoint_type(endpoint));
 
+		CHECK_TYPE(endpoint);
 		CHECK_STR2(endpoint);
-
 		CHECK_COND(endpoint, is_unset);
 		CHECK_COND2(endpoint, is_specified);
 
@@ -297,7 +234,7 @@ static void check_ip_info_subnet(void)
 
 		const ip_subnet *subnet = t->subnet;
 		if (t->family != 0) {
-			CHECK_TYPE(subnet_type(subnet));
+			CHECK_TYPE(subnet);
 		}
 
 		CHECK_STR2(subnet);
@@ -367,28 +304,26 @@ static void check_ip_info_range(void)
 		PRINT("%s", pri_family(t->family));
 
 		const ip_range *range = t->range;
-		CHECK_TYPE(range_type(range));
 
+		CHECK_TYPE(range);
 		CHECK_STR2(range);
-
 		CHECK_COND(range, is_unset);
 		CHECK_COND2(range, is_specified);
 	}
 
-	/* must match table above */
-	bool eq[elemsof(range_tests)][elemsof(range_tests)] = {
-		/* unset/NULL */
-		[0][0] = true,
-		[0][1] = true,
-		[1][1] = true,
-		[1][0] = true,
-		/* other */
-		[2][2] = true,
-		[3][3] = true,
-		[4][4] = true,
-		[5][5] = true,
+
+	static const struct {
+		const ip_range *l;
+		const ip_range *r;
+		int eq;
+	} range_op_range[] = {
+		{ &unset_range,                &unset_range,          .eq = true, },
+		{ &ipv4_info.range.none,       &ipv4_info.range.none, .eq = true, },
+		{ &ipv6_info.range.none,       &ipv6_info.range.none, .eq = true, },
+		{ &ipv4_info.range.all,        &ipv4_info.range.all,  .eq = true, },
+		{ &ipv6_info.range.all,        &ipv6_info.range.all,  .eq = true, },
 	};
-	CHECK_EQ2(range);
+	CHECK_OP(range, eq, range);
 }
 
 static void check_ip_info_selector(void)
@@ -398,10 +333,9 @@ static void check_ip_info_selector(void)
 		PRINT("%s", pri_family(t->family));
 
 		const ip_selector *selector = t->selector;
-		CHECK_TYPE(selector_type(selector));
 
+		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
-
 		CHECK_COND(selector, is_unset);
 		CHECK_COND2(selector, is_specified);
 		CHECK_COND2(selector, contains_no_addresses);
@@ -409,20 +343,18 @@ static void check_ip_info_selector(void)
 		CHECK_COND2(selector, contains_all_addresses);
 	}
 
-	/* must match table above */
-	bool eq[elemsof(selector_tests)][elemsof(selector_tests)] = {
-		/* unset/NULL */
-		[0][0] = true,
-		[0][1] = true,
-		[1][1] = true,
-		[1][0] = true,
-		/* other */
-		[2][2] = true,
-		[3][3] = true,
-		[4][4] = true,
-		[5][5] = true,
+	static const struct {
+		const ip_selector *l;
+		const ip_selector *r;
+		int eq;
+	} selector_op_selector[] = {
+		{ &unset_selector,             &unset_selector,          .eq = true, },
+		{ &ipv4_info.selector.none,    &ipv4_info.selector.none, .eq = true, },
+		{ &ipv6_info.selector.none,    &ipv6_info.selector.none, .eq = true, },
+		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, },
+		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, },
 	};
-	CHECK_EQ2(selector);
+	CHECK_OP(selector, eq, selector);
 }
 
 void ip_info_check(void)

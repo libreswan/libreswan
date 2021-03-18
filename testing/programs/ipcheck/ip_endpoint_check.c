@@ -22,7 +22,6 @@
 #include "constants.h"		/* for streq() */
 #include "ip_endpoint.h"
 #include "ip_protocol.h"
-#include "jambuf.h"
 #include "ipcheck.h"
 
 void ip_endpoint_check()
@@ -35,7 +34,7 @@ void ip_endpoint_check()
 		int family;
 		const char *in;
 		uint16_t hport;
-		const char *out;
+		const char *str;
 		uint8_t nport[2];
 		bool is_unset;
 		bool is_specified;
@@ -68,7 +67,7 @@ void ip_endpoint_check()
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s'%d->%s", pri_family(t->family), t->in, t->hport, t->out);
+		PRINT("%s '%s'%d->%s", pri_family(t->family), t->in, t->hport, t->str);
 
 		const struct ip_info *type = IP_TYPE(t->family);
 
@@ -79,18 +78,32 @@ void ip_endpoint_check()
 			FAIL("ttosubnet failed: %s", oops);
 		}
 
+		ip_endpoint e, *endpoint = &e;
 		const ip_protocol *protocol = t->hport == 0 ? &ip_protocol_unset : &ip_protocol_udp;
-		ip_endpoint e = endpoint_from_address_protocol_port(a, protocol,
-								    ip_hport(t->hport));
+		if (t->is_specified) {
+			e = endpoint_from_address_protocol_port(a, protocol,
+								ip_hport(t->hport));
+		} else {
+			/*
+			 * Construct the bogus endpoint by hand - the
+			 * endpoint_from_*() code would pexpect().
+			 */
+			e = (ip_endpoint) {
+				.is_set = true,
+				.version = a.version,
+				.bytes = a.bytes,
+				.hport = t->hport,
+				.ipproto = protocol->ipproto,
+			};
+		}
 
-		CHECK_TYPE(endpoint_type(&e));
+		CHECK_TYPE(endpoint);
 
 		/*
 		 * str_endpoint() / jam_endpoint()
 		 */
-		CHECK_STR(endpoint_buf, endpoint, t->out, &e);
+		CHECK_STR2(endpoint);
 
-		ip_endpoint *endpoint = &e;
 		CHECK_COND(endpoint, is_unset);
 		CHECK_COND2(endpoint, is_specified);
 

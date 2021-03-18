@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "ip_info.h"
 #include "where.h"
+#include "jambuf.h"
 
 struct logger;
 
@@ -88,22 +89,23 @@ extern bool use_dns;
 		continue;						\
 	}
 
-#define CHECK_FAMILY(FAMILY, TYPE)					\
+#define CHECK_FAMILY(FAMILY, T, V)					\
 	{								\
-		const struct ip_info *actual = TYPE;			\
-		const char *actual_name =				\
-			actual == NULL ? "unspec" : actual->af_name;	\
+		const struct ip_info *actual = T##_type(V);		\
 		const struct ip_info *expected = IP_TYPE(FAMILY);	\
-		const char *expected_name =				\
-			expected == NULL ? "unspec" : expected->af_name; \
-		if (actual != expected) {				\
-			FAIL(#TYPE" returned %s, expecting %s",		\
-			     actual_name, expected_name);		\
+		if (expected != actual) {				\
+			T##_buf tb;					\
+			const char *en = (actual == NULL ? "unset" :	\
+					  actual->af_name);		\
+			const char *an = (expected == NULL ? "unset" :	\
+					  expected->af_name);		\
+			FAIL(#T"_type(%s) returned %s, expecting %s",	\
+			     str_##T(V, &tb), an, en);			\
 		}							\
 	}
 
-#define CHECK_TYPE(TYPE)			\
-	CHECK_FAMILY(t->family, TYPE)
+#define CHECK_TYPE(T)				\
+	CHECK_FAMILY(t->family, T, T)
 
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\

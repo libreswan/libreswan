@@ -28,7 +28,7 @@ static void check_str_subnet(struct logger *logger)
 		int line;
 		int family;
 		char *in;
-		char *out;	/* NULL means error expected */
+		char *str;	/* NULL means error expected */
 	} tests[] = {
 		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24" },
 		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24" },
@@ -107,29 +107,23 @@ static void check_str_subnet(struct logger *logger)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'", pri_family(t->family), t->in,
-		      t->out ? t->out : "<error>");
+		      t->str == NULL ? t->str : "<error>");
 
-		ip_subnet s;
-		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
-		if (oops != NULL && t->out == NULL) {
+		ip_subnet tmp, *subnet = &tmp;
+		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
+		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
-		} else if (oops != NULL && t->out != NULL) {
+		} else if (oops != NULL && t->str != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL("ttosubnet failed: %s", oops);
-		} else if (oops == NULL && t->out == NULL) {
+		} else if (oops == NULL && t->str == NULL) {
 			/* If no errors, but we expected one */
 			FAIL("ttosubnet succeeded unexpectedly");
 		}
 
-		CHECK_TYPE(subnet_type(&s));
-
-		subnet_buf buf;
-		const char *out = str_subnet(&s, &buf);
-		if (!streq(t->out, out)) {
-			FAIL("str_subnet() returned '%s', expected '%s'",
-				out, t->out);
-		}
+		CHECK_TYPE(subnet);
+		CHECK_STR2(subnet);
 	}
 }
 
@@ -159,24 +153,24 @@ static void check_subnet_mask(struct logger *logger)
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->mask);
 
-		ip_subnet s;
-		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
+		ip_subnet tmp, *subnet = &tmp;
+		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(subnet_type(&s));
+		CHECK_TYPE(subnet);
 
 		address_buf buf;
 		const char *out;
 
-		ip_address mask = subnet_prefix_mask(s);
+		ip_address mask = subnet_prefix_mask(*subnet);
 		out = str_address(&mask, &buf);
 		if (!streq(t->mask, out)) {
 			FAIL("subnet_mask() returned '%s', expected '%s'",
 				out, t->mask);
 		}
-		CHECK_TYPE(address_type(&mask));
+		CHECK_FAMILY(t->family, address, &mask);
 	}
 }
 
@@ -208,16 +202,16 @@ static void check_subnet_prefix(struct logger *logger)
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->out);
 
-		ip_subnet s;
-		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
+		ip_subnet tmp, *subnet = &tmp;
+		err_t oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(subnet_type(&s));
+		CHECK_TYPE(subnet);
 
-		ip_address prefix = subnet_prefix(s);
-		CHECK_TYPE(address_type(&prefix));
+		ip_address prefix = subnet_prefix(*subnet);
+		CHECK_FAMILY(t->family, address, &prefix);
 
 		address_buf buf;
 		const char *out = str_address(&prefix, &buf);
@@ -272,7 +266,7 @@ static void check_subnet_contains(struct logger *logger)
 			if (oops != NULL) {
 				FAIL("ttosubnet() failed: %s", oops);
 			}
-			CHECK_TYPE(subnet_type(subnet));
+			CHECK_TYPE(subnet);
 		}
 
 		CHECK_COND(subnet, is_unset);
@@ -309,11 +303,11 @@ static void check_subnet_from_address(void)
 		if (oops != NULL) {
 			FAIL("numeric_to_address() failed: %s", oops);
 		}
-		ip_subnet s = subnet_from_address(a);
+		ip_subnet tmp = subnet_from_address(a), *subnet = &tmp;
 
-		CHECK_TYPE(subnet_type(&s));
+		CHECK_TYPE(subnet);
 
-		ip_address prefix = subnet_prefix(s);
+		ip_address prefix = subnet_prefix(*subnet);
 		if (!sameaddr(&prefix, &a)) {
 			address_buf pb, ab;
 			FAIL("subnet_prefix(&s) returned %s, expecting %s",
@@ -324,26 +318,26 @@ static void check_subnet_from_address(void)
 			continue;
 		}
 
-		ip_address m = subnet_prefix_mask(s);
+		ip_address m = subnet_prefix_mask(*subnet);
 		address_buf mb;
 		str_address(&m, &mb);
 		if (!streq(mb.buf, t->mask)) {
 			subnet_buf sb;
 			FAIL("subnet_mask(%s) returned %s, expecting %s",
-			     str_subnet(&s, &sb), mb.buf, t->mask);
+			     str_subnet(subnet, &sb), mb.buf, t->mask);
 		}
 
-		if (!subnet_contains_one_address(s)) {
+		if (!subnet_contains_one_address(*subnet)) {
 			subnet_buf sb;
 			FAIL("subnet_contains_one_address(%s) unexpectedly failed",
-			     str_subnet(&s, &sb));
+			     str_subnet(subnet, &sb));
 		}
 
-		if (!subnet_eq_address(s, a)) {
+		if (!subnet_eq_address(*subnet, a)) {
 			subnet_buf sb;
 			address_buf ab;
 			FAIL("subnet_is_address(%s,%s) unexpectedly failed",
-			     str_subnet(&s, &sb), str_address(&a, &ab));
+			     str_subnet(subnet, &sb), str_address(&a, &ab));
 		}
 	}
 }

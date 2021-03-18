@@ -46,17 +46,17 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 
 	for (size_t ti = 0; ti < nr_tests; ti++) {
 		const struct from_test *t = &tests[ti];
-		PRINT("%s %s=%s protoport=%s range=%s ipproto=%u hport=%u nport=%02x%02x", \
-		      pri_family(t->from.family),			\
-		      what, t->from.addresses != NULL ? t->from.addresses : "N/A", \
-		      t->from.protoport != NULL ? t->from.protoport : "N/A", \
-		      t->range != NULL ? t->range : "N/A",		\
-		      t->ipproto,					\
-		      t->hport,						\
-		      t->nport[0], t->nport[1])
+		PRINT("%s %s=%s protoport=%s range=%s ipproto=%u hport=%u nport=%02x%02x",
+		      pri_family(t->from.family),
+		      what, t->from.addresses != NULL ? t->from.addresses : "N/A",
+		      t->from.protoport != NULL ? t->from.protoport : "N/A",
+		      t->range != NULL ? t->range : "N/A",
+		      t->ipproto,
+		      t->hport,
+		      t->nport[0], t->nport[1]);
 
-		ip_selector selector;
-		err_t err = to_selector(&t->from, &selector, logger);
+		ip_selector tmp, *selector = &tmp;
+		err_t err = to_selector(&t->from, selector, logger);
 		if (t->range != NULL) {
 			if (err != NULL) {
 				FAIL("to_selector() failed: %s", err);
@@ -67,28 +67,28 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			continue;
 		}
 
-		CHECK_FAMILY(t->from.family, selector_type(&selector));
+		CHECK_FAMILY(t->from.family, selector, selector);
 
-		ip_subnet subnet = selector_subnet(selector);
+		ip_subnet subnet = selector_subnet(*selector);
 		subnet_buf sb;
 		str_subnet(&subnet, &sb);
 		if (!streq(sb.buf, t->subnet)) {
 			FAIL("str_range() was %s, expected %s", sb.buf, t->subnet);
 		}
 
-		ip_range range = selector_range(selector);
+		ip_range range = selector_range(*selector);
 		range_buf rb;
 		str_range(&range, &rb);
 		if (!streq(rb.buf, t->range)) {
 			FAIL("range was %s, expected %s", rb.buf, t->range);
 		}
 
-		const ip_protocol *protocol = selector_protocol(selector);
+		const ip_protocol *protocol = selector_protocol(*selector);
 		if (protocol->ipproto != t->ipproto) {
 			FAIL("ipproto was %u, expected %u", protocol->ipproto, t->ipproto);
 		}
 
-		ip_port port = selector_port(selector);
+		ip_port port = selector_port(*selector);
 
 		uint16_t hp = hport(port);
 		if (!memeq(&hp, &t->hport, sizeof(hport))) {

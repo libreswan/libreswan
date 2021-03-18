@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <limits.h>		/* for UINT32_MAX */
 
+#include "lswlog.h"
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
 #include "ip_range.h"
@@ -249,7 +250,7 @@ static void check_ttorange__to__str_range(void)
 		int line;
 		int family;
 		const char *in;
-		const char *out;
+		const char *str;
 		uint32_t pool_size;
 		bool truncated;
 	} tests[] = {
@@ -335,37 +336,30 @@ static void check_ttorange__to__str_range(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		if (t->out != NULL) {
-			PRINT("%s '%s' -> %s pool-size %"PRIu32" truncated %s", pri_family(t->family), t->in, t->out, t->pool_size, bool_str(t->truncated));
+		if (t->str != NULL) {
+			PRINT("%s '%s' -> %s pool-size %"PRIu32" truncated %s", pri_family(t->family), t->in, t->str, t->pool_size, bool_str(t->truncated));
 		} else {
 			PRINT("%s '%s' -> <error>", pri_family(t->family), t->in);
 		}
 		const char *oops = NULL;
 
-		ip_range r;
-		oops = ttorange(t->in, IP_TYPE(t->family), &r);
-		if (oops != NULL && t->out == NULL) {
+		ip_range tmp, *range = &tmp;
+		oops = ttorange(t->in, IP_TYPE(t->family), range);
+		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
 		}
-		if (oops != NULL && t->out != NULL) {
+		if (oops != NULL && t->str != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL("ttorange() failed: %s", oops);
 		}
 
-		CHECK_TYPE(range_type(&r));
-
-		range_buf buf;
-		const char *out = str_range(&r, &buf);
-		if (!streq(out, t->out)) {
-			FAIL("str_range() returned '%s', expecting '%s'",
-				out, t->out);
-			continue;
-		}
+		CHECK_TYPE(range);
+		CHECK_STR2(range);
 
 		if (t->pool_size > 0) {
 			uint32_t pool_size;
-			bool truncated = range_size(r, &pool_size);
+			bool truncated = range_size(*range, &pool_size);
 			if (t->pool_size != pool_size) {
 				FAIL("pool_size gave %"PRIu32", expecting %"PRIu32,
 					pool_size, t->pool_size);
@@ -408,34 +402,34 @@ static void check_range_from_subnet(struct logger *logger)
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'..'%s'", pri_family(t->family), t->in, t->start, t->end);
 
-		ip_subnet s;
-		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', &s, logger);
+		ip_subnet tmp, *subnet = &tmp;
+		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
 
-		CHECK_TYPE(subnet_type(&s));
+		CHECK_TYPE(subnet);
 
-		ip_range r = range_from_subnet(s);
-		CHECK_TYPE(range_type(&r));
+		ip_range tr = range_from_subnet(*subnet), *range = &tr;
+		CHECK_TYPE(range);
 
 		address_buf start_buf;
-		ip_address r_start = range_start(r);
+		ip_address r_start = range_start(*range);
 		const char *start = str_address(&r_start, &start_buf);
 		if (!streq(t->start, start)) {
 			FAIL("r.start is '%s', expected '%s'",
 				start, t->start);
 		}
-		CHECK_TYPE(address_type(&r_start));
+		CHECK_FAMILY(t->family, address, &r_start);
 
 		address_buf end_buf;
-		ip_address r_end = range_end(r);
+		ip_address r_end = range_end(*range);
 		const char *end = str_address(&r_end, &end_buf);
 		if (!streq(t->end, end)) {
 			FAIL("r.end is '%s', expected '%s'",
 				end, t->end);
 		}
-		CHECK_TYPE(address_type(&r_end));
+		CHECK_FAMILY(t->family, address, &r_end);
 
 	}
 }
@@ -490,7 +484,7 @@ static void check_range_op(void)
 		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
 				range_from_raw(HERE, lo.version, lo.bytes, hi.bytes));
 		ip_range *range = &tmp;
-		CHECK_TYPE(range_type(range));
+		CHECK_TYPE(range);
 
 		CHECK_COND(range, is_unset);
 		CHECK_COND2(range, is_specified);

@@ -22,7 +22,6 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
 #include "ip_address.h"
-#include "jambuf.h"
 #include "ipcheck.h"
 
 static void check_shunk_to_address(void)
@@ -80,38 +79,43 @@ static void check_shunk_to_address(void)
 		      bool_str(t->requires_dns));
 
 		const struct ip_info *type;
-		ip_address a;
+		ip_address tmp, *address = &tmp;
 
 		/* NUMERIC/NULL */
 
 		type = NULL;
-		err = numeric_to_address(shunk1(t->in), type, &a);
+		err = numeric_to_address(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (t->cooked != NULL && !t->requires_dns) {
-				FAIL("numeric_to_address(NULL) unexpecedly failed: %s", err);
+				FAIL("numeric_to_address(%s,NULL) unexpecedly failed: %s",
+				     t->in, err);
 			}
 		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(NULL) unexpecedly parsed a DNS address");
+			FAIL(" numeric_to_address(%s, NULL) unexpecedly parsed a DNS address",
+			     t->in);
 		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(NULL) unexpecedly succeeded");
+			FAIL(" numeric_to_address(%s, NULL) unexpecedly succeeded", t->in);
 		} else {
-			CHECK_TYPE(address_type(&a));
+			CHECK_TYPE(address);
 		}
 
 		/* NUMERIC/TYPE */
 
 		type = IP_TYPE(t->family);
-		err = numeric_to_address(shunk1(t->in), type, &a);
+		err = numeric_to_address(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (!t->requires_dns) {
-				FAIL(" numeric_to_address(type) unexpecedly failed: %s", err);
+				FAIL(" numeric_to_address(%s, %s) unexpecedly failed: %s",
+				     t->in, pri_family(t->family), err);
 			}
 		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(type) unexpecedly parsed a DNS address");
+			FAIL(" numeric_to_address(%s, %s) unexpecedly parsed a DNS address",
+			     t->in, pri_family(t->family));
 		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(type) unexpecedly succeeded");
+			FAIL(" numeric_to_address(%s, %s) unexpecedly succeeded",
+			     t->in, pri_family(t->family));
 		} else {
-			CHECK_TYPE(address_type(&a));
+			CHECK_TYPE(address);
 		}
 
 		if (t->requires_dns && !use_dns) {
@@ -125,7 +129,7 @@ static void check_shunk_to_address(void)
 			PRINT("skipping dns_hunk_to_address(type) -- no DNS");
 		} else {
 			type = IP_TYPE(t->family);
-			err = domain_to_address(shunk1(t->in), type, &a);
+			err = domain_to_address(shunk1(t->in), type, address);
 			if (err != NULL) {
 				if (t->cooked != NULL) {
 					FAIL("dns_hunk_to_address(type) unexpecedly failed: %s", err);
@@ -133,12 +137,12 @@ static void check_shunk_to_address(void)
 			} else if (t->cooked == NULL) {
 				FAIL(" dns_hunk_to_address(type) unexpecedly succeeded");
 			} else {
-				CHECK_TYPE(address_type(&a));
+				CHECK_TYPE(address);
 			}
 		}
 
 		/* now convert it back cooked */
-		CHECK_STR(address_buf, address, t->cooked, &a);
+		CHECK_STR(address_buf, address, t->cooked, address);
 
 	}
 }
@@ -161,14 +165,14 @@ static void check_str_address_sensitive(void)
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
-		ip_address a;
-		err_t err = numeric_to_address(shunk1(t->in), type, &a);
+		ip_address tmp, *address = &tmp;
+		err_t err = numeric_to_address(shunk1(t->in), type, address);
 		if (err != NULL) {
 			FAIL("numeric_to_address() failed: %s", err);
 			continue;
 		}
-		CHECK_TYPE(address_type(&a));
-		CHECK_STR(address_buf, address_sensitive, t->out, &a);
+		CHECK_TYPE(address);
+		CHECK_STR(address_buf, address_sensitive, t->out, address);
 	}
 }
 
@@ -192,14 +196,14 @@ static void check_str_address_reversed(void)
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
-		ip_address a;
-		err_t err = numeric_to_address(shunk1(t->in), type, &a);
+		ip_address tmp, *address = &tmp;
+		err_t err = numeric_to_address(shunk1(t->in), type, address);
 		if (err != NULL) {
 			FAIL("numeric_to_address() returned: %s", err);
 			continue;
 		}
-		CHECK_TYPE(address_type(&a));
-		CHECK_STR(address_reversed_buf, address_reversed, t->out, &a);
+		CHECK_TYPE(address);
+		CHECK_STR(address_reversed_buf, address_reversed, t->out, address);
 	}
 }
 
