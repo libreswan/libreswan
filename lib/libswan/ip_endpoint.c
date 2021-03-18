@@ -23,7 +23,7 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint endpoint_from_raw(where_t where_unused UNUSED, enum ip_version version,
+ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
 			      const struct ip_bytes bytes,
 			      const struct ip_protocol *protocol,
 			      ip_port port)
@@ -35,9 +35,7 @@ ip_endpoint endpoint_from_raw(where_t where_unused UNUSED, enum ip_version versi
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
 	};
-#if 0
 	pexpect_endpoint(&endpoint, where);
-#endif
 	return endpoint;
 }
 
@@ -103,9 +101,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 
 	ip_endpoint dst = endpoint;
 	dst.hport = hport(port);
-#if 0
 	pendpoint(&dst);
-#endif
 	return dst;
 }
 
