@@ -1033,10 +1033,9 @@ static int extract_end(struct end *dst,
 	return same_ca;
 }
 
-static bool check_connection_end(const struct whack_end *this,
-				 const struct whack_end *that,
-				 const struct whack_message *wm,
-				 struct logger *logger)
+static diag_t check_connection_end(const struct whack_end *this,
+				   const struct whack_end *that,
+				   const struct whack_message *wm)
 {
 	/*
 	 * This should have been diagnosed by whack,
@@ -1046,8 +1045,6 @@ static bool check_connection_end(const struct whack_end *this,
 	 * XXX: don't assume values were set (defaulted).
 	 * XXX: don't assume unset's type is NULL.
 	 * XXX: because both directions are tested some checks are redundant.
-	 *
-	 * !!! overloaded use of RC_CLASH
 	 */
 
 	/*
@@ -1061,48 +1058,36 @@ static bool check_connection_end(const struct whack_end *this,
 	if (type != NULL) {
 		if (!address_is_unset(&this->host_nexthop) &&
 		    address_type(&this->host_nexthop) != type) {
-			llog(RC_CLASH, logger,
-			     "host address family inconsistent: expecting %s but %snexthop is %s",
-			     type->ip_name, this->leftright, address_type(&this->host_nexthop)->ip_name);
-			return false;
+			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
+				    type->ip_name, this->leftright, address_type(&this->host_nexthop)->ip_name);
 		}
 		if (!address_is_unset(&that->host_addr) &&
 		    address_type(&that->host_addr) != type) {
-			llog(RC_CLASH, logger,
-			     "host address family inconsistent: expecting %s but %shost is %s",
-			     type->ip_name, that->leftright, address_type(&that->host_addr)->ip_name);
-			return false;
+			return diag("host address family inconsistent: expecting %s but %shost is %s",
+				    type->ip_name, that->leftright, address_type(&that->host_addr)->ip_name);
 		}
 		if (!address_is_unset(&that->host_nexthop) &&
 		    address_type(&that->host_nexthop) != type) {
-			llog(RC_CLASH, logger,
-			     "host address family inconsistent: expecting %s but %snexthop is %s",
-			     type->ip_name, that->leftright, address_type(&that->host_nexthop)->ip_name);
-			return false;
+			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
+				    type->ip_name, that->leftright, address_type(&that->host_nexthop)->ip_name);
 		}
 	}
 
 	/* ??? seems like a nasty test (in-band, low-level) */
 	/* XXX: still nasty; just less low-level */
 	if (range_is_specified(this->pool_range)) {
-		struct ip_pool *pool;
-		if (!find_addresspool(&this->pool_range, &pool, logger)) {
-			/* already logged */
-			return false;
+		struct ip_pool *pool; /* ignore */
+		diag_t d = find_addresspool(&this->pool_range, &pool);
+		if (d != NULL) {
+			return d;
 		}
 	}
 
-	if (subnet_is_specified(this->client) &&
-	    subnet_is_specified(that->client)) {
+	const struct ip_info *this_afi = subnet_type(&this->client);
+	const struct ip_info *that_afi = subnet_type(&that->client);
+	if (this_afi != NULL && that_afi != NULL && this_afi != that_afi) {
 		/* IPv4 vs IPv6? */
-		if (subnet_type(&this->client) != subnet_type(&that->client)) {
-			/*
-			 * !!! overloaded use of RC_CLASH
-			 */
-			llog(RC_CLASH, logger,
-				    "address family inconsistency in this/that connection");
-			return FALSE;
-		}
+		return diag("subnets must have the same address family");
 	}
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
@@ -1114,18 +1099,14 @@ static bool check_connection_end(const struct whack_end *this,
 		 */
 		if (this->host_type != KH_IPHOSTNAME &&
 		    (address_is_unset(&this->host_addr) || address_is_any(this->host_addr))) {
-			llog(RC_ORIENT, logger,
-				    "connection %s must specify host IP address for our side",
+			return diag("connection %s must specify host IP address for our side",
 				    wm->name);
-			return FALSE;
 		}
 	}
 
 	if (this->protoport.ipproto == 0 && this->protoport.hport != 0) {
-		llog(RC_ORIENT, logger,
-			    "connection %s cannot specify non-zero port %d for prototcol 0",
+		return diag("connection %s cannot specify non-zero port %d for prototcol 0",
 			    wm->name, this->protoport.hport);
-		return FALSE;
 	}
 
 	if (this->id != NULL && streq(this->id, "%fromcert")) {
@@ -1133,13 +1114,11 @@ static bool check_connection_end(const struct whack_end *this,
 
 		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
 			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
-			llog(RC_FATAL, logger,
-				    "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
-			return false;
+			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
 
-	return TRUE; /* happy */
+	return NULL; /* happy */
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
@@ -1302,6 +1281,8 @@ static void mark_parse(/*const*/ char *wmmark,
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
+	diag_t d;
+
 	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
 		llog(RC_DUPNAME, c->logger,
@@ -1519,17 +1500,14 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
-	if (!check_connection_end(&wm->right, &wm->left, wm, c->logger) ||
-	    !check_connection_end(&wm->left, &wm->right, wm, c->logger)) {
-		/* XXX: shouldn't check_connection_end() log the error? */
-		llog(RC_FATAL, c->logger,
-			    "failed to add connection: attempt to load incomplete connection");
+	d = check_connection_end(&wm->right, &wm->left, wm);
+	if (d != NULL) {
+		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
-
-	if (subnet_type(&wm->left.client) != subnet_type(&wm->right.client)) {
-		llog(RC_FATAL, c->logger,
-			    "failed to add connection: subnets must have the same address family");
+	d = check_connection_end(&wm->left, &wm->right, wm);
+	if (d != NULL) {
+		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 

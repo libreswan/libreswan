@@ -725,10 +725,12 @@ void reference_addresspool(struct connection *c)
 
 /*
  * Finds an ip_pool that has exactly matching bounds.
- * If a pool overlaps, an error is logged AND returned
- * *pool is set to the entry found; NULL if none found.
+ *
+ * If a pool overlaps, a diagnostic is returned.  Regardless *POOL is
+ * set to the entry found; NULL if none found.
  */
-bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct logger *logger)
+
+diag_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 {
 	struct ip_pool *h;
 
@@ -738,22 +740,19 @@ bool find_addresspool(const ip_range *pool_range, struct ip_pool **pool, struct 
 		if (range_eq_range(*pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
-			break;
+			return NULL;
 		}
 
 		if (range_overlap(*pool_range, h->r)) {
 			/* bad */
 			range_buf prbuf;
 			range_buf hbuf;
-
-			llog(RC_CLASH, logger,
-				    "ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
+			return diag("new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
 				    str_range(pool_range, &prbuf),
 				    str_range(&h->r, &hbuf));
-			return false;
 		}
 	}
-	return true;
+	return NULL;
 }
 
 /*
@@ -766,7 +765,9 @@ struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *l
 {
 	struct ip_pool **head = &pluto_pools;
 	struct ip_pool *pool = NULL;
-	if (!find_addresspool(pool_range, &pool, logger)) {
+	diag_t d = find_addresspool(pool_range, &pool);
+	if (d != NULL) {
+		log_diag(RC_CLASH, logger, &d, "ERROR: ");
 		return NULL;
 	}
 
