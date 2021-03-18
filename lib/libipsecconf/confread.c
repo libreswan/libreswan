@@ -535,6 +535,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
+			if (conn_st->ike_version != IKEv1) {
+				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
+			}
+
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
