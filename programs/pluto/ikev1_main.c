@@ -535,7 +535,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		connection_buf cib;
 		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 		     pri_connection(c, &cib));
-		ip_address sender_address = endpoint_address(&md->sender);
+		ip_address sender_address = endpoint_address(md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
@@ -545,13 +545,13 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbgl(md->md_logger,
 			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			ip_address sender_address = endpoint_address(&md->sender);
+			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
 			dbgl(md->md_logger,
 			     "remote end has wildcard ID, needs instantiation");
-			ip_address sender_address = endpoint_address(&md->sender);
+			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 	}

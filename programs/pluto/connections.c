@@ -2438,12 +2438,12 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					       struct logger *logger UNUSED)
 {
 	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);
-	passert(endpoint_is_specified(local_client));
-	passert(endpoint_is_specified(remote_client));
-	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+	passert(!endpoint_is_unset(local_client));
+	passert(!endpoint_is_unset(remote_client));
+	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
 
-	int local_port = endpoint_hport(local_client);
-	int remote_port = endpoint_hport(remote_client);
+	int local_port = endpoint_hport(*local_client);
+	int remote_port = endpoint_hport(*remote_client);
 
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
@@ -2470,7 +2470,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			     && se_label_match(sec_label, sr->this.sec_label, logger)
 #endif
 			     ) {
-				unsigned ipproto = endpoint_protocol(local_client)->ipproto;
+				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
 				policy_prio_t prio =
 					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
 					 2 * (sr->this.port == local_port) +
@@ -2667,7 +2667,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 	 */
 	pendpoint(local_client);
 	pendpoint(remote_client);
-	pexpect(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+	pexpect(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
 
 	/*
 	 * Go through all the "half" oriented connections (remote
@@ -2785,8 +2785,8 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 	}
 
 	/* XXX we might not yet know the ID! */
-	ip_address local_address = endpoint_address(local_client);
-	ip_address remote_address = endpoint_address(remote_client);
+	ip_address local_address = endpoint_address(*local_client);
+	ip_address remote_address = endpoint_address(*remote_client);
 	return oppo_instantiate(best, NULL, &local_address, &remote_address);
 }
 
@@ -3179,7 +3179,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * on list of connections for host pair with wildcard
 		 * Peer IP.
 		 */
-		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(&st->st_remote_endpoint);
+		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(st->st_remote_endpoint);
 		FOR_EACH_HOST_PAIR_CONNECTION(c->interface->ip_dev->id_address, remote, d) {
 
 			int wildcards;

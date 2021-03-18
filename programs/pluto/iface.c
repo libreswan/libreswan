@@ -373,7 +373,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.any,
 									 &ip_protocol_udp,
 									 ip_hport(IKE_UDP_PORT));
-		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
+		ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;
 			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
@@ -492,10 +492,10 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 	}
 }
 
-struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint *local_endpoint)
+struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_endpoint)
 {
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
-		if (endpoint_eq(local_endpoint, &p->local_endpoint)) {
+		if (endpoint_eq_endpoint(local_endpoint, p->local_endpoint)) {
 			return p;
 		}
 	}

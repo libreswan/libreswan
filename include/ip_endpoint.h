@@ -106,13 +106,6 @@ size_t jam_endpoints(struct jambuf *jambuf, const ip_endpoint *src, const ip_end
 const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *buf);
 
 /*
- * Logic
- */
-
-bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r);
-bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address);
-
-/*
  * Magic values.
  *
  * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
@@ -125,22 +118,30 @@ bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address ad
  */
 
 extern const ip_endpoint unset_endpoint;
-bool endpoint_is_unset(const ip_endpoint *endpoint);
 
-const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
-const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
+bool endpoint_is_unset(const ip_endpoint *endpoint);			/* handles NULL */
+const struct ip_info *endpoint_type(const ip_endpoint *endpoint);	/* handles NULL */
 
-bool endpoint_is_specified(const ip_endpoint *endpoint);
+bool endpoint_is_specified(const ip_endpoint endpoint);
 
-ip_address endpoint_address(const ip_endpoint *endpoint);
-ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
-				 const ip_address) MUST_USE_RESULT;
+const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint);
+ip_address endpoint_address(const ip_endpoint endpoint);
+ip_port endpoint_port(const ip_endpoint endpoint);
 
-ip_port endpoint_port(const ip_endpoint *endpoint);
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint,
+/*
+ * Logic
+ */
+
+bool endpoint_eq_endpoint(const ip_endpoint l, const ip_endpoint r);
+bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address);
+
+/*
+ * hacks
+ */
+
+int endpoint_hport(const ip_endpoint endpoint);
+ip_endpoint set_endpoint_port(const ip_endpoint endpoint,
 			      ip_port port) MUST_USE_RESULT;
 void update_endpoint_port(ip_endpoint *endpoint, ip_port port);
-
-int endpoint_hport(const ip_endpoint *endpoint);
 
 #endif

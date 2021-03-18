@@ -223,8 +223,10 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	 * Port's value and interpretation depends on protocol (ICMP,
 	 * TCP, UDP, ...) and ends may not be equal.
 	 */
+	passert(!endpoint_is_unset(local_client));
+	passert(!endpoint_is_unset(remote_client));
 	passert(endpoint_type(local_client) == endpoint_type(remote_client));
-	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
 
 	/*
 	 * XXX: hack to keep code below happy - need to figigure out
@@ -232,7 +234,7 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	 */
 	ip_selector our_client[] = { selector_from_endpoint(*local_client), };
 	ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
-	unsigned transport_proto = endpoint_protocol(local_client)->ipproto;
+	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.
@@ -1950,11 +1952,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		    st->st_interface->protocol == &ip_protocol_tcp) {
 			encap_type = st->st_interface->protocol->encap_esp;
 			if (inbound) {
-				encap_sport = endpoint_hport(&st->st_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(st->st_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			} else {
-				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(&st->st_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 			dbg("natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
@@ -2403,7 +2405,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	ip_address effective_remote_address = c->spd.that.host_addr;
 	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
 	    address_is_specified(c->temp_vars.redirect_ip)) {
-		effective_remote_address = endpoint_address(&st->st_remote_endpoint);
+		effective_remote_address = endpoint_address(st->st_remote_endpoint);
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
@@ -3325,8 +3327,8 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		redirected = true;
 		tmp_host_addr = c->spd.that.host_addr;
 		tmp_host_port = c->spd.that.host_port; /* XXX: needed? */
-		c->spd.that.host_addr = endpoint_address(&st->st_remote_endpoint);
-		c->spd.that.host_port = endpoint_hport(&st->st_remote_endpoint);
+		c->spd.that.host_addr = endpoint_address(st->st_remote_endpoint);
+		c->spd.that.host_port = endpoint_hport(st->st_remote_endpoint);
 	}
 
 	const ip_address *src, *dst;

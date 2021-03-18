@@ -113,14 +113,14 @@ static ip_sockaddr sockaddr_from_address_port(const ip_address *address, ip_port
 	return sa;
 }
 
-ip_sockaddr sockaddr_from_address(const ip_address *address)
+ip_sockaddr sockaddr_from_address(const ip_address address)
 {
-	return sockaddr_from_address_port(address, unset_port);
+	return sockaddr_from_address_port(&address, unset_port);
 }
 
-ip_sockaddr sockaddr_from_endpoint(const ip_endpoint *endpoint)
+ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
+	if (endpoint_is_unset(&endpoint)) {
 		return unset_sockaddr;
 	}
 

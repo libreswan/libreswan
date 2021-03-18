@@ -209,8 +209,8 @@ ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 
 	return selector_from_raw(HERE, endpoint.version,
 				 endpoint.bytes, afi->mask_cnt,
-				 endpoint_protocol(&endpoint),
-				 endpoint_port(&endpoint));
+				 endpoint_protocol(endpoint),
+				 endpoint_port(endpoint));
 }
 
 ip_selector selector_from_subnet(const ip_subnet subnet)

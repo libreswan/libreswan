@@ -153,7 +153,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
 		 */
-		ip_address sender_address = endpoint_address(&md->sender);
+		ip_address sender_address = endpoint_address(md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	}
 

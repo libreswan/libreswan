@@ -137,6 +137,20 @@ static const struct address_test {
 	{ LN, 6, &ipv6_info.address.loopback, "::1",             .is_specified = true, .is_loopback = true, },
 };
 
+static const struct endpoint_test {
+	int line;
+	int family;
+	const ip_endpoint *endpoint;
+	const char *str;
+	bool is_unset;
+	bool is_specified;
+	bool is_any;
+	int hport;
+} endpoint_tests[] = {
+	{ LN, 0, NULL,                     "<unset-endpoint>",   .is_unset = true, .hport = -1, },
+	{ LN, 0, &unset_endpoint,          "<unset-endpoint>",   .is_unset = true, .hport = -1, },
+};
+
 static const struct subnet_test {
 	int line;
 	int family;
@@ -173,20 +187,6 @@ static const struct range_test {
 	{ LN, 6, &ipv6_info.range.none, "::-::",            .contains_no_addresses = true, },
 	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-255.255.255.255",                    .is_specified = true, .contains_all_addresses = true, },
 	{ LN, 6, &ipv6_info.range.all,  "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", .is_specified = true, .contains_all_addresses = true, },
-};
-
-static const struct endpoint_test {
-	int line;
-	int family;
-	const ip_endpoint *endpoint;
-	const char *str;
-	bool is_unset;
-	bool is_specified;
-	bool is_any;
-	int hport;
-} endpoint_tests[] = {
-	{ LN, 0, NULL,                     "<unset-endpoint>",   .is_unset = true, .hport = -1, },
-	{ LN, 0, &unset_endpoint,          "<unset-endpoint>",   .is_unset = true, .hport = -1, },
 };
 
 static const struct selector_test {
@@ -253,10 +253,10 @@ static void check_ip_info_endpoint(void)
 		CHECK_STR2(endpoint);
 
 		CHECK_COND(endpoint, is_unset);
-		CHECK_COND(endpoint, is_specified);
+		CHECK_COND2(endpoint, is_specified);
 
 		if (!t->is_unset) {
-			int hport = endpoint_hport(endpoint);
+			int hport = endpoint_hport(*endpoint);
 			if (hport != t->hport) {
 				FAIL(" endpoint_port() returned %d, expecting %d",
 				     hport, t->hport);
@@ -264,15 +264,24 @@ static void check_ip_info_endpoint(void)
 		}
 	}
 
-	/* must match table above */
-	bool eq[elemsof(endpoint_tests)][elemsof(endpoint_tests)] = {
-		/* unset/NULL */
-		[0][0] = true,
-		[0][1] = true,
-		[1][1] = true,
-		[1][0] = true,
+	static const struct {
+		const ip_endpoint *l;
+		const ip_endpoint *r;
+		int eq;
+	} endpoint_op_endpoint[] = {
+		{ &unset_endpoint, &unset_endpoint, .eq = true, },
 	};
-	CHECK_EQ(endpoint);
+
+	static const struct {
+		const ip_endpoint *l;
+		const ip_address *r;
+		int address_eq;
+	} endpoint_op_address[] = {
+		{ &unset_endpoint, &unset_address, .address_eq = true, },
+	};
+
+	CHECK_OP(endpoint, eq, endpoint);
+	CHECK_OP(endpoint, address_eq, address);
 }
 
 static void check_ip_info_subnet(void)

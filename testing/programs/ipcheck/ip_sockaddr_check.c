@@ -90,7 +90,7 @@ static void check_sockaddr_as_endpoint(void)
 		}
 
 		/* endpoint->sockaddr */
-		ip_sockaddr esa = sockaddr_from_endpoint(&endpoint);
+		ip_sockaddr esa = sockaddr_from_endpoint(endpoint);
 		if (err == NULL) {
 			if (esa.len == 0) {
 				FAIL("endpoint_to_sockaddr() returned %d, expecting non-zero",

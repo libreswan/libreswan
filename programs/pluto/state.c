@@ -2063,7 +2063,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 "#%lu: \"%s\"%s:%u%s %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
-		 endpoint_hport(&st->st_remote_endpoint),
+		 endpoint_hport(st->st_remote_endpoint),
 		 (st->st_interface->protocol == &ip_protocol_tcp) ? "(tcp)" : "",
 		 st->st_state->name,
 		 st->st_state->story,
@@ -2611,7 +2611,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
 	    ike->sa.st_serialno, buf);
 
-	if (endpoint_eq(&old_endpoint, &new_endpoint)) {
+	if (endpoint_eq_endpoint(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
@@ -2633,20 +2633,20 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->spd.this.host_addr = endpoint_address(&child->sa.st_mobike_local_endpoint);
+		c->spd.this.host_addr = endpoint_address(child->sa.st_mobike_local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.leftright,
-		    c->spd.this.host_port, endpoint_hport(&child->sa.st_mobike_local_endpoint));
-		c->spd.this.host_port = endpoint_hport(&child->sa.st_mobike_local_endpoint);
+		    c->spd.this.host_port, endpoint_hport(child->sa.st_mobike_local_endpoint));
+		c->spd.this.host_port = endpoint_hport(child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
 		ike->sa.st_interface = child->sa.st_interface = md->iface;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		c->spd.that.host_addr = endpoint_address(&md->sender);
+		c->spd.that.host_addr = endpoint_address(md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.leftright,
-		    c->spd.that.host_port, endpoint_hport(&md->sender));
-		c->spd.that.host_port = endpoint_hport(&md->sender);
+		    c->spd.that.host_port, endpoint_hport(md->sender));
+		c->spd.that.host_port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;

@@ -178,7 +178,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	ip_endpoint host_end = endpoint_from_address_protocol_port(host_addr,
 								   ifp->protocol,
 								   port);
-	return endpoint_eq(&host_end, &ifp->local_endpoint);
+	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }
 
 bool orient(struct connection *c)
@@ -698,7 +698,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 }
 
 static ip_selector shunt_from_traffic_end(const char *what,
-					  const ip_endpoint *traffic_endpoint,
+					  const ip_endpoint traffic_endpoint,
 					  const struct end *end)
 {
 	ip_address shunt_address = endpoint_address(traffic_endpoint);
@@ -729,8 +729,8 @@ static ip_selector shunt_from_traffic_end(const char *what,
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
-	int our_port = endpoint_hport(&b->local.client);
-	int peer_port = endpoint_hport(&b->remote.client);
+	int our_port = endpoint_hport(b->local.client);
+	int peer_port = endpoint_hport(b->remote.client);
 
 	address_buf ourb;
 	const char *our_addr = str_address(&b->local.host_addr, &ourb);
@@ -763,8 +763,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * explicitly handles the clients.
 	 */
 
-	if (!endpoint_is_specified(&b->local.client) &&
-	    !endpoint_is_specified(&b->remote.client)) {
+	if (!endpoint_is_specified(b->local.client) &&
+	    !endpoint_is_specified(b->remote.client)) {
 		cannot_oppo(b, "impossible IP address");
 		return;
 	}
@@ -955,8 +955,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * XXX: should local/remote shunts be computed independently?
 	 */
 	pexpect(c->spd.this.protocol == c->spd.that.protocol);
-	ip_selector local_shunt = shunt_from_traffic_end("local", &b->local.client, &c->spd.this);
-	ip_selector remote_shunt = shunt_from_traffic_end("remote", &b->remote.client, &c->spd.that);
+	ip_selector local_shunt = shunt_from_traffic_end("local", b->local.client, &c->spd.this);
+	ip_selector remote_shunt = shunt_from_traffic_end("remote", b->remote.client, &c->spd.that);
 
 	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
 	pexpect(shunt_protocol == selector_protocol(remote_shunt));
@@ -1080,15 +1080,15 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		       const char *why,
 		       struct logger *logger)
 {
-	unsigned transport_proto = endpoint_protocol(local_client)->ipproto;
+	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
 	pexpect(transport_proto != 0);
-	pexpect(transport_proto == endpoint_protocol(remote_client)->ipproto);
+	pexpect(transport_proto == endpoint_protocol(*remote_client)->ipproto);
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
 		.local.client = *local_client,
 		.remote.client = *remote_client,
-		.local.host_addr = endpoint_address(local_client),
-		.remote.host_addr = endpoint_address(remote_client),
+		.local.host_addr = endpoint_address(*local_client),
+		.remote.host_addr = endpoint_address(*remote_client),
 		.transport_proto = transport_proto,
 		.held = held,
 		.policy_prio = BOTTOM_PRIO,

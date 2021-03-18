@@ -339,7 +339,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
 								      &ip_protocol_tcp,
 								      port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
@@ -635,7 +635,7 @@ stf_status create_tcp_interface(struct state *st)
 	 */
 
 	dbg("TCP: socket %d connecting to other end", fd);
-	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(&st->st_remote_endpoint);
+	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(st->st_remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
 		log_errno(st->st_logger, errno,
 			  "TCP: connect(%d) failed", fd);

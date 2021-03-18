@@ -164,7 +164,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
 	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
 								      &ip_protocol_udp,
 								      port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
@@ -387,7 +387,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 	}
 #endif
 
-	ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
+	ip_sockaddr remote_sa = sockaddr_from_endpoint(*remote_endpoint);
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 };
 

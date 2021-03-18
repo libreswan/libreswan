@@ -880,10 +880,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	const ip_address *src, *dst;
 	const ip_selector *src_client, *dst_client;
 
-	if (endpoint_is_specified(&st->st_mobike_local_endpoint)) {
+	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = endpoint_hport(&st->st_interface->local_endpoint);
+		old_port = endpoint_hport(st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -892,31 +892,31 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
 			sa.src.new_address = *src;
-			sa.dst.new_address = endpoint_address(&st->st_mobike_local_endpoint);
+			sa.dst.new_address = endpoint_address(st->st_mobike_local_endpoint);
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_mobike_local_endpoint);
+				encap_sport = endpoint_hport(st->st_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_mobike_local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
-			sa.src.new_address = endpoint_address(&st->st_mobike_local_endpoint);
+			sa.src.new_address = endpoint_address(st->st_mobike_local_endpoint);
 			sa.dst.new_address = *dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_mobike_local_endpoint);
-				encap_dport = endpoint_hport(&st->st_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_mobike_local_endpoint);
+				encap_dport = endpoint_hport(st->st_remote_endpoint);
 			}
 		}
 	} else {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = endpoint_hport(&st->st_remote_endpoint);
+		old_port = endpoint_hport(st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -924,13 +924,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.this.host_addr;
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
-			sa.src.new_address = endpoint_address(&st->st_mobike_remote_endpoint);
+			sa.src.new_address = endpoint_address(st->st_mobike_remote_endpoint);
 			sa.dst.new_address = c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(st->st_mobike_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -938,13 +938,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
 			sa.src.new_address = c->spd.this.host_addr;
-			sa.dst.new_address = endpoint_address(&st->st_mobike_remote_endpoint);
+			sa.dst.new_address = endpoint_address(st->st_mobike_remote_endpoint);
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(st->st_mobike_remote_endpoint);
 			}
 		}
 	}

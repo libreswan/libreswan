@@ -602,22 +602,19 @@ void check_orientations(void)
  * the exact value and has included it in req_policy.
  */
 static struct connection *find_host_connection(enum ike_version ike_version,
-					       const ip_endpoint *local_endpoint,
-					       const ip_endpoint *remote_endpoint,
+					       const ip_address local_address,
+					       const ip_address remote_address,
 					       lset_t req_policy, lset_t policy_exact_mask)
 {
-	endpoint_buf lb;
-	endpoint_buf rb;
+	address_buf lb;
+	address_buf rb;
 	policy_buf pb;
 	dbg("find_host_connection %s local=%s remote=%s policy=%s but ignoring ports",
 	    enum_name(&ike_version_names, ike_version),
-	    str_endpoint(local_endpoint, &lb),
-	    str_endpoint(remote_endpoint, &rb),
+	    str_address(&local_address, &lb),
+	    str_address(&remote_address, &rb),
 	    str_policy(req_policy, &pb));
 
-	/* strip port */
-	ip_address local_address = endpoint_address(local_endpoint);
-	ip_address remote_address = endpoint_address(remote_endpoint);/*could return unset OR any*/
 	struct host_pair *hp = find_host_pair(local_address, remote_address);
 	if (hp == NULL) {
 		return NULL;
@@ -724,11 +721,11 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 	/* just the adddress */
-	ip_address local_address = endpoint_address(local_endpoint);
-	ip_address remote_address = endpoint_address(remote_endpoint);
+	ip_address local_address = endpoint_address(*local_endpoint);
+	ip_address remote_address = endpoint_address(*remote_endpoint);
 
-	struct connection *c = find_host_connection(IKEv2, local_endpoint,
-						    remote_endpoint,
+	struct connection *c = find_host_connection(IKEv2, local_address,
+						    remote_address,
 						    policy, LEMPTY);
 	if (c == NULL) {
 		/*
@@ -742,8 +739,8 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		 * between an Initiator's address and that of its
 		 * client, but Food Groups kind of assumes one.
 		 */
-		for (struct connection *d = find_host_connection(IKEv2, local_endpoint,
-								 &unset_endpoint,
+		for (struct connection *d = find_host_connection(IKEv2, local_address,
+								 unset_address,
 								 policy, LEMPTY);
 		     d != NULL; d = find_next_host_connection(IKEv2, d->hp_next, policy, LEMPTY)) {
 			if (d->kind == CK_GROUP) {
@@ -847,7 +844,9 @@ struct connection *find_v1_host_connection(const ip_endpoint local_endpoint,
 					   const ip_endpoint remote_endpoint,
 					   lset_t req_policy, lset_t policy_exact_mask)
 {
-	return find_host_connection(IKEv1, &local_endpoint, &remote_endpoint,
+	return find_host_connection(IKEv1,
+				    endpoint_address(local_endpoint),
+				    endpoint_address(remote_endpoint),
 				    req_policy, policy_exact_mask);
 }
 
@@ -910,7 +909,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 		if (tmp->kind != CK_INSTANCE) {
 			continue;
 		}
-		ip_address sender = endpoint_address(&md->sender);
+		ip_address sender = endpoint_address(md->sender);
 		if (!address_in_selector_subnet(sender, tmp->spd.that.client)) {
 			continue;
 		}

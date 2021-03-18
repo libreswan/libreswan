@@ -77,8 +77,8 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 			};
 			ip_endpoint nhe;
 			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &nhe));
-			pexpect(endpoint_hport(&nhe) == 0);
-			*nh = endpoint_address(&nhe);
+			pexpect(endpoint_hport(nhe) == 0);
+			*nh = endpoint_address(nhe);
 		}
 	}
 
@@ -91,8 +91,8 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 			};
 			ip_endpoint dste;
 			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &dste));
-			pexpect(endpoint_hport(&dste) == 0);
-			*dst = endpoint_address(&dste);
+			pexpect(endpoint_hport(dste) == 0);
+			*dst = endpoint_address(dste);
 		}
 	}
 

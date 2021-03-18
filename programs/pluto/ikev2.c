@@ -3126,7 +3126,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    /*
 	     * Only when the request changes the remote's endpoint ...
 	     */
-	    !endpoint_eq(&ike->sa.st_remote_endpoint, &md->sender) &&
+	    !endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
 	    /*
 	     * Only when the request was protected and passes
 	     * integrity ...

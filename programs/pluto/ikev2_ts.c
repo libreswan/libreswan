@@ -1131,7 +1131,7 @@ bool v2_process_ts_request(struct child_sa *child,
 		 * second time local:<unset>.
 		 */
 		const ip_address local = md->iface->ip_dev->id_address;
-		const ip_address remote = (rpass == 0 ? endpoint_address(&md->sender) : unset_address);
+		const ip_address remote = (rpass == 0 ? endpoint_address(md->sender) : unset_address);
 		const struct host_pair *hp = find_host_pair(local, remote);
 
 		if (hp == NULL)

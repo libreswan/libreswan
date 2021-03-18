@@ -5426,7 +5426,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    !endpoint_eq(&md->sender, &st->st_remote_endpoint)) {
+	    !endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
 		/* remember the established/old address and interface */
 		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;
@@ -6200,7 +6200,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		return;
 
 	pexpect_st_local_endpoint(st);
-	ip_address local_address = endpoint_address(&st->st_interface->local_endpoint);
+	ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
 	/* ignore port */
 	if (sameaddr(ip, &local_address)) {
 		ip_address ip_p = st->st_deleted_local_addr;
@@ -6244,7 +6244,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
+	ip_port port = endpoint_port(st->st_interface->local_endpoint);
 	st->st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
 									   st->st_interface->protocol,
 									   port);
@@ -6278,11 +6278,11 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 {
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
-	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
+	ip_port port = endpoint_port(st->st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
 									 st->st_interface->protocol,
 									 port);
-	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
+	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
@@ -6290,7 +6290,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 		/* XXX: should this be building a global logger? */
 		struct logger global_logger[1] = { GLOBAL_LOGGER(whack_log_fd), };
 		find_ifaces(false, global_logger);
-		iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
+		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
 		}
@@ -6318,7 +6318,7 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
 		.host_family = endpoint_type(&st->st_remote_endpoint),
-		.addr = endpoint_address(&st->st_remote_endpoint),
+		.addr = endpoint_address(st->st_remote_endpoint),
 	};
 
 	/*

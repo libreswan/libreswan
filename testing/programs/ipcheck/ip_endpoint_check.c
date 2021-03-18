@@ -92,12 +92,12 @@ void ip_endpoint_check()
 
 		ip_endpoint *endpoint = &e;
 		CHECK_COND(endpoint, is_unset);
-		CHECK_COND(endpoint, is_specified);
+		CHECK_COND2(endpoint, is_specified);
 
 		/*
 		 * endpoint_*address()
 		 */
-		ip_address aout = endpoint_address(&e);
+		ip_address aout = endpoint_address(e);
 		address_buf astr;
 		if (!streq(str_address(&aout, &astr), t->in)) {
 			FAIL("endpoint_address() returned %s, expecting %s",
@@ -109,14 +109,14 @@ void ip_endpoint_check()
 		 */
 
 		/* host port */
-		uint16_t heport = endpoint_hport(&e);
+		uint16_t heport = endpoint_hport(e);
 		if (!memeq(&heport, &t->hport, sizeof(heport))) {
 			FAIL("endpoint_hport() returned '%d', expected '%d'",
 				heport, t->hport);
 		}
 
 		/* network port */
-		uint16_t neport = nport(endpoint_port(&e));
+		uint16_t neport = nport(endpoint_port(e));
 		if (!memeq(&neport, &t->nport, sizeof(neport))) {
 			FAIL("endpoint_nport() returned '%04x', expected '%02x%02x'",
 				neport, t->nport[0], t->nport[1]);
@@ -136,8 +136,8 @@ void ip_endpoint_check()
 		}
 
 		/* hport+1 -> nport+1 */
-		ip_endpoint hp = set_endpoint_port(&e, ip_hport(hport_plus_one));
-		uint16_t nportp = nport(endpoint_port(&hp));
+		ip_endpoint hp = set_endpoint_port(e, ip_hport(hport_plus_one));
+		uint16_t nportp = nport(endpoint_port(hp));
 		if (!memeq(&nportp, &nport_plus_one, sizeof(nportp))) {
 			FAIL("endpoint_nport(set_endpoint_hport(+1)) returned '%04x', expected '%04x'",
 				nportp, nport_plus_one);
@@ -146,10 +146,10 @@ void ip_endpoint_check()
 		/*
 		 * endpoint_eq()
 		 */
-		if (!endpoint_eq(&e, &e)) {
+		if (!endpoint_eq_endpoint(e, e)) {
 			FAIL("endpoint_eq(e, e) failed");
 		}
-		if (endpoint_eq(&e, &hp)) {
+		if (endpoint_eq_endpoint(e, hp)) {
 			FAIL("endpoint_eq(e, e+1) succeeded");
 		}
 
