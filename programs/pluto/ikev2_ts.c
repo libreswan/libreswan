@@ -1132,13 +1132,9 @@ bool v2_process_ts_request(struct child_sa *child,
 		 */
 		const ip_address local = md->iface->ip_dev->id_address;
 		const ip_address remote = (rpass == 0 ? endpoint_address(md->sender) : unset_address);
-		const struct host_pair *hp = find_host_pair(local, remote);
 
-		if (hp == NULL)
-			continue;
+		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
-		for (struct connection *d = hp->connections;
-		     d != NULL; d = d->hp_next) {
 			/* groups are templates instantiated as GROUPINSTANCE */
 			if (d->policy & POLICY_GROUP) {
 				continue;
