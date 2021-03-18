@@ -166,6 +166,11 @@ static bool end_matches_iface_endpoint(const struct end *end,
 				       const struct iface_endpoint *ifp)
 {
 	ip_address host_addr = end->host_addr;
+	if (!address_is_specified(host_addr)) {
+		/* %any, unknown, or unset */
+		return false;
+	}
+
 	/*
 	 * which port?
 	 */
