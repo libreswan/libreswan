@@ -3296,10 +3296,6 @@ struct connection *refine_host_connection(const struct state *st,
 					dbg("skipping because mismatched authby");
 					continue;
 				}
-				if (c->spd.this.authby != d->spd.this.authby) {
-					dbg("skipping because mismatched this authby");
-					continue;
-				}
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
