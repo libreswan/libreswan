@@ -212,7 +212,8 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 					   bool float_nat_initiator,
 					   struct logger *logger)
 {
-	ip_endpoint local_endpoint = endpoint3(io->protocol, &ifd->id_address, port);
+	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+									 io->protocol, port);
 	if (esp_encapsulation_enabled &&
 	    io->protocol->encap_esp->encap_type == 0) {
 		endpoint_buf b;
@@ -369,8 +370,9 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 * bind the socket; somewhat convoluted as BSD as size field.
 	 */
 	{
-		ip_address any = ipv4_info.address.any;
-		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(IKE_UDP_PORT));
+		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.any,
+									 &ip_protocol_udp,
+									 ip_hport(IKE_UDP_PORT));
 		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;

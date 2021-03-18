@@ -816,10 +816,12 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "need --listen before opportunistic initiation");
 		} else {
 			const ip_protocol *protocol = protocol_by_ipproto(m->oppo.ipproto);
-			ip_endpoint local = endpoint3(protocol, &m->oppo.local.address,
-						      m->oppo.local.port);
-			ip_endpoint remote = endpoint3(protocol, &m->oppo.remote.address,
-						       m->oppo.remote.port);
+			ip_endpoint local = endpoint_from_address_protocol_port(m->oppo.local.address,
+										protocol,
+										m->oppo.local.port);
+			ip_endpoint remote = endpoint_from_address_protocol_port(m->oppo.remote.address,
+										 protocol,
+										 m->oppo.remote.port);
 			initiate_ondemand(&local, &remote,
 					  /*held*/false,
 					  /*background*/m->whack_async,

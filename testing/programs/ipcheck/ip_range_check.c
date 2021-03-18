@@ -191,7 +191,7 @@ static void check_iprange_bits(void)
 		const char *hi;
 		int range;
 	} tests[] = {
-		{ LN, 4, "1.2.255.0", "1.2.254.255", 1 },
+		{ LN, 4, "1.2.254.255", "1.2.255.0", 1 },
 		{ LN, 4, "1.2.3.0", "1.2.3.7", 3 },
 		{ LN, 4, "1.2.3.0", "1.2.3.255", 8 },
 		{ LN, 4, "1.2.3.240", "1.2.3.255", 4 },
@@ -218,34 +218,24 @@ static void check_iprange_bits(void)
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s'-'%s'", pri_family(t->family), t->lo, t->hi)
 
-		const struct ip_info *type = IP_TYPE(t->family);
+		const struct ip_info *afi = IP_TYPE(t->family);
 
 		ip_address lo;
-		oops = numeric_to_address(shunk1(t->lo), type, &lo);
+		oops = numeric_to_address(shunk1(t->lo), afi, &lo);
 		if (oops != NULL) {
 			FAIL("numeric_to_address() failed converting '%s'", t->lo);
 			continue;
 		}
 
 		ip_address hi;
-		oops = numeric_to_address(shunk1(t->hi), type, &hi);
+		oops = numeric_to_address(shunk1(t->hi), afi, &hi);
 		if (oops != NULL) {
 			FAIL("numeric_to_address() failed converting '%s'", t->hi);
 			continue;
 		}
 
-		/*
-		 * XXX: apparently iprange_bits() working for both
-		 * low-hi and hi-low is a feature!?!
-		 */
-		ip_range lo_hi = range2(&lo, &hi);
-		ip_range hi_lo = range2(&hi, &lo);
+		ip_range lo_hi = range_from_raw(HERE, lo.version, lo.bytes, hi.bytes);
 		int lo2hi = range_host_bits(lo_hi);
-		int hi2lo = range_host_bits(hi_lo);
-		if (lo2hi != hi2lo) {
-			FAIL("iprange_bits(lo,hi) returned %d and iprange_bits(hi,lo) returned %d",
-			     lo2hi, hi2lo);
-		}
 		if (t->range != lo2hi) {
 			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
 			     lo2hi, t->range);
@@ -475,11 +465,11 @@ static void check_range_op(void)
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s'-'%s'", pri_family(t->family), t->lo, t->hi)
 
-		const struct ip_info *type = IP_TYPE(t->family);
+		const struct ip_info *afi = IP_TYPE(t->family);
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = numeric_to_address(shunk1(t->lo), type, &lo);
+			oops = numeric_to_address(shunk1(t->lo), afi, &lo);
 			if (oops != NULL) {
 				FAIL("numeric_to_address() failed converting '%s'", t->lo);
 			}
@@ -489,7 +479,7 @@ static void check_range_op(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = numeric_to_address(shunk1(t->hi), type, &hi);
+			oops = numeric_to_address(shunk1(t->hi), afi, &hi);
 			if (oops != NULL) {
 				FAIL("numeric_to_address() failed converting '%s'", t->hi);
 			}
@@ -497,7 +487,9 @@ static void check_range_op(void)
 			hi = unset_address;
 		}
 
-		const ip_range range[] = { range2(&lo, &hi), }; /* pointer */
+		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
+				range_from_raw(HERE, lo.version, lo.bytes, hi.bytes));
+		ip_range *range = &tmp;
 		CHECK_TYPE(range_type(range));
 
 		CHECK_COND(range, is_unset);

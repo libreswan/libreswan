@@ -1648,7 +1648,7 @@ static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
 {
 	ip_address address = address_from_xfrm(afi, src);
 	ip_port port = ip_nport(nport);
-	return endpoint3(protocol, &address, port);
+	return endpoint_from_address_protocol_port(address, protocol, port);
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)

@@ -146,43 +146,82 @@ const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *d
 	return out->buf;
 }
 
+static ip_selector selector_from_raw(where_t where, enum ip_version version,
+				     const struct ip_bytes bytes, unsigned prefix_bits,
+				     const struct ip_protocol *protocol, const ip_port port)
+{
+	ip_selector selector = {
+		.is_set = true,
+		.maskbits = prefix_bits,
+		.version = version,
+		.bytes = bytes,
+		.ipproto = protocol->ipproto,
+		.hport = port.hport,
+	};
+	pexpect_selector(&selector, where);
+	return selector;
+}
+
 ip_selector selector_from_address(const ip_address address)
 {
-	return selector_from_address_protocol_port(address, &ip_protocol_unset, unset_port);
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, address.version,
+				 address.bytes, afi->mask_cnt,
+				 &ip_protocol_unset, unset_port);
 }
 
 ip_selector selector_from_address_protocol(const ip_address address,
 					   const struct ip_protocol *protocol)
 {
-	return selector_from_address_protocol_port(address, protocol, unset_port);
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, address.version,
+				 address.bytes, afi->mask_cnt,
+				 protocol, unset_port);
 }
 
 ip_selector selector_from_address_protocol_port(const ip_address address,
 						const struct ip_protocol *protocol,
 						const ip_port port)
-{
-	if (address_is_unset(&address)) {
+{	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
 		return unset_selector;
 	}
-	ip_subnet subnet = subnet_from_address(address);
-	return selector_from_subnet_protocol_port(subnet, protocol, port);
+
+	return selector_from_raw(HERE, address.version,
+				 address.bytes, afi->mask_cnt,
+				 protocol, port);
 }
 
 ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 {
-	if (endpoint_is_unset(&endpoint)) {
+	const struct ip_info *afi = endpoint_type(&endpoint);
+	if (afi == NULL) {
 		return unset_selector;
 	}
-	ip_address address = endpoint_address(&endpoint);
-	ip_subnet subnet = subnet_from_address(address);
-	const struct ip_protocol *protocol = endpoint_protocol(&endpoint);
-	ip_port port = endpoint_port(&endpoint);
-	return selector_from_subnet_protocol_port(subnet, protocol, port);
+
+	return selector_from_raw(HERE, endpoint.version,
+				 endpoint.bytes, afi->mask_cnt,
+				 endpoint_protocol(&endpoint),
+				 endpoint_port(&endpoint));
 }
 
 ip_selector selector_from_subnet(const ip_subnet subnet)
 {
-	return selector_from_subnet_protocol_port(subnet, &ip_protocol_unset, unset_port);
+	if (subnet_is_unset(&subnet)) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, subnet.version,
+				 subnet.bytes, subnet.maskbits,
+				 &ip_protocol_unset, unset_port);
 }
 
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
@@ -192,16 +231,10 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 	if (subnet_is_unset(&subnet)) {
 		return unset_selector;
 	}
-	ip_selector selector = {
-		.is_set = true,
-		.maskbits = subnet.maskbits,
-		.version = subnet.version,
-		.bytes = subnet.bytes,
-		.ipproto = protocol->ipproto,
-		.hport = port.hport,
-	};
-	pselector(&selector);
-	return selector;
+
+	return selector_from_raw(HERE, subnet.version,
+				 subnet.bytes, subnet.maskbits,
+				 protocol, port);
 }
 
 ip_selector selector_from_address_protoport(const ip_address address,
@@ -257,15 +290,15 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	const ip_address start = address_from_blit(afi, selector.bytes,
-						   /*routing-prefix*/&keep_bits,
-						   /*host-identifier*/&clear_bits,
-						   selector.maskbits);
-	const ip_address end = address_from_blit(afi, selector.bytes,
-						 /*routing-prefix*/&keep_bits,
-						 /*host-identifier*/&set_bits,
-						 selector.maskbits);
-	return range2(&start, &end);
+	struct ip_bytes start = bytes_from_blit(afi, selector.bytes,
+						/*routing-prefix*/&keep_bits,
+						/*host-identifier*/&clear_bits,
+						selector.maskbits);
+	struct ip_bytes end = bytes_from_blit(afi, selector.bytes,
+					      /*routing-prefix*/&keep_bits,
+					      /*host-identifier*/&set_bits,
+					      selector.maskbits);
+	return range_from_raw(HERE, afi->ip_version, start, end);
 }
 
 ip_address selector_prefix(const ip_selector selector)
@@ -276,7 +309,7 @@ ip_address selector_prefix(const ip_selector selector)
 		return unset_address;
 	}
 
-	return address_from_raw(selector.version, selector.bytes);
+	return address_from_raw(HERE, selector.version, selector.bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector selector)
@@ -434,7 +467,7 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 		l.hport == r.hport);
 }
 
-void pexpect_selector(const ip_selector *s, const char *t, where_t where)
+void pexpect_selector(const ip_selector *s, where_t where)
 {
 	if (s == NULL) {
 		return;
@@ -448,8 +481,8 @@ void pexpect_selector(const ip_selector *s, const char *t, where_t where)
 	if (s->is_set == false ||
 	    s->version == 0) {
 		selector_buf b;
-		log_pexpect(where, "invalid selector: %s; "PRI_SELECTOR,
-			    t, pri_selector(s, &b));
+		log_pexpect(where, "invalid selector: "PRI_SELECTOR,
+			    pri_selector(s, &b));
 	}
 }
 

@@ -50,7 +50,7 @@ ip_address cidr_address(const ip_cidr cidr)
 		return unset_address;
 	}
 
-	return address_from_raw(cidr.version, cidr.bytes);
+	return address_from_raw(HERE, cidr.version, cidr.bytes);
 }
 
 err_t cidr_specified(const ip_cidr cidr)

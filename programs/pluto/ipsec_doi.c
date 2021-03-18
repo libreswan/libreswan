@@ -285,9 +285,9 @@ void initialize_new_state(struct state *st,
 	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint3(c->interface->protocol,
-					   &c->spd.that.host_addr,
-					   ip_hport(c->spd.that.host_port));
+	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
+								     c->interface->protocol,
+								     ip_hport(c->spd.that.host_port));
 	endpoint_buf eb;
 	dbg("in %s with remote endpoint set to %s",
 	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));

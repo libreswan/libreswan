@@ -23,27 +23,30 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
-						const struct ip_protocol *protocol,
-						ip_port port)
+ip_endpoint endpoint_from_raw(where_t where_unused UNUSED, enum ip_version version,
+			      const struct ip_bytes bytes,
+			      const struct ip_protocol *protocol,
+			      ip_port port)
 {
 	ip_endpoint endpoint = {
 		.is_set = true,
-		.version = address->version,
-		.bytes = address->bytes,
+		.version = version,
+		.bytes = bytes,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
 	};
 #if 0
-	pendpoint(&endpoint);
+	pexpect_endpoint(&endpoint, where);
 #endif
 	return endpoint;
 }
 
-ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, ip_port port)
+ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
+						const struct ip_protocol *protocol,
+						ip_port port)
 {
-	return endpoint_from_address_protocol_port(address, protocol, port);
+	return endpoint_from_raw(HERE, address.version, address.bytes,
+				 protocol, port);
 }
 
 ip_address endpoint_address(const ip_endpoint *endpoint)
@@ -54,7 +57,7 @@ ip_address endpoint_address(const ip_endpoint *endpoint)
 		return unset_address; /* empty_address? */
 	}
 
-	return address_from_raw(endpoint->version, endpoint->bytes);
+	return address_from_raw(HERE, endpoint->version, endpoint->bytes);
 }
 
 int endpoint_hport(const ip_endpoint *endpoint)
@@ -255,7 +258,7 @@ bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address ad
 	return address_eq_address(ea, address);
 }
 
-void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
+void pexpect_endpoint(const ip_endpoint *e, where_t where)
 {
 	if (e == NULL) {
 		return;
@@ -266,14 +269,26 @@ void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
 		return;
 	}
 
+        /*
+         * XXX: xfrm generates tcp acquires of the form:
+         *
+         *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
+         *
+	 * Presumably source port 0 is because the connect(?) call
+	 * specified no source port.
+	 *
+         * Until there's an ip_traffic object to wrap this up, this
+         * passert can't require a port.
+         */
+
 	const ip_protocol *protocol = endpoint_protocol(e);
 	if (e->is_set == false ||
 	    e->version == 0 ||
 	    e->ipproto == 0 ||
-	    protocol == NULL ||
-	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {
+	    protocol == NULL /* ||
+	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
 		endpoint_buf b;
-		log_pexpect(where, "invalid endpoint: %s; "PRI_ENDPOINT,
-			    s, pri_endpoint(e, &b));
+		log_pexpect(where, "invalid endpoint: "PRI_ENDPOINT,
+			    pri_endpoint(e, &b));
 	}
 }

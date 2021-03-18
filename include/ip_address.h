@@ -64,8 +64,8 @@ typedef struct {
 		(A)->version,						\
 		pri_bytes((A)->bytes)
 
-void pexpect_address(const ip_address *a, const char *t, where_t where);
-#define paddress(A) pexpect_address(A, #A, HERE)
+void pexpect_address(const ip_address *a, where_t where);
+#define paddress(A) pexpect_address(A, HERE)
 
 /*
  * Constructors.
@@ -169,7 +169,7 @@ ip_address address_from_blit(const struct ip_info *afi,
 			     unsigned prefix_bit_length);
 
 /* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
-ip_address address_from_raw(enum ip_version version,
+ip_address address_from_raw(where_t where, enum ip_version version,
 			    const struct ip_bytes bytes);
 
 /*

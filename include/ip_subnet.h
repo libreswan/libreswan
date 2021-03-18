@@ -59,14 +59,15 @@ typedef struct {
 			pri_bytes((S)->bytes),				\
 			(S)->maskbits
 
-void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
-#define psubnet(S) pexpect_subnet(S, #S, HERE)
+void pexpect_subnet(const ip_subnet *s, where_t where);
+#define psubnet(S) pexpect_subnet(S, HERE)
 
 /*
  * Constructors
  */
 
-ip_subnet subnet_from_raw(enum ip_version version, const struct ip_bytes bytes, unsigned prefix_bits);
+ip_subnet subnet_from_raw(where_t where, enum ip_version version,
+			  const struct ip_bytes bytes, unsigned prefix_bits);
 
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address address);

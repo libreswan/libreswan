@@ -32,9 +32,8 @@
 
 const ip_range unset_range; /* all zeros */
 
-static ip_range range_from_raw(enum ip_version version,
-			       const struct ip_bytes start,
-			       const struct ip_bytes end)
+ip_range range_from_raw(where_t where, enum ip_version version,
+			const struct ip_bytes start, const struct ip_bytes end)
 {
 	ip_range r = {
 		.is_set = true,
@@ -42,25 +41,8 @@ static ip_range range_from_raw(enum ip_version version,
 		.start = start,
 		.end = end,
 	};
-#if 0
-	prange(&r);
-#endif
+	pexpect_range(&r, where);
 	return r;
-}
-
-ip_range range2(const ip_address *start, const ip_address *end)
-{
- 	/* does the caller know best? */
-	const struct ip_info *afi = address_type(start);
-	if (afi == NULL) {
-		return unset_range;
-	}
-
-	if (!pexpect(afi == address_type(end))) {
-		return unset_range;
-	}
-
-	return range_from_raw(afi->ip_version, start->bytes, end->bytes);
 }
 
 /*
@@ -118,9 +100,8 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	case '\0':
 	{
 		/* single address */
-		*dst = range_from_raw(start_address.version,
-				      start_address.bytes,
-				      start_address.bytes);
+		*dst = range_from_raw(HERE, start_address.version,
+				      start_address.bytes, start_address.bytes);
 		return NULL;
 	}
 	case '/':
@@ -132,7 +113,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 			return err;
 		}
 		/* XXX: should this reject bad addresses */
-		*dst = range_from_raw(afi->ip_version,
+		*dst = range_from_raw(HERE, afi->ip_version,
 				      bytes_from_blit(afi, start_address.bytes,
 						      /*routing-prefix*/&keep_bits,
 						      /*host-identifier*/&clear_bits,
@@ -155,9 +136,8 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 		if (addrcmp(&start_address, &end_address) > 0) {
 			return "start of range must not be greater than end";
 		}
-		*dst = range_from_raw(afi->ip_version,
-				      start_address.bytes,
-				      end_address.bytes);
+		*dst = range_from_raw(HERE, afi->ip_version,
+				      start_address.bytes, end_address.bytes);
 		return NULL;
 	}
 	}
@@ -196,6 +176,22 @@ const char *str_range(const ip_range *range, range_buf *out)
 	return out->buf;
 }
 
+ip_range range_from_address(const ip_address address)
+{
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return unset_range;
+	}
+
+	if (address_eq_address(address, afi->address.any)) {
+		return afi->range.all;
+	}
+
+	return range_from_raw(HERE, address.version,
+			      address.bytes, address.bytes);
+}
+
 ip_range range_from_subnet(const ip_subnet subnet)
 {
 	const struct ip_info *afi = subnet_type(&subnet);
@@ -204,7 +200,7 @@ ip_range range_from_subnet(const ip_subnet subnet)
 		return unset_range;
 	}
 
-	return range_from_raw(afi->ip_version,
+	return range_from_raw(HERE, afi->ip_version,
 			      bytes_from_blit(afi, subnet.bytes,
 					      /*routing-prefix*/&keep_bits,
 					      /*host-identifier*/&clear_bits,
@@ -339,7 +335,7 @@ ip_address range_start(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(range.version, range.start);
+	return address_from_raw(HERE, range.version, range.start);
 }
 
 ip_address range_end(const ip_range range)
@@ -349,7 +345,7 @@ ip_address range_end(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(range.version, range.end);
+	return address_from_raw(HERE, range.version, range.end);
 }
 
 bool range_overlap(const ip_range l, const ip_range r)
@@ -401,7 +397,7 @@ err_t addresses_to_range(const ip_address start, const ip_address end,
 		return "out-of-order";
 	}
 
-	*dst = range2(&start, &end);
+	*dst = range_from_raw(HERE, start.version, start.bytes, end.bytes);
 	return NULL;
 }
 
@@ -423,7 +419,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 		return "address range is not a subnet";
 	}
 
-	*dst = subnet_from_raw(afi->ip_version, range.start, prefix_bits);
+	*dst = subnet_from_raw(HERE, afi->ip_version, range.start, prefix_bits);
 	return NULL;
 }
 
@@ -456,7 +452,7 @@ err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *addre
 		return "address overflow";
 	}
 
-	ip_address tmp = address_from_raw(range.version, sum);
+	ip_address tmp = address_from_raw(HERE, range.version, sum);
 	if (!address_in_range(tmp, range)) {
 		return "range overflow";
 	}
@@ -505,4 +501,24 @@ bool range_contains_all_addresses(const ip_range range)
 	}
 
 	return range_eq_range(range, afi->range.all);
+}
+
+void pexpect_range(const ip_range *r, where_t where)
+{
+	if (r == NULL) {
+		return;
+	}
+
+	/* more strict than is_unset() */
+	if (range_eq_range(*r, unset_range)) {
+		return;
+	}
+
+	if (r->is_set == false ||
+	    r->version == 0 ||
+	    bytes_cmp(r->version, r->start, r->version, r->end) > 0) {
+		range_buf b;
+		log_pexpect(where, "invalid range: "PRI_RANGE,
+			    pri_range(r, &b));
+	}
 }

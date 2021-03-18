@@ -66,7 +66,7 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 	default:
 		return "unexpected Address Family";
 	}
-	*e = endpoint_from_address_protocol_port(&address, protocol, port);
+	*e = endpoint_from_address_protocol_port(address, protocol, port);
 	return NULL;
 }
 

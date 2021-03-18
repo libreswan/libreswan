@@ -75,8 +75,8 @@ typedef struct {
 		(S)->ipproto,			\
 		(S)->hport
 
-void pexpect_selector(const ip_selector *s, const char *t, where_t where);
-#define pselector(S) pexpect_selector(S, #S, HERE)
+void pexpect_selector(const ip_selector *s, where_t where);
+#define pselector(S) pexpect_selector(S, HERE)
 
 ip_selector selector_from_address(const ip_address address);
 ip_selector selector_from_address_protocol(const ip_address address,

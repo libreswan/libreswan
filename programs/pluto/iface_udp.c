@@ -161,8 +161,9 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_udp,
-					    &ifd->id_address, port);
+	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+								      &ip_protocol_udp,
+								      port);
 	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;

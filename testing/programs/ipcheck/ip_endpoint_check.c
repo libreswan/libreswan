@@ -80,7 +80,7 @@ void ip_endpoint_check()
 		}
 
 		const ip_protocol *protocol = t->hport == 0 ? &ip_protocol_unset : &ip_protocol_udp;
-		ip_endpoint e = endpoint_from_address_protocol_port(&a, protocol,
+		ip_endpoint e = endpoint_from_address_protocol_port(a, protocol,
 								    ip_hport(t->hport));
 
 		CHECK_TYPE(endpoint_type(&e));

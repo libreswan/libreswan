@@ -31,10 +31,23 @@ typedef struct {
 	struct ip_bytes end;
 } ip_range;
 
+#define PRI_RANGE "%s is_set=%s version=%d start="PRI_BYTES" end="PRI_BYTES
+#define pri_range(R, B)				\
+	str_range(R, B),			\
+		bool_str((R)->is_set),		\
+		(R)->version,			\
+		pri_bytes((R)->start),		\
+		pri_bytes((R)->end)
+
+void pexpect_range(const ip_range *r, where_t where);
+#define prange(R) pexpect_range(R, HERE)
+
 /* caller knows best */
-ip_range range2(const ip_address *start, const ip_address *end);
+ip_range range_from_raw(where_t where, enum ip_version version,
+			const struct ip_bytes start, const struct ip_bytes end);
 
 ip_range range_from_subnet(const ip_subnet subnet);
+ip_range range_from_address(const ip_address subnet);
 
 err_t addresses_to_range(const ip_address start, const ip_address end,
 			 ip_range *dst) MUST_USE_RESULT;
@@ -88,7 +101,6 @@ bool range_eq_address(const ip_range range, const ip_address address);
 bool range_in_range(const ip_range inner, const ip_range outer);
 bool address_in_range(const ip_address address, const ip_range range);
 bool range_overlap(const ip_range l, const ip_range r);
-
 
 /*
  * Calculate the number of significant bits in the size of the range.

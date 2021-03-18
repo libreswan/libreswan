@@ -25,8 +25,8 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-ip_subnet subnet_from_raw(enum ip_version version, const struct ip_bytes bytes,
-			  unsigned prefix_bits)
+ip_subnet subnet_from_raw(where_t where, enum ip_version version,
+			  const struct ip_bytes bytes, unsigned prefix_bits)
 {
 	ip_subnet s = {
 		.is_set = true,
@@ -34,7 +34,7 @@ ip_subnet subnet_from_raw(enum ip_version version, const struct ip_bytes bytes,
 		.bytes = bytes,
 		.maskbits = prefix_bits,
 	};
-	psubnet(&s);
+	pexpect_subnet(&s, where);
 	return s;
 }
 
@@ -43,7 +43,7 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned pre
 	if (address_is_unset(&address)) {
 		return unset_subnet;
 	}
-	return subnet_from_raw(address.version, address.bytes, prefix_bits);
+	return subnet_from_raw(HERE, address.version, address.bytes, prefix_bits);
 }
 
 ip_subnet subnet_from_address(const ip_address address)
@@ -223,7 +223,7 @@ const char *str_subnet(const ip_subnet *subnet, subnet_buf *out)
 	return out->buf;
 }
 
-void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
+void pexpect_subnet(const ip_subnet *s, where_t where)
 {
 	if (s == NULL) {
 		return;
@@ -237,8 +237,8 @@ void pexpect_subnet(const ip_subnet *s, const char *t, where_t where)
 	if (s->is_set == false ||
 	    s->version == 0) {
 		subnet_buf b;
-		log_pexpect(where, "invalid subnet: %s; "PRI_SUBNET,
-			    t, pri_subnet(s, &b));
+		log_pexpect(where, "invalid subnet: "PRI_SUBNET,
+			    pri_subnet(s, &b));
 	}
 }
 

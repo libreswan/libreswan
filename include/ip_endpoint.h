@@ -61,18 +61,21 @@ typedef struct {
 		(A)->ipproto,						\
 		(A)->hport
 
-void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
-#define pendpoint(E) pexpect_endpoint(E, #E, HERE)
+void pexpect_endpoint(const ip_endpoint *e, where_t where);
+#define pendpoint(E) pexpect_endpoint(E, HERE)
 
 /*
  * Constructors.
  */
 
-ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
+ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
+			      const struct ip_bytes bytes,
+			      const struct ip_protocol *protocol,
+			      ip_port port);
+
+ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
 						const struct ip_protocol *protocol,
 						ip_port port);
-ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, ip_port port);
 
 /*
  * Formatting
