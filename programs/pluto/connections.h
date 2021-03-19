@@ -438,9 +438,6 @@ struct connection {
 	const struct config_end *local, *remote;
 };
 
-#define oriented(c) ((c).interface != NULL)
-extern bool orient(struct connection *c);
-
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d, const struct id *peers_id);
 

@@ -94,6 +94,7 @@
 #include "nss_cert_reread.h"
 #include "send.h"			/* for impair: send_keepalive() */
 #include "pluto_shutdown.h"		/* for shutdown_pluto() */
+#include "orient.h"
 
 static struct state *find_impaired_state(unsigned biased_what,
 					 struct logger *logger)

@@ -81,6 +81,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
+#include "orient.h"
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,

@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h> /* PATH_MAX */
+#include <errno.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -39,8 +40,7 @@
 #include "whack.h"
 #include "ip_info.h"
 #include "ip_selector.h"
-
-#include <errno.h>
+#include "orient.h"
 
 /* Groups is a list of connections that are policy groups.
  * The list is updated as group connections are added and deleted.

@@ -87,6 +87,7 @@
 #include <blapit.h>
 #include "crypt_dh.h"
 #include "unpack.h"
+#include "orient.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"

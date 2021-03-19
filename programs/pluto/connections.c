@@ -90,6 +90,7 @@
 #include "ip_selector.h"
 #include "nss_cert_reread.h"
 #include "security_selinux.h"
+#include "orient.h"
 
 struct connection *connections = NULL;
 

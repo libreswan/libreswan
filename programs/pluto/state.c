@@ -60,6 +60,7 @@
 #include "revival.h"
 #include "ikev1.h"		/* for send_v1_delete() */
 #include "ikev2_delete.h"	/* for record_v2_delete() */
+#include "orient.h"
 
 bool uniqueIDs = FALSE;
 
