@@ -77,7 +77,7 @@
 #include "nss_cert_load.h"
 #include "ikev2.h"
 #include "virtual_ip.h"	/* needs connections.h */
-#include "hostpair.h"
+#include "host_pair.h"
 #include "lswfips.h"
 #include "crypto.h"
 #include "kernel_xfrm.h"

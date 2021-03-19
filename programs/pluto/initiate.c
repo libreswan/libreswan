@@ -34,7 +34,7 @@
 #include "log.h"
 #include "ikev1_spdb.h"		/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "state_db.h"
 #include "orient.h"
 

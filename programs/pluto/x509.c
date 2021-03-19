@@ -60,7 +60,7 @@
 #include "state.h"
 #include "whack.h"
 #include "fetch.h"
-#include "hostpair.h" 		/* for FOR_EACH_HOST_PAIR_CONNECTION() */
+#include "host_pair.h" 		/* for FOR_EACH_HOST_PAIR_CONNECTION() */
 #include "secrets.h"
 #include "ip_address.h"
 #include "ikev2_message.h"	/* for build_ikev2_critical() */

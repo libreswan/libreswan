@@ -23,6 +23,11 @@
 
 #include "monotime.h"
 #include "fd.h"
+#include "lset.h"
+#include "chunk.h"
+
+struct state;
+struct show;
 
 /*
  * struct pending, the structure representing IPsec SA negotiations

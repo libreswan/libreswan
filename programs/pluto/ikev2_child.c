@@ -51,7 +51,7 @@
 #include "server.h"
 #include "vendor.h"
 #include "kernel.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "addresspool.h"
 #include "rnd.h"
 #include "ip_address.h"

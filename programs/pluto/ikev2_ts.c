@@ -30,7 +30,7 @@
 #include "connections.h"	/* for struct end */
 #include "demux.h"
 #include "virtual_ip.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "security_selinux.h"

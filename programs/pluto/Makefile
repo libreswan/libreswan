@@ -194,7 +194,8 @@ OBJS += iface.o
 OBJS += iface_udp.o
 OBJS += iface_tcp.o
 OBJS += hash_table.o list_entry.o
-OBJS += timer.o hostpair.o
+OBJS += timer.o
+OBJS += host_pair.o ikev1_host_pair.o ikev2_host_pair.o
 OBJS += retry.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)

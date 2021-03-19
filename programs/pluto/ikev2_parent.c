@@ -72,7 +72,7 @@
 #include "crypt_prf.h"
 #include "ietf_constants.h"
 #include "ip_address.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "send.h"
 #include "ikev2_send.h"
 #include "pluto_stats.h"

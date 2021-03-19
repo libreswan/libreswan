@@ -63,7 +63,7 @@
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"
@@ -94,6 +94,7 @@
 # include "kernel_xfrm_interface.h"
 #endif
 #include "unpack.h"
+#include "ikev1_host_pair.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -451,7 +452,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* random source ports are handled by find_host_connection */
-	c = find_v1_host_connection(md->iface->local_endpoint, md->sender,
+	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+				    endpoint_address(md->sender),
 				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
 
 	if (c == NULL) {
@@ -476,8 +478,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_v1_host_connection(md->iface->local_endpoint,
-								       unset_endpoint, policy,
+			struct connection *d = find_v1_host_connection(md->iface->ip_dev->id_address,
+								       unset_address, policy,
 								       POLICY_XAUTH | POLICY_AGGRESSIVE,
 								       NULL /* peer ID not known yet */);
 
@@ -504,9 +506,9 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 						c = d;
 					}
 				}
-				d = find_next_host_connection(IKEv1, d->hp_next,
-							      policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
-							      NULL /* peer ID not known yet */);
+				d = find_next_v1_host_connection(d->hp_next,
+								 policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
+								 NULL /* peer ID not known yet */);
 			}
 		}
 

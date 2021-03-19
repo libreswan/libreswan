@@ -154,7 +154,7 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ip_address.h"
 #include "ikev1_hash.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */

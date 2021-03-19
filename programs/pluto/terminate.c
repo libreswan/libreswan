@@ -58,7 +58,7 @@
 #include "nat_traversal.h"
 
 
-#include "hostpair.h"
+#include "host_pair.h"
 
 static int terminate_a_connection(struct connection *c, struct fd *whackfd,
 				  void *unused_arg UNUSED)

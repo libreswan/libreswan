@@ -34,7 +34,7 @@
 
 #include "iface.h"
 #include "log.h"
-#include "hostpair.h"			/* for release_dead_interfaces() */
+#include "host_pair.h"			/* for release_dead_interfaces() */
 #include "state.h"			/* for delete_states_dead_interfaces() */
 #include "server.h"			/* for *_pluto_event() */
 #include "kernel.h"

@@ -49,7 +49,7 @@
 #include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
 #include "crypt_dh.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "kernel.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"

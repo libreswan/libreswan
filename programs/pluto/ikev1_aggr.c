@@ -40,7 +40,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "fd.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ikev1_message.h"
 #include "pending.h"
 #include "iface.h"
@@ -51,6 +51,7 @@
 # include "kernel_xfrm_interface.h"
 #endif
 #include "unpack.h"
+#include "ikev1_host_pair.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -145,11 +146,12 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_host_connection(md->iface->local_endpoint,
-						       md->sender, policy, policy_exact_mask, ppeer_id);
+	struct connection *c = find_v1_host_connection(md->iface->ip_dev->id_address,
+						       endpoint_address(md->sender),
+						       policy, policy_exact_mask, ppeer_id);
 
 	if (c == NULL) {
-		c = find_v1_host_connection(md->iface->local_endpoint, unset_endpoint,
+		c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
 					    policy, policy_exact_mask, ppeer_id);
 		if (c == NULL) {
 			endpoint_buf b;
