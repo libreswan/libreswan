@@ -1206,6 +1206,9 @@ kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		good
 kvmplutotest	ikev2-tcp-04-ikeport				wip
+kvmplutotest	ikev2-tcp-05-transport-mode			good
+kvmplutotest	ikev2-tcp-06-failtest				wip
+kvmplutotest	ikev2-tcp-07-failtest-ke			wip
 kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
