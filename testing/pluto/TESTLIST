@@ -803,6 +803,7 @@ kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 #
 kvmplutotest	aggr-pluto-01		good
 kvmplutotest	aggr-pluto-02		good
+kvmplutotest	aggr-pluto-03-dual-nat	good
 kvmplutotest	aggr-pluto-04		good
 
 # Various algo tests
