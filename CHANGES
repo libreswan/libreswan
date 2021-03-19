@@ -6,6 +6,7 @@ v4.4 (unreleased)
 * IKEv2: Fixes to Labeled IPsec policies [Kavinda Wewegama/Paul]
 * IKEv2: Add redirect statistics to whack --globalstatus [Clive Zagno]
 * IKEv2: Connections would not always switch when needed [Andrew/Paul]
+* pluto: Use peer ID (IKEv2 IDr, IKEv1 Aggr) to select best initial conn [Paul]
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
 * contrib/munin: update plugin to use python3 and update doc header [Tuomo]
