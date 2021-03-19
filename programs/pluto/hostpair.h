@@ -25,6 +25,7 @@
 #ifndef HOST_PAIR_H
 #define HOST_PAIR_H /* XXX: file needs a rename */
 
+#include "id.h"
 #include "list_entry.h"
 
 struct host_pair {
@@ -63,12 +64,14 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md,
 
 struct connection *find_next_host_connection(enum ike_version ike_version,
 					     struct connection *c,
-					     lset_t req_policy, lset_t policy_exact_mask);
+					     lset_t req_policy, lset_t policy_exact_mask,
+					     const struct id *peer_id);
 
 struct connection *find_v1_host_connection(const ip_endpoint local_endpoint/*port-ignored*/,
 					   const ip_endpoint remote_endpoint/*port-ignored*/,
 					   lset_t req_policy,
-					   lset_t policy_exact_mask);
+					   lset_t policy_exact_mask,
+					   const struct id *peer_id);
 
 struct connection *next_host_pair_connection(const ip_address local,
 					     const ip_address remote,

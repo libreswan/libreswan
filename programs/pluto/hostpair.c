@@ -64,7 +64,7 @@
 #include "ip_info.h"
 #include "hash_table.h"
 #include "iface.h"
-
+#include "unpack.h"
 
 #include "hostpair.h"
 
@@ -604,7 +604,8 @@ void check_orientations(void)
 static struct connection *find_host_connection(enum ike_version ike_version,
 					       const ip_address local_address,
 					       const ip_address remote_address,
-					       lset_t req_policy, lset_t policy_exact_mask)
+					       lset_t req_policy, lset_t policy_exact_mask,
+					       const struct id *peer_id)
 {
 	address_buf lb;
 	address_buf rb;
@@ -622,7 +623,7 @@ static struct connection *find_host_connection(enum ike_version ike_version,
 
 	/* XXX: don't be fooled by "next", the search includes hp->connections */
 	struct connection *c = find_next_host_connection(ike_version, hp->connections,
-							 req_policy, policy_exact_mask);
+							 req_policy, policy_exact_mask, peer_id);
 	/*
 	 * This could be a shared IKE SA connection, in which case
 	 * we prefer to find the connection that has the IKE SA
@@ -634,7 +635,7 @@ static struct connection *find_host_connection(enum ike_version ike_version,
 	for (struct connection *candidate = c;
 	     candidate != NULL;
 	     candidate = find_next_host_connection(ike_version, candidate->hp_next,
-						   req_policy, policy_exact_mask)) {
+						   req_policy, policy_exact_mask, peer_id)) {
 		if (candidate->newest_isakmp_sa != SOS_NOBODY)
 			return candidate;
 	}
@@ -644,7 +645,8 @@ static struct connection *find_host_connection(enum ike_version ike_version,
 
 struct connection *find_next_host_connection(enum ike_version ike_version,
 					     struct connection *c,
-					     lset_t req_policy, lset_t policy_exact_mask)
+					     lset_t req_policy, lset_t policy_exact_mask,
+					     const struct id *peer_id)
 {
 	policy_buf pb;
 	dbg("find_next_host_connection policy=%s",
@@ -694,6 +696,11 @@ struct connection *find_next_host_connection(enum ike_version ike_version,
 		if ((req_policy ^ c->policy) & policy_exact_mask)
 			continue;
 
+		if (peer_id != NULL && !same_id(peer_id, &c->spd.that.id) &&
+			(c->spd.that.id.kind != ID_FROMCERT && !any_id(&c->spd.that.id))) {
+				continue; /* incompatible ID */
+		}
+
 		/*
 		 * Success if all specified policy bits are in candidate's policy.
 		 * It works even when the exact-match bits are included.
@@ -720,13 +727,29 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 {
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
+        struct id peer_id;
+	struct id *ppeer_id = NULL;
+
+	struct payload_digest *const pl_id_peer = md->chain[ISAKMP_NEXT_v2IDi];
+	if (pl_id_peer == NULL) {
+                dbg("IKEv2 no peer ID received");
+	} else {
+		enum ike_id_type hik = pl_id_peer->payload.v2id.isai_type; /* Peers Id Kind */
+		diag_t d = unpack_peer_id(hik, &peer_id, &pl_id_peer->pbs);
+		if (d != NULL) {
+			dbg("IKEv2 mode peer ID extraction failed - ignored peer ID for connection lookup");
+		} else {
+			ppeer_id = &peer_id;
+		}
+	}
+
 	/* just the adddress */
 	ip_address local_address = endpoint_address(*local_endpoint);
 	ip_address remote_address = endpoint_address(*remote_endpoint);
 
 	struct connection *c = find_host_connection(IKEv2, local_address,
 						    remote_address,
-						    policy, LEMPTY);
+						    policy, LEMPTY, ppeer_id);
 	if (c == NULL) {
 		/*
 		 * See if a wildcarded connection can be found.  We
@@ -741,8 +764,8 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		 */
 		for (struct connection *d = find_host_connection(IKEv2, local_address,
 								 unset_address,
-								 policy, LEMPTY);
-		     d != NULL; d = find_next_host_connection(IKEv2, d->hp_next, policy, LEMPTY)) {
+								 policy, LEMPTY, ppeer_id);
+		     d != NULL; d = find_next_host_connection(IKEv2, d->hp_next, policy, LEMPTY, ppeer_id)) {
 			if (d->kind == CK_GROUP) {
 				continue;
 			}
@@ -842,12 +865,13 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 
 struct connection *find_v1_host_connection(const ip_endpoint local_endpoint,
 					   const ip_endpoint remote_endpoint,
-					   lset_t req_policy, lset_t policy_exact_mask)
+					   lset_t req_policy, lset_t policy_exact_mask,
+					   const struct id *peer_id)
 {
 	return find_host_connection(IKEv1,
 				    endpoint_address(local_endpoint),
 				    endpoint_address(remote_endpoint),
-				    req_policy, policy_exact_mask);
+				    req_policy, policy_exact_mask, peer_id);
 }
 
 struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *policy,

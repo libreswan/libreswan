@@ -452,7 +452,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* random source ports are handled by find_host_connection */
 	c = find_v1_host_connection(md->iface->local_endpoint, md->sender,
-				    LEMPTY, POLICY_AGGRESSIVE);
+				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
 
 	if (c == NULL) {
 		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
@@ -478,7 +478,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		{
 			struct connection *d = find_v1_host_connection(md->iface->local_endpoint,
 								       unset_endpoint, policy,
-								       POLICY_XAUTH | POLICY_AGGRESSIVE);
+								       POLICY_XAUTH | POLICY_AGGRESSIVE,
+								       NULL /* peer ID not known yet */);
 
 			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
@@ -504,7 +505,8 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 					}
 				}
 				d = find_next_host_connection(IKEv1, d->hp_next,
-							      policy, POLICY_XAUTH | POLICY_AGGRESSIVE);
+							      policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
+							      NULL /* peer ID not known yet */);
 			}
 		}
 

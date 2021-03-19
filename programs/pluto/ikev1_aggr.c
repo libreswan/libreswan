@@ -133,12 +133,24 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) | POLICY_AGGRESSIVE;
 	const lset_t policy_exact_mask = POLICY_XAUTH | POLICY_AGGRESSIVE;
 
+	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const struct isakmp_id *const id = &id_pld->payload.id;
+	struct id peer_id;
+	struct id *ppeer_id = NULL;
+
+	diag_t d = unpack_peer_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
+	if (d != NULL) {
+		dbg("IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
+        } else {
+		ppeer_id = &peer_id;
+	}
+
 	struct connection *c = find_v1_host_connection(md->iface->local_endpoint,
-						       md->sender, policy, policy_exact_mask);
+						       md->sender, policy, policy_exact_mask, ppeer_id);
 
 	if (c == NULL) {
 		c = find_v1_host_connection(md->iface->local_endpoint, unset_endpoint,
-					    policy, policy_exact_mask);
+					    policy, policy_exact_mask, ppeer_id);
 		if (c == NULL) {
 			endpoint_buf b;
 			policy_buf pb;
