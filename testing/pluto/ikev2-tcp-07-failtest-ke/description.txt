@@ -1,0 +1,3 @@
+Test that IKE failure on KE size required new IKE_INIT message works
+
+
