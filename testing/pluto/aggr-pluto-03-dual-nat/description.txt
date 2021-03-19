@@ -1,0 +1,7 @@
+Test Aggressive mode with PSK with two endpoints behind the same NAT.
+They use different PSKs and different subnets. Both should be able to
+connect to east.
+
+We simulate two behind nat by simply deleting first start without sending
+deletes on road
+
