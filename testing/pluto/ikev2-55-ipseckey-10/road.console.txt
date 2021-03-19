@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep
 road #
  ipsec start
-Redirecting to: systemctl start ipsec.service
+Redirecting to: [initsystem]
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec auto --add road-east-ikev2
-002 "road-east-ikev2": added IKEv2 connection
+ ipsec auto --add road-east
+002 "road-east": added IKEv2 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #

@@ -40,7 +40,7 @@ road #
 036 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.67 #2: encountered fatal error in state STATE_PARENT_I2
 road #
  grep "DNS QUESTION" /tmp/pluto.log
-| DNS QUESTION 67.2.1.192.IN-ADDR.ARPA.\011IN\011IPSECKEY\012
+| DNS QUESTION 67.2.1.192.IN-ADDR.ARPA.\tIN\tIPSECKEY\n
 road #
  # should show large set of keys in pluto cache from IPSECKEY records
 road #
