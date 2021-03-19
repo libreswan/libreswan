@@ -81,10 +81,14 @@
 static void swap_ends(struct connection *c)
 {
 	struct spd_route *sr = &c->spd;
-	struct end t = sr->this;
+	struct end this = sr->this;
 
 	sr->this = sr->that;
-	sr->that = t;
+	sr->that = this;
+
+	const struct config_end *local = c->local;
+	c->local = c->remote;
+	c->remote = local;
 
 	/*
 	 * In case of asymmetric auth c->policy contains left.authby.
@@ -120,7 +124,7 @@ static void swap_ends(struct connection *c)
 static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, bool this)
 {
 	struct end *end = (this ? &c->spd.this : &c->spd.that);
-	if (end->raw.host.ikeport == 0) {
+	if (end->config->host.ikeport == 0) {
 		return false;
 	}
 	if (address_is_unset(&end->host_addr)) {
@@ -141,7 +145,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, 
 	 */
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct iface_endpoint *ifp = bind_iface_endpoint(dev, &udp_iface_io,
-							 ip_hport(end->raw.host.ikeport),
+							 ip_hport(end->config->host.ikeport),
 							 true/*esp_encapsulation_enabled*/,
 							 false/*float_nat_initiator*/,
 							 logger);
@@ -195,11 +199,11 @@ bool orient(struct connection *c)
 	dbg("  %s(THIS) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
 	    c->spd.this.leftright, str_address(&c->spd.this.host_addr, &ab),
 	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)),
-	    c->spd.this.raw.host.ikeport, bool_str(c->spd.this.host_encap));
+	    c->local->host.ikeport, bool_str(c->spd.this.host_encap));
 	dbg("  %s(THAT) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
 	    c->spd.that.leftright, str_address(&c->spd.that.host_addr, &ab),
 	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
-	    c->spd.that.raw.host.ikeport, bool_str(c->spd.that.host_encap));
+	    c->remote->host.ikeport, bool_str(c->spd.that.host_encap));
 	set_policy_prio(c); /* for updates */
 	bool swap = false;
 	for (const struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {

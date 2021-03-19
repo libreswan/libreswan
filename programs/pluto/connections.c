@@ -348,13 +348,13 @@ void delete_every_connection(void)
 ip_port end_host_port(const struct end *end, const struct end *other)
 {
 	unsigned port;
-	if (end->raw.host.ikeport != 0) {
+	if (end->config->host.ikeport != 0) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
-		port = end->raw.host.ikeport;
-	} else if (other->raw.host.ikeport != 0) {
+		port = end->config->host.ikeport;
+	} else if (other->config->host.ikeport != 0) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -427,7 +427,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * specified protoport; merge that.
 		 */
 		this->client = selector_from_address_protoport(this->host_addr,
-							       this->raw.client.protoport);
+							       this->config->client.protoport);
 	}
 
 	if (this->sendcert == 0) {
@@ -501,7 +501,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	 * "non-zero", a non-IKE_UDP_PORT; and when zero, any non-zero
 	 * port.
 	 */
-	if (dohost_port ? (this->raw.host.ikeport != 0 || this->host_port != IKE_UDP_PORT) :
+	if (dohost_port ? (this->config->host.ikeport != 0 || this->host_port != IKE_UDP_PORT) :
 	    this->host_port != 0) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
@@ -752,12 +752,46 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(struct end *dst,
+static int extract_end(struct connection *c,
 		       const struct whack_end *src,
-		       const char *leftright,
+		       enum left_right end_index,
 		       struct logger *logger/*connection "..."*/)
 {
+	/*
+	 * Since at this point 'this' and 'that' are disoriented their
+	 * names are pretty much meaningless.  Hence the strange
+	 * combination if 'this' and 'left' and 'that' and 'right.
+	 *
+	 * XXX: This is all too confusing - wouldn't it be simpler if
+	 * there was a '.left' and '.right' (or even .end[2] - this
+	 * code seems to be crying out for a for loop) and then having
+	 * orient() set up .local and .remote pointers or indexes
+	 * accordingly?
+	 */
+
+	struct config_end *config = &c->config[end_index];
+	config->end_index = end_index;
+	struct end *dst;
+	const char *leftright;
+	switch (end_index) {
+	case LEFT_END:
+		/* start with: LEFT == LOCAL == THIS */
+		leftright = "left";
+		dst = &c->spd.this;
+		c->local = config;
+		break;
+	case RIGHT_END:
+		/* start with: RIGHT == REMOTE == THAT */
+		leftright = "right";
+		dst = &c->spd.that;
+		c->remote = config;
+		break;
+	default:
+		bad_case(end_index);
+	}
+	dst->config = config;
 	dst->leftright = leftright;
+	config->end_name = leftright;
 
 	bool same_ca = 0;
 
@@ -976,8 +1010,8 @@ static int extract_end(struct end *dst,
 	dst->authby = src->authby;
 
 	/* save some defaults */
-	dst->raw.client.subnet = src->client;
-	dst->raw.client.protoport = src->protoport;
+	config->client.subnet = src->client;
+	config->client.protoport = src->protoport;
 
 	/*
 	 * .has_client means that .client contains a hardwired value,
@@ -999,12 +1033,12 @@ static int extract_end(struct end *dst,
 	dst->updown = clone_str(src->updown, "updown");
 	dst->sendcert =  src->sendcert;
 
-	dst->raw.host.ikeport = src->host_ikeport;
+	config->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		llog(RC_BADID, logger,
 			    "%sikeport=%u must be between 1..65535, ignored",
 			    leftright, src->host_ikeport);
-		dst->raw.host.ikeport = 0;
+		config->host.ikeport = 0;
 	}
 
 	/*
@@ -1832,11 +1866,11 @@ static bool extract_connection(const struct whack_message *wm,
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(&c->spd.this, &wm->left, "left", c->logger);
+	int same_leftca = extract_end(c, &wm->left, LEFT_END, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
-	int same_rightca = extract_end(&c->spd.that, &wm->right, "right", c->logger);
+	int same_rightca = extract_end(c, &wm->right, RIGHT_END, c->logger);
 	if (same_rightca < 0) {
 		return false;
 	}

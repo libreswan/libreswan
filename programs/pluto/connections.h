@@ -162,7 +162,7 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 struct host_pair;	/* opaque type */
 
 struct end {
-	const char *leftright;
+	const char *leftright; /* redundant .config->end_name */
 	struct id id;
 
 	enum keyword_host host_type;
@@ -178,16 +178,14 @@ struct end {
 
 	ip_selector client;
 
-	/* original information from whack */
-	struct {
-		struct {
-			ip_subnet subnet;
-			ip_protoport protoport;
-		} client;
-		struct {
-			unsigned ikeport;
-		} host;
-	} raw;
+	/*
+	 * An extract of the original configuration information for
+	 * the connection's end sent over by whack.
+	 *
+	 * Danger: for a connection instance, this point into the
+	 * parent connection.
+	 */
+	const struct config_end *config;
 
 	chunk_t sec_label;
 	bool key_from_DNS_on_demand;
@@ -417,6 +415,27 @@ struct connection {
 
 	struct list_entry serialno_list_entry;
 	struct list_entry hash_table_entries[CONNECTION_HASH_TABLES_ROOF];
+
+	/*
+	 * An extract of the original configuration information for
+	 * the connection's end sent over by whack.
+	 */
+	struct config_end {
+		const char *end_name;
+		enum left_right { LEFT_END, RIGHT_END, } end_index;
+		struct {
+			ip_subnet subnet;
+			ip_protoport protoport;
+		} client;
+		struct {
+			unsigned ikeport;
+		} host;
+	} config[2];
+	/*
+	 * Danger: for a connection instance, these point into the
+	 * parent connection.
+	 */
+	const struct config_end *local, *remote;
 };
 
 #define oriented(c) ((c).interface != NULL)
