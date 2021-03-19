@@ -134,6 +134,13 @@ enum {
 		memeq(l_, r_, sizeof(L));				\
 	})
 
+/* Remember, THING 1 and THING 2 are inseparable */
+#define FOR_EACH_THING(THING, THING1, THING2, ...)			\
+	for (typeof(THING1) things_[] = { THING1, THING2, ##__VA_ARGS__ }, \
+		     *thingp_ = things_, THING;				\
+	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
+	     thingp_++)
+
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
  * If termination isn't required, strncpy would do.
