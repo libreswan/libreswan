@@ -1,10 +1,4 @@
-# once unbound work properly replace the next lines
-sed -i 's/5353/53/' /etc/nsd/nsd.conf
-# /testing/guestbin/swan-prep --dnssec
 setenforce Permissive
-systemctl start nsd-keygen
-systemctl start nsd
-dig +short @127.0.0.1  west.testing.libreswan.org
-dig +short @127.0.0.1  east.testing.libreswan.org
+../../pluto/bin/start-dns.sh
 echo done
 : ==== end ====
