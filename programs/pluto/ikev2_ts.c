@@ -1125,13 +1125,9 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 
 	dbg("looking for better host pair");
-	for (unsigned rpass = 0; rpass < 2; rpass++) {
-		/*
-		 * First time through, look for local:remote, the
-		 * second time local:<unset>.
-		 */
-		const ip_address local = md->iface->ip_dev->id_address;
-		const ip_address remote = (rpass == 0 ? endpoint_address(md->sender) : unset_address);
+
+	const ip_address local = md->iface->ip_dev->id_address;
+	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
 
 		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
