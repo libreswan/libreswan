@@ -190,4 +190,16 @@ extern bool use_dns;
 			}						\
 		}
 
+#define CHECK_UNOP(T, OP, PRI, STR)					\
+		if (T != NULL) {					\
+			typeof(t->OP) op = T##_##OP(*T);		\
+			if (op != t->OP) {				\
+				T##_buf b;				\
+				FAIL(#T "_" #OP "(%s) returned "PRI", expecting "PRI, \
+				     str_##T(T, &b),			\
+				     STR(op),				\
+				     STR(t->OP));			\
+			}						\
+		}
+
 #endif

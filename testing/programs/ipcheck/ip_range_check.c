@@ -433,23 +433,24 @@ static void check_range_from_subnet(struct logger *logger)
 	}
 }
 
-static void check_range_op(void)
+static void check_range_is(void)
 {
 	static const struct test {
 		int line;
 		int family;
 		const char *lo;
 		const char *hi;
+		const char *str;
 		bool is_unset;
-		bool is_specified;
+		uintmax_t size;
 	} tests[] = {
-		{ LN, 0, "", "",                .is_unset = true, },
+		{ LN, 0, "", "",                "<unset-range>", .is_unset = true, },
 
-		{ LN, 4, "0.0.0.0", "0.0.0.0",  .is_specified = false, },
-		{ LN, 4, "0.0.0.1", "0.0.0.2",  .is_specified = true, },
+		{ LN, 4, "0.0.0.0", "0.0.0.0",  "0.0.0.0-0.0.0.0", .size = 1, },
+		{ LN, 4, "0.0.0.1", "0.0.0.2",  "0.0.0.1-0.0.0.2", .size = 2, },
 
-		{ LN, 6, "::", "::",            .is_specified = false, },
-		{ LN, 6, "::1", "::2",          .is_specified = true, },
+		{ LN, 6, "::", "::",            "::-::", .size = 1, },
+		{ LN, 6, "::1", "::2",          "::1-::2", .size = 2, },
 	};
 
 	const char *oops;
@@ -484,13 +485,13 @@ static void check_range_op(void)
 				range_from_raw(HERE, lo.version, lo.bytes, hi.bytes));
 		ip_range *range = &tmp;
 		CHECK_TYPE(range);
-
+		CHECK_STR2(range);
 		CHECK_COND(range, is_unset);
-		CHECK_COND2(range, is_specified);
+		CHECK_UNOP(range, size, "%ju", );
 	}
 }
 
-static void check_range_op2(void)
+static void check_range_op_range(void)
 {
 	static const struct test {
 		int line;
@@ -694,8 +695,8 @@ void ip_range_check(struct logger *logger)
 	check_iprange_bits();
 	check_ttorange__to__str_range();
 	check_range_from_subnet(logger);
-	check_range_op();
-	check_range_op2();
+	check_range_is();
+	check_range_op_range();
 	check_range_to_address();
 	check_range_to_offset();
 }

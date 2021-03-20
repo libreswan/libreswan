@@ -436,8 +436,8 @@ bool address_in_selector_subnet(const ip_address address, const ip_selector sele
 		return false;
 	}
 
-	ip_range range = selector_range(selector);
-	return address_in_range(address, range);
+	ip_subnet subnet = selector_subnet(selector);
+	return address_in_subnet(address, subnet);
 }
 
 bool endpoint_in_selector(const ip_endpoint endpoint, const ip_selector selector)

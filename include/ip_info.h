@@ -40,14 +40,10 @@ struct ip_info {
 	} subnet;
 
 	/*
-	 * ip_subnet.
-	 *
-	 * none: the unspecified range - matches no addresses
-	 *
-	 * (if nothing else, used for edge case testing)
+	 * ip_range.
 	 */
 	struct {
-		const ip_range none;
+		const ip_range zero;
 		const ip_range all;
 	} range;
 

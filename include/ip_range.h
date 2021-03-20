@@ -46,8 +46,8 @@ void pexpect_range(const ip_range *r, where_t where);
 ip_range range_from_raw(where_t where, enum ip_version version,
 			const struct ip_bytes start, const struct ip_bytes end);
 
-ip_range range_from_subnet(const ip_subnet subnet);
 ip_range range_from_address(const ip_address subnet);
+ip_range range_from_subnet(const ip_subnet subnet);
 
 err_t addresses_to_range(const ip_address start, const ip_address end,
 			 ip_range *dst) MUST_USE_RESULT;
@@ -81,25 +81,22 @@ const char *str_range(const ip_range *range, range_buf *buf);
 
 extern const ip_range unset_range;
 
-bool range_is_unset(const ip_range *r);
+bool range_is_unset(const ip_range *r);			/* handles NULL */
+const struct ip_info *range_type(const ip_range *r);	/* handles NULL */
+/* range_is_specified(R) range_size(R) > 0 */
 
-const struct ip_info *range_type(const ip_range *r);
-
-bool range_is_specified(const ip_range r);
-
-#if 0
-bool range_contains_no_addresses(const ip_range r);
-bool range_contains_one_address(const ip_range r);
-#endif
+/* range_contains_no_addresses(R) range_size(R) == 0 */
+/* range_contains_one_address(R) range_size(R) == 1 */
 bool range_contains_all_addresses(const ip_range r);
 
-bool range_eq_range(const ip_range l, const ip_range r);
-#if 0
-bool range_eq_subnet(const ip_range range, const ip_subnet subnet);
 bool range_eq_address(const ip_range range, const ip_address address);
-#endif
-bool range_in_range(const ip_range inner, const ip_range outer);
+bool range_eq_subnet(const ip_range range, const ip_subnet subnet);
+bool range_eq_range(const ip_range l, const ip_range r);
+
 bool address_in_range(const ip_address address, const ip_range range);
+bool subnet_in_range(const ip_subnet subnet, const ip_range range);
+bool range_in_range(const ip_range inner, const ip_range outer);
+
 bool range_overlaps_range(const ip_range l, const ip_range r);
 
 /*

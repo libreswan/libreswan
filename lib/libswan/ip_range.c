@@ -182,10 +182,6 @@ ip_range range_from_address(const ip_address address)
 		return unset_range;
 	}
 
-	if (address_eq_address(address, afi->address.any)) {
-		return afi->range.all;
-	}
-
 	return range_from_raw(HERE, address.version,
 			      address.bytes, address.bytes);
 }
@@ -228,22 +224,6 @@ bool range_is_unset(const ip_range *range)
 	return !range->is_set;
 }
 
-bool range_is_specified(const ip_range range)
-{
-	const struct ip_info *afi = range_type(&range);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false; /* need IPv4 or IPv6 */
-	}
-
-	/* don't allow 0-0 aka unspecified */
-	if (range_eq_range(range, afi->range.none)) {
-		return false;
-	}
-
-	return true;
-}
-
 uintmax_t range_size(const ip_range range)
 {
 	const struct ip_info *afi = range_type(&range);
@@ -272,6 +252,18 @@ uintmax_t range_size(const ip_range range)
 	return diff + 1;
 }
 
+bool range_eq_address(const ip_range range, const ip_address address)
+{
+	ip_range address_range = range_from_address(address);
+	return range_eq_range(range, address_range);
+}
+
+bool range_eq_subnet(const ip_range range, const ip_subnet subnet)
+{
+	ip_range subnet_range = range_from_subnet(subnet);
+	return range_eq_range(range, subnet_range);
+}
+
 bool range_eq_range(const ip_range l, const ip_range r)
 {
 	if (range_is_unset(&l) && range_is_unset(&r)) {
@@ -290,23 +282,14 @@ bool range_eq_range(const ip_range l, const ip_range r)
 
 bool address_in_range(const ip_address address, const ip_range range)
 {
-	const struct ip_info *afi = address_type(&address);
-	if (afi == NULL) {
-		return false;
-	}
+	ip_range address_range = range_from_address(address);
+	return range_in_range(address_range, range);
+}
 
-	if (range_type(&range) != afi) {
-		return false;
-	}
-
-	if (range_eq_range(range, afi->range.none)) {
-		return false;
-	}
-
-	return (bytes_cmp(address.version, address.bytes,
-			  range.version, range.start) >= 0 &&
-		bytes_cmp(address.version, address.bytes,
-			  range.version, range.end) <= 0);
+bool subnet_in_range(const ip_subnet subnet, const ip_range range)
+{
+	ip_range subnet_range = range_from_subnet(subnet);
+	return range_in_range(subnet_range, range);
 }
 
 bool range_in_range(const ip_range inner, const ip_range outer)
@@ -484,10 +467,6 @@ err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t 
 
 bool range_contains_all_addresses(const ip_range range)
 {
-	if (range_is_unset(&range)) {
-		return false;
-	}
-
 	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
 		return false;
