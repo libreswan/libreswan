@@ -100,7 +100,7 @@ bool range_eq_address(const ip_range range, const ip_address address);
 #endif
 bool range_in_range(const ip_range inner, const ip_range outer);
 bool address_in_range(const ip_address address, const ip_range range);
-bool range_overlap(const ip_range l, const ip_range r);
+bool range_overlaps_range(const ip_range l, const ip_range r);
 
 /*
  * Calculate the number of significant bits in the size of the range.

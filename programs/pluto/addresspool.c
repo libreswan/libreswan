@@ -743,7 +743,7 @@ diag_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 			return NULL;
 		}
 
-		if (range_overlap(*pool_range, h->r)) {
+		if (range_overlaps_range(*pool_range, h->r)) {
 			/* bad */
 			range_buf prbuf;
 			range_buf hbuf;

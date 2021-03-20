@@ -348,7 +348,7 @@ ip_address range_end(const ip_range range)
 	return address_from_raw(HERE, range.version, range.end);
 }
 
-bool range_overlap(const ip_range l, const ip_range r)
+bool range_overlaps_range(const ip_range l, const ip_range r)
 {
 	if (range_is_unset(&l) || range_is_unset(&r)) {
 		/* presumably overlap is bad */
