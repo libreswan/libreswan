@@ -278,6 +278,8 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	 *
          * Until there's an ip_traffic object to wrap this up, this
          * passert can't require a port.
+	 *
+	 * XXX: is [::]:TCP/10 valid?
          */
 
 	const ip_protocol *protocol = endpoint_protocol(*e);
