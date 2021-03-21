@@ -70,25 +70,34 @@ static void check_sockaddr_as_endpoint(void)
 		}
 
 		/* sockaddr->endpoint */
-		ip_endpoint tmp, *endpoint = &tmp;
-		err_t err = sockaddr_to_endpoint(&ip_protocol_udp, &sa, endpoint);
+		ip_address address[1];
+		ip_port port;
+		ip_endpoint endpoint = unset_endpoint;
+		err_t err = sockaddr_to_address_port(sa, address, &port);
 		if (err != NULL) {
 			if (t->err == NULL) {
-				FAIL("sockaddr_to_endpoint() unexpectedly failed: %s", err);
+				FAIL("sockaddr_to_address_port() unexpectedly failed: %s", err);
 			} else if (!streq(err, t->err)) {
-				FAIL("sockaddr_to_endpoint() returned error '%s', expecting '%s'", err, t->err);
+				FAIL("sockaddr_to_address_port() returned error '%s', expecting '%s'", err, t->err);
 			}
-			if (!endpoint_is_unset(endpoint)) {
-				FAIL("sockaddr_to_endpoint() failed yet endpoint is set");
+			if (!address_is_unset(address)) {
+				FAIL("sockaddr_to_address_port() failed yet address is set");
+			}
+			if (hport(port) != 0) {
+				FAIL("sockaddr_to_address_port() failed yet port is non-zero");
 			}
 		} else if (t->err != NULL) {
-			FAIL("sockaddr_to_endpoint() should have failed: %s", t->err);
+			FAIL("sockaddr_to_address_port() should have failed: %s", t->err);
 		} else {
-			CHECK_TYPE(endpoint);
+			endpoint = endpoint_from_address_protocol_port(*address, &ip_protocol_udp, port);
+			CHECK_TYPE(address);
 		}
 
+		/* as a string */
+		CHECK_STR(endpoint_buf, endpoint, expect_out, &endpoint);
+
 		/* endpoint->sockaddr */
-		ip_sockaddr esa = sockaddr_from_endpoint(*endpoint);
+		ip_sockaddr esa = sockaddr_from_endpoint(endpoint);
 		if (err == NULL) {
 			if (esa.len == 0) {
 				FAIL("endpoint_to_sockaddr() returned %d, expecting non-zero",
@@ -106,9 +115,6 @@ static void check_sockaddr_as_endpoint(void)
 					esa.len);
 			}
 		}
-
-		/* as a string */
-		CHECK_STR(endpoint_buf, endpoint, expect_out, endpoint);
 	}
 }
 

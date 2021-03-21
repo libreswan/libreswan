@@ -68,31 +68,35 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	 */
 
 	/* get NH */
-	if ((req.ifr_flags & IFF_POINTOPOINT) != 0x0 && nh != NULL &&
+	if (nh != NULL &&
+	    (req.ifr_flags & IFF_POINTOPOINT) != 0x0 &&
 	    (ioctl(sock, SIOCGIFDSTADDR, &req) == 0)) {
 		if (req.ifr_addr.sa_family == family->af) {
 			const ip_sockaddr sa = {
 				.len = family->sockaddr_size,
 				.sa.sa = req.ifr_addr,
 			};
-			ip_endpoint nhe;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &nhe));
-			pexpect(endpoint_hport(nhe) == 0);
-			*nh = endpoint_address(nhe);
+			ip_address nh_address;
+			ip_port nh_port;
+			happy(sockaddr_to_address_port(sa, &nh_address, &nh_port));
+			pexpect(hport(nh_port) == 0);
+			*nh = nh_address;
 		}
 	}
 
 	/* get DST */
-	if (dst != NULL && ioctl(sock, SIOCGIFADDR, &req) == 0) {
+	if (dst != NULL &&
+	    ioctl(sock, SIOCGIFADDR, &req) == 0) {
 		if (req.ifr_addr.sa_family == family->af) {
 			const ip_sockaddr sa = {
 				.len = family->sockaddr_size,
 				.sa.sa = req.ifr_addr,
 			};
-			ip_endpoint dste;
-			happy(sockaddr_to_endpoint(&ip_protocol_unset, &sa, &dste));
-			pexpect(endpoint_hport(dste) == 0);
-			*dst = endpoint_address(dste);
+			ip_address dst_address;
+			ip_port dst_port;
+			happy(sockaddr_to_address_port(sa, &dst_address, &dst_port));
+			pexpect(hport(dst_port) == 0);
+			*dst = dst_address;
 		}
 	}
 
