@@ -756,36 +756,22 @@ diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool)
 }
 
 /*
- * the caller must enforce the following:
- * - Range must not include 0.0.0.0 or ::0
- * - The range must be non-empty
+ * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-struct ip_pool *install_addresspool(const ip_range pool_range, struct logger *logger)
+diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 {
-	struct ip_pool **head = &pluto_pools;
-	struct ip_pool *pool = NULL;
-	diag_t d = find_addresspool(pool_range, &pool);
-	if (d != NULL) {
-		log_diag(RC_CLASH, logger, &d, "ERROR: ");
-		return NULL;
+	*pool = NULL;
+
+	/* can't be empty */
+	uintmax_t pool_size = range_size(pool_range);
+	if (pool_size == 0) {
+		range_buf rb;
+		return diag("address pool %s is empty",
+			    str_range(&pool_range, &rb));
 	}
 
-	if (pool != NULL) {
-		/* re-use existing pool */
-		if (DBGP(DBG_BASE)) {
-			DBG_pool(true, pool, "reusing existing address pool@%p", pool);
-		}
-		return pool;
-	}
-
-	/* make a new pool */
-	pool = alloc_thing(struct ip_pool, "addresspool entry");
-
-	pool->pool_refcount = 0;
-	pool->r = pool_range;
-	intmax_t pool_size = range_size(pool->r);
-	if (pool_size > UINT32_MAX) {
+	if (pool_size >= UINT32_MAX) {
 		/*
 		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
@@ -793,21 +779,49 @@ struct ip_pool *install_addresspool(const ip_range pool_range, struct logger *lo
 		pool_size = UINT32_MAX;
 		dbg("WARNING addresspool size overflow truncated to %ju", pool_size);
 	}
-	pool->size = pool_size;
-	passert(pool->size > 0);
 
-	pool->nr_in_use = 0;
-	pool->nr_leases = 0;
-	pool->free_list = empty_list;
-	pool->leases = NULL;
+	/* can't start at 0 */
+	ip_address start = range_start(pool_range);
+	if (address_is_any(start)) {
+		range_buf rb;
+		return diag("address pool %s starts at address zero",
+			    str_range(&pool_range, &rb));
+	}
+
+	/* can't overlap or duplicate */
+	struct ip_pool **head = &pluto_pools;
+	diag_t d = find_addresspool(pool_range, pool);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (*pool != NULL) {
+		/* re-use existing pool */
+		if (DBGP(DBG_BASE)) {
+			DBG_pool(true, *pool, "reusing existing address pool@%p", pool);
+		}
+		return NULL;
+	}
+
+	/* make a new pool */
+	struct ip_pool *new_pool = alloc_thing(struct ip_pool, "addresspool entry");
+	new_pool->pool_refcount = 0;
+	new_pool->r = pool_range;
+	new_pool->size = pool_size;
+	new_pool->nr_in_use = 0;
+	new_pool->nr_leases = 0;
+	new_pool->free_list = empty_list;
+	new_pool->leases = NULL;
+
 	/* insert */
-	pool->next = *head;
-	*head = pool;
+	new_pool->next = *head;
+	*head = new_pool;
 
 	if (DBGP(DBG_BASE)) {
-		DBG_pool(false, pool, "creating new address pool@%p", pool);
+		DBG_pool(false, new_pool, "creating new address pool@%p", new_pool);
 	}
-	return pool;
+	*pool = new_pool;
+	return NULL;
 }
 
 void show_addresspool_status(struct show *s)

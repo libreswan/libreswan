@@ -904,9 +904,10 @@ static bool add_xauth_addresspool(struct connection *c,
 		unreference_addresspool(c);
 	}
 
-	c->pool = install_addresspool(pool_range, logger);
-	if (c->pool != NULL) {
-		/* already logged */
+	diag_t d = install_addresspool(pool_range, &c->pool);
+	if (d != NULL) {
+		log_diag(RC_CLASH, logger, &d, "XAUTH: invalid addresspool for the conn %s user %s: ",
+			 c->name, userid);
 		return false;
 	}
 

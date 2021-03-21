@@ -23,7 +23,7 @@
 struct ip_range;
 struct ip_pool;        /* forward declaration; definition is local to addresspool.c */
 
-struct ip_pool *install_addresspool(const ip_range pool_range, struct logger *logger);
+diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool) MUST_USE_RESULT;
 diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool) MUST_USE_RESULT;
 
 extern void unreference_addresspool(struct connection *c);

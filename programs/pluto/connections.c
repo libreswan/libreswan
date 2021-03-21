@@ -1085,9 +1085,10 @@ static int extract_end(struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "both left and right define address pools");
 			return -1;
 		}
-		c->pool = install_addresspool(src->pool_range, c->logger);
-		if (c->pool == NULL) {
-			/* already logged */
+		diag_t d = install_addresspool(src->pool_range, &c->pool);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, c->logger, &d,
+				 "invalid %saddresspool: ", leftright);
 			return -1;
 		}
 		other_end->modecfg_server = true;
