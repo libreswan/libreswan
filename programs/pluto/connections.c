@@ -773,18 +773,21 @@ static int extract_end(struct connection *c,
 	struct config_end *config = &c->config[end_index];
 	config->end_index = end_index;
 	struct end *dst;
+	struct end *other_end;
 	const char *leftright;
 	switch (end_index) {
 	case LEFT_END:
 		/* start with: LEFT == LOCAL == THIS */
 		leftright = "left";
 		dst = &c->spd.this;
+		other_end = &c->spd.that;
 		c->local = config;
 		break;
 	case RIGHT_END:
 		/* start with: RIGHT == REMOTE == THAT */
 		leftright = "right";
 		dst = &c->spd.that;
+		other_end = &c->spd.this;
 		c->remote = config;
 		break;
 	default:
@@ -999,8 +1002,6 @@ static int extract_end(struct connection *c,
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
 	dst->ifaceip = src->ifaceip;
-	dst->modecfg_server = src->modecfg_server;
-	dst->modecfg_client = src->modecfg_client;
 	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;
 
@@ -1063,6 +1064,34 @@ static int extract_end(struct connection *c,
 
 	default:
 		break;
+	}
+
+	/*
+	 * How to add addresspool only for responder?  It is not
+	 * necessary on the initiator
+	 *
+	 * Note that, possibly confusingly, it is the client's end
+	 * that has the address pool.  I.e., set OTHER_END to server.
+	 *
+	 * Need to also merge in the client/server options provided by
+	 * whack - sometimes they are set, sometimes they are not.
+	 */
+
+	dst->modecfg_server = dst->modecfg_server || src->modecfg_server;
+	dst->modecfg_client = dst->modecfg_client || src->modecfg_client;
+
+	if (range_size(src->pool_range) > 0) {
+		if (c->pool != NULL) {
+			llog(RC_LOG_SERIOUS, logger, "both left and right define address pools");
+			return -1;
+		}
+		c->pool = install_addresspool(src->pool_range, c->logger);
+		if (c->pool == NULL) {
+			/* already logged */
+			return -1;
+		}
+		other_end->modecfg_server = true;
+		dst->modecfg_client = true;
 	}
 
 	return same_ca;
@@ -1880,24 +1909,6 @@ static bool extract_connection(const struct whack_message *wm,
 		c->spd.that.ca = clone_hunk(c->spd.this.ca, "same rightca");
 	} else if (same_leftca == 1) {
 		c->spd.this.ca = clone_hunk(c->spd.that.ca, "same leftca");
-	}
-
-	/*
-	 * How to add addresspool only for responder?
-	 * It is not necessary on the initiator
-	 */
-
-	if (range_size(wm->left.pool_range) > 0) {
-		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(wm->left.pool_range, c->logger);
-		c->spd.that.modecfg_server = TRUE;
-		c->spd.this.modecfg_client = TRUE;
-	}
-	if (range_size(wm->right.pool_range) > 0) {
-		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(wm->right.pool_range, c->logger);
-		c->spd.that.modecfg_client = TRUE;
-		c->spd.this.modecfg_server = TRUE;
 	}
 
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
