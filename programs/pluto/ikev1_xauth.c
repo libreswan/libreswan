@@ -858,52 +858,60 @@ static stf_status xauth_send_status(struct state *st, int status)
 	return STF_OK;
 }
 
+/*
+ * set user defined ip address or pool
+ */
+
 static bool add_xauth_addresspool(struct connection *c,
 				  const char *userid,
 				  const char *addresspool,
 				  struct logger *logger)
 {
-	/* set user defined ip address or pool */
-	bool ret = FALSE;
-	err_t er;
+	dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
+	    addresspool, c->name, userid);
+
+	/* allows <address>, <address>-<address> and <address>/bits */
+
 	ip_range pool_range;
-
-	if (strchr(addresspool, '-') == NULL) {
-		/* convert single ip address to addresspool */
-		char single_addresspool[128];
-
-		snprintf(single_addresspool, sizeof(single_addresspool),
-			"%s-%s",
-			addresspool, addresspool);
-		dbg("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
-		    single_addresspool, c->name, userid);
-		er = ttorange(single_addresspool, &ipv4_info, &pool_range);
-	} else {
-		dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
-		    addresspool, c->name, userid);
-		er = ttorange(addresspool, &ipv4_info, &pool_range);
-	}
-	if (er != NULL) {
+	err_t err = ttorange(addresspool, &ipv4_info, &pool_range);
+	if (err != NULL) {
 		llog(RC_LOG, logger,
-			    "XAUTH IP address %s is not valid %s user=%s",
-			    addresspool, er, userid);
-	} else {
-		/* install new addresspool */
-
-		/* delete existing pool if it exists */
-		if (c->pool != NULL) {
-			free_that_address_lease(c);
-			unreference_addresspool(c);
-		}
-
-		c->pool = install_addresspool(pool_range, logger);
-		if (c->pool != NULL) {
-			reference_addresspool(c);
-			ret = TRUE;
-		}
+		     "XAUTH IP addresspool %s for the conn %s user %s is not valid: %s",
+		     addresspool, c->name, userid, err);
+		return false;
 	}
 
-	return ret;
+	if (range_size(pool_range) == 0) {
+		/* should have been rejected by ttorange() */
+		llog(RC_LOG, logger,
+		     "XAUTH IP addresspool %s for the conn %s user=%s is empty!?!",
+		     addresspool, c->name, userid);
+		return false;
+	}
+
+	if (address_is_any(range_start(pool_range))) {
+		llog(RC_LOG, logger,
+		     "XAUTH IP addresspool %s for the conn %s user=%s cannot start at address zero",
+		     addresspool, c->name, userid);
+		return false;
+	}
+
+	/* install new addresspool */
+
+	/* delete existing pool if it exists */
+	if (c->pool != NULL) {
+		free_that_address_lease(c);
+		unreference_addresspool(c);
+	}
+
+	c->pool = install_addresspool(pool_range, logger);
+	if (c->pool != NULL) {
+		/* already logged */
+		return false;
+	}
+
+	reference_addresspool(c);
+	return true;
 }
 
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
