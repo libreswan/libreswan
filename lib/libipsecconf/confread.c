@@ -187,14 +187,14 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
 	d->left.host_family = &ipv4_info;
-	d->left.addr = address_any(&ipv4_info);
+	d->left.addr = ipv4_info.address.any;
 	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = address_any(&ipv4_info);
+	d->left.nexthop = ipv4_info.address.any;
 
 	d->right.host_family = &ipv4_info;
-	d->right.addr = address_any(&ipv4_info);
+	d->right.addr = ipv4_info.address.any;
 	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = address_any(&ipv4_info);
+	d->right.nexthop = ipv4_info.address.any;
 
 	d->xfrm_if_id = UINT32_MAX;
 
@@ -441,7 +441,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addrtype = end->options[KNCF_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = address_any(hostfam);
+		end->addr = hostfam->address.any;
 		break;
 
 	case KH_IFACE:
@@ -517,7 +517,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
 		}
-		oops = cidr_specified(&end->vti_ip);
+		oops = cidr_specified(end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
@@ -535,6 +535,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
+			if (conn_st->ike_version != IKEv1) {
+				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
+			}
+
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
@@ -551,7 +555,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = address_any(hostfam);
+	end->nexthop = hostfam->address.any;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
@@ -584,7 +588,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = address_any(hostfam);
+		end->nexthop = hostfam->address.any;
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
@@ -668,7 +672,7 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			end->subnet = subnet_from_address(&end->sourceip);
+			end->subnet = subnet_from_address(end->sourceip);
 			end->has_client = TRUE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
@@ -729,8 +733,8 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);
 
-		if (address_type(&end->pool_range.start) == &ipv6_info &&
-				!end->pool_range.is_subnet) {
+		if (range_type(&end->pool_range) == &ipv6_info &&
+		    !end->pool_range.is_subnet) {
 			ERR_FOUND("bad IPv6 %saddresspool=%s not subnet", leftright,
 					addresspool);
 		}
@@ -743,7 +747,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
 		}
-		oops = cidr_specified(&end->ifaceip);
+		oops = cidr_specified(end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);

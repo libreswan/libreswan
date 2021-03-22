@@ -13,7 +13,7 @@ struct ip_info {
 	/*
 	 * address family
 	 */
-	unsigned ip_version; /* 4 or 6 */
+	enum ip_version ip_version; /* 4 or 6 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */
@@ -38,6 +38,18 @@ struct ip_info {
 		const ip_subnet none;		/* ::/128 or 0.0.0.0/32 */
 		const ip_subnet all;		/* ::/0 or 0.0.0.0/0 */
 	} subnet;
+
+	/*
+	 * ip_subnet.
+	 *
+	 * none: the unspecified range - matches no addresses
+	 *
+	 * (if nothing else, used for edge case testing)
+	 */
+	struct {
+		const ip_range none;
+		const ip_range all;
+	} range;
 
 	/*
 	 * ip_selector

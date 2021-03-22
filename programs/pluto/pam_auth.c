@@ -174,7 +174,7 @@ void auth_fork_pam_process(struct state *st,
 
 	pamauth->ptarg.password = clone_str(password, "pam password");
 	pamauth->ptarg.c_name = clone_str(st->st_connection->name, "pam connection name");
-	pamauth->ptarg.rhost = endpoint_address(&st->st_remote_endpoint);
+	pamauth->ptarg.rhost = endpoint_address(st->st_remote_endpoint);
 	pamauth->ptarg.st_serialno = serialno;
 	pamauth->ptarg.c_instance_serial = st->st_connection->instance_serial;
 	pamauth->ptarg.atype = atype;

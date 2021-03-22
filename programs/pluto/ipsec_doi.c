@@ -81,6 +81,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
+#include "orient.h"
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
@@ -285,9 +286,9 @@ void initialize_new_state(struct state *st,
 	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint3(c->interface->protocol,
-					   &c->spd.that.host_addr,
-					   ip_hport(c->spd.that.host_port));
+	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
+								     c->interface->protocol,
+								     ip_hport(c->spd.that.host_port));
 	endpoint_buf eb;
 	dbg("in %s with remote endpoint set to %s",
 	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
@@ -378,19 +379,19 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 	ipstr_buf ipb;
 	jam_string(buf,
 		   (address_is_unset(&st->hidden_variables.st_nat_oa) ||
-		    address_is_any(&st->hidden_variables.st_nat_oa)) ? "none" :
+		    address_is_any(st->hidden_variables.st_nat_oa)) ? "none" :
 		   ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
 	jam_string(buf, " NATD=");
 
 	if (address_is_unset(&st->hidden_variables.st_natd) ||
-	    address_is_any(&st->hidden_variables.st_natd)) {
+	    address_is_any(st->hidden_variables.st_natd)) {
 		jam_string(buf, "none");
 	} else {
 		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
 		jam(buf, "%s:%d",
 		    str_address_sensitive(&st->hidden_variables.st_natd, &ipb),
-		    endpoint_hport(&st->st_remote_endpoint));
+		    endpoint_hport(st->st_remote_endpoint));
 	}
 
 	jam(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :

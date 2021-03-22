@@ -169,7 +169,7 @@ static void check_hunk_eq(void)
 	}
 }
 
-static void shunk_slice_check(void)
+static void check_shunk_slice(void)
 {
 	static const struct test {
 		const char *l;
@@ -205,7 +205,7 @@ static void shunk_slice_check(void)
 	}
 }
 
-static void shunk_token_check(void)
+static void check_shunk_token(void)
 {
 	static const struct test {
 		const char *s;
@@ -260,7 +260,7 @@ static void shunk_token_check(void)
 	}
 }
 
-static void shunk_span_check(void)
+static void check_shunk_span(void)
 {
 	static const struct test {
 		/* span(&old->new, delim, accept)->token */
@@ -303,7 +303,7 @@ static void shunk_span_check(void)
 	}
 }
 
-static void shunk_clone_check(void)
+static void check_shunk_clone(void)
 {
 	static const struct test {
 		const char *s;
@@ -679,51 +679,90 @@ static void check_shunk_to_uintmax(void)
 
 static void check_ntoh_hton_hunk(void)
 {
+
+	/*
+	 * Each entry consists of:
+	 *
+	 *   <value> <sentinel>
+	 *
+	 * so if a read goes to far it picks up the <sentinel>
+	 */
 	static const struct test {
-		uintmax_t i;
-		uintmax_t o;
+		uintmax_t hton;
+		uintmax_t ntoh;
 		size_t size;
-		const uint8_t bytes[3]; /* oversize */
+#define MAX_BYTES sizeof(uintmax_t)
+		const uint8_t bytes[MAX_BYTES+2]; /* oversize */
 	} tests[] = {
+
 		/* 00 */
-		{ 0, 0, 0, { 0x01, 0x02, 0x03, }, },
-		{ 0, 0, 1, { 0x00, 0x02, 0x03, }, },
-		{ 0, 0, 2, { 0x00, 0x00, 0x03, }, },
-		{ 0, 0, 3, { 0x00, 0x00, 0x00, }, },
+		{ 0, 0, 0, { [0] = 1, }, },
+		{ 0, 0, 1, { [1] = 2, }, },
+		{ 0, 0, 2, { [2] = 3, }, },
+		{ 0, 0, 3, { [3] = 4, }, },
 		/* 0x1234 */
-		{ 0x1234, 0x0000, 0, { 0x01, 0x02, 0x03, }, },
-		{ 0x1234, 0x0034, 1, { 0x34, 0x02, 0x03, }, },
-		{ 0x1234, 0x1234, 2, { 0x12, 0x34, 0x03, }, },
-		{ 0x1234, 0x1234, 3, { 0x00, 0x12, 0x34, }, },
+		{ 0x1234, 0x0000, 0, { [0] = 1, }, },
+		{ 0x1234, 0x0034, 1, { 0x34, [1] = 2, }, },
+		{ 0x1234, 0x1234, 2, { 0x12, 0x34, [2] = 3, }, },
+		{ 0x1234, 0x1234, 3, { 0x00, 0x12, 0x34, [3] = 4}, },
 		/* 0x123456 */
-		{ 0x123456, 0x000000, 0, { 0x01, 0x02, 0x03, }, },
-		{ 0x123456, 0x000056, 1, { 0x56, 0x02, 0x03, }, },
-		{ 0x123456, 0x003456, 2, { 0x34, 0x56, 0x03, }, },
-		{ 0x123456, 0x123456, 3, { 0x12, 0x34, 0x56, }, },
+		{ 0x123456, 0x000000, 0, { [0] = 1, }, },
+		{ 0x123456, 0x000056, 1, { 0x56, [1] = 2, }, },
+		{ 0x123456, 0x003456, 2, { 0x34, 0x56, [2] = 3, }, },
+		{ 0x123456, 0x123456, 3, { 0x12, 0x34, 0x56, [3] = 4, }, },
 		/* 0x12345678 */
-		{ 0x12345678, 0x00000000, 0, { 0x01, 0x02, 0x03, }, },
-		{ 0x12345678, 0x00000078, 1, { 0x78, 0x02, 0x03, }, },
-		{ 0x12345678, 0x00005678, 2, { 0x56, 0x78, 0x03, }, },
-		{ 0x12345678, 0x00345678, 3, { 0x34, 0x56, 0x78, }, },
+		{ 0x12345678, 0x00000000, 0, { [0] = 1, }, },
+		{ 0x12345678, 0x00000078, 1, { 0x78, [1] = 2, }, },
+		{ 0x12345678, 0x00005678, 2, { 0x56, 0x78, [2] = 3, }, },
+		{ 0x12345678, 0x00345678, 3, { 0x34, 0x56, 0x78, [3] = 4, }, },
+
+		/* largest */
+		{ UINTMAX_MAX-1, UINTMAX_MAX-1, MAX_BYTES, { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, [MAX_BYTES] = MAX_BYTES + 1, }, },
+		{ UINTMAX_MAX,   UINTMAX_MAX,   MAX_BYTES, { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, [MAX_BYTES] = MAX_BYTES + 1, }, },
+
+		/* oversized but under valued */
+		{ UINTMAX_MAX-1, UINTMAX_MAX-1, MAX_BYTES + 1, { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, [MAX_BYTES + 1] = MAX_BYTES + 2, }, },
+		{ UINTMAX_MAX,   UINTMAX_MAX,   MAX_BYTES + 1, { 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, [MAX_BYTES + 1] = MAX_BYTES + 2, }, },
+
+		/* oversized and / or over valued */
+		{ 0/*invalid*/, UINTMAX_MAX, MAX_BYTES + 1, { [0] = 0x01, [MAX_BYTES + 1] = MAX_BYTES + 2, }, },
+		{ /*truncated*/UINTMAX_MAX, UINTMAX_MAX >> 8, MAX_BYTES - 1, { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, [MAX_BYTES] = MAX_BYTES + 1, }, },
+		{ /*truncated*/0x1234, 0x34, 1, { 0x34, [1] = 2, }, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, " size=%zu i=%jx o=%jx", t->size, t->i, t->o);
+		PRINT(stdout, " size=%zu ntoh=%jx hton=%jx", t->size, t->ntoh, t->hton);
 
 		shunk_t t_shunk = shunk2(t->bytes, t->size);
-		uintmax_t h = ntoh_hunk(t_shunk);
-		if (h != t->o) {
+
+		uintmax_t h = ntoh_hunk(t_shunk); /* aka ntoh_bytes() */
+		if (h != t->ntoh) {
 			FAIL("hton_hunk() returned %jx, expecting %jx",
-			     h, t->o);
+			     h, t->ntoh);
 		}
 
-		uint8_t bytes[sizeof(t->bytes)] = { 0x01, 0x02, 0x03, };
+		/* hton() broken when oversize */
+		if (t->size > MAX_BYTES) {
+			continue;
+		}
+
+		uint8_t bytes[sizeof(t->bytes)]; /* = 1 2 3 4 ... */
+		for (unsigned u = 0; u < sizeof(bytes); u++) {
+			bytes[u] = u + 1;
+		}
+
 		chunk_t n = chunk2(bytes, t->size);
-		hton_chunk(t->i, n);
-		if (!memeq(bytes, t->bytes, sizeof(bytes))) {
+		hton_chunk(t->hton, n); /* aka hton_bytes() */
+		if (!memeq(bytes, t->bytes, t->size)) {
 			FAIL("hton_chunk() returned %jx, expecting %jx",
-			     ntoh_hunk(n), t->o);
+			     ntoh_hunk(n), t->hton);
+		}
+		for (unsigned u = t->size; u < sizeof(bytes); u++) {
+			if (bytes[u] != u + 1) {
+				FAIL("hton_chunk() byte[%u] is %02"PRIx8", expecting %02x",
+				     u, bytes[u], u + 1);
+			}
 		}
 	}
 }
@@ -731,10 +770,10 @@ static void check_ntoh_hton_hunk(void)
 int main(int argc UNUSED, char *argv[] UNUSED)
 {
 	check_hunk_eq();
-	shunk_slice_check();
-	shunk_token_check();
-	shunk_span_check();
-	shunk_clone_check();
+	check_shunk_slice();
+	check_shunk_token();
+	check_shunk_span();
+	check_shunk_clone();
 	check_hunk_char();
 	check_hunk_char_is();
 	check_shunk_to_uintmax();

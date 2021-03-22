@@ -25,8 +25,7 @@ west #
  # connection should fail to load - don't accept %fromcert without cert
 west #
  ipsec auto --add cert-complain
-036 "cert-complain": ID cannot be specified as %fromcert if PSK or AUTH-NULL is used
-036 "cert-complain": failed to add connection: attempt to load incomplete connection
+036 "cert-complain": failed to add connection: ID cannot be specified as %fromcert if PSK or AUTH-NULL is used
 west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #

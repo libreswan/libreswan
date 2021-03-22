@@ -40,7 +40,7 @@
 #include "nat_traversal.h"
 #include "pluto_x509.h"
 #include "fd.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ikev1_message.h"
 #include "pending.h"
 #include "iface.h"
@@ -51,6 +51,7 @@
 # include "kernel_xfrm_interface.h"
 #endif
 #include "unpack.h"
+#include "ikev1_host_pair.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -133,12 +134,25 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) | POLICY_AGGRESSIVE;
 	const lset_t policy_exact_mask = POLICY_XAUTH | POLICY_AGGRESSIVE;
 
-	struct connection *c = find_host_connection(IKEv1, &md->iface->local_endpoint,
-						    &md->sender, policy, policy_exact_mask);
+	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const struct isakmp_id *const id = &id_pld->payload.id;
+	struct id peer_id;
+	struct id *ppeer_id = NULL;
+
+	diag_t d = unpack_peer_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
+	if (d != NULL) {
+		dbg("IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
+        } else {
+		ppeer_id = &peer_id;
+	}
+
+	struct connection *c = find_v1_host_connection(md->iface->ip_dev->id_address,
+						       endpoint_address(md->sender),
+						       policy, policy_exact_mask, ppeer_id);
 
 	if (c == NULL) {
-		c = find_host_connection(IKEv1, &md->iface->local_endpoint, NULL,
-					 policy, policy_exact_mask);
+		c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
+					    policy, policy_exact_mask, ppeer_id);
 		if (c == NULL) {
 			endpoint_buf b;
 			policy_buf pb;
@@ -153,7 +167,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
 		 */
-		ip_address sender_address = endpoint_address(&md->sender);
+		ip_address sender_address = endpoint_address(md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	}
 
@@ -403,7 +417,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
-		    !pbs_out_hunk(id_b, &r_id_pbs, "my identity")) {
+		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -422,7 +436,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
 				&cert_pbs) ||
-		    !pbs_out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+		    !out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -693,7 +707,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
 				&cert_pbs) ||
-		    !pbs_out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+		    !out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -728,7 +742,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, &r_id_pbs) ||
-		    !pbs_out_hunk(id_b, &r_id_pbs, "my identity")) {
+		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&r_id_pbs);
@@ -842,7 +856,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&pbs, &id_pbs) ||
-		    !pbs_out_hunk(id_b, &id_pbs, "my identity"))
+		    !out_hunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);
@@ -1109,7 +1123,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		pb_stream id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||
-		    !pbs_out_hunk(id_b, &id_pbs, "my identity"))
+		    !out_hunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);

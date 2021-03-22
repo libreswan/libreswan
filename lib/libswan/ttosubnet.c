@@ -147,7 +147,7 @@ err_t ttosubnet(shunk_t src,
 		p++;
 	}
 
-	*dst = subnet_from_address_prefix_bits(&addrtmp, prefix_bits);
+	*dst = subnet_from_address_prefix_bits(addrtmp, prefix_bits);
 
 	if (warning) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {

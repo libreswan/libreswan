@@ -23,87 +23,95 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint endpoint_from_address_protocol_port(const ip_address *address,
-						const struct ip_protocol *protocol,
-						ip_port port)
+ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
+			      const struct ip_bytes bytes,
+			      const struct ip_protocol *protocol,
+			      ip_port port)
 {
 	ip_endpoint endpoint = {
 		.is_set = true,
-		.version = address->version,
-		.bytes = address->bytes,
+		.version = version,
+		.bytes = bytes,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
 	};
-#if 0
-	pendpoint(&endpoint);
-#endif
+	pexpect_endpoint(&endpoint, where);
 	return endpoint;
 }
 
-ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, ip_port port)
+ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
+						const struct ip_protocol *protocol,
+						ip_port port)
 {
-	return endpoint_from_address_protocol_port(address, protocol, port);
+	return endpoint_from_raw(HERE, address.version, address.bytes,
+				 protocol, port);
 }
 
-ip_address endpoint_address(const ip_endpoint *endpoint)
+ip_address endpoint_address(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_type(&endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return unset_address; /* empty_address? */
 	}
-	return address_from_raw(afi, &endpoint->bytes);
+
+	return address_from_raw(HERE, endpoint.version, endpoint.bytes);
 }
 
-int endpoint_hport(const ip_endpoint *endpoint)
+int endpoint_hport(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_type(&endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("%s has unspecified type", __func__);
 		return -1;
 	}
-	return endpoint->hport;
+
+	return endpoint.hport;
 }
 
-ip_port endpoint_port(const ip_endpoint *endpoint)
+ip_port endpoint_port(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_type(&endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("%s has unspecified type", __func__);
 		return unset_port;
 	}
-	return ip_hport(endpoint->hport);
+
+	return ip_hport(endpoint.hport);
 }
 
 void update_endpoint_port(ip_endpoint *endpoint, ip_port port)
 {
-	*endpoint = set_endpoint_port(endpoint, port);
+	*endpoint = set_endpoint_port(*endpoint, port);
 }
 
-ip_endpoint set_endpoint_port(const ip_endpoint *endpoint, ip_port port)
+ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_type(&endpoint);
 	if (afi == NULL) {
+		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
 		dbg("endpoint has unspecified type");
 		return unset_endpoint;
 	}
 
-	ip_endpoint dst = *endpoint;
+	ip_endpoint dst = endpoint;
 	dst.hport = hport(port);
-#if 0
 	pendpoint(&dst);
-#endif
 	return dst;
 }
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	if (endpoint == NULL) {
+	if (endpoint_is_unset(endpoint)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(endpoint->version);
 }
 
@@ -115,30 +123,28 @@ bool endpoint_is_unset(const ip_endpoint *endpoint)
 	return !endpoint->is_set;
 }
 
-const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint)
+const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
+	if (endpoint_is_unset(&endpoint)) {
 		return NULL;
 	}
-	return protocol_by_ipproto(endpoint->ipproto);
+	return protocol_by_ipproto(endpoint.ipproto);
 }
 
-bool endpoint_is_specified(const ip_endpoint *endpoint)
+bool endpoint_is_specified(const ip_endpoint endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
-		return false;
-	}
-	const struct ip_info *afi = endpoint_type(endpoint);
+	const struct ip_info *afi = endpoint_type(&endpoint);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	if (thingeq(endpoint->bytes, afi->address.any.bytes)) {
+
+	/* treat any 0 address as suspect */
+	if (thingeq(endpoint.bytes, unset_bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}
-	if (endpoint->hport == 0) {
-		dbg("treating endpoint with unset port as specified");
-	}
+
 	return true;
 }
 
@@ -153,45 +159,32 @@ bool endpoint_is_specified(const ip_endpoint *endpoint)
  * and a value of zero means no port.
  */
 
-static size_t format_endpoint(struct jambuf *buf, bool sensitive,
-			      const ip_endpoint *endpoint)
+size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	/*
-	 * A NULL/unset endpoint can't be sensitive so always log it.
-	 */
 	if (endpoint_is_unset(endpoint)) {
 		return jam_string(buf, "<unset-endpoint>");
 	}
 
-	if (sensitive) {
-		return jam_string(buf, "<endpoint>");
+	const struct ip_info *afi = endpoint_type(endpoint);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-endpoint>");
 	}
 
-	const struct ip_info *afi = endpoint_type(endpoint);
-	ip_address address = endpoint_address(endpoint);
-	int hport = endpoint_hport(endpoint);
 	size_t s = 0;
-
 	switch (afi->af) {
 	case AF_INET: /* N.N.N.N[:PORT] */
-		s += jam_address(buf, &address);
-		s += jam(buf, ":%d", hport);
+		s += afi->jam_address(buf, afi, &endpoint->bytes);
 		break;
-	case AF_INET6: /* [N:..:N]:PORT or N:..:N */
+	case AF_INET6: /* [N:..:N]:PORT */
 		s += jam(buf, "[");
-		s += jam_address(buf, &address);
+		s += afi->jam_address(buf, afi, &endpoint->bytes);
 		s += jam(buf, "]");
-		s += jam(buf, ":%d", hport);
 		break;
 	default:
 		bad_case(afi->af);
 	}
+	s += jam(buf, ":%d", endpoint->hport);
 	return s;
-}
-
-size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
-{
-	return format_endpoint(buf, /*sensitive?*/false, endpoint);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -203,7 +196,11 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 
 size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	return format_endpoint(buf, /*sensitive?*/!log_ip, endpoint);
+	if (!log_ip) {
+		return jam_string(buf, "<endpoint>");
+	}
+
+	return jam_endpoint(buf, endpoint);
 }
 
 const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *dst)
@@ -215,14 +212,17 @@ const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *ds
 
 size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoint *dst)
 {
-	const ip_protocol *srcp = endpoint_protocol(src);
-	const ip_protocol *dstp = endpoint_protocol(dst);
 	size_t s = 0;
-	s += format_endpoint(buf, /*sensitive?*/false, src);
+	s += jam_endpoint(buf, src);
 	s += jam_char(buf, ' ');
+
+
+	const ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_unset;
+	const ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_unset;
 	s += jam_protocols(buf, srcp, '-', dstp);
+
 	s += jam_char(buf, ' ');
-	s += format_endpoint(buf, /*sensitive?*/false, dst);
+	s += jam_endpoint(buf, dst);
 	return s;
 }
 
@@ -233,47 +233,63 @@ const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoi
 	return out->buf;
 }
 
-bool endpoint_eq(const ip_endpoint *l, const ip_endpoint *r)
+bool endpoint_eq_endpoint(const ip_endpoint l, const ip_endpoint r)
 {
-	if (endpoint_is_unset(l) && endpoint_is_unset(r)) {
+	if (endpoint_is_unset(&l) && endpoint_is_unset(&r)) {
 		/* unset/NULL endpoints are equal */
 		return true;
 	}
-	if (endpoint_is_unset(l) || endpoint_is_unset(r)) {
+
+	if (endpoint_is_unset(&l) || endpoint_is_unset(&r)) {
 		return false;
 	}
+
 	/* must compare individual fields */
-	return (l->version == r->version &&
-		thingeq(l->bytes, r->bytes) &&
-		l->ipproto == r->ipproto &&
-		l->hport == r->hport);
+	return (l.version == r.version &&
+		thingeq(l.bytes, r.bytes) &&
+		l.ipproto == r.ipproto &&
+		l.hport == r.hport);
 }
 
-bool endpoint_address_eq(const ip_endpoint *endpoint, const ip_address *address)
+bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address)
 {
 	ip_address ea = endpoint_address(endpoint);
-	return address_eq(&ea, address);
+	return address_eq_address(ea, address);
 }
 
-void pexpect_endpoint(const ip_endpoint *e, const char *s, where_t where)
+void pexpect_endpoint(const ip_endpoint *e, where_t where)
 {
 	if (e == NULL) {
 		return;
 	}
 
 	/* more strict than is_unset() */
-	if (endpoint_eq(e, &unset_endpoint)) {
+	if (endpoint_eq_endpoint(*e, unset_endpoint)) {
 		return;
 	}
 
-	const ip_protocol *protocol = endpoint_protocol(e);
+        /*
+         * XXX: xfrm generates tcp acquires of the form:
+         *
+         *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
+         *
+	 * Presumably source port 0 is because the connect(?) call
+	 * specified no source port.
+	 *
+         * Until there's an ip_traffic object to wrap this up, this
+         * passert can't require a port.
+	 *
+	 * XXX: is [::]:TCP/10 valid?
+         */
+
+	const ip_protocol *protocol = endpoint_protocol(*e);
 	if (e->is_set == false ||
 	    e->version == 0 ||
 	    e->ipproto == 0 ||
-	    protocol == NULL ||
-	    (protocol->endpoint_requires_non_zero_port && e->hport == 0)) {
+	    protocol == NULL /* ||
+	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
 		endpoint_buf b;
-		log_pexpect(where, "invalid endpoint: %s; "PRI_ENDPOINT,
-			    s, pri_endpoint(e, &b));
+		log_pexpect(where, "invalid endpoint: "PRI_ENDPOINT,
+			    pri_endpoint(e, &b));
 	}
 }

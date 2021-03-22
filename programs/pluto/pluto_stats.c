@@ -142,6 +142,7 @@ static const char *pstats_sa_reasons[DELETE_REASON_ROOF] = {
 	[REASON_EXCHANGE_TIMEOUT] = "exchange-timeout",
 	[REASON_CRYPTO_TIMEOUT] = "crypto-timeout",
 	[REASON_TOO_MANY_RETRANSMITS] = "too-many-retransmits",
+	[REASON_SUPERSEDED_BY_NEW_SA] = "superseeded-by-new-sa",
 	[REASON_AUTH_FAILED] = "auth-failed",
 	[REASON_CRYPTO_FAILED] = "crypto-failed",
 };

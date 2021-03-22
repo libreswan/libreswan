@@ -104,7 +104,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 	 * hsetportof(port,addr) where addr is invalid also get an
 	 * expecation failed message.
 	 */
-	if (!endpoint_is_specified(&remote_endpoint)) {
+	if (!endpoint_is_specified(remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		endpoint_buf b;
 		llog(RC_LOG, logger,
@@ -202,7 +202,7 @@ static bool send_chunks(const char *where, bool just_a_keepalive,
 			    str_endpoint(&interface->local_endpoint, &ib),
 			    str_endpoint(&remote_endpoint, &b));
 
-		ip_sockaddr remote_sa = sockaddr_from_endpoint(&remote_endpoint);
+		ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
 		ssize_t wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {

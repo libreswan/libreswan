@@ -34,7 +34,7 @@
 
 #include "iface.h"
 #include "log.h"
-#include "hostpair.h"			/* for release_dead_interfaces() */
+#include "host_pair.h"			/* for release_dead_interfaces() */
 #include "state.h"			/* for delete_states_dead_interfaces() */
 #include "server.h"			/* for *_pluto_event() */
 #include "kernel.h"
@@ -212,7 +212,8 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 					   bool float_nat_initiator,
 					   struct logger *logger)
 {
-	ip_endpoint local_endpoint = endpoint3(io->protocol, &ifd->id_address, port);
+	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+									 io->protocol, port);
 	if (esp_encapsulation_enabled &&
 	    io->protocol->encap_esp->encap_type == 0) {
 		endpoint_buf b;
@@ -369,9 +370,10 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 * bind the socket; somewhat convoluted as BSD as size field.
 	 */
 	{
-		ip_address any = address_any(&ipv4_info);
-		ip_endpoint any_ep = endpoint3(&ip_protocol_udp, &any, ip_hport(IKE_UDP_PORT));
-		ip_sockaddr any_sa = sockaddr_from_endpoint(&any_ep);
+		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.any,
+									 &ip_protocol_udp,
+									 ip_hport(IKE_UDP_PORT));
+		ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
 		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 			endpoint_buf eb;
 			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
@@ -490,10 +492,10 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 	}
 }
 
-struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint *local_endpoint)
+struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_endpoint)
 {
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
-		if (endpoint_eq(local_endpoint, &p->local_endpoint)) {
+		if (endpoint_eq_endpoint(local_endpoint, p->local_endpoint)) {
 			return p;
 		}
 	}

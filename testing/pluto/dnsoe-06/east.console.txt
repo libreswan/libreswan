@@ -19,7 +19,7 @@ east #
 000  
 000 List of Public Keys:
 000  
-000 TIMESTAMP, 2192 RSA Key AQXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
+000 TIMESTAMP, 2192 RSA Key AQXXXX (loaded private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_IPV4_ADDR '192.1.2.67'
 east #
  # give OE policies time to load

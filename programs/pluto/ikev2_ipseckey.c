@@ -315,7 +315,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	if (data_to_address(addr, afi->ip_size, afi, &ipaddr) != NULL)
 		return;
 
-	if (!endpoint_address_eq(&st->st_remote_endpoint, &ipaddr)) {
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, ipaddr)) {
 		endpoint_buf ra;
 		address_buf rb;
 		dbg(" forward address of IDi %s do not match remote address %s != %s",

@@ -49,7 +49,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
@@ -64,8 +64,8 @@ typedef struct {
 		(A)->version,						\
 		pri_bytes((A)->bytes)
 
-void pexpect_address(const ip_address *a, const char *t, where_t where);
-#define paddress(A) pexpect_address(A, #A, HERE)
+void pexpect_address(const ip_address *a, where_t where);
+#define paddress(A) pexpect_address(A, HERE)
 
 /*
  * Constructors.
@@ -135,20 +135,17 @@ const char *ipstr(const ip_address *src, ipstr_buf *b);
  */
 
 extern const ip_address unset_address;
-bool address_is_unset(const ip_address *address);
 
-const struct ip_info *address_type(const ip_address *address);
+bool address_is_unset(const ip_address *address);		/* handles NULL */
+const struct ip_info *address_type(const ip_address *address);	/* handles NULL */
 
 /* !unset && !any */
-bool address_is_specified(const ip_address *address);
-bool address_is_loopback(const ip_address *address);
-bool address_is_any(const ip_address *address);
+bool address_is_specified(const ip_address address);
+bool address_is_loopback(const ip_address address);
+bool address_is_any(const ip_address address);
 
 /* are two is_set() addresses identical? */
-bool address_eq(const ip_address *address, const ip_address *another);
-
-/* AF={INET,INET6}, ADDR = 0; aka %any? */
-ip_address address_any(const struct ip_info *info);
+bool address_eq_address(const ip_address address, const ip_address another);
 
 /*
  * Raw address bytes, both read-only and read-write.
@@ -165,19 +162,15 @@ uint32_t ntohl_address(const ip_address *address);
  * Modify an address routing-prefix:host-id.
  */
 
-extern const struct ip_blit set_bits;
-extern const struct ip_blit clear_bits;
-extern const struct ip_blit keep_bits;
-
 ip_address address_from_blit(const struct ip_info *afi,
-			     struct ip_bytes bytes,
+			     const struct ip_bytes bytes,
 			     const struct ip_blit *routing_prefix,
 			     const struct ip_blit *host_id,
-			     unsigned nr_prefix_bits);
+			     unsigned prefix_bit_length);
 
 /* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
-ip_address address_from_raw(const struct ip_info *afi,
-			    const struct ip_bytes *bytes);
+ip_address address_from_raw(where_t where, enum ip_version version,
+			    const struct ip_bytes bytes);
 
 /*
  * Old style.

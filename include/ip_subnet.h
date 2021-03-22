@@ -38,7 +38,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time
@@ -59,20 +59,27 @@ typedef struct {
 			pri_bytes((S)->bytes),				\
 			(S)->maskbits
 
-void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
-#define psubnet(S) pexpect_subnet(S, #S, HERE)
+void pexpect_subnet(const ip_subnet *s, where_t where);
+#define psubnet(S) pexpect_subnet(S, HERE)
 
 /*
  * Constructors
  */
 
-/* ADDRESS..ADDRESS */
-ip_subnet subnet_from_address(const ip_address *address);
-/* ADDRESS/PREFIX_BITS */
-ip_subnet subnet_from_address_prefix_bits(const ip_address *address, unsigned prefixbits);
+ip_subnet subnet_from_raw(where_t where, enum ip_version version,
+			  const struct ip_bytes bytes, unsigned prefix_bits);
 
-err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
-			     ip_subnet *subnet);
+/* ADDRESS..ADDRESS */
+ip_subnet subnet_from_address(const ip_address address);
+/* ADDRESS/PREFIX_BITS */
+ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned prefixbits);
+
+/* barf if not valid */
+err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);
+
+/* this rejects ::-:: */
+extern err_t addresses_to_subnet(const ip_address from, const ip_address to,
+				 ip_subnet *dst) MUST_USE_RESULT;
 
 /*
  * Format as a string.
@@ -101,23 +108,23 @@ bool subnet_is_unset(const ip_subnet *subnet);
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
 
-/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-bool subnet_contains_all_addresses(const ip_subnet *subnet);
 /* !unset, !all, !none */
-bool subnet_is_specified(const ip_subnet *subnet);
-/* ADDRESS..ADDRESS; unlike subnetishost() this rejects 0.0.0.0/32. */
-bool subnet_contains_one_address(const ip_subnet *subnet);
+bool subnet_is_specified(const ip_subnet subnet);
+/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
+bool subnet_contains_all_addresses(const ip_subnet subnet);
 /* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-bool subnet_contains_no_addresses(const ip_subnet *subnet);
+bool subnet_contains_no_addresses(const ip_subnet subnet);
+bool subnet_contains_one_address(const ip_subnet subnet);
 
 /* ADDRESS..ADDRESS in SUBNET */
-bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
-bool subnet_eq(const ip_subnet *a, const ip_subnet *b);
-bool subnet_in(const ip_subnet *lhs, const ip_subnet *rhs);
+bool address_in_subnet(const ip_address address, const ip_subnet subnet);
+bool subnet_in_subnet(const ip_subnet lhs, const ip_subnet rhs);
+bool subnet_eq_subnet(const ip_subnet a, const ip_subnet b);
+bool subnet_eq_address(const ip_subnet selector, const ip_address address);
 
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
-ip_address subnet_prefix(const ip_subnet *subnet);
-ip_address subnet_prefix_mask(const ip_subnet *subnet);
+ip_address subnet_prefix(const ip_subnet subnet);
+ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 
 /*
@@ -132,11 +139,5 @@ extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 /* misc. conversions and related */
 extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 		    ip_subnet *dst);
-
-/* tests */
-extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
-extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool subnetishost(const ip_subnet *s);
 
 #endif

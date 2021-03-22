@@ -28,17 +28,17 @@
 struct jambuf;
 
 typedef struct {
-	unsigned version;
+	enum ip_version version;
 	struct ip_bytes bytes;
 	unsigned prefix_bits;
 } ip_cidr;
 
 extern const ip_cidr unset_cidr;
 
-const struct ip_info *cidr_type(const ip_cidr *cidr);
-ip_address cidr_address(const ip_cidr *cidr);
+bool cidr_is_unset(const ip_cidr *cidr);		/* handles NULL */
+const struct ip_info *cidr_type(const ip_cidr *cidr);	/* handles NULL */
 
-bool cidr_is_unset(const ip_cidr *cidr);
+ip_address cidr_address(const ip_cidr cidr);
 
 /* convert CIDR address/mask; does not judge the result */
 err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
@@ -50,8 +50,9 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
  * specific route)" and ::/128 as "Unspecified address". While these
  * addresses are valid, they don't specifically specify anything...
  */
-err_t cidr_specified(const ip_cidr *cidr);
-bool cidr_is_specified(const ip_cidr *cidr);
+
+err_t cidr_specified(const ip_cidr cidr);
+bool cidr_is_specified(const ip_cidr cidr);
 
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*/128*/];

@@ -1,0 +1,50 @@
+both sides initiate and respond to each other on boot using ipsec-interface=1
+
+One end does a slow restart. There should not be multiple tunnels without packet flow
+
+tcpdump on broken versions show:
+
+22:29:33.251813 IP 192.1.3.209 > 192.1.2.23: ESP(spi=0x5581e1a4,seq=0x4), length 120
+22:29:33.322645 IP 192.1.2.23.isakmp > 192.1.3.209.isakmp: isakmp: child_sa  child_sa
+22:29:33.358341 IP 192.1.3.209.isakmp > 192.1.2.23.isakmp: isakmp: child_sa  child_sa[IR]
+22:29:34.281217 IP 192.1.3.209 > 192.1.2.23: ESP(spi=0x91a50440,seq=0x1), length 120
+22:29:35.305549 IP 192.1.3.209 > 192.1.2.23: ESP(spi=0x91a50440,seq=0x2), length 120
+22:29:36.329635 IP 192.1.3.209 > 192.1.2.23: ESP(spi=0x91a50440,seq=0x3), length 120
+
+this looks like road thought it had a tunnel, but east did an acquire. Even though IKE
+is up, so it only did a CREATE_CHILD_Sa, despite there only being one tunnel.
+
+Mar 11 22:29:33.574879: initiate on demand from 192.0.2.254:0 to 192.0.1.254:0 proto=1 because: acquire
+Mar 11 22:29:33.583183: "static": assign_holdpass() delete_bare_shunt() failed
+Mar 11 22:29:33.583620: initiate_ondemand_body() failed to install negotiation_shunt,
+Mar 11 22:29:33.637100: "static" #10: sent CREATE_CHILD_SA request for new IPsec SA
+Mar 11 22:29:33.694057: "static" #10: negotiated connection [192.0.2.0-192.0.2.255:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0]
+Mar 11 22:29:33.694152: "static" #10: IPsec SA established tunnel mode {ESP=>0xbb93095d <0x91a50440 xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+
+indeed it shows acquire. So somehow an IPsec SA that is active is losing its policy
+
+[root@east ~]# ip xfrm pol
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir out priority 2084814 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir fwd priority 2084814 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir in priority 2084814 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir out priority 2084814 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+
+
+this shows one odd transport policy that is a larval state? (reqid 0)
+
+road (the side that restarted, has a proper ip xfrm pol set. Although also too many states

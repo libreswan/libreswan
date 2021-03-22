@@ -24,110 +24,93 @@
 static void check_numeric_to_cidr(void)
 {
 	static const struct test {
+		int line;
 		int family;
 		const char *in;
-		const char *out;
+		const char *str;
 	} tests[] = {
-		{ 4, "128.0.0.0/0", "128.0.0.0/0", },
-		{ 6, "8000::/0", "8000::/0", },
+		{ LN, 4, "128.0.0.0/0", "128.0.0.0/0", },
+		{ LN, 6, "8000::/0", "8000::/0", },
 
-		{ 4, "128.0.0.0/1", "128.0.0.0/1", },
-		{ 6, "8000::/1", "8000::/1", },
+		{ LN, 4, "128.0.0.0/1", "128.0.0.0/1", },
+		{ LN, 6, "8000::/1", "8000::/1", },
 
-		{ 4, "1.2.255.4/23", "1.2.255.4/23", },
-		{ 4, "1.2.255.255/24", "1.2.255.255/24", },
-		{ 4, "1.2.3.255/25", "1.2.3.255/25", },
+		{ LN, 4, "1.2.255.4/23", "1.2.255.4/23", },
+		{ LN, 4, "1.2.255.255/24", "1.2.255.255/24", },
+		{ LN, 4, "1.2.3.255/25", "1.2.3.255/25", },
 
-		{ 6, "1:2:3:ffff::/63", "1:2:3:ffff::/63", },
-		{ 6, "1:2:3:ffff:ffff::/64", "1:2:3:ffff:ffff::/64", },
-		{ 6, "1:2:3:4:ffff::/65", "1:2:3:4:ffff::/65", },
+		{ LN, 6, "1:2:3:ffff::/63", "1:2:3:ffff::/63", },
+		{ LN, 6, "1:2:3:ffff:ffff::/64", "1:2:3:ffff:ffff::/64", },
+		{ LN, 6, "1:2:3:4:ffff::/65", "1:2:3:4:ffff::/65", },
 
-		{ 4, "1.2.3.255/31", "1.2.3.255/31", },
-		{ 4, "1.2.3.255/32", "1.2.3.255/32", },
-		{ 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:ffff/127", },
-		  { 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff/128", },
+		{ LN, 4, "1.2.3.255/31", "1.2.3.255/31", },
+		{ LN, 4, "1.2.3.255/32", "1.2.3.255/32", },
+		{ LN, 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:ffff/127", },
+		{ LN, 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff/128", },
 
-		{ 4, "1.2.3.4", NULL, },
-		{ 6, "1:2:3:4:5:6:7:8", NULL, },
-		{ 4, "1.2.3.255/33", NULL, },
-		{ 6, "1:2:3:4:5:6:7:ffff/129", NULL, },
+		{ LN, 4, "1.2.3.4", NULL, },
+		{ LN, 6, "1:2:3:4:5:6:7:8", NULL, },
+		{ LN, 4, "1.2.3.255/33", NULL, },
+		{ LN, 6, "1:2:3:4:5:6:7:ffff/129", NULL, },
 	};
-
-#define OUT(FILE, FMT, ...)						\
-	PRINT(FILE, "%s %s "FMT,					\
-	      t->in,							\
-	      t->out != NULL ? t->out : "ERROR",			\
-	      ##__VA_ARGS__)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		OUT(stdout, "");
+		PRINT("%s %s ", t->in, t->str != NULL ? t->str : "ERROR");
 
-		ip_cidr cidr;
-		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), &cidr);
+		ip_cidr tmp, *cidr = &tmp;
+		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), cidr);
 		if (err != NULL) {
-			if (t->out != NULL) {
-				FAIL(OUT, "numeric_to_cidr() unexpectedly failed: %s", err);
+			if (t->str != NULL) {
+				FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 			}
 			continue;
-		} else if (t->out == NULL) {
-			FAIL(OUT, "numeric_to_cidr() unexpectedly succeeded");
+		} else if (t->str == NULL) {
+			FAIL("numeric_to_cidr() unexpectedly succeeded");
 		}
 
-		CHECK_TYPE(OUT, cidr_type(&cidr));
-
-		cidr_buf outb;
-		const char *out = str_cidr(&cidr, &outb);
-		if (!streq(out, t->out)) {
-			FAIL(OUT, "str_cidr() returned '%s', expected '%s'",
-			     out, t->out);
-		}
-#undef OUT
+		CHECK_TYPE(cidr);
+		CHECK_STR2(cidr);
 	}
 }
 
 static void check_cidr_is()
 {
 	static const struct test {
+		int line;
 		int family;
 		const char *in;
 		bool specified;
 	} tests[] = {
 		/* default route */
-		{ 4, "0.0.0.0/0", false, },
-		{ 6, "::/0", false, },
+		{ LN, 4, "0.0.0.0/0", false, },
+		{ LN, 6, "::/0", false, },
 
 		/* unspecified address */
-		{ 4, "0.0.0.0/32", false, },
-		{ 4, "0.0.0.0/24", false, },
-		{ 4, "0.0.0.0/16", false, },
-		{ 6, "::/128", false, },
-		{ 6, "::/64", false, },
+		{ LN, 4, "0.0.0.0/32", false, },
+		{ LN, 4, "0.0.0.0/24", false, },
+		{ LN, 4, "0.0.0.0/16", false, },
+		{ LN, 6, "::/128", false, },
+		{ LN, 6, "::/64", false, },
 
 		/* something valid */
-		{ 4, "127.0.0.1/32", true, },
-		{ 6, "::1/128", true, },
+		{ LN, 4, "127.0.0.1/32", true, },
+		{ LN, 6, "::1/128", true, },
 	};
-
-#define OUT(FILE, FMT, ...)						\
-	PRINT(FILE, "%s %s "FMT,					\
-	      t->in,							\
-	      bool_str(t->specified),					\
-	      ##__VA_ARGS__)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		OUT(stdout, "");
+		PRINT("%s %s ", t->in, bool_str(t->specified));
 
 		ip_cidr cidr;
 		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), &cidr);
 		if (err != NULL) {
-			FAIL(OUT, "numeric_to_cidr() unexpectedly failed: %s", err);
+			FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 		}
 
-		bool specified = cidr_is_specified(&cidr);
+		bool specified = cidr_is_specified(cidr);
 		if (specified != t->specified) {
-			FAIL(OUT, "cidr_is_specified() returned %s, expecting %s",
+			FAIL("cidr_is_specified() returned %s, expecting %s",
 			     bool_str(specified), bool_str(t->specified));
 		}
 	}

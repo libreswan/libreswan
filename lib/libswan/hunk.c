@@ -79,7 +79,12 @@ uintmax_t ntoh_bytes(const void *bytes, size_t size)
 	uintmax_t h = 0;
 	const uint8_t *byte = bytes;
 	for (unsigned i = 0; i < size; i++) {
-		h = (h<<8) + byte[i];
+		uintmax_t n = (h<<8) + byte[i];
+		if (n < h) {
+			h = UINTMAX_MAX;
+		} else {
+			h = n;
+		}
 	}
 	return h;
 }

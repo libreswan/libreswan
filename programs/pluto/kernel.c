@@ -223,16 +223,18 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	 * Port's value and interpretation depends on protocol (ICMP,
 	 * TCP, UDP, ...) and ends may not be equal.
 	 */
+	passert(!endpoint_is_unset(local_client));
+	passert(!endpoint_is_unset(remote_client));
 	passert(endpoint_type(local_client) == endpoint_type(remote_client));
-	passert(endpoint_protocol(local_client) == endpoint_protocol(remote_client));
+	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
 
 	/*
 	 * XXX: hack to keep code below happy - need to figigure out
 	 * what to do with the shunt functions.
 	 */
-	ip_selector our_client[] = { selector_from_endpoint(local_client), };
-	ip_selector peer_client[] = { selector_from_endpoint(remote_client), };
-	unsigned transport_proto = endpoint_protocol(local_client)->ipproto;
+	ip_selector our_client[] = { selector_from_endpoint(*local_client), };
+	ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
+	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
 
 	/*
 	 * Add the kernel shunt to the pluto bare shunt list.
@@ -431,7 +433,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
 	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
-	if (address_is_specified(&sr->this.host_nexthop)) {
+	if (address_is_specified(sr->this.host_nexthop)) {
 		jam(buf, "PLUTO_NEXT_HOP='");
 		jam_address(buf, &sr->this.host_nexthop);
 		jam(buf, "' ");
@@ -449,22 +451,22 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_NET='");
-	ta = selector_prefix(&sr->this.client);
+	ta = selector_prefix(sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT_MASK='");
-	ta = selector_prefix_mask(&sr->this.client);
+	ta = selector_prefix_mask(sr->this.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
-	if (cidr_is_specified(&sr->this.host_vtiip)) {
+	if (cidr_is_specified(sr->this.host_vtiip)) {
 		jam(buf, "VTI_IP='");
 		jam_cidr(buf, &sr->this.host_vtiip);
 		jam(buf, "' ");
 	}
 
-	if (cidr_is_specified(&sr->this.ifaceip)) {
+	if (cidr_is_specified(sr->this.ifaceip)) {
 		jam(buf, "INTERFACE_IP='");
 		jam_cidr(buf, &sr->this.ifaceip);
 		jam(buf, "' ");
@@ -490,12 +492,12 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");
-	ta = selector_prefix(&sr->that.client);
+	ta = selector_prefix(sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_MASK='");
-	ta = selector_prefix_mask(&sr->that.client);
+	ta = selector_prefix_mask(sr->that.client);
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
@@ -547,7 +549,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	if (address_is_specified(&sr->this.host_srcip)) {
+	if (address_is_specified(sr->this.host_srcip)) {
 		jam(buf, "PLUTO_MY_SOURCEIP='");
 		jam_address(buf, &sr->this.host_srcip);
 		jam(buf, "' ");
@@ -598,7 +600,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 				c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (address_in_selector(&sr->that.host_addr, &sr->that.client)) {
+		} else if (address_in_selector_subnet(sr->that.host_addr, sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 				c->xfrmi->if_id);
 		} else {
@@ -690,7 +692,7 @@ bool do_command(const struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "unknown address family");
 			return false;
 		}
-		verb_suffix = selector_subnet_is_address(&sr->this.client, &sr->this.host_addr) ? hs : cs;
+		verb_suffix = selector_subnet_eq_address(sr->this.client, sr->this.host_addr) ? hs : cs;
 	}
 
 	dbg("command executing %s%s", verb, verb_suffix);
@@ -934,7 +936,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	/* if routing would affect IKE messages, reject */
 	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
 	    c->spd.this.host_port != IKE_UDP_PORT &&
-	    address_in_selector(&c->spd.that.host_addr, &c->spd.that.client)) {
+	    address_in_selector_subnet(c->spd.that.host_addr, c->spd.that.client)) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "cannot install route: peer is within its client");
 		return route_impossible;
@@ -1197,8 +1199,8 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
 		if (transport_proto == p->transport_proto &&
-		    selector_subnet_eq(our_client, &p->our_client) &&
-		    selector_subnet_eq(peer_client, &p->peer_client)) {
+		    selector_subnet_eq_subnet(*our_client, p->our_client) &&
+		    selector_subnet_eq_subnet(*peer_client, p->peer_client)) {
 			return pp;
 		}
 	}
@@ -1347,10 +1349,10 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		 */
 		if (p->said.spi == htonl(SPI_HOLD) &&
 		    transport_proto == p->transport_proto &&
-		    selector_in_selector(&p->our_client, our_client) &&
-		    selector_in_selector(&p->peer_client, peer_client)) {
-			ip_address our_addr = selector_prefix(&p->our_client);
-			ip_address peer_addr = selector_prefix(&p->peer_client);
+		    selector_in_selector(p->our_client, *our_client) &&
+		    selector_in_selector(p->peer_client, *peer_client)) {
+			ip_address our_addr = selector_prefix(p->our_client);
+			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto, SPI_HOLD,
 					       /*skip_xfrm_raw_eroute_delete?*/false,
@@ -1393,8 +1395,8 @@ bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_add
 	passert(afi == address_type(dst_address));
 	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
 	/* ports? assumed wide? */
-	ip_selector src = selector_from_address_protocol(src_address, protocol);
-	ip_selector dst = selector_from_address_protocol(dst_address, protocol);
+	ip_selector src = selector_from_address_protocol(*src_address, protocol);
+	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	selectors_buf sb;
 	dbg("replace bare shunt %s for %s",
@@ -1476,8 +1478,8 @@ bool delete_bare_shunt(const ip_address *src_address,
 	pexpect(afi == address_type(dst_address));
 	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
 	/* port? assumed wide? */
-	ip_selector src = selector_from_address_protocol(src_address, protocol);
-	ip_selector dst = selector_from_address_protocol(dst_address, protocol);
+	ip_selector src = selector_from_address_protocol(*src_address, protocol);
+	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	bool ok;
 	if (kernel_ops->type == USE_XFRM && skip_xfrm_raw_eroute_delete) {
@@ -1553,10 +1555,10 @@ bool eroute_connection(const struct spd_route *sr,
 		"eroute_connection %s", opname);
 
 	if (sa_proto == &ip_protocol_internal)
-		peer = address_any(address_type(&peer));
+		peer = address_type(&peer)->address.any;
 
 	if (sr->this.has_cat) {
-		ip_selector client = selector_from_address(&sr->this.host_addr);
+		ip_selector client = selector_from_address(sr->this.host_addr);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				    &peer, &sr->that.client,
 				    cur_spi,
@@ -1956,11 +1958,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		    st->st_interface->protocol == &ip_protocol_tcp) {
 			encap_type = st->st_interface->protocol->encap_esp;
 			if (inbound) {
-				encap_sport = endpoint_hport(&st->st_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(st->st_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			} else {
-				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(&st->st_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(st->st_remote_endpoint);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 			dbg("natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
@@ -2040,8 +2042,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (c->xfrmi != NULL) {
 			said_next->xfrm_if_id = c->xfrmi->if_id;
-			if (c->sa_marks.out.val != 0 || c->sa_marks.out.mask != 0)
-				said_next->mark_set = c->sa_marks.out;
+			said_next->mark_set = c->sa_marks.out;
 		}
 
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
@@ -2408,9 +2409,9 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 */
 
 	ip_address effective_remote_address = c->spd.that.host_addr;
-	if (!endpoint_address_eq(&st->st_remote_endpoint, &effective_remote_address) &&
-	    address_is_specified(&c->temp_vars.redirect_ip)) {
-		effective_remote_address = endpoint_address(&st->st_remote_endpoint);
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
+	    address_is_specified(c->temp_vars.redirect_ip)) {
+		effective_remote_address = endpoint_address(st->st_remote_endpoint);
 	}
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
@@ -3327,13 +3328,13 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	bool redirected = false;
 	ip_address tmp_host_addr = unset_address;
 	unsigned tmp_host_port = 0;
-	if (!endpoint_address_eq(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
-	    address_is_specified(&c->temp_vars.redirect_ip)) {
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
+	    address_is_specified(c->temp_vars.redirect_ip)) {
 		redirected = true;
 		tmp_host_addr = c->spd.that.host_addr;
 		tmp_host_port = c->spd.that.host_port; /* XXX: needed? */
-		c->spd.that.host_addr = endpoint_address(&st->st_remote_endpoint);
-		c->spd.that.host_port = endpoint_hport(&st->st_remote_endpoint);
+		c->spd.that.host_addr = endpoint_address(st->st_remote_endpoint);
+		c->spd.that.host_port = endpoint_hport(st->st_remote_endpoint);
 	}
 
 	const ip_address *src, *dst;
@@ -3521,8 +3522,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					}
 				}
 			}
-			ip_address our_addr = selector_prefix(&bsp->our_client);
-			ip_address peer_addr = selector_prefix(&bsp->peer_client);
+			ip_address our_addr = selector_prefix(bsp->our_client);
+			ip_address peer_addr = selector_prefix(bsp->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),

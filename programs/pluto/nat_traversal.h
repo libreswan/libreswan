@@ -141,17 +141,17 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
 			? ENCAPSULATION_MODE_UDP_TUNNEL_RFC \
 			: ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS \
-			) \
+		      ) \
 		    : ( ((st)->hidden_variables.st_nat_traversal & \
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
 			? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC \
 			: ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS \
-			) \
-		    ) \
+		      ) \
+		  ) \
 		: ( ((st)->st_policy & POLICY_TUNNEL) \
 		    ? ENCAPSULATION_MODE_TUNNEL \
 		    : ENCAPSULATION_MODE_TRANSPORT \
-		    ) \
+		  ) \
 		)
 
 #endif /* _NAT_TRAVERSAL_H_ */

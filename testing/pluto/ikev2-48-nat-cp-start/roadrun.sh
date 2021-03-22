@@ -1,9 +1,11 @@
-sleep 10
-ip -4 route
+# wait for autostart to complete
+../../pluto/bin/wait-for.sh --match 192.0.2.1 -- ipsec whack --trafficstatus
+
 # ipsec will configure 192.0.2.1 on eth0
+ip -4 route
 ip addr show  dev eth0
-ping -n -c 2 192.1.2.23
-ipsec whack --trafficstatus
+../../pluto/bin/ping-once.sh --up 192.0.2.1 192.1.2.23
+
 ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 #check if the address, 192.0.2.1, is removed
 ip addr show  dev eth0

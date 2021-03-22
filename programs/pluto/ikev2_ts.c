@@ -30,11 +30,13 @@
 #include "connections.h"	/* for struct end */
 #include "demux.h"
 #include "virtual_ip.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "security_selinux.h"
 #include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
+#include "ip_range.h"
+#include "iface.h"
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -88,16 +90,15 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 {
 	ikev2_print_ts(ts);
 	ip_subnet subnet;
-	/* XXX: check conversion worked */
-	rangetosubnet(&ts->net.start, &ts->net.end, &subnet);
+	happy(range_to_subnet(ts->net, &subnet));
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
 	/* XXX: check port range valid */
 	ip_port port = ip_hport(ts->startport);
-	end->client = selector_from_subnet_protocol_port(&subnet, protocol, port);
+	end->client = selector_from_subnet_protocol_port(subnet, protocol, port);
 	/* redundant */
 	end->port = ts->startport;
 	end->protocol = ts->ipprotoid;
-	end->has_client = !selector_is_address(&end->client, &end->host_addr);
+	end->has_client = !selector_eq_address(end->client, end->host_addr);
 	/* also save in state */
 	*st_ts = *ts;
 }
@@ -122,7 +123,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state 
 	}
 
 	/* subnet => range */
-	ts.net = selector_range(&e->client);
+	ts.net = selector_range(e->client);
 	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
@@ -221,12 +222,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 			return STF_INTERNAL_ERROR;
 
 		diag_t d;
-		d = pbs_out_address(&ts_range_pbs, &ts->net.start, "IP start");
+		d = pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
-		d = pbs_out_address(&ts_range_pbs, &ts->net.end, "IP end");
+		d = pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -257,7 +258,7 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		else
 			out_label = ts->sec_label;
 
-		diag_t d = pbs_out_raw(&ts_label_pbs, out_label.ptr, out_label.len, "output Security label");
+		diag_t d = pbs_out_hunk(&ts_label_pbs, out_label, "output Security label");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -285,9 +286,9 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	struct traffic_selector ts_ret = *ts;
 
 	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv4_info.subnet.all);
+		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
 	else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE)
-		ts_ret.net = range_from_subnet(&ipv6_info.subnet.all);
+		ts_ret.net = range_from_subnet(ipv6_info.subnet.all);
 
 	ts_ret.net.is_subnet = true;
 
@@ -467,14 +468,15 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 				bad_case(ts_h.isath_type); /* make compiler happy */
 			}
 
-
-			d = pbs_in_address(&ts_body_pbs, &ts->net.start, ipv, "TS IP start");
+			ip_address start;
+			d = pbs_in_address(&ts_body_pbs, &start, ipv, "TS IP start");
 			if (d != NULL) {
 				log_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
 			}
 
-			d = pbs_in_address(&ts_body_pbs, &ts->net.end, ipv, "TS IP end");
+			ip_address end;
+			d = pbs_in_address(&ts_body_pbs, &end, ipv, "TS IP end");
 			if (d != NULL) {
 				log_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
@@ -483,6 +485,22 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			/* XXX: does this matter? */
 			if (pbs_left(&ts_body_pbs) != 0)
 				return false;
+
+			err_t err = addresses_to_range(start, end, &ts->net);
+
+			/* pluto doesn't yet do full ranges; check for subnet */
+			ip_subnet ignore;
+			err = err == NULL ? range_to_subnet(ts->net, &ignore) : err;
+
+			if (err != NULL) {
+				address_buf sb, eb;
+				llog(RC_LOG, logger, "Traffic Selector range %s-%s invalid: %s",
+				     str_address_sensitive(&start, &sb),
+				     str_address_sensitive(&end, &eb),
+				     err);
+				return false;
+			}
+
 			ts->ts_type = ts_h.isath_type;
 			break;
 		}
@@ -726,7 +744,7 @@ static int score_address_range(const struct end *end,
 	 * Pre-compute possible fit --- sum of bits gives how good a
 	 * fit this is.
 	 */
-	int ts_range = range_significant_bits(&ts->net);
+	int ts_range = range_host_bits(ts->net);
 	int maskbits = end->client.maskbits;
 	int fitbits = maskbits + ts_range;
 
@@ -739,25 +757,20 @@ static int score_address_range(const struct end *end,
 	 *
 	 * XXX: so what is CIDR?
 	 */
-	ip_range range = selector_range(&end->client);
-	passert(addrcmp(&range.start, &range.end) <= 0);
-	passert(addrcmp(&ts->net.start, &ts->net.end) <= 0);
+	ip_range range = selector_range(end->client);
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (addrcmp(&range.start, &ts->net.start) == 0 &&
-		    addrcmp(&range.end, &ts->net.end) == 0) {
+		if (range_eq_range(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (addrcmp(&range.start, &ts->net.start) >= 0 &&
-		    addrcmp(&range.end, &ts->net.end) <= 0) {
+		if (range_in_range(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (addrcmp(&range.start, &ts->net.start) <= 0 &&
-		    addrcmp(&range.end, &ts->net.end) >= 0) {
+		if (range_in_range(ts->net, range)) {
 			f = fitbits;
 		}
 		break;
@@ -1112,26 +1125,12 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 
 	dbg("looking for better host pair");
-	const struct host_pair *hp = NULL;
-	for (const struct spd_route *sra = &c->spd;
-	     hp == NULL && sra != NULL; sra = sra->spd_next) {
-		hp = find_host_pair(&sra->this.host_addr,
-				    &sra->that.host_addr);
 
-		if (DBGP(DBG_BASE)) {
-			selector_buf s2;
-			selector_buf d2;
-			DBG_log("  checking hostpair %s -> %s is %s",
-				str_selector(&sra->this.client, &s2),
-				str_selector(&sra->that.client, &d2),
-				hp == NULL ? "not found" : "found");
-		}
+	const ip_address local = md->iface->ip_dev->id_address;
+	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
 
-		if (hp == NULL)
-			continue;
+		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
-		for (struct connection *d = hp->connections;
-		     d != NULL; d = d->hp_next) {
 			/* groups are templates instantiated as GROUPINSTANCE */
 			if (d->policy & POLICY_GROUP) {
 				continue;
@@ -1319,14 +1318,14 @@ bool v2_process_ts_request(struct child_sa *child,
 			}
 
 			/* require initiator's subnet <= T; why? */
-			if (!selector_in_selector(&c->spd.that.client, &t->spd.that.client)) {
+			if (!selector_in_selector(c->spd.that.client, t->spd.that.client)) {
 				dbg("    skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
-			ip_address c_this_client_address = selector_prefix(&c->spd.this.client);
-			ip_address t_this_client_address = selector_prefix(&t->spd.this.client);
-			if (!address_eq(&c_this_client_address, &t_this_client_address)) {
+			ip_address c_this_client_address = selector_prefix(c->spd.this.client);
+			ip_address t_this_client_address = selector_prefix(t->spd.this.client);
+			if (!address_eq_address(c_this_client_address, t_this_client_address)) {
 				dbg("    skipping; responder addresses don't match");
 				continue;
 			}

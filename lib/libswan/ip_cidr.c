@@ -34,42 +34,50 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 	if (cidr_is_unset(cidr)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(cidr->version);
 }
 
-ip_address cidr_address(const ip_cidr *cidr)
+ip_address cidr_address(const ip_cidr cidr)
 {
-	if (cidr_is_unset(cidr)) {
+	if (cidr_is_unset(&cidr)) {
 		return unset_address;
 	}
-	const struct ip_info *afi = cidr_type(cidr);
+
+	const struct ip_info *afi = cidr_type(&cidr);
 	if (afi == NULL) {
 		return unset_address;
 	}
-	return address_from_raw(afi, &cidr->bytes);
+
+	return address_from_raw(HERE, cidr.version, cidr.bytes);
 }
 
-err_t cidr_specified(const ip_cidr *cidr)
+err_t cidr_specified(const ip_cidr cidr)
 {
-	if (cidr_is_unset(cidr)) {
+	if (cidr_is_unset(&cidr)) {
 		return "unset";
 	}
-	const struct ip_info *afi = cidr_type(cidr);
+
+	const struct ip_info *afi = cidr_type(&cidr);
 	if (afi == NULL) {
 		return "unknown address family";
 	}
+
 	/* https://en.wikipedia.org/wiki/IPv6_address#Special_addresses */
-	if (thingeq(cidr->bytes, afi->address.any.bytes) &&
-	    cidr->prefix_bits == 0) {
+	/* ::/0 and/or 0.0.0.0/0 */
+	if (cidr.prefix_bits == 0 && thingeq(cidr.bytes, unset_bytes)) {
 		return "default route (no specific route)";
 	}
-	if (thingeq(cidr->bytes, afi->address.any.bytes)) {
+
+	if (thingeq(cidr.bytes, unset_bytes)) {
 		return "unspecified address";
 	}
+
 	return NULL;
 }
 
-bool cidr_is_specified(const ip_cidr *cidr)
+bool cidr_is_specified(const ip_cidr cidr)
 {
 	return cidr_specified(cidr) == NULL;
 }
@@ -128,7 +136,7 @@ size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 	}
 
 	size_t s = 0;
-	ip_address sa = cidr_address(cidr);
+	ip_address sa = cidr_address(*cidr);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", cidr->prefix_bits);
 	return s;

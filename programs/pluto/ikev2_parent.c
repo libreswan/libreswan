@@ -72,7 +72,7 @@
 #include "crypt_prf.h"
 #include "ietf_constants.h"
 #include "ip_address.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "send.h"
 #include "ikev2_send.h"
 #include "pluto_stats.h"
@@ -694,7 +694,7 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 			return false;
 		}
 	} else {
-		if (!pbs_out_hunk(*g, &kepbs, "ikev2 g^x"))
+		if (!out_hunk(*g, &kepbs, "ikev2 g^x"))
 			return FALSE;
 	}
 
@@ -785,7 +785,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
-		    !pbs_out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
 			return false;
 
 		close_output_pbs(&pb);
@@ -816,7 +816,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * - if not, check if we support redirect mechanism
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
-	if (address_is_specified(&c->temp_vars.redirect_ip)) {
+	if (address_is_specified(c->temp_vars.redirect_ip)) {
 		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, &rbody))
 			return false;
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
@@ -1131,7 +1131,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
-		    !pbs_out_hunk(st->st_nr, &pb, "IKEv2 nonce"))
+		    !out_hunk(st->st_nr, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb);
@@ -1768,19 +1768,23 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 
 /* Misleading name, also used for NULL sized type's */
 static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
-		const char *story, pb_stream *outpbs)
+					const char *story, struct pbs_out *outpbs)
 {
-	pb_stream a_pbs;
+	struct pbs_out a_pbs;
 
-	struct ikev2_cp_attribute attr;
-	attr.type = type;
-	if (ip == NULL) {
+	struct ikev2_cp_attribute attr = {
+		.type = type,
+	};
+
+	/* could be NULL */
+	const struct ip_info *afi = address_type(ip);
+
+	if (afi == NULL) {
 		attr.len = 0;
+	} else if (afi == &ipv6_info) {
+		attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
 	} else {
-		if (address_type(ip)->af == AF_INET)
-			attr.len = address_type(ip)->ip_size;
-		else
-			attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
+		attr.len = address_type(ip)->ip_size;
 	}
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
@@ -1788,7 +1792,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		diag_t d = pbs_out_address(&a_pbs, ip, story);
+		diag_t d = pbs_out_address(&a_pbs, *ip, story);
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
@@ -1855,7 +1859,7 @@ bool emit_v2_child_configuration_payload(struct connection *c,
 		return false;
 
 	if (cfg_reply) {
-		ip_address that_client_address = selector_prefix(&c->spd.that.client);
+		ip_address that_client_address = selector_prefix(c->spd.that.client);
 		ikev2_ship_cp_attr_ip(selector_type(&c->spd.that.client) == &ipv4_info ?
 				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 				      &that_client_address, "Internal IP Address", &cp_pbs);
@@ -2289,7 +2293,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 				&ikev2_id_i_desc,
 				&sk.pbs,
 				&i_id_pbs) ||
-		    !pbs_out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
+		    !out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&i_id_pbs);
 	}
@@ -2336,7 +2340,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			pb_stream r_id_pbs;
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
 				&r_id_pbs) ||
-			    !pbs_out_hunk(id_b, &r_id_pbs, "their IDr"))
+			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
@@ -3418,7 +3422,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		pb_stream r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_r_desc, &sk.pbs, &r_id_pbs) ||
-		    !pbs_out_hunk(ike->sa.st_v2_id_payload.data,
+		    !out_hunk(ike->sa.st_v2_id_payload.data,
 				  &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&r_id_pbs);
@@ -4328,7 +4332,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	};
 	pb_stream pb_nr;
 	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-	    !pbs_out_hunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
+	    !out_hunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
 		return STF_INTERNAL_ERROR;
 	close_output_pbs(&pb_nr);
 
@@ -4421,7 +4425,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 		};
 		pb_stream nr_pbs;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
-		    !pbs_out_hunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
+		    !out_hunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
 	}
@@ -5422,7 +5426,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 
 	if (mobike_check_established(st) &&
 	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    !endpoint_eq(&md->sender, &st->st_remote_endpoint)) {
+	    !endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
 		/* remember the established/old address and interface */
 		est_remote->remote = st->st_remote_endpoint;
 		est_remote->interface = st->st_interface;
@@ -6172,7 +6176,7 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 	if (!mobike_check_established(st))
 		return;
 
-	if (address_is_specified(&st->st_deleted_local_addr)) {
+	if (address_is_specified(st->st_deleted_local_addr)) {
 		/*
 		 * A work around for delay between new address and new route
 		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE
@@ -6196,7 +6200,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		return;
 
 	pexpect_st_local_endpoint(st);
-	ip_address local_address = endpoint_address(&st->st_interface->local_endpoint);
+	ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
 	/* ignore port */
 	if (sameaddr(ip, &local_address)) {
 		ip_address ip_p = st->st_deleted_local_addr;
@@ -6240,9 +6244,10 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
-	st->st_mobike_local_endpoint = endpoint3(st->st_interface->protocol,
-						 &this->addr, port);
+	ip_port port = endpoint_port(st->st_interface->local_endpoint);
+	st->st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
+									   st->st_interface->protocol,
+									   port);
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_endpoint *o_iface = st->st_interface;
 	/* notice how it gets set back below */
@@ -6273,10 +6278,11 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 {
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
-	ip_port port = endpoint_port(&st->st_interface->local_endpoint);
-	ip_endpoint local_endpoint = endpoint3(st->st_interface->protocol,
-					       &this->addr, port);
-	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
+	ip_port port = endpoint_port(st->st_interface->local_endpoint);
+	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
+									 st->st_interface->protocol,
+									 port);
+	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
@@ -6284,7 +6290,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 		/* XXX: should this be building a global logger? */
 		struct logger global_logger[1] = { GLOBAL_LOGGER(whack_log_fd), };
 		find_ifaces(false, global_logger);
-		iface = find_iface_endpoint_by_local_endpoint(&local_endpoint);
+		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
 		}
@@ -6312,7 +6318,7 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
 		.host_family = endpoint_type(&st->st_remote_endpoint),
-		.addr = endpoint_address(&st->st_remote_endpoint),
+		.addr = endpoint_address(st->st_remote_endpoint),
 	};
 
 	/*

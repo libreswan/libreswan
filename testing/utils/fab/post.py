@@ -276,7 +276,8 @@ class TestResult:
         # Start out assuming that it passed and then prove otherwise.
         self.resolution.passed()
 
-        # did pluto crash?
+        # check the log file for problems
+
         for host_name in test.host_names:
             pluto_log_filename = host_name + ".pluto.log"
             if self.grub(pluto_log_filename, "ASSERTION FAILED"):
@@ -320,6 +321,9 @@ class TestResult:
                 continue
 
             # Check the host's raw output for signs of a crash.
+            #
+            # Need to repeat EXPECTATION and ASSERTION.  It might be a
+            # command line utility that barfs.
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
@@ -331,6 +335,15 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, r"ASSERTION FAILED"):
+                self.issues.add(Issues.ASSERTION, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, r"EXPECTATION FAILED"):
+                self.issues.add(Issues.EXPECTATION, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, "\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.

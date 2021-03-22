@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "ip_info.h"
 #include "where.h"
+#include "jambuf.h"
 
 struct logger;
 
@@ -59,92 +60,133 @@ extern bool use_dns;
 			 (FAMILY) == 6 ? &ipv6_info :	\
 			 NULL)
 
-#define PRINT(FILE, FMT, ...)						\
-	fprintf(FILE, "%s[%zu]:"FMT"\n", __func__, ti,##__VA_ARGS__)
-
-#define FAIL(PRINT, FMT, ...)						\
+#define PREFIX(FILE)							\
 	{								\
+		const char *file = HERE_BASENAME;			\
+		fprintf(FILE, "%s:%d", file, t->line);			\
+		fprintf(FILE, " ");					\
+		fprintf(FILE, "%s():%d[%zu]", __func__, LN, ti);	\
+		fprintf(FILE, " ");					\
+	}
+
+#define PRINT(...)							\
+	{								\
+		PREFIX(stdout);						\
+		fprintf(stdout, __VA_ARGS__);				\
+		fprintf(stdout,	"\n");					\
+	}
+
+#define LN __LINE__
+
+#define FAIL(...)							\
+	{								\
+		fflush(stdout);	/* keep in sync */			\
 		fails++;						\
-		PRINT(stderr, " "FMT" ("PRI_WHERE")",##__VA_ARGS__,	\
-		      pri_where(HERE));					\
+		PREFIX(stderr);						\
+		fprintf(stderr, "FAILED: ");				\
+		fprintf(stderr, __VA_ARGS__);				\
+		fprintf(stderr,	"\n");					\
 		continue;						\
 	}
 
-/* t->family, t->in */
-#define PRINT_IN(FILE, FMT, ...)					\
-	PRINT(FILE, "%s '%s'"FMT,					\
-	      pri_family(t->family), t->in ,##__VA_ARGS__);
-
-#define FAIL_IN(FMT, ...) FAIL(PRINT_IN, FMT,##__VA_ARGS__)
-
-/* t->family, t->lo, t->hi */
-#define PRINT_LO2HI(FILE, FMT, ...)					\
-	PRINT(FILE, "%s '%s'-'%s'"FMT,					\
-	      pri_family(t->family), t->lo, t->hi,##__VA_ARGS__)
-
-#define FAIL_LO2HI(FMT, ...) FAIL(PRINT_LO2HI, FMT,##__VA_ARGS__)
-
-#define CHECK_FAMILY(PRINT, FAMILY, TYPE)				\
+#define CHECK_FAMILY(FAMILY, T, V)					\
 	{								\
-		const struct ip_info *actual = TYPE;			\
-		const char *actual_name =				\
-			actual == NULL ? "unspec" : actual->af_name;	\
+		const struct ip_info *actual = T##_type(V);		\
 		const struct ip_info *expected = IP_TYPE(FAMILY);	\
-		const char *expected_name =				\
-			expected == NULL ? "unspec" : expected->af_name; \
-		if (actual != expected) {				\
-			FAIL(PRINT, " "#TYPE" returned %s, expecting %s", \
-			     actual_name, expected_name);		\
+		if (expected != actual) {				\
+			T##_buf tb;					\
+			const char *en = (actual == NULL ? "unset" :	\
+					  actual->af_name);		\
+			const char *an = (expected == NULL ? "unset" :	\
+					  expected->af_name);		\
+			FAIL(#T"_type(%s) returned %s, expecting %s",	\
+			     str_##T(V, &tb), an, en);			\
 		}							\
 	}
 
-#define CHECK_TYPE(PRINT, TYPE)						\
-	CHECK_FAMILY(PRINT, t->family, TYPE)
-
-#define CHECK_ADDRESS(PRINT, ADDRESS)					\
-	{								\
-		CHECK_TYPE(PRINT, address_type(ADDRESS));		\
-		bool unset = address_is_unset(ADDRESS);			\
-		if (unset != t->unset) {					\
-			FAIL(PRINT, " address_is_unset() returned %s; expected %s", \
-			     bool_str(unset), bool_str(t->unset));		\
-		}							\
-		bool specified = address_is_specified(ADDRESS);		\
-		if (specified != t->specified) {			\
-			FAIL(PRINT, " address_is_specified() returned %s; expected %s", \
-			     bool_str(specified), bool_str(t->specified)); \
-		}							\
-		bool any = address_is_any(ADDRESS);			\
-		if (any != t->any) {					\
-			FAIL(PRINT, " address_is_any() returned %s; expected %s", \
-			     bool_str(any), bool_str(t->any));		\
-		}							\
-		bool loopback = address_is_loopback(ADDRESS);		\
-		if (loopback != t->loopback) {				\
-			FAIL(PRINT, " address_eq_loopback() returned %s; expected %s", \
-			     bool_str(loopback), bool_str(t->loopback)); \
-		}							\
-	}
+#define CHECK_TYPE(T)				\
+	CHECK_FAMILY(t->family, T, T)
 
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\
+			if (EXPECTED == NULL) {				\
+					FAIL(#EXPECTED " is NULL");	\
+			}						\
 			BUF buf;					\
 			const char *s = str_##OP(__VA_ARGS__, &buf);	\
 			if (s == NULL) {				\
-				FAIL_IN("str_"#OP"() unexpectedly returned NULL"); \
+				FAIL("str_"#OP"() unexpectedly returned NULL"); \
 			}						\
 			printf("expected %s s %s\n", EXPECTED, s);	\
 			if (!strcaseeq(EXPECTED, s)) {			\
-				FAIL_IN("str_"#OP"() returned '%s', expected '%s'", \
-					s, EXPECTED);			\
+				FAIL("str_"#OP"() returned '%s', expected '%s'", \
+				     s, EXPECTED);			\
 			}						\
 			size_t ssize = strlen(s);			\
 			char js[sizeof(buf)];				\
 			struct jambuf jbuf = ARRAY_AS_JAMBUF(js);		\
 			size_t jsize = jam_##OP(&jbuf, __VA_ARGS__);	\
 			if (jsize != ssize) {				\
-				FAIL_IN("jam_"#OP"() returned %zu, expecting %zu", \
-					jsize, ssize);			\
+				FAIL("jam_"#OP"() returned %zu, expecting %zu", \
+				     jsize, ssize);			\
+			}						\
+		}
+
+#define CHECK_STR2(T)                                                   \
+                {                                                       \
+			if (t->str == NULL) {				\
+				FAIL("t->str is NULL");			\
+			}						\
+                        T##_buf buf;                                    \
+                        const char *str = str_##T(T, &buf);             \
+                        if (str == NULL) {                              \
+                                FAIL("str_"#T"(%s) unexpectedly returned NULL",\
+                                     t->str);                           \
+                        }                                               \
+                        if (!strcaseeq(t->str, str)) {                  \
+                                FAIL("str_"#T"(%s) returned '%s', expecting '%s'", \
+                                     t->str, str, t->str);		\
+                        }                                               \
+                        size_t str_size = strlen(str);                  \
+                        char jam_str[sizeof(buf)];                      \
+                        struct jambuf jambuf = ARRAY_AS_JAMBUF(jam_str); \
+                        size_t jam_size = jam_##T(&jambuf, T);          \
+                        if (jam_size != str_size) {                     \
+                                FAIL("jam_"#T"() returned %zu, expecting %zu", \
+                                     jam_size, str_size);               \
+                        }                                               \
+                        if (!strcaseeq(t->str, jam_str)) {              \
+                                FAIL("jam_"#T"(%s) emitted '%s', expecting '%s'", \
+                                     t->str, jam_str, t->str);		\
+                        }                                               \
+                }
+
+/*
+ * Call a predicate.  First form assumes NULL allowed, second does
+ * not.
+ */
+
+#define CHECK_COND(T,COND)						\
+		{							\
+			bool cond = T##_##COND(T);			\
+			if (cond != t->COND) {				\
+				T##_buf b;				\
+				FAIL(#T"_"#COND"(%s) returned %s, expecting %s", \
+				     str_##T(T, &b),			\
+				     bool_str(cond),			\
+				     bool_str(t->COND));		\
+			}						\
+		}
+
+#define CHECK_COND2(T,COND)						\
+		if (T != NULL) {					\
+			bool cond = T##_##COND(*T);			\
+			if (cond != t->COND) {				\
+				T##_buf b;				\
+				FAIL(#T"_"#COND"(%s) returned %s, expecting %s", \
+				     str_##T(T, &b),			\
+				     bool_str(cond),			\
+				     bool_str(t->COND));		\
 			}						\
 		}
 

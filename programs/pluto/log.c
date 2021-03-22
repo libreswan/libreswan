@@ -469,7 +469,7 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 	} else {
 		const ip_endpoint *from = object;
 		/* peer's IP address */
-		if (endpoint_protocol(from) == &ip_protocol_tcp) {
+		if (endpoint_protocol(*from) == &ip_protocol_tcp) {
 			s += jam(buf, "connection from ");
 		} else {
 			s += jam(buf, "packet from ");

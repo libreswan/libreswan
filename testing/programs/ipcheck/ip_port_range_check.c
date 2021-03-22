@@ -26,19 +26,16 @@
 void ip_port_range_check(void)
 {
 	static const struct test {
+		int line;
 		unsigned lo, hi;
 		const char *out;
 	} tests[] = {
-		{ 4, 4, "4", },
-		{ 4, 8, "4-8", },
+		{ LN, 4, 4, "4", },
+		{ LN, 4, 8, "4-8", },
 	};
-#define OUT(FILE, FMT, ...)						\
-		PRINT(FILE, "ports=%u-%u out=%s"FMT,			\
-		      t->lo, t->hi, t->out, ##__VA_ARGS__)
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		OUT(stdout, "");
+		PRINT("ports=%u-%u out=%s", t->lo, t->hi, t->out);
 
 		ip_port lo = ip_hport(t->lo);
 		ip_port hi = ip_hport(t->hi);
@@ -46,9 +43,8 @@ void ip_port_range_check(void)
 
 		port_range_buf prb;
 		if (!streq(t->out, str_port_range(pr, &prb))) {
-			FAIL(OUT, "str_port_range() returned %s, expecting %s",
+			FAIL("str_port_range() returned %s, expecting %s",
 			     prb.buf, t->out);
 		}
 	}
-#undef OUT
 }

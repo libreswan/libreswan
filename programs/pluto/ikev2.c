@@ -71,12 +71,13 @@
 #include "ikev2_redirect.h"
 #include "ikev2_states.h"
 #include "ip_endpoint.h"
-#include "hostpair.h"		/* for find_v2_host_connection() */
+#include "host_pair.h"		/* for find_v2_host_connection() */
 #include "kernel.h"
 #include "iface.h"
 #include "ikev2_notify.h"
 #include "unpack.h"
 #include "pending.h"		/* for release_pending_whacks() */
+#include "ikev2_host_pair.h"
 
 static void v2_dispatch(struct ike_sa *ike, struct state *st,
 			struct msg_digest *md,
@@ -3126,7 +3127,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    /*
 	     * Only when the request changes the remote's endpoint ...
 	     */
-	    !endpoint_eq(&ike->sa.st_remote_endpoint, &md->sender) &&
+	    !endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
 	    /*
 	     * Only when the request was protected and passes
 	     * integrity ...

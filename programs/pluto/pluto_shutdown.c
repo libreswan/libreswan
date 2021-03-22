@@ -152,14 +152,19 @@ void exit_epilogue(void)
 	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */
+#ifdef USE_DNSSEC
+	unbound_ctx_free();	/* needs event-loop aka server */
+#endif
+
+	/*
+	 * No libevent events beyond this point.
+	 */
+	free_server();
+
 	free_virtual_ip();	/* virtual_private= */
-	free_server(); /* no libevent evnts beyond this point */
 	free_demux();
 	free_pluto_main();	/* our static chars */
 	free_impair_message(logger);
-#ifdef USE_DNSSEC
-	unbound_ctx_free();
-#endif
 
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective) {

@@ -19,6 +19,13 @@
 
 #include <stdint.h>		/* for uint8_t */
 
+struct ip_info;
+
+enum ip_version {
+	IPv4 = 4,
+	IPv6 = 6,
+};
+
 /*
  * We need something that makes static IPv4 initializers possible
  * (struct in_addr requires htonl() which is run-time only).
@@ -27,6 +34,8 @@
 struct ip_bytes {
 	uint8_t byte[16];
 };
+
+extern const struct ip_bytes unset_bytes;
 
 #define PRI_BYTES "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
 #define pri_bytes(B)							\
@@ -46,5 +55,37 @@ struct ip_bytes {
 		(B).byte[13],						\
 		(B).byte[14],						\
 		(B).byte[15]
+
+/*
+ * Modify address bytes broken down according to AFI as
+ * ROUTING-PREFIX:HOST-ID.
+ */
+
+extern const struct ip_blit set_bits;
+extern const struct ip_blit clear_bits;
+extern const struct ip_blit keep_bits;
+
+struct ip_bytes bytes_from_blit(const struct ip_info *afi,
+				const struct ip_bytes bytes,
+				const struct ip_blit *routing_prefix,
+				const struct ip_blit *host_id,
+				unsigned nr_prefix_bits);
+
+/* Calculate l-r using unsigned arithmetic */
+struct ip_bytes bytes_sub(const struct ip_info *afi,
+			  const struct ip_bytes l,
+			  const struct ip_bytes r);
+
+/* find first non-zero bit from left */
+int bytes_first_set_bit(const struct ip_info *afi,
+			const struct ip_bytes bytes);
+
+/* match prefixes, or -1 */
+int bytes_prefix_bits(const struct ip_info *afi,
+		      const struct ip_bytes lo,
+		      const struct ip_bytes hi);
+
+int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
+	      enum ip_version r_version, const struct ip_bytes r_bytes);
 
 #endif

@@ -217,7 +217,7 @@ void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (address_is_unset(&id->ip_addr) /*short-circuit*/||
-		    address_is_any(&id->ip_addr)) {
+		    address_is_any(id->ip_addr)) {
 			jam(buf, "%%any");
 		} else {
 			jam_address(buf, &id->ip_addr);
@@ -282,7 +282,12 @@ void free_id_content(struct id *id)
 	}
 }
 
-/* is this a "match anything" id */
+/*
+ * Is this a "match anything" id
+ * MUST only be called on our configured ID's, not our received ID's,
+ * because we would bad_case() on a bogus value
+ * (our enum and the IKE IANA values are matching)
+ */
 bool any_id(const struct id *a)
 {
 	switch (a->kind) {
@@ -291,11 +296,12 @@ bool any_id(const struct id *a)
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		return (address_is_unset(&a->ip_addr) || address_is_any(&a->ip_addr));
+		return (address_is_unset(&a->ip_addr) || address_is_any(a->ip_addr));
 
 	case ID_FQDN:
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
+	case ID_DER_ASN1_GN:
 	case ID_KEY_ID:
 	case ID_NULL:
 		return FALSE;

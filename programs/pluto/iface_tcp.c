@@ -336,9 +336,10 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
-					    &ifd->id_address, port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+								      &ip_protocol_tcp,
+								      port);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
@@ -634,7 +635,7 @@ stf_status create_tcp_interface(struct state *st)
 	 */
 
 	dbg("TCP: socket %d connecting to other end", fd);
-	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(&st->st_remote_endpoint);
+	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(st->st_remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
 		log_errno(st->st_logger, errno,
 			  "TCP: connect(%d) failed", fd);
@@ -656,13 +657,16 @@ stf_status create_tcp_interface(struct state *st)
 			close(fd);
 			return STF_FATAL;
 		}
-		err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &local_sockaddr, &local_endpoint);
+		ip_address local_address;
+		ip_port local_port;
+		err_t err = sockaddr_to_address_port(local_sockaddr, &local_address, &local_port);
 		if (err != NULL) {
 			log_state(RC_LOG, st,
 				  "TCP: failed to get local TCP address from socket %d, %s", fd, err);
 			close(fd);
 			return STF_FATAL;
 		}
+		local_endpoint = endpoint_from_address_protocol_port(local_address, &ip_protocol_tcp, local_port);
 	}
 
 	dbg("TCP: socket %d making things non-blocking", fd);
@@ -763,16 +767,19 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 		.len = sockaddr_len,
 		.sa.sa = *sockaddr,
 	};
-	ip_endpoint tcp_remote_endpoint;
-	err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &sa, &tcp_remote_endpoint);
-	if (err) {
-		llog(RC_LOG, logger,
-			    "TCP: invalid remote address: %s", err);
+	ip_address remote_tcp_address;
+	ip_port remote_tcp_port;
+	err_t err = sockaddr_to_address_port(sa, &remote_tcp_address, &remote_tcp_port);
+	if (err != NULL) {
+		llog(RC_LOG, logger, "TCP: invalid remote address: %s", err);
 		close(accepted_fd);
 		return;
 	}
+	ip_endpoint remote_tcp_endpoint = endpoint_from_address_protocol_port(remote_tcp_address,
+									      &ip_protocol_tcp,
+									      remote_tcp_port);
 
-	struct logger from_logger = logger_from(logger, &tcp_remote_endpoint);
+	struct logger from_logger = logger_from(logger, &remote_tcp_endpoint);
 	logger = &from_logger;
 	llog(RC_LOG, logger, "TCP: accepting connection");
 
@@ -783,7 +790,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	ifp->esp_encapsulation_enabled = true;
 	ifp->float_nat_initiator = false;
 	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
-	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
+	ifp->iketcp_remote_endpoint = remote_tcp_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;
 	ifp->iketcp_state = IKETCP_OPEN;
 	ifp->iketcp_server = true;

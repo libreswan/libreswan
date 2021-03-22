@@ -47,7 +47,7 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time
@@ -75,27 +75,27 @@ typedef struct {
 		(S)->ipproto,			\
 		(S)->hport
 
-void pexpect_selector(const ip_selector *s, const char *t, where_t where);
-#define pselector(S) pexpect_selector(S, #S, HERE)
+void pexpect_selector(const ip_selector *s, where_t where);
+#define pselector(S) pexpect_selector(S, HERE)
 
-ip_selector selector_from_address(const ip_address *address);
-ip_selector selector_from_address_protocol(const ip_address *address,
-					   const ip_protocol *protocol);
-ip_selector selector_from_address_protocol_port(const ip_address *address,
-						const ip_protocol *protocol,
-						ip_port port);
+ip_selector selector_from_address(const ip_address address);
+ip_selector selector_from_address_protocol(const ip_address address,
+					   const struct ip_protocol *protocol);
+ip_selector selector_from_address_protocol_port(const ip_address address,
+						const struct ip_protocol *protocol,
+						const ip_port port);
 
-ip_selector selector_from_endpoint(const ip_endpoint *address);
+ip_selector selector_from_endpoint(const ip_endpoint address);
 
-ip_selector selector_from_subnet(const ip_subnet *subnet);
-ip_selector selector_from_subnet_protocol_port(const ip_subnet *subnet,
-					       const ip_protocol *protocol,
-					       ip_port port);
+ip_selector selector_from_subnet(const ip_subnet subnet);
+ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
+					       const struct ip_protocol *protocol,
+					       const ip_port port);
 
-ip_selector selector_from_address_protoport(const ip_address *address,
-					    const ip_protoport *protoport);
-ip_selector selector_from_subnet_protoport(const ip_subnet *subnet,
-					   const ip_protoport *protoport);
+ip_selector selector_from_address_protoport(const ip_address address,
+					    const ip_protoport protoport);
+ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
+					   const ip_protoport protoport);
 
 err_t numeric_to_selector(shunk_t src, const struct ip_info *afi, ip_selector *dst);
 
@@ -112,40 +112,39 @@ err_t numeric_to_selector(shunk_t src, const struct ip_info *afi, ip_selector *d
  */
 
 extern const ip_selector unset_selector;
-bool selector_is_unset(const ip_selector *selector);
+
+bool selector_is_unset(const ip_selector *selector);			/* handles NULL */
+const struct ip_info *selector_type(const ip_selector *selector);	/* handles NULL */
+
+bool selector_is_specified(const ip_selector selector);
 
 /* attributes */
 
-const struct ip_info *selector_type(const ip_selector *selector);
 
-const ip_protocol *selector_protocol(const ip_selector *selector);
-ip_range selector_range(const ip_selector *selector);
-ip_port selector_port(const ip_selector *selector);
-/* ip_port_range selector_port_range(const ip_selector *selector); */
+const struct ip_protocol *selector_protocol(const ip_selector selector);
+ip_range selector_range(const ip_selector selector);
+ip_port selector_port(const ip_selector selector);
+/* ip_ports selector_port_range(const ip_selector *selector); */
 
 /* hacks */
-int selector_hport(const ip_selector *selector);
+int selector_hport(const ip_selector selector);
 #define update_selector_hport(SELECTOR, HPORT) { (SELECTOR)->hport = (HPORT); }
 #define update_selector_ipproto(SELECTOR, IPPROTO) { (SELECTOR)->ipproto = (IPPROTO); }
 
 /* assuming a subnet like XFRM does */
-ip_address selector_prefix(const ip_selector *selector);
-ip_address selector_prefix_mask(const ip_selector *selector);
-unsigned selector_prefix_bits(const ip_selector *selector);
+ip_address selector_prefix(const ip_selector selector);
+ip_address selector_prefix_mask(const ip_selector selector);
+unsigned selector_prefix_bits(const ip_selector selector);
 
-bool selector_contains_all_addresses(const ip_selector *selector);
-bool selector_contains_no_addresses(const ip_selector *selector);
+bool selector_contains_no_addresses(const ip_selector selector);
+bool selector_contains_one_address(const ip_selector selector);
+bool selector_contains_all_addresses(const ip_selector selector);
 
-bool selector_in_selector(const ip_selector *l, const ip_selector *r);
-bool endpoint_in_selector(const ip_endpoint *l, const ip_selector *r);
-bool address_in_selector(const ip_address *l, const ip_selector *r);
+bool selector_in_selector(const ip_selector l, const ip_selector r);
+bool endpoint_in_selector(const ip_endpoint l, const ip_selector r);
 
-bool selector_eq(const ip_selector *l, const ip_selector *r);
-bool selector_in(const ip_selector *l, const ip_selector *r);
-
-bool selector_is_one_address(const ip_selector *selector);
-bool selector_is_address(const ip_selector *selector, const ip_address *address);
-
+bool selector_eq_selector(const ip_selector l, const ip_selector r);
+bool selector_eq_address(const ip_selector selector, const ip_address address);
 
 /* printing */
 
@@ -181,10 +180,12 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
  */
 
 ip_subnet selector_subnet(const ip_selector selector);
-bool selector_subnet_eq(const ip_selector *lhs, const ip_selector *rhs);
-bool selector_subnet_in(const ip_selector *lhs, const ip_selector *rhs);
+bool selector_subnet_eq_subnet(const ip_selector lhs, const ip_selector rhs);
+bool selector_subnet_in_subnet(const ip_selector lhs, const ip_selector rhs);
+bool selector_subnet_eq_address(const ip_selector selector, const ip_address address);
+bool address_in_selector_subnet(const ip_address l, const ip_selector r);
+
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
-bool selector_subnet_is_address(const ip_selector *selector, const ip_address *address);
 
 #endif

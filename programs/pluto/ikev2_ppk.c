@@ -60,7 +60,7 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
-	return pbs_out_hunk(payl->ppk_id, outs, "PPK_ID");
+	return out_hunk(payl->ppk_id, outs, "PPK_ID");
 }
 
 /*

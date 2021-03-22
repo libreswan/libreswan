@@ -92,7 +92,7 @@ static bool v2_out_attr_variable(struct pbs_out *pbs,
 	if (!pexpect(out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))) {
 		return false;
 	}
-	if (!pexpect(pbs_out_hunk(chunk, pbs, "attribute value"))) {
+	if (!pexpect(out_hunk(chunk, pbs, "attribute value"))) {
 		return false;
 	}
 	return true;
@@ -1520,7 +1520,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	if (local_spi != NULL) {
 		pexpect(local_spi->len > 0);
 		pexpect(local_spi->len == proto_spi_size(proposal->protoid));
-		if (!pbs_out_hunk(*local_spi, &proposal_pbs, "our spi"))
+		if (!out_hunk(*local_spi, &proposal_pbs, "our spi"))
 			return FALSE;
 	}
 

@@ -21,13 +21,15 @@
 
 const ip_sockaddr unset_sockaddr;
 
-err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
-			   const ip_sockaddr *sa, ip_endpoint *e)
+err_t sockaddr_to_address_port(const ip_sockaddr sa, ip_address *address, ip_port *port)
 {
+	/* always clear */
+	*address = unset_address;
+	*port = unset_port;
+
 	/* paranoia from demux.c */
 	socklen_t min_len = offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t);
-	if (sa->len < min_len) {
-		*e = unset_endpoint;
+	if (sa.len < min_len) {
 		return "truncated";
 	}
 
@@ -38,27 +40,25 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 	 * here resulted in convoluted over-engineering.  Instead
 	 * ensure these code paths work using testing.
 	 */
-	ip_address address;
-	ip_port port;
-	switch (sa->sa.sa.sa_family) {
+	switch (sa.sa.sa.sa_family) {
 	case AF_INET:
 	{
 		/* XXX: to strict? */
-		if (sa->len != sizeof(sa->sa.sin)) {
+		if (sa.len != sizeof(sa.sa.sin)) {
 			return "wrong length";
 		}
-		address = address_from_in_addr(&sa->sa.sin.sin_addr);
-		port = ip_nport(sa->sa.sin.sin_port);
+		*address = address_from_in_addr(&sa.sa.sin.sin_addr);
+		*port = ip_nport(sa.sa.sin.sin_port);
 		break;
 	}
 	case AF_INET6:
 	{
 		/* XXX: to strict? */
-		if (sa->len != sizeof(sa->sa.sin6)) {
+		if (sa.len != sizeof(sa.sa.sin6)) {
 			return "wrong length";
 		}
-		address = address_from_in6_addr(&sa->sa.sin6.sin6_addr);
-		port = ip_nport(sa->sa.sin6.sin6_port);
+		*address = address_from_in6_addr(&sa.sa.sin6.sin6_addr);
+		*port = ip_nport(sa.sa.sin6.sin6_port);
 		break;
 	}
 	case AF_UNSPEC:
@@ -66,7 +66,6 @@ err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
 	default:
 		return "unexpected Address Family";
 	}
-	*e = endpoint_from_address_protocol_port(&address, protocol, port);
 	return NULL;
 }
 
@@ -113,14 +112,14 @@ static ip_sockaddr sockaddr_from_address_port(const ip_address *address, ip_port
 	return sa;
 }
 
-ip_sockaddr sockaddr_from_address(const ip_address *address)
+ip_sockaddr sockaddr_from_address(const ip_address address)
 {
-	return sockaddr_from_address_port(address, unset_port);
+	return sockaddr_from_address_port(&address, unset_port);
 }
 
-ip_sockaddr sockaddr_from_endpoint(const ip_endpoint *endpoint)
+ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
+	if (endpoint_is_unset(&endpoint)) {
 		return unset_sockaddr;
 	}
 

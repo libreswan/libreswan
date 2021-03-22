@@ -65,7 +65,7 @@
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
-#include "hostpair.h"		/* for init_host_pair() */
+#include "host_pair.h"		/* for init_host_pair() */
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */

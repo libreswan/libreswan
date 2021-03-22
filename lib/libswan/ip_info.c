@@ -103,28 +103,26 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 
 const struct ip_info ipv4_info = {
 
-	.ip_version = 4,
+	.ip_version = IPv4,
 	.ip_size = sizeof(struct in_addr),
 	.ip_name = "IPv4",
 	.mask_cnt = 32,
 
-	/* ip_address */
-	.address = {
-		.any = { .is_set = true, .version = 4, }, /* 0.0.0.0 */
-		.loopback = { .is_set = true, .version = 4, .bytes = { { 127, 0, 0, 1, }, }, },
-	},
+	/* ip_address - .address.any matches grep */
+	.address.any = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
+	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
 
-	/* ip_subnet */
-	.subnet = {
-		.none = { .is_set = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/32 */
-		.all = { .is_set = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
-	},
+	/* ip_subnet - .subnet.any matches grep */
+	.subnet.none = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
+	.subnet.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
-	/* ip_selector */
-	.selector = {
-		.none = { .is_set = true, .version = 4, .maskbits = 32, }, /* 0.0.0.0/0 */
-		.all = { .is_set = true, .version = 4, .maskbits = 0, }, /* 0.0.0.0/0 */
-	},
+	/* ip_range - .range.any matches grep */
+	.range.none = { .is_set = true, .version = IPv4, },
+	.range.all = { .is_set = true, .version = IPv4, /* .start = { { [3] = 1, }, }, */ .end = { { 255, 255, 255, 255, }, }, },
+
+	/* ip_selector - .selector.any matches grep */
+	.selector.none = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
+	.selector.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
 	/* ike */
 	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
@@ -146,28 +144,26 @@ const struct ip_info ipv4_info = {
 
 const struct ip_info ipv6_info = {
 
-	.ip_version = 6,
+	.ip_version = IPv6,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
 	.mask_cnt = 128,
 
-	/* ip_address */
-	.address = {
-		.any = { .is_set = true, .version = 6, }, /* :: */
-		.loopback = { .is_set = true, .version = 6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-	},
+	/* ip_address - .address.any matches grep */
+	.address.any = { .is_set = true, .version = IPv6, }, /* :: */
+	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
 
-	/* ip_subnet */
-	.subnet = {
-		.none = { .is_set = true, .version = 6, .maskbits = 128, }, /* ::/128 */
-		.all = { .is_set = true, .version = 6, .maskbits = 0, }, /* ::/0 */
-	},
+	/* ip_subnet - .subnet.any matches grep */
+	.subnet.none = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
+	.subnet.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
-	/* ip_selector */
-	.selector = {
-		.none = { .is_set = true, .version = 6, .maskbits = 128, }, /* ::/0 */
-		.all = { .is_set = true, .version = 6, .maskbits = 0, }, /* ::/0 */
-	},
+	/* ip_range - .range.any matches grep */
+	.range.none = { .is_set = true, .version = IPv6, },
+	.range.all = { .is_set = true, .version = IPv6, /* .start = { { [15] = 1, }, }, */ .end = { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, }, }, },
+
+	/* ip_selector - .selector.any matches grep */
+	.selector.none = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
+	.selector.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
 	/* ike */
 	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
@@ -205,8 +201,8 @@ const struct ip_info *ip_version_info(unsigned version)
 {
 	static const struct ip_info *ip_types[] = {
 		[0] = NULL,
-		[4] = &ipv4_info,
-		[6] = &ipv6_info,
+		[IPv4] = &ipv4_info,
+		[IPv6] = &ipv6_info,
 	};
 	passert(version < elemsof(ip_types));
 	return ip_types[version];

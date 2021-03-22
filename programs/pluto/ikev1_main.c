@@ -63,7 +63,7 @@
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "crypt_symkey.h"		/* for release_symkey() */
 
 #include "crypto.h"
@@ -94,6 +94,7 @@
 # include "kernel_xfrm_interface.h"
 #endif
 #include "unpack.h"
+#include "ikev1_host_pair.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -451,8 +452,9 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* random source ports are handled by find_host_connection */
-	c = find_host_connection(IKEv1, &md->iface->local_endpoint, &md->sender,
-				 LEMPTY, POLICY_AGGRESSIVE);
+	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+				    endpoint_address(md->sender),
+				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
 
 	if (c == NULL) {
 		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
@@ -476,8 +478,10 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_host_connection(IKEv1, &md->iface->local_endpoint, NULL,
-								    policy, POLICY_XAUTH | POLICY_AGGRESSIVE);
+			struct connection *d = find_v1_host_connection(md->iface->ip_dev->id_address,
+								       unset_address, policy,
+								       POLICY_XAUTH | POLICY_AGGRESSIVE,
+								       NULL /* peer ID not known yet */);
 
 			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
@@ -496,14 +500,15 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 					 * Opportunistic or Shunt:
 					 * pick tightest match
 					 */
-					if (endpoint_in_selector(&md->sender, &d->spd.that.client) &&
-					    (c == NULL || selector_in_selector(&c->spd.that.client,
-									       &d->spd.that.client))) {
+					if (endpoint_in_selector(md->sender, d->spd.that.client) &&
+					    (c == NULL || selector_in_selector(c->spd.that.client,
+									       d->spd.that.client))) {
 						c = d;
 					}
 				}
-				d = find_next_host_connection(IKEv1, d->hp_next,
-							      policy, POLICY_XAUTH | POLICY_AGGRESSIVE);
+				d = find_next_v1_host_connection(d->hp_next,
+								 policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
+								 NULL /* peer ID not known yet */);
 			}
 		}
 
@@ -534,7 +539,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		connection_buf cib;
 		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 		     pri_connection(c, &cib));
-		ip_address sender_address = endpoint_address(&md->sender);
+		ip_address sender_address = endpoint_address(md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
@@ -544,13 +549,13 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
 			dbgl(md->md_logger,
 			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			ip_address sender_address = endpoint_address(&md->sender);
+			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
 			dbgl(md->md_logger,
 			     "remote end has wildcard ID, needs instantiation");
-			ip_address sender_address = endpoint_address(&md->sender);
+			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}
 	}
@@ -1100,7 +1105,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 				&isakmp_ipsec_identification_desc,
 				rbody,
 				&id_pbs) ||
-		    !pbs_out_hunk(id_b, &id_pbs, "my identity")) {
+		    !out_hunk(id_b, &id_pbs, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1454,7 +1459,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&rbody, &r_id_pbs) ||
-		    !pbs_out_hunk(id_b, &r_id_pbs, "my identity")) {
+		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}

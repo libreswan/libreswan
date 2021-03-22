@@ -23,14 +23,15 @@
 
 const ip_address unset_address; /* all zeros */
 
-ip_address address_from_raw(const struct ip_info *afi, const struct ip_bytes *bytes)
+ip_address address_from_raw(where_t where, enum ip_version version,
+			    const struct ip_bytes bytes)
 {
 	ip_address a = {
 		.is_set = true,
-		.version = afi->ip_version,
-		.bytes = *bytes,
+		.version = version,
+		.bytes = bytes,
 	};
-	paddress(&a);
+	pexpect_address(&a, where);
 	return a;
 }
 
@@ -38,7 +39,7 @@ ip_address address_from_in_addr(const struct in_addr *in)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in, sizeof(*in));
-	return address_from_raw(&ipv4_info, &bytes);
+	return address_from_raw(HERE, IPv4, bytes);
 }
 
 uint32_t ntohl_address(const ip_address *a)
@@ -59,14 +60,16 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };
 	memcpy(bytes.byte, in6, sizeof(*in6));
-	return address_from_raw(&ipv6_info, &bytes);
+	return address_from_raw(HERE, IPv6, bytes);
 }
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	if (address == NULL) {
+	if (address_is_unset(address)) {
 		return NULL;
 	}
+
+	/* may return NULL */
 	return ip_version_info(address->version);
 }
 
@@ -85,51 +88,45 @@ const char *ipstr(const ip_address *src, ipstr_buf *b)
 
 shunk_t address_as_shunk(const ip_address *address)
 {
-	if (address == NULL) {
-		return null_shunk;
-	}
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
 		return null_shunk;
 	}
+
 	return shunk2(&address->bytes, afi->ip_size);
 }
 
 chunk_t address_as_chunk(ip_address *address)
 {
-	if (address == NULL) {
-		return empty_chunk;
-	}
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return empty_chunk;
 	}
+
 	return chunk2(&address->bytes, afi->ip_size);
 }
 
-static size_t format_address_cooked(struct jambuf *buf, bool sensitive,
-				    const ip_address *address)
+size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
 	if (address_is_unset(address)) {
 		return jam_string(buf, "<unset-address>");
 	}
 
-	if (sensitive) {
-		return jam_string(buf, "<address>");
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-address>");
 	}
 
-	const struct ip_info *afi = address_type(address);
 	return afi->jam_address(buf, afi, &address->bytes);
-}
-
-size_t jam_address(struct jambuf *buf, const ip_address *address)
-{
-	return format_address_cooked(buf, false, address);
 }
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
-	return format_address_cooked(buf, !log_ip, address);
+	if (!log_ip) {
+		return jam_string(buf, "<address>");
+	}
+	return jam_address(buf, address);
 }
 
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)
@@ -191,27 +188,6 @@ const char *str_address_reversed(const ip_address *src,
 	return dst->buf;
 }
 
-ip_address address_any(const struct ip_info *info)
-{
-	passert(info != NULL);
-	if (info == NULL) {
-		/*
-		 * XXX: Loudly reject AF_UNSPEC, but don't crash.
-		 * Callers know the protocol of the "any" (IPv[46]
-		 * term) or "unspecified" (alternative IPv6 term)
-		 * address required.
-		 *
-		 * If there's a need for a function that also allows
-		 * AF_UNSPEC, then call that function
-		 * address_unspecified().
-		 */
-		log_pexpect(HERE, "AF_UNSPEC unexpected");
-		return unset_address;
-	} else {
-		return info->address.any;
-	}
-}
-
 bool address_is_unset(const ip_address *address)
 {
 	if (address == NULL) {
@@ -220,142 +196,89 @@ bool address_is_unset(const ip_address *address)
 	return !address->is_set;
 }
 
-bool address_is_specified(const ip_address *address)
+bool address_is_specified(const ip_address address)
 {
-	if (address_is_unset(address)) {
-		return false;
-	}
-	const struct ip_info *afi = address_type(address);
+	const struct ip_info *afi = address_type(&address);
 	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	/* check all bytes; not just .ip_size */
-	if (thingeq(address->bytes, afi->address.any.bytes)) {
-		/* any address (but we know it is zero) */
+
+	/* exclude any address */
+	if (address_eq_address(address, afi->address.any)) {
 		return false;
 	}
 	return true;
 }
 
-bool address_eq(const ip_address *l, const ip_address *r)
+bool address_eq_address(const ip_address l, const ip_address r)
 {
-	if (address_is_unset(l) && address_is_unset(r)) {
+	if (address_is_unset(&l) && address_is_unset(&r)) {
 		/* unset/NULL addresses are equal */
 		return true;
 	}
-	if (address_is_unset(l) || address_is_unset(r)) {
+	if (address_is_unset(&l) || address_is_unset(&r)) {
 		return false;
 	}
 	/* must compare individual fields */
-	return (l->version == r->version &&
-		thingeq(l->bytes, r->bytes));
+	return (l.version == r.version &&
+		thingeq(l.bytes, r.bytes));
 }
 
-bool address_is_loopback(const ip_address *address)
+bool address_is_loopback(const ip_address address)
 {
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	return address_eq(address, &type->address.loopback);
+
+	return address_eq_address(address, afi->address.loopback);
 }
 
-bool address_is_any(const ip_address *address)
+bool address_is_any(const ip_address address)
 {
-	const struct ip_info *type = address_type(address);
-	if (type == NULL) {
+	const struct ip_info *afi = address_type(&address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
-	return address_eq(address, &type->address.any);
+
+	return address_eq_address(address, afi->address.any);
 }
-
-/*
- * mashup() notes:
- * - mashup operates on network-order IP addresses
- */
-
-struct ip_blit {
-	uint8_t and;
-	uint8_t or;
-};
-
-const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
-const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
 
 ip_address address_from_blit(const struct ip_info *afi,
-			     struct ip_bytes bytes,
+			     const struct ip_bytes in,
 			     const struct ip_blit *routing_prefix,
 			     const struct ip_blit *host_identifier,
-			     unsigned nr_prefix_bits)
+			     unsigned prefix_bit_length)
 {
-	if (!pexpect(nr_prefix_bits <= afi->mask_cnt)) {
+	if (!pexpect(prefix_bit_length <= afi->mask_cnt)) {
 		return unset_address;	/* "can't happen" */
 	}
 
-	uint8_t *p = bytes.byte;
-
-	/*
-	 * Split the byte array into:
-	 *
-	 *    leading | xbyte:xbit | trailing
-	 *
-	 * where LEADING only contains ROUTING_PREFIX bits, TRAILING
-	 * only contains HOST_ID bits, and XBYTE is the cross over and
-	 * contains the first HOST_ID bit at big (aka PPC) endian
-	 * position XBIT.
-	 */
-	size_t xbyte = nr_prefix_bits / BITS_PER_BYTE;
-	unsigned xbit = nr_prefix_bits % BITS_PER_BYTE;
-
-	/* leading bytes only contain the ROUTING_PREFIX */
-	for (unsigned b = 0; b < xbyte; b++) {
-		p[b] &= routing_prefix->and;
-		p[b] |= routing_prefix->or;
-	}
-
-	/*
-	 * Handle the cross over byte:
-	 *
-	 *    & {ROUTING_PREFIX,HOST_ID}->and | {ROUTING_PREFIX,HOST_ID}->or
-	 *
-	 * the hmask's shift is a little counter intuitive - it clears
-	 * the first (most significant) XBITs.
-	 *
-	 * tricky logic:
-	 * - if xbyte == raw.len we must not access p[xbyte]
-	 */
-	if (xbyte < afi->ip_size) {
-		uint8_t hmask = 0xFF >> xbit; /* clear MSBs */
-		uint8_t pmask = ~hmask; /* set MSBs */
-		p[xbyte] &= (routing_prefix->and & pmask) | (host_identifier->and & hmask);
-		p[xbyte] |= (routing_prefix->or & pmask) | (host_identifier->or & hmask);
-	}
-
-	/* trailing bytes only contain the HOST_ID */
-	for (unsigned b = xbyte + 1; b < afi->ip_size; b++) {
-		p[b] &= host_identifier->and;
-		p[b] |= host_identifier->or;
-	}
-
-	return address_from_raw(afi, &bytes);
+	struct ip_bytes bytes = bytes_from_blit(afi, in,
+						routing_prefix,
+						host_identifier,
+						prefix_bit_length);
+	return address_from_raw(HERE, afi->ip_version, bytes);
 }
 
-void pexpect_address(const ip_address *a, const char *s, where_t where)
+void pexpect_address(const ip_address *a, where_t where)
 {
 	if (a == NULL) {
 		return;
 	}
 
 	/* more strict than is_unset() */
-	if (address_eq(a, &unset_address)) {
+	if (address_eq_address(*a, unset_address)) {
 		return;
 	}
 
 	if (a->is_set == false ||
 	    a->version == 0) {
 		address_buf b;
-		log_pexpect(where, "invalid address: %s; "PRI_ADDRESS,
-			    s, pri_address(a, &b));
+		log_pexpect(where, "invalid address: "PRI_ADDRESS,
+			    pri_address(a, &b));
 	}
 }

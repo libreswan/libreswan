@@ -875,13 +875,22 @@ static void opt_to_address(struct family *family, ip_address *address)
 	diagq(opt_domain_to_address(family, address), optarg);
 }
 
-static ip_address get_any_address(struct family *family)
+static ip_address get_address_any(struct family *family)
 {
 	if (family->type == NULL) {
 		family->type = &ipv4_info;
 		family->used_by = long_opts[long_index].name;
 	}
 	return family->type->address.any;
+}
+
+static ip_subnet get_subnet_none(struct family *family)
+{
+	if (family->type == NULL) {
+		family->type = &ipv4_info;
+		family->used_by = long_opts[long_index].name;
+	}
+	return family->type->subnet.none;
 }
 
 struct sockaddr_un ctl_addr = {
@@ -934,9 +943,8 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 		if (taf != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
-		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn = get_any_address(caf);
-		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
+		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
+		this->client = get_subnet_none(caf);
 	}
 
 	/* check protocol */
@@ -1361,7 +1369,7 @@ int main(int argc, char **argv)
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = true;
 			opt_to_address(&host_family, &msg.whack_crash_peer);
-			if (address_is_any(&msg.whack_crash_peer)) {
+			if (address_is_any(msg.whack_crash_peer)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1502,7 +1510,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo.local.address), optarg);
 			if (address_is_unset(&msg.oppo.local.address) ||
-			    address_is_any(&msg.oppo.local.address)) {
+			    address_is_any(msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1513,7 +1521,7 @@ int main(int argc, char **argv)
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo.remote.address), optarg);
 			if (address_is_unset(&msg.oppo.remote.address) ||
-			    address_is_any(&msg.oppo.remote.address)) {
+			    address_is_any(msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1569,19 +1577,19 @@ int main(int argc, char **argv)
 			lset_t new_policy;
 			if (streq(optarg, "%any")) {
 				new_policy = LEMPTY;
-				msg.right.host_addr = get_any_address(&host_family);
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
-				msg.right.host_addr = get_any_address(&host_family);
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy = POLICY_TUNNEL | POLICY_GROUP;
-				msg.right.host_addr = get_any_address(&host_family);
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
-				msg.right.host_addr = get_any_address(&host_family);
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
 				if (opt_numeric_to_address(&host_family, &msg.right.host_addr) == NULL) {
@@ -1689,7 +1697,7 @@ int main(int argc, char **argv)
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {
-				msg.right.host_nexthop = get_any_address(&host_family);
+				msg.right.host_nexthop = get_address_any(&host_family);
 			} else {
 				opt_to_address(&host_family, &msg.right.host_nexthop);
 			}

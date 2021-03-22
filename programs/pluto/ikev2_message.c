@@ -1193,8 +1193,7 @@ static bool record_outbound_fragment(struct logger *logger,
 
 	/* output the fragment */
 
-	if (!pbs_out_hunk(*fragment, &skf.pbs,
-			  "cleartext fragment"))
+	if (!out_hunk(*fragment, &skf.pbs, "cleartext fragment"))
 		return false;
 
 	if (!close_v2SK_payload(&skf)) {

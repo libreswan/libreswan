@@ -154,7 +154,7 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "ip_address.h"
 #include "ikev1_hash.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */
@@ -999,7 +999,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				ip_address new_peer = address_from_in_addr(&in);
 
 				/* is all zeros? */
-				if (address_is_any(&new_peer)) {
+				if (address_is_any(new_peer)) {
 					ipstr_buf b;
 
 					log_state(RC_LOG_SERIOUS, st,
@@ -1084,7 +1084,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				tmp_c->spd.that.id.ip_addr = new_peer;
 
 				/* update things that were the old peer */
-				if (address_eq(&tmp_c->spd.this.host_nexthop, &old_addr)) {
+				if (address_eq_address(tmp_c->spd.this.host_nexthop, old_addr)) {
 					address_buf ob, nb;
 					dbg("local next hop %s is the same as the old remote addr, changing local next hop to %s",
 					    str_address(&old_addr, &ob),
@@ -1092,7 +1092,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					tmp_c->spd.this.host_nexthop = new_peer;
 				}
 
-				if (address_eq(&tmp_c->spd.that.host_srcip, &old_addr)) {
+				if (address_eq_address(tmp_c->spd.that.host_srcip, old_addr)) {
 					address_buf ob, nb;
 					dbg("remote host's srcip %s is the same as the old remote addr, changing remote host's srcip to %s",
 					    str_address(&old_addr, &ob),
@@ -1104,13 +1104,13 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				 * XXX: should this also check that
 				 * the client is a single address?
 				 */
-				ip_address client_prefix = selector_prefix(&tmp_c->spd.that.client);
-				if (address_eq(&client_prefix, &old_addr)) {
+				ip_address client_prefix = selector_prefix(tmp_c->spd.that.client);
+				if (address_eq_address(client_prefix, old_addr)) {
 					address_buf ob, nb;
 					dbg("old remote client's ip %s is the same as the old remote address, changing remote client ip to %s",
 					    str_address(&old_addr, &ob),
 					    str_address(&new_peer, &nb));
-					tmp_c->spd.that.client = selector_from_address(&new_peer);
+					tmp_c->spd.that.client = selector_from_address(new_peer);
 				}
 
 				/*

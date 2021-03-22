@@ -212,10 +212,10 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 #define SELECTOR_TO_XFRM(CLIENT, REQ, L)				\
 	{								\
 		ip_selector client_ = *(CLIENT);			\
-		ip_address address = selector_prefix(&client_);		\
+		ip_address address = selector_prefix(client_);		\
 		(REQ).L##addr = xfrm_from_address(&address);		\
-		(REQ).prefixlen_##L = selector_prefix_bits(&client_);	\
-		(REQ).L##port = nport(selector_port(&client_));		\
+		(REQ).prefixlen_##L = selector_prefix_bits(client_);	\
+		(REQ).L##port = nport(selector_port(client_));		\
 	}
 
 static void init_netlink_route_fd(struct logger *logger)
@@ -615,12 +615,12 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		int local_port;
 
 		if (dir == XFRM_POLICY_OUT) {
-			local_port = selector_hport(that_client);
-			local_client = selector_from_address(that_host);
+			local_port = selector_hport(*that_client);
+			local_client = selector_from_address(*that_host);
 			that_client = &local_client;
 		} else {
-			local_port = selector_hport(this_client);
-			local_client = selector_from_address(this_host);
+			local_port = selector_hport(*this_client);
+			local_client = selector_from_address(*this_host);
 			this_client = &local_client;
 		}
 		update_selector_hport(&local_client, local_port);
@@ -880,10 +880,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	const ip_address *src, *dst;
 	const ip_selector *src_client, *dst_client;
 
-	if (endpoint_is_specified(&st->st_mobike_local_endpoint)) {
+	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = endpoint_hport(&st->st_interface->local_endpoint);
+		old_port = endpoint_hport(st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -892,31 +892,31 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
 			sa.src.new_address = *src;
-			sa.dst.new_address = endpoint_address(&st->st_mobike_local_endpoint);
+			sa.dst.new_address = endpoint_address(st->st_mobike_local_endpoint);
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_mobike_local_endpoint);
+				encap_sport = endpoint_hport(st->st_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_mobike_local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
 			dst = &c->spd.that.host_addr;
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
-			sa.src.new_address = endpoint_address(&st->st_mobike_local_endpoint);
+			sa.src.new_address = endpoint_address(st->st_mobike_local_endpoint);
 			sa.dst.new_address = *dst;
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_mobike_local_endpoint);
-				encap_dport = endpoint_hport(&st->st_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_mobike_local_endpoint);
+				encap_dport = endpoint_hport(st->st_remote_endpoint);
 			}
 		}
 	} else {
 		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
-		old_port = endpoint_hport(&st->st_remote_endpoint);
+		old_port = endpoint_hport(st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
 		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
@@ -924,13 +924,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst = &c->spd.this.host_addr;
 			src_client = &c->spd.that.client;
 			dst_client = &c->spd.this.client;
-			sa.src.new_address = endpoint_address(&st->st_mobike_remote_endpoint);
+			sa.src.new_address = endpoint_address(st->st_mobike_remote_endpoint);
 			sa.dst.new_address = c->spd.this.host_addr;
 			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_mobike_remote_endpoint);
-				encap_dport = endpoint_hport(&st->st_interface->local_endpoint);
+				encap_sport = endpoint_hport(st->st_mobike_remote_endpoint);
+				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 			}
 		} else {
 			src = &c->spd.this.host_addr;
@@ -938,13 +938,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 			src_client = &c->spd.this.client;
 			dst_client = &c->spd.that.client;
 			sa.src.new_address = c->spd.this.host_addr;
-			sa.dst.new_address = endpoint_address(&st->st_mobike_remote_endpoint);
+			sa.dst.new_address = endpoint_address(st->st_mobike_remote_endpoint);
 			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
 			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(&st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(&st->st_mobike_remote_endpoint);
+				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+				encap_dport = endpoint_hport(st->st_mobike_remote_endpoint);
 			}
 		}
 	}
@@ -1250,13 +1250,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 */
 		if (sa->inbound) {
 			/* inbound; fix this end */
-			ip_port port = selector_port(sa->src.client);
-			src = selector_from_address_protocol_port(sa->src.address,
+			ip_port port = selector_port(*sa->src.client);
+			src = selector_from_address_protocol_port(*sa->src.address,
 								  protocol, port);
 		} else {
 			/* outbound; fix other end */
-			ip_port port = selector_port(sa->dst.client);
-			dst = selector_from_address_protocol_port(sa->dst.address,
+			ip_port port = selector_port(*sa->dst.client);
+			dst = selector_from_address_protocol_port(*sa->dst.address,
 								  protocol, port);
 		}
 
@@ -1648,7 +1648,7 @@ static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
 {
 	ip_address address = address_from_xfrm(afi, src);
 	ip_port port = ip_nport(nport);
-	return endpoint3(protocol, &address, port);
+	return endpoint_from_address_protocol_port(address, protocol, port);
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
@@ -2285,7 +2285,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				deltatime(0),
 				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
-				0 /* xfrm_if_id needed for shunt? */,
+				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 				op, buf2,
 				&sr->this.sec_label,
 				logger))

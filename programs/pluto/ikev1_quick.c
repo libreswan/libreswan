@@ -87,6 +87,7 @@
 #include <blapit.h>
 #include "crypt_dh.h"
 #include "unpack.h"
+#include "orient.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -167,16 +168,16 @@ static bool emit_subnet_id(const ip_subnet net,
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
-	ip_address tp = subnet_prefix(&net);
-	diag_t d = pbs_out_address(&id_pbs, &tp, "client network");
+	ip_address tp = subnet_prefix(net);
+	diag_t d = pbs_out_address(&id_pbs, tp, "client network");
 	if (d != NULL) {
 		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
 	if (!usehost) {
-		ip_address tm = subnet_prefix_mask(&net);
-		diag_t d = pbs_out_address(&id_pbs, &tm, "client mask");
+		ip_address tm = subnet_prefix_mask(net);
+		diag_t d = pbs_out_address(&id_pbs, tm, "client mask");
 		if (d != NULL) {
 			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
@@ -416,7 +417,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 		/* i.e., "zero" */
-		if (address_is_any(&temp_address)) {
+		if (address_is_any(temp_address)) {
 			ipstr_buf b;
 			llog(RC_LOG_SERIOUS, logger,
 				    "%s ID payload %s is invalid (%s) in Quick I1",
@@ -424,7 +425,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			/* XXX Could send notification back */
 			return false;
 		}
-		net = subnet_from_address(&temp_address);
+		net = subnet_from_address(temp_address);
 		subnet_buf b;
 		dbg("%s is %s", which, str_subnet(&net, &b));
 		break;
@@ -449,8 +450,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = address_mask_to_subnet(&temp_address, &temp_mask, &net);
-		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
+		err_t ughmsg = address_mask_to_subnet(temp_address, temp_mask, &net);
+		if (ughmsg == NULL && subnet_contains_no_addresses(net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
 		}
@@ -485,12 +486,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = rangetosubnet(&temp_address_from,
-					     &temp_address_to, &net);
-		if (ughmsg == NULL && subnet_contains_no_addresses(&net)) {
-			/* i.e., ::/128 or 0.0.0.0/32 */
-			ughmsg = "range contains no addresses";
-		}
+		err_t ughmsg = addresses_to_subnet(temp_address_from,
+						   temp_address_to, &net);
 		if (ughmsg != NULL) {
 			address_buf a, b;
 			llog(RC_LOG_SERIOUS, logger,
@@ -518,7 +515,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	}
 
 	ip_port port = ip_hport(id->isaiid_port);
-	*client = selector_from_subnet_protocol_port(&net, protocol, port);
+	*client = selector_from_subnet_protocol_port(net, protocol, port);
 
 	return true;
 }
@@ -544,7 +541,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	/* toss the proto/port */
 	ip_subnet subnet_temp = selector_subnet(selector_temp);
 
-	if (!samesubnet(&net, &subnet_temp)) {
+	if (!subnet_eq_subnet(net, subnet_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
 		llog(RC_LOG_SERIOUS, logger,
@@ -969,7 +966,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
-			remote_client = selector_from_address_protocol_port(&c->spd.that.host_addr,
+			remote_client = selector_from_address_protocol_port(c->spd.that.host_addr,
 									    remote_protocol,
 									    remote_port);
 		}
@@ -1010,8 +1007,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			hv = p1st->hidden_variables;
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
 
-			if (address_is_specified(&hv.st_nat_oa)) {
-				remote_client = selector_from_address_protocol_port(&hv.st_nat_oa,
+			if (address_is_specified(hv.st_nat_oa)) {
+				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
 				selector_buf buf;
@@ -1019,7 +1016,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
 					  idfqdn, str_selector(&remote_client, &buf),
 					  (address_is_unset(&hv.st_nat_oa) ||
-					   address_is_any(&hv.st_nat_oa)/*XXX: always 0?*/));
+					   address_is_any(hv.st_nat_oa)/*XXX: always 0?*/));
 			}
 		}
 	} else {
@@ -1027,8 +1024,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (address_type(&c->spd.this.host_addr) != address_type(&c->spd.that.host_addr))
 			return STF_FAIL;
 
-		local_client = selector_from_address(&c->spd.this.host_addr);
-		remote_client = selector_from_address(&c->spd.that.host_addr);
+		local_client = selector_from_address(c->spd.this.host_addr);
+		remote_client = selector_from_address(c->spd.that.host_addr);
 	}
 
 	struct crypt_mac new_iv;
@@ -1091,18 +1088,18 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct end local = c->spd.this;
 				local.client = *local_client;
-				local.has_client = !selector_is_address(local_client, &local.host_addr);
-				local.protocol = selector_protocol(local_client)->ipproto;
-				local.port = selector_port(local_client).hport;
+				local.has_client = !selector_eq_address(*local_client, local.host_addr);
+				local.protocol = selector_protocol(*local_client)->ipproto;
+				local.port = selector_port(*local_client).hport;
 				jam_end(buf, &local, NULL, /*left?*/true, LEMPTY, oriented(*c));
 
 				jam(buf, "...");
 
 				struct end remote = c->spd.that;
 				remote.client = *remote_client;
-				remote.has_client = !selector_is_address(remote_client, &remote.host_addr);
-				remote.protocol = selector_protocol(remote_client)->ipproto;
-				remote.port = selector_port(remote_client).hport;
+				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
+				remote.protocol = selector_protocol(*remote_client)->ipproto;
+				remote.port = selector_port(*remote_client).hport;
 				jam_end(buf, &remote, NULL, /*left?*/false, LEMPTY, oriented(*c));
 			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1144,7 +1141,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true port */
 		if (c->spd.that.has_port_wildcard) {
-			int port = selector_port(remote_client).hport;
+			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
 			c->spd.that.port = port;
 			c->spd.that.has_port_wildcard = false;
@@ -1156,7 +1153,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (selector_is_address(remote_client, &c->spd.that.host_addr)) {
+			if (selector_eq_address(*remote_client, c->spd.that.host_addr)) {
 				c->spd.that.has_client = false;
 			}
 
@@ -1614,7 +1611,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				idfqdn[idlen] = '\0';
 
 				st->st_connection->spd.that.client =
-					selector_from_address(&st->hidden_variables.st_nat_oa);
+					selector_from_address(st->hidden_variables.st_nat_oa);
 				subnet_buf buf;
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
@@ -1626,8 +1623,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 * No IDci, IDcr: we must check that the
 			 * defaults match our proposal.
 			 */
-			if (!selector_is_address(&c->spd.this.client, &c->spd.this.host_addr) ||
-			    !selector_is_address(&c->spd.that.client, &c->spd.that.host_addr)) {
+			if (!selector_eq_address(c->spd.this.client, c->spd.this.host_addr) ||
+			    !selector_eq_address(c->spd.that.client, c->spd.that.host_addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;

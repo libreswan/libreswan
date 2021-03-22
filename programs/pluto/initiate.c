@@ -26,270 +26,17 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <resolv.h>
-
-#include "sysdep.h"
-#include "constants.h"
-#include "lswalloc.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "secrets.h"
-
-#include "defs.h"
-#include "connections.h"        /* needs id.h */
+#include "connections.h"
 #include "pending.h"
-#include "foodgroups.h"
-#include "packet.h"
-#include "demux.h"      /* needs packet.h */
-#include "state.h"
 #include "timer.h"
-#include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "server.h"
-#include "kernel.h"     /* needs connections.h */
+#include "ipsec_doi.h"		/* for ipsecdoi_initiate() */
+#include "kernel.h"		/* for replace_bare_shunt()! */
 #include "log.h"
-#include "keys.h"
-#include "whack.h"
 #include "ikev1_spdb.h"		/* for kernel_alg_makedb() !?! */
-#include "ike_alg.h"
-#include "kernel_alg.h"
-#include "plutoalg.h"
-#include "ikev1_xauth.h"
-#include "nat_traversal.h"
-#include "ip_address.h"
 #include "initiate.h"
-#include "iface.h"
-#include "hostpair.h"
+#include "host_pair.h"
 #include "state_db.h"
-
-/*
- * Swap ends and try again.
- * It is a little tricky to see that this loop will stop.
- * Only continue if the far side matches.
- * If both sides match, there is an error-out.
- */
-static void swap_ends(struct connection *c)
-{
-	struct spd_route *sr = &c->spd;
-	struct end t = sr->this;
-
-	sr->this = sr->that;
-	sr->that = t;
-
-	/*
-	 * In case of asymmetric auth c->policy contains left.authby.
-	 * This magic will help responder to find connection during INIT.
-	 */
-	if (sr->this.authby != sr->that.authby)
-	{
-		c->policy &= ~POLICY_ID_AUTH_MASK;
-		switch (sr->this.authby) {
-		case AUTHBY_PSK:
-			c->policy |= POLICY_PSK;
-			break;
-		case AUTHBY_RSASIG:
-			c->policy |= POLICY_RSASIG;
-			break;
-		case AUTHBY_ECDSA:
-			c->policy |= POLICY_ECDSA;
-			break;
-		case AUTHBY_NULL:
-			c->policy |= POLICY_AUTH_NULL;
-			break;
-		case AUTHBY_NEVER:
-			/* nothing to add */
-			break;
-		default:
-			bad_case(sr->this.authby);
-		}
-	}
-	/* re-compute the base policy priority using the swapped left/right */
-	set_policy_prio(c);
-}
-
-static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, bool this)
-{
-	struct end *end = (this ? &c->spd.this : &c->spd.that);
-	if (end->raw.host.ikeport == 0) {
-		return false;
-	}
-	if (address_is_unset(&end->host_addr)) {
-		return false;
-	}
-	struct iface_dev *dev = find_iface_dev_by_address(&end->host_addr);
-	if (dev == NULL) {
-		return false;
-	}
-	/*
-	 * assume UDP for now
-	 *
-	 * A custom IKEPORT should not float away to port 4500.  For
-	 * now leave ADD_IKE_ENCAPSULATION_PREFIX clear so it can talk
-	 * to port 500.  Perhaps it doesn't belong in iface?
-	 *
-	 * XXX: should this log globally or against the connection?
-	 */
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	struct iface_endpoint *ifp = bind_iface_endpoint(dev, &udp_iface_io,
-							 ip_hport(end->raw.host.ikeport),
-							 true/*esp_encapsulation_enabled*/,
-							 false/*float_nat_initiator*/,
-							 logger);
-	if (ifp == NULL) {
-		dbg("could not create new interface");
-		return false;
-	}
-	/* already logged */
-	c->interface = ifp;
-	if (!this) {
-		dbg("swapping to that; new interface");
-		swap_ends(c);
-	}
-	if (listening) {
-		listen_on_iface_endpoint(ifp, logger);
-	}
-	return true;
-}
-
-static bool end_matches_iface_endpoint(const struct end *end,
-				       const struct end *other_end,
-				       const struct iface_endpoint *ifp)
-{
-	ip_address host_addr = end->host_addr;
-	/*
-	 * which port?
-	 */
-	ip_port port = end_host_port(end, other_end);
-	ip_endpoint host_end = endpoint3(ifp->protocol, &host_addr, port);
-	return endpoint_eq(&host_end, &ifp->local_endpoint);
-}
-
-bool orient(struct connection *c)
-{
-	struct fd *whackfd = whack_log_fd; /* placeholder */
-	if (oriented(*c)) {
-		dbg("already oriented");
-		return true;
-	}
-
-	connection_buf cb;
-	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
-	address_buf ab;
-	dbg("  %s(THIS) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.this.leftright, str_address(&c->spd.this.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)),
-	    c->spd.this.raw.host.ikeport, bool_str(c->spd.this.host_encap));
-	dbg("  %s(THAT) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.that.leftright, str_address(&c->spd.that.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
-	    c->spd.that.raw.host.ikeport, bool_str(c->spd.that.host_encap));
-	set_policy_prio(c); /* for updates */
-	bool swap = false;
-	for (const struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-
-		/* XXX: check connection allows p->protocol? */
-		bool this = end_matches_iface_endpoint(&c->spd.this, &c->spd.that, ifp);
-		bool that = end_matches_iface_endpoint(&c->spd.that, &c->spd.this, ifp);
-
-		if (this && that) {
-			/* too many choices */
-			connection_buf cib;
-			log_global(RC_LOG_SERIOUS, whackfd,
-				   "both sides of "PRI_CONNECTION" are our interface %s!",
-				   pri_connection(c, &cib),
-				   ifp->ip_dev->id_rname);
-			terminate_connection(c->name, false, whackfd);
-			c->interface = NULL; /* withdraw orientation */
-			return false;
-		}
-
-		if (!this && !that) {
-			endpoint_buf eb;
-			dbg("  interface endpoint %s does not match %s(THIS) or %s(THAT)",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.leftright, c->spd.that.leftright);
-			continue;
-		}
-		pexpect(this != that); /* only one */
-
-		if (oriented(*c)) {
-			/* oops, second match */
-			if (c->interface->ip_dev == ifp->ip_dev) {
-				connection_buf cib;
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "both sides of "PRI_CONNECTION" are our interface %s!",
-					   pri_connection(c, &cib),
-					   ifp->ip_dev->id_rname);
-			} else {
-				/*
-				 * XXX: if an interface has two
-				 * addresses vis <<ip addr add
-				 * 192.1.2.23/24 dev eth1>> this log
-				 * line doesn't differentiate.
-				 */
-				connection_buf cib;
-				address_buf cb, ifpb;
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "two interfaces match \"%s\"%s (%s %s, %s %s)",
-					   pri_connection(c, &cib),
-					   c->interface->ip_dev->id_rname,
-					   str_address(&c->interface->ip_dev->id_address, &cb),
-					   ifp->ip_dev->id_rname,
-					   str_address(&ifp->ip_dev->id_address, &ifpb));
-			}
-			terminate_connection(c->name, false, whackfd);
-			c->interface = NULL; /* withdraw orientation */
-			return false;
-		}
-
-		/* orient then continue search */
-		passert(this != that); /* only one */
-		if (this) {
-			endpoint_buf eb;
-			dbg("  interface endpoint %s matches %s(THIS); orienting",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.leftright);
-			swap = false;
-		}
-		if (that) {
-			endpoint_buf eb;
-			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.that.leftright);
-			swap = true;
-		}
-		c->interface = ifp;
-		passert(oriented(*c));
-	}
-	if (oriented(*c)) {
-		if (swap) {
-			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
-			    c->spd.that.leftright);
-			swap_ends(c);
-		}
-		return true;
-	}
-
-	/* No existing interface worked, should a new one be created? */
-
-	if (orient_new_iface_endpoint(c, whackfd, true)) {
-		return true;
-	}
-	if (orient_new_iface_endpoint(c, whackfd, false)) {
-		return true;
-	}
-	return false;
-}
+#include "orient.h"
 
 struct initiate_stuff {
 	bool background;
@@ -306,7 +53,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (remote_host != NULL && (address_is_unset(&c->spd.that.host_addr) ||
-				    address_is_any(&c->spd.that.host_addr))) {
+				    address_is_any(c->spd.that.host_addr))) {
 		ip_address remote_ip;
 
 		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
@@ -365,7 +112,7 @@ bool initiate_connection_2(struct connection *c,
 
 	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (address_is_unset(&c->spd.that.host_addr) ||
-		    address_is_any(&c->spd.that.host_addr)) {
+		    address_is_any(c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -386,7 +133,7 @@ bool initiate_connection_2(struct connection *c,
 	}
 
 	if ((address_is_unset(&c->spd.that.host_addr) ||
-	     address_is_any(&c->spd.that.host_addr)) &&
+	     address_is_any(c->spd.that.host_addr)) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
 			esb_buf b;
@@ -691,7 +438,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 }
 
 static ip_selector shunt_from_traffic_end(const char *what,
-					  const ip_endpoint *traffic_endpoint,
+					  const ip_endpoint traffic_endpoint,
 					  const struct end *end)
 {
 	ip_address shunt_address = endpoint_address(traffic_endpoint);
@@ -714,7 +461,7 @@ static ip_selector shunt_from_traffic_end(const char *what,
 		pexpect(end->port == hport(shunt_port));
 		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
 	}
-	return selector_from_address_protocol_port(&shunt_address,
+	return selector_from_address_protocol_port(shunt_address,
 						   shunt_protocol,
 						   shunt_port);
 }
@@ -722,8 +469,8 @@ static ip_selector shunt_from_traffic_end(const char *what,
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
-	int our_port = endpoint_hport(&b->local.client);
-	int peer_port = endpoint_hport(&b->remote.client);
+	int our_port = endpoint_hport(b->local.client);
+	int peer_port = endpoint_hport(b->remote.client);
 
 	address_buf ourb;
 	const char *our_addr = str_address(&b->local.host_addr, &ourb);
@@ -756,13 +503,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * explicitly handles the clients.
 	 */
 
-	if (!endpoint_is_specified(&b->local.client) &&
-	    !endpoint_is_specified(&b->remote.client)) {
+	if (!endpoint_is_specified(b->local.client) &&
+	    !endpoint_is_specified(b->remote.client)) {
 		cannot_oppo(b, "impossible IP address");
 		return;
 	}
 
-	if (address_eq(&b->local.host_addr, &b->remote.host_addr)) {
+	if (address_eq_address(b->local.host_addr, b->remote.host_addr)) {
 		/*
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
@@ -948,11 +695,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * XXX: should local/remote shunts be computed independently?
 	 */
 	pexpect(c->spd.this.protocol == c->spd.that.protocol);
-	ip_selector local_shunt = shunt_from_traffic_end("local", &b->local.client, &c->spd.this);
-	ip_selector remote_shunt = shunt_from_traffic_end("remote", &b->remote.client, &c->spd.that);
+	ip_selector local_shunt = shunt_from_traffic_end("local", b->local.client, &c->spd.this);
+	ip_selector remote_shunt = shunt_from_traffic_end("remote", b->remote.client, &c->spd.that);
 
-	const ip_protocol *shunt_protocol = selector_protocol(&local_shunt);
-	pexpect(shunt_protocol == selector_protocol(&remote_shunt));
+	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
+	pexpect(shunt_protocol == selector_protocol(remote_shunt));
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
@@ -1073,15 +820,15 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		       const char *why,
 		       struct logger *logger)
 {
-	unsigned transport_proto = endpoint_protocol(local_client)->ipproto;
+	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
 	pexpect(transport_proto != 0);
-	pexpect(transport_proto == endpoint_protocol(remote_client)->ipproto);
+	pexpect(transport_proto == endpoint_protocol(*remote_client)->ipproto);
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
 		.local.client = *local_client,
 		.remote.client = *remote_client,
-		.local.host_addr = endpoint_address(local_client),
-		.remote.host_addr = endpoint_address(remote_client),
+		.local.host_addr = endpoint_address(*local_client),
+		.remote.host_addr = endpoint_address(*remote_client),
 		.transport_proto = transport_proto,
 		.held = held,
 		.policy_prio = BOTTOM_PRIO,
@@ -1110,8 +857,8 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
-			    selector_subnet_eq(ours, &sr->this.client) &&
-			    selector_subnet_eq(peers, &sr->that.client))
+			    selector_subnet_eq_subnet(*ours, sr->this.client) &&
+			    selector_subnet_eq_subnet(*peers, sr->that.client))
 				return c;
 		}
 	}
@@ -1147,7 +894,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(&c->spd.that.host_addr)) {
+	if (address_is_specified(c->spd.that.host_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" has address",
 		    pri_connection(c, &cib));
@@ -1171,7 +918,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	if (address_is_unset(&new_addr) || address_is_any(&new_addr)) {
+	if (address_is_unset(&new_addr) || address_is_any(new_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		    pri_connection(c, &cib), c->dnshostname);

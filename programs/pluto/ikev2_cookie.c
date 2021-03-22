@@ -74,7 +74,7 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 
 	crypt_hash_digest_hunk(ctx, "Ni", Ni);
 
-	ip_address sender = endpoint_address(&md->sender);
+	ip_address sender = endpoint_address(md->sender);
 	shunk_t IPi = address_as_shunk(&sender);
 	crypt_hash_digest_hunk(ctx, "IPi", IPi);
 

@@ -1,17 +1,10 @@
-#once unbound work properly replace the next lines
+setenforce Permissive
 nic #
- sed -i 's/5353/53/' /etc/nsd/nsd.conf
-nic #
- #/testing/guestbin/swan-prep --dnssec
-nic #
- setenforce Permissive
-nic #
- systemctl start nsd-keygen
-nic #
- PATH/sbin/nsd > /dev/null 2> /dev/null
-nic #
- dig +short  @127.0.0.1  road.testing.libreswan.org  IPSECKEY
-;; connection timed out; no servers could be reached
+ ../../pluto/bin/start-dns.sh
+starting dns
+digging for road.testing.libreswan.org IPSECKEY
+Everything went well, including things like NXDOMAIN.
+Found 2 records
 nic #
  echo done
 done

@@ -50,7 +50,7 @@
 #include "timer.h"
 #include "ikev2.h"
 #include "ip_address.h"
-#include "hostpair.h"
+#include "host_pair.h"
 
 /*
  * queue an IPsec SA negotiation pending completion of a

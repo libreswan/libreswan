@@ -161,9 +161,10 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_udp,
-					    &ifd->id_address, port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+								      &ip_protocol_udp,
+								      port);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
 		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
@@ -282,8 +283,9 @@ static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
 	 * If that fails report some sense of error and then always
 	 * give up.
 	 */
-	const char *from_ugh = sockaddr_to_endpoint(&ip_protocol_udp, &from,
-						    &packet->sender);
+	ip_address sender_udp_address;
+	ip_port sender_udp_port;
+	const char *from_ugh = sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port);
 	if (from_ugh != NULL) {
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
@@ -311,6 +313,11 @@ static enum iface_status udp_read_packet(const struct iface_endpoint *ifp,
 		}
 		return IFACE_IGNORE;
 	}
+
+	packet->sender = endpoint_from_address_protocol_port(sender_udp_address,
+							     &ip_protocol_udp,
+							     sender_udp_port);
+
 
 	/*
 	 * Managed to decode the from address; switch to a "from"
@@ -386,7 +393,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 	}
 #endif
 
-	ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
+	ip_sockaddr remote_sa = sockaddr_from_endpoint(*remote_endpoint);
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 };
 
@@ -688,10 +695,14 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		/* usual case :-( */
 		char fromstr[sizeof(" for message to ?") + sizeof(endpoint_buf)] = "";
 		if (afi != NULL && emh.msg_namelen == afi->sockaddr_size) {
-			ip_endpoint endpoint;
-			/* this is a udp socket so presumably the endpoint is udp */
-			if (sockaddr_to_endpoint(&ip_protocol_udp, &from, &endpoint) == NULL) {
+			ip_address sender_udp_address;
+			ip_port sender_udp_port;
+			if (sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port) == NULL) {
+				/* this is a udp socket so presumably the endpoint is udp */
 				endpoint_buf ab;
+				ip_endpoint endpoint = endpoint_from_address_protocol_port(sender_udp_address,
+											   &ip_protocol_udp,
+											   sender_udp_port);
 				snprintf(fromstr, sizeof(fromstr),
 					 " for message to %s",
 					 str_endpoint_sensitive(&endpoint, &ab));
