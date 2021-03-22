@@ -293,8 +293,8 @@ static void check_ttorange__to__str_range(void)
 		/* total overflow */
 		{ LN, 6, "8000::0-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
 		{ LN, 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
-		{ LN, 6, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL/*"::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"*/, UINTMAX_MAX, },
-		{ LN, 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL/*"::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"*/, UINTMAX_MAX, },
+		{ LN, 6, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
 
 		/* allow mask */
 		{ LN, 4, "1.2.3.0/32", "1.2.3.0-1.2.3.0", 1, },
@@ -316,15 +316,15 @@ static void check_ttorange__to__str_range(void)
 		/* wrong order */
 		{ LN, 4, "1.2.3.4-1.2.3.3", NULL, -1, },
 		{ LN, 6, "::2-::1", NULL, -1, },
-		/* cannot contain %any */
-		{ LN, 4, "0.0.0.0-0.0.0.0", NULL/*"0.0.0.0-0.0.0.0"*/, 1, },
-		{ LN, 4, "0.0.0.0-0.0.0.1", NULL/*"0.0.0.0-0.0.0.1"*/, 2, },
-		{ LN, 6, "::-::", NULL/*"::-::"*/, 1, },
-		{ LN, 6, "::-::1", NULL/*"::-::1"*/, 2, },
-		{ LN, 6, "::/97", NULL/*"::/97"*/, ((uintmax_t)UINT32_MAX + 1) >> 1, },
-		{ LN, 6, "::0/64", NULL/*"::/64"*/, UINT64_MAX, },
-		{ LN, 6, "::0/127", NULL/*"::/127"*/, 2, },
-		{ LN, 6, "::/0", NULL/*"::/0"*/, UINTMAX_MAX, },
+		/* can contain %any */
+		{ LN, 4, "0.0.0.0-0.0.0.0", "0.0.0.0-0.0.0.0", 1, },
+		{ LN, 4, "0.0.0.0-0.0.0.1", "0.0.0.0-0.0.0.1", 2, },
+		{ LN, 6, "::-::", "::-::", 1, },
+		{ LN, 6, "::-::1", "::-::1", 2, },
+		{ LN, 6, "::/97", "::/97", ((uintmax_t)UINT32_MAX + 1) >> 1, },
+		{ LN, 6, "::0/64", "::/64", UINT64_MAX, },
+		{ LN, 6, "::0/127", "::/127", 2, },
+		{ LN, 6, "::/0", "::/0", UINTMAX_MAX, },
 		/* nonsense */
 		{ LN, 4, "1.2.3.0-nonenone", NULL, -1, },
 		{ LN, 4, "-", NULL, -1, },

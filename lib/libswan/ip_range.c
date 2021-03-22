@@ -64,37 +64,31 @@ int range_host_bits(const ip_range range)
 }
 
 /*
- * ttorange - convert text v4 "addr1-addr2" to address_start address_end
- *            v6 allows "subnet/mask" to address_start address_end
+ * ttorange()
+ *
+ * Convert "addr1-addr2" or subnet/mask to an address range.
  */
 err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 {
 	*dst = unset_range;
 	err_t err;
 
+	shunk_t cursor = shunk1(src);
+
 	/* START or START/MASK or START-END */
-	shunk_t end = shunk1(src);
 	char sep = '\0';
-	shunk_t start = shunk_token(&end, &sep, "/-");
+	shunk_t start_token = shunk_token(&cursor, &sep, "/-");
 
 	/* convert start address */
 	ip_address start_address;
-	err = numeric_to_address(start, afi, &start_address);
+	err = numeric_to_address(start_token, afi/*possibly NULL*/, &start_address);
 	if (err != NULL) {
 		return err;
 	}
 
-	if (address_is_any(start_address)) {
-		/* XXX: being more specific would mean diag_t */
-		return "0.0.0.0 or :: not allowed in range";
-	}
-
 	/* get real AFI */
 	afi = address_type(&start_address);
-	if (afi == NULL) {
-		/* should never happen */
-		return "INTERNAL ERROR: ttorange() encountered an unknown type";
-	}
+	passert(afi != NULL);
 
 	switch (sep) {
 	case '\0':
@@ -108,7 +102,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START/MASK */
 		uintmax_t maskbits = afi->mask_cnt;
-		err = shunk_to_uintmax(end, NULL, 0, &maskbits, afi->mask_cnt);
+		err = shunk_to_uintmax(cursor, NULL, 0, &maskbits, afi->mask_cnt);
 		if (err != NULL) {
 			return err;
 		}
@@ -129,20 +123,24 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START-END */
 		ip_address end_address;
-		err = numeric_to_address(end, afi, &end_address);
+		err = numeric_to_address(cursor, afi, &end_address);
 		if (err != NULL) {
+			/* includes IPv4 vs IPv6 */
 			return err;
 		}
-		if (addrcmp(&start_address, &end_address) > 0) {
-			return "start of range must not be greater than end";
+		passert(afi == address_type(&end_address));
+		if (bytes_cmp(start_address.version, start_address.bytes,
+			      end_address.version, end_address.bytes) > 0) {
+			return "start of range is greater than end";
 		}
 		*dst = range_from_raw(HERE, afi->ip_version,
 				      start_address.bytes, end_address.bytes);
 		return NULL;
 	}
+	default:
+		/* SEP is invalid, but being more specific means diag_t */
+		return "expecting '-' or '/'";
 	}
-	/* SEP is invalid, but being more specific means diag_t */
-	return "error";
 }
 
 size_t jam_range(struct jambuf *buf, const ip_range *range)
