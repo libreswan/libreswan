@@ -1,4 +1,4 @@
 ../../pluto/bin/ipsec-look.sh
-semodule -r ipsec-test-module
+semodule -r ipsecspd
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
