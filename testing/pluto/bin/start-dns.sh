@@ -33,6 +33,7 @@ esac
 
 if test ${status} -ne 0; then
     cat /tmp/dns.log
+    systemctl status -l nsd-keygen
     systemctl status -l nsd
 else
     echo Found $(grep "^${domain}" /tmp/dns.log | wc -l) records
