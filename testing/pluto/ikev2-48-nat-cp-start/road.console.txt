@@ -10,14 +10,17 @@ road #
  echo "initdone"
 initdone
 road #
- sleep 10
+ # wait for autostart to complete
+road #
+ ../../pluto/bin/wait-for.sh --match 192.0.2.1 -- ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east', lease=192.0.2.1/32
+road #
+ # ipsec will configure 192.0.2.1 on eth0
 road #
  ip -4 route
 default via 192.1.3.254 dev eth0
 192.1.2.23 dev eth0 scope link src 192.0.2.1
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
-road #
- # ipsec will configure 192.0.2.1 on eth0
 road #
  ip addr show  dev eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
@@ -25,21 +28,13 @@ road #
     inet 192.1.3.209/24 scope global eth0
        valid_lft forever preferred_lft forever
 road #
- ping -n -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-road #
- ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east', lease=192.0.2.1/32
+ ../../pluto/bin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=168B out=168B
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
