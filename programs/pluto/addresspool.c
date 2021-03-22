@@ -730,25 +730,25 @@ void reference_addresspool(struct connection *c)
  * set to the entry found; NULL if none found.
  */
 
-diag_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
+diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool)
 {
 	struct ip_pool *h;
 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
 
-		if (range_eq_range(*pool_range, h->r)) {
+		if (range_eq_range(pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
 			return NULL;
 		}
 
-		if (range_overlaps_range(*pool_range, h->r)) {
+		if (range_overlaps_range(pool_range, h->r)) {
 			/* bad */
 			range_buf prbuf;
 			range_buf hbuf;
 			return diag("new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
-				    str_range(pool_range, &prbuf),
+				    str_range(&pool_range, &prbuf),
 				    str_range(&h->r, &hbuf));
 		}
 	}
@@ -761,7 +761,7 @@ diag_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
  * - The range must be non-empty
  */
 
-struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *logger)
+struct ip_pool *install_addresspool(const ip_range pool_range, struct logger *logger)
 {
 	struct ip_pool **head = &pluto_pools;
 	struct ip_pool *pool = NULL;
@@ -783,7 +783,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *l
 	pool = alloc_thing(struct ip_pool, "addresspool entry");
 
 	pool->pool_refcount = 0;
-	pool->r = *pool_range;
+	pool->r = pool_range;
 	intmax_t pool_size = range_size(pool->r);
 	if (pool_size > UINT32_MAX) {
 		/*
