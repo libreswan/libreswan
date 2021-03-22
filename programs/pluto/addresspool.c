@@ -784,13 +784,16 @@ struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *l
 
 	pool->pool_refcount = 0;
 	pool->r = *pool_range;
-	if (range_size(pool->r, &pool->size)) {
+	intmax_t pool_size = range_size(pool->r);
+	if (pool_size > UINT32_MAX) {
 		/*
 		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
 		 */
-		dbg("WARNING addresspool size overflow truncated to %u", pool->size);
+		pool_size = UINT32_MAX;
+		dbg("WARNING addresspool size overflow truncated to %ju", pool_size);
 	}
+	pool->size = pool_size;
 	passert(pool->size > 0);
 
 	pool->nr_in_use = 0;

@@ -246,37 +246,32 @@ bool range_is_specified(const ip_range range)
 	return true;
 }
 
-bool range_size(const ip_range range, uint32_t *size)
+uintmax_t range_size(const ip_range range)
 {
-	*size = 0;
-
 	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
-		return true; /*return what?!?!?*/
+		return 0;
 	}
 
-	struct ip_bytes diff = bytes_sub(afi, range.end, range.start);
+	struct ip_bytes diff_bytes = bytes_sub(afi, range.end, range.start);
 
-	/* more than 32-bits of host-prefix always overflows. */
-	unsigned prefix_bits = bytes_first_set_bit(afi, diff);
+	/* more than uintmax_t-bits of host-prefix always overflows. */
+	unsigned prefix_bits = bytes_first_set_bit(afi, diff_bytes);
 	unsigned host_bits = afi->mask_cnt - prefix_bits;
-	if (host_bits > 32) {
-		*size = UINT32_MAX;
-		return true;
+	if (host_bits > sizeof(uintmax_t) * 8) {
+		return UINTMAX_MAX;
 	}
 
-	/* can't overflow; but could be 0xffffffff */
-	uint32_t n = ntoh_bytes(diff.byte, afi->ip_size);
-
-	/* adding 1 to 0xffffffff overflows */
-	if (n == UINT32_MAX) {
-		*size = UINT32_MAX;
-		return true;
+	/*
+	 * can't overflow; but could be 0xf..f and adding one will
+	 * overflow */
+	uintmax_t diff = ntoh_bytes(diff_bytes.byte, afi->ip_size);
+	if (diff >= UINTMAX_MAX) {
+		/* size+1 would overflow */
+		return UINTMAX_MAX;
 	}
 
-	/* ::1-::1 is one address */
-	*size = n + 1;
-	return false;
+	return diff + 1;
 }
 
 bool range_eq_range(const ip_range l, const ip_range r)

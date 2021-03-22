@@ -111,7 +111,7 @@ bool range_overlaps_range(const ip_range l, const ip_range r);
  */
 
 int range_host_bits(const ip_range range);
-bool range_size(const ip_range r, uint32_t *size);
+uintmax_t range_size(const ip_range r);
 
 /*
  * operations

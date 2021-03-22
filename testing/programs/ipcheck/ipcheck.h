@@ -109,6 +109,9 @@ extern bool use_dns;
 
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\
+			if (EXPECTED == NULL) {				\
+					FAIL(#EXPECTED " is NULL");	\
+			}						\
 			BUF buf;					\
 			const char *s = str_##OP(__VA_ARGS__, &buf);	\
 			if (s == NULL) {				\
@@ -131,6 +134,9 @@ extern bool use_dns;
 
 #define CHECK_STR2(T)                                                   \
                 {                                                       \
+			if (t->str == NULL) {				\
+				FAIL("t->str is NULL");			\
+			}						\
                         T##_buf buf;                                    \
                         const char *str = str_##T(T, &buf);             \
                         if (str == NULL) {                              \
@@ -138,8 +144,8 @@ extern bool use_dns;
                                      t->str);                           \
                         }                                               \
                         if (!strcaseeq(t->str, str)) {                  \
-                                FAIL("str_"#T"(%s) returned '%s'",      \
-                                     t->str, str);                      \
+                                FAIL("str_"#T"(%s) returned '%s', expecting '%s'", \
+                                     t->str, str, t->str);		\
                         }                                               \
                         size_t str_size = strlen(str);                  \
                         char jam_str[sizeof(buf)];                      \
@@ -150,8 +156,8 @@ extern bool use_dns;
                                      jam_size, str_size);               \
                         }                                               \
                         if (!strcaseeq(t->str, jam_str)) {              \
-                                FAIL("jam_"#T"(%s) returned '%s'",      \
-                                     t->str, jam_str);                  \
+                                FAIL("jam_"#T"(%s) emitted '%s', expecting '%s'", \
+                                     t->str, jam_str, t->str);		\
                         }                                               \
                 }
 

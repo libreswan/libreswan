@@ -25,7 +25,6 @@ struct ip_pool;        /* forward declaration; definition is local to addresspoo
 
 extern struct ip_pool *install_addresspool(const ip_range *pool_range, struct logger *logger);
 extern diag_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool) MUST_USE_RESULT;
-extern bool pool_size(ip_range *r, uint32_t *size);
 
 extern void unreference_addresspool(struct connection *c);
 extern void reference_addresspool(struct connection *c);

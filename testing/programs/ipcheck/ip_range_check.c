@@ -251,93 +251,92 @@ static void check_ttorange__to__str_range(void)
 		int family;
 		const char *in;
 		const char *str;
-		uint32_t pool_size;
-		bool truncated;
+		uintmax_t range_size;
 	} tests[] = {
 		/* single address */
-		{ LN, 4, "4.3.2.1", "4.3.2.1-4.3.2.1", 1, false},
-		{ LN, 6, "::1", "::1-::1", 1, false, },
-		{ LN, 4, "4.3.2.1-4.3.2.1", "4.3.2.1-4.3.2.1", 1, false, },
-		{ LN, 6, "::1-::1", "::1-::1", 1, false, },
-		{ LN, 4, "4.3.2.1/32", "4.3.2.1-4.3.2.1", 1, false, },
-		{ LN, 6, "::2/128", "::2/128", 1, false, },
+		{ LN, 4, "4.3.2.1", "4.3.2.1-4.3.2.1", 1, },
+		{ LN, 6, "::1", "::1-::1", 1, },
+		{ LN, 4, "4.3.2.1-4.3.2.1", "4.3.2.1-4.3.2.1", 1, },
+		{ LN, 6, "::1-::1", "::1-::1", 1, },
+		{ LN, 4, "4.3.2.1/32", "4.3.2.1-4.3.2.1", 1, },
+		{ LN, 6, "::2/128", "::2/128", 1, },
 		/* normal range */
-		{ LN, 6, "::1-::2", "::1-::2", 2, false, },
-		{ LN, 4, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, false, },
+		{ LN, 6, "::1-::2", "::1-::2", 2, },
+		{ LN, 4, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, },
 		/* largest */
-		{ LN, 4, "0.0.0.1-255.255.255.255", "0.0.0.1-255.255.255.255", UINT32_MAX, false, },
+		{ LN, 4, "0.0.0.1-255.255.255.255", "0.0.0.1-255.255.255.255", UINT32_MAX, },
 
 		/* ok - largest - overflow - truncate */
-		{ LN, 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:fffd", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:fffd", UINT32_MAX-1, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:fffe", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:fffe", UINT32_MAX, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6::-1:2:3:4:5:6:ffff:ffff", UINT32_MAX, true, },
-		{ LN, 6, "1:2:3:4:5:6:0:0-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6::-1:2:3:4:5:7::", UINT32_MAX, true, },
+		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffd", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffd", UINTMAX_MAX-1, },
+		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffe", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffe", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:ffff", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::-1:2:3:5:0000:0000:0000:0000", "1:2:3:4::-1:2:3:5::", UINTMAX_MAX, },
 
 		/* ok - largest - overflow - truncate */
-		{ LN, 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:fffe", "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:fffe", UINT32_MAX-1, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6:0:1-1:2:3:4:5:6:ffff:ffff", UINT32_MAX, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:1-1:2:3:4:5:7::", UINT32_MAX, true, },
-		{ LN, 6, "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:1-1:2:3:4:5:7:0:1", UINT32_MAX, true, },
+		{ LN, 6, "1:2:3:4::1-1:2:3:4:ffff:ffff:ffff:fffe", "1:2:3:4::1-1:2:3:4:ffff:ffff:ffff:fffe", UINTMAX_MAX-1, },
+		{ LN, 6, "1:2:3:4::1-1:2:3:4:ffff:ffff:ffff:ffff", "1:2:3:4::1-1:2:3:4:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::1-1:2:3:5:0000:0000:0000:0000", "1:2:3:4::1-1:2:3:5::", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::1-1:2:3:5:0000:0000:0000:0001", "1:2:3:4::1-1:2:3:5::1", UINTMAX_MAX, },
 
 		/* ok - largest - overflow - truncate */
-		{ LN, 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:6:ffff:ffff", "1:2:3:4:5:6:0:2-1:2:3:4:5:6:ffff:ffff", UINT32_MAX-1, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:2-1:2:3:4:5:7::", UINT32_MAX, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0:1", UINT32_MAX, true, },
-		{ LN, 6, "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0000:0002", "1:2:3:4:5:6:0:2-1:2:3:4:5:7:0:2", UINT32_MAX, true, },
+		{ LN, 6, "1:2:3:4::2-1:2:3:4:ffff:ffff:ffff:ffff", "1:2:3:4::2-1:2:3:4:ffff:ffff:ffff:ffff", UINTMAX_MAX-1, },
+		{ LN, 6, "1:2:3:4::2-1:2:3:5:0000:0000:0000:0000", "1:2:3:4::2-1:2:3:5::", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::2-1:2:3:5:0000:0000:0000:0001", "1:2:3:4::2-1:2:3:5::1", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::2-1:2:3:5:0000:0000:0000:0002", "1:2:3:4::2-1:2:3:5::2", UINTMAX_MAX, },
 
 		/* ok - largest - overflow - truncate */
-		{ LN, 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0000", "1:2:3:4:5:6:0:3-1:2:3:4:5:7::", UINT32_MAX-1, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0001", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:1", UINT32_MAX, false, },
-		{ LN, 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0002", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:2", UINT32_MAX, true, },
-		{ LN, 6, "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0000:0003", "1:2:3:4:5:6:0:3-1:2:3:4:5:7:0:3", UINT32_MAX, true, },
+		{ LN, 6, "1:2:3:4:0:0:0:3-1:2:3:5::0", "1:2:3:4::3-1:2:3:5::", UINTMAX_MAX-1, },
+		{ LN, 6, "1:2:3:4:0:0:0:3-1:2:3:5::1", "1:2:3:4::3-1:2:3:5::1", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4:0:0:0:3-1:2:3:5::2", "1:2:3:4::3-1:2:3:5::2", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4:0:0:0:3-1:2:3:5::3", "1:2:3:4::3-1:2:3:5::3", UINTMAX_MAX, },
 
 		/* total overflow */
-		{ LN, 6, "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", "2001:db8:0:9:ffff:fffe::-2001:db8:0:9:ffff:ffff::", UINT32_MAX, true, },
-		{ LN, 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
-		{ LN, 6, "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "1000::-1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
-		{ LN, 6, "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
-		{ LN, 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINT32_MAX, true, },
+		{ LN, 6, "8000::0-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL/*"::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"*/, UINTMAX_MAX, },
+		{ LN, 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", NULL/*"::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"*/, UINTMAX_MAX, },
 
 		/* allow mask */
-		{ LN, 4, "1.2.3.0/32", "1.2.3.0-1.2.3.0", 1, false, },
-		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, false, },
-		{ LN, 6, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, false, },
-		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", 1, false, },
-		{ LN, 6, "2001:db8:0:8::/112", "2001:db8:0:8::/112", 65536, false, },
-		{ LN, 6, "2001:db8:0:7::/97", "2001:db8:0:7::/97", 2147483648, false, },
-		{ LN, 6, "2001:db8:0:4::/96", "2001:db8:0:4::/96", UINT32_MAX, true, },
-		{ LN, 6, "2001:db8:0:6::/64", "2001:db8:0:6::/64", UINT32_MAX, true, },
-		{ LN, 6, "2001:db8::/32", "2001:db8::/32", UINT32_MAX, true, },
-		{ LN, 6, "2000::/3", "2000::/3", UINT32_MAX, true, },
-		{ LN, 6, "4000::/2", "4000::/2", UINT32_MAX, true, },
-		{ LN, 6, "8000::/1", "8000::/1", UINT32_MAX, true, },
+		{ LN, 4, "1.2.3.0/32", "1.2.3.0-1.2.3.0", 1, },
+		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, },
+		{ LN, 6, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, },
+		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", 1, },
+		{ LN, 6, "2001:db8:0:8::/112", "2001:db8:0:8::/112", 65536, },
+		{ LN, 6, "2001:db8:0:7::/97", "2001:db8:0:7::/97", 2147483648, },
+		{ LN, 6, "2001:db8:0:4::/96", "2001:db8:0:4::/96", (uintmax_t)UINT32_MAX+1, },
+		{ LN, 6, "2001:db8:0:6::/64", "2001:db8:0:6::/64", UINT64_MAX, },
+		{ LN, 6, "2001:db8::/32", "2001:db8::/32", UINTMAX_MAX, },
+		{ LN, 6, "2000::/3", "2000::/3", UINTMAX_MAX, },
+		{ LN, 6, "4000::/2", "4000::/2", UINTMAX_MAX, },
+		{ LN, 6, "8000::/1", "8000::/1", UINTMAX_MAX, },
 
 		/* reject port */
-		{ LN, 6, "2001:db8:0:7::/97:0", NULL, -1, false, },
-		{ LN, 6, "2001:db8:0:7::/97:30", NULL, -1, false},
+		{ LN, 6, "2001:db8:0:7::/97:0", NULL, -1, },
+		{ LN, 6, "2001:db8:0:7::/97:30", NULL, -1, },
 		/* wrong order */
-		{ LN, 4, "1.2.3.4-1.2.3.3", NULL, -1, false, },
-		{ LN, 6, "::2-::1", NULL, -1, false, },
+		{ LN, 4, "1.2.3.4-1.2.3.3", NULL, -1, },
+		{ LN, 6, "::2-::1", NULL, -1, },
 		/* cannot contain %any */
-		{ LN, 4, "0.0.0.0-0.0.0.0", NULL, -1, false, },
-		{ LN, 4, "0.0.0.0-0.0.0.1", NULL, -1, false, },
-		{ LN, 6, "::-::", NULL, -1, false, },
-		{ LN, 6, "::-::1", NULL, -1, false, },
-		{ LN, 6, "::/97", NULL, -1, false, },
-		{ LN, 6, "::0/64", NULL, -1, false, },
-		{ LN, 6, "::0/127", NULL, -1, false, },
-		{ LN, 6, "::/0", NULL, -1, false, },
+		{ LN, 4, "0.0.0.0-0.0.0.0", NULL/*"0.0.0.0-0.0.0.0"*/, 1, },
+		{ LN, 4, "0.0.0.0-0.0.0.1", NULL/*"0.0.0.0-0.0.0.1"*/, 2, },
+		{ LN, 6, "::-::", NULL/*"::-::"*/, 1, },
+		{ LN, 6, "::-::1", NULL/*"::-::1"*/, 2, },
+		{ LN, 6, "::/97", NULL/*"::/97"*/, ((uintmax_t)UINT32_MAX + 1) >> 1, },
+		{ LN, 6, "::0/64", NULL/*"::/64"*/, UINT64_MAX, },
+		{ LN, 6, "::0/127", NULL/*"::/127"*/, 2, },
+		{ LN, 6, "::/0", NULL/*"::/0"*/, UINTMAX_MAX, },
 		/* nonsense */
-		{ LN, 4, "1.2.3.0-nonenone", NULL, -1, false, },
-		{ LN, 4, "-", NULL, -1, false, },
-		{ LN, 4, "_/_", NULL, -1, false, },
-		{ LN, 6, "%default", NULL, -1, false, },
+		{ LN, 4, "1.2.3.0-nonenone", NULL, -1, },
+		{ LN, 4, "-", NULL, -1, },
+		{ LN, 4, "_/_", NULL, -1, },
+		{ LN, 6, "%default", NULL, -1, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		if (t->str != NULL) {
-			PRINT("%s '%s' -> %s pool-size %"PRIu32" truncated %s", pri_family(t->family), t->in, t->str, t->pool_size, bool_str(t->truncated));
+			PRINT("%s '%s' -> %s pool-size %ju",
+			      pri_family(t->family), t->in, t->str, t->range_size);
 		} else {
 			PRINT("%s '%s' -> <error>", pri_family(t->family), t->in);
 		}
@@ -355,18 +354,18 @@ static void check_ttorange__to__str_range(void)
 		}
 
 		CHECK_TYPE(range);
+		if (t->str == NULL) {
+			continue;
+		}
 		CHECK_STR2(range);
 
-		if (t->pool_size > 0) {
-			uint32_t pool_size;
-			bool truncated = range_size(*range, &pool_size);
-			if (t->pool_size != pool_size) {
-				FAIL("pool_size gave %"PRIu32", expecting %"PRIu32,
-					pool_size, t->pool_size);
-			}
-			if (t->truncated != truncated) {
-				FAIL("pool_size gave %s, expecting %s",
-					bool_str(truncated), bool_str(t->truncated));
+		if (t->range_size > 0) {
+			uintmax_t size = range_size(*range);
+			if (t->range_size != size) {
+				range_buf rb;
+				FAIL("range_size(%s) returned %ju, expecting %ju",
+				     str_range(range, &rb),
+				     size, t->range_size);
 			}
 		}
 	}
