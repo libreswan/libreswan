@@ -884,15 +884,6 @@ static ip_address get_address_any(struct family *family)
 	return family->type->address.any;
 }
 
-static ip_subnet get_subnet_none(struct family *family)
-{
-	if (family->type == NULL) {
-		family->type = &ipv4_info;
-		family->used_by = long_opts[long_index].name;
-	}
-	return family->type->subnet.none;
-}
-
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path   = DEFAULT_CTL_SOCKET,
@@ -944,7 +935,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
-		this->client = get_subnet_none(caf);
+		this->client = unset_subnet;
 	}
 
 	/* check protocol */
