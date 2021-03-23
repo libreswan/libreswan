@@ -275,11 +275,6 @@ bool address_in_subnet(const ip_address l, const ip_subnet r)
 		return false;
 	}
 
-	/* never true */
-	if (subnet_eq_subnet(r, afi->subnet.zero)) {
-		return false;
-	}
-
 	/* L.prefix[0 .. R.bits] == R.prefix[0.. R.bits] */
 	struct ip_bytes lb = bytes_from_blit(afi,
 					     /*LEFT*/l.bytes,

@@ -273,6 +273,7 @@ static void check_ip_info_subnet(void)
 		CHECK_UNOP(subnet, size, "%ju", /*NOP*/);
 
 		CHECK_FROM(range, subnet);
+		CHECK_FROM(selector, subnet);
 	}
 
 	static const struct {
@@ -308,6 +309,8 @@ static void check_ip_info_subnet(void)
 		const ip_subnet *r;
 		int in;
 	} address_op_subnet[] = {
+		{ &ipv4_info.address.any,      &ipv4_info.subnet.zero, .in = true, },
+		{ &ipv6_info.address.any,      &ipv6_info.subnet.zero, .in = true, },
 		{ &ipv4_info.address.any,      &ipv4_info.subnet.all, .in = true, },
 		{ &ipv6_info.address.any,      &ipv6_info.subnet.all, .in = true, },
 		{ &ipv4_info.address.loopback, &ipv4_info.subnet.all, .in = true, },
@@ -336,6 +339,7 @@ static void check_ip_info_range(void)
 		CHECK_COND2(range, is_all);
 		CHECK_UNOP(range, size, "%ju", );
 
+		CHECK_FROM(selector, range);
 	}
 
 	static const struct {
@@ -412,7 +416,6 @@ static void check_ip_info_range(void)
 	CHECK_OP(address, in, range);
 	CHECK_OP(subnet, in, range);
 	CHECK_OP(range, in, range);
-
 	CHECK_OP(range, overlaps, range);
 }
 
@@ -438,14 +441,119 @@ static void check_ip_info_selector(void)
 		const ip_selector *l;
 		const ip_selector *r;
 		int eq;
+		int in;
+		int overlaps;
 	} selector_op_selector[] = {
 		{ &unset_selector,             &unset_selector,          .eq = true, },
-		{ &ipv4_info.selector.zero,    &ipv4_info.selector.zero, .eq = true, },
-		{ &ipv6_info.selector.zero,    &ipv6_info.selector.zero, .eq = true, },
-		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, },
-		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, },
+		{ &ipv4_info.selector.zero,    &ipv4_info.selector.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.zero,    &ipv6_info.selector.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv4_info.selector.zero,    &ipv4_info.selector.all,  .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.zero,    &ipv6_info.selector.all,  .in = true, .overlaps = true, },
+		{ &ipv4_info.selector.all,     &ipv4_info.selector.zero, .overlaps = true, },
+		{ &ipv6_info.selector.all,     &ipv6_info.selector.zero, .overlaps = true, },
+		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, .in = true, .overlaps = true, },
 	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_address *r;
+		int eq;
+	} selector_op_address[] = {
+		{ &unset_selector, &unset_address, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.address.any, .eq = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_subnet *r;
+		int eq;
+	} selector_op_subnet[] = {
+		{ &unset_selector, &unset_subnet, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.subnet.zero, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.subnet.zero, .eq = true, },
+		{ &ipv4_info.selector.all, &ipv4_info.subnet.all, .eq = true, },
+		{ &ipv6_info.selector.all, &ipv6_info.subnet.all, .eq = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_endpoint *r;
+		int eq;
+	} selector_op_endpoint[] = {
+		{ &unset_selector, &unset_endpoint, .eq = true, },
+	};
+
+	static const struct {
+		const ip_endpoint *l;
+		const ip_selector *r;
+		int in;
+	} endpoint_op_selector[1];
+	static const struct {
+		const ip_subnet *l;
+		const ip_selector *r;
+		int in;
+	} subnet_op_selector[] = {
+		{ &ipv4_info.subnet.zero, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.subnet.all, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.subnet.all, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_address *l;
+		const ip_selector *r;
+		int in;
+	} address_op_selector[] = {
+		{ &ipv4_info.address.any, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.address.any, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.address.loopback, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.address.loopback, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_range *l;
+		const ip_selector *r;
+		int in;
+	} range_op_selector[] = {
+		{ &ipv4_info.range.zero, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.range.zero, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.range.all, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.range.all, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_range *r;
+		int eq;
+	} selector_op_range[] = {
+		{ &unset_selector, &unset_range, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.range.zero, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.range.zero, .eq = true, },
+		{ &ipv4_info.selector.all, &ipv4_info.range.all, .eq = true, },
+		{ &ipv6_info.selector.all, &ipv6_info.range.all, .eq = true, },
+	};
+
+	CHECK_OP(address, in, selector);
+	CHECK_OP(endpoint, in, selector);
+	CHECK_OP(subnet, in, selector);
+	CHECK_OP(range, in, selector);
+	CHECK_OP(selector, in, selector);
+
+	CHECK_OP(selector, eq, address);
+	CHECK_OP(selector, eq, endpoint);
+	CHECK_OP(selector, eq, subnet);
+	CHECK_OP(selector, eq, range);
 	CHECK_OP(selector, eq, selector);
+
+	CHECK_OP(selector, overlaps, selector);
 }
 
 void ip_info_check(void)

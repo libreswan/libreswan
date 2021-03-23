@@ -247,6 +247,17 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 				 &ip_protocol_unset, unset_port);
 }
 
+ip_selector selector_from_range(const ip_range range)
+{
+	if (range_is_unset(&range)) {
+		return unset_selector;
+	}
+
+	ip_subnet subnet;
+	happy(range_to_subnet(range, &subnet));
+	return selector_from_subnet_protocol_port(subnet, &ip_protocol_unset, unset_port);
+}
+
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port)
@@ -356,14 +367,44 @@ ip_address selector_prefix_mask(const ip_selector selector)
 
 bool selector_eq_address(const ip_selector selector, const ip_address address)
 {
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown+any */
-		return false;
-	}
-
 	ip_selector s = selector_from_address(address);
 	return selector_eq_selector(selector, s);
+}
+
+bool selector_eq_endpoint(const ip_selector selector, const ip_endpoint endpoint)
+{
+	ip_selector es = selector_from_endpoint(endpoint);
+	return selector_eq_selector(selector, es);
+}
+
+bool selector_eq_subnet(const ip_selector selector, const ip_subnet subnet)
+{
+	ip_selector ss = selector_from_subnet(subnet);
+	return selector_eq_selector(selector, ss);
+}
+
+bool selector_eq_range(const ip_selector selector, const ip_range range)
+{
+	ip_selector s = selector_from_range(range);
+	return selector_eq_selector(selector, s);
+}
+
+bool address_in_selector(const ip_address address, const ip_selector selector)
+{
+	ip_selector as = selector_from_address(address);
+	return selector_in_selector(as, selector);
+}
+
+bool subnet_in_selector(const ip_subnet subnet, const ip_selector selector)
+{
+	ip_selector ss = selector_from_subnet(subnet);
+	return selector_in_selector(ss, selector);
+}
+
+bool range_in_selector(const ip_range range, const ip_selector selector)
+{
+	ip_selector rs = selector_from_range(range);
+	return selector_in_selector(rs, selector);
 }
 
 bool selector_in_selector(const ip_selector i, const ip_selector o)
@@ -378,11 +419,6 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 
 	/* work in */
 	if (selector_type(&o) != afi) {
-		return false;
-	}
-
-	/* exclude outer ::/128 */
-	if (thingeq(o.bytes, unset_bytes) && o.maskbits == afi->mask_cnt) {
 		return false;
 	}
 
@@ -449,6 +485,12 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 		l.maskbits == r.maskbits &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
+}
+
+bool selector_overlaps_selector(const ip_selector l, const ip_selector r)
+{
+	/* since these are just subnets */
+	return (selector_in_selector(l, r) || selector_in_selector(r, l));
 }
 
 void pexpect_selector(const ip_selector *s, where_t where)

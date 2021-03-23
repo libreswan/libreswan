@@ -92,6 +92,8 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port);
 
+ip_selector selector_from_range(const ip_range range);
+
 ip_selector selector_from_address_protoport(const ip_address address,
 					    const ip_protoport protoport);
 ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
@@ -138,11 +140,19 @@ unsigned selector_prefix_bits(const ip_selector selector);
 
 bool selector_contains_one_address(const ip_selector selector);
 
-bool selector_in_selector(const ip_selector l, const ip_selector r);
+bool address_in_selector(const ip_address l, const ip_selector r);
 bool endpoint_in_selector(const ip_endpoint l, const ip_selector r);
+bool subnet_in_selector(const ip_subnet l, const ip_selector r);
+bool range_in_selector(const ip_range l, const ip_selector r);
+bool selector_in_selector(const ip_selector l, const ip_selector r);
 
-bool selector_eq_selector(const ip_selector l, const ip_selector r);
 bool selector_eq_address(const ip_selector selector, const ip_address address);
+bool selector_eq_endpoint(const ip_selector selector, const ip_endpoint endpoint);
+bool selector_eq_subnet(const ip_selector selector, const ip_subnet subnet);
+bool selector_eq_range(const ip_selector selector, const ip_range range);
+bool selector_eq_selector(const ip_selector l, const ip_selector r);
+
+bool selector_overlaps_selector(const ip_selector l, const ip_selector r);
 
 /* printing */
 
