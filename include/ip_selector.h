@@ -116,6 +116,9 @@ extern const ip_selector unset_selector;
 bool selector_is_unset(const ip_selector *selector);			/* handles NULL */
 const struct ip_info *selector_type(const ip_selector *selector);	/* handles NULL */
 
+bool selector_is_zero(const ip_selector selector);	/* ::/128 or 0.0.0.0/32 */
+bool selector_is_all(const ip_selector selector);	/* ::/0 or 0.0.0.0/0 */
+
 /* attributes */
 
 const struct ip_protocol *selector_protocol(const ip_selector selector);
@@ -133,9 +136,7 @@ ip_address selector_prefix(const ip_selector selector);
 ip_address selector_prefix_mask(const ip_selector selector);
 unsigned selector_prefix_bits(const ip_selector selector);
 
-bool selector_contains_no_addresses(const ip_selector selector);
 bool selector_contains_one_address(const ip_selector selector);
-bool selector_contains_all_addresses(const ip_selector selector);
 
 bool selector_in_selector(const ip_selector l, const ip_selector r);
 bool endpoint_in_selector(const ip_endpoint l, const ip_selector r);

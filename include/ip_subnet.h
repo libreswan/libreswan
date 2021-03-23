@@ -104,14 +104,13 @@ extern size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet);
  */
 
 extern const ip_subnet unset_subnet;
-bool subnet_is_unset(const ip_subnet *subnet);
 
-const struct ip_info *subnet_type(const ip_subnet *subnet);
+bool subnet_is_unset(const ip_subnet *subnet);			/* handles NULL */
+const struct ip_info *subnet_type(const ip_subnet *subnet);	/* handles NULL */
 
-/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-bool subnet_contains_all_addresses(const ip_subnet subnet);
-/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-bool subnet_contains_no_addresses(const ip_subnet subnet);
+bool subnet_is_zero(const ip_subnet subnet);	/* ::/128 or 0.0.0.0/32 */
+bool subnet_is_all(const ip_subnet subnet);	/* ::/0 or 0.0.0.0/0 */
+
 bool subnet_contains_one_address(const ip_subnet subnet);
 
 /* ADDRESS..ADDRESS in SUBNET */

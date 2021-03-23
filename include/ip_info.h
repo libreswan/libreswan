@@ -28,14 +28,9 @@ struct ip_info {
 
 	/*
 	 * ip_subnet.
-	 *
-	 * none: the unspecified address - matches no addresses
-	 * all: the default route - matches all addresses
-	 *
-	 * (if nothing else, used for edge case testing)
 	 */
 	struct {
-		const ip_subnet none;		/* ::/128 or 0.0.0.0/32 */
+		const ip_subnet zero;		/* ::/128 or 0.0.0.0/32 */
 		const ip_subnet all;		/* ::/0 or 0.0.0.0/0 */
 	} subnet;
 
@@ -57,7 +52,7 @@ struct ip_info {
 	 */
 	struct {
 		/* matches no addresses */
-		const ip_selector none;		/* ::/128 or 0.0.0.0/32 */
+		const ip_selector zero;		/* ::/128 or 0.0.0.0/32 */
 		/* matches all addresses */
 		const ip_selector all;		/* ::/0 or 0.0.0.0/0 */
 	} selector;

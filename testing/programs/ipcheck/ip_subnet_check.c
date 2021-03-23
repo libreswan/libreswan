@@ -222,43 +222,42 @@ static void check_subnet_prefix(struct logger *logger)
 	}
 }
 
-static void check_subnet_contains(struct logger *logger)
+static void check_subnet_is(struct logger *logger)
 {
 	static const struct test {
 		int line;
 		int family;
 		const char *in;
 		bool is_unset;
-		bool is_specified;
-		bool contains_all_addresses;
-		bool contains_no_addresses;
+		bool is_zero;
+		bool is_all;
 		bool contains_one_address;
 	} tests[] = {
 		/* unset */
 		{ LN, 0, NULL,           .is_unset = true, },
 		/* no_addresses */
-		{ LN, 4, "0.0.0.0/32",   .contains_no_addresses = true, },
-		{ LN, 6, "::/128",       .contains_no_addresses = true, },
+		{ LN, 4, "0.0.0.0/32",   .is_zero = true, },
+		{ LN, 6, "::/128",       .is_zero = true, },
 		/* one_address */
-		{ LN, 4, "127.0.0.1/32", .is_specified = true, .contains_one_address = true, },
-		{ LN, 6, "::1/128",      .is_specified = true, .contains_one_address = true, },
+		{ LN, 4, "127.0.0.1/32", .contains_one_address = true, },
+		{ LN, 6, "::1/128",      .contains_one_address = true, },
 		/* some_address+one_address? */
-		{ LN, 4, "127.0.0.0/31", .is_specified = true, },
-		{ LN, 6, "1::/127",      .is_specified = true, },
+		{ LN, 4, "127.0.0.0/31", .is_unset = false, },
+		{ LN, 6, "1::/127",      .is_unset = false, },
 		/* all addresses */
-		{ LN, 4, "0.0.0.0/0",    .is_specified = true, .contains_all_addresses = true, },
-		{ LN, 6, "::/0",         .is_specified = true, .contains_all_addresses = true, },
+		{ LN, 4, "0.0.0.0/0",    .is_all = true, },
+		{ LN, 6, "::/0",         .is_all = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s %s unset=%s all=%s some=%s none=%s",
+		PRINT("%s %s unset=%s zero=%s all=%s one=%s",
 		      pri_family(t->family),
 		      t->in != NULL ? t->in : "<unset>",
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->is_specified),
-		      bool_str(t->contains_no_addresses));
+		      bool_str(t->is_zero),
+		      bool_str(t->is_all),
+		      bool_str(t->contains_one_address));
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
 		if (t->family != 0) {
@@ -270,10 +269,10 @@ static void check_subnet_contains(struct logger *logger)
 		}
 
 		CHECK_COND(subnet, is_unset);
-		CHECK_COND2(subnet, contains_no_addresses);
+		CHECK_COND2(subnet, is_zero);
+		CHECK_COND2(subnet, is_all);
+
 		CHECK_COND2(subnet, contains_one_address);
-		CHECK_COND2(subnet, contains_all_addresses);
-		CHECK_COND2(subnet, contains_all_addresses);
 	}
 }
 
@@ -428,7 +427,7 @@ void ip_subnet_check(struct logger *logger)
 	check_str_subnet(logger);
 	check_subnet_prefix(logger);
 	check_subnet_mask(logger);
-	check_subnet_contains(logger);
+	check_subnet_is(logger);
 	check_subnet_from_address();
 	check_address_mask_to_subnet();
 }

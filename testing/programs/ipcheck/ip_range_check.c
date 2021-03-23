@@ -283,15 +283,16 @@ static void check_range_is(void)
 		const char *hi;
 		const char *str;
 		bool is_unset;
+		bool is_zero;
 		uintmax_t size;
 	} tests[] = {
-		{ LN, 0, "", "",                "<unset-range>", .is_unset = true, },
+		{ LN, 0, "", "",                "<unset-range>",   .is_unset = true, },
 
-		{ LN, 4, "0.0.0.0", "0.0.0.0",  "0.0.0.0-0.0.0.0", .size = 1, },
+		{ LN, 4, "0.0.0.0", "0.0.0.0",  "0.0.0.0-0.0.0.0", .is_zero = true, .size = 1, },
 		{ LN, 4, "0.0.0.1", "0.0.0.2",  "0.0.0.1-0.0.0.2", .size = 2, },
 
-		{ LN, 6, "::", "::",            "::-::", .size = 1, },
-		{ LN, 6, "::1", "::2",          "::1-::2", .size = 2, },
+		{ LN, 6, "::", "::",            "::-::",           .is_zero = true, .size = 1, },
+		{ LN, 6, "::1", "::2",          "::1-::2",         .size = 2, },
 	};
 
 	const char *oops;
@@ -328,6 +329,7 @@ static void check_range_is(void)
 		CHECK_TYPE(range);
 		CHECK_STR2(range);
 		CHECK_COND(range, is_unset);
+		CHECK_COND2(range, is_zero);
 		CHECK_UNOP(range, size, "%ju", );
 	}
 }

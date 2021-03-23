@@ -248,46 +248,43 @@ static void check_numeric_to_selector(struct logger *logger)
 			    do_numeric_to_selector, logger);
 }
 
-static void check_selector_contains(struct logger *logger)
+static void check_selector_is(struct logger *logger)
 {
 	static const struct test {
 		int line;
 		struct selector from;
 		bool is_unset;
-		bool is_specified;
-		bool contains_no_addresses;
+		bool is_zero;
+		bool is_all;
 		bool contains_one_address;
-		bool contains_some_addresses;
-		bool contains_all_addresses;
 	} tests[] = {
 		/* all */
 		{ LN, { 0, NULL, NULL, },            .is_unset = true, },
 		/* all */
-		{ LN, { 4, "0.0.0.0/0", "0/0", },    .contains_all_addresses = true, },
-		{ LN, { 6, "::/0", "0/0", },         .contains_all_addresses = true, },
+		{ LN, { 4, "0.0.0.0/0", "0/0", },    .is_all = true, },
+		{ LN, { 6, "::/0", "0/0", },         .is_all = true, },
 		/* some */
-		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_specified = true, },
-		{ LN, { 6, "8000::/127", "0/0", },   .is_specified = true, },
+		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_unset = false, },
+		{ LN, { 6, "8000::/127", "0/0", },   .is_unset = false, },
 		/* one */
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, .is_specified = true, .contains_one_address = true, },
-		{ LN, { 6, "8000::/128", "0/0", },   .is_specified = true, .contains_one_address = true, },
+		{ LN, { 4, "127.0.0.1/32", "0/0", }, .contains_one_address = true, },
+		{ LN, { 6, "8000::/128", "0/0", },   .contains_one_address = true, },
 		/* none */
-		{ LN, { 4, "0.0.0.0/32", "0/0", },   .contains_no_addresses = true, },
-		{ LN, { 6, "::/128", "0/0", },       .contains_no_addresses = true, },
+		{ LN, { 4, "0.0.0.0/32", "0/0", },   .is_zero = true, },
+		{ LN, { 6, "::/128", "0/0", },       .is_zero = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		err_t err;
 		const struct test *t = &tests[ti];
-		PRINT("%s subnet=%s protoport=%s unset=%s all=%s some=%s one=%s none=%s",
+		PRINT("%s subnet=%s protoport=%s unset=%s zero=%s all=%s one=%s",
 		      pri_family(t->from.family),
 		      t->from.addresses != NULL ? t->from.addresses : "<unset>",
 		      t->from.protoport != NULL ? t->from.protoport : "<unset>",
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->contains_some_addresses),
-		      bool_str(t->contains_one_address),
-		      bool_str(t->contains_no_addresses));
+		      bool_str(t->is_zero),
+		      bool_str(t->is_all),
+		      bool_str(t->contains_one_address));
 
 		ip_selector tmp, *selector = &tmp;
 		err = do_numeric_to_selector(&t->from, selector, logger);
@@ -296,9 +293,9 @@ static void check_selector_contains(struct logger *logger)
 		}
 
 		CHECK_COND(selector, is_unset);
+		CHECK_COND2(selector, is_zero);
+		CHECK_COND2(selector, is_all);
 		CHECK_COND2(selector, contains_one_address);
-		CHECK_COND2(selector, contains_no_addresses);
-		CHECK_COND2(selector, contains_all_addresses);
 	}
 }
 
@@ -469,7 +466,7 @@ void ip_selector_check(struct logger *logger)
 {
 	check_selector_from_address(logger);
 	check_selector_from_subnet_protoport(logger);
-	check_selector_contains(logger);
+	check_selector_is(logger);
 	check_in_selector(logger);
 	check_numeric_to_selector(logger);
 }

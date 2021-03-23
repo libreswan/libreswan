@@ -83,11 +83,9 @@ extern const ip_range unset_range;
 
 bool range_is_unset(const ip_range *r);			/* handles NULL */
 const struct ip_info *range_type(const ip_range *r);	/* handles NULL */
-/* range_is_specified(R) range_size(R) > 0 */
 
-/* range_contains_no_addresses(R) range_size(R) == 0 */
-/* range_contains_one_address(R) range_size(R) == 1 */
-bool range_contains_all_addresses(const ip_range r);
+bool range_is_zero(ip_range range);	/* ::-ffff... or 0.0.0.0-0.0.0.0 */
+bool range_is_all(const ip_range r);	/* ::-:: or 0.0.0.0-0.0.0.0 */
 
 bool range_eq_address(const ip_range range, const ip_address address);
 bool range_eq_subnet(const ip_range range, const ip_subnet subnet);

@@ -58,11 +58,11 @@
 #define CHECK_FROM(TO,FROM)						\
 		if (FROM != NULL) {					\
 			ip_##TO to = TO##_from_##FROM(*FROM);		\
-			bool all_from = FROM##_contains_all_addresses(*FROM); \
-			bool all_to = TO##_contains_all_addresses(to);	\
+			bool all_from = FROM##_is_all(*FROM); \
+			bool all_to = TO##_is_all(to);	\
 			if (all_from != all_to) {				\
 				FROM##_buf b;				\
-				FAIL(#TO"_contains_all_addresses("#TO"_from_"#FROM"(%s)) returned %s, expecting %s", \
+				FAIL(#TO"_is_all("#TO"_from_"#FROM"(%s)) returned %s, expecting %s", \
 				     str_##FROM(FROM, &b),		\
 				     bool_str(all_to), bool_str(all_from)); \
 			}						\
@@ -106,17 +106,16 @@ static const struct subnet_test {
 	const ip_subnet *subnet;
 	const char *str;
 	bool is_unset;
-	bool is_specified;
-	bool contains_no_addresses;
+	bool is_zero;
 	bool contains_one_address;
-	bool contains_all_addresses;
+	bool is_all;
 } subnet_tests[] = {
 	{ LN, 0, NULL,                    "<unset-subnet>", .is_unset = true, },
 	{ LN, 0, &unset_subnet,           "<unset-subnet>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.subnet.none,  "0.0.0.0/32",     .contains_no_addresses = true, },
-	{ LN, 6, &ipv6_info.subnet.none,  "::/128",         .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .is_specified = true, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.subnet.zero,  "0.0.0.0/32",     .is_zero = true, },
+	{ LN, 6, &ipv6_info.subnet.zero,  "::/128",         .is_zero = true, },
+	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .is_all = true, },
+	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .is_all = true, },
 };
 
 static const struct range_test {
@@ -125,15 +124,16 @@ static const struct range_test {
 	const ip_range *range;
 	const char *str;
 	bool is_unset;
+	bool is_zero;
 	uintmax_t size;
-	bool contains_all_addresses;
+	bool is_all;
 } range_tests[] = {
-	{ LN, 0, NULL,                  "<unset-range>", .is_unset = true, },
-	{ LN, 0, &unset_range,          "<unset-range>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0-0.0.0.0",  .size = 1, },
-	{ LN, 6, &ipv6_info.range.zero, "::-::",            .size = 1, },
-	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-255.255.255.255",                    .size = (uintmax_t)1<<32, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.range.all,  "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", .size = UINTMAX_MAX, .contains_all_addresses = true, },
+	{ LN, 0, NULL,                  "<unset-range>",    .is_unset = true, },
+	{ LN, 0, &unset_range,          "<unset-range>",    .is_unset = true, },
+	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0-0.0.0.0",  .is_zero = true, .size = 1, },
+	{ LN, 6, &ipv6_info.range.zero, "::-::",            .is_zero = true, .size = 1, },
+	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-"IPv4_MAX, .size = (uintmax_t)1<<32, .is_all = true, },
+	{ LN, 6, &ipv6_info.range.all,  "::-"IPv6_MAX,      .size = UINTMAX_MAX, .is_all = true, },
 };
 
 static const struct selector_test {
@@ -142,17 +142,16 @@ static const struct selector_test {
 	const ip_selector *selector;
 	const char *str;
 	bool is_unset;
-	bool is_specified;
-	bool contains_all_addresses;
+	bool is_zero;
+	bool is_all;
 	bool contains_one_address;
-	bool contains_no_addresses;
 } selector_tests[] = {
 	{ LN, 0, NULL,                     "<unset-selector>", .is_unset = true, },
 	{ LN, 0, &unset_selector,          "<unset-selector>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.selector.none, "0.0.0.0/32",       .contains_no_addresses = true, },
-	{ LN, 6, &ipv6_info.selector.none, "::/128",           .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_specified = true, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, },
+	{ LN, 6, &ipv6_info.selector.zero, "::/128",           .is_zero = true, },
+	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_all = true, },
+	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .is_all = true, },
 };
 
 static void check_ip_info_address(void)
@@ -233,12 +232,11 @@ static void check_ip_info_subnet(void)
 {
 	for (size_t ti = 0; ti < elemsof(subnet_tests); ti++) {
 		const struct subnet_test *t = &subnet_tests[ti];
-		PRINT("%s unset=%s all=%s some=%s none=%s",
+		PRINT("%s unset=%s all=%s zero=%s",
 		      pri_family(t->family),
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->is_specified),
-		      bool_str(t->contains_no_addresses));
+		      bool_str(t->is_all),
+		      bool_str(t->is_zero));
 
 		const ip_subnet *subnet = t->subnet;
 		if (t->family != 0) {
@@ -248,10 +246,10 @@ static void check_ip_info_subnet(void)
 		CHECK_STR2(subnet);
 
 		CHECK_COND(subnet, is_unset);
+		CHECK_COND2(subnet, is_zero);
+		CHECK_COND2(subnet, is_all);
 
-		CHECK_COND2(subnet, contains_no_addresses);
 		CHECK_COND2(subnet, contains_one_address);
-		CHECK_COND2(subnet, contains_all_addresses);
 
 		CHECK_FROM(range, subnet);
 	}
@@ -265,14 +263,14 @@ static void check_ip_info_subnet(void)
 		/* any */
 		{ &unset_subnet, &unset_subnet, .eq = true, },
 		/* none in none */
-		{ &ipv4_info.subnet.none, &ipv4_info.subnet.none, .eq = true, .in = true, },
-		{ &ipv6_info.subnet.none, &ipv6_info.subnet.none, .eq = true, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.subnet.zero, .eq = true, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.subnet.zero, .eq = true, .in = true, },
 		/* all in all */
 		{ &ipv4_info.subnet.all,  &ipv4_info.subnet.all,  .eq = true, .in = true, },
 		{ &ipv6_info.subnet.all,  &ipv6_info.subnet.all,  .eq = true, .in = true, },
 		/* none in all */
-		{ &ipv4_info.subnet.none,  &ipv4_info.subnet.all,             .in = true, },
-		{ &ipv6_info.subnet.none,  &ipv6_info.subnet.all,             .in = true, },
+		{ &ipv4_info.subnet.zero,  &ipv4_info.subnet.all,             .in = true, },
+		{ &ipv6_info.subnet.zero,  &ipv6_info.subnet.all,             .in = true, },
 	};
 
 	CHECK_OP(subnet, eq, subnet);
@@ -283,8 +281,8 @@ static void check_ip_info_subnet(void)
 		const ip_address *r;
 		int eq;
 	} subnet_op_address[] = {
-		{ &ipv4_info.subnet.none, &ipv4_info.address.any, .eq = true, },
-		{ &ipv6_info.subnet.none, &ipv6_info.address.any, .eq = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.address.any, .eq = true, },
 	};
 
 	CHECK_OP(subnet, eq, address);
@@ -314,8 +312,9 @@ static void check_ip_info_range(void)
 		CHECK_TYPE(range);
 		CHECK_STR2(range);
 		CHECK_COND(range, is_unset);
+		CHECK_COND2(range, is_zero);
+		CHECK_COND2(range, is_all);
 		CHECK_UNOP(range, size, "%ju", );
-		CHECK_COND2(range, contains_all_addresses);
 
 	}
 
@@ -338,8 +337,8 @@ static void check_ip_info_range(void)
 		{ &ipv4_info.range.all, &ipv4_info.subnet.all, .eq = true, },
 		{ &ipv6_info.range.all, &ipv6_info.subnet.all, .eq = true, },
 		/* clearly subnet isn't "none" */
-		{ &ipv4_info.range.zero, &ipv4_info.subnet.none, .eq = true, },
-		{ &ipv6_info.range.zero, &ipv6_info.subnet.none, .eq = true, },
+		{ &ipv4_info.range.zero, &ipv4_info.subnet.zero, .eq = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.subnet.zero, .eq = true, },
 	};
 
 	static const struct {
@@ -365,10 +364,10 @@ static void check_ip_info_range(void)
 		const ip_range *r;
 		bool in;
 	} subnet_op_range[] = {
-		{ &ipv4_info.subnet.none/*actually-one*/, &ipv4_info.range.zero, .in = true, },
-		{ &ipv6_info.subnet.none/*actually-one*/, &ipv6_info.range.zero, .in = true, },
-		{ &ipv4_info.subnet.none/*actually-one*/, &ipv4_info.range.all, .in = true, },
-		{ &ipv6_info.subnet.none/*actually-one*/, &ipv6_info.range.all, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.range.zero, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.range.zero, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.range.all, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.range.all, .in = true, },
 		{ &ipv4_info.subnet.all, &ipv4_info.range.all, .in = true, },
 		{ &ipv6_info.subnet.all, &ipv6_info.range.all, .in = true, },
 	};
@@ -407,10 +406,12 @@ static void check_ip_info_selector(void)
 
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
+
 		CHECK_COND(selector, is_unset);
-		CHECK_COND2(selector, contains_no_addresses);
+		CHECK_COND2(selector, is_zero);
+		CHECK_COND2(selector, is_all);
+
 		CHECK_COND2(selector, contains_one_address);
-		CHECK_COND2(selector, contains_all_addresses);
 	}
 
 	static const struct {
@@ -419,8 +420,8 @@ static void check_ip_info_selector(void)
 		int eq;
 	} selector_op_selector[] = {
 		{ &unset_selector,             &unset_selector,          .eq = true, },
-		{ &ipv4_info.selector.none,    &ipv4_info.selector.none, .eq = true, },
-		{ &ipv6_info.selector.none,    &ipv6_info.selector.none, .eq = true, },
+		{ &ipv4_info.selector.zero,    &ipv4_info.selector.zero, .eq = true, },
+		{ &ipv6_info.selector.zero,    &ipv6_info.selector.zero, .eq = true, },
 		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, },
 		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, },
 	};

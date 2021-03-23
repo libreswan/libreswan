@@ -202,7 +202,7 @@ extern bool use_dns;
 			}						\
 		}
 
-#define IPv4_LAST "255.255.255.255"
-#define IPv6_LAST "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+#define IPv4_MAX "255.255.255.255"
+#define IPv6_MAX "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
 
 #endif

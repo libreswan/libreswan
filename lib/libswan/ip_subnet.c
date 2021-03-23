@@ -113,19 +113,7 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	return !subnet->is_set;
 }
 
-bool subnet_contains_all_addresses(const ip_subnet subnet)
-{
-	if (subnet_is_unset(&subnet)) {
-		return false;
-	}
-	if (subnet.maskbits != 0) {
-		return false;
-	}
-	ip_address network = subnet_prefix(subnet);
-	return address_is_any(network);
-}
-
-bool subnet_contains_no_addresses(const ip_subnet subnet)
+bool subnet_is_zero(const ip_subnet subnet)
 {
 	const struct ip_info *afi = subnet_type(&subnet);
 	if (afi == NULL) {
@@ -133,12 +121,18 @@ bool subnet_contains_no_addresses(const ip_subnet subnet)
 		return false;
 	}
 
-	if (subnet.maskbits != afi->mask_cnt) {
+	return subnet_eq_subnet(subnet, afi->subnet.zero);
+}
+
+bool subnet_is_all(const ip_subnet subnet)
+{
+	const struct ip_info *afi = subnet_type(&subnet);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
 		return false;
 	}
 
-	ip_address network = subnet_prefix(subnet);
-	return address_is_any(network);
+	return subnet_eq_subnet(subnet, afi->subnet.all);
 }
 
 bool subnet_contains_one_address(const ip_subnet subnet)
@@ -292,7 +286,7 @@ bool address_in_subnet(const ip_address l, const ip_subnet r)
 	}
 
 	/* never true */
-	if (subnet_eq_subnet(r, afi->subnet.none)) {
+	if (subnet_eq_subnet(r, afi->subnet.zero)) {
 		return false;
 	}
 

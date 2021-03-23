@@ -447,7 +447,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		if (selector_is_unset(&c->spd.this.client) ||
-		    selector_contains_all_addresses(c->spd.this.client)) {
+		    selector_is_all(c->spd.this.client)) {
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");

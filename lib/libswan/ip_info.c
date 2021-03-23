@@ -115,7 +115,7 @@ const struct ip_info ipv4_info = {
 	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
 
 	/* ip_subnet - .subnet.any matches grep */
-	.subnet.none = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
+	.subnet.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
 	.subnet.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
 	/* ip_range - .range.any matches grep */
@@ -123,7 +123,7 @@ const struct ip_info ipv4_info = {
 	.range.all = { .is_set = true, .version = IPv4, .end = IPv4_FF, },
 
 	/* ip_selector - .selector.any matches grep */
-	.selector.none = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
+	.selector.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
 	.selector.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
 	/* ike */
@@ -158,7 +158,7 @@ const struct ip_info ipv6_info = {
 	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
 
 	/* ip_subnet - .subnet.any matches grep */
-	.subnet.none = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
+	.subnet.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
 	.subnet.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
 	/* ip_range - .range.any matches grep */
@@ -166,7 +166,7 @@ const struct ip_info ipv6_info = {
 	.range.all = { .is_set = true, .version = IPv6, .end = IPv6_FF, },
 
 	/* ip_selector - .selector.any matches grep */
-	.selector.none = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
+	.selector.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
 	.selector.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
 	/* ike */

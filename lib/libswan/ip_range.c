@@ -224,6 +224,26 @@ bool range_is_unset(const ip_range *range)
 	return !range->is_set;
 }
 
+bool range_is_zero(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return false;
+	}
+
+	return range_eq_range(range, afi->range.zero);
+}
+
+bool range_is_all(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return false;
+	}
+
+	return range_eq_range(range, afi->range.all);
+}
+
 uintmax_t range_size(const ip_range range)
 {
 	const struct ip_info *afi = range_type(&range);
@@ -462,16 +482,6 @@ err_t address_to_range_offset(const ip_range range, const ip_address address, ui
 	}
 
 	return NULL;
-}
-
-bool range_contains_all_addresses(const ip_range range)
-{
-	const struct ip_info *afi = range_type(&range);
-	if (afi == NULL) {
-		return false;
-	}
-
-	return range_eq_range(range, afi->range.all);
 }
 
 void pexpect_range(const ip_range *r, where_t where)

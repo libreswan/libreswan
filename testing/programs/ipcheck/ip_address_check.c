@@ -350,8 +350,8 @@ static void check_addresses_to(void)
 		{ LN, 4, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", },
 
 		/* all */
-		{ LN, 4, "0.0.0.0", IPv4_LAST, "0.0.0.0/0", NULL, },
-		{ LN, 6, "::",      IPv6_LAST, "::/0",      NULL, },
+		{ LN, 4, "0.0.0.0", IPv4_MAX, "0.0.0.0/0", NULL, },
+		{ LN, 6, "::",      IPv6_MAX, "::/0",      NULL, },
 
 		/* wrong order */
 		{ LN, 4, "1.2.255.0",  "1.2.254.255", NULL, NULL, },

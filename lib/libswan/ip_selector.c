@@ -29,6 +29,45 @@ bool selector_is_unset(const ip_selector *selector)
 	return !selector->is_set;
 }
 
+bool selector_is_zero(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_type(&selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown+any */
+		return false;
+	}
+
+	/* ::/128 or 0.0.0.0/32 */
+	return selector_eq_selector(selector, afi->selector.zero);
+}
+
+bool selector_is_all(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_type(&selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown+any */
+		return false;
+	}
+
+	/* ::/0 or 0.0.0.0/0 */
+	return selector_eq_selector(selector, afi->selector.all);
+}
+
+bool selector_contains_one_address(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_type(&selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return false;
+	}
+
+	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
+	return (!thingeq(selector.bytes, unset_bytes) &&
+		selector.maskbits == afi->mask_cnt &&
+		selector.ipproto == 0 &&
+		selector.hport == 0);
+}
+
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector_is_unset(selector)) {
@@ -315,33 +354,6 @@ ip_address selector_prefix_mask(const ip_selector selector)
 				 selector.maskbits);
 }
 
-bool selector_contains_all_addresses(const ip_selector selector)
-{
-	/* needs to  be set to IPv4 or IPv6 */
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		return false;
-	}
-
-	/* ::/0 or 0.0.0.0/0 */
-	return selector_eq_selector(selector, afi->selector.all);
-}
-
-bool selector_contains_one_address(const ip_selector selector)
-{
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false;
-	}
-
-	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	return (!thingeq(selector.bytes, unset_bytes) &&
-		selector.maskbits == afi->mask_cnt &&
-		selector.ipproto == 0 &&
-		selector.hport == 0);
-}
-
 bool selector_eq_address(const ip_selector selector, const ip_address address)
 {
 	const struct ip_info *afi = selector_type(&selector);
@@ -352,18 +364,6 @@ bool selector_eq_address(const ip_selector selector, const ip_address address)
 
 	ip_selector s = selector_from_address(address);
 	return selector_eq_selector(selector, s);
-}
-
-bool selector_contains_no_addresses(const ip_selector selector)
-{
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown+any */
-		return false;
-	}
-
-	/* ::/128 or 0.0.0.0/32 */
-	return selector_eq_selector(selector, afi->selector.none);
 }
 
 bool selector_in_selector(const ip_selector i, const ip_selector o)
