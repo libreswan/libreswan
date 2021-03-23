@@ -108,8 +108,6 @@ bool subnet_is_unset(const ip_subnet *subnet);
 
 const struct ip_info *subnet_type(const ip_subnet *subnet);
 
-/* !unset, !all, !none */
-bool subnet_is_specified(const ip_subnet subnet);
 /* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
 bool subnet_contains_all_addresses(const ip_subnet subnet);
 /* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */

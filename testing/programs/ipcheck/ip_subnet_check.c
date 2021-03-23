@@ -270,7 +270,6 @@ static void check_subnet_contains(struct logger *logger)
 		}
 
 		CHECK_COND(subnet, is_unset);
-		CHECK_COND2(subnet, is_specified);
 		CHECK_COND2(subnet, contains_no_addresses);
 		CHECK_COND2(subnet, contains_one_address);
 		CHECK_COND2(subnet, contains_all_addresses);

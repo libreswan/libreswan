@@ -116,10 +116,7 @@ extern const ip_selector unset_selector;
 bool selector_is_unset(const ip_selector *selector);			/* handles NULL */
 const struct ip_info *selector_type(const ip_selector *selector);	/* handles NULL */
 
-bool selector_is_specified(const ip_selector selector);
-
 /* attributes */
-
 
 const struct ip_protocol *selector_protocol(const ip_selector selector);
 ip_range selector_range(const ip_selector selector);

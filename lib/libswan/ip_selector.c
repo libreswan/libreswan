@@ -29,22 +29,6 @@ bool selector_is_unset(const ip_selector *selector)
 	return !selector->is_set;
 }
 
-bool selector_is_specified(const ip_selector selector)
-{
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false; /* need IPv4 or IPv6 */
-	}
-
-	/* don't allow ::/128 et.al. */
-	if (selector_eq_selector(selector, afi->selector.none)) {
-		return false;
-	}
-
-	return true;
-}
-
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector_is_unset(selector)) {

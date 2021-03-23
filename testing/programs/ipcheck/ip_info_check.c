@@ -249,9 +249,6 @@ static void check_ip_info_subnet(void)
 
 		CHECK_COND(subnet, is_unset);
 
-		if (subnet == NULL) continue;
-
-		CHECK_COND2(subnet, is_specified);
 		CHECK_COND2(subnet, contains_no_addresses);
 		CHECK_COND2(subnet, contains_one_address);
 		CHECK_COND2(subnet, contains_all_addresses);
@@ -411,7 +408,6 @@ static void check_ip_info_selector(void)
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
 		CHECK_COND(selector, is_unset);
-		CHECK_COND2(selector, is_specified);
 		CHECK_COND2(selector, contains_no_addresses);
 		CHECK_COND2(selector, contains_one_address);
 		CHECK_COND2(selector, contains_all_addresses);

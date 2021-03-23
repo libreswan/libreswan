@@ -113,22 +113,6 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	return !subnet->is_set;
 }
 
-bool subnet_is_specified(const ip_subnet subnet)
-{
-	const struct ip_info *afi = subnet_type(&subnet);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false; /* need IPv4 or IPv6 */
-	}
-
-	/* don't allow ::/128 */
-	if (thingeq(subnet, afi->subnet.none)) {
-		return false;
-	}
-
-	return true;
-}
-
 bool subnet_contains_all_addresses(const ip_subnet subnet)
 {
 	if (subnet_is_unset(&subnet)) {
