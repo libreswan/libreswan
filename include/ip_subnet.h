@@ -29,6 +29,7 @@
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_bytes.h"
+#include "err.h"
 
 struct jambuf;
 
@@ -77,9 +78,8 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned pre
 /* barf if not valid */
 err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);
 
-/* this rejects ::-:: */
-extern err_t addresses_to_subnet(const ip_address from, const ip_address to,
-				 ip_subnet *dst) MUST_USE_RESULT;
+extern err_t addresses_to_nonzero_subnet(const ip_address from, const ip_address to,
+					 ip_subnet *dst) MUST_USE_RESULT;
 
 /*
  * Format as a string.

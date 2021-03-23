@@ -49,8 +49,8 @@ ip_range range_from_raw(where_t where, enum ip_version version,
 ip_range range_from_address(const ip_address subnet);
 ip_range range_from_subnet(const ip_subnet subnet);
 
-err_t addresses_to_range(const ip_address start, const ip_address end,
-			 ip_range *dst) MUST_USE_RESULT;
+err_t addresses_to_nonzero_range(const ip_address start, const ip_address end,
+				 ip_range *dst) MUST_USE_RESULT;
 
 err_t range_to_subnet(const ip_range range, ip_subnet *subnet) MUST_USE_RESULT;
 
@@ -117,10 +117,10 @@ uintmax_t range_size(const ip_range r);
 ip_address range_start(const ip_range range); /* floor */
 ip_address range_end(const ip_range range); /* ceiling */
 
-err_t range_to_address(const ip_range range, uintmax_t offset,
-		       ip_address *address) MUST_USE_RESULT;
+err_t range_offset_to_address(const ip_range range, uintmax_t offset,
+			      ip_address *address) MUST_USE_RESULT;
 
-err_t range_to_offset(const ip_range range, const ip_address address,
-		      uintmax_t *offset) MUST_USE_RESULT;
+err_t address_to_range_offset(const ip_range range, const ip_address address,
+			      uintmax_t *offset) MUST_USE_RESULT;
 
 #endif

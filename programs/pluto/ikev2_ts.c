@@ -486,7 +486,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			if (pbs_left(&ts_body_pbs) != 0)
 				return false;
 
-			err_t err = addresses_to_range(start, end, &ts->net);
+			err_t err = addresses_to_nonzero_range(start, end, &ts->net);
 
 			/* pluto doesn't yet do full ranges; check for subnet */
 			ip_subnet ignore;

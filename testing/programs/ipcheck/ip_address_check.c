@@ -309,6 +309,148 @@ static void check_address_is(void)
 	}
 }
 
+static void check_addresses_to(void)
+{
+	static const struct test {
+		int line;
+		int family;
+		const char *lo;
+		const char *hi;
+		const char *subnet;	/* NULL means error expected */
+		const char *range;	/* NULL means use subnet */
+	} tests[] = {
+
+		/* zero-zero; zero-one */
+		{ LN, 4, "0.0.0.0", "0.0.0.0", NULL, NULL, },
+		{ LN, 6, "::",      "::",      NULL, NULL, },
+		{ LN, 4, "0.0.0.0", "0.0.0.1", "0.0.0.0/31", NULL, },
+		{ LN, 6, "::",      "::1",     "::/127", NULL, },
+
+		/* single address */
+		{ LN, 4, "1.2.3.0",    "1.2.3.0",   "1.2.3.0/32", NULL, },
+		{ LN, 6, "::1",        "::1",       "::1/128", NULL, },
+		{ LN, 4, "1.2.3.4",    "1.2.3.4",   "1.2.3.4/32", NULL, },
+
+		/* subnet */
+		{ LN, 4, "1.2.3.8",    "1.2.3.15", "1.2.3.8/29", NULL, },
+		{ LN, 4, "1.2.3.240",  "1.2.3.255", "1.2.3.240/28", NULL, },
+		{ LN, 4, "0.0.0.0",    "255.255.255.255", "0.0.0.0/0", NULL, },
+		{ LN, 4, "1.2.0.0",    "1.2.255.255", "1.2.0.0/16", NULL, },
+		{ LN, 4, "1.2.0.0",    "1.2.0.255", "1.2.0.0/24", NULL, },
+		{ LN, 4, "1.2.255.0",  "1.2.255.255", "1.2.255.0/24", NULL, },
+		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112", NULL, },
+		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116", NULL, },
+		{ LN, 6, "1:2:3:4:5:6:7:f0",  "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124", NULL, },
+
+		/* range only */
+		{ LN, 4, "1.2.3.0",    "1.2.3.254", NULL, "1.2.3.0-1.2.3.254", },
+		{ LN, 4, "1.2.3.0",    "1.2.3.126", NULL, "1.2.3.0-1.2.3.126", },
+		{ LN, 4, "1.2.3.0",    "1.2.3.125", NULL, "1.2.3.0-1.2.3.125", },
+		{ LN, 4, "1.2.255.1",  "1.2.255.255", NULL, "1.2.255.1-1.2.255.255", },
+		{ LN, 4, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", },
+
+		/* all */
+		{ LN, 4, "0.0.0.0", IPv4_LAST, "0.0.0.0/0", NULL, },
+		{ LN, 6, "::",      IPv6_LAST, "::/0",      NULL, },
+
+		/* wrong order */
+		{ LN, 4, "1.2.255.0",  "1.2.254.255", NULL, NULL, },
+	};
+
+	const char *oops;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		/* range falls back to subnet */
+		PRINT("%s-%s -> %s -> %s",
+		      t->lo, t->hi,
+		      t->range == NULL ? "<bad-range>" : t->range,
+		      t->subnet == NULL ? "<bad-subnet>" : t->subnet);
+
+		const struct ip_info *type = IP_TYPE(t->family);
+
+		ip_address lo;
+		oops = numeric_to_address(shunk1(t->lo), type, &lo);
+		if (oops != NULL) {
+			FAIL("numeric_to_address(lo=%s) failed: %s", t->lo, oops);
+			continue;
+		}
+
+		ip_address hi;
+		oops = numeric_to_address(shunk1(t->hi), type, &hi);
+		if (oops != NULL) {
+			FAIL("numeric_to_address(hi=%s) failed: %s", t->hi, oops);
+			continue;
+		}
+
+		ip_subnet s;
+		oops = addresses_to_nonzero_subnet(lo, hi, &s);
+		subnet_buf sb;
+		str_subnet(&s, &sb);
+
+		if (oops != NULL) {
+			if (t->subnet != NULL) {
+				FAIL("addresses_to_subnet(%s,%s) failed: %s", t->lo, t->hi, oops);
+			}
+		} else if (t->subnet == NULL) {
+			FAIL("addresses_to_subnet(%s,%s) returned %s unexpectedly",
+			     t->lo, t->hi, sb.buf);
+		} else if (!streq(t->subnet, sb.buf)) {
+			FAIL("addresses_to_subnet(%s,%s) returned `%s', expected `%s'",
+			     t->lo, t->hi, sb.buf, t->subnet);
+		}
+
+		ip_range r;
+		range_buf rb;
+		oops = addresses_to_nonzero_range(lo, hi, &r);
+		r.is_subnet = true; /* maybe */
+		str_range(&r, &rb);
+
+		if (oops != NULL) {
+			if (t->range != NULL || t->subnet != NULL) {
+				FAIL("addresses_to_range(%s,%s) unexpectedly failed: %s",
+				     t->lo, t->hi, oops);
+			}
+		} else if (t->range != NULL) {
+			if (!streq(t->range, rb.buf)) {
+				FAIL("addresses_to_range(%s,%s) returned `%s', expected `%s'",
+				     t->lo, t->hi, rb.buf, t->range);
+			}
+		} else if (t->subnet != NULL) {
+			if (!streq(t->subnet, rb.buf)) {
+				FAIL("addresses_to_range(%s,%s) returned `%s', expected `%s'",
+				     t->lo, t->hi, rb.buf, t->subnet);
+			}
+		} else {
+			FAIL("addresses_to_range(%s,%s) returned %s unexpectedly",
+			     t->lo, t->hi, rb.buf);
+		}
+
+		if (t->range == NULL) {
+			continue;
+		}
+
+		oops = range_to_subnet(r, &s);
+		str_subnet(&s, &sb);
+
+		if (oops != NULL && t->subnet == NULL) {
+			/* okay, error expected */
+		} else if (oops != NULL) {
+			FAIL("range_to_subnet(%s=>%s) failed: %s",
+			     rb.buf, sb.buf, oops);
+		} else if (t->subnet == NULL) {
+			FAIL("range_to_subnet(%s) returned %s unexpectedly",
+			     rb.buf, sb.buf);
+		} else {
+			if (!streq(t->subnet, sb.buf)) {
+				FAIL("range_to_subnet(%s) returned `%s', expected `%s'",
+				     rb.buf, sb.buf, t->subnet);
+			}
+		}
+
+	}
+}
+
 void ip_address_check(void)
 {
 	check_shunk_to_address();
@@ -316,4 +458,5 @@ void ip_address_check(void)
 	check_str_address_reversed();
 	check_address_is();
 	check_in_addr();
+	check_addresses_to();
 }

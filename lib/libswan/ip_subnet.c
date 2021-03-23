@@ -321,11 +321,11 @@ bool address_in_subnet(const ip_address l, const ip_subnet r)
 	return thingeq(lb, r.bytes);
 }
 
-err_t addresses_to_subnet(const ip_address start, const ip_address end, ip_subnet *dst)
+err_t addresses_to_nonzero_subnet(const ip_address start, const ip_address end, ip_subnet *dst)
 {
 	*dst = unset_subnet;
 	ip_range range;
-	err_t err = addresses_to_range(start, end, &range);
+	err_t err = addresses_to_nonzero_range(start, end, &range);
 	if (err != NULL) {
 		return err;
 	}

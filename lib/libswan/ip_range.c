@@ -345,8 +345,7 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	return true;
 }
 
-err_t addresses_to_range(const ip_address start, const ip_address end,
-			 ip_range *dst)
+err_t addresses_to_nonzero_range(const ip_address start, const ip_address end, ip_range *dst)
 {
 	*dst = unset_range;
 
@@ -364,9 +363,9 @@ err_t addresses_to_range(const ip_address start, const ip_address end,
 		return "conflicting address types";
 	}
 
-	/* need both 0 */
-	if (address_is_any(start) && address_is_any(end)) {
-		return "empty address range";
+	/* reject both 0 */
+	if (thingeq(start.bytes, unset_bytes) && thingeq(end.bytes, unset_bytes)) {
+		return "zero address range";
 	}
 
 	if (addrcmp(&start, &end) > 0) {
@@ -399,7 +398,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	return NULL;
 }
 
-err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *address)
+err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address *address)
 {
 	*address = unset_address;
 
@@ -437,7 +436,7 @@ err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *addre
 	return NULL;
 }
 
-err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t *offset)
+err_t address_to_range_offset(const ip_range range, const ip_address address, uintmax_t *offset)
 {
 	*offset = UINTMAX_MAX;
 

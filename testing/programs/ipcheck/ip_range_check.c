@@ -24,165 +24,6 @@
 #include "ip_subnet.h"
 #include "ipcheck.h"
 
-static void check_addresses_to(void)
-{
-	static const struct test {
-		int line;
-		int family;
-		const char *lo;
-		const char *hi;
-		const char *subnet;	/* NULL means error expected */
-		const char *range;	/* NULL means use subnet */
-		const char *oldnet;
-	} tests[] = {
-		/* single address */
-		{ LN, 4, "1.2.3.0",    "1.2.3.0", "1.2.3.0/32", NULL, NULL, },
-		{ LN, 6, "::1",        "::1", "::1/128", NULL, NULL, },
-		{ LN, 4, "1.2.3.4",    "1.2.3.4", "1.2.3.4/32", NULL, NULL, },
-
-		/* subnet */
-		{ LN, 4, "1.2.3.0",    "1.2.3.7", "1.2.3.0/29", NULL, NULL, },
-		{ LN, 4, "1.2.3.240",  "1.2.3.255", "1.2.3.240/28", NULL, NULL, },
-		{ LN, 4, "0.0.0.0",    "255.255.255.255", "0.0.0.0/0", NULL, NULL, },
-		{ LN, 4, "1.2.0.0",    "1.2.255.255", "1.2.0.0/16", NULL, NULL, },
-		{ LN, 4, "1.2.0.0",    "1.2.0.255", "1.2.0.0/24", NULL, NULL, },
-		{ LN, 4, "1.2.255.0",  "1.2.255.255", "1.2.255.0/24", NULL, NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112", NULL, NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116", NULL, NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:f0",  "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124", NULL, NULL, },
-
-		/* range only */
-		{ LN, 4, "1.2.3.0",    "1.2.3.254", NULL, "1.2.3.0-1.2.3.254", NULL, },
-		{ LN, 4, "1.2.3.0",    "1.2.3.126", NULL, "1.2.3.0-1.2.3.126", NULL, },
-		{ LN, 4, "1.2.3.0",    "1.2.3.125", NULL, "1.2.3.0-1.2.3.125", NULL, },
-		{ LN, 4, "1.2.255.1",  "1.2.255.255", NULL, "1.2.255.1-1.2.255.255", NULL, },
-		{ LN, 4, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", NULL, },
-
-		/* wrong order */
-		{ LN, 4, "1.2.255.0",  "1.2.254.255", NULL, NULL, NULL, },
-
-		/* any-any; almost any */
-		{ LN, 4, "0.0.0.0", "0.0.0.0", NULL, NULL, "0.0.0.0/32", },
-		{ LN, 6, "::",      "::",      NULL, NULL, "::/128", },
-		{ LN, 4, "0.0.0.0", "0.0.0.1", "0.0.0.0/31", NULL, NULL, },
-		{ LN, 6, "::",      "::1",      "::/127", NULL, NULL, },
-
-		/* all */
-		{ LN, 4, "0.0.0.0", "255.255.255.255", "0.0.0.0/0", NULL, NULL, },
-		{ LN, 6, "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::/0", NULL, NULL, },
-	};
-
-	const char *oops;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		const char *subnet = t->subnet;
-		const char *range = t->range != NULL ? t->range : subnet;
-		const char *oldnet = t->oldnet != NULL ? t->oldnet : subnet;
-		PRINT("%s-%s -> %s -> %s|%s",
-		      t->lo, t->hi,
-		      range == NULL ? "<bad-range>" : range,
-		      subnet == NULL ? "<bad-subnet>" : subnet,
-		      oldnet == NULL ? "<bad-oldnet>" : oldnet);
-
-		const struct ip_info *type = IP_TYPE(t->family);
-
-		ip_address lo;
-		oops = numeric_to_address(shunk1(t->lo), type, &lo);
-		if (oops != NULL) {
-			FAIL("numeric_to_address(lo=%s) failed: %s", t->lo, oops);
-			continue;
-		}
-
-		ip_address hi;
-		oops = numeric_to_address(shunk1(t->hi), type, &hi);
-		if (oops != NULL) {
-			FAIL("numeric_to_address(hi=%s) failed: %s", t->hi, oops);
-			continue;
-		}
-
-		ip_subnet s;
-		subnet_buf sb;
-		oops = rangetosubnet(&lo, &hi, &s);
-		str_subnet(&s, &sb);
-
-		if (oops != NULL && oldnet == NULL) {
-			/* okay, error expected */
-		} else if (oops != NULL) {
-			FAIL("rangetosubnet(%s,%s) failed: %s", t->lo, t->hi, oops);
-		} else if (oldnet == NULL) {
-			FAIL("rangetosubnet(%s,%s) returned %s unexpectedly",
-			     t->lo, t->hi, sb.buf);
-		} else {
-			if (!streq(oldnet, sb.buf)) {
-				FAIL("rangetosubnet(%s,%s) returned `%s', expected `%s'",
-				     t->lo, t->hi, sb.buf, oldnet);
-			}
-		}
-
-		ip_range r;
-		range_buf rb;
-		oops = addresses_to_range(lo, hi, &r);
-		r.is_subnet = true; /* maybe */
-		str_range(&r, &rb);
-
-		if (oops != NULL && range == NULL) {
-			/* okay, error expected */
-		} else if (oops != NULL) {
-			FAIL("addresses_to_range(%s,%s) failed: %s",
-			     t->lo, t->hi, oops);
-		} else if (range == NULL) {
-			FAIL("addresses_to_range(%s,%s) returned %s unexpectedly",
-			     t->lo, t->hi, rb.buf);
-		} else {
-			if (!streq(range, rb.buf)) {
-				FAIL("addresses_to_range(%s,%s) returned `%s', expected `%s'",
-				     t->lo, t->hi, rb.buf, range);
-			}
-		}
-
-		oops = addresses_to_subnet(lo, hi, &s);
-		str_subnet(&s, &sb);
-
-		if (oops != NULL && subnet == NULL) {
-			/* okay, error expected */
-		} else if (oops != NULL) {
-			FAIL("addresses_to_subnet(%s,%s) failed: %s", t->lo, t->hi, oops);
-		} else if (subnet == NULL) {
-			FAIL("addresses_to_subnet(%s,%s) returned %s unexpectedly",
-			     t->lo, t->hi, sb.buf);
-		} else {
-			if (!streq(subnet, sb.buf)) {
-				FAIL("addresses_to_subnet(%s,%s) returned `%s', expected `%s'",
-				     t->lo, t->hi, sb.buf, subnet);
-			}
-		}
-
-		if (range == NULL) {
-			continue;
-		}
-
-		oops = range_to_subnet(r, &s);
-		str_subnet(&s, &sb);
-
-		if (oops != NULL && subnet == NULL) {
-			/* okay, error expected */
-		} else if (oops != NULL) {
-			FAIL("range_to_subnet(%s=>%s) failed: %s",
-			     rb.buf, sb.buf, oops);
-		} else if (subnet == NULL) {
-			FAIL("range_to_subnet(%s) returned %s unexpectedly",
-			     rb.buf, sb.buf);
-		} else {
-			if (!streq(subnet, sb.buf)) {
-				FAIL("range_to_subnet(%s) returned `%s', expected `%s'",
-				     rb.buf, sb.buf, subnet);
-			}
-		}
-
-	}
-}
-
 static void check_iprange_bits(void)
 {
 	static const struct test {
@@ -609,7 +450,7 @@ static void check_range_to_address(void)
 		}
 
 		ip_address address;
-		err = range_to_address(range, t->offset, &address);
+		err = range_offset_to_address(range, t->offset, &address);
 		address_buf out;
 		str_address(&address, &out);
 
@@ -666,7 +507,7 @@ static void check_range_to_offset(void)
 		}
 
 		uintmax_t offset;
-		err = range_to_offset(range, address, &offset);
+		err = address_to_range_offset(range, address, &offset);
 
 		if (t->ok) {
 			if (err != NULL) {
@@ -691,7 +532,6 @@ static void check_range_to_offset(void)
 
 void ip_range_check(struct logger *logger)
 {
-	check_addresses_to();
 	check_iprange_bits();
 	check_ttorange__to__str_range();
 	check_range_from_subnet(logger);

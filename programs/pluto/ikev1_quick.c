@@ -486,8 +486,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = addresses_to_subnet(temp_address_from,
-						   temp_address_to, &net);
+		err_t ughmsg = addresses_to_nonzero_subnet(temp_address_from,
+							   temp_address_to, &net);
 		if (ughmsg != NULL) {
 			address_buf a, b;
 			llog(RC_LOG_SERIOUS, logger,
