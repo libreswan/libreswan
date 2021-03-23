@@ -55,6 +55,21 @@
 		}							\
 	}
 
+#define CHECK_FROM_ZERO(TO,FROM)					\
+		if (FROM != NULL) {					\
+			ip_##TO TO = TO##_from_##FROM(*FROM);		\
+			bool from_is_zero = (!FROM##_is_unset(FROM) &&	\
+					     !FROM##_is_specified(*FROM)); \
+			bool to_is_zero = TO##_is_zero(TO);		\
+			if (from_is_zero != to_is_zero) {		\
+				FROM##_buf b;				\
+				FAIL(#TO"_is_zero("#TO"_from_"#FROM"(%s)) returned %s, expecting %s", \
+				     str_##FROM(FROM, &b),		\
+				     bool_str(to_is_zero),		\
+				     bool_str(from_is_zero));		\
+			}						\
+		}
+
 #define CHECK_FROM(TO,FROM)						\
 		if (FROM != NULL) {					\
 			ip_##TO to = TO##_from_##FROM(*FROM);		\
@@ -168,6 +183,10 @@ static void check_ip_info_address(void)
 		CHECK_COND2(address, is_any);
 		CHECK_COND2(address, is_specified);
 		CHECK_COND2(address, is_loopback);
+
+		CHECK_FROM_ZERO(subnet, address);
+		CHECK_FROM_ZERO(range, address);
+		CHECK_FROM_ZERO(selector, address);
 	}
 
 	static const struct {
@@ -206,6 +225,8 @@ static void check_ip_info_endpoint(void)
 				     hport, t->hport);
 			}
 		}
+
+		CHECK_FROM_ZERO(selector, endpoint);
 	}
 
 	static const struct {
