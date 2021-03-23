@@ -111,8 +111,6 @@ const struct ip_info *subnet_type(const ip_subnet *subnet);	/* handles NULL */
 bool subnet_is_zero(const ip_subnet subnet);	/* ::/128 or 0.0.0.0/32 */
 bool subnet_is_all(const ip_subnet subnet);	/* ::/0 or 0.0.0.0/0 */
 
-bool subnet_contains_one_address(const ip_subnet subnet);
-
 /* ADDRESS..ADDRESS in SUBNET */
 bool address_in_subnet(const ip_address address, const ip_subnet subnet);
 bool subnet_in_subnet(const ip_subnet lhs, const ip_subnet rhs);
@@ -123,6 +121,7 @@ bool subnet_eq_address(const ip_subnet selector, const ip_address address);
 ip_address subnet_prefix(const ip_subnet subnet);
 ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
+uintmax_t subnet_size(const ip_subnet subnet);
 
 extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);

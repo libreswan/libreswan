@@ -135,20 +135,10 @@ bool subnet_is_all(const ip_subnet subnet)
 	return subnet_eq_subnet(subnet, afi->subnet.all);
 }
 
-bool subnet_contains_one_address(const ip_subnet subnet)
+uintmax_t subnet_size(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false;
-	}
-
-	if (subnet.maskbits != afi->mask_cnt) {
-		return false;
-	}
-
-	/* any non-zero address */
-	return !thingeq(subnet.bytes, unset_bytes);
+	ip_range range = range_from_subnet(subnet);
+	return range_size(range);
 }
 
 /*
