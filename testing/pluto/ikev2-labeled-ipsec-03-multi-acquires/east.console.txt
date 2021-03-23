@@ -1,5 +1,14 @@
 /testing/guestbin/swan-prep
 east #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+east #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+east #
+ rm ipsecspd.pp
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
@@ -69,6 +78,11 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+east #
+ rm -rf tmp ipsecspd.fc ipsecspd.if
 east #
  ../bin/check-for-core.sh
 east #
