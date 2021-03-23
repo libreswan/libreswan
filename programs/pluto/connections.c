@@ -665,7 +665,7 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
  * Two symmetric ends separated by ...
  */
 
-#define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
+#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
 #define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
 static char *format_connection(char *buf, size_t buf_len,

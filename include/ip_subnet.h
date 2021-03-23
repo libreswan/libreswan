@@ -129,6 +129,5 @@ unsigned subnet_prefix_bits(const ip_subnet subnet);
 
 extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);
-#define SUBNETTOT_BUF   sizeof(subnet_buf)
 
 #endif

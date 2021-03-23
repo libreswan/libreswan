@@ -545,11 +545,11 @@ typedef struct {
 		 /*"["*/ 1 +
 		 /*<serialno>*/ 10 +
 		 /*"]"*/ 1 +
-		 /*<myclient*/SUBNETTOT_BUF +
+		 /*<myclient*/sizeof(subnet_buf) +
 		 /*"=== ..."*/ 7 +
-		 /*<peer>*/ ADDRTOT_BUF +
+		 /*<peer>*/sizeof(address_buf) +
 		 /*"==="*/ 3 +
-		 /*<peer_client>*/ SUBNETTOT_BUF +
+		 /*<peer_client>*/sizeof(subnet_buf) +
 		 /*"\0"*/ 1 +
 		 /*<cookie>*/ 1];
 } connection_buf;
