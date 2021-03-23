@@ -127,17 +127,8 @@ ip_address subnet_prefix(const ip_subnet subnet);
 ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 
-/*
- * old
- */
-#include "err.h"
-
 extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);
 #define SUBNETTOT_BUF   sizeof(subnet_buf)
-
-/* misc. conversions and related */
-extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
-		    ip_subnet *dst);
 
 #endif
