@@ -26,7 +26,7 @@ east #
  # A tunnel should have established with non-zero byte counters
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 east #
  grep "negotiated connection" /tmp/pluto.log
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
