@@ -2,7 +2,7 @@
  * conversion from text forms of addresses to internal ones
  *
  * Copyright (C) 2000  Henry Spencer.
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2021 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -25,273 +25,269 @@
 #include "lswlog.h"		/* for pexpect() */
 #include "hunk.h"		/* for char_is_xdigit() */
 
-/*
- * Legal ASCII characters in a domain name.  Underscore technically is not,
- * but is a common misunderstanding.  Non-ASCII characters are simply
- * exempted from checking at the moment, to allow for UTF-8 encoded stuff;
- * the purpose of this check is merely to catch blatant errors.
- */
-static const char namechars[] =
-	"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
-#define ISASCII(c) (((c) & 0x80) == 0)
-
-static err_t tryhex(const char *, size_t, int, ip_address *);
-static err_t trydotted(const char *, size_t, ip_address *);
-static err_t getbyte(const char **, const char *, int *);
-static err_t colon(const char *, size_t, ip_address *);
+static bool tryhex(shunk_t hex, ip_address *dst);
+static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *);
+static err_t colon(shunk_t src, ip_address *);
 static err_t getpiece(const char **, const char *, unsigned *);
 
 /*
- * ttoaddr - convert text name or dotted-decimal address to binary address
+ * ttoaddr - convert text name or dotted-decimal address to binary
+ * address.
+ *
+ * NULL for success, else string literal.  WAS_NUMERIC is true when
+ * the the string is non-numeric.
  */
-static err_t	/* NULL for success, else string literal */
-ttoaddr_base(const char *src,
-	size_t srclen,	/* 0 means "apply strlen" */
-	int af,	/* address family */
-	int *allnumericfailed,
-	ip_address *dst)
+
+static err_t ttoaddr_base(shunk_t src,
+			  const struct ip_info *afi,	/* address family; could be NULL */
+			  bool *was_numeric,
+			  ip_address *dst)
 {
-	err_t oops;
+	*was_numeric = true;
+	*dst = unset_address;
 
-#define HEXLEN 10	/* strlen("0x11223344") */
-
-	switch (af) {
-	case AF_INET:
-	case AF_INET6:
-	case AF_UNSPEC:	/* guess */
-		break;
-
-	default:
-		return "invalid address family";
+	if (src.len == 0) {
+		return "empty string";
 	}
 
-	if (af == AF_INET && srclen == HEXLEN && *src == '0') {
-		switch (*(src + 1)) {
-		case 'x':
-		case 'X':
-			return tryhex(src + 2, srclen - 2, 'x', dst);
-		case 'h':
-		case 'H':
-			return tryhex(src + 2, srclen - 2, 'h', dst);
+	/*
+	 * Hack to recognize a HEX IPv4 address; presumably DNS names
+	 * can't start with a number so this can't be misinterpreted.
+	 *
+	 * If this fails, stumble on like nothing happened, letting
+	 * the more typical code report an error.
+	 */
+
+	if (afi == &ipv4_info || afi == NULL) {
+		if (tryhex(src, dst)) {
+			return NULL;
 		}
 	}
 
-	if (memchr(src, ':', srclen) != NULL) {
-		if (af == AF_INET)
+	if (memchr(src.ptr, ':', src.len) != NULL) {
+		if (afi == &ipv4_info) {
 			return "IPv4 address may not contain `:'";
-
-		return colon(src, srclen, dst);
+		}
+		return colon(src, dst);
 	}
 
-	if (af == AF_UNSPEC || af == AF_INET) {
-		oops = trydotted(src, srclen, dst);
-		if (oops == NULL)
-			return NULL;	/* it worked */
-
-	*allnumericfailed = 1;
-
-		if (*oops != '?')
-			return oops;	/* probably meant as d-d */
-	}
-
-	return "not numeric";
+	return trydotted(src, was_numeric, dst);
 }
 
 /*
  * tryname - try it as a name
  *
- * Slightly complicated by lack of reliable NUL termination in source.
+ * Error return is intricate because we cannot compose a static string.
  */
-static err_t tryname(
-	const char *src,
-	size_t srclen,
-	int nultermd,	/* is it known to be NUL-terminated? */
-	int af,
-	int tried_af,	/* kind(s) of numeric addressing tried */
-	ip_address *dst)
+static err_t tryname(const char *p,
+		     int af,
+		     int suggested_af,	/* kind(s) of numeric addressing tried */
+		     ip_address *dst)
 {
-	struct hostent *h;
-	struct netent *ne = NULL;
-	char namebuf[100];	/* enough for most DNS names */
-	const char *cp;
-	char *p = namebuf;
-	size_t n;
-
-	for (cp = src, n = srclen; n > 0; cp++, n--)
-		if (ISASCII(*cp) && strchr(namechars, *cp) == NULL)
-			return "illegal (non-DNS-name) character in name";
-
-	if (nultermd) {
-		cp = src;
-	} else {
-		if (srclen + 1 > sizeof(namebuf)) {
-			p = alloc_things(char, srclen + 1, "p");
-			if (p == NULL)
-				return "unable to get temporary space for name";
+	struct hostent *h = gethostbyname2(p, af);
+	if (h != NULL) {
+		if (h->h_addrtype != af) {
+			return "address-type mismatch from gethostbyname2!!!";
 		}
-		p[0] = '\0';	/* strncpy semantics are wrong */
-		strncat(p, src, srclen);
-		cp = (const char *)p;
+
+		return data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst);
 	}
 
-	h = gethostbyname2(cp, af);
-	/* like, windows even has an /etc/networks? */
-	if (h == NULL && af == AF_INET)
-		ne = getnetbyname(cp);
-	if (p != namebuf)
-		pfree(p);
-	if (h == NULL && ne == NULL) {
-		/* intricate because we cannot compose a static string */
-		switch (tried_af) {
-		case AF_INET:
-			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
-		case AF_INET6:
+	if (af == AF_INET6) {
+		if (suggested_af == AF_INET6) {
 			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
-		case AF_UNSPEC:	/* guess */
+		} else /* AF_UNSPEC */ {
 			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
 		}
 	}
 
-	if (h != NULL) {
-		if (h->h_addrtype != af)
-			return "address-type mismatch from gethostbyname2!!!";
+	pexpect(af == AF_INET);
 
-		return data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst);
-	} else {
-		if (ne->n_addrtype != af)
-			return "address-type mismatch from getnetbyname!!!";
-		if (!pexpect(af == AF_INET)) {
-			return "address-type mismatch by convoluted logic!!!";
+	/* like, windows even has an /etc/networks? */
+	struct netent *ne = getnetbyname(p);
+	if (ne == NULL) {
+		/* intricate because we cannot compose a static string */
+		if (suggested_af == AF_INET) {
+			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
+		} else {
+			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
 		}
-		/* apparently .n_net is in host order */
-		struct in_addr in = { htonl(ne->n_net), };
-		*dst = address_from_in_addr(&in);
-		return NULL;
 	}
+
+	if (ne->n_addrtype != af) {
+		return "address-type mismatch from getnetbyname!!!";
+	}
+
+	/* apparently .n_net is in host order */
+	struct in_addr in = { htonl(ne->n_net), };
+	*dst = address_from_in_addr(&in);
+	return NULL;
 }
 
 /*
  * tryhex - try conversion as an eight-digit hex number (AF_INET only)
  */
-static err_t tryhex(const char *src,
-		    size_t srclen,	/* should be 8 */
-		    int flavour, 	/* 'x' for network order, 'h' for host order */
-		    ip_address *dst)
+
+static bool tryhex(shunk_t hex,
+		   ip_address *dst)
 {
-	err_t oops;
-	unsigned long ul;
+	if (hex.len != strlen("0x12345678")) {
+		return false;
+	}
 
-	if (srclen != 8)
-		return "internal error, tryhex called with bad length";
+	if (!shunk_strcaseeat(&hex, "0x")) {
+		return false;
+	}
 
-	oops = ttoul(src, srclen, 16, &ul);
-	if (oops != NULL)
-		return oops;
+	uintmax_t ul;
+	err_t err = shunk_to_uintmax(hex, NULL, 16, &ul, UINT32_MAX);
+	if (err != NULL) {
+		return false;
+	}
 
-	struct in_addr addr = { (flavour == 'h') ? ul : htonl(ul), };
+	struct in_addr addr = { htonl(ul), };
 	*dst = address_from_in_addr(&addr);
-	return NULL;
+	return true;
 }
 
 /*
- * trydotted - try conversion as dotted decimal (AF_INET only)
+ * trydotted - try conversion as dotted numeric (AF_INET only).
  *
- * If the first char of a complaint is '?', that means "didn't look like
- * dotted decimal at all".
+ * But could a DNS name also be a valid IPv4 address, vis:
+ * - can start with a decimal-digit
+ * - can end with a decimal-digit
+ * - must contain at least one letter
+ * https://tools.ietf.org/html/rfc1912
+ *
+ * Yes, for instance: 0x01.0x02.0x03.0x04.
+ *
+ * This code tries to avoid this pitfall by only allowing non-decimal
+ * fields when they match a very limited format.
  */
-static err_t trydotted(const char *src, size_t srclen, ip_address *dst)
+
+static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
 {
-	const char *stop = src + srclen;	/* just past end */
-	err_t oops;
+	struct ip_bytes bytes = unset_bytes;
 
-	/* start with blank IPv4 address */
-	union {
-		struct in_addr addr;
-		uint8_t bytes[sizeof(struct in_addr)];
-	} u = { .bytes = { 0, }, };
+	shunk_t cursor = src;
+	for (unsigned b = 0; b < 4 && cursor.ptr != NULL /* more-input */; b++) {
+		/* Danger: nested breaks and returns. */
 
-	for (size_t i = 0; i < sizeof(u) && src < stop; i++) {
-		int byte;
-		oops = getbyte(&src, stop, &byte);
-		if (oops != NULL) {
-			if (*oops != '?')
-				return oops;	/* bad number */
-
-			if (i > 1)
-				return oops + 1;	/* failed number */
-
-			return oops;	/* with leading '?' */
+		/*
+		 * Carve off the next number.
+		 *
+		 * This way, given "09.1.2.", the full sub-string "09"
+		 * is extracted and converted.  Being invalid, it will
+		 * report an error about a bogus digit (and not the
+		 * less meaningful trailing garbage error).
+		 *
+		 * After the last token has been extracted cursor is
+		 * left pointing at NULL i.e., cursor.ptr==NULL.
+		 */
+		shunk_t token = shunk_token(&cursor, NULL, ".");
+		if (token.len == 0) {
+			/* ex: 0xa. */
+			*was_numeric = false;
+			return "empty dotted-numeric address field";
 		}
-		u.bytes[i] = byte;
-		if (i < 3 && src < stop && *src++ != '.') {
-			if (i == 0)
-				return "?syntax error in dotted-decimal address";
-			else
-				return "syntax error in dotted-decimal address";
+#if 0
+		fprintf(stderr, "cursor="PRI_SHUNK" token="PRI_SHUNK"\n",
+			pri_shunk(cursor), pri_shunk(token));
+#endif
+
+		/*
+		 * Try converting to a number.
+		 *
+		 * See examples in wikepedia.
+		 *
+		 * This lets uintmax decide how to convert the number
+		 * (play with wget).
+		 *
+		 * The alternative is to do a very strict check.
+                 */
+#if 0
+		unsigned base;
+		if (token.len == strlen("0xXX") && shunk_strcaseeat(&token, "0x")) {
+			base = 16;
+		} else if (token.len == strlen("0ooo") && shunk_strcaseeat(&token, "0")) {
+			base = 8;
+		} else {
+			base = 10;
 		}
+		if (hunk_strcasestarteq(token, "0") && token.len == strlen("0xXX")) {
+			base = 16;
+		}
+		uintmax_t byte;
+		err_t err = shunk_to_uintmax(token, NULL, base, &byte, 0/*no-celing*/);
+#else
+		uintmax_t byte;
+		err_t err = shunk_to_uintmax(token, NULL, 0, &byte, 0/*no-celing*/);
+#endif
+		if (err != NULL) {
+			*was_numeric = false;
+			return err;
+		}
+
+		/*
+		 * The last byte overflows into earlier unfilled
+		 * bytes.  For instance:
+		 *
+		 *   127.1     -> 127.0.0.1
+		 *   127.65534 -> 127.0.255.254
+		 *
+		 * A bizare hangover from address classes:
+		 * https://en.wikipedia.org/wiki/IPv4#Address_representations
+		 *
+		 * Now while it is arguable that:
+		 *
+		 *   65534 -> 0.0.255.254
+		 *   127   -> 0.0.0.127 !?!?!
+		 *
+		 * is also valid, that is too weird and rejected (but
+		 * 0x01020304 is accepted by an earlier call to
+		 * tryhex()).
+		 */
+		if (cursor.len == 0 && b > 0) {
+			for (unsigned e = 3; e >= b && byte != 0; e--) {
+				bytes.byte[e] = byte; /* truncate */
+				byte = byte >> 8;
+			}
+			if (byte != 0) {
+				return "overflow in dotted-numeric address";
+			}
+			break;
+		}
+
+		/* A non-last bytes need to fit into the byte */
+		if (byte > UINT8_MAX) {
+			return "byte overflow in dotted-numeric address";
+		}
+
+		bytes.byte[b] = byte;
 	}
-	if (src != stop)
-		return "extra garbage on end of dotted-decimal address";
-
-	*dst = address_from_in_addr(&u.addr);
-	return NULL;
-}
-
-/*
- * getbyte - try to scan a byte in dotted decimal
- *
- * A subtlety here is that all this arithmetic on ASCII digits really is
- * highly portable -- ANSI C guarantees that digits 0-9 are contiguous.
- * It's easier to just do it ourselves than set up for a call to ttoul().
- *
- * If the first char of a complaint is '?', that means "didn't look like a
- * number at all".
- */
-err_t getbyte(srcp, stop, retp)
-const char **srcp;	/* *srcp is updated */
-const char *stop;	/* first untouchable char */
-int *retp;	/* return-value pointer */
-{
-	char c;
-	const char *p;
-	int no;
-
-	if (*srcp >= stop)
-		return "?empty number in dotted-decimal address";
-
-	no = 0;
-	p = *srcp;
-	while (p < stop && no <= 255 && (c = *p) >= '0' && c <= '9') {
-		no = no * 10 + (c - '0');
-		p++;
+	if (cursor.ptr != NULL) {
+		*was_numeric = false;
+		return "garbage at end of dotted-address";
 	}
-	if (p == *srcp)
-		return "?non-numeric component in dotted-decimal address";
 
-	*srcp = p;
-	if (no > 255)
-		return "byte overflow in dotted-decimal address";
-
-	*retp = no;
+	*dst = address_from_raw(HERE, ipv4_info.ip_version, bytes);
 	return NULL;
 }
 
 /*
  * colon - convert IPv6 "numeric" address
  */
-static err_t colon(const char *src,
-		   size_t srclen,	/* known to be >0 */
-		   ip_address *dst)
+
+static err_t colon(shunk_t cursor, ip_address *dst)
 {
+	const char *src = cursor.ptr;
+	unsigned srclen = cursor.len;
 	const char *stop = src + srclen;	/* just past end */
 	unsigned piece;
 	int gapat;	/* where was empty piece seen */
 	err_t oops;
 #       define  NPIECES 8
-	union {
-		struct in6_addr in6;
-		uint8_t bytes[sizeof(struct in6_addr)];
-	} u = { .bytes = { 0, }, };
+	struct ip_bytes u = unset_bytes;
 	int i;
 	int j;
 #       define  IT      "IPv6 numeric address"
@@ -328,8 +324,8 @@ static err_t colon(const char *src,
 		} else if (oops != NULL) {
 			return oops;
 		}
-		u.bytes[2 * i] = piece >> 8;
-		u.bytes[2 * i + 1] = piece & 0xff;
+		u.byte[2 * i] = piece >> 8;
+		u.byte[2 * i + 1] = piece & 0xff;
 		if (i < NPIECES - 1) {	/* there should be more input */
 			if (src == stop && gapat < 0)
 				return IT " ends prematurely";
@@ -351,25 +347,25 @@ static err_t colon(const char *src,
 		naftergap = i - (gapat + 1);
 		for (i--, j = NPIECES - 1; naftergap > 0;
 			i--, j--, naftergap--) {
-			u.bytes[2 * j] = u.bytes[2 * i];
-			u.bytes[2 * j + 1] = u.bytes[2 * i + 1];
+			u.byte[2 * j] = u.byte[2 * i];
+			u.byte[2 * j + 1] = u.byte[2 * i + 1];
 		}
 		for (; j >= gapat; j--)
-			u.bytes[2 * j] = u.bytes[2 * j + 1] = 0;
+			u.byte[2 * j] = u.byte[2 * j + 1] = 0;
 	}
 
-	*dst = address_from_in6_addr(&u.in6);
+	*dst = address_from_raw(HERE, ipv6_info.ip_version, u);
 	return NULL;
 }
 
 /*
  * getpiece - try to scan one 16-bit piece of an IPv6 address
+ *
+ * ":" means "empty field seen"
  */
-err_t	/* ":" means "empty field seen" */
-getpiece(srcp, stop, retp)
-const char **srcp;	/* *srcp is updated */
-const char *stop;	/* first untouchable char */
-unsigned *retp;	/* return-value pointer */
+err_t getpiece(const char **srcp,	/* *srcp is updated */
+	       const char *stop,	/* first untouchable char */
+	       unsigned *retp)	/* return-value pointer */
 {
 	const char *p;
 #       define  NDIG    4
@@ -403,78 +399,65 @@ unsigned *retp;	/* return-value pointer */
 	return NULL;
 }
 
-static err_t	/* NULL for success, else string literal */
-ttoaddr(const char *src,
-	size_t srclen,	/* 0 means "apply strlen" */
-	int af,	/* address family */
-	ip_address *dst)
+err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
-	int nultermd;
-	int numfailed = 0;
-	err_t err;
-
-	if (srclen == 0) {
-		srclen = strlen(src);
-		if (srclen == 0)
-			return "empty string";
-
-		nultermd = 1;
-	} else {
-		nultermd = 0;	/* at least, not *known* to be terminated */
-	}
-	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
-
-	if (numfailed) {
-		/* err == non-numeric */
-		err_t v4err = NULL, v6err = NULL;
-		if (err && (af == AF_UNSPEC || af == AF_INET)) {
-			err = v4err = tryname(src, srclen, nultermd, AF_INET, af, dst);
-		}
-		if (err && (af == AF_UNSPEC || af == AF_INET6)) {
-			err = v6err = tryname(src, srclen, nultermd, AF_INET6, af, dst);
-		}
-		/* prefer the IPv4 error */
-		if (err != NULL && v4err != NULL) {
-			err = v4err;
-		}
+	*dst = unset_address;
+	if (src.len == 0) {
+		return "empty string";
 	}
 
+	bool was_numeric = true;
+	err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
+	if (was_numeric) {
+		/* no-point in continuing */
+		return err;
+	}
+
+	/* err == non-numeric */
+
+	for (const char *cp = src.ptr, *end = cp + src.len; cp < end; cp++) {
+		/*
+		 * Legal ASCII characters in a domain name.
+		 * Underscore technically is not, but is a common
+		 * misunderstanding.  Non-ASCII characters are simply
+		 * exempted from checking at the moment, to allow for
+		 * UTF-8 encoded stuff; the purpose of this check is
+		 * merely to catch blatant errors.
+		 *
+		 * XXX: Suspect the ISASCII() check can be dropped -
+		 * utf-8 isn't allowed in DNS names and without a
+		 * utf-8 parser the check is flawed.
+		 */
+		static const char namechars[] =
+			"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
+#define ISASCII(c) (((c) & 0x80) == 0)
+		if (ISASCII(*cp) && strchr(namechars, *cp) == NULL) {
+			return "illegal (non-DNS-name) character in name";
+		}
+	}
+
+	/*
+	 * need a guarenteed null terminated string
+	 */
+	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
+	int suggested_af = afi == NULL ? AF_UNSPEC : afi->af;
+	err_t v4err = NULL, v6err = NULL;
+	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET)) {
+		err = v4err = tryname(name, AF_INET, suggested_af, dst);
+	}
+	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET6)) {
+		err = v6err = tryname(name, AF_INET6, suggested_af, dst);
+	}
+	/* prefer the IPv4 error */
+	if (err != NULL && v4err != NULL) {
+		err = v4err;
+	}
+	pfree(name);
 	return err;
 }
 
-err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst)
+err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
-	*dst = unset_address;
-	if (src.len == 0) {
-		return "empty string";
-	}
-
-	return ttoaddr(src.ptr, src.len, type == NULL ? AF_UNSPEC : type->af, dst);
-}
-
-static err_t	/* NULL for success, else string literal */
-ttoaddr_num(const char *src,
-	size_t srclen,	/* 0 means "apply strlen" */
-	int af,	/* address family */
-	ip_address *dst)
-{
-	int numfailed = 0;
-
-	if (srclen == 0) {
-		srclen = strlen(src);
-		if (srclen == 0)
-			return "empty string";
-	}
-
-	return ttoaddr_base(src, srclen, af, &numfailed, dst);
-}
-
-err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst)
-{
-	*dst = unset_address;
-	if (src.len == 0) {
-		return "empty string";
-	}
-
-	return ttoaddr_num(src.ptr, src.len, type == NULL ? AF_UNSPEC : type->af, dst);
+	bool was_numeric; /* ignored */
+	return ttoaddr_base(src, afi, &was_numeric, dst);
 }
