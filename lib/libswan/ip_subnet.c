@@ -43,6 +43,7 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned pre
 	if (address_is_unset(&address)) {
 		return unset_subnet;
 	}
+
 	return subnet_from_raw(HERE, address.version, address.bytes, prefix_bits);
 }
 
@@ -52,7 +53,8 @@ ip_subnet subnet_from_address(const ip_address address)
 	if (afi == NULL) {
 		return unset_subnet;
 	}
-	return subnet_from_address_prefix_bits(address, afi->mask_cnt);
+
+	return subnet_from_raw(HERE, afi->ip_version, address.bytes, afi->mask_cnt);
 }
 
 err_t address_mask_to_subnet(const ip_address address,
@@ -73,11 +75,12 @@ err_t address_mask_to_subnet(const ip_address address,
 	if (prefix_bits < 0) {
 		return "invalid mask";
 	}
-	ip_address prefix = address_from_blit(afi, address.bytes,
-					      /*routing-prefix*/&keep_bits,
-					      /*host-identifier*/&clear_bits,
-					      prefix_bits);
-	*subnet = subnet_from_address_prefix_bits(prefix, prefix_bits);
+
+	struct ip_bytes prefix = bytes_from_blit(afi, address.bytes,
+						 /*routing-prefix*/&keep_bits,
+						 /*host-identifier*/&clear_bits,
+						 prefix_bits);
+	*subnet = subnet_from_raw(HERE, afi->ip_version, prefix, prefix_bits);
 	return NULL;
 }
 
@@ -89,10 +92,11 @@ ip_address subnet_prefix(const ip_subnet subnet)
 		return unset_address;
 	}
 
-	return address_from_blit(afi, subnet.bytes,
-				 /*routing-prefix*/&keep_bits,
-				 /*host-identifier*/&clear_bits,
-				 subnet.maskbits);
+	struct ip_bytes prefix = bytes_from_blit(afi, subnet.bytes,
+						 /*routing-prefix*/&keep_bits,
+						 /*host-identifier*/&clear_bits,
+						 subnet.maskbits);
+	return address_from_raw(HERE, afi->ip_version, prefix);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
@@ -110,6 +114,7 @@ bool subnet_is_unset(const ip_subnet *subnet)
 	if (subnet == NULL) {
 		return true;
 	}
+
 	return !subnet->is_set;
 }
 
@@ -155,10 +160,11 @@ ip_address subnet_prefix_mask(const ip_subnet subnet)
 		return unset_address;
 	}
 
-	return address_from_blit(afi, subnet.bytes,
-				 /*routing-prefix*/ &set_bits,
-				 /*host-identifier*/ &clear_bits,
-				 subnet.maskbits);
+	struct ip_bytes mask = bytes_from_blit(afi, subnet.bytes,
+					       /*routing-prefix*/ &set_bits,
+					       /*host-identifier*/ &clear_bits,
+					       subnet.maskbits);
+	return address_from_raw(HERE, afi->ip_version, mask);
 }
 
 unsigned subnet_prefix_bits(const ip_subnet subnet)
@@ -216,9 +222,11 @@ bool subnet_eq_subnet(const ip_subnet l, const ip_subnet r)
 		/* NULL/unset subnets are equal */
 		return true;
 	}
+
 	if (subnet_is_unset(&l) || subnet_is_unset(&r)) {
 		return false;
 	}
+
 	/* must compare individual fields */
 	return (l.version == r.version &&
 		thingeq(l.bytes, r.bytes) &&

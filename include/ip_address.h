@@ -71,6 +71,9 @@ void pexpect_address(const ip_address *a, where_t where);
  * Constructors.
  */
 
+ip_address address_from_raw(where_t where, enum ip_version version,
+			    const struct ip_bytes bytes);
+
 ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 err_t data_to_address(const void *data, size_t sizeof_data,
@@ -157,20 +160,6 @@ chunk_t address_as_chunk(ip_address *address);
  * XXX: prop up IPv4 centric code that just isn't worth the effort.
  */
 uint32_t ntohl_address(const ip_address *address);
-
-/*
- * Modify an address routing-prefix:host-id.
- */
-
-ip_address address_from_blit(const struct ip_info *afi,
-			     const struct ip_bytes bytes,
-			     const struct ip_blit *routing_prefix,
-			     const struct ip_blit *host_id,
-			     unsigned prefix_bit_length);
-
-/* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
-ip_address address_from_raw(where_t where, enum ip_version version,
-			    const struct ip_bytes bytes);
 
 /*
  * Old style.

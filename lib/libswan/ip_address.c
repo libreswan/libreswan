@@ -247,23 +247,6 @@ bool address_is_any(const ip_address address)
 	return address_eq_address(address, afi->address.any);
 }
 
-ip_address address_from_blit(const struct ip_info *afi,
-			     const struct ip_bytes in,
-			     const struct ip_blit *routing_prefix,
-			     const struct ip_blit *host_identifier,
-			     unsigned prefix_bit_length)
-{
-	if (!pexpect(prefix_bit_length <= afi->mask_cnt)) {
-		return unset_address;	/* "can't happen" */
-	}
-
-	struct ip_bytes bytes = bytes_from_blit(afi, in,
-						routing_prefix,
-						host_identifier,
-						prefix_bit_length);
-	return address_from_raw(HERE, afi->ip_version, bytes);
-}
-
 void pexpect_address(const ip_address *a, where_t where)
 {
 	if (a == NULL) {

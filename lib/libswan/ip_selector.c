@@ -26,6 +26,7 @@ bool selector_is_unset(const ip_selector *selector)
 	if (selector == NULL) {
 		return true;
 	}
+
 	return !selector->is_set;
 }
 
@@ -101,6 +102,7 @@ size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector)
 	if (!log_ip) {
 		return jam_string(buf, "<selector>");
 	}
+
 	return jam_selector(buf, selector);
 }
 
@@ -159,6 +161,7 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
 	if(!log_ip) {
 		return jam_string(buf, "<selector> -> <selector>");
 	}
+
 	return jam_selectors(buf, src, dst);
 }
 
@@ -277,6 +280,7 @@ ip_selector selector_from_address_protoport(const ip_address address,
 	if (address_is_unset(&address)) {
 		return unset_selector;
 	}
+
 	ip_subnet subnet = subnet_from_address(address);
 	return selector_from_subnet_protoport(subnet, protoport);
 }
@@ -304,6 +308,7 @@ ip_port selector_port(const ip_selector selector)
 	if (selector_is_unset(&selector)) {
 		return unset_port;
 	}
+
 	return ip_hport(selector.hport);
 }
 
@@ -359,10 +364,11 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
-	return address_from_blit(afi, selector.bytes,
-				 /*routing-prefix*/ &set_bits,
-				 /*host-identifier*/ &clear_bits,
-				 selector.maskbits);
+	struct ip_bytes prefix = bytes_from_blit(afi, selector.bytes,
+						 /*routing-prefix*/ &set_bits,
+						 /*host-identifier*/ &clear_bits,
+						 selector.maskbits);
+	return address_from_raw(HERE, afi->ip_version, prefix);
 }
 
 bool selector_eq_address(const ip_selector selector, const ip_address address)
@@ -476,9 +482,11 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 		/* NULL/unset selectors are equal */
 		return true;
 	}
+
 	if (selector_is_unset(&l) || selector_is_unset(&r)) {
 		return false;
 	}
+
 	/* must compare individual fields */
 	return (l.version == r.version &&
 		thingeq(l.bytes, r.bytes) &&
@@ -578,11 +586,11 @@ err_t numeric_to_selector(shunk_t input,
 		return "missing prefix bit size";
 	}
 
-	ip_address host = address_from_blit(afi, address.bytes,
-					    /*routing-prefix*/&clear_bits,
-					    /*host-identifier*/&keep_bits,
-					    prefix_bits);
-	if (!address_eq_address(host, afi->address.any)) {
+	struct ip_bytes host = bytes_from_blit(afi, address.bytes,
+					       /*routing-prefix*/&clear_bits,
+					       /*host-identifier*/&keep_bits,
+					       prefix_bits);
+	if (!thingeq(host, unset_bytes)) {
 		return "host-identifier must be zero";
 	}
 
@@ -672,6 +680,7 @@ bool selector_subnet_eq_address(const ip_selector selector, const ip_address add
 	if (address_is_unset(&address) || selector_is_unset(&selector)) {
 		return false;
 	}
+
 	ip_subnet subnet = selector_subnet(selector);
 	return subnet_eq_address(subnet, address);
 }

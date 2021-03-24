@@ -110,7 +110,7 @@ extern bool use_dns;
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\
 			if (EXPECTED == NULL) {				\
-					FAIL(#EXPECTED " is NULL");	\
+				FAIL(#EXPECTED " is NULL");		\
 			}						\
 			BUF buf;					\
 			const char *s = str_##OP(__VA_ARGS__, &buf);	\
