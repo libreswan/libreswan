@@ -167,6 +167,8 @@ west #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
