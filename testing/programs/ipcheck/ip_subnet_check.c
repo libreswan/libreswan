@@ -37,8 +37,8 @@ static void check_str_subnet(struct logger *logger)
 		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0" },
 /*	{4, "1.2.3.0/255.255.127.0",	"1.2.3.0/255.255.127.0"}, */
 		{ LN, 4, "1.2.3.1/255.255.127.0", NULL },
-		{ LN, 4, "128.009.000.032/32", "128.9.0.32/32" },
-		{ LN, 4, "128.0x9.0.32/32", NULL },
+		{ LN, 4, "128.0007.0000.0032/32", "128.7.0.26/32" },
+		{ LN, 4, "128.0x0f.0.32/32", "128.15.0.32/32", },
 		{ LN, 4, "0x80090020/32", "128.9.0.32/32" },
 		{ LN, 4, "0x800x0020/32", NULL },
 		{ LN, 4, "128.9.0.0/0xffFF0000", "128.9.0.0/16" },
@@ -53,7 +53,7 @@ static void check_str_subnet(struct logger *logger)
 		{ LN, 4, "10/8", "10.0.0.0/8" },
 		{ LN, 4, "10.0/8", "10.0.0.0/8" },
 		{ LN, 4, "10.0.0/8", "10.0.0.0/8" },
-		{ LN, 4, "10.0.1/24", "10.0.1.0/24" },
+		{ LN, 4, "10.0.1.0/24", "10.0.1.0/24" },
 		{ LN, 4, "_", NULL },
 		{ LN, 4, "_/_", NULL },
 		{ LN, 4, "1.2.3.1", NULL },
@@ -116,10 +116,10 @@ static void check_str_subnet(struct logger *logger)
 			continue;
 		} else if (oops != NULL && t->str != NULL) {
 			/* Error occurred, but we didn't expect one  */
-			FAIL("ttosubnet failed: %s", oops);
+			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 		} else if (oops == NULL && t->str == NULL) {
 			/* If no errors, but we expected one */
-			FAIL("ttosubnet succeeded unexpectedly");
+			FAIL("ttosubnet(%s) succeeded unexpectedly", t->in);
 		}
 
 		CHECK_TYPE(subnet);
