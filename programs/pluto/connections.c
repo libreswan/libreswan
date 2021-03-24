@@ -1051,7 +1051,7 @@ static int extract_end(struct connection *c,
 	switch (dst->host_type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = domain_to_address(shunk1(dst->host_addr_name),
+		err_t er = ttoaddress_dns(shunk1(dst->host_addr_name),
 					     address_type(&dst->host_addr),
 					     &dst->host_addr);
 		if (er != NULL) {

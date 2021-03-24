@@ -226,7 +226,7 @@ void unbound_sync_init(bool do_dnssec, const char *rootfile,
 }
 
 /*
- * synchronous blocking resolving - simple replacement of ttoaddr()
+ * synchronous blocking resolving - simple replacement of ttoaddress_dns()
  * src_len == 0 means "apply strlen"
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */

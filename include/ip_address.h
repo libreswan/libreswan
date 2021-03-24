@@ -79,9 +79,9 @@ err_t data_to_address(const void *data, size_t sizeof_data,
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 
 /* assumes dotted / colon notation */
-err_t numeric_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
+err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 /* if numeric lookup fails, try a DNS lookup */
-err_t domain_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
+err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
 /*
  * Convert an address to a string:
@@ -175,12 +175,6 @@ ip_address address_from_raw(where_t where, enum ip_version version,
 /*
  * Old style.
  */
-
-/* looks up names in DNS */
-extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
-
-/* does not look up names in DNS */
-extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
 
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     sizeof(address_reversed_buf)

@@ -84,7 +84,7 @@ static void check_shunk_to_address(void)
 		/* NUMERIC/NULL */
 
 		type = NULL;
-		err = numeric_to_address(shunk1(t->in), type, address);
+		err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (t->cooked != NULL && !t->requires_dns) {
 				FAIL("numeric_to_address(%s,NULL) unexpecedly failed: %s",
@@ -102,7 +102,7 @@ static void check_shunk_to_address(void)
 		/* NUMERIC/TYPE */
 
 		type = IP_TYPE(t->family);
-		err = numeric_to_address(shunk1(t->in), type, address);
+		err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (!t->requires_dns) {
 				FAIL(" numeric_to_address(%s, %s) unexpecedly failed: %s",
@@ -129,7 +129,7 @@ static void check_shunk_to_address(void)
 			PRINT("skipping dns_hunk_to_address(type) -- no DNS");
 		} else {
 			type = IP_TYPE(t->family);
-			err = domain_to_address(shunk1(t->in), type, address);
+			err = ttoaddress_dns(shunk1(t->in), type, address);
 			if (err != NULL) {
 				if (t->cooked != NULL) {
 					FAIL("dns_hunk_to_address(type) unexpecedly failed: %s", err);
@@ -166,9 +166,9 @@ static void check_str_address_sensitive(void)
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
 		ip_address tmp, *address = &tmp;
-		err_t err = numeric_to_address(shunk1(t->in), type, address);
+		err_t err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
-			FAIL("numeric_to_address() failed: %s", err);
+			FAIL("ttoaddress_num() failed: %s", err);
 			continue;
 		}
 		CHECK_TYPE(address);
@@ -197,9 +197,9 @@ static void check_str_address_reversed(void)
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
 		ip_address tmp, *address = &tmp;
-		err_t err = numeric_to_address(shunk1(t->in), type, address);
+		err_t err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
-			FAIL("numeric_to_address() returned: %s", err);
+			FAIL("ttoaddress_num() returned: %s", err);
 			continue;
 		}
 		CHECK_TYPE(address);
@@ -296,9 +296,9 @@ static void check_address_is(void)
 			tmp = unset_address;
 		} else {
 			const struct ip_info *type = NULL;
-			err_t err = numeric_to_address(shunk1(t->in), type, &tmp);
+			err_t err = ttoaddress_num(shunk1(t->in), type, &tmp);
 			if (err != NULL) {
-				FAIL("numeric_to_address() failed: %s", err);
+				FAIL("ttoaddress_num() failed: %s", err);
 			}
 		}
 
@@ -370,16 +370,16 @@ static void check_addresses_to(void)
 		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address lo;
-		oops = numeric_to_address(shunk1(t->lo), type, &lo);
+		oops = ttoaddress_num(shunk1(t->lo), type, &lo);
 		if (oops != NULL) {
-			FAIL("numeric_to_address(lo=%s) failed: %s", t->lo, oops);
+			FAIL("ttoaddress_num(lo=%s) failed: %s", t->lo, oops);
 			continue;
 		}
 
 		ip_address hi;
-		oops = numeric_to_address(shunk1(t->hi), type, &hi);
+		oops = ttoaddress_num(shunk1(t->hi), type, &hi);
 		if (oops != NULL) {
-			FAIL("numeric_to_address(hi=%s) failed: %s", t->hi, oops);
+			FAIL("ttoaddress_num(hi=%s) failed: %s", t->hi, oops);
 			continue;
 		}
 

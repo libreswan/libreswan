@@ -903,7 +903,7 @@ int main(int argc, char **argv)
 		case 'L':	/* --listen ip_addr */
 		{
 			ip_address lip;
-			err_t e = ttoaddr_num(optarg, 0, AF_UNSPEC, &lip);
+			err_t e = ttoaddress_num(shunk1(optarg), NULL/*UNSPEC*/, &lip);
 
 			if (e != NULL) {
 				/*
@@ -1128,7 +1128,8 @@ int main(int argc, char **argv)
 		case 'y':	/* --global-redirect-to */
 		{
 			ip_address rip;
-			check_err(ttoaddr(optarg, 0, AF_UNSPEC, &rip), longindex, logger);
+			check_err(ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip),
+				  longindex, logger);
 			set_global_redirect_dests(optarg);
 			llog(RC_LOG, logger,
 				    "all IKE_SA_INIT requests will from now on be redirected to: %s\n",

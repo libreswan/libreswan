@@ -296,9 +296,9 @@ static void check_subnet_from_address(void)
 		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		err_t oops = numeric_to_address(shunk1(t->in), type, &a);
+		err_t oops = ttoaddress_num(shunk1(t->in), type, &a);
 		if (oops != NULL) {
-			FAIL("numeric_to_address() failed: %s", oops);
+			FAIL("ttoaddress_num() failed: %s", oops);
 		}
 
 		ip_subnet tmp = subnet_from_address(a), *subnet = &tmp;
@@ -379,16 +379,16 @@ static void check_address_mask_to_subnet(void)
 		      t->subnet != NULL ? t->subnet : "<error>");
 
 		ip_address address;
-		err = numeric_to_address(shunk1(t->address), NULL, &address);
+		err = ttoaddress_num(shunk1(t->address), NULL, &address);
 		if (err != NULL) {
-			FAIL("numeric_to_address(%s) failed: %s",
+			FAIL("ttoaddress_num(%s) failed: %s",
 			     t->address, err);
 		}
 
 		ip_address mask;
-		err = numeric_to_address(shunk1(t->mask), NULL, &mask);
+		err = ttoaddress_num(shunk1(t->mask), NULL, &mask);
 		if (err != NULL) {
-			FAIL("numeric_to_address(%s) failed: %s",
+			FAIL("ttoaddress_num(%s) failed: %s",
 			     t->mask, err);
 		}
 

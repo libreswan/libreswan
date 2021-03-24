@@ -114,7 +114,7 @@ static err_t do_selector_from_address(const struct selector *s,
 	}
 
 	ip_address address;
-	err_t err = numeric_to_address(shunk1(s->addresses), IP_TYPE(s->family), &address);
+	err_t err = ttoaddress_num(shunk1(s->addresses), IP_TYPE(s->family), &address);
 	if (err != NULL) {
 		return err;
 	}

@@ -464,7 +464,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = numeric_to_address(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
+		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
@@ -577,7 +577,7 @@ static bool validate_end(struct starter_conn *conn_st,
 					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
-				er = ttoaddr(value, 0, AF_UNSPEC,
+				er = ttoaddress_dns(value, 0, AF_UNSPEC,
 						&end->nexthop);
 				if (er != NULL)
 					ERR_FOUND("bad value for %snexthop=%s [%s]",
@@ -660,7 +660,7 @@ static bool validate_end(struct starter_conn *conn_st,
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
 #else
-			er = ttoaddr(value, 0, AF_UNSPEC, &end->sourceip);
+			er = ttoaddress_dns(value, 0, AF_UNSPEC, &end->sourceip);
 			if (er != NULL)
 				ERR_FOUND("bad addr %ssourceip=%s [%s]",
 					  leftright, value, er);

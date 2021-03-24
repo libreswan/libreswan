@@ -245,8 +245,9 @@ int resolve_defaultroute_one(struct starter_end *host,
 			int af = (peer->host_family == &ipv4_info) ?
 					AF_INET : AF_INET6;
 #ifdef USE_DNSSEC
-			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
-				AF_UNSPEC, &peer->addr);
+			/* try numeric first */
+			err_t er = ttoaddress_num(shunk1(peer->strings[KSCF_IP]),
+						  NULL/*UNSPEC*/, &peer->addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
 				if (!unbound_resolve(peer->strings[KSCF_IP],
@@ -259,7 +260,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 #else
 			(void)logger /* UNUSED */;
 
-			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
+			err_t er = ttoaddress_dns(peer->strings[KSCF_IP], 0,
 				af, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);

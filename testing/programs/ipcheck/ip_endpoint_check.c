@@ -72,7 +72,7 @@ void ip_endpoint_check()
 		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		oops = numeric_to_address(shunk1(t->in), type, &a);
+		oops = ttoaddress_num(shunk1(t->in), type, &a);
 		if (oops != NULL) {
 			/* Error occurred, but we didn't expect one  */
 			FAIL("ttosubnet failed: %s", oops);

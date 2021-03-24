@@ -546,7 +546,7 @@ err_t numeric_to_selector(shunk_t input,
 	/* fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token)); */
 
 	ip_address address;
-	oops = numeric_to_address(address_token, afi/*possibly NULL*/, &address);
+	oops = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
 	if (oops != NULL) {
 		return oops;
 	}

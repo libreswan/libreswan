@@ -237,7 +237,7 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 				 xb[0], xb[1], xb[2], xb[3], xb[4], xb[5],
 				 xb[6], xb[7]);
 
-			happy(ttoaddr_num(sb, 0, AF_INET6, &ri.addr));
+			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ri.addr));
 
 			if (address_is_specified(ri.addr)) {
 				dbg("found %s with address %s",

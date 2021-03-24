@@ -401,7 +401,7 @@ void update_host_pairs(struct connection *c)
 	ip_address new_addr;
 
 	if (d->dnshostname == NULL ||
-	    domain_to_address(shunk1(d->dnshostname),
+	    ttoaddress_dns(shunk1(d->dnshostname),
 			      address_type(&d->spd.that.host_addr), &new_addr) != NULL ||
 	    sameaddr(&new_addr, &hp->remote))
 		return;

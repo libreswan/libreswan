@@ -63,16 +63,16 @@ static void check_iprange_bits(void)
 		const struct ip_info *afi = IP_TYPE(t->family);
 
 		ip_address lo;
-		oops = numeric_to_address(shunk1(t->lo), afi, &lo);
+		oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
 		if (oops != NULL) {
-			FAIL("numeric_to_address() failed converting '%s'", t->lo);
+			FAIL("ttoaddress_num() failed converting '%s'", t->lo);
 			continue;
 		}
 
 		ip_address hi;
-		oops = numeric_to_address(shunk1(t->hi), afi, &hi);
+		oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
 		if (oops != NULL) {
-			FAIL("numeric_to_address() failed converting '%s'", t->hi);
+			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 			continue;
 		}
 
@@ -305,9 +305,9 @@ static void check_range_is(void)
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = numeric_to_address(shunk1(t->lo), afi, &lo);
+			oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
 			if (oops != NULL) {
-				FAIL("numeric_to_address() failed converting '%s'", t->lo);
+				FAIL("ttoaddress_num() failed converting '%s'", t->lo);
 			}
 		} else {
 			lo = unset_address;
@@ -315,9 +315,9 @@ static void check_range_is(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = numeric_to_address(shunk1(t->hi), afi, &hi);
+			oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
 			if (oops != NULL) {
-				FAIL("numeric_to_address() failed converting '%s'", t->hi);
+				FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 			}
 		} else {
 			hi = unset_address;
@@ -503,9 +503,9 @@ static void check_range_to_offset(void)
 		}
 
 		ip_address address;
-		err = numeric_to_address(shunk1(t->address), NULL/*auto-detect*/, &address);
+		err = ttoaddress_num(shunk1(t->address), NULL/*auto-detect*/, &address);
 		if (err != NULL) {
-			FAIL("numeric_to_address(%s) failed: %s", t->address, err);
+			FAIL("ttoaddress_num(%s) failed: %s", t->address, err);
 		}
 
 		uintmax_t offset;

@@ -81,7 +81,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 
 	/* convert start address */
 	ip_address start_address;
-	err = numeric_to_address(start_token, afi/*possibly NULL*/, &start_address);
+	err = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
 	if (err != NULL) {
 		return err;
 	}
@@ -123,7 +123,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START-END */
 		ip_address end_address;
-		err = numeric_to_address(cursor, afi, &end_address);
+		err = ttoaddress_num(cursor, afi, &end_address);
 		if (err != NULL) {
 			/* includes IPv4 vs IPv6 */
 			return err;

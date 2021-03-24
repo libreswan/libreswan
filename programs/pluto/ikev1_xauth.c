@@ -247,7 +247,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 		while (ipstr != NULL) {
 			ip_address dnsip;
-			err_t e = ttoaddr_num(ipstr, 0, AF_INET, &dnsip);
+			err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &dnsip);
 
 			if (e != NULL) {
 				log_state(RC_LOG_SERIOUS, st,

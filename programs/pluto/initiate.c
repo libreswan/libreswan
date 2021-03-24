@@ -56,7 +56,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 				    address_is_any(c->spd.that.host_addr))) {
 		ip_address remote_ip;
 
-		ttoaddr_num(remote_host, 0, AF_UNSPEC, &remote_ip);
+		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
 
 		if (c->kind != CK_TEMPLATE) {
 			llog(RC_NOPEERIP, c->logger,
@@ -910,7 +910,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
+	e = ttoaddress_dns(shunk1(c->dnshostname), NULL/*UNSPEC*/, &new_addr);
 	if (e != NULL) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
