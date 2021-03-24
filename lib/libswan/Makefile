@@ -47,13 +47,14 @@ OBJS += constants.o \
 	lswfips.o \
 	sameaddr.o \
 	secrets.o \
-	subnettypeof.o ttoaddr.o ttodata.o \
+	subnettypeof.o ttodata.o \
 	ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += ttoaddress.o
 OBJS += alloc.o
 OBJS += alloc_printf.o
 
