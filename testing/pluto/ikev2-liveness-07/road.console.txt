@@ -27,7 +27,7 @@ road #
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 road #
- ping -n -c4 -I 192.0.2.100 192.1.2.23
+ ping -n -c 4 -I 192.0.2.100 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms

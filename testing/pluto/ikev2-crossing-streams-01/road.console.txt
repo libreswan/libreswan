@@ -62,7 +62,7 @@ road #
 road #
  ip addr add 192.0.1.254/24 dev eth0
 road #
- ping -n -c4 -I 192.0.1.254 192.0.2.254
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -85,7 +85,7 @@ road #
  ipsec trafficstatus
 006 #3: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 road #
- ping -n -c4 -I 192.0.1.254 192.0.2.254
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
