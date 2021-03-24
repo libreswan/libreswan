@@ -98,54 +98,6 @@ ttoaddr_base(const char *src,
 }
 
 /*
- * tnatoaddr - convert text numeric address (only) to binary address
- */
-err_t	/* NULL for success, else string literal */
-tnatoaddr(src, srclen, af, dst)
-const char *src;
-size_t srclen;	/* 0 means "apply strlen" */
-int af;	/* address family */
-ip_address *dst;
-{
-	err_t oops;
-
-	if (srclen == 0) {
-		srclen = strlen(src);
-		if (srclen == 0)
-			return "empty string";
-	}
-
-	switch (af) {
-	case AF_UNSPEC:	/* guess */
-		oops = colon(src, srclen, dst);
-		if (oops == NULL)
-			return NULL;
-
-		oops = trydotted(src, srclen, dst);
-		if (oops == NULL)
-			return NULL;
-
-		return "does not appear to be either IPv4 or IPv6 numeric address";
-
-	case AF_INET6:
-		return colon(src, srclen, dst);
-
-	case AF_INET:
-		oops = trydotted(src, srclen, dst);
-		if (oops == NULL)
-			return NULL;	/* it worked */
-
-		if (*oops != '?')
-			return oops;	/* probably meant as d-d */
-
-		return "does not appear to be numeric address";
-
-	default:
-		return "unknown address family in tnatoaddr";
-	}
-}
-
-/*
  * tryname - try it as a name
  *
  * Slightly complicated by lack of reliable NUL termination in source.

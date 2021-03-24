@@ -24,6 +24,7 @@
 #include <linux/rtnetlink.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <netdb.h>
 
 #include "constants.h"
 #include "lswalloc.h"
@@ -33,8 +34,9 @@
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
-#include <netdb.h>
+
 #include "ip_info.h"
+#include "lswlog.h"
 
 static void resolve_point_to_point_peer(const char *interface,
 					const struct ip_info *family,
@@ -241,27 +243,27 @@ int resolve_defaultroute_one(struct starter_end *host,
 		 * We may need to figure out source IP
 		 * and gateway IP to get there.
 		 */
+		pexpect(peer->host_family != NULL);
 		if (peer->addrtype == KH_IPHOSTNAME) {
-			int af = (peer->host_family == &ipv4_info) ?
-					AF_INET : AF_INET6;
 #ifdef USE_DNSSEC
 			/* try numeric first */
 			err_t er = ttoaddress_num(shunk1(peer->strings[KSCF_IP]),
-						  NULL/*UNSPEC*/, &peer->addr);
+						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
 				if (!unbound_resolve(peer->strings[KSCF_IP],
-						     0, af, &peer->addr,
+						     peer->host_family,
+						     &peer->addr,
 						     logger)) {
-						pfree(msgbuf);
-						return -1;
+					pfree(msgbuf);
+					return -1;
 				}
 			}
 #else
 			(void)logger /* UNUSED */;
 
-			err_t er = ttoaddress_dns(peer->strings[KSCF_IP], 0,
-				af, &peer->addr);
+			err_t er = ttoaddress_dns(peer->strings[KSCF_IP],
+						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
 				return -1;
@@ -397,8 +399,9 @@ int resolve_defaultroute_one(struct starter_end *host,
 			continue;
 
 		if (seeking_src && r_source[0] != '\0') {
-			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
-					&host->addr);
+			err_t err = ttoaddress_num(shunk1(r_source),
+						   aftoinfo(rtmsg->rtm_family),
+						   &host->addr);
 
 			if (err == NULL) {
 				host->addrtype = KH_IPADDR;
@@ -422,9 +425,9 @@ int resolve_defaultroute_one(struct starter_end *host,
 							    r_gateway, verbose);
 			}
 			if (r_gateway[0] != '\0') {
-				err_t err = tnatoaddr(r_gateway, 0,
-						rtmsg->rtm_family,
-						&host->nexthop);
+				err_t err = ttoaddress_num(shunk1(r_gateway),
+							   aftoinfo(rtmsg->rtm_family),
+							   &host->nexthop);
 
 				if (err != NULL) {
 					printf("unknown gateway results from kernel: %s\n",
