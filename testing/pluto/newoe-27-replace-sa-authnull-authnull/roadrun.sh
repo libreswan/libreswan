@@ -16,7 +16,7 @@ sleep 5
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # test the new tunnel works properly
-ping -n -c 3 -I 192.1.3.209 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 # Now immitate a second indepdent client to east to show this 2nd client doesn't kill 1st client
 killall -9 pluto
 ip addr del 192.1.3.209/24 dev eth0
