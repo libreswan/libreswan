@@ -26,7 +26,11 @@
 
 unsigned fails;
 
-#define PRINT(FILE, FMT, ...)						\
+#define PRINT(FMT, ...)							\
+	fprintf(stdout, "%s[%zu]:"FMT"\n",				\
+		__func__, ti,##__VA_ARGS__)
+
+#define PRINTF(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]:"FMT"\n",				\
 		__func__, ti,##__VA_ARGS__)
 
@@ -40,7 +44,7 @@ unsigned fails;
 #define FAIL(FMT, ...)						\
 	{							\
 		fails++;					\
-		PRINT(stderr, " "FMT,##__VA_ARGS__);		\
+		PRINTF(stderr, " "FMT,##__VA_ARGS__);		\
 		continue;					\
 	}
 
@@ -285,7 +289,7 @@ static void check_shunk_span(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, " old='%s' accept='%s' -> token='%s' new='%s'",
+		PRINT(" old='%s' accept='%s' -> token='%s' new='%s'",
 			t->old, t->accept, t->token, t->token);
 
 		shunk_t t_input = shunk1(t->old);
@@ -494,7 +498,7 @@ static void check_hunk_char_is(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, "char %c", ti < 32 || ti >= 127 ? '?' : (char)ti);
+		PRINT("char %c", ti < 32 || ti >= 127 ? '?' : (char)ti);
 
 		char c = hunk_char(shunk, ti);
 		if (c != (char)ti) {
@@ -618,6 +622,7 @@ static void check_shunk_to_uintmax(void)
 		/* auto select - stopchar */
 		{ "0b012",    0, 0, 1, "2", },
 		{ "012345678",    0, 0, UINTMAX_C(01234567), "8", },
+		{ "0012345678",    0, 0, UINTMAX_C(01234567), "8", },
 		{ "0x0123f56789abcdefg",    0, 0, UINTMAX_C(0x0123f56789abcdef), "g", },
 
 		/* limits */
@@ -648,10 +653,20 @@ static void check_shunk_to_uintmax(void)
 
 		/* must use entire buffer */
 		err = shunk_to_uintmax(t_s, NULL, t->base, &u, t->ceiling);
+		/* OK when test expects entire buffer to be consumed */
 		bool t_ok = t->o != NULL && t->o[0] == '\0';
-		if ((err == NULL) != t_ok) {
-			FAIL_S("shunk_to_uintmax(cursor==NULL) returned '%s', expecting '%s'",
-			       err, bool_str(t_ok));
+		if (err != NULL) {
+			if (t_ok) {
+				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly failed: %s", t->s, err);
+			} else {
+				PRINT("shunk_to_uintmax(%s,NULL) failed with: %s", t->s, err);
+			}
+		} else {
+			if (!t_ok) {
+				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly succeeded", t->s);
+			} else {
+				PRINT("shunk_to_uintmax(%s,NULL) succeded with %ju", t->s, u);
+			}
 		}
 		if (u != (t_ok ? t->u : 0)) {
 			FAIL_S("shunk_to_uintmax(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
@@ -732,7 +747,7 @@ static void check_ntoh_hton_hunk(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(stdout, " size=%zu ntoh=%jx hton=%jx", t->size, t->ntoh, t->hton);
+		PRINT(" size=%zu ntoh=%jx hton=%jx", t->size, t->ntoh, t->hton);
 
 		shunk_t t_shunk = shunk2(t->bytes, t->size);
 
