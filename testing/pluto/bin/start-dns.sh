@@ -15,6 +15,9 @@ systemctl status -l nsd-keygen
 systemctl status -l nsd
 echo ==== tuc ====
 
+# only interested in errors
+$(dirname $0)/wait-for.sh --match 'notice: nsd started' -- systemctl status nsd > /dev/null
+
 # grr, dig writes dns lookup failures to stdout.  Need to save stdout
 # and then, depending on the exit code, display it.
 
@@ -25,11 +28,11 @@ echo digging for ${domain} IPSECKEY
 dig @127.0.0.1 ${domain} IPSECKEY > /tmp/dns.log
 status=$?
 
-echo ==== cut ====
+test ${status} -ne 0 || echo ==== cut ====
 cat /tmp/dns.log
 systemctl status -l nsd-keygen
 systemctl status -l nsd
-echo ==== tuc ====
+test ${status} -ne 0 || echo ==== tuc ====
 
 # These dig return code descriptions are lifted directly from the
 # manual page.
