@@ -82,7 +82,7 @@ while true ; do
     fi
     count=$(expr ${count} + 1)
     if test ${count} -ge ${timeout} ; then
-	echo timeout after ${timeout} seconds
+	echo timeout waiting ${timeout} seconds for "$@" to $(${match} && echo match || echo mismatch) "${regex}" 1>&2
 	exit 1
     fi
     sleep 1
