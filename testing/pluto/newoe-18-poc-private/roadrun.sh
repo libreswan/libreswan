@@ -1,4 +1,4 @@
-ping -n -c 1 -I 192.1.3.209 192.1.2.23
+../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 # wait on OE retransmits and rekeying
 sleep 5
 # should show established tunnel and no bare shunts

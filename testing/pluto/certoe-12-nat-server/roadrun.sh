@@ -1,5 +1,5 @@
 # one packet, which gets eaten by XFRM, so east does not initiate
-ping -n -c 1 -I 192.1.3.209 192.1.3.130
+../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.3.130
 # wait on OE IKE negotiation
 # ping should succeed through tunnel
 ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.3.130

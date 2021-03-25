@@ -8,10 +8,8 @@ road #
 road #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
- ping -n -c 2 -I 192.0.4.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.4.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down -I 192.0.4.254 192.0.2.254
+down
 road #
  ../../pluto/bin/strongswan-start.sh
 road #

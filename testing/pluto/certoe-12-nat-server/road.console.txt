@@ -27,10 +27,8 @@ initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.3.130
-PING 192.1.3.130 (192.1.3.130) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.3.130 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.3.130
+down
 road #
  # wait on OE IKE negotiation
 road #
