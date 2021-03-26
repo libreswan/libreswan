@@ -16,11 +16,8 @@ road #
  echo "initdone"
 initdone
 road #
- ping -q -n -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec auto --up road-east-x509-ipv4
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection

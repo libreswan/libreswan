@@ -64,23 +64,18 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.66
-PING 192.1.2.66 (192.1.2.66) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.66: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.66: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.66 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.66
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.66'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.66'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.66'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.66'
 road #
  echo done
 done
@@ -88,7 +83,7 @@ road #
  # A tunnel should have established with non-zero byte counters
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.66'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.66'
 road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.66-192.1.2.66:0-65535 0]

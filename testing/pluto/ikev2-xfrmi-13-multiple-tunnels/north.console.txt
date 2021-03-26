@@ -76,46 +76,26 @@ north #
 north #
  ip addr add 192.0.34.254/24 dev ipsec24 2>/dev/null
 north #
- ping -w 4 -c 2 -I 192.0.31.254 192.0.21.254
-PING 192.0.21.254 (192.0.21.254) from 192.0.31.254 : 56(84) bytes of data.
-64 bytes from 192.0.21.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.21.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.21.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.31.254 192.0.21.254
+up
 north #
- ping -w 4 -c 2 -I 192.0.32.254 192.0.22.254
-PING 192.0.22.254 (192.0.22.254) from 192.0.32.254 : 56(84) bytes of data.
-64 bytes from 192.0.22.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.22.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.22.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.32.254 192.0.22.254
+up
 north #
- ping -w 4 -c 2 -I 192.0.33.254 192.0.23.254
-PING 192.0.23.254 (192.0.23.254) from 192.0.33.254 : 56(84) bytes of data.
-64 bytes from 192.0.23.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.23.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.23.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.33.254 192.0.23.254
+up
 north #
- ping -w 4 -c 2 -I 192.0.34.254 192.0.24.254
-PING 192.0.24.254 (192.0.24.254) from 192.0.34.254 : 56(84) bytes of data.
-64 bytes from 192.0.24.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.24.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.24.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.0.34.254 192.0.24.254
+up
 north #
  echo done
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 north #
  ip -s link show ipsec1
 Device "ipsec1" does not exist.

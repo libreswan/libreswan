@@ -52,7 +52,7 @@ east #
 000        ID_FQDN '@east'
 east #
  ipsec whack --trafficstatus
-006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@road.testing.libreswan.org'
+006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@road.testing.libreswan.org'
 east #
  ../bin/check-for-core.sh
 east #

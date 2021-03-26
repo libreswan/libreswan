@@ -1,4 +1,4 @@
-ping -q -n -c 2 192.1.2.23
+../../pluto/bin/ping-once.sh --up 192.1.2.23
 ipsec auto --up road-east-x509-ipv4
 ../../pluto/bin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 ipsec whack --trafficstatus
