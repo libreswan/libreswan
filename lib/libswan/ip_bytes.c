@@ -106,14 +106,14 @@ struct ip_bytes bytes_sub(const struct ip_info *afi,
 	struct ip_bytes diff = unset_bytes;
 
 	/* subtract: diff = hi - lo */
-	int carry = 0;
+	int borrow = 0;
 	for (int j = afi->ip_size - 1; j >= 0; j--) {
-		int val = l.byte[j] - r.byte[j] - carry;
+		int val = l.byte[j] - r.byte[j] - borrow;
 		if (val < 0) {
-			val += 0x100u;
-			carry = 1;
+			val += 0x100u;	/* clearer, but not needed */
+			borrow = 1;
 		} else {
-			carry = 0;
+			borrow = 0;
 		}
 		diff.byte[j] = val;
 	}
