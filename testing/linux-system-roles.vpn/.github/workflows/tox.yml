@@ -1,0 +1,77 @@
+# yamllint disable rule:line-length
+name: tox
+on:  # yamllint disable-line rule:truthy
+  - pull_request
+env:
+  TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.3.0"
+  LSR_ANSIBLES: 'ansible==2.8.* ansible==2.9.*'
+  LSR_MSCENARIOS: default
+  # LSR_EXTRA_PACKAGES: libdbus-1-dev
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pyver: ['2.7', '3.6', '3.7', '3.8']
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.pyver }}
+      - name: Install platform dependencies, python, tox, tox-lsr
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip
+          sudo apt-get update
+          sudo apt-get install git
+          pip install "$TOX_LSR"
+          lsr_ci_preinstall
+      - name: Run tox tests
+        run: |
+          set -euxo pipefail
+          toxpyver=$(echo "${{ matrix.pyver }}" | tr -d .)
+          toxenvs="py${toxpyver}"
+          case "$toxpyver" in
+          27) toxenvs="${toxenvs},coveralls,flake8,pylint,custom" ;;
+          36) toxenvs="${toxenvs},coveralls,black,yamllint,ansible-lint,shellcheck,custom,collection,ansible-test" ;;
+          37) toxenvs="${toxenvs},coveralls,custom" ;;
+          38) toxenvs="${toxenvs},coveralls,custom" ;;
+          esac
+          TOXENV="$toxenvs" lsr_ci_runtox
+  python-26:
+    runs-on: ubuntu-16.04
+    env:
+      PY26URL: https://storage.googleapis.com/travis-ci-language-archives/python/binaries/ubuntu/14.04/x86_64/python-2.6.tar.bz2
+      PY26TARFILE: "python-2.6.tar.bz2"
+      PY26VENVPATH: "/home/travis/virtualenv/python2.6"
+      VIRTUAL_ENV_DISABLE_PROMPT: "true"
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v2
+      - name: Install python, dependencies
+        run: |
+          set -euo pipefail
+          curl -sSf --retry 5 -o "$PY26TARFILE" "$PY26URL"
+          sudo tar xjf "$PY26TARFILE" --directory /
+          myuid=$(id -u)
+          mygid=$(id -g)
+          sudo chown -H -R $myuid:$mygid "$PY26VENVPATH"
+          source "$PY26VENVPATH/bin/activate"
+          set -x
+          python --version
+          pip --version
+          sudo apt-get update
+          sudo apt-get install git
+          pip install 'tox<3' 'virtualenv==15.*' 'pluggy==0.5.*' \
+          "$TOX_LSR"
+          lsr_ci_preinstall
+          pip list
+      - name: Run tox tests
+        run: |
+          set -euo pipefail
+          source "$PY26VENVPATH/bin/activate"
+          set -x
+          tox -e py26,coveralls26,custom

@@ -1,0 +1,198 @@
+---
+# yamllint disable rule:line-length
+- hosts: all
+
+  vars_files:
+    - './vars/main.yml'
+
+  vars:
+    __vpn_num_hosts: 2
+    __vpn_main_certname: "main_cert"
+    # see RFC 5737, the following CIDRs are provided for documentation/testing use
+    __vpn_private_host_cidr: "203.0.113.0/24"
+    __vpn_clear_host_cidr: "198.51.100.0/24"
+
+  tasks:
+
+    - name: Set up test environment
+      vars:
+        __vpn_opportunistic: true
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+
+        - name: Add extra options to check
+          set_fact:
+            vpn_connections: |
+              {% for tunnel in vpn_connections %}
+              {%   set pols = [] %}
+              {%   set private_pol = {"policy": "private", "cidr": __vpn_private_host_cidr} %}
+              {%   set clear_pol = {"policy": "clear", "cidr": __vpn_clear_host_cidr} %}
+              {%   set _ = pols.append(private_pol) %}
+              {%   set _ = pols.append(clear_pol) %}
+              {%   set _ = tunnel.__setitem__("auth_method", "cert") %}
+              {%   set _ = tunnel.__setitem__("opportunistic", true) %}
+              {%   set _ = tunnel.__setitem__("policies", pols) %}
+              {% endfor %}
+              {{ vpn_connections }}
+
+        - name: add cert_name fact to controller
+          set_fact:
+            cert_name: "{{ __vpn_main_certname }}"
+
+        - name: Use vpn role
+          include_role:
+            name: linux-system-roles.vpn
+          ignore_errors: true
+
+        - meta: flush_handlers
+
+        - name: Assert file existence
+          include_tasks: tasks/assert_mesh_conf_exists.yml
+
+        - name: reset success flag
+          set_fact:
+            __vpn_success: true
+
+        - name: get and store mesh.conf file
+          slurp:
+            src: "/etc/ipsec.d/mesh.conf"
+          register: __vpn_register_conf
+
+        - name: extract content for conn private
+          set_fact:
+            conn_private: "{{ __vpn_register_conf['content'] \
+                          | b64decode \
+                          | regex_findall ('^conn\\sprivate\\n[\\s\\S]*?(?=\\n\\n)', multiline=true) \
+                          | first }}"
+
+        - name: extract content for conn private-or-clear
+          set_fact:
+            conn_private_or_clear: "{{ __vpn_register_conf['content'] \
+                                  | b64decode \
+                                  | regex_findall ('^conn\\sprivate-or-clear\\n[\\s\\S]*?(?=\\n\\n)', multiline=true) \
+                                  | first }}"
+
+        - name: extract content for conn clear
+          set_fact:
+            conn_clear: "{{ __vpn_register_conf['content'] \
+                        | b64decode \
+                        | regex_findall ('^conn\\sclear\\n[\\s\\S]*', multiline=true) \
+                        | first }}"
+
+        - name: check that private section contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            conn_private is not search('type=tunnel') or
+            conn_private is not search('left=%defaultroute') or
+            conn_private is not search('leftid=%fromcert') or
+            conn_private is not search('rightid=%fromcert') or
+            conn_private is not search('rightrsasigkey=%cert') or
+            conn_private is not search('rightca=%same') or
+            conn_private is not search('leftcert=' + __vpn_main_certname) or
+            conn_private is not search('auto=route') or
+            conn_private is not search('right=%opportunisticgroup') or
+            conn_private is not search('negotiationshunt=hold') or
+            conn_private is not search('failureshunt=drop') or
+            conn_private is not search('ikev2=insist') or
+            conn_private is not search('keyingtries=1') or
+            conn_private is not search('retransmit-timeout=2s')
+
+        - name: assert success for private part of conf file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in conn private section of mesh.conf file
+
+        - name: check that private-or-clear section contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            conn_private_or_clear is not search('type=tunnel') or
+            conn_private_or_clear is not search('left=%defaultroute') or
+            conn_private_or_clear is not search('leftid=%fromcert') or
+            conn_private_or_clear is not search('rightid=%fromcert') or
+            conn_private_or_clear is not search('rightrsasigkey=%cert') or
+            conn_private_or_clear is not search('rightca=%same') or
+            conn_private_or_clear is not search('leftcert=' + __vpn_main_certname) or
+            conn_private_or_clear is not search('auto=route') or
+            conn_private_or_clear is not search('right=%opportunisticgroup') or
+            conn_private_or_clear is not search('negotiationshunt=hold') or
+            conn_private_or_clear is not search('failureshunt=passthrough') or
+            conn_private_or_clear is not search('ikev2=insist') or
+            conn_private_or_clear is not search('keyingtries=1') or
+            conn_private_or_clear is not search('retransmit-timeout=2s')
+
+        - name: assert success for private or clear part of conf file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in conn private-or-clear section of mesh.conf file
+
+        - name: check that clear section contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            conn_clear is not search('type=passthrough') or
+            conn_clear is not search('left=%defaultroute') or
+            conn_clear is not search('right=%group') or
+            conn_clear is not search('auto=route') or
+            conn_clear is not search('authby=never')
+
+        - name: assert success for clear part of conf file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in conn clear section of mesh.conf file
+
+        - name: get and store policies private file
+          slurp:
+            src: "/etc/ipsec.d/policies/private"
+          register: __vpn_register_private
+
+        - name: get and store policies private or clear file
+          slurp:
+            src: "/etc/ipsec.d/policies/private-or-clear"
+          register: __vpn_register_private_or_clear
+
+        - name: get and store policies clear file
+          slurp:
+            src: "/etc/ipsec.d/policies/clear"
+          register: __vpn_register_clear
+
+        - name: check contents of policy private file
+          set_fact:
+            __vpn_success: false
+          when: >-
+            __vpn_register_private['content'] | b64decode
+            is not search(__vpn_private_host_cidr)
+
+        - name: assert success for policy private file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors policies/private file
+
+        - name: check contents of policy private or clear file
+          set_fact:
+            __vpn_success: false
+          when: >-
+            __vpn_register_private_or_clear['content'] | b64decode
+            is not search(current_subnet) or
+            __vpn_register_private_or_clear['content'] | b64decode
+            is not search(__vpn_dynamic_hosts_dummy_cidr)
+
+        - name: assert success for policy private or clear file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors policies/private-or-clear file
+
+        - name: check contents of policy clear file
+          set_fact:
+            __vpn_success: false
+          when: >-
+            __vpn_register_clear['content'] | b64decode
+            is not search(__vpn_clear_host_cidr)
+
+        - name: assert success for policy clear file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors policies/clear file

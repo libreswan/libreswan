@@ -1,0 +1,51 @@
+- hosts: all
+  tasks:
+    - name: Set platform/version specific variables
+      include_role:
+        name: linux-system-roles.vpn
+        tasks_from: set_vars
+        public: true
+
+    - name: get service facts
+      service_facts:
+
+    - name: stop ipsec service
+      service:
+        name: ipsec
+        state: stopped
+        enabled: no
+      when: ansible_facts.services['ipsec.service'] is defined
+
+    - name: uninstall packages
+      package:
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ __vpn_packages | d([])}}"
+
+    - name: clean up files
+      vars:
+        tunnels: |
+          {% set unique_tunnels = [] %}
+          {% for connection in vpn_connections | d([])%}
+          {%   if inventory_hostname in connection.hosts %}
+          {%     for node in connection.hosts %}
+          {%       if node != inventory_hostname %}
+          {%         set _ = unique_tunnels.append(node) %}
+          {%       endif %}
+          {%     endfor %}
+          {%   endif %}
+          {% endfor %}
+          {{ unique_tunnels | unique }}
+
+      block:
+        - name: remove ipsec.conf files
+          file:
+            state: absent
+            path: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.conf"
+          with_items: "{{ tunnels }}"
+
+        - name: remove ipsec.secrets files
+          file:
+            state: absent
+            path: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.secrets"
+          with_items: "{{ tunnels }}"

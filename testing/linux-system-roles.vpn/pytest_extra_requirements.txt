@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+
+# Write extra requirements for running pytest here:
+# If you need ansible then uncomment the following line:
+#-ransible_pytest_extra_requirements.txt
+# If you need mock then uncomment the following line:
+#mock ; python_version < "3.0"

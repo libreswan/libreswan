@@ -1,0 +1,7 @@
+---
+vpn_provider: libreswan
+vpn_auth_method: psk
+vpn_regen_keys: false
+vpn_opportunistic: false
+vpn_connections: []
+vpn_default_policy: private-or-clear
