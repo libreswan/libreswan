@@ -1,7 +1,3 @@
-# testing nicrun
-nic #
- echo nicrun has run
-nicrun has run
 nic #
  # nic is used as the System Role provisioning host
 nic #
