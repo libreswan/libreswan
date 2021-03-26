@@ -151,6 +151,7 @@ KVM_UPGRADE_PACKAGES ?= \
     python3-pexpect \
     rpm-build \
     rsync \
+    selinux-policy-devel \
     screen \
     strace \
     systemd-devel \

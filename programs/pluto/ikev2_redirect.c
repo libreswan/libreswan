@@ -198,7 +198,7 @@ static chunk_t build_redirect_notification_data_str(const shunk_t dest,
 						    struct logger *logger)
 {
 	ip_address ip_addr;
-	err_t ugh = ttoaddr_num(dest.ptr, dest.len, AF_UNSPEC, &ip_addr);
+	err_t ugh = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
 
 	if (ugh != NULL) {
 		/*
@@ -315,7 +315,7 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 			break;	/* no more */
 
 		ip_address ip_addr;
-		err_t ugh = ttoaddr_num(t, len, AF_UNSPEC, &ip_addr);
+		err_t ugh = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
 
 		if (ugh != NULL) {
 			dbg("address %.*s isn't a valid address", len, t);
@@ -382,8 +382,8 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 		}
 
-		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
-					AF_UNSPEC, redirect_ip);
+		err_t ugh = ttoaddress_dns(shunk2(gw_str, gw_info.gw_identity_len),
+					   NULL/*UNSPEC*/, redirect_ip);
 		if (ugh != NULL)
 			return ugh;
 	} else {

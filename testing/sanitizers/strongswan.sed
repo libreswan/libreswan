@@ -16,9 +16,12 @@ s/^\(scheduling reauthentication in \)\([0-9]*s\)/\1XXXs/g
 s/\(scheduling rekeying in \)\([0-9]*s\)/\1XXXs/g
 s/\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g
 s/^\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g
-s/[0-9]* bytes_i ([0-9]* pkts, [0-9X]*s ago), [0-9X]* bytes_o ([0-9X]* pkts, [0-9X]*s ago), rekeying in [0-9X]* minutes/XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
-s/[0-9]* bytes_i ([0-9]*s ago), [0-9]* bytes_o ([0-9]* pkts, [0-9]*s ago), rekeying in [0-9]* minutes/XXX bytes_i (xxs ago), XX bytes_o (XX pkts, XXs ago), rekeying in XX minutes/g
-s/[0-9]* bytes_i, [0-9]* bytes_o, rekeying in [0-9]* minutes/XX bytes_i, XX bytes_o, rekeying in XX minutes/g
+
+s/ [0-9]* bytes_\([io]\),/ XX bytes_\1,/g
+s/ [0-9]* bytes_\([io]\) ([0-9X]*s ago),/ XXX bytes_\1 (XXs ago),/g
+s/ [0-9]* bytes_\([io]\) ([0-9]* pkts\?, [0-9X]*s ago),/ XXX bytes_\1 (XX pkts, XXs ago),/g
+s/ rekeying in [0-9X]* minutes/ rekeying in XX minutes/g
+
 s/([0-9]* bytes)/(XXX bytes)/g
 s/\(INSTALLED, T[A-Z]*, .* in UDP SPIs: \)[a-z0-9]*_i [a-z0-9]*_o/\1SPISPI_i SPISPI_o/g
 /^  worker threads: .*$/d

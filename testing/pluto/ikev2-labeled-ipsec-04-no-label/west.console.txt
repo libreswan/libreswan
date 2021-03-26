@@ -1,12 +1,13 @@
 /testing/guestbin/swan-prep
 west #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
 west #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
 west #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
-west #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ rm ipsecspd.pp
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -23,26 +24,28 @@ west #
 west #
  # expected to fail
 west #
+
+[ This connection should fail! ]
+
+
  ipsec auto --up labeled
 1v2 "labeled" #1: initiating IKEv2 connection
 1v2 "labeled" #1: sent IKE_SA_INIT request
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "labeled" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "labeled" #1: authenticated using RSA with SHA2_512
-238 "labeled" #2: state transition 'Initiator: process IKE_AUTH response' failed with v2N_TS_UNACCEPTABLE
-002 "labeled" #2: IMPAIR: retransmit so deleting SA
-002 "labeled" #2: liveness action - putting connection into hold
-002 "labeled" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
-002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "labeled" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "labeled" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:4300-4300 6]
+004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  echo done
 done
 west #
  ipsec whack --shutdown
 west #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
  ../bin/check-for-core.sh
 west #

@@ -696,7 +696,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * and an ID_FQDN containing a textual IP address?
 	 */
 	ip_address myip;
-	bool san_ip = (tnatoaddr(raw_id, 0, AF_UNSPEC, &myip) == NULL);
+	bool san_ip = (ttoaddress_num(shunk1(raw_id), NULL/*UNSPEC*/, &myip) == NULL);
 
 	/*
 	 * nameList is a pointer into a non-empty circular linked

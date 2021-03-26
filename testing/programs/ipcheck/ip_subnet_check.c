@@ -222,43 +222,42 @@ static void check_subnet_prefix(struct logger *logger)
 	}
 }
 
-static void check_subnet_contains(struct logger *logger)
+static void check_subnet_is(struct logger *logger)
 {
 	static const struct test {
 		int line;
 		int family;
 		const char *in;
 		bool is_unset;
-		bool is_specified;
-		bool contains_all_addresses;
-		bool contains_no_addresses;
-		bool contains_one_address;
+		uintmax_t size;
+		bool is_zero;
+		bool is_all;
 	} tests[] = {
 		/* unset */
 		{ LN, 0, NULL,           .is_unset = true, },
 		/* no_addresses */
-		{ LN, 4, "0.0.0.0/32",   .contains_no_addresses = true, },
-		{ LN, 6, "::/128",       .contains_no_addresses = true, },
+		{ LN, 4, "0.0.0.0/32",   .size = 1, .is_zero = true, },
+		{ LN, 6, "::/128",       .size = 1, .is_zero = true, },
 		/* one_address */
-		{ LN, 4, "127.0.0.1/32", .is_specified = true, .contains_one_address = true, },
-		{ LN, 6, "::1/128",      .is_specified = true, .contains_one_address = true, },
+		{ LN, 4, "127.0.0.1/32", .size = 1, },
+		{ LN, 6, "::1/128",      .size = 1, },
 		/* some_address+one_address? */
-		{ LN, 4, "127.0.0.0/31", .is_specified = true, },
-		{ LN, 6, "1::/127",      .is_specified = true, },
+		{ LN, 4, "127.0.0.0/31", .size = 2, },
+		{ LN, 6, "1::/127",      .size = 2, },
 		/* all addresses */
-		{ LN, 4, "0.0.0.0/0",    .is_specified = true, .contains_all_addresses = true, },
-		{ LN, 6, "::/0",         .is_specified = true, .contains_all_addresses = true, },
+		{ LN, 4, "0.0.0.0/0",    .size = (uintmax_t)1 << 32, .is_all = true, },
+		{ LN, 6, "::/0",         .size = UINTMAX_MAX,        .is_all = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s %s unset=%s all=%s some=%s none=%s",
+		PRINT("%s %s unset=%s size=%ju zero=%s all=%s",
 		      pri_family(t->family),
 		      t->in != NULL ? t->in : "<unset>",
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->is_specified),
-		      bool_str(t->contains_no_addresses));
+		      t->size,
+		      bool_str(t->is_zero),
+		      bool_str(t->is_all));
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
 		if (t->family != 0) {
@@ -270,11 +269,9 @@ static void check_subnet_contains(struct logger *logger)
 		}
 
 		CHECK_COND(subnet, is_unset);
-		CHECK_COND2(subnet, is_specified);
-		CHECK_COND2(subnet, contains_no_addresses);
-		CHECK_COND2(subnet, contains_one_address);
-		CHECK_COND2(subnet, contains_all_addresses);
-		CHECK_COND2(subnet, contains_all_addresses);
+		CHECK_COND2(subnet, is_all);
+		CHECK_COND2(subnet, is_zero);
+		CHECK_UNOP(subnet, size, "%ju", );
 	}
 }
 
@@ -284,12 +281,12 @@ static void check_subnet_from_address(void)
 		int line;
 		int family;
 		const char *in;
-		const char *mask;
+		const char *prefix_mask;
 	} tests[] = {
-		{ LN, 4, "0.0.0.0", NULL, },
-		{ LN, 6, "::", NULL, },
+		{ LN, 4, "0.0.0.0",   "255.255.255.255", },
+		{ LN, 6, "::",        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 		{ LN, 4, "127.0.0.1", "255.255.255.255", },
-		{ LN, 6, "::1",  "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ LN, 6, "::1",       "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -299,10 +296,11 @@ static void check_subnet_from_address(void)
 		const struct ip_info *type = IP_TYPE(t->family);
 
 		ip_address a;
-		err_t oops = numeric_to_address(shunk1(t->in), type, &a);
+		err_t oops = ttoaddress_num(shunk1(t->in), type, &a);
 		if (oops != NULL) {
-			FAIL("numeric_to_address() failed: %s", oops);
+			FAIL("ttoaddress_num() failed: %s", oops);
 		}
+
 		ip_subnet tmp = subnet_from_address(a), *subnet = &tmp;
 
 		CHECK_TYPE(subnet);
@@ -314,30 +312,20 @@ static void check_subnet_from_address(void)
 				str_address(&prefix, &pb), str_address(&a, &ab));
 		}
 
-		if (t->mask == NULL) {
-			continue;
-		}
-
-		ip_address m = subnet_prefix_mask(*subnet);
-		address_buf mb;
-		str_address(&m, &mb);
-		if (!streq(mb.buf, t->mask)) {
-			subnet_buf sb;
-			FAIL("subnet_mask(%s) returned %s, expecting %s",
-			     str_subnet(subnet, &sb), mb.buf, t->mask);
-		}
-
-		if (!subnet_contains_one_address(*subnet)) {
-			subnet_buf sb;
-			FAIL("subnet_contains_one_address(%s) unexpectedly failed",
-			     str_subnet(subnet, &sb));
-		}
-
 		if (!subnet_eq_address(*subnet, a)) {
 			subnet_buf sb;
 			address_buf ab;
 			FAIL("subnet_is_address(%s,%s) unexpectedly failed",
 			     str_subnet(subnet, &sb), str_address(&a, &ab));
+		}
+
+		ip_address m = subnet_prefix_mask(*subnet);
+		address_buf mb;
+		str_address(&m, &mb);
+		if (!streq(mb.buf, t->prefix_mask)) {
+			subnet_buf sb;
+			FAIL("subnet_mask(%s) returned %s, expecting %s",
+			     str_subnet(subnet, &sb), mb.buf, t->prefix_mask);
 		}
 	}
 }
@@ -391,16 +379,16 @@ static void check_address_mask_to_subnet(void)
 		      t->subnet != NULL ? t->subnet : "<error>");
 
 		ip_address address;
-		err = numeric_to_address(shunk1(t->address), NULL, &address);
+		err = ttoaddress_num(shunk1(t->address), NULL, &address);
 		if (err != NULL) {
-			FAIL("numeric_to_address(%s) failed: %s",
+			FAIL("ttoaddress_num(%s) failed: %s",
 			     t->address, err);
 		}
 
 		ip_address mask;
-		err = numeric_to_address(shunk1(t->mask), NULL, &mask);
+		err = ttoaddress_num(shunk1(t->mask), NULL, &mask);
 		if (err != NULL) {
-			FAIL("numeric_to_address(%s) failed: %s",
+			FAIL("ttoaddress_num(%s) failed: %s",
 			     t->mask, err);
 		}
 
@@ -429,7 +417,7 @@ void ip_subnet_check(struct logger *logger)
 	check_str_subnet(logger);
 	check_subnet_prefix(logger);
 	check_subnet_mask(logger);
-	check_subnet_contains(logger);
+	check_subnet_is(logger);
 	check_subnet_from_address();
 	check_address_mask_to_subnet();
 }

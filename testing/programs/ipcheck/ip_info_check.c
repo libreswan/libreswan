@@ -35,7 +35,7 @@
 		for (size_t tr = 0; tr < elemsof(R##_tests); tr++) {	\
 			const ip_##R *r = R##_tests[tr].R;		\
 			if (r == NULL) continue;			\
-			int expected = 0;				\
+			bool expected = false;				\
 			for (size_t to = 0; to < elemsof(L##_op_##R); to++) { \
 				const typeof(L##_op_##R[0]) *op = &L##_op_##R[to]; \
 				if (l == op->l && r == op->r) {		\
@@ -43,20 +43,45 @@
 					break;				\
 				}					\
 			}						\
-			int b = L##_##OP##_##R(*l, *r);			\
+			bool b = L##_##OP##_##R(*l, *r);		\
 			/* work with int *cmp() */			\
-			if ((b > 0 && expected <= 0) ||			\
-			    (b == 0 && expected != 0) ||		\
-			    (b < 0 && expected >= 0)) {			\
+			if (b != expected) {				\
 				L##_buf lb;				\
 				R##_buf rb;				\
-				FAIL(#L "_" #OP "_" #R "(%s,%s) returned %d, expected %d", \
-				     str_##L(l, &lb),			\
-				     str_##R(r, &rb),			\
-				     b, expected);			\
+				FAIL(#L "_" #OP "_" #R "(%s,%s) returned %s, expected %s", \
+				     str_##L(l, &lb), str_##R(r, &rb),	\
+				     bool_str(b), bool_str(expected));	\
 			}						\
 		}							\
 	}
+
+#define CHECK_FROM_ZERO(TO,FROM)					\
+		if (FROM != NULL) {					\
+			ip_##TO TO = TO##_from_##FROM(*FROM);		\
+			bool from_is_zero = (!FROM##_is_unset(FROM) &&	\
+					     !FROM##_is_specified(*FROM)); \
+			bool to_is_zero = TO##_is_zero(TO);		\
+			if (from_is_zero != to_is_zero) {		\
+				FROM##_buf b;				\
+				FAIL(#TO"_is_zero("#TO"_from_"#FROM"(%s)) returned %s, expecting %s", \
+				     str_##FROM(FROM, &b),		\
+				     bool_str(to_is_zero),		\
+				     bool_str(from_is_zero));		\
+			}						\
+		}
+
+#define CHECK_FROM(TO,FROM)						\
+		if (FROM != NULL) {					\
+			ip_##TO to = TO##_from_##FROM(*FROM);		\
+			bool all_from = FROM##_is_all(*FROM); \
+			bool all_to = TO##_is_all(to);	\
+			if (all_from != all_to) {				\
+				FROM##_buf b;				\
+				FAIL(#TO"_is_all("#TO"_from_"#FROM"(%s)) returned %s, expecting %s", \
+				     str_##FROM(FROM, &b),		\
+				     bool_str(all_to), bool_str(all_from)); \
+			}						\
+		}
 
 static const struct address_test {
 	int line;
@@ -96,17 +121,16 @@ static const struct subnet_test {
 	const ip_subnet *subnet;
 	const char *str;
 	bool is_unset;
-	bool is_specified;
-	bool contains_no_addresses;
-	bool contains_one_address;
-	bool contains_all_addresses;
+	uintmax_t size;
+	bool is_all;
+	bool is_zero;
 } subnet_tests[] = {
 	{ LN, 0, NULL,                    "<unset-subnet>", .is_unset = true, },
 	{ LN, 0, &unset_subnet,           "<unset-subnet>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.subnet.none,  "0.0.0.0/32",     .contains_no_addresses = true, },
-	{ LN, 6, &ipv6_info.subnet.none,  "::/128",         .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .is_specified = true, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.subnet.zero,  "0.0.0.0/32",     .is_zero = true, .size = 1, },
+	{ LN, 6, &ipv6_info.subnet.zero,  "::/128",         .is_zero = true, .size = 1, },
+	{ LN, 4, &ipv4_info.subnet.all,   "0.0.0.0/0",      .is_all = true, .size = (uintmax_t)1 << 32, },
+	{ LN, 6, &ipv6_info.subnet.all,   "::/0",           .is_all = true, .size = UINTMAX_MAX, },
 };
 
 static const struct range_test {
@@ -115,17 +139,16 @@ static const struct range_test {
 	const ip_range *range;
 	const char *str;
 	bool is_unset;
-	bool is_specified;
-	bool contains_no_addresses;
-	bool contains_one_address;
-	bool contains_all_addresses;
+	bool is_zero;
+	bool is_all;
+	uintmax_t size;
 } range_tests[] = {
-	{ LN, 0, NULL,                  "<unset-range>", .is_unset = true, },
-	{ LN, 0, &unset_range,          "<unset-range>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.range.none, "0.0.0.0-0.0.0.0",  .contains_no_addresses = true, },
-	{ LN, 6, &ipv6_info.range.none, "::-::",            .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-255.255.255.255",                    .is_specified = true, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.range.all,  "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 0, NULL,                  "<unset-range>",     .is_unset = true, },
+	{ LN, 0, &unset_range,          "<unset-range>",     .is_unset = true, },
+	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0-0.0.0.0",   .is_zero = true, .size = 1, },
+	{ LN, 6, &ipv6_info.range.zero, "::-::",             .is_zero = true, .size = 1, },
+	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-"IPv4_MAX,  .is_all = true,  .size = (uintmax_t)1<<32, },
+	{ LN, 6, &ipv6_info.range.all,  "::-"IPv6_MAX,       .is_all = true,  .size = UINTMAX_MAX, },
 };
 
 static const struct selector_test {
@@ -134,17 +157,16 @@ static const struct selector_test {
 	const ip_selector *selector;
 	const char *str;
 	bool is_unset;
-	bool is_specified;
-	bool contains_all_addresses;
+	bool is_zero;
+	bool is_all;
 	bool contains_one_address;
-	bool contains_no_addresses;
 } selector_tests[] = {
 	{ LN, 0, NULL,                     "<unset-selector>", .is_unset = true, },
 	{ LN, 0, &unset_selector,          "<unset-selector>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.selector.none, "0.0.0.0/32",       .contains_no_addresses = true, },
-	{ LN, 6, &ipv6_info.selector.none, "::/128",           .contains_no_addresses = true, },
-	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_specified = true, .contains_all_addresses = true, },
-	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .is_specified = true, .contains_all_addresses = true, },
+	{ LN, 4, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, },
+	{ LN, 6, &ipv6_info.selector.zero, "::/128",           .is_zero = true, },
+	{ LN, 4, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_all = true, },
+	{ LN, 6, &ipv6_info.selector.all,  "::/0",             .is_all = true, },
 };
 
 static void check_ip_info_address(void)
@@ -161,6 +183,10 @@ static void check_ip_info_address(void)
 		CHECK_COND2(address, is_any);
 		CHECK_COND2(address, is_specified);
 		CHECK_COND2(address, is_loopback);
+
+		CHECK_FROM_ZERO(subnet, address);
+		CHECK_FROM_ZERO(range, address);
+		CHECK_FROM_ZERO(selector, address);
 	}
 
 	static const struct {
@@ -199,6 +225,8 @@ static void check_ip_info_endpoint(void)
 				     hport, t->hport);
 			}
 		}
+
+		CHECK_FROM_ZERO(selector, endpoint);
 	}
 
 	static const struct {
@@ -225,12 +253,12 @@ static void check_ip_info_subnet(void)
 {
 	for (size_t ti = 0; ti < elemsof(subnet_tests); ti++) {
 		const struct subnet_test *t = &subnet_tests[ti];
-		PRINT("%s unset=%s all=%s some=%s none=%s",
+		PRINT("%s unset=%s size=%ju zero=%s all=%s",
 		      pri_family(t->family),
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->is_specified),
-		      bool_str(t->contains_no_addresses));
+		      t->size,
+		      bool_str(t->is_zero),
+		      bool_str(t->is_all));
 
 		const ip_subnet *subnet = t->subnet;
 		if (t->family != 0) {
@@ -240,14 +268,12 @@ static void check_ip_info_subnet(void)
 		CHECK_STR2(subnet);
 
 		CHECK_COND(subnet, is_unset);
+		CHECK_COND2(subnet, is_zero);
+		CHECK_COND2(subnet, is_all);
+		CHECK_UNOP(subnet, size, "%ju", /*NOP*/);
 
-		if (subnet == NULL) continue;
-
-		CHECK_COND2(subnet, is_specified);
-		CHECK_COND2(subnet, contains_no_addresses);
-		CHECK_COND2(subnet, contains_one_address);
-		CHECK_COND2(subnet, contains_all_addresses);
-
+		CHECK_FROM(range, subnet);
+		CHECK_FROM(selector, subnet);
 	}
 
 	static const struct {
@@ -259,42 +285,43 @@ static void check_ip_info_subnet(void)
 		/* any */
 		{ &unset_subnet, &unset_subnet, .eq = true, },
 		/* none in none */
-		{ &ipv4_info.subnet.none, &ipv4_info.subnet.none, .eq = true, .in = true, },
-		{ &ipv6_info.subnet.none, &ipv6_info.subnet.none, .eq = true, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.subnet.zero, .eq = true, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.subnet.zero, .eq = true, .in = true, },
 		/* all in all */
 		{ &ipv4_info.subnet.all,  &ipv4_info.subnet.all,  .eq = true, .in = true, },
 		{ &ipv6_info.subnet.all,  &ipv6_info.subnet.all,  .eq = true, .in = true, },
 		/* none in all */
-		{ &ipv4_info.subnet.none,  &ipv4_info.subnet.all,             .in = true, },
-		{ &ipv6_info.subnet.none,  &ipv6_info.subnet.all,             .in = true, },
+		{ &ipv4_info.subnet.zero,  &ipv4_info.subnet.all,             .in = true, },
+		{ &ipv6_info.subnet.zero,  &ipv6_info.subnet.all,             .in = true, },
 	};
-
-	CHECK_OP(subnet, eq, subnet);
-	CHECK_OP(subnet, in, subnet);
 
 	static const struct {
 		const ip_subnet *l;
 		const ip_address *r;
 		int eq;
 	} subnet_op_address[] = {
-		{ &ipv4_info.subnet.none, &ipv4_info.address.any, .eq = true, },
-		{ &ipv6_info.subnet.none, &ipv6_info.address.any, .eq = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.address.any, .eq = true, },
 	};
-
-	CHECK_OP(subnet, eq, address);
 
 	static const struct {
 		const ip_address *l;
 		const ip_subnet *r;
 		int in;
 	} address_op_subnet[] = {
+		{ &ipv4_info.address.any,      &ipv4_info.subnet.zero, .in = true, },
+		{ &ipv6_info.address.any,      &ipv6_info.subnet.zero, .in = true, },
 		{ &ipv4_info.address.any,      &ipv4_info.subnet.all, .in = true, },
 		{ &ipv6_info.address.any,      &ipv6_info.subnet.all, .in = true, },
 		{ &ipv4_info.address.loopback, &ipv4_info.subnet.all, .in = true, },
 		{ &ipv6_info.address.loopback, &ipv6_info.subnet.all, .in = true, },
 	};
-	CHECK_OP(address, in, subnet);
 
+	CHECK_OP(address, in, subnet);
+	CHECK_OP(subnet, in, subnet);
+
+	CHECK_OP(subnet, eq, address);
+	CHECK_OP(subnet, eq, subnet);
 }
 
 static void check_ip_info_range(void)
@@ -308,22 +335,88 @@ static void check_ip_info_range(void)
 		CHECK_TYPE(range);
 		CHECK_STR2(range);
 		CHECK_COND(range, is_unset);
-		CHECK_COND2(range, is_specified);
+		CHECK_COND2(range, is_zero);
+		CHECK_COND2(range, is_all);
+		CHECK_UNOP(range, size, "%ju", );
+
+		CHECK_FROM(selector, range);
 	}
 
+	static const struct {
+		const ip_range *l;
+		const ip_address *r;
+		bool eq;
+	} range_op_address[] = {
+		{ &unset_range, &unset_address, .eq = true, },
+		{ &ipv4_info.range.zero, &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.address.any, .eq = true, },
+	};
+
+	static const struct {
+		const ip_range *l;
+		const ip_subnet *r;
+		bool eq;
+	} range_op_subnet[] = {
+		{ &unset_range, &unset_subnet, .eq = true, },
+		{ &ipv4_info.range.all, &ipv4_info.subnet.all, .eq = true, },
+		{ &ipv6_info.range.all, &ipv6_info.subnet.all, .eq = true, },
+		/* clearly subnet isn't "none" */
+		{ &ipv4_info.range.zero, &ipv4_info.subnet.zero, .eq = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.subnet.zero, .eq = true, },
+	};
 
 	static const struct {
 		const ip_range *l;
 		const ip_range *r;
-		int eq;
+		bool eq;
+		bool in;
+		bool overlaps;
 	} range_op_range[] = {
 		{ &unset_range,                &unset_range,          .eq = true, },
-		{ &ipv4_info.range.none,       &ipv4_info.range.none, .eq = true, },
-		{ &ipv6_info.range.none,       &ipv6_info.range.none, .eq = true, },
-		{ &ipv4_info.range.all,        &ipv4_info.range.all,  .eq = true, },
-		{ &ipv6_info.range.all,        &ipv6_info.range.all,  .eq = true, },
+		{ &ipv4_info.range.zero,       &ipv4_info.range.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.range.zero,       &ipv6_info.range.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv4_info.range.zero,       &ipv4_info.range.all,  .in = true, .overlaps = true, },
+		{ &ipv6_info.range.zero,       &ipv6_info.range.all,  .in = true, .overlaps = true, },
+		{ &ipv4_info.range.all,        &ipv4_info.range.zero, .overlaps = true, },
+		{ &ipv6_info.range.all,        &ipv6_info.range.zero, .overlaps = true, },
+		{ &ipv4_info.range.all,        &ipv4_info.range.all,  .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.range.all,        &ipv6_info.range.all,  .eq = true, .in = true, .overlaps = true, },
 	};
+
+	static const struct {
+		const ip_subnet *l;
+		const ip_range *r;
+		bool in;
+	} subnet_op_range[] = {
+		{ &ipv4_info.subnet.zero, &ipv4_info.range.zero, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.range.zero, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.range.all, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.range.all, .in = true, },
+		{ &ipv4_info.subnet.all,  &ipv4_info.range.all, .in = true, },
+		{ &ipv6_info.subnet.all,  &ipv6_info.range.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_address *l;
+		const ip_range *r;
+		bool in;
+	} address_op_range[] = {
+		{ &ipv4_info.address.any, &ipv4_info.range.all, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.range.all, .in = true, },
+		{ &ipv4_info.address.any, &ipv4_info.range.zero, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.range.zero, .in = true, },
+		{ &ipv4_info.address.loopback, &ipv4_info.range.all, .in = true, },
+		{ &ipv6_info.address.loopback, &ipv6_info.range.all, .in = true, },
+	};
+
+	CHECK_OP(range, eq, address);
+	CHECK_OP(range, eq, subnet);
 	CHECK_OP(range, eq, range);
+
+	CHECK_OP(address, in, range);
+	CHECK_OP(subnet, in, range);
+	CHECK_OP(range, in, range);
+	CHECK_OP(range, overlaps, range);
 }
 
 static void check_ip_info_selector(void)
@@ -336,25 +429,131 @@ static void check_ip_info_selector(void)
 
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
+
 		CHECK_COND(selector, is_unset);
-		CHECK_COND2(selector, is_specified);
-		CHECK_COND2(selector, contains_no_addresses);
+		CHECK_COND2(selector, is_zero);
+		CHECK_COND2(selector, is_all);
+
 		CHECK_COND2(selector, contains_one_address);
-		CHECK_COND2(selector, contains_all_addresses);
 	}
 
 	static const struct {
 		const ip_selector *l;
 		const ip_selector *r;
 		int eq;
+		int in;
+		int overlaps;
 	} selector_op_selector[] = {
 		{ &unset_selector,             &unset_selector,          .eq = true, },
-		{ &ipv4_info.selector.none,    &ipv4_info.selector.none, .eq = true, },
-		{ &ipv6_info.selector.none,    &ipv6_info.selector.none, .eq = true, },
-		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, },
-		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, },
+		{ &ipv4_info.selector.zero,    &ipv4_info.selector.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.zero,    &ipv6_info.selector.zero, .eq = true, .in = true, .overlaps = true, },
+		{ &ipv4_info.selector.zero,    &ipv4_info.selector.all,  .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.zero,    &ipv6_info.selector.all,  .in = true, .overlaps = true, },
+		{ &ipv4_info.selector.all,     &ipv4_info.selector.zero, .overlaps = true, },
+		{ &ipv6_info.selector.all,     &ipv6_info.selector.zero, .overlaps = true, },
+		{ &ipv4_info.selector.all,     &ipv4_info.selector.all,  .eq = true, .in = true, .overlaps = true, },
+		{ &ipv6_info.selector.all,     &ipv6_info.selector.all,  .eq = true, .in = true, .overlaps = true, },
 	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_address *r;
+		int eq;
+	} selector_op_address[] = {
+		{ &unset_selector, &unset_address, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.address.any, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.address.any, .eq = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_subnet *r;
+		int eq;
+	} selector_op_subnet[] = {
+		{ &unset_selector, &unset_subnet, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.subnet.zero, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.subnet.zero, .eq = true, },
+		{ &ipv4_info.selector.all, &ipv4_info.subnet.all, .eq = true, },
+		{ &ipv6_info.selector.all, &ipv6_info.subnet.all, .eq = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_endpoint *r;
+		int eq;
+	} selector_op_endpoint[] = {
+		{ &unset_selector, &unset_endpoint, .eq = true, },
+	};
+
+	static const struct {
+		const ip_endpoint *l;
+		const ip_selector *r;
+		int in;
+	} endpoint_op_selector[1];
+	static const struct {
+		const ip_subnet *l;
+		const ip_selector *r;
+		int in;
+	} subnet_op_selector[] = {
+		{ &ipv4_info.subnet.zero, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.subnet.zero, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.subnet.zero, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.subnet.all, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.subnet.all, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_address *l;
+		const ip_selector *r;
+		int in;
+	} address_op_selector[] = {
+		{ &ipv4_info.address.any, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.address.any, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.address.any, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.address.loopback, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.address.loopback, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_range *l;
+		const ip_selector *r;
+		int in;
+	} range_op_selector[] = {
+		{ &ipv4_info.range.zero, &ipv4_info.selector.zero, .in = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.selector.zero, .in = true, },
+		{ &ipv4_info.range.zero, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.range.zero, &ipv6_info.selector.all, .in = true, },
+		{ &ipv4_info.range.all, &ipv4_info.selector.all, .in = true, },
+		{ &ipv6_info.range.all, &ipv6_info.selector.all, .in = true, },
+	};
+
+	static const struct {
+		const ip_selector *l;
+		const ip_range *r;
+		int eq;
+	} selector_op_range[] = {
+		{ &unset_selector, &unset_range, .eq = true, },
+		{ &ipv4_info.selector.zero, &ipv4_info.range.zero, .eq = true, },
+		{ &ipv6_info.selector.zero, &ipv6_info.range.zero, .eq = true, },
+		{ &ipv4_info.selector.all, &ipv4_info.range.all, .eq = true, },
+		{ &ipv6_info.selector.all, &ipv6_info.range.all, .eq = true, },
+	};
+
+	CHECK_OP(address, in, selector);
+	CHECK_OP(endpoint, in, selector);
+	CHECK_OP(subnet, in, selector);
+	CHECK_OP(range, in, selector);
+	CHECK_OP(selector, in, selector);
+
+	CHECK_OP(selector, eq, address);
+	CHECK_OP(selector, eq, endpoint);
+	CHECK_OP(selector, eq, subnet);
+	CHECK_OP(selector, eq, range);
 	CHECK_OP(selector, eq, selector);
+
+	CHECK_OP(selector, overlaps, selector);
 }
 
 void ip_info_check(void)

@@ -1,12 +1,13 @@
 /testing/guestbin/swan-prep
 west #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
 west #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
 west #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
-west #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ rm ipsecspd.pp
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -40,11 +41,13 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 west #
  ip xfrm pol
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
@@ -131,11 +134,13 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
@@ -159,8 +164,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
  ../bin/check-for-core.sh
 west #

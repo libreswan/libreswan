@@ -526,7 +526,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	if (selector_is_unset(&this->client)) {
 		return;
 	}
-	bool boring = (selector_contains_all_addresses(this->client) &&
+	bool boring = (selector_is_all(this->client) &&
 		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
 	if (!boring && !is_left) {
@@ -540,7 +540,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 			jam_string(buf, "vhost:?");
 		else
 			jam_string(buf,  "vnet:?");
-	} else if (selector_contains_no_addresses(this->client)) {
+	} else if (selector_is_zero(this->client)) {
 		jam_string(buf, "?");
 	} else {
 		jam_selector_subnet(buf, &this->client);
@@ -665,7 +665,7 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
  * Two symmetric ends separated by ...
  */
 
-#define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
+#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
 #define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
 static char *format_connection(char *buf, size_t buf_len,
@@ -1051,7 +1051,7 @@ static int extract_end(struct connection *c,
 	switch (dst->host_type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = domain_to_address(shunk1(dst->host_addr_name),
+		err_t er = ttoaddress_dns(shunk1(dst->host_addr_name),
 					     address_type(&dst->host_addr),
 					     &dst->host_addr);
 		if (er != NULL) {
@@ -2326,7 +2326,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd.that.client = selector_type(&d->spd.that.client)->selector.none;
+		d->spd.that.client = selector_type(&d->spd.that.client)->selector.zero;
 	}
 	connection_buf inst;
 	address_buf b;
@@ -2380,7 +2380,7 @@ static size_t jam_connection_client(struct jambuf *b,
 		s += jam_string(b, prefix);
 		if (selector_is_unset(&client)) {
 			s += jam_string(b, "?");
-		} else if (selector_contains_no_addresses(client)) {
+		} else if (selector_is_zero(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
 			s += jam_selector_subnet(b, &client);

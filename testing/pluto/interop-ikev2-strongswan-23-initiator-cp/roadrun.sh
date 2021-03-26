@@ -1,3 +1,3 @@
 strongswan up roadnet-eastnet-ikev2 | grep -v resolvconf
-ping -n -c 4 -I 192.0.2.1 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 echo done

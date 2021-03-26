@@ -247,7 +247,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 		while (ipstr != NULL) {
 			ip_address dnsip;
-			err_t e = ttoaddr_num(ipstr, 0, AF_INET, &dnsip);
+			err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &dnsip);
 
 			if (e != NULL) {
 				log_state(RC_LOG_SERIOUS, st,
@@ -447,7 +447,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		if (selector_is_unset(&c->spd.this.client) ||
-		    selector_contains_all_addresses(c->spd.this.client)) {
+		    selector_is_all(c->spd.this.client)) {
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");

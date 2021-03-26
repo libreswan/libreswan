@@ -46,11 +46,11 @@ void pexpect_range(const ip_range *r, where_t where);
 ip_range range_from_raw(where_t where, enum ip_version version,
 			const struct ip_bytes start, const struct ip_bytes end);
 
-ip_range range_from_subnet(const ip_subnet subnet);
 ip_range range_from_address(const ip_address subnet);
+ip_range range_from_subnet(const ip_subnet subnet);
 
-err_t addresses_to_range(const ip_address start, const ip_address end,
-			 ip_range *dst) MUST_USE_RESULT;
+err_t addresses_to_nonzero_range(const ip_address start, const ip_address end,
+				 ip_range *dst) MUST_USE_RESULT;
 
 err_t range_to_subnet(const ip_range range, ip_subnet *subnet) MUST_USE_RESULT;
 
@@ -81,25 +81,20 @@ const char *str_range(const ip_range *range, range_buf *buf);
 
 extern const ip_range unset_range;
 
-bool range_is_unset(const ip_range *r);
+bool range_is_unset(const ip_range *r);			/* handles NULL */
+const struct ip_info *range_type(const ip_range *r);	/* handles NULL */
 
-const struct ip_info *range_type(const ip_range *r);
+bool range_is_zero(ip_range range);	/* ::-ffff... or 0.0.0.0-0.0.0.0 */
+bool range_is_all(const ip_range r);	/* ::-:: or 0.0.0.0-0.0.0.0 */
 
-bool range_is_specified(const ip_range r);
-
-#if 0
-bool range_contains_no_addresses(const ip_range r);
-bool range_contains_one_address(const ip_range r);
-#endif
-bool range_contains_all_addresses(const ip_range r);
-
-bool range_eq_range(const ip_range l, const ip_range r);
-#if 0
-bool range_eq_subnet(const ip_range range, const ip_subnet subnet);
 bool range_eq_address(const ip_range range, const ip_address address);
-#endif
-bool range_in_range(const ip_range inner, const ip_range outer);
+bool range_eq_subnet(const ip_range range, const ip_subnet subnet);
+bool range_eq_range(const ip_range l, const ip_range r);
+
 bool address_in_range(const ip_address address, const ip_range range);
+bool subnet_in_range(const ip_subnet subnet, const ip_range range);
+bool range_in_range(const ip_range inner, const ip_range outer);
+
 bool range_overlaps_range(const ip_range l, const ip_range r);
 
 /*
@@ -120,10 +115,10 @@ uintmax_t range_size(const ip_range r);
 ip_address range_start(const ip_range range); /* floor */
 ip_address range_end(const ip_range range); /* ceiling */
 
-err_t range_to_address(const ip_range range, uintmax_t offset,
-		       ip_address *address) MUST_USE_RESULT;
+err_t range_offset_to_address(const ip_range range, uintmax_t offset,
+			      ip_address *address) MUST_USE_RESULT;
 
-err_t range_to_offset(const ip_range range, const ip_address address,
-		      uintmax_t *offset) MUST_USE_RESULT;
+err_t address_to_range_offset(const ip_range range, const ip_address address,
+			      uintmax_t *offset) MUST_USE_RESULT;
 
 #endif

@@ -1,6 +1,6 @@
 # temp file fixing
 ipsec whack --impair suppress-retransmits
 ipsec auto --up westnet-eastnet-ikev2
-ping -n -c 2 -I 192.0.1.254 192.0.2.254
+../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 echo done

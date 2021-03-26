@@ -54,10 +54,8 @@ west #
 031 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 000 "westnet-eastnet-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
- ping -n -c 2 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
  ../../pluto/bin/ipsec-look.sh
 west NOW

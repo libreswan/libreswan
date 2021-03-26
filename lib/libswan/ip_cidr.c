@@ -99,7 +99,7 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 
 	/* parse ADDRESS */
 	ip_address addr;
-	err = numeric_to_address(address, afi/*possibly NULL */,
+	err = ttoaddress_num(address, afi/*possibly NULL */,
 				 &addr);
 	if (err != NULL) {
 		return err;

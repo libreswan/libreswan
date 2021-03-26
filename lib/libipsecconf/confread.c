@@ -464,7 +464,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = numeric_to_address(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
+		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
@@ -562,29 +562,24 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
-			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-				      &end->nexthop) != NULL) {
+			ip_address nexthop = unset_address;
 #ifdef USE_DNSSEC
+			if (ttoaddress_num(shunk1(value), hostfam, &nexthop) != NULL) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(value,
-						     strlen(value), AF_INET,
-						     &end->nexthop, logger) &&
-				    !unbound_resolve(value,
-						strlen(value), AF_INET6,
-						     &end->nexthop, logger))
+				if (!unbound_resolve(value, hostfam, &nexthop, logger))
 					ERR_FOUND("bad value for %snexthop=%s\n",
-						leftright, value);
-#else
-				er = ttoaddr(value, 0, AF_UNSPEC,
-						&end->nexthop);
-				if (er != NULL)
-					ERR_FOUND("bad value for %snexthop=%s [%s]",
-						leftright, value,
-						er);
-#endif
+						  leftright, value);
 			}
+#else
+			err_t e = ttoaddress_dns(shunk1(value), hostfam, &nexthop);
+			if (e != NULL) {
+				ERR_FOUND("bad value for %snexthop=%s [%s]",
+					  leftright, value, e);
+			}
+#endif
+			end->nexthop = nexthop;
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
@@ -645,32 +640,32 @@ static bool validate_end(struct starter_conn *conn_st,
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
 
-		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &end->sourceip) != NULL) {
+		/*
+		 * XXX: suspect this lookup should be forced to use
+		 * the same family as the client.
+		 */
+		ip_address sourceip = unset_address;
 #ifdef USE_DNSSEC
+		/* try numeric first */
+		err_t e = ttoaddress_num(shunk1(value), NULL/*UNSPEC*/, &sourceip);
+		if (e != NULL) {
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
-			if (!unbound_resolve(value,
-					     strlen(value), AF_INET,
-					     &end->sourceip, logger) &&
-			    !unbound_resolve(value,
-					     strlen(value), AF_INET6,
-					     &end->sourceip, logger))
+			if (!unbound_resolve(value, &ipv4_info, &end->sourceip, logger) &&
+			    !unbound_resolve(value, &ipv6_info, &end->sourceip, logger))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
-#else
-			er = ttoaddr(value, 0, AF_UNSPEC, &end->sourceip);
-			if (er != NULL)
-				ERR_FOUND("bad addr %ssourceip=%s [%s]",
-					  leftright, value, er);
-#endif
-		} else {
-			er = tnatoaddr(value, 0, AF_UNSPEC, &end->sourceip);
-			if (er != NULL)
-				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
-					leftright, value, er);
 		}
+#else
+		/* try numeric then DNS */
+		err_t e = ttoaddress_dns(value, 0, AF_UNSPEC, &sourceip);
+		if (e != NULL) {
+			ERR_FOUND("bad addr %ssourceip=%s [%s]",
+				  leftright, value, e);
+		}
+#endif
+		end->sourceip = sourceip;
 		if (!end->has_client) {
 			end->subnet = subnet_from_address(end->sourceip);
 			end->has_client = TRUE;

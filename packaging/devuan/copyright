@@ -24,7 +24,6 @@ Files:
  lib/libswan/keyblobtoid.c
  lib/libswan/pfkey_error.c
  lib/libswan/pfkey_sock.c
- lib/libswan/rangetosubnet.c
  lib/libswan/sameaddr.c
  lib/libswan/sanitizestring.c
  lib/libswan/satoa.c

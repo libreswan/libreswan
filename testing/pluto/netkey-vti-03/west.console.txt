@@ -92,28 +92,21 @@ west #
  ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ping -n -c 4 -I 10.0.1.254 10.0.2.254
-PING 10.0.2.254 (10.0.2.254) from 10.0.1.254 : 56(84) bytes of data.
-64 bytes from 10.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 10.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 10.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 10.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 10.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 10.0.1.254 10.0.2.254
+up
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-vti-01", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-006 #4: "westnet-eastnet-vti-02", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #4: "westnet-eastnet-vti-02", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  # show packets went via ipsec0
 west #
  ifconfig ipsec0
 ipsec0: flags=193<UP,RUNNING,NOARP>  mtu 1480
         tunnel   txqueuelen 1000  (IPIP Tunnel)
-        RX packets 5  bytes 420 (420.0 B)
+        RX packets 2  bytes 168 (168.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 5  bytes 420 (420.0 B)
+        TX packets 2  bytes 168 (168.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 west #
  # show how our tunnel interface looks

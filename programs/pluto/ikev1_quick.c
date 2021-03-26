@@ -451,7 +451,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		}
 
 		err_t ughmsg = address_mask_to_subnet(temp_address, temp_mask, &net);
-		if (ughmsg == NULL && subnet_contains_no_addresses(net)) {
+		if (ughmsg == NULL && subnet_is_zero(net)) {
 			/* i.e., ::/128 or 0.0.0.0/32 */
 			ughmsg = "subnet contains no addresses";
 		}
@@ -486,8 +486,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 
-		err_t ughmsg = addresses_to_subnet(temp_address_from,
-						   temp_address_to, &net);
+		err_t ughmsg = addresses_to_nonzero_subnet(temp_address_from,
+							   temp_address_to, &net);
 		if (ughmsg != NULL) {
 			address_buf a, b;
 			llog(RC_LOG_SERIOUS, logger,

@@ -164,7 +164,7 @@ east #
  # normally xfrmcheck should never fail, but this tests the test :)
 east #
  ../bin/xfrmcheck.sh
-ERROR: XfrmInTmplMismatch 4
+ERROR: XfrmInTmplMismatch 1
 east #
  ../bin/check-for-core.sh
 east #

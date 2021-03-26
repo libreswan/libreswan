@@ -125,7 +125,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		if (strchr(flp->tok, '/') == NULL) {
 			/* no /, so treat as /32 or V6 equivalent */
 			ip_address t;
-			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
+			err_t err = ttoaddress_num(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
 					    "ignored, '%s' is not an address: %s",

@@ -114,7 +114,7 @@ static err_t do_selector_from_address(const struct selector *s,
 	}
 
 	ip_address address;
-	err_t err = numeric_to_address(shunk1(s->addresses), IP_TYPE(s->family), &address);
+	err_t err = ttoaddress_num(shunk1(s->addresses), IP_TYPE(s->family), &address);
 	if (err != NULL) {
 		return err;
 	}
@@ -248,46 +248,43 @@ static void check_numeric_to_selector(struct logger *logger)
 			    do_numeric_to_selector, logger);
 }
 
-static void check_selector_contains(struct logger *logger)
+static void check_selector_is(struct logger *logger)
 {
 	static const struct test {
 		int line;
 		struct selector from;
 		bool is_unset;
-		bool is_specified;
-		bool contains_no_addresses;
+		bool is_zero;
+		bool is_all;
 		bool contains_one_address;
-		bool contains_some_addresses;
-		bool contains_all_addresses;
 	} tests[] = {
 		/* all */
 		{ LN, { 0, NULL, NULL, },            .is_unset = true, },
 		/* all */
-		{ LN, { 4, "0.0.0.0/0", "0/0", },    .contains_all_addresses = true, },
-		{ LN, { 6, "::/0", "0/0", },         .contains_all_addresses = true, },
+		{ LN, { 4, "0.0.0.0/0", "0/0", },    .is_all = true, },
+		{ LN, { 6, "::/0", "0/0", },         .is_all = true, },
 		/* some */
-		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_specified = true, },
-		{ LN, { 6, "8000::/127", "0/0", },   .is_specified = true, },
+		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_unset = false, },
+		{ LN, { 6, "8000::/127", "0/0", },   .is_unset = false, },
 		/* one */
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, .is_specified = true, .contains_one_address = true, },
-		{ LN, { 6, "8000::/128", "0/0", },   .is_specified = true, .contains_one_address = true, },
+		{ LN, { 4, "127.0.0.1/32", "0/0", }, .contains_one_address = true, },
+		{ LN, { 6, "8000::/128", "0/0", },   .contains_one_address = true, },
 		/* none */
-		{ LN, { 4, "0.0.0.0/32", "0/0", },   .contains_no_addresses = true, },
-		{ LN, { 6, "::/128", "0/0", },       .contains_no_addresses = true, },
+		{ LN, { 4, "0.0.0.0/32", "0/0", },   .is_zero = true, },
+		{ LN, { 6, "::/128", "0/0", },       .is_zero = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		err_t err;
 		const struct test *t = &tests[ti];
-		PRINT("%s subnet=%s protoport=%s unset=%s all=%s some=%s one=%s none=%s",
+		PRINT("%s subnet=%s protoport=%s unset=%s zero=%s all=%s one=%s",
 		      pri_family(t->from.family),
 		      t->from.addresses != NULL ? t->from.addresses : "<unset>",
 		      t->from.protoport != NULL ? t->from.protoport : "<unset>",
 		      bool_str(t->is_unset),
-		      bool_str(t->contains_all_addresses),
-		      bool_str(t->contains_some_addresses),
-		      bool_str(t->contains_one_address),
-		      bool_str(t->contains_no_addresses));
+		      bool_str(t->is_zero),
+		      bool_str(t->is_all),
+		      bool_str(t->contains_one_address));
 
 		ip_selector tmp, *selector = &tmp;
 		err = do_numeric_to_selector(&t->from, selector, logger);
@@ -296,137 +293,139 @@ static void check_selector_contains(struct logger *logger)
 		}
 
 		CHECK_COND(selector, is_unset);
+		CHECK_COND2(selector, is_zero);
+		CHECK_COND2(selector, is_all);
 		CHECK_COND2(selector, contains_one_address);
-		CHECK_COND2(selector, contains_no_addresses);
-		CHECK_COND2(selector, contains_all_addresses);
 	}
 }
 
-static void check_in_selector(struct logger *logger)
+static void check_selector_op_selector(void)
 {
 
 	static const struct test {
 		int line;
-		struct selector inner;
-		struct selector outer;
+		const char *inner;
+		const char *outer;
 		bool selector;
 		bool address;
 		bool endpoint;
 	} tests[] = {
 
-		/* all */
+		/*
+		 * all - remember LHS needs a non-zero address
+		 */
 
-		{ LN, { 4, "0.0.0.0/0", "0/0", }, { 4, "0.0.0.0/0", "0/0", },             true, true, true, },
-		{ LN, { 6, "::/0", "0/0", },      { 6, "::/0", "0/0", },                  true, true, true, },
+		{ LN, "0.0.0.0/0:0/0", "0.0.0.0/0:0/0",        true,  true,  false, },
+		{ LN, "::/0:0/0",      "::/0:0/0",             true,  true,  false, },
 
-		{ LN, { 4, "0.0.0.0/0", "0/0", }, { 4, "0.0.0.0/0", "udp/10", },          false, true, false, },
-		{ LN, { 6, "::/0", "0/0", },      { 6, "::/0", "udp/10", },               false, true, false, },
+		{ LN, "0.0.0.0/0:0/0", "0.0.0.0/0:udp/10",     false, true,  false, },
+		{ LN, "::/0:0/0", "::/0:udp/10",               false, true,  false, },
 
-		{ LN, { 4, "0.0.0.0/0", "udp/10", }, { 4, "0.0.0.0/0", "0/0", },          true, true, true, },
-		{ LN, { 6, "::/0", "udp/10", },      { 6, "::/0", "0/0", },               true, true, true, },
+		{ LN, "0.0.0.0/0:udp/10", "0.0.0.0/0:0/0",     true,  true,  true, },
+		{ LN, "::/0:udp/10",      "::/0:0/0",          true,  true,  true, },
 
-		{ LN, { 4, "0.0.0.0/0", "udp/10", }, { 4, "0.0.0.0/0", "udp/10", },       true, true, true, },
-		{ LN, { 6, "::/0", "udp/10", },      { 6, "::/0", "udp/10", },            true, true, true, },
+		{ LN, "0.0.0.0/0:udp/10", "0.0.0.0/0:udp/10",  true,  true,  true, },
+		{ LN, "::/0:udp/10",      "::/0:udp/10",       true,  true,  true, },
 
-		{ LN, { 4, "0.0.0.0/0", "udp/10", }, { 4, "0.0.0.0/0", "udp/11", },       false, true, false, },
-		{ LN, { 6, "::/0", "udp/10", },      { 6, "::/0", "udp/11", },            false, true, false, },
+		{ LN, "0.0.0.0/0:udp/10", "0.0.0.0/0:udp/11",  false, true,  false, },
+		{ LN, "::/0:udp/10",      "::/0:udp/11",       false, true,  false, },
 
-		{ LN, { 4, "0.0.0.0/0", "udp/10", }, { 4, "0.0.0.0/0", "tcp/10", },       false, true, false, },
-		{ LN, { 6, "::/0", "udp/10", },      { 6, "::/0", "tcp/10", },            false, true, false, },
+		{ LN, "0.0.0.0/0:udp/10", "0.0.0.0/0:tcp/10",  false, true,  false, },
+		{ LN, "::/0:udp/10",      "::/0:tcp/10",       false, true,  false, },
 
 		/* some */
 
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, { 4, "127.0.0.0/31", "0/0", },       true,true, true, },
-		{ LN, { 6, "8000::/128", "0/0", },   { 6, "8000::/127", "0/0", },         true, true, true, },
+		{ LN, "127.0.0.1/32:0/0", "127.0.0.0/31:0/0",     true,true, true, },
+		{ LN, "8000::/128:0/0", "8000::/127:0/0",         true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, { 4, "127.0.0.0/31", "tcp/10", },    false, true, false, },
-		{ LN, { 6, "8000::/128", "0/0", },   { 6, "8000::/127", "tcp/10", },      false, true, false, },
+		{ LN, "127.0.0.1/32:0/0", "127.0.0.0/31:tcp/10",  false, true, false, },
+		{ LN, "8000::/128:0/0", "8000::/127:tcp/10",      false, true, false, },
 
-		{ LN, { 4, "127.0.0.1/32", "tcp/10", }, { 4, "127.0.0.0/31", "0/0", },    true, true, true, },
-		{ LN, { 6, "8000::/128", "tcp/10", },   { 6, "8000::/127", "0/0", },      true, true, true, },
+		{ LN, "127.0.0.1/32:tcp/10", "127.0.0.0/31:0/0",  true, true, true, },
+		{ LN, "8000::/128:tcp/10", "8000::/127:0/0",      true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "tcp/10", }, { 4, "127.0.0.0/31", "tcp/10", }, true, true, true, },
-		{ LN, { 6, "8000::/128", "tcp/10", },   { 6, "8000::/127", "tcp/10", },   true, true, true, },
+		{ LN, "127.0.0.1/32:tcp/10", "127.0.0.0/31:tcp/10", true, true, true, },
+		{ LN, "8000::/128:tcp/10", "8000::/127:tcp/10",   true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "tcp/10", }, { 4, "127.0.0.0/31", "tcp/11", }, false, true, false, },
-		{ LN, { 6, "8000::/128", "tcp/10", },   { 6, "8000::/127", "tcp/11", },   false, true, false, },
+		{ LN, "127.0.0.1/32:tcp/10", "127.0.0.0/31:tcp/11", false, true, false, },
+		{ LN, "8000::/128:tcp/10", "8000::/127:tcp/11",   false, true, false, },
 
-		{ LN, { 4, "127.0.0.1/32", "tcp/10", }, { 4, "127.0.0.0/31", "udp/10", }, false, true, false, },
-		{ LN, { 6, "8000::/128", "tcp/10", },   { 6, "8000::/127", "udp/10", },   false, true, false, },
+		{ LN, "127.0.0.1/32:tcp/10", "127.0.0.0/31:udp/10", false, true, false, },
+		{ LN, "8000::/128:tcp/10", "8000::/127:udp/10",   false, true, false, },
 
 		/* one */
 
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, { 4, "127.0.0.1/32", "0/0", },       true, true, true, },
-		{ LN, { 6, "8000::/128", "0/0", },   { 6, "8000::/128", "0/0", },         true, true, true, },
+		{ LN, "127.0.0.1/32:0/0", "127.0.0.1/32:0/0",       true, true, true, },
+		{ LN, "8000::/128:0/0", "8000::/128:0/0",         true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, { 4, "127.0.0.1/32", "udp/10", },    false, true, false, },
-		{ LN, { 6, "8000::/128", "0/0", },   { 6, "8000::/128", "udp/10", },      false, true, false, },
+		{ LN, "127.0.0.1/32:0/0", "127.0.0.1/32:udp/10",    false, true, false, },
+		{ LN, "8000::/128:0/0", "8000::/128:udp/10",      false, true, false, },
 
-		{ LN, { 4, "127.0.0.1/32", "udp/10", }, { 4, "127.0.0.1/32", "0/0", },    true, true, true, },
-		{ LN, { 6, "8000::/128", "udp/10", },   { 6, "8000::/128", "0/0", },      true, true, true, },
+		{ LN, "127.0.0.1/32:udp/10", "127.0.0.1/32:0/0",    true, true, true, },
+		{ LN, "8000::/128:udp/10", "8000::/128:0/0",      true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "udp/10", }, { 4, "127.0.0.1/32", "udp/10", }, true, true, true, },
-		{ LN, { 6, "8000::/128", "udp/10", },   { 6, "8000::/128", "udp/10", },   true, true, true, },
+		{ LN, "127.0.0.1/32:udp/10", "127.0.0.1/32:udp/10", true, true, true, },
+		{ LN, "8000::/128:udp/10", "8000::/128:udp/10",   true, true, true, },
 
-		{ LN, { 4, "127.0.0.1/32", "udp/10", }, { 4, "127.0.0.1/32", "udp/11", }, false, true, false, },
-		{ LN, { 6, "8000::/128", "udp/10", },   { 6, "8000::/128", "udp/11", },   false, true, false, },
+		{ LN, "127.0.0.1/32:udp/10", "127.0.0.1/32:udp/11", false, true, false, },
+		{ LN, "8000::/128:udp/10", "8000::/128:udp/11",   false, true, false, },
 
-		{ LN, { 4, "127.0.0.1/32", "udp/10", }, { 4, "127.0.0.1/32", "tcp/10", }, false, true, false, },
-		{ LN, { 6, "8000::/128", "udp/10", },   { 6, "8000::/128", "tcp/10", },   false, true, false, },
+		{ LN, "127.0.0.1/32:udp/10", "127.0.0.1/32:tcp/10", false, true, false, },
+		{ LN, "8000::/128:udp/10", "8000::/128:tcp/10",   false, true, false, },
 
 		/* allow ::/N:udp/10 provided it isn't ::/128 */
 
-		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/31", "0/0", },         false, false, false, },
-		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/127", "0/0", },             true,  true,  true, },
+		{ LN, "127.0.0.0/32:0/0", "0.0.0.0/31:0/0",    false, false, false, },
+		{ LN, "::1/128:0/0", "::/127:0/0",             true,  true,  true, },
 
-		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/31", "udp/10", },   false, false, false, },
-		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/127", "udp/10", },       true,  true,  true, },
+		{ LN, "127.0.0.0/32:udp/10", "0.0.0.0/31:udp/10",   false, false, false, },
+		{ LN, "::1/128:udp/10", "::/127:udp/10",       true,  true,  true, },
 
 		/* these a non-sensical - rhs has no addresses yet udp */
 
-		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "udp/10", },      false, false, false, },
-		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/128", "udp/10", },          false, false, false, },
+		{ LN, "127.0.0.0/32:0/0", "0.0.0.0/32:udp/10", false, false, false, },
+		{ LN, "::1/128:0/0", "::/128:udp/10",          false, false, false, },
 
-		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "udp/10", },   false, false, false, },
-		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/128", "udp/10", },       false, false, false, },
+		{ LN, "127.0.0.0/32:udp/10", "0.0.0.0/32:udp/10",   false, false, false, },
+		{ LN, "::1/128:udp/10", "::/128:udp/10",       false, false, false, },
 
-		/* none - so nothing can match */
+		/* zero - can match self */
 
-		{ LN, { 4, "127.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "0/0", },         false, false, false, },
-		{ LN, { 6, "::1/128", "0/0", },      { 6, "::/128", "0/0", },             false, false, false, },
+		{ LN, "127.0.0.0/32:0/0", "0.0.0.0/32:0/0",    false, false, false, },
+		{ LN, "::1/128:0/0",      "::/128:0/0",        false, false, false, },
 
-		{ LN, { 4, "127.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "0/0", },      false, false, false, },
-		{ LN, { 6, "::1/128", "udp/10", },      { 6, "::/128", "0/0", },          false, false, false, },
+		{ LN, "127.0.0.0/32:udp/10", "0.0.0.0/32:0/0", false, false, false, },
+		{ LN, "::1/128:udp/10",      "::/128:0/0",     false, false, false, },
 
-		{ LN, { 4, "0.0.0.0/32", "0/0", }, { 4, "0.0.0.0/32", "0/0", },           false, false, false, },
-		{ LN, { 6, "::/128", "0/0", },      { 6, "::/128", "0/0", },              false, false, false, },
+		{ LN, "0.0.0.0/32:0/0", "0.0.0.0/32:0/0",      true,  true,  false, },
+		{ LN, "::/128:0/0",     "::/128:0/0",          true,  true,  false, },
 
-		{ LN, { 4, "0.0.0.0/32", "udp/10", }, { 4, "0.0.0.0/32", "0/0", },        false, false, false, },
-		{ LN, { 6, "::/128", "udp/10", },      { 6, "::/128", "0/0", },           false, false, false, },
+		{ LN, "0.0.0.0/32:udp/10", "0.0.0.0/32:0/0",   true,  true,  true, },
+		{ LN, "::/128:udp/10", "::/128:0/0",           true,  true,  true, },
 
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		err_t err;
 		const struct test *t = &tests[ti];
-		PRINT("{ %s subnet=%s protoport=%s } in { %s subnet=%s protoport=%s } selector=%s address=%s endpoint=%s",
-		      pri_family(t->inner.family), t->inner.addresses, t->inner.protoport,
-		      pri_family(t->outer.family), t->outer.addresses, t->outer.protoport,
+		PRINT("%s in %s: selector=%s address=%s endpoint=%s",
+		      t->inner, t->outer,
 		      bool_str(t->selector),
 		      bool_str(t->address),
 		      bool_str(t->endpoint));
 
-		ip_selector outer_selector;
-		err = do_selector_from_subnet_protoport(&t->outer, &outer_selector, logger);
+		ip_selector inner_selector;
+		err = numeric_to_selector(shunk1(t->inner), NULL, &inner_selector);
 		if (err != NULL) {
-			FAIL("outer-selector failed: %s", err);
+			FAIL("numeric_to_selector(%s) failed: %s", t->inner, err);
 		}
 
-		ip_selector inner_selector;
-		err = do_selector_from_subnet_protoport(&t->inner, &inner_selector, logger);
+		ip_selector outer_selector;
+		err = numeric_to_selector(shunk1(t->outer), NULL, &outer_selector);
 		if (err != NULL) {
-			FAIL("inner-selector failed: %s", err);
+			FAIL("numeric_to_selector(%s) failed: %s", t->outer, err);
 		}
+
 		bool selector = selector_in_selector(inner_selector, outer_selector);
 		if (selector != t->selector) {
 			selector_buf si, so;
@@ -469,7 +468,7 @@ void ip_selector_check(struct logger *logger)
 {
 	check_selector_from_address(logger);
 	check_selector_from_subnet_protoport(logger);
-	check_selector_contains(logger);
-	check_in_selector(logger);
+	check_selector_is(logger);
 	check_numeric_to_selector(logger);
+	check_selector_op_selector();
 }

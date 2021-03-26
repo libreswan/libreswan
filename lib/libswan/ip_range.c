@@ -81,7 +81,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 
 	/* convert start address */
 	ip_address start_address;
-	err = numeric_to_address(start_token, afi/*possibly NULL*/, &start_address);
+	err = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
 	if (err != NULL) {
 		return err;
 	}
@@ -123,7 +123,7 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START-END */
 		ip_address end_address;
-		err = numeric_to_address(cursor, afi, &end_address);
+		err = ttoaddress_num(cursor, afi, &end_address);
 		if (err != NULL) {
 			/* includes IPv4 vs IPv6 */
 			return err;
@@ -182,10 +182,6 @@ ip_range range_from_address(const ip_address address)
 		return unset_range;
 	}
 
-	if (address_eq_address(address, afi->address.any)) {
-		return afi->range.all;
-	}
-
 	return range_from_raw(HERE, address.version,
 			      address.bytes, address.bytes);
 }
@@ -228,20 +224,24 @@ bool range_is_unset(const ip_range *range)
 	return !range->is_set;
 }
 
-bool range_is_specified(const ip_range range)
+bool range_is_zero(const ip_range range)
 {
 	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false; /* need IPv4 or IPv6 */
-	}
-
-	/* don't allow 0-0 aka unspecified */
-	if (range_eq_range(range, afi->range.none)) {
 		return false;
 	}
 
-	return true;
+	return range_eq_range(range, afi->range.zero);
+}
+
+bool range_is_all(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		return false;
+	}
+
+	return range_eq_range(range, afi->range.all);
 }
 
 uintmax_t range_size(const ip_range range)
@@ -272,6 +272,18 @@ uintmax_t range_size(const ip_range range)
 	return diff + 1;
 }
 
+bool range_eq_address(const ip_range range, const ip_address address)
+{
+	ip_range address_range = range_from_address(address);
+	return range_eq_range(range, address_range);
+}
+
+bool range_eq_subnet(const ip_range range, const ip_subnet subnet)
+{
+	ip_range subnet_range = range_from_subnet(subnet);
+	return range_eq_range(range, subnet_range);
+}
+
 bool range_eq_range(const ip_range l, const ip_range r)
 {
 	if (range_is_unset(&l) && range_is_unset(&r)) {
@@ -290,23 +302,14 @@ bool range_eq_range(const ip_range l, const ip_range r)
 
 bool address_in_range(const ip_address address, const ip_range range)
 {
-	const struct ip_info *afi = address_type(&address);
-	if (afi == NULL) {
-		return false;
-	}
+	ip_range address_range = range_from_address(address);
+	return range_in_range(address_range, range);
+}
 
-	if (range_type(&range) != afi) {
-		return false;
-	}
-
-	if (range_eq_range(range, afi->range.none)) {
-		return false;
-	}
-
-	return (bytes_cmp(address.version, address.bytes,
-			  range.version, range.start) >= 0 &&
-		bytes_cmp(address.version, address.bytes,
-			  range.version, range.end) <= 0);
+bool subnet_in_range(const ip_subnet subnet, const ip_range range)
+{
+	ip_range subnet_range = range_from_subnet(subnet);
+	return range_in_range(subnet_range, range);
 }
 
 bool range_in_range(const ip_range inner, const ip_range outer)
@@ -362,8 +365,7 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	return true;
 }
 
-err_t addresses_to_range(const ip_address start, const ip_address end,
-			 ip_range *dst)
+err_t addresses_to_nonzero_range(const ip_address start, const ip_address end, ip_range *dst)
 {
 	*dst = unset_range;
 
@@ -381,9 +383,9 @@ err_t addresses_to_range(const ip_address start, const ip_address end,
 		return "conflicting address types";
 	}
 
-	/* need both 0 */
-	if (address_is_any(start) && address_is_any(end)) {
-		return "empty address range";
+	/* reject both 0 */
+	if (thingeq(start.bytes, unset_bytes) && thingeq(end.bytes, unset_bytes)) {
+		return "zero address range";
 	}
 
 	if (addrcmp(&start, &end) > 0) {
@@ -416,7 +418,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	return NULL;
 }
 
-err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *address)
+err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address *address)
 {
 	*address = unset_address;
 
@@ -454,7 +456,7 @@ err_t range_to_address(const ip_range range, uintmax_t offset, ip_address *addre
 	return NULL;
 }
 
-err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t *offset)
+err_t address_to_range_offset(const ip_range range, const ip_address address, uintmax_t *offset)
 {
 	*offset = UINTMAX_MAX;
 
@@ -480,20 +482,6 @@ err_t range_to_offset(const ip_range range, const ip_address address, uintmax_t 
 	}
 
 	return NULL;
-}
-
-bool range_contains_all_addresses(const ip_range range)
-{
-	if (range_is_unset(&range)) {
-		return false;
-	}
-
-	const struct ip_info *afi = range_type(&range);
-	if (afi == NULL) {
-		return false;
-	}
-
-	return range_eq_range(range, afi->range.all);
 }
 
 void pexpect_range(const ip_range *r, where_t where)

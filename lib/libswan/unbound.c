@@ -37,6 +37,7 @@
 #include "dnssec.h"
 #include "constants.h"
 #include "lswlog.h"
+#include "ip_info.h"
 
 static struct ub_ctx *dns_ctx = NULL;
 
@@ -226,34 +227,28 @@ void unbound_sync_init(bool do_dnssec, const char *rootfile,
 }
 
 /*
- * synchronous blocking resolving - simple replacement of ttoaddr()
+ * synchronous blocking resolving - simple replacement of ttoaddress_dns()
  * src_len == 0 means "apply strlen"
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
-bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struct logger *logger)
+bool unbound_resolve(char *src, const struct ip_info *afi,
+		     ip_address *ipaddr, struct logger *logger)
 {
 	/* 28 = AAAA record, 1 = A record */
-	const int qtype = (af == AF_INET6) ? 28 : 1;
-	struct ub_result *result;
+	const int qtype = (afi == &ipv6_info) ? 28/*AAAA*/ : 1/*A*/;
 
 	passert(dns_ctx != NULL);
 
-	if (srclen == 0) {
-		srclen = strlen(src);
-		if (srclen == 0) {
-			llog(RC_LOG, logger, "empty hostname in host lookup");
-			return FALSE;
-		}
+	if (strlen(src) == 0) {
+		return diag("empty hostname in host lookup");
 	}
 
-	{
-		int ugh = ub_resolve(dns_ctx, src, qtype, 1 /* CLASS IN */,
-				&result);
-		if (ugh != 0) {
-			llog(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
-			ub_resolve_free(result);
-			return FALSE;
-		}
+	struct ub_result *result;
+	int ugh = ub_resolve(dns_ctx, src, qtype, 1 /* CLASS IN */, &result);
+	if (ugh != 0) {
+		llog(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
+		ub_resolve_free(result);
+		return FALSE;
 	}
 
 	if (result->bogus) {
@@ -263,6 +258,7 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 		ub_resolve_free(result);
 		return FALSE;
 	}
+
 	if (!result->havedata) {
 		if (result->secure) {
 			dbg("validated reply proves '%s' does not exist",
@@ -273,11 +269,11 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 		}
 		ub_resolve_free(result);
 		return FALSE;
-	} else if (!result->bogus) {
-		if (!result->secure) {
-			dbg("warning: %s lookup was not protected by DNSSEC!",
-				result->qname);
-		}
+	}
+
+	if (!result->secure) {
+		dbg("warning: %s lookup was not protected by DNSSEC!",
+		    result->qname);
 	}
 
 	if (DBGP(DBG_TMI)) {
@@ -298,24 +294,24 @@ bool unbound_resolve(char *src, size_t srclen, int af, ip_address *ipaddr, struc
 	}
 
 	/* XXX: for now pick the first one and return that */
+	passert(result->data != NULL);
 	passert(result->data[0] != NULL);
-	{
-		char dst[INET6_ADDRSTRLEN];
-		err_t err = tnatoaddr(
-			inet_ntop(af, result->data[0], dst,
-				(af == AF_INET) ? INET_ADDRSTRLEN :
-					INET6_ADDRSTRLEN),
-			0, af, ipaddr);
+	passert(result->len != NULL);
+
+	if ((size_t)result->len[0] != afi->ip_size) {
+		pexpect_fail(logger, HERE, "dns record is %u bytes, expecting %zu",
+			     result->len[0], afi->ip_size);
 		ub_resolve_free(result);
-		if (err == NULL) {
-			dbg("success for %s lookup",
-				(af == AF_INET) ? "IPv4" : "IPv6");
-			return TRUE;
-		} else {
-			llog(RC_LOG, logger, "tnatoaddr failed in unbound_resolve()");
-			return FALSE;
-		}
+		return false;
 	}
+
+	struct ip_bytes bytes = unset_bytes;
+	for (unsigned b = 0; b < afi->ip_size; b++) {
+		bytes.byte[b] = result->data[0][b];
+	}
+	*ipaddr = address_from_raw(HERE, afi->ip_version, bytes);
+	dbg("success for %s lookup", afi->ip_name);
+	return true;
 }
 
 struct ub_ctx * get_unbound_ctx(void)

@@ -247,7 +247,7 @@ static ip_address lease_address(const struct ip_pool *pool,
 				const struct lease *lease)
 {
 	ip_address address;
-	err_t err = range_to_address(pool->r, lease - pool->leases, &address);
+	err_t err = range_offset_to_address(pool->r, lease - pool->leases, &address);
 	if (err != NULL) {
 		/* shouldn't happen!?! */
 		log_pexpect(HERE, "range+offset failed: %s", err);
@@ -386,7 +386,7 @@ static struct lease *connection_lease(struct connection *c)
 	struct ip_pool *pool = c->pool;
 	ip_address prefix = selector_prefix(c->spd.that.client);
 	uintmax_t offset;
-	err_t err = range_to_offset(pool->r, prefix, &offset);
+	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
 		pexpect_fail(c->logger, HERE, "offset of address in range failed: %s", err);
 		return NULL;

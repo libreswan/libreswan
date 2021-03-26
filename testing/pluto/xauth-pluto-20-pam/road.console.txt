@@ -55,7 +55,7 @@ road #
 1v1 "xauth-road-eastnet" #4: sent Quick Mode request
 004 "xauth-road-eastnet" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=gooduser}
 road #
- ping -n -c4 192.0.2.254
+ ping -n -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms

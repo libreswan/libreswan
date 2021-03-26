@@ -29,6 +29,7 @@
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_bytes.h"
+#include "err.h"
 
 struct jambuf;
 
@@ -77,9 +78,8 @@ ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned pre
 /* barf if not valid */
 err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);
 
-/* this rejects ::-:: */
-extern err_t addresses_to_subnet(const ip_address from, const ip_address to,
-				 ip_subnet *dst) MUST_USE_RESULT;
+extern err_t addresses_to_nonzero_subnet(const ip_address from, const ip_address to,
+					 ip_subnet *dst) MUST_USE_RESULT;
 
 /*
  * Format as a string.
@@ -104,40 +104,27 @@ extern size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet);
  */
 
 extern const ip_subnet unset_subnet;
-bool subnet_is_unset(const ip_subnet *subnet);
 
-const struct ip_info *subnet_type(const ip_subnet *subnet);
+bool subnet_is_unset(const ip_subnet *subnet);			/* handles NULL */
+const struct ip_info *subnet_type(const ip_subnet *subnet);	/* handles NULL */
 
-/* !unset, !all, !none */
-bool subnet_is_specified(const ip_subnet subnet);
-/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-bool subnet_contains_all_addresses(const ip_subnet subnet);
-/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-bool subnet_contains_no_addresses(const ip_subnet subnet);
-bool subnet_contains_one_address(const ip_subnet subnet);
+bool subnet_is_zero(const ip_subnet subnet);	/* ::/128 or 0.0.0.0/32 */
+bool subnet_is_all(const ip_subnet subnet);	/* ::/0 or 0.0.0.0/0 */
 
-/* ADDRESS..ADDRESS in SUBNET */
 bool address_in_subnet(const ip_address address, const ip_subnet subnet);
 bool subnet_in_subnet(const ip_subnet lhs, const ip_subnet rhs);
-bool subnet_eq_subnet(const ip_subnet a, const ip_subnet b);
+
 bool subnet_eq_address(const ip_subnet selector, const ip_address address);
+/* subnet_eq_range() === range_eq_subnet() */
+bool subnet_eq_subnet(const ip_subnet a, const ip_subnet b);
 
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
 ip_address subnet_prefix(const ip_subnet subnet);
 ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
-
-/*
- * old
- */
-#include "err.h"
+uintmax_t subnet_size(const ip_subnet subnet);
 
 extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
 		       int clash, ip_subnet *dst, struct logger *logger);
-#define SUBNETTOT_BUF   sizeof(subnet_buf)
-
-/* misc. conversions and related */
-extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
-		    ip_subnet *dst);
 
 #endif

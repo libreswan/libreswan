@@ -54,6 +54,7 @@
 #include "secrets.h"
 #include "lswnss.h"
 #include "lswtool.h"
+#include "ip_info.h"
 
 #include <keyhi.h>
 #include <prerror.h>
@@ -271,12 +272,11 @@ static int show_dnskey(struct private_key_stuff *pks,
 	}
 
 	if (gateway != NULL) {
+		/* XXX: ttoaddress_dns() - knows how to figure out IPvX? */
 		ip_address test;
-		if (ttoaddr(gateway, strlen(gateway), AF_INET,
-			    &test) == NULL) {
+		if (ttoaddress_dns(shunk1(gateway), &ipv4_info, &test) == NULL) {
 			gateway_type = 1;
-		} else if (ttoaddr(gateway, strlen(gateway), AF_INET6,
-			    &test) == NULL) {
+		} else if (ttoaddress_dns(shunk1(gateway), &ipv6_info, &test) == NULL) {
 			gateway_type = 2;
 		} else {
 			fprintf(stderr, "%s: unknown address family for gateway %s",

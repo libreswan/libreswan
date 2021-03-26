@@ -850,9 +850,9 @@ struct family {
 	const struct ip_info *type;
 };
 
-static err_t opt_numeric_to_address(struct family *family, ip_address *address)
+static err_t opt_ttoaddress_num(struct family *family, ip_address *address)
 {
-	err_t err = numeric_to_address(shunk1(optarg), family->type, address);
+	err_t err = ttoaddress_num(shunk1(optarg), family->type, address);
 	if (err == NULL && family->type == NULL) {
 		family->type = address_type(address);
 		family->used_by = long_opts[long_index].name;
@@ -860,9 +860,9 @@ static err_t opt_numeric_to_address(struct family *family, ip_address *address)
 	return err;
 }
 
-static err_t opt_domain_to_address(struct family *family, ip_address *address)
+static err_t opt_ttoaddress_dns(struct family *family, ip_address *address)
 {
-	err_t err = domain_to_address(shunk1(optarg), family->type, address);
+	err_t err = ttoaddress_dns(shunk1(optarg), family->type, address);
 	if (err == NULL && family->type == NULL) {
 		family->type = address_type(address);
 		family->used_by = long_opts[long_index].name;
@@ -872,7 +872,7 @@ static err_t opt_domain_to_address(struct family *family, ip_address *address)
 
 static void opt_to_address(struct family *family, ip_address *address)
 {
-	diagq(opt_domain_to_address(family, address), optarg);
+	diagq(opt_ttoaddress_dns(family, address), optarg);
 }
 
 static ip_address get_address_any(struct family *family)
@@ -882,15 +882,6 @@ static ip_address get_address_any(struct family *family)
 		family->used_by = long_opts[long_index].name;
 	}
 	return family->type->address.any;
-}
-
-static ip_subnet get_subnet_none(struct family *family)
-{
-	if (family->type == NULL) {
-		family->type = &ipv4_info;
-		family->used_by = long_opts[long_index].name;
-	}
-	return family->type->subnet.none;
 }
 
 struct sockaddr_un ctl_addr = {
@@ -944,7 +935,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
-		this->client = get_subnet_none(caf);
+		this->client = unset_subnet;
 	}
 
 	/* check protocol */
@@ -1507,8 +1498,9 @@ int main(int argc, char **argv)
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo.local.address), optarg);
+			diagq(ttoaddress_dns(shunk1(optarg),
+					     aftoinfo(msg.tunnel_addr_family),
+					     &msg.oppo.local.address), optarg);
 			if (address_is_unset(&msg.oppo.local.address) ||
 			    address_is_any(msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
@@ -1518,8 +1510,9 @@ int main(int argc, char **argv)
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo.remote.address), optarg);
+			diagq(ttoaddress_dns(shunk1(optarg),
+					     aftoinfo(msg.tunnel_addr_family),
+					     &msg.oppo.remote.address), optarg);
 			if (address_is_unset(&msg.oppo.remote.address) ||
 			    address_is_any(msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
@@ -1592,7 +1585,7 @@ int main(int argc, char **argv)
 				msg.right.host_addr = get_address_any(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
-				if (opt_numeric_to_address(&host_family, &msg.right.host_addr) == NULL) {
+				if (opt_ttoaddress_num(&host_family, &msg.right.host_addr) == NULL) {
 					/*
 					 * we have a proper numeric IP
 					 * address.
@@ -1605,7 +1598,7 @@ int main(int argc, char **argv)
 					 * the syntax.
 					 */
 					msg.dnshostname = optarg;
-					opt_domain_to_address(&host_family, &msg.right.host_addr);
+					opt_ttoaddress_dns(&host_family, &msg.right.host_addr);
 					/*
 					 * we don't fail here.  pluto
 					 * will re-check the DNS later

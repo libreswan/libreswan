@@ -111,7 +111,7 @@ err_t atoid(const char *src, struct id *id)
 			&ipv4_info :
 			&ipv6_info;
 		ip_address addr;
-		err_t ugh = domain_to_address(shunk1(src), afi, &addr);
+		err_t ugh = ttoaddress_dns(shunk1(src), afi, &addr);
 		if (ugh != NULL) {
 			return ugh;
 		}

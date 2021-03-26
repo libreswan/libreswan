@@ -33,15 +33,8 @@ selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA road-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.3.209/32 === 192.0.2.0/24
 connection 'road-eastnet-ikev2' established successfully
 road #
- ping -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up 192.0.2.254
+up
 road #
  echo done
 done

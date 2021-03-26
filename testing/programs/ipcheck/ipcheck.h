@@ -110,7 +110,7 @@ extern bool use_dns;
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\
 			if (EXPECTED == NULL) {				\
-					FAIL(#EXPECTED " is NULL");	\
+				FAIL(#EXPECTED " is NULL");		\
 			}						\
 			BUF buf;					\
 			const char *s = str_##OP(__VA_ARGS__, &buf);	\
@@ -189,5 +189,20 @@ extern bool use_dns;
 				     bool_str(t->COND));		\
 			}						\
 		}
+
+#define CHECK_UNOP(T, OP, PRI, STR)					\
+		if (T != NULL) {					\
+			typeof(t->OP) op = T##_##OP(*T);		\
+			if (op != t->OP) {				\
+				T##_buf b;				\
+				FAIL(#T "_" #OP "(%s) returned "PRI", expecting "PRI, \
+				     str_##T(T, &b),			\
+				     STR(op),				\
+				     STR(t->OP));			\
+			}						\
+		}
+
+#define IPv4_MAX "255.255.255.255"
+#define IPv6_MAX "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
 
 #endif

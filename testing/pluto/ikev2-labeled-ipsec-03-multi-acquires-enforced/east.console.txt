@@ -1,12 +1,13 @@
 /testing/guestbin/swan-prep
 east #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
 east #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
 east #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
-east #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ rm ipsecspd.pp
 east #
  setenforce 1
 east #
@@ -24,8 +25,9 @@ east #
 [x] PID
 east #
  echo "initdone"
+runcon: ‘ipsec’: Permission denied    <--- needs fixing
 initdone
-[1]+  Segmentation fault      runcon -t netutils_t ipsec getpeercon_server 4300
+[1]+  Exit 126                runcon -t netutils_t ipsec getpeercon_server 4300
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW
@@ -65,12 +67,13 @@ Certificate Nickname                                         Trust Attributes
 east #
  ../bin/check-for-core.sh
 east #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+east #
+ rm -rf tmp ipsecspd.fc ipsecspd.if
 east #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 #============= netutils_t ==============
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t shell_exec_t:file map;
+allow netutils_t bin_t:file entrypoint;            <---- needs fixing
 east #
  

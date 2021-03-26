@@ -1,12 +1,13 @@
 /testing/guestbin/swan-prep
 west #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
 west #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
 west #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
-west #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ rm ipsecspd.pp
 west #
  setenforce 1
 west #
@@ -42,11 +43,13 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 west #
  ip xfrm pol
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
@@ -85,6 +88,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket in priority 0 ptype main 
 west #
  echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+runcon: ‘nc’: Permission denied
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
@@ -119,11 +123,13 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
@@ -149,12 +155,13 @@ Certificate Nickname                                         Trust Attributes
 west #
  ../bin/check-for-core.sh
 west #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf tmp ipsecspd.fc ipsecspd.if
 west #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 #============= netutils_t ==============
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t bin_t:file map;
+allow netutils_t bin_t:file entrypoint;     <---- needs fixing
 west #
  

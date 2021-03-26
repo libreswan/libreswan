@@ -26,23 +26,47 @@ bool selector_is_unset(const ip_selector *selector)
 	if (selector == NULL) {
 		return true;
 	}
+
 	return !selector->is_set;
 }
 
-bool selector_is_specified(const ip_selector selector)
+bool selector_is_zero(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_type(&selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown+any */
+		return false;
+	}
+
+	/* ::/128 or 0.0.0.0/32 */
+	return selector_eq_selector(selector, afi->selector.zero);
+}
+
+bool selector_is_all(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_type(&selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown+any */
+		return false;
+	}
+
+	/* ::/0 or 0.0.0.0/0 */
+	return selector_eq_selector(selector, afi->selector.all);
+}
+
+bool selector_contains_one_address(const ip_selector selector)
 {
 	const struct ip_info *afi = selector_type(&selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
-		return false; /* need IPv4 or IPv6 */
-	}
-
-	/* don't allow ::/128 et.al. */
-	if (selector_eq_selector(selector, afi->selector.none)) {
 		return false;
 	}
 
-	return true;
+	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
+	return (!thingeq(selector.bytes, unset_bytes) &&
+		selector.maskbits == afi->mask_cnt &&
+		selector.ipproto == 0 &&
+		selector.hport == 0);
 }
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
@@ -78,6 +102,7 @@ size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector)
 	if (!log_ip) {
 		return jam_string(buf, "<selector>");
 	}
+
 	return jam_selector(buf, selector);
 }
 
@@ -136,6 +161,7 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
 	if(!log_ip) {
 		return jam_string(buf, "<selector> -> <selector>");
 	}
+
 	return jam_selectors(buf, src, dst);
 }
 
@@ -224,6 +250,17 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 				 &ip_protocol_unset, unset_port);
 }
 
+ip_selector selector_from_range(const ip_range range)
+{
+	if (range_is_unset(&range)) {
+		return unset_selector;
+	}
+
+	ip_subnet subnet;
+	happy(range_to_subnet(range, &subnet));
+	return selector_from_subnet_protocol_port(subnet, &ip_protocol_unset, unset_port);
+}
+
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port)
@@ -243,6 +280,7 @@ ip_selector selector_from_address_protoport(const ip_address address,
 	if (address_is_unset(&address)) {
 		return unset_selector;
 	}
+
 	ip_subnet subnet = subnet_from_address(address);
 	return selector_from_subnet_protoport(subnet, protoport);
 }
@@ -270,6 +308,7 @@ ip_port selector_port(const ip_selector selector)
 	if (selector_is_unset(&selector)) {
 		return unset_port;
 	}
+
 	return ip_hport(selector.hport);
 }
 
@@ -325,61 +364,53 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
-	return address_from_blit(afi, selector.bytes,
-				 /*routing-prefix*/ &set_bits,
-				 /*host-identifier*/ &clear_bits,
-				 selector.maskbits);
-}
-
-bool selector_contains_all_addresses(const ip_selector selector)
-{
-	/* needs to  be set to IPv4 or IPv6 */
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		return false;
-	}
-
-	/* ::/0 or 0.0.0.0/0 */
-	return selector_eq_selector(selector, afi->selector.all);
-}
-
-bool selector_contains_one_address(const ip_selector selector)
-{
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false;
-	}
-
-	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	return (!thingeq(selector.bytes, unset_bytes) &&
-		selector.maskbits == afi->mask_cnt &&
-		selector.ipproto == 0 &&
-		selector.hport == 0);
+	struct ip_bytes prefix = bytes_from_blit(afi, selector.bytes,
+						 /*routing-prefix*/ &set_bits,
+						 /*host-identifier*/ &clear_bits,
+						 selector.maskbits);
+	return address_from_raw(HERE, afi->ip_version, prefix);
 }
 
 bool selector_eq_address(const ip_selector selector, const ip_address address)
 {
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown+any */
-		return false;
-	}
-
 	ip_selector s = selector_from_address(address);
 	return selector_eq_selector(selector, s);
 }
 
-bool selector_contains_no_addresses(const ip_selector selector)
+bool selector_eq_endpoint(const ip_selector selector, const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = selector_type(&selector);
-	if (afi == NULL) {
-		/* NULL+unset+unknown+any */
-		return false;
-	}
+	ip_selector es = selector_from_endpoint(endpoint);
+	return selector_eq_selector(selector, es);
+}
 
-	/* ::/128 or 0.0.0.0/32 */
-	return selector_eq_selector(selector, afi->selector.none);
+bool selector_eq_subnet(const ip_selector selector, const ip_subnet subnet)
+{
+	ip_selector ss = selector_from_subnet(subnet);
+	return selector_eq_selector(selector, ss);
+}
+
+bool selector_eq_range(const ip_selector selector, const ip_range range)
+{
+	ip_selector s = selector_from_range(range);
+	return selector_eq_selector(selector, s);
+}
+
+bool address_in_selector(const ip_address address, const ip_selector selector)
+{
+	ip_selector as = selector_from_address(address);
+	return selector_in_selector(as, selector);
+}
+
+bool subnet_in_selector(const ip_subnet subnet, const ip_selector selector)
+{
+	ip_selector ss = selector_from_subnet(subnet);
+	return selector_in_selector(ss, selector);
+}
+
+bool range_in_selector(const ip_range range, const ip_selector selector)
+{
+	ip_selector rs = selector_from_range(range);
+	return selector_in_selector(rs, selector);
 }
 
 bool selector_in_selector(const ip_selector i, const ip_selector o)
@@ -394,11 +425,6 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 
 	/* work in */
 	if (selector_type(&o) != afi) {
-		return false;
-	}
-
-	/* exclude outer ::/128 */
-	if (thingeq(o.bytes, unset_bytes) && o.maskbits == afi->mask_cnt) {
 		return false;
 	}
 
@@ -436,8 +462,8 @@ bool address_in_selector_subnet(const ip_address address, const ip_selector sele
 		return false;
 	}
 
-	ip_range range = selector_range(selector);
-	return address_in_range(address, range);
+	ip_subnet subnet = selector_subnet(selector);
+	return address_in_subnet(address, subnet);
 }
 
 bool endpoint_in_selector(const ip_endpoint endpoint, const ip_selector selector)
@@ -456,15 +482,23 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 		/* NULL/unset selectors are equal */
 		return true;
 	}
+
 	if (selector_is_unset(&l) || selector_is_unset(&r)) {
 		return false;
 	}
+
 	/* must compare individual fields */
 	return (l.version == r.version &&
 		thingeq(l.bytes, r.bytes) &&
 		l.maskbits == r.maskbits &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
+}
+
+bool selector_overlaps_selector(const ip_selector l, const ip_selector r)
+{
+	/* since these are just subnets */
+	return (selector_in_selector(l, r) || selector_in_selector(r, l));
 }
 
 void pexpect_selector(const ip_selector *s, where_t where)
@@ -520,7 +554,7 @@ err_t numeric_to_selector(shunk_t input,
 	/* fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token)); */
 
 	ip_address address;
-	oops = numeric_to_address(address_token, afi/*possibly NULL*/, &address);
+	oops = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
 	if (oops != NULL) {
 		return oops;
 	}
@@ -552,11 +586,11 @@ err_t numeric_to_selector(shunk_t input,
 		return "missing prefix bit size";
 	}
 
-	ip_address host = address_from_blit(afi, address.bytes,
-					    /*routing-prefix*/&clear_bits,
-					    /*host-identifier*/&keep_bits,
-					    prefix_bits);
-	if (!address_eq_address(host, afi->address.any)) {
+	struct ip_bytes host = bytes_from_blit(afi, address.bytes,
+					       /*routing-prefix*/&clear_bits,
+					       /*host-identifier*/&keep_bits,
+					       prefix_bits);
+	if (!thingeq(host, unset_bytes)) {
 		return "host-identifier must be zero";
 	}
 
@@ -646,6 +680,7 @@ bool selector_subnet_eq_address(const ip_selector selector, const ip_address add
 	if (address_is_unset(&address) || selector_is_unset(&selector)) {
 		return false;
 	}
+
 	ip_subnet subnet = selector_subnet(selector);
 	return subnet_eq_address(subnet, address);
 }

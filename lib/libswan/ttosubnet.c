@@ -64,7 +64,7 @@ err_t ttosubnet(shunk_t src,
 
 	/* parse ADDR */
 	ip_address addrtmp;
-	oops = numeric_to_address(addr, afi, &addrtmp);
+	oops = ttoaddress_num(addr, afi, &addrtmp);
 	if (oops != NULL) {
 		return oops;
 	}
@@ -83,7 +83,7 @@ err_t ttosubnet(shunk_t src,
 	if (oops != NULL) {
 		if (afi == &ipv4_info) {
 			ip_address masktmp;
-			oops = numeric_to_address(mask, afi, &masktmp);
+			oops = ttoaddress_num(mask, afi, &masktmp);
 			if (oops != NULL) {
 				return oops;
 			}

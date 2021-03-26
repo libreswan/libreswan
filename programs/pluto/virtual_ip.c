@@ -388,8 +388,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	if (virt == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_HOST &&
-	    !subnet_contains_one_address(peer_net)) {
+	if (virt->flags & F_VIRTUAL_HOST && subnet_size(peer_net) != 1) {
 		return "only virtual host single IPs are allowed";
 	}
 

@@ -794,7 +794,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			bool pass_remote = false;
 
 			if (m->remote_host != NULL) {
-				oops = ttoaddr(m->remote_host, 0, AF_UNSPEC, &testip);
+				oops = ttoaddress_dns(shunk1(m->remote_host), NULL/*UNSPEC*/, &testip);
 
 				if (oops != NULL) {
 					whack_log(RC_NOPEERIP, whackfd,

@@ -71,6 +71,9 @@ void pexpect_address(const ip_address *a, where_t where);
  * Constructors.
  */
 
+ip_address address_from_raw(where_t where, enum ip_version version,
+			    const struct ip_bytes bytes);
+
 ip_address address_from_in_addr(const struct in_addr *in);
 ip_address address_from_in6_addr(const struct in6_addr *sin6);
 err_t data_to_address(const void *data, size_t sizeof_data,
@@ -79,9 +82,9 @@ err_t data_to_address(const void *data, size_t sizeof_data,
 #define hunk_to_address(HUNK, AF, DST) data_to_address(HUNK.ptr, HUNK.len, AF, DST)
 
 /* assumes dotted / colon notation */
-err_t numeric_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
+err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 /* if numeric lookup fails, try a DNS lookup */
-err_t domain_to_address(shunk_t src, const struct ip_info *type, ip_address *dst);
+err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
 /*
  * Convert an address to a string:
@@ -159,32 +162,11 @@ chunk_t address_as_chunk(ip_address *address);
 uint32_t ntohl_address(const ip_address *address);
 
 /*
- * Modify an address routing-prefix:host-id.
- */
-
-ip_address address_from_blit(const struct ip_info *afi,
-			     const struct ip_bytes bytes,
-			     const struct ip_blit *routing_prefix,
-			     const struct ip_blit *host_id,
-			     unsigned prefix_bit_length);
-
-/* address_from_blit(AFI, BYTES, clear_bits, keep_bits, 0); */
-ip_address address_from_raw(where_t where, enum ip_version version,
-			    const struct ip_bytes bytes);
-
-/*
  * Old style.
  */
 
-/* looks up names in DNS */
-extern err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
-
-/* does not look up names in DNS */
-extern err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
-
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     sizeof(address_reversed_buf)
-extern err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);
