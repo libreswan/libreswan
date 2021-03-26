@@ -1,0 +1,6 @@
+---
+- name: Ensure that the role runs with default parameters
+  hosts: all
+
+  roles:
+    - linux-system-roles.vpn
