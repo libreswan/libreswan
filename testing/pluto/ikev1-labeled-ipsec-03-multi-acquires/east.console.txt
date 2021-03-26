@@ -1,5 +1,18 @@
 /testing/guestbin/swan-prep
 east #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+east #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+east #
+ rm ipsecspd.pp
+east #
+ setsebool domain_can_mmap_files=1
+east #
+ setsebool nis_enabled=1
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
@@ -74,20 +87,13 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+east #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
-#============= netutils_t ==============
-allow netutils_t bin_t:file entrypoint;
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t shell_exec_t:file map;
-allow netutils_t shell_exec_t:file execute;
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
-allow netutils_t unreserved_port_t:tcp_socket name_bind;
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t usr_t:file map;
-allow netutils_t usr_t:file { execute execute_no_trans };
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
 east #
  

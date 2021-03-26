@@ -1,5 +1,18 @@
 /testing/guestbin/swan-prep
 west #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+west #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+west #
+ rm ipsecspd.pp
+west #
+ setsebool domain_can_mmap_files=1
+west #
+ setsebool nis_enabled=1
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
@@ -103,7 +116,7 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=148, outBytes=205, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  ping -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -123,7 +136,7 @@ west #
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=148, outBytes=205, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  echo done
 done
@@ -182,16 +195,13 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
-#============= netutils_t ==============
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t bin_t:file map;
-allow netutils_t bin_t:file { entrypoint execute };
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
-allow netutils_t unreserved_port_t:tcp_socket name_bind;
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
 west #
  
