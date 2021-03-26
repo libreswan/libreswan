@@ -1,5 +1,5 @@
 ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-ping -n -c 2 -I 192.0.2.1 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 # change ip, emulating sudden switching network
 ipsec whack --impair send-no-delete
@@ -12,6 +12,6 @@ ipsec whack --impair suppress-retransmits
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 # should not fail to ping
-ping -n -c 4 -I 192.0.2.1 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 echo done
