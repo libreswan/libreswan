@@ -34,7 +34,7 @@
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
 
-enum iface_status handle_packet_cb(const struct iface_endpoint *ifp, struct logger *logger);
+enum iface_read_status handle_packet_cb(const struct iface_endpoint *ifp, struct logger *logger);
 
 /* State transition function infrastructure
  *

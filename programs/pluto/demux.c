@@ -79,9 +79,9 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static enum iface_status read_message(const struct iface_endpoint *ifp,
-				      struct msg_digest **mdp,
-				      struct logger *logger)
+static enum iface_read_status read_message(const struct iface_endpoint *ifp,
+					   struct msg_digest **mdp,
+					   struct logger *logger)
 {
 	pexpect(*mdp == NULL);
 
@@ -93,8 +93,8 @@ static enum iface_status read_message(const struct iface_endpoint *ifp,
 		.logger = logger,
 	};
 
-	enum iface_status status = ifp->io->read_packet(ifp, &packet, logger);
-	if (status != IFACE_OK) {
+	enum iface_read_status status = ifp->io->read_packet(ifp, &packet, logger);
+	if (status != IFACE_READ_OK_BUT) {
 		/* already logged */
 		return status;
 	}
@@ -125,7 +125,7 @@ static enum iface_status read_message(const struct iface_endpoint *ifp,
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
 	*mdp = md;
-	return IFACE_OK;
+	return IFACE_READ_OK_BUT;
 }
 
 /*
@@ -311,13 +311,13 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-enum iface_status handle_packet_cb(const struct iface_endpoint *ifp,
-				   struct logger *logger)
+enum iface_read_status handle_packet_cb(const struct iface_endpoint *ifp,
+					struct logger *logger)
 {
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = NULL;
-	enum iface_status status = read_message(ifp, &md, logger);
-	if (status != IFACE_OK) {
+	enum iface_read_status status = read_message(ifp, &md, logger);
+	if (status != IFACE_READ_OK_BUT) {
 		pexpect(md == NULL);
 	} else if (pexpect(md != NULL)) {
 		md->md_inception = md_start;
@@ -327,7 +327,7 @@ enum iface_status handle_packet_cb(const struct iface_endpoint *ifp,
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
 	} else {
-		status = IFACE_FATAL;
+		status = IFACE_READ_FATAL;
 	}
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
