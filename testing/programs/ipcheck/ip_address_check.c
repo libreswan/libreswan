@@ -87,14 +87,14 @@ static void check_shunk_to_address(void)
 		err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (t->cooked != NULL && !t->requires_dns) {
-				FAIL("numeric_to_address(%s,NULL) unexpecedly failed: %s",
+				FAIL("numeric_to_address(%s,NULL) unexpectedly failed: %s",
 				     t->in, err);
 			}
 		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(%s, NULL) unexpecedly parsed a DNS address",
+			FAIL(" numeric_to_address(%s, NULL) unexpectedly parsed a DNS address",
 			     t->in);
 		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(%s, NULL) unexpecedly succeeded", t->in);
+			FAIL(" numeric_to_address(%s, NULL) unexpectedly succeeded", t->in);
 		} else {
 			CHECK_TYPE(address);
 		}
@@ -105,14 +105,14 @@ static void check_shunk_to_address(void)
 		err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			if (!t->requires_dns) {
-				FAIL(" numeric_to_address(%s, %s) unexpecedly failed: %s",
+				FAIL(" numeric_to_address(%s, %s) unexpectedly failed: %s",
 				     t->in, pri_family(t->family), err);
 			}
 		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(%s, %s) unexpecedly parsed a DNS address",
+			FAIL(" numeric_to_address(%s, %s) unexpectedly parsed a DNS address",
 			     t->in, pri_family(t->family));
 		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(%s, %s) unexpecedly succeeded",
+			FAIL(" numeric_to_address(%s, %s) unexpectedly succeeded",
 			     t->in, pri_family(t->family));
 		} else {
 			CHECK_TYPE(address);
@@ -132,10 +132,10 @@ static void check_shunk_to_address(void)
 			err = ttoaddress_dns(shunk1(t->in), type, address);
 			if (err != NULL) {
 				if (t->cooked != NULL) {
-					FAIL("dns_hunk_to_address(type) unexpecedly failed: %s", err);
+					FAIL("dns_hunk_to_address(type) unexpectedly failed: %s", err);
 				}
 			} else if (t->cooked == NULL) {
-				FAIL(" dns_hunk_to_address(type) unexpecedly succeeded");
+				FAIL(" dns_hunk_to_address(type) unexpectedly succeeded");
 			} else {
 				CHECK_TYPE(address);
 			}
