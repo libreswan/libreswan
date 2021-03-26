@@ -130,6 +130,7 @@ KVM_UPGRADE_PACKAGES ?= \
     libseccomp-devel \
     libselinux-devel \
     linux-firmware \
+    linux-system-roles \
     lsof \
     make \
     mtr \
