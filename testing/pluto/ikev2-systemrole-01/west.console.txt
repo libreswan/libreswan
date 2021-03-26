@@ -40,8 +40,6 @@ initdone
 west #
  # New files should have dropped in, and we are ready to restart
 west #
- # NOTE: for now only works on KVM/qemu until we support *.sh in nsrun
-west #
  ipsec restart
 Redirecting to: [initsystem]
 west #
@@ -134,7 +132,24 @@ west #
 000  
 000 Connection list:
 000  
-000 Total IPsec connections: loaded 0, active 0
+000 "192.1.2.45-to-192.1.2.23": 192.1.2.45<192.1.2.45>[@192.1.2.45]...192.1.2.23<192.1.2.23>[@192.1.2.23]; prospective erouted; eroute owner: #0
+000 "192.1.2.45-to-192.1.2.23":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret
+000 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
+000 "192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "192.1.2.45-to-192.1.2.23":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "192.1.2.45-to-192.1.2.23":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "192.1.2.45-to-192.1.2.23":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "192.1.2.45-to-192.1.2.23":   v2-auth-hash-policy: none;
+000 "192.1.2.45-to-192.1.2.23":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "192.1.2.45-to-192.1.2.23":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_FQDN; our id=@192.1.2.45; their idtype: ID_FQDN; their id=@192.1.2.23
+000 "192.1.2.45-to-192.1.2.23":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "192.1.2.45-to-192.1.2.23":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000  
+000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
@@ -148,11 +163,24 @@ west #
  # trigger tunnel - the first trigger ping packet is lost
 west #
  ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
-up
+down UNEXPECTED
+west #
+ sleep 2
+west #
+ ping -c4 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # show non-zero IPsec traffic counters
 west #
  ipsec whack --trafficstatus
+006 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@192.1.2.23'
 west #
  echo done
 done
