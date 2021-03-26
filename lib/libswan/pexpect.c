@@ -32,7 +32,7 @@ void log_pexpect(where_t where, const char *message, ...)
 	}
 }
 
-void pexpect_fail(struct logger *logger, where_t where, const char *message, ...)
+void llog_pexpect_fail(struct logger *logger, where_t where, const char *message, ...)
 {
 	JAMBUF(buf) {
 		jam_string(buf, "EXPECTATION FAILED: ");
