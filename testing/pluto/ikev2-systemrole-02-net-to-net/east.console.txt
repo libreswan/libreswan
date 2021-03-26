@@ -4,11 +4,13 @@ east #
 east #
  # into /etc/ipsec.d/
 east #
- mkdir -p OUTPUT/west/ipsec.d
+ rm -rf OUTPUT/east/ipsec.d
 east #
- chmod 777 OUTPUT/west
+ mkdir -p OUTPUT/east/ipsec.d
 east #
- mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
+ chmod 777 OUTPUT/east
+east #
+ mount -o bind,rw OUTPUT/east/ipsec.d /etc/ipsec.d
 east #
  # initnss normally happens in the initsystem - but not for namespace testing
 east #
