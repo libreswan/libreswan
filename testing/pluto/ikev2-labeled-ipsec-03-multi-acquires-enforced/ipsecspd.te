@@ -10,6 +10,7 @@ require {
 	type ipsec_spd_t;
 	type ipsec_t;
 	type iptables_t;
+	type netutils_t;
 	type ping_t;
 	type unconfined_service_t;
 	type unconfined_t;
@@ -65,6 +66,7 @@ allow unconfined_service_t unconfined_t:association setcontext;
 allow unconfined_service_t ping_t:association setcontext;
 allow unconfined_service_t ipsec_t:association setcontext;
 allow unconfined_service_t nping_t:association setcontext;
+allow unconfined_service_t netutils_t:association setcontext;
 
 #============= ipsec_t ==============
 allow ipsec_t ipsec_mgmt_t:process { noatsecure rlimitinh siginh };
@@ -72,9 +74,16 @@ allow ipsec_t unconfined_t:association setcontext;
 allow ipsec_t ping_t:association setcontext;
 allow ipsec_t ipsec_t:association setcontext;
 allow ipsec_t nping_t:association setcontext;
+allow ipsec_t netutils_t:association setcontext;
 ipsec_setcontext_default_spd(ipsec_t)
 
 #============= ipsec_mgmt_t ==============
 allow ipsec_mgmt_t ifconfig_t:process { noatsecure rlimitinh siginh };
 allow ipsec_mgmt_t ipsec_t:process { noatsecure siginh };
 allow ipsec_mgmt_t iptables_t:process { noatsecure rlimitinh siginh };
+
+#============= netutils_t ==============
+corecmd_bin_entry_type(netutils_t)
+corecmd_shell_entry_type(netutils_t)
+corenet_tcp_bind_generic_port(netutils_t)
+files_exec_usr_files(netutils_t)
