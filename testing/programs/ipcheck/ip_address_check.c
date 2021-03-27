@@ -158,7 +158,9 @@ static void check_shunk_to_address(void)
 		}
 
 		/* now convert it back cooked */
-		if (t->str != NULL) {
+		if (t->requires_dns && !use_dns) {
+			PRINT("skipping str_*() -- no DNS");
+		} else if (t->str != NULL) {
 			CHECK_STR2(address);
 		}
 
