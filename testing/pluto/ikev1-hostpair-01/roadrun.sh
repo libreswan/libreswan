@@ -1,5 +1,5 @@
 ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv4-psk-ikev1 --initiate
-ping -n -c 2 -I 192.0.2.1 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 # change ip, emulating sudden switching network
 ipsec whack --impair send-no-delete
@@ -11,6 +11,6 @@ ipsec start
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name westnet-eastnet-ipv4-psk-ikev1 --initiate
 # should not fail to ping
-ping -n -c 4 -I 192.0.2.1 192.1.2.23
+../../pluto/bin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
 ipsec whack --trafficstatus
 echo done

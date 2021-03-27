@@ -1,5 +1,5 @@
 ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate
 ipsec whack --trafficstatus
-ping -n -c 4 192.0.2.254
+../../pluto/bin/ping-once.sh --up 192.0.2.254
 ipsec whack --trafficstatus
 echo done
