@@ -4,6 +4,6 @@ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 ipsec whack --impair send-no-ikev2-auth
 echo "initdone"

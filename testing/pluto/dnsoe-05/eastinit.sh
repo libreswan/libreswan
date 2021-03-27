@@ -11,5 +11,5 @@ ipsec whack --listpubkeys
 # "has private key"
 ipsec whack --listpubkeys
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
 echo "initdone"

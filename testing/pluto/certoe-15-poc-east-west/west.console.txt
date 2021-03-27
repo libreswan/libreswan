@@ -27,7 +27,8 @@ west #
 west #
  # give OE policies time to load
 west #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 west #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID

@@ -11,7 +11,8 @@ west #
 west #
  # give OE policies time to load
 west #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 west #
  echo "initdone"
 initdone

@@ -11,6 +11,6 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 echo "initdone"

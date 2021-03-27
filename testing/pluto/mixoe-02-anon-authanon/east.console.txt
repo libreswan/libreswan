@@ -18,7 +18,8 @@ east #
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 east #
  ipsec status | grep "our auth" | grep private
 000 "clear-or-private":   our auth:rsasig, their auth:rsasig

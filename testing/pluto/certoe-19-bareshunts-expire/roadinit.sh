@@ -9,5 +9,5 @@ echo "192.1.4.66/32"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 10
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
 echo "initdone"

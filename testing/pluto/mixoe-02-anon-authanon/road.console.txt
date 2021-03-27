@@ -17,7 +17,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec status | grep "our auth" | grep private
 000 "clear-or-private":   our auth:null, their auth:null

@@ -5,5 +5,5 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add road-east-ikev2
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
 echo "initdone"

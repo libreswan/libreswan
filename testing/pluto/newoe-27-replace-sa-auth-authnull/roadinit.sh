@@ -7,5 +7,5 @@ ipsec auto --add authenticated
 # ensure for tests acquires expire before our failureshunt=2m
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 echo "initdone"

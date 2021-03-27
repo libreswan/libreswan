@@ -17,7 +17,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+timeout waiting 30 seconds for ipsec auto --status to match loaded 9,
 road #
  ipsec auto --status
 000 using kernel interface: xfrm

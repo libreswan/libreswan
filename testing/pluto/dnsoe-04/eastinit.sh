@@ -7,5 +7,5 @@ ipsec start
 ipsec whack --impair suppress-retransmits
 ipsec whack --listpubkeys
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
 echo "initdone"

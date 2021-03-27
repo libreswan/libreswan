@@ -12,7 +12,7 @@ ipsec whack --impair send-no-delete
 ipsec restart
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # test the new tunnel works properly

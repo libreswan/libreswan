@@ -9,5 +9,5 @@ ipsec whack --impair suppress-retransmits
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 ipsec whack --listpubkeys
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
 echo "initdone"

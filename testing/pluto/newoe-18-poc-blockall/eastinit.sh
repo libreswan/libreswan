@@ -4,5 +4,5 @@ echo "0.0.0.0/0"  >> /etc/ipsec.d/policies/block
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 echo "initdone"

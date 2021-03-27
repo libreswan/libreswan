@@ -6,7 +6,7 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 ipsec auto --status
 #these will create passthroguh shunts
 ping -n -c 4 -I 192.1.3.33 192.1.2.23

@@ -18,7 +18,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 3
+ ../../pluto/bin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+000 Total IPsec connections: loaded 2, active 0
 road #
  echo "initdone"
 initdone
@@ -54,7 +55,8 @@ Redirecting to: [initsystem]
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../pluto/bin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+000 Total IPsec connections: loaded 2, active 0
 road #
  # should be empty
 road #

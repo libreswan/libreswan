@@ -12,7 +12,7 @@ ipsec whack --impair suppress-retransmits
 # ensure for tests acquires expire before our failureshunt=2m
 echo 30 > /proc/sys/net/core/xfrm_acq_expires
 # give OE policies time to load
-sleep 5
+../../pluto/bin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
 # one packet, which gets eaten by XFRM, so east does not initiate
 ping -n -c 1 -I 192.1.3.33 192.1.2.23
 # wait on OE IKE negotiation

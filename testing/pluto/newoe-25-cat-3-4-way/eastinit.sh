@@ -9,5 +9,5 @@ cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
-sleep 2
+../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 echo "initdone"

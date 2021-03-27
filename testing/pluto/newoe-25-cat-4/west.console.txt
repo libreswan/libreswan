@@ -13,7 +13,8 @@ west #
 west #
  # give OE policies time to load
 west #
- sleep 10
+ ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+000 Total IPsec connections: loaded 9, active 0
 west #
  ping -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
