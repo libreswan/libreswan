@@ -237,7 +237,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp,
 			       struct logger *logger);
 #endif
 
-static enum iface_read_status udp_read_packet(const struct iface_endpoint *ifp,
+static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 					      struct iface_packet *packet,
 					      struct logger *logger)
 {
@@ -379,7 +379,7 @@ static enum iface_read_status udp_read_packet(const struct iface_endpoint *ifp,
 		return IFACE_READ_IGNORE;
 	}
 
-	return IFACE_READ_OK_BUT;
+	return IFACE_READ_OK;
 }
 
 static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
@@ -397,21 +397,12 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 };
 
-static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
-				 const short unused_event UNUSED,
-				 void *arg)
-{
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
-	const struct iface_endpoint *ifp = arg;
-	handle_packet_cb(ifp, logger);
-}
-
 static void udp_listen(struct iface_endpoint *ifp,
 		       struct logger *unused_logger UNUSED)
 {
 	if (ifp->udp_message_listener == NULL) {
 		attach_fd_read_sensor(&ifp->udp_message_listener, ifp->fd,
-				      handle_udp_packet_cb, ifp);
+				      process_iface_packet, ifp);
 	}
 }
 

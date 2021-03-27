@@ -40,16 +40,18 @@ struct iface_packet {
 };
 
 enum iface_read_status {
-	IFACE_READ_OK_BUT = 0,
-	IFACE_READ_EOF,
-	IFACE_READ_FATAL,
+	IFACE_READ_OK = 0,
 	IFACE_READ_IGNORE, /* aka EAGAIN */
+	IFACE_READ_ABORT, /* on return, delete iface! */
+	/* place holders, same as ignore for now */
+	IFACE_READ_ERROR,
+	IFACE_READ_EOF,
 };
 
 struct iface_io {
 	bool send_keepalive;
 	const struct ip_protocol *protocol;
-	enum iface_read_status (*read_packet)(const struct iface_endpoint *ifp,
+	enum iface_read_status (*read_packet)(struct iface_endpoint *ifp,
 					      struct iface_packet *,
 					      struct logger *logger);
 	ssize_t (*write_packet)(const struct iface_endpoint *ifp,
