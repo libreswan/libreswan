@@ -37,18 +37,18 @@ initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
 road #
  # wait on OE IKE negotiation
 road #
- sleep 1
+ ../../pluto/bin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  # should show established tunnel and no bare shunts
+road #
+ ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
@@ -148,13 +148,8 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  echo done
 done
@@ -162,7 +157,7 @@ road #
  # A tunnel should have established with non-zero byte counters
 road #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  # you should see both RSA and NULL
 road #
