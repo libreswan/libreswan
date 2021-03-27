@@ -79,7 +79,7 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static enum iface_read_status read_message(const struct iface_endpoint *ifp,
+static enum iface_read_status read_message(struct iface_endpoint *ifp,
 					   struct msg_digest **mdp,
 					   struct logger *logger)
 {
@@ -94,7 +94,7 @@ static enum iface_read_status read_message(const struct iface_endpoint *ifp,
 	};
 
 	enum iface_read_status status = ifp->io->read_packet(ifp, &packet, logger);
-	if (status != IFACE_READ_OK_BUT) {
+	if (status != IFACE_READ_OK) {
 		/* already logged */
 		return status;
 	}
@@ -125,7 +125,7 @@ static enum iface_read_status read_message(const struct iface_endpoint *ifp,
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
 	*mdp = md;
-	return IFACE_READ_OK_BUT;
+	return IFACE_READ_OK;
 }
 
 /*
@@ -295,43 +295,77 @@ static void process_md(struct msg_digest **mdp)
 	process_packet(mdp);
 }
 
-/* wrapper for read_packet and process_packet
+/*
+ * wrapper for read_packet and process_packet
  *
  * The main purpose of this wrapper is to factor out teardown code
  * from the many return points in process_packet.  This amounts to
  * releasing the msg_digest and resetting global variables.
  *
  * When processing of a packet is suspended (STF_SUSPEND),
- * process_packet sets md to NULL to prevent the msg_digest being freed.
- * Someone else must ensure that msg_digest is freed eventually.
+ * process_packet sets md to NULL to prevent the msg_digest being
+ * freed.  Someone else must ensure that msg_digest is freed
+ * eventually.
  *
- * read_packet is broken out to minimize the lifetime of the
- * enormous input packet buffer, an auto.
+ * read_packet is broken out to minimize the lifetime of the enormous
+ * input packet buffer, an auto.
  */
 
 static bool impair_incoming(struct msg_digest *md);
 
-enum iface_read_status handle_packet_cb(const struct iface_endpoint *ifp,
-					struct logger *logger)
+void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *ifp_arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct iface_endpoint *ifp = ifp_arg;
+
+	/* on the same page^D^D^D fd? */
+	pexpect(ifp->fd == fd);
+
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = NULL;
 	enum iface_read_status status = read_message(ifp, &md, logger);
-	if (status != IFACE_READ_OK_BUT) {
-		pexpect(md == NULL);
-	} else if (pexpect(md != NULL)) {
+	switch (status) {
+	case IFACE_READ_OK:
+		/*
+		 * XXX: Danger
+		 *
+		 * process_md() passes the message along to the state
+		 * machine and the state machine can then pass the
+		 * message along to the state processor.
+		 *
+		 * Unfortunately, part way through all this, the state
+		 * processor may decide to delete the state, and
+		 * deleting the state can delete IFP.
+		 *
+		 * To play it safe, KILL IFP.
+		 *
+		 * Can we please just stop calling delete_state() mid
+		 * transition?
+		 */
+		ifp = ifp_arg = NULL;
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {
 			process_md(&md);
 		}
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
-	} else {
-		status = IFACE_READ_FATAL;
+		break;
+	case IFACE_READ_IGNORE:
+	case IFACE_READ_EOF:
+	case IFACE_READ_ERROR:
+		pexpect(md == NULL);
+		break;
+	case IFACE_READ_ABORT:
+		/*
+		 * XXX: this assumes that IFP is not being shared.
+		 */
+		pexpect(md == NULL);
+		free_any_iface_endpoint(&ifp);
+		break;
 	}
+
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
-	return status;
 }
 
 /*

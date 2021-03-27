@@ -37,9 +37,8 @@ s/last_contact=[0-9]*\.[0-9]*->[0-9]*\.[0-9]*/last_contact=XX.XXX->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
 
 # TCP sockets
-s/from socket [0-9]* /from socket XX /g
-s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
-s/TCP: socket [0-9]* /TCP: socket XX /g
+s/ socket [0-9][0-9]*: / socket XX: /g
+
 /^nohup: ignoring input and redirecting stderr to stdout$/d
 s/encap type 7 sport/encap type espintcp sport/g
 s/unbound-control.[0-9]*:[0-9]*./unbound-control[XXXXXX:X] /g 

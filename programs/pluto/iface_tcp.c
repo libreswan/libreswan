@@ -121,18 +121,11 @@ static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 				 struct sockaddr *sockaddr, int sockaddr_len,
 				 void *arg);
 
-static enum iface_read_status iketcp_read_packet(const struct iface_endpoint *ifp,
-						 struct iface_packet *packet,
-						 struct logger *logger)
+static enum iface_read_status read_raw_iketcp_packet(const char *prefix,
+						     const struct iface_endpoint *ifp,
+						     struct iface_packet *packet,
+						     struct logger *logger)
 {
-	/*
-	 * At this point there's no logger so log it against the
-	 * remote endpoint determined earlier.
-	 */
-	/* XXX: pick up packet.logger.global_whackfd? */
-	struct logger from_logger = logger_from(logger, &ifp->iketcp_remote_endpoint);
-	logger = &from_logger;
-
 	/*
 	 * Reads the entire packet _without_ length, if buffer isn't
 	 * big enough packet is truncated.
@@ -145,12 +138,12 @@ static enum iface_read_status iketcp_read_packet(const struct iface_endpoint *if
 	int packet_errno = errno;
 	if (packet_errno != 0) {
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "read from socket %d failed "PRI_ERRNO,
-			    ifp->fd, pri_errno(packet_errno));
+			    "%ssocket %d: read failed "PRI_ERRNO,
+			    prefix, ifp->fd, pri_errno(packet_errno));
 		if (packet_errno == EAGAIN) {
 			return IFACE_READ_IGNORE;
 		} else {
-			return IFACE_READ_FATAL;
+			return IFACE_READ_ERROR;
 		}
 	}
 
@@ -160,29 +153,213 @@ static enum iface_read_status iketcp_read_packet(const struct iface_endpoint *if
 	if (packet->len == 0) {
 		/* interpret this as EOF */
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "%zd byte message from socket %d indicates EOF",
-			    packet->len, ifp->fd);
+			    "%ssocket %d: %zd byte read indicates EOF",
+			    prefix, ifp->fd, packet->len);
 		return IFACE_READ_EOF;
 	}
 
 	if (packet->len < NON_ESP_MARKER_SIZE) {
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "%zd byte message from socket %d is way to small",
-			    packet->len, ifp->fd);
-		return IFACE_READ_FATAL;
+			    "%ssocket %d: %zd byte message is way to small",
+			    prefix, ifp->fd, packet->len);
+		return IFACE_READ_ERROR;
 	}
 
 	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
 	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "%zd byte message from socket %d is missing %d byte zero ESP marker",
-			    packet->len, ifp->fd, NON_ESP_MARKER_SIZE);
-		return IFACE_READ_FATAL;
+			    "%ssocket %d: %zd byte message is missing %d byte zero ESP marker",
+			    prefix, ifp->fd, packet->len, NON_ESP_MARKER_SIZE);
+		return IFACE_READ_ERROR;
 	}
 
 	packet->len -= sizeof(zero_esp_marker);
 	packet->ptr += sizeof(zero_esp_marker);
-	return IFACE_READ_OK_BUT;
+	return IFACE_READ_OK;
+}
+
+static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
+						 struct iface_packet *packet,
+						 struct logger *logger)
+{
+	bool v6 = ifp->ip_dev->id_address.version == 6;
+
+	/*
+	 * At this point there's no so log it against the remote
+	 * endpoint determined when the connection was accepted.
+	 */
+	struct logger from_logger = logger_from(logger, &ifp->iketcp_remote_endpoint);
+	logger = &from_logger;
+
+	switch (ifp->iketcp_state) {
+
+	case IKETCP_ACCEPTED:
+	{
+		/*
+		 * Read the "IKETCP" prefix.
+		 *
+		 * XXX: Since there's no state sharing IFP (this is
+		 * first attempt at reading the socket) return
+		 * IFACE_READ_ABORT. The caller (the low-level event
+		 * handler) will then delete IFP.
+		 */
+
+		dbg_iketcp(ifp, "reading IKETCP prefix from socket %d", ifp->fd);
+		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
+		uint8_t buf[sizeof(iketcp)];
+		ssize_t len = read(ifp->fd, buf, sizeof(buf));
+
+		if (len < 0) {
+			/* too strict? */
+			int e = errno;
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: error reading 'IKETCP' prefix "PRI_ERRNO,
+				    ifp->fd, pri_errno(e));
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		if (len != sizeof(buf)) {
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: reading 'IKETCP' prefix returned %zd bytes but expecting %zu",
+				    ifp->fd, len, sizeof(buf));
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		dbg_iketcp(ifp, "socket %d verifying IKETCP prefix", ifp->fd);
+		if (!memeq(buf, iketcp, len)) {
+			/* discard this tcp connection */
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: prefix did not match 'IKETCP'", ifp->fd);
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		/*
+		 * Tell the kernel to load up the ESPINTCP Upper Layer
+		 * Protocol.
+		 *
+		 * From this point on all writes are auto-wrapped in
+		 * their length and reads are auto-blocked.
+		 */
+		if (impair.tcp_skip_setsockopt_espintcp) {
+			llog_iketcp(RC_LOG, logger, ifp,
+				    "IMPAIR: skipping setsockopt(ESPINTCP)");
+		} else {
+
+			dbg_iketcp(ifp, "socket %d enabling ESPINTCP", ifp->fd);
+
+			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
+				      "espintcp", sizeof("espintcp"))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "setsockopt(%d, SOL_TCP, TCP_ULP, \"espintcp\") failed; closing socket "PRI_ERRNO,
+					    ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+			struct xfrm_userpolicy_info policy_in = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_IN,
+			};
+
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "closing socket %d: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_in\") failed "PRI_ERRNO,
+					    ifp->fd, ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+			struct xfrm_userpolicy_info policy_out = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_OUT,
+			};
+
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "closing socket %d: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_out\") failed "PRI_ERRNO,
+					    ifp->fd, ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+		}
+
+		/*
+		 * Return IGNORE so that the caller knows to not feed
+		 * the packet into the state machinery.
+		 *
+		 * Why not update the callback so that it points to a
+		 * simple handler?  This is easier, and it seems that
+		 * changing the event handler while in the event
+		 * handler isn't allowed.
+		 */
+		ifp->iketcp_state = IKETCP_PREFIX_RECEIVED;
+		return IFACE_READ_IGNORE;
+	}
+
+	case IKETCP_PREFIX_RECEIVED:
+	{
+		/*
+		 * Read the first packet; stop the timeout.
+		 *
+		 * XXX: Since there's no state sharing IFP (so far all
+		 * that's happened is "IKETCP" has been read), convert
+		 * errors into IFACE_READ_ABORT.  The caller (the
+		 * low-level event handler) will then delete IFP.
+		 */
+
+		dbg_iketcp(ifp, "reading first packet from socket %d", ifp->fd);
+		enum iface_read_status status = read_raw_iketcp_packet("closing ", ifp,
+								       packet, logger);
+
+		switch (status) {
+		case IFACE_READ_OK:
+			dbg_iketcp(ifp, "socket %d first packet ok; switching to running and freeing timeout",
+				   ifp->fd);
+			event_free(ifp->iketcp_timeout);
+			ifp->iketcp_timeout = NULL;
+			ifp->iketcp_state = IKETCP_ENABLED;
+			return IFACE_READ_OK;
+		case IFACE_READ_IGNORE:
+			return IFACE_READ_IGNORE;
+		case IFACE_READ_ABORT:
+		case IFACE_READ_EOF:
+		case IFACE_READ_ERROR:
+			return IFACE_READ_ABORT;
+		}
+		bad_case(status);
+	}
+
+	case IKETCP_ENABLED:
+	{
+		dbg_iketcp(ifp, "reading packet from socket %d", ifp->fd);
+		return read_raw_iketcp_packet("", ifp, packet, logger);
+	}
+
+	case IKETCP_STOPPED:
+	{
+		/*
+		 * XXX: Even though the event handler has been told to
+		 * shut down there may still be events outstanding;
+		 * drain them.
+		 */
+		char bytes[10];
+		ssize_t size = read(ifp->fd, &bytes, sizeof(bytes));
+		if (size < 0) {
+			llog_iketcp(RC_LOG, logger, ifp,
+				    "read to drain socket %d failed "PRI_ERRNO,
+				    ifp->fd, pri_errno(errno));
+		} else {
+			dbg_iketcp(ifp, "drained %zd bytes from socket %d",
+				   size, ifp->fd);
+		}
+		return IFACE_READ_IGNORE;
+	}
+	}
+	/* no default - all cases return - missing case error */
+	bad_case(ifp->iketcp_state);
 }
 
 static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
@@ -193,33 +370,33 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 	int flags = 0;
 	if (impair.tcp_use_blocking_write) {
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "IMPAIR: socket %d switching off NONBLOCK before write",
+			    "IMPAIR: socket %d: switching off NONBLOCK before write",
 			    ifp->fd);
 		flags = fcntl(ifp->fd, F_GETFL, 0);
 		if (flags == -1) {
 			int e = errno;
 			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
-				    "fcntl(%d, F_GETFL, 0) "PRI_ERRNO,
-				    ifp->fd, pri_errno(e));
+				    "socket %d: fcntl(%d, F_GETFL, 0) failed "PRI_ERRNO,
+				    ifp->fd, ifp->fd, pri_errno(e));
 		}
 		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
 			int e = errno;
 			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
-				    "RC_LOG_SERIOUS, fcntl(%d, F_SETFL, 0%o) "PRI_ERRNO,
-				    ifp->fd, flags, pri_errno(e));
+				    "socket %d: fcntl(%d, F_SETFL, 0%o) failed, "PRI_ERRNO,
+				    ifp->fd, ifp->fd, flags, pri_errno(e));
 		}
 	}
 	ssize_t wlen = write(ifp->fd, ptr, len);
 	dbg_iketcp(ifp, "socket %d wrote %zd of %zu bytes", ifp->fd, wlen, len);
 	if (impair.tcp_use_blocking_write && flags >= 0) {
 		llog_iketcp(RC_LOG, logger, ifp,
-			    "IMPAIR: TCP: socket %d restoring flags 0%o after write",
+			    "IMPAIR: socket %d: restoring flags 0%o after write",
 			    ifp->fd, flags);
 		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
 			int e = errno;
 			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
-				    "fcntl(%d, F_SETFL, 0%o) "PRI_ERRNO,
-				    ifp->fd, flags, pri_errno(e));
+				    "socket %d: fcntl(%d, F_SETFL, 0%o) failed "PRI_ERRNO,
+				    ifp->fd, ifp->fd, flags, pri_errno(e));
 		}
 	}
 	return wlen;
@@ -447,250 +624,6 @@ const struct iface_io iketcp_iface_io = {
 	.bind_iface_endpoint = iketcp_bind_iface_endpoint,
 };
 
-static void iketcp_message_listener_cb(evutil_socket_t listener_fd,
-				       const short unused_event UNUSED,
-				       void *arg)
-{
-	struct iface_endpoint *ifp = arg;
-
-	/* build the logger on the stack */
-	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
-	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
-	struct logger *logger = &from_logger;
-
-	llog_pexpect(logger, listener_fd == ifp->fd);
-	bool v6 = ifp->ip_dev->id_address.version == 6;
-
-	switch (ifp->iketcp_state) {
-
-	case IKETCP_ACCEPTED:
-		dbg_iketcp(ifp, "socket %d reading IKETCP prefix", ifp->fd);
-		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
-		uint8_t buf[sizeof(iketcp)];
-
-		ssize_t len = read(ifp->fd, buf, sizeof(buf));
-		if (len < 0) {
-			/* too strict? */
-			int e = errno;
-			llog_iketcp(RC_LOG, logger, ifp,
-				    "problem reading IKETCP prefix from socket %d "PRI_ERRNO,
-				    ifp->fd, pri_errno(e));
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_endpoint(&ifp);
-			return;
-		}
-
-		if (len != sizeof(buf)) {
-			llog_iketcp(RC_LOG, logger, ifp,
-				    "problem reading IKETCP prefix from socket %d - returned %zd bytes but expecting %zu; closing socket",
-				    ifp->fd, len, sizeof(buf));
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_endpoint(&ifp);
-			return;
-		}
-
-		dbg_iketcp(ifp, "socket %d verifying IKETCP prefix", ifp->fd);
-		if (!memeq(buf, iketcp, len)) {
-			/* discard this tcp connection */
-			llog_iketcp(RC_LOG, logger, ifp,
-				    "did not receive the IKE-in-TCP stream prefix ; closing socket");
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_endpoint(&ifp);
-			return;
-		}
-
-		/*
-		 * Tell the kernel to load up the ESPINTCP Upper Layer
-		 * Protocol.
-		 *
-		 * From this point on all writes are auto-wrapped in
-		 * their length and reads are auto-blocked.
-		 */
-		if (impair.tcp_skip_setsockopt_espintcp) {
-			llog_iketcp(RC_LOG, logger, ifp,
-				    "IMPAIR: skipping setsockopt(ESPINTCP)");
-		} else {
-			struct xfrm_userpolicy_info policy_in = {
-				.action = XFRM_POLICY_ALLOW,
-				.sel.family = v6 ? AF_INET6 :AF_INET,
-				.dir = XFRM_POLICY_IN,
-			};
-			struct xfrm_userpolicy_info policy_out = {
-				.action = XFRM_POLICY_ALLOW,
-				.sel.family = v6 ? AF_INET6 :AF_INET,
-				.dir = XFRM_POLICY_OUT,
-			};
-
-			dbg_iketcp(ifp, "socket %d enabling ESPINTCP", ifp->fd);
-
-			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
-				      "espintcp", sizeof("espintcp"))) {
-				int e = errno;
-				llog_iketcp(RC_LOG, logger, ifp,
-					    "setsockopt(%d, SOL_TCP, TCP_ULP, \"espintcp\") failed; closing socket "PRI_ERRNO,
-					    ifp->fd, pri_errno(e));
-				/*
-				 * XXX: Since this is the first
-				 * attempt at reading the socket,
-				 * there isn't a state that could be
-				 * sharing IFP.
-				 */
-				free_any_iface_endpoint(&ifp);
-				return;
-			}
-
-			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
-				int e = errno;
-				llog_iketcp(RC_LOG, logger, ifp,
-					    "setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_in\") failed; closing socket "PRI_ERRNO,
-					    ifp->fd, pri_errno(e));
-				free_any_iface_endpoint(&ifp);
-				return;
-			}
-			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
-				int e = errno;
-				llog_iketcp(RC_LOG, logger, ifp,
-					    "setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_out\") failed; closing socket "PRI_ERRNO,
-					    ifp->fd, pri_errno(e));
-				free_any_iface_endpoint(&ifp);
-				return;
-			}
-
-		}
-
-		/*
-		 * TCP: Should hack the callback to the non-IKETCP
-		 * version, but this is easier - it seems changing the
-		 * event handler while in the event handler isn't
-		 * allowed.
-		 */
-		ifp->iketcp_state = IKETCP_PREFIX_RECEIVED;
-		return;
-
-	case IKETCP_PREFIX_RECEIVED:
-		dbg_iketcp(ifp, "socket %d trying to read first packet", ifp->fd);
-		/* received the first packet; stop the timeout */
-		switch (handle_packet_cb(ifp, logger)) {
-		case IFACE_READ_OK_BUT:
-			dbg_iketcp(ifp, "socket %d first packet ok; switching to running and freeing timeout",
-				   ifp->fd);
-			event_free(ifp->iketcp_timeout);
-			ifp->iketcp_timeout = NULL;
-			ifp->iketcp_state = IKETCP_ENABLED;
-			return;
-			break;
-		case IFACE_READ_IGNORE:
-			dbg_iketcp(ifp, "socket %d first packet got try-again", ifp->fd);
-			return;
-		case IFACE_READ_EOF:
-		case IFACE_READ_FATAL:
-			/* already logged */
-			/*
-			 * XXX: Since the first packet couldn't be
-			 * read, no state was created so there's no
-			 * problem with state and event sharing IFP.
-			 */
-			free_any_iface_endpoint(&ifp);
-			return;
-		}
-		bad_case(0);
-
-	case IKETCP_ENABLED:
-	{
-		/*
-		 * XXX: Danger
-		 *
-		 * handle_packet_cb() both reads the message
-		 * and (assuming the read returns IFACE_READ_OK[_BUT])
-		 * passes the message along to the state machine.  The
-		 * state machine then passes the message along to the
-		 * state processor.
-		 *
-		 * Unfortunately, part way through all this, the state
-		 * machine may decide to delete the state and that,
-		 * in-turn deletes, the tcp IFP structure we've here
-		 * locally.
-		 *
-		 * Hence *_BUT*.
-		 *
-		 * Can we please just not call delete_state() mid
-		 * transition?
-		 */
-		int fd = ifp->fd; /* save FD for logging */
-		dbg_iketcp(ifp, "socket %d calling handle packet", fd);
-		switch (handle_packet_cb(ifp, logger)) {
-		case IFACE_READ_OK_BUT:
-			/* XXX: IFP is unsafe */
-#if 0
-			dbg_iketcp(ifp, "socket %d packet read ok; not trusting IFP", fd);
-#else
-			dbg("TCP: RUNNING: socket %d packet read ok; NOT TRUSTING IFP", fd);
-#endif
-			return;
-		case IFACE_READ_IGNORE:
-			dbg_iketcp(ifp, "socket %d packet got try-again", fd);
-			return;
-		case IFACE_READ_EOF:
-		case IFACE_READ_FATAL:
-			/* already logged */
-			/*
-			 * XXX: IFP is safe - the read failed, which
-			 * means that the state code was never called.
-			 *
-			 * Shutdown the event handler, but leave the
-			 * rest of EVP alone.  The state, when it is
-			 * deleted, will clean up EVP.
-			 *
-			 * According to the libevent2 book: It is safe
-			 * to call event_free() on an event that is
-			 * pending or active: doing so makes the event
-			 * non-pending and inactive before
-			 * deallocating it.
-			 */
-			event_free(ifp->iketcp_message_listener);
-			ifp->iketcp_message_listener = NULL;
-			ifp->iketcp_state = IKETCP_STOPPED;
-			return;
-		}
-		bad_case(0);
-	}
-
-	case IKETCP_STOPPED:
-	{
-		/*
-		 * XXX: Even though the event handler has been told to
-		 * shut down there may still be events outstanding;
-		 * drain them.
-		 */
-		char bytes[10];
-		ssize_t size = read(ifp->fd, &bytes, sizeof(bytes));
-		if (size < 0) {
-			llog_iketcp(RC_LOG, logger, ifp,
-				    "read to drain socket %d failed "PRI_ERRNO,
-				    ifp->fd, pri_errno(errno));
-		} else {
-			dbg_iketcp(ifp, "socket %d drained %zd bytes",
-				   ifp->fd, size);
-		}
-		return;
-	}
-	}
-	/* no default - all cases return - missing case error */
-	bad_case(ifp->iketcp_state);
-}
-
 /*
  * Open a TCP socket connected to st_remote_endpoint.  Since this end
  * opend the socket, this end sends the IKE-in-TCP magic word.
@@ -826,7 +759,7 @@ stf_status create_tcp_interface(struct state *st)
 #endif
 
 	attach_fd_read_sensor(&ifp->iketcp_message_listener,
-			      fd, iketcp_message_listener_cb, ifp);
+			      fd, process_iface_packet, ifp);
 
 	st->st_interface = ifp; /* TCP: leaks old st_interface? */
 	pstats_iketcp_started[ifp->iketcp_server]++;
@@ -873,13 +806,13 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 
 	struct logger from_logger = logger_from(logger, &remote_tcp_endpoint);
 	logger = &from_logger;
-	llog_iketcp(RC_LOG, logger, ifp, "accepted connection");
+	llog_iketcp(RC_LOG, logger, ifp, "socket %d: accepted connection", ifp->fd);
 
 	/* set up a timeout to kill the socket when nothing happens */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
 	attach_fd_read_sensor(&ifp->iketcp_message_listener, ifp->fd,
-			      iketcp_message_listener_cb, ifp);
+			      process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
 }
