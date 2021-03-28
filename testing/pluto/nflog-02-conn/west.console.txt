@@ -60,27 +60,28 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
 west #
- rm -fr /tmp/nflog-50.pcap
+ # suppress job monitoring; specify packet count
 west #
- rm -fr /tmp/nflog-50.log
+ rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
 west #
- (tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /dev/null 2>&1 &)
+ set +m
 west #
- ping -n -c 5 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=5 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
+[B] PID
+west #
+ ../../pluto/bin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
+tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), snapshot length 262144 bytes
+west #
+ ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsec auto --down westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=420B out=420B
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  iptables -L -n
@@ -93,17 +94,17 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 west #
- cp /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
+ # wait for count to reach tcpdump then dump it
 west #
- tcpdump -n -r /tmp/nflog-50.pcap 2>/dev/null
+ wait
+west #
+ cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
+west #
+ tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 2, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 2, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 3, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 3, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 4, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 4, length 64
+IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
 west #
  echo done
 done
