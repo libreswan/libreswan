@@ -781,7 +781,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 	    c->name, type->name);
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true, logger);
 	if (s == NULL) {
-		dbg("connection %s's %s private key not found",
+		llog(RC_LOG_SERIOUS, logger, "connection %s's %s private key not found",
 		    c->name, type->name);
 		return NULL;
 	}
