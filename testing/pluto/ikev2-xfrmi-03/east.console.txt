@@ -22,15 +22,15 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@north'
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
 east #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped overrun mcast   
-    672        8        0       0       0       0       
+    336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
-    672        8        0       0       0       0       
+    336        4        0       0       0       0       
 east #
  ip rule show
 0:	from all lookup local

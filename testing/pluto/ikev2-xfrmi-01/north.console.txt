@@ -42,22 +42,15 @@ north #
 north #
  sleep  2
 north #
- ping -w 4 -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../pluto/bin/ping-once.sh --up 192.0.2.254
+up
 north #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped overrun mcast   
-    336        4        0       0       0       0       
+    84         1        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    84         1        0       0       0       0       
 north #
  #kill -9 $(cat /tmp/tcpdump.pid)
 north #
@@ -78,7 +71,7 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "north", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "north", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 north #
  ../bin/check-for-core.sh
 north #

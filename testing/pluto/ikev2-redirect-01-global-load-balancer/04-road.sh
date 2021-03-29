@@ -10,7 +10,7 @@ ipsec auto --up road-east
 echo "1. road connection add+up done"
 sleep 1
 # should be connected to west!
-ping -n -c 4 192.0.2.254
+../../pluto/bin/ping-once.sh --up 192.0.2.254
 ipsec whack --trafficstatus
 ipsec auto --delete road-east
 echo "1. road connection delete done"
