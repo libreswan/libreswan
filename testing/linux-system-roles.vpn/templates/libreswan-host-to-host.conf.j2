@@ -7,7 +7,7 @@
 {%         set host = tunnel.hosts[host].hostname | d((hostvars[host] | d({})).ansible_host | d(host)) %}
 conn {{ (tunnel | json_query('name')) | ternary((tunnel.name | d('', true)) + '-', '') }}{{ host }}-to-{{ otherhost }}
   left={{ host }}
-  leftid=@{{ host }}
+  leftid={{ host | ipaddr | ternary('','@') }}{{ host }}
 {%         if tunnel.hosts[host] is mapping and 'subnets' in tunnel.hosts[host] %}
   leftsubnets={
 {%-          for subnet in tunnel.hosts[host].subnets -%}
@@ -20,7 +20,7 @@ conn {{ (tunnel | json_query('name')) | ternary((tunnel.name | d('', true)) + '-
 {%     endfor %}
   right={{ otherhost }}
 {%     if tunnel.auth_method == 'psk' %}
-  rightid=@{{ otherhost }}
+  rightid={{ otherhost | ipaddr | ternary('','@') }}{{ otherhost }}
 {%     endif %}
 {%     if tunnel.hosts[item] is mapping and 'subnets' in tunnel.hosts[item] %}
   rightsubnets={

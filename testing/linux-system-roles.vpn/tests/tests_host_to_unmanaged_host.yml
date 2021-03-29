@@ -71,7 +71,7 @@
             __vpn_register_unmanaged_conf.content | b64decode is not
             search('right=' + __vpn_unmanaged_hostname) or
             __vpn_register_unmanaged_conf.content | b64decode is not
-            search('rightid=@' + __vpn_unmanaged_hostname)
+            search('rightid=' + __vpn_unmanaged_hostname)
 
         - name: assert success for unmanaged host conf file
           assert:
@@ -87,7 +87,7 @@
           set_fact:
             __vpn_success: false
           when: >-
-            __vpn_register_unmanaged_secrets.content | b64decode is not search('^@' + __vpn_main_hostname + ' @' + __vpn_unmanaged_hostname + ' : PSK *')
+            __vpn_register_unmanaged_secrets.content | b64decode is not search('^@' + __vpn_main_hostname + ' ' + __vpn_unmanaged_hostname + ' : PSK *')
 
         - name: assert success for unmanaged host secrets files
           assert:
