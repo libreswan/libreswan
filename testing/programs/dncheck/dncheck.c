@@ -212,7 +212,7 @@ static void dn_check(void)
 			CHECK_JAM_DN(t->nss, true);
 		}
 
-		/* Can NSS can parse it's variant? */
+		/* Can NSS can parse its variant? */
 
 		{
 			const char *nss_dn = t->nss != NULL ? t->nss : t->out;

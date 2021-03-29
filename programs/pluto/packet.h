@@ -133,7 +133,7 @@ struct packet_byte_stream {
 	 *
 	 * IKEv2 has a "chain" of next payloads.  The chain starts
 	 * with the message's Next Payload field, and then threads its
-	 * way through every single payload header.  For SK, it's Next
+	 * way through every single payload header.  For SK, its Next
 	 * Payload field is for the first containing payload.
 	 *
 	 * IKEv1, provided payloads nested within an SK payload are
@@ -451,7 +451,7 @@ extern struct_desc ipsec_sit_desc;
  * A variable length SPI follows.
  *
  * XXX: Don't be confused by the field "Next Payload" in the below -
- * it has nothing to do with the next payload chain.  It's values are
+ * it has nothing to do with the next payload chain.  Its values are
  * either 0 (last) or ISAKMP_NEXT_P.
  *
  *                      1                   2                   3
@@ -481,7 +481,7 @@ extern struct_desc isakmp_proposal_desc;
  * Variable length SA Attributes follow.
  *
  * XXX: Don't be confused by the field "Next Payload" in the below -
- * it has nothing to do with the next payload chain.  It's values are
+ * it has nothing to do with the next payload chain.  Its values are
  * either 0 (last) or ISAKMP_NEXT_T.
  *
  *                      1                   2                   3

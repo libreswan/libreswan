@@ -59,7 +59,7 @@ struct v2_msgid_windows {
 
 /*
  * The Message ID for the state's in-progress exchanges.  If no
- * exchange is in progress then it's value is -1.
+ * exchange is in progress then its value is -1.
  *
  * The INITIATOR Message ID is valid from the time the request is sent
  * (earlier?) through to when the response is received.  Lookups then

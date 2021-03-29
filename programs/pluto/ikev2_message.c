@@ -1270,7 +1270,7 @@ static bool record_outbound_fragments(const pb_stream *body,
 
 	/*
 	 * Extract the hdr from the original unfragmented message.
-	 * Set it up for auto-update of it's next payload field chain.
+	 * Set it up for auto-update of its next payload field chain.
 	 */
 	struct isakmp_hdr hdr;
 	{

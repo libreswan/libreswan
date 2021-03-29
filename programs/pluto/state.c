@@ -1059,7 +1059,7 @@ void delete_state_tail(struct state *st)
 	    st->st_serialno >= st->st_connection->newest_isakmp_sa) {
 		/*
 		 * XXX: don't try to delete the iface port of an old
-		 * TCP IKE SA.  It's replacement will have taken
+		 * TCP IKE SA.  Its replacement will have taken
 		 * ownership.  However, do delete a TCP IKE SA when it
 		 * looks like it is getting ready for a replace.
 		 */
@@ -2731,7 +2731,7 @@ static bool v2_migrate_predicate(struct state *st, void *context)
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
 	/*
-	 * TO is in the process of being emancipated.  It's
+	 * TO is in the process of being emancipated.  Its
 	 * .st_clonedfrom has been zapped and the new IKE_SPIs
 	 * installed (a true child would have FROM's IKE SPIs).
 	 *

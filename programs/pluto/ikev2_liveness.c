@@ -47,7 +47,7 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 	 * for the other end to identify which child this is for!
 	 *
 	 * XXX: See record 'n'_send for how screwed up all this is:
-	 * need to pass in the CHILD SA so that it's liveness
+	 * need to pass in the CHILD SA so that its liveness
 	 * timestamp (and not the IKE) gets updated.
 	 */
 	pstats_ike_dpd_sent++;
