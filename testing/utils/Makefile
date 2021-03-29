@@ -18,6 +18,6 @@ include ../../mk/dirs.mk
 endif
 include $(top_srcdir)/Makefile.inc
 
-SUBDIRS=pcap2skb
+#SUBDIRS=
 
 include $(top_srcdir)/mk/targets.mk
