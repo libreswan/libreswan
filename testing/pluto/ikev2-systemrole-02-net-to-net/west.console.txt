@@ -134,7 +134,7 @@ west #
 000  
 000 Connection list:
 000  
-000 "192.1.2.45-to-192.1.2.23": 192.1.2.45<192.1.2.45>[@192.1.2.45]...192.1.2.23<192.1.2.23>[@192.1.2.23]; prospective erouted; eroute owner: #0
+000 "192.1.2.45-to-192.1.2.23": 192.1.2.45<192.1.2.45>...192.1.2.23<192.1.2.23>; prospective erouted; eroute owner: #0
 000 "192.1.2.45-to-192.1.2.23":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret
@@ -147,7 +147,7 @@ west #
 000 "192.1.2.45-to-192.1.2.23":   v2-auth-hash-policy: none;
 000 "192.1.2.45-to-192.1.2.23":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "192.1.2.45-to-192.1.2.23":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_FQDN; our id=@192.1.2.45; their idtype: ID_FQDN; their id=@192.1.2.23
+000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23
 000 "192.1.2.45-to-192.1.2.23":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "192.1.2.45-to-192.1.2.23":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  

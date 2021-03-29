@@ -1,61 +1,61 @@
 /testing/guestbin/swan-prep
-east #
+west #
  # System Role deployment on nic will push configurations to our machine
-east #
+west #
  # into /etc/ipsec.d/
-east #
- rm -rf OUTPUT/east/ipsec.d
-east #
- mkdir -p OUTPUT/east/ipsec.d
-east #
- chmod 777 OUTPUT/east
-east #
- mount -o bind,rw OUTPUT/east/ipsec.d /etc/ipsec.d
-east #
+west #
+ rm -rf OUTPUT/west/ipsec.d
+west #
+ mkdir -p OUTPUT/west/ipsec.d
+west #
+ chmod 777 OUTPUT/west
+west #
+ mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
+west #
  # initnss normally happens in the initsystem - but not for namespace testing
-east #
+west #
  echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && ipsec initnss > /dev/null
-east #
+west #
  # test config for syntax errors
-east #
+west #
  ipsec addconn --checkconfig --config /etc/ipsec.conf
-east #
+west #
  # start for test
-east #
+west #
  ipsec start
 Redirecting to: [initsystem]
-east #
+west #
  /testing/pluto/bin/wait-until-pluto-started
-east #
+west #
  # test secrets reading for early warning of syntax errors
-east #
+west #
  ipsec secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
-east #
+west #
  echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
-east #
+west #
  # ready for System Role to drop file(s) into /etc/ipsec.d/
-east #
+west #
  echo "initdone"
 initdone
-east #
+west #
  # New files should have dropped in, and we are ready to restart
-east #
+west #
  ipsec restart
 Redirecting to: [initsystem]
-east #
+west #
  /testing/pluto/bin/wait-until-pluto-started
-east #
+west #
  ipsec status
 000 using kernel interface: xfrm
 000  
 000 interface lo UDP 127.0.0.1:4500
 000 interface lo UDP 127.0.0.1:500
-000 interface eth0 UDP 192.0.2.254:4500
-000 interface eth0 UDP 192.0.2.254:500
-000 interface eth1 UDP 192.1.2.23:4500
-000 interface eth1 UDP 192.1.2.23:500
+000 interface eth0 UDP 192.0.1.254:4500
+000 interface eth0 UDP 192.0.1.254:500
+000 interface eth1 UDP 192.1.2.45:4500
+000 interface eth1 UDP 192.1.2.45:500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -134,22 +134,22 @@ east #
 000  
 000 Connection list:
 000  
-000 "192.1.2.23-to-192.1.2.45": 192.1.2.23<192.1.2.23>[@192.1.2.23]...192.1.2.45<192.1.2.45>[@192.1.2.45]; prospective erouted; eroute owner: #0
-000 "192.1.2.23-to-192.1.2.45":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "192.1.2.23-to-192.1.2.45":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "192.1.2.23-to-192.1.2.45":   our auth:secret, their auth:secret
-000 "192.1.2.23-to-192.1.2.45":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "192.1.2.23-to-192.1.2.45":   sec_label:unset;
-000 "192.1.2.23-to-192.1.2.45":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "192.1.2.23-to-192.1.2.45":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "192.1.2.23-to-192.1.2.45":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "192.1.2.23-to-192.1.2.45":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
-000 "192.1.2.23-to-192.1.2.45":   v2-auth-hash-policy: none;
-000 "192.1.2.23-to-192.1.2.45":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "192.1.2.23-to-192.1.2.45":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "192.1.2.23-to-192.1.2.45":   our idtype: ID_FQDN; our id=@192.1.2.23; their idtype: ID_FQDN; their id=@192.1.2.45
-000 "192.1.2.23-to-192.1.2.45":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "192.1.2.23-to-192.1.2.45":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "192.1.2.45-to-192.1.2.23": 192.1.2.45<192.1.2.45>...192.1.2.23<192.1.2.23>; prospective erouted; eroute owner: #0
+000 "192.1.2.45-to-192.1.2.23":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret
+000 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
+000 "192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "192.1.2.45-to-192.1.2.23":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "192.1.2.45-to-192.1.2.23":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "192.1.2.45-to-192.1.2.23":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "192.1.2.45-to-192.1.2.23":   v2-auth-hash-policy: none;
+000 "192.1.2.45-to-192.1.2.23":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "192.1.2.45-to-192.1.2.23":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "192.1.2.45-to-192.1.2.23":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23
+000 "192.1.2.45-to-192.1.2.23":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "192.1.2.45-to-192.1.2.23":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -159,21 +159,45 @@ east #
 000  
 000 Bare Shunt list:
 000  
-east #
+west #
+ # this assumes conection loaded with auto=ondemand
+west #
+ # trigger tunnel - the first trigger ping packet is lost
+west #
+ ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+down UNEXPECTED
+west #
+ sleep 2
+west #
+ ping -c4 -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # show non-zero IPsec traffic counters
+west #
+ ipsec whack --trafficstatus
+006 #2: "192.1.2.45-to-192.1.2.23", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
+west #
  echo done
 done
-east #
+west #
  ipsec stop
 Redirecting to: [initsystem]
-east #
+west #
  rm -f /etc/ipsec.d/*.*
-east #
+west #
  umount /etc/ipsec.d
-east #
+west #
  test -f /var/run/pluto/sshd.pid && kill -9 `cat /var/run/pluto/sshd.pid` >/dev/null
-east #
+west #
  ../bin/check-for-core.sh
-east #
+west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
+west #
  

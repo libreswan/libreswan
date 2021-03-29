@@ -1225,10 +1225,11 @@ kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
 kvmplutotest	ikev2-intermediate-02-psk		good
 
 # VPN System Roles - skip automated testing for now
-kvmplutotest	ikev2-systemrole-01			good
+kvmplutotest	ikev2-systemrole-01-host-to-host	good
 kvmplutotest	ikev2-systemrole-02-net-to-net		good
-# bug in System Role, see https://github.com/linux-system-roles/vpn/issues/19
+# bug in System Role, see https://github.com/linux-system-roles/vpn/issues/21
 kvmplutotest	ikev2-systemrole-03-certs		wip
+kvmplutotest	ikev2-systemrole-04-mesh		wip
 
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
