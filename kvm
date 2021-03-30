@@ -3,36 +3,63 @@
 if test $# = 0; then
     cat <<EOF
 Usage:
-   $0 sh <domain>
-   $0 test [<test> ...]
-   $0 diffs [<test> ...]
-   $0 results [<test> ...]
+   <operation> <operation> ... <arg> <arg>
+where <operation is>
+  sh <domain>
+  test [<test> ...]
+  diffs [<test> ...]
+  results [<test> ...]
+  patch [<test> ...]
+  upgrade
 EOF
     exit 1
 fi
 
-op=$1; shift
 
-case $op in
-    sh )
-	exec make kvmsh-"$*"
-	;;
-    test )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-test KVM_TESTS="$*"
-	;;
-    diff|diffs )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-diffs KVM_TESTS="$*"
-	;;
-    result|results )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-results KVM_TESTS="$*"
-	;;
-esac
+ops=""
+
+# first pass
+while test $# -gt 0 ; do
+    case $1 in
+	sh )
+	    shift ; exec make kvmsh-"$*"
+	    ;;
+	test | retest | upgrade | patch )
+	    ops="${ops} $1"
+	    ;;
+	diff|diffs )
+	    ops="${ops} diff"
+	    ;;
+	result|results )
+	    ops="${ops} results"
+	    ;;
+	* ) # assume files
+	    break
+	    ;;
+    esac
+    shift
+done
+
+if test $# -eq 0; then
+    set testing/pluto
+fi
+
+# second pass
+for op in ${ops} ; do
+    case ${op} in
+	upgrade )
+	    make kvm-upgrade || exit $?
+	    ;;
+	test | retest )
+	    make kvm-${op} KVM_TESTS="$*"
+	    ;;
+	diff )
+	    make kvm-diffs KVM_TESTS="$*" || exit $?
+	    ;;
+	results )
+	    make kvm-results KVM_TESTS="$*"
+	    ;;
+	patch )
+	    make kvm-diffs KVM_TESTS="$*" | patch -p1
+    esac
+done
