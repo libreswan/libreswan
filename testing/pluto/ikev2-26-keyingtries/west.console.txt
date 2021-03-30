@@ -43,11 +43,13 @@ west #
 031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
- # the state should have been deleted, but replaced via EVENT_SA_REPLACE with a new state trying
+ # The state should have been deleted, but replaced via event
 west #
- # if no STATE_s show up, this test failed
+ # SA_REPLACE with a new state.  If no STATE show up, this test
 west #
- ipsec status |grep STATE_  || echo "test failed, all states went away"
+ # failed
+west #
+ ../../pluto/bin/wait-for.sh --match 'sent IKE_AUTH request' -- ipsec status
 000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_RETRANSMIT in XXs; idle;
 west #
