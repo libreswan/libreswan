@@ -14,12 +14,11 @@
  * for more details.
  */
 
-#ifndef RETRY_H
-#define RETRY_H
+#ifndef IKEV2_RETRY_H
+#define IKEV2_RETRY_H
 
 struct state;
 
-void retransmit_v1_msg(struct state *st);
 void retransmit_v2_msg(struct state *st);
 
 bool ikev2_schedule_retry(struct state *st);

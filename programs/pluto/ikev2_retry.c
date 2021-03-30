@@ -24,111 +24,14 @@
 
 #include "defs.h"
 #include "state.h"
-#include "retry.h"
-#include "log.h"
-#include "ip_address.h"
+#include "ikev2_retry.h"
+#include "passert.h"
 #include "connections.h"
-#include "ikev1_send.h"
-#include "ikev2_send.h"
-#include "demux.h"	/* for state_transition_fn used by ipsec_doi.h */
-#include "ipsec_doi.h"
-#include "ikev2.h"	/* for need_this_intiator() */
+#include "log.h"
 #include "pluto_stats.h"
-#include "pending.h"		/* for release_pending_whacks() */
-
-#ifdef USE_IKEv1
-/* Time to retransmit, or give up.
- *
- * Generally, we'll only try to send the message
- * MAXIMUM_RETRANSMISSIONS times.  Each time we double
- * our patience.
- *
- * As a special case, if this is the first initiating message
- * of a Main Mode exchange, and we have been directed to try
- * forever, we'll extend the number of retransmissions to
- * MAXIMUM_RETRANSMISSIONS_INITIAL times, with all these
- * extended attempts having the same patience.  The intention
- * is to reduce the bother when nobody is home.
- *
- * Since IKEv1 is not reliable for the Quick Mode responder,
- * we'll extend the number of retransmissions as well to
- * improve the reliability.
- */
-void retransmit_v1_msg(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	unsigned long try = st->st_try;
-	unsigned long try_limit = c->sa_keying_tries;
-
-
-	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
-	address_buf b;
-	connection_buf cib;
-	dbg("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
-	    str_address(&c->spd.that.host_addr, &b),
-	    pri_connection(c, &cib),
-	    st->st_serialno, try, try_limit,
-	    retransmit_count(st) + 1);
-
-	switch (retransmit(st)) {
-	case RETRANSMIT_YES:
-		resend_recorded_v1_ike_msg(st, "EVENT_RETRANSMIT");
-		return;
-	case RETRANSMIT_NO:
-		return;
-	case RETRANSMITS_TIMED_OUT:
-		break;
-	case DELETE_ON_RETRANSMIT:
-		/* disable re-key code */
-		try = 0;
-		break;
-	}
-
-	if (try != 0 && (try <= try_limit || try_limit == 0)) {
-		/*
-		 * A lot like EVENT_SA_REPLACE, but over again.  Since
-		 * we know that st cannot be in use, we can delete it
-		 * right away.
-		 */
-		char story[80]; /* arbitrary limit */
-
-		try++;
-		snprintf(story, sizeof(story), try_limit == 0 ?
-			 "starting keying attempt %ld of an unlimited number" :
-			 "starting keying attempt %ld of at most %ld",
-			 try, try_limit);
-
-		/* ??? DBG and real-world code mixed */
-		if (!DBGP(DBG_WHACKWATCH)) {
-			if (fd_p(st->st_logger->object_whackfd)) {
-				/*
-				 * Release whack because the observer
-				 * will get bored.
-				 */
-				log_state(RC_COMMENT, st,
-				       "%s, but releasing whack",
-				       story);
-				release_pending_whacks(st, story);
-			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				/* no whack: just log */
-				log_state(RC_LOG, st, "%s", story);
-			}
-		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			log_state(RC_COMMENT, st, "%s", story);
-		}
-
-		ipsecdoi_replace(st, try);
-	}
-
-	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
-
-	/* placed here because IKEv1 doesn't do a proper state change to STF_FAIL/STF_FATAL */
-	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
-
-	delete_state(st);
-	/* note: no md->st to clear */
-}
-#endif
+#include "ikev2_send.h"
+#include "pending.h"
+#include "ipsec_doi.h"
 
 void retransmit_v2_msg(struct state *st)
 {

@@ -59,7 +59,8 @@
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
-#include "retry.h"
+#include "ikev1_retry.h"
+#include "ikev2_retry.h"
 #include "fetch.h"		/* for check_crls() */
 #include "pluto_stats.h"
 #include "iface.h"
