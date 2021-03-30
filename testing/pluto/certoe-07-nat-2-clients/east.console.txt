@@ -39,10 +39,6 @@ east #
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.2/32
 east #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.2/32
-east #
  ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 east NOW
 XFRM state:

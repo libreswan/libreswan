@@ -21,8 +21,6 @@ nic #
 nic #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-nic #
  ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 nic #
  # you should see both RSA and NULL
