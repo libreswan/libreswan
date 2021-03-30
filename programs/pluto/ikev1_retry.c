@@ -53,9 +53,12 @@
 void retransmit_v1_msg(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	unsigned long try = st->st_try + 1;
+	/*
+	 * XXX: CURRENT_TRY will be 0 on the initial responder (which
+	 * isn't currently trying to establish a connection).
+	 */
+	unsigned long current_try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
-
 
 	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
 	address_buf b;
@@ -63,7 +66,7 @@ void retransmit_v1_msg(struct state *st)
 	dbg("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
 	    str_address(&c->spd.that.host_addr, &b),
 	    pri_connection(c, &cib),
-	    st->st_serialno, try, try_limit,
+	    st->st_serialno, current_try, try_limit,
 	    retransmit_count(st) + 1);
 
 	switch (retransmit(st)) {
@@ -76,11 +79,11 @@ void retransmit_v1_msg(struct state *st)
 		break;
 	case DELETE_ON_RETRANSMIT:
 		/* disable re-key code */
-		try = 0;
+		current_try = 0;
 		break;
 	}
 
-	if (try != 0 && (try <= try_limit || try_limit == 0)) {
+	if (current_try != 0 && (current_try < try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.  Since
 		 * we know that st cannot be in use, we can delete it
@@ -88,10 +91,11 @@ void retransmit_v1_msg(struct state *st)
 		 */
 		char story[80]; /* arbitrary limit */
 
+		unsigned long next_try = current_try + 1;
 		snprintf(story, sizeof(story), try_limit == 0 ?
 			 "starting keying attempt %ld of an unlimited number" :
 			 "starting keying attempt %ld of at most %ld",
-			 try, try_limit);
+			 next_try, try_limit);
 
 		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
@@ -112,7 +116,7 @@ void retransmit_v1_msg(struct state *st)
 			log_state(RC_COMMENT, st, "%s", story);
 		}
 
-		ipsecdoi_replace(st, try);
+		ipsecdoi_replace(st, next_try);
 	}
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
