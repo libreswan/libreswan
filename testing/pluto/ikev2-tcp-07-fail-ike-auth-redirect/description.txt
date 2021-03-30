@@ -1,0 +1,1 @@
+Test a REDIRECT response during a TCP IKE_AUTH exchange.

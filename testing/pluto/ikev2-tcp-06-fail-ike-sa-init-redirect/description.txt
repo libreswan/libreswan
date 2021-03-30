@@ -1,0 +1,4 @@
+Test a REDIRECT response duing a TCP IKE_SA_INIT exchange.
+
+
+
