@@ -1452,8 +1452,8 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 	if (wm->sa_clones != 0 &&  c->ike_version == IKEv1) {
-		loglog(RC_FATAL, "clones= requires ikev2");
-		return;
+		llog(RC_FATAL, c->logger, "clones= requires ikev2");
+		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {

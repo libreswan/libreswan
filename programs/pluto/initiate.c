@@ -838,7 +838,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
-		.sec_label = sec_label
+		.sec_label = sec_label,
 		.clone_cpu_id = clone_cpu_id,
 	};
 

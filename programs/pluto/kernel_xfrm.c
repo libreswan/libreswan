@@ -509,11 +509,11 @@ static void add_sa_clone_atribs(uint32_t sub_sa_id, struct rtattr *attr, void *r
 	struct request *req = (struct request *)req_void;
 
 	if (sub_sa_id  == 0) {
-		DBG_log("AA_2020 %s %d set XFRM_SA_PCPU_HEAD sub_sa_id %u", __func__, __LINE__, sub_sa_id);
+		dbg("AA_2020 %s %d set XFRM_SA_PCPU_HEAD sub_sa_id %u", __func__, __LINE__, sub_sa_id);
 		xfrm_sub_sa_flag = XFRM_SA_PCPU_HEAD;
 	} else {
 		sub_sa_id  = sub_sa_id - 1; // Steffen's sub sa id array start with 0, while connection start with 1
-		DBG(DBG_KERNEL, DBG_log("AA_2020 %s %d set XFRMA_SA_PCPU %u", __func__, __LINE__, sub_sa_id));
+		dbg("AA_2020 %s %d set XFRMA_SA_PCPU %u", __func__, __LINE__, sub_sa_id);
 		attr->rta_type = XFRMA_SA_PCPU;
 		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
 
@@ -525,7 +525,7 @@ static void add_sa_clone_atribs(uint32_t sub_sa_id, struct rtattr *attr, void *r
 	}
 	attr->rta_type = XFRMA_SA_EXTRA_FLAGS;
 	attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
-	DBG(DBG_KERNEL, DBG_log("AA_2020 %s %d set extra flag %u", __func__, __LINE__, xfrm_sub_sa_flag));
+	dbg("AA_2020 %s %d set extra flag %u", __func__, __LINE__, xfrm_sub_sa_flag);
 	memcpy(RTA_DATA(attr), &xfrm_sub_sa_flag, sizeof(uint32_t));
 	req->n.nlmsg_len += attr->rta_len;
 	attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1659,8 +1659,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
 		xfrm_address_t srcaddr;
-		ip2xfrm(sa->src.address, &srcaddr);
-
+		srcaddr = xfrm_from_address(sa->src.address);
 		DBG_log("AA_2020 %s %d clone_id %u 0x%x", __func__, __LINE__, sa->clone_id, ntohl(sa->spi));
 		add_sa_clone_atribs(sa->clone_id, attr, &req);
 		DBG_log("AA_2020 %s %d add XFRMA_SRCADDR %u 0x%x", __func__, __LINE__, sa->clone_id, ntohl(sa->spi));
@@ -1797,7 +1796,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 
 		case XFRMA_SA_PCPU:
 			cpu_id = *((uint32_t *) RTA_DATA(attr));
-			lswlogf(buf, "%s XFRMA_SA_PCPU %u \n", acquire_log_p, cpu_id);
+			dbg("XFRMA_SA_PCPU %u", cpu_id);
 			break;
 
 		case XFRMA_SEC_CTX:
@@ -2551,7 +2550,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_SRCADDR;
 		attr->rta_len = RTA_LENGTH(sizeof(xfrm_address_t));
-		ip2xfrm(sa->src.address, &srcaddr);
+		srcaddr = xfrm_from_address(sa->src.address);
 		memcpy(RTA_DATA(attr), &srcaddr, sizeof(srcaddr));
 		req.n.nlmsg_len += attr->rta_len;
 		DBG_log("AA_2020 %s %d XFRMA_SRCADDR %u 0x%x nlmsg_len %u %s", __func__, __LINE__, sa->clone_id, ntohl(sa->spi), req.n.nlmsg_len,
@@ -2560,7 +2559,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	}
 #endif
 
-	ip2xfrm(sa->dst.address, &req.id.daddr);
+	req.id.daddr = xfrm_from_address(sa->dst.address);
 
 	req.id.spi = sa->spi;
 	req.id.family = addrtypeof(sa->src.address);
