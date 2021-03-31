@@ -87,12 +87,6 @@ east #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
-|    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 4 (00 04)
-"westnet-eastnet" #4: received 'quick_inI1_outR1' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| ***parse ISAKMP Hash Payload:
 |    next payload type: ISAKMP_NEXT_D (0xc)
 |    length: 36 (00 24)
 | ***parse ISAKMP Delete Payload:
@@ -109,12 +103,6 @@ east #
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
 "westnet-eastnet" #5: authenticated using RSA with SHA-1
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| ***parse ISAKMP Hash Payload:
-|    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (00 24)
-"westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:

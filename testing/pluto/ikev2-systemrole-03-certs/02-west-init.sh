@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep
 # System Role deployment on nic will push configurations to our machine
 # into /etc/ipsec.d/
-rm -rf OUTPUT/east/ipsec.d
-mkdir -p OUTPUT/east/ipsec.d
-chmod 777 OUTPUT/east
-mount -o bind,rw OUTPUT/east/ipsec.d /etc/ipsec.d
+rm -rf OUTPUT/west/ipsec.d
+mkdir -p OUTPUT/west/ipsec.d
+chmod 777 OUTPUT/west
+mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
 # initnss normally happens in the initsystem - but not for namespace testing
 # echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && ipsec initnss > /dev/null
 ipsec initnss

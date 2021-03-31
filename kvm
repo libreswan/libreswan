@@ -6,6 +6,7 @@ Usage:
    <operation> <operation> ... <arg> <arg>
 where <operation is>
   sh <domain>
+  install
   test [<test> ...]
   diffs [<test> ...]
   results [<test> ...]
@@ -24,7 +25,7 @@ while test $# -gt 0 ; do
 	sh )
 	    shift ; exec make kvmsh-"$*"
 	    ;;
-	test | retest | upgrade | patch )
+	test | retest | upgrade | patch | install )
 	    ops="${ops} $1"
 	    ;;
 	diff|diffs )
@@ -45,21 +46,30 @@ if test $# -eq 0; then
 fi
 
 # second pass
+status=0
 for op in ${ops} ; do
     case ${op} in
 	upgrade )
 	    make kvm-upgrade || exit $?
 	    ;;
+	install )
+	    make kvm-install || exit $?
+	    ;;
 	test | retest )
 	    make kvm-${op} KVM_TESTS="$*"
 	    ;;
 	diff )
-	    make kvm-diffs KVM_TESTS="$*" || exit $?
+	    make kvm-diffs KVM_TESTS="$*"
+	    status=$?
 	    ;;
 	results )
 	    make kvm-results KVM_TESTS="$*"
+	    status=$?
 	    ;;
 	patch )
 	    make kvm-diffs KVM_TESTS="$*" | patch -p1
+	    ;;
     esac
 done
+
+exit ${status}

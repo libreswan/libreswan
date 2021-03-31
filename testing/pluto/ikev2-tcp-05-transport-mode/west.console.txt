@@ -86,16 +86,6 @@ west #
  echo "done"
 done
 west #
- # test TCP code for leaks
-west #
- ipsec whack --shutdown
-west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  
