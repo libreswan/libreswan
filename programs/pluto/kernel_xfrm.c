@@ -106,8 +106,6 @@
 #define XFRM_STATE_AF_UNSPEC 32
 #endif
 
-#define USE_CLONES
-
 static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
