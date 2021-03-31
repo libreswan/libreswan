@@ -257,8 +257,10 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	initiate_ondemand(local_client, remote_client,
 			  /*held*/ true,
 			  /*background*/ true,
-			  sec_label, clone_cpu_id,
-			  "acquire", logger);
+			  sec_label,
+			  "acquire",
+			  clone_cpu_id,
+			  logger);
 
 	if (kernel_ops->remove_orphaned_holds != NULL) {
 		dbg("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt");

@@ -1970,59 +1970,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 												 struct msg_digest *md,
 												 const struct hash_signature *sig);
 
-bool extract_u32_notify(pb_stream *pbs, char *name, uint32_t *dst)
-{
-	size_t len = pbs_left(pbs);
-	if (len > sizeof(uint32_t)) {
-		loglog(RC_LOG_SERIOUS, "%s length is too big %zd/%zd", name, len, sizeof(uint32_t));
-		return false;
-	}
-	if (len < sizeof(uint32_t)) {
-		loglog(RC_LOG_SERIOUS, "%s data must be at least %zd bytes (received %zd bytes including type byte)",
-			name, len, sizeof(uint32_t));
-		return false;
-	}
-
-	if (!in_raw(dst, len, pbs, "uint32_t notify Payload")) {
-		loglog(RC_LOG_SERIOUS, "%s data could not be read", name);
-		return false;
-	}
-
-	*dst = ntohl(*dst);
-
-	dbg("received %s %u", name, *dst);
-
-	return true;
-}
-
-static bool extract_clones_notifies(pb_stream *i_pbs, pb_stream *r_pbs,
-		struct ike_sa *ike)
-{
-	if (i_pbs != NULL)
-		if (!extract_u32_notify(i_pbs, "v2N_PCPU_I", &ike->sa.st_pcpu.sa_clones_i))
-			return true;
-	if (r_pbs != NULL)
-		if (!extract_u32_notify(r_pbs, "v2N_PCPU_R", &ike->sa.st_pcpu.sa_clones_r))
-			return true;
-
-	if (ike->sa.st_connection->sa_clones <= CLONE_SA_HEAD) {
-		libreswan_log("received v2N_PCPU_I %u and v2N_PCPU_R %u this connection has clones disabled",  ike->sa.st_pcpu.sa_clones_i, ike->sa.st_pcpu.sa_clones_r);
-		return false /* quiet or hard failure ??? */;
-	}
-
-	if (!ike->sa.st_pcpu.sa_clones_r  || !ike->sa.st_pcpu.sa_clones_i) {
-		libreswan_log("expecting non zero for both received v2N_PCPU_I %u and v2N_PCPU_R %u ignore these",  ike->sa.st_pcpu.sa_clones_i, ike->sa.st_pcpu.sa_clones_r);
-		return true;
-	}
-
-	dbg("received v2N_PCPU_I %u and v2N_PCPU_R %u clones supported ",
-		ike->sa.st_pcpu.sa_clones_i, ike->sa.st_pcpu.sa_clones_r);
-
-	ike->sa.st_pcpu.sa_clones = true;
-
-	return false;
-}
-
 static bool send_clone_support(uint32_t sa_clones, pb_stream *outs)
 {
 	/* these are from IKE  SA  not from child */
@@ -2042,7 +1989,7 @@ bool send_clone_id(struct ike_sa *ike, struct child_sa *child, pb_stream *outs)
 
 	pexpect(cc->sa_clones >= pc->sa_clones);  /* harder requirment ??? */
 	if (cc->spd.this.sa_clone_id > pc->sa_clones) {
-		loglog(RC_LOG_SERIOUS, " can not initiate Child SA clone id %u > IKE SA clones %u.",
+		log_state(RC_LOG_SERIOUS, &ike->sa, " can not initiate Child SA clone id %u > IKE SA clones %u.",
 				cc->spd.this.sa_clone_id, pc->sa_clones);
 		return false;
 	}
@@ -3559,9 +3506,33 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_intermediate_used = false;
 
-	if (md->v2N.sa_clones_i != NULL || md->v2N.sa_clones_r != NULL)
-		if (extract_clones_notifies(&md->v2N.sa_clones_i->pbs, &md->v2N.sa_clones_r->pbs, ike))
-			return STF_INTERNAL_ERROR;
+	if (md->pbs[PBS_v2N_PCPU_I] != NULL) {
+		struct pbs_in pcpu_i_pbs = *md->pbs[PBS_v2N_PCPU_I];
+		struct notify_pcpu_u32 ni;
+		diag_t d = pbs_in_struct(&pcpu_i_pbs, &notify_pcpu_u32_desc,
+                                 &ni, sizeof(ni), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			return STF_FATAL;
+		}
+		ike->sa.st_pcpu.sa_clones_i = ni.npcpu_u32;
+	}
+	if (md->pbs[PBS_v2N_PCPU_R] != NULL) {
+		struct pbs_in pcpu_r_pbs = *md->pbs[PBS_v2N_PCPU_R];
+		struct notify_pcpu_u32 nr;
+		diag_t d = pbs_in_struct(&pcpu_r_pbs, &notify_pcpu_u32_desc,
+                                 &nr, sizeof(nr), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			return STF_FATAL;
+		}
+		ike->sa.st_pcpu.sa_clones_r = nr.npcpu_u32;
+	}
+	if (ike->sa.st_pcpu.sa_clones_i != 0 && ike->sa.st_pcpu.sa_clones_r !=0) {
+		ike->sa.st_pcpu.sa_clones = true;
+		dbg("received v2N_PCPU_I %u and v2N_PCPU_R %u clones supported ",
+			ike->sa.st_pcpu.sa_clones_i, ike->sa.st_pcpu.sa_clones_r);
+	}
 
 	if (c->sa_clones > CLONE_SA_HEAD) {
 		if (!send_clone_support(c->sa_clones, &sk.pbs))
@@ -3842,10 +3813,33 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		return STF_FATAL;
 	}
 
-	if (md->v2N.sa_clones_i != NULL || md->v2N.sa_clones_r != NULL)
-		if (extract_clones_notifies(&md->v2N.sa_clones_i->pbs, &md->v2N.sa_clones_r->pbs, ike))
-			return STF_INTERNAL_ERROR;
-
+	if (md->pbs[PBS_v2N_PCPU_I] != NULL) {
+		struct pbs_in pcpu_i_pbs = *md->pbs[PBS_v2N_PCPU_I];
+		struct notify_pcpu_u32 ni;
+		diag_t d = pbs_in_struct(&pcpu_i_pbs, &notify_pcpu_u32_desc,
+                                 &ni, sizeof(ni), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			return STF_FATAL;
+		}
+		ike->sa.st_pcpu.sa_clones_i = ni.npcpu_u32;
+	}
+	if (md->pbs[PBS_v2N_PCPU_R] != NULL) {
+		struct pbs_in pcpu_r_pbs = *md->pbs[PBS_v2N_PCPU_R];
+		struct notify_pcpu_u32 nr;
+		diag_t d = pbs_in_struct(&pcpu_r_pbs, &notify_pcpu_u32_desc,
+                                 &nr, sizeof(nr), NULL);
+		if (d != NULL) {
+			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			return STF_FATAL;
+		}
+		ike->sa.st_pcpu.sa_clones_r = nr.npcpu_u32;
+	}
+	if (ike->sa.st_pcpu.sa_clones_i != 0 && ike->sa.st_pcpu.sa_clones_r !=0) {
+		ike->sa.st_pcpu.sa_clones = true;
+		dbg("received v2N_PCPU_I %u and v2N_PCPU_R %u clones supported ",
+			ike->sa.st_pcpu.sa_clones_i, ike->sa.st_pcpu.sa_clones_r);
+	}
 
 	/* check for Child SA related NOTIFY payloads */
 	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) {
@@ -3904,13 +3898,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		st->st_seen_use_ipcomp = TRUE;
 	}
 
-	if (md->v2N.sa_clone_id != NULL) {
-		if (!extract_u32_notify(&md->v2N.sa_clone_id->pbs, "v2N_PCPU_ID", &st->st_pcpu.sa_clone_id))
-			return true;
-	} else {
+	if (st->st_pcpu.sa_clone_id != 0) {
 		if (c->sa_clones > CLONE_SA_HEAD) {
 
-			loglog(RC_LOG_SERIOUS, "missing v2N_PCPU_ID expecting for this connection");
+			log_state(RC_LOG_SERIOUS, st, "missing v2N_PCPU_ID expecting for this connection");
 			return STF_FAIL;
 		}
 	}

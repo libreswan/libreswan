@@ -1601,6 +1601,18 @@ struct_desc suggested_group_desc = {
 	.pt = ISAKMP_NEXT_v2NONE,
 };
 
+/* draft-pwouters-multi-sa-performance-00 */
+static field_desc notify_pcpu_u32_fields[] = {
+	{ ft_nat, 16 / BITS_PER_BYTE, "u32 number/ID", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc notify_pcpu_u32_desc = {
+	.name = "PCPU u32 value",
+	.fields = notify_pcpu_u32_fields,
+	.size = sizeof(struct notify_pcpu_u32),
+};
+
 /*
  * IPcomp Notify as per RFC 7296:
  *

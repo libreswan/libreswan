@@ -227,9 +227,23 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			break;
 
 		case v2N_PCPU_ID:
-			if (!extract_u32_notify(&ntfy->pbs, "v2N_PCPU_ID", &cst->st_pcpu.sa_clone_id))
+		{
+			pb_stream pbs = ntfy->pbs;
+			size_t len = pbs_left(&pbs);
+			struct notify_pcpu_u32 pcpu_id;
+
+			dbg("received v2N_PCPU_ID of length %zd", len);
+
+			diag_t d = pbs_in_struct(&pbs, &notify_pcpu_u32_desc,
+                                 &pcpu_id, sizeof(pcpu_id), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 				return STF_FATAL;
+			}
+			cst->st_pcpu.sa_clone_id = pcpu_id.npcpu_u32;
 			break;
+		}
+
 		default:
 			log_state(RC_LOG, &child->sa,
 				  "received unsupported NOTIFY %s ",

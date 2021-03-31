@@ -1196,8 +1196,12 @@ union payload {
 struct suggested_group {
 	uint16_t /*oakley_group_t*/ sg_group;
 };
-
 extern struct_desc suggested_group_desc;
+
+struct notify_pcpu_u32 {
+	uint32_t /*oakley_group_t*/ npcpu_u32;
+};
+extern struct_desc notify_pcpu_u32_desc;
 
 struct ikev2_redirect_part {
 	u_int8_t gw_identity_type;

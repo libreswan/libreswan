@@ -295,5 +295,5 @@ bool emit_v2N_compression(struct state *cst,
 extern bool send_clone_id(struct ike_sa *ike, struct child_sa *child,
 		pb_stream *outs);
 
-extern bool extract_u32_notify(pb_stream *pbs, char *name, uint32_t *dst);
+extern bool extract_u32_notify(const pb_stream *pbs, struct state *st, char *name, uint32_t *dst);
 #endif
