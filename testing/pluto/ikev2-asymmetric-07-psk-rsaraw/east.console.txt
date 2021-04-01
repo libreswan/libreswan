@@ -41,7 +41,7 @@ OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=sec
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 east #
  ../bin/check-for-core.sh
 east #

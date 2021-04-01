@@ -45,7 +45,7 @@ west #
 1v2 "x509" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "x509" #1: certificate verified OK: C=CZ,ST=Moravia,L=Brno,O=Test Example,OU="Global, Support, Services",CN=server
 002 "x509" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ'
-003 "x509" #1: authenticated using RSA with SHA2_512
+003 "x509" #1: authenticated using RSA with SHA2_512 and peer certificate 'CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ' issued by CA 'CN=cacert'
 002 "x509" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
