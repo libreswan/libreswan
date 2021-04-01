@@ -516,6 +516,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *our_client,
 					       const ip_endpoint *peer_client,
 					       chunk_t sec_label,
+					       uint32_t clone_cpu_id,
 					       struct logger *logger);
 
 /* instantiating routines */
@@ -605,7 +606,7 @@ extern void liveness_action(struct state *st);
 
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
-so_serial_t get_newer_sa_from_connection(struct state *st);
+struct connection *clone_slot(struct connection *r, uint32_t sa_clone_id);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *dst_end,
 					    bool preserve_ca, struct logger *logger);
@@ -613,4 +614,5 @@ extern void reread_cert_connections(struct fd *whackfd);
 
 ip_port end_host_port(const struct end *end, const struct end *other);
 
+so_serial_t get_newer_sa_from_connection(struct state *st);
 #endif

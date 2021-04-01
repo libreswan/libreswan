@@ -1033,27 +1033,6 @@ static struct best_score score_ends_iprange(enum fit fit,
 	return best_score;
 }
 
-static struct connection *clone_slot(struct connection *r, uint32_t sa_clone_id)
-{
-	struct connection *c;
-	char tmpconnname[256];
-
-	snprintf(tmpconnname, sizeof(tmpconnname), "%s-%u", r->connalias, sa_clone_id);
-	dbg("AA_2020 %s %d conn_by_name('%s')  %u/%u\n", __func__, __LINE__, tmpconnname, sa_clone_id, r->sa_clones);
-	c = conn_by_name(tmpconnname, TRUE);
-	if (c == NULL) {
-		libreswan_log("no clone connection for cpu id %u", sa_clone_id);
-		return NULL;
-	}
-
-	if (c->newest_ipsec_sa == SOS_NOBODY) {
-		dbg("AA_2020 %s %d use %s as clone conn %u/%u", __func__, __LINE__, r->name, sa_clone_id, r->sa_clones);
-		return c;
-	}
-	dbg("AA_2020 %s %d %s no clone for %u/%u", __func__, __LINE__, r->name, sa_clone_id, r->sa_clones);
-
-	return NULL;
-}
 
 /*
  * find the best connection and, if it is AUTH exchange, create the

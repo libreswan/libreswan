@@ -553,6 +553,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 							   &b->local.client,
 							   &b->remote.client,
 							   b->sec_label,
+							   b->clone_cpu_id,
 							   b->logger);
 	if (c == NULL) {
 		/*
