@@ -1,47 +1,69 @@
 #!/bin/sh
 
+pass1="sh"
+pass2="test diff result retest upgrade patch install clean"
+
 if test $# = 0; then
     cat <<EOF
 Usage:
    <operation> <operation> ... <arg> <arg>
 where <operation is>
   sh <domain>
-  install
-  test [<test> ...]
-  diffs [<test> ...]
-  results [<test> ...]
-  patch [<test> ...]
-  upgrade
+  ${pass2} ... <test> ...
+To enable completion:
+  complete -o filename -C './kvm' ./kvm
 EOF
     exit 1
 fi
 
+# Invoked by completer with:
+#   $0 <command==$0> <word> <previous>?
+if test "$1" == $0 -a "$#" -eq 3 ; then
+    command=$1
+    word=$2
+    previous=$3
+    # hack to detect first vs later argument
+    if test "${previous}" == "${command}" ; then
+	# first command
+	compgen -W "${pass1} ${pass2}" "${word}" | sort
+    elif test "${previous}" == "sh" ; then
+	# pass 1 command
+	compgen -W "east west north south road build base nic" "${word}"
+    else
+	# either <command> or <directory>
+	compgen -o plusdirs -W "${pass2}" "${word}"
+    fi
+    exit 0
+fi
 
-ops=""
-
-# first pass
+# accumulate pass 2 commands; execute pass 1
+ops=
 while test $# -gt 0 ; do
-    case $1 in
-	sh )
-	    shift ; exec make kvmsh-"$*"
-	    ;;
-	test | retest | upgrade | patch | install )
-	    ops="${ops} $1"
-	    ;;
-	diff|diffs )
-	    ops="${ops} diff"
-	    ;;
-	result|results )
-	    ops="${ops} results"
-	    ;;
-	* ) # assume files
-	    break
+    case " ${pass2} " in
+	*" $1 "* ) ops="${ops} $1" ;;
+	* )
+	    # must be a pass1 command
+	    case "$1" in
+		sh ) exec make kvmsh-$2 ;;
+		diffs ) ops="${ops} diff" ;;
+		results ) ops="${ops} result" ;;
+		* ) # check for a directory
+		    if test ! -d $1 ; then
+			if test -z "${ops}" ; then
+			    echo "unknown command: $1" 1>&2
+			else
+			    echo "not a directory: $1" 1>&2
+			fi
+			exit 1
+		    fi
+		    break
+	    esac
 	    ;;
     esac
     shift
 done
 
-if test $# -eq 0; then
+if test $# -eq 0 ; then
     set testing/pluto
 fi
 
@@ -49,11 +71,8 @@ fi
 status=0
 for op in ${ops} ; do
     case ${op} in
-	upgrade )
-	    make kvm-upgrade || exit $?
-	    ;;
-	install )
-	    make kvm-install || exit $?
+	upgrade | clean | install )
+	    make kvm-${op} || exit $?
 	    ;;
 	test | retest )
 	    make kvm-${op} KVM_TESTS="$*"
