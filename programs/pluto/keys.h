@@ -70,11 +70,19 @@ extern struct pubkey_list *pluto_pubkeys;
 
 const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
 
-typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
-				  shunk_t signature,
-				  struct pubkey *kr,
-				  const struct hash_desc *hash_algo,
-				  struct logger *logger);
+/*
+ * Danger! This function returns two values.
+ *
+ * true|false: did pubkey KR verify the signature
+ * FATAL_DIAG != NULL => operation should be aborted (implies false)
+ */
+
+typedef bool (try_signature_fn) (const struct crypt_mac *hash,
+				 shunk_t signature,
+				 struct pubkey *kr,
+				 const struct hash_desc *hash_algo,
+				 diag_t *fatal_diag,
+				 struct logger *logger);
 
 extern try_signature_fn try_signature_RSA;
 

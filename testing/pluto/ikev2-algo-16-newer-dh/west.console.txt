@@ -52,7 +52,7 @@ west #
 1v2 "westnet-eastnet-ikev2-modp2048" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-modp2048" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ikev2-modp2048" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-modp2048" #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-modp2048" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-modp2048" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-modp2048" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -67,7 +67,7 @@ west #
 1v2 "westnet-eastnet-ikev2-modp3072" #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-modp3072" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP3072}
 002 "westnet-eastnet-ikev2-modp3072" #3: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-modp3072" #3: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-modp3072" #3: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-modp3072" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-modp3072" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -82,7 +82,7 @@ west #
 1v2 "westnet-eastnet-ikev2-modp4096" #5: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-modp4096" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP4096}
 002 "westnet-eastnet-ikev2-modp4096" #5: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-modp4096" #5: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-modp4096" #5: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-modp4096" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-modp4096" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -97,7 +97,7 @@ west #
 1v2 "westnet-eastnet-ikev2-modp8192" #7: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-modp8192" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP8192}
 002 "westnet-eastnet-ikev2-modp8192" #7: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-modp8192" #7: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-modp8192" #7: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-modp8192" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-modp8192" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -112,7 +112,7 @@ west #
 1v2 "westnet-eastnet-ikev2-dh19" #9: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-dh19" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}
 002 "westnet-eastnet-ikev2-dh19" #9: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-dh19" #9: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-dh19" #9: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-dh19" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-dh19" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -127,7 +127,7 @@ west #
 1v2 "westnet-eastnet-ikev2-dh20" #11: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-dh20" #11: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}
 002 "westnet-eastnet-ikev2-dh20" #11: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-dh20" #11: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-dh20" #11: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-dh20" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-dh20" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -142,7 +142,7 @@ west #
 1v2 "westnet-eastnet-ikev2-dh21" #13: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-dh21" #13: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}
 002 "westnet-eastnet-ikev2-dh21" #13: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-dh21" #13: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-dh21" #13: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-dh21" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-dh21" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
@@ -157,7 +157,7 @@ west #
 1v2 "westnet-eastnet-ikev2-dh31" #15: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2-dh31" #15: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
 002 "westnet-eastnet-ikev2-dh31" #15: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2-dh31" #15: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2-dh31" #15: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2-dh31" #16: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-dh31" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
