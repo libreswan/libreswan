@@ -1721,7 +1721,6 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.ptr = NULL,
 		.len = 0
 	};
-	uint32_t cpu_id = -1;
 
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 

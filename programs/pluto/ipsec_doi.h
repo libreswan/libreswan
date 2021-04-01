@@ -42,7 +42,7 @@ extern void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		uint32_t clone_cpu_id,
 		struct connection *c,
 		const threadtime_t *inception,
-		struct xfrm_user_sec_ctx_ike *uctx);
+		chunk_t sec_label);
 
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 

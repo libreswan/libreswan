@@ -398,8 +398,8 @@ extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 const uint32_t sa_clone_id,
 				 bool tunnel_mode,
 				 struct logger *logger);
-extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
-			      struct logger *logger);
+extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, const uint32_t sa_clone_id,
+				bool tunnel_mode, struct logger *logger);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);

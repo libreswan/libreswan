@@ -304,7 +304,7 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 	int count = initiate_clones(name, whackfd, &is); /* try as clones */
 	if (count == 0) {
 		/* try as simple alias */
-		loglog(RC_COMMENT, "try initiating all conns with alias='%s'", name);
+		llog(RC_COMMENT, c->logger, "try initiating all conns with alias='%s'", name);
 		count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
 	}
 
@@ -685,8 +685,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/* acquire matched Connection HEAD SA initiate the sub SA for cpu */
 	if (c->sa_clones > 0 && c->desired_state == STARTUP_ONDEMAND) {
 		if (b->clone_cpu_id < UINT32_MAX)
-			ipsecdoi_clone_initiate(b->whackfd, b->clone_cpu_id, c, &inception,
-				uctx);
+			ipsecdoi_clone_initiate(b->background ? null_fd : b->logger->global_whackfd,
+				b->clone_cpu_id, c, &inception, b->sec_label);
 		else
 			dbg("AA_2020 %s %d discard acquire clone_cpu_id %u", __func__, __LINE__, b->clone_cpu_id);
 

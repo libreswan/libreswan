@@ -2019,7 +2019,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->spd.reqid = c->sa_reqid = get_clone_reqid(c->connalias);
 			DBG_log("AA_2020 %s %d %s use head's reqid %u", __func__, __LINE__, c->name, c->spd.reqid);
 			if  (c->spd.reqid == 0) {
-				libreswan_log("AA_2020 can not find head reqid");
+				llog(RC_FATAL, c->logger, "AA_2020 can not find head reqid");
 				return false;
 			}
 		}
@@ -2493,7 +2493,7 @@ struct connection *clone_slot(struct connection *r, uint32_t sa_clone_id)
 		cn = conn_by_name(tmpconnname, TRUE);
 	}
 	if (cn == NULL) {
-		libreswan_log("no clone connection for cpu id %u", sa_clone_id);
+		llog(RC_LOG, r->logger, "no clone connection for cpu id %u", sa_clone_id);
 		return NULL;
 	}
 	if (cn->newest_ipsec_sa == SOS_NOBODY) {

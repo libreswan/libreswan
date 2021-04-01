@@ -96,13 +96,14 @@ static struct connection *find_next_v2_host_connection(struct connection *c,
 			break;
 
 		if (c->sa_clones > CLONE_SA_HEAD) {
+			connection_buf cib;
 			if (c->sa_clone_id == CLONE_SA_HEAD) {
-				char ci[CONN_INST_BUF];
-				dbg("AA_2020 %s %d found head sa returns %s%s", __func__, __LINE__, c->name, fmt_conn_instance(c, ci));
+				dbg("AA_2020 %s %d found head sa returns "PRI_CONNECTION"", __func__, __LINE__,
+					pri_connection(c, &cib));
 				break;
 			} else {
-				char ci[CONN_INST_BUF];
-				dbg("AA_2020 %s %d ignore sub sa connection %s%s", __func__, __LINE__, c->name, fmt_conn_instance(c, ci));
+				dbg("AA_2020 %s %d ignore sub sa connection "PRI_CONNECTION"", __func__, __LINE__,
+					pri_connection(c, &cib));
 				continue;
 			}
 		}

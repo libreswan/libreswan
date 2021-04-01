@@ -2447,7 +2447,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, cst->st_pcpu.sa_clone_id
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_pcpu.sa_clone_id,
 						 child->sa.st_logger);
 	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 
@@ -4234,27 +4234,6 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	return true;
 }
 
-static bool ikev2_child_resp_clone_id(struct child_sa *child, struct msg_digest *md)
-{
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_PCPU_ID:
-			if (!extract_u32_notify(&ntfy->pbs, "v2N_PCPU_ID", &child->sa.st_pcpu.sa_clone_id))
-				return true;
-			break;
-
-		default:
-			/* This is a HACK for clones 20200724
-			 * there is another pass of notify payloads
-			 * after this that will handle all other but
-			 * REKEY
-			 */
-			break;
-		}
-	}
-	return false;
-}
-
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
@@ -4864,7 +4843,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
 		break;
 	case STATE_V2_NEW_CHILD_R0:
-		ikev2_child_resp_clone_id(child, md);
+		/* regular notify handling should have done this now:  ikev2_child_resp_clone_id(child, md); */
 		/* state m/c created CHILD SA */
 		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
 		if (!assign_child_responder_client(ike, child, md)) {

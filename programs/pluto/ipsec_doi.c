@@ -87,7 +87,7 @@ void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		uint32_t clone_cpu_id,
 		struct connection *c,
 		const threadtime_t *inception,
-		struct xfrm_user_sec_ctx_ike *uctx)
+		chunk_t sec_label)
 {
 	/* head one is already initiated, now initiate pcpu one */
 	uint32_t sa_clone_id = clone_cpu_id + 1;
@@ -98,12 +98,12 @@ void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		struct connection *cc = conn_by_name(tmpconnname, TRUE);
 		if (cc == NULL) {
 
-			libreswan_log("can not find clone %s in connection list", tmpconnname);
+			llog(RC_LOG_SERIOUS, c->logger, "can not find clone %s in connection list", tmpconnname);
 		} else {
 			if (cc->newest_ipsec_sa == SOS_NOBODY)  {
 				dbg("initiate clone sa %s for cpu id %u/%u (starting 0)",  tmpconnname, sa_clone_id, c->sa_clones);
 				ipsecdoi_initiate(whack_sock, cc, cc->policy, 1,
-					SOS_NOBODY, inception, uctx);
+					SOS_NOBODY, inception, sec_label);
 			} else {
 				dbg("ignore acquire for clone %s for cpu id %u/%u (starting 0) newest_ipsec_sa #%lu",  tmpconnname, sa_clone_id, c->sa_clones, cc->newest_ipsec_sa);
 			}
@@ -111,7 +111,7 @@ void ipsecdoi_clone_initiate(struct fd *whack_sock,
 		}
 
 	} else {
-		libreswan_log(" can not initiate clone instance %u > %u clones.", clone_cpu_id, c->sa_clones);
+		llog(RC_LOG_SERIOUS, c->logger, " can not initiate clone instance %u > %u clones.", clone_cpu_id, c->sa_clones);
 	}
 }
 

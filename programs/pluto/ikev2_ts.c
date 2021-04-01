@@ -1420,7 +1420,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	if (c->sa_clones > 0) {
 		struct connection *free_clone = clone_slot(c, child->sa.st_pcpu.sa_clone_id);
 		if (free_clone == NULL)  {
-			libreswan_log("AA_2020 %s %d no free clone connection for clonse = %u", __func__, __LINE__, c->sa_clones);
+			llog(RC_LOG, child->sa.st_logger,
+				"AA_2020 %s %d no free clone connection for clonse = %u", __func__, __LINE__, c->sa_clones);
 			return false;
 		} else {
 			dbg("AA_2020 %s %d switch connection from %s to %s",

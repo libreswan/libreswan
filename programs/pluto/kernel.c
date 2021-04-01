@@ -1793,7 +1793,7 @@ static uint16_t csum16(uint32_t *ptr)
 	register int nbytes = sizeof(uint32_t);
 
 	while (nbytes > 1) {
-                sum += *ptr++;
+                // sum += *ptr++; /* throws compile error */
                 nbytes -= 2;
         }
 
@@ -1810,6 +1810,7 @@ static uint16_t perturb_clone_port(uint16_t port, uint32_t clone_id, uint32_t se
 		return port;
 
 	uint16_t csum = csum16(&seed);
+	
 	/* check for 16 bit wraping and offset it */
 	uint16_t new_port = port + csum > 65535 ? csum : port + csum;
 
