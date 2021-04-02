@@ -67,4 +67,10 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      enum ikev2_auth_method auth_method,
 			      v2_auth_signature_cb *cb);
 
+bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
+			struct ike_sa *ike,
+			const struct crypt_mac *idhash_in,
+			struct pbs_in *signature_pbs,
+			const enum keyword_authby that_authby);
+
 #endif
