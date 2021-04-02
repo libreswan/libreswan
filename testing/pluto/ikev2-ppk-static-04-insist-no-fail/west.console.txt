@@ -54,16 +54,6 @@ done
 west #
  # east should fail PSK because it refuses PPK
 west #
- hostname | grep east > /dev/null && grep "PSK Authentication failed" /tmp/pluto.log
-west #
- ipsec whack --shutdown
-west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ grep 'authentication failed: ' /tmp/pluto.log
 west #
  
