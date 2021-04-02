@@ -1,7 +1,7 @@
 #!/bin/sh
 
 pass1="sh"
-pass2="test diff result retest upgrade patch install clean"
+pass2="test diffs results retest upgrade patch install clean"
 
 if test $# = 0; then
     cat <<EOF
@@ -45,8 +45,8 @@ while test $# -gt 0 ; do
 	    # must be a pass1 command
 	    case "$1" in
 		sh ) exec make kvmsh-$2 ;;
-		diffs ) ops="${ops} diff" ;;
-		results ) ops="${ops} result" ;;
+		diff ) ops="${ops} diffs" ;;
+		result ) ops="${ops} results" ;;
 		* ) # check for a directory
 		    if test ! -d $1 ; then
 			if test -z "${ops}" ; then
@@ -77,12 +77,8 @@ for op in ${ops} ; do
 	test | retest )
 	    make kvm-${op} KVM_TESTS="$*"
 	    ;;
-	diff )
-	    make kvm-diffs KVM_TESTS="$*"
-	    status=$?
-	    ;;
-	results )
-	    make kvm-results KVM_TESTS="$*"
+	diffs | results )
+	    make kvm-${op} KVM_TESTS="$*"
 	    status=$?
 	    ;;
 	patch )
