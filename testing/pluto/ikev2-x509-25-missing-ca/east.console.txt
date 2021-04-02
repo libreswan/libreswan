@@ -25,7 +25,6 @@ initdone
 east #
  hostname | grep east > /dev/null && grep -E "no Certificate Authority in NSS Certificate DB|authentication using rsasig failed" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
-"ikev2-westnet-eastnet-x509-cr" #1: Digital Signature authentication using rsasig failed in I2 Auth Payload
 east #
  ../bin/check-for-core.sh
 east #
