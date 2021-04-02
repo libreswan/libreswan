@@ -294,12 +294,13 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
  * This just needs to answer the very simple yes/no question.  Did
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
-static bool v2_check_auth(enum ikev2_auth_method recv_auth,
-			  struct ike_sa *ike,
-			  const struct crypt_mac *idhash_in,
-			  pb_stream *pbs,
-			  const enum keyword_authby that_authby,
-			  const char *context)
+
+static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
+			       struct ike_sa *ike,
+			       const struct crypt_mac *idhash_in,
+			       struct pbs_in *signature_pbs,
+			       const enum keyword_authby that_authby,
+			       const char *context)
 {
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
@@ -312,9 +313,10 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		shunk_t signature = pbs_in_left_as_shunk(pbs);
-		stf_status authstat = ikev2_verify_rsa_hash(ike, idhash_in,
-							    signature, &ike_alg_hash_sha1);
+		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
+		stf_status authstat = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in,
+									  signature,
+									  &ike_alg_hash_sha1);
 
 		if (authstat != STF_OK) {
 			log_state(RC_LOG, &ike->sa,
@@ -334,7 +336,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTHBY_PSK, ike, idhash_in, pbs)) {
+		if (!ikev2_verify_psk_auth(AUTHBY_PSK, ike, idhash_in, signature_pbs)) {
 			log_state(RC_LOG, &ike->sa,
 				  "PSK Authentication failed: AUTH mismatch in %s!",
 				  context);
@@ -354,7 +356,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTHBY_NULL, ike, idhash_in, pbs)) {
+		if (!ikev2_verify_psk_auth(AUTHBY_NULL, ike, idhash_in, signature_pbs)) {
 			log_state(RC_LOG, &ike->sa,
 				  "NULL authentication failed: AUTH mismatch in %s! (implementation bug?)",
 				  context);
@@ -398,17 +400,17 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 					  "no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
 					  enum_name(&keyword_authby_names, that_authby), context);
 				if (DBGP(DBG_BASE)) {
-					size_t dl = min(pbs_left(pbs),
+					size_t dl = min(pbs_left(signature_pbs),
 							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
 								  PMAX(ASN1_SHA1_ECDSA_SIZE,
 								       PMAX(ASN1_SHA2_RSA_PSS_SIZE,
 									    ASN1_SHA2_ECDSA_SIZE))));
-					DBG_dump("offered blob", pbs->cur, dl);
+					DBG_dump("offered blob", signature_pbs->cur, dl);
 				}
 				return FALSE;	/* none recognized */
 			}
 
-			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, pbs, that_authby))
+			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, signature_pbs, that_authby))
 				break;
 
 			dbg("st_hash_negotiated policy does not match hash algorithm %s",
@@ -418,18 +420,18 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		/* try to match the hash */
 		stf_status authstat;
 
-		shunk_t signature = pbs_in_left_as_shunk(pbs);
+		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 		switch (that_authby) {
 		case AUTHBY_RSASIG:
-			authstat = ikev2_verify_rsa_hash(ike, idhash_in,
-							 signature,
-							 hap->algo);
+			authstat = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in,
+								       signature,
+								       hap->algo);
 			break;
 
 		case AUTHBY_ECDSA:
-			authstat = ikev2_verify_ecdsa_hash(ike, idhash_in,
-							   signature,
-							   hap->algo);
+			authstat = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in,
+									 signature,
+									 hap->algo);
 			break;
 
 		default:
@@ -3051,9 +3053,10 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		size_t len = pbs_left(&pbs);
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				   ike, &idhash_in, &pbs_no_ppk_auth,
-				   ike->sa.st_connection->spd.that.authby, "no-PPK-auth")) {
+		if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+					ike, &idhash_in, &pbs_no_ppk_auth,
+					ike->sa.st_connection->spd.that.authby,
+					"no-PPK-auth")) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -3077,8 +3080,9 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 
 			dbg("going to try to verify NULL_AUTH from Notify payload");
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_check_auth(IKEv2_AUTH_NULL, ike, &idhash_in,
-					   &pbs_null_auth, AUTHBY_NULL, "NULL_auth from Notify Payload")) {
+			if (!v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
+						&pbs_null_auth, AUTHBY_NULL,
+						"NULL_auth from Notify Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 						    ENCRYPTED_PAYLOAD);
@@ -3089,9 +3093,10 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("NULL_AUTH verified");
 		} else {
 			dbg("verifying AUTH payload");
-			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-					   st->st_connection->spd.that.authby, "I2 Auth Payload")) {
+			if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+						ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						st->st_connection->spd.that.authby,
+						"I2 Auth Payload")) {
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 						    ENCRYPTED_PAYLOAD);
@@ -3974,10 +3979,9 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	/* process AUTH payload */
 
 	dbg("verifying AUTH payload");
-	if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-			   ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-			   that_authby, "R2 Auth Payload"))
-	{
+	if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+				ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+				that_authby, "R2 Auth Payload")) {
 		/*
 		 * We cannot send a response as we are processing IKE_AUTH reply
 		 * the RFC states we should pretend IKE_AUTH was okay, and then

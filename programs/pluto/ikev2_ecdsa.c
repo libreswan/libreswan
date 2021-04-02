@@ -54,13 +54,13 @@
 #include "lswnss.h"
 #include "ikev2_auth.h"
 
-static try_signature_fn try_signature_ECDSA_ikev2; /* type assert */
+static authsig_using_pubkey_fn authsig_using_ECDSA_ikev2_pubkey; /* type assert */
 
-bool try_signature_ECDSA_ikev2(const struct crypt_mac *hash, shunk_t signature,
-			       struct pubkey *kr,
-			       const struct hash_desc *unused_hash_algo UNUSED,
-			       diag_t *fatal_diag,
-			       struct logger *logger)
+bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t signature,
+				      struct pubkey *kr,
+				      const struct hash_desc *unused_hash_algo UNUSED,
+				      diag_t *fatal_diag,
+				      struct logger *logger)
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
@@ -165,10 +165,10 @@ bool try_signature_ECDSA_ikev2(const struct crypt_mac *hash, shunk_t signature,
 	return true;
 }
 
-stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
-				   const struct crypt_mac *idhash,
-				   shunk_t signature,
-				   const struct hash_desc *hash_algo)
+stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
+						 const struct crypt_mac *idhash,
+						 shunk_t signature,
+						 const struct hash_desc *hash_algo)
 {
 	if (hash_algo->common.ikev2_alg_id < 0) {
 		return STF_FATAL;
@@ -176,6 +176,7 @@ stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 
 	struct crypt_mac calc_hash = v2_calculate_sighash(ike, idhash, hash_algo,
 							  REMOTE_PERSPECTIVE);
-	return check_signature_gen(ike, &calc_hash, signature, hash_algo,
-				   &pubkey_type_ecdsa, try_signature_ECDSA_ikev2);
+	return authsig_and_log_using_pubkey(ike, &calc_hash, signature, hash_algo,
+					    &pubkey_type_ecdsa,
+					    authsig_using_ECDSA_ikev2_pubkey);
 }

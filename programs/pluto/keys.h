@@ -77,20 +77,20 @@ const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
  * FATAL_DIAG != NULL => operation should be aborted (implies false)
  */
 
-typedef bool (try_signature_fn) (const struct crypt_mac *hash,
-				 shunk_t signature,
-				 struct pubkey *kr,
-				 const struct hash_desc *hash_algo,
-				 diag_t *fatal_diag,
-				 struct logger *logger);
+typedef bool (authsig_using_pubkey_fn) (const struct crypt_mac *hash,
+					shunk_t signature,
+					struct pubkey *kr,
+					const struct hash_desc *hash_algo,
+					diag_t *fatal_diag,
+					struct logger *logger);
 
-extern try_signature_fn try_signature_RSA;
+extern authsig_using_pubkey_fn authsig_using_RSA_pubkey;
 
-extern stf_status check_signature_gen(struct ike_sa *ike,
-				      const struct crypt_mac *hash,
-				      shunk_t signature,
-				      const struct hash_desc *hash_algo,
-				      const struct pubkey_type *type,
-				      try_signature_fn *try_signature);
+extern stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
+					       const struct crypt_mac *hash,
+					       shunk_t signature,
+					       const struct hash_desc *hash_algo,
+					       const struct pubkey_type *type,
+					       authsig_using_pubkey_fn *try_pubkey);
 
 #endif /* _KEYS_H */

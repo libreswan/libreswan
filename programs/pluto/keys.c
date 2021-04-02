@@ -148,12 +148,12 @@ void list_psks(struct show *s)
 	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
-bool try_signature_RSA(const struct crypt_mac *expected_hash,
-		       shunk_t signature,
-		       struct pubkey *kr,
-		       const struct hash_desc *hash_algo,
-		       diag_t *fatal_diag,
-		       struct logger *logger)
+bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
+			      shunk_t signature,
+			      struct pubkey *kr,
+			      const struct hash_desc *hash_algo,
+			      diag_t *fatal_diag,
+			      struct logger *logger)
 {
 	const struct RSA_public_key *k = &kr->u.rsa;
 
@@ -327,12 +327,13 @@ bool try_signature_RSA(const struct crypt_mac *expected_hash,
  * take_a_crack is a helper function.  Mostly forensic.  If only we
  * had coroutines. (XXX: generators).
  */
+
 struct tac_state {
 	const struct pubkey_type *type;
 	const struct crypt_mac *hash;
 	shunk_t signature;
 	const struct hash_desc *hash_algo;
-	try_signature_fn *try_signature;
+	authsig_using_pubkey_fn *try_pubkey;
 	realtime_t now;
 	struct logger *logger;
 	const struct end *remote;
@@ -433,7 +434,7 @@ static bool try_all_keys(const char *cert_origin,
 		jam(&s->tried_jambuf, " *%s", keyid_str);
 
 		logtime_t try_time = logtime_start(s->logger);
-		bool passed = (s->try_signature)(s->hash, s->signature,
+		bool passed = (s->try_pubkey)(s->hash, s->signature,
 						 key, s->hash_algo,
 						 &s->fatal_diag, s->logger);
 		logtime_stop(&try_time, "%s() trying a pubkey", __func__);
@@ -462,12 +463,12 @@ static bool try_all_keys(const char *cert_origin,
 	return false; /* keep searching */
 }
 
-stf_status check_signature_gen(struct ike_sa *ike,
-			       const struct crypt_mac *hash,
-			       shunk_t signature,
-			       const struct hash_desc *hash_algo,
-			       const struct pubkey_type *type,
-			       try_signature_fn *try_signature)
+stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
+					const struct crypt_mac *hash,
+					shunk_t signature,
+					const struct hash_desc *hash_algo,
+					const struct pubkey_type *type,
+					authsig_using_pubkey_fn *try_pubkey)
 {
 	const struct connection *c = ike->sa.st_connection;
 	struct tac_state s = {
@@ -479,7 +480,7 @@ stf_status check_signature_gen(struct ike_sa *ike,
 		.signature = signature,
 		.hash_algo = hash_algo,
 		.remote = &c->spd.that,
-		.try_signature = try_signature,
+		.try_pubkey = try_pubkey,
 		/* out */
 		.tried_cnt = 0,
 		.key = NULL,

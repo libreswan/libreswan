@@ -1334,9 +1334,10 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	case OAKLEY_RSA_SIG:
 	{
 		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
-		r = check_signature_gen(ike_sa(st, HERE), &hash, signature,
-					&ike_alg_hash_sha1, /*always*/
-					&pubkey_type_rsa, try_signature_RSA);
+		r = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
+						 &ike_alg_hash_sha1, /*always*/
+						 &pubkey_type_rsa,
+						 authsig_using_RSA_pubkey);
 		if (r != STF_OK) {
 			/* already logged */
 			dbg("received '%s' message SIG_%s data did not match computed value",

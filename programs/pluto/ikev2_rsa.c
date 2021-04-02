@@ -142,10 +142,10 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	return TRUE;
 }
 
-stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
-				 const struct crypt_mac *idhash,
-				 shunk_t signature,
-				 const struct hash_desc *hash_algo)
+stf_status v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
+					       const struct crypt_mac *idhash,
+					       shunk_t signature,
+					       const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(&ike->sa);
 
@@ -162,8 +162,9 @@ stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     REMOTE_PERSPECTIVE);
-	stf_status retstat = check_signature_gen(ike, &hash, signature, hash_algo,
-						 &pubkey_type_rsa, try_signature_RSA);
+	stf_status retstat = authsig_and_log_using_pubkey(ike, &hash, signature, hash_algo,
+							  &pubkey_type_rsa,
+							  authsig_using_RSA_pubkey);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;
 }
