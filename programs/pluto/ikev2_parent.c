@@ -299,17 +299,15 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			       struct ike_sa *ike,
 			       const struct crypt_mac *idhash_in,
 			       struct pbs_in *signature_pbs,
-			       const enum keyword_authby that_authby,
-			       const char *context)
+			       const enum keyword_authby that_authby)
 {
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
 		if (that_authby != AUTHBY_RSASIG) {
-			log_state(RC_LOG, &ike->sa,
-				  "peer attempted RSA authentication but we want %s in %s",
-				  enum_name(&keyword_authby_names, that_authby),
-				  context);
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "authentication failed: peer attempted RSA authentication but we want %s",
+				  enum_name(&keyword_authby_names, that_authby));
 			return false;
 		}
 
@@ -317,30 +315,27 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		stf_status authstat = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in,
 									  signature,
 									  &ike_alg_hash_sha1);
-
 		if (authstat != STF_OK) {
-			log_state(RC_LOG, &ike->sa,
-				  "RSA authentication of %s failed", context);
 			return false;
 		}
+
 		return true;
 	}
 
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_authby != AUTHBY_PSK) {
-			log_state(RC_LOG, &ike->sa,
-				  "peer attempted PSK authentication but we want %s in %s",
-				  enum_name(&keyword_authby_names, that_authby),
-				  context);
-			return FALSE;
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "authentication failed: peer attempted PSK authentication but we want %s",
+				  enum_name(&keyword_authby_names, that_authby));
+			return false;
 		}
 
 		if (!ikev2_verify_psk_auth(AUTHBY_PSK, ike, idhash_in, signature_pbs)) {
+			/* XXX: double log needs fixing! */
 			log_state(RC_LOG, &ike->sa,
-				  "PSK Authentication failed: AUTH mismatch in %s!",
-				  context);
-			return FALSE;
+				  "authentication failed: PSK AUTH mismatch");
+			return false;
 		}
 		return TRUE;
 	}
@@ -350,30 +345,29 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		if (!(that_authby == AUTHBY_NULL ||
 		      (that_authby == AUTHBY_RSASIG && LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy)))) {
 			log_state(RC_LOG, &ike->sa,
-				  "peer attempted NULL authentication but we want %s in %s",
-				  enum_name(&keyword_authby_names, that_authby),
-				  context);
-			return FALSE;
+				  "authentication failed: peer attempted NULL authentication but we want %s",
+				  enum_name(&keyword_authby_names, that_authby));
+			return false;
 		}
 
 		if (!ikev2_verify_psk_auth(AUTHBY_NULL, ike, idhash_in, signature_pbs)) {
+			/* XXX: double log needs fixing! */
 			log_state(RC_LOG, &ike->sa,
-				  "NULL authentication failed: AUTH mismatch in %s! (implementation bug?)",
-				  context);
-			return FALSE;
+				  "authentication failed: NULL AUTH mismatch (implementation bug?)");
+			return false;
 		}
-		ike->sa.st_ikev2_anon = TRUE;
-		return TRUE;
+
+		ike->sa.st_ikev2_anon = true;
+		return true;
 	}
 
 	case IKEv2_AUTH_DIGSIG:
 	{
 		if (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG) {
-			log_state(RC_LOG, &ike->sa,
-				  "peer attempted Authentication through Digital Signature but we want %s in %s",
-				  enum_name(&keyword_authby_names, that_authby),
-				  context);
-			return FALSE;
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "authentication failed: peer attempted authentication through Digital Signature but we want %s",
+				  enum_name(&keyword_authby_names, that_authby));
+			return false;
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -396,9 +390,9 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				log_state(RC_LOG, &ike->sa,
-					  "no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s in %s",
-					  enum_name(&keyword_authby_names, that_authby), context);
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
+					  enum_name(&keyword_authby_names, that_authby));
 				if (DBGP(DBG_BASE)) {
 					size_t dl = min(pbs_left(signature_pbs),
 							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
@@ -407,7 +401,7 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 									    ASN1_SHA2_ECDSA_SIZE))));
 					DBG_dump("offered blob", signature_pbs->cur, dl);
 				}
-				return FALSE;	/* none recognized */
+				return false;	/* none recognized */
 			}
 
 			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, signature_pbs, that_authby))
@@ -439,21 +433,17 @@ static bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		}
 
 		if (authstat != STF_OK) {
-			log_state(RC_LOG, &ike->sa,
-				  "Digital Signature authentication using %s failed in %s",
-				  enum_name(&keyword_authby_names, that_authby),
-				  context);
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+
+		return true;
 	}
 
 	default:
-		log_state(RC_LOG, &ike->sa,
-			  "authentication method: %s not supported in %s",
-			  enum_name(&ikev2_auth_names, recv_auth),
-			  context);
-		return FALSE;
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "authentication failed: method %s not supported",
+			  enum_name(&ikev2_auth_names, recv_auth));
+		return false;
 	}
 }
 
@@ -3055,8 +3045,8 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 
 		if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 					ike, &idhash_in, &pbs_no_ppk_auth,
-					ike->sa.st_connection->spd.that.authby,
-					"no-PPK-auth")) {
+					ike->sa.st_connection->spd.that.authby)) {
+			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -3081,8 +3071,8 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("going to try to verify NULL_AUTH from Notify payload");
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
 			if (!v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						&pbs_null_auth, AUTHBY_NULL,
-						"NULL_auth from Notify Payload")) {
+						&pbs_null_auth, AUTHBY_NULL)) {
+				dbg("NULL_auth from Notify Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 						    ENCRYPTED_PAYLOAD);
@@ -3095,8 +3085,8 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("verifying AUTH payload");
 			if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						st->st_connection->spd.that.authby,
-						"I2 Auth Payload")) {
+						st->st_connection->spd.that.authby)) {
+				dbg("I2 Auth Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 						    ENCRYPTED_PAYLOAD);
@@ -3981,12 +3971,13 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	dbg("verifying AUTH payload");
 	if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				that_authby, "R2 Auth Payload")) {
+				that_authby)) {
+		dbg("R2 Auth Payload failed");
 		/*
-		 * We cannot send a response as we are processing IKE_AUTH reply
-		 * the RFC states we should pretend IKE_AUTH was okay, and then
-		 * send an INFORMATIONAL DELETE IKE SA but we have not implemented
-		 * that yet.
+		 * We cannot send a response as we are processing
+		 * IKE_AUTH reply the RFC states we should pretend
+		 * IKE_AUTH was okay, and then send an INFORMATIONAL
+		 * DELETE IKE SA but we have not implemented that yet.
 		 */
 		return STF_FATAL;
 	}
