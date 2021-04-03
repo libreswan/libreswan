@@ -49,7 +49,7 @@ OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 east #
  ../bin/check-for-core.sh
 east #

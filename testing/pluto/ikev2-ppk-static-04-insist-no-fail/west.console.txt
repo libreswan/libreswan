@@ -54,6 +54,6 @@ done
 west #
  # east should fail PSK because it refuses PPK
 west #
- grep 'authentication failed: ' /tmp/pluto.log
+ grep -e '^[^|].*: authentication failed: ' /tmp/pluto.log
 west #
  
