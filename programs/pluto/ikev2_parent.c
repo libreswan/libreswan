@@ -1830,8 +1830,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_co
 	 */
 	if (LIN(POLICY_PPK_ALLOW, pc->policy) && ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
-		chunk_t *ppk = get_connection_ppk(ike->sa.st_connection, &ppk_id,
-						 ike->sa.st_logger);
+		chunk_t *ppk = get_connection_ppk(ike->sa.st_connection, &ppk_id);
 
 		if (ppk != NULL) {
 			dbg("found PPK and PPK_ID for our connection");
@@ -2273,8 +2272,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	 */
 	if (ike->sa.st_seen_ppk) {
 		chunk_t *ppk_id;
-		get_connection_ppk(ike->sa.st_connection, &ppk_id,
-				   ike->sa.st_logger);
+		get_connection_ppk(ike->sa.st_connection, &ppk_id);
 		struct ppk_id_payload ppk_id_p = { .type = 0, };
 		create_ppk_id_payload(ppk_id, &ppk_id_p);
 		if (DBGP(DBG_BASE)) {

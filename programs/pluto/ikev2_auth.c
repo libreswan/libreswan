@@ -36,6 +36,7 @@
 #include "ikev2_message.h"
 #include "ikev2.h"
 #include "keys.h"
+#include "ikev2_psk.h"
 
 static const uint8_t rsa_sha1_der_header[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -393,6 +394,11 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			struct pbs_in *signature_pbs,
 			const enum keyword_authby that_authby)
 {
+	/*
+	 * XXX: can the boiler plate check that THAT_AUTHBY matches
+	 * recv_auth appearing in all case branches be merged?
+	 */
+
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
@@ -423,10 +429,8 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTHBY_PSK, ike, idhash_in, signature_pbs)) {
-			/* XXX: double log needs fixing! */
-			log_state(RC_LOG, &ike->sa,
-				  "authentication failed: PSK AUTH mismatch");
+		if (!v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs)) {
+			dbg("authentication failed: PSK AUTH mismatch");
 			return false;
 		}
 		return TRUE;
@@ -442,10 +446,8 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		if (!ikev2_verify_psk_auth(AUTHBY_NULL, ike, idhash_in, signature_pbs)) {
-			/* XXX: double log needs fixing! */
-			log_state(RC_LOG, &ike->sa,
-				  "authentication failed: NULL AUTH mismatch (implementation bug?)");
+		if (!v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs)) {
+			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return false;
 		}
 
