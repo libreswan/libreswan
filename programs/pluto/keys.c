@@ -573,13 +573,14 @@ stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
 }
 
 /*
- * find the struct secret associated with the combination of
- * me and the peer.  We match the Id (if none, the IP address).
- * Failure is indicated by a NULL.
+ * Find the struct secret associated with the combination of me and
+ * the peer.  We match the Id (if none, the IP address).  Failure is
+ * indicated by a NULL.
  */
+
 static struct secret *lsw_get_secret(const struct connection *c,
 				     enum PrivateKeyKind kind,
-				     bool asym, struct logger *logger UNUSED)
+				     bool asym)
 {
 	/* under certain conditions, override that_id to %ANYADDR */
 
@@ -656,24 +657,21 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
  * Note: the result is not to be freed by the caller.
  * Note2: this seems to be called for connections using RSA too?
  */
-const chunk_t *get_connection_psk(const struct connection *c,
-				  struct logger *logger)
+
+const chunk_t *get_connection_psk(const struct connection *c)
 {
-	if (c->policy & POLICY_AUTH_NULL) {
-		DBGF(DBG_CRYPT, "Mutual AUTH_NULL secret - returning empty_chunk");
-		return &empty_chunk;
+	/* caller handles null_auth */
+	passert((c->policy & POLICY_AUTH_NULL) == LEMPTY);
+
+	struct secret *s = lsw_get_secret(c, PKK_PSK, false);
+	if (s == NULL) {
+		dbg("no PreShared Key Found");
+		return NULL;
 	}
 
-	struct secret *s = lsw_get_secret(c, PKK_PSK, FALSE, logger);
-	const chunk_t *psk =
-		s == NULL ? NULL : &lsw_get_pks(s)->u.preshared_secret;
-
-	if (psk != NULL) {
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("PreShared Key", *psk);
-		}
-	} else {
-		dbg("no PreShared Key Found");
+	const chunk_t *psk = &lsw_get_pks(s)->u.preshared_secret;
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("PreShared Key", *psk);
 	}
 	return psk;
 }
@@ -681,10 +679,9 @@ const chunk_t *get_connection_psk(const struct connection *c,
 
 /* Return ppk and store ppk_id in *ppk_id */
 
-chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id,
-			    struct logger *logger)
+chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PPK, FALSE, logger);
+	struct secret *s = lsw_get_secret(c, PKK_PPK, false);
 
 	if (s == NULL) {
 		*ppk_id = NULL;
@@ -822,7 +819,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 
 	dbg("looking for connection %s's %s private key",
 	    c->name, type->name);
-	struct secret *s = lsw_get_secret(c, type->private_key_kind, true, logger);
+	struct secret *s = lsw_get_secret(c, type->private_key_kind, true);
 	if (s == NULL) {
 		llog(RC_LOG_SERIOUS, logger, "connection %s's %s private key not found",
 		    c->name, type->name);

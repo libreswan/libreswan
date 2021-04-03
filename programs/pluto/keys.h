@@ -51,10 +51,8 @@ extern bool has_private_key(cert_t cert);
 extern void list_public_keys(struct show *s, bool utc, bool check_pub_keys);
 extern void list_psks(struct show *s);
 
-extern const chunk_t *get_connection_psk(const struct connection *c,
-					 struct logger *logger);
-extern chunk_t *get_connection_ppk(const struct connection *c,
-				   chunk_t **ppk_id, struct logger *logger);
+extern const chunk_t *get_connection_psk(const struct connection *c);
+extern chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id);
 extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(struct logger *logger);

@@ -32,7 +32,7 @@ initdone
 east #
  # east should fail PSK because it refuses PPK
 east #
- grep 'authentication failed: ' /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: authentication failed: PSK AUTH mismatch
+ grep -e '^[^|].*: authentication failed: ' /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: authentication failed: computed hash does not match hash received from peer ID_FQDN '@west'
 east #
  

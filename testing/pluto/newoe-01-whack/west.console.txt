@@ -23,7 +23,7 @@ west #
 002 initiate on demand from 192.1.2.45:8 to 192.1.2.23:0 proto=1 because: whack
 002 can't find expected bare shunt to delete: 192.1.2.45/32:0 -ICMP-> 192.1.2.23/32:0
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using authby=null
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 west #
  ../../pluto/bin/ping-once.sh --up 192.1.2.23

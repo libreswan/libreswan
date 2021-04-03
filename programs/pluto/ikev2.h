@@ -188,11 +188,6 @@ extern stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
 							shunk_t signature,
 							const struct hash_desc *hash_algo);
 
-extern bool ikev2_verify_psk_auth(enum keyword_authby authby,
-				  const struct ike_sa *ike,
-				  const struct crypt_mac *idhash,
-				  pb_stream *sig_pbs);
-
 extern void ikev2_derive_child_keys(struct child_sa *child);
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
