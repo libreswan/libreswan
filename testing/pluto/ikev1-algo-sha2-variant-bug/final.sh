@@ -5,5 +5,4 @@ if [ "$HEAD" = "$TAIL" ]; then echo "ERROR: inbound and outbound key are the sam
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

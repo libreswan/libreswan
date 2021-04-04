@@ -39,8 +39,6 @@ west #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_FQDN (0x2)
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

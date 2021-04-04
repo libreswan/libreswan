@@ -5,5 +5,4 @@ hostname | grep north > /dev/null && ip -s link show dev gre1
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -4,5 +4,4 @@ grep -v '| helper' /tmp/pluto.log | grep -B 1 -e '|    last proposal: ' -A 3 -e 
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

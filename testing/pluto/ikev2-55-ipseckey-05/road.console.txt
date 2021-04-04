@@ -69,8 +69,6 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

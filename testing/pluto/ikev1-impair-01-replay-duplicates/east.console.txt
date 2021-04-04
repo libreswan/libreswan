@@ -53,8 +53,6 @@ packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

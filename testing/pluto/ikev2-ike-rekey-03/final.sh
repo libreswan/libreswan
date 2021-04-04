@@ -5,5 +5,4 @@ hostname | grep west > /dev/null && grep "sent IKE_SA_INIT request" /tmp/pluto.l
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

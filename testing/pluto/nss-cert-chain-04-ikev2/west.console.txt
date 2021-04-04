@@ -64,8 +64,6 @@ done
 west #
  hostname | grep east > /dev/null && grep "switched from" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

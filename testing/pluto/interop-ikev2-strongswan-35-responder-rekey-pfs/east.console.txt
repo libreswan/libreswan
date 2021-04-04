@@ -13,8 +13,6 @@ east #
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

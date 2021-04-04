@@ -76,8 +76,6 @@ west_chain_endcert                                           u,u,u
 west_chain_int_2                                             CT,, 
 west_chain_int_1                                             CT,, 
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

@@ -72,8 +72,6 @@ west #
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

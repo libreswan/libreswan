@@ -44,8 +44,6 @@ initdone
 north #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

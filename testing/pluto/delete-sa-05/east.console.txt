@@ -24,8 +24,6 @@ east #
 000 #6: "west-east-auto":500 STATE_QUICK_I1 (sent Quick Mode request); EVENT_RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "west-east-auto2":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

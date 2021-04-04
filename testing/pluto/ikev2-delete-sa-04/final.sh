@@ -7,5 +7,4 @@ hostname | grep east > /dev/null && grep -e 'but must remain up per local policy
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

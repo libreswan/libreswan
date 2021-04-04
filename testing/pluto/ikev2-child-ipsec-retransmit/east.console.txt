@@ -30,8 +30,6 @@ east #
 | sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 | sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

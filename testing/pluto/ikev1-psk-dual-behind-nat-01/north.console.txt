@@ -93,8 +93,6 @@ north #
  ipsec whack --trafficstatus
 006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=252, outBytes=252
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

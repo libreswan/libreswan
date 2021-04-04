@@ -152,8 +152,6 @@ west #
  hostname | grep west > /dev/null && grep "sent IKE_SA_INIT request" /tmp/pluto.log
 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

@@ -105,8 +105,6 @@ north #
 006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 006 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

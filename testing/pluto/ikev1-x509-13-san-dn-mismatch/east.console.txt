@@ -19,8 +19,6 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_DER_ASN1_DN (0x9)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

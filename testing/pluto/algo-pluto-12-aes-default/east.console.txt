@@ -57,8 +57,6 @@ east #
 |    af+type: AF+KEY_LENGTH (0x8006)
 |    length/value: 128 (00 80)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

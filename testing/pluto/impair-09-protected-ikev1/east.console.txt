@@ -453,7 +453,5 @@ east #
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

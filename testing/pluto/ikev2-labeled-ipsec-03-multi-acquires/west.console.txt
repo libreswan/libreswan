@@ -189,8 +189,6 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 west #
  rm -rf tmp ipsecspd.fc ipsecspd.if
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 #============= netutils_t ==============
 #!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'

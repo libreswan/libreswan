@@ -50,8 +50,6 @@ Security Associations (1 up, 0 connecting):
       client{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
       client{1}:   192.0.1.254/32 === 192.0.2.0/24
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

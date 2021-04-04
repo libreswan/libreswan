@@ -24,8 +24,6 @@ east #
  grep "Notify Message Type: v2N_TS_UNACCEPTABLE" /tmp/pluto.log
 |    Notify Message Type: v2N_TS_UNACCEPTABLE (0x26)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

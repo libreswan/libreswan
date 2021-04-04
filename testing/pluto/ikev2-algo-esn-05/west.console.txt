@@ -53,8 +53,6 @@ west #
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

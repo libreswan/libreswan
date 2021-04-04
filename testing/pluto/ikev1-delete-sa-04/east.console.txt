@@ -25,8 +25,6 @@ east #
  ipsec status |grep EVENT_RETRANSMIT | sed "s/EVENT_RETRANSMIT in .*$/EVENT_RETRANSMIT in .../"
 000 #5: "west-east-auto":500 STATE_MAIN_I1 (sent Main Mode request); EVENT_RETRANSMIT in ...
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

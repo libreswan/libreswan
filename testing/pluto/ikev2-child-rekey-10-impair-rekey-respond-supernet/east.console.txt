@@ -30,8 +30,6 @@ east #
 east #
  # road fail to rekey and no clear log message to grep
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

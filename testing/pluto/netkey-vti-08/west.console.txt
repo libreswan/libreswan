@@ -56,8 +56,6 @@ west #
 west #
  ip xfrm policy | grep \\-1
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

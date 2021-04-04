@@ -4,5 +4,4 @@ hostname | grep east > /dev/null && grep "verify_end_cert trying profile" /tmp/p
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

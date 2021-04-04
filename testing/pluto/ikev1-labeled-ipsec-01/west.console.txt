@@ -153,8 +153,6 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 west #
  rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 west #
  

@@ -55,8 +55,6 @@ src 192.1.2.254/32 dst 192.1.2.23/32
 src 192.1.2.23/32 dst 192.1.2.254/32 
 	dir out priority 3129279 ptype main 
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

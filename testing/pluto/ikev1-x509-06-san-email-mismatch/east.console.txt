@@ -21,8 +21,6 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_USER_FQDN (0x3)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

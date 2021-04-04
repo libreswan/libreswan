@@ -67,8 +67,6 @@ east #
 "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

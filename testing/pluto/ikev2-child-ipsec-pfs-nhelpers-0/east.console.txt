@@ -21,8 +21,6 @@ east #
  grep "done inline" /tmp/pluto.log
 no helpers will be started; all cryptographic operations will be done inline
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

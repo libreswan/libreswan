@@ -57,8 +57,6 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

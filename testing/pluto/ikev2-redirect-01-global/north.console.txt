@@ -53,8 +53,6 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec status |grep "eroute owner"
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

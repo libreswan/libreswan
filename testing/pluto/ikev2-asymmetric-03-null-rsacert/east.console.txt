@@ -158,8 +158,6 @@ OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

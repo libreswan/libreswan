@@ -10,4 +10,3 @@ ipsec auto --add subnet6-good
 # this one should fail to load
 ipsec auto --add subnet6-bad
 
-../bin/check-for-core.sh

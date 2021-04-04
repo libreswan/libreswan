@@ -67,8 +67,6 @@ west #
 west #
  test -f /sbin/ipsecctl && ipsecctl -s all | sort
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

@@ -14,8 +14,6 @@ east #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@west'
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

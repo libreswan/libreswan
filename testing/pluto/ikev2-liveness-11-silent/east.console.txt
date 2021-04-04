@@ -16,8 +16,6 @@ east #
  grep "liveness: .* was replaced by "  /tmp/pluto.log
 | liveness: #2 was replaced by #3 so not needed
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -37,8 +37,6 @@ west #
 006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 006 #3: "westnet-eastnet-ipv4-psk-ikev2-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

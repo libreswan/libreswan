@@ -29,8 +29,6 @@ east #
 | processing informational INVALID_KEY_INFORMATION (17)
 "westnet-eastnet-ipv4-psk-slow" #3: received and ignored notification payload: INVALID_KEY_INFORMATION
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

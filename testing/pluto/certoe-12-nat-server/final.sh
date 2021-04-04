@@ -9,5 +9,4 @@ ipsec stop
 #check the ip extra ip address/sourceip address is removed
 ip addr show scope global
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

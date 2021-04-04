@@ -38,8 +38,6 @@ east #
  grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
 | #1 complete_v2_state_transition() PARENT_R0->PARENT_R1 with status STF_OK
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

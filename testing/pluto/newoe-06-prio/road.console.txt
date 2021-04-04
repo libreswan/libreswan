@@ -50,8 +50,6 @@ road #
 000 #2: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

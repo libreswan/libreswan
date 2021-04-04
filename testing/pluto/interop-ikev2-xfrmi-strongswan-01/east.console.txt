@@ -53,8 +53,6 @@ east #
 throw 192.0.2.0/24
 throw 192.1.2.0/24
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

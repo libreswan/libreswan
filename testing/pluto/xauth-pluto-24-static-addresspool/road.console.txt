@@ -43,8 +43,6 @@ road #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

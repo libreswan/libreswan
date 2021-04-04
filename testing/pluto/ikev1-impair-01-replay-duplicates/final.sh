@@ -3,5 +3,4 @@ sed -n -e '/IMPAIR: start processing duplicate packet/,/IMPAIR: stop processing 
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

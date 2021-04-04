@@ -84,8 +84,6 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 east #
  rm -rf tmp ipsecspd.fc ipsecspd.if
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 #============= netutils_t ==============
 allow netutils_t bin_t:file entrypoint;

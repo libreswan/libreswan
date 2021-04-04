@@ -158,8 +158,6 @@ west #
 west #
  ip tunnel del eth3
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

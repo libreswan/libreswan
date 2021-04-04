@@ -48,7 +48,5 @@ east #
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

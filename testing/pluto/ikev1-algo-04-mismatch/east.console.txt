@@ -19,8 +19,6 @@ east #
 |    Notify Message Type: NO_PROPOSAL_CHOSEN (0xe)
 | state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -130,8 +130,6 @@ east #
 000  
 000 List of CRLs:
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

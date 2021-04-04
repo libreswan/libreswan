@@ -40,8 +40,6 @@ west #
  grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
 payload found
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

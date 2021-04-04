@@ -88,8 +88,6 @@ west #
 west #
  grep "received and ignored empty informational" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

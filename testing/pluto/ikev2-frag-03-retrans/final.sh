@@ -4,5 +4,4 @@ grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log | sed
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

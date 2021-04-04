@@ -5,5 +5,4 @@ hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm id
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

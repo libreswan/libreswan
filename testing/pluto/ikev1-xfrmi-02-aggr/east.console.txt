@@ -14,8 +14,6 @@ east #
  ipsec whack --trafficstatus
 006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@road'
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

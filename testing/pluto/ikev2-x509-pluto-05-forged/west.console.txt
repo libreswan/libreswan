@@ -32,8 +32,6 @@ west #
 west #
  hostname | grep east && grep "Signature check" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

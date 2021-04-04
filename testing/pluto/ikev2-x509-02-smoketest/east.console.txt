@@ -54,8 +54,6 @@ east #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

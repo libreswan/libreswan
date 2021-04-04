@@ -25,7 +25,5 @@ east #
 "west-east-auto" #1: received Delete SA payload: already replacing IPsec State #2 in 54 seconds
 bug triggered
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

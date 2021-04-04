@@ -223,8 +223,6 @@ west #
 000  
 000 List of CRLs:
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

@@ -15,8 +15,6 @@ initdone
 east #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

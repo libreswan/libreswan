@@ -58,8 +58,6 @@ north #
  grep "^leak" /tmp/pluto.log
 leak-detective enabled
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

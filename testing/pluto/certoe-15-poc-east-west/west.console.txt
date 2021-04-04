@@ -249,7 +249,5 @@ west #
  ipsec whack --trafficstatus
 006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

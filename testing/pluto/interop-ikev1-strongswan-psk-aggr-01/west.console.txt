@@ -37,8 +37,6 @@ west #
 west #
  hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

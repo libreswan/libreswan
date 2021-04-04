@@ -18,8 +18,6 @@ east #
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then grep "processing failed" /tmp/charon.log; fi
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

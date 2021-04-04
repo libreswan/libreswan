@@ -115,8 +115,6 @@ src 192.0.2.0/24 dst 192.0.3.0/24
 	dir in priority 2084814 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.8.22
 north #
- ../bin/check-for-core.sh
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

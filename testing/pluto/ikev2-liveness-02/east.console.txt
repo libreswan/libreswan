@@ -20,8 +20,6 @@ east #
 east #
  hostname | grep west > /dev/null || grep "IKEv2 liveness:" /tmp/pluto.log
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

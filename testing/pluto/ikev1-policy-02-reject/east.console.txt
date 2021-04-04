@@ -24,8 +24,6 @@ east #
  hostname | grep east > /dev/null && grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log
 packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.2.45:500
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -33,8 +33,6 @@ east #
 east
 "main-north"[1] 192.1.2.45 #1: switched from "main-north"[1] 192.1.2.45 to "main-east"
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

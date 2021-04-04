@@ -95,8 +95,6 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=252, outBytes=252
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

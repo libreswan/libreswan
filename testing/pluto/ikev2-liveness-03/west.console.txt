@@ -78,8 +78,6 @@ west #
 west #
  hostname | grep west > /dev/null || grep "IKEv2 liveness action:" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

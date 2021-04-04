@@ -34,8 +34,6 @@ west #
 | processing informational NO_PROPOSAL_CHOSEN (14)
 "westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

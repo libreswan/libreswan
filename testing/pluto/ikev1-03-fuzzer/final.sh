@@ -4,5 +4,4 @@ hostname |grep east > /dev/null && grep "packet from" /tmp/pluto.log | sed "s/^.
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

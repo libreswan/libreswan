@@ -50,8 +50,6 @@ road #
 road #
  hostname | grep east > /dev/null && ip route
 road #
- ../bin/check-for-core.sh
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

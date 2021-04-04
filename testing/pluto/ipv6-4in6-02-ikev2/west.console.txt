@@ -135,8 +135,6 @@ src ::/0 dst ::/0 proto ipv6-icmp type 136
 src ::/0 dst ::/0 proto ipv6-icmp type 136 
 	dir in priority 1 ptype main 
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

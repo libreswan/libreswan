@@ -2,5 +2,4 @@ hostname | grep east > /dev/null && grep -E "no Certificate Authority in NSS Cer
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

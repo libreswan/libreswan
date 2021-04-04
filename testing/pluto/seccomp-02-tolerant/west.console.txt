@@ -65,8 +65,6 @@ hashsha1                                                     P,,
 east-ec                                                      P,,  
 nic                                                          P,,  
 west #
- ../bin/check-for-core.sh
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

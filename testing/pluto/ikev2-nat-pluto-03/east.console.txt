@@ -20,8 +20,6 @@ east #
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 east #
- ../bin/check-for-core.sh
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  
