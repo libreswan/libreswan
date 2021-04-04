@@ -1,13 +1,19 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+ # generate in output directory
+west #
+ rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
+west #
+ ln -s ../ipsecspd.te OUTPUT
+west #
+ make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
+make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-west #
- rm ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
 west #
  ipsec start
 Redirecting to: [initsystem]
