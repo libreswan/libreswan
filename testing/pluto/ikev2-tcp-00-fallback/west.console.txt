@@ -72,8 +72,6 @@ west #
  echo "done"
 done
 west #
- # test TCP code for leaks
-west #
  ipsec whack --shutdown
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
