@@ -1310,11 +1310,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.reqid = sa->reqid;
 	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
-	/* TODO expose limits to kernel_sa via config */
-	req.p.lft.soft_byte_limit = XFRM_INF;
-	req.p.lft.soft_packet_limit = XFRM_INF;
-	req.p.lft.hard_byte_limit = XFRM_INF;
-	req.p.lft.hard_packet_limit = XFRM_INF;
+	req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
+	req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
+	req.p.lft.hard_packet_limit = sa->sa_ipsec_max_packets;
+	req.p.lft.soft_packet_limit = sa->sa_max_soft_packets;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
@@ -1899,6 +1898,71 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 		rta = RTA_NEXT(rta, msg_size);
 	}
 }
+static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
+{
+	struct xfrm_user_expire *ue = NLMSG_DATA(n);
+
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ue))) {
+		llog(RC_LOG_SERIOUS, logger,
+			"netlink_expire got message with length %zu < %zu bytes; ignore message",
+			(size_t) n->nlmsg_len, sizeof(*ue));
+		return;
+	}
+
+	const struct ip_info *afi = aftoinfo(ue->state.family);
+	if (afi == NULL) {
+		llog(RC_LOG, logger,
+		     "kernel: XFRM_MSG_EXPIRE message malformed: family %u unknown",
+		     ue->state.family);
+		return;
+	}
+
+	const ip_protocol *protocol = protocol_by_ipproto(ue->state.id.proto);
+	if (protocol == NULL) {
+		llog(RC_LOG, logger,
+		      "XFRM_MSG_EXPIRE message from kernel malformed: protocol %u unknown",
+		       ue->state.id.proto);
+		return;
+	}
+
+	ip_address src, dst;
+	address_buf a;
+	address_buf b;
+	xfrm2ip(&ue->state.saddr, &src, ue->state.family);
+	xfrm2ip(&ue->state.id.daddr, &dst, ue->state.family);
+	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d bytes %llu packets %llu%s",
+	    __func__, ntohl(ue->state.id.spi),
+	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
+	    ue->state.mode, ue->state.id.proto, ue->state.curlft.bytes,
+	    ue->state.curlft.packets,
+	    ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : "")
+
+	uint8_t protoid = PROTO_RESERVED;
+	switch (ue->state.id.proto) {
+	case  IPPROTO_ESP:
+		protoid = PROTO_IPSEC_ESP;
+		break;
+	case  IPPROTO_AH:
+		protoid = PROTO_IPSEC_AH;
+		break;
+	default:
+		bad_case(ue->state.id.proto);
+	}
+
+	if ((ue->hard && impair.ignore_hard_expire) ||
+	    (!ue->hard && impair.ignore_soft_expire)) {
+		dbg("IMPAIR is supress a %s EXPIRE event",
+		    ue->hard ? "hard" : "soft");
+	}
+
+	if (ue->state.id.spi == 0)
+		return;  /* acquire state with SPI 0x0 expired, ignore it */
+
+	handle_sa_expire(ue->state.id.spi, protoid, &dst,
+			ue->hard, ue->state.curlft.bytes,
+			ue->state.curlft.packets,
+			ue->state.curlft.add_time);
+}
 
 static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 {
@@ -2011,13 +2075,19 @@ static bool netlink_get(int fd, struct logger *logger)
 	}
 
 	sparse_buf sb;
-	dbg("kernel: netlink_get: %s message",
-	    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb));
+	dbg("kernel: netlink_get: %s message with legth %zu",
+	    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
+	    (size_t) rsp.n.nlmsg_len);
 
 	switch (rsp.n.nlmsg_type) {
 	case XFRM_MSG_ACQUIRE:
 		netlink_acquire(&rsp.n, logger);
 		break;
+
+	case XFRM_MSG_EXPIRE: /* SA soft and hard limit */
+		netlink_kernel_sa_expire(&rsp.n, logger);
+		break;
+
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n, logger);
 		break;
