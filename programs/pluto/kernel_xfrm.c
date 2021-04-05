@@ -1900,6 +1900,35 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 		rta = RTA_NEXT(rta, msg_size);
 	}
 }
+static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
+{
+	struct xfrm_user_expire *ue = NLMSG_DATA(n);
+
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ue))) {
+		llog(RC_LOG, logger,
+			"netlink_expire got message with length %zu < %zu bytes; ignore message",
+			(size_t) n->nlmsg_len, sizeof(*ue));
+		return;
+	}
+
+	ip_address src, dst;
+	address_buf a;
+	address_buf b;
+	xfrm2ip(&ue->state.saddr, &src, ue->state.family);
+	xfrm2ip(&ue->state.id.daddr, &dst, ue->state.family);
+	dbg("%s spi 0x%x src %s dst %s%s mode %u proto %d", __func__,
+	    ntohl(ue->state.id.spi),
+	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "",
+	    ue->state.mode, ue->state.id.proto);
+	uint8_t protoid = PROTO_RESERVED;
+	switch (ue->state.id.proto) {
+	case  IPPROTO_ESP: protoid = PROTO_IPSEC_ESP; break;
+	case  IPPROTO_AH: protoid = PROTO_IPSEC_AH; break;
+	default:
+		bad_case(ue->state.id.proto);
+	}
+	initiate_replace(ue->state.id.spi, protoid, &dst);
+}
 
 static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 {
@@ -2060,6 +2089,11 @@ static bool netlink_get(int fd, struct logger *logger)
 	case XFRM_MSG_ACQUIRE:
 		netlink_acquire(&rsp.n, logger);
 		break;
+
+	case XFRM_MSG_EXPIRE: /* SA soft and hard limit */
+		netlink_kernel_sa_expire(&rsp.n, logger);
+		break;
+
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n, logger);
 		break;

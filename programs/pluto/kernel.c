@@ -2067,6 +2067,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.add_selector = add_selector,
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.sa_lifebytes = c->sa_ipsec_life_bytes,
+		.sa_lifepackets = c->sa_ipsec_life_packets,
 		.outif = -1,
 		.sec_label = (st->st_seen_sec_label.len > 0 ? st->st_seen_sec_label :
 			      st->st_acquired_sec_label.len > 0 ? st->st_acquired_sec_label :
@@ -3884,4 +3886,19 @@ void shutdown_kernel(struct logger *logger)
 	if (kernel_ops->shutdown != NULL)
 		kernel_ops->shutdown(logger);
 	expire_bare_shunts(logger, true/*all*/);
+}
+
+void initiate_replace(ipsec_spi_t spi, uint8_t protoid, ip_address *dst)
+{
+	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst);
+	if (child != NULL) {
+		// TBD fix the case when the rekey is NO
+		if (child->sa.st_kernel_sa_expired) {
+			dbg("#%lu one of the SA has already expired ignore the EXPIRE", child->sa.st_serialno);
+		} else {
+			child->sa.st_kernel_sa_expired = true;
+			// Fix ME EVENT_SA_REKEY is the not the right one it set next timer 8 hours
+			event_force(EVENT_SA_REKEY, &child->sa);
+		}
+	}
 }
