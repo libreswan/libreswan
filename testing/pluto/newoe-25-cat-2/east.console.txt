@@ -28,10 +28,6 @@ east #
  ipsec stop
 Redirecting to: [initsystem]
 east #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

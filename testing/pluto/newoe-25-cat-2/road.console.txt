@@ -449,10 +449,6 @@ road #
  ipsec stop
 Redirecting to: [initsystem]
 road #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

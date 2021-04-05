@@ -84,9 +84,5 @@ road #
 road #
  ipsec whack --shutdown
 road #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

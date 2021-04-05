@@ -13,10 +13,6 @@ east #
  echo initdone
 initdone
 east #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

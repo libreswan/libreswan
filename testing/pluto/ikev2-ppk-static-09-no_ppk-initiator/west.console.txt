@@ -71,10 +71,6 @@ done
 west #
  ipsec whack --shutdown
 west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

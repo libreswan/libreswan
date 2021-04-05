@@ -63,9 +63,6 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec stop
 north #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

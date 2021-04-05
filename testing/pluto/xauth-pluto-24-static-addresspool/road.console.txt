@@ -40,9 +40,6 @@ road #
 road #
  hostname | grep east > /dev/null && ipsec stop
 road #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

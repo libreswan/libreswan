@@ -1,5 +1,4 @@
 ipsec whack --shutdown
-grep -e leak /tmp/pluto.log | grep -v -e '|'
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
