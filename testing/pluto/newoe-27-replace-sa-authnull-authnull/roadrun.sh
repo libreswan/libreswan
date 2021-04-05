@@ -5,18 +5,18 @@ sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # ping should succeed through tunnel
-../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # prevent delete notify
 ipsec whack --impair send-no-delete
 ipsec restart
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # give OE policies time to load
-../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # test the new tunnel works properly
-../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 # Now immitate a second indepdent client to east to show this 2nd client doesn't kill 1st client
 killall -9 pluto
 ip addr del 192.1.3.209/24 dev eth0

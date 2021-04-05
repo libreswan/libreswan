@@ -7,11 +7,11 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
 000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec auto --add road-east-ikev2

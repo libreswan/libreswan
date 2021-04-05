@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-west-east
 002 "ikev2-west-east": added IKEv2 connection
@@ -37,11 +37,11 @@ west #
 west #
  # should show tcp being used
 west #
- ../../pluto/bin/ipsec-look.sh | grep encap
+ ../../guestbin/ipsec-look.sh | grep encap
 	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
 	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

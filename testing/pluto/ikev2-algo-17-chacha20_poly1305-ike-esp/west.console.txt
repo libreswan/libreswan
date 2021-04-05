@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-chacha
 002 "westnet-eastnet-chacha": added IKEv2 connection
@@ -20,7 +20,7 @@ west #
 002 "westnet-eastnet-chacha" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-chacha" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus

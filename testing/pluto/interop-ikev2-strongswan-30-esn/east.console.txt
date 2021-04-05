@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone

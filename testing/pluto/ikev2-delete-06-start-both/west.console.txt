@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  #ipsec auto --add west-east-auto
 west #
@@ -14,7 +14,7 @@ west #
 west #
  sleep 10
 west #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
@@ -37,7 +37,7 @@ west #
 west #
  # traffic flow should still work
 west #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
  sleep 20

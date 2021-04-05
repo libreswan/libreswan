@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection

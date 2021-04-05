@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -26,7 +26,7 @@ selected proposal: ESP:AES_CBC_128/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  echo done
@@ -110,7 +110,7 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):

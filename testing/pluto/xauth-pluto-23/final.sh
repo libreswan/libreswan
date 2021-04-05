@@ -3,7 +3,7 @@ hostname | grep road > /dev/null && sleep 5
 hostname | grep north > /dev/null && sleep 5
 hostname | grep east > /dev/null && ipsec whack --trafficstatus
 : ==== cut ====
-ipsec look # ../../pluto/bin/ipsec-look.sh
+ipsec look # ../guestbin/ipsec-look.sh
 ipsec auto --status
 ipsec stop
 : ==== tuc ====

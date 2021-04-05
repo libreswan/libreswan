@@ -7,7 +7,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -18,7 +18,7 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

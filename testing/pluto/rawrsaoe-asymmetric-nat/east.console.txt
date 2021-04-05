@@ -9,13 +9,13 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- ../../pluto/bin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
 000 Total IPsec connections: loaded 6, active 0
 east #
  echo "initdone"

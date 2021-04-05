@@ -49,7 +49,7 @@ flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dst
 openbsdw #
  if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
 if [ -f /tmp/iked.log ]; then cp /tmlog ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
-../bin/check-for-core.sh
+../../guestbin/check-for-core.sh
 openbsdw #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi

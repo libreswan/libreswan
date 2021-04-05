@@ -6,7 +6,7 @@ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ping6 -n -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add v6-transport
 ipsec auto --status |grep v6-transport
 echo "initdone"

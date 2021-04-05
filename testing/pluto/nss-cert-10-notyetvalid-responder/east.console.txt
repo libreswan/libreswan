@@ -15,7 +15,7 @@ east #
 east #
  LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # if faketime works, adding conn should not give a warning about cert
 east #

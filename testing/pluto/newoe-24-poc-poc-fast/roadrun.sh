@@ -6,7 +6,7 @@ sleep 2
 # will show two established tunnels and no shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # ping should succeed through tunnel

@@ -7,7 +7,7 @@ east #
 east #
  # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
 east #
- PATH/bin/update-crypto-policies
+ PA../../guestbin/update-crypto-policies
 Setting system policy to DEFAULT
 Note: System-wide crypto policies are applied on application start-up.
 It is recommended to restart the system for the change of policies
@@ -69,7 +69,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": NSS Password from file "/etc/ipsec.d/nsspassword" for token "libreswan" with length 6 passed to NSS

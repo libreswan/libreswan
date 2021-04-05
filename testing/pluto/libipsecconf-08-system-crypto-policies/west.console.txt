@@ -8,7 +8,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test
 002 "test": added IKEv2 connection
@@ -23,7 +23,7 @@ west #
 west #
  ln -s PATH/share/crypto-policies/back-ends/FIPS/libreswan.config OUTPUT/west-add.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
@@ -39,7 +39,7 @@ west #
 west #
  ln -s PATH/share/crypto-policies/back-ends/FUTURE/libreswan.config OUTPUT/west-add.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
@@ -55,7 +55,7 @@ west #
 west #
  ln -s PATH/share/crypto-policies/back-ends/LEGACY/libreswan.config OUTPUT/west-add.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection
@@ -71,7 +71,7 @@ west #
 west #
  ln -s PATH/share/crypto-policies/back-ends/NEXT/libreswan.config OUTPUT/west-add.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test
 002 "test": terminating SAs using this connection

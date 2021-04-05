@@ -4,7 +4,7 @@ west #
 west #
  ipsec pluto --config /tmp/test.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone

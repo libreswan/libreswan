@@ -12,11 +12,11 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 000 Total IPsec connections: loaded 11, active 0
 road #
  echo "initdone"
@@ -42,7 +42,7 @@ road #
 road #
  # verify xfrm policy got added for %pass
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.3.209 dst 192.1.2.23
@@ -116,7 +116,7 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209

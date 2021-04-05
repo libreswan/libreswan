@@ -9,7 +9,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -270,7 +270,7 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 XFRM policy:
@@ -308,15 +308,15 @@ Certificate Nickname                                         Trust Attributes
 road #
  # trigger OE
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
- ../../pluto/bin/wait-for.sh --match '"private-or-clear#192.1.2.0/24"' -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match '"private-or-clear#192.1.2.0/24"' -- ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -340,7 +340,7 @@ Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209

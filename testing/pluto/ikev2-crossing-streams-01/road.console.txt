@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add static
 002 "static": added IKEv2 connection
@@ -62,7 +62,7 @@ road #
 road #
  ip addr add 192.0.1.254/24 dev eth0
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 road #
  # did it split over two IPsec SA's or not? just curious
@@ -78,7 +78,7 @@ road #
  ipsec trafficstatus
 006 #3: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 road #
  ipsec status |grep STATE_

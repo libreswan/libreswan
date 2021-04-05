@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -16,7 +16,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #1: initiating IKEv1 Main Mode connection
 1v1 "aes128" #1: sent Main Mode request
@@ -44,7 +44,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:duplicate
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #3: initiating IKEv1 Main Mode connection
 002 "aes128" #3: IMPAIR: stripping key-length
@@ -64,7 +64,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:duplicate
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #4: initiating IKEv1 Main Mode connection
 1v1 "aes128" #4: sent Main Mode request
@@ -89,7 +89,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #6: initiating IKEv1 Main Mode connection
 002 "aes128" #6: IMPAIR: stripping key-length
@@ -109,7 +109,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #7: initiating IKEv1 Main Mode connection
 1v1 "aes128" #7: sent Main Mode request
@@ -134,7 +134,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:omit
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #9: initiating IKEv1 Main Mode connection
 002 "aes128" #9: IMPAIR: stripping key-length
@@ -162,7 +162,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:omit
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #11: initiating IKEv1 Main Mode connection
 1v1 "aes128" #11: sent Main Mode request
@@ -189,7 +189,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:empty
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #13: initiating IKEv1 Main Mode connection
 002 "aes128" #13: IMPAIR: stripping key-length
@@ -219,7 +219,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:empty
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv1 connection
 002 "aes128" #15: initiating IKEv1 Main Mode connection
 1v1 "aes128" #15: sent Main Mode request
@@ -244,7 +244,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv1 connection
 002 "3des" #17: initiating IKEv1 Main Mode connection
 1v1 "3des" #17: sent Main Mode request
@@ -272,7 +272,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv1 connection
 002 "3des" #19: initiating IKEv1 Main Mode connection
 002 "3des" #19: IMPAIR: sending key-length attribute value 0
@@ -293,7 +293,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:192
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv1 connection
 002 "3des" #20: initiating IKEv1 Main Mode connection
 002 "3des" #20: IMPAIR: sending key-length attribute value 192

@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
 002 "west-east": added IKEv1 connection
@@ -17,7 +17,7 @@ west #
 west #
  # we can transmit in the clear
 west #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
  # bring up the tunnel
@@ -36,7 +36,7 @@ west #
 west #
  # use the tunnel
 west #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
  # show the tunnel!

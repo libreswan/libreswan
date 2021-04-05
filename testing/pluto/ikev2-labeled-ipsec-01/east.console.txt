@@ -18,7 +18,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
@@ -32,7 +32,7 @@ east #
 -> listening on TCP port 4300 ... ok
 -> waiting ... initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 <- connect(192.1.2.45,unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023)
    quit
 -> connection closed

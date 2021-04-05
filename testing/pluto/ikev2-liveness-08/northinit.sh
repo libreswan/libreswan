@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add north-east-x509-ipv4
 ipsec auto --up north-east-x509-ipv4
 ping -n -c 4 -I 192.0.2.100 192.1.2.23

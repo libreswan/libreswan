@@ -10,7 +10,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -40,7 +40,7 @@ road #
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
@@ -64,7 +64,7 @@ road #
 002 "road-west-x509-ipv4"[1] 192.1.2.45 #4: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0]
 004 "road-west-x509-ipv4"[1] 192.1.2.45 #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.45:4500 DPD=passive}
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.1.254
+ ../../guestbin/ping-once.sh --up 192.0.1.254
 up
 road #
  ipsec whack --trafficstatus

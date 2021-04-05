@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
 iptables -t nat -L -n
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

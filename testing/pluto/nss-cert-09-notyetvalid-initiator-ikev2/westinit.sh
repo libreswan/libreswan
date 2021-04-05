@@ -7,7 +7,7 @@ mkdir -p /var/run/pluto
 # here.  Invoke pluto directly so that it is the root of the shared
 # faketime tree.
 LD_PRELOAD=/usr/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 
 # if faketime works, adding conn should not give a warning about cert
 ipsec auto --add nss-cert

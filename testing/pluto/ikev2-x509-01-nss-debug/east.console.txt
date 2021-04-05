@@ -29,7 +29,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
@@ -37,7 +37,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

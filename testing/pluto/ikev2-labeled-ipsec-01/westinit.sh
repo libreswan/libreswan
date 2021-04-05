@@ -5,6 +5,6 @@ ln -s ../ipsecspd.te OUTPUT
 make -C OUTPUT/ -f /usr/share/selinux/devel/Makefile ipsecspd.pp
 semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add labeled
 echo "initdone"

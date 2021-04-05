@@ -21,7 +21,7 @@ ausearch -ts recent -i -m SECCOMP
 
 # Test seccomp actually works - that it records pluto crashing ....
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 
 # Since whack hangs - it does not know that pluto died - run it in the
 # background.  Give it a few seconds to do its job.

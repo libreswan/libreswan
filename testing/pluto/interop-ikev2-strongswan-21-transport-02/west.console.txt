@@ -2,13 +2,13 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -30,13 +30,13 @@ west #
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

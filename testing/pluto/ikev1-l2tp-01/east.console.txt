@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add any-east-l2tp
 002 "any-east-l2tp": added IKEv1 connection
@@ -24,7 +24,7 @@ east #
  echo done
 done
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.3.33 dst 192.1.2.23

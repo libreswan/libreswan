@@ -7,7 +7,7 @@ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ping6 -n -c 4 2001:db8:1:2::23
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add v6-tunnel-east-road
 ipsec auto --status | grep v6-tunnel-east-road
 ipsec whack --impair suppress-retransmits

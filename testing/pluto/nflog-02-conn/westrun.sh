@@ -6,10 +6,10 @@ iptables -L -n
 rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
 set +m
 tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
-../../pluto/bin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
+../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
 
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 
 ipsec auto --down westnet-eastnet-ikev2
 iptables -L -n

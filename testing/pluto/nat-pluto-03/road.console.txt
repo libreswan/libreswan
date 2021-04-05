@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-forceencaps
 002 "road-eastnet-forceencaps": added IKEv1 connection
@@ -26,7 +26,7 @@ road #
 1v1 "road-eastnet-forceencaps" #2: sent Quick Mode request
 004 "road-eastnet-forceencaps" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus

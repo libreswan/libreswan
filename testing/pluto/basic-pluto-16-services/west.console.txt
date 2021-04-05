@@ -43,61 +43,61 @@ west #
  systemctl status ipsec.service >/dev/null || echo failed
 west #
  service ipsec start || echo failed
-Redirecting to /bin/systemctl start ipsec.service
+Redirecting t../../guestbin/systemctl start ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec start || echo failed
-Redirecting to /bin/systemctl start ipsec.service
+Redirecting t../../guestbin/systemctl start ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec restart || echo failed
-Redirecting to /bin/systemctl restart ipsec.service
+Redirecting t../../guestbin/systemctl restart ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec stop || echo failed
-Redirecting to /bin/systemctl stop ipsec.service
+Redirecting t../../guestbin/systemctl stop ipsec.service
 west #
  service ipsec status >/dev/null && echo detected proper failure
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec stop || echo failed
-Redirecting to /bin/systemctl stop ipsec.service
+Redirecting t../../guestbin/systemctl stop ipsec.service
 west #
  service ipsec status >/dev/null && echo detected proper failure
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec start || echo failed
-Redirecting to /bin/systemctl start ipsec.service
+Redirecting t../../guestbin/systemctl start ipsec.service
 west #
  service ipsec force-reload || echo failed
-Redirecting to /bin/systemctl force-reload ipsec.service
+Redirecting t../../guestbin/systemctl force-reload ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec start || echo failed
-Redirecting to /bin/systemctl start ipsec.service
+Redirecting t../../guestbin/systemctl start ipsec.service
 west #
  service ipsec restart || echo failed
-Redirecting to /bin/systemctl restart ipsec.service
+Redirecting t../../guestbin/systemctl restart ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  service ipsec start || echo failed
-Redirecting to /bin/systemctl start ipsec.service
+Redirecting t../../guestbin/systemctl start ipsec.service
 west #
  service ipsec condrestart || echo failed
-Redirecting to /bin/systemctl condrestart ipsec.service
+Redirecting t../../guestbin/systemctl condrestart ipsec.service
 west #
  service ipsec status >/dev/null || echo failed
-Redirecting to /bin/systemctl status ipsec.service
+Redirecting t../../guestbin/systemctl status ipsec.service
 west #
  # test for fix that starts ipsec only after nic/network is online, rhbz#1145245
 west #

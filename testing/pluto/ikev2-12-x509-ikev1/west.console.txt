@@ -5,7 +5,7 @@ west #
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -16,7 +16,7 @@ west #
 west #
  ipsec pluto --config /etc/ipsec.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv1 connection
@@ -54,10 +54,10 @@ west #
 031 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 000 "westnet-eastnet-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -84,7 +84,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:

@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
 002 "rw-east-pool-x509-ipv4": added IKEv2 connection

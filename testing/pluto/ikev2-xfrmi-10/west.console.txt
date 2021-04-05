@@ -13,11 +13,11 @@ west #
 west #
  ip link add ipsec17 type xfrm if_id 17 dev eth1
 west #
- ../../pluto/bin/ip-addr-show.sh ipsec17
+ ../../guestbin/ip-addr-show.sh ipsec17
 west #
  ip address add 192.0.1.254/24 dev ipsec17
 west #
- ../../pluto/bin/ip-addr-show.sh
+ ../../guestbin/ip-addr-show.sh
 eth1 inet 192.1.2.45/24
 ipsec17 inet 192.0.1.254/24
 west #
@@ -27,13 +27,13 @@ west #
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
 002 "west": added IKEv2 connection
@@ -50,7 +50,7 @@ west #
 002 "west" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "west" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ip -s link show ipsec17

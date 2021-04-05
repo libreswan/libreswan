@@ -12,13 +12,13 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
 000 Total IPsec connections: loaded 2, active 0
 road #
  echo "initdone"

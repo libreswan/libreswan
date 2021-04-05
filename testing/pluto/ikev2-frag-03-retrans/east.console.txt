@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -23,7 +23,7 @@ east #
 | Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
 | Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

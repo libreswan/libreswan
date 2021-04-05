@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --hostname east
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec whack --impair allow-null-none
 # normally NONE is not emitted
 ipsec whack --impair v2-proposal-integ:allow-none

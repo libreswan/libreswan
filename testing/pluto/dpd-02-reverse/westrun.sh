@@ -1,9 +1,9 @@
 #!/bin/sh
 # we can transmit in the clear
-../../pluto/bin/ping-once.sh --up 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # bring up the tunnel
 ipsec auto --up west-east
-../../pluto/bin/ping-once.sh --up 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 echo "Tunnel should be up"
 ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
@@ -27,7 +27,7 @@ echo "Removing block"
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 sleep 10
-../../pluto/bin/ping-once.sh --up 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # Tunnel should be back up now
 echo "Tunnel should be up"
 ipsec whack --trafficstatus

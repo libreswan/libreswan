@@ -3,14 +3,14 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
@@ -23,7 +23,7 @@ done
 west #
  grep 'Notify data  ff$' /tmp/pluto.log
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

@@ -2,10 +2,10 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -34,7 +34,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):

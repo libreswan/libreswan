@@ -1,7 +1,7 @@
 ipsec auto --up road
 ping6 -c 2 -w 4 192.0.2.254
 ipsec trafficstatus 
-../../pluto/bin/ip-addr-show.sh
+../../guestbin/ip-addr-show.sh
 ip -6 route
 ip route get to 192.1.2.23
 #

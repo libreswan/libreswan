@@ -7,11 +7,11 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # give OE policies time to load
 west #
- ../../pluto/bin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 000 Total IPsec connections: loaded 10, active 0
 west #
  echo "initdone"
@@ -26,7 +26,7 @@ west #
 003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 west #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
  # should show traffic
@@ -37,7 +37,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

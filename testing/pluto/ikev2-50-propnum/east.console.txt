@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- ../../pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-propnum
 002 "westnet-eastnet-propnum": added IKEv2 connection

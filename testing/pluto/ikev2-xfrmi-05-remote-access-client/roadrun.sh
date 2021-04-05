@@ -1,7 +1,7 @@
 ipsec auto --up eastnet-any
 # did we get our IP
 ip addr show dev ipsec1
-../../pluto/bin/ping-once.sh --up 192.0.2.254
+../../guestbin/ping-once.sh --up 192.0.2.254
 ipsec whack --trafficstatus
 # check to see if our resolv.conf got updated
 cat /etc/resolv.conf

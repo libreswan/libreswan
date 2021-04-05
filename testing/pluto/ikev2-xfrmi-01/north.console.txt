@@ -13,7 +13,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north
 002 "north": added IKEv2 connection
@@ -42,7 +42,7 @@ north #
 north #
  sleep  2
 north #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 north #
  ip -s link show ipsec1

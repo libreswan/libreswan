@@ -7,7 +7,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
 002 "northnet-eastnet": added IKEv2 connection
@@ -24,7 +24,7 @@ north #
 002 "northnet-eastnet" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 north #
- ../../pluto/bin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 north #
  echo done

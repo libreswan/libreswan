@@ -7,17 +7,17 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE policies time to load
 east #
- ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 000 Total IPsec connections: loaded 9, active 0
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair revival
 west #
@@ -60,7 +60,7 @@ west #
 002 "west" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- # ../../pluto/bin/ping-once.sh ...?
+ # ../../guestbin/ping-once.sh ...?
 west #
  taskset 0x3 ping -w 3 -n -c 2 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.

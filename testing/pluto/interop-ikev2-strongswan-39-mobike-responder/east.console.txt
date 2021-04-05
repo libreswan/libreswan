@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.33.222

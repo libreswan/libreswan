@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
 002 "ipv4-psk-ikev2-transport": added IKEv2 connection
@@ -57,7 +57,7 @@ west #
 002 "ipv4-psk-ikev2-transport" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "ipv4-psk-ikev2-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
@@ -82,7 +82,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

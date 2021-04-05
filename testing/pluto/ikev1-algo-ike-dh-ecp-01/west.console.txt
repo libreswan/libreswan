@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,20 +13,20 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  echo "initdone"
 initdone
 west #
- ../bin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh19": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh19" #1: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh19" #1: sent Main Mode request
@@ -44,7 +44,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev1-ike=aes128-sha1-dh19" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 "ikev1-ike=aes128-sha1-dh19": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh20": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh20" #3: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh20" #3: sent Main Mode request
@@ -62,7 +62,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev1-ike=aes128-sha1-dh20" #3: deleting state (STATE_MAIN_I4) and sending notification
 002 "ikev1-ike=aes128-sha1-dh20": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh21": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh21" #5: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh21" #5: sent Main Mode request
@@ -83,7 +83,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:

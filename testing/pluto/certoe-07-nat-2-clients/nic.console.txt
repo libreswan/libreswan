@@ -14,14 +14,14 @@ nic #
 nic #
  # A tunnel should have established with non-zero byte counters
 nic #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 nic #
  # jacob two two for east?
 nic #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #
- ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
+ ../../guestbin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 nic #
  # you should see both RSA and NULL
 nic #

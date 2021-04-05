@@ -1,5 +1,5 @@
 ipsec auto --up west-east-delete1
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 ipsec auto --status
 echo "sleeping a bit.. 2"

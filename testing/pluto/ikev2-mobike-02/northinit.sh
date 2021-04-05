@@ -9,7 +9,7 @@ ip addr show dev eth1 | grep 192.1.3.33 || ip addr add 192.1.3.33/24 dev eth1
 ip route | grep default || ip route add default via 192.1.3.254
 # routes and addresses setup for the test
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet
 ipsec whack --impair suppress-retransmits
 echo "initdone"

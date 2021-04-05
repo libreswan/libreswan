@@ -2,13 +2,13 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -46,7 +46,7 @@ west #
 west #
  ip route add unreachable 192.1.2.23
 west #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 ping -n -c 1 -w 4 192.1.2.23
 connect: No route to host
 destination 192.1.2.23 is dead
@@ -100,7 +100,7 @@ west #
 west #
  ip route del unreachable 192.1.2.23
 west #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 west #
  ping -q -n -c 1 -I 192.0.1.254 192.0.2.254

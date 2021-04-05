@@ -4,7 +4,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
 002 "westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection

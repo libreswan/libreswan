@@ -4,7 +4,7 @@ certutil -d sql:/etc/ipsec.d -D -n west
 certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -d sql:/etc/ipsec.d -t "CT,,"
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/badca/badwest.p12
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert
 ipsec auto --status |grep nss-cert
 echo "initdone"

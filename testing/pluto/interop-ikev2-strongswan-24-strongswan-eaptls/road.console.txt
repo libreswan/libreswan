@@ -6,7 +6,7 @@ road #
 road #
  cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
 road #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 road #
  echo "initdone"
 initdone
@@ -115,7 +115,7 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

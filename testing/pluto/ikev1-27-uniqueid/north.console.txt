@@ -4,7 +4,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add road-eastnet-ikev2
 002 "road-eastnet-ikev2": added IKEv1 connection
@@ -44,7 +44,7 @@ north #
  ipsec restart
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  # temp while the test still fails
 north #

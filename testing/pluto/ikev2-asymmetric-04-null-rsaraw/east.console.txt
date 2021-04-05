@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -61,7 +61,7 @@ OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

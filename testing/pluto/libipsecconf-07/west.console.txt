@@ -7,7 +7,7 @@ west #
 west #
  ipsec pluto --config west.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --listen > /dev/null
 west #
@@ -23,7 +23,7 @@ west #
 west #
  ipsec pluto --config west-listen.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --listen > /dev/null
 west #

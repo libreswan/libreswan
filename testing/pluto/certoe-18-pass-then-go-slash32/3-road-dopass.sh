@@ -5,5 +5,5 @@ sleep 10
 ipsec trafficstatus
 ipsec shuntstatus
 # verify xfrm policy got added for %pass
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 echo "waiting on east to start ipsec and OE initiate to us"

@@ -14,7 +14,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # other is loaded in another test case, ikev2-x509-17-multicert-03
 east #

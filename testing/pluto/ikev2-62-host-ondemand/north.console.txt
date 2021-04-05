@@ -3,7 +3,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  # ipsec auto --add north-east
 north #
@@ -12,15 +12,15 @@ initdone
 north #
  # one ping to trigger IKE
 north #
- ../../pluto/bin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
 fired and forgotten
 north #
- ../../pluto/bin/wait-for.sh --match north-east -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match north-east -- ipsec whack --trafficstatus
 006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 north #
  # success
 north #
- ../../pluto/bin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 north #
  ipsec whack --trafficstatus

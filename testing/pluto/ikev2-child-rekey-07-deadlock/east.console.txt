@@ -2,7 +2,7 @@
 east #
  export PLUTO_CRYPTO_HELPER_DELAY=5; export EF_DISABLE_BANNER=1; ipsec pluto  --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
 002 "west-east/1x0": added IKEv2 connection

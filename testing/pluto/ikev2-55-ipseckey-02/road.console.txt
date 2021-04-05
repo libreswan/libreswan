@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -35,7 +35,7 @@ road #
 road #
  # there should be two public keys. including road
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -62,7 +62,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -80,6 +80,6 @@ road #
 002 "road-east-2" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "road-east-2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 

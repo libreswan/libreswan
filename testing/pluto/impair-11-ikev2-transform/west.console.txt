@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -12,7 +12,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #1: initiating IKEv2 connection
 1v2 "conf" #1: sent IKE_SA_INIT request
@@ -36,7 +36,7 @@ west #
 west #
  ipsec whack --impair ikev2-add-ike-transform:0x60000
 west #
- ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #3: initiating IKEv2 connection
 002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
@@ -61,7 +61,7 @@ west #
 west #
  ipsec whack --impair ikev2-add-ike-transform:0x3ffff
 west #
- ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #5: initiating IKEv2 connection
 002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
@@ -86,7 +86,7 @@ west #
 west #
  ipsec whack --impair ikev2-add-child-transform:0x60000
 west #
- ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #7: initiating IKEv2 connection
 1v2 "conf" #7: sent IKE_SA_INIT request
@@ -111,7 +111,7 @@ west #
 west #
  ipsec whack --impair ikev2-add-child-transform:0x3ffff
 west #
- ../../pluto/bin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #9: initiating IKEv2 connection
 1v2 "conf" #9: sent IKE_SA_INIT request

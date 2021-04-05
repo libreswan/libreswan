@@ -5,6 +5,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ping -c 4 -n -I 192.0.3.254 192.0.2.254
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet-nat
 echo "initdone"

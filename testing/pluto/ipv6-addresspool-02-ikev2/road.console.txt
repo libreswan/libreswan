@@ -1,19 +1,19 @@
 /testing/guestbin/swan-prep --46
 road #
- ../../pluto/bin/wait-until-alive 2001:db8:0:2::254
+ ../../guestbin/wait-until-alive 2001:db8:0:2::254
 destination 2001:db8:0:2::254 is alive
 road #
  ip6tables -A INPUT -i eth0 -s 2001:db8:0:2::254 -p ipv6-icmp -j DROP
 road #
  ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
- ../../pluto/bin/ping-once.sh --down 2001:db8:0:2::254
+ ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
 down
 road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -44,7 +44,7 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 road NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:3::209

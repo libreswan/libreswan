@@ -18,7 +18,7 @@ east #
 east #
  # initnss normally happens in the initsystem - but not for namespace testing
 east #
- #echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && ipsec initnss #> /dev/null
+ #echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && ipsec initnss #> /dev/null
 east #
  ipsec initnss
 Initializing NSS database
@@ -35,7 +35,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # test secrets reading for early warning of syntax errors
 east #
@@ -43,7 +43,7 @@ east #
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
- echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
+ echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
 east #
  # ready for System Role to drop file(s) into /etc/ipsec.d/
 east #
@@ -55,7 +55,7 @@ east #
  ipsec restart
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE a chance to load
 east #

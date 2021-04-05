@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
 002 "west-east": added IKEv1 connection
@@ -47,7 +47,7 @@ west #
 west #
  # encrypted
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  # plaintext
@@ -57,7 +57,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

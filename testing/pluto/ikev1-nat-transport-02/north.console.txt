@@ -2,13 +2,13 @@
 north #
  # confirm that the network is alive
 north #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east-222
 002 "north-east-222": added IKEv1 connection

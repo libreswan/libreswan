@@ -9,13 +9,13 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  # give OE a chance to load conns
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
 000 Total IPsec connections: loaded 9, active 0
 road #
  ipsec auto --status
@@ -261,7 +261,7 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 XFRM policy:
@@ -299,13 +299,13 @@ Certificate Nickname                                         Trust Attributes
 road #
  # bring up first tunnel
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
- ../../pluto/bin/wait-for.sh --match '192.1.2.23' -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match '192.1.2.23' -- ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
 road #
- ../../pluto/bin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -313,13 +313,13 @@ road #
 road #
  # bring up second tunnel
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.45
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.45
 down
 road #
- ../../pluto/bin/wait-for.sh --match '192.1.2.45' -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match '192.1.2.45' -- ipsec whack --trafficstatus
 006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
 road #
- ../../pluto/bin/ping-once.sh --up   -I 192.1.3.209 192.1.2.45
+ ../../guestbin/ping-once.sh --up   -I 192.1.3.209 192.1.2.45
 up
 road #
  ipsec whack --trafficstatus
@@ -329,7 +329,7 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ping-once.sh --down 10.0.10.1
+ ../../guestbin/ping-once.sh --down 10.0.10.1
 down
 road #
  ipsec whack --trafficstatus
@@ -350,7 +350,7 @@ target     prot opt source               destination
 SNAT       all  --  0.0.0.0/0            192.1.2.45           policy match dir out pol ipsec to:10.0.10.1
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.3.209

@@ -15,7 +15,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add v6-transport
 002 "v6-transport": added IKEv1 connection
@@ -42,7 +42,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45

@@ -13,11 +13,11 @@ road #
 road #
  ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 10
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 000 Total IPsec connections: loaded 11, active 0
 road #
  echo "initdone"
@@ -32,7 +32,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32 \	dir out priority 3129278 ptype main \	tmp
 road #
  # trigger a private-or-clear and check for shunt and shunt expiry
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
  # wait on OE retransmits and rekeying

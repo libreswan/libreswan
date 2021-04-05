@@ -6,6 +6,6 @@ sleep 3
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 # should show tcp being used
-../../pluto/bin/ipsec-look.sh | grep encap
+../../guestbin/ipsec-look.sh | grep encap
 ipsec auto --down ikev2-westnet-eastnet
 echo "done"

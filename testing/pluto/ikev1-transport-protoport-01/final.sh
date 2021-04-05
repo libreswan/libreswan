@@ -1,5 +1,5 @@
 # verify protoport selectors are there
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -3,14 +3,14 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
 west #
  # wait for the connection to come up
 west #
- ../../pluto/bin/wait-for.sh --match westnet-eastnet-auto -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match westnet-eastnet-auto -- ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # ensure that clear text does not get through
@@ -23,7 +23,7 @@ west #
 west #
  # traffic counters
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
@@ -41,12 +41,12 @@ west #
 west #
  # should be 0
 west #
- ../../pluto/bin/wait-for.sh --match 'westnet-eastnet-auto.*inBytes=0' -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match 'westnet-eastnet-auto.*inBytes=0' -- ipsec whack --trafficstatus
 006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # A new IPsec SA should be established (older versions would be dead for 30 seconds)
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus

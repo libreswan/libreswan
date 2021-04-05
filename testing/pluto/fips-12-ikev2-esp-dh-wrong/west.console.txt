@@ -17,7 +17,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -36,10 +36,10 @@ west #
 002 "ikev2-base" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-base" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../bin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp1536 -I 192.0.100.254 192.0.200.254
+ ../../guestbin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp1536 -I 192.0.100.254 192.0.200.254
 036 "ikev2-esp=aes-sha1-modp1536": failed to add connection: ESP DH algorithm 'modp1536' is not supported
 west #
  ipsec auto --delete ikev2-base

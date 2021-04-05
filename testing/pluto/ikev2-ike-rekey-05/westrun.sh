@@ -1,9 +1,9 @@
 ipsec auto --up westnet-eastnet-a
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec auto --up westnet-eastnet-b
-../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 ipsec auto --up westnet-eastnet-c
-../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 ipsec whack --trafficstatus
 ipsec status |grep STATE_
 echo sleep 3m

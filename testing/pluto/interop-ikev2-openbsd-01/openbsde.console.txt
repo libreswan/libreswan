@@ -29,7 +29,7 @@ esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes
 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
-../bin/check-for-core.sh
+../../guestbin/check-for-core.sh
 openbsde #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi

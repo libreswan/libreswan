@@ -1,5 +1,5 @@
 ipsec whack --trafficstatus
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== restore IPs to prevent leaking into other tests that dont reboot first ===

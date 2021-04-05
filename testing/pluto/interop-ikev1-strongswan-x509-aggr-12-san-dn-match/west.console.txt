@@ -6,7 +6,7 @@ west #
 west #
  cp -a /etc/strongswan/ipsec.d/certs/* /etc/strongswan/certs/
 west #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 west #
  echo "initdone"
 initdone

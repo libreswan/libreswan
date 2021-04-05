@@ -1,10 +1,10 @@
 #!/bin/sh
 # we can transmit in the clear
-../../pluto/bin/ping-once.sh --up 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # bring up the tunnel
 ipsec auto --up west-east
 # use the tunnel
-../../pluto/bin/ping-once.sh --up 192.1.2.23
+../../guestbin/ping-once.sh --up 192.1.2.23
 # show the tunnel!
 echo "Tunnel should be up"
 ipsec whack --trafficstatus

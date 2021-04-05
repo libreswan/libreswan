@@ -9,11 +9,11 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # give OE policies time to load
 west #
- ../../pluto/bin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
 000 Total IPsec connections: loaded 9, active 0
 west #
  # check no oe
@@ -22,13 +22,13 @@ west #
 west #
  # triger oe; expect zero byte count on up connection
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down
 west #
- ../../pluto/bin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 west #
- ../../pluto/bin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
@@ -37,7 +37,7 @@ west #
  echo "initdone"
 initdone
 west #
- ../../pluto/bin/ping-once.sh --up 10.0.10.1
+ ../../guestbin/ping-once.sh --up 10.0.10.1
 up
 west #
  ipsec whack --trafficstatus
@@ -54,7 +54,7 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.45

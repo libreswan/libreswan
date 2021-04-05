@@ -4,7 +4,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add rw-westnet-pool-x509-ipv4
 002 "rw-westnet-pool-x509-ipv4": added IKEv2 connection

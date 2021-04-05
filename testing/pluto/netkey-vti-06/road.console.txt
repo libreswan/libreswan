@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-vti
 002 "road-east-vti": added IKEv1 connection
@@ -31,7 +31,7 @@ road #
 road #
  # since we have vti-routing=no, no marking, so unencrypted packets are dropped
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.0.2.254
 down
 road #
  ipsec whack --trafficstatus
@@ -41,7 +41,7 @@ road #
 road #
  # now packets into vti0 device will get marked, and encrypted and counted
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus

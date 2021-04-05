@@ -4,7 +4,7 @@ road #
 road #
  # private-or-clear
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 7.7.7.7
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 7.7.7.7
 up
 road #
  ipsec start
@@ -14,11 +14,11 @@ road #
 road #
  echo 30 > /proc/sys/net/core/xfrm_acq_expires
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
 000 Total IPsec connections: loaded 12, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
@@ -29,18 +29,18 @@ initdone
 road #
  # trigger OE
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
- ../../pluto/bin/wait-for.sh --match '"private-or-clear#192.1.2.0/24"' -- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match '"private-or-clear#192.1.2.0/24"' -- ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
- ../../pluto/bin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
 up
 road #
  # try shunt
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 7.7.7.7
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 7.7.7.7
 down
 road #
  ipsec whack --shuntstatus
@@ -62,20 +62,20 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 7.7.7.7
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 7.7.7.7
 down
 road #
  # let acquire time out; shunt is now failureshunt=pass and should show
 road #
  # up, ping will work
 road #
- ../../pluto/bin/wait-for.sh --timeout 60 --match 7.7.7.7 -- ipsec whack --shuntstatus
+ ../../guestbin/wait-for.sh --timeout 60 --match 7.7.7.7 -- ipsec whack --shuntstatus
 000 192.1.3.209/32 -0-> 7.7.7.7/32 => %pass 0    oe-failed
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 7.7.7.7
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 7.7.7.7
 up
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -153,7 +153,7 @@ road #
 road #
  sleep 60
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -232,7 +232,7 @@ road #
 road #
  sleep 60
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -308,7 +308,7 @@ road #
 road #
  sleep 60
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -389,7 +389,7 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209

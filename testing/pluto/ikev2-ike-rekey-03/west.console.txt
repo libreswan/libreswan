@@ -19,7 +19,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --debug-all --impair suppress-retransmits
 west #
@@ -64,13 +64,13 @@ west #
 west #
  # confirm #2-#4 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  ipsec whack --trafficstatus
@@ -92,13 +92,13 @@ west #
 west #
  # confirm #2-#4 replaced by #5-#7
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  ipsec whack --trafficstatus
@@ -118,13 +118,13 @@ west #
 west #
  # confirm #5-#7 replaced by #8-#10; and #1 by #11
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  # in final.sh

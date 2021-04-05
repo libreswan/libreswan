@@ -9,13 +9,13 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec whack --impair suppress-retransmits
 north #
  # give OE policies time to load
 north #
- ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 000 Total IPsec connections: loaded 9, active 0
 north #
  ipsec auto --status
@@ -291,7 +291,7 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 north #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 north NOW
 XFRM state:
 src 192.1.3.209 dst 192.1.3.33

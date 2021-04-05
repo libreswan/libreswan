@@ -11,13 +11,13 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 timeout waiting 30 seconds for ipsec auto --status to match loaded 9,
 road #
  ipsec auto --status
@@ -281,7 +281,7 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 XFRM policy:
@@ -377,7 +377,7 @@ target     prot opt source               destination
 SNAT       all  --  0.0.0.0/0            192.1.2.45           policy match dir out pol ipsec to:10.0.10.1
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.3.33 dst 192.1.3.209

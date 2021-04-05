@@ -4,7 +4,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-dpd
 002 "north-dpd/0x1": added IKEv1 connection

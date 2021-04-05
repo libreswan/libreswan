@@ -16,13 +16,13 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- ../../pluto/bin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
 000 Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
@@ -30,7 +30,7 @@ initdone
 east #
  # A tunnel should have established with non-zero byte counters
 east #
- ../../pluto/bin/ping-once.sh --up 192.1.2.23
+ ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 east #
  # jacob two two for east?
@@ -39,7 +39,7 @@ east #
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.2/32
 east #
- ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
+ ../../guestbin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23

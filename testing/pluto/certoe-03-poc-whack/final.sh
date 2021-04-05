@@ -1,4 +1,4 @@
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 # A tunnel should have established
 grep "negotiated connection" /tmp/pluto.log

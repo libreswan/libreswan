@@ -9,7 +9,7 @@ road #
 ipsec start
 Redirecting to: [initsystem]
 road #
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 road #
 ipsec auto --add road-eastnet-nonat
 002 "road-eastnet-nonat": added IKEv2 connection
@@ -140,7 +140,7 @@ road #
 ipsec whack --trafficstatus
 006 #2: "road-eastnet-nonat", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 road #
-../../pluto/bin/ipsec-look.sh
+../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -184,7 +184,7 @@ road #
 echo done
 done
 road #
-../../pluto/bin/ipsec-look.sh
+../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209

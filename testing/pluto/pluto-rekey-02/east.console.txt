@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet-nat
 002 "northnet-eastnet-nat": added IKEv1 connection
@@ -11,7 +11,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh | sed "s/port [0-9][0-9][0-9][0-9][0-9]/port XPORT/"
+ ../../guestbin/ipsec-look.sh | sed "s/port [0-9][0-9][0-9][0-9][0-9]/port XPORT/"
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # this should have failed to --add 
 ipsec auto --add first
 echo 'conn second' >> /etc/ipsec.conf

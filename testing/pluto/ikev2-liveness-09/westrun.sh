@@ -7,7 +7,7 @@ ipsec whack --trafficstatus
 sleep 15
 # Setting up block
 ip route add unreachable 192.1.2.23
-../../pluto/bin/wait-until-alive 192.1.2.23
+../../guestbin/wait-until-alive 192.1.2.23
 sleep 45
 # livness/dpd should have triggered now
 # Tunnel should be down with %trap or %hold preventing packet leaks
@@ -21,7 +21,7 @@ ipsec status | grep westnet-eastnet-ikev2
 ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
 # Remove the null route
 ip route del unreachable 192.1.2.23
-../../pluto/bin/wait-until-alive 192.1.2.23
+../../guestbin/wait-until-alive 192.1.2.23
 ping -q -n -c 1 -I 192.0.1.254 192.0.2.254
 sleep 2
 # ping should reply

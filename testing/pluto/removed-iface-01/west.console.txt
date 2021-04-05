@@ -9,7 +9,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add test1
 002 "test1": added IKEv2 connection
@@ -49,7 +49,7 @@ west #
 002 "test1" #2: negotiated connection [192.1.3.2-192.1.3.2:0-65535 0] -> [192.1.3.1-192.1.3.1:0-65535 0]
 004 "test1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.2 192.1.3.1
+ ../../guestbin/ping-once.sh --up -I 192.1.3.2 192.1.3.1
 up
 west #
  ipsec whack --trafficstatus
@@ -81,7 +81,7 @@ west #
 002 "test2" #4: negotiated connection [192.1.3.3-192.1.3.3:0-65535 0] -> [192.1.3.1-192.1.3.1:0-65535 0]
 004 "test2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.3 192.1.3.1
+ ../../guestbin/ping-once.sh --up -I 192.1.3.3 192.1.3.1
 up
 west #
  ipsec whack --trafficstatus

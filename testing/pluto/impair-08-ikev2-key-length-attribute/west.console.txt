@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -14,7 +14,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #1: initiating IKEv2 connection
 1v2 "aes128" #1: sent IKE_SA_INIT request
@@ -38,7 +38,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #3: initiating IKEv2 connection
 002 "aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
@@ -54,7 +54,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #5: initiating IKEv2 connection
 1v2 "aes128" #5: sent IKE_SA_INIT request
@@ -71,7 +71,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:duplicate
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #7: initiating IKEv2 connection
 002 "aes128" #7: IMPAIR: duplicating key-length attribute
@@ -94,7 +94,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:duplicate
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #9: initiating IKEv2 connection
 1v2 "aes128" #9: sent IKE_SA_INIT request
@@ -119,7 +119,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:omit
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #11: initiating IKEv2 connection
 002 "aes128" #11: IMPAIR: omitting fixed-size key-length attribute
@@ -135,7 +135,7 @@ west #
 west #
  ipsec whack --impair child-key-length-attribute:omit
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #13: initiating IKEv2 connection
 1v2 "aes128" #13: sent IKE_SA_INIT request
@@ -154,7 +154,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:empty
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #15: initiating IKEv2 connection
 002 "aes128" #15: IMPAIR: emitting variable-size key-length attribute with no key
@@ -173,7 +173,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:empty
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #17: initiating IKEv2 connection
 002 "aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
@@ -190,7 +190,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv2 connection
 1v2 "3des" #19: initiating IKEv2 connection
 1v2 "3des" #19: sent IKE_SA_INIT request
@@ -214,7 +214,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv2 connection
 1v2 "3des" #21: initiating IKEv2 connection
 002 "3des" #21: IMPAIR: emitting fixed-length key-length attribute with 0 key
@@ -239,7 +239,7 @@ west #
 west #
  ipsec whack --impair ike-key-length-attribute:192
 west #
- ../../pluto/bin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv2 connection
 1v2 "3des" #23: initiating IKEv2 connection
 002 "3des" #23: IMPAIR: emitting fixed-length key-length attribute with 192 key

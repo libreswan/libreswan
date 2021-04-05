@@ -5,7 +5,7 @@ ping -c 10000 -I  192.0.2.250  192.0.1.254 2>&1 >/dev/null &
 ping -c 10000 -I  192.0.2.251  192.0.1.254 2>&1 >/dev/null & 
 ping -c 10000 -I  192.0.2.254  192.0.1.254 2>&1 >/dev/null &
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --status
 echo "initdone"

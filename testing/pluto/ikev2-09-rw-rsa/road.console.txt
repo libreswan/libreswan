@@ -9,7 +9,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-nonat
 002 "road-eastnet-nonat": added IKEv2 connection
@@ -46,7 +46,7 @@ road #
 002 "road-eastnet-nonat" #2: negotiated connection [192.0.2.219-192.0.2.219:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-eastnet-nonat" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
@@ -55,7 +55,7 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209

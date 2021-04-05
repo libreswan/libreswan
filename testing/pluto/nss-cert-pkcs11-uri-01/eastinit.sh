@@ -2,7 +2,7 @@
 /testing/guestbin/swan-prep
 certutl -L -d sql:/etc/ipsec.d
 # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
-/usr/bin/update-crypto-policies
+/u../../guestbin/update-crypto-policies
 # setup softhsm with east's PKCS12 info
 #SOFTHSM2_CONF="/etc/softhsm2.conf"
 #SOFTHSM2_TOKEN_DIR="$(grep 'directories.tokendir' "$SOFTHSM2_CONF" | cut -d '=' -f 2 | sed 's/ //g')"
@@ -29,7 +29,7 @@ echo "KEY_URI=${KEY_URI}"
 echo -e "conn eastcert\n\trightcert=${CERT_URI}" > OUTPUT/eastcert.conf
 echo -e "NSS Certificate DB:${GNUTLS_PIN}\nNSS FIPS 140-2 Certificate DB:${GNUTLS_PIN}\nlibreswan:${GNUTLS_PIN}" > /etc/ipsec.d/nsspassword 
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --listall
 echo "initdone"

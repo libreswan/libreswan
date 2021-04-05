@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,20 +13,20 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  echo "initdone"
 initdone
 west #
- ../bin/libreswan-up-down.sh westnet-eastnet-esp-null-md5 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-esp-null-md5 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-esp-null-md5": added IKEv2 connection
 1v2 "westnet-eastnet-esp-null-md5" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-esp-null-md5" #1: sent IKE_SA_INIT request
@@ -42,7 +42,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-esp-null-md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh westnet-eastnet-esp-null-sha1 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-esp-null-sha1 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-esp-null-sha1": added IKEv2 connection
 1v2 "westnet-eastnet-esp-null-sha1" #3: initiating IKEv2 connection
 1v2 "westnet-eastnet-esp-null-sha1" #3: sent IKE_SA_INIT request
@@ -61,7 +61,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:

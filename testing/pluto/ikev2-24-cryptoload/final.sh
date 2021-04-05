@@ -1,4 +1,4 @@
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 ipsec stop
 grep -e leak /tmp/pluto.log | grep -v -e '|'
 : ==== cut ====

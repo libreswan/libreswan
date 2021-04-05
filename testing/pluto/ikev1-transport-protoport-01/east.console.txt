@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2-transport
 002 "ipv4-psk-ikev2-transport": added IKEv1 connection
@@ -13,7 +13,7 @@ initdone
 east #
  # verify protoport selectors are there
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

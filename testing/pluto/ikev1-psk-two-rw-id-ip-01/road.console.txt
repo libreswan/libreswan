@@ -3,9 +3,9 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 road #
  ipsec auto --add road-east
 002 "road-east": added IKEv1 connection
@@ -37,10 +37,10 @@ road #
 road #
  # bonus ping for different count
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
 up
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus

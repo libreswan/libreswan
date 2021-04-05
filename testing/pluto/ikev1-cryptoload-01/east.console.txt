@@ -20,7 +20,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  echo "initdone"
 initdone

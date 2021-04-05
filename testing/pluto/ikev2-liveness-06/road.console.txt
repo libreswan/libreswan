@@ -4,7 +4,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-x509-ipv4
 002 "road-east-x509-ipv4": added IKEv2 connection

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add any-east-l2tp
 # ensure that clear text does not get through
 iptables -A INPUT  -i eth1 -d 192.1.2.23 -m policy --dir in --pol none -p udp --dport 1701 -j REJECT

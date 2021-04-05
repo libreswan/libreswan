@@ -1,5 +1,5 @@
 grep -v -P "\t0$" /proc/net/xfrm_stat
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

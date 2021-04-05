@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
 002 "roadnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection

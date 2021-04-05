@@ -1,4 +1,4 @@
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 grep "NetworkManager" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status

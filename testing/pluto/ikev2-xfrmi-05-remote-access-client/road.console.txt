@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add eastnet-any
 002 "eastnet-any": added IKEv2 connection
@@ -38,7 +38,7 @@ X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 100.64.13.2/32 scope 50 ipsec1
        valid_lft forever preferred_lft forever
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus

@@ -17,11 +17,11 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE policies time to load
 east #
- ../../pluto/bin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 timeout waiting 30 seconds for ipsec auto --status to match loaded 9,
 east #
  echo "initdone"
@@ -41,7 +41,7 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23

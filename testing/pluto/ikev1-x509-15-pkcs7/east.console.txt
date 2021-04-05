@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair send-pkcs7-thingie
 east #
@@ -38,7 +38,7 @@ east #
 |    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 |    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

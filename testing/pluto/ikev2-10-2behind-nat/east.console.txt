@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add pool-eastnet-ikev2
 002 "pool-eastnet-ikev2": added IKEv2 connection
@@ -13,7 +13,7 @@ east #
 006 #2: "pool-eastnet-ikev2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.100/32
 006 #4: "pool-eastnet-ikev2"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23

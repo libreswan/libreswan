@@ -21,13 +21,13 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  # give OE policies time to load
 west #
- ../../pluto/bin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
 000 Total IPsec connections: loaded 11, active 0
 west #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &

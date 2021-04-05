@@ -9,7 +9,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-failtest
 002 "ikev1-failtest": added IKEv1 connection

@@ -5,7 +5,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -33,14 +33,14 @@ road #
  echo done
 done
 road #
- ../bin/xfrmcheck.sh
+ ../../guestbin/xfrmcheck.sh
 road #
  # traffic should be 0 bytes in both directions
 road #
  ipsec whack --trafficstatus
 006 #2: "road", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 road #
- ../bin/tcpdump.sh --stop --host east
+ ../../guestbin/tcpdump.sh --stop --host east
 road #
  hostname | grep east > /dev/null && ip -s link show ipsec1
 road #

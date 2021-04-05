@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # connection started due to auto=start
 road #
@@ -13,7 +13,7 @@ road #
 road #
  sleep 3
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 road #
  ipsec trafficstatus
@@ -87,7 +87,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 road #
  # test if packet flow still works
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 road #
  ipsec trafficstatus

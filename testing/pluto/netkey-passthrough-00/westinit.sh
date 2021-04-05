@@ -7,7 +7,7 @@
 # confirm clear text does not get through
 ## ping -n -c 4 -I 192.1.2.45 192.1.2.23
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add west-east
 ipsec auto --add west-east-passthrough
 ipsec auto --route west-east-passthrough

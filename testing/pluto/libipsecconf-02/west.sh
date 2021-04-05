@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 
 # These should load
 ipsec auto --add base

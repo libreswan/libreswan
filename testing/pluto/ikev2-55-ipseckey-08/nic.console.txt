@@ -1,6 +1,6 @@
 setenforce Permissive
 nic #
- ../../pluto/bin/start-dns.sh
+ ../../guestbin/start-dns.sh
 starting dns
 digging for road.testing.libreswan.org IPSECKEY
 Everything went well, including things like NXDOMAIN.

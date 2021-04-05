@@ -9,5 +9,5 @@ ipsec _stackmanager start
 #export PLUTO_CRYPTO_HELPER_DELAY=10
 export EF_DISABLE_BANNER=1
 ipsec pluto --config /etc/ipsec.conf
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 echo "initdone"

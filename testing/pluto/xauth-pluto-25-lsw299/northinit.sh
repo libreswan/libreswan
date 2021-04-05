@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
-../bin/block-non-ipsec.sh
+../../guestbin/wait-until-pluto-started
+../../guestbin/block-non-ipsec.sh
 ipsec auto --add north-east
 # note - initiating during "init" when multiple hosts/namespaces are starting up is unwise - race conditions
 # let east startup and load conns

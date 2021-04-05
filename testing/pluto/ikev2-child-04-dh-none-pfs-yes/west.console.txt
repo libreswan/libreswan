@@ -27,7 +27,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -61,7 +61,7 @@ west #
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  # remote pfs=no dh=none
@@ -73,7 +73,7 @@ west #
 002 "westnet-eastnet-ikev2-00" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2-00" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
  # pfs=no dh=none - connect
@@ -83,7 +83,7 @@ west #
 002 "westnet-eastnet-ikev2-01" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-ikev2-01" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  # pfs=yes dh= - connect
@@ -93,7 +93,7 @@ west #
 002 "westnet-eastnet-ikev2-10" #5: negotiated connection [192.0.110.0-192.0.110.255:0-65535 0] -> [192.0.210.0-192.0.210.255:0-65535 0]
 004 "westnet-eastnet-ikev2-10" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.110.254 192.0.210.254
+ ../../guestbin/ping-once.sh --up -I 192.0.110.254 192.0.210.254
 up
 west #
  # pfs=yes dh=none - connect
@@ -103,7 +103,7 @@ west #
 002 "westnet-eastnet-ikev2-11" #6: negotiated connection [192.0.111.0-192.0.111.255:0-65535 0] -> [192.0.211.0-192.0.211.255:0-65535 0]
 004 "westnet-eastnet-ikev2-11" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.111.254 192.0.211.254
+ ../../guestbin/ping-once.sh --up -I 192.0.111.254 192.0.211.254
 up
 west #
  ipsec whack --trafficstatus

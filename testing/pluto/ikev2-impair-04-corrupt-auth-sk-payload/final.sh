@@ -1,6 +1,6 @@
 : expect only one SKEYSEED operation
 grep 'calculating skeyseed' /tmp/pluto.log | wc -l
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

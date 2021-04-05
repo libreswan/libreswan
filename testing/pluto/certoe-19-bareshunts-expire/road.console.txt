@@ -17,11 +17,11 @@ road #
 road #
  ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 10
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../pluto/bin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
+ ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
 000 Total IPsec connections: loaded 13, active 0
 road #
  echo "initdone"

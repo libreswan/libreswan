@@ -3,7 +3,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet
 002 "xauth-road-eastnet": added IKEv1 connection
@@ -32,7 +32,7 @@ road #
  ipsec whack --trafficstatus
 006 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=0, outBytes=0
 road #
- ../../pluto/bin/ping-once.sh --up 192.0.2.254
+ ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus

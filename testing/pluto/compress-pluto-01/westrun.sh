@@ -4,6 +4,6 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # test compression via large pings that can be compressed on IPCOMP SA
 ping -n -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 ipsec auto --down westnet-eastnet-compress
 echo done

@@ -1,6 +1,6 @@
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh
 # normally xfrmcheck should never fail, but this tests the test :)
-../bin/xfrmcheck.sh
+../../guestbin/xfrmcheck.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

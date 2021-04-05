@@ -5,7 +5,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add any-northnet-ipv4-psk-ikev2
 002 "any-northnet-ipv4-psk-ikev2": added IKEv2 connection

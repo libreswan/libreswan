@@ -2,9 +2,9 @@
 east #
  # confirm that the network is alive
 east #
- #../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ #../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone

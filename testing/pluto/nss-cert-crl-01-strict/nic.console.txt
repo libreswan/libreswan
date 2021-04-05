@@ -2,6 +2,6 @@
 nic #
  cp ../../x509/crls/cacrlvalid.crl OUTPUT/revoked.crl
 nic #
- ../bin/simple-http-server.sh OUTPUT 80
+ ../../guestbin/simple-http-server.sh OUTPUT 80
 Serving HTTP on 0.0.0.0 port 80 ...
 

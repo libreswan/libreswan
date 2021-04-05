@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # this should succeed
 ipsec auto --add modecfg-east-21
 # these should fail due to overlapping address pools

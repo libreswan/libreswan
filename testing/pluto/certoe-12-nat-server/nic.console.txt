@@ -12,7 +12,7 @@ nic #
 nic #
  hostname | grep nic > /dev/null || ipsec trafficstatus
 nic #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 nic #
  # you should see both RSA and NULL
 nic #

@@ -14,7 +14,7 @@ west #
 west #
  # initnss normally happens in the initsystem - but not for namespace testing
 west #
- echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && ipsec initnss > /dev/null
+ echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && ipsec initnss > /dev/null
 west #
  # test config for syntax errors
 west #
@@ -25,7 +25,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # test secrets reading for early warning of syntax errors
 west #
@@ -33,7 +33,7 @@ west #
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
- echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
+ echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
 west #
  # ready for System Role to drop file(s) into /etc/ipsec.d/
 west #
@@ -45,7 +45,7 @@ west #
  ipsec restart
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec status
 000 using kernel interface: xfrm
@@ -164,7 +164,7 @@ west #
 west #
  # trigger tunnel - the first trigger ping packet is lost
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  sleep 2

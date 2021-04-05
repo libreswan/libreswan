@@ -5,7 +5,7 @@ echo "2001:db8:1:3::254/128" >> /etc/ipsec.d/policies/clear
 echo "2001:db8:1:2::254/128" >> /etc/ipsec.d/policies/clear
 echo "fe80::/10" >> /etc/ipsec.d/policies/clear
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # give OE policies time to load
-../../pluto/bin/wait-for.sh --match 'loaded 5' -- ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 5' -- ipsec auto --status
 echo "initdone"

@@ -6,7 +6,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add test
 002 "test": added IKEv1 connection

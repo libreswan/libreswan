@@ -3,7 +3,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec whack --impair suppress-retransmits
 north #
@@ -144,7 +144,7 @@ north #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 north #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 north NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.33

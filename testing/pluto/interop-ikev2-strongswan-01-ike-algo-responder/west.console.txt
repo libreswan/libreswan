@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -28,7 +28,7 @@ initdone
 west #
  ipsec whack --impair suppress-retransmits --debug crypt,crypt-low
 west #
- ../bin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
 002 "ike=chacha20poly1305-sha2-dh19": added IKEv2 connection
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: initiating IKEv2 connection
 1v2 "ike=chacha20poly1305-sha2-dh19" #1: sent IKE_SA_INIT request
@@ -44,7 +44,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=chacha20poly1305-sha2-dh19" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh19 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha2-dh19": added IKEv2 connection
 1v2 "ike=aes128-sha2-dh19" #3: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh19" #3: sent IKE_SA_INIT request
@@ -60,7 +60,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh19" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh19": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh20 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha2-dh20": added IKEv2 connection
 1v2 "ike=aes128-sha2-dh20" #5: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh20" #5: sent IKE_SA_INIT request
@@ -76,7 +76,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh20" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh20": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha2-dh21 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha2-dh21": added IKEv2 connection
 1v2 "ike=aes128-sha2-dh21" #7: initiating IKEv2 connection
 1v2 "ike=aes128-sha2-dh21" #7: sent IKE_SA_INIT request
@@ -92,7 +92,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha2-dh21" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha2-dh21": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha1-dh19": added IKEv2 connection
 1v2 "ike=aes128-sha1-dh19" #9: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh19" #9: sent IKE_SA_INIT request
@@ -108,7 +108,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh19" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh19": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha1-dh20": added IKEv2 connection
 1v2 "ike=aes128-sha1-dh20" #11: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh20" #11: sent IKE_SA_INIT request
@@ -124,7 +124,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh20" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh20": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-sha1-dh21": added IKEv2 connection
 1v2 "ike=aes128-sha1-dh21" #13: initiating IKEv2 connection
 1v2 "ike=aes128-sha1-dh21" #13: sent IKE_SA_INIT request
@@ -140,7 +140,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes128-sha1-dh21" #13: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes128-sha1-dh21": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 "ike=aes_ctr128-sha1-dh21": added IKEv2 connection
 1v2 "ike=aes_ctr128-sha1-dh21" #15: initiating IKEv2 connection
 1v2 "ike=aes_ctr128-sha1-dh21" #15: sent IKE_SA_INIT request
@@ -156,7 +156,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=aes_ctr128-sha1-dh21" #15: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=3des-sha2-modp2048 -I 192.0.1.254 192.0.2.254
 002 "ike=3des-sha2-modp2048": added IKEv2 connection
 1v2 "ike=3des-sha2-modp2048" #17: initiating IKEv2 connection
 1v2 "ike=3des-sha2-modp2048" #17: sent IKE_SA_INIT request
@@ -172,7 +172,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=3des-sha2-modp2048" #17: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=3des-sha2-modp2048": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
 002 "ike=aes128-aes_xcbc-modp2048": added IKEv2 connection
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: initiating IKEv2 connection
 1v2 "ike=aes128-aes_xcbc-modp2048" #19: sent IKE_SA_INIT request
@@ -191,7 +191,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 XFRM policy:

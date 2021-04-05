@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-northnet-ipv4-psk
 002 "westnet-northnet-ipv4-psk": added IKEv1 connection
@@ -154,7 +154,7 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
