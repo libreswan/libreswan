@@ -31,7 +31,7 @@ road #
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:1:2::23
 connect: Network is unreachable
-../guestbin/ping-once.sh: unexpected status 2
+../../guestbin/ping-once.sh: unexpected status 2
 road #
  # add default via link local
 road #
