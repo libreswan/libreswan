@@ -1,6 +1,6 @@
 #!/bin/sh
 
-pass1="sh"
+pass1="sh modified"
 pass2="test diffs results retest upgrade patch install clean"
 
 if test $# = 0; then
@@ -36,8 +36,11 @@ if test "$1" == $0 -a "$#" -eq 3 ; then
     exit 0
 fi
 
-# accumulate pass 2 commands; execute pass 1
+# accumulate pass 2 commands; execute pass 1 commands
+
 ops=
+modified=
+
 while test $# -gt 0 ; do
     case " ${pass2} " in
 	*" $1 "* ) ops="${ops} $1" ;;
@@ -47,6 +50,7 @@ while test $# -gt 0 ; do
 		sh ) exec make kvmsh-$2 ;;
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
+		modified | --modified ) modified=modified- ;;
 		* ) # check for a directory
 		    if test ! -d $1 ; then
 			if test -z "${ops}" ; then
@@ -75,14 +79,14 @@ for op in ${ops} ; do
 	    make kvm-${op} || exit $?
 	    ;;
 	test | retest )
-	    make kvm-${op} KVM_TESTS="$*"
+	    make kvm-${modified}${op} KVM_TESTS="$*"
 	    ;;
 	diffs | results )
-	    make kvm-${op} KVM_TESTS="$*"
+	    make kvm-${modified}${op} KVM_TESTS="$*"
 	    status=$?
 	    ;;
 	patch )
-	    make kvm-diffs KVM_TESTS="$*" | patch -p1
+	    make kvm-${modified}diffs KVM_TESTS="$*" | patch -p1
 	    ;;
     esac
 done
