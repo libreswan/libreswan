@@ -2013,6 +2013,10 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 				 st->st_ah.present ? st->st_ah.peer_bytes :
 				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
 		jam(buf, ", outBytes=%u", outb);
+
+		if (c->sa_ipsec_life_bytes != 0) {
+			jam(buf, ", maxBytes=%" PRIu64 "", c->sa_ipsec_life_bytes);
+		}
 	}
 
 	if (st->st_xauth_username[0] == '\0') {
