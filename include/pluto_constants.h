@@ -70,7 +70,7 @@ enum ike_version {
  */
 #define IPSEC_SA_LIFEBYTES_DEFAULT ~(int64_t)0 /* XFRM_INF, including xfrm.h is probably over doing it */
 #define IPSEC_SA_LIFEPACKETS_DEFAULT ~(int64_t)0 /* XFRM_INF, including xfrm.h is probably over doing it */
-#define IPSEC_SA_LIFEBYTES_SOFT_LIMIT_PERCENTAGE 80
+#define IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE 80
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
