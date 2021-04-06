@@ -1,8 +1,6 @@
 #!/bin/sh
 
-set -ex
-
-# Teardown the host, or more pointedly shutdown any running daemons
+# Teardown the host, or more pointedly, shutdown any running daemons
 # (pluto, strongswan, iked, ...) and then check for core dumps or
 # other problems.
 
@@ -10,10 +8,13 @@ set -ex
 # this script exit with a non-zero status then all the output is
 # exposed.
 
+set -ex
+
 ok=true
 
-
-# Shutdown pluto; what about strongswan / iked / ...
+# Shutdown pluto
+#
+# What about strongswan / iked / ...?
 
 echo shutting down
 
@@ -22,8 +23,9 @@ if test -r /tmp/pluto.log ; then
 fi
 
 
-# Check for core files and if any are found, copy them to the output
-# directory.
+# Check for core files
+#
+# If any are found, copy them to the output directory.
 
 echo checking for core files
 
@@ -44,6 +46,25 @@ if test -r /tmp/pluto.log ; then
     if grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
 	ok=false
 	grep -e leak /tmp/pluto.log | grep -v -e '|'
+    fi
+fi
+
+
+# check for selinux warnings
+#
+# Should the setup code snapshot austatus before the test is run?
+
+echo checking for selinux warnings
+
+if test -f /sbin/ausearch ; then
+    log=OUTPUT/$(hostname).ausearch.log
+    # ignore status
+    ausearch -r -m avc -ts boot 2>&1 | tee ${log}
+    # some warnings are OK, some are not :-(
+    if test -s ${log} && grep -v \
+	    -e '^type=AVC .* avc:  denied  { remount } ' \
+	    ${log} ; then
+	ok=false
     fi
 fi
 
