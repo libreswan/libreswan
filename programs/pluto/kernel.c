@@ -3888,17 +3888,33 @@ void shutdown_kernel(struct logger *logger)
 	expire_bare_shunts(logger, true/*all*/);
 }
 
-void initiate_replace(ipsec_spi_t spi, uint8_t protoid, ip_address *dst)
+void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool soft)
 {
-	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst);
+	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst); /* why is spi still in network order? */
 	if (child != NULL) {
-		// TBD fix the case when the rekey is NO
-		if (child->sa.st_kernel_sa_expired) {
-			dbg("#%lu one of the SA has already expired ignore the EXPIRE", child->sa.st_serialno);
-		} else {
-			child->sa.st_kernel_sa_expired = true;
-			// Fix ME EVENT_SA_REKEY is the not the right one it set next timer 8 hours
-			event_force(EVENT_SA_REKEY, &child->sa);
+		struct connection *c = child->sa.st_connection;
+		bool rekey = !LIN(POLICY_DONT_REKEY, c->policy);
+		bool latest = c->newest_ipsec_sa == child->sa.st_serialno;
+
+		llog(RC_LOG, c->logger, "received %s [bytes? packets?] EXPIRE event from kernel for connection %s with SPI 0x%x, %s",
+			soft ? "soft" : "hard",
+			c->name, ntohl(spi),
+			!latest ? "but since this Child SA has already been replaced it will just be deleted" :
+				rekey ?  "initiating a Child SA rekey" : "but connection has rekey=no so deleting connection");
+
+		if (latest && rekey) {
+			if (!child->sa.st_kernel_sa_expired) {
+				child->sa.st_kernel_sa_expired = true;
+				event_delete(EVENT_v2_LIVENESS, &child->sa);
+				event_delete(EVENT_DPD, &child->sa);
+				/* causes delete before rekey thus acquire :/ event_force(EVENT_SA_EXPIRE, &child->sa);  creates add_pending() */
+				event_force(EVENT_SA_REKEY, &child->sa);
+			} else {
+				dbg("Connection %s with serial #%lu already had one direction of the IPsec SA pair trigger an expire event, ignoring event for other direction",
+					c->name, child->sa.st_serialno);
+			}
 		}
+	} else {
+		log_global(RC_LOG, null_fd, "Received kernel EXPIRE event for IPsec SPI 0x%x, but there is no connection anymore with this SPI.", ntohl(spi));
 	}
 }

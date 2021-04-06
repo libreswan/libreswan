@@ -436,6 +436,6 @@ bool shunt_policy(enum kernel_policy_op op,
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,
 			  ipsec_spi_t spi, const struct ip_protocol *sa_proto);
-void initiate_replace(ipsec_spi_t spi, uint8_t protoid, ip_address *dst);
+void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool soft);
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

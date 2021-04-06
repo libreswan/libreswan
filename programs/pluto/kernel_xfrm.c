@@ -1916,9 +1916,9 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	address_buf b;
 	xfrm2ip(&ue->state.saddr, &src, ue->state.family);
 	xfrm2ip(&ue->state.id.daddr, &dst, ue->state.family);
-	dbg("%s spi 0x%x src %s dst %s%s mode %u proto %d", __func__,
+	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d", __func__,
 	    ntohl(ue->state.id.spi),
-	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "",
+	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
 	    ue->state.mode, ue->state.id.proto);
 	uint8_t protoid = PROTO_RESERVED;
 	switch (ue->state.id.proto) {
@@ -1927,7 +1927,11 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	default:
 		bad_case(ue->state.id.proto);
 	}
-	initiate_replace(ue->state.id.spi, protoid, &dst);
+	if ((ue->hard && impair.ignore_hard_expire) || (!ue->hard && impair.ignore_soft_expire)) {
+		dbg("IMPAIR is supressing a %s EXPIRE event", ue->hard ? "hard" : "soft");
+		return;
+	}
+	handle_expiring_sa(ue->state.id.spi, protoid, &dst, !ue->hard);
 }
 
 static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
