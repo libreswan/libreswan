@@ -25,11 +25,15 @@ east #
 [x] PID
 east #
  echo "initdone"
-runcon: ‘ipsec’: Permission denied    <--- needs fixing
-initdone
-[1]+  Exit 126                runcon -t netutils_t ipsec getpeercon_server 4300
+-> running as unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023
+-> creating socket ... ok
+-> listening on TCP port 4300 ... ok
+-> waiting ... initdone
 east #
  ../../guestbin/ipsec-look.sh
+<- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
+   quit
+-> connection closed
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
