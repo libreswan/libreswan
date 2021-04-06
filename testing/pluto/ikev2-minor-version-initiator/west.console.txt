@@ -87,6 +87,4 @@ Certificate Nickname                                         Trust Attributes
 west #
  grep "minor version" /tmp/pluto.log >/dev/null && echo payload found
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

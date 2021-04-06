@@ -113,6 +113,4 @@ east #
  echo "for nspr logs, look at the verbose console log in OUTPUT"
 for nspr logs, look at the verbose console log in OUTPUT
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

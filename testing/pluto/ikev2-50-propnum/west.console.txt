@@ -82,6 +82,4 @@ west #
 |    spi size: 4 (04)
 |    # transforms: 3 (03)
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

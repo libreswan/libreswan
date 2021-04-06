@@ -14,6 +14,4 @@ east #
  grep 'dropping packet' /tmp/pluto.log
 packet from 192.1.2.45:500: IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

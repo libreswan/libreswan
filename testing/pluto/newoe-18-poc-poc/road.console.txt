@@ -153,6 +153,4 @@ road #
 000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

@@ -166,6 +166,4 @@ west #
 west #
  hostname |grep west > /dev/null || ipsec stop
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

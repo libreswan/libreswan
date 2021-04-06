@@ -49,6 +49,4 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed with v2N_INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #3: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed with v2N_INVALID_SYNTAX
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

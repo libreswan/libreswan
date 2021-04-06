@@ -54,6 +54,4 @@ east #
 | sending IKE fragment id '1', number '5' (last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

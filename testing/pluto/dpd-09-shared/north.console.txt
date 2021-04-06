@@ -97,6 +97,4 @@ north #
  echo done
 done
 north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-north #
  

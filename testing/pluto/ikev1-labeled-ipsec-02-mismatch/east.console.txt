@@ -17,6 +17,4 @@ east #
 libsemanage.semanage_direct_remove_key: Unable to remove module ipsec-test-module at priority 400. (No such file or directory).
 semodule:  Failed!
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

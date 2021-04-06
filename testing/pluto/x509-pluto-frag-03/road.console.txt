@@ -34,6 +34,4 @@ road #
 | peer supports fragmentation
 | peer supports fragmentation
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

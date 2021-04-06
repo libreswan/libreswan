@@ -3,4 +3,3 @@ ipsec whack --trafficstatus
 grep "negotiated connection" /tmp/pluto.log
 # you should one RSA and one NULL, asymetric OE
 grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -7,4 +7,3 @@ grep 'proposal .* chosen from' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
 # connections: default (missing); integ=none included; integ=none
 # excluded
 grep 'remote accepted' /tmp/pluto.log
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

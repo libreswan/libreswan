@@ -4,4 +4,3 @@ ipsec whack --trafficstatus
 ipsec status |grep STATE_
 # confirm the revive conn code triggered
 hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*EVENT_REVIVE_CONNS' /tmp/pluto.log
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

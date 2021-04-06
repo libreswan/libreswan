@@ -83,6 +83,4 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shutdown
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

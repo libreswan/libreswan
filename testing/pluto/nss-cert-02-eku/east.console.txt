@@ -49,6 +49,4 @@ west-ec                                                      P,,
 nic                                                          P,,  
 usage-server                                                 u,u,u
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

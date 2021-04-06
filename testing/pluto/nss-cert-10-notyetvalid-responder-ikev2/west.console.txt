@@ -37,6 +37,4 @@ west #
  grep "certificate payload rejected" /tmp/pluto.log
 "nss-cert" #1: X509: certificate payload rejected for this connection
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

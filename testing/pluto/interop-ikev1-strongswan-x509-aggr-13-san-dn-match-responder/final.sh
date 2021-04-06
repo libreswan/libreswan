@@ -5,4 +5,3 @@ ipsec auto --status
 ipsec stop
 strongswan stop
 : ==== tuc ====
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

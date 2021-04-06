@@ -166,6 +166,4 @@ east #
  ../../guestbin/xfrmcheck.sh
 ERROR: XfrmInTmplMismatch 1
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

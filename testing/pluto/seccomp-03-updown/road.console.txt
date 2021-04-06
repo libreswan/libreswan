@@ -112,6 +112,4 @@ road #
 road #
  hostname | grep east > /dev/null && ausearch -ts recent -i -m SECCOMP
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

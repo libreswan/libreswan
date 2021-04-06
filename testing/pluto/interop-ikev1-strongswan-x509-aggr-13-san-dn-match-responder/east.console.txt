@@ -18,6 +18,4 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 grep: /tmp/pluto.log: No such file or directory
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

@@ -90,6 +90,4 @@ road #
 road #
  hostname | grep east > /dev/null && grep IKEv2_AUTH_ /tmp/pluto.log
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

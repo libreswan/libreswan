@@ -92,6 +92,4 @@ north                                                        P,,
 road                                                         P,,  
 west-eku-ipsecIKE                                            u,u,u
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

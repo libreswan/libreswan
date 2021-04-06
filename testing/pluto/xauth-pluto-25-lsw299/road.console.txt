@@ -58,6 +58,4 @@ road #
 road #
  hostname | grep east > /dev/null && ipsec stop
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

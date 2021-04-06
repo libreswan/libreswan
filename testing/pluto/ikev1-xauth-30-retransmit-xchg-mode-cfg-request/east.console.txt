@@ -48,6 +48,4 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

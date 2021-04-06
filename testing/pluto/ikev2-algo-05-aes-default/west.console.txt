@@ -185,6 +185,4 @@ west #
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (00 80)
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

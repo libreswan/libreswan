@@ -132,6 +132,4 @@ road #
 road #
  grep "cannot route" /tmp/pluto.log
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

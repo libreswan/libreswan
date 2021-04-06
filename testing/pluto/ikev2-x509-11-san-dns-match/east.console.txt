@@ -19,6 +19,4 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_FQDN (0x2)
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

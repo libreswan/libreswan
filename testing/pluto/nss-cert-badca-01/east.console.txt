@@ -44,6 +44,4 @@ east #
  grep ERROR /tmp/pluto.log
 "nss-cert" #1: NSS ERROR: Issuer certificate is invalid.
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

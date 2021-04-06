@@ -17,6 +17,4 @@ east #
 east #
  ipsec status | grep STATE_
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

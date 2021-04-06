@@ -61,6 +61,4 @@ north                                                        P,,
 road                                                         P,,  
 signedbyother                                                u,u,u
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

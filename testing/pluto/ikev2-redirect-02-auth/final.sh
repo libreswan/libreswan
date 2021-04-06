@@ -7,4 +7,3 @@ ipsec auto --status
 ip xfrm policy
 ip xfrm state
 : ==== tuc ====
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

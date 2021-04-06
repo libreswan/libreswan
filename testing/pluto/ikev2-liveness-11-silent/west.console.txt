@@ -133,6 +133,4 @@ west #
  grep "liveness: .* was replaced by "  /tmp/pluto.log
 | liveness: #2 was replaced by #3 so not needed
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

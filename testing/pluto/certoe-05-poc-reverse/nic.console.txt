@@ -43,6 +43,4 @@ OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-nic #
  

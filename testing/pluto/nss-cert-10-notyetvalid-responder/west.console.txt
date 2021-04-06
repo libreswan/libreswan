@@ -43,6 +43,4 @@ west #
 "nss-cert" #1: NSS ERROR: Peer's Certificate has expired.
 "nss-cert" #2: NSS ERROR: Peer's Certificate has expired.
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

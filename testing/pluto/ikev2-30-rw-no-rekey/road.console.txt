@@ -71,6 +71,4 @@ road                                                         u,u,u
 west                                                         P,,  
 west-ec                                                      P,,  
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

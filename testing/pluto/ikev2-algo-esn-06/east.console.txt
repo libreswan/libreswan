@@ -20,6 +20,4 @@ east #
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

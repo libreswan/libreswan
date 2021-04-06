@@ -5,4 +5,3 @@ grep MSG_TRUNC /tmp/pluto.log
 grep "cannot route" /tmp/pluto.log
 : ==== cut ====
 : ==== tuc ====
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -24,6 +24,4 @@ east #
  grep "already replacing" /tmp/pluto.log && echo "bug triggered"
 "west-east-auto" #1: received Delete SA payload: already replacing IPsec State #2 in 54 seconds
 bug triggered
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

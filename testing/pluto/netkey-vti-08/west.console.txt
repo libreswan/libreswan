@@ -56,6 +56,4 @@ west #
 west #
  ip xfrm policy | grep \\-1
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

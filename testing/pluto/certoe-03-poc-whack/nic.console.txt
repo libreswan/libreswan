@@ -16,6 +16,4 @@ nic #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
 grep: /tmp/pluto.log: No such file or directory
 nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-nic #
  

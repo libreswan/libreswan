@@ -40,6 +40,4 @@ east #
 | byte at offset 1 (37) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 | byte at offset 5 (41) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  
