@@ -16,7 +16,7 @@ east #
 east #
  # initnss normally happens in the initsystem - but not for namespace testing
 east #
- #echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && ipsec initnss #> /dev/null
+ # ../../guestbin/if-namespace.sh ipsec initnss
 east #
  ipsec initnss
 Initializing NSS database
@@ -41,7 +41,7 @@ east #
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 east #
- echo $SUDO_COMMAND | grep../../guestbin/nsenter " > /dev/null 2>&1 && PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid >/dev/null
+ ../../guestbin/if-namespace.sh PATH/sbin/sshd -o PidFile=/var/run/pluto/sshd.pid
 east #
  # ready for System Role to drop file(s) into /etc/ipsec.d/
 east #
