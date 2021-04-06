@@ -5,6 +5,4 @@ east #
  echo "initdone"
 initdone
 east #
- : ==== tuc ====
-east #
  

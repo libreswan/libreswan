@@ -25,7 +25,4 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
  

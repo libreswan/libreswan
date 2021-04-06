@@ -96,6 +96,4 @@ west #
  echo done
 done
 west #
- : ==== tuc ====
-west #
  
