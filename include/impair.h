@@ -154,6 +154,8 @@ struct impair {
 	bool ignore_v2_ike_auth_child;
 	bool childless_v2_sec_label;
 
+	bool ignore_soft_expire;
+	bool ignore_hard_expire;
 	/*
 	 * add more here
 	 */
