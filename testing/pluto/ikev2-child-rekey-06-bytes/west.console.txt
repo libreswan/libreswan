@@ -1,23 +1,22 @@
 /testing/guestbin/swan-prep
 west #
- # make sure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
-iptables v1.8.5 (legacy): Couldn't load target `LOGDROP':No such file or directory
-Try `iptables -h' or 'iptables --help' for more information.
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
 002 "west": added IKEv2 connection
 west #
+ # confirm max bytes for IPsec SA is set
+west #
+ ipsec status |grep ipsec_life_bytes
+000 "west":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; ipsec_life_bytes 2048; ipsec_life_packets 0; keyingtries: 0;
+west #
  echo "initdone"
 initdone
+west #
+ ipsec whack --impair ignore-hard-expire
 west #
  ipsec auto --up west
 1v2 "west" #1: initiating IKEv2 connection
@@ -30,45 +29,47 @@ west #
 west #
  # 20 pings will get to almost rekey
 west #
- ping -W 4 -n -q -c 20 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 20 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 20 packets transmitted, 20 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ # expect #2 IPsec original Child SA
+west #
+ ipsec trafficstatus
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=1680, outBytes=1680, maxBytes=2048, id='@east'
+west #
  # next ping will go over and initiate a rekey
 west #
- ping -W 4 -n -q -c 1 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- sleep 10
+ # expect #3 IPsec first rekeyed Child SA
 west #
- # expect #1 IKE #3 IPsec first rekeyed Child
+ sleep 5
 west #
- ipsec whack --trafficstatus
-006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+ ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2048, id='@east'
 west #
- ping -W 4 -n -q -c 28 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 28 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 28 packets transmitted, 28 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- # expect #1 IKE #4 IPsec second rekeyed Child
+ # expect #4 IPsec second rekeyed Child SA
 west #
- ipsec whack --trafficstatus
-006 #4: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='@east'
+ sleep 5
+west #
+ ipsec trafficstatus
+006 #4: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2048, id='@east'
 west #
  echo done
 done
-west #
- ipsec whack --trafficstatus
-006 #4: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='@east'
-west #
- ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
