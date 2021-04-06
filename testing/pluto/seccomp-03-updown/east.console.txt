@@ -18,4 +18,6 @@ east #
  hostname | grep east > /dev/null && ausearch -ts recent -i -m SECCOMP
 <no matches>
 east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
  

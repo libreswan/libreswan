@@ -17,6 +17,7 @@ ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 ipsec stop
 
 # ensure seccomp did not kill pluto - should not show any hits
+ausearch -ts recent -i -m SECCOMP
 
 # Test seccomp actually works - that it records pluto crashing ....
 ipsec start
@@ -27,5 +28,6 @@ ipsec start
 ipsec whack --seccomp-crashtest & sleep 2
 
 # should show 1 entry of pluto crashing now
+ausearch -ts recent -i -m SECCOMP | sed -e "s/ ip=[^ ]* / ip=XXX /" -e "s/ pid=[^ ]* / pid=XXX /" -e "s/msg=audit(.*) /msg=audit(XXX) /"
 
 echo done
