@@ -853,6 +853,8 @@ static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 
 void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 {
+	bool expiry_renew = st->st_kernel_sa_expired;
+
 	if (st->st_ike_version == IKEv2 &&
 	    should_send_delete(st)) {
 		/* pre delete check for slot to send delete message */
@@ -867,7 +869,8 @@ void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 	}
 	delete_state(st);
 	st = NULL;
-	v2_expire_unused_ike_sa(ike);
+	if (!expiry_renew) /* we are about to create a replacement IPsec SA for the expired one */
+		v2_expire_unused_ike_sa(ike);
 }
 
 static void delete_state_tail(struct state *st);
