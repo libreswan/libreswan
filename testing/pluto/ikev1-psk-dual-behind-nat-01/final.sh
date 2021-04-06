@@ -4,4 +4,3 @@
 hostname | grep east > /dev/null && ping -c2 192.0.2.101
 hostname | grep east > /dev/null && ping -c2 192.0.2.102
 ipsec whack --trafficstatus
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

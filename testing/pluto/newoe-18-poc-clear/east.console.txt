@@ -67,6 +67,4 @@ east #
 east #
  grep -v '^|' /tmp/pluto.log | grep "negotiated connection"
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

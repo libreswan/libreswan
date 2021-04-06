@@ -6,4 +6,3 @@ hostname | grep east > /dev/null && ip -s link show ipsec1
 hostname | grep east > /dev/null && ip rule show
 hostname | grep east > /dev/null && ip route show table 50
 hostname | grep east > /dev/null && ip route
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

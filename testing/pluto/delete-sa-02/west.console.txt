@@ -30,6 +30,4 @@ west #
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 002 "west-east" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

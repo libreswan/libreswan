@@ -79,6 +79,4 @@ east #
 east #
  ip tunnel del eth3
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

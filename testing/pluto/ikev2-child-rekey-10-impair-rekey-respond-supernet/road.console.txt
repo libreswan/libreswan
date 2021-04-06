@@ -66,6 +66,4 @@ road #
 road #
  # road fail to rekey and no clear log message to grep
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

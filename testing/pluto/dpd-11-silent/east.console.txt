@@ -15,6 +15,4 @@ east #
 east #
  grep R_U_THERE /tmp/pluto.log
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

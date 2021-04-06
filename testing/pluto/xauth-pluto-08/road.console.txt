@@ -86,6 +86,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

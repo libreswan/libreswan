@@ -160,6 +160,4 @@ road #
  ipsec status | grep STATE_
 000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

@@ -4,4 +4,3 @@ grep "liveness: .* was replaced by "  /tmp/pluto.log
 # stop pluto so if test case is ran manually and left, no legit liveness probes are done
 ipsec stop
 : ==== tuc ====
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

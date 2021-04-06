@@ -50,8 +50,6 @@ openbsdw #
  if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
 if [ -f /tmp/iked.log ]; then cp /tmlog ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
 ../../guestbin/check-for-core.sh
-openbsdw #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi
 openbsdw #
  

@@ -449,6 +449,4 @@ road #
  ipsec stop
 Redirecting to: [initsystem]
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

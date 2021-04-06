@@ -106,6 +106,4 @@ road #
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.66'
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

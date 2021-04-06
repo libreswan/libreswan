@@ -99,6 +99,4 @@ packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 5 of
 "westnet-eastnet" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 5 of 5
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

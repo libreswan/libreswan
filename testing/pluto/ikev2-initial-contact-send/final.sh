@@ -4,4 +4,3 @@ ipsec whack --trafficstatus
 # on east, shows up twice in log for a single payload
 # on west, shows up once in log for a single payload
 grep INITIAL /tmp/pluto.log
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -113,6 +113,4 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

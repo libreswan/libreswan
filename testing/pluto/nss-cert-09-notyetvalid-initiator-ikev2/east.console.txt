@@ -19,6 +19,4 @@ east #
  grep "ERROR" /tmp/pluto.log
 "nss-cert" #1: NSS ERROR: Peer's Certificate has expired.
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

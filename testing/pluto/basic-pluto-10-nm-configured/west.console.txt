@@ -208,6 +208,4 @@ west #
  grep "NetworkManager" /tmp/pluto.log
 "westnet-eastnet" #2: up-client output: sending connect signal to NetworkManager
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

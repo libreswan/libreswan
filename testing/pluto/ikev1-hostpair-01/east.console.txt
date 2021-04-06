@@ -66,6 +66,4 @@ east #
 east #
  hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

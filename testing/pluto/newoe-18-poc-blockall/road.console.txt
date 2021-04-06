@@ -156,6 +156,4 @@ road #
 road #
  grep "negotiated connection" /tmp/pluto.log
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

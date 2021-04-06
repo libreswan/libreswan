@@ -59,6 +59,4 @@ west #
 west #
  grep ID_UNASSIGNED_ID4 /tmp/pluto.log
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

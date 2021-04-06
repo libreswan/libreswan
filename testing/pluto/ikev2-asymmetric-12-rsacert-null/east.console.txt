@@ -51,6 +51,4 @@ OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

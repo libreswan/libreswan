@@ -37,6 +37,4 @@ Redirecting to: [initsystem]
 west #
  hostname | grep east > /dev/null && grep "FIPS: Rejecting" /tmp/pluto.log
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

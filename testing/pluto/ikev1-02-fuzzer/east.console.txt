@@ -18,6 +18,4 @@ east #
 east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

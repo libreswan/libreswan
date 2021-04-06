@@ -76,6 +76,4 @@ nic                                                          P,,
 north                                                        Pu,u,u
 road                                                         P,,  
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

@@ -371,6 +371,4 @@ west #
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

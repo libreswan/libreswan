@@ -63,6 +63,4 @@ north #
  ipsec trafficstatus
 006 #2: "north-east-222", type=ESP, add_time=1234567890, inBytes=20, outBytes=200, id='@east'
 north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-north #
  

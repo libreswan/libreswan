@@ -34,6 +34,4 @@ done
 road #
  grep -E -i fragment /tmp/pluto.log
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

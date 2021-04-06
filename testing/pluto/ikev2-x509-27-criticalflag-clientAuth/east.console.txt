@@ -61,6 +61,4 @@ east #
  hostname | grep east > /dev/null && grep "verify_end_cert trying profile" /tmp/pluto.log
 | verify_end_cert trying profile IPsec
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

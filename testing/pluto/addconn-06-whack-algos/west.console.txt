@@ -49,6 +49,4 @@ west #
  ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
 IKEv2
 IKEv2
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

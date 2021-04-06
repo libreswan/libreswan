@@ -55,6 +55,4 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec stop
 north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-north #
  

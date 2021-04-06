@@ -26,6 +26,4 @@ east #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

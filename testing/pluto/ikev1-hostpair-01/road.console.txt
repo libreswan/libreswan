@@ -131,6 +131,4 @@ road #
 road #
  hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

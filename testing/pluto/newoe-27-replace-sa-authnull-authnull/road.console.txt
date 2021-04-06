@@ -118,6 +118,4 @@ road #
  grep -v -P "\t0$" /proc/net/xfrm_stat
 XfrmOutNoStates         	3
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

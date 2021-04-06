@@ -3,4 +3,3 @@ ipsec whack --trafficstatus
 ip xfrm state
 ip xfrm policy
 ipsec auto --status | grep westnet-eastnet
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

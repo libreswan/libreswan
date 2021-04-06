@@ -188,6 +188,4 @@ west #
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

@@ -130,7 +130,5 @@ east #
 000  
 000 List of CRLs:
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  
 

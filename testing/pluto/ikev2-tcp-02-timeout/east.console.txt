@@ -54,6 +54,4 @@ east #
  ipsec stop
 Redirecting to: [initsystem]
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

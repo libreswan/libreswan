@@ -57,6 +57,4 @@ hashsha1                                                     P,,
 east-ec                                                      P,,  
 nic                                                          P,,  
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

@@ -7,4 +7,3 @@ ipsec auto --delete private-or-clear
 sleep 5
 # should show 0 states left
 ipsec status | grep "SAs: total"
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -135,6 +135,4 @@ east #
 000 Bare Shunt list:
 000  
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

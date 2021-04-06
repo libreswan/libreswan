@@ -12,6 +12,5 @@ echo ""
 ipsec status | grep "hash-policy:" | grep defaults
 echo ""
 ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 : ==== end ====
 

@@ -57,6 +57,4 @@ west #
 | netlink: enabling ESN
 | netlink: enabling ESN
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

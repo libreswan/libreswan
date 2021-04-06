@@ -18,6 +18,4 @@ east #
  ls /var/tmp/east.record
 /var/tmp/east.record
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

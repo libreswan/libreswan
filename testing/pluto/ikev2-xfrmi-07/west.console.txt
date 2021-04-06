@@ -50,6 +50,4 @@ west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

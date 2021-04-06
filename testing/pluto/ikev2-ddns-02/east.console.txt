@@ -18,6 +18,4 @@ east #
 east #
  rm -f /etc/systemd/system/unbound.service
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

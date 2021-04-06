@@ -63,6 +63,4 @@ road #
  hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
 "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: authenticated using authby=null and peer ID_IPV4_ADDR '192.1.2.23'
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

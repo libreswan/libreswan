@@ -158,6 +158,4 @@ done
 road #
  hostname | grep east > /dev/null && (grep "ADDR ADDR" /tmp/charon.log || echo "good, no double ADDR payload seen")
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

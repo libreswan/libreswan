@@ -46,6 +46,4 @@ west #
 000 #3: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "west-east-auto2":500 STATE_MAIN_R3 (IKE SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

@@ -41,6 +41,4 @@ road #
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-road #
  

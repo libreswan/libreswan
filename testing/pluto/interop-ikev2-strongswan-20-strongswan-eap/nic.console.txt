@@ -23,6 +23,4 @@ nic #
 nic #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-nic #
  

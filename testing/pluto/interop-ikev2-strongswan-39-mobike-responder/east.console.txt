@@ -65,6 +65,4 @@ roadnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.3.1/32
 east #
  sleep 7
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

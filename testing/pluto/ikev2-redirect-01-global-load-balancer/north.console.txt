@@ -109,6 +109,4 @@ north #
  ipsec whack --trafficstatus
 north #
  ipsec whack --shutdown
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

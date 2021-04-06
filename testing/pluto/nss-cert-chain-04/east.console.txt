@@ -83,6 +83,4 @@ west-ec                                                      P,,
 nic                                                          P,,  
 otherca                                                      CT,, 
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

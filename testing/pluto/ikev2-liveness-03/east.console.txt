@@ -19,6 +19,4 @@ east #
 east #
  hostname | grep west > /dev/null || grep "IKEv2 liveness action:" /tmp/pluto.log
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  

@@ -44,6 +44,4 @@ Redirecting to: [initsystem]
 east #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

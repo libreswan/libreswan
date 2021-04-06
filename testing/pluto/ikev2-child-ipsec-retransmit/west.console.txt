@@ -59,6 +59,4 @@ west #
 | sending 305 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
 | sending 305 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-west #
  

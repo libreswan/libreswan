@@ -21,6 +21,4 @@ east #
 east #
  grep "initiate on demand" /tmp/pluto.log
 east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-east #
  
