@@ -1,3 +1,1 @@
 ipsec trafficstatus
-: ==== cut ====
-: ==== tuc ====
