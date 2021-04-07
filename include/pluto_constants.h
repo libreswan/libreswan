@@ -611,7 +611,6 @@ extern struct keywords message_role_names;
 enum sa_role {
 	SA_INITIATOR = 1,
 	SA_RESPONDER = 2,
-#define SA_ROLE_ROOF 3
 };
 
 extern struct keywords sa_role_names;
