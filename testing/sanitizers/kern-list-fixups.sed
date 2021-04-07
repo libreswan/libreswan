@@ -10,6 +10,7 @@ s/^\[\s\+[0-9]\+.[0-9]\+\] /\[ 00.00] /
   / Netfilter messages via NETLINK/d
   / IPsec XFRM device driver/d
   / used greatest stack depth: [0-9]* bytes left/d
+  / SELinux: /d
 }
 
 # XXX: how many of these are still generated?
@@ -127,7 +128,6 @@ s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 /^.*hrtimer: interrupt took .*$/d
 /^.*Clocksource tsc unstabl.*$/d
 /^.*audit_printk.*$/d
-/^.*SELinux: unrecognized netlink message.*$/d
 /^.*clocksource.*$/d
 s/ qlen 1000$//
 /^type=PROCTITLE.*$/d
