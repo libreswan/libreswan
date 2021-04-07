@@ -424,7 +424,7 @@ struct state {
 	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
-	bool st_kernel_sa_expired;  /* received expire in one direction */
+	enum sa_expire_kind st_kernel_sa_expired;  /* what kind of expire did we receive */
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
 

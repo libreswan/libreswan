@@ -2725,7 +2725,11 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	for (unsigned i = 0; i < nr; i++) {
 		const struct dead_spi *tbd = &dead[i];
-		result &= del_spi(tbd->spi, tbd->protocol, &tbd->src, &tbd->dst, st->st_logger);
+		if (st->st_kernel_sa_expired != SA_STATE_HARD) {
+			dbg("Skipped del_spi() as kernel has already deleted due to hard limit expire event");
+		} else {
+			result &= del_spi(tbd->spi, tbd->protocol, &tbd->src, &tbd->dst, st->st_logger);
+		}
 	}
 
 	return result;
@@ -3541,6 +3545,11 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
 	struct connection *const c = st->st_connection;
 
+	if (st->st_kernel_sa_expired == SA_STATE_HARD) {
+		dbg("get_sa_info() skipped as kernel has already deleted the SA");
+		return true;
+	}
+
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return false;
 	}
@@ -3896,6 +3905,15 @@ void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool 
 		bool rekey = !LIN(POLICY_DONT_REKEY, c->policy);
 		bool latest = c->newest_ipsec_sa == child->sa.st_serialno;
 
+		/* always mark it, so hard can overwrite soft status */
+		enum sa_expire_kind prev_state = child->sa.st_kernel_sa_expired;
+		child->sa.st_kernel_sa_expired = soft ? SA_STATE_SOFT : SA_STATE_HARD;
+
+		if ((!soft && impair.ignore_hard_expire) || (soft && impair.ignore_soft_expire)) {
+			llog(RC_LOG, c->logger, "IMPAIR is supressing a %s EXPIRE event", soft ? "soft" : "hard");
+			return;
+		}
+
 		llog(RC_LOG, c->logger, "received %s [bytes? packets?] EXPIRE event from kernel for connection %s with SPI 0x%x, %s",
 			soft ? "soft" : "hard",
 			c->name, ntohl(spi),
@@ -3903,14 +3921,16 @@ void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool 
 				rekey ?  "initiating a Child SA rekey" : "but connection has rekey=no so deleting connection");
 
 		if (latest && rekey) {
-			if (!child->sa.st_kernel_sa_expired) {
-				child->sa.st_kernel_sa_expired = true;
+			if (prev_state != SA_NOT_EXPIRED) {
 				event_delete(EVENT_v2_LIVENESS, &child->sa);
 				event_delete(EVENT_DPD, &child->sa);
-				/* causes delete before rekey thus acquire :/ event_force(EVENT_SA_EXPIRE, &child->sa);  creates add_pending() */
-				event_force(EVENT_SA_REKEY, &child->sa);
+				if (soft) {
+					event_force(EVENT_SA_REKEY, &child->sa);
+				} else {
+					event_force(EVENT_SA_EXPIRE, &child->sa);
+				}
 			} else {
-				dbg("Connection %s with serial #%lu already had one direction of the IPsec SA pair trigger an expire event, ignoring event for other direction",
+				dbg("Connection %s with serial #%lu was already expiring, no further actions required",
 					c->name, child->sa.st_serialno);
 			}
 		}

@@ -1127,6 +1127,18 @@ enum pluto_exit_code {
 	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE = 127,
 };
 
+/*
+ * EXPIRE type events from the kernel.
+ * Based on these, different actions can be taken, eg skipping delete SPI
+ */
+enum sa_expire_kind {
+	SA_NOT_EXPIRED = 0,
+	SA_STATE_SOFT = 1,
+	SA_STATE_HARD = 2,
+	SA_POL_SOFT = 3,
+	SA_POL_HARD = 4,
+};
+
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
 extern void init_pluto_constants(void);

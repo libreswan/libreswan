@@ -1337,6 +1337,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.lft.soft_packet_limit = sa->sa_lifepackets * IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE / 100;
 	req.p.lft.hard_packet_limit = sa->sa_lifepackets;
 
+	/* we can ignore userspace, but that wouldn't prevent kernel from deleting and causing ACQUIRE */
+	if (impair.ignore_hard_expire) {
+		req.p.lft.hard_byte_limit = req.p.lft.hard_packet_limit = XFRM_INF;
+	}
+
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p)));
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
@@ -1924,10 +1929,6 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	case  IPPROTO_AH: protoid = PROTO_IPSEC_AH; break;
 	default:
 		bad_case(ue->state.id.proto);
-	}
-	if ((ue->hard && impair.ignore_hard_expire) || (!ue->hard && impair.ignore_soft_expire)) {
-		dbg("IMPAIR is supressing a %s EXPIRE event", ue->hard ? "hard" : "soft");
-		return;
 	}
 	handle_expiring_sa(ue->state.id.spi, protoid, &dst, !ue->hard);
 }
