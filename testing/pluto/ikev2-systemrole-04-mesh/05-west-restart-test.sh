@@ -5,7 +5,7 @@ ipsec restart
 sleep 3
 ipsec status
 # trigger OE
-ping -c4 -I 192.1.2.45 192.1.2.23
+ping -n -c 4 -I 192.1.2.45 192.1.2.23
 # show non-zero IPsec traffic counters
 ipsec whack --trafficstatus
 echo done

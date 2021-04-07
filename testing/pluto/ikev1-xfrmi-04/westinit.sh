@@ -4,5 +4,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
 ipsec auto --up westnet-eastnet
-ping -w 10 -n -c 2 -I 192.0.1.254 192.0.2.254
+ping -n -w 10 -c 2 -I 192.0.1.254 192.0.2.254
 echo "initdone"

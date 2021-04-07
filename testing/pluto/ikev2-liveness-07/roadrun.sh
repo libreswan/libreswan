@@ -16,5 +16,5 @@ iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 sleep 30
 # Tunnel should be back up now even without triggering traffic
 ipsec whack --trafficstatus
-ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
+ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
 echo done

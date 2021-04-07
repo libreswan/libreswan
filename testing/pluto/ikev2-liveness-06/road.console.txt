@@ -16,7 +16,7 @@ initdone
 road #
  #!/bin/sh
 road #
- ping -q -n -c 2 192.1.2.23
+ ping -n -q -c 2 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX

@@ -13,7 +13,7 @@ initdone
 west #
  : we can transmit in the clear
 west #
- ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
@@ -35,7 +35,7 @@ west #
 west #
  : use the tunnel
 west #
- ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 8 received, 0% packet loss, time XXXX
@@ -68,7 +68,7 @@ west #
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- ping -q -c 8 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 8 packets transmitted, 6 received, 25% packet loss, time XXXX

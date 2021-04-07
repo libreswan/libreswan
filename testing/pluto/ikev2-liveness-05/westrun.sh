@@ -1,6 +1,6 @@
 #!/bin/sh
 ipsec auto --up westnet-eastnet-ikev2
-ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 # Tunnel should be up
 ipsec whack --trafficstatus
 # Let R_U_THERE packets flow
@@ -15,13 +15,13 @@ sleep 30
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # packets should be caught in firewall and no icmp replies should happen
-ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
+ping -n -q -w 2 -c 3 -I 192.0.1.254 192.0.2.254
 # Remove the Blockage
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 # trigger traffic
-ping -W 1 -w 1 -q -n -c 1 -I 192.0.1.254 192.0.2.254
+ping -n -W 1 -w 1 -q -c 1 -I 192.0.1.254 192.0.2.254
 sleep 2
-ping -W 1 -w 4 -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ping -n -W 1 -w 4 -q -c 4 -I 192.0.1.254 192.0.2.254
 # Tunnel should be back up now even without triggering traffic
 echo done

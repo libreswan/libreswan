@@ -32,7 +32,7 @@ initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ping -q -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -w 2 -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 1 received, 50% packet loss, time XXXX
@@ -49,7 +49,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ping -q -w 4 -n -c 2 -I 192.1.3.209 192.1.2.23
+ ping -n -q -w 4 -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX

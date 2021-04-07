@@ -1,7 +1,7 @@
-ping -f -c 100000 -I  192.0.3.254  192.0.2.254 2>&1 >/dev/null &
-ping -f -c 100000 -I  192.0.3.254  192.0.2.251 2>&1 >/dev/null &
-ping -f -c 100000 -I  192.0.3.254  192.0.22.254 2>&1 >/dev/null &
-ping -f -c 100000 -I  192.0.3.254  192.0.22.251 2>&1 >/dev/null &
+ping -n -f -c 100000 -I  192.0.3.254  192.0.2.254 2>&1 >/dev/null &
+ping -n -f -c 100000 -I  192.0.3.254  192.0.2.251 2>&1 >/dev/null &
+ping -n -f -c 100000 -I  192.0.3.254  192.0.22.254 2>&1 >/dev/null &
+ping -n -f -c 100000 -I  192.0.3.254  192.0.22.251 2>&1 >/dev/null &
 ipsec auto --add north-eastnets
 ipsec auto --up north-eastnets
 sleep 16

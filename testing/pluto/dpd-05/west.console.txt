@@ -15,7 +15,7 @@ west #
 west #
  # we can transmit in the clear
 west #
- ping -q -c 4 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -36,7 +36,7 @@ west #
 west #
  # use the tunnel
 west #
- ping -q -c 4 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -82,7 +82,7 @@ west #
 west #
  sleep 10
 west #
- ping -q -c 4 -n -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 3 received, 25% packet loss, time XXXX

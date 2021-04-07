@@ -28,7 +28,7 @@ initdone
 road #
  # block policy causing ping to hang
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -w 2 -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 ping: sendmsg: Operation not permitted
 ping: sendmsg: Operation not permitted

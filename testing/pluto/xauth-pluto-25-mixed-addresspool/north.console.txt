@@ -39,7 +39,7 @@ north #
 north #
  sleep 10
 north #
- ping -q -n -c 4 -w 4 -I 192.0.2.201  192.0.2.254
+ ping -n -q -c 4 -w 4 -I 192.0.2.201  192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.2.201 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX

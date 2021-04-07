@@ -41,7 +41,7 @@ north #
 002 "northnet-eastnet" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 north #
- ping -W 1 -q -n -c 2 -I 192.0.3.254  192.0.2.254
+ ping -n -q -W 1 -c 2 -I 192.0.3.254  192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
@@ -86,7 +86,7 @@ north #
 north #
  # note this end should be 192.1.8.22
 north #
- ping -W 1 -q -n -c 4 -I 192.0.3.254  192.0.2.254
+ ping -n -q -W 1 -c 4 -I 192.0.3.254  192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX

@@ -67,7 +67,7 @@ road #
 road #
  ipsec whack --trafficstatus
 road #
- ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
+ ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX

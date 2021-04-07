@@ -1,5 +1,5 @@
 ipsec auto --up road-eastnet
-ping -W 1 -q -n -c 2 192.1.2.23
+ping -n -q -W 1 -c 2 192.1.2.23
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.209
 ip xfrm state
@@ -21,6 +21,6 @@ sleep 10
 # ip addr show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 ip addr show scope global dev eth0 | grep -v valid_lft
 # MOBIKE ping should work
-ping -W 8 -q -n -c 8 192.1.2.23
+ping -n -q -W 8 -c 8 192.1.2.23
 # "ip xfrm" output this end should be 192.1.33.222
 echo done

@@ -26,7 +26,7 @@ west #
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
- ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -90,7 +90,7 @@ west #
 west #
  # ping should be caught ip route unreachable
 west #
- ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
+ ping -n -q -w 2 -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -102,7 +102,7 @@ west #
  ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 west #
- ping -q -n -c 1 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -111,7 +111,7 @@ west #
 west #
  # ping should reply
 west #
- ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
