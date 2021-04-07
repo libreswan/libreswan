@@ -45,7 +45,6 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
-002 "ikev2-westnet-eastnet-x509-cr" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 003 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSA with SHA2_512 and 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 036 "ikev2-westnet-eastnet-x509-cr" #2: encountered fatal error in state STATE_PARENT_I2
 west #
