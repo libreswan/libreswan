@@ -9,7 +9,6 @@
 # exposed.
 
 set -ex
-
 ok=true
 
 # Shutdown pluto
@@ -17,6 +16,8 @@ ok=true
 # What about strongswan / iked / ...?
 
 echo shutting down
+
+ps -elf | sed -n -e '1 p ; /sed/n ; /pluto/{p;n} ; /strongswan/{p;n} ; /iked/{p;n}'
 
 if test -r /tmp/pluto.log ; then
     ipsec stop
@@ -32,6 +33,7 @@ echo checking for core files
 if $(dirname $0)/check-for-core.sh ; then
     echo no core files found
 else
+    echo core file found
     ok=false
 fi
 
@@ -44,6 +46,7 @@ if test -r /tmp/pluto.log ; then
     # check-01 selftests pluto and that doesn't run leak detective so
     # the absense of 'leak detective found no leaks' isn't sufficient.
     if grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
+	echo memory leaks found
 	ok=false
 	grep -e leak /tmp/pluto.log | grep -v -e '|'
     fi
@@ -54,7 +57,7 @@ fi
 #
 # Should the setup code snapshot austatus before the test is run?
 
-echo checking for selinux warnings
+echo checking for selinux audit records
 
 if test -f /sbin/ausearch ; then
     log=OUTPUT/$(hostname).ausearch.log
@@ -64,6 +67,7 @@ if test -f /sbin/ausearch ; then
     if test -s ${log} && grep -v \
 	    -e '^type=AVC .* avc:  denied  { remount } ' \
 	    ${log} ; then
+	echo selinux audit records found
 	ok=false
     fi
 fi
