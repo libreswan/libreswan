@@ -1,4 +1,4 @@
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
@@ -9,7 +9,7 @@ sleep 60
 ipsec whack --trafficstatus
 ../../guestbin/ipsec-look.sh
 #establish a new one
-ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 ../../guestbin/ipsec-look.sh
 echo done

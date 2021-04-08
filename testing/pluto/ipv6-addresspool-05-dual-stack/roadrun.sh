@@ -1,5 +1,5 @@
 ipsec auto --up road
-ping6 -c 2 -w 5 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
+ping6 -n -q -w 5 -c 2 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
 ipsec trafficstatus
 ../../guestbin/ip-addr-show.sh
 ip -6 route

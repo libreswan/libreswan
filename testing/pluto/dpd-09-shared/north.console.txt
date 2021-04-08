@@ -34,12 +34,12 @@ north #
 1v1 "north-a-dpd" #2: sent Quick Mode request
 004 "north-a-dpd" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.2.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.22.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -78,12 +78,12 @@ north #
 north #
  ip route del unreachable 192.1.2.23
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.2.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.22.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX

@@ -24,7 +24,7 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -94,7 +94,7 @@ road #
 road #
  # should fail due to private failure resulting in hold policy
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX

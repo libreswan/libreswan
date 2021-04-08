@@ -15,7 +15,7 @@ openbsdw #
 echo "initdone"
 initdone
 openbsdw #
- ping -n -c 1 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
 ping -n -c 1 -I 192.0.1.254 192.0.2.2.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
 --- 192.0.2.254 ping statistics ---
@@ -24,13 +24,9 @@ openbsdw #
  sleep 3
 sleep 3
 openbsdw #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 ping -n -c 4 -I 192.0.1.254 192.0.2.2.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
-64 bytes from 192.0.2.254: icmp_seq=0 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 packets received, 0.0% packet loss
 openbsdw #

@@ -45,12 +45,8 @@ west #
 002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2a" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ping -n -w 4 -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -60,12 +56,8 @@ west #
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ping -n -w 4 -c 4 -I 192.0.100.254 192.0.200.254
+ ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
-64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.200.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -75,12 +67,8 @@ west #
 002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-ikev2c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ping -n -w 4 -c 4 -I 192.0.101.254 192.0.201.254
+ ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
 PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
-64 bytes from 192.0.201.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.201.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -101,32 +89,20 @@ sleep 23
 west #
  sleep 23
 west #
- ping -n -w 4 -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -w 4 -c 4 -I 192.0.100.254 192.0.200.254
+ ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
-64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.200.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -w 4 -c 4 -I 192.0.101.254 192.0.201.254
+ ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
 PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
-64 bytes from 192.0.201.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.201.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -147,32 +123,20 @@ sleep 25
 west #
  sleep 25
 west #
- ping -n -w 4 -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -w 4 -c 4 -I 192.0.100.254 192.0.200.254
+ ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
-64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.200.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ping -n -w 4 -c 4 -I 192.0.101.254 192.0.201.254
+ ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
 PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
-64 bytes from 192.0.201.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.201.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.201.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

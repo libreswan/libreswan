@@ -20,8 +20,8 @@ ping -n -q -w 2 -c 3 -I 192.0.1.254 192.0.2.254
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 # trigger traffic
-ping -n -W 1 -w 1 -q -c 1 -I 192.0.1.254 192.0.2.254
+ping -n -q -W 1 -w 1 -c 1 -I 192.0.1.254 192.0.2.254
 sleep 2
-ping -n -W 1 -w 4 -q -c 4 -I 192.0.1.254 192.0.2.254
+ping -n -q -W 1 -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 # Tunnel should be back up now even without triggering traffic
 echo done

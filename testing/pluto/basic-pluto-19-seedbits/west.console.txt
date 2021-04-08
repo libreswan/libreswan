@@ -44,7 +44,7 @@ west #
 west #
  # this ping should fail due to the type=block connection
 west #
- ping -n -c 1 192.1.2.23
+ ping -n -q -c 1 192.1.2.23
 ping: connect: Operation not permitted
 west #
  ipsec stop

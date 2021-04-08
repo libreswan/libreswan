@@ -8,7 +8,7 @@ ipsec auto --add north-east
 sleep 10
 ipsec whack --xauthname 'xnorth' --xauthpass 'use1pass' --name north-east --initiate
 sleep 2
-ping -n -c 4 -w 4 -I 192.0.2.101 192.0.2.254
+ping -n -q -c 4 -w 4 -I 192.0.2.101 192.0.2.254
 sleep 5
 ipsec whack --trafficstatus
 echo initdone

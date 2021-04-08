@@ -36,12 +36,8 @@ west #
  echo "initdone"
 initdone
 west #
- ping -n -c 5 -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 5 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=5 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 5 packets transmitted, 4 received, 20% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -61,10 +57,8 @@ west #
 west #
  # ping should succeed through tunnel
 west #
- ping -n -c 2 -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 2 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -141,7 +135,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- ping -n -c 1 -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 1 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -233,10 +227,8 @@ west #
 west #
  # ping should succeed through tunnel
 west #
- ping -n -c 2 -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 2 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

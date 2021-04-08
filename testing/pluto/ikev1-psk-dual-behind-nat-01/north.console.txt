@@ -86,9 +86,9 @@ Certificate Nickname                                         Trust Attributes
 north #
  # check both connections still work on east
 north #
- hostname | grep east > /dev/null && ping -c2 192.0.2.101
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.101
 north #
- hostname | grep east > /dev/null && ping -c2 192.0.2.102
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.102
 north #
  ipsec whack --trafficstatus
 006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=252, outBytes=252

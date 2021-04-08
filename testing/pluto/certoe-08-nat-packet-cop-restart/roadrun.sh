@@ -1,5 +1,5 @@
 # one packet, which gets eaten by XFRM, so east does not initiate
-ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 # wait on OE IKE negotiation
 sleep 1
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
@@ -16,7 +16,7 @@ iptables -t nat -F
 ipsec start
 sleep 5
 # packet trigger OE
-ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 sleep 1
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus

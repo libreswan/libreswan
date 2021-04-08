@@ -30,15 +30,8 @@ road #
  echo "initdone"
 initdone
 road #
- ping6 -n -c 8 2001:db8:1:2::23
+ ping6 -n -q -c 8 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=5 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=6 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=7 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=8 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
 8 packets transmitted, 7 received, 12% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

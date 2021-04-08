@@ -6,8 +6,8 @@ ipsec start
 ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
 iptables -D INPUT -p UDP --dport 500 -j DROP
 # trigger OE
-ping -n -c 1 192.1.3.209
+ping -n -q -c 1 192.1.3.209
 sleep 2
-ping -n -c 2 192.1.3.209
+ping -n -q -c 2 192.1.3.209
 sleep 2
 ipsec trafficstatus

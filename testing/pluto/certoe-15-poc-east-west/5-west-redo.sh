@@ -5,7 +5,7 @@ sleep 5
 # try triggering again, ondemand policy should re-trigger OE
 ip xfrm state
 ip xfrm pol
-ping -n -c 1 -I 192.1.2.45 192.1.2.23
+ping -n -q -c 1 -I 192.1.2.45 192.1.2.23
 # wait on OE to re-establish IPsec SA
 sleep 5
 ip xfrm state
@@ -14,5 +14,5 @@ ip xfrm pol
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # ping should succeed through tunnel
-ping -n -c 2 -I 192.1.2.45 192.1.2.23
+ping -n -q -c 2 -I 192.1.2.45 192.1.2.23
 ipsec whack --trafficstatus

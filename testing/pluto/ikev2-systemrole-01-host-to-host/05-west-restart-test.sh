@@ -6,7 +6,7 @@ ipsec status
 # trigger tunnel - the first trigger ping packet is lost
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 sleep 2
-ping -n -c 4 -I 192.1.2.45 192.1.2.23
+ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 # show non-zero IPsec traffic counters
 ipsec whack --trafficstatus
 echo done

@@ -6,5 +6,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load
 ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
-ping -n -c 4 -I 192.1.2.45 192.1.2.23
+ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 echo "initdone"

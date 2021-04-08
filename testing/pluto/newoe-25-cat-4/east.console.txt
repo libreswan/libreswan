@@ -19,7 +19,7 @@ east #
  echo "initdone"
 initdone
 east #
- ping -n -c 4 10.0.10.1
+ ping -n -q -c 4 10.0.10.1
 PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
 From 192.1.2.254 icmp_seq=1 Destination Net Unreachable
 From 192.1.2.254 icmp_seq=2 Destination Net Unreachable

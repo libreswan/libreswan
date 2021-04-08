@@ -306,32 +306,26 @@ Certificate Nickname                                         Trust Attributes
 road #
  # ping should succeed through tunnel after triggering
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.45
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.45
 PING 192.1.2.45 (192.1.2.45) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.45 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  sleep 3
 road #
- ping -n -c 3 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 3 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- ping -n -c 3 -I 192.1.3.209 192.1.2.45
+ ping -n -q -c 3 -I 192.1.3.209 192.1.2.45
 PING 192.1.2.45 (192.1.2.45) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.45: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.45: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.45: icmp_seq=3 ttl=64 time=0.XXX ms
 --- 192.1.2.45 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -339,7 +333,7 @@ road #
  echo done
 done
 road #
- ping -n -c 4 10.0.10.1
+ ping -n -q -c 4 10.0.10.1
 PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
 From 192.1.3.254 icmp_seq=1 Destination Net Unreachable
 From 192.1.3.254 icmp_seq=2 Destination Net Unreachable

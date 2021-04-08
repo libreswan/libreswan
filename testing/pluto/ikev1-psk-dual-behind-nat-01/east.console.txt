@@ -83,18 +83,14 @@ Certificate Nickname                                         Trust Attributes
 east #
  # check both connections still work on east
 east #
- hostname | grep east > /dev/null && ping -c2 192.0.2.101
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.101
 PING 192.0.2.101 (192.0.2.101) 56(84) bytes of data.
-64 bytes from 192.0.2.101: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.101: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.101 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 east #
- hostname | grep east > /dev/null && ping -c2 192.0.2.102
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.102
 PING 192.0.2.102 (192.0.2.102) 56(84) bytes of data.
-64 bytes from 192.0.2.102: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.102: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.102 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

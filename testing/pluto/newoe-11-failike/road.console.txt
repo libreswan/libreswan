@@ -24,11 +24,8 @@ initdone
 road #
  # trigger OE
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -52,12 +49,8 @@ road #
 road #
  # pings should work plaintext
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=63 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=63 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

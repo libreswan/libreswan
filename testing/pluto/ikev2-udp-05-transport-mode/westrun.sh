@@ -1,5 +1,5 @@
 ipsec auto --up ikev2-west-east
-ping -n -c 4 192.1.2.23
+ping -n -q -c 4 192.1.2.23
 ipsec whack --trafficstatus
 # should show tcp being used
 ../../guestbin/ipsec-look.sh | grep encap
