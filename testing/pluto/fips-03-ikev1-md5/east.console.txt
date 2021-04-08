@@ -4,10 +4,10 @@ FIPS mode enabled.
 east #
  ipsec checknss
 east #
- PA../../guestbin/modutil -dbdir sql:/etc/ipsec.d -fips true -force
+ modutil -dbdir sql:/etc/ipsec.d -fips true -force
 FIPS mode already enabled.
 east #
- PA../../guestbin/modutil -dbdir sql:/etc/ipsec.d -chkfips true
+ modutil -dbdir sql:/etc/ipsec.d -chkfips true
 FIPS mode enabled.
 east #
  fipscheck

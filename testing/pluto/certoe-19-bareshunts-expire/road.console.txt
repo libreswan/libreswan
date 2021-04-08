@@ -54,7 +54,7 @@ road #
 road #
  sleep 10
 road #
- # should show %pass in shuntstatus and xfrm policy and without partial STATE
+ # should show pass in shuntstatus and xfrm policy and without partial STATE
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -78,7 +78,7 @@ road #
 road #
  ipsec status | grep STATE_
 road #
- # repeat test with a %hold shunt - but it really shouldn't matter
+ # repeat test with a hold shunt - but it really shouldn't matter
 road #
  # trigger a private and check for shunt and shunt expiry
 road #
@@ -108,7 +108,7 @@ road #
 road #
  sleep 10
 road #
- # should show %pass in shuntstatus and xfrm policy and without partial STATE
+ # should show pass in shuntstatus and xfrm policy and without partial STATE
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
