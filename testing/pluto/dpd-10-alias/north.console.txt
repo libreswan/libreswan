@@ -43,8 +43,6 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
-From 192.1.3.254 icmp_seq=1 Destination Net Unreachable
-From 192.1.3.254 icmp_seq=2 Destination Net Unreachable
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, +2 errors, 100% packet loss, time XXXX
 north #
@@ -112,7 +110,6 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
-From 192.1.3.254 icmp_seq=2 Destination Net Unreachable
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
 north #
