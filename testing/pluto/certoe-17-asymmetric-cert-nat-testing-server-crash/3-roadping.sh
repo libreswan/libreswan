@@ -2,9 +2,9 @@
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # trigger ping, this will be lost
-ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
-sleep 3
+../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
 # ping should succeed through tunnel
-ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 echo "Crashing the server on east (killing IPsec)"

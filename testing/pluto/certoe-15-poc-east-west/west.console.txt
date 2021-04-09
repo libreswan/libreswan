@@ -36,35 +36,25 @@ west #
  echo "initdone"
 initdone
 west #
- ping -n -q -c 5 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-5 packets transmitted, 4 received, 20% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
  # wait on OE retransmits and rekeying
 west #
- sleep 5
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match private -- ipsec whack --trafficstatus
+006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='192.1.2.23'
 west #
  # should show established tunnel and no bare shunts
 west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
  ipsec whack --trafficstatus
-006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
+006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.23'
 west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-west #
- # ping should succeed through tunnel
-west #
- ping -n -q -c 2 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- ipsec whack --trafficstatus
-006 #2: "private#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='192.1.2.23'
 west #
  echo "waiting on east to send delete for this IPsec SA"
 waiting on east to send delete for this IPsec SA
@@ -75,7 +65,7 @@ west #
 west #
  # let the old acquire expire so it won't interfere with our new trigger
 west #
- sleep 5
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
 west #
  # try triggering again, ondemand policy should re-trigger OE
 west #
@@ -135,14 +125,15 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- ping -n -q -c 1 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match private -- ipsec whack --trafficstatus
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='192.1.2.23'
 west #
  # wait on OE to re-establish IPsec SA
 west #
- sleep 5
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
 west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
@@ -216,29 +207,21 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- # should show established tunnel and no bare shunts
-west #
- ipsec whack --trafficstatus
-006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='192.1.2.23'
-west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 west #
  # ping should succeed through tunnel
 west #
- ping -n -q -c 2 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
  ipsec whack --trafficstatus
-006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.23'
 west #
  # both ends should show a tunnel
 west #
  ipsec whack --trafficstatus
-006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
+006 #4: "private#192.1.2.23/32"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.23'
 west #
 
