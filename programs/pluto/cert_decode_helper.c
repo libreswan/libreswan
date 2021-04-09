@@ -161,8 +161,7 @@ static stf_status cert_decode_completed(struct state *st,
 		if (ike->sa.st_remote_certs.verified != NULL) {
 			CERTCertificate *end_cert = ike->sa.st_remote_certs.verified->cert;
 			passert(end_cert != NULL);
-			log_state(RC_LOG, &ike->sa,
-				  "certificate verified OK: %s", end_cert->subjectName);
+			dbg("certificate verified OK: %s", end_cert->subjectName);
 		}
 	} else {
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
