@@ -116,6 +116,7 @@ OBJS += ip_said.o
 OBJS += ip_selector.o
 OBJS += ip_sockaddr.o
 OBJS += ip_subnet.o
+OBJS += ip_traffic.o
 
 OBJS += lmod.o
 OBJS += lset.o
