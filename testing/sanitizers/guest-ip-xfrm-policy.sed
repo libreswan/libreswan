@@ -11,7 +11,7 @@ b end
   n
   /^[a-z]* #/ b end
 
-  s/ spi 0x[^ ]* / spi 0xSPISPI /g
+  / spi 0x00000000 /! s/ spi 0x[^ ]* / spi 0xSPISPI /g
   s/ reqid [0-9][0-9]* / reqid REQID /g
 
 b match
