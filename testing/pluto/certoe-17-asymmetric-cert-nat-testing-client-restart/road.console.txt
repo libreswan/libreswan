@@ -48,12 +48,10 @@ road #
  echo "waiting for road to restart client cleanly"
 waiting for road to restart client cleanly
 road #
- # restarting ipsec service
+ # restarting ipsec service; OE policies time to load
 road #
  ipsec restart
 Redirecting to: [initsystem]
-road #
- # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
 000 Total IPsec connections: loaded 2, active 0
@@ -62,14 +60,12 @@ road #
 road #
  ipsec status |grep STATE_
 road #
- # restart ipsec
+ # restart ipsec; give OE conns time to load
 road #
  ipsec restart
 Redirecting to: [initsystem]
 road #
- # give OE conns time to load
-road #
- sleep 5
+ ../../guestbin/wait-until-pluto-started
 road #
  # should be empty
 road #
