@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add any-east-l2tp
-002 added IKEv1 connection "any-east-l2tp"
+002 "any-east-l2tp": added IKEv1 connection
 east #
  # ensure that clear text does not get through
 east #
@@ -24,7 +24,7 @@ east #
  echo done
 done
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
@@ -66,7 +66,4 @@ east #
  grep 'Result using RFC 3947' /tmp/pluto.log
 | NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: peer behind NAT
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

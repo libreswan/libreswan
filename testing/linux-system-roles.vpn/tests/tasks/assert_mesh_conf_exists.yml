@@ -1,0 +1,10 @@
+---
+- name: stat mesh.conf file path
+  stat:
+    path: "/etc/ipsec.d/mesh.conf"
+  register: conf
+
+- name: Assert that mesh.conf exists
+  assert:
+    that:
+      - conf.stat.exists

@@ -12,13 +12,14 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 3' -- ipsec auto --status
+000 Total IPsec connections: loaded 3, active 0
 east #
  echo "initdone"
 initdone
@@ -26,7 +27,7 @@ east #
  # confirm tunnel is up
 east #
  ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 east #
  # killing service ipsec
 east #
@@ -35,75 +36,15 @@ east #
  ipsec stop
 Redirecting to: [initsystem]
 east #
- #eck if  tunnel is up
-east #
- ipsec whack --trafficstatus
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+ # service killed
 east #
  # restart ipsec service
 east #
- systemctl start ipsec
+ ipsec start
+Redirecting to: [initsystem]
 east #
  # give OE conns time to load
 east #
- sleep 5
+ ../../guestbin/wait-until-pluto-started
 east #
- # A tunnel should have established with non-zero byte counters
-east #
- ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='ID_NULL', lease=10.0.10.1/32
-east #
- grep "negotiated connection" /tmp/pluto.log
-"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
-east #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using authby=null
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[2] ...192.1.2.23 #3: authenticated using RSA with SHA2_512
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

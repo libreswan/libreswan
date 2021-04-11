@@ -10,10 +10,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -35,27 +35,24 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep '^connection from' /tmp/pluto.log
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix from socket XX - returned 0 bytes but expecting 6; closing socket
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: problem reading IKETCP prefix from socket XX - returned 1 bytes but expecting 6; closing socket
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: did not receive the IKE-in-TCP stream prefix ; closing socket
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
-connection from 192.1.2.45:EPHEM: TCP: accepting connection
-connection from 192.1.2.45:EPHEM: TCP: 0 byte message from socket XX indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: reading 'IKETCP' prefix returned 0 bytes but expecting 6
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: reading 'IKETCP' prefix returned 1 bytes but expecting 6
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: prefix did not match 'IKETCP'
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: read failed Errno 22: Invalid argument
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
 east #
  ipsec stop
 Redirecting to: [initsystem]
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -4,10 +4,10 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-002 added IKEv2 connection "north-east"
+002 "north-east": added IKEv2 connection
 north #
  ipsec whack --impair revival
 north #
@@ -18,9 +18,7 @@ north #
 1v2 "north-east" #1: initiating IKEv2 connection
 1v2 "north-east" #1: sent IKE_SA_INIT request
 1v2 "north-east" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "north-east" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "north-east" #1: authenticated using RSA with SHA2_512
+003 "north-east" #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "north-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.10X
 002 "north-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "north-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
@@ -33,7 +31,4 @@ north #
  ipsec whack --trafficstatus | sed -e "s/#./#X/" -e "s/\[[0-9]\]/[X]/" -e "s/192.0.2.10./192.0.2.10X/" | sort
 006 #X: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10X/32
 north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

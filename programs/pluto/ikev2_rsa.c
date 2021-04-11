@@ -43,7 +43,6 @@
 #include "ike_alg_hash.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
@@ -72,16 +71,13 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		get_connection_private_key(c, type,
 					   ike->sa.st_logger);
 	if (pks == NULL) {
-		libreswan_log("No %s private key found", type->name);
+		log_state(RC_LOG, &ike->sa, "No %s private key found", type->name);
 		return false; /* failure: no key to use */
 	}
 
-	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
-	const struct RSA_private_key *k = &pks->u.RSA_private_key;
-	unsigned int sz = k->pub.k;
-
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     LOCAL_PERSPECTIVE);
+	passert(hash.len <= sizeof(hash.ptr/*array*/));
 
 	/*
 	 * Allocate large enough space for any digest.  Bound could be
@@ -101,7 +97,6 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	case IKEv2_HASH_ALGORITHM_SHA2_256:
 	case IKEv2_HASH_ALGORITHM_SHA2_384:
 	case IKEv2_HASH_ALGORITHM_SHA2_512:
-		passert(hash.len <= sizeof(signed_octets));
 		memcpy(signed_octets, hash.ptr, hash.len);
 		signed_len = hash.len;
 		break;
@@ -109,11 +104,16 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		bad_case(hash_algo->common.ikev2_alg_id);
 	}
 
-	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
-		sz <= RSA_MAX_OCTETS);
+	passert(signed_len <= sizeof(signed_octets));
+	if (DBGP(DBG_CRYPT)) {
+	    DBG_dump("v2rsa octets", signed_octets, signed_len);
+	}
 
-	DBG(DBG_CRYPT,
-	    DBG_dump("v2rsa octets", signed_octets, signed_len));
+	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
+	unsigned int sz = pks->size;
+	passert(RSA_MIN_OCTETS <= sz);
+	passert(4 + signed_len < sz);
+	passert(sz <= RSA_MAX_OCTETS);
 
 	{
 		/* now generate signature blob */
@@ -129,9 +129,11 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 		passert(sig.len == sz);
 		if (no_ppk_auth != NULL) {
 			*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
-			DBG(DBG_PRIVATE, DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth));
+			if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+				DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth);
+			}
 		} else {
-			if (!pbs_out_hunk(sig, a_pbs, "rsa signature"))
+			if (!out_hunk(sig, a_pbs, "rsa signature"))
 				return FALSE;
 		}
 	}
@@ -140,60 +142,29 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	return TRUE;
 }
 
-static try_signature_fn try_RSA_signature_v2; /* type assertion */
-
-static err_t try_RSA_signature_v2(const struct crypt_mac *hash,
-				  const pb_stream *sig_pbs, struct pubkey *kr,
-				  struct state *st,
-				  const struct hash_desc *hash_algo)
-{
-	const u_char *sig_val = sig_pbs->cur;
-	size_t sig_len = pbs_left(sig_pbs);
-	const struct RSA_public_key *k = &kr->u.rsa;
-
-	if (k == NULL)
-		return "1" "no key available"; /* failure: no key to use */
-
-	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (sig_len != k->k) {
-		loglog(RC_LOG_SERIOUS, "sig length %zu does not match pubkey length %d", sig_len, k->k);
-		return "1" "SIG length does not match public key length";
-	}
-
-	err_t ugh = RSA_signature_verify_nss(k, hash, sig_val, sig_len,
-					     hash_algo, st->st_logger);
-	if (ugh != NULL)
-		return ugh;
-
-	unreference_key(&st->st_peer_pubkey);
-	st->st_peer_pubkey = reference_key(kr);
-
-	return NULL;
-}
-
-stf_status ikev2_verify_rsa_hash(struct ike_sa *ike,
-				 const struct crypt_mac *idhash,
-				 pb_stream *sig_pbs,
-				 const struct hash_desc *hash_algo)
+stf_status v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
+					       const struct crypt_mac *idhash,
+					       shunk_t signature,
+					       const struct hash_desc *hash_algo)
 {
 	statetime_t start = statetime_start(&ike->sa);
-	size_t sig_len = pbs_left(sig_pbs);
 
 	/* XXX: table lookup? */
 	if (hash_algo->common.ikev2_alg_id < 0) {
-		loglog(RC_LOG_SERIOUS, "unknown or unsupported hash algorithm");
+		log_state(RC_LOG_SERIOUS, &ike->sa, "unknown or unsupported hash algorithm");
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (sig_len ==0) {
-		loglog(RC_LOG_SERIOUS, "rejecting received zero-length RSA signature");
+	if (signature.len == 0) {
+		log_state(RC_LOG_SERIOUS, &ike->sa, "rejecting received zero-length RSA signature");
 		return STF_FATAL;
 	}
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     REMOTE_PERSPECTIVE);
-	stf_status retstat = check_signature_gen(&ike->sa, &hash, sig_pbs, hash_algo,
-						 &pubkey_type_rsa, try_RSA_signature_v2);
+	stf_status retstat = authsig_and_log_using_pubkey(ike, &hash, signature, hash_algo,
+							  &pubkey_type_rsa,
+							  authsig_using_RSA_pubkey);
 	statetime_stop(&start, "%s()", __func__);
 	return retstat;
 }

@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -16,18 +16,18 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet
-002 added IKEv2 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -36,12 +36,11 @@ west #
 1v2 "westnet-eastnet" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet" #1: authenticated using authby=secret
+003 "westnet-eastnet" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec trafficstatus
@@ -59,7 +58,7 @@ west #
 west #
  sleep 15
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  # only #3 should be there with traffic
@@ -72,12 +71,12 @@ west #
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:secret, their auth:secret
-000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet":   policy_label:unset;
-000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 0%; keyingtries: 0;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet":   sec_label:unset;
+000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 0%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet":   v2-auth-hash-policy: none;
 000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -87,7 +86,7 @@ west #
 000 "westnet-eastnet":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048
-000 "westnet-eastnet":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=MODP2048
+000 "westnet-eastnet":   ESP algorithm newest: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #3: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B! ESPmax=0B 
@@ -98,7 +97,4 @@ west #
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

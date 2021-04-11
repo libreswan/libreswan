@@ -3,22 +3,22 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-aes256
-002 added IKEv1 connection "westnet-eastnet-aes256"
+002 "westnet-eastnet-aes256": added IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet-aes256
 000 "westnet-eastnet-aes256": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-aes256":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-aes256":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-aes256":   policy_label:unset;
-000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet-aes256":   sec_label:unset;
+000 "westnet-eastnet-aes256":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-aes256":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-aes256":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-aes256":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-aes256":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-aes256":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-aes256":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
@@ -30,7 +30,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -68,7 +68,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

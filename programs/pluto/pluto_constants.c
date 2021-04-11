@@ -3,6 +3,7 @@
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,13 +31,13 @@
 #endif
 #include "passert.h"
 
+#include "jambuf.h"
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
 
 /*
  * To obsolete or convert to runtime options:
- * ALLOW_MICROSOFT_BAD_PROPOSAL
  * IPSEC_CONNECTION_LIMIT
  * NOTYET
  * NOT_YET
@@ -142,12 +143,8 @@ enum_names timer_event_names = {
 	NULL
 };
 
-/*
- * natt_bit_names is dual purpose:
- * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
- * - for enum_name(&natt_method_names, enum natt_method)
- */
-const char *const natt_bit_names[] = {
+/* NAT methods */
+static const char *const natt_method_name[] = {
 	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
@@ -155,12 +152,11 @@ const char *const natt_bit_names[] = {
 
 	"I am behind NAT",
 	"peer behind NAT",
-	NULL	/* end for bitnamesof() */
 };
 
 enum_names natt_method_names = {
 	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
-	ARRAY_REF(natt_bit_names)-1,
+	ARRAY_REF(natt_method_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -205,68 +201,83 @@ enum_names stf_status_names = {
 
 /*
  * Names for sa_policy_bits.
- * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
-const char *const sa_policy_bit_names[] = {
-	"PSK",
-	"RSASIG",
-	"ECDSA",
-	"AUTH_NEVER",
-	"AUTHNULL",
-	"ENCRYPT",
-	"AUTHENTICATE",
-	"COMPRESS",
-	"TUNNEL",
-	"PFS",
-	"DECAP_DSCP",
-	"NOPMTUDISC",
-	"MSDH_DOWNGRADE",
-	"ALLOW_NO_SAN",
-	"DNS_MATCH_ID",
-	"SHA2_TRUNCBUG",
-	"SHUNT0",
-	"SHUNT1",
-	"FAIL0",
-	"FAIL1",
-	"NEGO_PASS",
-	"DONT_REKEY",
-	"REAUTH",
-	"OPPORTUNISTIC",
-	"GROUP",
-	"GROUTED",
-	"GROUPINSTANCE",
-	"UP",
-	"XAUTH",
-	"MODECFG_PULL",
-	"AGGRESSIVE",
-	"OVERLAPIP",
-	"IKEV1_ALLOW",
-	"IKEV2_ALLOW",
-	"IKEV2_ALLOW_NARROWING",
-	"IKEV2_PAM_AUTHORIZE",
-	"SEND_REDIRECT_ALWAYS",
-	"SEND_REDIRECT_NEVER",
-	"ACCEPT_REDIRECT_YES",
-	"IKE_FRAG_ALLOW",
-	"IKE_FRAG_FORCE",
-	"NO_IKEPAD",
-	"MOBIKE",
-	"PPK_ALLOW",
-	"PPK_INSIST",
-	"ESN_NO",
-	"ESN_YES",
-	"RSASIG_v1_5",
-	NULL	/* end for bitnamesof() */
+static const char *const sa_policy_bit_name[] = {
+#define P(N) [N##_IX] = #N
+	P(POLICY_PSK),
+	P(POLICY_RSASIG),
+	P(POLICY_ECDSA),
+	P(POLICY_AUTH_NEVER),
+	P(POLICY_AUTH_NULL),
+	P(POLICY_ENCRYPT),
+	P(POLICY_AUTHENTICATE),
+	P(POLICY_COMPRESS),
+	P(POLICY_TUNNEL),
+	P(POLICY_PFS),
+	P(POLICY_DECAP_DSCP),
+	P(POLICY_NOPMTUDISC),
+	P(POLICY_MSDH_DOWNGRADE),
+	P(POLICY_ALLOW_NO_SAN),
+	P(POLICY_DNS_MATCH_ID),
+	P(POLICY_SHA2_TRUNCBUG),
+	P(POLICY_SHUNT0),
+	P(POLICY_SHUNT1),
+	P(POLICY_FAIL0),
+	P(POLICY_FAIL1),
+	P(POLICY_NEGO_PASS),
+	P(POLICY_DONT_REKEY),
+	P(POLICY_REAUTH),
+	P(POLICY_OPPORTUNISTIC),
+	P(POLICY_GROUP),
+	P(POLICY_GROUTED),
+	P(POLICY_GROUPINSTANCE),
+	P(POLICY_UP),
+	P(POLICY_XAUTH),
+	P(POLICY_MODECFG_PULL),
+	P(POLICY_AGGRESSIVE),
+	P(POLICY_OVERLAPIP),
+	P(POLICY_IKEV2_ALLOW_NARROWING),
+	P(POLICY_IKEV2_PAM_AUTHORIZE),
+	P(POLICY_SEND_REDIRECT_ALWAYS),
+	P(POLICY_SEND_REDIRECT_NEVER),
+	P(POLICY_ACCEPT_REDIRECT_YES),
+	P(POLICY_IKE_FRAG_ALLOW),
+	P(POLICY_IKE_FRAG_FORCE),
+	P(POLICY_NO_IKEPAD),
+	P(POLICY_MOBIKE),
+	P(POLICY_PPK_ALLOW),
+	P(POLICY_PPK_INSIST),
+	P(POLICY_ESN_NO),
+	P(POLICY_ESN_YES),
+	P(POLICY_INTERMEDIATE),
+	P(POLICY_IGNORE_PEER_DNS),
+	P(POLICY_RSASIG_v1_5),
+#undef P
 };
+
+static const enum_names sa_policy_bit_names = {
+	0, POLICY_IX_LAST,
+	ARRAY_REF(sa_policy_bit_name),
+	"POLICY_", /* prefix */
+	NULL
+};
+
 
 /*
  * Names for RFC 7427 IKEv2 AUTH signature hash algo sighash_policy_bits
  */
-const char *const sighash_policy_bit_names[] = {
+static const char *const sighash_policy_bit_name[] = {
 	"SHA2_256",
 	"SHA2_384",
 	"SHA2_512",
-	NULL	/* end for bitnamesof() */
+};
+
+const struct enum_names sighash_policy_bit_names = {
+	POL_SIGHASH_SHA2_256_IX,
+	POL_SIGHASH_SHA2_512_IX,
+	ARRAY_REF(sighash_policy_bit_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 static const char *const keyword_authby_name[] = {
@@ -380,26 +391,36 @@ enum_names perspective_names = {
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
-const char *prettypolicy(lset_t policy)
-{
-	char pbitnamesbuf[200];
-	const char *bn = bitnamesofb(sa_policy_bit_names,
-				     policy &
-				     ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
-				     pbitnamesbuf, sizeof(pbitnamesbuf));
-	static char buf[512]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
-	lset_t shunt = (policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
-	lset_t fail = (policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
 
-	if (bn != pbitnamesbuf)
-		pbitnamesbuf[0] = '\0';
-	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
-		 pbitnamesbuf,
-		 shunt == POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ?  "" : "+",
-		 shunt ==  POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ? "" : policy_shunt_names[shunt],
-		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : "+failure",
-		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : policy_fail_names[fail]);
-	return buf;
+size_t jam_policy(struct jambuf *buf, lset_t policy)
+{
+	size_t s = 0;
+
+	lset_t other = policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK);
+	const char *sep = "";
+	if (other != LEMPTY) {
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", other);
+		sep = "+";
+	}
+
+	lset_t shunt = (policy & POLICY_SHUNT_MASK);
+	if (shunt != POLICY_SHUNT_TRAP) {
+		s += jam(buf, "%s%s", sep, policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+		sep = "+";
+	}
+	lset_t fail = (policy & POLICY_FAIL_MASK);
+	if (fail != POLICY_FAIL_NONE) {
+		s += jam(buf, "%sfailure%s", sep, policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+		sep = "+";
+	}
+	return s;
+}
+
+const char *str_policy(lset_t policy, policy_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_policy(&buf, policy);
+	return dst->buf;
 }
 
 static const enum_names *pluto_enum_names_checklist[] = {
@@ -416,6 +437,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&v1_sa_type_names,
 	&v2_sa_type_names,
 	&perspective_names,
+	&sa_policy_bit_names,
 };
 
 void init_pluto_constants(void) {

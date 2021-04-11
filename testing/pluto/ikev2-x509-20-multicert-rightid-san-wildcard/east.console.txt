@@ -13,13 +13,13 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add main-east
-002 added IKEv2 connection "main-east"
+002 "main-east": added IKEv2 connection
 east #
  ipsec auto --add main-north
-002 added IKEv2 connection "main-north"
+002 "main-north": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -36,7 +36,4 @@ east #
 east #
  ipsec whack --shutdown
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -51,8 +51,9 @@ static v2_cookie_t v2_cookie_secret;
 void refresh_v2_cookie_secret(void)
 {
 	get_rnd_bytes(&v2_cookie_secret, sizeof(v2_cookie_secret));
-	DBG(DBG_PRIVATE,
-	    DBG_dump_thing("v2_cookie_secret", v2_cookie_secret));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_thing("v2_cookie_secret", v2_cookie_secret);
+	}
 }
 
 /*
@@ -73,7 +74,8 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 
 	crypt_hash_digest_hunk(ctx, "Ni", Ni);
 
-	shunk_t IPi = address_as_shunk(&md->sender);
+	ip_address sender = endpoint_address(md->sender);
+	shunk_t IPi = address_as_shunk(&sender);
 	crypt_hash_digest_hunk(ctx, "IPi", IPi);
 
 	crypt_hash_digest_thing(ctx, "SPIi", md->hdr.isa_ike_initiator_spi);
@@ -197,9 +199,9 @@ static stf_status resume_IKE_SA_INIT_with_cookie(struct ike_sa *ike)
 	return STF_OK;
 }
 
-stf_status process_IKE_SA_INIT_v2N_COOKIE_response(struct ike_sa *ike,
-						   struct child_sa *child,
-						   struct msg_digest *md)
+stf_status ikev2_in_IKE_SA_INIT_R_v2N_COOKIE(struct ike_sa *ike,
+					     struct child_sa *child,
+					     struct msg_digest *md)
 {
 	pexpect(child == NULL);
 	const struct pbs_in *cookie_pbs = md->pbs[PBS_v2N_COOKIE];
@@ -249,8 +251,7 @@ stf_status process_IKE_SA_INIT_v2N_COOKIE_response(struct ike_sa *ike,
 		dbg("ignoring other notify payloads");
 	}
 
-	free_chunk_content(&ike->sa.st_dcookie);
-	ike->sa.st_dcookie = clone_hunk(cookie, "DDOS cookie");
+	replace_chunk(&ike->sa.st_dcookie, clone_hunk(cookie, "DDOS cookie"));
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("IKEv2 cookie received", ike->sa.st_dcookie);
 	}

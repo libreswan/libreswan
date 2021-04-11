@@ -4,7 +4,7 @@ west #
 west #
  ipsec pluto --config /tmp/test.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -22,7 +22,7 @@ west #
  # rhbz#1645137 test
 west #
  ipsec addconn --config /tmp/test.conf longike
-002 added IKEv2 connection "longike"
+002 "longike": added IKEv2 connection
 west #
  ipsec whack --shutdown # stop will cause reading /etc/ipsec.conf
 west #
@@ -71,7 +71,4 @@ west #
  echo done
 done
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

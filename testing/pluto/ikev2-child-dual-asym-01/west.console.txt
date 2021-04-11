@@ -2,19 +2,19 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add one
-002 added IKEv2 connection "one"
+002 "one": added IKEv2 connection
 west #
  ipsec auto --add two
-002 added IKEv2 connection "two"
+002 "two": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -23,13 +23,12 @@ west #
 1v2 "one" #1: initiating IKEv2 connection
 1v2 "one" #1: sent IKE_SA_INIT request
 1v2 "one" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "one" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "one" #1: authenticated using authby=secret
+003 "one" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "one" #2: negotiated connection [192.1.2.45-192.1.2.45:6081-6081 17] -> [192.1.2.23-192.1.2.23:0-65535 17]
 004 "one" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up two
-1v2 "two" #3: sent IPsec Child req wait response
+1v2 "two" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "two" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 17] -> [192.1.2.23-192.1.2.23:6081-6081 17]
 004 "two" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
@@ -40,7 +39,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -96,7 +95,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

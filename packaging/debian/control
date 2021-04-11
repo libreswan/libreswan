@@ -9,6 +9,7 @@ Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
 # Rules-Requires-Root: no # breaks jessie
 # libunbound-dev (>= 1.6.5~)  # this is not yet
+# For Ubuntu 14.04 instead of libsystemd-dev, use libsystemd-daemon-dev
 Build-Depends:
  bison,
  bzip2,

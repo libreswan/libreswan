@@ -20,28 +20,44 @@ include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=
 
-SUBDIRS+=pluto
-SUBDIRS+=whack
-SUBDIRS+=addconn
-SUBDIRS+=configs _plutorun _stackmanager
-SUBDIRS+=_secretcensor _updown _unbound-hook
-SUBDIRS+=auto barf verify show ipsec look newhostkey
-SUBDIRS+=rsasigkey setup showhostkey
-SUBDIRS+=readwriteconf
-SUBDIRS+=_import_crl
-SUBDIRS+=algparse
-SUBDIRS+=cavp
-SUBDIRS+=letsencrypt
+# first
+SUBDIRS += pluto
+SUBDIRS += whack
+
+SUBDIRS += _import_crl
+SUBDIRS += _plutorun
+SUBDIRS += _secretcensor
+SUBDIRS += _stackmanager
+SUBDIRS += _unbound-hook
+SUBDIRS += _updown
+SUBDIRS += addconn
+SUBDIRS += algparse
+SUBDIRS += auto
+SUBDIRS += barf
+SUBDIRS += cavp
+SUBDIRS += ecdsasigkey
+SUBDIRS += ipsec
+SUBDIRS += letsencrypt
+SUBDIRS += look
+SUBDIRS += newhostkey
+SUBDIRS += readwriteconf
+SUBDIRS += rsasigkey
+SUBDIRS += setup
+SUBDIRS += show
+SUBDIRS += showhostkey
+SUBDIRS += verify
 
 ifeq ($(USE_PORTEXCLUDES),true)
-SUBDIRS+=portexcludes
+SUBDIRS += portexcludes
 endif
 
 ifeq ($(USE_XFRM),true)
-SUBDIRS+= _updown.xfrm
-endif
-ifeq ($(USE_BSDKAME),true)
-SUBDIRS+=_realsetup.bsd _updown.bsdkame
+SUBDIRS +=  _updown.xfrm
 endif
 
-include $(top_srcdir)/mk/subdirs.mk
+ifeq ($(USE_BSDKAME),true)
+SUBDIRS += _realsetup.bsd
+SUBDIRS += _updown.bsdkame
+endif
+
+include $(top_srcdir)/mk/targets.mk

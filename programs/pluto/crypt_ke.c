@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,7 +41,7 @@
 #include "crypto.h"
 #include "rnd.h"
 #include "state.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "log.h"
 
 #include <nspr.h>
@@ -53,56 +52,103 @@
 #include "test_buffer.h"
 #include "ike_alg.h"
 #include "crypt_dh.h"
+#include "crypt_ke.h"
 
-/* MUST BE THREAD-SAFE */
-void calc_ke(struct pcr_kenonce *kn, struct logger *logger)
+struct task {
+	const struct dh_desc *dh;
+	chunk_t nonce;
+	struct dh_local_secret *local_secret;
+	ke_and_nonce_cb *cb;
+};
+
+static void compute_ke_and_nonce(struct logger *logger,
+				 struct task *task,
+				 int thread_unused UNUSED)
 {
-	const struct dh_desc *group = kn->group;
-
-	kn->secret = calc_dh_secret(kn->group, &kn->gi, logger);
-
-	DBG(DBG_CRYPT,
-	    DBG_log("NSS: Local DH %s secret (pointer): %p",
-		    group->common.fqn, kn->secret);
-	    DBG_dump_hunk("NSS: Public DH wire value:",
-			   kn->gi));
-}
-
-/* MUST BE THREAD-SAFE */
-void calc_nonce(struct pcr_kenonce *kn)
-{
-	kn->n = alloc_chunk(DEFAULT_NONCE_SIZE, "n");
-	get_rnd_bytes(kn->n.ptr, kn->n.len);
-
-	DBG(DBG_CRYPT,
-	    DBG_dump_hunk("Generated nonce:", kn->n));
-}
-
-void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
-{
-	if (kn->secret != NULL) {
-		free_dh_secret(&kn->secret);
+	if (task->dh != NULL) {
+		task->local_secret = calc_dh_local_secret(task->dh, logger);
+		if (DBGP(DBG_CRYPT)) {
+			DBG_log("NSS: Local DH %s secret (pointer): %p",
+				task->dh->common.fqn, task->local_secret);
+		}
 	}
-	free_chunk_content(&kn->n);
-	free_chunk_content(&kn->gi);
+	task->nonce = alloc_chunk(DEFAULT_NONCE_SIZE, "nonce");
+	fill_rnd_chunk(task->nonce);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("Generated nonce:", task->nonce);
+	}
 }
 
-/* Note: not all cn's are the same subtype */
-void request_ke_and_nonce(const char *name,
-			  struct state *st,
-			  const struct dh_desc *group,
-			  crypto_req_cont_func *callback)
+static void cleanup_ke_and_nonce(struct task **task)
 {
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
-	send_crypto_helper_request(st, cn);
+	dh_local_secret_delref(&(*task)->local_secret, HERE);
+	free_chunk_content(&(*task)->nonce);
+	pfreeany(*task);
 }
 
-void request_nonce(const char *name,
-		   struct state *st,
-		   crypto_req_cont_func *callback)
+static stf_status complete_ke_and_nonce(struct state *st,
+					struct msg_digest *md,
+					struct task *task)
 {
-	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
-	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
-	send_crypto_helper_request(st, cn);
+	stf_status status = task->cb(st, md,
+				     task->local_secret,
+				     &task->nonce);
+	return status;
+}
+
+static const struct task_handler ke_and_nonce_handler = {
+	.name = "dh",
+	.cleanup_cb = cleanup_ke_and_nonce,
+	.computer_fn = compute_ke_and_nonce,
+	.completed_cb = complete_ke_and_nonce,
+};
+
+void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
+			 ke_and_nonce_cb *cb, const char *name)
+{
+	struct task *task = alloc_thing(struct task, "dh");
+	task->dh = dh;
+	task->cb = cb;
+	submit_task(st->st_logger, st, task, &ke_and_nonce_handler, name);
+}
+
+/*
+ * Process KE values.
+ */
+void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
+			   chunk_t *g)
+{
+	/*
+	 * Should the crypto helper group and the state group be in
+	 * sync?
+	 *
+	 * Probably not, yet seemingly (IKEv2) code is assuming this.
+	 *
+	 * For instance, with IKEv2, the initial initiator is setting
+	 * st_oakley.group to the draft KE group (and well before
+	 * initial responder has had a chance to agree to any thing).
+	 * Should the initial responder comes back with INVALID_KE
+	 * then st_oakley.group gets changed to match the suggestion
+	 * and things restart; should the initial responder come back
+	 * with an accepted proposal and KE, then the st_oakley.group
+	 * is set based on the accepted proposal (the two are
+	 * checked).
+	 *
+	 * Surely, instead, st_oakley.group should be left alone.  The
+	 * the initial initiator would maintain a list of KE values
+	 * proposed (INVALID_KE flip-flopping can lead to more than
+	 * one) and only set st_oakley.group when the initial
+	 * responder comes back with a vald accepted propsal and KE.
+	 */
+	if (DBGP(DBG_CRYPT)) {
+		const struct dh_desc *group = dh_local_secret_desc(local_secret);
+		DBG_log("wire (crypto helper) group %s and state group %s %s",
+			group->common.fqn,
+			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
+			group == st->st_oakley.ta_dh ? "match" : "differ");
+	}
+
+	replace_chunk(g, clone_dh_local_secret_ke(local_secret));
+	pexpect(st->st_dh_local_secret == NULL);
+	st->st_dh_local_secret = dh_local_secret_addref(local_secret, HERE);
 }

@@ -129,11 +129,11 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 
 		last_sn = node->cert->subjectName;
 		last_error = node->error;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate %s failed %s verification",
 			    node->cert->subjectName, usage);
 		/* ??? we ignore node->depth and node->arg */
-		log_message(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
+		llog(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
 			    nss_err_str(node->error));
 		/*
 		 * XXX: this redundant log message is to keep tests happy -
@@ -144,17 +144,9 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 		 * above with "NSS ERROR: ".
 		 */
 		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-			log_message(RC_LOG_SERIOUS, logger, "certificate revoked!");
+			llog(RC_LOG_SERIOUS, logger, "certificate revoked!");
 		}
 	}
-}
-
-static void new_vfy_log(CERTVerifyLog *log)
-{
-	log->count = 0;
-	log->head = NULL;
-	log->tail = NULL;
-	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
 static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
@@ -254,25 +246,6 @@ static bool verify_end_cert(struct logger *logger,
 		{ certificateUsageSSLServer, "TLS Server" }
 	};
 
-	bool verified = false;	/* more ways to fail than succeed */
-
-	CERTVerifyLog vfy_log;
-
-	enum cvout_param {
-		cvout_errorLog,
-		cvout_end,
-	};
-
-	CERTValOutParam cvout[] = {
-		[cvout_errorLog] = {
-			.type = cert_po_errorLog,
-			.value = { .pointer = { .log = &vfy_log } }
-		},
-		[cvout_end] = {
-			.type = cert_po_end
-		}
-	};
-
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
 		unsigned nr = 0;
@@ -288,47 +261,78 @@ static bool verify_end_cert(struct logger *logger,
 		}
 	}
 
-	for (const struct usage_desc *p = usages; ; p++) {
+	bool keep_trying = true;
+	for (unsigned pi = 0; pi < elemsof(usages) && keep_trying; pi++) {
+		const struct usage_desc *p = &usages[pi];
 		dbg("verify_end_cert trying profile %s", p->usageName);
 
-		new_vfy_log(&vfy_log);
+		/*
+		 * WARNING: cvout[] points at cvout_error_log.  Both vfy_log's
+		 * arena and cvout[1].value.pointer.chan need to be
+		 * freed (and the latter is messy).
+		 */
+		enum cvout_param {
+			cvout_errorLog,
+			cvout_end,
+		};
+		CERTVerifyLog cvout_error_log = {
+			.count = 0,
+			.head = NULL,
+			.tail = NULL,
+			.arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE), /* must-"free" */
+		};
+		CERTValOutParam cvout[] = {
+			[cvout_errorLog] = {
+				.type = cert_po_errorLog,
+				.value = { .pointer = { .log = &cvout_error_log } }
+			},
+			[cvout_end] = {
+				.type = cert_po_end,
+			}
+		};
+
 		SECStatus rv = CERT_PKIXVerifyCert(end_cert, p->usage, cvin, cvout, NULL);
 
 		if (rv == SECSuccess) {
 			/* success! */
-			pexpect(vfy_log.count == 0 && vfy_log.head == NULL);
+			pexpect(cvout_error_log.count == 0 && cvout_error_log.head == NULL);
+			PORT_FreeArena(cvout_error_log.arena, PR_FALSE);
 			dbg("certificate is valid (profile %s)", p->usageName);
-			verified = true;
-			break;
+			return true;
 		}
 
+		/*
+		 * Deal with failure; log; cleanup; and maybe try
+		 * again!
+		 */
 		pexpect(rv == SECFailure);
-
-		/* Failure.  Can we try again? */
+		/* XXX: cvout_error_log.head can be NULL */
 
 		/*
 		 * The (error) log can have more than one entry
 		 * but we only test the first with RETRYABLE_TYPE.
 		 */
-		passert(vfy_log.count > 0 && vfy_log.head != NULL);
-
-		if (p == &usages[elemsof(usages) - 1] ||
-		    !RETRYABLE_TYPE(vfy_log.head->error)) {
+		if (pi == elemsof(usages) - 1) {
+			/* none left */
+			log_bad_cert(logger, "ERROR", p->usageName, cvout_error_log.head);
+			keep_trying = false; /* technically redundant */
+		} else if (cvout_error_log.head != NULL &&
+			   !RETRYABLE_TYPE(cvout_error_log.head->error)) {
 			/* we are a conclusive failure */
-			log_bad_cert(logger, "ERROR", p->usageName, vfy_log.head);
-			break;
+			log_bad_cert(logger, "ERROR", p->usageName, cvout_error_log.head);
+			keep_trying = false;
+		} else {
+			/*
+			 * This usage failed: prepare to repeat for
+			 * the next one.
+			 */
+			log_bad_cert(logger, "warning", p->usageName,  cvout_error_log.head);
 		}
 
-		/* this usage failed: prepare to repeat for the next one */
-
-		log_bad_cert(logger, "warning", p->usageName,  vfy_log.head);
-
-		PORT_FreeArena(vfy_log.arena, PR_FALSE);
+		PORT_FreeArena(cvout_error_log.arena, PR_FALSE);
 	}
 
-	PORT_FreeArena(vfy_log.arena, PR_FALSE);
-
-	return verified;
+	return false;
 }
 
 /*
@@ -409,7 +413,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
 			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "FIPS: Rejecting peer cert with key size %d under %d",
 				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
@@ -450,17 +454,17 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		switch (ike_version) {
 		case IKEv2:
 			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
+			cert_name = enum_name_short(&ikev2_cert_type_names, cert_type);
 			break;
 		case IKEv1:
 			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
+			cert_name = enum_name_short(&ike_cert_type_names, cert_type);
 			break;
 		default:
 			bad_case(ike_version);
 		}
 		if (cert_name == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring certificate with unknown type %d",
 				    cert_type);
 			continue;
@@ -485,12 +489,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "Wrapped PKCS7 certificate payload could not be decoded");
 				continue;
 			}
 			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
-				log_message(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG_SERIOUS, logger,
 					    "Wrapped PKCS7 certificate payload did not contain any certificates");
 				SEC_PKCS7DestroyContentInfo(contents);
 				continue;
@@ -503,7 +507,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		}
 		default:
-			log_message(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring %s certificate payload", cert_name);
 			break;
 		}
@@ -541,7 +545,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	if (root_certs_empty(root_certs)) {
-		log_message(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
+		llog(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
 		return result;
 	}
 
@@ -575,7 +579,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 
 	CERTCertificate *end_cert = make_end_cert_first(&result.cert_chain);
 	if (end_cert == NULL) {
-		log_message(RC_LOG, logger, "X509: no EE-cert in chain!");
+		llog(RC_LOG, logger, "X509: no EE-cert in chain!");
 		release_certs(&result.cert_chain);
 		return result;
 	}
@@ -592,7 +596,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
 		if (rev_opts->crl_strict) {
-			log_message(RC_LOG, logger,
+			llog(RC_LOG, logger,
 				    "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
 			release_certs(&result.cert_chain);
 			result.crl_update_needed = true;
@@ -610,7 +614,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		 * XXX: preserve verify_end_cert()'s behaviour? only
 		 * send this to the file
 		 */
-		log_message(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
+		llog(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
 		release_certs(&result.cert_chain);
 		result.harmless = false;
 		return result;
@@ -626,12 +630,6 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 			       const struct id *id, struct logger *logger)
 {
-	if (id->kind == ID_DER_ASN1_DN) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "cert_VerifySubjectAltName() should not be called for ID_DER_ASN1_DN");
-		return true;
-	}
-
 	/*
 	 * Get a handle on the certificate's subject alt name.
 	 */
@@ -640,7 +638,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf name;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate contains no subjectAltName extension to match %s '%s'",
 			    enum_name(&ike_idtype_names, id->kind),
 			    str_id(id, &name));
@@ -656,7 +654,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
 		id_buf name;
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
 			    enum_name(&ike_idtype_names, id->kind),
 			    str_id(id, &name));
@@ -698,7 +696,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * and an ID_FQDN containing a textual IP address?
 	 */
 	ip_address myip;
-	bool san_ip = (tnatoaddr(raw_id, 0, AF_UNSPEC, &myip) == NULL);
+	bool san_ip = (ttoaddress_num(shunk1(raw_id), NULL/*UNSPEC*/, &myip) == NULL);
 
 	/*
 	 * nameList is a pointer into a non-empty circular linked
@@ -786,7 +784,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
 		jam(buf, "certificate subjectAltName extension does not match ");
 		jam_enum(buf, &ike_idtype_names, id->kind);
 		jam(buf, " '");

@@ -59,20 +59,21 @@ def compile_prompt(logger, username=None, hostname=None):
     prompt = (r'\[' +
               r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
               r'@' +
-              r'(?P<' + HOSTNAME_GROUP + r'>'  + (hostname or HOSTNAME_PATTERN) + r')' +
+              r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or HOSTNAME_PATTERN) + r')' +
               r' ' +
-              r'(?P<' + BASENAME_GROUP + r'>'  + (BASENAME_PATTERN) + ")" +
-              r'(?P<' + STATUS_GROUP + r'>' + (STATUS_PATTERN) + r')' +
+              r'(?P<' + BASENAME_GROUP + r'>' + (BASENAME_PATTERN) + r')' +
+              r'(?P<' + STATUS_GROUP + r'>'   + (STATUS_PATTERN) + r')' +
               r'\]' +
-              r'(?P<' + DOLLAR_GROUP + r'>'  + (dollar or DOLLAR_PATTERN)  + r')' +
+              r'(?P<' + DOLLAR_GROUP + r'>'   + (dollar or DOLLAR_PATTERN)  + r')' +
               r' ')
     logger.debug("prompt '%s'", prompt)
-    return re.compile(prompt)
+    # byte regex
+    return re.compile(prompt.encode())
 
 
 def check_prompt_group(logger, match, expected, field):
     if expected:
-        found = match.group(field)
+        found = match.group(field).decode('utf-8')
         logger.debug("prompt field: '%s' expected: '%s' found: '%s'", field, expected, found)
         if expected != found:
             # Throw TIMEOUT as that is what is expected and what
@@ -124,6 +125,7 @@ class Remote:
     def __init__(self, command, hostname=None, username=None, prefix=""):
         # Need access to HOSTNAME.
         self.logger = logutil.getLogger(prefix, __name__, hostname)
+        self.unicode_output_file = None
         self.basename = None
         self.hostname = hostname
         self.username = username
@@ -133,7 +135,7 @@ class Remote:
         # TIMEOUT seconds; leave searchwindowsize set to the infinte
         # default so that expect patterns do not mysteriously fail.
         self.logger.debug("spawning '%s'", command)
-        self.child = pexpect.spawnu(command, timeout=0)
+        self.child = pexpect.spawn(command, timeout=0)
         #This crashes inside of pexpect!
         #self.logger.debug("child is '%s'", self.child)
         # route low level output to the logger
@@ -150,6 +152,7 @@ class Remote:
         .sendcontrol("]")
 
         """
+        self.logger.info("closing console")
         self.child.close()
 
     def sync(self, hostname=None, username=None, timeout=TIMEOUT):
@@ -166,7 +169,7 @@ class Remote:
         number = str(random.randrange(1000000, 100000000))
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
-        self.expect(sync + r'\s+' + self.prompt.pattern, timeout=timeout)
+        self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
         # Fix the prompt
         self.run("PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
@@ -192,21 +195,31 @@ class Remote:
 
     def chdir(self, directory):
         self.basename = os.path.basename(directory)
-        return self.run("cd %s" % directory)
+        return self.run("cd " + directory)
 
-    def output(self, logfile=None):
-        self.logger.debug("switching output from %s to %s", self.child.logfile, logfile)
-        logfile, self.child.logfile = self.child.logfile, logfile
-        return logfile
+    def redirect_output(self, unicode_file):
+        self.unicode_output_file = unicode_file
+        self.logger.debug("switching output from %s to %s's buffer", self.child.logfile, unicode_file)
+        self.child.logfile = unicode_file and unicode_file.buffer or None
+
+    def append_output(self, unicode_format, *unicode_args):
+        self.unicode_output_file.write(unicode_format % unicode_args)
+        self.unicode_output_file.flush()
+
+    def close_output(self):
+        if self.unicode_output_file:
+            self.logger.info("closing console output");
+            self.unicode_output_file.close()
+            self.child.logfile = None
 
     def sendline(self, line):
         return self.child.sendline(line)
 
     def drain(self):
         self.logger.debug("draining any existing output")
-        if self.expect([r'.+', pexpect.TIMEOUT], timeout=0) == 0:
+        if self.expect([rb'.+', pexpect.TIMEOUT], timeout=0) == 0:
             self.logger.info("discarding '%s' and re-draining", self.child.match)
-            self.expect([r'.+', pexpect.TIMEOUT], timeout=0)
+            self.expect([rb'.+', pexpect.TIMEOUT], timeout=0)
 
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         timer = timing.Lapsed()
@@ -236,7 +249,7 @@ class Remote:
         """
 
         self.logger.debug("expect '%s' and prompt", expect)
-        if self.expect([expect + "\s+" + self.prompt.pattern, self.prompt],
+        if self.expect([expect + rb'\s+' + self.prompt.pattern, self.prompt],
                        timeout=timeout, searchwindowsize=searchwindowsize):
             self.logger.debug("only matched prompt")
             raise pexpect.TIMEOUT("pattern %s not found" % expect)

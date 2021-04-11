@@ -12,6 +12,11 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/config.mk
+
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
 
@@ -26,9 +31,12 @@ OBJS += cavp_print.o
 OBJS += cavp_parser.o
 OBJS += cavp_entry.o
 
+ifeq ($(USE_IKEv1),true)
 OBJS += test_ikev1.o
 OBJS += test_ikev1_psk.o
 OBJS += test_ikev1_dsa.o
+USERLAND_CFLAGS += -DUSE_IKEv1
+endif
 OBJS += test_ikev2.o
 OBJS += test_sha.o
 OBJS += test_hmac.o
@@ -36,28 +44,21 @@ OBJS += test_gcm.o
 
 OBJS += acvp.o
 
-#
-# XXX: For the moment build things by pulling in chunks of pluto.
-# What, if anything, should be moved to libswan or another library?
-#
-CFLAGS += -I$(top_srcdir)/programs/pluto
-PLUTOOBJS += test_buffer.o
-PLUTOOBJS += ikev1_prf.o
-PLUTOOBJS += ikev2_prf.o
-# Need absolute path as 'make' (check dependencies) and 'ld' (do link)
-# are run from different directories.
-OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
-
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
 USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 
-default: check
-.PHONY: check default
+default: local-check
+.PHONY: default
 
-check: test.cavp.ikev2.ok test.cavp.ikev1_dsa.ok test.cavp.ikev1_psk.ok
+ifeq ($(USE_IKEv1),true)
+TESTCHECKS = test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
+else
+TESTCHECKS = test.acvp.ikev2.ok
+endif
+local-check: $(TESTCHECKS)
 
 .PRECIOUS: %.fax
 test.cavp.%.fax: | $(builddir)
@@ -75,8 +76,6 @@ test.cavp.%.out: test.cavp.%.fax $(PROGRAM)
 test.cavp.%.ok: test.cavp.%.out test.cavp.%.fax
 	diff -u $(builddir)/test.cavp.$*.fax $(builddir)/test.cavp.$*.out
 	touch $(builddir)/$@
-
-check: test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
 
 .PRECIOUS: %.out
 test.acvp.%.out: test.acvp.%.run $(PROGRAM)
@@ -97,8 +96,4 @@ clean.cavp:
 	rm -f $(builddir)/*.out
 	rm -f $(builddir)/*.tmp
 
-ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
-else
-include ../../mk/program.mk
-endif

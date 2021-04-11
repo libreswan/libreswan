@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep
 east #
  ip tunnel add test0 mode gre local 192.1.2.23 remote 192.1.2.45
-[ 00.00] gre: GRE over IPv4 demultiplexor driver
-[ 00.00] ip_gre: GRE over IPv4 tunneling driver
 east #
  ip addr add 172.29.1.2/24 dev test0
 east #
@@ -11,19 +9,19 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add test1
 002 "test1": terminating SAs using this connection
-002 added IKEv1 connection "test1"
+002 "test1": added IKEv1 connection
 east #
  ipsec auto --add test2
 002 "test2": terminating SAs using this connection
-002 added IKEv1 connection "test2"
+002 "test2": added IKEv1 connection
 east #
  ipsec auto --add test3
 002 "test3": terminating SAs using this connection
-002 added IKEv1 connection "test3"
+002 "test3": added IKEv1 connection
 east #
  ipsec auto --ready
 002 listening for IKE messages

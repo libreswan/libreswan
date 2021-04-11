@@ -8,26 +8,26 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert-correct
-002 added IKEv1 connection "nss-cert-correct"
+002 "nss-cert-correct": added IKEv1 connection
 east #
  ipsec auto --add nss-cert-wrong
-002 added IKEv1 connection "nss-cert-wrong"
+002 "nss-cert-wrong": added IKEv1 connection
 east #
  ipsec auto --status |grep nss-cert
 000 "nss-cert-correct": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any[@west.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-correct":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "nss-cert-correct":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-correct":   our auth:rsasig, their auth:rsasig
-000 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "nss-cert-correct":   policy_label:unset;
+000 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "nss-cert-correct":   sec_label:unset;
 000 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "nss-cert-correct":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-correct":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "nss-cert-correct":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-correct":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "nss-cert-correct":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-correct":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-correct":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert-correct":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_FQDN; their id=@west.testing.libreswan.org
@@ -37,13 +37,13 @@ east #
 000 "nss-cert-wrong":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "nss-cert-wrong":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-wrong":   our auth:rsasig, their auth:rsasig
-000 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "nss-cert-wrong":   policy_label:unset;
+000 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "nss-cert-wrong":   sec_label:unset;
 000 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
-000 "nss-cert-wrong":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-wrong":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "nss-cert-wrong":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-wrong":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "nss-cert-wrong":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-wrong":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-wrong":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert-wrong":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org
@@ -65,7 +65,4 @@ west-ec                                                      P,,
 nic                                                          P,,  
 otherca                                                      CT,, 
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

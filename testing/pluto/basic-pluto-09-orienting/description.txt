@@ -1,1 +1,6 @@
 Attempt to create test case for https://bugzilla.redhat.com/show_bug.cgi?id=1166146
+
+This is an IKEv1 (but prob also IKEv2) crasher when a floating IP ends up on the other
+end of a re-orienting connection.
+
+See the bugzilla for details

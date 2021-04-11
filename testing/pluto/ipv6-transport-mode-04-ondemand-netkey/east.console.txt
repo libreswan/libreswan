@@ -3,12 +3,12 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
@@ -52,7 +52,6 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-::1 dev lo proto kernel metric 256
 2001:db8:0:1::/64 via 2001:db8:1:2::45 dev eth1
 2001:db8:0:2::/64 dev eth0 proto kernel metric 256
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
@@ -63,7 +62,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

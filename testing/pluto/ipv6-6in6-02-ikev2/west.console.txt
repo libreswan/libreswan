@@ -2,12 +2,8 @@
 west #
  # confirm that the network is alive
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
-64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -20,7 +16,7 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -28,10 +24,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-6in6
-002 added IKEv2 connection "westnet-eastnet-6in6"
+002 "westnet-eastnet-6in6": added IKEv2 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -42,17 +38,12 @@ west #
 1v2 "westnet-eastnet-6in6" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-6in6" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-6in6" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-6in6" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-6in6" #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-6in6" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-6in6" #2: negotiated connection [2001:db8:0:1::-2001:db8:0:1:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0]
 004 "westnet-eastnet-6in6" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
-64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -63,7 +54,4 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-6in6", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, id='@east'
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

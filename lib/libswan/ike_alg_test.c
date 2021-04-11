@@ -25,11 +25,11 @@
 
 #define TEST(TESTER, ALG, TESTS)					\
 	if (!ike_alg_is_valid(&(ALG).common)) {				\
-		log_message(RC_LOG, logger,				\
+		llog(RC_LOG, logger,				\
 			    "skipping tests for disabled %s algorithm", \
 			    (ALG).common.fqn);				\
 	} else {							\
-		log_message(RC_LOG, logger,				\
+		llog(RC_LOG, logger,				\
 			    "testing %s:", (ALG).common.fqn);		\
 		passert(TESTER(&ALG, TESTS, logger));				\
 	}

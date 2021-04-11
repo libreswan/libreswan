@@ -1,0 +1,14 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # connection started due to auto=start
+east #
+ ipsec status |grep STATE_
+000 #6: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #7: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#6; idle;
+east #
+ 

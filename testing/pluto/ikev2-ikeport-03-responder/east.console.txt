@@ -3,12 +3,11 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 adding UDP interface eth1 192.1.2.23:2500
-002 adding interface eth1 192.1.2.23:2500
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -29,9 +28,9 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
-000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto
-000 ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
+000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
+000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -104,12 +103,12 @@ east #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-ikev2":   policy_label:unset;
-000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet-ikev2":   sec_label:unset;
+000 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -129,7 +128,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -165,7 +164,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

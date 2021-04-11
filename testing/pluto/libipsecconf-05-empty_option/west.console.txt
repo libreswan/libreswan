@@ -3,16 +3,16 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --add first
-002 added IKEv1 connection "first"
+002 "first": added IKEv1 connection
 west #
  ipsec auto --add second
-002 added IKEv1 connection "second"
+002 "second": added IKEv1 connection
 west #
  # conn second should inherit the conn %default values with 3des-md5
 west #

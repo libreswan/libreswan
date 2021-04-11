@@ -7,18 +7,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-base
-002 added IKEv2 connection "ikev2-base"
+002 "ikev2-base": added IKEv2 connection
 east #
  ipsec auto --add ikev2-esp=aes-sha1-modp1536
-002 added IKEv2 connection "ikev2-esp=aes-sha1-modp1536"
+002 "ikev2-esp=aes-sha1-modp1536": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

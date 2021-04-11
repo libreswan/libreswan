@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-eastnet
-002 added IKEv2 connection "road-eastnet"
+002 "road-eastnet": added IKEv2 connection
 east #
  ipsec status |grep encaps:
 000 "road-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
@@ -20,7 +20,4 @@ east #
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

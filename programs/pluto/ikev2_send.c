@@ -94,17 +94,20 @@ void record_v2_message(struct ike_sa *ike,
 bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
 		    struct pbs_out *outs)
 {
-	log_pbs_out(RC_LOG, outs,
-		    "IMPAIR: adding an unknown%s payload of type %d to %s %s",
-		    impair.unknown_v2_payload_critical ? " critical" : "",
-		    ikev2_unknown_payload_desc.pt,
-		    enum_short_name(&ikev2_exchange_names, exchange_type),
-		    victim);
+	diag_t d;
+	llog(RC_LOG, outs->outs_logger,
+	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
+	     impair.unknown_v2_payload_critical ? " critical" : "",
+	     ikev2_unknown_payload_desc.pt,
+	     enum_name_short(&ikev2_exchange_names, exchange_type),
+	     victim);
 	struct ikev2_generic gen = {
-		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical),
+		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_unknown_payload_desc, &pbs)) {
+	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -119,14 +122,19 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
  */
 bool emit_v2V(const char *string, pb_stream *outs)
 {
+	diag_t d;
 	struct ikev2_generic gen = {
 		.isag_np = 0,
 	};
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &gen, sizeof(gen), &ikev2_vendor_id_desc, &pbs)) {
+	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
-	if (!out_raw(string, strlen(string), &pbs, string)) {
+	d = pbs_out_raw(&pbs, string, strlen(string), string);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	close_output_pbs(&pbs);
@@ -160,10 +168,10 @@ bool emit_v2V(const char *string, pb_stream *outs)
 
 /* emit a v2 Notification payload, with optional SA and optional sub-payload */
 bool emit_v2Nsa_pl(v2_notification_t ntype,
-		enum ikev2_sec_proto_id protoid,
-		const ipsec_spi_t *spi, /* optional */
-		pb_stream *outs,
-		pb_stream *payload_pbs /* optional */)
+		   enum ikev2_sec_proto_id protoid,
+		   const ipsec_spi_t *spi, /* optional */
+		   struct pbs_out *outs,
+		   struct pbs_out *payload_pbs /* optional */)
 {
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
@@ -186,17 +194,22 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	dbg("adding a v2N Payload");
 
 	struct ikev2_notify n = {
-		.isan_critical = build_ikev2_critical(false),
+		.isan_critical = build_ikev2_critical(false, outs->outs_logger),
 		.isan_protoid = protoid,
 		.isan_spisize = spi != NULL ? sizeof(*spi) : 0,
 		.isan_type = ntype,
 	};
 
-	pb_stream pls;
+	struct pbs_out pls;
 
-	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls) ||
-	    (spi != NULL && !out_raw(spi, sizeof(*spi), &pls, "SPI"))) {
+	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls))
 		return false;
+	if (spi != NULL) {
+		diag_t d = pbs_out_raw(&pls, spi, sizeof(*spi), "SPI");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+			return false;
+		}
 	}
 
 	if (payload_pbs == NULL)
@@ -224,8 +237,9 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	/* for some reason out_raw() doesn't like size==0 */
-	if (size > 0 && !out_raw(bytes, size, &pl, "Notify data")) {
+	diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -246,7 +260,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	pb_stream n_pbs;
 
 	if (!emit_v2Npl(v2N_SIGNATURE_HASH_ALGORITHMS, outs, &n_pbs)) {
-		libreswan_log("error initializing notify payload for notify message");
+		llog(RC_LOG, outs->outs_logger, "error initializing notify payload for notify message");
 		return false;
 	}
 
@@ -254,8 +268,10 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 	if (sighash_policy & POLICY) {					\
 		uint16_t hash_id = htons(ID);				\
 		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		if (!out_raw(&hash_id, sizeof(hash_id), &n_pbs,		\
-			     "hash algorithm identifier "#ID)) {	\
+		diag_t d = pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id), \
+				       "hash algorithm identifier "#ID);\
+		if (d != NULL) {					\
+			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", ""); \
 			return false;					\
 		}							\
 	}
@@ -323,7 +339,7 @@ static bool open_response(struct response *response,
 					 md /* response */,
 					 md->hdr.isa_xchg/* same exchange type */);
 	if (!pbs_ok(&response->body)) {
-		log_message(RC_LOG, response->logger,
+		llog(RC_LOG, response->logger,
 			    "error initializing hdr for encrypted notification");
 		return false;
 	}
@@ -366,7 +382,7 @@ static bool close_response(struct response *response)
 		close_output_pbs(&response->message);
 		stf_status ret = encrypt_v2SK_payload(&response->sk);
 		if (ret != STF_OK) {
-			log_message(RC_LOG, response->logger,
+			llog(RC_LOG, response->logger,
 				    "error encrypting response");
 			return false;
 		}
@@ -387,20 +403,20 @@ static bool emit_v2N_spi_response(struct response *response,
 				  v2_notification_t ntype,
 				  const chunk_t *ndata /* optional */)
 {
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *const exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 
 	/*
 	 * XXX: this will prefix with cur_state.  For this code path
 	 * is it ever different to the IKE SA?
 	 */
 	endpoint_buf b;
-	log_message(RC_NOTIFICATION+ntype, response->logger,
+	llog(RC_NOTIFICATION+ntype, response->logger,
 		    "responding to %s message (ID %u) from %s with %s notification %s",
 		    exchange_name, md->hdr.isa_msgid,
-		    str_sensitive_endpoint(&ike->sa.st_remote_endpoint, &b),
+		    str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 		    response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
 		    notify_name);
 
@@ -438,7 +454,7 @@ static bool emit_v2N_spi_response(struct response *response,
 
 	pb_stream n_pbs;
 	if (!emit_v2Nsa_pl(ntype, protoid, spi, response->pbs, &n_pbs) ||
-	    (ndata != NULL && !pbs_out_hunk(*ndata, &n_pbs, "Notify data"))) {
+	    (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data"))) {
 		return false;
 	}
 
@@ -495,11 +511,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 {
 	passert(md != NULL); /* always a response */
 
-	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 	passert(notify_name != NULL); /* must be known */
 
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
-	const char *exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const char *exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 	if (exchange_name == NULL) {
 		/* when responding to crud, name may not be known */
 		exchange_name = "UNKNOWN";
@@ -507,11 +523,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	log_md(RC_LOG, md,
-	       "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-	       exchange_name, exchange_type,
-	       md->hdr.isa_msgid,
-	       notify_name);
+	llog(RC_LOG, md->md_logger,
+	     "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
+	     exchange_name, exchange_type,
+	     md->hdr.isa_msgid,
+	     notify_name);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -557,8 +573,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying) so it is not saved.
 	 */
-	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
-		   same_out_pbs_as_chunk(&reply));
+	send_pbs_out_using_md(md, "v2 notify", &reply);
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }
@@ -627,12 +642,12 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
 	}
 }
 
-void free_v2_incomming_fragments(struct v2_incomming_fragments **frags)
+void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 {
 	if (*frags != NULL) {
 		for (unsigned i = 0; i < elemsof((*frags)->frags); i++) {
-			struct v2_incomming_fragment *frag = &(*frags)->frags[i];
-			free_chunk_content(&frag->cipher);
+			struct v2_incoming_fragment *frag = &(*frags)->frags[i];
+			free_chunk_content(&frag->text);
 		}
 		pfree(*frags);
 		*frags = NULL;
@@ -644,6 +659,6 @@ void free_v2_message_queues(struct state *st)
 	for (enum message_role message = MESSAGE_ROLE_FLOOR;
 	     message < MESSAGE_ROLE_ROOF; message++) {
 		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
-		free_v2_incomming_fragments(&st->st_v2_incomming[message]);
+		free_v2_incoming_fragments(&st->st_v2_incoming[message]);
 	}
 }

@@ -4,7 +4,7 @@ west #
 west #
  ipsec initnss > /dev/null 2> /dev/null
 west #
- pk12util -i /testing/x509/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
@@ -12,13 +12,13 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add x509
-002 added IKEv2 connection "x509"
+002 "x509": added IKEv2 connection
 west #
  ipsec auto --add x509-comma-comma
-002 added IKEv2 connection "x509-comma-comma"
+002 "x509-comma-comma": added IKEv2 connection
 west #
  # show both conns are interpreted with \,
 west #
@@ -43,9 +43,7 @@ west #
 1v2 "x509" #1: initiating IKEv2 connection
 1v2 "x509" #1: sent IKE_SA_INIT request
 1v2 "x509" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "x509" #1: certificate verified OK: C=CZ,ST=Moravia,L=Brno,O=Test Example,OU="Global, Support, Services",CN=server
-002 "x509" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ'
-003 "x509" #1: authenticated using RSA with SHA2_512
+003 "x509" #1: authenticated using RSA with SHA2_512 and peer certificate 'CN=server, OU=Global\, Support\, Services, O=Test Example, L=Brno, ST=Moravia, C=CZ' issued by CA 'CN=cacert'
 002 "x509" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #

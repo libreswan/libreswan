@@ -3,10 +3,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-northnet-ipv4-psk
-002 added IKEv1 connection "westnet-northnet-ipv4-psk"
+002 "westnet-northnet-ipv4-psk": added IKEv1 connection
 west #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -26,9 +26,9 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
-000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto
-000 ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
+000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
+000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -99,12 +99,12 @@ west #
 000 "westnet-northnet-ipv4-psk":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-northnet-ipv4-psk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-northnet-ipv4-psk":   our auth:secret, their auth:secret
-000 "westnet-northnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-northnet-ipv4-psk":   policy_label:unset;
-000 "westnet-northnet-ipv4-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-northnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-northnet-ipv4-psk":   sec_label:unset;
+000 "westnet-northnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-northnet-ipv4-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-northnet-ipv4-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-northnet-ipv4-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-northnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -134,16 +134,12 @@ west #
 1v1 "westnet-northnet-ipv4-psk" #1: sent Main Mode I3
 002 "westnet-northnet-ipv4-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-northnet-ipv4-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-northnet-ipv4-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-northnet-ipv4-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-northnet-ipv4-psk" #2: sent Quick Mode request
 004 "westnet-northnet-ipv4-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
- ping -n -c 4  -I 192.0.1.254 192.0.3.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.3.254
 PING 192.0.3.254 (192.0.3.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.3.254: icmp_seq=1 ttl=63 time=0.XXX ms
-64 bytes from 192.0.3.254: icmp_seq=2 ttl=63 time=0.XXX ms
-64 bytes from 192.0.3.254: icmp_seq=3 ttl=63 time=0.XXX ms
-64 bytes from 192.0.3.254: icmp_seq=4 ttl=63 time=0.XXX ms
 --- 192.0.3.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -154,7 +150,7 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -192,7 +188,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

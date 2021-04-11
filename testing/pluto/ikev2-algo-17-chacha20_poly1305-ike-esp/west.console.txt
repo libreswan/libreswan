@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-chacha
+002 "westnet-eastnet-chacha": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-chacha
+1v2 "westnet-eastnet-chacha" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-chacha" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-chacha" #1: sent IKE_AUTH request {auth=IKEv2 cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
+003 "westnet-eastnet-chacha" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+002 "westnet-eastnet-chacha" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-chacha" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-chacha", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+west #
+ echo done
+done
+west #
+ 

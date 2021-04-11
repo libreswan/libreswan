@@ -2,12 +2,8 @@
 west #
  # confirm that the network is alive
 west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -20,12 +16,8 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -33,10 +25,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add v6-transport
-002 added IKEv1 connection "v6-transport"
+002 "v6-transport": added IKEv1 connection
 west #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -59,9 +51,9 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
-000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto
-000 ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
+000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
+000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -132,12 +124,12 @@ west #
 000 "v6-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "v6-transport":   our auth:rsasig, their auth:rsasig
-000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "v6-transport":   policy_label:unset;
-000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "v6-transport":   sec_label:unset;
+000 "v6-transport":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "v6-transport":   policy: IKEv1+RSASIG+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "v6-transport":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-transport":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -162,23 +154,19 @@ west #
 1v1 "v6-transport" #1: sent Main Mode I2
 1v1 "v6-transport" #1: sent Main Mode I3
 002 "v6-transport" #1: Peer ID is ID_FQDN: '@east'
-003 "v6-transport" #1: authenticated using RSA with SHA-1
+003 "v6-transport" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "v6-transport" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "v6-transport" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "v6-transport" #2: sent Quick Mode request
 004 "v6-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
@@ -222,7 +210,6 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-::1 dev lo proto kernel metric 256
 2001:db8:0:1::/64 dev eth0 proto kernel metric 256
 2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
@@ -236,7 +223,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
@@ -280,7 +267,6 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-::1 dev lo proto kernel metric 256
 2001:db8:0:1::/64 dev eth0 proto kernel metric 256
 2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
@@ -291,7 +277,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

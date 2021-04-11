@@ -1,0 +1,16 @@
+---
+- name: Ensure that the role declares all parameters in defaults
+  hosts: all
+
+  tasks:
+    - block:
+        - include_role:
+            name: linux-system-roles.vpn
+            public: true
+        - assert:
+            that: "{{ item }} is defined"
+          loop:
+            - vpn_provider
+            - vpn_auth_method
+            - vpn_regen_keys
+            - vpn_connections

@@ -2,16 +2,16 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -22,9 +22,9 @@ west #
 1v1 "west-east" #1: sent Main Mode I2
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: authenticated using RSA with SHA-1
+003 "west-east" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -49,7 +49,7 @@ west #
 002 "west-east" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
+002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  sleep 30
 west #
@@ -58,7 +58,4 @@ done
 west #
  ipsec whack --shutdown
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

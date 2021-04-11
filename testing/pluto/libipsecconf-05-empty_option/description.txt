@@ -1,2 +1,51 @@
-This tests for a bug where an empty option is accepted on a non-last connection,
-and fails on a last connection.
+This tests for a bug with an empty option
+
+The empty option is accepted / ignored when at the end of the last
+connection but fails when at the end of the non-last connection.
+
+But which is correct?
+
+The problem is with the rule:
+
+-	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
+
+combined with the default flex rule.
+
+Things work for:
+
+    KEYWORD(rightsubnet) EQUAL(=) EOL EOF
+    
+but breaks when:
+
+    KEYWORD(rightsubnet) EQUAL(=) EOL conn EOF
+
+(%option debug added) Notice how EOL is consumed by the %option
+default rule and then STRING consumes "conn"
+
+Reading a token: --accepting rule at line 406 ("        ")
+Next token is token FIRST_SPACES ()
+Shifting token FIRST_SPACES ()
+Entering state 29
+Reading a token: --accepting rule at line 537 ("rightsubnet")
+STR/KEY: rightsubnet
+Next token is token KEYWORD ()
+Shifting token KEYWORD ()
+Entering state 32
+Reading a token: --accepting rule at line 525 ("=")
+Next token is token EQUAL ()
+Shifting token EQUAL ()
+Entering state 38
+Reading a token: --accepting default rule ("
+")
+--accepting default rule ("
+")
+--accepting rule at line 504 ("conn")
+STRING(with-out-quotes-or-whitespace): conn
+Next token is token STRING ()
+Shifting token STRING ()
+Entering state 44
+Reducing stack by rule 20 (line 212):
+   $1 = token KEYWORD ()
+   $2 = token EQUAL ()
+   $3 = token STRING ()
+-> $$ = nterm statement_kw ()

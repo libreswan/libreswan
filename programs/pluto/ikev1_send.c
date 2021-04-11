@@ -162,7 +162,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
 	 *        && st->st_seen_fragmentation_supported)
 	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
-	 *     || st->st_seen_fragments))
+	 *     || st->st_v1_seen_fragments))
 	 *
 	 * ??? the following test does not account for natt_bonus
 	 */
@@ -171,7 +171,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 			st->st_seen_fragmentation_supported) ||
 		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-		st->st_seen_fragments   );
+		st->st_v1_seen_fragments   );
 }
 
 static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
@@ -179,12 +179,12 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 						 bool resending)
 {
 	if (st->st_interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
+		log_state(RC_LOG, st, "Cannot send packet - interface vanished!");
 		return FALSE;
 	}
 	/* another bandaid */
 	if (st->st_v1_tpacket.ptr == NULL) {
-		libreswan_log("Cannot send packet - st_v1_tpacket.ptr is NULL");
+		log_state(RC_LOG, st, "Cannot send packet - st_v1_tpacket.ptr is NULL");
 		return false;
 	}
 
@@ -238,8 +238,7 @@ void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *wh
 {
 	passert(pbs_offset(pbs) != 0);
 	free_v1_message_queues(st);
-	free_chunk_content(&st->st_v1_tpacket);
-	st->st_v1_tpacket = clone_out_pbs_as_chunk(pbs, what);
+	replace_chunk(&st->st_v1_tpacket, clone_out_pbs_as_chunk(pbs, what));
 	st->st_last_liveness = mononow();
 }
 

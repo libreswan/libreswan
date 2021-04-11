@@ -50,7 +50,7 @@
       <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
       <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
       <arg choice="opt">--force-busy</arg>
-      <arg choice="opt">--strictcrlpolicy</arg>
+      <arg choice="opt">--crl-strict</arg>
       <arg choice="opt">--crlcheckinterval</arg>
       <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
       <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
@@ -60,8 +60,6 @@
       <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
       <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
-      <arg choice="opt">--perpeerlog</arg>
-      <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--nssdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
@@ -442,6 +440,24 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
+      <arg choice="plain">--global-redirect
+      <replaceable>yes|no|auto</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--global-redirect-to
+      <replaceable>ip-address(es)</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
       <arg choice="opt">
 	--name
 	<replaceable>connection-name</replaceable>
@@ -451,7 +467,7 @@
       <replaceable>ip-address(es)</replaceable></arg>
 
     </cmdsynopsis>
-    
+
     <cmdsynopsis>
       <command>ipsec</command>
 
@@ -468,6 +484,16 @@
 
       <arg choice="plain">--oppothere
       <replaceable>ip-address</replaceable></arg>
+
+      <arg choice="plain">--opposport
+      <replaceable>port</replaceable></arg>
+
+      <arg choice="plain">--oppodport
+      <replaceable>port</replaceable></arg>
+
+      <arg choice="plain">--oppoproto
+      <replaceable>protocol</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -630,6 +656,7 @@
       <arg choice="plain">--trafficstatus</arg>
       <arg choice="plain">--shuntstatus</arg>
       <arg choice="plain">--addresspoolstatus</arg>
+      <arg choice="plain">--processstatus</arg>
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
@@ -672,8 +699,8 @@
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
-
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
+      <arg choice="opt">--leave-state</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -690,10 +717,9 @@
     protocol. In other words, <emphasis remap="B">pluto</emphasis> can
     eliminate much of the work of manual keying. The actual secure
     transmission of packets is the responsibility of other parts of the system
-    - the kernel. Pluto can talk to various kernel implementations, such as
-    <emphasis remap="B">KLIPS</emphasis>, such as <emphasis
-    remap="B">XFRM/NETKEY</emphasis>, and such as <emphasis
-    remap="B">KAME</emphasis> IPsec stacks. <citerefentry>
+    - the kernel. Pluto can talk to various kernel implementations, such as the Linux
+    <emphasis remap="B">XFRM</emphasis> and BSD <emphasis remap="B">KAME</emphasis>
+    IPsec stacks. <citerefentry>
         <refentrytitle>ipsec_auto</refentrytitle>
 
         <manvolnum>8</manvolnum>
@@ -760,15 +786,12 @@
 
       <para><emphasis remap="B">pluto</emphasis> is an implementation of IKE.
       It runs as a daemon on a network node. Currently, this network node must
-      be a LINUX system running the <emphasis remap="B">KLIPS</emphasis> or
-      <emphasis remap="B">XFRM/NETKEY</emphasis> implementation of IPsec, or a
-      FreeBSD/NetBSD/Mac OSX system running the <emphasis
-      remap="B">KAME</emphasis> implementation of IPsec.</para>
+      be a Linux system running the <emphasis remap="B">XFRM</emphasis> IPsec
+      stack, or a FreeBSD/NetBSD/Mac OSX system running the <emphasis
+      remap="B">KAME</emphasis> IPsec stack.</para>
 
       <para><emphasis remap="B">pluto</emphasis> implements a large subset of
-      IKE. This is enough for it to interoperate with other instances of
-      <emphasis remap="B">pluto</emphasis>, and many other IKE
-      implementations.</para>
+      IKEv1 and IKEv2.</para>
 
       <para>The policy for acceptable characteristics for Security
       Associations is mostly hardwired into the code of <emphasis
@@ -784,8 +807,7 @@
       <para><emphasis remap="B">pluto</emphasis> initiates negotiation of a
       Security Association when it is manually prodded: the program <emphasis
       remap="B">whack</emphasis> is run to trigger this. It will also initiate
-      a negotiation when <emphasis remap="B">KLIPS</emphasis> traps an
-      outbound packet for Opportunistic Encryption.</para>
+      a negotiation when IPsec traps an outbound packet for Opportunistic Encryption.</para>
 
       <para><emphasis remap="B">pluto</emphasis> implements ISAKMP SAs itself.
       After it has negotiated the characteristics of an IPsec SA, it directs
@@ -816,12 +838,7 @@
       configured (the <option>--interface</option> option can be used to limit
       the interfaces considered). It does this only when <emphasis
       remap="B">whack</emphasis> tells it to --listen, so the interfaces must
-      be configured by then. Each interface with a name of the form
-      <command>ipsec</command>[<literal>0</literal>-<literal>9</literal>] is
-      taken as a <emphasis remap="B">KLIPS</emphasis> virtual public
-      interface. Another network interface with the same IP address (the first
-      one found will be used) is taken as the corresponding real public
-      interface. The <option>--listen</option> can be used to limit listening on
+      be configured by then. The <option>--listen</option> can be used to limit listening on
       only 1 IP address of a certain interface. <citerefentry>
           <refentrytitle>ifconfig</refentrytitle>
 
@@ -846,56 +863,11 @@
       Domain Name System.</para>
     </refsect2>
 
-    <refsect2 id="setting_up_klips_for_pluto">
-      <title>Setting up <emphasis remap="B">KLIPS</emphasis> for <emphasis
-      remap="B">pluto</emphasis></title>
-
-      <para>The most basic network topology that <emphasis
-      remap="B">pluto</emphasis> supports has two security gateways
-      negotiating on behalf of client subnets. The diagram of RGB's testbed is
-      a good example (see <emphasis
-      remap="I">klips/doc/rgb_setup.txt</emphasis>).</para>
-
-      <para>The file <filename>INSTALL</filename> in the base directory of
-      this distribution explains how to start setting up the whole system,
-      including <emphasis remap="B">KLIPS</emphasis>.</para>
-
-      <para>Make sure that the security gateways have routes to each other.
-      This is usually covered by the default route, but may require issuing
-      <citerefentry>
-          <refentrytitle>route</refentrytitle>
-
-          <manvolnum>8</manvolnum>
-        </citerefentry> commands. The route must go through a particular IP
-      interface (we will assume it is <emphasis remap="I">eth0</emphasis>, but
-      it need not be). The interface that connects the security gateway to its
-      client must be a different one.</para>
-
-      <para>It is necessary to issue a <citerefentry>
-          <refentrytitle>ipsec_tncfg</refentrytitle>
-
-          <manvolnum>8</manvolnum>
-        </citerefentry> command on each gateway. The required command
-      is:</para>
-
-      <para>&nbsp;&nbsp;&nbsp;ipsec tncfg --attach&nbsp;--virtual&nbsp;ipsec0
-      --physical&nbsp;eth0</para>
-
-      <para>A command to set up the ipsec0 virtual interface will also need to
-      be run. It will have the same parameters as the command used to set up
-      the physical interface to which it has just been connected using
-      <citerefentry>
-          <refentrytitle>ipsec_tncfg</refentrytitle>
-
-          <manvolnum>8</manvolnum>
-        </citerefentry>.</para>
-    </refsect2>
-
     <refsect2 id="setting_up_netkey_for_pluto">
-      <title>Setting up <emphasis remap="B">XFRM/NETKEY</emphasis> for <emphasis
+      <title>Setting up <emphasis remap="B">XFRM</emphasis> for <emphasis
       remap="B">pluto</emphasis></title>
 
-      <para>No special requirements are necessary to use XFRM/NETKEY - it ships
+      <para>No special requirements are necessary to use XFRM - it ships
       with all modern versions of Linux 2.4 and later.
       </para>
     </refsect2>
@@ -970,7 +942,7 @@
       The first attempt to update a CRL is started at <emphasis
       remap="I">2*crlcheckinterval</emphasis> before the next update time.
       Pluto logs a warning if no valid CRL was loaded or obtained for a
-      connection. If <option>--strictcrlpolicy</option> is given, the
+      connection. If <option>--crl-strict</option> is given, the
       connection will be rejected until a valid CRL has been loaded.
       </para>
 
@@ -1025,14 +997,6 @@
       <para>Alternatively, <option>--logfile</option> can be used to send all logging
       information to a specific file.</para>
 
-      <para>If the <option>--perpeerlog</option> option is given, then pluto
-      will open a log file per connection. By default, this is in
-      /var/log/pluto/peer, in a subdirectory formed by turning all dot (.)
-      [IPv4] or colon (:) [IPv6] into slashes (/).</para>
-
-      <para>The base directory can be changed with the
-      <option>--perpeerlogbase</option>.</para>
-
       <para>Once <emphasis remap="B">pluto</emphasis> is started, it waits for
       requests from <emphasis remap="B">whack</emphasis>.</para>
     </refsect2>
@@ -1051,7 +1015,7 @@
 
       <para>Pluto supports X.509 Certificates. All certificate handling is done using
       the NSS library and all certificate material is stored in an NSS database in
-      @IPSEC_NSSDIR@ or another directory as specified by <option>--ipsecdir</option>.</para>
+      @IPSEC_NSSDIR@ or another directory as specified by <option>--nssdir</option>.</para>
 
       <para>Pluto may core dump. It will normally do so into the current
       working directory. You can specify the --coredir option for pluto, or
@@ -1094,15 +1058,7 @@
       connection. Often there is one representing an ISAKMP SA and another
       representing an IPsec SA.</para>
 
-      <para><emphasis remap="B">KLIPS</emphasis> hooks into the routing code
-      in a LINUX kernel. Traffic to be processed by an IPsec SA must be
-      directed through <emphasis remap="B">KLIPS</emphasis> by routing
-      commands. Furthermore, the processing to be done is specified by
-      <emphasis remap="I">ipsec eroute(8)</emphasis> commands. <emphasis
-      remap="B">pluto</emphasis> takes the responsibility of managing both of
-      these special kinds of routes.</para>
-
-      <para><emphasis remap="B">XFRM/NETKEY</emphasis> requires no special
+      <para><emphasis remap="B">XFRM</emphasis> requires no special
       routing.</para>
 
       <para>Each connection may be routed, and must be while it has an IPsec
@@ -1112,11 +1068,6 @@
       are for the same peer's client subnet but use different interfaces or
       gateways (<emphasis remap="B">pluto</emphasis>'s logic does not reflect
       any advanced routing capabilities).</para>
-
-      <para>On KLIPS, each eroute is associated with the state object for an
-      IPsec SA because it has the particular characteristics of the SA. Two
-      eroutes conflict if they specify the identical local and remote clients
-      (unlike for routes, the local clients are taken into account).</para>
 
       <para>When <emphasis remap="B">pluto</emphasis> needs to install a route
       for a connection, it must make sure that no conflicting route is in use.
@@ -1143,10 +1094,6 @@
       connection already has an eroute, all its outgoing traffic is taken over
       by the new eroute. The incoming traffic will still be processed. This
       characteristic is exploited during rekeying.</para>
-
-      <para>All of these routing characteristics are expected change when
-      <emphasis remap="B">KLIPS</emphasis> and <emphasis
-      remap="B">XFRM/NETKEY</emphasis> merge into a single new stack.</para>
     </refsect2>
 
     <refsect2 id="using_whack">
@@ -1675,9 +1622,7 @@
           <term><option>--compress</option></term>
 
           <listitem>
-            <para>All proposed IPsec SAs will include IPCOMP (compression).
-            This will be ignored if KLIPS is not configured with IPCOMP
-            support.</para>
+            <para>All proposed IPsec SAs will include IPCOMP (compression). </para>
           </listitem>
         </varlistentry>
 
@@ -2228,8 +2173,10 @@
         </varlistentry>
       </variablelist>
 
-      <para>The opportunistic initiate form is mainly used for
-      debugging.</para>
+      <para>
+	The opportunistic initiate form is mainly used for
+	debugging.
+      </para>
 
       <variablelist remap="TP">
         <varlistentry>
@@ -2237,17 +2184,39 @@
 
           <term><option>--tunnelipv6</option></term>
 
-          <term><option>--oppohere</option>&nbsp;<emphasis
-          remap="I">ip-address</emphasis></term>
+          <term>
+	    <option>--oppohere</option>&nbsp;
+	    <emphasis remap="I">ip-address</emphasis>
+	  </term>
 
-          <term><option>--oppothere</option>&nbsp;<emphasis
-          remap="I">ip-address</emphasis></term>
+          <term>
+	    <option>--oppothere</option>&nbsp;
+	    <emphasis remap="I">ip-address</emphasis>
+	  </term>
+
+          <term>
+	    <option>--opposport</option>&nbsp;
+	    <emphasis remap="I">port</emphasis>
+	  </term>
+
+          <term>
+	    <option>--oppodport</option>&nbsp;
+	    <emphasis remap="I">port</emphasis>
+	  </term>
+
+          <term>
+	    <option>--oppoproto</option>&nbsp;
+	    <emphasis remap="I">protocol</emphasis>
+	  </term>
 
           <listitem>
-            <para>This will cause <emphasis remap="B">pluto</emphasis> to
-            attempt to opportunistically initiate a connection from here to
-            the there, even if a previous attempt had been made. The whack log
-            will show the progress of this attempt.</para>
+            <para>
+	      This will cause <emphasis remap="B">pluto</emphasis> to
+	      attempt to opportunistically initiate a connection from
+	      here to the there, even if a previous attempt had been
+	      made. The whack log will show the progress of this
+	      attempt.
+	    </para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -2330,30 +2299,47 @@
         </varlistentry>
       </variablelist>
 
-      <para>Redirecting active clients can be done using IKEv2 redirect
-      mechanism.</para>
+      <para>Redirecting clients can be done using IKEv2 redirect mechanism.</para>
 
       <variablelist remap="TP">
         <varlistentry>
-          <term><option>--name</option>&nbsp;<emphasis
-          remap="i">connection_name</emphasis></term>
+          <term><option>--global-redirect</option>&nbsp;<emphasis
+          remap="i">yes|no|auto</emphasis></term>
 
-	  <listitem>
-	    <para>Specifying this is optional. If not specified
-	    the mechanism will redirect all currently active peers.
-	    If specified, only the peers from connection <emphasis
-	    remap="i">connection_name</emphasis> will be redirected.
-            </para>
+          <listitem>
+            <para>The --global-redirect option controls whether <emphasis
+            remap="b">pluto</emphasis> will instruct remote peers to redirect
+            IKE/IPsec SA's during IKE_SA_INIT. Valid options are <emphasis
+            remap="b">no</emphasis>, <emphasis remap="b">yes</emphasis> and
+            <emphasis remap="b">auto</emphasis>, where auto means remote peers
+            will be redirected if DDoS mode is active.</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
+          <term><option>--global-redirect-to</option>&nbsp;<emphasis
+          remap="i">ip-address(es)</emphasis></term>
+
+          <listitem>
+            <para>The destination, or a list of destinations, where the peers will
+            be redirected.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--name</option>&nbsp;<emphasis
+          remap="i">connection_name</emphasis></term>
+
           <term><option>--redirect-to</option>&nbsp;<emphasis
           remap="i">ip-address(es)</emphasis></term>
 
-	  <listitem>
-	    <para>A destination, or a list of destination, where
-	    the peers will be redirected.
+          <listitem>
+            <para>The destination, or a list of destinations, where the peers will
+            be redirected.
+            Specifying the connection name is optional. If not specified
+            the mechanism will redirect all currently active peers.
+            If specified, only the peers from connection <emphasis
+            remap="i">connection_name</emphasis> will be redirected.
             </para>
           </listitem>
         </varlistentry>
@@ -2513,8 +2499,10 @@
 
       <para>The shutdown form is the proper way to shut down <emphasis
       remap="B">pluto</emphasis>. It will tear down the SAs on this machine
-      that <emphasis remap="B">pluto</emphasis> has negotiated. It does not
-      inform its peers, so the SAs on their machines remain.</para>
+      that <emphasis remap="B">pluto</emphasis> has negotiated. If the
+      <emphasis remap="B">--leave-state</emphasis> option is given, it does not
+      delete any connections, and leaves the kernel state in the kernel. Note that
+      the init system used might clean up the kernel state regardless.</para>
 
       <variablelist remap="TP">
         <varlistentry>
@@ -3374,12 +3362,6 @@
     <refsect2 id="notes">
       <title>Notes</title>
 
-      <para>If <emphasis remap="B">pluto</emphasis> is compiled without
-      -DKLIPS, it negotiates Security Associations but never ask the kernel to
-      put them in place and never makes routing changes. This allows <emphasis
-      remap="B">pluto</emphasis> to be tested on systems without <emphasis
-      remap="B">KLIPS</emphasis>, but makes it rather useless.</para>
-
       <para>Each IPsec SA is assigned an SPI, a 32-bit number used to refer to
       the SA. The IKE protocol lets the destination of the SA choose the SPI.
       The range 0 to 0xFF is reserved for IANA. <emphasis
@@ -3465,8 +3447,7 @@
           <listitem>
             <para>Each of these may be combined with IPCOMP Deflate
             compression, but only if the potential connection specifies
-            compression and only if KLIPS is configured with IPCOMP
-            support.</para>
+            compression.</para>
           </listitem>
         </varlistentry>
 

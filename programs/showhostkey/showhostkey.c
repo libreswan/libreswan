@@ -54,6 +54,7 @@
 #include "secrets.h"
 #include "lswnss.h"
 #include "lswtool.h"
+#include "ip_info.h"
 
 #include <keyhi.h>
 #include <prerror.h>
@@ -134,13 +135,13 @@ static void print(struct private_key_stuff *pks,
 	// only old/obsolete secrets entries use this
 	case PKK_RSA: {
 		printf("RSA");
-		char *keyid = pks->u.RSA_private_key.pub.keyid;
-		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
+		keyid_t keyid = pks->keyid;
+		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
 			printf(" id: %s", idb);
 		}
 		ckaid_buf cb;
-		ckaid_t *ckaid = &pks->u.RSA_private_key.pub.ckaid;
+		ckaid_t *ckaid = &pks->ckaid;
 		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
@@ -209,7 +210,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PKK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
+	if (pks->kind == PKK_RSA && streq(pks->keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -223,7 +224,8 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PKK_RSA && ckaid_starts_with(&pks->u.RSA_private_key.pub.ckaid, start)) {
+	if ((pks->kind == PKK_RSA || pks->kind == PKK_ECDSA) &&
+	    ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {
@@ -270,12 +272,11 @@ static int show_dnskey(struct private_key_stuff *pks,
 	}
 
 	if (gateway != NULL) {
+		/* XXX: ttoaddress_dns() - knows how to figure out IPvX? */
 		ip_address test;
-		if (ttoaddr(gateway, strlen(gateway), AF_INET,
-			    &test) == NULL) {
+		if (ttoaddress_dns(shunk1(gateway), &ipv4_info, &test) == NULL) {
 			gateway_type = 1;
-		} else if (ttoaddr(gateway, strlen(gateway), AF_INET6,
-			    &test) == NULL) {
+		} else if (ttoaddress_dns(shunk1(gateway), &ipv6_info, &test) == NULL) {
 			gateway_type = 2;
 		} else {
 			fprintf(stderr, "%s: unknown address family for gateway %s",
@@ -294,7 +295,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 static int show_confkey(struct private_key_stuff *pks,
 			char *side)
 {
-	if (pks->kind != PKK_RSA) {
+	if (pks->kind != PKK_RSA && pks->kind != PKK_ECDSA) {
 		char *enumstr = "gcc is crazy";
 		switch (pks->kind) {
 		case PKK_PSK:
@@ -316,32 +317,26 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	printf("\t# rsakey %s\n",
-	       pks->u.RSA_private_key.pub.keyid);
-	printf("\t%srsasigkey=%s\n", side,
-	       base64);
-	pfree(base64);
+	switch (pks->kind) {
+	case PKK_RSA:
+		printf("\t# rsakey %s\n",
+		       pks->keyid.keyid);
+		printf("\t%srsasigkey=%s\n", side,
+		       base64);
+		pfree(base64);
+		break;
+	case PKK_ECDSA:
+		printf("\t# ecdsakey %s\n",
+		       pks->keyid.keyid);
+		printf("\t%secdsasigkey=%s\n", side,
+		       base64);
+		pfree(base64);
+		break;
+	default:
+		passert(FALSE);
+	}
+
 	return 0;
-}
-
-/*
- * XXX: this code is broken:
- *
- * - it duplicates stuff in secrets.c
- *
- * - it doesn't support ECDSA
- *
- * - it doesn't pass a secret into the iterator
- *
- * Why not load the secret properly?
- */
-
-static void fill_RSA_public_key(struct RSA_public_key *rsa, SECKEYPublicKey *pubkey)
-{
-	passert(SECKEY_GetPublicKeyType(pubkey) == rsaKey);
-	rsa->e = clone_secitem_as_chunk(pubkey->u.rsa.publicExponent, "e");
-	rsa->n = clone_secitem_as_chunk(pubkey->u.rsa.modulus, "n");
-	form_keyid(rsa->e, rsa->n, rsa->keyid, &rsa->k);
 }
 
 static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
@@ -356,7 +351,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 
 	SECKEYPrivateKeyList *list = PK11_ListPrivateKeysInSlot(slot);
 	if (list == NULL) {
-		log_message(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
+		llog(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
 		PK11_FreeSlot(slot);
 		return NULL;
 	}
@@ -370,34 +365,45 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
-		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {
-			/* only rsa for now */
+		SECKEYPrivateKey *private_key = node->key;
+
+		/*
+		 * XXX: this code has a lot in common with secrets.c
+		 * which also creates private-key-stuff.
+		 */
+
+		/* XXX: see also private_key_type_nss(pubk); */
+		const struct pubkey_type *type;
+		switch (SECKEY_GetPrivateKeyType(private_key)) {
+		case rsaKey:
+			type = &pubkey_type_rsa;
+			break;
+		case ecKey:
+			type = &pubkey_type_ecdsa;
+			break;
+		default:
+			continue;
+		}
+
+		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(node->key); /* must free */
+		if (ckaid_nss == NULL) {
+			continue;
+		}
+
+		SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(node->key);
+		if (pubk == NULL) {
 			continue;
 		}
 
 		struct private_key_stuff pks = {
-			.kind = PKK_RSA,
-			.on_heap = TRUE,
+			.pubkey_type = type,
+			.kind = type->private_key_kind,
+			.line = 0,
+			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		{
-			SECItem *nss_ckaid
-				= PK11_GetLowLevelKeyIDForPrivateKey(node->key);
-			if (nss_ckaid == NULL) {
-				// fprintf(stderr, "ckaid not found\n");
-				continue;
-			}
-			pks.u.RSA_private_key.pub.ckaid = ckaid_from_secitem(nss_ckaid);
-			SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-		}
-
-		{
-			SECKEYPublicKey *pubkey = SECKEY_ConvertToPublicKey(node->key);
-			if (pubkey != NULL) {
-				fill_RSA_public_key(&pks.u.RSA_private_key.pub, pubkey);
-				SECKEY_DestroyPublicKey(pubkey);
-			}
-		}
+		type->extract_private_key_pubkey_content(&pks, &pks.keyid, &pks.ckaid, &pks.size,
+							 pubk, ckaid_nss);
 
 		/*
 		 * Only count private keys that get processed.
@@ -423,8 +429,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			break;
 		}
 
-		free_chunk_content(&pks.u.RSA_private_key.pub.e);
-		free_chunk_content(&pks.u.RSA_private_key.pub.n);
+		type->free_secret_content(&pks);
 
 		if (ret < 0) {
 			break;
@@ -437,10 +442,9 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	return result; /* could be NULL */
 }
 
-static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid)
+static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid, struct logger *logger)
 {
-	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid,
-									  &progname_logger);
+	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, logger);
 	if (pks == NULL) {
 		/* already logged any error */
 		return NULL;
@@ -451,7 +455,7 @@ static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid
 int main(int argc, char *argv[])
 {
 	log_to_stderr = FALSE;
-	tool_init_log("ipsec showhostkey");
+	struct logger *logger = tool_init_log("ipsec showhostkey");
 
 	int opt;
 	bool left_flg = FALSE;
@@ -523,7 +527,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case 'd':
-			lsw_conf_nssdir(optarg, &progname_logger);
+			lsw_conf_nssdir(optarg, logger);
 			break;
 
 		case OPT_PASSWORD:
@@ -579,25 +583,27 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
-	log_message(RC_LOG, &progname_logger, "using nss directory \"%s\"", oco->nssdir);
+	llog(RC_LOG, logger, "using nss directory \"%s\"", oco->nssdir);
 
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
-	int status = 0;
-	if (!lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, &progname_logger)) {
-		exit(1);
+	diag_t d = lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
 	}
+
+	int status = 0;
 
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		foreach_secret(dump_key, NULL);
+		foreach_secret(dump_key, NULL, logger);
 		goto out;
 	}
 
 	if (list_flg) {
-		foreach_secret(list_key, NULL);
+		foreach_secret(list_key, NULL, logger);
 		goto out;
 	}
 
@@ -606,13 +612,13 @@ int main(int argc, char *argv[])
 		if (log_to_stderr)
 			printf("%s picking by rsaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", rsaid);
-		pks = foreach_secret(pick_by_rsaid, rsaid);
+		pks = foreach_secret(pick_by_rsaid, rsaid, logger);
 	} else if (ckaid != NULL) {
 		if (log_to_stderr) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
-		pks = foreach_secret(pick_by_ckaid, ckaid);
+		pks = foreach_secret(pick_by_ckaid, ckaid, logger);
 	} else {
 		fprintf(stderr, "%s: nothing to do\n", progname);
 		status = 1;

@@ -62,9 +62,10 @@ using:
 
 	ipsec initnss
 
-By default the NSS db is created in /etc/ipsec.d/ on RHEL/Fedora/CentOS
-but in /var/lib/ipsec/nss/ on Debian/Ubuntu. The remainder of this file
-uses /etc/ipsec.d/ in the examples.
+By default the NSS db is created in /var/lib/ipsec/nss/. Older
+RHEL/Fedora/CentOS used /etc/ipsec.d/ but Debian/Ubuntu used
+/var/lib/ipsec/nss/ (the new default).
+The remainder of this file uses /var/lib/ipsec/nss/ in the examples.
 
 When creating a database, you are prompted for a password. The default
 libreswan package install for RHEL/Fedora/CentOS uses an empty password.
@@ -74,7 +75,7 @@ running in FIPS mode.
 
 To change the empty password, run:
 
-	certutil -W -d sql:/etc/ipsec.d
+	certutil -W -d sql:/var/lib/ipsec/nss/
 
 Enter return for the "old password", then enter your new password.
 
@@ -112,7 +113,7 @@ The "ipsec newhostkey" and "ipsec rsasigkey" utilities are used for
 creating raw RSA keys. If a non-default NSS directory is used, this can
 be specified using the --nssdir option.
 
-	ipsec newhostkey --nssdir /tmp/ipsec.d [--password password]
+	ipsec newhostkey --nssdir /tmp/nssdir [--password password]
 
 The password is only required if the NSS database is protected with a
 non-empty password.
@@ -136,7 +137,7 @@ Below, we will be using the nss tools to generate certificates
 * To create a certificate authority (CA certificate):
 
 	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -v 12 \
-		-t "CT,," -x -d sql:/etc/ipsec.d
+		-t "CT,," -x -d sql:/var/lib/ipsec/nss
 
 It creates a certificate with RSA keys (-k rsa) with the nickname
 "ExampleCA", and with common name "Example CA Inc". The option
@@ -151,7 +152,7 @@ certificate can be obtained from anywhere in the world.
 * To create a user certificate signed by the above CA
 
 	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
-		-v 12 -t "u,u,u" -d sql:/etc/ipsec.d
+		-v 12 -t "u,u,u" -d sql:/var/lib/ipsec/nss
 
 It creates a user cert with nickname "user1" with attributes
 "u,u,u" signed by the CA cert "ExampleCA".
@@ -208,8 +209,8 @@ Now you can import the file into the NSS db:
 	ipsec import certkey.p12
 
 If you did not pick a name using the -name option, you can use
-certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked during
-the import.
+certutil -L -d sql:/var/lib/ipsec/nss to figure out the name NSS picked
+during the import.
 
 Add following to /etc/ipsec.secrets file:
 
@@ -229,12 +230,12 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	pk12util -o cacert1.p12 -n cacert1 -d sql:/etc/ipsec.d
+	pk12util -o cacert1.p12 -n cacert1 -d sql:/var/lib/ipsec/nss
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 
 	ipsec import cacert1.p12
-	certutil -M -n cacert1 -t "CT,," -d sql:/etc/ipsec.d
+	certutil -M -n cacert1 -t "CT,," -d sql:/var/lib/ipsec/nss
 
 Example connection for ipsec.conf:
 

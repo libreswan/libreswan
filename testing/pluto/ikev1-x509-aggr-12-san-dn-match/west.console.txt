@@ -6,10 +6,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add san
-002 added IKEv1 connection "san"
+002 "san": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -24,10 +24,10 @@ west #
 1v1 "san" #1: sent Aggressive Mode request
 002 "san" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "san" #1: authenticated using RSA with SHA-1
+003 "san" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "san" #1: I am sending my cert
 004 "san" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "san" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "san" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "san" #2: sent Quick Mode request
 004 "san" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -39,7 +39,4 @@ west #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_DER_ASN1_DN (0x9)
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

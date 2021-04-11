@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec status |grep "ikev1-policy"
+000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
+east #
+ # should fail
+east #
+ ipsec auto --add ikev1
+036 "ikev1": failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections
+east #
+ # should work but unused
+east #
+ ipsec auto --add ikev2
+002 "ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep "ignoring IKEv1 packet" /tmp/pluto.log
+packet from 192.1.2.45:500: ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets
+east #
+ hostname | grep east > /dev/null && (grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo "A reply SHOULD NOT have been sent")
+east #
+ 

@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,19 +13,19 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-nflog
-002 added IKEv1 connection "westnet-eastnet-nflog"
+002 "westnet-eastnet-nflog": added IKEv1 connection
 west #
  ipsec auto --add west-east-nflog
-002 added IKEv1 connection "west-east-nflog"
+002 "west-east-nflog": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -46,9 +46,9 @@ west #
 1v1 "westnet-eastnet-nflog" #1: sent Main Mode I2
 1v1 "westnet-eastnet-nflog" #1: sent Main Mode I3
 002 "westnet-eastnet-nflog" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-nflog" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-nflog" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-nflog" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-nflog" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-nflog" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-nflog" #2: sent Quick Mode request
 004 "westnet-eastnet-nflog" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -65,7 +65,7 @@ target     prot opt source               destination
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
 west #
  ipsec auto --up west-east-nflog
-002 "west-east-nflog" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east-nflog" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east-nflog" #3: sent Quick Mode request
 004 "west-east-nflog" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -83,47 +83,35 @@ target     prot opt source               destination
 NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
 NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
 west #
- rm -fr /tmp/nflog-50.pcap
+ # suppress job monitoring; specify packet count
 west #
- (tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 >/dev/null 2>/dev/null &)
+ rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
 west #
- ping -n -c 2 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ set +m
 west #
- ping -n -c 2 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
+[B] PID
 west #
- ping -n -c 2 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
+tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), snapshot length 262144 bytes
 west #
- ping -n -c 2 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsec auto --down westnet-eastnet-nflog
 002 "westnet-eastnet-nflog": terminating SAs using this connection
 002 "westnet-eastnet-nflog": IKE SA is shared - only terminating IPsec SA
 002 "westnet-eastnet-nflog" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "westnet-eastnet-nflog" #2: ESP traffic information: in=336B out=336B
+005 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
@@ -140,7 +128,7 @@ west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
 002 "west-east-nflog" #3: deleting state (STATE_QUICK_I2) and sending notification
-005 "west-east-nflog" #3: ESP traffic information: in=336B out=336B
+005 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
 west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
@@ -152,23 +140,22 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 west #
+ # wait for count to reach tcpdump then dump it
+west #
+ wait
+west #
  cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
 west #
- tcpdump -n -r OUTPUT/nflog-50.pcap
-reading from file OUTPUT/nflog-50.pcap, link-type NFLOG (Linux netfilter log messages)
+ tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 2, length 64
-IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 2, length 64
 IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.1.2.45 > 192.1.2.23: ICMP echo request, id XXXX, seq 2, length 64
-IP 192.1.2.23 > 192.1.2.45: ICMP echo reply, id XXXX, seq 2, length 64
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -207,7 +194,4 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

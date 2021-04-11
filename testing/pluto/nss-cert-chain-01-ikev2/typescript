@@ -1,0 +1,1475 @@
+Script started on 2020-12-11 14:44:03-05:00 [TERM="vt220" TTY="/dev/ttyS0" COLUMNS="-1" LINES="-1"]
+GNU gdb (GDB) Fedora 9.1-6.fc32
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-redhat-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+Temporary breakpoint 1 at 0x368a0: file /source/programs/pluto/plutomain.c, line 659.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+  Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
+
+Temporary breakpoint 1, main (argc=5, argv=0x7fffffffea78) at /source/programs/pluto/plutomain.c:659
+659	{
+Breakpoint 2 at 0x555555630c0e: file /usr/include/bits/string_fortified.h, line 71.
+Breakpoint 3 at 0x55555563137e: file /source/programs/pluto/nss_cert_verify.c, line 331.
+Breakpoint 4 at 0x7ffff7d4c8b0: file certvfypkix.c, line 2036.
+Breakpoint 5 at 0x7ffff7dcfc10: file pkix_build.c, line 3680.
+Breakpoint 6 at 0x7ffff7dcd510: file pkix_build.c, line 3115.
+Breakpoint 7 at 0x7ffff7dcb816: file pkix_build.c, line 1819.
+Breakpoint 8 at 0x7ffff7dcb28e: file pkix_build.c, line 1826.
+Breakpoint 9 at 0x7ffff7dc8930: file pkix_build.c, line 2329.
+Breakpoint 10 at 0x7ffff7dc9543: file pkix_build.c, line 1718.
+Breakpoint 11 at 0x7ffff7dcbbf5: file pkix_build.c, line 1832.
+Breakpoint 12 at 0x7ffff7e11215: file pkix_pl_pk11certstore.c, line 586.
+Breakpoint 13 at 0x7ffff7ddeb50: file pkix_pl_cert.c, line 1365.
+Breakpoint 14 at 0x7ffff7dded69: file pkix_pl_cert.c, line 1429.
+Breakpoint 15 at 0x7ffff7e10fa2: file pkix_pl_pk11certstore.c, line 660.
+Breakpoint 16 at 0x7ffff7dd1f50: file pkix_tools.c, line 1163.
+Breakpoint 17 at 0x7ffff7dd23b1: file pkix_tools.c, line 1234.
+Breakpoint 18 at 0x7ffff7dd1500: file pkix_tools.c, line 930.
+Breakpoint 19 at 0x7ffff7dd49d5: file pkix_list.c, line 1281.
+Breakpoint 20 at 0x7ffff7dd5440: file pkix_list.c, line 1391.
+Breakpoint 21 at 0x7ffff7dd5722: file pkix_list.c, line 1428.
+Breakpoint 22 at 0x7ffff7dd59c9: file pkix_list.c, line 1487.
+Breakpoint 23 at 0x7ffff7dd5b00: file pkix_list.c, line 1507.
+Breakpoint 24 at 0x7ffff7dd7780: file pkix_list.c, line 1578.
+Breakpoint 25 at 0x7ffff7dd7ac0: file pkix_list.c, line 676.
+Breakpoint 26 at 0x7ffff7dd6fc0: file pkix_list.c, line 1537.
+Breakpoint 27 at 0x7ffff7dd43b0: file pkix_list.c, line 434.
+Breakpoint 28 at 0x7ffff7e00cb4: file pkix_pl_object.c, line 599.
+Breakpoint 29 at 0x7ffff7e012c0: file pkix_pl_object.c, line 928.
+Breakpoint 30 at 0x7ffff7dd66e0: file pkix_list.c, line 804.
+Temporary breakpoint 31 at 0x7ffff7a9c6d0: file event.c, line 1879.
+Pluto initialized
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50c6fe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50ceff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50d4fe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50dcff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50e2fe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50eaff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50f0fe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50f8ff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff50fefe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff5106ff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff510cfe8 references: 1 type: PKIX_HASHTABLE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff5114ff8 references: 1 type: PKIX_MUTEX_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff511aff8 references: 1 type: PKIX_MONITORLOCK_TYPE
+[New Thread 0x7ffff4f31700 (LWP 881)]
+[Detaching after fork from child process 882]
+
+Thread 1 "pluto" hit Temporary breakpoint 31, event_base_loop (base=0x7ffff5133d68, flags=0) at event.c:1879
+1879	{
+002 "nss-cert-chain": added IKEv2 connection
+[Switching to Thread 0x7ffff4f31700 (LWP 881)]
+
+Thread 2 "pluto" hit Breakpoint 2, verify_end_cert (end_cert=0x7ffff4669820, rev_opts=0x7ffff5356fd8, root_certs=0x7ffff571cfe8, logger=0x7ffff4651fb8) at /source/programs/pluto/nss_cert_verify.c:220
+220		set_rev_params(&rev, rev_opts);
+end_cert:
+$1 = (CERTCertificate *) 0x7ffff4669820
+root_certs:
+$2 = (const struct root_certs *) 0x7ffff571cfe8
+$3 = {refcnt = {count = 2}, trustcl = 0x7ffff4643820}
+$4 = {list = {next = 0x7ffff4643838, prev = 0x7ffff4643838}, arena = 0x7ffff46a0fb0}
+root_certs.trustcl list:
+$5 = (PRCList *) 0x7ffff4643838
+$6 = {links = {next = 0x7ffff4643820, prev = 0x7ffff4643820}, cert = 0x7ffff46e9820, appData = 0x0}
+$7 = (PRCList *) 0x7ffff4643820
+$8 = {links = {next = 0x7ffff4643838, prev = 0x7ffff4643838}, cert = 0x7ffff46a0fb0, appData = 0x7ffff4643820}
+
+CERT_PKIXVerifyCert(): cert(to verify): 0x7ffff4669820 usages: 1000 ...
+  paramsIn:
+    {type = cert_pi_revocationFlags, value = {scalar = {b = 0, i = 0, ui = 0, l = 0, ul = 0, time = 0}, pointer = {p = 0x7ffff4f306c0, s = 0x7ffff4f306c0 "\002", cert = 0x7ffff4f306c0, chain = 0x7ffff4f306c0, revocation = 0x7ffff4f306c0, chainVerifyCallback = 0x7ffff4f306c0}, array = {pi = 0x0, pui = 0x0, pl = 0x0, pul = 0x0, oids = 0x0}, arraySize = 0}}
+    {type = cert_pi_useAIACertFetch, value = {scalar = {b = 0, i = 0, ui = 0, l = 0, ul = 0, time = 0}, pointer = {p = 0x0, s = 0x0, cert = 0x0, chain = 0x0, revocation = 0x0, chainVerifyCallback = 0x0}, array = {pi = 0x0, pui = 0x0, pl = 0x0, pul = 0x0, oids = 0x0}, arraySize = 0}}
+    {type = cert_pi_trustAnchors, value = {scalar = {b = 0, i = 0, ui = 0, l = 0, ul = 0, time = 0}, pointer = {p = 0x7ffff4643820, s = 0x7ffff4643820 "88d\364\377\177", cert = 0x7ffff4643820, chain = 0x7ffff4643820, revocation = 0x7ffff4643820, chainVerifyCallback = 0x7ffff4643820}, array = {pi = 0x0, pui = 0x0, pl = 0x0, pul = 0x0, oids = 0x0}, arraySize = 0}}
+      0x7ffff4643838
+        {links = {next = 0x7ffff4643820, prev = 0x7ffff4643820}, cert = 0x7ffff46e9820, appData = 0x0}
+        {arena = 0x7ffff4657fb0, subjectName = 0x7ffff46ebf08 "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA", issuerName = 0x7ffff46ebf80 "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA", signatureWrap = {data = {type = siBuffer, data = 0x7ffff46e9b1c "0\202\003\225\240\003\002\001\002\002\001", len = 921}, signatureAlgorithm = {algorithm = {type = siBuffer, data = 0x7ffff46e9eb9 "*\206H\206\367\r\001\001\v\005", len = 9}, parameters = {type = siBuffer, data = 0x7ffff46e9ec2 "\005", len = 2}}, signature = {type = siBuffer, data = 0x7ffff46e9ec9 "3\037p\272\001\022\177\032%\266\350RjR\265R\211+|\017\214<hT\331r\265\265\226\065\320\060\022\302\342LU\003\240\311\031D\003ᡱS\305\"D\032\344\200\344\ru\006\"\003\202\036i۾0\270F\244<\024\306\363\t\vp\346v\361͂$\242\266\356\303\314\002\260\071C\250\350Hk\204\361g,\321wY\265", len = 2048}}, derCert = {type = siBuffer, data = 0x7ffff46e9b18 "0\202\004\255\060\202\003\225\240\003\002\001\002\002\001", len = 1201}, derIssuer = {type = siBuffer, data = 0x7ffff46e9b37 "0\201\254\061\v0\t\006\003U\004\006\023\002CA1\020\060\016\006\003U\004\b\f\aOntario1\020\060\016\006\003U\004\a\f\aToronto1\022\060\020\006\003U\004\n\f\tLibreswan1\030\060\026\006\003U\004\v\f\017Test Department1%0#\006\003U\004\003\f\034Libreswan test CA for mainca1$0\"\006\t*\206H\206\367\r\001\t\001\026\025testing@libreswan.org0\"\030\017\062\060\062\060\061\062\060\066\061\065\065\067\061\060Z\030\017\062\060\062\063"..., len = 175}, derSubject = {type = siBuffer, data = 0x7ffff46e9c0a "0\201\254\061\v0\t\006\003U\004\006\023\002CA1\020\060\016\006\003U\004\b\f\aOntario1\020\060\016\006\003U\004\a\f\aToronto1\022\060\020\006\003U\004\n\f\tLibreswan1\030\060\026\006\003U\004\v\f\017Test Department1%0#\006\003U\004\003\f\034Libreswan test CA for mainca1$0\"\006\t*\206H\206\367\r\001\t\001\026\025testing@libreswan.org0\202\001\"0\r\006\t*\206H\206\367\r\001\001\001\005", len = 175}, derPublicKey = {type = siBuffer, data = 0x7ffff46e9cb9 "0\202\001\"0\r\006\t*\206H\206\367\r\001\001\001\005", len = 294}, certKey = {type = siBuffer, data = 0x7ffff46ebe28 "", len = 176}, version = {type = siBuffer, data = 0x7ffff46e9b24 "\002\002\001", len = 1}, serialNumber = {type = siBuffer, data = 0x7ffff46e9b27 "", len = 1}, signature = {algorithm = {type = siBuffer, data = 0x7ffff46e9b2c "*\206H\206\367\r\001\001\v\005", len = 9}, parameters = {type = siBuffer, data = 0x7ffff46e9b35 "\005", len = 2}}, issuer = {arena = 0x0, rdns = 0x7ffff46eb820}, validity = {arena = 0x0, notBefore = {type = siGeneralizedTime, data = 0x7ffff46e9bea "20201206155710Z\030\017\062\060\062\063\061\062\060\066\061\065\065\067\061\060Z0\201\254\061\v0\t\006\003U\004\006\023\002CA1\020\060\016\006\003U\004\b\f\aOntario1\020\060\016\006\003U\004\a\f\aToronto1\022\060\020\006\003U\004\n\f\tLibreswan1\030\060\026\006\003U\004\v\f\017Test Department1%0#\006\003U\004\003\f\034Libreswan test CA for mainca1$0\"\006\t*\206H\206\367\r\001\t\001\026\025testing@libres"..., len = 15}, notAfter = {type = siGeneralizedTime, data = 0x7ffff46e9bfb "20231206155710Z0\201\254\061\v0\t\006\003U\004\006\023\002CA1\020\060\016\006\003U\004\b\f\aOntario1\020\060\016\006\003U\004\a\f\aToronto1\022\060\020\006\003U\004\n\f\tLibreswan1\030\060\026\006\003U\004\v\f\017Test Department1%0#\006\003U\004\003\f\034Libreswan test CA for mainca1$0\"\006\t*\206H\206\367\r\001\t\001\026\025testing@libreswan.org0\202\001\"0\r\006\t*\206"..., len = 15}}, subject = {arena = 0x0, rdns = 0x7ffff46eba58}, subjectPublicKeyInfo = {arena = 0x0, algorithm = {algorithm = {type = siBuffer, data = 0x7ffff46e9cc1 "*\206H\206\367\r\001\001\001\005", len = 9}, parameters = {type = siBuffer, data = 0x7ffff46e9cca "\005", len = 2}}, subjectPublicKey = {type = siBuffer, data = 0x7ffff46e9cd1 "0\202\001\n\002\202\001\001", len = 2160}}, issuerID = {type = siBuffer, data = 0x0, len = 0}, subjectID = {type = siBuffer, data = 0x0, len = 0}, extensions = 0x7ffff46ebc90, emailAddr = 0x7ffff46ebed8 "testing@libreswan.org", dbhandle = 0x7ffff5338830, subjectKeyID = {type = siBuffer, data = 0x7ffff46ebef0 "\264\362B\262\071\265}\b\270\307Q\262*/\034\261j\260\273\206", len = 20}, keyIDGenerated = 0, keyUsage = 134, rawKeyUsage = 134, keyUsagePresent = 1, nsCertType = 16901, keepSession = 0, timeOK = 0, domainOK = 0x0, isperm = 1, istemp = 0, nickname = 0x7ffff46ebff8 "mainca", dbnickname = 0x0, nssCertificate = 0x7ffff46c98c0, trust = 0x7ffff46f1820, referenceCount = 1, subjectList = 0x0, authKeyID = 0x0, isRoot = 1, options = {apointer = 0x0, bits = {hasUnsupportedCriticalExt = 0}}, series = 0, slot = 0x7ffff528ec90, pkcs11ID = 2746018976, ownSlot = 1, distrust = 0x0}
+      0x7ffff4643820
+        {links = {next = 0x7ffff4643838, prev = 0x7ffff4643838}, cert = 0x7ffff46a0fb0, appData = 0x7ffff4643820}
+        {arena = 0x7ffff4643800, subjectName = 0x7ffff46a0fd0 "", issuerName = 0x7ffff46a0fd0 "", signatureWrap = {data = {type = 4100591568, data = 0x7ffff4643800 "", len = 2009}, signatureAlgorithm = {algorithm = {type = siAsciiNameString, data = 0xb8ac9bdf <error: Cannot access memory at address 0xb8ac9bdf>, len = 4100202320}, parameters = {type = siBuffer, data = 0x0, len = 0}}, signature = {type = siBuffer, data = 0x0, len = 0}}, derCert = {type = siBuffer, data = 0x0, len = 0}, derIssuer = {type = siBuffer, data = 0x0, len = 0}, derSubject = {type = siBuffer, data = 0x0, len = 0}, derPublicKey = {type = siBuffer, data = 0x0, len = 0}, certKey = {type = siBuffer, data = 0x0, len = 0}, version = {type = siBuffer, data = 0x0, len = 0}, serialNumber = {type = siBuffer, data = 0x0, len = 0}, signature = {algorithm = {type = siBuffer, data = 0x0, len = 0}, parameters = {type = siBuffer, data = 0x0, len = 0}}, issuer = {arena = 0x0, rdns = 0x0}, validity = {arena = 0x0, notBefore = {type = siBuffer, data = 0x0, len = 0}, notAfter = {type = siBuffer, data = 0x0, len = 0}}, subject = {arena = 0x0, rdns = 0x0}, subjectPublicKeyInfo = {arena = 0x0, algorithm = {algorithm = {type = siBuffer, data = 0x0, len = 0}, parameters = {type = siBuffer, data = 0x0, len = 0}}, subjectPublicKey = {type = siBuffer, data = 0x0, len = 0}}, issuerID = {type = siBuffer, data = 0x0, len = 0}, subjectID = {type = siBuffer, data = 0x0, len = 0}, extensions = 0x0, emailAddr = 0x0, dbhandle = 0x0, subjectKeyID = {type = siBuffer, data = 0x0, len = 0}, keyIDGenerated = 0, keyUsage = 0, rawKeyUsage = 0, keyUsagePresent = 0, nsCertType = 0, keepSession = 0, timeOK = 0, domainOK = 0x0, isperm = 0, istemp = 0, nickname = 0x0, dbnickname = 0x0, nssCertificate = 0x0, trust = 0x0, referenceCount = 0, subjectList = 0x0, authKeyID = 0x0, isRoot = 0, options = {apointer = 0x0, bits = {hasUnsupportedCriticalExt = 0}}, series = 0, slot = 0x0, pkcs11ID = 0, ownSlot = 0, distrust = 0x0}
+    {type = cert_pi_useOnlyTrustAnchors, value = {scalar = {b = 1, i = 1, ui = 1, l = 1, ul = 1, time = 1}, pointer = {p = 0x0, s = 0x0, cert = 0x0, chain = 0x0, revocation = 0x0, chainVerifyCallback = 0x0}, array = {pi = 0x0, pui = 0x0, pl = 0x0, pul = 0x0, oids = 0x0}, arraySize = 0}}
+  paramsOut:
+    {type = cert_po_errorLog, value = {scalar = {b = 0, i = 0, ui = 0, l = 0, ul = 0, usages = 0}, pointer = {p = 0x7ffff4f30610, s = 0x7ffff4f30610 "\260\177r\364\377\177", log = 0x7ffff4f30610, cert = 0x7ffff4f30610, chain = 0x7ffff4f30610}, array = {p = 0x0, oids = 0x0}, arraySize = 0}}
+PKIX_PL_Object_Alloc(): returns: 0x7ffff472df88 references: 1 type: PKIX_PROCESSINGPARAMS_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4531fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4531fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4535ff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4539fb8 references: 1 type: PKIX_CERTSTORE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff453dfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff453dfd8
+PKIX_List_AppendItem() list: 0x7ffff453dfd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff453dfd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff453dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 2 type: PKIX_CERTSTORE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4545fe8 references: 1 type: PKIX_REVOCATIONCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4549fc8 references: 1 type: PKIX_CRLCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff454dfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff454dfd8
+PKIX_List_AppendItem() list: 0x7ffff454dfd8 length: 0 item: 0x7ffff4549fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff454dfd8 length: 0 item: 0x7ffff4549fc8 ...
+  list: 0x7ffff454dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4549fc8 references: 2 type: PKIX_CRLCHECKER_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff454dfd8, pNewObject=pNewObject@entry=0x7ffff4f30298, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4551fd8, pNewObject=0x7ffff4555fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4559fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff454dfd8 references: 1 type: PKIX_OCSPCHECKER_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4555fd8 length: 1 item: 0x7ffff454dfd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4555fd8 length: 1 item: 0x7ffff454dfd8 ...
+  list: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4559fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4549fc8 references: 1 type: PKIX_CRLCHECKER_TYPE
+    element 1: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff454dfd8 references: 2 type: PKIX_OCSPCHECKER_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4555fd8, pNewObject=pNewObject@entry=0x7ffff4f30298, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4559fd8, pNewObject=0x7ffff455dfe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4561fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4551fd8, pNewObject=0x7ffff4561fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4565fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff455dfd8 length: 2 index: 0
+  list: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4561fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4549fc8 references: 2 type: PKIX_CRLCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff455dfd8 length: 2 index: 1
+  list: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4565fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff454dfd8 references: 3 type: PKIX_OCSPCHECKER_TYPE
+PKIX_List_SetItem(): list: 0x7ffff455dfd8 length: 2 index: 0 item: 0x7ffff4549fc8 references: 3 type: PKIX_CRLCHECKER_TYPE
+  list: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+   *element 0: 0x7ffff4561fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4549fc8 references: 3 type: PKIX_CRLCHECKER_TYPE
+    element 1: 0x7ffff4565fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff454dfd8 references: 3 type: PKIX_OCSPCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4551fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4555fe8 references: 1 type: PKIX_BYTEARRAY_TYPE
+pkix_pl_Cert_CreateWithNSSCert():
+  nssCert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff456def8 references: 1 type: PKIX_CERT_TYPE
+  cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4551fd8 length: 0 item: 0x7ffff4569fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4551fd8 length: 0 item: 0x7ffff4569fd8 ...
+  list: 0x7ffff4551fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 2 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4531fe8 references: 1 type: PKIX_BYTEARRAY_TYPE
+pkix_pl_Cert_CreateWithNSSCert():
+  nssCert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff46a7ef8 references: 1 type: PKIX_CERT_TYPE
+  cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4531fe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4559f68 references: 1 type: PKIX_COMCERTSELPARAMS_TYPE
+
+Thread 2 "pluto" hit Breakpoint 5, PKIX_BuildChain (procParams=0x7ffff472df88, pNBIOContext=0x7ffff4f304c0, pState=0x7ffff4f304c8, pBuildResult=0x7ffff4f304b8, pVerifyNode=0x7ffff4f304d8, plContext=0x7ffff472bfc0) at pkix_build.c:3680
+3680	{
+
+Thread 2 "pluto" hit Breakpoint 6, pkix_Build_InitiateBuildChain (procParams=0x7ffff472df88, pNBIOContext=pNBIOContext@entry=0x7ffff4f30370, pState=pState@entry=0x7ffff4f30360, pBuildResult=pBuildResult@entry=0x7ffff4f30368, pVerifyNode=0x7ffff4f304d8, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:3115
+3115	pkix_Build_InitiateBuildChain(
+$9 = {trustAnchors = 0x7ffff4551fd8, hintCerts = 0x0, constraints = 0x7ffff4531fe8, date = 0x7ffff4535ff8, initialPolicies = 0x0, initialPolicyMappingInhibit = 0, initialAnyPolicyInhibit = 0, initialExplicitPolicy = 0, qualifiersRejected = 0, certChainCheckers = 0x0, certStores = 0x7ffff453dfd8, isCrlRevocationCheckingEnabled = 1, isCrlRevocationCheckingEnabledWithNISTPolicy = 1, revChecker = 0x7ffff4545fe8, resourceLimits = 0x0, useAIAForCertFetching = 0, qualifyTargetCert = 1, useOnlyTrustAnchors = 1}
+PKIX_PL_Object_Alloc(): returns: 0x7ffff46adfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff46adfd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff46b1fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff46c1fc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff46adfd8 length: 0 item: 0x7ffff46b1fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff46adfd8 length: 0 item: 0x7ffff46b1fc8 ...
+  list: 0x7ffff46adfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff459afc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff46adfd8 length: 1 item: 0x7ffff459afc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45aafd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff46adfd8 length: 1 item: 0x7ffff459afc8 ...
+  list: 0x7ffff46adfd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff45aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45aefc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff46adfd8 length: 2 item: 0x7ffff45aefc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45befd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff46adfd8 length: 2 item: 0x7ffff45aefc8 ...
+  list: 0x7ffff46adfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+   +element 1: 0x7ffff45aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 1 type: PKIX_GENERALNAME_TYPE
+    element 2: 0x7ffff45befd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45aefc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff46abff8 references: 1 type: PKIX_PUBLICKEY_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45c8fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45c8fd8
+PKIX_List_AppendItem() list: 0x7ffff45c8fd8 length: 0 item: 0x7ffff46a7ef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45c8fd8 length: 0 item: 0x7ffff46a7ef8 ...
+  list: 0x7ffff45c8fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff46a7ef8 secondObject: 0x7ffff46a7ef8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45d0ec8 references: 1 type: PKIX_FORWARDBUILDERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45d4fd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45d8fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45d8fd8
+PKIX_List_AppendItem() list: 0x7ffff45d8fd8 length: 0 item: 0x7ffff46a7ef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45dcfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45d8fd8 length: 0 item: 0x7ffff46a7ef8 ...
+  list: 0x7ffff45d8fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45dcfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff45d8fd8 length: 1 item: 0x7ffff4551fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45e0fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45d8fd8 length: 1 item: 0x7ffff4551fd8 ...
+  list: 0x7ffff45d8fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff45dcfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+    element 1: 0x7ffff45e0fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4551fd8 references: 4 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff45d8fd8 length: 2 index: 0
+  list: 0x7ffff45d8fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45dcfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff45d8fd8 length: 2 index: 1
+  list: 0x7ffff45d8fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff45e0fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4551fd8 references: 4 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4551fd8 length: 1 index: 0
+  list: 0x7ffff4551fd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45dcfc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45e2f68 references: 1 type: PKIX_COMCERTSELPARAMS_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45e6fe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45eafd8
+
+Thread 2 "pluto" hit Breakpoint 9, pkix_Build_GatherCerts (plContext=<optimized out>, pNBIOContext=<optimized out>, certSelParams=<optimized out>, state=<optimized out>) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+pkix_Build_GatherCerts():
+#1  pkix_BuildForwardDepthFirstSearch (pNBIOContext=pNBIOContext@entry=0x7ffff4f30180, state=<optimized out>, pValResult=pValResult@entry=0x7ffff4f30190, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+#2  0x00007ffff7dcdcea in pkix_Build_InitiateBuildChain (procParams=<optimized out>, pNBIOContext=pNBIOContext@entry=0x7ffff4f30370, pState=pState@entry=0x7ffff4f30360, pBuildResult=pBuildResult@entry=0x7ffff4f30368, pVerifyNode=0x7ffff4f304d8, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:3526
+3526	        pkixErrorResult =
+state.buildConstants.certStores (used to getCert):
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 1 type: PKIX_CERTSTORE_TYPE
+state.buildConstants.anchors (used to get):
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff453dfd8 length: 1 index: 0
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 1 type: PKIX_CERTSTORE_TYPE
+  ... pkix_Build_GatherCerts(): certStore: 0x7ffff4539fb8
+    {certCallback = 0x7ffff7e10e20 <pkix_pl_Pk11CertStore_GetCert>, crlCallback = 0x7ffff7e12a80 <pkix_pl_Pk11CertStore_GetCRL>, certContinue = 0x0, crlContinue = 0x0, trustCallback = 0x7ffff7e12850 <pkix_pl_Pk11CertStore_CheckTrust>, importCrlCallback = 0x7ffff7e12590 <pkix_pl_Pk11CertStore_ImportCrl>, checkRevByCrlCallback = 0x7ffff7e11e80 <pkix_pl_Pk11CertStore_CheckRevByCrl>, certStoreContext = 0x0, cacheFlag = 1, localFlag = 1}
+
+Thread 2 "pluto" hit Breakpoint 18, pkix_CacheCert_Lookup (store=0x7ffff4539fb8, certSelParams=0x7ffff45e2f68, testDate=0x7ffff4535ff8, pFound=0x7ffff4f2fec4, pCerts=0x7ffff4f2ff48, plContext=0x7ffff472bfc0) at pkix_tools.c:930
+930	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45eafd8
+PKIX_List_AppendItem() list: 0x7ffff45eafd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eefd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45eafd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45eefd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 3 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff45eafd8 length: 1 item: 0x7ffff45dcfc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45eafd8 length: 1 item: 0x7ffff45dcfc8 ...
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff45eefd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 3 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45dcfc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff45eafd8 length: 2 index: 0
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45eefd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 3 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff45eafd8 length: 2 index: 1
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45dcfc8 references: 4 type: PKIX_X500NAME_TYPE
+
+Thread 2 "pluto" hit Breakpoint 12, 0x00007ffff7e11215 in pkix_pl_Pk11CertStore_CertQuery (plContext=<optimized out>, pSelected=<optimized out>, params=<optimized out>) at pkix_pl_pk11certstore.c:586
+586	        PKIX_CHECK(pkix_pl_Pk11CertStore_CertQuery
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45eafd8
+pkix_pl_Cert_CreateWithNSSCert():
+  nssCert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eeef8 references: 1 type: PKIX_CERT_TYPE
+  cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff45eafd8 length: 0 item: 0x7ffff45eeef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45eafd8 length: 0 item: 0x7ffff45eeef8 ...
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45f2fd8
+PKIX_List_GetItem() list: 0x7ffff45eafd8 length: 1 index: 0
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45fefc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4604ff8 references: 1 type: PKIX_CERTBASICCONSTRAINTS_TYPE
+PKIX_List_AppendItem() list: 0x7ffff45f2fd8 length: 0 item: 0x7ffff45eeef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4608fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45f2fd8 length: 0 item: 0x7ffff45eeef8 ...
+  list: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4608fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+pkix_CacheCert_Add(): store: 0x7ffff4539fb8 ...
+  certs:
+    list: 0x7ffff45f2fd8 references: 1 type: PKIX_LIST_TYPE
+      element 0: 0x7ffff4608fd8 references: 1 type: PKIX_LIST_TYPE
+        item: 0x7ffff45eeef8 references: 1 type: PKIX_CERT_TYPE
+          cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff45eafd8
+PKIX_List_AppendItem() list: 0x7ffff45eafd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45eafd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 4 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff45eafd8 length: 1 item: 0x7ffff45dcfc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff460cfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45eafd8 length: 1 item: 0x7ffff45dcfc8 ...
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 4 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff460cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45dcfc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4610fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4610fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4614ff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4610fd8 length: 0 item: 0x7ffff4614ff8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4618fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4610fd8 length: 0 item: 0x7ffff4614ff8 ...
+  list: 0x7ffff4610fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4618fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4614ff8 references: 2 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4610fd8 length: 1 item: 0x7ffff45f2fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff461cfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4610fd8 length: 1 item: 0x7ffff45f2fd8 ...
+  list: 0x7ffff4610fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4618fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4614ff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff461cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45f2fd8 references: 2 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff45eafd8 length: 2 index: 0
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45f8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 4 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff45eafd8 length: 2 index: 1
+  list: 0x7ffff45eafd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff460cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45dcfc8 references: 4 type: PKIX_X500NAME_TYPE
+  ... pkix_CacheCert_Add(): cachedValues: ...
+  list: 0x7ffff4610fd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4618fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4614ff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff461cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45f2fd8 references: 2 type: PKIX_LIST_TYPE
+        element 0: 0x7ffff4608fd8 references: 1 type: PKIX_LIST_TYPE
+          item: 0x7ffff45eeef8 references: 1 type: PKIX_CERT_TYPE
+            cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4622fe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff4551fd8 length: 1 index: 0
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff462afc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4431fd8 references: 1 type: PKIX_ERROR_TYPE
+pkix_Build_RemoveDupUntrustedCerts(): certsFound: ?
+  trustedCertList:
+pkix_List_MergeLists(): firstList: (nil) secondList: 0x7ffff45f2fd8 ...PKIX_PL_Object_Alloc(): returns: 0x7ffff4622fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4622fd8
+PKIX_List_GetItem() list: 0x7ffff45f2fd8 length: 1 index: 0
+  list: 0x7ffff45f2fd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4608fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff4622fd8 length: 0 item: 0x7ffff45eeef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4431fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4622fd8 length: 0 item: 0x7ffff45eeef8 ...
+  list: 0x7ffff4622fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4431fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff4622fd8 length: 1 index: 0
+  list: 0x7ffff4622fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4431fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4435fd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 1 index: 0
+  list: 0x7ffff45c8fd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff45eeef8 secondObject: 0x7ffff46a7ef8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4439ff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff45c8fd8 length: 1 item: 0x7ffff45eeef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45c8fd8 length: 1 item: 0x7ffff45eeef8 ...
+  list: 0x7ffff45c8fd8 references: 2 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+    element 1: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 5 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4579fc8 references: 1 type: PKIX_X500NAME_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff46adfd8, pNewObject=0x7ffff4f2fed0, plContext=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff457ffd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4596fd8, pNewObject=0x7ffff457ffe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4583fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff45aafd8, pNewObject=0x7ffff4583fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4587fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff45befd8, pNewObject=0x7ffff4587fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff458bfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4463fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4463fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4467fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4477fc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4463fd8 length: 0 item: 0x7ffff4467fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff447dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4463fd8 length: 0 item: 0x7ffff4467fc8 ...
+  list: 0x7ffff4463fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff447dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4467fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4481fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4463fd8 length: 1 item: 0x7ffff4481fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4491fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4463fd8 length: 1 item: 0x7ffff4481fc8 ...
+  list: 0x7ffff4463fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff447dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4467fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff4491fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4481fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff4463fd8 length: 2 index: 0
+  list: 0x7ffff4463fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff447dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4467fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff46adfd8 length: 3 item: 0x7ffff4467fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff458ffd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff46adfd8 length: 3 item: 0x7ffff4467fc8 ...
+  list: 0x7ffff46adfd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff45aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 2 type: PKIX_GENERALNAME_TYPE
+   +element 2: 0x7ffff45befd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45aefc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 3: 0x7ffff458ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4467fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff4463fd8 length: 2 index: 1
+  list: 0x7ffff4463fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4491fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4481fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff46adfd8 length: 4 item: 0x7ffff4481fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4593fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff46adfd8 length: 4 item: 0x7ffff4481fc8 ...
+  list: 0x7ffff46adfd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4596fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff45aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 2: 0x7ffff45befd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45aefc8 references: 2 type: PKIX_GENERALNAME_TYPE
+   +element 3: 0x7ffff458ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4467fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 4: 0x7ffff4593fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4481fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4463ec8 references: 1 type: PKIX_FORWARDBUILDERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff447df68 references: 1 type: PKIX_COMCERTSELPARAMS_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4491fe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4497fd8
+
+Thread 2 "pluto" hit Breakpoint 9, pkix_Build_GatherCerts (plContext=<optimized out>, pNBIOContext=<optimized out>, certSelParams=<optimized out>, state=<optimized out>) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+pkix_Build_GatherCerts():
+#1  pkix_BuildForwardDepthFirstSearch (pNBIOContext=pNBIOContext@entry=0x7ffff4f30180, state=<optimized out>, pValResult=pValResult@entry=0x7ffff4f30190, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+#2  0x00007ffff7dcdcea in pkix_Build_InitiateBuildChain (procParams=<optimized out>, pNBIOContext=pNBIOContext@entry=0x7ffff4f30370, pState=pState@entry=0x7ffff4f30360, pBuildResult=pBuildResult@entry=0x7ffff4f30368, pVerifyNode=0x7ffff4f304d8, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:3526
+3526	        pkixErrorResult =
+state.buildConstants.certStores (used to getCert):
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 3 type: PKIX_CERTSTORE_TYPE
+state.buildConstants.anchors (used to get):
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff453dfd8 length: 1 index: 0
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 3 type: PKIX_CERTSTORE_TYPE
+  ... pkix_Build_GatherCerts(): certStore: 0x7ffff4539fb8
+    {certCallback = 0x7ffff7e10e20 <pkix_pl_Pk11CertStore_GetCert>, crlCallback = 0x7ffff7e12a80 <pkix_pl_Pk11CertStore_GetCRL>, certContinue = 0x0, crlContinue = 0x0, trustCallback = 0x7ffff7e12850 <pkix_pl_Pk11CertStore_CheckTrust>, importCrlCallback = 0x7ffff7e12590 <pkix_pl_Pk11CertStore_ImportCrl>, checkRevByCrlCallback = 0x7ffff7e11e80 <pkix_pl_Pk11CertStore_CheckRevByCrl>, certStoreContext = 0x0, cacheFlag = 1, localFlag = 1}
+
+Thread 2 "pluto" hit Breakpoint 18, pkix_CacheCert_Lookup (store=0x7ffff4539fb8, certSelParams=0x7ffff447df68, testDate=0x7ffff4535ff8, pFound=0x7ffff4f2fec4, pCerts=0x7ffff4f2ff48, plContext=0x7ffff472bfc0) at pkix_tools.c:930
+930	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4497fd8
+PKIX_List_AppendItem() list: 0x7ffff4497fd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff449bfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4497fd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff449bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 5 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4497fd8 length: 1 item: 0x7ffff4579fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4497fd8 length: 1 item: 0x7ffff4579fc8 ...
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff449bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 5 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4579fc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff4497fd8 length: 2 index: 0
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff449bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 5 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4497fd8 length: 2 index: 1
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4579fc8 references: 4 type: PKIX_X500NAME_TYPE
+
+Thread 2 "pluto" hit Breakpoint 12, 0x00007ffff7e11215 in pkix_pl_Pk11CertStore_CertQuery (plContext=<optimized out>, pSelected=<optimized out>, params=<optimized out>) at pkix_pl_pk11certstore.c:586
+586	        PKIX_CHECK(pkix_pl_Pk11CertStore_CertQuery
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4497fd8
+pkix_pl_Cert_CreateWithNSSCert():
+  nssCert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff449bef8 references: 1 type: PKIX_CERT_TYPE
+  cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff4497fd8 length: 0 item: 0x7ffff449bef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4497fd8 length: 0 item: 0x7ffff449bef8 ...
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff449ffd8
+PKIX_List_GetItem() list: 0x7ffff4497fd8 length: 1 index: 0
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44abfc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44b1ff8 references: 1 type: PKIX_CERTBASICCONSTRAINTS_TYPE
+PKIX_List_AppendItem() list: 0x7ffff449ffd8 length: 0 item: 0x7ffff449bef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44b5fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff449ffd8 length: 0 item: 0x7ffff449bef8 ...
+  list: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44b5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+pkix_CacheCert_Add(): store: 0x7ffff4539fb8 ...
+  certs:
+    list: 0x7ffff449ffd8 references: 1 type: PKIX_LIST_TYPE
+      element 0: 0x7ffff44b5fd8 references: 1 type: PKIX_LIST_TYPE
+        item: 0x7ffff449bef8 references: 1 type: PKIX_CERT_TYPE
+          cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4497fd8
+PKIX_List_AppendItem() list: 0x7ffff4497fd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4497fd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 6 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4497fd8 length: 1 item: 0x7ffff4579fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44b9fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4497fd8 length: 1 item: 0x7ffff4579fc8 ...
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 6 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff44b9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4579fc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44bdfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff44bdfd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44c1ff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff44bdfd8 length: 0 item: 0x7ffff44c1ff8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44c5fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff44bdfd8 length: 0 item: 0x7ffff44c1ff8 ...
+  list: 0x7ffff44bdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44c5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44c1ff8 references: 2 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff44bdfd8 length: 1 item: 0x7ffff449ffd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44c9fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff44bdfd8 length: 1 item: 0x7ffff449ffd8 ...
+  list: 0x7ffff44bdfd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff44c5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44c1ff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff44c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449ffd8 references: 2 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4497fd8 length: 2 index: 0
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44a5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 6 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4497fd8 length: 2 index: 1
+  list: 0x7ffff4497fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff44b9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4579fc8 references: 4 type: PKIX_X500NAME_TYPE
+  ... pkix_CacheCert_Add(): cachedValues: ...
+  list: 0x7ffff44bdfd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44c5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44c1ff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff44c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449ffd8 references: 2 type: PKIX_LIST_TYPE
+        element 0: 0x7ffff44b5fd8 references: 1 type: PKIX_LIST_TYPE
+          item: 0x7ffff449bef8 references: 1 type: PKIX_CERT_TYPE
+            cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44cffe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff4551fd8 length: 1 index: 0
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44d3fd8 references: 1 type: PKIX_ERROR_TYPE
+pkix_Build_RemoveDupUntrustedCerts(): certsFound: ?
+  trustedCertList:
+pkix_List_MergeLists(): firstList: (nil) secondList: 0x7ffff449ffd8 ...PKIX_PL_Object_Alloc(): returns: 0x7ffff44cffd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff44cffd8
+PKIX_List_GetItem() list: 0x7ffff449ffd8 length: 1 index: 0
+  list: 0x7ffff449ffd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44b5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff44cffd8 length: 0 item: 0x7ffff449bef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44d3fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff44cffd8 length: 0 item: 0x7ffff449bef8 ...
+  list: 0x7ffff44cffd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44d3fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff44cffd8 length: 1 index: 0
+  list: 0x7ffff44cffd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff44d3fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44d7fd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 2 index: 0
+  list: 0x7ffff45c8fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff449bef8 secondObject: 0x7ffff46a7ef8
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 2 index: 1
+  list: 0x7ffff45c8fd8 references: 3 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff449bef8 secondObject: 0x7ffff45eeef8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44dbff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff45c8fd8 length: 2 item: 0x7ffff449bef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44dbfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff45c8fd8 length: 2 item: 0x7ffff449bef8 ...
+  list: 0x7ffff45c8fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+   +element 1: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+    element 2: 0x7ffff44dbfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 5 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44e3fc8 references: 1 type: PKIX_X500NAME_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff457ffd8, pNewObject=0x7ffff4f2fed0, plContext=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44e9fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4583fd8, pNewObject=0x7ffff44e9fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44edfd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4587fd8, pNewObject=0x7ffff44edfe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44f1fd8 references: 1 type: PKIX_LIST_TYPE
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff458bfd8, pNewObject=0x7ffff44f1fe0, plContext=plContext@entry=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44f5fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44fffd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff44fffd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4503fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4447fc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff44fffd8 length: 0 item: 0x7ffff4503fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff444dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff44fffd8 length: 0 item: 0x7ffff4503fc8 ...
+  list: 0x7ffff44fffd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff444dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4503fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4451fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff44fffd8 length: 1 item: 0x7ffff4451fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4461fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff44fffd8 length: 1 item: 0x7ffff4451fc8 ...
+  list: 0x7ffff44fffd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff444dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4503fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff4461fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4451fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff44fffd8 length: 2 index: 0
+  list: 0x7ffff44fffd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff444dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4503fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff457ffd8 length: 3 item: 0x7ffff4503fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44f9fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff457ffd8 length: 3 item: 0x7ffff4503fc8 ...
+  list: 0x7ffff457ffd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4583fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff4587fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 3 type: PKIX_GENERALNAME_TYPE
+   +element 2: 0x7ffff458bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45aefc8 references: 3 type: PKIX_GENERALNAME_TYPE
+    element 3: 0x7ffff44f9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4503fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff44fffd8 length: 2 index: 1
+  list: 0x7ffff44fffd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4461fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4451fc8 references: 1 type: PKIX_GENERALNAME_TYPE
+PKIX_List_AppendItem() list: 0x7ffff457ffd8 length: 4 item: 0x7ffff4451fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44fdfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff457ffd8 length: 4 item: 0x7ffff4451fc8 ...
+  list: 0x7ffff457ffd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4583fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46b1fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+    element 1: 0x7ffff4587fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff459afc8 references: 3 type: PKIX_GENERALNAME_TYPE
+    element 2: 0x7ffff458bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45aefc8 references: 3 type: PKIX_GENERALNAME_TYPE
+   +element 3: 0x7ffff44f9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4503fc8 references: 2 type: PKIX_GENERALNAME_TYPE
+    element 4: 0x7ffff44fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4451fc8 references: 3 type: PKIX_GENERALNAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4461ec8 references: 1 type: PKIX_FORWARDBUILDERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff44fff68 references: 1 type: PKIX_COMCERTSELPARAMS_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff444dfe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4335fd8
+
+Thread 2 "pluto" hit Breakpoint 9, pkix_Build_GatherCerts (plContext=<optimized out>, pNBIOContext=<optimized out>, certSelParams=<optimized out>, state=<optimized out>) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+pkix_Build_GatherCerts():
+#1  pkix_BuildForwardDepthFirstSearch (pNBIOContext=pNBIOContext@entry=0x7ffff4f30180, state=<optimized out>, pValResult=pValResult@entry=0x7ffff4f30190, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:2329
+2329	                PKIX_CHECK(pkix_Build_GatherCerts
+#2  0x00007ffff7dcdcea in pkix_Build_InitiateBuildChain (procParams=<optimized out>, pNBIOContext=pNBIOContext@entry=0x7ffff4f30370, pState=pState@entry=0x7ffff4f30360, pBuildResult=pBuildResult@entry=0x7ffff4f30368, pVerifyNode=0x7ffff4f304d8, plContext=plContext@entry=0x7ffff472bfc0) at pkix_build.c:3526
+3526	        pkixErrorResult =
+state.buildConstants.certStores (used to getCert):
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 5 type: PKIX_CERTSTORE_TYPE
+state.buildConstants.anchors (used to get):
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff453dfd8 length: 1 index: 0
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 5 type: PKIX_CERTSTORE_TYPE
+  ... pkix_Build_GatherCerts(): certStore: 0x7ffff4539fb8
+    {certCallback = 0x7ffff7e10e20 <pkix_pl_Pk11CertStore_GetCert>, crlCallback = 0x7ffff7e12a80 <pkix_pl_Pk11CertStore_GetCRL>, certContinue = 0x0, crlContinue = 0x0, trustCallback = 0x7ffff7e12850 <pkix_pl_Pk11CertStore_CheckTrust>, importCrlCallback = 0x7ffff7e12590 <pkix_pl_Pk11CertStore_ImportCrl>, checkRevByCrlCallback = 0x7ffff7e11e80 <pkix_pl_Pk11CertStore_CheckRevByCrl>, certStoreContext = 0x0, cacheFlag = 1, localFlag = 1}
+
+Thread 2 "pluto" hit Breakpoint 18, pkix_CacheCert_Lookup (store=0x7ffff4539fb8, certSelParams=0x7ffff44fff68, testDate=0x7ffff4535ff8, pFound=0x7ffff4f2fec4, pCerts=0x7ffff4f2ff48, plContext=0x7ffff472bfc0) at pkix_tools.c:930
+930	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4335fd8
+PKIX_List_AppendItem() list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4339fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4339fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 7 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4335fd8 length: 1 item: 0x7ffff44e3fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4335fd8 length: 1 item: 0x7ffff44e3fc8 ...
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4339fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 7 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44e3fc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff4335fd8 length: 2 index: 0
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4339fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 7 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4335fd8 length: 2 index: 1
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44e3fc8 references: 4 type: PKIX_X500NAME_TYPE
+
+Thread 2 "pluto" hit Breakpoint 12, 0x00007ffff7e11215 in pkix_pl_Pk11CertStore_CertQuery (plContext=<optimized out>, pSelected=<optimized out>, params=<optimized out>) at pkix_pl_pk11certstore.c:586
+586	        PKIX_CHECK(pkix_pl_Pk11CertStore_CertQuery
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4335fd8
+pkix_pl_Cert_CreateWithNSSCert():
+  nssCert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4339ef8 references: 1 type: PKIX_CERT_TYPE
+  cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4339ef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4339ef8 ...
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4339ef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff433dfd8
+PKIX_List_GetItem() list: 0x7ffff4335fd8 length: 1 index: 0
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4339ef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4349fc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff434fff8 references: 1 type: PKIX_CERTBASICCONSTRAINTS_TYPE
+PKIX_List_AppendItem() list: 0x7ffff433dfd8 length: 0 item: 0x7ffff4339ef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff433dfd8 length: 0 item: 0x7ffff4339ef8 ...
+  list: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4339ef8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+pkix_CacheCert_Add(): store: 0x7ffff4539fb8 ...
+  certs:
+    list: 0x7ffff433dfd8 references: 1 type: PKIX_LIST_TYPE
+      element 0: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+        item: 0x7ffff4339ef8 references: 1 type: PKIX_CERT_TYPE
+          cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4335fd8
+PKIX_List_AppendItem() list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4539fb8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4335fd8 length: 0 item: 0x7ffff4539fb8 ...
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 8 type: PKIX_CERTSTORE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4335fd8 length: 1 item: 0x7ffff44e3fc8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4357fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4335fd8 length: 1 item: 0x7ffff44e3fc8 ...
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 8 type: PKIX_CERTSTORE_TYPE
+    element 1: 0x7ffff4357fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44e3fc8 references: 4 type: PKIX_X500NAME_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff435bfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff435bfd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff435fff8 references: 1 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff435bfd8 length: 0 item: 0x7ffff435fff8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4363fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff435bfd8 length: 0 item: 0x7ffff435fff8 ...
+  list: 0x7ffff435bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4363fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff435fff8 references: 2 type: PKIX_DATE_TYPE
+PKIX_List_AppendItem() list: 0x7ffff435bfd8 length: 1 item: 0x7ffff433dfd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4367fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff435bfd8 length: 1 item: 0x7ffff433dfd8 ...
+  list: 0x7ffff435bfd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4363fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff435fff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff4367fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff433dfd8 references: 2 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4335fd8 length: 2 index: 0
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4343fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 8 type: PKIX_CERTSTORE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4335fd8 length: 2 index: 1
+  list: 0x7ffff4335fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4357fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44e3fc8 references: 4 type: PKIX_X500NAME_TYPE
+  ... pkix_CacheCert_Add(): cachedValues: ...
+  list: 0x7ffff435bfd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4363fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff435fff8 references: 2 type: PKIX_DATE_TYPE
+    element 1: 0x7ffff4367fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff433dfd8 references: 2 type: PKIX_LIST_TYPE
+        element 0: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+          item: 0x7ffff4339ef8 references: 1 type: PKIX_CERT_TYPE
+            cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff436dfe8 references: 1 type: PKIX_CERTSELECTOR_TYPE
+PKIX_List_GetItem() list: 0x7ffff4551fd8 length: 1 index: 0
+  list: 0x7ffff4551fd8 references: 3 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4555fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4569fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4371ff8 references: 1 type: PKIX_CERTBASICCONSTRAINTS_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4375fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4375fd8
+PKIX_List_AppendItem() list: 0x7ffff4375fd8 length: 0 item: 0x7ffff456def8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4379fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4375fd8 length: 0 item: 0x7ffff456def8 ...
+  list: 0x7ffff4375fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4379fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff456def8 references: 3 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+pkix_Build_RemoveDupUntrustedCerts(): certsFound: ?
+  trustedCertList:
+    list: 0x7ffff4375fd8 references: 1 type: PKIX_LIST_TYPE
+      element 0: 0x7ffff4379fd8 references: 1 type: PKIX_LIST_TYPE
+        item: 0x7ffff456def8 references: 2 type: PKIX_CERT_TYPE
+          cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff4375fd8 length: 1 index: 0
+  list: 0x7ffff4375fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4379fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff456def8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff433dfd8 length: 1 index: 0
+  list: 0x7ffff433dfd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4339ef8 references: 1 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff456def8 secondObject: 0x7ffff4339ef8
+PKIX_List_DeleteItem(): list: 0x7ffff433dfd8 length: 1 index: 0
+  list: 0x7ffff433dfd8 references: 2 type: PKIX_LIST_TYPE
+   -element 0: 0x7ffff4353fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4339ef8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+pkix_List_MergeLists(): firstList: 0x7ffff4375fd8 secondList: 0x7ffff433dfd8 ...PKIX_PL_Object_Alloc(): returns: 0x7ffff4341fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4341fd8
+PKIX_List_GetItem() list: 0x7ffff4375fd8 length: 1 index: 0
+  list: 0x7ffff4375fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4379fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff456def8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff4341fd8 length: 0 item: 0x7ffff456def8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff433bfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4341fd8 length: 0 item: 0x7ffff456def8 ...
+  list: 0x7ffff4341fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff433bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff456def8 references: 4 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff4341fd8 length: 1 index: 0
+  list: 0x7ffff4341fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff433bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff456def8 references: 2 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46e9820 E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff436ffd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 0
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff456def8 secondObject: 0x7ffff46a7ef8
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 1
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff456def8 secondObject: 0x7ffff45eeef8
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 2
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff44dbfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff456def8 secondObject: 0x7ffff449bef8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4349ff8 references: 1 type: PKIX_PUBLICKEY_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4355fd8 references: 1 type: PKIX_TRUSTANCHOR_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4377fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff437bfd8
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 2
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff44dbfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff437bfd8 length: 0 item: 0x7ffff449bef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff437ffd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff437bfd8 length: 0 item: 0x7ffff449bef8 ...
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff437ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 9 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 1
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff443dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff437bfd8 length: 1 item: 0x7ffff45eeef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4383fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff437bfd8 length: 1 item: 0x7ffff45eeef8 ...
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff437ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+    element 1: 0x7ffff4383fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 9 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_GetItem() list: 0x7ffff45c8fd8 length: 3 index: 0
+  list: 0x7ffff45c8fd8 references: 4 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff45ccfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 6 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_List_AppendItem() list: 0x7ffff437bfd8 length: 2 item: 0x7ffff46a7ef8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4387fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff437bfd8 length: 2 item: 0x7ffff46a7ef8 ...
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff437ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+   +element 1: 0x7ffff4383fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+    element 2: 0x7ffff4387fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 9 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff438bfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff438bfd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff438ff68 references: 1 type: PKIX_CERTPOLICYCHECKERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4393fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4399fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff439ffe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43a5fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43abfe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43b1fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff43b1fd8
+PKIX_List_AppendItem() list: 0x7ffff43b1fd8 length: 0 item: 0x7ffff43abfe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43b5fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43b1fd8 length: 0 item: 0x7ffff43abfe8 ...
+  list: 0x7ffff43b1fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43b5fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43abfe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43b9fc8 references: 1 type: PKIX_CERTPOLICYNODE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43bdfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff43bdfd8
+PKIX_List_AppendItem() list: 0x7ffff43bdfd8 length: 0 item: 0x7ffff4393fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43c1fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43bdfd8 length: 0 item: 0x7ffff4393fe8 ...
+  list: 0x7ffff43bdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c1fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4393fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43c5fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4377fd8 length: 0 item: 0x7ffff43c5fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4377fd8 length: 0 item: 0x7ffff43c5fd8 ...
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff43cdfd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 0 item: 0x7ffff43d1fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 0 item: 0x7ffff43d1fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 1 item: 0x7ffff4520fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 1 item: 0x7ffff4520fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 2 item: 0x7ffff5842fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 2 item: 0x7ffff5842fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+   +element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 3 item: 0x7ffff4694fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 3 item: 0x7ffff4694fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+   +element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+    element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4689fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 4 item: 0x7ffff4689fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 4 item: 0x7ffff4689fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+   +element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+    element 4: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4689fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff5864fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff43cdfd8 length: 5 item: 0x7ffff5864fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4645fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff43cdfd8 length: 5 item: 0x7ffff5864fe8 ...
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+    element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+   +element 4: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4689fe8 references: 1 type: PKIX_OID_TYPE
+    element 5: 0x7ffff4645fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5864fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4649fd8 references: 1 type: PKIX_SIGNATURECHECKERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff464dfe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff58b4fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4377fd8 length: 1 item: 0x7ffff58b4fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4377fd8 length: 1 item: 0x7ffff58b4fd8 ...
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+    element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff58bcfe8 references: 1 type: PKIX_CERTNAMECONSTRAINTSCHECKERSTATE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4630fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4636fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4377fd8 length: 2 item: 0x7ffff4636fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4377fd8 length: 2 item: 0x7ffff4636fd8 ...
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+   +element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+    element 2: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4636fd8 references: 2 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff437bfd8 length: 3 index: 0
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff437ffd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff449bef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4711820 E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff463efd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff463efd8
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff463efd8, pNewObject=0x7ffff4f2fc00, plContext=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4403fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 0
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff4393fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff4399fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff439ffe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff43a5fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 1
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff43b9ff8 references: 1 type: PKIX_PUBLICKEY_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff464dfe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 2
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4636fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 0
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff43d1fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 1
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff4520fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 2
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff5842fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 3
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff4694fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 4
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 4: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4689fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff4689fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 5
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 5: 0x7ffff4645fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5864fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4403fd8 length: 0 object: 0x7ffff5864fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff437bfd8 length: 3 index: 1
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4383fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff45eeef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff46d9820 E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4403fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4403fd8
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4403fd8, pNewObject=0x7ffff4f2fc00, plContext=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4409fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 0
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff4393fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff4399fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff439ffe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff43a5fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 1
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff440dff8 references: 1 type: PKIX_PUBLICKEY_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff464dfe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 2
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4636fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 0
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff43d1fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 1
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff4520fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 2
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff5842fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 3
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff4694fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 4
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 4: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4689fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff4689fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 5
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 5: 0x7ffff4645fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5864fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff4409fd8 length: 0 object: 0x7ffff5864fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff437bfd8 length: 3 index: 2
+  list: 0x7ffff437bfd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff4387fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff46a7ef8 references: 7 type: PKIX_CERT_TYPE
+        cert: 0x7ffff4669820 E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4409fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4409fd8
+
+Thread 2 "pluto" hit Breakpoint 27, pkix_List_Duplicate (object=0x7ffff4409fd8, pNewObject=0x7ffff4f2fc00, plContext=0x7ffff472bfc0) at pkix_list.c:434
+434	{
+PKIX_PL_Object_Alloc(): returns: 0x7ffff441bfd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 0
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff4393fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff4399fe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff439ffe8 (calls DeleteItem)
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff43a5fe8 (calls DeleteItem)
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4423fc8 references: 1 type: PKIX_X500NAME_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 1
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff464dfe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 2
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4636fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4429fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4429fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4235fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4429fd8 length: 0 item: 0x7ffff4235fe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff423bfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4429fd8 length: 0 item: 0x7ffff4235fe8 ...
+  list: 0x7ffff4429fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff423bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4235fe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff423ffe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_AppendItem() list: 0x7ffff4429fd8 length: 1 item: 0x7ffff423ffe8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4245fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4429fd8 length: 1 item: 0x7ffff423ffe8 ...
+  list: 0x7ffff4429fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff423bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4235fe8 references: 1 type: PKIX_OID_TYPE
+    element 1: 0x7ffff4245fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff423ffe8 references: 2 type: PKIX_OID_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4231fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_GetItem() list: 0x7ffff4429fd8 length: 2 index: 0
+  list: 0x7ffff4429fd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff423bfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4235fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_PL_Object_Equals(): firstObject: 0x7ffff4231fe8 secondObject: 0x7ffff4235fe8
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 0
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43d7fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43d1fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff43d1fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 1
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff43fdfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4520fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff4520fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 2
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff466dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5842fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff5842fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 3
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 3: 0x7ffff58aafd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4694fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff4694fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 4
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 4: 0x7ffff469cfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4689fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff4689fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff43cdfd8 length: 6 index: 5
+  list: 0x7ffff43cdfd8 references: 1 type: PKIX_LIST_TYPE
+    element 5: 0x7ffff4645fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff5864fe8 references: 1 type: PKIX_OID_TYPE
+PKIX_List_Remove(): list: 0x7ffff441bfd8 length: 0 object: 0x7ffff5864fe8 (calls DeleteItem)
+PKIX_List_GetItem() list: 0x7ffff455dfd8 length: 2 index: 0
+  list: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4561fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4549fc8 references: 1 type: PKIX_CRLCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff453dfd8 length: 1 index: 0
+  list: 0x7ffff453dfd8 references: 5 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4541fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4539fb8 references: 6 type: PKIX_CERTSTORE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4259fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4259fd8
+PKIX_PL_Object_Alloc(): returns: 0x7ffff425dfd8 references: 1 type: PKIX_CRLDP_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4261fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_InsertItem() list: 0x7ffff4259fd8 length: 0 index: 0, item: 0x7ffff425dfd8
+  list: 0x7ffff4259fd8 references: 1 type: PKIX_LIST_TYPE
+   +element 0: 0x7ffff4261fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff425dfd8 references: 2 type: PKIX_CRLDP_TYPE
+PKIX_List_GetItem() list: 0x7ffff4259fd8 length: 1 index: 0
+  list: 0x7ffff4259fd8 references: 2 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4261fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff425dfd8 references: 1 type: PKIX_CRLDP_TYPE
+PKIX_List_GetItem() list: 0x7ffff455dfd8 length: 2 index: 1
+  list: 0x7ffff455dfd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff4565fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff454dfd8 references: 1 type: PKIX_OCSPCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 2
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 2: 0x7ffff463afd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4636fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 1
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 1: 0x7ffff58b8fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff58b4fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_List_GetItem() list: 0x7ffff4377fd8 length: 3 index: 0
+  list: 0x7ffff4377fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff43c9fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff43c5fd8 references: 1 type: PKIX_CERTCHAINCHECKER_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4265fe8 references: 1 type: PKIX_VALIDATERESULT_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4269fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff4269fd8
+PKIX_List_AppendItem() list: 0x7ffff4269fd8 length: 0 item: 0x7ffff436ffd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff426dfd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff4269fd8 length: 0 item: 0x7ffff436ffd8 ...
+  list: 0x7ffff4269fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff426dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff436ffd8 references: 2 type: PKIX_VERIFYNODE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff5842fd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff5842fd8
+PKIX_List_AppendItem() list: 0x7ffff5842fd8 length: 0 item: 0x7ffff44d7fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4665fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff5842fd8 length: 0 item: 0x7ffff44d7fd8 ...
+  list: 0x7ffff5842fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4665fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44d7fd8 references: 2 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4269fd8 length: 1 index: 0
+  list: 0x7ffff4269fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff426dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff436ffd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff467efd8 references: 1 type: PKIX_LIST_TYPE
+PKIX_List_Create(): returns 0x7ffff467efd8
+PKIX_List_AppendItem() list: 0x7ffff467efd8 length: 0 item: 0x7ffff4435fd8 ...
+PKIX_PL_Object_Alloc(): returns: 0x7ffff4341fd8 references: 1 type: PKIX_LIST_TYPE
+  ... PKIX_List_AppendItem():  list: 0x7ffff467efd8 length: 0 item: 0x7ffff4435fd8 ...
+  list: 0x7ffff467efd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4341fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff4435fd8 references: 2 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff5842fd8 length: 1 index: 0
+  list: 0x7ffff5842fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff4665fd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff44d7fd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_List_GetItem() list: 0x7ffff4269fd8 length: 1 index: 0
+  list: 0x7ffff4269fd8 references: 1 type: PKIX_LIST_TYPE
+    element 0: 0x7ffff426dfd8 references: 1 type: PKIX_LIST_TYPE
+      item: 0x7ffff436ffd8 references: 1 type: PKIX_VERIFYNODE_TYPE
+PKIX_PL_Object_Alloc(): returns: 0x7ffff452efe8 references: 1 type: PKIX_BUILDRESULT_TYPE
+
+Thread 2 "pluto" hit Breakpoint 3, find_and_verify_certs (logger=<optimized out>, ike_version=<optimized out>, cert_payloads=<optimized out>, rev_opts=0x7ffff5356fd8, root_certs=<optimized out>, keyid=0x7ffff5356fa0) at /source/programs/pluto/nss_cert_verify.c:607
+607		logtime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
+[Inferior 1 (process 874) detached]
+
+Script done on 2020-12-11 14:45:38-05:00 [COMMAND_EXIT_CODE="134"]

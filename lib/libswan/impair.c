@@ -151,6 +151,7 @@ struct impairment impairments[] = {
 	V("send-no-ikev2-auth", send_no_ikev2_auth, "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
 	V("send-no-main-r2", send_no_main_r2, "causes pluto to omit sending an last Main Mode response packet"),
 	V("send-no-xauth-r0", send_no_xauth_r0, "causes pluto to omit sending an XAUTH user/passwd request"),
+	V("send-no-idr", send_no_idr, "causes pluto as initiator to omit sending an IDr payload"),
 	V("send-pkcs7-thingie", send_pkcs7_thingie, "send certificates as a PKCS7 thingie"),
 	V("send-nonzero-reserved", send_nonzero_reserved, "send non-zero reserved fields in IKEv2 proposal fields"),
 	V("send-nonzero-reserved-id", send_nonzero_reserved_id, "send non-zero reserved fields in IKEv2 ID payload that is part of the AUTH hash calculation"),
@@ -171,6 +172,9 @@ struct impairment impairments[] = {
 	A("initiate-v2-rekey", INITIATE_v2_REKEY, 0, "initiate an IKEv2 rekey using the CREATE_CHILD_SA exchange", "SA"),
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
+
+	A("drop-incoming", IMPAIR_DROP_INCOMING, 0, "drop the N'th incoming message", "message number"),
+	A("drop-outgoing", IMPAIR_DROP_INCOMING, 0, "drop the N'th outgoing message", "message number"),
 
 	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
 	  "impair the (unencrypted) part of the exchange",
@@ -210,7 +214,7 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			} else {
 				fprintf(file, ", ");
 			}
-			const char *sname = enum_short_name(cr->how_enum_names, e);
+			const char *sname = enum_name_short(cr->how_enum_names, e);
 			fprintf(file, "%s", sname);
 		}
 	}
@@ -237,7 +241,7 @@ static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *c
 {
 	unsigned bias = cr->how_keywords != NULL ? cr->how_keywords->nr_values : 1;
 	uintmax_t u;
-	err_t err = shunk_to_uint(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
+	err_t err = shunk_to_uintmax(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
 	if (err == NULL) {
 		return u + bias;
 	} else {
@@ -294,7 +298,7 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 	if (cr == NULL) {
-		log_message(ERROR_STREAM, logger,
+		llog(ERROR_STREAM, logger,
 			    "unrecognized impair option '"PRI_SHUNK"'\n",
 			    pri_shunk(what));
 		return IMPAIR_ERROR;
@@ -314,7 +318,7 @@ enum impair_status parse_impair(const char *optarg,
 	 * instance: --no-impair no-foo:bar.
 	 */
 	if ((!enable + what_no + (how.ptr != NULL)) > 1) {
-		log_message(ERROR_STREAM, logger,
+		llog(ERROR_STREAM, logger,
 			    "overly negative --%simpair %s",
 			    enable ? "" : "no-", optarg);
 		return IMPAIR_ERROR;
@@ -391,7 +395,7 @@ enum impair_status parse_impair(const char *optarg,
 		}
 	}
 
-	log_message(ERROR_STREAM, logger,
+	llog(ERROR_STREAM, logger,
 		    "ignoring impair option '"PRI_SHUNK"' with unrecognized parameter '"PRI_SHUNK"' (%s)",
 		    pri_shunk(what), pri_shunk(how), optarg);
 	return IMPAIR_ERROR;
@@ -430,7 +434,7 @@ static void jam_impairment(struct jambuf *buf,
 			jam(buf, "?%u?", value);
 		}
 	} else if (cr->how_enum_names != NULL) {
-		const char *sname = enum_short_name(cr->how_enum_names, value);
+		const char *sname = enum_name_short(cr->how_enum_names, value);
 		if (sname != NULL) {
 			jam_string(buf, sname);
 		} else {
@@ -481,9 +485,8 @@ void jam_impairments(struct jambuf *buf, const char *sep)
 bool process_impair(const struct whack_impair *wc,
 		    void (*action)(enum impair_action, unsigned param,
 				   unsigned update, bool background,
-				   struct fd *whackfd),
-		    bool background, struct fd *whackfd,
-		    struct logger *logger)
+				   struct logger *logger),
+		    bool background, struct logger *logger)
 {
 	if (wc->what == 0) {
 		/* ignore; silently */
@@ -503,14 +506,14 @@ bool process_impair(const struct whack_impair *wc,
 			const struct impairment *cr = &impairments[ci];
 			if (cr->action == CALL_IMPAIR_UPDATE &&
 			    value_of(cr) != 0) {
-				LOG_JAMBUF(RC_COMMENT, logger, buf) {
+				LLOG_JAMBUF(RC_COMMENT, logger, buf) {
 					jam_impairment(buf, cr);
 				}
 			}
 		}
 		return true;
 	} else if (wc->what >= elemsof(impairments)) {
-		log_message(RC_LOG|ERROR_STREAM, logger,
+		llog(RC_LOG|ERROR_STREAM, logger,
 			    "impairment %u out-of-range", wc->what);
 		return false;
 	}
@@ -529,7 +532,7 @@ bool process_impair(const struct whack_impair *wc,
 			bad_case(cr->sizeof_value);
 		}
 		/* log the update */
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_impairment(buf, cr);
 		}
 		return true;
@@ -539,13 +542,15 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT:
 	case CALL_STATE_EVENT:
+	case CALL_IMPAIR_DROP_INCOMING:
+	case CALL_IMPAIR_DROP_OUTGOING:
 		/* how is always biased */
 		if (action == NULL) {
-			log_message(RC_LOG|DEBUG_STREAM, logger,
+			llog(RC_LOG|DEBUG_STREAM, logger,
 				    "no action for impairment %s", cr->what);
 			return false;
 		}
-		action(cr->action, cr->param, wc->how, background, whackfd);
+		action(cr->action, cr->param, wc->how, background, logger);
 		return true;
 	}
 	/* not inside case */

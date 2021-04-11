@@ -1,4 +1,4 @@
-/* PAM Authentication and Autherization related
+/* PAM Authentication and Authorization related
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,17 +15,20 @@
  * Porting to 2.x by Sean Mathews
  */
 
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
+
+#include "ip_address.h"
+
 struct pam_thread_arg {
 	char *name;
 	char *password;
 	char *c_name;
-	char *ra;
+	ip_address rhost;
 	so_serial_t st_serialno;
 	unsigned long c_instance_serial;
 	const char *atype;  /* string XAUTH or IKEv2 */
 };
 
-extern bool do_pam_authentication(struct pam_thread_arg *arg);
+extern bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger);
 
-#endif /* XAUTH_HAVE_PAM */
+#endif /* AUTH_HAVE_PAM */

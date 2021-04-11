@@ -21,10 +21,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet
-002 added IKEv2 connection "road-eastnet"
+002 "road-eastnet": added IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -33,14 +33,14 @@ road #
 1v2 "road-eastnet"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-eastnet"[1] 192.1.2.23 #1: authenticated using authby=secret
+003 "road-eastnet"[1] 192.1.2.23 #1: authenticated using authby=secret and peer ID_IPV4_ADDR '192.1.2.23'
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.10-192.0.3.10:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
 004 "road-eastnet"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 road #
  # note this end should be 192.1.3.209
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -67,7 +67,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+ ping -n -q -W 1 -c 2 -I 192.0.3.10 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
@@ -80,7 +80,7 @@ road #
 road #
  # remove this end ip next one will take over
 road #
- ../bin/ip-addr-show.sh
+ ../../guestbin/ip-addr-show.sh
 eth0 inet 192.1.3.209/24
 lo inet 192.0.3.10/32
 road #
@@ -101,7 +101,7 @@ road #
 road #
  sleep 5
 road #
- ../bin/ip-addr-show.sh
+ ../../guestbin/ip-addr-show.sh
 lo inet 192.0.3.10/32
 road #
  ip route
@@ -116,13 +116,13 @@ road #
 road #
  sleep 10
 road #
- ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
+ ping -n -q -W 1 -c 2 -I 192.0.3.10 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.3.10 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- ../bin/ip-addr-show.sh
+ ../../guestbin/ip-addr-show.sh
 eth0 inet 192.1.33.209/24
 lo inet 192.0.3.10/32
 road #
@@ -136,7 +136,7 @@ road #
 road #
  # note this end should be 192.1.3.209
 road #
- ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
+ ping -n -q -W 1 -c 2 -I 192.0.3.10 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.3.10 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
@@ -146,7 +146,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23', lease=192.0.3.10/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='192.1.2.23', lease=192.0.3.10/32
 road #
  ip xfrm state
 src 192.1.2.23 dst 192.1.33.209
@@ -173,7 +173,4 @@ road #
 road #
  sleep 7
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

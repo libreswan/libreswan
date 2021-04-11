@@ -6,10 +6,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-x509
-002 added IKEv2 connection "westnet-eastnet-x509"
+002 "westnet-eastnet-x509": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -32,7 +32,4 @@ west #
 west #
  hostname | grep east && grep "Signature check" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

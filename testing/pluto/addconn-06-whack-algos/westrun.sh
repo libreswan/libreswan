@@ -11,8 +11,6 @@ ipsec status | grep "hash-policy:" | grep rsasig
 echo ""
 ipsec status | grep "hash-policy:" | grep defaults
 echo ""
-ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*\(IKEV._ALLOW\).*$/\1/"
-../bin/check-for-core.sh
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ipsec status | grep "TUNNEL" | grep ikev2-default | sed "s/^.*policy: \(IKEv.\).*$/\1/"
 : ==== end ====
 

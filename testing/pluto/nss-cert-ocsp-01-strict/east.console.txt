@@ -6,10 +6,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert
-002 added IKEv1 connection "nss-cert"
+002 "nss-cert": added IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -19,12 +19,4 @@ Redirecting to: [initsystem]
 east #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-east #
- grep '^leak' /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

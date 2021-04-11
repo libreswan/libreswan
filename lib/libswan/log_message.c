@@ -17,11 +17,11 @@
 
 #include "lswlog.h"
 
-void log_message(lset_t rc_flags, const struct logger *logger,
+void llog(lset_t rc_flags, const struct logger *logger,
 		 const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	log_va_list(rc_flags, logger, message, ap);
+	llog_va_list(rc_flags, logger, message, ap);
 	va_end(ap);
 }

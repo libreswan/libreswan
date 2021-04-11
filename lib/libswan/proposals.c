@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2020 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,12 +53,13 @@ struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *poli
 	struct proposal_parser *parser = alloc_thing(struct proposal_parser, "parser");
 	parser->policy = policy;
 	parser->protocol = protocol;
-	parser->error[0] = '\0';
+	parser->diag = NULL;
 	return parser;
 }
 
 void free_proposal_parser(struct proposal_parser **parser)
 {
+	pfree_diag(&(*parser)->diag);
 	pfree(*parser);
 	*parser = NULL;
 }
@@ -133,7 +134,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * At least one of the integrity algorithms wasn't
 		 * NONE.  For instance, esp=aes_gcm-sha1" is invalid.
 		 */
-		proposal_error(parser, "AEAD %s encryption algorithm '%s' must have 'NONE' as the integrity algorithm",
+		proposal_error(parser, "AEAD %s encryption algorithm %s must have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
 			       encrypt->fqn);
 		return false;
@@ -147,7 +148,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		 * algorithm was NONE.  For instance,
 		 * esp=aes_cbc-none" is invalid.
 		 */
-		proposal_error(parser, "non-AEAD %s encryption algorithm '%s' cannot have 'NONE' as the integrity algorithm",
+		proposal_error(parser, "non-AEAD %s encryption algorithm %s cannot have 'NONE' as the integrity algorithm",
 			       proposal->protocol->name,
 			       encrypt->fqn);
 		return false;
@@ -343,65 +344,98 @@ void append_algorithm(struct proposal_parser *parser,
 		      const struct ike_alg *alg,
 		      int enckeylen)
 {
+	if (alg == NULL) {
+		DBGF(DBG_PROPOSAL_PARSER, "no algorithm to append");
+		return;
+	}
 	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
 	passert(algorithm < elemsof(proposal->algorithms));
+	/* find end */
 	struct algorithm **end = &proposal->algorithms[algorithm];
-	/* find end, and check for duplicates */
 	while ((*end) != NULL) {
-		/*
-		 * enckeylen=0 acts as a wildcard
-		 */
-		if (alg == (*end)->desc &&
-		    (alg->algo_type != IKE_ALG_ENCRYPT ||
-		     ((*end)->enckeylen == 0 ||
-		      enckeylen == (*end)->enckeylen))) {
-			log_message(parser->policy->logger_rc_flags, parser->policy->logger,
-				    "discarding duplicate algorithm '%s'",
-				    alg->fqn);
-			return;
-		}
 		end = &(*end)->next;
 	}
+	/* append */
 	struct algorithm new_algorithm = {
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
-	DBGF(DBG_PROPOSAL_PARSER, "appending %s algorithm %s[_%d]",
-	     ike_alg_type_name(alg->algo_type), alg->fqn, enckeylen);
+	DBGF(DBG_PROPOSAL_PARSER, "appending %s %s algorithm %s[_%d]",
+	     parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
+	     enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
+}
+
+void remove_duplicate_algorithms(struct proposal_parser *parser,
+				 struct proposal *proposal,
+				 enum proposal_algorithm algorithm)
+{
+	passert(algorithm < elemsof(proposal->algorithms));
+	/* XXX: not efficient */
+	for (struct algorithm *alg = proposal->algorithms[algorithm];
+	     alg != NULL; alg = alg->next) {
+		struct algorithm **dup = &alg->next;
+		while ((*dup) != NULL) {
+			/*
+			 * Since enckeylen=0 is a wildcard there's no
+			 * point following it enckeylen=128 say; OTOH
+			 * enckeylen=128 then enckeylen=0 is ok as
+			 * latter picks up 192 and 256.
+			 */
+			if (alg->desc == (*dup)->desc &&
+			    (alg->desc->algo_type != IKE_ALG_ENCRYPT ||
+			     alg->enckeylen == 0 ||
+			     alg->enckeylen == (*dup)->enckeylen)) {
+				struct algorithm *dead = (*dup);
+				if (impair.proposal_parser) {
+					llog(parser->policy->logger_rc_flags, parser->policy->logger,
+						    "IMPAIR: ignoring duplicate algorithms");
+					return;
+				}
+				LLOG_JAMBUF(parser->policy->logger_rc_flags, parser->policy->logger, buf) {
+					jam(buf, "discarding duplicate %s %s algorithm %s",
+					    parser->protocol->name, ike_alg_type_name(dead->desc->algo_type),
+					    dead->desc->fqn);
+					if (dead->enckeylen != 0) {
+						jam(buf, "_%d", dead->enckeylen);
+					}
+				}
+				(*dup) = (*dup)->next; /* remove */
+				pfree(dead);
+			} else {
+				dup = &(*dup)->next; /* advance */
+			}
+		}
+	}
 }
 
 void jam_proposal(struct jambuf *log,
 		  const struct proposal *proposal)
 {
-	const char *ps = "";
-
-	const char *as = "";
+	const char *ps = "";	/* proposal separator */
+	const char *as;	/* attribute separator (within a proposal) */
+#	define startprop() { as = ps; }
+#	define jamsep() { jam_string(log, as); ps = "-"; as = "+"; }
 
 	as = ps;
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
+		jamsep();
 		jam_string(log, encrypt->common.fqn);
 		if (alg->enckeylen != 0) {
 			jam(log, "_%d", alg->enckeylen);
 		}
 	}
 
-	as = ps;
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
-		const struct prf_desc *prf = prf_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
-		jam_string(log, prf->common.fqn);
-	}
-
+	startprop();
+	/* ESP, or AEAD */
 	bool print_integ = (impair.proposal_parser ||
 			    /* no PRF */
 			    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL ||
-			    /* AEAD should have NONE */
+			    /* AEAD when not NONE */
 			    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)));
+	/* non-AEAD when PRF and INTEG don't match */
 	if (!print_integ && proposal_encrypt_norm(proposal)) {
-		/* non-AEAD should have matching PRF and INTEG */
 		for (struct algorithm *integ = next_algorithm(proposal, PROPOSAL_integ, NULL),
 			     *prf = next_algorithm(proposal, PROPOSAL_prf, NULL);
 		     !print_integ && (integ != NULL || prf != NULL);
@@ -411,21 +445,30 @@ void jam_proposal(struct jambuf *log,
 				       &integ_desc(integ->desc)->prf->common != prf->desc);
 		}
 	}
-	as = ps;
 	if (print_integ) {
 		FOR_EACH_ALGORITHM(proposal, integ, alg) {
 			const struct integ_desc *integ = integ_desc(alg->desc);
-			jam_string(log, as); ps = "-"; as = "+";
+			jamsep();
 			jam_string(log, integ->common.fqn);
 		}
 	}
 
-	as = ps;
+	startprop();
+	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+		const struct prf_desc *prf = prf_desc(alg->desc);
+		jamsep();
+		jam_string(log, prf->common.fqn);
+	}
+
+	startprop();
 	FOR_EACH_ALGORITHM(proposal, dh, alg) {
 		const struct dh_desc *dh = dh_desc(alg->desc);
-		jam_string(log, as); ps = "-"; as = "+";
+		jamsep();
 		jam_string(log, dh->common.fqn);
 	}
+
+#	undef startprop
+#	undef jamsep
 }
 
 void jam_proposals(struct jambuf *log, const struct proposals *proposals)
@@ -491,11 +534,11 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 				dh = proposal->algorithms[PROPOSAL_dh]->desc;
 			}
 			if (dh == &ike_alg_dh_none.common) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
 					    parser->protocol->name);
 			} else if (dh != NULL) {
-				log_message(parser->policy->logger_rc_flags, parser->policy->logger,
+				llog(parser->policy->logger_rc_flags, parser->policy->logger,
 					    "ignoring %s DH algorithm %s as PFS policy is disabled",
 					    parser->protocol->name, dh->fqn);
 			}
@@ -564,19 +607,19 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(parser->error, sizeof(parser->error), fmt, ap);
+	passert(parser->diag == NULL);
+	parser->diag = diag_va_list(fmt, ap);
 	va_end(ap);
 }
 
 bool impair_proposal_errors(struct proposal_parser *parser)
 {
-	pexpect(parser->error[0] != '\0');
+	passert(parser->diag != NULL);
 	if (impair.proposal_parser) {
-		log_message(parser->policy->logger_rc_flags,
-			    parser->policy->logger,
-			    "IMPAIR: ignoring proposal error: %s",
-			    parser->error);
-		parser->error[0] = '\0';
+		log_diag(parser->policy->logger_rc_flags,
+			 parser->policy->logger,
+			 &parser->diag,
+			 "IMPAIR: ignoring proposal error: ");
 		return true;
 	} else {
 		return false;
@@ -611,7 +654,7 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	}
 	if (parser->policy->check_pfs_vs_dh &&
 	    !proposals_pfs_vs_dh_check(parser, proposals)) {
-		pexpect(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		proposals_delref(&proposals);
 		return NULL;
 	}
@@ -621,4 +664,214 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 bool default_proposals(struct proposals *proposals)
 {
 	return proposals == NULL || proposals->defaulted;
+}
+
+/*
+ * Try to parse any of <ealg>-<ekeylen>, <ealg>_<ekeylen>,
+ * <ealg><ekeylen>, or <ealg> using some look-ahead.
+ */
+
+static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, shunk_t buf)
+{
+	passert(parser->diag == NULL);
+	/* convert -<eklen> if present */
+	char *end = NULL;
+	long eklen = strtol(buf.ptr, &end, 10);
+	if (buf.ptr + buf.len != end) {
+		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length contains a non-numeric character",
+			       parser->protocol->name,
+			       pri_shunk(print));
+		return 0;
+	}
+	if (eklen >= INT_MAX) {
+		proposal_error(parser, "%s encryption algorithm '"PRI_SHUNK"' key length WAY too big",
+			       parser->protocol->name,
+			       pri_shunk(print));
+		return 0;
+	}
+	if (eklen == 0) {
+		proposal_error(parser, "%s encryption key length is zero",
+			       parser->protocol->name);
+		return 0;
+	}
+	return eklen;
+}
+
+bool proposal_parse_encrypt(struct proposal_parser *parser,
+			    struct proposal_tokenizer *tokens,
+			    const struct ike_alg **encrypt,
+			    int *encrypt_keylen)
+{
+	if (tokens->this.len == 0) {
+		proposal_error(parser, "%s encryption algorithm is empty",
+			       parser->protocol->name);
+		return false;
+	}
+
+	/*
+	 * Does it match <ealg>-<eklen>?
+	 *
+	 * Use the tokens NEXT lookahead to check <eklen> first.  If
+	 * it starts with a digit then just assume <ealg>-<ealg> and
+	 * error out if it is not so.
+	 */
+	if (tokens->this_term == '-' &&
+	    tokens->next.len > 0 &&
+	    char_isdigit(hunk_char(tokens->next, 0))) {
+		/* assume <ealg>-<eklen> */
+		shunk_t ealg = tokens->this;
+		shunk_t eklen = tokens->next;
+		/* print "<ealg>-<eklen>" in errors */
+		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
+		int enckeylen = parse_proposal_eklen(parser, print, eklen);
+		if (enckeylen <= 0) {
+			passert(parser->diag != NULL);
+			return false;
+		}
+		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+							       enckeylen, print);
+		if (alg == NULL) {
+			DBGF(DBG_PROPOSAL_PARSER,
+			     "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
+			     pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
+			return false;
+		}
+		/* consume <ealg>-<eklen> */
+		proposal_next_token(tokens);
+		proposal_next_token(tokens);
+		// append_algorithm(parser, proposal, alg, enckeylen);
+		*encrypt = alg; *encrypt_keylen = enckeylen;
+		return true;
+	}
+
+	/*
+	 * Does it match <ealg> (without any _<eklen> suffix?)
+	 */
+	const shunk_t print = tokens->this;
+	shunk_t ealg = tokens->this;
+	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
+						       0/*enckeylen*/, print);
+	if (alg != NULL) {
+		/* consume <ealg> */
+		proposal_next_token(tokens);
+		// append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
+		*encrypt = alg; *encrypt_keylen = 0;
+		return true;
+	}
+
+	/* buffer still contains error from <ealg> lookup */
+	passert(parser->diag != NULL);
+
+	/*
+	 * See if there's a trailing <eklen> in <ealg>.  If there
+	 * isn't then the lookup error above can be returned.
+	 */
+	size_t end = ealg.len;
+	while (end > 0 && char_isdigit(hunk_char(ealg, end-1))) {
+		end--;
+	}
+	if (end == ealg.len) {
+		/*
+		 * no trailing <eklen> digits and <ealg> was rejected
+		 * by above); error still contains message from not
+		 * finding just <ealg>.
+		 */
+		passert(parser->diag != NULL);
+		return false; // warning_or_false(parser, "encryption", print);
+	}
+
+	/* buffer still contains error from <ealg> lookup */
+	passert(parser->diag != NULL);
+	pfree_diag(&parser->diag);
+
+	/*
+	 * Try parsing the <eklen> found in <ealg>.  For something
+	 * like aes_gcm_16, above lookup should have found the
+	 * algorithm so isn't a problem here.
+	 */
+	shunk_t eklen = shunk_slice(ealg, end, ealg.len);
+	int enckeylen = parse_proposal_eklen(parser, print, eklen);
+	if (enckeylen <= 0) {
+		passert(parser->diag != NULL);
+		return false;
+	}
+
+	/*
+	 * The <eklen> in <ealg><eklen> or <ealg>_<eklen> parsed; trim
+	 * <eklen> from <ealg> and then try the lookup.
+	 */
+	ealg = shunk_slice(ealg, 0, end);
+	if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
+		ealg = shunk_slice(ealg, 0, end-1);
+	}
+	pfree_diag(&parser->diag); /* zap old error */
+	alg = encrypt_alg_byname(parser, ealg, enckeylen, print);
+	if (alg == NULL) {
+		passert(parser->diag != NULL);
+		return false; // warning_or_false(parser, "encryption", print);
+	}
+
+	/* consume <ealg> */
+	proposal_next_token(tokens);
+	// append_algorithm(parser, proposal, alg, enckeylen);
+	*encrypt = alg; *encrypt_keylen = enckeylen;
+	return true;
+}
+
+struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims)
+{
+	struct proposal_tokenizer token = {
+		.input = input,
+		.delims = delims,
+	};
+	/* parse next */
+	proposal_next_token(&token);
+	/* next<-this; parse next */
+	proposal_next_token(&token);
+	return token;
+}
+
+void proposal_next_token(struct proposal_tokenizer *tokens)
+{
+	/* shuffle terminators */
+	tokens->prev_term = tokens->this_term;
+	tokens->this_term = tokens->next_term;
+	/* shuffle tokens */
+	tokens->this = tokens->next;
+	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
+	if (DBGP(DBG_PROPOSAL_PARSER)) {
+		JAMBUF(buf) {
+			jam(buf, "token: ");
+			if (tokens->prev_term != '\0') {
+				jam(buf, "'%c'", tokens->prev_term);
+			} else {
+				jam(buf, "''");
+			}
+			jam(buf, " ");
+			if (tokens->this.ptr == NULL) {
+				jam(buf, "<null>");
+			} else {
+				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
+			}
+			jam(buf, " ");
+			if (tokens->this_term != '\0') {
+				jam(buf, "'%c'", tokens->this_term);
+			} else {
+				jam(buf, "''");
+			}
+			jam(buf, " ");
+			if (tokens->next.ptr == NULL) {
+				jam(buf, "<null>");
+			} else {
+				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->next));
+			}
+			jam(buf, " ");
+			if (tokens->next_term != '\0') {
+				jam(buf, "'%c'", tokens->next_term);
+			} else {
+				jam(buf, "''");
+			}
+			jambuf_to_debug_stream(buf); /* XXX: grrr */
+		}
+	}
 }

@@ -4,12 +4,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 road #
  ipsec auto --add x509
-002 added IKEv1 connection "x509"
+002 "x509": added IKEv1 connection
 road #
  echo done
 done
@@ -34,7 +34,4 @@ done
 road #
  grep -E -i fragment /tmp/pluto.log
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

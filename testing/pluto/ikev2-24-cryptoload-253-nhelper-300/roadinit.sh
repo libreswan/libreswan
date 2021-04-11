@@ -254,5 +254,5 @@ ip addr add 192.1.3.252/24 dev eth0
 ip addr add 192.1.3.253/24 dev eth0
 ipsec start
 ipsec whack --impair suppress-retransmits
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 echo "initdone"

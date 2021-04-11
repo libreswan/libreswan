@@ -3,12 +3,12 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev1"
+002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -20,7 +20,7 @@ west #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I1) and NOT sending notification
@@ -34,7 +34,4 @@ west #
 | processing informational NO_PROPOSAL_CHOSEN (14)
 "westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

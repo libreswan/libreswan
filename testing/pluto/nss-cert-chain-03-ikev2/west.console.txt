@@ -6,23 +6,23 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert-chain
-002 added IKEv2 connection "nss-cert-chain"
+002 "nss-cert-chain": added IKEv2 connection
 west #
  ipsec auto --status |grep nss-cert-chain
 000 "nss-cert-chain": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-chain":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west_chain_endcert; my_updown=ipsec _updown;
 000 "nss-cert-chain":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-chain":   our auth:rsasig, their auth:rsasig
-000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "nss-cert-chain":   policy_label:unset;
+000 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "nss-cert-chain":   sec_label:unset;
 000 "nss-cert-chain":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_int_2.testing.libreswan.org, E=west_chain_int_2@testing.libreswan.org'...'%any'
-000 "nss-cert-chain":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-chain":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-chain":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "nss-cert-chain":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-chain":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "nss-cert-chain":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "nss-cert-chain":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "nss-cert-chain":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -39,9 +39,7 @@ west #
 1v2 "nss-cert-chain" #1: initiating IKEv2 connection
 1v2 "nss-cert-chain" #1: sent IKE_SA_INIT request
 1v2 "nss-cert-chain" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "nss-cert-chain" #1: certificate verified OK: E=east_chain_endcert@testing.libreswan.org,CN=east_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "nss-cert-chain" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org'
-003 "nss-cert-chain" #1: authenticated using RSA with SHA2_512
+003 "nss-cert-chain" #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
 002 "nss-cert-chain" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
 004 "nss-cert-chain" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -62,11 +60,4 @@ west #
 west #
  ipsec whack --shutdown
 west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

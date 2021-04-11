@@ -7,19 +7,19 @@ Usage:
 
     $0 <summarydir> [ <repodir> [ <first-commit> ] ]
 
-Select, and then print on STDOUT, the hash for an untested commit in
-the range [<first-commit>..HEAD].
+Search [<first-comit>..HEAD] for the next commit to test.  First
+choice is HEAD; second choice is something "interesting" such as a tag
+or branch (see git-interesting.sh); and the third choice is to split
+the longest run of untested commits.
 
-First choice is HEAD; second choice is something "interesting" such as
-a tag or branch (see git-interesting.sh); and the third choice is to
-split the longest run of untested commits.
+On STDOUT, print the hash of the selected commit.
 
-Additional debugging information is printed on STDER including lines
-of the form:
+On STDERR, in addition to random debug lines, list the status of all
+commits using the format:
 
-    TESTED: <resultdir> <hash> <interesting>
+    (TESTED|UNTESTED): <resultdir> <hash> <interesting> <index> <run-length> <bias>
 
-which can be used to examine result directories.
+(see git-interesting.sh for <interesting>'s value)
 
 EOF
   exit 1
@@ -55,32 +55,34 @@ first_commit=$(git show --no-patch --format=%H ${first_commit})
 branch=$(${webdir}/gime-git-branch.sh .)
 remote=$(git config --get branch.${branch}.remote)
 
-# Find the longest untested run of commits.
+# Find the longest untested run of commits.  Use a bias to prefer
+# earlier runs.
 
 run=""
-count=0
+index=0
+point_count=0
 
 head_commit=
-head_count=0
+head_index=0
 
-points="tag merge branch"
-for point in ${points} ; do
-    point_commit=${point}_commit
-    point_count=${point}_count
-    eval ${point_commit}=
-    eval ${point_count}=0
-done
-
-longest_bias=0
-longest_length=0
-longest_count=0
 longest_commit=
+longest_index=0
+longest_length=0
+
+tag=
+tag_commit=
+tag_index=0
+
+point=
+point_commit=
+point_index=0
+point_rank=0
 
 while read commits ; do
-    count=$(expr ${count} + 1)
+    index=$(expr ${index} + 1)
     commit=$(set -- ${commits} ; echo $1)
 
-    # directory containing test result?
+    # See of the commit has a test result directory?
     #
     # Git's idea of how long an abrievated hash needs to be keeps
     # growing.
@@ -106,21 +108,27 @@ while read commits ; do
     # Hopefuly this is less confusing then having tester.sh ignore new
     # commits.  These results will get pruned early.
     #
-    # Use count=1 as a flag to indicate that the test wasn't tested.
+    # Use index=1 as a flag to indicate that the test wasn't tested.
 
     if test -z "${head_commit}" ; then
 	head_commit=${commit}
-	test ${count} -eq 1 # always true
+	test ${index} -eq 1 # always true
 	if test -z "${resultdir}" ; then
 	    # flag that this hasn't been tested
-	    head_count=${count}
+	    head_index=${index}
 	fi
-	echo head ${head_commit} at ${head_count} 1>&2
+	echo head ${head_commit} at ${head_index} 1>&2
 	# Don't bail early as some scripts rely on this script
 	# printing an analysis of all the commits.
     fi
 
-    # Find out how interesting the commit is; and why.
+    # Find out how interesting the commit is, and why.  list the
+    # results on stderr.
+    #
+    # Among other things, this output can be used to select a random
+    # set of results to delete.  For instance, by selecting a random
+    # subset of the less interesting results (interesting results have
+    # a colon).  See README.txt.
 
     if interesting=$(${webdir}/git-interesting.sh ${commit}) ; then
 	uninteresting=false
@@ -128,46 +136,45 @@ while read commits ; do
 	uninteresting=true
     fi
 
-    # List all the tested commits.
-    #
-    # Among other things, this output can be used to select a random
-    # set of results to delete.  For instance, by selecting a random
-    # subset of the less interesting results (interesting results have
-    # a colon).  See README.txt.
-
+    run_length=$(echo ${run} | wc -w)
     if test -n "${resultdir}"; then
-	echo TESTED: ${resultdir} ${commit} ${interesting} 1>&2
+	TESTED=TESTED
+    else
+	TESTED=UNTESTED
     fi
+    echo ${TESTED}: ${resultdir} ${commit} ${interesting} ${index} ${run_length} ${point_count} 1>&2
 
-    # Skip uninteresting commits; don't include them in untested runs.
+    # Skip uninteresting commits - don't include them in untested
+    # runs.
 
     if ${uninteresting} ; then
 	continue
     fi
 
-    # Update the longest run if, after adjusting for a bias towards
-    # earlier runs, it is longer; while repeatedly updating isn't the
-    # most efficient it avoids the need to do updates in the various
-    # code paths below.
+    # Update the longest run if, after using the POINT_COUNT to bias
+    # things towards earlier runs, it is longer.  While repeatedly
+    # updating isn't the most efficient it avoids the need to do
+    # updates in the various code paths below.
 
-    run_length=$(echo ${run} | wc -w)
-    if test ${run_length} -gt $(expr ${longest_length} + ${longest_bias}) ; then
+    if test ${run_length} -gt $(expr ${longest_length} + ${point_count}) ; then
 	longest_length=${run_length}
-	longest_count=${count}
-	longest_commit=$(echo ${run} | awk '{ print $(NF / 2 + 1)}')
-	echo longest ${longest_commit} at ${longest_count} length ${longest_length} bias ${longest_bias} run ${run} 1>&2
+	longest_index=${index}
+	longest_commit=$(echo ${run} | awk '{ print $(NF / 2 + 1)}') # midpoint
+	echo longest ${longest_commit} at ${longest_index} length ${longest_length} run ${run} 1>&2
     fi
 
-    # If this is a really interesting commit (branch, merge, tag),
-    # increment the bias so that earlier runs are preferred.  Do this
-    # before discarding tested commits so that nothing is missed.
-    # This somewhat double counts as both merge and branch points are
-    # considered.
+    # Increment the point count (branch, merge, tag) when needed.
+    #
+    # Do this before discarding tested commits so that nothing is
+    # missed.
+    #
+    # The POINT_COUNT is used to bias the untested run length that
+    # earlier shorter runs are prefered.
 
     case "${interesting}" in
 	*:* )
-	    longest_bias=$(expr ${longest_bias} + 1)
-	    echo bias ${longest_bias} $(echo ${interesting} | cut -d: -f1) ${commit} at ${count} 1>&2
+	    point_count=$(expr ${point_count} + 1)
+	    echo point: ${point_count} $(echo ${interesting} | cut -d: -f1) ${commit} at ${index} 1>&2
 	    ;;
     esac
 
@@ -182,17 +189,22 @@ while read commits ; do
     # or tag) untested commit.
 
     case "${interesting}" in
+	tag:*)
+	    tag=$(expr "${interesting}" : '.*: *\(.*\)')
+	    tag_commit=${commit}
+	    tag_index=${index}
+	    # kill current run
+	    run=""
+	    continue
+	    ;;
 	*:* )
 	    point=$(expr "${interesting}" : '\(.*\):')
-	    point_commit=${point}_commit
-	    point_count=${point}_count
-	    if test -z "${!point_commit}" ; then
-		eval ${point_commit}=${commit}
-		eval ${point_count}=${count}
-		echo "${point} ${!point_commit} at ${!point_count}" 1>&2
-		run=""
-		continue
-	    fi
+	    point_commit=${commit}
+	    point_index=${index}
+	    point_rank=${point_count}
+	    # kill current run
+	    run=""
+	    continue
 	    ;;
     esac
 
@@ -204,14 +216,11 @@ done < <(git rev-list \
 	     ${first_commit}..${remote} ; echo ${first_commit})
 
 # Dump the results
+# ${point^^} is upper case
 
-echo HEAD ${head_commit} at ${head_count} 1>&2
-for point in ${points} ; do
-    point_commit=${point}_commit
-    point_count=${point}_count
-    echo "${point^^} ${!point_commit} at ${!point_count}" 1>&2
-done
-echo LONGEST ${longest_length} ${longest_count} ${longest_commit} 1>&2
+echo HEAD ${head_commit} at ${head_index} 1>&2
+echo "${point^^} ${point_commit} at ${point_index} rank ${point_rank}" 1>&2
+echo LONGEST ${longest_commit} at ${longest_index} length ${longest_length} 1>&2
 
 # Now which came first?
 
@@ -222,20 +231,22 @@ print_selected() {
     exit 0
 }
 
-if test ${head_count} -gt 0 ; then
+# head
+if test ${head_index} -gt 0 ; then
     print_selected "head" ${head_commit}
 fi
 
-for point in ${points} ; do
-    point_commit=${point}_commit
-    point_count=${point}_count
-    if test "${!point_count}" -gt 0 -a "${!point_count}" -lt "${longest_count}" ; then
-	print_selected ${point} "${!point_commit}"
-    fi
-done
+# any tag
+if test "${tag_index}" -gt 0 ; then
+    print_selected tag:${tag} "${point_commit}"
+fi
 
-if test ${longest_count} -gt 0 ; then
-    # Split the run in approx two.
+# any branch/merge is untested?
+if test "${point_index}" -gt 0 ; then
+    print_selected ${point} "${point_commit}"
+fi
+
+if test ${longest_index} -gt 0 ; then
     print_selected "longest-run" ${longest_commit}
 fi
 

@@ -65,7 +65,7 @@
  *
  *   TOTAL < ROOF => ARRAY[TOTAL] == '\0'
  *
- * When TOTAL>=ROOF, overflow has occured and no futher characters are
+ * When TOTAL>=ROOF, overflow has occurred and no further characters are
  * written.
  *
  * When TOTAL==ROOF-1 the buffer is full.  Technically there is still
@@ -147,7 +147,7 @@ void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos);
  * trying to pretty-print a table of values.
  */
 
-size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap);
+size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap) PRINTF_LIKE_VA(2);
 size_t jam_raw_bytes(struct jambuf *buf, const void *bytes, size_t nr_bytes);
 
 /* wrap above */
@@ -162,21 +162,53 @@ size_t jam_jambuf(struct jambuf *buf, struct jambuf *in);
 
 typedef size_t (jam_bytes_fn)(struct jambuf *buf, const void *bytes, size_t size);
 
-/* bytes as hex ...  */
+/*
+ * bytes as hex ...
+ */
 
 /* upper case hex - B1B2... */
 jam_bytes_fn jam_HEX_bytes;
+#define jam_HEX_hunk(BUF, HUNK)						\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_HEX_bytes(BUF, hunk_.ptr, hunk_.len);		\
+	})
+
 /* lower case hex - b1b2... */
 jam_bytes_fn jam_hex_bytes;
+#define jam_hex_hunk(BUF, HUNK)						\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_hex_bytes(BUF, hunk_.ptr, hunk_.len);		\
+	})
+
 /* hex bytes - b1 b2 b3 b4  b6 b6 b7 b8 - like DBG_dump */
 jam_bytes_fn jam_dump_bytes;
+#define jam_dump_hunk(BUF, HUNK)					\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_dump_bytes(BUF, hunk_.ptr, hunk_.len);		\
+	})
 
-/* bytes as a string */
+/*
+ * bytes as a string.
+ */
 
 /* (isprint(b1) ? \NNN : b1)... */
 jam_bytes_fn jam_sanitized_bytes;
-/* (ismeta(b1)) ? \NNN : b1)... */
+#define jam_sanitized_hunk(BUF, HUNK)					\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_sanitized_bytes(BUF, hunk_.ptr, hunk_.len);		\
+	})
+
+/* (ismeta(b1)) ? \NNN : b1)... (i.e., shell escaped) */
 jam_bytes_fn jam_meta_escaped_bytes;
+#define jam_meta_escaped_hunk(BUF, HUNK)				\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_meta_escaped_bytes(BUF, hunk_.ptr, hunk_.len);	\
+	})
 
 /*
  * Code wrappers that cover up the details of allocating,

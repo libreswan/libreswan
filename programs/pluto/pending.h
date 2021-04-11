@@ -18,28 +18,16 @@
  * for more details.
  */
 
+#ifndef PENDING_H
+#define PENDING_H
+
 #include "monotime.h"
 #include "fd.h"
+#include "lset.h"
+#include "chunk.h"
 
-void add_pending(struct fd *whack_sock,
-		 struct ike_sa *ike,
-		 struct connection *c,
-		 lset_t policy,
-		 unsigned long try,
-		 so_serial_t replacing,
-		 struct xfrm_user_sec_ctx_ike *uctx,
-		 bool part_of_initiate);
-
-void flush_pending_by_connection(const struct connection *c);
-bool in_pending_use(const struct connection *c);
-void show_pending_phase2(struct show *s,
-			 const struct connection *c,
-			 const struct ike_sa *ike);
-bool pending_check_timeout(const struct connection *c);
-
-extern struct connection *first_pending(const struct ike_sa *ike,
-					lset_t *policy,
-					struct fd **p_whack_sock);
+struct state;
+struct show;
 
 /*
  * struct pending, the structure representing IPsec SA negotiations
@@ -56,6 +44,34 @@ struct pending {
 	so_serial_t replacing;
 	monotime_t pend_time;
 	bool part_of_initiate;
-	struct xfrm_user_sec_ctx_ike *uctx;
+	chunk_t sec_label;
 	struct pending *next;
 };
+
+void add_pending(struct fd *whack_sock,
+		 struct ike_sa *ike,
+		 struct connection *c,
+		 lset_t policy,
+		 unsigned long try,
+		 so_serial_t replacing,
+		 chunk_t sec_label,
+		 bool part_of_initiate);
+
+void unpend(struct ike_sa *ike, struct connection *cc);
+void release_pending_whacks(struct state *st, err_t story);
+void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
+
+void flush_pending_by_connection(const struct connection *c);
+void flush_pending_by_state(struct ike_sa *ike);
+
+bool connection_is_pending(const struct connection *c);
+void show_pending_phase2(struct show *s,
+			 const struct connection *c,
+			 const struct ike_sa *ike);
+bool pending_check_timeout(const struct connection *c);
+
+extern struct connection *first_pending(const struct ike_sa *ike,
+					lset_t *policy,
+					struct fd **p_whack_sock);
+
+#endif

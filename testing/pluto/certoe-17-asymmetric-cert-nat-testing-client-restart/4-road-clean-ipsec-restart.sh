@@ -1,6 +1,5 @@
-# restarting ipsec service
+# restarting ipsec service; OE policies time to load
 ipsec restart
-# give OE policies time to load
-sleep 5
+../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
 # should be empty
 ipsec status |grep STATE_

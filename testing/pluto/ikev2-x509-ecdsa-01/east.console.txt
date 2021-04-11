@@ -13,10 +13,10 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec whack --impair suppress-retransmits
 east #
@@ -25,7 +25,4 @@ initdone
 east #
  ipsec whack --shutdown
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

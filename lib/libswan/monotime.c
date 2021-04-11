@@ -17,6 +17,7 @@
  */
 
 #include <time.h>	/* for clock_*() + clockid_t */
+#include <errno.h>
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
 #include "lswlog.h"	/* for libreswan_exit_log_errno() */
@@ -48,15 +49,16 @@ monotime_t mononow(void)
 {
 	struct timespec t;
 	int e = clock_gettime(monotime_clockid(), &t);
-	if (e != 0) {
+	if (e < 0) {
 		/*
 		 * This code assumes clock_gettime() always succeeds -
 		 * if it were expected to fail then there'd either be
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
+		int err = errno;
 		PASSERT_FAIL("clock_gettime(%d,...) in mononow() failed. "PRI_ERRNO,
-			     monotime_clockid(), pri_errno(e));
+			     monotime_clockid(), pri_errno(err));
 	}
 	/* OK */
 	return (monotime_t) {

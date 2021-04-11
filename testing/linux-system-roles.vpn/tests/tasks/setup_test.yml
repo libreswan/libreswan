@@ -1,0 +1,60 @@
+---
+- name: Set platform/version specific variables
+  include_role:
+    name: linux-system-roles.vpn
+    tasks_from: set_vars
+    public: true
+
+- name: extra operations on inventory hostname
+  block:
+    - name: Change inventory_hostname
+      set_fact:
+        inventory_hostname: "{{ __vpn_main_hostname }}"
+
+    # Dummy main host is dynamically added to avoid error in VPN role
+    # that says hostvars[{{ main_hostname }}] is undefined
+    - name: add dummy main host
+      add_host:
+        name: "{{ __vpn_main_hostname }}"
+
+  when: not (__vpn_opportunistic | d(false) | bool)
+
+- name: Create nss directory for testing
+  file:
+    path: "{{ __vpn_nss_location }}"
+    state: directory
+    mode: '0600'
+
+- name: Create /etc/ipsec.d directory for testing
+  file:
+    path: "/etc/ipsec.d"
+    state: directory
+    mode: '0600'
+
+- name: Dynamically add more hosts
+  include_tasks: tasks/add_hosts.yml
+
+- name: create dummy policies directory
+  block:
+    - name: Create dummy policies directory for testing
+      file:
+        path: "/etc/ipsec.d/policies"
+        state: directory
+        mode: '0600'
+
+    - name: Create dummy policy files for testing
+      file:
+        path: "/etc/ipsec.d/policies/private"
+        state: touch
+
+    - name: Create dummy policy files for testing
+      file:
+        path: "/etc/ipsec.d/policies/private-or-clear"
+        state: touch
+
+    - name: Create dummy policy files for testing
+      file:
+        path: "/etc/ipsec.d/policies/clear"
+        state: touch
+
+  when: __vpn_opportunistic | d(false)

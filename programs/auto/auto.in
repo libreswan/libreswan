@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 # user interface to automatic keying and Pluto in general
 # Copyright (C) 1998, 1999, 2000  Henry Spencer.
 # Copyright (C) 2014-2017 Paul Wouters <pwouters@redhat.com>
@@ -24,15 +24,15 @@ usage="Usage:
 	${me} [--showonly] [--asynchronous] --down connectionname
 	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute|ondemand} connectionname
-	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-	${me} [--showonly] --{rereadcrls|rereadcerts|rereadall}
-	${me} [--showonly] [--utc] --{listpubkeys|listcerts}
-	${me} [--showonly] [--utc] --checkpubkeys
-	${me} [--showonly] [--utc] --{listcacerts|listgroups}
+	${me} [--showonly] --{ready|status}
+	${me} [--showonly] --{fetchcrls|rereadcerts|rereadall|rereadsecrets}
+	${me} [--showonly] [--utc] --{listpubkeys|listcerts|listcacerts}
 	${me} [--showonly] [--utc] --{listcrls|listall}
+	${me} [--showonly] [--utc] --checkpubkeys
 	${me} [--showonly] [--utc] --purgeocsp
 
-	other options: [--config ipsecconfigfile] [--verbose] [--ctlsocket <file>]"
+	other options: [--config ipsecconfigfile] [--verbose] \\
+		[--ctlsocket <file>]"
 
 config=
 async=
@@ -88,12 +88,11 @@ do
 	    op="$1"
 	    argc=1
 	    ;;
-	--ready|--status|--rereadsecrets|--rereadgroups|\
-	--rereadcacerts|--rereadcrls|--rereadcerts| --rereadall|\
-	--listpubkeys|--listcerts|\
-	--checkpubkeys|\
-	--listcacerts|--listgroups|\
-	--listcrls|--listall|--purgeocsp)
+	--checkpubkeys|--fetchcrls|\
+	--listall|--listcacerts|--listcerts|--listcrls|--listpubkeys|\
+	--purgeocsp|--ready|\
+	--rereadall|--rereadcerts|--rereadcrls|--rereadsecrets|\
+	--status)
 	    if [ " ${op}" != " " ]; then
 		echo "${usage}" >&2
 		exit 2
@@ -127,7 +126,7 @@ case "${op}$#:$1:$2" in
     1:ready:|1:status:|1:rereadsecrets:|\
     1:rereadcacerts:|1:rereadcrls:|1:rereadcerts:|1:rereadall:|\
     1:listpubkeys:|1:listcerts:|\
-    1:listcacerts:|1:listgroups:|\
+    1:listcacerts:|\
     1:listcrls:|1:listall:)
 	echo "${me}: warning: obsolete command syntax used" >&2
 	op="--$1"
@@ -188,10 +187,6 @@ case "${op}" in
 	;;
     --listcacerts)
 	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" ${utc} --listcacerts
-	exit
-	;;
-    --listgroups)
-	${showonly} ipsec whack --ctlsocket "${CTLSOCKET}" ${utc} --listgroups
 	exit
 	;;
     --listcrls)

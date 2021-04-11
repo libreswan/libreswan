@@ -1,0 +1,2 @@
+test A/AAAA resolving and %defaultroute road has east46 as right
+which would resolve to v4 and v6 address.

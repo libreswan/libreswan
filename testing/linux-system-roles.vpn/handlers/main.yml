@@ -1,0 +1,10 @@
+---
+- name: restart vpn service and wait for ssh conn to return
+  include_tasks: tasks/enable_restart_vpn.yml
+  listen: __vpn_handler_enable_start_vpn
+
+- name: send pings to initialize mesh connections
+  command: "ping -c 5 {{ item }}"
+  loop: "{{ ansible_play_batch }}"
+  when: item != inventory_hostname
+  listen: __vpn_handler_init_mesh_conns

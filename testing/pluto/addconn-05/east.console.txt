@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec addconn --verbose east
 opening file: /etc/ipsec.conf
@@ -28,12 +28,9 @@ conn: "east" redirect-to=<unset>
 conn: "east" accept-redirect-to=<unset>
 conn: "east" esp=<unset>
 conn: "east" ike=<unset>
-002 added IKEv2 connection "east"
+002 "east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -5,15 +5,12 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "roadnet-eastnet-ipv4-psk-ikev2"
+002 "roadnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

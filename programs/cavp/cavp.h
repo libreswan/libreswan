@@ -14,12 +14,13 @@
  */
 
 struct cavp_entry;
+struct logger;
 
 struct cavp {
 	const char *alias;
 	const char *description;
 	void (*print_config)(void);
-	void (*run_test)(void);
+	void (*run_test)(struct logger *logger);
 	const struct cavp_entry *config;
 	const struct cavp_entry *data;
 	const char *match[];

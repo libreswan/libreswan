@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  # ensure that clear text does not get through
@@ -13,28 +13,28 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 added IKEv2 connection "ipv4-psk-ikev2-transport"
+002 "ipv4-psk-ikev2-transport": added IKEv2 connection
 west #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 000 "ipv4-psk-ikev2-transport": 192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]; unrouted; eroute owner: #0
 000 "ipv4-psk-ikev2-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret
-000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "ipv4-psk-ikev2-transport":   policy_label:unset;
-000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "ipv4-psk-ikev2-transport":   sec_label:unset;
+000 "ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "ipv4-psk-ikev2-transport":   policy: IKEv2+PSK+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
 000 "ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -52,12 +52,11 @@ west #
 1v2 "ipv4-psk-ikev2-transport" #1: initiating IKEv2 connection
 1v2 "ipv4-psk-ikev2-transport" #1: sent IKE_SA_INIT request
 1v2 "ipv4-psk-ikev2-transport" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "ipv4-psk-ikev2-transport" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ipv4-psk-ikev2-transport" #1: authenticated using authby=secret
+003 "ipv4-psk-ikev2-transport" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ipv4-psk-ikev2-transport" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "ipv4-psk-ikev2-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
  ipsec whack --trafficstatus
@@ -66,7 +65,7 @@ west #
  # test rekey
 west #
  ipsec whack --rekey-ipsec --name ipv4-psk-ikev2-transport
-1v2 "ipv4-psk-ikev2-transport" #3: STATE_V2_REKEY_CHILD_I1: STATE_V2_REKEY_CHILD_I1
+1v2 "ipv4-psk-ikev2-transport" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "ipv4-psk-ikev2-transport" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "ipv4-psk-ikev2-transport" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "ipv4-psk-ikev2-transport" #3: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 NATOA=none NATD=none DPD=passive}
@@ -82,7 +81,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -118,7 +117,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -4,15 +4,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
-002 added IKEv2 connection "rw-east-pool-x509-ipv4"
+002 "rw-east-pool-x509-ipv4": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -37,7 +37,4 @@ road                                                         P,,
 west                                                         P,,  
 west-ec                                                      P,,  
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

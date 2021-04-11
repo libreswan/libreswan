@@ -12,26 +12,26 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-chain-B
-002 added IKEv1 connection "road-chain-B"
+002 "road-chain-B": added IKEv1 connection
 east #
  ipsec auto --add road-A
-002 added IKEv1 connection "road-A"
+002 "road-A": added IKEv1 connection
 east #
  ipsec auto --status |grep road
 000 "road-A": 192.0.2.254/32===192.1.2.23<192.1.2.23>[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "road-A":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-A":   our auth:rsasig, their auth:rsasig
-000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-A":   policy_label:unset;
+000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "road-A":   sec_label:unset;
 000 "road-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
-000 "road-A":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-A":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-A":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-A":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-A":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@someone.testing.libreswan.org
@@ -41,13 +41,13 @@ east #
 000 "road-chain-B":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-chain-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-chain-B":   our auth:rsasig, their auth:rsasig
-000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-chain-B":   policy_label:unset;
+000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "road-chain-B":   sec_label:unset;
 000 "road-chain-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-chain-B":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-chain-B":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-chain-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-chain-B":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-chain-B":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-chain-B":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@west_chain_endcert.testing.libreswan.org
@@ -83,7 +83,4 @@ west-ec                                                      P,,
 nic                                                          P,,  
 otherca                                                      CT,, 
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

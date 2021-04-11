@@ -10,17 +10,14 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 added IKEv2 connection "ikev2-westnet-eastnet-x509-cr"
+002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  grep ": AUTHENTICATION_FAILED" /tmp/pluto.log
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

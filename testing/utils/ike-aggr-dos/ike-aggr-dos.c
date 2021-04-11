@@ -150,9 +150,9 @@ static void usage(void)
 
  */
 
-void molest_ike_params(u_char *user,
+void molest_ike_params(uint8_t *user,
 		       const struct pcap_pkthdr *h,
-		       const u_char *bytes)
+		       const uint8_t *bytes)
 {
 	static unsigned char molest_index1 = 0x12;
 	static unsigned char molest_index2 = 0x34;
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 	in  = pcap_open_offline(filein, errbuf);
 	out = pcap_dump_open(in, fileout);
 
-	pcap_dispatch(in, -1, molest_ike_params, (u_char *)out);
+	pcap_dispatch(in, -1, molest_ike_params, (uint8_t *)out);
 
 	pcap_dump_close(out);
 	pcap_close(in);

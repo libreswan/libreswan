@@ -22,7 +22,6 @@
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
-#include <sys/queue.h>
 
 #include "constants.h"
 #include "lswlog.h"
@@ -83,7 +82,7 @@ static void confwrite_int(FILE *out,
 		case kt_appendlist:
 		case kt_filename:
 		case kt_dirname:
-		case kt_rsakey:
+		case kt_rsasigkey:
 
 		case kt_percent:
 		case kt_ipaddr:
@@ -154,8 +153,7 @@ static void confwrite_int(FILE *out,
 
 				if (val != 0) {
 					JAMBUF(buf) {
-						jam_enum_lset_short(buf, k->info->names,
-								    ",", val);
+						jam_lset_short(buf, k->info->names, ",", val);
 						fprintf(out, "\t%s%s=\""PRI_SHUNK"\"\n",
 							side, k->keyname,
 							pri_shunk(jambuf_as_shunk(buf)));
@@ -221,7 +219,7 @@ static void confwrite_str(FILE *out,
 			}
 			break;
 
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_ipaddr:
 		case kt_range:
 		case kt_subnet:
@@ -306,6 +304,11 @@ static void confwrite_side(FILE *out,
 	if (end->strings_set[KSCF_ID] && end->id)
 		fprintf(out, "\t%sid=\"%s\"\n",     side, end->id);
 
+	/*
+	 * We don't write out end->strings_set[KSCF_SEC_LABEL] as it is printed
+	 * from the symmetric conn option "policylabel"
+	 */
+
 	switch (end->nexttype) {
 	case KH_NOTSET:
 		/* nothing! */
@@ -329,31 +332,27 @@ static void confwrite_side(FILE *out,
 	}
 
 	if (end->has_client) {
-		if (!subnetishost(&end->subnet) ||
-		     !addrinsubnet(&end->addr, &end->subnet)) {
+		if (!subnet_eq_address(end->subnet, end->addr)) {
 			subnet_buf as;
 			fprintf(out, "\t%ssubnet=%s\n", side,
 				str_subnet(&end->subnet, &as));
 		}
 	}
 
-	if (subnet_is_specified(&end->vti_ip)) {
-		subnet_buf as;
+	if (cidr_is_specified(end->vti_ip)) {
+		cidr_buf as;
 		fprintf(out, "\t%svti=%s\n", side,
-			str_subnet(&end->vti_ip, &as));
+			str_cidr(&end->vti_ip, &as));
 	}
 
-	if (subnet_is_specified(&end->ifaceip)) {
-		subnet_buf as;
+	if (cidr_is_specified(end->ifaceip)) {
+		cidr_buf as;
 		fprintf(out, "\t%sinterface-ip=%s\n", side,
-			str_subnet(&end->ifaceip, &as));
+			str_cidr(&end->ifaceip, &as));
 	}
 
-	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
-		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
-
-	if (end->rsakey2 != NULL && end->rsakey2[0] != '\0')
-		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
+	if (end->rsasigkey != NULL && end->rsasigkey[0] != '\0')
+		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsasigkey);
 
 	if (protoport_is_set(&end->protoport)) {
 		protoport_buf buf;
@@ -364,7 +363,7 @@ static void confwrite_side(FILE *out,
 	if (end->certx != NULL)
 		fprintf(out, "\t%scert=%s\n", side, end->certx);
 
-	if (address_is_specified(&end->sourceip)) {
+	if (address_is_specified(end->sourceip)) {
 		ipstr_buf as;
 
 		fprintf(out, "\t%ssourceip=%s\n",
@@ -450,6 +449,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		case STARTUP_START:
 			dsn = "start";
 			break;
+
+		case STARTUP_KEEP:
+			dsn = "keep";
+			break;
 		}
 		cwf("auto", dsn);
 	}
@@ -532,14 +535,18 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			/* ikev2= */
 			{
-				const char *v2ps = "UNKNOWN";
-
-				if (conn->policy & POLICY_IKEV2_ALLOW)
-					v2ps = "yes";
-
-				if (conn->policy & POLICY_IKEV1_ALLOW)
+				const char *v2ps;
+				switch (conn->ike_version) {
+				case IKEv1:
 					v2ps = "no";
-
+					break;
+				case IKEv2:
+					v2ps = "yes";
+					break;
+				default:
+					v2ps = "UNKNOWN";
+					break;
+				}
 				cwf("ikev2", v2ps);
 			}
 

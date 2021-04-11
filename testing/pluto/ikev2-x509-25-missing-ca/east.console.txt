@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # remove CA cert
 east #
@@ -18,16 +18,12 @@ east #
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 added IKEv2 connection "ikev2-westnet-eastnet-x509-cr"
+002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  hostname | grep east > /dev/null && grep -E "no Certificate Authority in NSS Certificate DB|authentication using rsasig failed" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
-"ikev2-westnet-eastnet-x509-cr" #1: Digital Signature authentication using rsasig failed in I2 Auth Payload
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

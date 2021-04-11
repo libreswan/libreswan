@@ -72,7 +72,7 @@ int known_oid(chunk_t object)
  */
 size_t asn1_length(chunk_t *blob)
 {
-	u_char n;
+	uint8_t n;
 	size_t len;
 
 	if (blob->len < 2)
@@ -127,8 +127,8 @@ size_t asn1_length(chunk_t *blob)
 
 size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 {
-	u_char n;
-	u_char type_r,type_s;
+	uint8_t n;
+	uint8_t type_r,type_s;
 	int len_r,len_s;
 
 	if (blob->len < 2) {
@@ -201,7 +201,7 @@ void code_asn1_length(size_t length, chunk_t *code)
 		code->len = 1;
 	} else if (length < 256) {
 		code->ptr[0] = 0x81;
-		code->ptr[1] = (u_char) length;
+		code->ptr[1] = (uint8_t) length;
 		code->len = 2;
 	} else if (length < 65536) {
 		code->ptr[0] = 0x82;

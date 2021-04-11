@@ -24,6 +24,8 @@
 #include "realtime.h"
 #include "defs.h"		/* for exiting_pluto */
 #include "log.h"
+#include "pluto_shutdown.h"		/* for exiting_pluto */
+
 
 static pthread_mutex_t crl_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t crl_queue_cond = PTHREAD_COND_INITIALIZER;
@@ -47,7 +49,8 @@ static generalName_t *deep_clone_general_names(generalName_t *orig)
 
 struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 					    generalName_t *end_dps,
-					    struct crl_fetch_request *next)
+					    struct crl_fetch_request *next,
+					    struct logger *logger)
 {
 	if (!pexpect(issuer_dn != NULL)) {
 		return next;
@@ -65,7 +68,7 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	passert(handle != NULL);
 	CERTCertificate *ca = CERT_FindCertByName(handle, issuer_dn);
 	if (ca == NULL) {
-		LSWLOG(buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam_string(buf, "NSS error finding CA to add to fetch request: ");
 			jam_nss_error(buf);
 		}

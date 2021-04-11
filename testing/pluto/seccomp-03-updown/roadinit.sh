@@ -4,7 +4,7 @@ cp road-unbound.conf /etc/unbound/unbound.conf
 unbound-control-setup > /dev/null 2>&1
 unbound
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ipsec whack --impair suppress-retransmits
 echo "initdone"

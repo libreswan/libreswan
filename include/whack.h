@@ -35,6 +35,7 @@
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
+#include "ip_cidr.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"
@@ -65,29 +66,28 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 47)
-
-/*
- * Where, if any, is the pubkey coming from.
- *
- * This goes across the wire so re-ordering this means bumping whack's
- * version number.
- */
-enum whack_pubkey_type {
-	WHACK_PUBKEY_NONE = 0,	/* must be zero (to make it default) */
-	WHACK_PUBKEY_CERTIFICATE_NICKNAME,
-	WHACK_PUBKEY_CKAID,
-};
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 49)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
  * and because whack is a separate program from pluto.
  */
 struct whack_end {
-	char *id;	/* id string (if any) -- decoded by pluto */
-	char *pubkey;	/* PUBKEY_TYPE string (if any) -- decoded by pluto  */
-	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
-	char *groups;	/* access control groups (if any) -- parsed by pluto */
+	char *leftright;	/* either "left" or "right" */
+
+	char *id;		/* id string (if any) -- decoded by pluto */
+	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
+	char *ca;		/* distinguished name string (if any) -- parsed by pluto */
+	char *groups;		/* access control groups (if any) -- parsed by pluto */
+
+	/*
+	 * Where, if anywhere, is the public/private key coming from?
+	 * Pass everything over and let pluto decide what if anything
+	 * conflict.
+	 */
+	char *cert;
+	char *ckaid;
+	char *rsasigkey;
 
 	enum keyword_authby authby;
 
@@ -96,8 +96,8 @@ struct whack_end {
 	unsigned host_ikeport;
 	ip_address host_nexthop;
 	ip_address host_srcip;
-	ip_subnet host_vtiip;
-	ip_subnet ifaceip;
+	ip_cidr host_vtiip;
+	ip_cidr ifaceip;
 
 	ip_subnet client;
 	ip_protoport protoport;
@@ -105,7 +105,6 @@ struct whack_end {
 	bool has_client;
 
 	bool key_from_DNS_on_demand;
-	enum whack_pubkey_type pubkey_type;
 	char *updown;		/* string */
 	char *virt;
 	ip_range pool_range;	/* store start of v4 addresspool */
@@ -115,7 +114,6 @@ struct whack_end {
 	bool modecfg_server;	/* for MODECFG */
 	bool modecfg_client;
 	bool cat;		/* IPv4 Client Address Translation */
-	unsigned int tundev;
 	enum certpolicy sendcert;
 	bool send_ca;
 	enum ike_cert_type certtype;
@@ -151,6 +149,9 @@ struct whack_message {
 	 * If you change anything earlier in this struct, update WHACK_BASIC_MAGIC.
 	 */
 
+	bool whack_process_status; /* non-basic */
+
+	bool whack_leave_state; /* dont send delete or  clean kernel state on shutdown */
 	/* name is used in connection and initiate */
 	size_t name_len; /* string 1 */
 	char *name;
@@ -170,6 +171,7 @@ struct whack_message {
 	bool whack_connection;
 	bool whack_async;
 
+	enum ike_version ike_version;
 	lset_t policy;
 	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;
@@ -241,8 +243,7 @@ struct whack_message {
 	reqid_t sa_reqid;
 	int nflog_group;
 
-	bool labeled_ipsec;
-	char *policy_label;
+	char *sec_label;
 
 	/*  note that each end contains string 2/5.id, string 3/6 cert,
 	 *  and string 4/7 updown
@@ -251,7 +252,6 @@ struct whack_message {
 	struct whack_end right;
 
 	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t addr_family;	/* between gateways */
 	sa_family_t tunnel_addr_family;	/* between clients */
 
 	char *ike;			/* ike algo string (separated by commas) */
@@ -279,8 +279,13 @@ struct whack_message {
 
 	/* for WHACK_OPINITIATE */
 	bool whack_oppo_initiate;
-	ip_address oppo_my_client, oppo_peer_client;
-	int oppo_proto, oppo_dport;
+	struct {
+		struct {
+			ip_address address;
+			ip_port port;
+		} local, remote;
+		unsigned ipproto;
+	} oppo;
 
 	/* for WHACK_TERMINATE: */
 	bool whack_terminate;
@@ -331,7 +336,7 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_REREAD */
-	u_char whack_reread;
+	uint8_t whack_reread;
 
 	/* for connalias string */
 	char *connalias;
@@ -350,6 +355,8 @@ struct whack_message {
 	bool vti_shared; /* use remote %any and skip cleanup on down? */
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	enum allow_global_redirect global_redirect;
+	char *global_redirect_to;
 	char *redirect_to;
 	char *accept_redirect_to;
 

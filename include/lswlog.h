@@ -1,4 +1,4 @@
-/* logging declaratons
+/* logging declarations
  *
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
@@ -188,7 +188,7 @@ enum stream {
  * If any *_STREAM flag is specified then only send the message to
  * that stream.
  *
- * log_message() is a catch-all for code that may or may not have ST.
+ * llog() is a catch-all for code that may or may not have ST.
  * For instance a responder decoding a message may not yet have
  * created the state.  It will will use ST, MD, or nothing as the
  * prefix, and logs to ST's whackfd when possible.
@@ -224,27 +224,20 @@ struct logger {
 	int timing_level;
 };
 
-void log_message(lset_t rc_flags,
-		 const struct logger *log,
-		 const char *format, ...) PRINTF_LIKE(3);
+void llog(lset_t rc_flags,
+	  const struct logger *log,
+	  const char *format, ...) PRINTF_LIKE(3);
 
-void log_va_list(lset_t rc_flags, const struct logger *logger,
-		 const char *message, va_list ap);
+void llog_va_list(lset_t rc_flags, const struct logger *logger,
+		 const char *message, va_list ap) PRINTF_LIKE_VA(3);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-#define LOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
+#define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\
 		for (jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS);	\
 		     BUF != NULL;					\
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
-
-/*
- * Initial (and tool) logger - it writes everything with PROGNAME:
- * (aka progname_logger.object) prefix.
- */
-
-extern struct logger progname_logger;
 
 /*
  * Fallback for debug and panic cases where making a logger available
@@ -259,19 +252,6 @@ void jambuf_to_error_stream(struct jambuf *buf);
 void jambuf_to_debug_stream(struct jambuf *buf);
 
 /*
- * Log to the default stream(s):
- *
- * - for pluto this means 'syslog', and when connected, whack.
- *
- * - for standalone tools, this means stderr, but only when enabled.
- *
- * There are two variants, the first specify the RC (prefix sent to
- * whack), while the second default RC to RC_LOG.
- */
-
-void jam_cur_prefix(struct jambuf *buf);
-
-/*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
  *
@@ -280,18 +260,18 @@ void jam_cur_prefix(struct jambuf *buf);
  * Because __VA_ARGS__ may contain function calls that modify ERRNO,
  * errno's value is first saved.
  *
- * While these common-case macros could be implemented directly using
- * LSWLOG_ERRNO_() et.al. they are not, instead they are implemented
- * as wrapper functions.  This is so that a crash will include the
- * below functions _including_ the with MESSAGE parameter - makes
- * debugging much easier.
+ * While these common-case macros are implemented as wrapper functions
+ * so that backtrace will include the below function call and that
+ * _includes_ the MESSAGE parameter - makes debugging much easier.
  */
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
 /*
- * XXX: Notice how "ERROR: " comes before <prefix>:
- *   ERROR: <prefix><message...>
+ * XXX: The message format is:
+ *   ERROR: <log-prefix><message...>
+ * and not:
+ *   <log-prefix>ERROR: <message...>
  */
 void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
@@ -302,14 +282,17 @@ void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 	}
 
 /*
- * XXX: Notice how "FATAL ERROR: " comes before <prefix>:
- *   FATAL ERROR: <prefix><message...>
+ * XXX: The message format is:
+ *   FATAL ERROR: <log-prefix><message...>
+ * and not:
+ *   <log-prefix>FATAL ERROR: <message...>
  */
-void fatal(struct logger *logger, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
-#define fatal_errno(LOGGER, ERRNO, FMT, ...)				\
+void fatal(enum pluto_exit_code rc, struct logger *logger,
+	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
+#define fatal_errno(RC, LOGGER, ERRNO, FMT, ...)			\
 	{								\
 		int e_ = ERRNO; /* save value across va args */		\
-		fatal(LOGGER, FMT". "PRI_ERRNO,				\
+		fatal(RC, LOGGER, FMT". "PRI_ERRNO,			\
 		      ##__VA_ARGS__, pri_errno(e_));			\
 	}
 
@@ -344,6 +327,14 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 #define DBGF(COND, MESSAGE, ...) { if (DBGP(COND)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
 #define dbg(MESSAGE, ...) { if (DBGP(DBG_BASE)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
+
+#define dbgl(LOGGER, FMT, ...)					\
+	{							\
+		if (DBGP(DBG_BASE)) {				\
+			llog(DEBUG_STREAM, (LOGGER),		\
+			     FMT, ##__VA_ARGS__);		\
+		}						\
+	}
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
@@ -409,7 +400,7 @@ void lswbuf(struct jambuf *log)
  * When evaluating ASSERTION, do not wrap it in parentheses as it will
  * suppress the warning for 'foo = bar'.
  *
- * Because static analizer tools are easily confused, explicitly
+ * Because static analyzer tools are easily confused, explicitly
  * return the assertion result.
  */
 
@@ -431,9 +422,19 @@ void lswlog_pexpect_example(void *p)
 		assertion__; /* result */				\
 	})
 
-void pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
-
 void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
+
+#define llog_pexpect(LOGGER, ASSERTION)					\
+	({								\
+		bool assertion__ = ASSERTION;				\
+		if (!assertion__) {					\
+			llog_pexpect_fail(LOGGER, HERE, "%s", #ASSERTION); \
+		}							\
+		assertion__; /* result */				\
+	})
+
+void llog_pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
+#define pexpect_fail llog_pexpect_fail /* TBD: rename */
 
 /* for a switch statement */
 
@@ -446,7 +447,7 @@ void libreswan_bad_case(const char *expression, long value, where_t where) NEVER
 		if (impair.BEHAVIOUR) {					\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
-				log_message(RC_LOG, LOGGER,		\
+				llog(RC_LOG, LOGGER,		\
 					    "IMPAIR: assertion '%s' failed", \
 					    #ASSERTION);		\
 			}						\

@@ -1,4 +1,4 @@
-/* PAM Authentication and Autherization related functions
+/* PAM Authentication and Authorization related functions
  *
  * Copyright (C) 2001-2002 Colubris Networks
  * Copyright (C) 2003 Sean Mathews - Nu Tech Software Solutions, inc.
@@ -108,7 +108,7 @@ static int pam_conv(int num_msg,
 	return PAM_SUCCESS;
 }
 
-static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
+static void dbg_pam_step(const struct pam_thread_arg *arg, const char *what)
 {
 	dbg("%s helper thread %s for state #%lu, %s[%lu] user=%s.",
 	    arg->atype, what,
@@ -123,7 +123,7 @@ static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
  * @return bool success
  */
 /* IN AN AUTH PROCESS */
-bool do_pam_authentication(struct pam_thread_arg *arg)
+bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 {
 	int retval;
 	pam_handle_t *pamh = NULL;
@@ -143,14 +143,15 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 		retval = pam_start("pluto", arg->name, &conv, &pamh);
 		if (retval != PAM_SUCCESS)
 			break;
-		log_pam_step(arg, what);
+		dbg_pam_step(arg, what);
 
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
-		retval = pam_set_item(pamh, PAM_RHOST, arg->ra);
+		address_buf rhb;
+		retval = pam_set_item(pamh, PAM_RHOST, str_address(&arg->rhost, &rhb));
 		if (retval != PAM_SUCCESS)
 			break;
-		log_pam_step(arg, what);
+		dbg_pam_step(arg, what);
 
 		/* Two factor authentication - Check that the user is valid,
 		 * and then check if they are permitted access
@@ -159,13 +160,13 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
 		if (retval != PAM_SUCCESS)
 			break;
-		log_pam_step(arg, what);
+		dbg_pam_step(arg, what);
 
 		what = "pam_acct_mgmt";
 		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
 		if (retval != PAM_SUCCESS)
 			break;
-		log_pam_step(arg, what);
+		dbg_pam_step(arg, what);
 
 		/* success! */
 		pam_end(pamh, PAM_SUCCESS);
@@ -173,10 +174,11 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 	} while (FALSE);
 
 	/* common failure code */
-	libreswan_log("%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
-		      arg->atype, what, pam_strerror(pamh, retval),
-		      arg->st_serialno, arg->c_name, arg->c_instance_serial,
-		      arg->name);
+	llog(RC_LOG, logger,
+		    "%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
+		    arg->atype, what, pam_strerror(pamh, retval),
+		    arg->st_serialno, arg->c_name, arg->c_instance_serial,
+		    arg->name);
 	pam_end(pamh, retval);
 	return FALSE;
 }

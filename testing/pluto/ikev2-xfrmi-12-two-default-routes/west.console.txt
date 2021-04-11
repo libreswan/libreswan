@@ -3,10 +3,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add north-west-default
-002 added IKEv2 connection "north-west-default"
+002 "north-west-default": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -14,7 +14,4 @@ west #
  ipsec whack --trafficstatus
 006 #2: "north-west-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@north'
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

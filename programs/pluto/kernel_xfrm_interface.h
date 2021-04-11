@@ -25,7 +25,12 @@
 
 /* xfrmi interface format. start with ipsec1 IFNAMSIZ - 1 */
 #define XFRMI_DEV_FORMAT "ipsec%" PRIu32
+
+/* for ipsec0 we need to map it to a different if_id */
+#define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
+
 struct connection;
+struct logger;
 
 struct pluto_xfrmi {
 	char *name;
@@ -38,7 +43,7 @@ struct pluto_xfrmi {
 };
 extern bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id);
 extern bool add_xfrmi(struct connection *c, struct logger *logger);
-extern void stale_xfrmi_interfaces(void);
+extern void stale_xfrmi_interfaces(struct logger *logger);
 extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c, struct logger *logger);

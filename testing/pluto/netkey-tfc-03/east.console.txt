@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add tfc
-002 added IKEv2 connection "tfc"
+002 "tfc": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -19,7 +19,4 @@ east #
  grep " IPsec SA established tunnel mode" /tmp/pluto.log
 "tfc" #2: IPsec SA established tunnel mode {ESP/TFC=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

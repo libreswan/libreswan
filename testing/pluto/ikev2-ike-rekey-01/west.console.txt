@@ -9,10 +9,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-002 added IKEv2 connection "west"
+002 "west": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -23,12 +23,11 @@ west #
 1v2 "west" #1: initiating IKEv2 connection
 1v2 "west" #1: sent IKE_SA_INIT request
 1v2 "west" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "west" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "west" #1: authenticated using authby=secret
+003 "west" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "west" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "west" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
@@ -47,7 +46,7 @@ west #
 004 "west" #3: established IKE SA {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
@@ -70,7 +69,7 @@ west #
 004 "west" #4: established IKE SA {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "west" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec status |grep STATE_
@@ -84,7 +83,4 @@ west #
 000 #2: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
 000 #4: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

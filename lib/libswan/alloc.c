@@ -185,10 +185,10 @@ void report_leaks(struct logger *logger)
 			/* filter out one-time leaks we prefer to not fix */
 			if (strstr(pprev->i.name, "(ignore)") == NULL) {
 				if (n != 1)
-					log_message(RC_LOG, logger, "leak: %lu * %s, item size: %lu",
+					llog(RC_LOG, logger, "leak: %lu * %s, item size: %lu",
 						    n, pprev->i.name, pprev->i.size);
 				else
-					log_message(RC_LOG, logger, "leak: %s, item size: %lu",
+					llog(RC_LOG, logger, "leak: %s, item size: %lu",
 						    pprev->i.name, pprev->i.size);
 				numleaks += n;
 				total += pprev->i.size;
@@ -201,10 +201,10 @@ void report_leaks(struct logger *logger)
 	pthread_mutex_unlock(&leak_detective_mutex);
 
 	if (numleaks != 0) {
-		log_message(RC_LOG, logger, "leak detective found %lu leaks, total size %lu",
+		llog(RC_LOG, logger, "leak detective found %lu leaks, total size %lu",
 			    numleaks, total);
 	} else {
-		log_message(RC_LOG, logger, "leak detective found no leaks");
+		llog(RC_LOG, logger, "leak detective found no leaks");
 	}
 }
 

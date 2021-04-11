@@ -49,31 +49,6 @@ extern enum_enum_names sa_type_names;
 extern const char *check_expiry(realtime_t expiration_date,
 				time_t warning_interval, bool strict);
 
-/*
- * Messily exit Pluto
- *
- * This code tries to shutdown pluto while the event loop is still
- * active and while worker threads are still running.  Funny enough,
- * it occasionally crashes or spews garbage, for instance:
- *
- * - a worker thread trying to access NSS after NSS has been shutdown
- *
- * - scary leak-detective errors because there are events sitting in
- *   the event queue
- *
- * The global EXITING_PLUTO is there as a hint to long running threads
- * that they should also shutdown (it should be tested in the thread's
- * main and some inner loops).  Just note that, on its own, it isn't
- * sufficient.  Any long running threads will also need a gentle nudge
- * (so that they loop around and detect the need to quit) and then a
- * join to confirm that they have exited.
- *
- * Also avoid pthread_cancel() which can crash.
- */
-
-extern volatile bool exiting_pluto;
-extern void exit_pluto(enum pluto_exit_code status) NEVER_RETURNS;
-
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32
 #define v1_MAINMODE_MSGID  ((msgid_t) 0)		/* network and host order */
@@ -88,5 +63,8 @@ extern bool all_zero(const unsigned char *m, size_t len);
 #define pad_up(n, m) (((m) - 1) - (((n) + (m) - 1) % (m)))
 
 extern bool in_main_thread(void);	/* in plutomain.c */
+
+void delete_lock(void);		/* XXX: better home? */
+void free_pluto_main(void);	/* XXX: better home? */
 
 #endif /* _DEFS_H */

@@ -42,7 +42,6 @@
 #endif
 
 #ifdef HAVE_SECCOMP
-#define LSW_SECCOMP_EXIT_FAIL 8
 #include "lswseccomp.h"
 #endif
 
@@ -67,13 +66,13 @@ static char *environlize(const char *str)
  * XXX: why not let pluto resolve all this like it is already doing?
  * because of MOBIKE.
  */
-static void resolve_defaultroute(struct starter_conn *conn UNUSED)
+static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger *logger)
 {
 #ifdef XFRM_SUPPORT
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger) == 1)
-		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, &progname_logger);
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger) == 1)
-		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, &progname_logger);
+	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger) == 1)
+		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger);
+	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger) == 1)
+		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger);
 #else /* !defined(XFRM_SUPPORT) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
@@ -83,8 +82,8 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	fprintf(stderr, "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()\n");
-	exit(7);	/* random code */
+	fatal(PLUTO_EXIT_FAIL, logger,
+	      "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
 #endif
 }
 
@@ -93,8 +92,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fprintf(stderr, "seccomp_init_addconn() failed!");
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp_init_addconn() failed!");
 	}
 
 	/*
@@ -162,9 +160,9 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		fprintf(stderr, "seccomp_load() failed!");
 		seccomp_release(ctx);
-		exit(LSW_SECCOMP_EXIT_FAIL);
+		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
+			    "seccomp_load() failed!");
 	}
 }
 #endif
@@ -217,7 +215,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	int opt;
 	bool autoall = FALSE;
@@ -236,7 +234,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	const char *ctlsocket = NULL;
+	char *ctlsocket = NULL;
 
 #if 0
 	/* efence settings */
@@ -326,14 +324,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (ctlsocket == NULL)
+		ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default ctlsocket");
+
 	if (autoall) {
 		/* pluto forks us, we might have to wait on it to create the socket */
 		struct stat sb;
 		int ws = 5; /* somewhat arbitrary */
 
 		while (ws > 0) {
-			int ret = stat(ctlsocket == NULL ? DEFAULT_CTL_SOCKET :
-				ctlsocket, &sb);
+			int ret = stat(ctlsocket, &sb);
 
 			if (ret == -1) {
 				sleep(1);
@@ -358,20 +358,8 @@ int main(int argc, char *argv[])
 		yydebug = 1;
 	}
 
-	char *confdir = IPSEC_CONFDIR;
-
-	if (configfile == NULL) {
-		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
-		configfile = alloc_bytes(strlen(confdir) +
-					 sizeof("/ipsec.conf"),
-					 "conf file");
-
-		/* calculate default value for configfile */
-		strcpy(configfile, confdir);	/* safe: see allocation above */
-		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");	/* safe: see allocation above */
-		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
-	}
+	if (configfile == NULL)
+		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
 
 	if (verbose > 0)
 		printf("opening file: %s\n", configfile);
@@ -383,8 +371,7 @@ int main(int argc, char *argv[])
 	{
 		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &errl, ctlsocket, configsetup,
-				    &progname_logger);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup, logger);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
@@ -406,10 +393,10 @@ int main(int argc, char *argv[])
 #ifdef HAVE_SECCOMP
 	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
-			init_seccomp_addconn(SCMP_ACT_KILL, &progname_logger);
+			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), &progname_logger);
+		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), logger);
 		break;
 	case SECCOMP_DISABLED:
 		break;
@@ -422,7 +409,7 @@ int main(int argc, char *argv[])
 	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
 			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
 			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
-			  &progname_logger);
+			  logger);
 #endif
 
 	if (autoall) {
@@ -437,17 +424,18 @@ int main(int argc, char *argv[])
 		 * This mimics behaviour of the old _plutoload
 		 */
 		if (verbose > 0)
-			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
+			printf("  Pass #1: Loading auto=add, auto=keep, auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
 				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_KEEP ||
 				conn->desired_state == STARTUP_START)
 			{
 				if (verbose > 0)
 					printf(" %s", conn->name);
-				resolve_defaultroute(conn);
-				starter_whack_add_conn(cfg, conn, &progname_logger);
+				resolve_defaultroute(conn, logger);
+				starter_whack_add_conn(cfg, conn, logger);
 			}
 		}
 
@@ -466,8 +454,7 @@ int main(int argc, char *argv[])
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				if (conn->desired_state == STARTUP_ONDEMAND)
-					starter_whack_route_conn(cfg, conn,
-								 &progname_logger);
+					starter_whack_route_conn(cfg, conn, logger);
 			}
 		}
 
@@ -543,9 +530,8 @@ int main(int argc, char *argv[])
 						p1, p2, p3,
 						conn->name);
 				} else {
-					resolve_defaultroute(conn);
-					exit_status = starter_whack_add_conn(cfg, conn,
-									     &progname_logger);
+					resolve_defaultroute(conn, logger);
+					exit_status = starter_whack_add_conn(cfg, conn, logger);
 					conn->state = STATE_ADDED;
 				}
 			}
@@ -640,6 +626,8 @@ int main(int argc, char *argv[])
 		const struct keyword_def *kd;
 
 		printf("%s %sconfreadstatus=''\n", export, varprefix);
+		printf("%s configfile='%s'\n", export, configfile);
+		printf("%s ctlsocket='%s'\n", export, ctlsocket);
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if ((kd->validity & kv_config) == 0)
 				continue;
@@ -699,6 +687,8 @@ int main(int argc, char *argv[])
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
+	pfreeany(ctlsocket);
+	pfreeany(configfile);
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
 	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code

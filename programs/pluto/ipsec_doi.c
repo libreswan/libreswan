@@ -50,7 +50,6 @@
 #include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "server.h"
-#include "spdb.h"
 #include "timer.h"
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
@@ -66,7 +65,6 @@
 #include "ike_alg_encrypt.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 #include "ikev2.h"
@@ -75,7 +73,6 @@
 #include "ip_info.h"
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "ip_address.h"
@@ -84,116 +81,7 @@
 #include "pending.h"
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
-
-/*
- * Process KE values.
- */
-void unpack_KE_from_helper(struct state *st,
-			   struct pluto_crypto_req *r,
-			   chunk_t *g)
-{
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-	/*
-	 * Should the crypto helper group and the state group be in
-	 * sync?
-	 *
-	 * Probably not, yet seemingly (IKEv2) code is assuming this.
-	 *
-	 * For instance, with IKEv2, the initial initiator is setting
-	 * st_oakley.group to the draft KE group (and well before
-	 * initial responder has had a chance to agree to any thing).
-	 * Should the initial responder comes back with INVALID_KE
-	 * then st_oakley.group gets changed to match the suggestion
-	 * and things restart; should the initial responder come back
-	 * with an accepted proposal and KE, then the st_oakley.group
-	 * is set based on the accepted proposal (the two are
-	 * checked).
-	 *
-	 * Surely, instead, st_oakley.group should be left alone.  The
-	 * the initial initiator would maintain a list of KE values
-	 * proposed (INVALID_KE flip-flopping can lead to more than
-	 * one) and only set st_oakley.group when the initial
-	 * responder comes back with a vald accepted propsal and KE.
-	 */
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			kn->group ? kn->group->common.fqn : "NULL",
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
-	}
-
-	free_chunk_content(g); /* happens in odd error cases */
-	*g = kn->gi;
-
-	transfer_dh_secret_to_state("KE", &kn->secret, st);
-}
-
-/* accept_KE
- *
- * Check and accept DH public value (Gi or Gr) from peer's message.
- * According to RFC2409 "The Internet key exchange (IKE)" 5:
- *  The Diffie-Hellman public value passed in a KE payload, in either
- *  a phase 1 or phase 2 exchange, MUST be the length of the negotiated
- *  Diffie-Hellman group enforced, if necessary, by pre-pending the
- *  value with zeros.
- */
-bool accept_KE(chunk_t *dest, const char *val_name,
-	       const struct dh_desc *gr,
-	       struct payload_digest *ke_pd)
-{
-	if (ke_pd == NULL) {
-		loglog(RC_LOG_SERIOUS, "KE missing");
-		return false;
-	}
-	pb_stream *pbs = &ke_pd->pbs;
-	if (pbs_left(pbs) != gr->bytes) {
-		loglog(RC_LOG_SERIOUS,
-		       "KE has %u byte DH public value; %u required",
-		       (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
-		/* XXX Could send notification back */
-		return false;
-	}
-	free_chunk_content(dest); /* XXX: ever needed? */
-	*dest = clone_hunk(pbs_in_left_as_shunk(pbs), val_name);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("DH public value received:");
-		DBG_dump_hunk(NULL, *dest);
-	}
-	return true;
-}
-
-void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
-{
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-	free_chunk_content(n);
-	*n = kn->n;
-}
-
-bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs,
-			  const char *name)
-{
-	return ikev1_out_generic_chunk(&isakmp_nonce_desc, outs, *n, name);
-}
-
-bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		      pb_stream *outs, const char *name)
-{
-	unpack_nonce(n, r);
-	return ikev1_justship_nonce(n, outs, name);
-}
-
-static initiator_function *pick_initiator(struct connection *c,
-					  lset_t policy)
-{
-	if (policy & c->policy & POLICY_IKEV2_ALLOW) {
-		return ikev2_parent_outI1;
-	} else {
-		/* we may try V1; Aggressive or Main Mode? */
-		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-	}
-}
+#include "orient.h"
 
 void ipsecdoi_initiate(struct fd *whack_sock,
 		       struct connection *c,
@@ -201,9 +89,11 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 		       unsigned long try,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
-		       struct xfrm_user_sec_ctx_ike *uctx
-		       )
+		       chunk_t sec_label)
 {
+	if (sec_label.len != 0)
+		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
 	 * go directly to Quick Mode.  We are even willing to use one
@@ -213,29 +103,47 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 	 * Note: there is no way to initiate with a Road Warrior.
 	 */
 	struct state *st = find_phase1_state(c,
+#ifdef USE_IKEv1
 					     ISAKMP_SA_ESTABLISHED_STATES |
 					     PHASE1_INITIATOR_STATES |
+#endif
 					     IKEV2_ISAKMP_INITIATOR_STATES);
 
-	if (st == NULL) {
-		initiator_function *initiator = pick_initiator(c, policy);
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
-			initiator(whack_sock, c, NULL, policy, try, inception, uctx);
-		}
-	} else if (HAS_IPSEC_POLICY(policy)) {
-		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	switch (c->ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		if (st == NULL) {
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
+			initiator(whack_sock, c, NULL, policy, try, inception, sec_label);
+		} else if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, pexpect_ike_sa(st),
 				    c, policy, try,
-				    replacing, uctx,
-				    false/*part of initiate*/);
-		} else if (st->st_ike_version == IKEv2) {
+				    replacing, sec_label,
+				    false /*part of initiate*/);
+		} else {
+			/*
+			 * ??? we assume that peer_nexthop_sin isn't
+			 * important: we already have it from when we
+			 * negotiated the ISAKMP SA!  It isn't clear
+			 * what to do with the error return.
+			 */
+			quick_outI1(whack_sock, st, c, policy, try,
+				    replacing, sec_label);
+		}
+		break;
+#endif
+	case IKEv2:
+		if (st == NULL) {
+			/* note: new IKE SA pulls sec_label from connection */
+			ikev2_out_IKE_SA_INIT_I(whack_sock, c, NULL, policy, try, inception, empty_chunk);
+		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
+			/* leave CHILD SA negotiation pending */
+			add_pending(whack_sock, pexpect_ike_sa(st),
+				    c, policy, try,
+				    replacing, sec_label,
+				    false /*part of initiate*/);
+		} else {
 			struct pending p = {
 				.whack_sock = whack_sock, /*on-stack*/
 				.ike = pexpect_ike_sa(st),
@@ -243,17 +151,13 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 				.try = try,
 				.policy = policy,
 				.replacing = replacing,
-				.uctx = uctx,
+				.sec_label = sec_label,
 			};
 			ikev2_initiate_child_sa(&p);
-		} else {
-			/* ??? we assume that peer_nexthop_sin isn't important:
-			 * we already have it from when we negotiated the ISAKMP SA!
-			 * It isn't clear what to do with the error return.
-			 */
-			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing, uctx);
-			}
+		}
+		break;
+	default:
+		bad_case(c->ike_version);
 	}
 }
 
@@ -282,19 +186,25 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
 		if (IS_PARENT_SA_ESTABLISHED(st))
-			libreswan_log("initiate reauthentication of IKE SA");
+			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 
-		initiator_function *initiator = pick_initiator(c, policy);
-
-		if (initiator != NULL) {
-			/*
-			 * initiator will create a state (and that in
-			 * turn will start its timing it), need a way
-			 * to stop it.
-			 */
-			(void) initiator(st->st_whack_sock,
-					 c, st, policy, try, &inception,
-				st->sec_ctx);
+		switch(st->st_ike_version) {
+		case IKEv2:
+		{
+			initiator_function *initiator = ikev2_out_IKE_SA_INIT_I;
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			break;
+		}
+#ifdef USE_IKEv1
+		case IKEv1:
+		{
+			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
+			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			break;
+		}
+#endif
+		default:
+			dbg("unsupported IKE version '%d', cannot initiate", st->st_ike_version);
 		}
 	} else {
 		/*
@@ -330,9 +240,8 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_whack_sock, st->st_connection,
-				  policy, try, st->st_serialno, &inception,
-			st->sec_ctx);
+		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
+				  policy, try, st->st_serialno, &inception, empty_chunk);
 	}
 }
 
@@ -363,108 +272,28 @@ bool has_preloaded_public_key(const struct state *st)
 	return FALSE;
 }
 
-/*
- * Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
- * Clears *peer to avoid surprises.
- * Note: what we discover may oblige Pluto to switch connections.
- * We must be called before SIG or HASH are decoded since we
- * may change the peer's RSA key or ID.
- */
-
-bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs)
-{
-	size_t left = pbs_left(id_pbs);
-
-	*peer = (struct id) {.kind = kind };	/* clears everything */
-
-	switch (kind) {
-	/* ident types mostly match between IKEv1 and IKEv2 */
-	case ID_IPV4_ADDR:
-	case ID_IPV6_ADDR:
-		/* failure mode for initaddr is probably inappropriate address length */
-	{
-		struct pbs_in in_pbs = *id_pbs;
-		if (!pbs_in_address(&peer->ip_addr,
-				    (peer->kind == ID_IPV4_ADDR ? &ipv4_info :
-				     &ipv6_info),
-				    &in_pbs, "peer ID")) {
-			/* XXX Could send notification back */
-			return false;
-		}
-	}
-	break;
-
-	/* seems odd to continue as ID_FQDN? */
-	case ID_USER_FQDN:
-		if (memchr(id_pbs->cur, '@', left) == NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"peer's ID_USER_FQDN contains no @: %.*s",
-				(int) left,
-				id_pbs->cur);
-			/* return FALSE; */
-		}
-	/* FALLTHROUGH */
-	case ID_FQDN:
-		if (memchr(id_pbs->cur, '\0', left) != NULL) {
-			loglog(RC_LOG_SERIOUS,
-				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				enum_show(&ike_idtype_names, kind));
-			return FALSE;
-		}
-
-		/* ??? ought to do some more sanity check, but what? */
-
-		peer->name = chunk2(id_pbs->cur, left);
-		break;
-
-	case ID_KEY_ID:
-		peer->name = chunk2(id_pbs->cur, left);
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("KEY ID:", peer->name);
-		}
-		break;
-
-	case ID_DER_ASN1_DN:
-		peer->name = chunk2(id_pbs->cur, left);
-		if (DBGP(DBG_BASE)) {
-		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
-		}
-		break;
-
-	case ID_NULL:
-		if (left != 0) {
-			if (DBGP(DBG_BASE)) {
-				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left);
-			}
-		}
-		break;
-
-	default:
-		/* XXX Could send notification back */
-		loglog(RC_LOG_SERIOUS,
-			"Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
-			enum_show(&ike_idtype_names, kind));
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 void initialize_new_state(struct state *st,
-			  struct connection *c,
 			  lset_t policy,
 			  int try)
 {
-	update_state_connection(st, c);
-
-	/* reset our choice of interface */
+	/*
+	 * reset our choice of interface
+	 *
+	 * XXX: why? suspect this has the side effect of restoring /
+	 * updating connection's ends?
+	 */
+	struct connection *c = st->st_connection;
+	pexpect(oriented(*c));
 	c->interface = NULL;
 	(void)orient(c);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint3(c->interface->protocol,
-					   &c->spd.that.host_addr,
-					   ip_hport(c->spd.that.host_port));
+	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
+								     c->interface->protocol,
+								     ip_hport(c->spd.that.host_port));
+	endpoint_buf eb;
+	dbg("in %s with remote endpoint set to %s",
+	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_try = try;
@@ -480,51 +309,6 @@ void initialize_new_state(struct state *st,
 	}
 
 	binlog_refresh_state(st);
-}
-
-void send_delete(struct state *st)
-{
-	if (impair.send_no_delete) {
-		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-	} else {
-		dbg("#%lu send %s delete notification for %s",
-		    st->st_serialno,
-		    enum_name(&ike_version_names, st->st_ike_version),
-		    st->st_state->name);
-		switch (st->st_ike_version) {
-		case IKEv1:
-			send_v1_delete(st);
-			break;
-		case IKEv2:
-		{
-			struct ike_sa *ike = ike_sa(st, HERE);
-			record_v2_delete(ike, st);
-			send_recorded_v2_message(ike, "delete notification",
-						 MESSAGE_REQUEST);
-			/*
-			 * XXX: The record 'n' send call shouldn't be
-			 * needed.  Instead, as part of this
-			 * transition (live -> being-deleted) the
-			 * standard success_v2_transition() code path
-			 * should get to do the right thing.
-			 *
-			 * XXX: The record 'n' send call leads to an
-			 * RFC violation.  The lack of a state
-			 * transition means there's nothing set up to
-			 * wait for the ack.  And that in turn means
-			 * that the next packet will be sent before
-			 * this one has had a response.
-			 */
-			dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-			    ike->sa.st_serialno, st->st_serialno, __func__);
-			v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
-			st->st_dont_send_delete = true;
-			break;
-		}
-		default:
-			bad_case(st->st_ike_version);
-		}
-	}
 }
 
 void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
@@ -595,21 +379,21 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 	jam_string(buf, "NATOA=");
 	/* XXX: can lswlog_ip() be used? */
 	ipstr_buf ipb;
-	jam_string(buf, isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
-		ipstr(&st->hidden_variables.st_nat_oa, &ipb));
+	jam_string(buf,
+		   (address_is_unset(&st->hidden_variables.st_nat_oa) ||
+		    address_is_any(st->hidden_variables.st_nat_oa)) ? "none" :
+		   ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
 	jam_string(buf, " NATD=");
 
-	if (isanyaddr(&st->hidden_variables.st_natd)) {
+	if (address_is_unset(&st->hidden_variables.st_natd) ||
+	    address_is_any(st->hidden_variables.st_natd)) {
 		jam_string(buf, "none");
 	} else {
 		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
-		char oa[ADDRTOT_BUF + sizeof(":00000")];
-		snprintf(oa, sizeof(oa),
-			 "%s:%d",
-			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
-			 endpoint_hport(&st->st_remote_endpoint));
-		jam_string(buf, oa);
+		jam(buf, "%s:%d",
+		    str_address_sensitive(&st->hidden_variables.st_natd, &ipb),
+		    endpoint_hport(st->st_remote_endpoint));
 	}
 
 	jam(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :

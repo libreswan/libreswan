@@ -41,7 +41,8 @@ struct finite_state v2_states[] = {
 #define S(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
 		.kind = KIND,					\
 		.name = #KIND,					\
-		.short_name = #KIND + 6/*STATE_*/,		\
+		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
+		.short_name = &#KIND[6]/*STATE_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
 	}
@@ -49,7 +50,8 @@ struct finite_state v2_states[] = {
 #define V2(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
 		.kind = KIND,					\
 		.name = #KIND,					\
-		.short_name = #KIND + 9/*STATE_V2_*/,		\
+		/* Not using #KIND + 9 because of clang's -Wstring-plus-int */ \
+		.short_name = &#KIND[9]/*STATE_V2_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
 	}
@@ -286,7 +288,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		log_stream = ALL_STREAMS;
 	}
 
-	LOG_JAMBUF(RC_LOG_SERIOUS | log_stream, logger, buf) {
+	LLOG_JAMBUF(RC_LOG_SERIOUS | log_stream, logger, buf) {
 		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
@@ -304,28 +306,28 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		}
 		if (md->message_payloads.parsed) {
 			jam(buf, "; message payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    md->message_payloads.present);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       md->message_payloads.present);
 		}
 		if (md->encrypted_payloads.parsed) {
 			jam(buf, "; encrypted payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       md->encrypted_payloads.present);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       md->encrypted_payloads.present);
 		}
 		if (errors->missing != LEMPTY) {
 			jam(buf, "; missing payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    errors->missing);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->missing);
 		}
 		if (errors->unexpected != LEMPTY) {
 			jam(buf, "; unexpected payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					    errors->unexpected);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->unexpected);
 		}
 		if (errors->excessive != LEMPTY) {
 			jam(buf, "; excessive payloads: ");
-			jam_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors->excessive);
+			jam_lset_short(buf, &ikev2_payload_names, ",",
+				       errors->excessive);
 		}
 		if (errors->notification != v2N_NOTHING_WRONG) {
 			jam(buf, "; missing notification ");

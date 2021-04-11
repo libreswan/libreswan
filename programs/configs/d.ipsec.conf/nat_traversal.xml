@@ -1,7 +1,0 @@
-  <varlistentry>
-  <term><emphasis remap='B'>nat_traversal</emphasis></term>
-  <listitem>
-<para>OBSOLETE.  Support for NAT Traversal is always enabled.</para>
-  </listitem>
-  </varlistentry>
-

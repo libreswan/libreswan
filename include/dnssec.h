@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "ip_address.h"
+#include "diag.h"
 
 struct logger;
 struct event_base;
@@ -12,11 +13,11 @@ extern void unbound_ctx_free(void);
 extern void unbound_sync_init(bool do_dnssec, const char *rootfile,
 			      const char *trusted, struct logger *logger);
 
-extern bool unbound_event_init(struct event_base *eb, bool do_dnssec,
-			       const char *rootfile, const char *trusted,
-			       struct logger *logger);
+extern diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
+				 const char *rootfile, const char *trusted,
+				 struct logger *logger);
 
-extern bool unbound_resolve(char *src, size_t srclen, int af,
+extern bool unbound_resolve(char *src, const struct ip_info *afi,
 			    ip_address *ipaddr, struct logger *logger);
 
 extern struct ub_ctx *get_unbound_ctx(void);

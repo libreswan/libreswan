@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-foo
+002 "westnet-eastnet-foo": added IKEv2 connection
+west #
+ ipsec auto --add westnet-eastnet-bar
+002 "westnet-eastnet-bar": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-foo
+1v2 "westnet-eastnet-foo" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-foo" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-foo" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-eastnet-foo" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@eastfoo'
+002 "westnet-eastnet-foo" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-foo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ # expected to fail
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec auto --up westnet-eastnet-bar
+1v2 "westnet-eastnet-bar" #3: initiating IKEv2 connection
+1v2 "westnet-eastnet-bar" #3: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-bar" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+000 "westnet-eastnet-bar" #4: scheduling retry attempt 1 of an unlimited number, but releasing whack
+west #
+ echo done
+done
+west #
+ ipsec whack --shutdown
+west #
+ 

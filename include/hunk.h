@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <stddef.h>		/* size_t */
 #include <stdint.h>		/* uint8_t */
-#include <ctype.h>		/* for isdigit() et.al. */
 
 /*
  * Macros and functions for manipulating hunk like structures.  Any
@@ -39,7 +38,7 @@
  * is an array (hence comment above about .data being a better
  * choice).
  *
- * To avoid repeated evaluation of fuctions, the macros below first
+ * To avoid repeated evaluation of functions, the macros below first
  * make a copy of the hunk being manipulated.  For structures such as
  * ckaid_t where that will copy the buffer contents, it is assumed
  * that the compiler will see that things are constant and eliminate
@@ -138,6 +137,12 @@ bool case_eq(const void *l_ptr, size_t l_len,
 			case_eq(hunk_.ptr, slen_, string_, slen_);	\
 	})
 
+#define hunk_strnlen(HUNK)					\
+	({							\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		strnlen((const char *)hunk_.ptr, hunk_.len);	\
+	})
+
 /* misc */
 
 #define hunk_memeq(HUNK, MEM, SIZE)					\
@@ -163,40 +168,19 @@ bool case_eq(const void *l_ptr, size_t l_len,
 		index_ < hunk_.len ? string_[INDEX] : '\0';		\
 	})
 
-#define hunk_char_isdigit(HUNK, OFFSET)				\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		isdigit(c_);					\
-	})
+/* see hunkcheck.c */
+bool char_isbdigit(char c);
+bool char_isblank(char c);
+bool char_isdigit(char c);
+bool char_islower(char c);
+bool char_isodigit(char c);
+bool char_isprint(char c);
+bool char_isspace(char c);
+bool char_isupper(char c);
+bool char_isxdigit(char c);
 
-#define hunk_char_isbdigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		c_ >= '0' && c_ <= '1';				\
-	})
-
-#define hunk_char_isodigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		c_ >= '0' && c_ <= '7';				\
-	})
-
-#define hunk_char_isxdigit(HUNK, OFFSET)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* is isdigit() is affected by locale? */	\
-		isxdigit(c_);					\
-	})
-
-#define hunk_char_isprint(HUNK, OFFSET)				\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		/* isprint() is affected by locale(?) */	\
-		/* isascii() isn't portable */			\
-		c_ >= 0x20 && c_ <= 0x7e;			\
-	})
+char  char_tolower(char c);
+char  char_toupper(char c);
 
 #define hunk_char_ischar(HUNK, OFFSET, CHARS)			\
 	({							\
@@ -228,6 +212,17 @@ uintmax_t ntoh_bytes(const void *bytes, size_t size);
 	({								\
 		const chunk_t hunk_ = HUNK; /* evaluate once */		\
 		hton_bytes(H, hunk_.ptr, hunk_.len);			\
+	})
+
+/*
+ * convert a hunk into a NUL terminated string; NULL is NULL.
+ */
+
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
+#define clone_hunk_as_string(HUNK, NAME)				\
+	({								\
+		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
+		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
 	})
 
 #endif

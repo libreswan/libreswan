@@ -30,13 +30,19 @@ s/^Protocol mismatch\.$/Invalid SSH identification string./g
 # some things are different on Debian/Ubuntu, and we dont really need to see those for testing
 /000 nssdir=.*$/d
 /000 dnssec-rootkey-file=.*$/d
+
 # timing info from the log
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g
+s/last_contact=[0-9]*\.[0-9]*->[0-9]*\.[0-9]*/last_contact=XX.XXX->XX.XXX/g
 s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
+
 # TCP sockets
-s/from socket [0-9]* /from socket XX /g
-s/IMPAIR: TCP: socket [0-9]* /IMPAIR: TCP: socket XX /g
-s/TCP: socket [0-9]* /TCP: socket XX /g
+s/ socket [0-9][0-9]*: / socket XX: /g
+
 /^nohup: ignoring input and redirecting stderr to stdout$/d
 s/encap type 7 sport/encap type espintcp sport/g
 s/unbound-control.[0-9]*:[0-9]*./unbound-control[XXXXXX:X] /g 
+s/ping: connect: Network is unreachable/connect: Network is unreachable/g
+# softhsm - pkcs-uri ephemerals
+s/serial=[^;]*;token=libreswan/serial=XXXXXXXX;token=libreswan/g
+s/and is reassigned to slot .*$/and is reassigned to slot XXXXX/g

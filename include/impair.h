@@ -23,6 +23,7 @@
 
 struct fd;
 struct logger;
+struct jambuf;
 
 /*
  * Meddle with the contents of a payload.
@@ -111,6 +112,7 @@ struct impair {
 	bool send_no_delete;
 	bool send_no_ikev2_auth;
 	bool send_no_xauth_r0;
+	bool send_no_idr;
 	bool drop_xauth_r0;
 	bool send_no_main_r2;
 	bool force_fips;
@@ -182,14 +184,21 @@ enum impair_action {
 	CALL_SEND_KEEPALIVE,
 	CALL_GLOBAL_EVENT,
 	CALL_STATE_EVENT,
+	CALL_IMPAIR_DROP_INCOMING,
+	CALL_IMPAIR_DROP_OUTGOING,
+#if 0
+	CALL_IMPAIR_DUP_INCOMING,
+	CALL_IMPAIR_DUP_OUTGOING,
+	CALL_IMPAIR_CORRUPT_INCOMING,
+	CALL_IMPAIR_CORRUPT_OUTGOING,
+#endif
 };
 
 bool process_impair(const struct whack_impair *whack_impair,
 		    void (*action)(enum impair_action, unsigned what,
 				   unsigned how, bool background,
-				   struct fd *whackfd),
-		    bool background, struct fd *whackfd,
-		    struct logger *logger);
+				   struct logger *logger),
+		    bool background, struct logger *logger);
 
 bool have_impairments(void);
 void jam_impairments(struct jambuf *buf, const char *sep);

@@ -3,24 +3,24 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
-002 added IKEv2 connection "east-any"
+002 "east-any": added IKEv2 connection
 east #
  ipsec auto --status | grep east-any
 000 "east-any": 192.1.2.23<192.1.2.23>...%any; unrouted; eroute owner: #0
 000 "east-any":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "east-any":   our auth:rsasig, their auth:rsasig
-000 "east-any":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "east-any":   policy_label:unset;
-000 "east-any":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "east-any":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "east-any":   sec_label:unset;
+000 "east-any":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "east-any":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5; +rKOD;
+000 "east-any":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5; +rKOD;
 000 "east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "east-any":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "east-any":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "east-any":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 000 "east-any":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
@@ -50,9 +50,6 @@ east #
 000        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.3.33'
+006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.3.33'
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

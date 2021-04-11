@@ -32,64 +32,35 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <event2/bufferevent.h>		/* TCP: for bufferevent_free()? */
-
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
-#include "xauth.h"		/* for xauth_cancel() */
+#include "pam_auth.h"		/* for pamauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
 #include "ikev1_msgid.h"
-#include "kernel.h"	/* needs connections.h */
 #include "log.h"
-#include "packet.h"	/* so we can calculate sizeof(struct isakmp_hdr) */
-#include "keys.h"	/* for free_public_key */
 #include "rnd.h"
-#include "timer.h"
-#include "whack.h"
 #include "demux.h"	/* needs packet.h */
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-#include "crypto.h"
 #include "crypt_symkey.h"
-#include "spdb.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
-#include "ikev2_redirect.h"
-#include "secrets.h"    /* unreference_key() */
+#include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
 #include "crypt_dh.h"
-#include "hostpair.h"
-#include "initiate.h"
+#include "host_pair.h"
 #include "kernel.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */
-
-#include <pk11pub.h>
-#include <keyhi.h>
-
-#include "ikev2_msgid.h"
 #include "pluto_stats.h"
-#include "ikev2_ipseckey.h"
-#include "ip_address.h"
 #include "ip_info.h"
-#include "ip_selector.h"
+#include "revival.h"
+#include "ikev1.h"		/* for send_v1_delete() */
+#include "ikev2_delete.h"	/* for record_v2_delete() */
+#include "orient.h"
 
 bool uniqueIDs = FALSE;
 
@@ -104,7 +75,7 @@ uint16_t pluto_nflog_group = 0;
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec _stackmanager
  */
-uint16_t pluto_xfrmlifetime = 300;
+uint16_t pluto_xfrmlifetime = 30;
 
 /*
  * Handle for each and every state.
@@ -122,6 +93,7 @@ static struct finite_state state_undefined = {
 	.category = CAT_IGNORE,
 };
 
+#ifdef USE_IKEv1
 static struct finite_state state_ikev1_roof = {
 	.kind = STATE_IKEv1_ROOF,
 	.name = "STATE_IKEv1_ROOF",
@@ -129,6 +101,7 @@ static struct finite_state state_ikev1_roof = {
 	.story = "invalid state - IKEv1 roof",
 	.category = CAT_IGNORE,
 };
+#endif
 
 static struct finite_state state_ikev2_roof = {
 	.kind = STATE_IKEv2_ROOF,
@@ -140,139 +113,11 @@ static struct finite_state state_ikev2_roof = {
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
 	[STATE_UNDEFINED] = &state_undefined,
+#ifdef USE_IKEv1
 	[STATE_IKEv1_ROOF] &state_ikev1_roof,
+#endif
 	[STATE_IKEv2_ROOF] &state_ikev2_roof,
 };
-
-/*
- * Revival mechanism: keep track of connections
- * that should be kept up, even though all their
- * states have been deleted.
- *
- * We record the connection names.
- * Each name is recorded only once.
- *
- * XXX: This functionality totally overlaps both "initiate" and
- * "pending" and should be merged (however, this simple code might
- * prove to be a better starting point).
- */
-
-struct revival {
-	char *name;
-	struct revival *next;
-};
-
-static struct revival *revivals = NULL;
-
-/*
- * XXX: Return connection C's revival object's link, if found.  If the
- * connection C can't be found, then the address of the revival list's
- * tail is returned.  Perhaps, exiting the loop and returning NULL
- * would be more obvious.
- */
-static struct revival **find_revival(const struct connection *c)
-{
-	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
-		if (*rp == NULL || streq((*rp)->name, c->name)) {
-			return rp;
-		}
-	}
-}
-
-/*
- * XXX: In addition to freeing RP (and killing the pointer), this
- * "free" function has the side effect of unlinks RP from the revival
- * list.  Perhaps free*() isn't the best name.
- */
-static void free_revival(struct revival **rp)
-{
-	struct revival *r = *rp;
-	*rp = r->next;
-	pfree(r->name);
-	pfree(r);
-}
-
-void flush_revival(const struct connection *c)
-{
-	struct revival **rp = find_revival(c);
-
-	if (*rp == NULL) {
-		dbg("flush revival: connection '%s' wasn't on the list",
-		    c->name);
-	} else {
-		dbg("flush revival: connection '%s' revival flushed",
-		    c->name);
-		free_revival(rp);
-	}
-}
-
-static void add_revival(struct connection *c)
-{
-	if (*find_revival(c) == NULL) {
-		struct revival *r = alloc_thing(struct revival,
-						"revival struct");
-
-		r->name = clone_str(c->name, "revival conn name");
-		r->next = revivals;
-		revivals = r;
-		int delay = c->temp_vars.revive_delay;
-		dbg("add revival: connection '%s' added to the list and scheduled for %d seconds",
-		    c->name, delay);
-		c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-						REVIVE_CONN_DELAY_MAX);
-		/*
-		 * XXX: Schedule the next revival using this
-		 * connection's revival delay and not the most urgent
-		 * connection's revival delay.  Trying to fix this
-		 * here just is annoying and probably of marginal
-		 * benefit: it is something better handled with a
-		 * proper connection event so that the event loop deal
-		 * with all the math (this code would then be
-		 * deleted); and would encroach even further on
-		 * "initiate" and "pending" functionality.
-		 */
-		schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
-	}
-}
-
-void revive_conns(struct fd *unused_whackfd UNUSED)
-{
-	/*
-	 * XXX: Revive all listed connections regardless of their
-	 * DELAY.  See note above in add_revival().
-	 *
-	 * XXX: since this is called from the event loop, the global
-	 * whack_log_fd is invalid so specifying RC isn't exactly
-	 * useful.
-	 */
-	while (revivals != NULL) {
-		struct connection *c = conn_by_name(revivals->name,
-						    true/*strict: don't accept CK_INSTANCE*/);
-		/*
-		 * Above call. with quiet=false, would try to log
-		 * using whack_log(); but that's useless as the global
-		 * whack_log_fd is only valid while in the whack
-		 * handler.
-		 */
-		if (c == NULL) {
-			loglog(RC_UNKNOWN_NAME, "failed to initiate connection \"%s\" which received a Delete/Notify but must remain up per local policy; connection no longer exists", revivals->name);
-		} else {
-			log_connection(RC_LOG, null_fd, c,
-				       "initiating connection which received a Delete/Notify but must remain up per local policy");
-			if (!initiate_connection(c, NULL, null_fd, true/*background*/)) {
-				log_connection(RC_FATAL, null_fd, c,
-					       "failed to initiate connection");
-			}
-		}
-		/*
-		 * Danger! The free_revival() call removes head,
-		 * replacing it with the next in the list.
-		 */
-		free_revival(&revivals);
-	}
-}
-
-/* end of revival mechanism */
 
 void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
 {
@@ -547,7 +392,7 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
  * Caller must insert_state().
  */
 
-static struct state *new_state(enum ike_version ike_version,
+static struct state *new_state(struct connection *c,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type, struct fd *whackfd)
@@ -561,8 +406,8 @@ static struct state *new_state(enum ike_version ike_version,
 		.st_state = &state_undefined,
 		.st_serialno = next_so++,
 		.st_inception = realnow(),
-		.st_ike_version = ike_version,
 		.st_establishing_sa = sa_type,
+		.st_connection = c,
 		.st_ike_spis = {
 			.initiator = ike_initiator_spi,
 			.responder = ike_responder_spi,
@@ -573,8 +418,8 @@ static struct state *new_state(enum ike_version ike_version,
 	st->st_logger = alloc_logger(st, &logger_state_vec, HERE);
 	st->st_logger->object_whackfd = dup_any(whackfd);
 
-	st->hidden_variables.st_nat_oa = address_any(&ipv4_info);
-	st->hidden_variables.st_natd = address_any(&ipv4_info);
+	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
+	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);
@@ -583,17 +428,17 @@ static struct state *new_state(enum ike_version ike_version,
 	return st;
 }
 
-struct ike_sa *new_v1_istate(struct fd *whackfd)
+struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd)
 {
-	struct state *st = new_state(IKEv1, ike_initiator_spi(),
+	struct state *st = new_state(c, ike_initiator_spi(),
 				     zero_ike_spi, IKE_SA, whackfd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	return ike;
 }
 
-struct ike_sa *new_v1_rstate(struct msg_digest *md)
+struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 {
-	struct state *st = new_state(IKEv1, md->hdr.isa_ike_spis.initiator,
+	struct state *st = new_state(c, md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender, md->md_logger),
 				     IKE_SA, null_fd);
 	struct ike_sa *ike = pexpect_ike_sa(st);
@@ -601,14 +446,15 @@ struct ike_sa *new_v1_rstate(struct msg_digest *md)
 	return ike;
 }
 
-struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
+struct ike_sa *new_v2_ike_state(struct connection *c,
+				const struct state_v2_microcode *transition,
 				enum sa_role sa_role,
 				const ike_spi_t ike_initiator_spi,
 				const ike_spi_t ike_responder_spi,
-				struct connection *c, lset_t policy,
+				lset_t policy,
 				int try, struct fd *whack_sock)
 {
-	struct state *st = new_state(IKEv2, ike_initiator_spi, ike_responder_spi,
+	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, whack_sock);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	ike->sa.st_sa_role = sa_role;
@@ -616,7 +462,7 @@ struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
 	change_state(&ike->sa, fs->kind);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	initialize_new_state(&ike->sa, c, policy, try);
+	initialize_new_state(&ike->sa, policy, try);
 	return ike;
 }
 
@@ -635,7 +481,6 @@ void init_states(void)
 		passert(s->kind == kind);
 		passert(s->category != CAT_UNKNOWN);
 	}
-	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }
 
 void delete_state_by_id_name(struct state *st, void *name)
@@ -699,7 +544,7 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
-	    st->st_serialno, pri_fd(st->st_whack_sock), why);
+	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why);
 	close_any_fd(&st->st_logger->object_whackfd, where);
 	close_any_fd(&st->st_logger->global_whackfd, where);
 }
@@ -718,8 +563,8 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	/* Any children? */
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid */,
-					     NULL/* ignore role */,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore role */,
 					     &ike->sa.st_ike_spis,
 					     NULL, NULL /* no predicate */,
 					     __func__);
@@ -729,14 +574,12 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 		return;
 	}
 
-	{
-		char cib[CONN_INST_BUF];
-		struct connection *c = ike->sa.st_connection;
-		loglog(RC_INFORMATIONAL, "expire unused IKE SA #%lu \"%s\"%s",
-		       ike->sa.st_serialno, c->name,
-		       fmt_conn_instance(c, cib));
-		event_force(EVENT_SA_EXPIRE, &ike->sa);
-	}
+	connection_buf cib;
+	struct connection *c = ike->sa.st_connection;
+	log_state(RC_INFORMATIONAL, &ike->sa, "expire unused IKE SA #%lu "PRI_CONNECTION,
+		  ike->sa.st_serialno,
+		  pri_connection(c, &cib));
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 }
 
 
@@ -746,60 +589,77 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
  * Should it schedule pending events?
  */
 
-static bool flush_incomplete_child(struct state *st, void *pst UNUSED)
+static bool flush_incomplete_child(struct state *cst, void *pst)
 {
-	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+	struct child_sa *child = pexpect_child_sa(cst);
 
-		char cib[CONN_INST_BUF];
-		struct connection *c = st->st_connection;
+	if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 
-		so_serial_t newest_sa;
-		switch (st->st_establishing_sa) {
-		case IKE_SA: newest_sa = c->newest_isakmp_sa; break;
-		case IPSEC_SA: newest_sa = c->newest_ipsec_sa; break;
-		default: bad_case(st->st_establishing_sa);
+		struct ike_sa *ike = pexpect_ike_sa(pst);
+		struct connection *c = child->sa.st_connection;
+
+		/*
+		 * If it wasn't so rudely interrupted, what would the
+		 * CHILD SA have eventually replaced?
+		 */
+		so_serial_t replacing_sa;
+		switch (child->sa.st_establishing_sa) {
+		case IKE_SA: replacing_sa = c->newest_isakmp_sa; break;
+		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
+		default: bad_case(child->sa.st_establishing_sa);
 		}
 
-		if (st->st_serialno > newest_sa &&
+		if (child->sa.st_serialno > replacing_sa &&
 		    (c->policy & POLICY_UP) &&
 		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
-			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state->name,
-			       c->name, fmt_conn_instance(c, cib));
 
-			st->st_policy = c->policy; /* for pick_initiator */
-			event_force(EVENT_SA_REPLACE, st);
+			/*
+			 * Nothing else has managed to replace
+			 * REPLACING_SA and the connection needs to
+			 * say up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "reschedule pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			child->sa.st_policy = c->policy; /* for pick_initiator */
+			event_force(EVENT_SA_REPLACE, &child->sa);
+
 		} else {
-			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
-			       "connection \"%s\"%s - the parent is going away",
-			       st->st_serialno, st->st_state->name,
-			       c->name, fmt_conn_instance(c, cib));
 
-			event_force(EVENT_SA_EXPIRE, st);
+			/*
+			 * Either something else replaced
+			 * REPLACING_SA, or the connection shouldn't
+			 * stay up.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "expire pending CHILD SA - the IKE SA #%lu is going away",
+				  ike->sa.st_serialno);
+			event_force(EVENT_SA_EXPIRE, &child->sa);
+
 		}
 		/*
 		 * Shut down further logging for the child, above are
 		 * the last whack will hear from them.
 		 */
-		release_any_whack(st, HERE, "IKE going away");
+		release_any_whack(&child->sa, HERE, "IKE going away");
 	}
 	/*
 	 * XXX: why was this non-conditional?  probably doesn't matter
 	 * as it is idenpotent?
 	 */
-	delete_cryptographic_continuation(st);
+	delete_cryptographic_continuation(&child->sa);
 	return false; /* keep going */
 }
 
 static void flush_incomplete_children(struct ike_sa *ike)
 {
-	state_by_ike_spis(ike->sa.st_ike_version,
-			  &ike->sa.st_serialno,
+	state_by_ike_spis(ike->sa.st_ike_version, /* match: IKE VERSION */
+			  &ike->sa.st_serialno /* match: parent is IKE SA */,
 			  NULL /* ignore MSGID */,
 			  NULL /* ignore role */,
-			  &ike->sa.st_ike_spis,
-			  flush_incomplete_child, NULL/*arg*/, __func__);
+			  &ike->sa.st_ike_spis /* match: IKE SPIs */,
+			  flush_incomplete_child, ike/*arg*/,
+			  __func__);
 }
 
 static bool should_send_delete(const struct state *st)
@@ -809,8 +669,12 @@ static bool should_send_delete(const struct state *st)
 		return false;
 	}
 
+	/*
+	 * PW: But this is valid for IKEv1, where it would need to start a
+	 * new IKE SA to send the delete notification ???
+	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st) &&
-	    !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	    !IS_IKE_SA_ESTABLISHED(st)) {
 		dbg("%s: no, not established", __func__);
 		return false;
 	}
@@ -835,6 +699,62 @@ static bool should_send_delete(const struct state *st)
 	return true;
 }
 
+static void send_delete(struct state *st)
+{
+	if (impair.send_no_delete) {
+		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
+	}
+
+	dbg("#%lu send %s delete notification for %s",
+	    st->st_serialno,
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_state->name);
+	switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		send_v1_delete(st);
+		break;
+#endif
+	case IKEv2:
+	{
+		struct ike_sa *ike = ike_sa(st, HERE);
+
+		/* XXX: something better? */
+		struct fd *ike_whack = ike->sa.st_logger->global_whackfd;
+		ike->sa.st_logger->global_whackfd = dup_any(st->st_logger->global_whackfd);
+
+		record_v2_delete(ike, st);
+		send_recorded_v2_message(ike, "delete notification",
+					 MESSAGE_REQUEST);
+
+		/* XXX: something better? */
+		close_any(&ike->sa.st_logger->global_whackfd);
+		ike->sa.st_logger->global_whackfd = ike_whack;
+
+		/*
+		 * XXX: The record 'n' send call shouldn't be needed.
+		 * Instead, as part of this transition (live ->
+		 * being-deleted) the standard success_v2_transition()
+		 * code path should get to do the right thing.
+		 *
+		 * XXX: The record 'n' send call leads to an RFC
+		 * violation.  The lack of a state transition means
+		 * there's nothing set up to wait for the ack.  And
+		 * that in turn means that the next packet will be
+		 * sent before this one has had a response.
+		 */
+		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
+		    ike->sa.st_serialno, st->st_serialno, __func__);
+		v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
+		st->st_dont_send_delete = true;
+		break;
+	}
+	default:
+		bad_case(st->st_ike_version);
+	}
+}
+
 static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
@@ -846,24 +766,25 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		* the message prefix.
 		*/
 		deltatime_buf dtb;
-		libreswan_log("deleting state (%s) aged %ss and %ssending notification",
-			      st->st_state->name,
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, st, "deleting state (%s) aged %ss and %ssending notification",
+			  st->st_state->name,
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
 		deltatime_buf dtb;
-		libreswan_log("deleting other state #%lu (%s) aged %ss and %ssending notification",
-			      st->st_serialno, st->st_state->name,
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, cur_state, "deleting other state #%lu (%s) aged %ss and %ssending notification",
+			  st->st_serialno, st->st_state->name,
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	} else {
 		deltatime_buf dtb;
 		connection_buf cib;
-		libreswan_log("deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-			      st->st_serialno, st->st_state->name,
-			      pri_connection(c, &cib),
-			      str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			      del_notify ? "" : "NOT ");
+		log_state(RC_LOG, cur_state,
+			  "deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+			  st->st_serialno, st->st_state->name,
+			  pri_connection(c, &cib),
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
 	}
 
 	dbg("%s state #%lu: %s(%s) => delete",
@@ -888,7 +809,7 @@ static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
 	return STF_OK;
 }
 
-void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
+void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 {
 	if (st->st_ike_version == IKEv2 &&
 	    should_send_delete(st)) {
@@ -907,10 +828,23 @@ void schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 	v2_expire_unused_ike_sa(ike);
 }
 
+static void delete_state_tail(struct state *st);
+
+void delete_other_state(struct state *st, struct state *other_state)
+{
+	delete_state_log(other_state, st);
+	delete_state_tail(other_state);
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	struct connection *const c = st->st_connection;
+	delete_state_log(st, st);
+	delete_state_tail(st);
+}
+
+void delete_state_tail(struct state *st)
+{
 	pstat_sa_deleted(st);
 
 	/*
@@ -925,11 +859,8 @@ void delete_state(struct state *st)
 			pri_cpu_usage(st->st_timing.helper_usage));
 	}
 
-	so_serial_t old_serialno = push_cur_state(st);
-	delete_state_log(st, state_by_serialno(old_serialno));
-
 	/*
-	 * IKEv2 IKE failures are logged in the state transition conpletion.
+	 * IKEv2 IKE failures are logged in the state transition completion.
 	 * IKEv1 IKE failures do not go through a transition, so we catch
 	 * these in delete_state()
 	 */
@@ -946,28 +877,30 @@ void delete_state(struct state *st)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
-	if (IS_IKE_SA(st) && (c->policy & POLICY_OPPORTUNISTIC) &&
+	if (IS_IKE_SA(st) &&
+	    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
 	    (st->st_state->kind == STATE_PARENT_I1 ||
 	     st->st_state->kind == STATE_PARENT_I2)) {
+		struct connection *c = st->st_connection;
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);
 
 		dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
-		    enum_short_name(&spi_names, failure_shunt),
-		    enum_short_name(&spi_names, nego_shunt));
+		    enum_name_short(&spi_names, failure_shunt),
+		    enum_name_short(&spi_names, nego_shunt));
 
-		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt)) {
-			loglog(RC_LOG_SERIOUS, "orphan_holdpass() failure ignored");
+		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt, st->st_logger)) {
+			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 		}
 	}
 
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
 		if (!get_sa_info(st, FALSE, NULL)) {
-			libreswan_log("failed to pull traffic counters from outbound IPsec SA");
+			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
 		if (!get_sa_info(st, TRUE, NULL)) {
-			libreswan_log("failed to pull traffic counters from inbound IPsec SA");
+			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
 		/*
@@ -985,10 +918,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
@@ -1004,10 +937,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
 		}
@@ -1023,20 +956,24 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			loglog(RC_INFORMATIONAL, "%s%s%s",
-				statebuf,
-				st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				st->st_xauth_username);
+			log_state(RC_INFORMATIONAL, st, "%s%s%s",
+				  statebuf,
+				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
+				  st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
 	}
 
-#ifdef XAUTH_HAVE_PAM
-	if (st->st_xauth != NULL) {
-		xauth_pam_abort(st);
+#ifdef AUTH_HAVE_PAM
+	if (st->st_pamauth != NULL) {
+		pamauth_abort(st);
 	}
 #endif
+
+	/* intermediate */
+	free_chunk_content(&st->st_intermediate_packet_me);
+	free_chunk_content(&st->st_intermediate_packet_peer);
 
 	event_delete(EVENT_DPD, st);
 	event_delete(EVENT_v2_LIVENESS, st);
@@ -1057,7 +994,7 @@ void delete_state(struct state *st)
 		 *
 		 * ??? in IKEv2, we should not immediately delete:
 		 * we should use an Informational Exchange to
-		 * co-ordinate deletion.
+		 * coordinate deletion.
 		 * ikev2_delete_out doesn't really accomplish this.
 		 */
 		send_delete(st);
@@ -1098,45 +1035,17 @@ void delete_state(struct state *st)
 			delete_ipsec_sa(st);
 	}
 
-	if (c->newest_ipsec_sa == st->st_serialno)
-		c->newest_ipsec_sa = SOS_NOBODY;
+	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
+		st->st_connection->newest_ipsec_sa = SOS_NOBODY;
 
-	if (c->newest_isakmp_sa == st->st_serialno)
-		c->newest_isakmp_sa = SOS_NOBODY;
+	if (st->st_connection->newest_isakmp_sa == st->st_serialno)
+		st->st_connection->newest_isakmp_sa = SOS_NOBODY;
 
 	/*
-	 * If policy dictates, try to keep the connection alive.
-	 * DONT_REKEY overrides UP.
-	 *
-	 * XXX: need more info from someone knowing what the problem
-	 * is.
-	 * ??? What problem is this referring to?
+	 * If policy dictates, try to keep the state's connection
+	 * alive.  DONT_REKEY overrides UP.
 	 */
-	if ((c->policy & (POLICY_UP | POLICY_DONT_REKEY)) == POLICY_UP &&
-	    IS_IKE_SA(st)) {
-		/* XXX: break it down so it can be logged */
-		so_serial_t newer_sa = get_newer_sa_from_connection(st);
-		if (state_by_serialno(newer_sa) != NULL) {
-			/*
-			 * Presumably this is an old state that has
-			 * either been rekeyed or replaced.
-			 *
-			 * XXX: Should not even be here though!  The
-			 * old IKE SA should be going through delete
-			 * state transition that, at the end, cleanly
-			 * deletes it with none of this guff.
-			 */
-			dbg("IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
-			    st->st_serialno, c->name, newer_sa);
-		} else if (impair.revival) {
-			log_state(RC_LOG, st,
-				  "IMPAIR: skipping revival of connection that is supposed to remain up");
-		} else {
-			log_state(RC_LOG, st,
-				  "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
-			add_revival(c);
-		}
-	}
+	add_revival_if_needed(st);
 
 	/*
 	 * fake a state change here while we are still associated with a
@@ -1150,36 +1059,63 @@ void delete_state(struct state *st)
 	    st->st_serialno >= st->st_connection->newest_isakmp_sa) {
 		/*
 		 * XXX: don't try to delete the iface port of an old
-		 * TCP IKE SA.  It's replacement will have taken
+		 * TCP IKE SA.  Its replacement will have taken
 		 * ownership.  However, do delete a TCP IKE SA when it
 		 * looks like it is getting ready for a replace.
 		 */
 		if (st->st_interface->protocol == &ip_protocol_tcp) {
 			dbg("TCP: freeing interface; release instead?");
-			struct iface_port **p = (void*)&st->st_interface; /* hack const */
+			struct iface_endpoint **p = (void*)&st->st_interface; /* hack const */
 			/*
 			 * XXX: The state and the event loop are
 			 * sharing EVP.  This deletes both.
 			 */
-			free_any_iface_port(p);
+			free_any_iface_endpoint(p);
 		}
 	}
-	st->st_interface = NULL;
 
 	/*
-	 * Unlink the connection which may in turn delete the
-	 * connection instance.  Needs to be done before the state is
-	 * removed from the state DB as it can otherwise leak the
-	 * connection (or explode because it was removed from the
-	 * list).
+	 * Release stored IKE fragments. This is a union in st so only
+	 * call one!  XXX: should be a union???
 	 */
-	update_state_connection(st, NULL);
+	switch (st->st_connection->ike_version) {
+	case IKEv1:
+#ifdef USE_IKEv1
+		free_v1_message_queues(st);
+#endif
+		break;
+	case IKEv2:
+		free_v2_message_queues(st);
+		break;
+	default:
+		bad_case(st->st_connection->ike_version);
+	}
 
 	/*
-	 * Effectively, this deletes any ISAKMP SA that this state
-	 * represents
+	 * This, effectively,  deletes any ISAKMP SA that this state
+	 * represents - lookups for this state no longer work.
 	 */
 	del_state_from_db(st);
+
+	/*
+	 * Break the STATE->CONNECTION link.  If CONNECTION is an
+	 * instance, then it too will be deleted.
+	 *
+	 * - checks ST's POLICY_UP
+	 *
+	 *   is the established IKE SA being revived and, hence, the
+	 *   connection should not be deleted
+	 *
+	 * - checks for a another state still using the connection
+	 *
+	 *   since this state was removed from the CONNECTION -> STATE
+	 *   hash table this succeeding means that there must be a
+	 *   second state using the connection
+	 */
+	connection_delete_unused_instance(&st->st_connection, st,
+					  st->st_logger->global_whackfd);
+	pexpect(st->st_connection == NULL);
+	st->st_interface = NULL;
 
 	v2_msgid_free(st);
 
@@ -1189,23 +1125,10 @@ void delete_state(struct state *st)
 
 	/* from here on we are just freeing RAM */
 
+#ifdef USE_IKEv1
 	ikev1_clear_msgid_list(st);
-	unreference_key(&st->st_peer_pubkey);
-
-	/*
-	 * Release stored IKE fragments. This is a union in st so only
-	 * call one!  XXX: should be a union???
-	 */
-	switch (st->st_ike_version) {
-	case IKEv1:
-		free_v1_message_queues(st);
-		break;
-	case IKEv2:
-		free_v2_message_queues(st);
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
+#endif
+	pubkey_delref(&st->st_peer_pubkey, HERE);
 
 	/*
 	 * Free the accepted proposal first, it points into the
@@ -1213,19 +1136,11 @@ void delete_state(struct state *st)
 	 */
 	free_ikev2_proposal(&st->st_accepted_ike_proposal);
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
-
-	/*
-	 * If this state 'owns' the DH secret, release it.  If not
-	 * then it is presumably owned by a crypto-helper and that can
-	 * clean it up.
-	 */
-	if (st->st_dh_secret != NULL) {
-		free_dh_secret(&st->st_dh_secret);
-	}
+	/* helper may have its own ref */
+	dh_local_secret_delref(&st->st_dh_local_secret, HERE);
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
-	pop_cur_state(old_serialno);
 
 	release_certs(&st->st_remote_certs.verified);
 	free_public_keys(&st->st_remote_certs.pubkey_db);
@@ -1234,8 +1149,10 @@ void delete_state(struct state *st)
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_peer);
+#ifdef USE_IKEv1
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);
+#endif
 	free_chunk_content(&st->st_p1isa);
 	free_chunk_content(&st->st_gi);
 	free_chunk_content(&st->st_gr);
@@ -1245,7 +1162,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_id_payload.data);
 
 #    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
-	free_any_nss_symkey(st->st_shared_nss);
+	free_any_nss_symkey(st->st_dh_shared_secret);
 	free_any_nss_symkey(st->st_skeyid_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */
 	free_any_nss_symkey(st->st_skey_ai_nss); /* aka st_skeyid_a_nss */
@@ -1287,10 +1204,12 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
 
+	free_chunk_content(&st->st_seen_sec_label);
+	free_chunk_content(&st->st_acquired_sec_label);
+
 	free_chunk_content(&st->st_no_ppk_auth);
 
-	pfreeany(st->sec_ctx);
-	free_logger(&st->st_logger);
+	free_logger(&st->st_logger, HERE);
 	messup(st);
 	pfree(st);
 }
@@ -1320,7 +1239,7 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 
-	if (in_pending_use(c)) {
+	if (connection_is_pending(c)) {
 		dbg("#%lu connection is also pending; but what about pending for this state???",
 		    child->sa.st_serialno);
 		return true;
@@ -1390,12 +1309,10 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				 * suppressing the message 'deleting
 				 * other state'.
 				 */
-				so_serial_t old_serialno = push_cur_state(this);
 				/* XXX: better way? */
 				close_any(&this->st_logger->global_whackfd);
 				this->st_logger->global_whackfd = dup_any(whackfd);
 				delete_state(this);
-				pop_cur_state(old_serialno);
 			}
 		}
 	}
@@ -1406,7 +1323,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
  * but using interfaces that are going down
  */
 
-void delete_states_dead_interfaces(struct fd *whackfd)
+void delete_states_dead_interfaces(struct logger *logger)
 {
 	struct state *this = NULL;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -1419,12 +1336,12 @@ void delete_states_dead_interfaces(struct fd *whackfd)
 				id_vname = c->xfrmi->name;
 			else
 				id_vname = this->st_interface->ip_dev->id_rname;
-			log_global(RC_LOG, whackfd,
-				   "deleting lasting state #%lu on interface (%s) which is shutting down",
-				   this->st_serialno, id_vname);
+			llog(RC_LOG, logger,
+				    "deleting lasting state #%lu on interface (%s) which is shutting down",
+				    this->st_serialno, id_vname);
 			/* XXX: better? */
 			close_any(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = dup_any(whackfd);
+			this->st_logger->global_whackfd = dup_any(logger->global_whackfd);
 			delete_state(this);
 			/* note: no md->st to clear */
 		}
@@ -1475,8 +1392,12 @@ void delete_states_by_connection(struct connection *c, bool relations, struct fd
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		passert(sr->eroute_owner == SOS_NOBODY);
-		passert(sr->routing != RT_ROUTED_TUNNEL);
+		/*
+		 * these passerts are not true currently due to mobike.
+		 * Requires some re-implementation. Use pexpect for now.
+		 */
+		pexpect(sr->eroute_owner == SOS_NOBODY);
+		pexpect(sr->routing != RT_ROUTED_TUNNEL);
 	}
 
 	if (ck == CK_INSTANCE) {
@@ -1508,7 +1429,8 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 			    str_endpoint(&this->st_remote_endpoint, &b),
 			    peerstr);
 
-			if (sameaddr(&this->st_remote_endpoint, peer)) {
+			if (peer != NULL /* ever false? */ &&
+			    endpoint_address_eq_address(this->st_remote_endpoint, *peer)) {
 				if (ph1 == 0 && IS_IKE_SA(this)) {
 					whack_log(RC_COMMENT, whackfd,
 						  "peer %s for connection %s crashed; replacing",
@@ -1532,7 +1454,8 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-static struct state *duplicate_state(struct state *st,
+static struct state *duplicate_state(struct connection *c,
+				     struct state *st,
 				     enum sa_type sa_type,
 				     struct fd *whackfd)
 {
@@ -1544,7 +1467,7 @@ static struct state *duplicate_state(struct state *st,
 		st->st_outbound_time = mononow();
 	}
 
-	nst = new_state(st->st_ike_version,
+	nst = new_state(c,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
 			sa_type, whackfd);
@@ -1553,8 +1476,6 @@ static struct state *duplicate_state(struct state *st,
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
 	    st->st_serialno, pri_connection(st->st_connection, &cib),
 	    nst->st_serialno, sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA");
-
-	update_state_connection(nst, st->st_connection);
 
 	if (sa_type == IPSEC_SA) {
 		nst->st_oakley = st->st_oakley;
@@ -1575,7 +1496,7 @@ static struct state *duplicate_state(struct state *st,
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_seen_fragmentation_supported = st->st_seen_fragmentation_supported;
-	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
 	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
@@ -1629,22 +1550,27 @@ static struct state *duplicate_state(struct state *st,
 	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
 	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
 
+	nst->st_acquired_sec_label = st->st_acquired_sec_label;
+	nst->st_seen_sec_label = st->st_seen_sec_label;
+
 	return nst;
 }
 
-struct state *ikev1_duplicate_state(struct state *st,
+struct state *ikev1_duplicate_state(struct connection *c,
+				    struct state *st,
 				    struct fd *whackfd)
 {
-	return duplicate_state(st, IPSEC_SA, whackfd);
+	return duplicate_state(c, st, IPSEC_SA, whackfd);
 }
 
-struct child_sa *new_v2_child_state(struct ike_sa *ike,
+struct child_sa *new_v2_child_state(struct connection *c,
+				    struct ike_sa *ike,
 				    enum sa_type sa_type,
 				    enum sa_role role,
 				    enum state_kind kind,
 				    struct fd *whackfd)
 {
-	struct state *cst = duplicate_state(&ike->sa, sa_type, whackfd);
+	struct state *cst = duplicate_state(c, &ike->sa, sa_type, whackfd);
 	cst->st_sa_role = role;
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
@@ -1664,22 +1590,17 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 		 * Since OLD_STATE might be deleted by f();
 		 * save/restore using serialno.
 		 */
-		so_serial_t old_serialno = push_cur_state(st);
 		(*f)(st, data);
-		pop_cur_state(old_serialno);
 	}
 }
 
-/*
- * Find a state object for an IKEv1 state
- */
-
+#ifdef USE_IKEv1
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
+				 NULL /*ignore-clonedfrom*/,
 				 &msgid/*check v1 msgid*/,
-				 NULL/*ignore-role*/,
+				 NULL /*ignore-role*/,
 				 ike_spis, NULL, NULL, __func__);
 }
 
@@ -1687,11 +1608,12 @@ struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid)
 {
 	return state_by_ike_initiator_spi(IKEv1,
-					  NULL/*ignore-clonedfrom*/,
-					  &msgid/*check v1 msgid*/,
-					  NULL/*ignore-role*/,
+					  NULL /*ignore-clonedfrom*/,
+					  &msgid /*check v1 msgid*/,
+					  NULL /*ignore-role*/,
 					  ike_initiator_spi, __func__);
 }
+#endif
 
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
@@ -1702,7 +1624,7 @@ struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 	const so_serial_t sos_nobody = SOS_NOBODY;
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &sos_nobody/*clonedfrom: IKE SA*/,
-					     NULL/*ignore v1 msgid*/,
+					     NULL /*ignore v1 msgid*/,
 					     &local_ike_role,
 					     ike_spis, NULL, NULL, __func__);
 	return pexpect_ike_sa(st);
@@ -1796,16 +1718,14 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 	};
 	struct state *st = state_by_ike_spis(IKEv2,
 					     &ike->sa.st_serialno,
-					     NULL/* ignore v1 msgid*/,
-					     NULL/*ignore-role*/,
+					     NULL /* ignore v1 msgid */,
+					     NULL /* ignore-role */,
 					     &ike->sa.st_ike_spis,
 					     v2_spi_predicate, &filter, __func__);
 	return pexpect_child_sa(st);
 }
 
-/*
- * Find a state object.
- */
+#ifdef USE_IKEv1
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
@@ -1832,12 +1752,13 @@ struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
 		.msgid = msgid,
 	};
 	return state_by_ike_spis(IKEv1,
-				 NULL/*ignore-clonedfrom*/,
-				 NULL/*ignore v1 msgid; see predicate*/,
-				 NULL/*ignore-role*/,
+				 NULL /* ignore-clonedfrom */,
+				 NULL /* ignore v1 msgid; see predicate */,
+				 NULL /* ignore-role */,
 				 ike_spis, v1_msgid_predicate,
 				 &filter, __func__);
 }
+#endif
 
 /*
  * find_phase2_state_to_delete: find an AH or ESP SA to delete
@@ -1950,16 +1871,15 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
-	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (LHAS(ok_states, st->st_state->kind) &&
-		    (st->st_ike_version == IKEv2) == is_ikev2 &&
+		    c->ike_version == st->st_connection->ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
-		    sameaddr(&st->st_remote_endpoint, &c->spd.that.host_addr) &&
+		    endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
 		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
@@ -1970,7 +1890,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	return best;
 }
 
-void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
+void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			unsigned long count, monotime_t nw)
 {
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -1982,8 +1902,8 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd.eroute_owner == st->st_serialno &&
 		    c->spd.routing == RT_ROUTED_TUNNEL &&
-		    samesubnet(&c->spd.this.client, ours) &&
-		    samesubnet(&c->spd.that.client, peers)) {
+		    selector_subnet_eq_subnet(c->spd.this.client, *ours) &&
+		    selector_subnet_eq_subnet(c->spd.that.client, *peers)) {
 			if (st->st_outbound_count != count) {
 				st->st_outbound_count = count;
 				st->st_outbound_time = nw;
@@ -2042,14 +1962,14 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		 * pool.
 		 */
 		jam(buf, ", lease=");
-		jam_subnet(buf, &c->spd.that.client);
+		jam_selector_subnet(buf, &c->spd.that.client);
 	} else if (c->spd.this.has_internal_address) {
 		/*
 		 * "this" received an internal address from "that";
 		 * presumably from "that"'s address pool.
 		 */
 		jam(buf, ", lease=");
-		jam_subnet(buf, &c->spd.this.client);
+		jam_selector_subnet(buf, &c->spd.this.client);
 	}
 }
 
@@ -2078,7 +1998,6 @@ void fmt_state(struct state *st, const monotime_t now,
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
-	char inst[CONN_INST_BUF];
 	char dpdbuf[128];
 	char traffic_buf[512], *mbcp;
 	const char *np1 = c->newest_isakmp_sa == st->st_serialno ?
@@ -2089,7 +2008,8 @@ void fmt_state(struct state *st, const monotime_t now,
 	const char *eo = c->spd.eroute_owner == st->st_serialno ?
 			 "; eroute owner" : "";
 
-	fmt_conn_instance(c, inst);
+	connection_buf cib;
+	const char *inst = str_connection_instance(c, &cib);
 
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
@@ -2144,7 +2064,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 "#%lu: \"%s\"%s:%u%s %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
-		 endpoint_hport(&st->st_remote_endpoint),
+		 endpoint_hport(st->st_remote_endpoint),
 		 (st->st_interface->protocol == &ip_protocol_tcp) ? "(tcp)" : "",
 		 st->st_state->name,
 		 st->st_state->story,
@@ -2564,7 +2484,7 @@ startover:
 ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries)
 {
 	/* cpi is in network order so first two bytes are the high order ones */
-	get_rnd_bytes((u_char *)&cpi, 2);
+	get_rnd_bytes((uint8_t *)&cpi, 2);
 
 	/*
 	 * Make sure that the result is unique.
@@ -2646,7 +2566,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	/* check for all conditions before updating IPsec SA's */
 	if (afi != address_type(&c->spd.that.host_addr)) {
-		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
+		log_state(RC_LOG, &ike->sa,
+			  "MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;
 	}
 
@@ -2685,43 +2606,48 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	endpoint_buf new;
 	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s -> %s",
 		 md_role == MESSAGE_RESPONSE ? "local" : "remote",
-		 str_sensitive_endpoint(&old_endpoint, &old),
-		 str_sensitive_endpoint(&new_endpoint, &new));
+		 str_endpoint_sensitive(&old_endpoint, &old),
+		 str_endpoint_sensitive(&new_endpoint, &new));
 
 	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
 	    ike->sa.st_serialno, buf);
 
-	if (endpoint_eq(old_endpoint, new_endpoint)) {
+	if (endpoint_eq_endpoint(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
-			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s",
-				      str_sensitive_endpoint(&old_endpoint, &b));
+			log_state(RC_LOG, &ike->sa,
+				  "MOBIKE success no change to kernel SA same IP address and port  %s",
+				  str_endpoint_sensitive(&old_endpoint, &b));
 
 			return true;
 		}
 	}
 
 	if (!migrate_ipsec_sa(&child->sa)) {
-		libreswan_log("%s FAILED", buf);
+		log_state(RC_LOG, &ike->sa, "%s FAILED", buf);
 		return false;
 	}
 
-	libreswan_log(" success %s", buf);
+	log_state(RC_LOG, &ike->sa, " success %s", buf);
 
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->spd.this.host_addr = endpoint_address(&child->sa.st_mobike_local_endpoint);
-		c->spd.this.host_port = endpoint_hport(&child->sa.st_mobike_local_endpoint);
+		c->spd.this.host_addr = endpoint_address(child->sa.st_mobike_local_endpoint);
+		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.leftright,
+		    c->spd.this.host_port, endpoint_hport(child->sa.st_mobike_local_endpoint));
+		c->spd.this.host_port = endpoint_hport(child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
 
 		ike->sa.st_interface = child->sa.st_interface = md->iface;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		c->spd.that.host_addr = md->sender;
-		c->spd.that.host_port = endpoint_hport(&md->sender);
+		c->spd.that.host_addr = endpoint_address(md->sender);
+		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.leftright,
+		    c->spd.that.host_port, endpoint_hport(md->sender));
+		c->spd.that.host_port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;
@@ -2748,8 +2674,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */
 		migration_up(child->sa.st_connection, &child->sa);
-		ike->sa.st_deleted_local_addr = address_any(&ipv4_info);
-		child->sa.st_deleted_local_addr = address_any(&ipv4_info);
+		ike->sa.st_deleted_local_addr = ipv4_info.address.any;
+		child->sa.st_deleted_local_addr = ipv4_info.address.any;
 		if (dpd_active_locally(&child->sa) && child->sa.st_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay, deltatime(MIN_LIVENESS));
@@ -2805,7 +2731,7 @@ static bool v2_migrate_predicate(struct state *st, void *context)
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 {
 	/*
-	 * TO is in the process of being emancipated.  It's
+	 * TO is in the process of being emancipated.  Its
 	 * .st_clonedfrom has been zapped and the new IKE_SPIs
 	 * installed (a true child would have FROM's IKE SPIs).
 	 *
@@ -2830,8 +2756,8 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 	};
 	state_by_ike_spis(IKEv2,
 			  &from->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &from->sa.st_ike_spis,
 			  v2_migrate_predicate, &filter, __func__);
 }
@@ -2839,8 +2765,13 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
-	/* pass down whack fd; better abstraction? */
-	if (ike != NULL && fd_p(ike->sa.st_logger->global_whackfd)) {
+	/*
+	 * Transfer the IKE SA's whack-fd to the child so that the
+	 * child can also log its demise; better abstraction?
+	 */
+	if (ike != NULL &&
+	    &ike->sa != st &&
+	    fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
 	}
@@ -2851,7 +2782,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 		st->st_dont_send_delete = true;
 		break;
 	}
-	delete_state(st);
+	delete_other_state(&ike->sa, st/*other*/);
 	return false; /* keep going */
 }
 
@@ -2865,8 +2796,8 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 	 */
 	state_by_ike_spis(ike->sa.st_ike_version,
 			  &ike->sa.st_serialno,
-			  NULL/*ignore v1 msgid*/,
-			  NULL/*ignore-sa-role*/,
+			  NULL /*ignore v1 msgid */,
+			  NULL /*ignore-sa-role */,
 			  &ike->sa.st_ike_spis,
 			  delete_ike_family_child, NULL,
 			  __func__);
@@ -2999,11 +2930,13 @@ void show_globalstate_status(struct show *s)
 	show_raw(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
 	show_raw(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
 	show_raw(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
+#ifdef USE_IKEv1
 	for (enum state_kind sk = STATE_IKEv1_FLOOR; sk < STATE_IKEv1_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
 			 fs->name, state_count[sk]);
 	}
+#endif
 	for (enum state_kind sk = STATE_IKEv2_FLOOR; sk < STATE_IKEv2_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
 		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
@@ -3229,11 +3162,8 @@ static void list_state_event(struct show *s, struct state *st,
 				    deltasecs(monotimediff(pe->ev_time, now)));
 			}
 			if (st->st_connection != NULL) {
-				/* fmt_connection(buf, st->st_connection); */
-				char cib[CONN_INST_BUF];
-				jam(buf, " \"%s\"%s",
-				    st->st_connection->name,
-				    fmt_conn_instance(st->st_connection, cib));
+				connection_buf cib;
+				jam(buf, " "PRI_CONNECTION, pri_connection(st->st_connection, &cib));
 			}
 			jam(buf, "  #%lu", st->st_serialno);
 		}
@@ -3254,6 +3184,7 @@ void list_state_events(struct show *s, monotime_t now)
 	}
 }
 
+#ifdef USE_IKEv1
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
 		       where_t where)
 {
@@ -3266,6 +3197,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 	}
 	st->st_v1_transition = transition;
 }
+#endif
 
 void set_v2_transition(struct state *st, const struct state_v2_microcode *transition,
 		       where_t where)

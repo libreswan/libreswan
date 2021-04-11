@@ -24,8 +24,34 @@
 struct msg_digest;
 struct dh_desc;
 struct ike_sa;
-struct v2_outgoing_fragment;
-struct v2_incomming_fragments;
+
+struct v2_incoming_fragment {
+	chunk_t text;		/* cipher or plain - decrypt in place */
+	chunk_t plain;		/* read-only; points into cipher text */
+	size_t iv_offset;	/* into text */
+};
+
+struct v2_incoming_fragments {
+	unsigned total;
+	unsigned count;
+	/*
+	 * Next-Payload from first fragment.
+	 */
+	int first_np;
+	/*
+	 * For simplicity, index by fragment number which is 1-based;
+	 * leaving element 0 empty.
+	 */
+	struct v2_incoming_fragment frags[MAX_IKE_FRAGMENTS + 1];
+};
+
+/* hunk like */
+
+struct v2_outgoing_fragment {
+	struct v2_outgoing_fragment *next;
+	size_t len;
+	uint8_t ptr[1]; /* can be bigger */
+};
 
 /*
  * Should the payload be encrypted/protected (don't confuse this with
@@ -75,7 +101,7 @@ void record_v2_message(struct ike_sa *ike,
 		       enum message_role message);
 
 void free_v2_message_queues(struct state *st);
-void free_v2_incomming_fragments(struct v2_incomming_fragments **frags);
+void free_v2_incoming_fragments(struct v2_incoming_fragments **frags);
 void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
 
 /*

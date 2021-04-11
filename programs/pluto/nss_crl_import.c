@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -37,7 +36,7 @@ static const char crl_name[] = "_import_crl";
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
-int send_crl_to_import(u_char *der, size_t len, const char *url, struct logger *logger)
+int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger)
 {
 	CERTSignedCrl *crl = NULL;
 	CERTCertificate *cacert = NULL;
@@ -75,7 +74,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url, struct logger *
 		*crl_path_space = '\0';
 		n = 0;
 # else
-		FATAL_ERRNO(errno, "readlink(\"/proc/self/exe\") failed for crl helper");
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "readlink(\"/proc/self/exe\") failed for crl helper");
 # endif
 	}
 #else
@@ -83,7 +83,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url, struct logger *
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name)) {
-		fatal(logger, "path to %s is too long", crl_name);
+		fatal(PLUTO_EXIT_FAIL, logger, "path to %s is too long", crl_name);
 	}
 
 	while (n > 0 && crl_path_space[n - 1] != '/')

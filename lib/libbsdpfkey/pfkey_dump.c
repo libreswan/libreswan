@@ -221,7 +221,7 @@ static struct val2str str_alg_comp[] = {
 };
 
 /*
- * dump SADB_MSG formated.  For debugging, you should use kdebug_sadb().
+ * dump SADB_MSG formatted.  For debugging, you should use kdebug_sadb().
  */
 
 void
@@ -534,7 +534,7 @@ pfkey_spdump1(struct sadb_msg *m, int withports)
 	m_sec_ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
 #endif
 #ifdef __linux__
-	/* *bsd indicates per-socket policies by omiting src and dst 
+	/* *bsd indicates per-socket policies by omitting src and dst 
 	 * extensions. Linux always includes them, but we can catch it
 	 * by checkin for policy id.
 	 */

@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -14,14 +14,14 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ikev2" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
-005 "westnet-eastnet-ikev2" #3: ESP traffic information: in=336B out=336B
+005 "westnet-eastnet-ikev2" #3: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then sleep 5 ; fi
 east #
  #
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 XFRM policy:
@@ -55,7 +55,4 @@ east #
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

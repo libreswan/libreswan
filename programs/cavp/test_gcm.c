@@ -22,7 +22,6 @@
 #include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_symkey.h"
-#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -171,10 +170,10 @@ static chunk_t salt = {
 	.len = 0,
 };
 
-static void gcm_run_test(void)
+static void gcm_run_test(struct logger *logger)
 {
 	print_number("Count", NULL, count);
-	print_symkey("Key", NULL, key, 0);
+	print_symkey("Key", NULL, key, 0, logger);
 	print_chunk("IV", NULL, iv, 0);
 	print_chunk("CT", NULL, ct, 0);
 	print_chunk("AAD", NULL, aad, 0);
@@ -188,9 +187,9 @@ static void gcm_run_test(void)
 	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", gcm_alg,
 							    0, sizeof_symkey(key),
 							    key,
-							    HERE, &progname_logger);
+							    HERE, logger);
 
-	chunk_t text_and_tag = clone_chunk_chunk(ct, tag, "text-and-tag");
+	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
 
 	bool result = gcm_alg->encrypt_ops
 		->do_aead(gcm_alg,
@@ -201,7 +200,7 @@ static void gcm_run_test(void)
 			  ct.len, tag.len,
 			  gcm_key,
 			  false/*encrypt*/,
-			  &progname_logger);
+			  logger);
 	if (result) {
 		/* plain text */
 		chunk_t pt = {

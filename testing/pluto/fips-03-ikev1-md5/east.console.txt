@@ -4,10 +4,10 @@ FIPS mode enabled.
 east #
  ipsec checknss
 east #
- PATH/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force
+ modutil -dbdir sql:/etc/ipsec.d -fips true -force
 FIPS mode already enabled.
 east #
- PATH/bin/modutil -dbdir sql:/etc/ipsec.d -chkfips true
+ modutil -dbdir sql:/etc/ipsec.d -chkfips true
 FIPS mode enabled.
 east #
  fipscheck
@@ -17,15 +17,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-md5
-036 Failed to add connection "westnet-eastnet-md5": ike string error: IKE PRF algorithm 'md5' is not supported
+036 "westnet-eastnet-md5": failed to add connection: IKE PRF algorithm 'md5' is not supported
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -41,7 +41,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509 --x509name ../otherca/signedbyother
 Preparing X.509 files
-command 'PATH/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'' failed with status 255: certutil: could not find certificate named "Libreswan test CA for mainca - Libreswan": SEC_ERROR_...
+command 'PATH/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d -t 'CT,,'' failed with status 255: certutil: could not find certificate named "Libreswan test CA for mainca - Libreswan": SEC_ERROR_...
 west #
  certutil -M -n 'Libreswan test CA for otherca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'
 west #
@@ -11,12 +11,12 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-x509-cr
-002 added IKEv1 connection "westnet-eastnet-x509-cr"
+002 "westnet-eastnet-x509-cr": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -39,7 +39,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -61,7 +61,4 @@ north                                                        P,,
 road                                                         P,,  
 signedbyother                                                u,u,u
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

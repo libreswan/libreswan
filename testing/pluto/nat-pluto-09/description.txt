@@ -2,5 +2,5 @@ This is a test of NAT-traversal.
 
 This test is identical to nat-pluto-08, except we now use a
 rightsubnet=vnet:%priv,%v4:192.0.0.0/8 where 192/8 is not part
-of the virtual_private= that is loaded into %priv
+of the virtual-private= that is loaded into %priv
 

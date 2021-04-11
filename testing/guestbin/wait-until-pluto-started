@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Wait until both whack can talk to pluto and the addconn process has
+# disappeared.  This will delay until pluto is started
+
+echo ==== cut ====
+count=10
+while count=$(expr $count - 1) && test $count -gt 0 ; do
+    # both need to attach ...
+    if ps=$(ipsec whack --processstatus) ; then
+	echo "${ps}"
+	# ... and not find addconn
+	if echo "${ps}" | grep addconn ; then
+	    echo try again
+	else
+	    echo addconn exited
+	    break
+	fi
+    fi
+    sleep 1
+done
+echo ==== tuc ====
+
+# what took so long?
+if [ $count -eq 0 ]
+then
+   if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+	echo "pluto in namespace failed to start - check logs or output"
+   else
+	systemctl --full status ipsec.service
+   fi
+fi

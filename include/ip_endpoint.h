@@ -24,53 +24,58 @@
 #include "ip_address.h"
 #include "ip_port.h"
 #include "ip_protoport.h"
+#include "ip_bytes.h"
 
 struct jambuf;
 struct ip_protocol;
 
-/*
- * ip_endpoint and ip_address should be distinct types where the
- * latter consists of ADDRESS:PORT.  Unfortunately separating them is
- * going to be slow.
- *
- * Defining ENDPOINT_TYPE causes the the types to become distinct.
- */
-
-#ifdef ENDPOINT_TYPE
 typedef struct {
+	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	unsigned version; /* 0, 4, 6 */
+	enum ip_version version; /* 0, 4, 6 */
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	struct ip_bytes { uint8_t byte[16]; } bytes;
+	struct ip_bytes bytes;
 	/*
-	 * In pluto "0" denotes all ports (or, in the context of an
-	 * endpoint, is that none?).
+	 * Protocol 0 is interpreted as a wild card so isn't allowed.
+	 */
+	unsigned ipproto;
+	/*
+	 * For protocols such as UDP and TCP, the 0 port is
+	 * interpreted as a wild card so isn't allowed.
 	 */
 	int hport;
-	unsigned ipproto;
-	bool is_endpoint;
 } ip_endpoint;
-#else
-typedef ip_address ip_endpoint;
-#endif
 
-void pexpect_endpoint(const ip_endpoint *e, const char *t, where_t where);
-#define pendpoint(E) pexpect_endpoint(E, #E, HERE)
+#define PRI_ENDPOINT "%s (is_set=%s version=%d bytes="PRI_BYTES" ipproto=%u hport=%u"
+#define pri_endpoint(A, B)						\
+	str_endpoint(A, B),						\
+		bool_str((A)->is_set),					\
+		(A)->version,						\
+		pri_bytes((A)->bytes),					\
+		(A)->ipproto,						\
+		(A)->hport
+
+void pexpect_endpoint(const ip_endpoint *e, where_t where);
+#define pendpoint(E) pexpect_endpoint(E, HERE)
 
 /*
  * Constructors.
  */
 
-ip_endpoint endpoint(const ip_address *address, int port);
+ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
+			      const struct ip_bytes bytes,
+			      const struct ip_protocol *protocol,
+			      ip_port port);
 
-ip_endpoint endpoint3(const struct ip_protocol *protocol,
-		      const ip_address *address, ip_port port);
+ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
+						const struct ip_protocol *protocol,
+						ip_port port);
 
 /*
  * Formatting
@@ -78,22 +83,27 @@ ip_endpoint endpoint3(const struct ip_protocol *protocol,
  * Endpoint formatting is always "cooked".  For instance, the address
  * "::1" is printed as "[::1]:PORT" (raw would print it as
  * "[0:0....:0]:PORT"
+ *
+ * XXX: sizeof("") includes '\0'.  What's an extra few bytes between
+ * friends?
  */
 
 typedef struct {
-	char buf[1/*[*/ + sizeof(address_buf) + 1/*]*/ + 5/*:65535*/];
+	char buf[sizeof("[") + sizeof(address_buf) + sizeof("]:65535")];
 } endpoint_buf;
 
-const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
 size_t jam_endpoint(struct jambuf *, const ip_endpoint*);
-const char *str_sensitive_endpoint(const ip_endpoint *, endpoint_buf *);
-size_t jam_sensitive_endpoint(struct jambuf *, const ip_endpoint*);
+size_t jam_endpoint_sensitive(struct jambuf *, const ip_endpoint*);
 
-/*
- * Logic
- */
+const char *str_endpoint(const ip_endpoint *, endpoint_buf *);
+const char *str_endpoint_sensitive(const ip_endpoint *, endpoint_buf *);
 
-bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
+typedef struct {
+	char buf[sizeof(endpoint_buf) + sizeof("--UNKNOWN--UNKNOWN-->") + sizeof(endpoint_buf)];
+} endpoints_buf;
+
+size_t jam_endpoints(struct jambuf *jambuf, const ip_endpoint *src, const ip_endpoint *dst);
+const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *buf);
 
 /*
  * Magic values.
@@ -104,39 +114,34 @@ bool endpoint_eq(const ip_endpoint l, ip_endpoint r);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_endpoint unset_endpoint;
 
-const struct ip_info *endpoint_type(const ip_endpoint *endpoint);
-const struct ip_protocol *endpoint_protocol(const ip_endpoint *endpoint);
-ip_address endpoint_address(const ip_endpoint *endpoint);
+bool endpoint_is_unset(const ip_endpoint *endpoint);			/* handles NULL */
+const struct ip_info *endpoint_type(const ip_endpoint *endpoint);	/* handles NULL */
 
-bool endpoint_is_set(const ip_endpoint *endpoint);
-bool endpoint_is_any(const ip_endpoint *endpoint);
-bool endpoint_is_specified(const ip_endpoint *endpoint);
+bool endpoint_is_specified(const ip_endpoint endpoint);
 
-/* Host or Network byte order */
-int endpoint_hport(const ip_endpoint *endpoint);
-ip_port endpoint_port(const ip_endpoint *endpoint);
-
-ip_endpoint set_endpoint_hport(const ip_endpoint *endpoint,
-			       int hport) MUST_USE_RESULT;
-ip_endpoint set_endpoint_address(const ip_endpoint *endpoint,
-				 const ip_address) MUST_USE_RESULT;
+const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint);
+ip_address endpoint_address(const ip_endpoint endpoint);
+ip_port endpoint_port(const ip_endpoint endpoint);
 
 /*
- * Old style.
+ * Logic
  */
 
+bool endpoint_eq_endpoint(const ip_endpoint l, const ip_endpoint r);
+bool endpoint_address_eq_address(const ip_endpoint endpoint, const ip_address address);
+
 /*
- * XXX: compatibility.
- *
- * setportof() should be replaced by update_{subnet,endpoint}_nport();
- * code is assuming ip_subnet.addr is an endpoint.
+ * hacks
  */
-#define portof(SRC) nport(endpoint_port((SRC)))
-#define setportof(NPORT, ENDPOINT) { *(ENDPOINT) = set_endpoint_hport((ENDPOINT), ntohs(NPORT)); }
+
+int endpoint_hport(const ip_endpoint endpoint);
+ip_endpoint set_endpoint_port(const ip_endpoint endpoint,
+			      ip_port port) MUST_USE_RESULT;
+void update_endpoint_port(ip_endpoint *endpoint, ip_port port);
 
 #endif

@@ -3,10 +3,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair revival
 west #
@@ -44,7 +44,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -60,7 +60,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -17,7 +17,6 @@
 #include <string.h>
 #include <stdlib.h>	/* for strtoul() */
 #include <limits.h>
-#include <ctype.h>
 
 #include "shunk.h"
 #include "lswlog.h"	/* for pexpect() */
@@ -27,7 +26,7 @@
  * manipulating strings they are different.
  */
 
-const shunk_t null_shunk = NULL_SHUNK;
+const shunk_t null_shunk = NULL_HUNK;
 const shunk_t empty_shunk = { .ptr = "", .len = 0, };
 
 shunk_t shunk1(const char *ptr)
@@ -145,10 +144,10 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
  * If OUTPUT is NULL, INPUT must only contain the numeric value, else
  * OUTPUT is set to any trailing characters.
  *
- * If CEILING is non-ZERO, *dest must be less then CEILING.
+ * If CEILING is non-ZERO, *dest can't be greater than CEILING.
  */
-err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
-		    uintmax_t *dest, uintmax_t ceiling)
+err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base,
+		       uintmax_t *dest, uintmax_t ceiling)
 {
 	*dest = 0;
 	if (output != NULL) {
@@ -162,18 +161,29 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 	/*
 	 * Detect standard prefixes.
 	 *
-	 * MIMIC BSD - only auto detect the prefix when the number has
-	 * at least one valid digit.
+	 * MIMIC BSD:
+	 *
+	 * Only auto detect the 0[xb] prefix when it is followed by at
+	 * least one valid digit.  If the digit is missing, fall back
+	 * to decimal, and not octal, so that decimal errors are
+	 * returned.
 	 */
-	if (base == 0) {
-		if (hunk_strcasestarteq(input, "0x") &&
-		    hunk_char_isxdigit(input, 2)) {
-			shunk_strcaseeat(&input, "0x");
-			base = 16;
-		} else if (hunk_strcasestarteq(input, "0b") &&
-			   hunk_char_isbdigit(input, 2)) {
-			shunk_strcaseeat(&input, "0b");
-			base = 2;
+	unsigned base;
+	if (draft_base == 0) {
+		if (hunk_strcasestarteq(input, "0x")) {
+			if (char_isxdigit(hunk_char(input, 2))) {
+				shunk_strcaseeat(&input, "0x");
+				base = 16;
+			} else {
+				base = 10;
+			}
+		} else if (hunk_strcasestarteq(input, "0b")) {
+			if (char_isbdigit(hunk_char(input, 2))) {
+				shunk_strcaseeat(&input, "0b");
+				base = 2;
+			} else {
+				base = 10;
+			}
 		} else if (hunk_char(input, 0) == '0') {
 			/* so 0... is interpreted as 0 below */
 			base = 8;
@@ -186,6 +196,8 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 	} else if (base == 16) {
 		shunk_strcaseeat(&input, "0x");
 #endif
+	} else {
+		base = draft_base;
 	}
 
 	/* something to convert */
@@ -193,11 +205,11 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 
 	/* something */
 	uintmax_t u = 0;
-	while (hunk_char_isprint(cursor, 0)) {
+	while (char_isprint(hunk_char(cursor, 0))) {
 		unsigned char c = hunk_char(cursor, 0);
 		/* convert to a digit; <0 will overflow */
 		unsigned d;
-		if (isdigit(c)) {
+		if (char_isdigit(c)) {
 			d = c - '0';
 		} else if (c >= 'a') {
 			d = c - 'a' + 10;
@@ -227,7 +239,9 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 
 	if (cursor.len == input.len) {
 		/* nothing valid */
-		switch (base) {
+		switch (draft_base) {
+		case 2:
+			return "first binary digit invalid";
 		case 8:
 			return "first octal digit invalid";
 		case 10:
@@ -239,10 +253,12 @@ err_t shunk_to_uint(shunk_t input, shunk_t *output, unsigned base,
 		}
 	}
 
-	/* everyting consumed? */
+	/* everything consumed? */
 	if (output == NULL) {
 		if (cursor.len > 0) {
 			switch (base) {
+			case 2:
+				return "non-binary digit in number";
 			case 8:
 				return "non-octal digit in number";
 			case 10:

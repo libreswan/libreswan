@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
@@ -83,7 +83,4 @@ src ::/0 dst ::/0
 src ::/0 dst ::/0 
 	socket out priority 0 ptype main 
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

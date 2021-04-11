@@ -3,15 +3,17 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
 west #
- # send KE:0 -- which is invalid
+ # send KE:0 (which is invalid)
+west #
+ # expect KE:0 in response
 west #
  ipsec whack --impair none
 west #
@@ -21,17 +23,18 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- # should fail with syntax-error response
+ # DH should fail
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
-207 "westnet-eastnet-ipv4-psk-ikev2" #1: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I1) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
+200 "westnet-eastnet-ipv4-psk-ikev2" #1: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed
 west #
- # receive KE:0 -- which is invalid
+ # send valid KE
+west #
+ # expect KE:0 in response (which is invalid)
 west #
  ipsec whack --impair none
 west #
@@ -39,23 +42,19 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- # should fail fail with syntax error
+ # DH should fail
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request
-207 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_PARENT_I1) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: skipping revival of connection that is supposed to remain up
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
+200 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed
 west #
  echo done
 done
 west #
- grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log | grep -v -e '^|'
-"westnet-eastnet-ipv4-psk-ikev2" #1: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
-"westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH' failed with v2N_INVALID_SYNTAX
+ grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX -e SEC_ERROR /tmp/pluto.log | grep -v -e '^|'
+"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
+"westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using MODP failed: SEC_ERROR 19 (0x13): security library: memory allocation failure.
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

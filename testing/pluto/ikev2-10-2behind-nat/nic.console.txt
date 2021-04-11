@@ -4,7 +4,7 @@ nic #
 nic #
  # NAT
 nic #
- iptables -t nat -p udp -A POSTROUTING --source 192.1.3.0/24  -o eth0 -j MASQUERADE
+ iptables -t nat -p udp -A POSTROUTING --source 192.1.3.0/24  -o eth0 -j MASQUERADE --to-port 40000-60000
 nic #
  # make sure that we never acidentially let ESP or unencrypted through.
 nic #
@@ -29,7 +29,7 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
-MASQUERADE  udp  --  192.1.3.0/24         0.0.0.0/0           
+MASQUERADE  udp  --  192.1.3.0/24         0.0.0.0/0            masq ports: 40000-60000
 nic #
  iptables -L -n
 Chain INPUT (policy ACCEPT)

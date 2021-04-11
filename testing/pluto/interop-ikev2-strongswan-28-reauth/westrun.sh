@@ -1,7 +1,7 @@
 strongswan up westnet-eastnet-ikev2
-ping -n -c 4 -I 192.0.1.254 192.0.2.254
-echo "sleep 80 sec to ike to rekey "
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+echo "sleep 90 sec to ike to rekey "
 sleep 50
-sleep 30
+sleep 40
 echo done
-ping -n -c 4 -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

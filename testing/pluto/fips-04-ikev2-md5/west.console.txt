@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,18 +13,18 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-md5
-002 added IKEv2 connection "westnet-eastnet-md5"
+002 "westnet-eastnet-md5": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -37,15 +37,13 @@ west #
 002 "westnet-eastnet-md5" #1: deleting state (STATE_PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-md5" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -61,7 +59,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

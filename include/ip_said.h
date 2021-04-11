@@ -48,7 +48,7 @@ typedef struct {
 	 * This is in network order (but is manipulated like an int.
 	 *
 	 * XXX: Does this mean it is the SPI that the remote end
-	 * expects to see on its incomming packets?
+	 * expects to see on its incoming packets?
 	 */
 #               define  SPI_PASS        256     /* magic values... */
 #               define  SPI_DROP        257     /* ...for use... */
@@ -99,5 +99,6 @@ ip_address said_address(const ip_said *said);
 
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 #define SATOT_BUF       sizeof(said_buf)
+#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 
 #endif

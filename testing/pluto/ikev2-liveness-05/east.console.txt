@@ -3,22 +3,19 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=756, outBytes=756, id='@west'
 east #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -60,7 +60,7 @@ ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
-SUBDIRS?=lib programs initsystems testing
+SUBDIRS?=lib programs initsystems testing configs
 
 TAGSFILES = $(wildcard include/*.h include/*/*.h lib/lib*/*.[ch] programs/*/*.[ch] testing/check/*/*.[ch])
 
@@ -88,7 +88,7 @@ ifneq ($(strip(${REGRESSRESULTS})),)
 endif
 	@echo "======== End of make check target. ========"
 
-include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+include ${LIBRESWANSRCDIR}/mk/targets.mk
 
 # directories visited by all recursion
 
@@ -170,7 +170,7 @@ war:
 showversion:
 	@echo ${IPSECVERSION} | sed "s/^v//"
 showdebversion:
-	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2~\3/" | sed "s/~-/~/"
+	@$(MAKE) --silent --directory packaging/debian showdebversion
 showrpmversion:
 	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/^v//;s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2_\3/;s/-/_/g;s/__/_/g"
 showrpmrelease:
@@ -178,58 +178,19 @@ showrpmrelease:
 showobjdir:
 	@echo $(OBJDIR)
 
-# these need to move elsewhere and get fixed not to use root
-
-.PHONY: deb-prepare
-DEBIPSECBASEVERSION=$(shell make -s showdebversion)
-deb-prepare:
-	if [ -f /etc/devuan_version ]; then \
-		cp -r packaging/devuan debian; \
-	else \
-		cp -r packaging/debian .; \
-	fi
-	cat debian/changelog
-	grep "IPSECBASEVERSION" debian/changelog && \
-		sed -i "s/@IPSECBASEVERSION@/$(DEBIPSECBASEVERSION)/g" debian/changelog || \
-		echo "missing IPSECBASEVERSION in debian/changelog. This is not git repository?"
-	cat debian/changelog
-
+# these need get fixed not to use root
 .PHONY: deb
-deb: deb-prepare
-	debuild -i -us -uc -b
-	rm -fr debian
-	#debuild -S -sa
+deb:
+	if [ -f /etc/devuan_version ]; then \
+		$(MAKE) --directory packaging/devuan ; \
+	else \
+		$(MAKE) --directory packaging/debian ; \
+	fi
 
 release:
 	packaging/utils/makerelease
 
 local-install:
-	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
-	if /usr/sbin/selinuxenabled ; then  \
-		echo -e "\n************************** WARNING ***********************************" ; \
-		echo "SElinux is present on this system and the prefix path is not /usr." ; \
-		echo "This can cause software failures if selinux is running in Enforcing mode"; \
-		echo -e "unless selinux policies are updated manually to allow this.\n" ; \
-		echo "The following commands fix a common issue of /usr/local/ being mislabeled"; \
-		echo "    restorecon /usr/local/sbin -Rv"; \
-		echo "    restorecon /usr/local/libexec/ipsec -Rv"; \
-		if test -x /usr/sbin/getenforce ; then \
-			echo -e "\nSElinux is currently running in `/usr/sbin/getenforce` mode" ; \
-		fi ; \
-		echo -e "**********************************************************************\n" ; \
-	fi \
-	fi
-ifeq ($(USE_XAUTHPAM),true)
-	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
-		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
-		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
-	else \
-		echo -e "\n************************** WARNING ***********************************" ; \
-		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \
-		echo "was already present.  You may wish to update it yourself if desired." ; \
-		echo -e "**********************************************************************\n" ; \
-	fi
-endif
 
 # Test only target (run by swan-install) that generates FIPS .*.hmac
 # file for pluto that will be verified by fipscheck.

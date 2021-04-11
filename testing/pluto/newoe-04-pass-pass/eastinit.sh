@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 cp policies/* /etc/ipsec.d/policies/
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # give OE policies time to load
-sleep 5
+../../guestbin/wait-for.sh --match 'loaded 12' -- ipsec auto --status
 echo "initdone"

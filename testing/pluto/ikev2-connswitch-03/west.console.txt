@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-one
+002 "westnet-eastnet-one": added IKEv2 connection
+west #
+ ipsec auto --add westnet-eastnet-two
+002 "westnet-eastnet-two": added IKEv2 connection
+west #
+ ipsec auto --add westnet-eastnet-three
+002 "westnet-eastnet-three": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-two
+1v2 "westnet-eastnet-two" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-two" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-two" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-eastnet-two" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+002 "westnet-eastnet-two" #2: negotiated connection [192.1.1.0-192.1.1.255:0-65535 0] -> [192.1.2.0-192.1.2.255:0-65535 0]
+004 "westnet-eastnet-two" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up westnet-eastnet-one
+1v2 "westnet-eastnet-one" #3: sent CREATE_CHILD_SA request for new IPsec SA
+002 "westnet-eastnet-one" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-one" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up westnet-eastnet-three
+1v2 "westnet-eastnet-three" #4: sent CREATE_CHILD_SA request for new IPsec SA
+002 "westnet-eastnet-three" #4: negotiated connection [192.2.1.0-192.2.1.255:0-65535 0] -> [192.2.2.0-192.2.2.255:0-65535 0]
+004 "westnet-eastnet-three" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ echo done
+done
+west #
+ ipsec whack --shutdown
+west #
+ 

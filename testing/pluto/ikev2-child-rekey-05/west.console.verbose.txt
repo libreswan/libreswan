@@ -42,10 +42,6 @@ initdone
 004 "west" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xfcd01530 <0x55a851ec xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 [root@west ikev2-child-rekey]# ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.474 ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.329 ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.326 ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.323 ms
 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 3004ms
@@ -57,10 +53,6 @@ sleep 31
 [root@west ikev2-child-rekey]# sleep 31
 [root@west ikev2-child-rekey]# ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=1.16 ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.574 ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=3.97 ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.406 ms
 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 3004ms
@@ -72,10 +64,6 @@ sleep 31
 [root@west ikev2-child-rekey]# sleep 20
 [root@west ikev2-child-rekey]# ping -W 4 -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.428 ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.279 ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.262 ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.299 ms
 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time 3004ms
@@ -108,7 +96,7 @@ done
 000 pluto_version=3.22_538_gd830a1b_ipsec_rekey_child-1, pluto_vendorid=OE-Libreswan-v3.22-538
 000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -183,10 +171,10 @@ done
 000 "west":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west":   our auth:secret, their auth:secret
-000 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, cat:unset;
 000 "west":   labeled_ipsec:no;
 000 "west":   policy_label:unset;
-000 "west":   ike_life: 3600s; ipsec_life: 30s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west":   ike_life: 28800s; ipsec_life: 30s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west":   retransmit-interval: 15000ms; retransmit-timeout: 60s;
 000 "west":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKE_FRAG_ALLOW+ESN_NO;

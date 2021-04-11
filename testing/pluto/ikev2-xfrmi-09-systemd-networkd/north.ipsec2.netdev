@@ -1,0 +1,8 @@
+[NetDev]
+Name=ipsec2
+Kind=xfrm
+Description=systemd xfrmi test
+
+[Xfrm]
+InterfaceId=2
+Independent=yes

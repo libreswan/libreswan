@@ -4,29 +4,25 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # this should succeed
 east #
  ipsec auto --add modecfg-east-21
-002 added IKEv1 connection "modecfg-east-21"
+002 "modecfg-east-21": added IKEv1 connection
 east #
  # these should fail due to overlapping address pools
 east #
  ipsec auto --add modecfg-east-20
-023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
-023 leftaddresspool clash
-036 Failed to load connection "modecfg-east-20": attempt to load incomplete connection
+036 "modecfg-east-20": failed to add connection: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
 east #
  ipsec auto --add modecfg-road-east
-023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
-023 leftaddresspool clash
-036 Failed to load connection "modecfg-road-east": attempt to load incomplete connection
+036 "modecfg-road-east": failed to add connection: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
 east #
  echo initdone
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
@@ -75,7 +71,4 @@ road                                                         P,,
 west                                                         P,,  
 west-ec                                                      P,,  
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

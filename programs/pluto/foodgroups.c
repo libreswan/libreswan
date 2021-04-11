@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <limits.h> /* PATH_MAX */
+#include <errno.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -39,13 +40,7 @@
 #include "whack.h"
 #include "ip_info.h"
 #include "ip_selector.h"
-
-#include <errno.h>
-
-/* Food group config files are found in directory fg_path */
-
-static char *fg_path = NULL;
-static size_t fg_path_space = 0;
+#include "orient.h"
 
 /* Groups is a list of connections that are policy groups.
  * The list is updated as group connections are added and deleted.
@@ -70,7 +65,7 @@ static struct fg_groups *groups = NULL;
 struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
-	ip_subnet subnet;
+	ip_selector subnet;
 	uint8_t proto;
 	uint16_t sport;
 	uint16_t dport;
@@ -79,50 +74,42 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
-static struct fg_targets *new_targets;
-
-
 /* subnetcmp compares the two ip_subnet values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
  */
-static int subnetcmp(const ip_subnet *a, const ip_subnet *b)
+static int subnetcmp(const ip_selector a, const ip_selector b)
 {
 	int r;
 
-	ip_address neta = subnet_prefix(a);
-	ip_address maska = subnet_mask(a);
-	ip_address netb = subnet_prefix(b);
-	ip_address maskb = subnet_mask(b);
+	ip_address neta = selector_prefix(a);
+	ip_address maska = selector_prefix_mask(a);
+	ip_address netb = selector_prefix(b);
+	ip_address maskb = selector_prefix_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)
 		r = addrcmp(&maska, &maskb);
 	return r;
 }
 
-static void read_foodgroup(struct fg_groups *g, struct logger *logger)
+static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
+			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->connection->name;
-	const ip_subnet *lsn = &g->connection->spd.this.client;
+	const ip_selector *lsn = &g->connection->spd.this.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
-	size_t plen = strlen(oco->policies_dir) + 2 + strlen(fgn) + 1;
-	struct file_lex_position flp_space;
+	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
-	if (plen > fg_path_space) {
-		pfreeany(fg_path);
-		fg_path_space = plen + 10;
-		fg_path = alloc_bytes(fg_path_space, "policy group path");
-	}
-
-	/* danger, global buffer */
-	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
-	if (!lexopen(&flp_space, fg_path, true, logger)) {
+	struct file_lex_position *flp;
+	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
 		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
+		pfreeany(fg_path);
 		return;
 	}
+	pfreeany(fg_path);
 
-	log_message(RC_LOG, logger, "loading group \"%s\"", fg_path);
+	llog(RC_LOG, flp->logger, "loading group \"%s\"", flp->filename);
 	while (flp->bdry == B_record) {
 
 		/* force advance to first token */
@@ -134,36 +121,38 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		}
 
 		/* address or address/mask */
-		ip_subnet sn;
+		ip_selector sn;
 		if (strchr(flp->tok, '/') == NULL) {
 			/* no /, so treat as /32 or V6 equivalent */
 			ip_address t;
-			err_t err = numeric_to_address(shunk1(flp->tok), NULL, &t);
+			err_t err = ttoaddress_num(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"ignored, '%s' is not an address: %s",
-					flp->tok, err);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "ignored, '%s' is not an address: %s",
+					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = subnet_from_address(&t);
+			sn = selector_from_address(t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
-			err_t err = ttosubnet(flp->tok, 0, afi->af, 'x', &sn, logger);
+			ip_subnet snn;
+			err_t err = ttosubnet(shunk1(flp->tok), afi, 'x', &snn, flp->logger);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"ignored, '%s' is not a subnet: %s",
-					flp->tok, err);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "ignored, '%s' is not a subnet: %s",
+					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
+			sn = selector_from_subnet(snn);
 		}
 
-		const struct ip_info *type = subnet_type(&sn);
+		const struct ip_info *type = selector_type(&sn);
 		if (type == NULL) {
-			log_flp(RC_LOG_SERIOUS, flp,
-				"ignored, unsupported Address Family \"%s\"",
-				flp->tok);
+			llog(RC_LOG_SERIOUS, flp->logger,
+				    "ignored, unsupported Address Family \"%s\"",
+				    flp->tok);
 			flushline(flp, NULL/*shh*/);
 			continue;
 		}
@@ -178,48 +167,48 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 			/* protocol */
 			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"protocol '%s' invalid: %s",
-					flp->tok, err);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "protocol '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
-					flp->tok, IPPROTO_ESP, IPPROTO_AH);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
+					    flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
 			/* source port */
 			if (!shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &sport);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"source port '%s' invalid: %s",
-					flp->tok, err);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "source port '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			/* dest port */
 			if (!shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(flp->tok, &dport);
 			if (err != NULL) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"destination port '%s' invalid: %s",
-					flp->tok, err);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "destination port '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
 			/* more stuff? */
 			if (shift(flp)) {
-				log_flp(RC_LOG_SERIOUS, flp,
-					"garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
-					flp->tok);
+				llog(RC_LOG_SERIOUS, flp->logger,
+					    "garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
+					    flp->tok);
 				break;
 			}
 		}
@@ -230,16 +219,15 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		struct fg_targets **pp;
 		int r;
 
-		for (pp = &new_targets;;
+		for (pp = new_targets;;
 		     pp = &(*pp)->next) {
 			if (*pp == NULL) {
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(lsn,
-				      &(*pp)->group->connection->spd.this.client);
+			r = subnetcmp(*lsn, (*pp)->group->connection->spd.this.client);
 			if (r == 0) {
-				r = subnetcmp(&sn, &(*pp)->subnet);
+				r = subnetcmp(sn, (*pp)->subnet);
 			}
 			if (r != 0)
 				break;
@@ -254,12 +242,12 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			log_flp(RC_LOG_SERIOUS, flp,
-				"subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-				str_subnet(&sn, &dest),
-				proto, sport, dport,
-				str_subnet(lsn, &source),
-				(*pp)->group->connection->name);
+			llog(RC_LOG_SERIOUS, flp->logger,
+				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+				    str_selector_subnet(&sn, &dest),
+				    proto, sport, dport,
+				    str_selector_subnet(lsn, &source),
+				    (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
@@ -269,66 +257,87 @@ static void read_foodgroup(struct fg_groups *g, struct logger *logger)
 			f->proto = proto;
 			f->sport = sport;
 			f->dport = dport;
-			f->name = NULL;
+			f->name = NULL; /* filled in below */
 			*pp = f;
 		}
 	}
 	if (flp->bdry != B_file) {
-		log_flp(RC_LOG_SERIOUS, flp, "rest of file ignored");
+		llog(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
 	}
-	lexclose();
+	lexclose(&flp);
 }
 
-static void free_targets(void)
+static void pfree_target(struct fg_targets **target)
 {
-	while (targets != NULL) {
-		struct fg_targets *t = targets;
-
-		targets = t->next;
-		pfreeany(t->name);
-		pfree(t);
-	}
+	pfreeany((*target)->name);
+	pfree((*target));
+	*target = NULL;
 }
 
-void load_groups(struct fd *whackfd)
+void load_groups(struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	passert(new_targets == NULL);
+	struct fg_targets *new_targets = NULL;
 
 	/* for each group, add config file targets into new_targets */
 	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
 		if (oriented(*g->connection)) {
-			read_foodgroup(g, logger);
+			struct file_lex_position flp = {
+				.logger = logger,
+			};
+			read_foodgroup(&flp, g, &new_targets);
 		}
 	}
 
-	/* dump new_targets */
-	if (DBG_BASE) {
-		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+	if (DBGP(DBG_BASE)) {
+		/* dump old food groups */
+		DBG_log("old food groups:");
+		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("%s->%s %d sport %d dport %d %s",
+			DBG_log("  %s->%s %d sport %d dport %d %s",
 				str_selector(&t->group->connection->spd.this.client, &asource),
 				str_selector(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
 		}
-	    }
+		/* dump new food groups */
+		DBG_log("new food groups:");
+		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
+			selector_buf asource;
+			selector_buf atarget;
+			DBG_log("  %s->%s %d sport %d dport %d %s",
+				str_selector(&t->group->connection->spd.this.client, &asource),
+				str_selector(&t->subnet, &atarget),
+				t->proto, t->sport, t->dport,
+				t->group->connection->name);
+		}
+	}
 
-	/* determine and deal with differences between targets and new_targets.
-	 * structured like a merge.
+	/*
+	 * determine and deal with differences between targets and
+	 * new_targets.  Structured like a merge of old into new.
 	 */
 	{
-		struct fg_targets *op = targets,
-		*np = new_targets;
+		struct fg_targets **opp = &targets;
+		struct fg_targets **npp = &new_targets;
 
-		while (op != NULL && np != NULL) {
-			int r = subnetcmp(
-				&op->group->connection->spd.this.client,
-				&np->group->connection->spd.this.client);
+		while ((*opp) != NULL || (*npp) != NULL) {
+			struct fg_targets *op = *opp;
+			struct fg_targets *np = *npp;
 
+			/* select next: -1:old; 0:merge; +1:new? */
+			int r = 0;
+			if (op == NULL) {
+				r = 1; /* no more old; next is new */
+			}
+			if (np == NULL) {
+				r = -1; /* no more new; next is old */
+			}
 			if (r == 0)
-				r = subnetcmp(&op->subnet, &np->subnet);
+				r = subnetcmp(op->group->connection->spd.this.client,
+					      np->group->connection->spd.this.client);
+			if (r == 0)
+				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)
 				r = op->proto - np->proto;
 			if (r == 0)
@@ -338,42 +347,50 @@ void load_groups(struct fd *whackfd)
 
 			if (r == 0 && op->group == np->group) {
 				/* unchanged -- steal name & skip over */
+				passert(np->name == NULL);
 				np->name = op->name;
 				op->name = NULL;
-				op = op->next;
-				np = np->next;
+				/* free old; advance new */
+				*opp = op->next;
+				pfree_target(&op);
+				npp = &np->next;
 			} else {
-				/* note: following cases overlap! */
+				/* note: r>=0 || r<= 0: following cases overlap! */
 				if (r <= 0) {
-					remove_group_instance(
-						op->group->connection,
-						op->name);
-					op = op->next;
+					remove_group_instance(op->group->connection,
+							      op->name);
+					/* free old */
+					*opp = op->next;
+					pfree_target(&op);
 				}
 				if (r >= 0) {
-					np->name = add_group_instance(
-						whackfd,
-						np->group->connection,
-						&np->subnet, np->proto,
-						np->sport, np->dport);
-					np = np->next;
+					struct connection *g = np->group->connection;
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
+					g->logger->global_whackfd = dup_any(logger->global_whackfd);
+					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
+										   np->sport, np->dport);
+					/* XXX: something better? */
+					close_any(&g->logger->global_whackfd);
+					if (ng != NULL) {
+						passert(np->name == NULL);
+						np->name = clone_str(ng->name, "group instance name");
+						/* advance new */
+						npp = &np->next;
+					} else {
+						/* XXX: is this really a pexpect()? */
+						dbg("add group instance failed");
+						/* free new; advance new */
+						*npp = np->next;
+						pfree_target(&np);
+					}
 				}
 			}
 		}
-		for (; op != NULL; op = op->next)
-			remove_group_instance(op->group->connection, op->name);
-
-		for (; np != NULL; np = np->next) {
-			np->name = add_group_instance(whackfd,
-						      np->group->connection,
-						      &np->subnet, np->proto,
-						      np->sport, np->dport);
-		}
 
 		/* update: new_targets replaces targets */
-		free_targets();
+		passert(targets == NULL);
 		targets = new_targets;
-		new_targets = NULL;
 	}
 }
 
@@ -396,12 +413,12 @@ static struct fg_groups *find_group(const struct connection *c)
 	return g;
 }
 
-void route_group(struct fd *whackfd, struct connection *c)
+void route_group(struct connection *c)
 {
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		log_connection(RC_ROUTE, whackfd, c,
-			       "cannot route an ISAKMP-only group connection");
+		llog(RC_ROUTE, c->logger,
+		     "cannot route an ISAKMP-only group connection");
 	} else {
 		struct fg_groups *g = find_group(c);
 		struct fg_targets *t;
@@ -418,11 +435,9 @@ void route_group(struct fd *whackfd, struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					struct connection *old = push_cur_connection(ci); /* for trap_connection() */
-					if (!trap_connection(ci, whackfd))
-						log_connection(WHACK_STREAM|RC_ROUTE, whackfd, c,
-							       "could not route");
-					pop_cur_connection(old);
+					if (!trap_connection(ci))
+						llog(WHACK_STREAM|RC_ROUTE, c->logger,
+						     "could not route");
 				}
 			}
 		}
@@ -441,9 +456,7 @@ void unroute_group(struct connection *c)
 			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 			if (ci != NULL) {
-				set_cur_connection(ci);
 				unroute_connection(ci);
-				set_cur_connection(c);
 			}
 		}
 	}
@@ -475,7 +488,7 @@ void delete_group(const struct connection *c)
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
 						      t->name);
-				pfree(t);
+				pfree_target(&t);
 				/* pp is ready for next iteration */
 			} else {
 				/* advance PP */

@@ -11,16 +11,16 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2a
-002 added IKEv2 connection "westnet-eastnet-ikev2a"
+002 "westnet-eastnet-ikev2a": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet-ikev2b
-002 added IKEv2 connection "westnet-eastnet-ikev2b"
+002 "westnet-eastnet-ikev2b": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet-ikev2c
-002 added IKEv2 connection "westnet-eastnet-ikev2c"
+002 "westnet-eastnet-ikev2c": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -40,7 +40,4 @@ east #
 east #
  hostname | grep west > /dev/null && grep "sent IKE_SA_INIT request" /tmp/pluto.log
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

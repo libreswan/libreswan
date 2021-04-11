@@ -2,16 +2,16 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -22,12 +22,11 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1
+003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
- ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -46,7 +45,7 @@ west #
 west #
  ip route add unreachable 192.1.2.23
 west #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 ping -n -c 1 -w 4 192.1.2.23
 connect: No route to host
 destination 192.1.2.23 is dead
@@ -76,12 +75,12 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-ikev2":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet-ikev2":   policy_label:unset;
-000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet-ikev2":   sec_label:unset;
+000 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -91,7 +90,7 @@ west #
 west #
  # ping should be caught ip route unreachable
 west #
- ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
+ ping -n -q -w 2 -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -100,10 +99,10 @@ west #
 west #
  ip route del unreachable 192.1.2.23
 west #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 west #
- ping -q -n -c 1 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -112,7 +111,7 @@ west #
 west #
  # ping should reply
 west #
- ping -q -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -131,21 +130,18 @@ west #
 "westnet-eastnet-ikev2" #2: IKEv2 liveness action - putting connection into hold
 | xfrm acquire rtattribute type 5
 | xfrm acquire rtattribute type 16
-| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
-| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
 west #
  grep -E "liveness: action|acquire" OUTPUT/west.pluto.log
 | xfrm acquire rtattribute type 5
 | xfrm acquire rtattribute type 16
-| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
-| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
 west #
  echo done
 done
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

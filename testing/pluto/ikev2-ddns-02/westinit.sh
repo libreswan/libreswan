@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 cp resolv.conf /etc
 # need to disable ipv6 and activate auto-interface
 cp west-unbound.conf /etc/unbound/unbound.conf

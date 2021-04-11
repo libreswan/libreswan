@@ -70,6 +70,7 @@
 #include "pluto_stats.h"
 #include "ikev2_send.h"
 #include "iface.h"
+#include "impair_message.h"
 
 /*
  * read the message.
@@ -78,8 +79,9 @@
  * buffer and then copy it to a new, properly sized buffer.
  */
 
-static enum iface_status read_message(const struct iface_port *ifp,
-				      struct msg_digest **mdp)
+static enum iface_read_status read_message(struct iface_endpoint *ifp,
+					   struct msg_digest **mdp,
+					   struct logger *logger)
 {
 	pexpect(*mdp == NULL);
 
@@ -88,10 +90,11 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	struct iface_packet packet = {
 		.ptr = bigbuffer,
 		.len = sizeof(bigbuffer),
+		.logger = logger,
 	};
 
-	enum iface_status status = ifp->io->read_packet(ifp, &packet);
-	if (status != IFACE_OK) {
+	enum iface_read_status status = ifp->io->read_packet(ifp, &packet, logger);
+	if (status != IFACE_READ_OK) {
 		/* already logged */
 		return status;
 	}
@@ -122,7 +125,7 @@ static enum iface_status read_message(const struct iface_port *ifp,
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
 	*mdp = md;
-	return IFACE_OK;
+	return IFACE_READ_OK;
 }
 
 /*
@@ -140,16 +143,17 @@ static enum iface_status read_message(const struct iface_port *ifp,
 void process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct logger *logger = md->md_logger;
 
-	if (!pbs_in_struct(&md->packet_pbs, &md->hdr, sizeof(md->hdr),
-			   &isakmp_hdr_desc, &md->message_pbs, logger)) {
+	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
+				 &md->hdr, sizeof(md->hdr), &md->message_pbs);
+	if (d != NULL) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		log_md(RC_LOG, md, "received packet with mangled IKE header - dropped");
+		log_diag(RC_LOG, md->md_logger, &d,
+			 "dropping packet with mangled IKE header: ");
 		return;
 	}
 
@@ -175,10 +179,24 @@ void process_packet(struct msg_digest **mdp)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		log_md(RC_LOG, md, "ignoring packet with IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
+			llog(RC_LOG, md->md_logger,
+			     "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			return;
+		}
+#ifdef USE_IKEv1
+		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
+			llog(RC_LOG, md->md_logger,
+			     "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			send_notification_from_md(md, INVALID_MAJOR_VERSION);
+			return;
+		}
+
 		if (vmin > ISAKMP_MINOR_VERSION) {
 			/* RFC2408 3.1 ISAKMP Header Format:
 			 *
@@ -194,7 +212,8 @@ void process_packet(struct msg_digest **mdp)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			log_md(RC_LOG, md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			llog(RC_LOG, md->md_logger,
+			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
@@ -204,6 +223,7 @@ void process_packet(struct msg_digest **mdp)
 		    md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will release_any_md(mdp) */
+#endif
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
@@ -211,7 +231,8 @@ void process_packet(struct msg_digest **mdp)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			log_md(RC_LOG, md, "Ignoring unknown IKEv2 minor version number %d", vmin);
+			llog(RC_LOG, md->md_logger,
+			     "Ignoring unknown IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
@@ -221,7 +242,8 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
-		log_md(RC_LOG, md, "message contains unsupported IKE major version '%d'", vmaj);
+		llog(RC_LOG, md->md_logger,
+		     "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent
@@ -270,50 +292,80 @@ void process_packet(struct msg_digest **mdp)
  */
 static void process_md(struct msg_digest **mdp)
 {
-	ip_address old_from = push_cur_from((*mdp)->sender);
 	process_packet(mdp);
-	pop_cur_from(old_from);
-	reset_cur_state();
-	reset_cur_connection();
 }
 
-/* wrapper for read_packet and process_packet
+/*
+ * wrapper for read_packet and process_packet
  *
  * The main purpose of this wrapper is to factor out teardown code
  * from the many return points in process_packet.  This amounts to
  * releasing the msg_digest and resetting global variables.
  *
  * When processing of a packet is suspended (STF_SUSPEND),
- * process_packet sets md to NULL to prevent the msg_digest being freed.
- * Someone else must ensure that msg_digest is freed eventually.
+ * process_packet sets md to NULL to prevent the msg_digest being
+ * freed.  Someone else must ensure that msg_digest is freed
+ * eventually.
  *
- * read_packet is broken out to minimize the lifetime of the
- * enormous input packet buffer, an auto.
+ * read_packet is broken out to minimize the lifetime of the enormous
+ * input packet buffer, an auto.
  */
 
 static bool impair_incoming(struct msg_digest *md);
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp)
+void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *ifp_arg)
 {
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct iface_endpoint *ifp = ifp_arg;
+
+	/* on the same page^D^D^D fd? */
+	pexpect(ifp->fd == fd);
+
 	threadtime_t md_start = threadtime_start();
 	struct msg_digest *md = NULL;
-	enum iface_status status = read_message(ifp, &md);
-	if (status != IFACE_OK) {
-		pexpect(md == NULL);
-	} else if (pexpect(md != NULL)) {
+	enum iface_read_status status = read_message(ifp, &md, logger);
+	switch (status) {
+	case IFACE_READ_OK:
+		/*
+		 * XXX: Danger
+		 *
+		 * process_md() passes the message along to the state
+		 * machine and the state machine can then pass the
+		 * message along to the state processor.
+		 *
+		 * Unfortunately, part way through all this, the state
+		 * processor may decide to delete the state, and
+		 * deleting the state can delete IFP.
+		 *
+		 * To play it safe, KILL IFP.
+		 *
+		 * Can we please just stop calling delete_state() mid
+		 * transition?
+		 */
+		ifp = ifp_arg = NULL;
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {
 			process_md(&md);
 		}
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
-	} else {
-		status = IFACE_FATAL;
+		break;
+	case IFACE_READ_IGNORE:
+	case IFACE_READ_EOF:
+	case IFACE_READ_ERROR:
+		pexpect(md == NULL);
+		break;
+	case IFACE_READ_ABORT:
+		/*
+		 * XXX: this assumes that IFP is not being shared.
+		 */
+		pexpect(md == NULL);
+		free_any_iface_endpoint(&ifp);
+		break;
 	}
+
 	threadtime_stop(&md_start, SOS_NOBODY,
 			"%s() reading and processing packet", __func__);
-	pexpect_reset_globals();
-	return status;
 }
 
 /*
@@ -331,10 +383,9 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...) PRIN
 static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 {
 	/* not whack FD yet is expected to be reset! */
-	pexpect_reset_globals();
-	struct msg_digest *md = clone_raw_md(orig, fmt /* good enough */);
+	struct msg_digest *md = clone_raw_md(orig, HERE);
 
-	LSWLOG(buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam_string(buf, "IMPAIR: start processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -347,9 +398,8 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 	}
 
 	process_md(&md);
-	md_delref(&md, HERE);
 
-	LSWLOG(buf) {
+	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam(buf, "IMPAIR: stop processing ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -357,8 +407,8 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_end(ap);
 	}
 
+	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 static unsigned long replay_count;
@@ -386,7 +436,7 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 {
 	if (!already_impaired) {
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-		e->md = clone_raw_md(md, "copy of real message");
+		e->md = clone_raw_md(md, HERE);
 		e->nr = ++replay_count; /* yes; pre-increment */
 		e->entry = list_entry(&replay_info, e); /* back-link */
 		insert_list_entry(&replay_packets, &e->entry);
@@ -395,6 +445,9 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 
 static bool impair_incoming(struct msg_digest *md)
 {
+	if (impair_incoming_message(md)) {
+		return true;
+	}
 	bool impaired = false;
 	if (impair.replay_duplicates) {
 		save_md_for_replay(impaired, md);
@@ -428,6 +481,16 @@ static bool impair_incoming(struct msg_digest *md)
 	return impaired;
 }
 
+void free_demux(void)
+{
+	struct replay_entry *e = NULL;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+		md_delref(&e->md, HERE);
+		remove_list_entry(&e->entry);
+		pfreeany(e);
+	}
+}
+
 static callback_cb handle_md_event; /* type assertion */
 static void handle_md_event(struct state *st, void *context)
 {
@@ -436,7 +499,6 @@ static void handle_md_event(struct state *st, void *context)
 	process_md(&md);
 	md_delref(&md, HERE);
 	pexpect(md == NULL);
-	pexpect_reset_globals();
 }
 
 void schedule_md_event(const char *name, struct msg_digest *md)
@@ -503,7 +565,8 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
+char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
+		      bool ignore, struct logger *logger)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -553,10 +616,14 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name)
 			break;
 		}
 	}
-	if (!jambuf_ok(&buf)) {
-		loglog(RC_INFORMATIONAL, "Received overlong %s: %s (truncated)", attr_name, strbuf);
-	} else {
-		loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+	llog(RC_INFORMATIONAL, logger,
+		    "Received %s%s%s: %s%s",
+		    ignore ? "and ignored " : "",
+		    jambuf_ok(&buf) ? "" : "overlong ",
+		    attr_name, strbuf,
+		    jambuf_ok(&buf) ? "" : " (truncated)");
+	if (ignore) {
+		return NULL;
 	}
 	return clone_str(strbuf, attr_name);
 }

@@ -81,7 +81,7 @@ ike_spi_t ike_initiator_spi(void)
  * it will prevent an attacker from depleting our random pool
  * or entropy.
  */
-ike_spi_t ike_responder_spi(const ip_address *addr, struct logger *logger)
+ike_spi_t ike_responder_spi(const ip_endpoint *initiator_endpoint, struct logger *logger)
 {
 	if (impair.ike_responder_spi > 0) {
 		/* 1-biased so that 0 is "disable" */
@@ -100,12 +100,12 @@ ike_spi_t ike_responder_spi(const ip_address *addr, struct logger *logger)
 							 &ike_alg_hash_sha2_256,
 							 logger);
 
-		crypt_hash_digest_thing(ctx, "addr", *addr);
+		crypt_hash_digest_thing(ctx, "addr", *initiator_endpoint);
 		crypt_hash_digest_thing(ctx, "sod", ike_spi_secret);
 		counter++;
 		crypt_hash_digest_thing(ctx, "counter", counter);
 
-		u_char buffer[SHA2_256_DIGEST_SIZE];
+		uint8_t buffer[SHA2_256_DIGEST_SIZE];
 		crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
 		/* cookie size is smaller than hash output size */
 		passert(IKE_SA_SPI_SIZE <= SHA2_256_DIGEST_SIZE);

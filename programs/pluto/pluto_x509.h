@@ -42,8 +42,8 @@ bool v1_verify_certs(struct msg_digest *md);
 bool match_certs_id(const struct certs *certs, struct id *peer_id /*ID_FROMCERT => updated*/,
 		    struct logger *logger);
 
-extern void ikev1_decode_cr(struct msg_digest *md);
-extern void ikev2_decode_cr(struct msg_digest *md);
+extern void ikev1_decode_cr(struct msg_digest *md, struct logger *logger);
+extern void ikev2_decode_cr(struct msg_digest *md, struct logger *logger);
 
 extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 
@@ -54,7 +54,7 @@ extern bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 				    chunk_t ca, pb_stream *outs);
 
 extern void load_authcerts(const char *type, const char *path,
-			   u_char auth_flags);
+			   uint8_t auth_flags);
 
 extern bool match_requested_ca(const generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
@@ -68,7 +68,7 @@ extern bool ikev2_send_cert_decision(const struct state *st);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     pb_stream *outpbs);
 
-stf_status ikev2_send_cert(const struct state *st, pb_stream *outpbs);
+stf_status ikev2_send_cert(const struct connection *c, pb_stream *outpbs);
 
 bool ikev2_send_certreq_INIT_decision(const struct state *st,
 				      enum sa_role role);

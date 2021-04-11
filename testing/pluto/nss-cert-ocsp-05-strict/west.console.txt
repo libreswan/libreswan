@@ -6,25 +6,25 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add nss-cert-ocsp
-002 added IKEv1 connection "nss-cert-ocsp"
+002 "nss-cert-ocsp": added IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert-ocsp
 000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-ocsp":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west; my_updown=ipsec _updown;
 000 "nss-cert-ocsp":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "nss-cert-ocsp":   our auth:rsasig, their auth:rsasig
-000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "nss-cert-ocsp":   policy_label:unset;
+000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "nss-cert-ocsp":   sec_label:unset;
 000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-ocsp":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "nss-cert-ocsp":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "nss-cert-ocsp":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert-ocsp":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
@@ -43,9 +43,9 @@ west #
 1v1 "nss-cert-ocsp" #1: sent Main Mode I3
 002 "nss-cert-ocsp" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "nss-cert-ocsp" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "nss-cert-ocsp" #1: authenticated using RSA with SHA-1
+003 "nss-cert-ocsp" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "nss-cert-ocsp" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "nss-cert-ocsp" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "nss-cert-ocsp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "nss-cert-ocsp" #2: sent Quick Mode request
 004 "nss-cert-ocsp" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -57,12 +57,4 @@ Redirecting to: [initsystem]
 west #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-west #
- grep '^leak' /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -138,8 +138,7 @@ def build_result(logger, result, baseline, args, what_to_print, b):
         elif p is Print.SAVED_OUTPUT_DIRECTORY:
             b.add(p, result.test.saved_output_directory)
         elif p is Print.TEST_SCRIPTS:
-            b.add(p, [{ "host": h, "script": s} for h, s in result.test.host_script_tuples],
-                  string=lambda scripts, sep: sep + ",".join([script["host"] + ":" + script["script"] for script in scripts]))
+            b.add(p, result.test.host_scripts)
         elif p is Print.BASELINE_DIRECTORY:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].directory or None)
         elif p is Print.BASELINE_OUTPUT_DIRECTORY:

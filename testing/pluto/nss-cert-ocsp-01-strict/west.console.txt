@@ -6,10 +6,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert
-002 added IKEv1 connection "nss-cert"
+002 "nss-cert": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -23,9 +23,9 @@ west #
 1v1 "nss-cert" #1: sent Main Mode I3
 002 "nss-cert" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "nss-cert" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "nss-cert" #1: authenticated using RSA with SHA-1
+003 "nss-cert" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "nss-cert" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "nss-cert" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "nss-cert" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "nss-cert" #2: sent Quick Mode request
 004 "nss-cert" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -37,12 +37,4 @@ Redirecting to: [initsystem]
 west #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-west #
- grep '^leak' /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

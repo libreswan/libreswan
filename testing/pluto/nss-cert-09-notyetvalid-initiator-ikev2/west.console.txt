@@ -7,16 +7,20 @@ west #
 west #
  mkdir -p /var/run/pluto
 west #
- # set a time in the future so notyetvalid and east certs are valid here
+ # Set a time in the future so notyetvalid and east certs are valid
 west #
- faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
+ # here.  Invoke pluto directly so that it is the root of the shared
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ # faketime tree.
+west #
+ LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
+west #
+ ../../guestbin/wait-until-pluto-started
 west #
  # if faketime works, adding conn should not give a warning about cert
 west #
  ipsec auto --add nss-cert
-002 added IKEv2 connection "nss-cert"
+002 "nss-cert": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -37,7 +41,4 @@ west #
 west #
  grep "ERROR" /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

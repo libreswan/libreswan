@@ -1,0 +1,18 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add static
+002 "static": added IKEv2 connection
+east #
+ ipsec auto --asynchronous --up static
+1v2 "static" #1: initiating IKEv2 connection
+east #
+ ipsec status |grep STATE_
+000 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #2: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+east #
+ 

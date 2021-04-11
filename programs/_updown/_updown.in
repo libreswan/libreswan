@@ -1,4 +1,4 @@
-#! /bin/sh
+#!@SHELL_BINARY@
 # iproute2 version, default updown script
 #
 # Copyright (C) 2003-2004 Nigel Metheringham
@@ -133,9 +133,9 @@ case $PLUTO_VERSION in
 esac
 
 if [ -x @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} ]; then
-    exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} "$@"
+    exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $@
 else
-    echo "FATAL: Could not execute @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $*"
+    echo "FATAL: Could not execute @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $@"
 fi
 
 exit 3

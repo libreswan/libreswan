@@ -16,13 +16,14 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
@@ -30,7 +31,7 @@ east #
  # A tunnel should have established with non-zero byte counters
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
 east #
  # you should see both RSA and NULL
 east #
@@ -48,7 +49,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | hash algorithm identifier (network ordered)
@@ -63,10 +64,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -17,6 +17,7 @@
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,7 +34,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -52,7 +52,6 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "defs.h"
 #include "whack.h"
 #include "ip_address.h"
 #include "ip_info.h"
@@ -88,12 +87,13 @@ static void help(void)
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | [--rsa-sha2_256] | \\\n"
-		"		[--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | \\\n"
-		"		[--auth-never] \\\n"
+		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | \\\n"
+		"		[--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | \\\n"
+		"		[ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] [--allow-cert-without-san-id]\\\n"
+		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
@@ -110,7 +110,7 @@ static void help(void)
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
-		"	[--ikev1-allow | --ikev2-allow] \\\n"
+		"	[--ikev1 | --ikev2] \\\n"
 		"	[--allow-narrowing] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
@@ -119,7 +119,7 @@ static void help(void)
 		"	[--nm-configured] \\\n"
 #endif
 #ifdef HAVE_LABELED_IPSEC
-		"	[--labeledipsec] [--policylabel <label>] \\\n"
+		"	[--policylabel <label>] \\\n"
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
@@ -138,6 +138,7 @@ static void help(void)
 		"	[--nflog-group <groupnum>] \\\n"
 		"	[--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] \\\n"
 		"	[--conn-mark-out <mark/mask>] \\\n"
+		"	[--ipsec-interface <num>] \\\n"
 		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
@@ -155,11 +156,16 @@ static void help(void)
 		"rekey: whack (--rekey-ike | --rekey-ipsec) \\\n"
 		"	--name <connection_name> [--asynchronous] \\\n"
 		"\n"
-		"active redirect: whack [--name <connection_name>] --redirect-to <ip-address(es)> \n"
+		"active redirect: whack [--name <connection_name>] \\\n"
+		"	--redirect-to <ip-address(es)> \n"
+		"\n"
+		"global redirect: whack --global-redirect yes|no|auto\n"
+		"	--global-redirect-to <ip-address, dns-domain, ..> \n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
-		"	[-oppotproto <protocol>]\n"
+		"	--opposport <port> --oppodport <port> \\\n"
+		"	[--oppoproto <protocol>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
@@ -191,11 +197,11 @@ static void help(void)
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall]\n"
+		"reread: whack [--fetchcrls] [--rereadcerts] [--rereadsecrets] [--rereadall]\n"
 		"\n"
 		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
 		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
-		"	[--showstates] | [--addresspoolstatus]\n"
+		"	[--showstates] | [--addresspoolstatus] [--processstatus]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
 		"\n"
@@ -203,7 +209,7 @@ static void help(void)
 		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
-		"shutdown: whack --shutdown\n"
+		"shutdown: whack --shutdown [--leave-state]\n"
 		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
@@ -305,6 +311,8 @@ enum option_enums {
 	OPT_REKEY_IPSEC,
 
 	OPT_ACTIVE_REDIRECT,
+	OPT_GLOBAL_REDIRECT,
+	OPT_GLOBAL_REDIRECT_TO,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -324,12 +332,14 @@ enum option_enums {
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
 	OPT_SHUTDOWN,
+	OPT_SHUTDOWN_DIRTY,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
 	OPT_ADDRESSPOOL_STATUS,
 	OPT_FIPS_STATUS,
 	OPT_BRIEF_STATUS,
+	OPT_PROCESS_STATUS,
 
 #ifdef HAVE_SECCOMP
 	OPT_SECCOMP_CRASHTEST,
@@ -338,6 +348,7 @@ enum option_enums {
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
 	OPT_OPPO_PROTO,
+	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
 
 #   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
@@ -396,14 +407,16 @@ enum option_enums {
 	END_VTIIP,
 	END_AUTHBY,
 	END_UPDOWN,
-	END_TUNDEV,
 
-#define END_LAST  END_TUNDEV	/* last end description*/
+#define END_LAST  END_UPDOWN	/* last end description*/
 
 /* Connection Description options -- segregated */
 
 #   define CD_FIRST CD_TO	/* first connection description */
 	CD_TO,
+
+	CD_IKEv1,
+	CD_IKEv2,
 
 	CD_MODECFGDNS,
 	CD_MODECFGDOMAINS,
@@ -421,6 +434,7 @@ enum option_enums {
 	CD_VTI_IFACE,
 	CD_VTI_ROUTING,
 	CD_VTI_SHARED,
+	CD_IPSEC_IFACE,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -458,12 +472,13 @@ enum option_enums {
 	CD_SHA2_TRUNCBUG,
 	CD_NMCONFIGURED,
 	CD_LABELED_IPSEC,
-	CD_POLICY_LABEL,
+	CD_SEC_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
 	CD_ESP,
-#   define CD_LAST CD_ESP	/* last connection description */
+	CD_INTERMEDIATE,
+#   define CD_LAST CD_INTERMEDIATE	/* last connection description */
 
 /*
  * Algorithm options (just because CD_ was full)
@@ -530,6 +545,8 @@ enum option_enums {
 #define NUMERIC_ARG (1 << 11)	/* expect a numeric argument */
 #define AUX_SHIFT   12	/* amount to shift for aux information */
 
+int long_index;
+
 static const struct option long_opts[] = {
 #   define OO   OPTION_OFFSET
 	/* name, has_arg, flag, val */
@@ -566,6 +583,8 @@ static const struct option long_opts[] = {
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "redirect-to", required_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
+	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT + OO },
+	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -589,11 +608,13 @@ static const struct option long_opts[] = {
 	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
+	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS + OO },
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
 #ifdef HAVE_SECCOMP
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
 #endif
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
+	{ "leave-state", no_argument, NULL, OPT_SHUTDOWN_DIRTY + OO },
 	{ "username", required_argument, NULL, OPT_USERNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
 	{ "xauthname", required_argument, NULL, OPT_USERNAME + OO }, /* old name */
@@ -602,6 +623,7 @@ static const struct option long_opts[] = {
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
 	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO + OO },
+	{ "opposport", required_argument, NULL, OPT_OPPO_SPORT + OO },
 	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
@@ -639,7 +661,6 @@ static const struct option long_opts[] = {
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
-	{ "tundev", required_argument, NULL, END_TUNDEV + OO + NUMERIC_ARG },
 
 	/* options for a connection description */
 
@@ -649,6 +670,7 @@ static const struct option long_opts[] = {
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
+	PS("intermediate", INTERMEDIATE),
 	/* These require more complicated settings now, done below
 	 * PS("rsasig", RSASIG),
 	 * PS("ecdsa", ECDSA),
@@ -740,6 +762,7 @@ static const struct option long_opts[] = {
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
 	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
+	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -758,7 +781,7 @@ static const struct option long_opts[] = {
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
-	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
+	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
 
 	{ "rsasig", no_argument, NULL, ALGO_RSASIG + OO },
@@ -774,12 +797,14 @@ static const struct option long_opts[] = {
 	{ "rsa-sha2_512", no_argument, NULL, ALGO_RSA_SHA2_512 + OO },
 
 
-	PS("ikev1-allow", IKEV1_ALLOW),
-	PS("ikev2-allow", IKEV2_ALLOW),
-	PS("ikev2-propose", IKEV2_ALLOW), /* map onto allow */
+	{ "ikev1", no_argument, NULL, CD_IKEv1 + OO },
+	{ "ikev1-allow", no_argument, NULL, CD_IKEv1 + OO }, /* obsolete name */
+	{ "ikev2", no_argument, NULL, CD_IKEv2 +OO },
+	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete name */
+	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete, map onto allow */
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
 	PS("ikefrag-allow", IKE_FRAG_ALLOW),
@@ -792,6 +817,7 @@ static const struct option long_opts[] = {
 	PS("nopmtudisc", NOPMTUDISC),
 	PS("ms-dh-downgrade", MSDH_DOWNGRADE),
 	PS("dns-match-id", DNS_MATCH_ID),
+	PS("ignore-peer-dns", IGNORE_PEER_DNS),
 #undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP + OO },
@@ -801,10 +827,8 @@ static const struct option long_opts[] = {
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO }, /* backwards compat */
 	{ "nm-configured", no_argument, NULL, CD_NMCONFIGURED + OO },
 #endif
-#ifdef HAVE_LABELED_IPSEC
-	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
-	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
-#endif
+
+	{ "policylabel", required_argument, NULL, CD_SEC_LABEL + OO },
 
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
@@ -817,6 +841,48 @@ static const struct option long_opts[] = {
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
+
+/*
+ * figure out an address family.
+ */
+struct family {
+	const char *used_by;
+	const struct ip_info *type;
+};
+
+static err_t opt_ttoaddress_num(struct family *family, ip_address *address)
+{
+	err_t err = ttoaddress_num(shunk1(optarg), family->type, address);
+	if (err == NULL && family->type == NULL) {
+		family->type = address_type(address);
+		family->used_by = long_opts[long_index].name;
+	}
+	return err;
+}
+
+static err_t opt_ttoaddress_dns(struct family *family, ip_address *address)
+{
+	err_t err = ttoaddress_dns(shunk1(optarg), family->type, address);
+	if (err == NULL && family->type == NULL) {
+		family->type = address_type(address);
+		family->used_by = long_opts[long_index].name;
+	}
+	return err;
+}
+
+static void opt_to_address(struct family *family, ip_address *address)
+{
+	diagq(opt_ttoaddress_dns(family, address), optarg);
+}
+
+static ip_address get_address_any(struct family *family)
+{
+	if (family->type == NULL) {
+		family->type = &ipv4_info;
+		family->used_by = long_opts[long_index].name;
+	}
+	return family->type->address.any;
+}
 
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
@@ -859,22 +925,21 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      sa_family_t caf, sa_family_t taf)
+		      struct family *caf, const struct ip_info *taf)
 {
-	if (caf != addrtypeof(&this->host_addr))
+	if (caf->type != NULL && caf->type != address_type(&this->host_addr))
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
-		if (aftoinfo(taf) != subnet_type(&this->client))
+		if (taf != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
-		/* fill in anyaddr-anyaddr as (missing) client subnet */
-		ip_address cn = address_any(aftoinfo(caf));
-		diagq(rangetosubnet(&cn, &cn, &this->client), NULL);
+		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
+		this->client = unset_subnet;
 	}
 
 	/* check protocol */
-	if (this->protoport.protocol != that->protoport.protocol) {
+	if (this->protoport.ipproto != that->protoport.ipproto) {
 		diagq("the protocol for leftprotoport and rightprotoport must be the same",
 			NULL);
 	}
@@ -896,7 +961,7 @@ static void send_reply(int sock, char *buf, ssize_t len)
 
 int main(int argc, char **argv)
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	struct whack_message msg;
 	struct whackpacker wp;
@@ -909,9 +974,7 @@ int main(int argc, char **argv)
 		cdp_seen = LEMPTY,
 		end_seen = LEMPTY,
 		algo_seen = LEMPTY;
-	const char
-		*af_used_by = NULL,
-		*tunnel_af_used_by = NULL;
+	const char *tunnel_af_used_by = NULL;
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
@@ -921,7 +984,6 @@ int main(int argc, char **argv)
 	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
-	int oppo_dport = 0;
 	bool ignore_errors = FALSE;
 
 	/* check division of numbering space */
@@ -936,6 +998,8 @@ int main(int argc, char **argv)
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
 	clear_end(&msg.right);	/* left set from this after --to */
+
+	struct family host_family = { 0, };
 
 	msg.name = NULL;
 	msg.remote_host = NULL;
@@ -953,11 +1017,6 @@ int main(int argc, char **argv)
 	/* Network Manager support */
 #ifdef HAVE_NM
 	msg.nmconfigured = FALSE;
-#endif
-
-#ifdef HAVE_LABELED_IPSEC
-	msg.labeled_ipsec = FALSE;
-	msg.policy_label = NULL;
 #endif
 
 	msg.xauthby = XAUTHBY_FILE;
@@ -979,7 +1038,6 @@ int main(int argc, char **argv)
 
 	msg.active_redirect_dests = NULL;
 
-	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
 
 	msg.right.updown = DEFAULT_UPDOWN;
@@ -988,8 +1046,14 @@ int main(int argc, char **argv)
 	msg.iketcp = IKE_TCP_NO;
 	msg.remote_tcpport = NAT_IKE_UDP_PORT;
 
+	msg.xfrm_if_id = UINT32_MAX;
+
+	/* set defaults to ICMP PING request */
+	msg.oppo.ipproto = IPPROTO_ICMP;
+	msg.oppo.local.port = ip_hport(8);
+	msg.oppo.remote.port = ip_hport(0);
+
 	for (;;) {
-		int long_index;
 		/* numeric argument for some flags */
 		unsigned long opt_whole = 0;
 
@@ -1294,12 +1358,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
-			msg.whack_crash = TRUE;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.whack_crash_peer), optarg);
-			if (isanyaddr(&msg.whack_crash_peer)) {
+			msg.whack_crash = true;
+			opt_to_address(&host_family, &msg.whack_crash_peer);
+			if (address_is_any(msg.whack_crash_peer)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
@@ -1310,6 +1373,26 @@ int main(int argc, char **argv)
 
 		case OPT_ACTIVE_REDIRECT:	/* --redirect-to */
 			msg.active_redirect_dests = strdup(optarg);
+			continue;
+
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
+			if (streq(optarg, "yes")) {
+				msg.global_redirect = GLOBAL_REDIRECT_YES;
+			} else if (streq(optarg, "no")) {
+				msg.global_redirect = GLOBAL_REDIRECT_NO;
+			} else if (streq(optarg, "auto")) {
+				msg.global_redirect = GLOBAL_REDIRECT_AUTO;
+			} else {
+				diag("invalid option argument for --global-redirect (allowed arguments: yes, no, auto)");
+			}
+			continue;
+
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
+			if (!strlen(optarg)) {
+				msg.global_redirect_to = strdup("<none>");
+			} else {
+				msg.global_redirect_to = strdup(optarg);
+			}
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
@@ -1337,9 +1420,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
-		case OPT_REREADCRLS:    /* --rereadcrls */
-		case OPT_REREADCERTS:    /* --rereadcerts */
-		case OPT_FETCHCRLS:    /* --fetchcrls */
+		case OPT_REREADCRLS:	/* --rereadcrls */
+		case OPT_REREADCERTS:	/* --rereadcerts */
+		case OPT_FETCHCRLS:	/* --fetchcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
 			continue;
 
@@ -1390,6 +1473,11 @@ int main(int argc, char **argv)
 			ignore_errors = TRUE;
 			continue;
 
+		case OPT_PROCESS_STATUS:	/* --processstatus */
+			msg.whack_process_status = true;
+			ignore_errors = true;
+			continue;
+
 		case OPT_SHOW_STATES:	/* --showstates */
 			msg.whack_show_states = TRUE;
 			ignore_errors = TRUE;
@@ -1404,32 +1492,44 @@ int main(int argc, char **argv)
 			msg.whack_shutdown = TRUE;
 			continue;
 
+		case OPT_SHUTDOWN_DIRTY:	/* --leave-state */
+			msg.whack_leave_state = TRUE;
+			continue;
+
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo_my_client), optarg);
-			if (isanyaddr(&msg.oppo_my_client)) {
+			diagq(ttoaddress_dns(shunk1(optarg),
+					     aftoinfo(msg.tunnel_addr_family),
+					     &msg.oppo.local.address), optarg);
+			if (address_is_unset(&msg.oppo.local.address) ||
+			    address_is_any(msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
-				      &msg.oppo_peer_client), optarg);
-			if (isanyaddr(&msg.oppo_peer_client)) {
+			diagq(ttoaddress_dns(shunk1(optarg),
+					     aftoinfo(msg.tunnel_addr_family),
+					     &msg.oppo.remote.address), optarg);
+			if (address_is_unset(&msg.oppo.remote.address) ||
+			    address_is_any(msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-					optarg);
+				      optarg);
 			}
 			continue;
 
 		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
-			msg.oppo_proto = strtol(optarg, NULL, 0);
+			msg.oppo.ipproto = strtol(optarg, NULL, 0);
+			continue;
+
+		case OPT_OPPO_SPORT:	/* --opposport <port> */
+			msg.oppo.local.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
 
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
-			oppo_dport = strtol(optarg, NULL, 0);
+			msg.oppo.remote.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
@@ -1467,27 +1567,28 @@ int main(int argc, char **argv)
 
 		case END_HOST:	/* --host <ip-address> */
 		{
-			lset_t new_policy = LEMPTY;
-
-			af_used_by = long_opts[long_index].name;
-			msg.right.host_addr = address_any(aftoinfo(msg.addr_family));
+			lset_t new_policy;
 			if (streq(optarg, "%any")) {
+				new_policy = LEMPTY;
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
-				new_policy |= POLICY_TUNNEL | POLICY_GROUP;
+				new_policy = POLICY_TUNNEL | POLICY_GROUP;
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
-					      POLICY_GROUP;
+				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
+				msg.right.host_addr = get_address_any(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
-				if (ttoaddr_num(optarg, 0, msg.addr_family,
-					&msg.right.host_addr) == NULL) {
+				new_policy = LEMPTY;
+				if (opt_ttoaddress_num(&host_family, &msg.right.host_addr) == NULL) {
 					/*
 					 * we have a proper numeric IP
-					 * address
+					 * address.
 					 */
 				} else {
 					/*
@@ -1497,16 +1598,15 @@ int main(int argc, char **argv)
 					 * the syntax.
 					 */
 					msg.dnshostname = optarg;
-					ttoaddr(optarg, 0, msg.addr_family,
-						&msg.right.host_addr);
+					opt_ttoaddress_dns(&host_family, &msg.right.host_addr);
 					/*
-					 * we don't fail here.
-					 * pluto will re-check the DNS later
+					 * we don't fail here.  pluto
+					 * will re-check the DNS later
 					 */
 				}
 			} else {
-				diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.right.host_addr), optarg);
+				new_policy = LEMPTY;
+				opt_to_address(&host_family, &msg.right.host_addr);
 			}
 
 			msg.policy |= new_policy;
@@ -1519,7 +1619,7 @@ int main(int argc, char **argv)
 					 * or IPV6 equivalent
 					 */
 					tunnel_af_used_by = optarg;
-					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->all_addresses);
+					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->subnet.all);
 				}
 				msg.right.has_client = TRUE;
 			}
@@ -1558,20 +1658,18 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			if (msg.right.pubkey != NULL)
+			if (msg.right.ckaid != NULL)
 				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
-			msg.right.pubkey = optarg;	/* decoded by Pluto */
-			msg.right.pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+			msg.right.cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			if (msg.right.pubkey != NULL)
+			if (msg.right.cert != NULL)
 				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			/* try parsing it; the error isn't the most specific */
 			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
 			diagq(ugh, optarg);
-			msg.right.pubkey = optarg;	/* decoded by Pluto */
-			msg.right.pubkey_type = WHACK_PUBKEY_CKAID;
+			msg.right.ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
@@ -1591,25 +1689,20 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
-			af_used_by = long_opts[long_index].name;
 			if (streq(optarg, "%direct")) {
-				msg.right.host_nexthop = address_any(aftoinfo(msg.addr_family));
+				msg.right.host_nexthop = get_address_any(&host_family);
 			} else {
-				diagq(ttoaddr(optarg, 0, msg.addr_family,
-					      &msg.right.host_nexthop),
-				      optarg);
+				opt_to_address(&host_family, &msg.right.host_nexthop);
 			}
 			continue;
 
 		case END_SRCIP:	/* --srcip <ip-address> */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.right.host_srcip), optarg);
+			opt_to_address(&host_family, &msg.right.host_srcip);
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			diagq(text_cidr_to_subnet(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
-						  &msg.right.host_vtiip), optarg);
+			diagq(numeric_to_cidr(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
+					      &msg.right.host_vtiip), optarg);
 			continue;
 
 		/*
@@ -1636,10 +1729,10 @@ int main(int argc, char **argv)
 			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
-				diagq(ttosubnet(optarg, 0,
-						msg.tunnel_addr_family,
+				diagq(ttosubnet(shunk1(optarg),
+						aftoinfo(msg.tunnel_addr_family),
 						'6', &msg.right.client,
-						&progname_logger),
+						logger),
 					optarg);
 				msg.right.has_client = TRUE;
 			}
@@ -1660,10 +1753,6 @@ int main(int argc, char **argv)
 			msg.right.updown = optarg;
 			continue;
 
-		case END_TUNDEV:	/* --tundev <mast#> */
-			msg.right.tundev = opt_whole;
-			continue;
-
 		case CD_TO:	/* --to */
 			/* process right end, move it to left, reset it */
 			if (!LHAS(end_seen, END_HOST - END_FIRST))
@@ -1673,6 +1762,18 @@ int main(int argc, char **argv)
 			clear_end(&msg.right);
 			end_seen = LEMPTY;
 			continue;
+
+		/* --ikev1 --ikev2 --ikev2-propose */
+		case CD_IKEv1:
+		case CD_IKEv2:
+		{
+			enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
+			if (msg.ike_version != 0 && msg.ike_version != ike_version) {
+				diag("connection can no longer have --ikev1 and --ikev2");
+			}
+			msg.ike_version = ike_version;
+			continue;
+		}
 
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
@@ -1705,16 +1806,14 @@ int main(int argc, char **argv)
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
-		/* --ikev1-allow */
-		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:
-		/* --ikev2-allow (now also --ikev2-propose) */
-		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:
-
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
 
 		/* --mobike */
 		case CDP_SINGLETON + POLICY_MOBIKE_IX:
+
+		/* --intermediate */
+		case CDP_SINGLETON + POLICY_INTERMEDIATE_IX:
 
 		/* --ikefrag-allow */
 		case CDP_SINGLETON + POLICY_IKE_FRAG_ALLOW_IX:
@@ -1971,27 +2070,14 @@ int main(int argc, char **argv)
 				diag("--tcp-options are 'yes', 'no' or 'fallback'");
 			continue;
 
-#ifdef HAVE_LABELED_IPSEC
-		case CD_LABELED_IPSEC:	/* --labeledipsec */
-			msg.labeled_ipsec = TRUE;
+		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */
+			/* ignore */
 			continue;
 
-		case CD_POLICY_LABEL:	/* --policylabel */
-			msg.policy_label = optarg;
-			continue;
-#endif
-
-		case CD_CONNIPV4:	/* --ipv4 */
-			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
-				diag("--ipv4 conflicts with --ipv6");
-
-			/*
-			 * Since this is the default, the flag is redundant.
-			 * So we don't need to set msg.addr_family
-			 * and we don't need to check af_used_by
-			 * and we don't have to consider defaulting
-			 * tunnel_addr_family.
-			 */
+		case CD_SEC_LABEL:	/* --sec-label */
+			/* we only support symmetric labels but put it in struct end */
+			msg.right.sec_label = optarg;
+			msg.left.sec_label = optarg;
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
@@ -2052,23 +2138,59 @@ int main(int argc, char **argv)
 			msg.policy |= POLICY_ECDSA;
 			continue;
 
-		case CD_CONNIPV6:	/* --ipv6 */
-			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST))
-				diag("--ipv6 conflicts with --ipv4");
+		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
+			if (host_family.type == &ipv4_info) {
+				/* ignore redundant options */
+				continue;
+			}
 
-			if (af_used_by != NULL)
-				diagq("--ipv6 must precede", af_used_by);
+			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST)) {
+				/* i.e., --ipv6 ... --ipv4 */
+				diag("--ipv4 conflicts with --ipv6");
+			}
 
-			af_used_by = long_opts[long_index].name;
-			msg.addr_family = AF_INET6;
+			if (host_family.used_by != NULL) {
+				/* i.e., --host ::1 --ipv4; useful? wrong message? */
+				diagq("--ipv4 must precede", host_family.used_by);
+			}
+			host_family.used_by = long_opts[long_index].name;
+			host_family.type = &ipv4_info;
 
 			/*
 			 * Consider defaulting tunnel_addr_family to AF_INET6.
 			 * Do so only if it hasn't yet been specified or used.
 			 */
 			if (LDISJOINT(cd_seen,
-				      LELEM(CD_TUNNELIPV4 -
-					    CD_FIRST) |
+				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
+				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
+			    tunnel_af_used_by == NULL)
+				msg.tunnel_addr_family = AF_INET;
+			continue;
+
+		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
+			if (host_family.type == &ipv6_info) {
+				/* ignore redundant options */
+				continue;
+			}
+
+			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST)) {
+				/* i.e., --ipv4 ... --ipv6 */
+				diag("--ipv6 conflicts with --ipv4");
+			}
+
+			if (host_family.used_by != NULL) {
+				/* i.e., --host 0.0.0.1 --ipv6; useful? wrong message? */
+				diagq("--ipv6 must precede", host_family.used_by);
+			}
+			host_family.used_by = long_opts[long_index].name;
+			host_family.type = &ipv6_info;
+
+			/*
+			 * Consider defaulting tunnel_addr_family to AF_INET6.
+			 * Do so only if it hasn't yet been specified or used.
+			 */
+			if (LDISJOINT(cd_seen,
+				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
 				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
 			    tunnel_af_used_by == NULL)
 				msg.tunnel_addr_family = AF_INET6;
@@ -2079,7 +2201,7 @@ int main(int argc, char **argv)
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
 
 			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv4 must precede", af_used_by);
+				diagq("--tunnelipv4 must precede", tunnel_af_used_by);
 
 			msg.tunnel_addr_family = AF_INET;
 			continue;
@@ -2089,7 +2211,7 @@ int main(int argc, char **argv)
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
 
 			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv6 must precede", af_used_by);
+				diagq("--tunnelipv6 must precede", tunnel_af_used_by);
 
 			msg.tunnel_addr_family = AF_INET6;
 			continue;
@@ -2133,7 +2255,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			ttorange(optarg, NULL, &msg.right.pool_range, &progname_logger);
+			diagq(ttorange(optarg, NULL, &msg.right.pool_range), optarg);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
@@ -2170,11 +2292,15 @@ int main(int argc, char **argv)
 			msg.vti_shared = TRUE;
 			continue;
 
+		case CD_IPSEC_IFACE:      /* --ipsec-interface */
+			msg.xfrm_if_id = opt_whole;
+			continue;
+
 		case CD_XAUTHBY:	/* --xauthby */
 			if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-#ifdef XAUTH_HAVE_PAM
+#ifdef AUTH_HAVE_PAM
 			} else if (streq(optarg, "pam")) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;
@@ -2323,7 +2449,7 @@ int main(int argc, char **argv)
 			realloc_things(msg.impairments, msg.nr_impairments,
 				       msg.nr_impairments+1, "impairments");
 			switch (parse_impair(optarg, &msg.impairments[msg.nr_impairments],
-					     enable, &progname_logger)) {
+					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
 			case IMPAIR_HELP:
@@ -2343,29 +2469,28 @@ int main(int argc, char **argv)
 		break;
 	}
 
-	if (msg.policy & POLICY_IKEV2_ALLOW) {
-		if (msg.policy & POLICY_IKEV1_ALLOW) {
-			diag("connection can no longer have --ikev1-allow and --ikev2-allow");
-		}
-	} else if (!(msg.policy & POLICY_IKEV1_ALLOW)) {
+	if (msg.ike_version == 0) {
 		/* no ike version specified, default to IKEv2 */
-		msg.policy |= POLICY_IKEV2_ALLOW;
+		msg.ike_version = IKEv2;
 	}
 
-	if (msg.policy & POLICY_IKEV1_ALLOW) {
+	switch (msg.ike_version) {
+	case IKEv1:
 		if (msg.policy & POLICY_ECDSA)
-			diag("connection cannot specify --ecdsa and --ikev1-allow");
-		if (msg.sighash_policy != LEMPTY)
-			diag("connection cannot specify --ikev1-allow and --ecdsa-sha2 or --rsa-sha2");
-	} else {
+			diag("connection cannot specify --ecdsa and --ikev1");
+		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
+		msg.sighash_policy = LEMPTY;
+		break;
+	case IKEv2:
 		if (msg.policy & POLICY_AGGRESSIVE)
 			diag("connection cannot specify --ikev2 and --aggressive");
+		break;
 	}
 
 	if (!auth_specified) {
 		/* match the parser loading defaults to whack defaults */
 		msg.policy |= POLICY_RSASIG;
-		if (msg.policy & POLICY_IKEV2_ALLOW) {
+		if (msg.ike_version == IKEv2) {
 			msg.policy |= POLICY_RSASIG_v1_5;
 			msg.policy |= POLICY_ECDSA;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
@@ -2373,10 +2498,6 @@ int main(int argc, char **argv)
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 		}
 	}
-
-
-	if (oppo_dport != 0)
-		setportof(htons(oppo_dport), &msg.oppo_peer_client);
 
 	if (optind != argc) {
 		/*
@@ -2427,11 +2548,11 @@ int main(int argc, char **argv)
 				diag("encryption required for opportunism");
 		}
 
-		check_end(&msg.left, &msg.right,
-			  msg.addr_family, msg.tunnel_addr_family);
+		check_end(&msg.left, &msg.right, &host_family,
+			  aftoinfo(msg.tunnel_addr_family));
 
-		check_end(&msg.right, &msg.left,
-			  msg.addr_family, msg.tunnel_addr_family);
+		check_end(&msg.right, &msg.left, &host_family,
+			  aftoinfo(msg.tunnel_addr_family));
 
 		if (subnet_type(&msg.left.client) !=
 		    subnet_type(&msg.right.client))
@@ -2446,14 +2567,6 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
 				msg.left.authby == AUTHBY_NEVER && msg.right.authby == AUTHBY_NEVER)
 				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
-
-			/*
-			 * If neither v1 nor v2, default to v2
-			 */
-			if (!LIN(POLICY_IKEV1_ALLOW, msg.policy) &&
-				!LIN(POLICY_IKEV2_ALLOW, msg.policy))
-					msg.policy |= POLICY_IKEV2_ALLOW;
-
 			/*
 			 * ??? this test can never fail:
 			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
@@ -2495,6 +2608,7 @@ int main(int argc, char **argv)
 	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser || msg.active_redirect_dests != NULL ||
+	      msg.global_redirect || msg.global_redirect_to ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
@@ -2503,6 +2617,7 @@ int main(int argc, char **argv)
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_addresspool_status ||
+	      msg.whack_process_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))

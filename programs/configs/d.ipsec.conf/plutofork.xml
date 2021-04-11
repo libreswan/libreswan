@@ -1,7 +1,0 @@
-  <varlistentry>
-  <term><emphasis remap='B'>plutofork</emphasis></term>
-  <listitem>
-<para>This option has been obsoleted. The pluto daemon always forks unless
-it is started with the --nofork option.</para>
-  </listitem>
-  </varlistentry>

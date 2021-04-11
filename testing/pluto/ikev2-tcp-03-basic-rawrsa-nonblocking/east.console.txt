@@ -1,19 +1,18 @@
 /testing/guestbin/swan-prep
 east #
- dmesg -n 6
+ # dmesg -n 6
 east #
  # nohup tcpdump -i eth1 -s 65535 -X -vv -nn tcp > OUTPUT/east.tcpdump &
 east #
- nohup dumpcap -i eth1 -w /tmp/east.pcap > OUTPUT/east.dumpcap &
-[x] PID
+ # nohup dumpcap -i eth1 -w /tmp/east.pcap > OUTPUT/east.dumpcap &
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -41,7 +40,4 @@ east #
  ipsec stop
 Redirecting to: [initsystem]
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -6,13 +6,10 @@ west #
 west #
  # should abort, not crash, due to missing nss
 west #
- ipsec pluto --ctlbase /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
+ ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
 Pluto initialized
-NSS DB directory: sql:/etc/ipsec.d
-Initializing NSS
-Opening NSS database "sql:/etc/ipsec.d" read-only
-Initialization of NSS with read-only database "sql:/etc/ipsec.d" failed (-8174)
-FATAL: NSS initialization failure
+Initializing NSS using read-write database "sql:/etc/ipsec.d"
+FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR 18 (0x12): security library: bad database.
 west #
  #
 west #
@@ -36,7 +33,7 @@ west #
 west #
  chmod -R 755 /var/cache/otheruser
 west #
- ipsec pluto --ctlbase /var/cache/otheruser/var/run/pluto --use-netkey --secretsfile /var/cache/otheruser/etc/ipsec.secrets
+ ipsec pluto --rundir /var/cache/otheruser/var/run/pluto --secretsfile /var/cache/otheruser/etc/ipsec.secrets
 west #
  # give pluto time to start and create its socket and pid files
 west #
@@ -44,19 +41,16 @@ west #
 west #
  # show it is running
 west #
- ipsec whack --ctlbase /var/cache/otheruser/var/run/pluto --briefstatus
+ ipsec whack --rundir /var/cache/otheruser/var/run/pluto --briefstatus
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 west #
  # shut it down
 west #
- ipsec whack --ctlbase /var/cache/otheruser/var/run/pluto  --shutdown
+ ipsec whack --rundir /var/cache/otheruser/var/run/pluto  --shutdown
 west #
  echo "initdone"
 initdone
-west #
- echo done
-done
 west #
  

@@ -1,0 +1,11 @@
+basic-pluto-01 but now with labeled IPsec using NETKEY. A test on port 4300
+using netcat and getpeercon_server to confirm traffic flow and label.
+
+(requires private getpeercon package, we'll include it as source in /testing soon)
+
+A shutdown is issued to verify no kernel state is left behind
+
+This needs updating to must use netutils_t type for both ncat server
+and client (via runcon -t), I did not find a better context type than
+this. Also you need to switch nis_enabled and domain_can_mmap_file
+selinux boolean on to make it work.

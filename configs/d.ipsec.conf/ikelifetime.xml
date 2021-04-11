@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ikelifetime</emphasis></term>
+  <listitem>
+<para>how long the keying channel of a connection (buzzphrase:
+ &ldquo;IKE SA&rdquo; or &ldquo;Parent SA&rdquo;) should last
+ before being renegotiated; acceptable values as for
+<emphasis remap='B'>salifetime</emphasis>. The
+default as of version 4.2 is <emphasis remap='B'>8h</emphasis>, before
+that it was 1h. The maximum is <emphasis remap='B'>24h</emphasis>.
+The two-ends-disagree case is similar to that of
+<emphasis remap='B'>salifetime</emphasis>.</para>
+  </listitem>
+  </varlistentry>

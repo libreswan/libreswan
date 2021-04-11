@@ -27,27 +27,27 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair delete-on-retransmit
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 added IKEv2 connection "westnet-eastnet-ikev2"
+002 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-00
-002 added IKEv2 connection "westnet-eastnet-ikev2-00"
+002 "westnet-eastnet-ikev2-00": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-01
-002 ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-002 added IKEv2 connection "westnet-eastnet-ikev2-01"
+002 "westnet-eastnet-ikev2-01": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+002 "westnet-eastnet-ikev2-01": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-10
-002 added IKEv2 connection "westnet-eastnet-ikev2-10"
+002 "westnet-eastnet-ikev2-10": added IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-11
-002 added IKEv2 connection "westnet-eastnet-ikev2-11"
+002 "westnet-eastnet-ikev2-11": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -56,12 +56,11 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2" #1: authenticated using authby=secret
+003 "westnet-eastnet-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  # remote pfs=no dh=none
@@ -69,37 +68,37 @@ west #
  # pfs=no dh= - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-00
-1v2 "westnet-eastnet-ikev2-00" #3: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ikev2-00" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-00" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2-00" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
 west #
  # pfs=no dh=none - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-01
-1v2 "westnet-eastnet-ikev2-01" #4: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ikev2-01" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-01" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-ikev2-01" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 up
 west #
  # pfs=yes dh= - fail
 west #
  # ipsec auto --up westnet-eastnet-ikev2-10
 west #
- # ../../pluto/bin/ping-once.sh --down -I 192.0.110.254 192.0.210.254
+ # ../../guestbin/ping-once.sh --down -I 192.0.110.254 192.0.210.254
 west #
  # pfs=yes dh=none - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-11
-1v2 "westnet-eastnet-ikev2-11" #5: sent IPsec Child req wait response
+1v2 "westnet-eastnet-ikev2-11" #5: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-11" #5: negotiated connection [192.0.111.0-192.0.111.255:0-65535 0] -> [192.0.211.0-192.0.211.255:0-65535 0]
 004 "westnet-eastnet-ikev2-11" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.111.254 192.0.211.254
+ ../../guestbin/ping-once.sh --up -I 192.0.111.254 192.0.211.254
 up
 west #
  ipsec whack --trafficstatus
@@ -111,7 +110,4 @@ west #
  echo done
 done
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

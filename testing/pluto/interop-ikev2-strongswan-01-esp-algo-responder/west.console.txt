@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,24 +13,23 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
 west #
- ../bin/libreswan-up-down.sh esp=null-md5 -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "esp=null-md5"
+ ../../guestbin/libreswan-up-down.sh esp=null-md5 -I 192.0.1.254 192.0.2.254
+002 "esp=null-md5": added IKEv2 connection
 1v2 "esp=null-md5" #1: initiating IKEv2 connection
 1v2 "esp=null-md5" #1: sent IKE_SA_INIT request
 1v2 "esp=null-md5" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "esp=null-md5" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "esp=null-md5" #1: authenticated using authby=secret
+003 "esp=null-md5" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "esp=null-md5" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=null-md5" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -40,13 +39,12 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-md5": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "esp=null-sha1"
+ ../../guestbin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
+002 "esp=null-sha1": added IKEv2 connection
 1v2 "esp=null-sha1" #3: initiating IKEv2 connection
 1v2 "esp=null-sha1" #3: sent IKE_SA_INIT request
 1v2 "esp=null-sha1" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "esp=null-sha1" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "esp=null-sha1" #3: authenticated using authby=secret
+003 "esp=null-sha1" #3: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "esp=null-sha1" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=null-sha1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -56,13 +54,12 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null-sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null-sha1": terminating SAs using this connection
 west #
- ../bin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "esp=null_auth_aes_gmac-null"
+ ../../guestbin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
+002 "esp=null_auth_aes_gmac-null": added IKEv2 connection
 1v2 "esp=null_auth_aes_gmac-null" #5: initiating IKEv2 connection
 1v2 "esp=null_auth_aes_gmac-null" #5: sent IKE_SA_INIT request
 1v2 "esp=null_auth_aes_gmac-null" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "esp=null_auth_aes_gmac-null" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "esp=null_auth_aes_gmac-null" #5: authenticated using authby=secret
+003 "esp=null_auth_aes_gmac-null" #5: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "esp=null_auth_aes_gmac-null" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=null_auth_aes_gmac-null" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -72,13 +69,12 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null_auth_aes_gmac-null" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "esp=null_auth_aes_gmac-null": terminating SAs using this connection
 west #
- modinfo chacha20poly1305 > /dev/null && ../bin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
-002 added IKEv2 connection "esp=chacha20_poly1305-null"
+ modinfo chacha20poly1305 > /dev/null && ../../guestbin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
+002 "esp=chacha20_poly1305-null": added IKEv2 connection
 1v2 "esp=chacha20_poly1305-null" #7: initiating IKEv2 connection
 1v2 "esp=chacha20_poly1305-null" #7: sent IKE_SA_INIT request
 1v2 "esp=chacha20_poly1305-null" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-002 "esp=chacha20_poly1305-null" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "esp=chacha20_poly1305-null" #7: authenticated using authby=secret
+003 "esp=chacha20_poly1305-null" #7: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "esp=chacha20_poly1305-null" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=chacha20_poly1305-null" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -91,7 +87,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 XFRM policy:
@@ -109,7 +105,4 @@ Certificate Nickname                                         Trust Attributes
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

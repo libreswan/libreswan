@@ -4,12 +4,12 @@ west #
 west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -26,11 +26,4 @@ done
 west #
  ipsec whack --shutdown
 west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

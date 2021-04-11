@@ -3,12 +3,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 road #
  ipsec auto --add road-east
-002 added IKEv1 connection "road-east"
+002 "road-east": added IKEv1 connection
 road #
  echo initdone
 initdone
@@ -40,10 +40,4 @@ road #
 road #
  hostname | grep east > /dev/null && ipsec stop
 road #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

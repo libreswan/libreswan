@@ -7,7 +7,9 @@ west #
 west #
  ipsec pluto --config west.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --listen > /dev/null
 west #
  ipsec status | grep "000 interface"
 000 interface lo UDP 127.0.0.1:4500
@@ -21,7 +23,9 @@ west #
 west #
  ipsec pluto --config west-listen.conf
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --listen > /dev/null
 west #
  # It should only listen on 192.1.2.45 and not on 192.0.1.254
 west #
@@ -34,7 +38,4 @@ west #
  echo done
 done
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

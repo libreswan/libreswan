@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # list certs in NSS DB
 east #
@@ -15,7 +15,7 @@ east #
  # add / remove 'test'
 east #
  ipsec auto --add test
-002 added IKEv2 connection "test"
+002 "test": added IKEv2 connection
 east #
  ipsec auto --delete test
 east #
@@ -30,8 +30,7 @@ east #
  # try a load; should fail
 east #
  ipsec auto --add test
-003 failed to find certificate named 'east' in the NSS database
-036 Failed to add connection "test" with invalid "right" certificate
+036 "test": failed to add connection: right certificate 'east' not found in the NSS database
 east #
  ipsec auto --delete test
 east #
@@ -42,11 +41,11 @@ east #
  # re-load should not dump core
 east #
  ipsec auto --add test
-002 added IKEv2 connection "test"
+002 "test": added IKEv2 connection
 east #
  ipsec auto --delete test
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -70,7 +69,4 @@ road                                                         P,,
 west                                                         P,,  
 west-ec                                                      P,,  
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

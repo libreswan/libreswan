@@ -34,12 +34,11 @@ typedef struct {
 	ip_port hi;
 } ip_port_range;
 
-extern ip_port unset_port_range; /* aka all ports? */
-
 ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi);
 
+extern const ip_port_range unset_port_range; /* aka all ports? */
+
 bool port_range_is_unset(ip_port_range port_range);
-#define port_range_is_set !port_range_is_unset
 
 typedef struct {
 	char buf[sizeof("65535-65535") + 1/*canary*/];

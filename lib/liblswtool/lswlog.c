@@ -18,14 +18,12 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>	/* used only if MSG_NOSIGNAL not defined */
-#include <sys/queue.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -36,22 +34,44 @@
 #include "lswtool.h"
 #include "lswlog.h"
 
-bool log_to_stderr = TRUE;	/* should log go to stderr? */
+bool log_to_stderr = true;	/* should log go to stderr? */
 
 const char *progname;
 
-void tool_init_log(const char *name)
+static size_t jam_progname_prefix(struct jambuf *buf, const void *object UNUSED)
+{
+	const char *progname = object;
+	if (progname != NULL) {
+		return jam(buf, "%s: ", progname);
+	}
+	return 0;
+}
+
+static bool suppress_progname_log(const void *object UNUSED)
+{
+	return false;
+}
+
+const struct logger_object_vec progname_object_vec = {
+	.name = "tool",
+	.jam_object_prefix = jam_progname_prefix,
+	.suppress_object_log = suppress_progname_log,
+};
+
+static struct logger progname_logger = {
+	.object_vec = &progname_object_vec,
+	.object = NULL, /* progname */
+};
+
+struct logger *tool_init_log(const char *name)
 {
 	const char *last_slash = strrchr(name, '/');
 	progname_logger.object = progname = last_slash == NULL ? name : last_slash + 1;
 
-	if (log_to_stderr)
+	if (log_to_stderr) {
 		setbuf(stderr, NULL);
-}
-
-void jam_cur_prefix(struct jambuf *buf)
-{
-	jam_logger_prefix(buf, &progname_logger);
+	}
+	return &progname_logger;
 }
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)

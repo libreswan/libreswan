@@ -20,6 +20,15 @@
 
 struct state;
 
+struct v1_ike_rfrag {
+	struct v1_ike_rfrag *next;
+	struct msg_digest *md;
+	int index;
+	int last;
+	uint8_t *data;
+	size_t size;
+};
+
 void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what);
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what);

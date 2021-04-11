@@ -32,7 +32,7 @@
 #include "demux.h"
 #include "state.h"
 #include "pluto_x509.h"
-#include "pluto_crypt.h"
+#include "server_pool.h"
 #include "cert_decode_helper.h"
 #include "pluto_stats.h"
 #include "id.h"
@@ -48,18 +48,7 @@
  * Just decode a cert payload.
  */
 
-static crypto_compute_fn cert_decode_computer; /* type check */
-static crypto_completed_cb cert_decode_completed; /* type check */
-static crypto_cancelled_cb cert_decode_cancelled; /* type check */
-
-struct crypto_handler cert_decode_handler = {
-	.name = "decode certificate payload",
-	.compute_fn = cert_decode_computer,
-	.completed_cb = cert_decode_completed,
-	.cancelled_cb = cert_decode_cancelled,
-};
-
-struct crypto_task {
+struct task {
 	/* input */
 	struct msg_digest *md; /* counted reference */
 	struct payload_digest *cert_payloads; /* ref into md */
@@ -72,11 +61,22 @@ struct crypto_task {
 	struct verified_certs verified;
 };
 
+static task_computer_fn cert_decode_computer; /* type check */
+static task_completed_cb cert_decode_completed; /* type check */
+static task_cleanup_cb cert_decode_cleanup; /* type check */
+
+struct task_handler cert_decode_handler = {
+	.name = "decode certificate payload",
+	.computer_fn = cert_decode_computer,
+	.completed_cb = cert_decode_completed,
+	.cleanup_cb = cert_decode_cleanup,
+};
+
 void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			struct msg_digest *md, struct payload_digest *cert_payloads,
 			cert_decode_cb *cb, const char *why)
 {
-	struct crypto_task task = {
+	struct task task = {
 		.root_certs = root_certs_addref(HERE),
 		.md = md_addref(md, HERE),
 		.cert_payloads = cert_payloads,
@@ -90,13 +90,13 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_crypto(ike->sa.st_logger, state_to_resume,
-		      clone_thing(task, "decode certificate payload task"),
-		      &cert_decode_handler, why);
+	submit_task(ike->sa.st_logger, state_to_resume,
+		    clone_thing(task, "decode certificate payload task"),
+		    &cert_decode_handler, why);
 }
 
 static void cert_decode_computer(struct logger *logger,
-				 struct crypto_task *task,
+				 struct task *task,
 				 int my_thread UNUSED)
 {
 	task->verified = find_and_verify_certs(logger, task->ike_version,
@@ -106,17 +106,17 @@ static void cert_decode_computer(struct logger *logger,
 
 static stf_status cert_decode_completed(struct state *st,
 					struct msg_digest *md,
-					struct crypto_task **task)
+					struct task *task)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	pexpect(!ike->sa.st_remote_certs.processed);
 	ike->sa.st_remote_certs.processed = true;
-	ike->sa.st_remote_certs.harmless = (*task)->verified.harmless;
+	ike->sa.st_remote_certs.harmless = task->verified.harmless;
 
 	/* if there's an error, log it */
 
 #if defined(LIBCURL) || defined(LIBLDAP)
-	if ((*task)->verified.crl_update_needed &&
+	if (task->verified.crl_update_needed &&
 	    deltasecs(crl_check_interval) > 0) {
 		/*
 		 * When a strict crl check fails, the certs are
@@ -130,44 +130,25 @@ static stf_status cert_decode_completed(struct state *st,
 		 */
 		SECItem fdn = { siBuffer, NULL, 0 };
 		if (find_fetch_dn(&fdn, ike->sa.st_connection, NULL)) {
-			add_crl_fetch_requests(crl_fetch_request(&fdn, NULL, NULL));
+			add_crl_fetch_requests(crl_fetch_request(&fdn, NULL,
+								 NULL, ike->sa.st_logger));
 		}
-		pexpect((*task)->verified.cert_chain == NULL);
-		pexpect((*task)->verified.pubkey_db == NULL);
+		pexpect(task->verified.cert_chain == NULL);
+		pexpect(task->verified.pubkey_db == NULL);
 	}
 #endif
 
-	/* transfer certs and db to state (might be NULL) */
+	/*
+	 * transfer certs and db to state (might be NULL).
+	 */
 
 	pexpect(st->st_remote_certs.verified == NULL);
-	ike->sa.st_remote_certs.verified = (*task)->verified.cert_chain;
-	(*task)->verified.cert_chain = NULL;
+	ike->sa.st_remote_certs.verified = task->verified.cert_chain;
+	task->verified.cert_chain = NULL;
 
 	pexpect(ike->sa.st_remote_certs.pubkey_db == NULL);
-	ike->sa.st_remote_certs.pubkey_db = (*task)->verified.pubkey_db;
-	(*task)->verified.pubkey_db = NULL;
-
-	/*
-	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
-	 * packet needs to be sent anymore. And we cannot recover. Unlike
-	 * IKEv1, we cannot send an updated IKE_AUTH request that would use
-	 * different credentials.
-	 *
-	 * XXX: totall wrong - the initiator must send a delete
-	 * notify.
-	 *
-	 * On responder (code elsewhere), we have to STF_FAIL to get out
-	 * the response packet (we need a zombie state for these)
-	 *
-	 * Note: once AUTH succeeds, we can still return STF_FAIL's because
-	 * those apply to the Child SA and should not tear down the IKE SA.
-	 */
-	bool harmless = (*task)->verified.harmless;
-
-	/* release the task */
-
-	cert_decode_cb *cb = (*task)->cb;
-	cert_decode_cancelled(task);
+	ike->sa.st_remote_certs.pubkey_db = task->verified.pubkey_db;
+	task->verified.pubkey_db = NULL;
 
 	/*
 	 * Log failure, and for the initiator possibly fail.
@@ -176,12 +157,11 @@ static stf_status cert_decode_completed(struct state *st,
 	 * output happy.  See decode_certs().
 	 */
 
-	if (harmless) {
+	if (task->verified.harmless) {
 		if (ike->sa.st_remote_certs.verified != NULL) {
 			CERTCertificate *end_cert = ike->sa.st_remote_certs.verified->cert;
 			passert(end_cert != NULL);
-			log_state(RC_LOG, &ike->sa,
-				  "certificate verified OK: %s", end_cert->subjectName);
+			dbg("certificate verified OK: %s", end_cert->subjectName);
 		}
 	} else {
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
@@ -204,13 +184,13 @@ static stf_status cert_decode_completed(struct state *st,
                 */
 	}
 
-	return cb(st, md);
+	return task->cb(st, md);
 }
 
-static void cert_decode_cancelled(struct crypto_task **task)
+static void cert_decode_cleanup(struct task **task)
 {
-	pexpect((*task)->verified.cert_chain == NULL);
-	pexpect((*task)->verified.pubkey_db == NULL);
+	release_certs(&(*task)->verified.cert_chain);	/* may be NULL */
+	free_public_keys(&(*task)->verified.pubkey_db);	/* may be NULL */
 	release_any_md(&(*task)->md);
 	root_certs_delref(&(*task)->root_certs, HERE);
 	pfreeany((*task));

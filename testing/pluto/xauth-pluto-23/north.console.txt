@@ -4,10 +4,10 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-002 added IKEv1 connection "north-east"
+002 "north-east": added IKEv1 connection
 north #
  ipsec whack --xauthname 'xnorth' --xauthpass 'use1pass' --name north-east --initiate
 002 "north-east" #1: initiating IKEv1 Main Mode connection
@@ -18,7 +18,7 @@ north #
 1v1 "north-east" #1: sent Main Mode I3
 002 "north-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "north-east" #1: authenticated using RSA with SHA-1
+003 "north-east" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "north-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 041 "north-east" #1: north-east prompt for Username:
 040 "north-east" #1: north-east prompt for Password:
@@ -33,19 +33,16 @@ north #
 005 "north-east" #1: Received subnet 192.0.2.0/24
 005 "north-east" #1: Subnet 192.0.2.0/24 already has an spd_route - ignoring
 004 "north-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "north-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "north-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO
 1v1 "north-east" #2: sent Quick Mode request
 002 "north-east" #2: up-client output: updating resolvconf
 004 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=xnorth}
 north #
- ping -q -w 4 -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 north #
  echo initdone
 initdone
@@ -58,11 +55,4 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
 north #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

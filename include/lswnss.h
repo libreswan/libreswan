@@ -24,6 +24,7 @@
 #include "lset.h"
 #include "lswalloc.h"
 #include "secrets.h"
+#include "diag.h"
 
 enum lsw_nss_flags {
 	LSW_NSS_READONLY = 1,
@@ -38,12 +39,12 @@ enum lsw_nss_flags {
  * terminated buffer.
  */
 
-bool lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
+diag_t lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
 void lsw_nss_shutdown(void);
 
 /*
  * Any code that could call back into lsw_nss_get_password() needs to
- * pass in a context parameter - the logger is it.  Otherwize the
+ * pass in a context parameter - the logger is it.  Otherwise the
  * password code can't log!
  *
  * Just a wrapper but type checked.
@@ -61,6 +62,7 @@ size_t jam_nss_error(struct jambuf *log);
 /* NSS: <message...>: SECERR: N (0xX): <error-string> */
 void log_nss_error(lset_t rc_log, struct logger *logger,
 		   const char *message, ...) PRINTF_LIKE(3);
+diag_t diag_nss_error(const char *message, ...) PRINTF_LIKE(1);
 void passert_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 void pexpect_nss_error(struct logger *logger, where_t where,

@@ -17,8 +17,6 @@
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 
-CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
-
 SRCS=confread.c confwrite.c starterwhack.c starterlog.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c
@@ -66,7 +64,7 @@ $(OBJS): $(builddir)/parser.tab.h
 
 LEX = flex
 
-$(builddir)/lex.yy.c: parser.l
+$(builddir)/lex.yy.c: parser.lex
 	: no space between -o and scratch output file
 	$(LEX) -o$@.tmp $<
 	sed -e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
@@ -93,6 +91,7 @@ ifeq ($(USE_YACC),true)
 BISON=yacc -b parser
 else
 BISON=bison
+BISONOSFLAGS=-g --verbose
 endif
 
 $(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
@@ -106,4 +105,4 @@ $(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
 clean: parser-clean
 .PHONY: parser-clean
 parser-clean:
-	cd $(builddir) && $(RM) -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp
+	cd $(builddir) && rm -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp

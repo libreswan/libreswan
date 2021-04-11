@@ -24,31 +24,24 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
-
 typedef void initiator_function(struct fd *whack_sock,
 				struct connection *c,
 				struct state *predecessor,
 				lset_t policy,
 				unsigned long try,
 				const threadtime_t *inception,
-				struct xfrm_user_sec_ctx_ike *uctx);
+				chunk_t sec_label);
 
 extern void ipsecdoi_initiate(struct fd *whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
 			      const threadtime_t *inception,
-			      struct xfrm_user_sec_ctx_ike *uctx);
+			      chunk_t sec_label);
 
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
-/*
- * forward
- */
-struct dh_desc;
-extern void send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
 extern void accept_self_delete(struct msg_digest *md);
@@ -58,20 +51,11 @@ extern void send_notification_from_state(struct state *st,
 					 notification_t type);
 extern void send_notification_from_md(struct msg_digest *md, notification_t type);
 
-extern bool accept_KE(chunk_t *dest, const char *val_name,
-		      const struct dh_desc *gr,
-		      struct payload_digest *ke_pd);
-
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);
 
 extern bool has_preloaded_public_key(const struct state *st);
-
-extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
-
-struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
-extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);
 
 extern void lswlog_child_sa_established(struct jambuf *buf, struct state *st);
 extern void lswlog_ike_sa_established(struct jambuf *buf, struct state *st);

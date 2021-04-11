@@ -20,11 +20,12 @@ struct integ_desc;
 struct prf_desc;
 struct encrypt_desc;
 struct hash_desc;
+struct logger;
 
 struct cavp_entry {
 	const char *key;
 	const char *opt; /* name from ACVP json */
-	void (*op)(const struct cavp_entry *key, const char *value);
+	void (*op)(const struct cavp_entry *key, const char *value, struct logger *logger);
 	/* set by the below */
 	chunk_t *chunk;
 	PK11SymKey **symkey;
@@ -39,13 +40,13 @@ struct cavp_entry {
 	const struct integ_desc *integ;
 };
 
-void op_entry(const struct cavp_entry *entry, const char *value);
-void op_ignore(const struct cavp_entry *entry, const char *value);
-void op_chunk(const struct cavp_entry *entry, const char *value);
-void op_symkey(const struct cavp_entry *entry, const char *value);
-void op_signed_long(const struct cavp_entry *entry, const char *value);
-void op_unsigned_long(const struct cavp_entry *entry, const char *value);
-void op_boolean(const struct cavp_entry *entry, const char *value);
+void op_entry(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_ignore(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_chunk(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_symkey(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_signed_long(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_unsigned_long(const struct cavp_entry *entry, const char *value, struct logger *logger);
+void op_boolean(const struct cavp_entry *entry, const char *value, struct logger *logger);
 
 const struct cavp_entry *cavp_entry_by_key(const struct cavp_entry *entries, const char *key);
 const struct cavp_entry *cavp_entry_by_opt(const struct cavp_entry *entries, const char *opt);

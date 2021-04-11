@@ -41,6 +41,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -63,10 +64,8 @@
 #include "server.h"
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
-#include "peerlog.h"
 #include "keys.h"
 #include "whack.h"
-#include "spdb.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -76,10 +75,9 @@
 #include "pluto_x509.h"
 #include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
-#include "virtual.h"	/* needs connections.h */
-#include "hostpair.h"
+#include "virtual_ip.h"	/* needs connections.h */
+#include "host_pair.h"
 #include "lswfips.h"
 #include "crypto.h"
 #include "kernel_xfrm.h"
@@ -91,6 +89,8 @@
 #include "iface.h"
 #include "ip_selector.h"
 #include "nss_cert_reread.h"
+#include "security_selinux.h"
+#include "orient.h"
 
 struct connection *connections = NULL;
 
@@ -102,7 +102,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 /*
  * Find a connection by name.
  *
- * strict: don't accept a CK_INSTANCE.
+ * no_inst: don't accept a CK_INSTANCE.
  *
  * If none is found, and strict&&!queit, a diagnostic is logged to
  * whack.
@@ -110,7 +110,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
  * XXX: Fun fact: this function re-orders the list, moving the entry
  * to the front as a side effect (ulgh)!.
  */
-struct connection *conn_by_name(const char *nm, bool strict)
+struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	struct connection *p, *prev;
 
@@ -120,7 +120,7 @@ struct connection *conn_by_name(const char *nm, bool strict)
 			break;
 		}
 		if (streq(p->name, nm) &&
-		    (!strict || p->kind != CK_INSTANCE)) {
+		    (!no_inst || p->kind != CK_INSTANCE)) {
 			if (prev != NULL) {
 				/* remove p from list */
 				prev->ac_next = p->ac_next;
@@ -163,6 +163,8 @@ static void delete_end(struct end *e)
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
+	pfreeany(e->ckaid);
+	free_chunk_content(&e->sec_label);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -187,10 +189,9 @@ static void discard_connection(struct connection *c,
 void delete_connection(struct connection *c, bool relations)
 {
 	struct fd *whackfd = whack_log_fd;
-	struct connection *old_cur_connection = push_cur_connection(c);
-	if (old_cur_connection == c) {
-		old_cur_connection = NULL;
-	}
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd); /* freed by discard_conection() */
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -200,10 +201,10 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_INSTANCE) {
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			address_buf b;
-			log_connection(RC_LOG, whackfd, c,
-				       "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
-				       str_address_sensitive(&c->spd.that.host_addr, &b),
-				       c->newest_isakmp_sa, c->newest_ipsec_sa);
+			llog(RC_LOG, c->logger,
+			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
+			     str_address_sensitive(&c->spd.that.host_addr, &b),
+			     c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL) {
@@ -211,12 +212,10 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 	release_connection(c, relations, whackfd); /* won't delete c */
-	pop_cur_connection(old_cur_connection);
 	/* make a copy of the logger so it works even after the delete */
-	struct logger tmp = CONNECTION_LOGGER(c, whack_log_fd);
-	struct logger *connection_logger = clone_logger(&tmp); /* must-free */
-	discard_connection(c, true/*connection_valid*/, connection_logger);
-	free_logger(&connection_logger);
+	struct logger *logger = clone_logger(c->logger, HERE); /* must-free */
+	discard_connection(c, true/*connection_valid*/, logger);
+	free_logger(&logger, HERE);
 }
 
 static void discard_connection(struct connection *c,
@@ -231,9 +230,6 @@ static void discard_connection(struct connection *c,
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c, connection_logger);
-
-	/* free up any logging resources */
-	perpeer_logfree(c);
 
 	/* find and delete c from connections list */
 	/* XXX: if in list, remove_list_entry(c->ac_next); */
@@ -258,24 +254,17 @@ static void discard_connection(struct connection *c,
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
-	pfreeany(c->policy_label);
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
+	free_logger(&c->logger, HERE);
 
 	/* deal with top spd_route and then the rest */
 
 	passert(c->spd.this.virt == NULL);
 
-	if (c->kind != CK_GOING_AWAY) {
-#if 0
-		/* ??? this seens buggy since virts don't get unshared */
-		pfreeany(c->spd.that.virt);
-#else
-		/* ??? make do until virts get unshared */
-		c->spd.that.virt = NULL;
-#endif
-	}
+	virtual_ip_delref(&c->spd.this.virt, HERE);
+	virtual_ip_delref(&c->spd.that.virt, HERE);
 
 	struct spd_route *sr = c->spd.spd_next;
 
@@ -357,57 +346,95 @@ void delete_every_connection(void)
 		delete_connection(connections, TRUE);
 }
 
-static err_t default_end(const char *leftright, struct end *e,
-			 ip_address *dflt_nexthop, unsigned remote_port)
+ip_port end_host_port(const struct end *end, const struct end *other)
 {
-	err_t ugh = NULL;
-	const struct ip_info *afi = aftoinfo(addrtypeof(&e->host_addr));
+	unsigned port;
+	if (end->config->host.ikeport != 0) {
+		/*
+		 * The END's IKEPORT was specified in the config file.
+		 * Use that.
+		 */
+		port = end->config->host.ikeport;
+	} else if (other->config->host.ikeport != 0) {
+		/*
+		 * The other end's IKEPORT was specified in the config
+		 * file.  Since specifying an IKEPORT implies ESP
+		 * encapsulation (i.e. IKE packets must include the
+		 * ESP=0 prefix), send packets from the encapsulating
+		 * NAT_IKE_UDP_PORT.
+		 */
+		port = NAT_IKE_UDP_PORT;
+	} else if (other->host_encap) {
+		/*
+		 * See above.  Presumably an instance which previously
+		 * had a natted port and is being revived.
+		 */
+		port = NAT_IKE_UDP_PORT;
+	} else {
+		port = IKE_UDP_PORT;
+	}
+	return ip_hport(port);
+}
 
-	if (afi == NULL)
-		return "unknown address family in default_end";
-
-	/* Default ID to IP (but only if not NO_IP -- WildCard) */
-	if (e->id.kind == ID_NONE && endpoint_is_specified(&e->host_addr)) {
-		e->id.kind = afi->id_addr;
-		e->id.ip_addr = e->host_addr;
-		e->has_id_wildcards = FALSE;
+void update_ends_from_this_host_addr(struct end *this, struct end *that)
+{
+	const struct ip_info *afi = address_type(&this->host_addr);
+	if (afi == NULL) {
+		dbg("%s.host_addr's address family is unknown; skipping default_end()",
+		    this->leftright);
+		return;
 	}
 
-	/* Default nexthop to other side. */
-	if (isanyaddr(&e->host_nexthop))
-		e->host_nexthop = *dflt_nexthop;
+	if (address_is_any(this->host_addr)) {
+		dbg("%s.host_addr's is %%any; skipping default_end()",
+		    this->leftright);
+		return;
+	}
+
+	dbg("updating connection from %s.host_addr", this->leftright);
+
+	/* Default ID to IP (but only if not NO_IP -- WildCard) */
+	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
+		this->id.kind = afi->id_ip_addr;
+		this->id.ip_addr = this->host_addr;
+		this->has_id_wildcards = FALSE;
+	}
+
+	/* propagate this HOST_ADDR to that. */
+	if (address_is_unset(&that->host_nexthop) ||
+	    address_is_any(that->host_nexthop)) {
+		that->host_nexthop = this->host_addr;
+		address_buf ab;
+		dbg("%s host_nexthop %s",
+		    that->leftright, str_address(&that->host_nexthop, &ab));
+	}
 
 	/*
-	 * XXX: When DST is the peer setting .host_port to PLUTO_PORT
-	 * (our port) is wrong.  IKE_UDP_PORT is the next best thing.
-	 *
-	 * But what if DST is THIS?  .host_port gets ignored?
-	 *
-	 * If one end has an ikeport, the other must use ikport or nat
-	 * port.
+	 * If THAT has an IKEPORT (which means messages are ESP=0
+	 * prefixed), then THIS must send from either IKEPORT or the
+	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	e->host_port = (e->raw.host.ikeport ? e->raw.host.ikeport :
-			remote_port ? NAT_IKE_UDP_PORT :
-			IKE_UDP_PORT);
-	dbg("%s host_port %d", leftright, e->host_port);
+	unsigned host_port = hport(end_host_port(this, that));
+	dbg("%s() %s.host_port: %u->%u", __func__, this->leftright,
+	    this->host_port, host_port);
+	this->host_port = host_port;
 
 	/* Default client to subnet containing only self */
-	if (!e->has_client) {
+	if (!this->has_client) {
 		/*
 		 * Default client to a subnet containing only self.
 		 *
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		e->client = selector_from_address(&e->host_addr, &e->raw.client.protoport);
+		this->client = selector_from_address_protoport(this->host_addr,
+							       this->config->client.protoport);
 	}
 
-	if (e->sendcert == 0) {
+	if (this->sendcert == 0) {
 		/* uninitialized (ugly hack) */
-		e->sendcert = CERT_SENDIFASKED;
+		this->sendcert = CERT_SENDIFASKED;
 	}
-
-	return ugh;
 }
 
 /*
@@ -431,7 +458,10 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 {
 	/* HOST */
 	bool dohost_name;
-	if (isanyaddr(&this->host_addr)) {
+	bool dohost_port;
+	if (address_is_unset(&this->host_addr) ||
+	    address_is_any(this->host_addr)) {
+		dohost_port = false;
 		if (this->host_type == KH_IPHOSTNAME) {
 			dohost_name = true;
 			jam_string(buf, "%dns");
@@ -454,9 +484,11 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 	} else if (is_virtual_end(this)) {
 		dohost_name = false;
+		dohost_port = false;
 		jam_string(buf, "%virtual");
 	} else {
 		dohost_name = true;
+		dohost_port = true;
 		jam_address_sensitive(buf, &this->host_addr);
 	}
 
@@ -465,7 +497,13 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		jam(buf, "<%s>", this->host_addr_name);
 	}
 
-	if (this->raw.host.ikeport != 0 || this->host_port != IKE_UDP_PORT) {
+	/*
+	 * XXX: only print anomalies: when the host address is
+	 * "non-zero", a non-IKE_UDP_PORT; and when zero, any non-zero
+	 * port.
+	 */
+	if (dohost_port ? (this->config->host.ikeport != 0 || this->host_port != IKE_UDP_PORT) :
+	    this->host_port != 0) {
 		/*
 		 * XXX: Part of the problem is that code is stomping
 		 * on the HOST_ADDR's port setting it to the CLIENT's
@@ -481,32 +519,35 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, bool is_left)
 {
-	/* [CLIENT===] */
-	if (this->has_client) {
-		bool boring = (subnet_contains_all_addresses(&this->client) &&
-			       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
+	/* [CLIENT===] or [===CLIENT] */
+	if (!this->has_client) {
+		return;
+	}
+	if (selector_is_unset(&this->client)) {
+		return;
+	}
+	bool boring = (selector_is_all(this->client) &&
+		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
-		if (!boring && !is_left) {
-			jam_string(buf, "===");
-		}
+	if (!boring && !is_left) {
+		jam_string(buf, "===");
+	}
 
-		if (boring) {
-			/* boring case */
-		} else if (is_virtual_end(this)) {
-			if (is_virtual_vhost(this))
-				jam_string(buf, "vhost:?");
-			else
-				jam_string(buf,  "vnet:?");
-		} else if (subnet_contains_no_addresses(&this->client)) {
-			jam_string(buf, "?");
-		} else {
-			jam_subnet(buf, &this->client);
-		}
+	if (boring) {
+		/* boring case */
+	} else if (is_virtual_end(this)) {
+		if (is_virtual_vhost(this))
+			jam_string(buf, "vhost:?");
+		else
+			jam_string(buf,  "vnet:?");
+	} else if (selector_is_zero(this->client)) {
+		jam_string(buf, "?");
+	} else {
+		jam_selector_subnet(buf, &this->client);
+	}
 
-		if (!boring && is_left) {
-			jam_string(buf, "===");
-		}
-
+	if (!boring && is_left) {
+		jam_string(buf, "===");
 	}
 }
 
@@ -591,12 +632,8 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 	}
 }
 
-static void jam_end(struct jambuf *buf,
-		  const struct end *this,
-		    const struct end *that,
-		    bool is_left,
-		    lset_t policy,
-		    bool filter_rnh)
+void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+	     bool is_left, lset_t policy, bool filter_rnh)
 {
 	if (is_left) {
 		/* CLIENT=== */
@@ -623,36 +660,22 @@ static void jam_end(struct jambuf *buf,
 	}
 }
 
-size_t format_end(char *buf,
-		  size_t buf_len,
-		  const struct end *this,
-		  const struct end *that,
-		  bool is_left,
-		  lset_t policy,
-		  bool filter_rnh)
-{
-	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, this, that, is_left, policy, filter_rnh);
-	return strlen(buf);
-}
-
 /*
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
+
+#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
 #define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
 static char *format_connection(char *buf, size_t buf_len,
-			const struct connection *c,
-			const struct spd_route *sr)
+			       const struct connection *c,
+			       const struct spd_route *sr)
 {
-	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
-
-	snprintf(buf + w, buf_len - w, "...");
-	w += strlen(buf + w);
-	(void) format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy,
-		oriented(*c));
+	struct jambuf b = array_as_jambuf(buf, buf_len);
+	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, FALSE);
+	jam(&b, "...");
+	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(*c));
 	return buf;
 }
 
@@ -671,6 +694,10 @@ void unshare_connection_end(struct end *e)
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->virt = virtual_ip_addref(e->virt, HERE);
+	if (e->ckaid != NULL) {
+		e->ckaid = clone_thing(*e->ckaid, "ckaid");
+	}
 }
 
 /*
@@ -688,8 +715,6 @@ void unshare_connection_end(struct end *e)
  */
 static void unshare_connection(struct connection *c)
 {
-	c->name = clone_str(c->name, "connection name");
-
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
@@ -698,8 +723,6 @@ static void unshare_connection(struct connection *c)
 				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-	c->policy_label = clone_str(c->policy_label,
-				    "connection policy_label");
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -730,11 +753,49 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
-static int extract_end(struct fd *whackfd,
-		       struct end *dst, const struct whack_end *src,
-		       const char *leftright)
+static int extract_end(struct connection *c,
+		       const struct whack_end *src,
+		       enum left_right end_index,
+		       struct logger *logger/*connection "..."*/)
 {
+	/*
+	 * Since at this point 'this' and 'that' are disoriented their
+	 * names are pretty much meaningless.  Hence the strange
+	 * combination if 'this' and 'left' and 'that' and 'right.
+	 *
+	 * XXX: This is all too confusing - wouldn't it be simpler if
+	 * there was a '.left' and '.right' (or even .end[2] - this
+	 * code seems to be crying out for a for loop) and then having
+	 * orient() set up .local and .remote pointers or indexes
+	 * accordingly?
+	 */
+
+	struct config_end *config = &c->config[end_index];
+	config->end_index = end_index;
+	struct end *dst;
+	struct end *other_end;
+	const char *leftright;
+	switch (end_index) {
+	case LEFT_END:
+		/* start with: LEFT == LOCAL == THIS */
+		leftright = "left";
+		dst = &c->spd.this;
+		other_end = &c->spd.that;
+		c->local = config;
+		break;
+	case RIGHT_END:
+		/* start with: RIGHT == REMOTE == THAT */
+		leftright = "right";
+		dst = &c->spd.that;
+		other_end = &c->spd.this;
+		c->remote = config;
+		break;
+	default:
+		bad_case(end_index);
+	}
+	dst->config = config;
 	dst->leftright = leftright;
+	config->end_name = leftright;
 
 	bool same_ca = 0;
 
@@ -746,11 +807,22 @@ static int extract_end(struct fd *whackfd,
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
-		err_t ugh = atoid(src->id, &dst->id);
+		/*
+		 * Cannot report errors due to low level nesting of functions,
+		 * since it will try literal IP string conversions first. But
+		 * atoid() will log real failures like illegal DNS chars already,
+		 * and for @string ID's all chars are valid without processing.
+		 */
+		atoid(src->id, &dst->id);
+	}
+
+	if (src->sec_label != NULL) {
+		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
+		dbg("received sec_label '%s' from whack", src->sec_label);
+		err_t ugh = vet_seclabel(HUNK_AS_SHUNK(dst->sec_label));
 		if (ugh != NULL) {
-			log_global(RC_BADID, whackfd,
-				   "bad %s --id: %s (ignored)",
-				   leftright, ugh);
+			llog(RC_LOG, logger, "bad %s; ignored", ugh);
+			dst->sec_label = empty_chunk;
 		}
 	}
 
@@ -765,18 +837,18 @@ static int extract_end(struct fd *whackfd,
 			/* convert the CA into a DN blob */
 			ugh = atodn(src->ca, &dst->ca); /* static result! */
 			if (ugh != NULL) {
-				log_global(RC_LOG, whackfd,
-					   "bad %s CA string '%s': %s (ignored)",
-					   leftright, src->ca, ugh);
+				llog(RC_LOG, logger,
+					    "bad %s CA string '%s': %s (ignored)",
+					    leftright, src->ca, ugh);
 				dst->ca = EMPTY_CHUNK;
 			} else {
 				dst->ca = clone_hunk(dst->ca, "ca string");
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(dst->ca);
 				if (ugh != NULL) {
-					log_global(RC_LOG, whackfd,
-						   "error parsing %s CA converted to DN: %s",
-						   leftright, ugh);
+					llog(RC_LOG, logger,
+						    "error parsing %s CA converted to DN: %s",
+						    leftright, ugh);
 					DBG_dump_hunk(NULL, dst->ca);
 				}
 			}
@@ -784,9 +856,139 @@ static int extract_end(struct fd *whackfd,
 		}
 	}
 
-	if (!load_end_cert_and_preload_secret(whackfd, leftright/*side*/, src->pubkey,
-					      src->pubkey_type, dst)) {
-		return -1;
+	/*
+	 * Try to find the cert / private key.
+	 *
+	 * XXX: Be lazy and simply warn about combinations such as
+	 * cert+ckaid.
+	 *
+	 * Should this instead cross check?
+	 */
+	if (src->cert != NULL) {
+		if (src->ckaid != NULL) {
+			llog(RC_LOG, logger,
+				    "warning: ignoring %s ckaid '%s' and using %s certificate '%s'",
+				    dst->leftright, src->cert,
+				    dst->leftright, src->cert);
+		}
+		if (src->rsasigkey != NULL) {
+			llog(RC_LOG, logger,
+				    "warning: ignoring %s rsasigkey '%s' and using %s certificate '%s'",
+				    dst->leftright, src->cert,
+				    dst->leftright, src->cert);
+		}
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert, logger);
+		if (cert == NULL) {
+			llog(RC_FATAL, logger,
+				    "failed to add connection: %s certificate '%s' not found in the NSS database",
+				    dst->leftright, src->cert);
+			return -1; /* fatal */
+		}
+		diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+								   same_ca/*preserve_ca*/,
+								   logger);
+		if (diag != NULL) {
+			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+			CERT_DestroyCertificate(cert);
+			return -1;
+		}
+	} else if (src->rsasigkey != NULL) {
+		if (src->ckaid != NULL) {
+			llog(RC_LOG, logger,
+				    "warning: ignoring %s ckaid '%s' and using %s rsasigkey",
+				    dst->leftright, src->ckaid, dst->leftright);
+		}
+		/*
+		 * XXX: hack: whack will load the rsasigkey in a
+		 * second message, this code just extracts the ckaid.
+		 */
+		const struct pubkey_type *type = &pubkey_type_rsa;
+		/* XXX: lifted from starter_whack_add_pubkey() */
+		char err_buf[TTODATAV_BUF];
+		char keyspace[1024 + 4];
+		size_t keylen;
+
+		/* ??? this value of err isn't used */
+		err_t err = ttodatav(src->rsasigkey, 0, 0,
+				     keyspace, sizeof(keyspace), &keylen,
+				     err_buf, sizeof(err_buf), 0);
+		union pubkey_content pkc;
+		keyid_t pubkey;
+		ckaid_t ckaid;
+		size_t size;
+		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, &size,
+						  chunk2(keyspace, keylen));
+		if (err != NULL) {
+			llog(RC_FATAL, logger,
+				    "failed to add connection: %s raw public key invalid: %s",
+				    dst->leftright, err);
+			return -1;
+		}
+		ckaid_buf ckb;
+		dbg("saving %s CKAID %s extracted from raw %s public key",
+		    dst->leftright, str_ckaid(&ckaid, &ckb), type->name);
+		dst->ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
+		type->free_pubkey_content(&pkc);
+		/* try to pre-load the private key */
+		bool load_needed;
+		err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
+		if (err != NULL) {
+			ckaid_buf ckb;
+			dbg("no private key matching %s CKAID %s: %s",
+			    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
+		} else if (load_needed) {
+			ckaid_buf ckb;
+			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+				    "loaded private key matching %s CKAID %s",
+				    dst->leftright, str_ckaid(dst->ckaid, &ckb));
+		}
+	} else if (src->ckaid != NULL) {
+		ckaid_t ckaid;
+		err_t err = string_to_ckaid(src->ckaid, &ckaid);
+		if (err != NULL) {
+			/* should have been rejected by whack? */
+			/* XXX: don't trust whack */
+			llog(RC_FATAL, logger,
+				    "failed to add connection: %s CKAID '%s' invalid: %s",
+				    dst->leftright, src->ckaid, err);
+			return -1; /* fatal */
+		}
+		/*
+		 * Always save the CKAID so lazy load of the private
+		 * key will work.
+		 */
+		dst->ckaid = clone_thing(ckaid, "end ckaid");
+		/*
+		 * See if there's a certificate matching the CKAID, if
+		 * not assume things will later find the private key.
+		 */
+		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
+		if (cert != NULL) {
+			diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+									   same_ca/*preserve_ca*/,
+									   logger);
+			if (diag != NULL) {
+				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+				CERT_DestroyCertificate(cert);
+				return -1;
+			}
+		} else {
+			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
+			    dst->leftright, src->ckaid);
+			/* try to pre-load the private key */
+			bool load_needed;
+			err_t err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
+			if (err != NULL) {
+				ckaid_buf ckb;
+				dbg("no private key matching %s CKAID %s: %s",
+				    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
+			} else {
+				ckaid_buf ckb;
+				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+					    "loaded private key matching %s CKAID %s",
+					    dst->leftright, str_ckaid(dst->ckaid, &ckb));
+			}
+		}
 	}
 
 	/* does id have wildcards? */
@@ -800,8 +1002,6 @@ static int extract_end(struct fd *whackfd,
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
 	dst->ifaceip = src->ifaceip;
-	dst->modecfg_server = src->modecfg_server;
-	dst->modecfg_client = src->modecfg_client;
 	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;
 
@@ -812,8 +1012,8 @@ static int extract_end(struct fd *whackfd,
 	dst->authby = src->authby;
 
 	/* save some defaults */
-	dst->raw.client.subnet = src->client;
-	dst->raw.client.protoport = src->protoport;
+	config->client.subnet = src->client;
+	config->client.protoport = src->protoport;
 
 	/*
 	 * .has_client means that .client contains a hardwired value,
@@ -823,24 +1023,24 @@ static int extract_end(struct fd *whackfd,
 	 */
 	dst->has_client = src->has_client;
 	if (src->has_client) {
-		pexpect(subnet_is_set(&src->client));
-		dst->client = selector_from_subnet(&src->client,
-						   &src->protoport);
+		pexpect(!subnet_is_unset(&src->client));
+		dst->client = selector_from_subnet_protoport(src->client,
+							     src->protoport);
 	}
 
-	dst->protocol = src->protoport.protocol;
-	dst->port = src->protoport.port;
+	dst->protocol = src->protoport.ipproto;
+	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	dst->updown = clone_str(src->updown, "updown");
 	dst->sendcert =  src->sendcert;
 
-	dst->raw.host.ikeport = src->host_ikeport;
+	config->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
-		log_global(RC_BADID, whackfd,
-			   "%sikeport=%u must be between 1..65535, ignored",
-			   leftright, src->host_ikeport);
-		dst->raw.host.ikeport = 0;
+		llog(RC_BADID, logger,
+			    "%sikeport=%u must be between 1..65535, ignored",
+			    leftright, src->host_ikeport);
+		config->host.ikeport = 0;
 	}
 
 	/*
@@ -851,12 +1051,13 @@ static int extract_end(struct fd *whackfd,
 	switch (dst->host_type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = domain_to_address(shunk1(dst->host_addr_name),
+		err_t er = ttoaddress_dns(shunk1(dst->host_addr_name),
 					     address_type(&dst->host_addr),
 					     &dst->host_addr);
 		if (er != NULL) {
-			log_global(RC_COMMENT, whackfd,
-				   "failed to convert '%s' at load time: %s", dst->host_addr_name, er);
+			llog(RC_COMMENT, logger,
+				    "failed to convert '%s' at load time: %s",
+				    dst->host_addr_name, er);
 		}
 		break;
 	}
@@ -865,73 +1066,112 @@ static int extract_end(struct fd *whackfd,
 		break;
 	}
 
+	/*
+	 * How to add addresspool only for responder?  It is not
+	 * necessary on the initiator
+	 *
+	 * Note that, possibly confusingly, it is the client's end
+	 * that has the address pool.  I.e., set OTHER_END to server.
+	 *
+	 * Need to also merge in the client/server options provided by
+	 * whack - sometimes they are set, sometimes they are not.
+	 */
+
+	dst->modecfg_server = dst->modecfg_server || src->modecfg_server;
+	dst->modecfg_client = dst->modecfg_client || src->modecfg_client;
+
+	if (range_size(src->pool_range) > 0) {
+		if (c->pool != NULL) {
+			llog(RC_LOG_SERIOUS, logger, "both left and right define address pools");
+			return -1;
+		}
+		diag_t d = install_addresspool(src->pool_range, &c->pool);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, c->logger, &d,
+				 "invalid %saddresspool: ", leftright);
+			return -1;
+		}
+		other_end->modecfg_server = true;
+		dst->modecfg_client = true;
+	}
+
 	return same_ca;
 }
 
-static bool check_connection_end(const struct whack_end *this,
-				const struct whack_end *that,
-				const struct whack_message *wm)
+static diag_t check_connection_end(const struct whack_end *this,
+				   const struct whack_end *that,
+				   const struct whack_message *wm)
 {
-	if ((this->host_type == KH_IPADDR || this->host_type == KH_IFACE) &&
-		(wm->addr_family != addrtypeof(&this->host_addr) ||
-			wm->addr_family != addrtypeof(&this->host_nexthop))) {
-		/*
-		 * This should have been diagnosed by whack, so we need not
-		 * be clear.
-		 * !!! overloaded use of RC_CLASH
-		 */
-		loglog(RC_CLASH,
-			"address family inconsistency in this connection=%d host=%d/nexthop=%d",
-			wm->addr_family,
-			addrtypeof(&this->host_addr),
-			addrtypeof(&this->host_nexthop));
-		return FALSE;
+	/*
+	 * This should have been diagnosed by whack,
+	 * so we need not be clear.
+	 *
+	 * XXX: don't trust whack.
+	 * XXX: don't assume values were set (defaulted).
+	 * XXX: don't assume unset's type is NULL.
+	 * XXX: because both directions are tested some checks are redundant.
+	 */
+
+	/*
+	 * Find a type for the host addresses.  Order search by what
+	 * was most liklely specified.
+	 */
+	const struct ip_info *type = (!address_is_unset(&this->host_addr) ? address_type(&this->host_addr) :
+				      !address_is_unset(&this->host_nexthop) ? address_type(&this->host_nexthop) :
+				      NULL);
+
+	if (type != NULL) {
+		if (!address_is_unset(&this->host_nexthop) &&
+		    address_type(&this->host_nexthop) != type) {
+			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
+				    type->ip_name, this->leftright, address_type(&this->host_nexthop)->ip_name);
+		}
+		if (!address_is_unset(&that->host_addr) &&
+		    address_type(&that->host_addr) != type) {
+			return diag("host address family inconsistent: expecting %s but %shost is %s",
+				    type->ip_name, that->leftright, address_type(&that->host_addr)->ip_name);
+		}
+		if (!address_is_unset(&that->host_nexthop) &&
+		    address_type(&that->host_nexthop) != type) {
+			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
+				    type->ip_name, that->leftright, address_type(&that->host_nexthop)->ip_name);
+		}
 	}
 
 	/* ??? seems like a nasty test (in-band, low-level) */
 	/* XXX: still nasty; just less low-level */
-	if (range_is_specified(&this->pool_range)) {
-		struct ip_pool *pool;
-		err_t er = find_addresspool(&this->pool_range, &pool);
-
-		if (er != NULL) {
-			loglog(RC_CLASH, "leftaddresspool clash");
-			return FALSE;
+	if (range_size(this->pool_range) > 0) {
+		struct ip_pool *pool; /* ignore */
+		diag_t d = find_addresspool(this->pool_range, &pool);
+		if (d != NULL) {
+			return d;
 		}
 	}
 
-	if (subnet_is_specified(&this->client) &&
-	    subnet_is_specified(&that->client)) {
+	const struct ip_info *this_afi = subnet_type(&this->client);
+	const struct ip_info *that_afi = subnet_type(&that->client);
+	if (this_afi != NULL && that_afi != NULL && this_afi != that_afi) {
 		/* IPv4 vs IPv6? */
-		if (subnet_type(&this->client) != subnet_type(&that->client)) {
-			/*
-			 * !!! overloaded use of RC_CLASH
-			 */
-			loglog(RC_CLASH,
-				"address family inconsistency in this/that connection");
-			return FALSE;
-		}
+		return diag("subnets must have the same address family");
 	}
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
-	if (that->host_type != KH_IPHOSTNAME && isanyaddr(&that->host_addr)) {
+	if (that->host_type != KH_IPHOSTNAME &&
+	    (address_is_unset(&that->host_addr) || address_is_any(that->host_addr))) {
 		/*
 		 * Other side is wildcard: we must check if other conditions
 		 * met.
 		 */
 		if (this->host_type != KH_IPHOSTNAME &&
-			isanyaddr(&this->host_addr)) {
-			loglog(RC_ORIENT,
-				"connection %s must specify host IP address for our side",
-				wm->name);
-			return FALSE;
+		    (address_is_unset(&this->host_addr) || address_is_any(this->host_addr))) {
+			return diag("connection %s must specify host IP address for our side",
+				    wm->name);
 		}
 	}
 
-	if (this->protoport.protocol == 0 && this->protoport.port != 0) {
-		loglog(RC_ORIENT, "connection %s cannot specify non-zero port %d for prototcol 0",
-			wm->name, this->protoport.port);
-		return FALSE;
+	if (this->protoport.ipproto == 0 && this->protoport.hport != 0) {
+		return diag("connection %s cannot specify non-zero port %d for prototcol 0",
+			    wm->name, this->protoport.hport);
 	}
 
 	if (this->id != NULL && streq(this->id, "%fromcert")) {
@@ -939,81 +1179,22 @@ static bool check_connection_end(const struct whack_end *this,
 
 		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
 			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
-			loglog(RC_FATAL, "ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
-			return false;
+			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
 
-	return TRUE; /* happy */
+	return NULL; /* happy */
 }
 
-bool load_end_cert_and_preload_secret(struct fd *whackfd,
-				      const char *which, const char *pubkey,
-				      enum whack_pubkey_type pubkey_type,
-				      struct end *dst_end)
+diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
+					    struct end *dst_end,
+					    bool preserve_ca,
+					    struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), };
+	passert(cert != NULL);
 	dst_end->cert.ty = CERT_NONE;
 	dst_end->cert.u.nss_cert = NULL;
-
-	CERTCertificate *cert = NULL;
-	const char *cert_source = NULL;;
-	switch (pubkey_type) {
-	case WHACK_PUBKEY_CERTIFICATE_NICKNAME:
-	{
-		cert_source = "nickname";
-		cert = get_cert_by_nickname_from_nss(pubkey, logger);
-		if (cert == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
-				    "failed to find certificate named '%s' in the NSS database",
-				    pubkey);
-			return false;
-		}
-		break;
-	}
-	case WHACK_PUBKEY_CKAID:
-	{
-		/*
-		 * Perhaps it is already loaded?  Or perhaps it was
-		 * specified using an earlier rsasigkey=.
-		 */
-		cert_source = "CKAID";
-		struct pubkey *key = get_pubkey_with_matching_ckaid(pubkey);
-		if (key != NULL) {
-			/*
-			 * Convert the CKAID into the corresponding ID
-			 * so that a search will re-find it.
-			 */
-			dst_end->id = key->id;
-			return true;
-		}
-		ckaid_t ckaid;
-		err_t err = string_to_ckaid(pubkey, &ckaid);
-		if (err != NULL) {
-			/* should have been rejected by whack? */
-			log_message(RC_LOG, logger, "invalid hex CKAID '%s': %s", pubkey, err);
-			return false;
-		}
-		cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
-		if (cert == NULL) {
-			log_message(RC_LOG_SERIOUS, logger,
-				    "failed to find certificate ckaid '%s' in the NSS database",
-				    pubkey);
-			return false;
-		}
-		break;
-	}
-	case WHACK_PUBKEY_NONE:
-		pexpect(pubkey == NULL);
-		return true;
-	default:
-		log_message(RC_LOG_SERIOUS, logger,
-			    "warning: unknown pubkey '%s' of type %d", pubkey, pubkey_type);
-		/* recoverable screwup? */
-		return true;
-	}
-
-	passert(cert != NULL);
+	const char *nickname = cert->nickname;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -1027,13 +1208,11 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
 		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
-			log_message(RC_FATAL, logger,
-				    "FIPS: Rejecting cert with key size %d which is under %d",
+			SECKEY_DestroyPublicKey(pk);
+			return diag("FIPS: rejecting %s certificate '%s' with key size %d which is under %d",
+				    dst_end->leftright, nickname,
 				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
-			SECKEY_DestroyPublicKey(pk);
-			CERT_DestroyCertificate(cert);
-			return false;
 		}
 		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
 		SECKEY_DestroyPublicKey(pk);
@@ -1045,24 +1224,28 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
-		log_message(RC_LOG_SERIOUS, logger,
-			    "%s certificate \'%s\' is expired or not yet valid",
-			    which, pubkey);
-		CERT_DestroyCertificate(cert);
-		return false;
+		return diag("%s certificate '%s' is expired or not yet valid",
+			    dst_end->leftright, nickname);
 	}
 
-	dbg("loading %s certificate \'%s\' pubkey", which, pubkey);
+	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, nickname);
 	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
-		CERT_DestroyCertificate(cert);
-		return false;
+		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
+		return diag("%s certificate \'%s\' pubkey could not be loaded",
+			    dst_end->leftright, nickname);
 	}
 
 	dst_end->cert.ty = CERT_X509_SIGNATURE;
 	dst_end->cert.u.nss_cert = cert;
 
-	/* if no CA is defined, use issuer as default */
-	if (dst_end->ca.ptr == NULL) {
+	/*
+	 * If no CA is defined, use issuer as default; but only when
+	 * update is ok.
+	 *
+	 */
+	if (preserve_ca || dst_end->ca.ptr != NULL) {
+		dbg("preserving existing %s ca", dst_end->leftright);
+	} else {
 		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
@@ -1078,16 +1261,24 @@ bool load_end_cert_and_preload_secret(struct fd *whackfd,
 	 * get_psk.
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
-	err_t ugh = load_nss_cert_secret(cert, logger);
+	bool load_needed;
+	err_t ugh = preload_private_key_by_cert(&dst_end->cert, &load_needed, logger);
 	if (ugh != NULL) {
-		dbg("warning: no secret key loaded for %s certificate with %s %s: %s",
-		    which, cert_source, pubkey, ugh);
+		dbg("no private key matching %s certificate %s: %s",
+		    dst_end->leftright, nickname, ugh);
+	} else if (load_needed) {
+		llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+			    "loaded private key matching %s certificate '%s'",
+			    dst_end->leftright, nickname);
 	}
-	return true;
+	return NULL;
 }
 
 /* only used by add_connection() */
-static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *sa_mark) {
+static void mark_parse(/*const*/ char *wmmark,
+		       struct sa_mark *sa_mark,
+		       struct logger *logger/*connection "...":*/)
+{
 	/*const*/ char *val_end;
 
 	sa_mark->unique = FALSE;
@@ -1103,9 +1294,9 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 		    (*val_end != '\0' && *val_end != '/'))
 		{
 			/* ??? should be detected and reported by confread and whack */
-			loglog(RC_LOG_SERIOUS,
-				"connection \"%s\": bad mark value \"%s\"",
-				cnm, wmmark);
+			/* XXX: don't trust whack */
+			llog(RC_LOG_SERIOUS, logger,
+				    "bad mark value \"%s\"", wmmark);
 		} else {
 			sa_mark->val = v;
 		}
@@ -1117,18 +1308,19 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
 		unsigned long v = strtoul(val_end+1, &mask_end, 0);
 		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
 			/* ??? should be detected and reported by confread and whack */
-			loglog(RC_LOG_SERIOUS,
-				"connection \"%s\": bad mark mask \"%s\"",
-				cnm, mask_end);
+			/* XXX: don't trust whack */
+			llog(RC_LOG_SERIOUS, logger,
+				   "bad mark mask \"%s\"", mask_end);
 		} else {
 			sa_mark->mask = v;
 		}
 	}
 	if ((sa_mark->val & ~sa_mark->mask) != 0) {
 		/* ??? should be detected and reported by confread and whack */
-		loglog(RC_LOG_SERIOUS,
-			"connection \"%s\": mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
-			cnm, sa_mark->val, sa_mark->mask);
+		/* XXX: don't trust whack */
+		llog(RC_LOG_SERIOUS, logger,
+			    "mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
+			    sa_mark->val, sa_mark->mask);
 	}
 }
 
@@ -1151,203 +1343,189 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
-static bool extract_connection(struct fd *whackfd,
-			       const struct whack_message *wm,
+static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
-	/*
-	 * Give the connection a name early so that all error paths
-	 * have something to log.
-	 */
-	c->name = clone_str(wm->name, "connection name");
+	diag_t d;
 
+	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
-		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
-			wm->name);
+		llog(RC_DUPNAME, c->logger,
+		     "attempt to redefine connection \"%s\"", wm->name);
 		return false;
 	}
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
-		loglog(RC_FATAL,
-			"Failed to add connection \"%s\" with compress because kernel is not configured to do IPCOMP",
-			wm->name);
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection with compress because kernel is not configured to do IPCOMP");
 		return false;
 	}
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->sa_tfcpad != 0) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\", connection with type=transport cannot specify tfc=",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: connection with type=transport cannot specify tfc=");
 			return false;
 		}
 		if (wm->vti_iface != NULL) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\", VTI requires tunnel mode but connection specifies type=transport",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: VTI requires tunnel mode but connection specifies type=transport");
 			return false;
 		}
 	}
 	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
 		if (wm->sa_tfcpad != 0) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\", connection with phase2=ah cannot specify tfc=",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: connection with phase2=ah cannot specify tfc=");
 			return false;
 		}
 	}
 
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
 		if ((wm->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\", connection with authby=never must specify shunt type via type=",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: connection with authby=never must specify shunt type via type=");
 			return false;
 		}
 	}
 	if ((wm->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\": shunt connection cannot have authentication method other then authby=never",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
 			return false;
 		}
 	} else {
 		switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 		case LEMPTY:
 			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": non-shunt connection must have AH or ESP",
-					wm->name);
+				llog(RC_FATAL, c->logger,
+					    "failed to add connection: non-shunt connection must have AH or ESP");
 				return false;
 			}
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\": non-shunt connection must not specify both AH and ESP",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: non-shunt connection must not specify both AH and ESP");
 			return false;
 		}
 	}
 
-	switch (wm->policy & (POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW)) {
-	case POLICY_IKEV1_ALLOW:
-		c->ike_version = IKEv1;
-		break;
-	case POLICY_IKEV2_ALLOW:
-		c->ike_version = IKEv2;
-		break;
-	case 0:
-		c->ike_version = 0; /* i.e., none */
-		break;
-	default:
-		/* XXX: ikev[12] -> IKEv[12] */
-		loglog(RC_FATAL, "Failed to add connection \"%s\": connection can only be ikev1 or ikev2",
-			wm->name);
+	if (wm->ike_version == IKEv1) {
+#ifdef USE_IKEv1
+		if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
+			llog(RC_FATAL, c->logger,
+				    "failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections");
+			return false;
+		}
+#else
+		llog(RC_FATAL, c->logger, "failed to add IKEv1 connection: IKEv1 support not compiled in");
 		return false;
+#endif
 	}
+	c->ike_version = wm->ike_version;
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
 	    c->ike_version == IKEv1) {
-		loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2",
-		       wm->name);
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: opportunistic connection MUST have IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
 	    c->ike_version == IKEv1) {
-		loglog(RC_FATAL, "MOBIKE requires ikev2");
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: MOBIKE requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->ike_version == IKEv1) {
-		loglog(RC_FATAL, "narrowing=yes requires ikev2");
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: narrowing=yes requires IKEv2");
 		return false;
 	}
 
 	if (wm->iketcp != IKE_TCP_NO &&
 	    c->ike_version != IKEv2) {
-		loglog(RC_FATAL, "enable-tcp= requires ikev2");
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: enable-tcp= requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_sa_check == NULL) {
-			log_connection(RC_FATAL, whackfd, c, "MOBIKE not supported by %s interface",
-				       kernel_ops->kern_name);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: MOBIKE not supported by %s interface",
+				    kernel_ops->kern_name);
 			return false;
 		}
 		/* probe the interface */
-		err_t err = kernel_ops->migrate_sa_check();
+		err_t err = kernel_ops->migrate_sa_check(c->logger);
 		if (err != NULL) {
-			log_connection(RC_FATAL, whackfd, c,
-				       "MOBIKE kernel support missing for %s interface: %s",
-				       kernel_ops->kern_name, err);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: MOBIKE kernel support missing for %s interface: %s",
+				    kernel_ops->kern_name, err);
 			return false;
 		}
 	}
 
 	if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
-		loglog(RC_FATAL,
-			"Failed to add connection \"%s\": tcp-remoteport cannot be 0 or 500",
-						wm->name);
-				return false;
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: tcp-remoteport cannot be 0 or 500");
+		return false;
 	}
 
 	/* we could complain about a lot more whack strings */
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->ike != NULL) {
-			loglog(RC_INFORMATIONAL, "Ignored ike= option for type=passthrough connection");
+			llog(RC_INFORMATIONAL, c->logger,
+				    "ignored ike= option for type=passthrough connection");
 		}
 		if (wm->esp != NULL) {
-			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
+			llog(RC_INFORMATIONAL, c->logger,
+				    "ignored esp= option for type=passthrough connection");
 		}
 		if (wm->iketcp != IKE_TCP_NO) {
-			loglog(RC_INFORMATIONAL, "Ignored enable-tcp= option for type=passthrough connection");
+			llog(RC_INFORMATIONAL, c->logger,
+				    "ignored enable-tcp= option for type=passthrough connection");
 		}
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
-				wm->name);
+			llog(RC_FATAL, c->logger,
+				    "failed to add connection: leftauth= / rightauth= options are invalid for type=passthrough connection");
 			return false;
 		}
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
 			if (c->ike_version == IKEv1) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2",
-						wm->name);
+				llog(RC_FATAL, c->logger,
+					    "failed to add connection: leftauth= and rightauth= require ikev2");
 				return false;
 			}
 			if (wm->left.authby == AUTHBY_UNSET || wm->right.authby == AUTHBY_UNSET) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": leftauth= and rightauth= must both be set or both be unset",
-						wm->name);
+				llog(RC_FATAL, c->logger,
+					    "failed to add connection: leftauth= and rightauth= must both be set or both be unset");
 				return false;
 			}
 			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
 			if (wm->left.authby == wm->right.authby) {
-				bool conflict = FALSE;
-				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
+				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
+				const char *conflict = NULL;
 				switch (wm->left.authby) {
 				case AUTHBY_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
-						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
-						conflict = TRUE;
+						conflict = "leftauthby=secret but authby= is not secret";
 					}
 					break;
 				case AUTHBY_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
-						loglog(RC_FATAL, "leftauthby=null but authby= is not null");
-						conflict = TRUE;
+						conflict = "leftauthby=null but authby= is not null";
 					}
 					break;
 				case AUTHBY_NEVER:
 					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
-						loglog(RC_FATAL, "leftauthby=never but authby= is not never - double huh?");
-						conflict = TRUE;
+						conflict = "leftauthby=never but authby= is not never - double huh?";
 					}
 					break;
 				case AUTHBY_RSASIG:
@@ -1357,23 +1535,23 @@ static bool extract_connection(struct fd *whackfd,
 				default:
 					bad_case(wm->left.authby);
 				}
-				if (conflict) {
-					loglog(RC_FATAL,
-						"Failed to add connection \"%s\": leftauth=%s and rightauth=%s must not conflict with authby=%s",
-							wm->name,
-							enum_name(&keyword_authby_names, wm->left.authby),
-							enum_name(&keyword_authby_names, wm->right.authby),
-							prettypolicy(wm->policy & POLICY_ID_AUTH_MASK));
+				if (conflict != NULL) {
+					policy_buf pb;
+					llog(RC_FATAL, c->logger,
+					     "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
+					     enum_name(&keyword_authby_names, wm->left.authby),
+					     enum_name(&keyword_authby_names, wm->right.authby),
+					     str_policy(wm->policy & POLICY_ID_AUTH_MASK, &pb),
+					     conflict);
 					return false;
 				}
 			} else {
 				if ((wm->left.authby == AUTHBY_PSK && wm->right.authby == AUTHBY_NULL) ||
 				    (wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_PSK)) {
-					loglog(RC_FATAL,
-						"Failed to add connection \"%s\": cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
-							wm->name,
-							enum_name(&keyword_authby_names, wm->left.authby),
-							enum_name(&keyword_authby_names, wm->right.authby));
+					llog(RC_FATAL, c->logger,
+						    "failed to add connection: cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
+						    enum_name(&keyword_authby_names, wm->left.authby),
+						    enum_name(&keyword_authby_names, wm->right.authby));
 					return false;
 				}
 			}
@@ -1382,22 +1560,19 @@ static bool extract_connection(struct fd *whackfd,
 
 	if (protoport_has_any_port(&wm->right.protoport) &&
 	    protoport_has_any_port(&wm->left.protoport)) {
-		log_global(RC_FATAL, whackfd,
-			   "failed to add connection \"%s\": cannot have protoport with %%any on both sides",
-			   wm->name);
+		llog(RC_FATAL, c->logger,
+			    "failed to add connection: cannot have protoport with %%any on both sides");
 		return false;
 	}
 
-	if (!check_connection_end(&wm->right, &wm->left, wm) ||
-	    !check_connection_end(&wm->left, &wm->right, wm)) {
-		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
-			wm->name);
+	d = check_connection_end(&wm->right, &wm->left, wm);
+	if (d != NULL) {
+		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
-
-	if (subnet_type(&wm->left.client) != subnet_type(&wm->right.client)) {
-		loglog(RC_FATAL, "Failed to load connection \"%s\": subnets must have the same address family",
-			wm->name);
+	d = check_connection_end(&wm->left, &wm->right, wm);
+	if (d != NULL) {
+		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 
@@ -1425,7 +1600,6 @@ static bool extract_connection(struct fd *whackfd,
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
-		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
 		c->ike_version = 0;
 		c->iketcp = IKE_TCP_NO;
 		c->remote_tcpport = 0;
@@ -1434,19 +1608,21 @@ static bool extract_connection(struct fd *whackfd,
 	if (libreswan_fipsmode()) {
 		if (c->policy & POLICY_NEGO_PASS) {
 			c->policy &= ~POLICY_NEGO_PASS;
-			loglog(RC_LOG_SERIOUS,
-				"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 		if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
 			c->policy &= ~POLICY_FAIL_MASK;
 			c->policy |= POLICY_FAIL_NONE;
-			loglog(RC_LOG_SERIOUS,
-				"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 	}
 
-	dbg("added new connection %s with policy %s%s",
-	    c->name, prettypolicy(c->policy),
+	policy_buf pb;
+	dbg("added new %s connection %s with policy %s%s",
+	    enum_name(&ike_version_names, c->ike_version),
+	    c->name, str_policy(c->policy, &pb),
 	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
@@ -1455,8 +1631,9 @@ static bool extract_connection(struct fd *whackfd,
 			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_AUTH_NEVER;
+				policy_buf pb;
 				dbg("no AUTH policy was set for type=passthrough - defaulting to %s",
-				    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 			}
 		}
 	} else {
@@ -1465,8 +1642,9 @@ static bool extract_connection(struct fd *whackfd,
 			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_DEFAULT;
+				policy_buf pb;
 				dbg("no AUTH policy was set - defaulting to %s",
-				    prettypolicy(c->policy & POLICY_ID_AUTH_MASK));
+				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 			}
 		}
 
@@ -1482,8 +1660,6 @@ static bool extract_connection(struct fd *whackfd,
 
 		/* IKE cipher suites */
 
-		struct logger logger = cur_logger();
-
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
 		    (wm->ike != NULL || c->ike_version == IKEv2)) {
 			const struct proposal_policy proposal_policy = {
@@ -1493,7 +1669,7 @@ static bool extract_connection(struct fd *whackfd,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = false,
 				.logger_rc_flags = ALL_STREAMS|RC_LOG,
-				.logger = &logger,
+				.logger = c->logger, /* on-stack */
 				/* let defaults stumble on regardless */
 				.ignore_parser_errors = (wm->ike == NULL),
 			};
@@ -1502,9 +1678,9 @@ static bool extract_connection(struct fd *whackfd,
 			c->ike_proposals.p = proposals_from_str(parser, wm->ike);
 
 			if (c->ike_proposals.p == NULL) {
-				pexpect(parser->error[0]); /* something */
-				loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
-					wm->name, parser->error);
+				pexpect(parser->diag != NULL); /* something */
+				log_diag(RC_FATAL, c->logger, &parser->diag,
+					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
@@ -1541,7 +1717,7 @@ static bool extract_connection(struct fd *whackfd,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = true,
 				.logger_rc_flags = ALL_STREAMS|RC_LOG,
-				.logger = &logger,
+				.logger = c->logger, /* on-stack */
 				/* let defaults stumble on regardless */
 				.ignore_parser_errors = (wm->esp == NULL),
 			};
@@ -1561,9 +1737,9 @@ static bool extract_connection(struct fd *whackfd,
 			struct proposal_parser *parser = fn(&proposal_policy);
 			c->child_proposals.p = proposals_from_str(parser, wm->esp);
 			if (c->child_proposals.p == NULL) {
-				loglog(RC_FATAL,
-				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
-				       wm->name, esp, parser->error);
+				pexpect(parser->diag != NULL);
+				log_diag(RC_FATAL, c->logger, &parser->diag,
+					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
 				return false;
@@ -1591,11 +1767,11 @@ static bool extract_connection(struct fd *whackfd,
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			libreswan_log("conn: %s, rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
-				c->name,
-				deltasecs(c->sa_rekey_margin),
-				deltasecs(c->sa_ipsec_life_seconds),
-				deltasecs(new_rkm));
+			llog(RC_LOG, c->logger,
+			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
+			     deltasecs(c->sa_rekey_margin),
+			     deltasecs(c->sa_ipsec_life_seconds),
+			     deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1606,15 +1782,15 @@ static bool extract_connection(struct fd *whackfd,
 			time_t max_ipsec = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
 
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				loglog(RC_LOG_SERIOUS,
-					"IKE lifetime limited to the maximum allowed %jds",
-					(intmax_t) max_ike);
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "IKE lifetime limited to the maximum allowed %jds",
+				     (intmax_t) max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				loglog(RC_LOG_SERIOUS,
-					"IPsec lifetime limited to the maximum allowed %jds",
-					(intmax_t) max_ipsec);
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "IPsec lifetime limited to the maximum allowed %jds",
+				     (intmax_t) max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
 		}
@@ -1668,32 +1844,32 @@ static bool extract_connection(struct fd *whackfd,
 
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
-			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.in);
-			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.out);
+			mark_parse(wm->conn_mark_both, &c->sa_marks.in, c->logger);
+			mark_parse(wm->conn_mark_both, &c->sa_marks.out, c->logger);
 			if (wm->conn_mark_in != NULL || wm->conn_mark_out != NULL) {
-				loglog(RC_LOG_SERIOUS,
-					"connection \"%s\": conflicting mark specifications",
-					wm->name);
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "conflicting mark specifications");
 			}
 		}
 		if (wm->conn_mark_in != NULL)
-			mark_parse(wm->name, wm->conn_mark_in, &c->sa_marks.in);
+			mark_parse(wm->conn_mark_in, &c->sa_marks.in, c->logger);
 		if (wm->conn_mark_out != NULL)
-			mark_parse(wm->name, wm->conn_mark_out, &c->sa_marks.out);
+			mark_parse(wm->conn_mark_out, &c->sa_marks.out, c->logger);
 
 		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
 #ifdef USE_XFRM_INTERFACE
-		if (wm->xfrm_if_id != yn_no) {
-			struct logger logger = CONNECTION_LOGGER(c, whackfd);
-			err_t err = xfrm_iface_supported(&logger);
+		if (wm->xfrm_if_id != UINT32_MAX) {
+			err_t err = xfrm_iface_supported(c->logger);
 			if (err == NULL) {
-				if (setup_xfrm_interface(c, wm->xfrm_if_id))
+				if (!setup_xfrm_interface(c, wm->xfrm_if_id == 0 ?
+					PLUTO_XFRMI_REMAP_IF_ID_ZERO : wm->xfrm_if_id ))
 					return false;
 			} else {
-				log_message(RC_FATAL, &logger,
-					    "ipsec-interface=%u not supported. %s", wm->xfrm_if_id, err);
+				llog(RC_FATAL, c->logger,
+				     "failed to add connection: ipsec-interface=%u not supported. %s",
+				     wm->xfrm_if_id, err);
 				return false;
 			}
 		}
@@ -1704,7 +1880,6 @@ static bool extract_connection(struct fd *whackfd,
 	c->nmconfigured = wm->nmconfigured;
 #endif
 
-	c->policy_label = clone_str(wm->policy_label, "connection policy_label");
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
@@ -1722,16 +1897,12 @@ static bool extract_connection(struct fd *whackfd,
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(whackfd, &c->spd.this, &wm->left, "left");
+	int same_leftca = extract_end(c, &wm->left, LEFT_END, c->logger);
 	if (same_leftca < 0) {
-		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"left\" certificate",
-		       c->name);
 		return false;
 	}
-	int same_rightca = extract_end(whackfd, &c->spd.that, &wm->right, "right");
+	int same_rightca = extract_end(c, &wm->right, RIGHT_END, c->logger);
 	if (same_rightca < 0) {
-		loglog(RC_FATAL, "Failed to add connection \"%s\" with invalid \"right\" certificate",
-		       c->name);
 		return false;
 	}
 
@@ -1741,33 +1912,11 @@ static bool extract_connection(struct fd *whackfd,
 		c->spd.this.ca = clone_hunk(c->spd.that.ca, "same leftca");
 	}
 
-	/*
-	 * How to add addresspool only for responder?
-	 * It is not necessary on the initiator
-	 */
-
-	if ((range_type(&wm->left.pool_range) == &ipv4_info ||
-		range_type(&wm->left.pool_range) == &ipv6_info)	&&
-		range_is_specified(&wm->left.pool_range)) {
-		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->left.pool_range);
-		c->spd.that.modecfg_server = TRUE;
-		c->spd.this.modecfg_client = TRUE;
-	}
-	if ((range_type(&wm->right.pool_range) == &ipv4_info ||
-		range_type(&wm->right.pool_range) == &ipv6_info) &&
-		range_is_specified(&wm->right.pool_range)) {
-		/* there is address pool range add to the global list */
-		c->pool = install_addresspool(&wm->right.pool_range);
-		c->spd.that.modecfg_client = TRUE;
-		c->spd.this.modecfg_server = TRUE;
-	}
-
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 		c->policy |= POLICY_XAUTH;
 
-	default_end("left", &c->spd.this, &c->spd.that.host_addr, c->spd.that.raw.host.ikeport);
-	default_end("right", &c->spd.that, &c->spd.this.host_addr, c->spd.this.raw.host.ikeport);
+	update_ends_from_this_host_addr(&c->spd.this, &c->spd.that);
+	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
 	 * If both left/rightauth is unset, fill it in with (preferred) symmetric policy
@@ -1807,7 +1956,8 @@ static bool extract_connection(struct fd *whackfd,
 	 * force any wildcard host IP address, any wildcard subnet
 	 * or any wildcard ID to _that_ end
 	 */
-	if (isanyaddr(&c->spd.this.host_addr) ||
+	if (address_is_unset(&c->spd.this.host_addr) ||
+	    address_is_any(c->spd.this.host_addr) ||
 	    c->spd.this.has_port_wildcard ||
 	    c->spd.this.has_id_wildcards) {
 		struct end t = c->spd.this;
@@ -1853,15 +2003,16 @@ static bool extract_connection(struct fd *whackfd,
 		 */
 		if (c->sa_keying_tries == 0) {
 			c->sa_keying_tries = 1;
-			libreswan_log("the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
+			llog(RC_LOG, c->logger,
+			     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
 		}
 	}
 
 	if (c->policy & POLICY_GROUP) {
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if ((isanyaddr(&c->spd.that.host_addr) &&
-			!NEVER_NEGOTIATE(c->policy)) ||
+	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
+		    !NEVER_NEGOTIATE(c->policy)) ||
 		c->spd.that.has_port_wildcard ||
 		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 			c->spd.that.has_id_wildcards )) {
@@ -1899,14 +2050,13 @@ static bool extract_connection(struct fd *whackfd,
 		 * This now happens with wildcards on
 		 * non-instantiations, such as rightsubnet=vnet:%priv
 		 * or rightprotoport=17/%any
-		 * passert(isanyaddr(&c->spd.that.host_addr));
+		 * passert(address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr));
 		 */
-		struct logger logger = GLOBAL_LOGGER(whackfd);
-		c->spd.that.virt = create_virtual(c,
-						  wm->left.virt != NULL ?
+		passert(c->spd.that.virt == NULL);
+		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
 						  wm->left.virt :
 						  wm->right.virt,
-						  &logger);
+						  c->logger);
 		if (c->spd.that.virt != NULL)
 			c->spd.that.has_client = TRUE;
 	}
@@ -1932,33 +2082,40 @@ static const char *const policy_shunt_names[4] = {
 
 void add_connection(struct fd *whackfd, const struct whack_message *wm)
 {
-	struct connection *c = alloc_connection(HERE);
-	if (extract_connection(whackfd, wm, c)) {
-		/* log all about this connection */
-		libreswan_log("added %s connection \"%s\"",
-		NEVER_NEGOTIATE(c->policy) ?
-			policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
-			LIN(POLICY_IKEV2_ALLOW, c->policy) ? "IKEv2" : "IKEv1",	 c->name);
-		dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-		    deltasecs(c->sa_ike_life_seconds),
-		    deltasecs(c->sa_ipsec_life_seconds),
-		    deltasecs(c->sa_rekey_margin),
-		    c->sa_rekey_fuzz,
-		    c->sa_keying_tries,
-		    c->sa_replay_window,
-		    prettypolicy(c->policy),
-		    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
-		char topo[CONN_BUF_LEN];
-		dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
-	} else {
-		/*
-		 * Don't log here - it's assumed that
-		 * extract_connection() has already displayed an
-		 * RC_FATAL log message.
-		 */
-		struct logger logger = GLOBAL_LOGGER(whackfd);
-		discard_connection(c, false/*not-valid*/, &logger);
+	struct connection *c = alloc_connection(wm->name, HERE);
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+
+	if (!extract_connection(wm, c)) {
+		/* already logged */
+		struct logger *logger = clone_logger(c->logger, HERE);
+		discard_connection(c, false/*not-valid*/, logger);
+		free_logger(&logger, HERE);
+		return;
 	}
+
+	/* log all about this connection */
+	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
+			    c->ike_version == IKEv1 ? "IKEv1" :
+			    c->ike_version == IKEv2 ? "IKEv2" :
+			    "IKEv?");
+	/* connection is good-to-go: log against it */
+	llog(RC_LOG, c->logger, "added %s connection", what);
+	policy_buf pb;
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+	    deltasecs(c->sa_ike_life_seconds),
+	    deltasecs(c->sa_ipsec_life_seconds),
+	    deltasecs(c->sa_rekey_margin),
+	    c->sa_rekey_fuzz,
+	    c->sa_keying_tries,
+	    c->sa_replay_window,
+	    str_policy(c->policy, &pb),
+	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+	char topo[CONN_BUF_LEN];
+	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
 }
 
 /*
@@ -1967,93 +2124,96 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(struct fd *whackfd,
-			 struct connection *group, const ip_subnet *target,
-			 uint8_t proto , uint16_t sport , uint16_t dport)
+struct connection *add_group_instance(struct connection *group,
+				      const ip_selector *target,
+				      uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(*group));
 
 	/*
 	 * Manufacture a unique name for this template.
-	 * If the name gets truncated, that will manifest itself
-	 * in a duplicated name and thus be rejected.
 	 */
-	char namebuf[100];	/* presumed large enough */
+	char *namebuf; /* must free */
 
-	{
-		subnet_buf targetbuf;
-		str_subnet(target, &targetbuf);
+	subnet_buf targetbuf;
+	str_selector_subnet(target, &targetbuf);
 
-		if (proto == 0) {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf.buf);
-		} else {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
-				targetbuf.buf, sport, proto, dport);
-		}
+	if (proto == 0) {
+		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
+	} else {
+		namebuf = alloc_printf("%s#%s-(%d--%d--%d)", group->name,
+				       targetbuf.buf, sport, proto, dport);
 	}
 
 	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
-		loglog(RC_DUPNAME,
-			"group name + target yields duplicate name \"%s\"",
-			namebuf);
+		llog(RC_DUPNAME, group->logger,
+		     "group name + target yields duplicate name \"%s\"", namebuf);
+		pfreeany(namebuf);
 		return NULL;
-	} else {
-		struct connection *t = clone_connection(group, HERE);
-
-		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
-		t->name = namebuf;	/* trick: unsharing will clone this for us */
-
-		/* suppress virt before unsharing */
-		passert(t->spd.this.virt == NULL);
-
-		pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
-
-		if (t->spd.that.virt != NULL) {
-			DBG_log("virtual_ip not supported in group instance; ignored");
-			t->spd.that.virt = NULL;
-		}
-
-		unshare_connection(t);
-
-		t->spd.that.client = *target;
-		if (proto != 0) {
-			/* if foodgroup entry specifies protoport, override protoport= settings */
-			t->spd.this.protocol = proto;
-			t->spd.that.protocol = proto;
-			t->spd.this.port = sport;
-			t->spd.that.port = dport;
-		}
-		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
-		t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-		t->kind = isanyaddr(&t->spd.that.host_addr) &&
-			!NEVER_NEGOTIATE(t->policy) ?
-			CK_TEMPLATE : CK_INSTANCE;
-
-		/* reset log file info */
-		t->log_file_name = NULL;
-		t->log_file = NULL;
-		t->log_file_err = FALSE;
-
-		t->spd.reqid = group->sa_reqid == 0 ?
-			gen_reqid() : group->sa_reqid;
-
-		/* add to connections list */
-		t->ac_next = connections;
-		connections = t;
-
-		/* same host_pair as parent: stick after parent on list */
-		/* t->hp_next = group->hp_next; */	/* done by clone_thing */
-		group->hp_next = t;
-
-		/* route if group is routed */
-		if (group->policy & POLICY_GROUTED) {
-			if (!trap_connection(t, whackfd))
-				whack_log(RC_ROUTE, whackfd,
-					  "could not route");
-		}
-		return clone_str(t->name, "group instance name");
 	}
+
+	struct connection *t = clone_connection(namebuf, group, HERE);
+	passert(namebuf != t->name); /* see clone_connection() */
+	pfreeany(namebuf);
+	t->foodgroup = t->name; /* XXX: DANGER: unshare_connection() will clone this */
+
+	/* suppress virt before unsharing */
+	passert(t->spd.this.virt == NULL);
+
+	pexpect(t->spd.spd_next == NULL);	/* we only handle top spd */
+
+	if (t->spd.that.virt != NULL) {
+		DBG_log("virtual_ip not supported in group instance; ignored");
+		virtual_ip_delref(&t->spd.that.virt, HERE);
+	}
+
+	unshare_connection(t);
+	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
+
+	t->spd.that.client = *target;
+	if (proto != 0) {
+		/* if foodgroup entry specifies protoport, override protoport= settings */
+		t->spd.this.protocol = proto;
+		t->spd.that.protocol = proto;
+		t->spd.this.port = sport;
+		t->spd.that.port = dport;
+	}
+	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
+	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
+	t->kind = (address_is_unset(&t->spd.that.host_addr) || address_is_any(t->spd.that.host_addr)) &&
+		!NEVER_NEGOTIATE(t->policy) ?
+		CK_TEMPLATE : CK_INSTANCE;
+
+	/* reset log file info */
+	t->log_file_name = NULL;
+	t->log_file = NULL;
+	t->log_file_err = FALSE;
+
+	t->spd.reqid = group->sa_reqid == 0 ?
+		gen_reqid() : group->sa_reqid;
+
+	/* add to connections list */
+	t->ac_next = connections;
+	connections = t;
+
+	/* same host_pair as parent: stick after parent on list */
+	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
+	group->hp_next = t;
+
+	/* route if group is routed */
+	if (group->policy & POLICY_GROUTED) {
+		/* XXX: something better? */
+		close_any(&t->logger->global_whackfd);
+		t->logger->global_whackfd = dup_any(group->logger->global_whackfd);
+		if (!trap_connection(t)) {
+			llog(WHACK_STREAM|RC_ROUTE, group->logger,
+			     "could not route");
+		}
+		/* XXX: something better? */
+		close_any(&t->logger->global_whackfd);
+	}
+	return t;
 }
 
 /* An old target has disappeared for a group: delete instance. */
@@ -2085,7 +2245,8 @@ struct connection *instantiate(struct connection *c,
 	passert(c->spd.spd_next == NULL);
 
 	c->instance_serial++;
-	struct connection *d = clone_connection(c, HERE);
+	struct connection *d = clone_connection(c->name, c, HERE);
+	passert(c->name != d->name); /* see clone_connection() */
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
@@ -2101,17 +2262,20 @@ struct connection *instantiate(struct connection *c,
 	if (peer_addr != NULL) {
 		d->spd.that.host_addr = *peer_addr;
 	}
-	default_end("that", &d->spd.that, &d->spd.this.host_addr, d->spd.this.raw.host.ikeport);
+	update_ends_from_this_host_addr(&d->spd.that, &d->spd.this);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	default_end("this", &d->spd.this, &d->spd.that.host_addr, d->spd.this.raw.host.ikeport);
+	update_ends_from_this_host_addr(&d->spd.this, &d->spd.that);
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+
+	/* since both ends updated; presumably already oriented? */
+	set_policy_prio(d);
 
 	/* set internal fields */
 	d->ac_next = connections;
@@ -2144,14 +2308,14 @@ struct connection *instantiate(struct connection *c,
 
 struct connection *rw_instantiate(struct connection *c,
 				  const ip_address *peer_addr,
-				  const ip_subnet *peer_subnet,
+				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
 	struct connection *d = instantiate(c, peer_addr, peer_id);
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
-		if (subnetishost(peer_subnet) && addrinsubnet(peer_addr, peer_subnet))
+		if (selector_eq_address(*peer_subnet, *peer_addr))
 			d->spd.that.has_client = FALSE;
 	}
 
@@ -2162,7 +2326,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd.that.client = subnet_type(&d->spd.that.client)->no_addresses;
+		d->spd.that.client = selector_type(&d->spd.that.client)->selector.zero;
 	}
 	connection_buf inst;
 	address_buf b;
@@ -2173,15 +2337,28 @@ struct connection *rw_instantiate(struct connection *c,
 }
 
 /* priority formatting */
-void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
+size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp)
 {
 	if (pp == BOTTOM_PRIO) {
-		snprintf(buf, POLICY_PRIO_BUF, "0");
-	} else {
-		snprintf(buf, POLICY_PRIO_BUF, "%" PRIu32 ",%" PRIu32,
-			pp >> 17,
-			(pp & ~(~(policy_prio_t)0 << 17)) >> 8);
+		return jam_string(buf, "0");
 	}
+
+	return jam(buf, "%" PRIu32 ",%" PRIu32,
+		   pp >> 17, (pp & ~(~(policy_prio_t)0 << 17)) >> 8);
+}
+
+const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf)
+{
+	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
+	jam_policy_prio(&jb, pp);
+	return buf->buf;
+}
+
+void set_policy_prio(struct connection *c)
+{
+	c->policy_prio = (((policy_prio_t)c->spd.this.client.maskbits << 17) |
+			  ((policy_prio_t)c->spd.that.client.maskbits << 8) |
+			  ((policy_prio_t)1));
 }
 
 /*
@@ -2193,17 +2370,20 @@ void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
 
 static size_t jam_connection_client(struct jambuf *b,
 				    const char *prefix, const char *suffix,
-				    const ip_subnet *client, const ip_address *gw)
+				    const ip_selector client,
+				    const ip_address host_addr)
 {
 	size_t s = 0;
-	if (subnetisaddr(client, gw)) {
+	if (selector_subnet_eq_address(client, host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (subnet_contains_no_addresses(client)) {
+		if (selector_is_unset(&client)) {
+			s += jam_string(b, "?");
+		} else if (selector_is_zero(client)) {
 			s += jam_string(b, "?"); /* unknown */
 		} else {
-			s += jam_subnet(b, client);
+			s += jam_selector_subnet(b, &client);
 		}
 		s += jam_string(b, suffix);
 	}
@@ -2222,13 +2402,13 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		s += jam_connection_client(buf, " ", "===",
-					   &c->spd.this.client,
-					   &c->spd.this.host_addr);
+					   c->spd.this.client,
+					   c->spd.this.host_addr);
 		s += jam_string(buf, " ...");
 		s += jam_address(buf, &c->spd.that.host_addr);
 		s += jam_connection_client(buf, "===", "",
-					   &c->spd.that.client,
-					   &c->spd.that.host_addr);
+					   c->spd.that.client,
+					   c->spd.that.host_addr);
 	} else {
 		s += jam_string(buf, " ");
 		s += jam_address_sensitive(buf, &c->spd.that.host_addr);
@@ -2256,24 +2436,8 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 }
 
 /*
- * This function is called using the convention:
- *
- *    printf("\"%s\"%s", c->name, fmt_conn_instance(c, &buf));
- *
- * The CK_INSTANCE check is so it returns "" when false.
- */
-char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
-{
-	/* not sizeof(buf), as BUF is an address */
-	struct jambuf p = array_as_jambuf(buf, CONN_INST_BUF);
-	if (c->kind == CK_INSTANCE) {
-		jam_connection_instance(&p, c);
-	}
-	return buf;
-}
-
-/*
  * Find an existing connection for a trapped outbound packet.
+ *
  * This is attempted before we bother with gateway discovery.
  *   + this connection is routed or instance_of_routed_template
  *     (i.e. approved for on-demand)
@@ -2289,26 +2453,26 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
  * See also build_outgoing_opportunistic_connection.
  */
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					const ip_address *our_client,
-					const ip_address *peer_client,
-					int transport_proto)
+					       const ip_endpoint *local_client,
+					       const ip_endpoint *remote_client,
+					       chunk_t csec_label,
+					       struct logger *logger UNUSED)
 {
-	int our_port = ntohs(portof(our_client));
-	int peer_port = ntohs(portof(peer_client));
+	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);
+	passert(!endpoint_is_unset(local_client));
+	passert(!endpoint_is_unset(remote_client));
+	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
+
+	int local_port = endpoint_hport(*local_client);
+	int remote_port = endpoint_hport(*remote_client);
 
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 	struct spd_route *best_sr = NULL;
 
-	passert(endpoint_is_specified(our_client));
-	passert(endpoint_is_specified(peer_client));
-
-	address_buf a, b;
-	dbg("find_connection: looking for policy for connection: %s:%d/%d -> %s:%d/%d",
-	    str_address(our_client, &a),
-	    transport_proto, our_port,
-	    str_address(peer_client, &b),
-	    transport_proto, peer_port);
+	endpoints_buf eb;
+	dbg("find_connection: looking for policy for connection: %s",
+	    str_endpoints(local_client, remote_client, &eb));
 
 	struct connection *c;
 
@@ -2320,53 +2484,45 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if ((routed(sr->routing) ||
-					c->instance_initiation_ok) &&
-				addrinsubnet(our_client, &sr->this.client) &&
-				addrinsubnet(peer_client, &sr->that.client) &&
-				(sr->this.protocol == 0 ||
-					transport_proto == sr->this.protocol) &&
-				(sr->this.port == 0 ||
-					our_port == sr->this.port) &&
-				(sr->that.port == 0 ||
-					peer_port == sr->that.port))
-			{
+			if ( (routed(sr->routing) || c->instance_initiation_ok || sec_label.len != 0) &&
+			    endpoint_in_selector(*local_client, sr->this.client) &&
+			    endpoint_in_selector(*remote_client, sr->that.client)
+#ifdef HAVE_LABELED_IPSEC
+			     && se_label_match(sec_label, sr->this.sec_label, logger)
+#endif
+			     ) {
+				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
 				policy_prio_t prio =
-					8 * (c->prio +
-					     (c->kind == CK_INSTANCE)) +
-					2 * (sr->this.port == our_port) +
-					2 * (sr->that.port == peer_port) +
-					1 * (sr->this.protocol == transport_proto);
+					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+					 2 * (sr->this.port == local_port) +
+					 2 * (sr->that.port == remote_port) +
+					 1 * (sr->this.protocol == ipproto));
 
 				if (DBGP(DBG_BASE)) {
-					connection_buf cib;
-					selector_buf c_ocb;
-					selector_buf c_pcb;
-					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s -> %s [pri: %" PRIu32 "]",
-						pri_connection(c, &cib),
-						str_selector(&c->spd.this.client, &c_ocb),
-						str_selector(&c->spd.that.client, &c_pcb),
+					connection_buf cib_c;
+					selectors_buf sb;
+					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
+						pri_connection(c, &cib_c),
+						str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 						prio);
 
 					if (best == NULL) {
-						connection_buf cib2;
 						DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(c, &cib2),
+							pri_connection(c, &cib_c),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
 								"none");
 					} else {
-						connection_buf cib;
-						connection_buf cib2;
+						connection_buf cib_best;
 						DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(best, &cib),
+							pri_connection(best, &cib_best),
 							best_prio,
 							best,
 							best->policy_next ?
 								best->policy_next->name :
 								"none",
-							pri_connection(c, &cib2),
+							pri_connection(c, &cib_c),
 							prio, c,
 							c->policy_next ?
 								c->policy_next->name :
@@ -2405,46 +2561,52 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 }
 
 struct connection *oppo_instantiate(struct connection *c,
-				    const ip_address *peer_addr,
-				    const struct id *peer_id,
-				    const ip_address *our_client,
-				    const ip_address *peer_client)
+				    const struct id *remote_id,
+				    /* both host and client */
+				    const ip_address *local_address,
+				    const ip_address *remote_address)
 {
-	struct connection *d = instantiate(c, peer_addr, peer_id);
+	passert(local_address != NULL);
+	passert(remote_address != NULL);
+	address_buf lb, rb;
+	dbg("oppo instantiating c=\"%s\" with c->routing %s between %s -> %s",
+	    c->name, enum_name(&routing_story, c->spd.routing),
+	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	dbg("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-	    d->name, c->name,
-	    enum_name(&routing_story, c->spd.routing),
-	    enum_name(&routing_story, d->spd.routing));
-	if (DBGP(DBG_BASE)) {
-		char instbuf[512];
-		DBG_log("new oppo instance: %s",
-			format_connection(instbuf, sizeof(instbuf), d, &d->spd));
-	}
+	struct connection *d = instantiate(c, remote_address, remote_id);
 
 	passert(d->spd.spd_next == NULL);
 
 	/* fill in our client side */
 	if (d->spd.this.has_client) {
 		/*
-		 * There was a client in the abstract connection so we demand
-		 * that the required client is within that subnet, * or that
-		 * it is our private ip in case we are behind a port forward
+		 * There was a client in the abstract connection so we
+		 * demand that either ...
 		 */
-		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
 
 		/* opportunistic connections do not use port selectors */
-		if (addrinsubnet(our_client, &d->spd.this.client)) {
-			d->spd.this.client = selector_from_address(our_client, &unset_protoport/*all*/);
-		} else {
+		if (address_in_selector_subnet(*local_address, d->spd.this.client)) {
+			/*
+			 * the required client is within that subnet
+			 * narrow it(?), ...
+			*/
+			d->spd.this.client = selector_from_address(*local_address);
+		} else if (address_eq_address(*local_address, d->spd.this.host_addr)) {
+			/*
+			 * or that it is our private ip in case we are
+			 * behind a port forward.
+			 */
 			update_selector_hport(&d->spd.this.client, 0);
+		} else {
+			passert_fail(c->logger, HERE,
+				     "local address does not match the host or client");
 		}
 	} else {
 		/*
-		 * There was no client in the abstract connection
-		 * so we demand that the required client be the host.
+		 * There was no client in the abstract connection so
+		 * we demand that the required client be the host.
 		 */
-		passert(sameaddr(our_client, &d->spd.this.host_addr));
+		passert(address_eq_address(*local_address, d->spd.this.host_addr));
 	}
 
 	/*
@@ -2452,14 +2614,11 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If the client is the peer, excise the client from the connection.
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(endtosubnet(peer_client, &d->spd.that.client, HERE));
+	passert(address_in_selector_subnet(*remote_address, d->spd.that.client));
+	d->spd.that.client = selector_from_address(*remote_address);
 
-	/* opportunistic connections do not use port selectors */
-	setportof(0, &d->spd.that.client.addr);
-
-	if (sameaddr(peer_client, &d->spd.that.host_addr))
-		d->spd.that.has_client = FALSE;
+	if (address_eq_address(*remote_address, d->spd.that.host_addr))
+		d->spd.that.has_client = false;
 
 	/*
 	 * Adjust routing if something is eclipsing c.
@@ -2475,19 +2634,22 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * even if it is created for responding.
 	 */
 	if (routed(c->spd.routing))
-		d->instance_initiation_ok = TRUE;
+		d->instance_initiation_ok = true;
 
 	if (DBGP(DBG_BASE)) {
 		char topo[CONN_BUF_LEN];
 		connection_buf inst;
-		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION": %s",
+		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION" with routing %s: %s",
 			pri_connection(d, &inst),
+			enum_name(&routing_story, d->spd.routing),
 			format_connection(topo, sizeof(topo), d, &d->spd));
 	}
 	return d;
 }
 
 /*
+ * Outgoing opportunistic connection.
+ *
  * Find and instantiate a connection for an outgoing Opportunistic connection.
  * We've already discovered its gateway.
  * We look for a connection such that:
@@ -2510,89 +2672,143 @@ struct connection *oppo_instantiate(struct connection *c,
  * find_connection_for_clients. In this case, we know the gateways
  * that we need to instantiate an opportunistic connection.
  */
-struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
-							   const ip_address *peer_client,
-							   const int transport_proto)
+struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *local_client,
+							   const ip_endpoint *remote_client)
 {
+	/*
+	 * Did the caller do their job?
+	 *
+	 * Where the protocol includes a port, the endpoint ports
+	 * don't need to match but they do need to be defined.
+	 *
+	 * Unfortunately rcv_whack.c calls this function with a very
+	 * flimsy looking local/remote endpoints - both the protocol
+	 * and the port are missing.  Hence some of the fuzzy checks
+	 * below.
+	 */
+	pendpoint(local_client);
+	pendpoint(remote_client);
+	pexpect(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
+
+	/*
+	 * Go through all the "half" oriented connections (remote
+	 * address is unset) looking for client that matches the
+	 * local/remote endpoint.
+	 *
+	 * Unfortunately there's no good data structure for doing
+	 * this, so ...
+	 *
+	 * Big hack: get the list of local addresses by iterating over
+	 * the interface endpoints, and then feed the endpoint's
+	 * address into FOR_EACH_HOST_PAIR_CONNECTION(LOCAL,UNSET).
+	 */
 	struct connection *best = NULL;
-	struct spd_route *bestsr = NULL;	/* initialization not necessary */
-	int our_port, peer_port;
-
-	passert(endpoint_is_specified(our_client));
-	passert(endpoint_is_specified(peer_client));
-
-	our_port = endpoint_hport(our_client);
-	peer_port = endpoint_hport(peer_client);
-
-	struct iface_port *p;
-
-	struct connection *c = NULL;
-
-	for (p = interfaces; p != NULL; p = p->next) {
+	struct spd_route *best_spd_route = NULL;
+	struct iface_dev *last_iface_device = NULL;
+	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		/*
-		 * Go through those connections with our address and NO_IP as
-		 * hosts.
-		 * We cannot know what port the peer would use, so we assume
-		 * that it is pluto_port (makes debugging easier).
+		 * Bigger hack: assume the interface endpoints
+		 * (ADDRESS:500 ADDRESS:4500) for a device are grouped
+		 * (mostly true, TCP, custom port?) and only search
+		 * when a new interface device is found.
 		 */
-		c = find_host_pair_connections(&p->local_endpoint, NULL);
+		if (p->ip_dev == last_iface_device) {
+			continue;
+		}
+		last_iface_device = p->ip_dev;
+		/*
+		 * Go through those connections with our address and
+		 * NO_IP as hosts.
+		 *
+		 * We cannot know what port the peer would use, so we
+		 * assume that it is pluto_port (makes debugging
+		 * easier).
+		 *
+		 * XXX: the port doesn't matter!
+		 */
+		FOR_EACH_HOST_PAIR_CONNECTION(p->ip_dev->id_address, unset_address, c) {
 
-		for (; c != NULL; c = c->hp_next) {
 			dbg("checking %s", c->name);
 			if (c->kind == CK_GROUP)
 				continue;
 
-			struct spd_route *sr;
-
-			/* for each sr of c, see if we have a new best */
-			/* Paul: while this code can reject unmatched conns, it does not find the most narrow match! */
-			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-				if (!routed(sr->routing) ||
-				    !addrinsubnet(our_client, &sr->this.client) ||
-				    !addrinsubnet(peer_client, &sr->that.client) ||
-				    ((sr->this.protocol != 0) && transport_proto != 0 && sr->this.protocol != transport_proto) ||
-				    ((sr->this.protocol != 0) && sr->that.port != 0 && peer_port != sr->that.port) ||
-				    ((sr->this.protocol != 0) && sr->this.port != 0 && our_port != sr->this.port)
-				   )
-				{
-					/*  sr does not work for these clients */
-				} else if (best == NULL ||
-					   !subnetinsubnet(&bestsr->this.client, &sr->this.client) ||
-					   (samesubnet(&bestsr->this.client, &sr->this.client) &&
-					    !subnetinsubnet(&bestsr->that.client, &sr->that.client)))
-				{
-					/*
-					 * First or better solution.
-					 *
-					 * The test for better (see above) is:
-					 *   sr's this is narrower, or
-					 *   sr's this is same and sr's that is narrower.
-					 * ??? not elegant, not symmetric.
-					 * Possible replacement test:
-					 *   bestsr->this.client.maskbits + bestsr->that.client.maskbits >
-					 *   sr->this.client.maskbits + sr->that.client.maskbits
-					 * but this knows too much about the representation of ip_subnet.
-					 * What is the correct semantics?
-					 */
-					best = c;
-					bestsr = sr;
+			/*
+			 * for each sr of c, see if we have a new best
+			 *
+			 * Paul: while this code can reject unmatched
+			 * conns, it does not find the most narrow
+			 * match!
+			 */
+			for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+				if (!routed(sr->routing)) {
+					continue;
 				}
+				if (!endpoint_in_selector(*local_client, sr->this.client)) {
+					continue;
+				}
+				if (!endpoint_in_selector(*remote_client, sr->that.client)) {
+					continue;
+				}
+
+				/*
+				 * First or better solution.
+				 *
+				 * The test for better is:
+				 *   sr's .this is narrower, or
+				 *   sr's .this is same and sr's .that is narrower.
+				 * ??? not elegant, not symmetric.
+				 * Possible replacement test:
+				 *   best_spd_route->this.client.maskbits + best_spd_route->that.client.maskbits >
+				 *   sr->this.client.maskbits + sr->that.client.maskbits
+				 * but this knows too much about the representation of ip_subnet.
+				 * What is the correct semantics?
+				 *
+				 * XXX: selector_in_selector() is
+				 * exclusive - it excludes
+				 * selector_eq().
+				 */
+
+				if (best_spd_route != NULL &&
+				    selector_in_selector(best_spd_route->this.client, sr->this.client)) {
+					/*
+					 * BEST_SPD_ROUTE is better.
+					 *
+					 * BEST_SPD_ROUTE's .this is
+					 * narrower than .SR's.
+					 */
+					continue;
+				}
+				if (best_spd_route != NULL &&
+				    selector_eq_selector(best_spd_route->this.client, sr->this.client) &&
+				    selector_in_selector(best_spd_route->that.client, sr->that.client)) {
+					/*
+					 * BEST_SPD_ROUTE is better.
+					 *
+					 * Since BEST_SPD_ROUTE's
+					 * .this matches SR's,
+					 * tie-break with
+					 * BEST_SPD_ROUTE's .that
+					 * being narrower than .SR's.
+					 */
+					continue;
+				}
+				best = c;
+				best_spd_route = sr;
 			}
 		}
 	}
 
 	if (best == NULL ||
-		NEVER_NEGOTIATE(best->policy) ||
-		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-		best->kind != CK_TEMPLATE)
-	{
+	    NEVER_NEGOTIATE(best->policy) ||
+	    (best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+	    best->kind != CK_TEMPLATE) {
 		return NULL;
-	} else {
-		/* XXX we might not yet know the ID! */
-		ip_address peer_addr = endpoint_address(peer_client);
-		return oppo_instantiate(best, &peer_addr, NULL,
-					our_client, peer_client);
 	}
+
+	/* XXX we might not yet know the ID! */
+	ip_address local_address = endpoint_address(*local_client);
+	ip_address remote_address = endpoint_address(*remote_client);
+	return oppo_instantiate(best, NULL, &local_address, &remote_address);
 }
 
 /*
@@ -2614,7 +2830,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	if (!oriented(*c)) {
-		libreswan_log("route_owner: connection no longer oriented - system interface change?");
+		llog(RC_LOG, c->logger,
+		     "route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
 
@@ -2660,8 +2877,7 @@ struct connection *route_owner(struct connection *c,
 				if (src == srd)
 					continue;
 
-				if (!samesubnet(&src->that.client,
-						&srd->that.client) ||
+				if (!selector_subnet_eq_subnet(src->that.client, srd->that.client) ||
 				    src->that.protocol != srd->that.protocol ||
 				    src->that.port != srd->that.port ||
 				    !sameaddr(&src->this.host_addr,
@@ -2674,8 +2890,7 @@ struct connection *route_owner(struct connection *c,
 					best_routing = srd->routing;
 				}
 
-				if (samesubnet(&src->this.client,
-						&srd->this.client) &&
+				if (selector_subnet_eq_subnet(src->this.client, srd->this.client) &&
 				    src->this.protocol == srd->this.protocol &&
 				    src->this.port == srd->this.port &&
 				    srd->routing > best_erouting)
@@ -2898,17 +3113,18 @@ struct connection *refine_host_connection(const struct state *st,
 	{
 		switch (this_authby) {
 		case AUTHBY_PSK:
-			psk = get_psk(c, st->st_logger);
+			psk = get_connection_psk(c);
 			/*
 			 * It should be virtually impossible to fail to find
 			 * PSK: we just used it to decode the current message!
 			 * Paul: only true for IKEv1
 			 */
 			if (psk == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find PSK");
+				log_state(RC_LOG_SERIOUS, st, "cannot find PSK");
 				return c; /* cannot determine PSK, so not switching */
 			}
 			break;
+
 		case AUTHBY_NULL:
 			/* we know our AUTH_NULL key :) */
 			break;
@@ -2922,7 +3138,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			const struct pubkey_type *type = &pubkey_type_rsa;
 			if (get_connection_private_key(c, type, st->st_logger) == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
+				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
 				 /* cannot determine my private key, so not switching */
 				return c;
 			}
@@ -2938,7 +3154,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			const struct pubkey_type *type = &pubkey_type_ecdsa;
 			if (get_connection_private_key(c, type) == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find %s key", type->name);
+				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
 				 /* cannot determine my private key, so not switching */
 				return c;
 			}
@@ -2949,8 +3165,9 @@ struct connection *refine_host_connection(const struct state *st,
 			/* don't die on bad_case(auth); */
 
 			/* ??? why not dies?  How could this happen? */
-			loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-				enum_name(&keyword_authby_names, this_authby));
+			log_state(RC_LOG_SERIOUS, st,
+				  "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
+				  enum_name(&keyword_authby_names, this_authby));
 			return c;
 		}
 	}
@@ -2970,16 +3187,23 @@ struct connection *refine_host_connection(const struct state *st,
 	 */
 	passert(c != NULL);
 
-	struct connection *d = c->host_pair->connections;
-
 	int best_our_pathlen = 0;
 	int best_peer_pathlen = 0;
 	struct connection *best_found = NULL;
 	int best_wildcards = 0;
 
-	/* wcip stands for: wildcard Peer IP? */
-	for (bool wcpip = FALSE;; wcpip = TRUE) {
-		for (; d != NULL; d = d->hp_next) {
+	/* wcpip stands for: wildcard Peer IP? */
+	for (unsigned wcpip = 1; wcpip <= 2; wcpip++) {
+		/*
+		 * When starting second time around we're willing to
+		 * settle for a connection that needs Peer IP
+		 * instantiated: Road Warrior or Opportunistic.  Look
+		 * on list of connections for host pair with wildcard
+		 * Peer IP.
+		 */
+		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(st->st_remote_endpoint);
+		FOR_EACH_HOST_PAIR_CONNECTION(c->interface->ip_dev->id_address, remote, d) {
+
 			int wildcards;
 			bool matching_peer_id = match_id(peer_id,
 							&d->spd.that.id,
@@ -3010,13 +3234,15 @@ struct connection *refine_host_connection(const struct state *st,
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
 				id_buf tzb;
+				esb_buf tzesb;
 				dbg("peer expects us to be %s (%s) according to its IDr payload",
 				    str_id(tarzan_id, &tzb),
-				    enum_show(&ike_idtype_names, tarzan_id->kind));
+				    enum_show(&ike_idtype_names, tarzan_id->kind, &tzesb));
 				id_buf usb;
+				esb_buf usesb;
 				dbg("this connection's local id is %s (%s)",
 				    str_id(&d->spd.this.id, &usb),
-				    enum_show(&ike_idtype_names, d->spd.this.id.kind));
+				    enum_show(&ike_idtype_names, d->spd.this.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg("peer IDr payload does not match our expected ID, this connection will not do");
@@ -3092,10 +3318,6 @@ struct connection *refine_host_connection(const struct state *st,
 					dbg("skipping because mismatched authby");
 					continue;
 				}
-				if (c->spd.this.authby != d->spd.this.authby) {
-					dbg("skipping because mismatched this authby");
-					continue;
-				}
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
@@ -3116,7 +3338,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			if (this_authby == AUTHBY_PSK) {
 				/* secret must match the one we already used */
-				const chunk_t *dpsk = get_psk(d, st->st_logger);
+				const chunk_t *dpsk = get_connection_psk(d);
 
 				/*
 				 * We can change PSK mid-way in IKEv2 or aggressive mode.
@@ -3187,12 +3409,11 @@ struct connection *refine_host_connection(const struct state *st,
 				  peer_pathlen < best_peer_pathlen) ||
 				 (peer_pathlen == best_peer_pathlen &&
 				  our_pathlen < best_our_pathlen))) {
-				char cib[CONN_INST_BUF];
-				dbg("refine_host_connection: picking new best \"%s\"%s (wild=%d, peer_pathlen=%d/our=%d)",
-					d->name,
-					fmt_conn_instance(d, cib),
-					wildcards, peer_pathlen,
-					our_pathlen);
+				connection_buf cib;
+				dbg("refine_host_connection: picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
+				    pri_connection(d, &cib),
+				    wildcards, peer_pathlen,
+				    our_pathlen);
 				*fromcert = d_fromcert;
 				best_found = d;
 				best_wildcards = wildcards;
@@ -3200,23 +3421,8 @@ struct connection *refine_host_connection(const struct state *st,
 				best_our_pathlen = our_pathlen;
 			}
 		}
-
-		if (wcpip) {
-			/* been around twice already */
-			dbg("returning since no better match than original best_found");
-			return best_found;
-		}
-
-		/*
-		 * Starting second time around.
-		 * We're willing to settle for a connection that needs Peer IP
-		 * instantiated: Road Warrior or Opportunistic.
-		 * Look on list of connections for host pair with wildcard
-		 * Peer IP.
-		 */
-		dbg("refine going into 2nd loop allowing instantiated conns as well");
-		d = find_host_pair_connections(&c->spd.this.host_addr, NULL);
 	}
+	return best_found;
 }
 
 /*
@@ -3224,7 +3430,7 @@ struct connection *refine_host_connection(const struct state *st,
  * used (by another id) addr/net.
  */
 static bool is_virtual_net_used(struct connection *c,
-				const ip_subnet *peer_net,
+				const ip_selector *peer_net,
 				const struct id *peer_id)
 {
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
@@ -3233,31 +3439,30 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
-			if ((subnetinsubnet(peer_net, &d->spd.that.client) ||
-					subnetinsubnet(&d->spd.that.client,
-						peer_net)) &&
-				!same_id(&d->spd.that.id, peer_id))
+			if ((selector_subnet_in_subnet(*peer_net, d->spd.that.client) ||
+			     selector_subnet_in_subnet(d->spd.that.client, *peer_net)) &&
+			    !same_id(&d->spd.that.id, peer_id))
 			{
 				id_buf idb;
 				connection_buf cbuf;
 				subnet_buf client;
-				libreswan_log("Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
-					      str_subnet(peer_net, &client),
-					      pri_connection(d, &cbuf),
-					      enum_name(&connection_kind_names,
-							d->kind),
-					      str_id(&d->spd.that.id, &idb));
+				llog(RC_LOG, c->logger,
+				     "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
+				     str_selector_subnet(peer_net, &client),
+				     pri_connection(d, &cbuf),
+				     enum_name(&connection_kind_names, d->kind),
+				     str_id(&d->spd.that.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
-					libreswan_log(
-						"Kernel method '%s' does not support overlapping IP ranges",
-						kernel_ops->kern_name);
+					llog(RC_LOG, c->logger,
+					     "Kernel method '%s' does not support overlapping IP ranges",
+					     kernel_ops->kern_name);
 					return TRUE;
 				}
 
 				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
-					libreswan_log(
-						"overlap is okay by mutual consent");
+					llog(RC_LOG, c->logger,
+					     "overlap is okay by mutual consent");
 
 					/*
 					 * Look for another overlap to report
@@ -3274,15 +3479,17 @@ static bool is_virtual_net_used(struct connection *c,
 					NULL;
 
 				if (x == NULL) {
-					libreswan_log(
-						"overlap is forbidden (neither agrees to overlap)");
+					llog(RC_LOG, c->logger,
+					     "overlap is forbidden (neither agrees to overlap)");
 				} else {
-					libreswan_log("overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
-						      pri_connection(x, &cbuf));
+					llog(RC_LOG, c->logger,
+					     "overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
+					     pri_connection(x, &cbuf));
 				}
 
 				/* ??? why is this a separate log line? */
-				libreswan_log("Your ID is '%s'", str_id(peer_id, &idb));
+				llog(RC_LOG, c->logger,
+				     "Your ID is '%s'", str_id(peer_id, &idb));
 
 				return TRUE; /* already used by another one */
 			}
@@ -3328,23 +3535,17 @@ static bool is_virtual_net_used(struct connection *c,
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
-				const struct host_pair *hp,
-				const ip_subnet *our_net,
-				const ip_subnet *peer_net,
-				const uint8_t our_protocol,
-				const uint16_t our_port,
-				const uint8_t peer_protocol,
-				const uint16_t peer_port)
+				 const struct host_pair *hp,
+				 const ip_selector *local_client,
+				 const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
-	const bool peer_net_is_host = subnetisaddr(peer_net,
-						&c->spd.that.host_addr);
+	const bool remote_is_host = selector_eq_address(*remote_client,
+							c->spd.that.host_addr);
+
 	err_t virtualwhy = NULL;
-
-	struct connection *d;
-
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
+	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
 
@@ -3358,37 +3559,41 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		if (!(d->spd.this.protocol == our_protocol &&
-		      d->spd.that.protocol == peer_protocol &&
-		      (d->spd.this.port == 0 || d->spd.this.port == our_port) &&
-		      (d->spd.that.has_port_wildcard || d->spd.that.port == peer_port)))
+		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(*local_client));
+		unsigned remote_port = hport(selector_port(*remote_client));
+		if (!(d->spd.this.protocol == local_protocol &&
+		      d->spd.that.protocol == remote_protocol &&
+		      (d->spd.this.port == 0 || d->spd.this.port == local_port) &&
+		      (d->spd.that.has_port_wildcard || d->spd.that.port == remote_port)))
 		{
 			continue;
 		}
 
 		/*
 		 * non-Opportunistic case:
-		 * our_client must match.
+		 * local_client must match.
 		 *
-		 * So must peer_client, but the testing is complicated
+		 * So must remote_client, but the testing is complicated
 		 * by the fact that the peer might be a wildcard
 		 * and if so, the default value of that.client
-		 * won't match the default peer_net. The appropriate test:
+		 * won't match the default remote_net. The appropriate test:
 		 *
-		 * If d has a peer client, it must match peer_net.
-		 * If d has no peer client, peer_net must just have peer itself.
+		 * If d has a peer client, it must match remote_net.
+		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		const struct spd_route *sr;
+		for (const struct spd_route *sr = &d->spd;
+		     best != d && sr != NULL; sr = sr->spd_next) {
 
-		for (sr = &d->spd; best != d && sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1, d1;
 				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name, str_selector(our_net, &s1),
+					c->name, str_selector(local_client, &s1),
 					c->spd.this.protocol, c->spd.this.port,
-					str_selector(peer_net, &d1),
+					str_selector(remote_client, &d1),
 					c->spd.that.protocol, c->spd.that.port,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
@@ -3399,45 +3604,41 @@ static struct connection *fc_try(const struct connection *c,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
-			if (!samesubnet(&sr->this.client, our_net)) {
+			if (!selector_subnet_eq_subnet(sr->this.client, *local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
-					DBG_log("   our client (%s) not in our_net (%s)",
+					DBG_log("   our client (%s) not in local_net (%s)",
 						str_selector(&sr->this.client, &s3),
-						str_selector(our_net, &s1));
+						str_selector(local_client, &s1));
 				}
-
 				continue;
 			}
 
 			if (sr->that.has_client) {
-				if (!samesubnet(&sr->that.client, peer_net) &&
+
+				if (!selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
-						DBG_log("   their client (%s) not in same peer_net (%s)",
+						DBG_log("   their client (%s) not in same remote_net (%s)",
 							str_selector(&sr->that.client, &d3),
-							str_selector(peer_net, &d1));
+							str_selector(remote_client, &d1));
 					}
 					continue;
 				}
 
-				virtualwhy = check_virtual_net_allowed(
-						d,
-						peer_net,
-						&sr->that.host_addr);
+				virtualwhy = check_virtual_net_allowed(d,
+								       selector_subnet(*remote_client),
+								       sr->that.host_addr);
 
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
-				     is_virtual_net_used(
-					d,
-					peer_net,
-					&sr->that.id)))
-				{
+				     is_virtual_net_used(d, remote_client,
+							 &sr->that.id))) {
 					dbg("   virtual net not allowed");
 					continue;
 				}
-			} else if (!peer_net_is_host) {
+			} else if (!remote_is_host) {
 				continue;
 			}
 
@@ -3474,34 +3675,27 @@ static struct connection *fc_try(const struct connection *c,
 	    (best ? best->name : "none"), best_prio);
 
 	if (best == NULL && virtualwhy != NULL) {
-		libreswan_log(
-			"peer proposal was rejected in a virtual connection policy: %s",
-			virtualwhy);
+		llog(RC_LOG, c->logger,
+		     "peer proposal was rejected in a virtual connection policy: %s",
+		     virtualwhy);
 	}
 
 	return best;
 }
 
 static struct connection *fc_try_oppo(const struct connection *c,
-				const struct host_pair *hp,
-				const ip_subnet *our_net,
-				const ip_subnet *peer_net,
-				const uint8_t our_protocol,
-				const uint16_t our_port,
-				const uint8_t peer_protocol,
-				const uint16_t peer_port)
+				      const struct host_pair *hp,
+				      const ip_selector *local_client,
+				      const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 
-	struct connection *d;
-
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
+	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
 		if (d->policy & POLICY_GROUP)
 			continue;
 
 		int wildcards, pathlen;
-
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
 		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
@@ -3510,39 +3704,43 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		if (d->spd.this.protocol != our_protocol ||
-			(d->spd.this.port && d->spd.this.port != our_port) ||
-			d->spd.that.protocol != peer_protocol ||
-			(d->spd.that.port != peer_port &&
+		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+		unsigned local_port = hport(selector_port(*local_client));
+		unsigned remote_port = hport(selector_port(*remote_client));
+		if (d->spd.this.protocol != local_protocol ||
+			(d->spd.this.port && d->spd.this.port != local_port) ||
+			d->spd.that.protocol != remote_protocol ||
+			(d->spd.that.port != remote_port &&
 				!d->spd.that.has_port_wildcard))
 			continue;
 
 		/*
 		 * Opportunistic case:
-		 * our_net must be inside d->spd.this.client
-		 * and peer_net must be inside d->spd.that.client
+		 * local_net must be inside d->spd.this.client
+		 * and remote_net must be inside d->spd.that.client
 		 * Note: this host_pair chain also has shunt
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
 
-		const struct spd_route *sr;
+		for (const struct spd_route *sr = &d->spd;
+		     sr != NULL; sr = sr->spd_next) {
 
-		for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1;
 				selector_buf d1;
 				selector_buf s3;
 				selector_buf d3;
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
-					c->name, str_selector(our_net, &s1),
-					str_selector(peer_net, &d1),
+					c->name, str_selector(local_client, &s1),
+					str_selector(remote_client, &d1),
 					d->name, str_selector(&sr->this.client, &s3),
 					str_selector(&sr->that.client, &d3));
 			}
 
-			if (!subnetinsubnet(our_net, &sr->this.client) ||
-				!subnetinsubnet(peer_net, &sr->that.client))
+			if (!selector_subnet_in_subnet(*local_client, sr->this.client) ||
+			    !selector_subnet_in_subnet(*remote_client, sr->that.client))
 				continue;
 
 			/*
@@ -3559,7 +3757,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 */
 			policy_prio_t prio =
-				PRIO_WEIGHT * (d->prio + routed(sr->routing)) +
+				PRIO_WEIGHT * (d->policy_prio + routed(sr->routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 
@@ -3581,13 +3779,9 @@ static struct connection *fc_try_oppo(const struct connection *c,
 	return best;
 }
 
-struct connection *find_client_connection(struct connection *const c,
-					const ip_subnet *our_net,
-					const ip_subnet *peer_net,
-					const uint8_t our_protocol,
-					const uint16_t our_port,
-					const uint8_t peer_protocol,
-					const uint16_t peer_port)
+struct connection *find_v1_client_connection(struct connection *const c,
+					     const ip_selector *local_client,
+					     const ip_selector *remote_client)
 {
 	struct connection *d;
 
@@ -3597,13 +3791,10 @@ struct connection *find_client_connection(struct connection *const c,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		selector_buf s1;
-		selector_buf d1;
-		DBG_log("find_client_connection starting with %s",
-			c->name);
-		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
-			str_selector(our_net, &s1), our_protocol, our_port,
-			str_selector(peer_net, &d1), peer_protocol, peer_port);
+		selectors_buf sb;
+		DBG_log("find_v1_client_connection starting with %s", c->name);
+		DBG_log("  looking for %s",
+			str_selectors(local_client, remote_client, &sb));
 	}
 
 	/*
@@ -3614,9 +3805,7 @@ struct connection *find_client_connection(struct connection *const c,
 		struct connection *unrouted = NULL;
 		int srnum = -1;
 
-		const struct spd_route *sr;
-
-		for (sr = &c->spd; unrouted == NULL && sr != NULL;
+		for (const struct spd_route *sr = &c->spd; unrouted == NULL && sr != NULL;
 			sr = sr->spd_next) {
 			srnum++;
 
@@ -3628,14 +3817,16 @@ struct connection *find_client_connection(struct connection *const c,
 					str_selector(&sr->that.client, &d2));
 			}
 
-			if (samesubnet(&sr->this.client, our_net) &&
-				samesubnet(&sr->that.client, peer_net) &&
-				sr->this.protocol == our_protocol &&
-				(!sr->this.port ||
-					sr->this.port == our_port) &&
-				(sr->that.protocol == peer_protocol) &&
-				(!sr->that.port ||
-					sr->that.port == peer_port)) {
+			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
+			unsigned local_port = selector_port(*local_client).hport;
+			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+			unsigned remote_port = selector_port(*remote_client).hport;
+			if (selector_subnet_eq_subnet(sr->this.client, *local_client) &&
+			    selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
+			    sr->this.protocol == local_protocol &&
+			    (!sr->this.port || sr->this.port == local_port) &&
+			    (sr->that.protocol == remote_protocol) &&
+			    (!sr->that.port || sr->that.port == remote_port)) {
 				if (routed(sr->routing))
 					return c;
 
@@ -3649,8 +3840,7 @@ struct connection *find_client_connection(struct connection *const c,
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->host_pair, our_net, peer_net,
-			our_protocol, our_port, peer_protocol, peer_port);
+		d = fc_try(c, c->host_pair, local_client, remote_client);
 
 		dbg("  fc_try %s gives %s", c->name, (d ? d->name : "none"));
 
@@ -3659,14 +3849,13 @@ struct connection *find_client_connection(struct connection *const c,
 	}
 
 	if (d == NULL) {
-		/* look for an abstract connection to match */
+		/*
+		 * look for an abstract connection to match
+		 */
 		const struct host_pair *hp = NULL;
-
-		const struct spd_route *sra;
-
-		for (sra = &c->spd; hp == NULL &&
-				sra != NULL; sra = sra->spd_next) {
-			hp = find_host_pair(&sra->this.host_addr, NULL);
+		for (const struct spd_route *sra = &c->spd;
+		     sra != NULL && hp == NULL; sra = sra->spd_next) {
+			hp = find_host_pair(sra->this.host_addr, unset_address);
 			if (DBGP(DBG_BASE)) {
 				selector_buf s2;
 				selector_buf d2;
@@ -3678,23 +3867,19 @@ struct connection *find_client_connection(struct connection *const c,
 		}
 
 		if (hp != NULL) {
-			/* RW match with actual peer_id or abstract peer_id? */
-			d = fc_try(c, hp, our_net, peer_net,
-				our_protocol, our_port, peer_protocol,
-				peer_port);
+			/* RW match with actual remote_id or abstract remote_id? */
+			d = fc_try(c, hp, local_client, remote_client);
 
 			if (d == NULL &&
-				subnetishost(our_net) &&
-				subnetishost(peer_net)) {
+			    selector_contains_one_address(*local_client) &&
+			    selector_contains_one_address(*remote_client)) {
 				/*
 				 * Opportunistic match?
-				 * Always use abstract peer_id.
+				 * Always use abstract remote_id.
 				 * Note that later instantiation will result
-				 * in the same peer_id.
+				 * in the same remote_id.
 				 */
-				d = fc_try_oppo(c, hp, our_net, peer_net,
-						our_protocol, our_port,
-						peer_protocol, peer_port);
+				d = fc_try_oppo(c, hp, local_client, remote_client);
 			}
 		}
 	}
@@ -3725,7 +3910,8 @@ int connection_compare(const struct connection *ca,
 		ca->instance_serial > cb-> instance_serial ? 1 : 0;
 
 	default:
-		return ca->prio < cb->prio ? -1 : ca->prio > cb->prio ? 1 : 0;
+		return (ca->policy_prio < cb->policy_prio ? -1 :
+			ca->policy_prio > cb->policy_prio ? 1 : 0);
 	}
 }
 
@@ -3749,7 +3935,7 @@ static void show_one_sr(struct show *s,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
 
-#define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(h, &ipb) : "unset")
+#define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
@@ -3758,8 +3944,8 @@ static void show_one_sr(struct show *s,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
-		OPT_HOST(&c->spd.this.host_srcip, thisipb),
-		OPT_HOST(&c->spd.that.host_srcip, thatipb),
+		OPT_HOST(c->spd.this.host_srcip, thisipb),
+		OPT_HOST(c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
 		OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
 		(sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) ?
@@ -3798,16 +3984,16 @@ static void show_one_sr(struct show *s,
 		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
 		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
 
-	struct esb_buf auth1, auth2;
+	esb_buf auth1, auth2;
 
 	show_comment(s,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
-		enum_show_shortb(&keyword_authby_names, sr->this.authby, &auth1),
-		enum_show_shortb(&keyword_authby_names, sr->that.authby, &auth2));
+		enum_show_short(&keyword_authby_names, sr->this.authby, &auth1),
+		enum_show_short(&keyword_authby_names, sr->that.authby, &auth2));
 
 	show_comment(s,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
@@ -3815,7 +4001,6 @@ static void show_one_sr(struct show *s,
 		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
 		(c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
 		(c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
-		(c->modecfg_banner == NULL) ? ", banner:unset" : "",
 		sr->this.cat ? "set" : "unset");
 
 #undef COMBO
@@ -3825,10 +4010,13 @@ static void show_one_sr(struct show *s,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	const char *policy_label;
-	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
-	show_comment(s, "\"%s\"%s:   policy_label:%s;",
-		  c->name, instance, policy_label);
+	/* we only support symmetric labels, but store it in struct end - pick one */
+	if (sr->this.sec_label.len == 0)
+		show_comment(s, "\"%s\"%s:   sec_label:unset;", c->name, instance);
+	else
+		show_comment(s, "\"%s\"%s:   sec_label:%.*s;",
+			c->name, instance,
+			(int)sr->this.sec_label.len, sr->this.sec_label.ptr);
 }
 
 void show_one_connection(struct show *s,
@@ -3837,7 +4025,6 @@ void show_one_connection(struct show *s,
 	const char *ifn;
 	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
 	char instance[32];
-	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];
 	char satfcstr[13];
@@ -3921,21 +4108,24 @@ void show_one_connection(struct show *s,
 			c->name, instance, c->policy_next->name);
 	}
 
-	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s;",
-		  c->name, instance,
-		  prettypolicy(c->policy),
-		  NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
-		  c->spd.this.key_from_DNS_on_demand |
-			c->spd.that.key_from_DNS_on_demand ? "; " : "",
-		  c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-		  c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
+	lset_t policy = c->policy;
+	policy_buf pb;
+	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
+		     c->name, instance,
+		     c->ike_version > 0 ? enum_name(&ike_version_names, c->ike_version) : "",
+		     c->ike_version > 0 && policy != LEMPTY ? "+" : "",
+		     str_policy(policy, &pb),
+		     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "",
+		     (c->spd.this.key_from_DNS_on_demand ||
+		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",
+		     c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
+		     c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
 	if (c->ike_version == IKEv2) {
-		char hashpolbuf[200];
-		const char *hashstr = bitnamesofb(sighash_policy_bit_names,
-				c->sighash_policy,
-				hashpolbuf, sizeof(hashpolbuf));
-
+		lset_buf hashpolbuf;
+		const char *hashstr = str_lset(&sighash_policy_bit_names,
+					       c->sighash_policy,
+					       &hashpolbuf);
 		show_comment(s, "\"%s\"%s:   v2-auth-hash-policy: %s;",
 			c->name, instance, hashstr);
 	}
@@ -3955,15 +4145,14 @@ void show_one_connection(struct show *s,
 	else
 		strcpy(satfcstr, "none");
 
-	fmt_policy_prio(c->prio, prio);
+	policy_prio_buf prio;
 	show_comment(s,
 		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
-		  c->name, instance,
-		  prio,
-		  ifn,
-		  c->metric,
-		  mtustr, sapriostr, satfcstr
-	);
+		     c->name, instance,
+		     str_policy_prio(c->policy_prio, &prio),
+		     ifn,
+		     c->metric,
+		     mtustr, sapriostr, satfcstr);
 
 	if (c->nflog_group != 0)
 		snprintf(nflogstr, sizeof(nflogstr), "%d", c->nflog_group);
@@ -4104,43 +4293,64 @@ void show_connections_status(struct show *s)
  * We must be careful to avoid circularity:
  * we don't touch it if it is CK_GOING_AWAY.
  */
-void connection_discard(struct connection *c)
+void connection_delete_unused_instance(struct connection **cp,
+				       struct state *old_state,
+				       struct fd *whackfd)
 {
-	dbg("in connection_discard for connection %s", c->name);
+	struct connection *c = (*cp);
+	*cp = NULL;
 
-	if (c->kind == CK_INSTANCE) {
-		dbg("connection is instance");
-		if (in_pending_use(c)) {
-			dbg("in pending use");
-			return;
-		}
-		dbg("not in pending use");
-
-		/* find the first */
-		struct state *st = state_by_connection(c, NULL, NULL, __func__);
-		if (DBGP(DBG_BASE)) {
-			/*
-			 * Cross check that the state DB has been kept
-			 * up-to-date.
-			 */
-			struct state *dst = NULL;
-			FOR_EACH_STATE_NEW2OLD(dst) {
-				if (dst->st_connection == c) {
-					break;
-				}
-			}
-			/* found a state, may not be the same */
-			pexpect((dst == NULL) == (st == NULL));
-			st = dst; /* let the truth be free */
-		}
-
-		if (st == NULL) {
-			dbg("no states use this connection instance, deleting");
-			delete_connection(c, FALSE);
-		} else {
-			dbg("states still using this connection instance, retaining");
-		}
+	if (c->kind != CK_INSTANCE) {
+		dbg("connection %s is not an instance, skipping delete-unused", c->name);
+		return;
 	}
+
+	if (connection_is_pending(c)) {
+		dbg("connection instance %s is pending, skipping delete-unused",
+		    c->name);
+		return;
+	}
+
+	if (LIN(POLICY_UP, c->policy) &&
+	    old_state != NULL && IS_IKE_SA_ESTABLISHED(old_state)) {
+		/*
+		 * If this connection instance was previously for an
+		 * established sa planning to revive, don't delete.
+		 */
+		dbg("connection instance %s with serial "PRI_CO" is being revived, skipping delete-unused",
+		    c->name, pri_co(c->serialno));
+		return;
+	}
+
+	/* find the first */
+	struct state *st = state_by_connection(c, NULL, NULL, __func__);
+	if (DBGP(DBG_BASE)) {
+		/*
+		 * Cross check that the state DB has been kept
+		 * up-to-date.
+		 */
+		struct state *dst = NULL;
+		FOR_EACH_STATE_NEW2OLD(dst) {
+			if (dst->st_connection == c) {
+				break;
+			}
+		}
+		/* found a state, may not be the same */
+		pexpect((dst == NULL) == (st == NULL));
+		st = dst; /* let the truth be free */
+	}
+
+	if (st != NULL) {
+		dbg("connection instance %s in use by #%lu, skipping delete-unused",
+		    c->name, st->st_serialno);
+		return;
+	}
+
+	dbg("connection instance %s is not being used, deleting", c->name);
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(whackfd);
+	delete_connection(c, false);
 }
 
 /*
@@ -4150,25 +4360,19 @@ void connection_discard(struct connection *c)
  *
  * - discard the old connection when not in use
  */
-void update_state_connection(struct state *st, struct connection *c)
+void update_state_connection(struct state *st, struct connection *new)
 {
 	struct connection *old = st->st_connection;
+	passert(old != NULL);
+	passert(new != NULL);
 
-	if (old != c) {
-		st->st_connection = c;
+	if (old != new) {
+		st->st_connection = new;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
-			/*
-			 * Hack to see cur_connection needs to be
-			 * updated.  If nothing else, it will log a
-			 * suspend then resume.
-			 */
-			if (is_cur_connection(old)) {
-				pop_cur_connection(NULL);
-				push_cur_connection(c);
-			}
-			connection_discard(old);
+			connection_delete_unused_instance(&old, st,
+							  st->st_logger->global_whackfd);
 		}
 	}
 }
@@ -4203,8 +4407,8 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 			for (src = &c->spd; src != NULL; src = src->spd_next) {
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
-				    samesubnet(&src->this.client, &srue->this.client) &&
-				    samesubnet(&src->that.client, &srue->that.client))
+				    selector_subnet_eq_subnet(src->this.client, srue->this.client) &&
+				    selector_subnet_eq_subnet(src->that.client, srue->that.client))
 				{
 					dbg("%s eclipsed %s", c->name, ue->name);
 					*esrp = srue;
@@ -4235,29 +4439,30 @@ void liveness_clear_connection(struct connection *c, const char *v)
 	}
 }
 
-void liveness_action(struct connection *c, enum ike_version ike_version)
+void liveness_action(struct state *st)
 {
-	char cib[CONN_INST_BUF];
-	const char *ikev = enum_name(&ike_version_liveness_names, ike_version);
+	struct connection *c = st->st_connection;
+	const char *ikev = enum_name(&ike_version_liveness_names, st->st_ike_version);
 	passert(ikev != NULL);
-
-	fmt_conn_instance(c, cib);
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		libreswan_log("%s action - clearing connection kind %s", ikev,
-				enum_name(&connection_kind_names, c->kind));
+		log_state(RC_LOG, st,
+			  "%s action - clearing connection kind %s", ikev,
+			  enum_name(&connection_kind_names, c->kind));
 		liveness_clear_connection(c, ikev);
 		break;
 
 	case DPD_ACTION_RESTART:
-		libreswan_log("%s action - restarting all connections that share this peer",
-				ikev);
+		log_state(RC_LOG, st,
+			  "%s action - restarting all connections that share this peer",
+			  ikev);
 		restart_connections_by_peer(c);
 		break;
 
 	case DPD_ACTION_HOLD:
-		libreswan_log("%s action - putting connection into hold", ikev);
+		log_state(RC_LOG, st,
+			  "%s action - putting connection into hold", ikev);
 		if (c->kind == CK_INSTANCE) {
 			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
 		}
@@ -4384,7 +4589,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 		    newest, st->st_serialno);
 	}
 
-	if (newest != SOS_NOBODY && newest > st->st_serialno) {
+	if (newest != SOS_NOBODY && newest != st->st_serialno) {
 		return newest;
 	} else {
 		return SOS_NOBODY;

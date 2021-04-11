@@ -1,0 +1,47 @@
+/testing/guestbin/swan-prep
+west #
+ checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+west #
+ semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+west #
+ semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+west #
+ rm -f ipsec-test-module.mod ipsec-test-module.pp
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add labeled
+002 "labeled": added IKEv1 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ # expected to fail
+west #
+ ipsec auto --up labeled
+002 "labeled" #1: initiating IKEv1 Main Mode connection
+1v1 "labeled" #1: sent Main Mode request
+1v1 "labeled" #1: sent Main Mode I2
+1v1 "labeled" #1: sent Main Mode I3
+002 "labeled" #1: Peer ID is ID_FQDN: '@east'
+003 "labeled" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
+004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+1v1 "labeled" #2: sent Quick Mode request
+002 "labeled" #2: IMPAIR: retransmit so deleting SA
+002 "labeled" #2: deleting state (STATE_QUICK_I1) and NOT sending notification
+west #
+ echo done
+done
+west #
+ ipsec whack --shutdown
+west #
+ semodule -r ipsec-test-module
+libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+west #
+ 

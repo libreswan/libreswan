@@ -1,0 +1,177 @@
+/testing/guestbin/swan-prep
+west #
+ # generate in output directory
+west #
+ rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
+west #
+ ln -s ../ipsecspd.te OUTPUT
+west #
+ make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
+make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
+west #
+ semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # for port re-use in tests with protoport selectors
+west #
+ echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
+west #
+ ipsec auto --up labeled
+1v2 "labeled" #1: initiating IKEv2 connection
+1v2 "labeled" #1: sent IKE_SA_INIT request
+1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+002 "labeled" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:4300-4300 6]
+004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ # workaround kernel bug displaying a NUL freaking out python
+west #
+ ip xfrm state | strings
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+west #
+ ip xfrm pol
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+	dir out priority 1687486 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+	dir in priority 1687486 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 16389 mode transport
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+west #
+ echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
+NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
+libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
+libnsock nsock_connect_tcp(): TCP connection requested to 192.1.2.23:4300 (IOD #1) EID 8
+libnsock mksock_bind_addr(): Binding to 0.0.0.0:4301 (IOD #1)
+libnsock nsock_trace_handler_callback(): Callback: CONNECT SUCCESS for EID 8 [192.1.2.23:4300]
+Ncat: Connected to 192.1.2.23:4300.
+libnsock nsock_iod_new2(): nsock_iod_new (IOD #2)
+libnsock nsock_read(): Read request from IOD #1 [192.1.2.23:4300] (timeout: -1ms) EID 18
+libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 26
+libnsock nsock_trace_handler_callback(): Callback: READ SUCCESS for EID 26 [peer unspecified] (5 bytes): quit.
+libnsock nsock_write(): Write request for 5 bytes to IOD #1 EID 35 [192.1.2.23:4300]
+libnsock nsock_trace_handler_callback(): Callback: WRITE SUCCESS for EID 35 [192.1.2.23:4300]
+libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 42
+libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 42 [peer unspecified]
+libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 18 [192.1.2.23:4300]
+Ncat: 5 bytes sent, 0 bytes received ...
+libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
+libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
+west #
+ ipsec trafficstatus
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
+west #
+ echo done
+done
+west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+west #
+ 

@@ -3,12 +3,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 road #
  ipsec auto --add road-east
-002 added IKEv1 connection "road-east"
+002 "road-east": added IKEv1 connection
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -31,11 +31,11 @@ road #
 002 "road-east" #1: modecfg: Sending IP request (MODECFG_I1)
 005 "road-east" #1: Received IPv4 address: 192.0.2.102/32
 004 "road-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "road-east" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-east" #2: sent Quick Mode request
 004 "road-east" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=xroad}
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
@@ -46,7 +46,7 @@ done
 road #
  # on east this should show 2 sets of in/fwd/out policies
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -88,14 +88,11 @@ Certificate Nickname                                         Trust Attributes
 road #
  # check both connections still work on east
 road #
- hostname | grep east > /dev/null && ping -c2 192.0.2.101
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.101
 road #
- hostname | grep east > /dev/null && ping -c2 192.0.2.102
+ hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.102
 road #
  ipsec whack --trafficstatus
 006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=252, outBytes=252
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -3,7 +3,7 @@
 %global with_efence 0
 %global with_development 0
 %global with_cavstests 1
-%global nss_version 3.41
+%global nss_version 3.52
 %global unbound_version 1.6.6
 # Libreswan config options
 %global libreswan_config \\\
@@ -22,15 +22,15 @@
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=true \\\
     USE_SECCOMP=true \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
 %{nil}
 
-#global prever rc1
+#global prever dr1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
 # version is generated in the release script
-Version: IPSECBASEVERSION
+Version: 4.3
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -98,9 +98,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
 # enable crypto-policies support
-sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
-# linking to freebl is no longer needed
-sed -i "s/-lfreebl //" mk/config.mk
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 
 %build
 make %{?_smp_mflags} \
@@ -109,13 +107,15 @@ make %{?_smp_mflags} \
 %else
     OPTIMIZE_CFLAGS="%{optflags}" \
 %endif
+    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-lto-type-mismatch -Wno-maybe-uninitialized" \
 %if 0%{with_efence}
     USE_EFENCE=true \
 %endif
-    USERLINK="%{?__global_ldflags}" \
+    USERLINK="%{?__global_ldflags} -Wl,-z,relro -Wl,--as-needed  -Wl,-z,now -flto --no-lto" \
     %{libreswan_config} \
     programs
 FS=$(pwd)
+
 
 %install
 make \
@@ -127,8 +127,6 @@ rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
-# used when setting --perpeerlog without --perpeerlogbase
-install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
@@ -146,9 +144,6 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 # We only run the CAVS tests.
 cp %{SOURCE1} %{SOURCE2} %{SOURCE3} .
 bunzip2 *.fax.bz2
-
-# work around for older xen based machines
-export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
 %{buildroot}%{_libexecdir}/ipsec/cavp -v2 ikev2.fax | \
@@ -191,16 +186,17 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_rundir}/pluto
+%attr(0700,root,root) %dir %{_sharedstatedir}/ipsec
+%attr(0700,root,root) %dir %{_sharedstatedir}/ipsec/nss
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %doc %{_mandir}/*/*
 
 %changelog
-* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Sun Feb 21 2021 Team Libreswan <team@libreswan.org> - 4.3-1
 - Automated build from release tar ball

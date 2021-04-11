@@ -23,7 +23,8 @@ static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
 
-enum status { PASSED = 0, FAILED = 1, ERROR = 126, };
+#define ERROR 124
+
 enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(CHECK,PARSE,OK) {						\
@@ -33,7 +34,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.logger_rc_flags = ERROR_STREAM|RC_LOG,		\
-			.logger = &progname_logger,			\
+			.logger = logger,				\
 			.check_pfs_vs_dh = CHECK,			\
 			.ignore_parser_errors = ignore_parser_errors,	\
 		};							\
@@ -66,7 +67,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		struct proposals *proposals =				\
 			proposals_from_str(parser, algstr);		\
 		if (proposals != NULL) {				\
-			pexpect(parser->error[0] == '\0');		\
+			pexpect(parser->diag == NULL);			\
 			FOR_EACH_PROPOSAL(proposals, proposal) {	\
 				JAMBUF(buf) {				\
 					jam(buf, "\t");			\
@@ -85,8 +86,8 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 					algstr == NULL ? "" : algstr);	\
 			}						\
 		} else {						\
-			pexpect(parser->error[0]);			\
-			printf("\tERROR: %s\n", parser->error);		\
+			pexpect(parser->diag != NULL);			\
+			printf("\tERROR: %s\n", str_diag(parser->diag)); \
 			if (expected == PASS) {				\
 				failures++;				\
 				fprintf(stderr,				\
@@ -116,22 +117,25 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-static void esp(enum expect expected, const char *algstr)
+#define esp(EXPECTED, ALGSTR) test_esp(EXPECTED, ALGSTR, logger)
+static void test_esp(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(true, esp, kernel_alg_is_ok);
 }
 
-static void ah(enum expect expected, const char *algstr)
+#define ah(EXPECTED, ALGSTR) test_ah(EXPECTED, ALGSTR, logger)
+static void test_ah(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(true, ah, kernel_alg_is_ok);
 }
 
-static void ike(enum expect expected, const char *algstr)
+#define ike(EXPECTED, ALGSTR) test_ike(EXPECTED, ALGSTR, logger)
+static void test_ike(enum expect expected, const char *algstr, struct logger *logger)
 {
 	CHECK(false, ike, ike_alg_is_ike);
 }
 
-typedef void (protocol_t)(enum expect expected, const char *);
+typedef void (protocol_t)(enum expect expected, const char *, struct logger *logger);
 
 struct protocol {
 	const char *name;
@@ -139,33 +143,33 @@ struct protocol {
 };
 
 const struct protocol protocols[] = {
-	{ "ike", ike, },
-	{ "ah", ah, },
-	{ "esp", esp, },
+	{ "ike", test_ike, },
+	{ "ah", test_ah, },
+	{ "esp", test_esp, },
 };
 
-static void all(const char *algstr)
+static void all(const char *algstr, struct logger *logger)
 {
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		protocol->parser(COUNT, algstr);
+		protocol->parser(COUNT, algstr, logger);
 	}
 }
 
-static void test_proposal(const char *arg)
+static void test_proposal(const char *arg, struct logger *logger)
 {
 	const char *eq = strchr(arg, '=');
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
 		if (streq(arg, protocol->name)) {
-			protocol->parser(COUNT, NULL);
+			protocol->parser(COUNT, NULL, logger);
 			return;
 		}
 		if (startswith(arg, protocol->name) &&
 		    arg + strlen(protocol->name) == eq) {
-			protocol->parser(COUNT, eq + 1);
+			protocol->parser(COUNT, eq + 1, logger);
 			return;
 		}
 	}
@@ -173,10 +177,10 @@ static void test_proposal(const char *arg)
 		fprintf(stderr, "unrecognized PROTOCOL in '%s'", arg);
 		exit(1);
 	}
-	all(arg);
+	all(arg, logger);
 }
 
-static void test(void)
+static void test(struct logger *logger)
 {
 	/*
 	 * esp=
@@ -461,15 +465,73 @@ static void test(void)
 	ike(true, "3des;dh21");
 	ike(true, "3des-sha1;dh21");
 	ike(true, "3des-sha1-ecp_521");
-	ike(ike_version == IKEv2, "aes_gcm");
-	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	ike(ike_version == IKEv2, "3des+aes");
 	ike(false, "aes;none");
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
-	ike(impaired, "aes_gcm-sha1-none-modp2048");
-	ike(impaired, "aes_gcm+aes_gcm-sha1-none-modp2048");
+
+	/* quads */
+
+	ike(false, "aes-sha1-sha2-ecp_521");
+	ike(false, "aes-sha2-sha2;ecp_521");
+	/* fqn */
+	ike(ike_version == IKEv2, "aes-sha1_96-sha2-ecp_521");
+	ike(ike_version == IKEv2, "aes-sha1_96-sha2;ecp_521");
+
+	/* toss duplicates */
+
+	ike(ike_version == IKEv2, "aes+aes-sha1+sha1-modp8192+modp8192");
+	/* cycle through 3des-sha2-modp4096 */
+	ike(ike_version == IKEv2, "3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192");
+	ike(ike_version == IKEv2, "aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192");
+	ike(ike_version == IKEv2, "aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096");
+	/* keys */
+	ike(ike_version == IKEv2, "aes+aes128+aes256"); /* toss 128/256 */
+	ike(ike_version == IKEv2, "aes128+aes+aes256"); /* toss 256 */
+	ike(ike_version == IKEv2, "aes128+aes256+aes");
+	/* proposals */
+	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192");
+	ike(true, "aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192"); /* almost middle */
+
+	/* aead */
+
+	ike(ike_version == IKEv2, "aes_gcm");
+	ike(ike_version == IKEv2, "aes_gcm-sha2");
+	ike(ike_version == IKEv2, "aes_gcm-sha2-modp2048");
+	ike(ike_version == IKEv2, "aes_gcm-sha2;modp2048");
+	ike(false, "aes_gcm-modp2048"); /* ';' required - PRF */
+	ike(ike_version == IKEv2, "aes_gcm;modp2048");
+	ike(ike_version == IKEv2, "aes_gcm-none");
+	ike(ike_version == IKEv2, "aes_gcm-none-sha2");
+	ike(ike_version == IKEv2, "aes_gcm-none-sha2-modp2048");
+	ike(ike_version == IKEv2, "aes_gcm-none-sha2;modp2048");
+	ike(false, "aes_gcm-none-modp2048");  /* ';' required - INTEG */
+	ike(ike_version == IKEv2, "aes_gcm-none;modp2048");
+	ike(false, "aes_gcm-sha1-none-modp2048"); /* old syntax */
+	ike(false, "aes_gcm-sha1-none;modp2048"); /* old syntax */
 	ike(false, "aes+aes_gcm"); /* mixing AEAD and NORM encryption */
+
+	/* syntax */
+
+	ike(false, ","); /* empty algorithm */
+	ike(false, "aes,"); /* empty algorithm */
+	ike(false, "aes,,aes"); /* empty algorithm */
+	ike(false, ",aes"); /* empty algorithm */
+
+	ike(false, "-"); /* empty algorithm */
+	ike(false, "+"); /* empty algorithm */
+	ike(false, ";"); /* empty algorithm */
+
+	ike(false, "aes-"); /* empty algorithm */
+	ike(false, "aes+"); /* empty algorithm */
+	ike(false, "aes;"); /* empty algorithm */
+	ike(false, "-aes"); /* empty algorithm */
+	ike(false, "+aes"); /* empty algorithm */
+	ike(false, ";aes"); /* empty algorithm */
+	ike(false, "aes+-"); /* empty algorithm */
+	ike(false, "aes+;"); /* empty algorithm */
+	ike(false, "aes++"); /* empty algorithm */
 }
 
 static void usage(void)
@@ -502,10 +564,10 @@ static void usage(void)
 		"         default: no\n"
 		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
 		"         default: determined by system environment\n"
-		"    -P <password> | -nsspw <password> | -password <password>:\n"
-		"        <password> to unlock crypto database\n"
 		"    -v --verbose: be more verbose\n"
-		"    -d --debug: enable debug logging\n"
+		"    --debug: enable debug logging\n"
+		/* -d <NSSDB> is reserved */
+		/* -P <password> | -nsspw <password> | -password <password> are reserved */
 		"    --impair: disable all algorithm parser checks\n"
 		"    --ignore: ignore parser errors (or at least some)\n"
 		"    -p1: simple parser\n"
@@ -524,7 +586,7 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
 	log_to_stderr = false;
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	if (argc == 1) {
 		usage();
@@ -568,6 +630,7 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "v") || streq(arg, "verbose")) {
 			verbose = true;
 		} else if (streq(arg, "debug")) {
+			/* -d <NSSDB> is reserved */
 			debug = true;
 		} else if (streq(arg, "ignore")) {
 			ignore_parser_errors = true;
@@ -591,11 +654,12 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	if (!lsw_nss_setup(NULL, LSW_NSS_READONLY, &progname_logger)) {
-		/* already logged */
-		exit(ERROR);
+	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
+	if (d != NULL) {
+		fatal_diag(ERROR, logger, &d, "%s", "");
 	}
-	init_crypt_symkey(&progname_logger);
+
+	init_crypt_symkey(logger);
 	fips = libreswan_fipsmode();
 
 	/*
@@ -604,7 +668,7 @@ int main(int argc, char *argv[])
 	 */
 	log_to_stderr = verbose;
 
-	init_ike_alg(&progname_logger);
+	init_ike_alg(logger);
 
 	/*
 	 * Only enabling debugging and impairing after things have
@@ -618,7 +682,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (test_algs) {
-		test_ike_alg(&progname_logger);
+		test_ike_alg(logger);
 	}
 
 	if (*argp) {
@@ -627,18 +691,18 @@ int main(int argc, char *argv[])
 			exit(ERROR);
 		}
 		for (; *argp != NULL; argp++) {
-			test_proposal(*argp);
+			test_proposal(*argp, logger);
 		}
 	} else if (test_proposals) {
-		test();
+		test(logger);
 		if (failures > 0) {
 			fprintf(stderr, "%d FAILURES\n", failures);
 		}
 	}
 
-	report_leaks(&progname_logger);
+	report_leaks(logger);
 
 	lsw_nss_shutdown();
 
-	exit(failures > 0 ? FAILED : PASSED);
+	exit(failures > 0 ? PLUTO_EXIT_FAIL : PLUTO_EXIT_OK);
 }

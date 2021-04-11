@@ -3,12 +3,14 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair ke-payload:empty
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  ipsec auto --add westnet-eastnet-ipv4-psk-slow
-002 added IKEv1 connection "westnet-eastnet-ipv4-psk-slow"
+002 "westnet-eastnet-ipv4-psk-slow": added IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -26,16 +28,5 @@ east #
 "westnet-eastnet-ipv4-psk-slow" #3: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
 "westnet-eastnet-ipv4-psk-slow" #3: received and ignored notification payload: INVALID_KEY_INFORMATION
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #3: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-| processing informational INVALID_KEY_INFORMATION (17)
-"westnet-eastnet-ipv4-psk-slow" #3: received and ignored notification payload: INVALID_KEY_INFORMATION
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #3: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-| processing informational INVALID_KEY_INFORMATION (17)
-"westnet-eastnet-ipv4-psk-slow" #3: received and ignored notification payload: INVALID_KEY_INFORMATION
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

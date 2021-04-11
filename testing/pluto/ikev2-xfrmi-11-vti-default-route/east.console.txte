@@ -60,7 +60,7 @@ east #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -136,7 +136,7 @@ east #
 000 "north-east-default":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "north-east-default":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-east-default":   our auth:secret, their auth:secret
-000 "north-east-default":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "north-east-default":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "north-east-default":   policy_label:unset;
 000 "north-east-default":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-east-default":   retransmit-interval: 9999ms; retransmit-timeout: 99s;

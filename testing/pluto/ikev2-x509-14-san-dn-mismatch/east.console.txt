@@ -6,10 +6,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add san
-002 added IKEv2 connection "san"
+002 "san": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -23,7 +23,4 @@ east #
 east #
  grep "RSA authentication failed" /tmp/pluto.log
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

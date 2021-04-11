@@ -3,15 +3,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet-nat
-002 added IKEv1 connection "northnet-eastnet-nat"
+002 "northnet-eastnet-nat": added IKEv1 connection
 east #
  echo initdone
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh | sed "s/dport [0-9][0-9][0-9][0-9][0-9]/dport DPORT/"
+ ../../guestbin/ipsec-look.sh | sed "s/dport [0-9][0-9][0-9][0-9][0-9]/dport DPORT/"
 east NOW
 XFRM state:
 src 192.1.2.111 dst 192.1.2.23
@@ -51,7 +51,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

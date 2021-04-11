@@ -4,19 +4,20 @@
 %global with_efence 0
 # There is no new enough unbound on rhel6
 %global with_dnssec 0
-%global nss_version 3.34.0-4
+%global nss_version 3.28.4
 # _rundir is not defined on rhel6
 %{!?_rundir:%global _rundir %{_localstatedir}/run}
 # Libreswan config options
 %global libreswan_config \\\
+    FINALINITDDIR=%{_initrddir} \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
-    FINALINITDDIR=%{_initrddir} \\\
-    PREFIX=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
-    PYTHON_BINARY=%{__python} \\\
+    PREFIX=%{_prefix} \\\
+    PYTHON_BINARY=python2 \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
@@ -26,16 +27,18 @@
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=false \\\
+    USE_NSS_KDF=false \\\
+    USE_OLD_SELINUX=true \\\
     USE_SECCOMP=false \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
-#global prever rc1
+#global prever dr1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: IPSECBASEVERSION
+Version: 4.3
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -140,8 +143,6 @@ rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
-# used when setting --perpeerlog without --perpeerlogbase
-install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 # replace with rhel[56] specific version
 install -m 0755 initsystems/sysvinit/init.rhel \
@@ -202,10 +203,9 @@ fi
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %attr(0755,root,root) %dir %{_libexecdir}/ipsec
 %{_libexecdir}/ipsec/*
@@ -217,5 +217,5 @@ fi
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Sun Feb 21 2021 Team Libreswan <team@libreswan.org> - 4.3-1
 - Automated build from release tar ball

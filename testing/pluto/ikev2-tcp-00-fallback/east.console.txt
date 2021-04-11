@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-westnet-eastnet
+002 "ikev2-westnet-eastnet": added IKEv2 connection
+east #
+ # block IKE and ESP over UDP
+east #
+ iptables -I INPUT -p udp --dport 500 -j DROP
+east #
+ iptables -I INPUT -p udp --dport 4500 -j DROP
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --shutdown
+east #
+ 

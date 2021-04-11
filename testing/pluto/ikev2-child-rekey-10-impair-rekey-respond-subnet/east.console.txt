@@ -4,10 +4,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 added IKEv2 connection "east"
+002 "east": added IKEv2 connection
 east #
  ipsec whack --impair revival
 east #
@@ -30,7 +30,4 @@ east #
 east #
  # road fail to rekey and no clear log message to grep
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

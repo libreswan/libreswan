@@ -4,7 +4,7 @@ ip route get to 192.0.3.254 | grep eth1 && ip route del 192.0.3.0/24 via 192.1.2
 ip addr show dev eth0 | grep 192.0.22.254 || ip addr add 192.0.22.254/24 dev eth0
 /testing/guestbin/swan-prep
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet
 ipsec auto --add westnet-eastnet
 echo "initdone"

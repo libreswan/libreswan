@@ -46,24 +46,23 @@ typedef uint_fast64_t lset_t;
 #define LFIRST(s) ((s) & -(s))
 #define LSINGLETON(s) ((s) != LEMPTY && LFIRST(s) == (s))
 
-/* Printing lset_t values:
- *
- * These routines require a name table which is a NULL-terminated
- * sequence of strings.  That means that each bit in the set must
- * have a name.
- *
- * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
- * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
- *
- * jam_enum_lset_short() formats into a caller-supplied buffer -- only form
+/*
+ * Printing lset_t values:
  */
-extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
-extern const char *bitnamesofb(const char *const table[],
-			       lset_t val,
-			       char *buf, size_t blen);
 
-size_t jam_enum_lset_short(struct jambuf *, const struct enum_names *sd,
-			      const char *separator, lset_t val);
+typedef struct {
+	char buf[512]; /* arbitrary */
+} lset_buf;
+
+extern bool test_lset(const struct enum_names *table, lset_t val);
+
+size_t jam_lset(struct jambuf *, const struct enum_names *sd, lset_t val);
+const char *str_lset(const struct enum_names *sd, lset_t val, lset_buf *buf);
+
+size_t jam_lset_short(struct jambuf *, const struct enum_names *sd,
+		      const char *separator, lset_t val);
+const char *str_lset_short(const struct enum_names *sd,
+			   const char *separator, lset_t val,
+			   lset_buf *buf);
 
 #endif /* CONSTANTS_H */

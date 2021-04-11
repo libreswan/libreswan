@@ -35,10 +35,10 @@
 #include "pluto_stats.h"
 #include "connections.h"
 #include "kernel.h"
-#include "virtual.h"
+#include "virtual_ip.h"
 #include "plutoalg.h"
 #include "crypto.h"
-#include "db_ops.h"
+#include "ikev1_db_ops.h"
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "show.h"
@@ -283,12 +283,15 @@ static void connection_state(struct state *st, void *data)
 		} else {
 			if (lc->phase1 < p1_init)
 				lc->phase1 = p1_init;
+#ifdef USE_IKEv1
+/* PW: This seems an unintensional flaw of using ikev1 only checks ??? */
 			if (IS_ISAKMP_ENCRYPTED(st->st_state->kind) &&
 			    lc->phase1 < p1_encrypt)
 				lc->phase1 = p1_encrypt;
 			if (IS_ISAKMP_AUTHENTICATED(st->st_state) &&
 			    lc->phase1 < p1_auth)
 				lc->phase1 = p1_auth;
+#endif
 		}
 	} else {
 		lc->phase1 = p1_down;
@@ -298,10 +301,12 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_connection != lc->conn)
 		return;
 
+#ifdef USE_IKEv1
 	if (IS_PHASE15(st->st_state->kind)) {
 		if (lc->tunnel < tun_phase15)
 			lc->tunnel = tun_phase15;
 	}
+#endif
 
 	if (IS_CHILD_SA(st)) {
 		if (lc->tunnel < tun_phase2)
@@ -424,7 +429,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 st->st_ref_peer == IPSEC_SAREF_NULL ? 0u :
 		 IPsecSAref2NFmark(st->st_ref_peer) | IPSEC_NFMARK_IS_SAREF_BIT);
 	if (system(buf) == -1) {
-		loglog(RC_LOG_SERIOUS, "statsbin= failed to send status update notification");
+		log_state(RC_LOG_SERIOUS, st, "statsbin= failed to send status update notification");
 	}
 	dbg("log_state for connection %s completed", conn->name);
 }

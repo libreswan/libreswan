@@ -48,10 +48,9 @@
 #include "demux.h"
 #include "ikev1_quick.h"
 #include "timer.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ip_address.h"
-#include "hostpair.h"
+#include "host_pair.h"
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -63,26 +62,28 @@ void add_pending(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
-		 struct xfrm_user_sec_ctx_ike *uctx,
+		 const chunk_t sec_label,
 		 bool part_of_initiate)
 {
-	struct pending *p, **pp;
-
 	/* look for duplicate pending IPsec SA's, skip add operation */
-	pp = host_pair_first_pending(c);
-
-	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
-		if (p->connection == c && p->ike == ike) {
+	struct pending **pp = host_pair_first_pending(c);
+	for (struct pending *p = pp ? *pp : NULL; p != NULL; p = p->next) {
+		if (p->connection == c) {
 			address_buf b;
 			connection_buf cib;
-			dbg("Ignored already queued up pending IPsec SA negotiation with %s "PRI_CONNECTION"",
+			bool duplicate = (p->ike == ike);
+			dbg("connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+			    pri_connection(c, &cib),
+			    p->ike->sa.st_serialno,
 			    str_address(&c->spd.that.host_addr, &b),
-			    pri_connection(c, &cib));
-			return;
+			    duplicate ? "ignoring duplicate" : "this IKE SA is different");
+			if (duplicate) {
+				return;
+			}
 		}
 	}
 
-	p = alloc_thing(struct pending, "struct pending");
+	struct pending *p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = dup_any(whack_sock); /*on heap*/
 	p->ike = ike;
 	p->connection = c;
@@ -91,13 +92,7 @@ void add_pending(struct fd *whack_sock,
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->part_of_initiate = part_of_initiate; /* useful */
-	p->uctx = NULL;
-	if (uctx != NULL) {
-		p->uctx = clone_thing(*uctx, "pending security context");
-		dbg("pending IPsec SA negotiation with security context %s, %d",
-		    p->uctx->sec_ctx_value,
-		    p->uctx->ctx.ctx_len);
-	}
+	p->sec_label = sec_label;
 
 	/*
 	 * If this is part of an initiate then there's already enough
@@ -113,7 +108,7 @@ void add_pending(struct fd *whack_sock,
 			    ipstr(&c->spd.that.host_addr, &b),
 			    ike->sa.st_serialno, pri_connection(cb, &cibb));
 	}
-	host_pair_enqueue_pending(c, p, &p->next);
+	host_pair_enqueue_pending(c, p);
 }
 
 /*
@@ -131,7 +126,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	 *
 	 * If the socket is valid, close it.
 	 */
-	if (!fd_p(st->st_whack_sock)) {
+	if (!fd_p(st->st_logger->object_whackfd)) {
 		dbg("%s: state #%lu has no whack fd",
 		     __func__, st->st_serialno);
 		return;
@@ -151,7 +146,7 @@ void release_pending_whacks(struct state *st, err_t story)
 	struct ike_sa *ike_with_same_whack = NULL;
 	if (IS_CHILD_SA(st)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		if (same_fd(st->st_whack_sock, ike->sa.st_whack_sock)) {
+		if (same_fd(st->st_logger->object_whackfd, ike->sa.st_logger->object_whackfd)) {
 			ike_with_same_whack = ike;
 			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
 		} else {
@@ -180,10 +175,10 @@ void release_pending_whacks(struct state *st, err_t story)
 	for (struct pending *p = *pp; p != NULL; p = p->next) {
 		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
 		    __func__, p->ike->sa.st_serialno,
-		    pri_fd(p->ike->sa.st_whack_sock),
+		    pri_fd(p->ike->sa.st_logger->object_whackfd),
 		    pri_fd(p->whack_sock));
 		if (p->ike == ike_with_same_whack && fd_p(p->whack_sock)) {
-			if (!same_fd(st->st_whack_sock, p->whack_sock)) {
+			if (!same_fd(st->st_logger->object_whackfd, p->whack_sock)) {
 				/* XXX: why not the log file? */
 				log_pending(WHACK_STREAM|RC_COMMENT, p,
 					    "%s for IKE SA, but releasing whack for pending %s",
@@ -210,25 +205,36 @@ void release_pending_whacks(struct state *st, err_t story)
  */
 static void delete_pending(struct pending **pp)
 {
+	/* remove from list */
 	struct pending *p = *pp;
-
 	*pp = p->next;
-	if (p->connection != NULL)
-		connection_discard(p->connection);
-	close_any(&p->whack_sock); /*on-heap*/
 
 	if (DBGP(DBG_BASE)) {
 		if (p->connection == NULL) {
-			/* ??? when does this happen? */
-			DBG_log("removing pending policy for no connection {%p}", p);
+			/*
+			 * ??? when does this happen?
+			 *
+			 * Look for p->connection=NULL below.  When
+			 * unpend()ing, the pending connection's
+			 * ownership is transfered to the state.
+			 */
+			DBG_log("removing pending policy {%p}; connection ownership transfered", p);
 		} else {
 			connection_buf cib;
-			DBG_log("removing pending policy for "PRI_CONNECTION" {%p}",
-				pri_connection(p->connection, &cib), p);
+			DBG_log("removing pending policy {%p} with connection "PRI_CONNECTION"",
+				p, pri_connection(p->connection, &cib));
 		}
 	}
 
-	pfreeany(p->uctx);
+	if (p->connection != NULL) {
+		/* above unlink means C is no longer pending */
+		pexpect(!connection_is_pending(p->connection));
+		connection_delete_unused_instance(&p->connection,
+						  /*old-state*/NULL,
+						  null_fd/*XXX: p->whack_sock?*/);
+	}
+	close_any(&p->whack_sock); /*on-heap*/
+
 	pfree(p);
 }
 
@@ -276,11 +282,11 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				}
 				break;
 			case IKEv1:
+#ifdef USE_IKEv1
 				quick_outI1(p->whack_sock, &ike->sa, p->connection,
 					    p->policy,
-					    p->try, p->replacing
-					    , p->uctx
-					    );
+					    p->try, p->replacing, empty_chunk);
+#endif
 				break;
 			default:
 				bad_case(ike->sa.st_ike_version);
@@ -356,6 +362,10 @@ bool pending_check_timeout(const struct connection *c)
 void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 {
 	struct pending *p, **pp;
+
+	pexpect(old_ike != NULL);
+	if (old_ike == NULL)
+		return;
 
 	pp = host_pair_first_pending(old_ike->sa.st_connection);
 	if (pp == NULL)
@@ -433,7 +443,7 @@ void show_pending_phase2(struct show *s,
 	}
 }
 
-bool in_pending_use(const struct connection *c)
+bool connection_is_pending(const struct connection *c)
 {
 	/* see if it is being used by a pending */
 	struct pending **pp, *p;

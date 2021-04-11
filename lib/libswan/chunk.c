@@ -18,19 +18,9 @@
 #include "chunk.h"
 #include "lswalloc.h"
 #include "lswlog.h"	/* for DBG_dump() */
-#include "ctype.h"		/* for isxdigit() */
 #include <stdlib.h>		/* for strtoul() */
 
-/*
- * Compiler note: some older versions of GCC claim that EMPTY_CHUNK
- * isn't a constant so we cannot use it as an initializer for empty_chunk.
- */
-const chunk_t empty_chunk = { .ptr = NULL, .len = 0 };
-
-chunk_t chunk1(char *ptr)
-{
-	return (chunk_t) { .ptr = (void*) ptr, .len = strlen(ptr), };
-}
+const chunk_t empty_chunk = NULL_HUNK;
 
 chunk_t chunk2(void *ptr, size_t len)
 {
@@ -49,33 +39,10 @@ void free_chunk_content(chunk_t *chunk)
 	*chunk = EMPTY_CHUNK;
 }
 
-chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
+void replace_chunk(chunk_t *dest, chunk_t src)
 {
-	size_t len = lhs.len + rhs.len;
-	chunk_t cat = {
-		.len = len,
-		.ptr = alloc_things(uint8_t, len, name),
-	};
-	memcpy(cat.ptr, lhs.ptr, lhs.len);
-	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
-	return cat;
-}
-
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
-{
-	if (ptr == NULL) {
-		return NULL;
-	}
-
-	/* NUL terminated (could also contain NULs, oops)? */
-	const char *in = ptr;
-	if (len > 0 && in[len - 1] == '\0') {
-		return clone_bytes(in, len, name);
-	}
-
-	char *out = alloc_things(char, len + 1, name);
-	memcpy(out, ptr, len);
-	return out;
+	free_chunk_content(dest);
+	*dest = src;
 }
 
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
@@ -86,6 +53,27 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 	 * orig=PTR; size>0 -> new PTR
 	 */
 	return chunk2(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
+}
+
+chunk_t clone_bytes_bytes_as_chunk(const void *lhs_ptr, size_t lhs_size,
+				   const void *rhs_ptr, size_t rhs_size,
+				   const char *name)
+{
+	size_t size = lhs_size + rhs_size;
+	uint8_t *bytes = alloc_things(uint8_t, size, name);
+	memcpy(bytes, lhs_ptr, lhs_size);
+	memcpy(bytes + lhs_size, rhs_ptr, rhs_size);
+	return chunk2(bytes, size);
+}
+
+void append_chunk_bytes(const char *name, chunk_t *lhs,
+			const void *rhs, size_t sizeof_rhs)
+{
+	size_t len = lhs->len + sizeof_rhs;
+	chunk_t new = alloc_chunk(len, name);
+	memcpy(new.ptr, lhs->ptr, lhs->len);
+	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
+	replace_chunk(lhs, new);
 }
 
 /*
@@ -101,7 +89,7 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 chunk_t chunk_from_hex(const char *hex, const char *name)
 {
 	/*
-	 * The decoded buffer (consiting of can't be bigger than half the encoded
+	 * The decoded buffer (consisting of can't be bigger than half the encoded
 	 * string.
 	 */
 	chunk_t chunk = alloc_chunk((strlen(hex)+1)/2, name);
@@ -116,7 +104,7 @@ chunk_t chunk_from_hex(const char *hex, const char *name)
 			break;
 		}
 		/* Expecting <HEX><HEX> */
-		if (!isxdigit(pos[0]) || !isxdigit(pos[1])) {
+		if (!char_isxdigit(pos[0]) || !char_isxdigit(pos[1])) {
 			/* friendly barf for debugging */
 			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
 				     pos - hex, hex, pos);

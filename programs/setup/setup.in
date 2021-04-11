@@ -33,7 +33,7 @@ initsystem="@INITSYSTEM@"
 # linux_START
 # The stock Fedora/RHEL RPM gets tested in side namespaces where
 # things get invoked directly is needed.
-if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+if echo $SUDO_COMMAND | grep "/bin/nsenter " && test -f /testing/guestbin/swan-prep > /dev/null 2>&1 ; then
     # direct start
     initsystem=namespaces
 fi
@@ -64,7 +64,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec start"
 		exec rc-service ipsec start
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec start"
 		exec /etc/init.d/ipsec start
 		;;
@@ -114,7 +114,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec stop"
 		exec rc-service ipsec stop
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec stop"
 		exec /etc/init.d/ipsec stop
 		;;
@@ -180,7 +180,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec status"
 		exec rc-service ipsec status
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec status"
 		exec /etc/init.d/ipsec status
 		;;
@@ -216,7 +216,7 @@ case "$1" in
 		echo "Redirecting to: rc-service ipsec restart"
 		exec rc-service ipsec restart
 		;;
-	    sysv )
+	    sysvinit )
 		echo "Redirecting to: /etc/init.d/ipsec restart"
 		exec /etc/init.d/ipsec restart
 		;;
@@ -227,6 +227,11 @@ case "$1" in
 	    rc.d )
 		echo "Redirecting to: /etc/rc.d/pluto onerestart"
 		exec /etc/rc.d/pluto onerestart
+		;;
+	    namespaces )
+		echo "Redirecting to: namespaces"
+		ipsec whack --shutdown
+		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
 		;;
 	    "" )
 		echo "Redirecting to: [stop start manually]"

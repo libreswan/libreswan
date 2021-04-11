@@ -20,76 +20,66 @@
 #define IP_SUBNET_H
 
 /*
- * This is not the subnet you're looking for.
+ * This defines a traditional subnet:
  *
- * In libreswan ip_subnet is used to store multiple things:
+ *    ADDRESS_PREFIX / MASK
  *
- *
- * #1 addresses i.e., NETWORK_PREFIX|HOST_IDENTIFIER / MASK
- * #2 subnets i.e., NETWORK_PREFIX|0 / MASK
- *
- * OK, so far so good, they are kind of eqivalent.
- *
- * #3 selectors i.e., NETWORK_PREFIX | 0 / MASK : PORT
- *
- * where PORT==0 imples 0..65535, and (presumably) port can only be
- * non-zero when the NETWORK_PREFIX/MASK is for a single address.
- *
- * the latter being a less general form of:
- *
- *    LO_ADDRESS..HI_ADDRESS : LO_PORT..HI_PORT
- *
- *
- */
-
-/*
- * Define SUBNET_TYPE to enable traditional subnets; expect everything
- * to break.
  */
 
 #include "ip_address.h"
 #include "ip_endpoint.h"
-
-#include "where.h"		/* used by endtosubnet() */
+#include "ip_bytes.h"
+#include "err.h"
 
 struct jambuf;
 
 typedef struct {
-#ifdef SUBNET_TYPE
-	/* proper subnet, not libreswan mashup */
-	ip_address addr;
-#else
-	/* (routing)prefix|host(id):port */
-	ip_endpoint addr;
-	bool is_selector;
-#endif
-	/* (routing prefix) bits */
-	int maskbits;
-	bool is_subnet;
+	bool is_set;
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	enum ip_version version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers
+	 * possible (struct in_addr requires htonl() which is run-time
+	 * only).
+	 */
+	struct ip_bytes bytes;
+	/*
+	 * (routing prefix) bits.
+	 */
+	unsigned maskbits;
 } ip_subnet;
 
-#define PRI_SUBNET "{"PRI_ADDRESS"} maskbits=%u is_subnet=%s is_selector=%s"
+#define PRI_SUBNET "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%u"
 #define pri_subnet(S, B)						\
-	pri_address(&(S)->addr, B),					\
-		(S)->maskbits,						\
-		bool_str((S)->is_subnet),				\
-		bool_str((S)->is_selector)
+		str_subnet(S, B),					\
+			bool_str((S)->is_set),				\
+			(S)->version,					\
+			pri_bytes((S)->bytes),				\
+			(S)->maskbits
 
-void pexpect_subnet(const ip_subnet *s, const char *t, where_t where);
-#define psubnet(S) pexpect_subnet(S, #S, HERE)
+void pexpect_subnet(const ip_subnet *s, where_t where);
+#define psubnet(S) pexpect_subnet(S, HERE)
 
 /*
  * Constructors
  */
 
-/* ADDRESS..ADDRESS:0..65535 */
-ip_subnet subnet_from_address(const ip_address *address);
+ip_subnet subnet_from_raw(where_t where, enum ip_version version,
+			  const struct ip_bytes bytes, unsigned prefix_bits);
 
-err_t address_mask_to_subnet(const ip_address *address, const ip_address *mask,
-			     ip_subnet *subnet);
+/* ADDRESS..ADDRESS */
+ip_subnet subnet_from_address(const ip_address address);
+/* ADDRESS/PREFIX_BITS */
+ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned prefixbits);
 
-/* convert CIDR addresss/mask to subnet */
-err_t text_cidr_to_subnet(shunk_t cidr, const struct ip_info *afi, ip_subnet *subnet);
+/* barf if not valid */
+err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);
+
+extern err_t addresses_to_nonzero_subnet(const ip_address from, const ip_address to,
+					 ip_subnet *dst) MUST_USE_RESULT;
 
 /*
  * Format as a string.
@@ -110,61 +100,31 @@ extern size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet);
  * term "unspecified" underspecified.
  *
  * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
- * is identified by *_type() returning NULL.
+ * is identified by *_unset().
  */
 
 extern const ip_subnet unset_subnet;
 
-const struct ip_info *subnet_type(const ip_subnet *subnet);
+bool subnet_is_unset(const ip_subnet *subnet);			/* handles NULL */
+const struct ip_info *subnet_type(const ip_subnet *subnet);	/* handles NULL */
 
-bool subnet_is_unset(const ip_subnet *subnet);
-#define subnet_is_set !subnet_is_unset
+bool subnet_is_zero(const ip_subnet subnet);	/* ::/128 or 0.0.0.0/32 */
+bool subnet_is_all(const ip_subnet subnet);	/* ::/0 or 0.0.0.0/0 */
 
-/* default route - ::/0 or 0.0.0.0/0 - matches all addresses */
-bool subnet_contains_all_addresses(const ip_subnet *subnet);
-/* !unset, !all, !none */
-bool subnet_is_specified(const ip_subnet *subnet);
-/* ADDRESS..ADDRESS; unlike subnetishost() this rejects 0.0.0.0/32. */
-bool subnet_contains_one_address(const ip_subnet *subnet);
-/* unspecified address - ::/128 or 0.0.0.0/32 - matches no addresses */
-bool subnet_contains_no_addresses(const ip_subnet *subnet);
+bool address_in_subnet(const ip_address address, const ip_subnet subnet);
+bool subnet_in_subnet(const ip_subnet lhs, const ip_subnet rhs);
 
-/* ADDRESS..ADDRESS in SUBNET */
-bool address_in_subnet(const ip_address *address, const ip_subnet *subnet);
+bool subnet_eq_address(const ip_subnet selector, const ip_address address);
+/* subnet_eq_range() === range_eq_subnet() */
+bool subnet_eq_subnet(const ip_subnet a, const ip_subnet b);
 
-/* h(ost) or n(etwork) ordered */
-int subnet_hport(const ip_subnet *subnet);
-
-/* when applied to an address, leaves just the routing prefix */
-extern ip_address subnet_mask(const ip_subnet *subnet);
 /* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|0 */
-ip_address subnet_prefix(const ip_subnet *subnet);
-/* Given ROUTING_PREFIX|HOST_ID return 0|HOST_ID */
-ip_address subnet_host(const ip_subnet *subnet);
-/* Given ROUTING_PREFIX|HOST_ID return ROUTING_PREFIX|HOST_ID */
-ip_address subnet_address(const ip_subnet *subnet);
+ip_address subnet_prefix(const ip_subnet subnet);
+ip_address subnet_prefix_mask(const ip_subnet subnet);
+unsigned subnet_prefix_bits(const ip_subnet subnet);
+uintmax_t subnet_size(const ip_subnet subnet);
 
-/*
- * old
- */
-#include "err.h"
-
-extern err_t ttosubnet(const char *src, size_t srclen, int af, int clash,
-		       ip_subnet *dst, struct logger *logger);
-#define SUBNETTOT_BUF   sizeof(subnet_buf)
-extern err_t initsubnet(const ip_address *addr, int maskbits, int clash,
-			ip_subnet *dst, struct logger *logger);
-extern err_t endtosubnet(const ip_endpoint *end, ip_subnet *dst, where_t where);
-
-/* misc. conversions and related */
-extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
-		    ip_subnet *dst);
-
-/* tests */
-extern bool samesubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool addrinsubnet(const ip_address *a, const ip_subnet *s);
-extern bool subnetinsubnet(const ip_subnet *a, const ip_subnet *b);
-extern bool subnetishost(const ip_subnet *s);
-#define subnetisaddr(sn, a) (subnetishost(sn) && addrinsubnet((a), (sn)))
+extern err_t ttosubnet(shunk_t src, const struct ip_info *afi,
+		       int clash, ip_subnet *dst, struct logger *logger);
 
 #endif

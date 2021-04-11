@@ -4,7 +4,7 @@
 #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 (test -z $(ip netns identify) || PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
 ipsec auto --add westnet-eastnet-22
 ipsec auto --route westnet-eastnet-22

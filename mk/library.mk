@@ -10,7 +10,7 @@ include $(top_srcdir)/mk/targets.mk
 
 ARFLAGS=crvs
 
-local-base: $(LIB)
+local-check local-base: $(LIB)
 
 local-clean-base:
 	rm -f $(builddir)/*.o
@@ -29,5 +29,4 @@ $(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
 	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB).tmp $(OBJS)
 	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)
 
-include $(top_srcdir)/mk/depend.mk
-include $(top_srcdir)/mk/builddir.mk
+include $(top_srcdir)/mk/rules.mk

@@ -3,15 +3,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-002 added IKEv2 connection "east"
+002 "east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
@@ -55,7 +55,6 @@ default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-::1 dev lo proto kernel metric 256
 2001:db8:0:1::/64 via 2001:db8:1:2::45 dev eth1
 2001:db8:0:2::/64 dev eth0 proto kernel metric 256
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
@@ -68,7 +67,4 @@ Certificate Nickname                                         Trust Attributes
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

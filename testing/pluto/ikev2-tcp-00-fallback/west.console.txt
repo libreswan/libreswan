@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ certutil -D -n east -d sql:/etc/ipsec.d
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev2-westnet-eastnet
+002 "ikev2-westnet-eastnet": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # this will 'fail' on the first attempt. The second attempt
+west #
+ # happens in the background and succeeds using TCP
+west #
+ # see: https://github.com/libreswan/libreswan/issues/368
+west #
+ ipsec auto --up ikev2-westnet-eastnet
+1v2 "ikev2-westnet-eastnet" #1: initiating IKEv2 connection
+1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
+031 "ikev2-westnet-eastnet" #1: STATE_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+000 "ikev2-westnet-eastnet" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+west #
+ sleep 3
+west #
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #3: "ikev2-westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ # should show tcp being used
+west #
+ ../../guestbin/ipsec-look.sh | grep encap
+	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
+	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
+west #
+ ipsec auto --down ikev2-westnet-eastnet
+002 "ikev2-westnet-eastnet": terminating SAs using this connection
+002 "ikev2-westnet-eastnet" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "ikev2-westnet-eastnet" #3: ESP traffic information: in=336B out=336B
+002 "ikev2-westnet-eastnet" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+west #
+ echo "done"
+done
+west #
+ ipsec whack --shutdown
+west #
+ 

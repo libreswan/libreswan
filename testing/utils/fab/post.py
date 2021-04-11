@@ -32,8 +32,6 @@ LHS = ">>>>>>>>>>"
 CUT = LHS + "cut" + LHS
 TUC = RHS + "tuc" + RHS
 DONE = CUT + " done " + TUC
-TIMEOUT = "timeout while running test script"
-EXCEPTION = "exception while running test script"
 
 class Resolution:
     PASSED = "passed"
@@ -102,10 +100,11 @@ class Issues:
     GPFAULT = "GPFAULT"
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
+    LEAK = "LEAK"
 
-    TIMEOUT = "timeout"
-
-    CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
+    TIMEOUT = "TIMEOUT"
+    EOF = "EOF"
+    EXCEPTION = "EXCEPTION"
 
     ISCNTRL = "iscntrl"
 
@@ -174,6 +173,10 @@ class Issues:
         if not host in self._issue_hosts[issue]:
             self._issue_hosts[issue].append(host)
         self._logger.debug("host %s has issue %s", host, issue)
+
+    def crashed(self):
+        return {Issues.ASSERTION, Issues.EXPECTATION, Issues.CORE, Issues.SEGFAULT, Issues.GPFAULT}.isdisjoint(self);
+
 
 
 def _strip(s):
@@ -273,7 +276,8 @@ class TestResult:
         # Start out assuming that it passed and then prove otherwise.
         self.resolution.passed()
 
-        # did pluto crash?
+        # check the log file for problems
+
         for host_name in test.host_names:
             pluto_log_filename = host_name + ".pluto.log"
             if self.grub(pluto_log_filename, "ASSERTION FAILED"):
@@ -289,6 +293,9 @@ class TestResult:
                 # This won't detect a \n embedded in the middle of a
                 # log line.
                 self.issues.add(Issues.ISCNTRL, host_name)
+                self.resolution.failed()
+            if self.grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
+                self.issues.add(Issues.LEAK, host_name)
                 self.resolution.failed()
 
         # Check the raw console output for problems and that it
@@ -314,6 +321,9 @@ class TestResult:
                 continue
 
             # Check the host's raw output for signs of a crash.
+            #
+            # Need to repeat EXPECTATION and ASSERTION.  It might be a
+            # command line utility that barfs.
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
@@ -326,6 +336,15 @@ class TestResult:
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
                 self.resolution.failed()
+            if self.grub(raw_output_filename, r"ASSERTION FAILED"):
+                self.issues.add(Issues.ASSERTION, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, r"EXPECTATION FAILED"):
+                self.issues.add(Issues.EXPECTATION, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, "\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
 
             # Check that the host's raw output is complete.
             #
@@ -335,10 +354,20 @@ class TestResult:
 
             logger.debug("host %s checking if raw console output is complete");
 
-            if self.grub(raw_output_filename, LHS + " " + TIMEOUT):
+            if self.grub(raw_output_filename, LHS + " " + Issues.TIMEOUT):
                 # One of the test scripts hung; all the
                 self.issues.add(Issues.TIMEOUT, host_name)
                 self.resolution.failed()
+
+            if self.grub(raw_output_filename, LHS + " " + Issues.EOF):
+                # One of the test scripts hung; all the
+                self.issues.add(Issues.EOF, host_name)
+                self.resolution.unresolved()
+
+            if self.grub(raw_output_filename, LHS + " " + Issues.EXCEPTION):
+                # One of the test scripts hung; all the
+                self.issues.add(Issues.EXCEPTION, host_name)
+                self.resolution.unresolved()
 
             if self.grub(raw_output_filename, DONE) is None:
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)

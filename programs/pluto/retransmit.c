@@ -129,11 +129,9 @@ void start_retransmits(struct state *st)
 		 * network is assumed to be reliable).
 		 */
 		rt->delay = c->r_timeout;
-		LSWLOG(buf) {
-			jam_string(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
-			jam_deltatime(buf, rt->delay);
-			jam_string(buf, " seconds");
-		}
+		deltatime_buf db;
+		log_state(RC_LOG, st, "IMPAIR: suppressing retransmits; scheduling timeout in %s seconds",
+			  str_deltatime(rt->delay, &db));
 	}
 	rt->start = mononow();
 	rt->delays = rt->delay;
@@ -167,16 +165,16 @@ enum retransmit_status retransmit(struct state *st)
 	 * - trigger the retransmit timeout path after the first delay
 	 */
 	if (impair.timeout_on_retransmit) {
-		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
+		log_state(RC_LOG, st, "IMPAIR: retransmit so timing out SA (may retry)");
 		return RETRANSMITS_TIMED_OUT;
 	}
 	if (impair.delete_on_retransmit) {
-		libreswan_log("IMPAIR: retransmit so deleting SA");
+		log_state(RC_LOG, st, "IMPAIR: retransmit so deleting SA");
 		return DELETE_ON_RETRANSMIT;
 	}
 
 	if (st->st_interface->protocol == &ip_protocol_tcp) {
-		libreswan_log("TCP: retransmit skipped because TCP is handling retransmits");
+		log_state(RC_LOG, st, "TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;
 	}
 
@@ -219,7 +217,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
+		LLOG_JAMBUF(RC_NORETRANSMISSION, st->st_logger, buf) {
 			jam(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				jam(buf, "max number of retransmissions (%lu) reached after ",
@@ -232,6 +230,7 @@ enum retransmit_status retransmit(struct state *st)
 					nr_retransmits);
 			}
 			switch (st->st_state->kind) {
+#ifdef USE_IKEv1
 			case STATE_MAIN_I3:
 			case STATE_AGGR_I2:
 				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
@@ -245,6 +244,7 @@ enum retransmit_status retransmit(struct state *st)
 					jam_string(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
 				}
 				break;
+#endif
 			case STATE_PARENT_I2:
 				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
 				break;
@@ -264,7 +264,7 @@ enum retransmit_status retransmit(struct state *st)
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LSWLOG_RC(RC_RETRANSMISSION, buf) {
+	LLOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);
@@ -286,7 +286,7 @@ void suppress_retransmits(struct state *st)
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_delete(EVENT_RETRANSMIT, st);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LSWLOG_RC(RC_RETRANSMISSION, buf) {
+	LLOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
 		jam(buf, "%s: suppressing retransmits; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);

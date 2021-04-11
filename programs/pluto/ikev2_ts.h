@@ -26,13 +26,24 @@ struct connection;
 struct child_sa;
 struct state;
 
-/* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
+/*
+ * IKEv2, this struct will be mapped into a ikev2_ts1 payload
+ * It contains either a v4/v6 range OR a sec_label
+ */
 struct traffic_selector {
 	uint8_t ts_type;
 	uint8_t ipprotoid;
 	uint16_t startport;
 	uint16_t endport;
 	ip_range net;	/* for now, always happens to be a CIDR */
+	/*
+	 * shares memory with any of:
+	 * - the struct pbs_in's buffer
+	 * - end.sec_label
+	 * - st.*sec_label
+	 * - acquire's sec_label
+	 */
+	shunk_t sec_label;
 };
 
 void ikev2_print_ts(const struct traffic_selector *ts);
@@ -43,12 +54,12 @@ bool v2_process_ts_response(struct child_sa *child,
 bool v2_process_ts_request(struct child_sa *child,
 			   const struct msg_digest *md);
 
-struct traffic_selector ikev2_end_to_ts(const struct end *e);
+struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state *st);
 
 stf_status v2_emit_ts_payloads(const struct child_sa *cst,
 			       pb_stream *outpbs,
 			       const struct connection *c);
 
-bool child_rekey_ts_verify(struct child_sa *child, struct msg_digest *md);
+bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *md);
 
 #endif

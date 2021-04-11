@@ -5,11 +5,10 @@ You can load this machine definition into libvirt using:
 
 <domain type='kvm'>
   <name>@@NAME@@</name>
-  <memory unit='KiB'>393216</memory>
-  <currentMemory unit='KiB'>393216</currentMemory>
+  <memory unit='MiB'>512</memory>
   <vcpu>1</vcpu>
   <os>
-    <type arch='x86_64' machine='pc-0.15'>hvm</type>
+    <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
   </os>
   <features>
@@ -37,7 +36,7 @@ You can load this machine definition into libvirt using:
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@SOURCEDIR@@'/>
-      <target dir='swansource'/>
+      <target dir='source'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
       <source dir='/tmp'/>

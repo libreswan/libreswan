@@ -42,6 +42,7 @@
 #include "ip_sockaddr.h"
 #include "ip_protocol.h"
 #include "iface.h"
+#include "impair_message.h"
 
 /* send_ike_msg logic is broken into layers.
  * The rest of the system thinks it is simple.
@@ -65,11 +66,12 @@
  * for NATT.  It accepts two chunks because this avoids double-copying.
  */
 
-bool send_chunks(const char *where, bool just_a_keepalive,
-		 so_serial_t serialno, /* can be SOS_NOBODY */
-		 const struct iface_port *interface,
-		 ip_address remote_endpoint,
-		 chunk_t a, chunk_t b)
+static bool send_chunks(const char *where, bool just_a_keepalive,
+			so_serial_t serialno, /* can be SOS_NOBODY */
+			const struct iface_endpoint *interface,
+			ip_endpoint remote_endpoint,
+			chunk_t a, chunk_t b,
+			struct logger *logger)
 {
 	/* NOTE: on system with limited stack, buf could be made static */
 	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
@@ -80,14 +82,14 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	size_t natt_bonus;
 
 	if (interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
-		return FALSE;
+		llog(RC_LOG, logger, "cannot send packet - interface vanished!");
+		return false;
 	}
 
 	/* bandaid */
 	if (a.ptr == NULL) {
-		libreswan_log("Cannot send packet - a.ptr is NULL");
-		return FALSE;
+		llog(RC_LOG, logger, "cannot send packet - a.ptr is NULL");
+		return false;
 	}
 
 	/*
@@ -102,12 +104,13 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	 * hsetportof(port,addr) where addr is invalid also get an
 	 * expecation failed message.
 	 */
-	if (isanyaddr(&remote_endpoint)) {
+	if (!endpoint_is_specified(remote_endpoint)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		endpoint_buf b;
-		libreswan_log("Will not send packet to bogus address %s",
-			      str_sensitive_endpoint(&remote_endpoint, &b));
-		return FALSE;
+		llog(RC_LOG, logger,
+			    "will not send packet to bogus address %s",
+			    str_endpoint_sensitive(&remote_endpoint, &b));
+		return false;
 	}
 
 	/*
@@ -122,11 +125,12 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 
 	const uint8_t *ptr;
 	size_t len = natt_bonus + a.len + b.len;
-	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
-		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
-		return FALSE;
+		/* XXX: UDP centric? */
+		llog(RC_LOG_SERIOUS, logger,
+			    "send_ike_msg(): really too big %zu bytes", len);
+		return false;
 	}
 
 	if (len != a.len) {
@@ -149,78 +153,86 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	if (DBGP(DBG_BASE)) {
 		endpoint_buf lb;
 		endpoint_buf rb;
-		DBG_log("sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
-			len, where,
-			interface->ip_dev->id_rname,
-			str_endpoint(&interface->local_endpoint, &lb),
-			str_endpoint(&remote_endpoint, &rb),
-			interface->protocol->name,
-			serialno);
+		llog(DEBUG_STREAM, logger,
+			    "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
+			    len, where,
+			    interface->ip_dev->id_rname,
+			    str_endpoint(&interface->local_endpoint, &lb),
+			    str_endpoint(&remote_endpoint, &rb),
+			    interface->protocol->name,
+			    serialno);
 		DBG_dump(NULL, ptr, len);
 	}
 
-	wlen = interface->io->write_packet(interface, ptr, len, &remote_endpoint);
-
-	if (wlen != (ssize_t)len) {
-		if (!just_a_keepalive) {
-			endpoint_buf lb;
-			endpoint_buf rb;
-			LOG_ERRNO(errno, "send on %s from %s to %s using %s failed in %s",
-				  interface->ip_dev->id_rname,
-				  str_endpoint(&interface->local_endpoint, &lb),
-				  str_sensitive_endpoint(&remote_endpoint, &rb),
-				  interface->protocol->name,
-				  where);
+	if (!impair_outgoing_message(shunk2(ptr, len), logger)) {
+		ssize_t wlen = interface->io->write_packet(interface, ptr, len,
+							   &remote_endpoint, logger);
+		if (wlen != (ssize_t)len) {
+			if (!just_a_keepalive) {
+				endpoint_buf lb;
+				endpoint_buf rb;
+				log_errno(logger, errno,
+					  "send on %s from %s to %s using %s failed in %s",
+					  interface->ip_dev->id_rname,
+					  str_endpoint(&interface->local_endpoint, &lb),
+					  str_endpoint_sensitive(&remote_endpoint, &rb),
+					  interface->protocol->name,
+					  where);
+			}
+			return false;
 		}
-		return FALSE;
+		pstats_ike_out_bytes += len;
 	}
 
-	pstats_ike_out_bytes += len;
-
-	/* Send a duplicate packet when this impair is enabled - used for testing */
+	/*
+	 * For testing: send a duplicate packet when this impair is
+	 * enabled.
+	 *
+	 * XXX: sends the packet out using UDP?  Merge with above?
+	 */
 	if (impair.jacob_two_two) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
 		endpoint_buf b;
 		endpoint_buf ib;
-		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
-			len,
-			where,
-			interface->ip_dev->id_rname,
-			str_endpoint(&interface->local_endpoint, &ib),
-			str_endpoint(&remote_endpoint, &b));
+		llog(RC_LOG, logger,
+			    "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
+			    len, where,
+			    interface->ip_dev->id_rname,
+			    str_endpoint(&interface->local_endpoint, &ib),
+			    str_endpoint(&remote_endpoint, &b));
 
-		ip_sockaddr remote_sa = sockaddr_from_endpoint(&remote_endpoint);
-		wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
+		ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
+		ssize_t wlen = sendto(interface->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 		if (wlen != (ssize_t)len) {
 			if (!just_a_keepalive) {
-				LOG_ERRNO(errno,
+				log_errno(logger, errno,
 					  "sendto on %s to %s failed in %s",
 					  interface->ip_dev->id_rname,
 					  str_endpoint(&remote_endpoint, &b),
 					  where);
 			}
-			return FALSE;
+			return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
-bool send_chunk(const char *where, so_serial_t serialno, /* can be SOS_NOBODY */
-		const struct iface_port *interface,
-		ip_address remote_endpoint, chunk_t packet)
+bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_out *packet)
 {
-	return send_chunks(where, FALSE, serialno,
-			   interface, remote_endpoint,
-			   packet, EMPTY_CHUNK);
+	return send_chunks(where, false, SOS_NOBODY,
+			   md->iface, md->sender,
+			   same_out_pbs_as_chunk(packet), EMPTY_CHUNK,
+			   md->md_logger);
 }
 
 bool send_chunks_using_state(struct state *st, const char *where,
-			     chunk_t a, chunk_t b)
+			     chunk_t chunk_a, chunk_t chunk_b)
 {
-	return send_chunks(where, FALSE,
-			   st->st_serialno, st->st_interface,
-			   st->st_remote_endpoint, a, b);
+	return send_chunks(where, false, st->st_serialno,
+			   st->st_interface, st->st_remote_endpoint,
+			   chunk_a, chunk_b,
+			   st->st_logger);
 }
 
 bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
@@ -228,8 +240,7 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 	return send_chunks_using_state(st, where, packet, EMPTY_CHUNK);
 }
 
-bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
-				    const char *where)
+bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *pbs)
 {
 	return send_chunk_using_state(st, where, same_out_pbs_as_chunk(pbs));
 }
@@ -239,13 +250,12 @@ bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
  * We don't want send errors logged (too noisy).
  * We don't want the packet prefixed with a non-ESP Marker.
  */
-bool send_keepalive(struct state *st, const char *where)
+bool send_keepalive_using_state(struct state *st, const char *where)
 {
 	static unsigned char ka_payload = 0xff;
 
-	return send_chunks(where, TRUE,
-			   st->st_serialno, st->st_interface,
+	return send_chunks(where, true, st->st_serialno, st->st_interface,
 			   st->st_remote_endpoint,
-			   THING_AS_CHUNK(ka_payload),
-			   EMPTY_CHUNK);
+			   THING_AS_CHUNK(ka_payload), EMPTY_CHUNK,
+			   st->st_logger);
 }

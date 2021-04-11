@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --userland strongswan
-../../pluto/bin/strongswan-start.sh
+../../guestbin/strongswan-start.sh
 ip link set down dev ipsec2 2> /dev/null > /dev/null
 ip link del ipsec2 2> /dev/null > /dev/null
 ip rule del pref 220 2> /dev/null > /dev/null

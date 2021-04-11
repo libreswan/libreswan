@@ -20,7 +20,6 @@
 #ifndef IFACE_H
 #define IFACE_H
 
-#include <sys/queue.h>
 
 #include "ip_endpoint.h"
 #include "refcnt.h"
@@ -28,35 +27,42 @@
 
 struct fd;
 struct raw_iface;
-struct iface_port;
+struct iface_endpoint;
 struct show;
 struct iface_dev;
+struct logger;
 
 struct iface_packet {
 	ssize_t len;
 	ip_endpoint sender;
 	uint8_t *ptr;
+	struct logger *logger; /*global*/
 };
 
-enum iface_status {
-	IFACE_OK = 0,
-	IFACE_EOF,
-	IFACE_FATAL,
-	IFACE_IGNORE, /* aka EAGAIN */
+enum iface_read_status {
+	IFACE_READ_OK = 0,
+	IFACE_READ_IGNORE, /* aka EAGAIN */
+	IFACE_READ_ABORT, /* on return, delete iface! */
+	/* place holders, same as ignore for now */
+	IFACE_READ_ERROR,
+	IFACE_READ_EOF,
 };
 
 struct iface_io {
 	bool send_keepalive;
 	const struct ip_protocol *protocol;
-	enum iface_status (*read_packet)(const struct iface_port *ifp,
-					 struct iface_packet *);
-	ssize_t (*write_packet)(const struct iface_port *ifp,
+	enum iface_read_status (*read_packet)(struct iface_endpoint *ifp,
+					      struct iface_packet *,
+					      struct logger *logger);
+	ssize_t (*write_packet)(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint);
-	void (*cleanup)(struct iface_port *ifp);
-	void (*listen)(struct iface_port *fip, struct logger *logger);
-	int (*bind_iface_port)(struct iface_dev *ifd,
-			       ip_port port, bool esp_encapsulation_enabled);
+				const ip_endpoint *remote_endpoint,
+				struct logger *logger);
+	void (*cleanup)(struct iface_endpoint *ifp);
+	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
+	int (*bind_iface_endpoint)(struct iface_dev *ifd,
+				   ip_port port, bool esp_encapsulation_enabled,
+				   struct logger *logger);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -70,9 +76,9 @@ extern const struct iface_io iketcp_iface_io; /*IKETCP specific*/
  * - their shared IP address (eg. 10.7.3.2)
  * Note: the port for IKE is always implicitly UDP/pluto_port.
  *
- * The iface is a unique IP address on a system. It may be used
- * by multiple port numbers. In general, two conns have the same
- * interface if they have the same iface_port->iface_alias.
+ * The iface is a unique IP address on a system. It may be used by
+ * multiple port numbers. In general, two conns have the same
+ * interface if they have the same iface_endpoint->iface_alias.
  */
 
 struct iface_dev {
@@ -85,15 +91,15 @@ struct iface_dev {
 };
 
 void release_iface_dev(struct iface_dev **id);
-void add_or_keep_iface_dev(struct raw_iface *ifp);
+void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger);
 struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
-struct iface_port {
+struct iface_endpoint {
 	struct iface_dev   *ip_dev;
 	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
-	struct iface_port *next;
+	struct iface_endpoint *next;
 	const struct ip_protocol *protocol;
 	/*
 	 * Here's what the RFC has to say:
@@ -140,7 +146,7 @@ struct iface_port {
 	 * to a random port:
 	 * - to be able to work with NAT esp encap needs to be enabled and that
 	 * in turn means all incoming messages must have the ESP=0 prefix
-	 * - trying to negotiate to port 500 will fail - the incomming message
+	 * - trying to negotiate to port 500 will fail - the incoming message
 	 * will be missing the ESP=0 prefix
 	 */
 	bool esp_encapsulation_enabled;
@@ -160,28 +166,29 @@ struct iface_port {
 	ip_endpoint iketcp_remote_endpoint;
 	bool iketcp_server;
 	enum iketcp_state {
-		IKETCP_OPEN = 1,
-		IKETCP_PREFIXED, /* received IKETCP */
-		IKETCP_RUNNING,  /* received at least one packet */
+		IKETCP_ACCEPTED = 1,
+		IKETCP_PREFIX_RECEIVED, /* received IKETCP */
+		IKETCP_ENABLED, /* received at least one packet */
 		IKETCP_STOPPED, /* waiting on state to close */
 	} iketcp_state;
 	struct event *iketcp_timeout;
 };
 
-void stop_iketcp_iface_port(struct iface_port **ifp);
-void free_any_iface_port(struct iface_port **ifp);
+void stop_iketcp_iface_endpoint(struct iface_endpoint **ifp);
+void free_any_iface_endpoint(struct iface_endpoint **ifp);
 
-extern struct iface_port *interfaces;   /* public interfaces */
+extern struct iface_endpoint *interfaces;   /* public interfaces */
 
-extern struct iface_port *find_iface_port_by_local_endpoint(ip_endpoint *local_endpoint);
+extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_endpoint);
 extern bool use_interface(const char *rifn);
-extern void find_ifaces(bool rm_dead, struct fd *whackfd);
+extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
-extern void free_ifaces(void);
-void listen_on_iface_port(struct iface_port *ifp, struct logger *logger);
-struct iface_port *bind_iface_port(struct iface_dev *ifd, const struct iface_io *io,
-				   ip_port port,
-				   bool esp_encapsulation_enabled,
-				   bool float_nat_initiator);
+extern void free_ifaces(struct logger *logger);
+void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);
+struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct iface_io *io,
+					   ip_port port,
+					   bool esp_encapsulation_enabled,
+					   bool float_nat_initiator,
+					   struct logger *logger);
 
 #endif

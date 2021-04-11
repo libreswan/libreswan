@@ -1,38 +1,96 @@
 #!/bin/sh
 
+pass1="sh modified"
+pass2="test diffs results retest upgrade patch install clean keys"
+
 if test $# = 0; then
     cat <<EOF
 Usage:
-   $0 sh <domain>
-   $0 test [<test> ...]
-   $0 diffs [<test> ...]
-   $0 results [<test> ...]
+   <operation> <operation> ... <arg> <arg>
+where <operation is>
+  sh <domain>
+  ${pass2} ... <test> ...
+To enable completion:
+  complete -o filename -C './kvm' ./kvm
 EOF
     exit 1
 fi
 
-op=$1; shift
+# Invoked by completer with:
+#   $0 <command==$0> <word> <previous>?
+if test "$1" == $0 -a "$#" -eq 3 ; then
+    command=$1
+    word=$2
+    previous=$3
+    # hack to detect first vs later argument
+    if test "${previous}" == "${command}" ; then
+	# first command
+	compgen -W "${pass1} ${pass2}" "${word}" | sort
+    elif test "${previous}" == "sh" ; then
+	# pass 1 command
+	compgen -W "east west north south road build base nic" "${word}"
+    else
+	# either <command> or <directory>
+	compgen -o plusdirs -W "${pass2}" "${word}"
+    fi
+    exit 0
+fi
 
-case $op in
-    sh )
-	exec make kvmsh-"$*"
-	;;
-    test )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-test KVM_TESTS="$*"
-	;;
-    diff|diffs )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-diffs KVM_TESTS="$*"
-	;;
-    result|results )
-	if test $# -eq 0 ; then
-	    set testing/pluto
-	fi
-	exec make kvm-results KVM_TESTS="$*"
-	;;
-esac
+# accumulate pass 2 commands; execute pass 1 commands
+
+ops=
+modified=
+
+while test $# -gt 0 ; do
+    case " ${pass2} " in
+	*" $1 "* ) ops="${ops} $1" ;;
+	* )
+	    # must be a pass1 command
+	    case "$1" in
+		sh ) exec gmake kvmsh-$2 ;;
+		diff ) ops="${ops} diffs" ;;
+		result ) ops="${ops} results" ;;
+		modified | --modified ) modified=modified- ;;
+		* ) # check for a directory
+		    if test ! -d $1 ; then
+			if test -z "${ops}" ; then
+			    echo "unknown command: $1" 1>&2
+			else
+			    echo "not a directory: $1" 1>&2
+			fi
+			exit 1
+		    fi
+		    break
+	    esac
+	    ;;
+    esac
+    shift
+done
+
+if test $# -eq 0 ; then
+    set testing/pluto
+fi
+
+# second pass
+status=0
+for op in ${ops} ; do
+    case ${op} in
+	upgrade | clean | install )
+	    gmake kvm-${op} || exit $?
+	    ;;
+	test | retest )
+	    gmake kvm-${modified}${op} KVM_TESTS="$*"
+	    ;;
+	diffs | results )
+	    gmake kvm-${modified}${op} KVM_TESTS="$*"
+	    status=$?
+	    ;;
+	patch )
+	    gmake kvm-${modified}diffs KVM_TESTS="$*" | patch -p1
+	    ;;
+	keys )
+	    gmake kvm-keys-clean kvm-keys
+    esac
+done
+
+exit ${status}

@@ -1,0 +1,85 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add rekey
+002 "rekey": added IKEv2 connection
+west #
+ ipsec auto --add rekey1
+002 "rekey1": added IKEv2 connection
+west #
+ ipsec auto --add rekey2
+002 "rekey2": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up rekey
+1v2 "rekey" #1: initiating IKEv2 connection
+1v2 "rekey" #1: sent IKE_SA_INIT request
+1v2 "rekey" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "rekey" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+002 "rekey" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "rekey" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up rekey1
+1v2 "rekey1" #3: sent CREATE_CHILD_SA request for new IPsec SA
+002 "rekey1" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "rekey1" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up rekey2
+1v2 "rekey2" #4: sent CREATE_CHILD_SA request for new IPsec SA
+002 "rekey2" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "rekey2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ sleep 3
+west #
+ # do an ike rekey
+west #
+ ipsec whack --rekey-ike --name rekey
+002 "rekey" #1: initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey
+1v2 "rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA
+002 "rekey" #5: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
+004 "rekey" #5: established IKE SA {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "rekey" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+west #
+ # do an ike rekey - but pick the conn that does not have the actual IKE SA
+west #
+ # is the error what we really want? Or would we want it to find the shared IKE SA?
+west #
+ ipsec whack --rekey-ike --name rekey2
+002 connection does not have IKE SA
+west #
+ # rekey should not trigger IKE_SA_INIT exchanges but CREATE_CHIKD_SA exchanges
+west #
+ ipsec whack --rekey-ipsec --name rekey1
+1v2 "rekey1" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
+002 "rekey1" #6: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "rekey1" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "rekey1" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "rekey1" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "rekey1" #3: ESP traffic information: in=0B out=0B
+west #
+ ipsec whack --rekey-ipsec --name rekey
+1v2 "rekey" #7: sent CREATE_CHILD_SA request to rekey IPsec SA
+002 "rekey" #7: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "rekey" #7: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "rekey" #7: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "rekey" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "rekey" #2: ESP traffic information: in=0B out=0B
+west #
+ ipsec whack --rekey-ipsec --name rekey2
+1v2 "rekey2" #8: sent CREATE_CHILD_SA request to rekey IPsec SA
+002 "rekey2" #8: rekeyed #4 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "rekey2" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "rekey2" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "rekey2" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "rekey2" #4: ESP traffic information: in=0B out=0B
+west #
+ echo done
+done
+west #
+ 

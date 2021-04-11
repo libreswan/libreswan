@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 certutil -D -n west -d sql:/etc/ipsec.d
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 # remove CA cert
 certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
 # insert a different CAcert to avoid NSS aborting for having no CA at all

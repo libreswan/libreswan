@@ -1,4 +1,17 @@
 A routed subnet-to-subnet tunnel using xfrmi interface systemd-networkd
 
-this test NEED systemd-networkd not likely to run in simple namespace.
-It could run under docker/podman.
+this test NEED systemd-networkd and not likely to run in a simple namespace.
+It could run under docker/podman (with systemd).
+
+Systemd got this feature in commit
+f392c065662 ("Merge pull request #12863 from 1848/if_xfrm")
+    Added support for xfrm interfaces
+
+https://github.com/systemd/systemd/pull/12863
+F32 systemd has xfrmi suspport
+
+Note: if this test is aborted before completion, it leaves the file
+/etc/systemd/network/ipsec2.netdev on the host. This cannot be fixed
+in time for systemd to read it. Re-running this test then will clean
+this up and the run after that can then be used as proper test case.
+

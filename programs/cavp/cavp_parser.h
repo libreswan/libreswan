@@ -14,5 +14,6 @@
  */
 
 struct cavp;
+struct logger;
 
-void cavp_parser(const struct cavp *cavp);
+void cavp_parser(const struct cavp *cavp, struct logger *logger);

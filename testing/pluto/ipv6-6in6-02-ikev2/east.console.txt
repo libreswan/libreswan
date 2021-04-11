@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-6in6
-002 added IKEv2 connection "westnet-eastnet-6in6"
+002 "westnet-eastnet-6in6": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -14,7 +14,4 @@ east #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-6in6", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, id='@west'
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -127,9 +127,11 @@ def main():
         baseline = testsuite.load(logger, logutil.DEBUG, args,
                                   testsuite_directory=args.baseline,
                                   error_level=logutil.DEBUG)
-        if not baseline:
-            # Perhaps the baseline just contains output, magic up the
-            # corresponding testsuite directory.
+        if not baseline and os.path.isdir(args.baseline):
+            # Perhaps, AKA BACKUP/YYYY-MM-DDD-..., the baseline
+            # directory only contains a copy of the output.  Magic up
+            # a baseline by combining the output with the tests in
+            # ARGS.TESTING_DIRECTORY.
             baseline_directory = os.path.join(args.testing_directory, "pluto")
             baseline = testsuite.load(logger, logutil.DEBUG, args,
                                       testsuite_directory=baseline_directory,
@@ -231,7 +233,8 @@ def results(logger, tests, baseline, args, result_stats):
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
 
-            if baseline and post.Issues.CRASHED.isdisjoint(result.issues):
+            if baseline and test in baseline \
+               and not result.issues.crashed():
                 # Since there is a baseline and the test didn't crash
                 # limit what is printed to just those where the
                 # baseline's result is different.

@@ -47,7 +47,7 @@ extern const struct id empty_id;	/* ID_NONE */
 err_t atoid(const char *src, struct id *id);
 
 /*
- * Formattting.
+ * Formatting.
  *
  * jam_id() only emits printable ASCII.  Non-printable characters, for
  * instance, are escaped using the RFC compliant sequence \<HEX><HEX>.

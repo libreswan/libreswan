@@ -17,21 +17,14 @@
 #ifndef LSWSECCOMP_H
 #define LSWSECCOMP_H
 
-#ifndef LSW_SECCOMP_EXIT_FAIL
-#error "need to define LSW_SECCOMP_EXIT_FAIL"
-#endif
-
 #include <seccomp.h>
 
-#include "lswlog.h"		/* for libreswan_exit() et.al. refered to by macro */
+#include "lswlog.h"		/* for libreswan_exit() et.al. referred to by macro */
 
 /*
  * Add system call NAME to seccomp.
  *
  * Needs to be a macro so that SCMP_SYS(NAME) expands correctly.
- *
- * XXX: Should use EXIT_LOG_ERRNO() but that doesn't take a custom
- * exit code.
  *
  * XXX: seccomp_release() isn't technically needed - the context
  * hasn't been loaded so can be dropped on the floor.
@@ -42,16 +35,16 @@
 		int rc = seccomp_rule_add(ctx, SCMP_ACT_ALLOW,		\
 					  SCMP_SYS(NAME), 0);		\
 		if (rc != 0) {						\
-			if (rc < 0) {					\
-				log_errno(logger, -rc,			\
-					  "seccomp_rule_add() failed for system call '%s'", \
-					  #NAME);			\
-			} else {					\
-				log_message(RC_LOG, logger, "seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
-					    #NAME, rc);			\
-			}						\
 			seccomp_release(ctx); /* XXX: needed? */	\
-			libreswan_exit(LSW_SECCOMP_EXIT_FAIL);		\
+			if (rc < 0) {					\
+				fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc, \
+					    "seccomp_rule_add() failed for system call '%s'", \
+					    #NAME);			\
+			} else {					\
+				fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, \
+				      "seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
+				      #NAME, rc);			\
+			}						\
 		}							\
 	}
 

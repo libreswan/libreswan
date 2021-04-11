@@ -1,0 +1,90 @@
+/testing/guestbin/swan-prep
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ../../guestbin/block-non-ipsec.sh
+road #
+ ipsec auto --add road-east
+002 "road-east": added IKEv1 connection
+road #
+ echo initdone
+initdone
+road #
+ ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
+002 "road-east" #1: initiating IKEv1 Main Mode connection
+1v1 "road-east" #1: sent Main Mode request
+1v1 "road-east" #1: sent Main Mode I2
+1v1 "road-east" #1: sent Main Mode I3
+002 "road-east" #1: Peer ID is ID_FQDN: '@east'
+004 "road-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+041 "road-east" #1: road-east prompt for Username:
+040 "road-east" #1: road-east prompt for Password:
+002 "road-east" #1: XAUTH: Answering XAUTH challenge with user='xroad'
+004 "road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "road-east" #1: XAUTH: Successfully Authenticated
+004 "road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "road-east" #1: modecfg: Sending IP request (MODECFG_I1)
+005 "road-east" #1: Received IPv4 address: 192.0.2.102/32
+005 "road-east" #1: Received DNS server 1.2.3.4
+005 "road-east" #1: Received DNS server 5.6.7.8
+004 "road-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO
+1v1 "road-east" #2: sent Quick Mode request
+002 "road-east" #2: up-client output: updating resolvconf
+004 "road-east" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=xroad}
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
+road #
+ echo done
+done
+road #
+ # on east this should show 2 sets of in/fwd/out policies
+road #
+ ../../guestbin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.102/32
+	dir fwd priority 2080766 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.102/32
+	dir in priority 2080766 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.102/32 dst 0.0.0.0/0
+	dir out priority 2080766 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 via 192.1.3.254 dev eth0 src 192.0.2.102
+default via 192.1.3.254 dev eth0
+128.0.0.0/1 via 192.1.3.254 dev eth0 src 192.0.2.102
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ 

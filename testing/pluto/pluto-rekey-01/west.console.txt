@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,16 +13,16 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv1 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -36,19 +36,12 @@ west #
 1v1 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I3
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev2" #2: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  # wait for an IKE rekey
 west #
@@ -60,7 +53,7 @@ west #
 west #
  ipsec whack --showstates
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#1; idle;
-000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B 
+000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B! ESPmax=4194303B 
 000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (IKE SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 000 #4: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
@@ -75,7 +68,4 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

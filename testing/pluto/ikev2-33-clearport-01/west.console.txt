@@ -3,13 +3,13 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv2 connection "west-east"
+002 "west-east": added IKEv2 connection
 west #
  ipsec auto --add pass-222
-002 added IKEv2 connection "pass-222"
+002 "pass-222": added passthrough connection
 west #
  echo "initdone"
 initdone
@@ -73,9 +73,4 @@ west #
  echo done
 done
 west #
- : ==== tuc ====
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

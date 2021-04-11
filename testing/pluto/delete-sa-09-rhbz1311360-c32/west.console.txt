@@ -2,31 +2,31 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-002 added IKEv1 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv1 connection
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  ipsec status | grep west
 000 "west-east": 192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]; unrouted; eroute owner: #0
 000 "west-east":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "west-east":   our auth:secret, their auth:secret
-000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "west-east":   policy_label:unset;
-000 "west-east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "west-east":   sec_label:unset;
+000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "west-east":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "west-east":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -36,12 +36,12 @@ west #
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:secret, their auth:secret
-000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "westnet-eastnet":   policy_label:unset;
-000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "westnet-eastnet":   sec_label:unset;
+000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -58,12 +58,12 @@ west #
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 004 "west-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-east" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet
-002 "westnet-eastnet" #3: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #3: sent Quick Mode request
 004 "westnet-eastnet" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -72,9 +72,9 @@ west #
  sleep 2
 west #
  ipsec status |grep STATE
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #2: "west-east":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #2: "west-east":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ipsec auto --down  west-east
 002 "west-east": terminating SAs using this connection
@@ -90,10 +90,7 @@ west #
  # Expecting the IKE SA of west-east and the IPsec SA of westnet-eastnet
 west #
  ipsec status |grep STATE
-000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

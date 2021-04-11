@@ -3,16 +3,16 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --add first
-002 added IKEv2 connection "first"
+002 "first": added IKEv2 connection
 west #
  ipsec auto --add second
-002 added IKEv2 connection "second"
+002 "second": added IKEv2 connection
 west #
  # conn second should inherit the conn %default values with 3des-md5
 west #
@@ -25,13 +25,12 @@ west #
  # connection should fail to load - don't accept %fromcert without cert
 west #
  ipsec auto --add cert-complain
-036 ID cannot be specified as %fromcert if PSK or AUTH-NULL is used
-036 Failed to load connection "cert-complain": attempt to load incomplete connection
+036 "cert-complain": failed to add connection: ID cannot be specified as %fromcert if PSK or AUTH-NULL is used
 west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #
  ipsec auto --add cert-allow
-002 added IKEv2 connection "cert-allow"
+002 "cert-allow": added IKEv2 connection
 west #
  echo done
 done

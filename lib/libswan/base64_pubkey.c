@@ -38,8 +38,8 @@ static err_t rsa_pubkey_to_rfc_resource_record(chunk_t exponent, chunk_t modulus
 	 * just allocate 3 extra bytes.
 	 */
 	size_t rrlen = exponent.len + modulus.len + 3;
-	u_char *buf = alloc_bytes(rrlen, "buffer for rfc3110");
-	u_char *p = buf;
+	uint8_t *buf = alloc_bytes(rrlen, "buffer for rfc3110");
+	uint8_t *p = buf;
 
 	if (exponent.len <= 255) {
 		*p++ = exponent.len;
@@ -104,8 +104,8 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 	/*
 	 * Does the exponent fall off the end of the resource record?
 	 */
-	u_char *const exponent_end = exponent.ptr + exponent.len;
-	u_char *const rr_end = rr.ptr + rr.len;
+	uint8_t *const exponent_end = exponent.ptr + exponent.len;
+	uint8_t *const rr_end = rr.ptr + rr.len;
 	if (exponent_end > rr_end) {
 		return "truncated RSA public key resource record exponent";
 	}
@@ -178,7 +178,9 @@ err_t pack_RSA_public_key(const struct RSA_public_key *rsa, chunk_t *rr)
 }
 #endif
 
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+			    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+			    const chunk_t *pubkey)
 {
 	/* unpack */
 	chunk_t exponent;
@@ -188,57 +190,60 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 		return rrerr;
 	}
 
-	ckaid_t ckaid;
-	err_t ckerr = form_ckaid_rsa(modulus, &ckaid);
+	err_t ckerr = form_ckaid_rsa(modulus, ckaid);
 	if (ckerr != NULL) {
 		return ckerr;
 	}
 
-	keyblobtoid(pubkey->ptr, pubkey->len, rsa->keyid, sizeof(rsa->keyid));
-	rsa->k = modulus.len;
+	err_t e = keyblob_to_keyid(pubkey->ptr, pubkey->len, keyid);
+	if (e != NULL) {
+		return e;
+	}
+
+	*size = modulus.len;
 	rsa->e = clone_hunk(exponent, "e");
 	rsa->n = clone_hunk(modulus, "n");
-	rsa->ckaid = ckaid;
 
 	/* generate the CKAID */
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", rsa->keyid);
+		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  n", rsa->n);
 		DBG_dump_hunk("  e", rsa->e);
-		DBG_dump_hunk("  CKAID", rsa->ckaid);
+		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
 	return NULL;
 }
 
-err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey)
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
+			      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+			      const chunk_t *pubkey)
 {
-	/* ??? can this be cloned later, after form_ckaid_ecdsa has succeeded? */
-	ecdsa->pub = clone_hunk(*pubkey, "public value");
+	err_t e;
 
-	ckaid_t ckaid;
-	err_t err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
-	if (err != NULL) {
-		free_chunk_content(&ecdsa->pub);
-		return err;
+	e = form_ckaid_ecdsa(*pubkey, ckaid);
+	if (e != NULL) {
+		return e;
 	}
 
-	memcpy(ecdsa->keyid, pubkey->ptr, KEYID_BUF-1);
-	ecdsa->keyid[KEYID_BUF-1] = '\0';
+	/* use the ckaid since that digested the entire pubkey */
+	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
+	if (e != NULL) {
+		return e;
+	}
 
-	ecdsa->k = pubkey->len;
-	ecdsa->ckaid = ckaid;
-
-	/* generate the CKAID */ /* ??? really? Not done above? */
+	*size = pubkey->len;
+	ecdsa->pub = clone_hunk(*pubkey, "public value");
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", ecdsa->keyid);
-		DBG_log("  key size: *%s", ecdsa->keyid);
+		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  pub", ecdsa->pub);
-		DBG_dump_hunk("  CKAID", ecdsa->ckaid);
+		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
        return NULL;

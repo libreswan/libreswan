@@ -5,10 +5,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add eastnet-road
-002 added IKEv2 connection "eastnet-road"
+002 "eastnet-road": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -51,7 +51,4 @@ east #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -3,10 +3,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -22,13 +22,10 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: no useful state microcode entry found for incoming packet
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: reschedule pending child #2 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: reschedule pending CHILD SA - the IKE SA #1 is going away
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

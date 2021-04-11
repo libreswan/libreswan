@@ -24,7 +24,7 @@
 #include "pluto_timing.h"
 #include "log.h"
 
-static struct root_certs *root_certs;
+static struct root_certs *root_cert_db;
 
 struct root_certs *root_certs_addref(where_t where)
 {
@@ -32,25 +32,25 @@ struct root_certs *root_certs_addref(where_t where)
 
 	/* extend or set cert cache lifetime */
 	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
-	if (root_certs != NULL) {
-		return ref_add(root_certs, where);
+	if (root_cert_db != NULL) {
+		return refcnt_addref(root_cert_db, where);
 	}
 
-	plog_global("loading root certificate cache");
+	log_global(LOG_STREAM, null_fd, "loading root certificate cache");
 
 	/*
 	 * Always allocate the ROOT_CERTS structure.  If things fail,
-	 * it will contain the empty list (but avoid possibly
-	 * expensive attempts to re-load).
-	 *
-	 * Need to start with two references: the ROOT_CERTS; and the
-	 * result of this function.
+	 * it will contain an empty list of certificates (but avoid
+	 * possibly expensive attempts to re-load).
 	 */
-	root_certs = alloc_thing(struct root_certs, "root certs");
-	ref_init(root_certs, where); /* static pointer */
-	ref_add(root_certs, where); /* function result */
-	root_certs->trustcl = CERT_NewCertList();
+	root_cert_db = refcnt_alloc(struct root_certs, where);
 
+	/*
+	 * Start with two references: the ROOT_CERT_DB; and the result
+	 * of this function.
+	 */
+	struct root_certs *root_certs = refcnt_addref(root_cert_db, where); /* function result */
+	root_certs->trustcl = CERT_NewCertList();
 
 	struct logger logger = GLOBAL_LOGGER(null_fd);
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(&logger);
@@ -97,17 +97,17 @@ struct root_certs *root_certs_addref(where_t where)
 	return root_certs;
 }
 
-static void root_certs_free(struct root_certs **certs, where_t unused_where UNUSED)
+static void root_certs_free(struct root_certs **root_certs, where_t unused_where UNUSED)
 {
-	plog_global("destroying root certificate cache");
-	CERT_DestroyCertList(root_certs->trustcl);
-	pfreeany(*certs);
+	log_global(LOG_STREAM, null_fd, "destroying root certificate cache");
+	CERT_DestroyCertList((*root_certs)->trustcl);
+	pfreeany(*root_certs);
 }
 
 void root_certs_delref(struct root_certs **root_certs,
 			where_t where)
 {
-	ref_delete(root_certs, root_certs_free, where);
+	refcnt_delref(root_certs, root_certs_free, where);
 }
 
 bool root_certs_empty(const struct root_certs *root_certs)
@@ -119,12 +119,37 @@ bool root_certs_empty(const struct root_certs *root_certs)
 
 void init_root_certs(void)
 {
+	/*
+	 * Set up the timer for deleting the root certs, but don't
+	 * schedule it (it gets scheduled when the root certs are
+	 * allocated).
+	 */
 	init_oneshot_timer(EVENT_FREE_ROOT_CERTS, free_root_certs);
 }
 
-void free_root_certs(struct fd *unused_whackfd UNUSED)
+void free_root_certs(struct logger *logger)
 {
 	passert(in_main_thread());
-	root_certs_delref(&root_certs, HERE);
-	pexpect(root_certs == NULL);
+
+	/*
+	 * This function can be called during shutdown when there are
+	 * no certs.
+	 */
+	if (root_cert_db == NULL) {
+		return;
+	}
+
+	/*
+	 * Deal with a helper thread being stuck (because it is being debugged?);
+	 * need to peek at the refcnt.
+	 */
+	if (root_cert_db->refcnt.count > 1) {
+		llog(RC_LOG, logger, "root certs still in use; suspect stuck thread");
+		/* extend or set cert cache lifetime */
+		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
+		return;
+	}
+
+	root_certs_delref(&root_cert_db, HERE);
+	pexpect(root_cert_db == NULL);
 }

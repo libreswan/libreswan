@@ -1,0 +1,80 @@
+
+policy_module(ipsecspd, 1.0.0)
+
+require {
+	role unconfined_r;
+
+	type bin_t;
+	type ifconfig_t;
+	type ipsec_mgmt_t;
+	type ipsec_spd_t;
+	type ipsec_t;
+	type iptables_t;
+	type ping_t;
+	type unconfined_service_t;
+	type unconfined_t;
+
+	class association { polmatch sendto setcontext };
+	class capability { net_raw };
+	class chr_file { append getattr ioctl lock read write };
+	class dir { getattr ioctl lock open read search };
+	class file { entrypoint execute getattr ioctl lock map open read };
+	class lnk_file { getattr read };
+	class netif { egress ingress tcp_recv tcp_send udp_recv udp_send };
+       	class node { recvfrom tcp_recv tcp_send udp_recv udp_send sendto };
+	class process { noatsecure rlimitinh siginh };
+	class tcp_socket { create_stream_socket_perms name_connect node_bind recv_msg send_msg };
+	class udp_socket { create_socket_perms recv_msg send_msg };
+}
+
+#============= BEGIN nping_t ==============
+
+type nping_t;
+
+role unconfined_r types nping_t;
+
+domain_type(nping_t)
+
+domain_entry_file(nping_t, bin_t)
+
+sysnet_read_config(nping_t)
+
+userdom_use_inherited_user_ptys(nping_t)
+
+allow nping_t self:capability net_raw;
+
+# Allow UDP network traffic on all generic interfaces for `nping_t`.
+allow nping_t self:udp_socket create_socket_perms;
+corenet_udp_sendrecv_generic_if(nping_t)
+corenet_udp_sendrecv_generic_node(nping_t)
+corenet_udp_sendrecv_all_ports(nping_t)
+
+# Allow TCP network traffic on all generic interfaces for `nping_t`.
+allow nping_t self:tcp_socket create_stream_socket_perms;
+corenet_tcp_sendrecv_generic_if(nping_t)
+corenet_tcp_sendrecv_generic_node(nping_t)
+corenet_tcp_sendrecv_all_ports(nping_t)
+corenet_tcp_connect_all_ports(nping_t)
+corenet_tcp_bind_generic_node(nping_t)
+
+#============= END nping_t ==============
+
+#============= unconfined_service_t ==============
+# Required when running `pluto` under `rr`.
+allow unconfined_service_t unconfined_t:association setcontext;
+allow unconfined_service_t ping_t:association setcontext;
+allow unconfined_service_t ipsec_t:association setcontext;
+allow unconfined_service_t nping_t:association setcontext;
+
+#============= ipsec_t ==============
+allow ipsec_t ipsec_mgmt_t:process { noatsecure rlimitinh siginh };
+allow ipsec_t unconfined_t:association setcontext;
+allow ipsec_t ping_t:association setcontext;
+allow ipsec_t ipsec_t:association setcontext;
+allow ipsec_t nping_t:association setcontext;
+ipsec_setcontext_default_spd(ipsec_t)
+
+#============= ipsec_mgmt_t ==============
+allow ipsec_mgmt_t ifconfig_t:process { noatsecure rlimitinh siginh };
+allow ipsec_mgmt_t ipsec_t:process { noatsecure siginh };
+allow ipsec_mgmt_t iptables_t:process { noatsecure rlimitinh siginh };

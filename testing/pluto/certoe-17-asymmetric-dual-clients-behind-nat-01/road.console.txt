@@ -12,13 +12,14 @@ road #
  ipsec restart
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  # give OE policies time to load
 road #
- sleep 3
+ ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+000 Total IPsec connections: loaded 2, active 0
 road #
  echo "initdone"
 initdone
@@ -35,30 +36,23 @@ road #
 road #
  # trigger ping, this will be lost
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  # sending pings
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  # A tunnel should have established with non-zero byte counters
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
@@ -77,7 +71,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384:
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using authby=null
+OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
@@ -93,9 +87,6 @@ OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash al
 OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

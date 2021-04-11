@@ -4,10 +4,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
-002 added IKEv2 connection "road-east"
+002 "road-east": added IKEv2 connection
 road #
  # we cannot have --impair retransmit, because for some reason
 road #
@@ -27,9 +27,7 @@ road #
 002 "road-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "road-east" #2: sent IKE_SA_INIT request
 1v2 "road-east" #2: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road-east" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "road-east" #3: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "road-east" #2: authenticated using RSA with SHA2_512
+003 "road-east" #2: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
 002 "road-east" #3: received INTERNAL_IP4_DNS 1.2.3.4
 002 "road-east" #3: received INTERNAL_IP4_DNS 5.6.7.8
@@ -44,23 +42,16 @@ road #
 road #
  # should be connected to west!
 road #
- ping -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 road #
  ipsec whack --trafficstatus
-006 #3: "road-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
+006 #3: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 road #
  ipsec auto --delete road-east
 002 "road-east": terminating SAs using this connection
 002 "road-east" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
-005 "road-east" #3: ESP traffic information: in=336B out=336B
+005 "road-east" #3: ESP traffic information: in=84B out=84B
 002 "road-east" #3: down-client output: restoring resolvconf
 002 "road-east" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 road #
@@ -68,7 +59,7 @@ road #
 1. road connection delete done
 road #
  ipsec auto --add road-east
-002 added IKEv2 connection "road-east"
+002 "road-east": added IKEv2 connection
 road #
  ipsec whack --impair delete-on-retransmit
 road #
@@ -90,12 +81,4 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shutdown
-road #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

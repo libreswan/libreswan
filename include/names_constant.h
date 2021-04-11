@@ -24,10 +24,8 @@ extern const struct lmod_info debug_lmod_info;
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
 extern enum_names certpolicy_type_names;
-extern const char *const sa_policy_bit_names[];
-extern const char *const sighash_policy_bit_names[];
 extern enum_names oakley_attr_names;
-extern const char *const oakley_attr_bit_names[];
+extern enum_names oakley_attr_bit_names;
 extern enum_names *const oakley_attr_val_descs[];
 extern const unsigned int oakley_attr_val_descs_roof;
 extern enum_names ipsec_attr_names;
@@ -51,7 +49,6 @@ extern enum_enum_names payload_type_names;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
 extern enum_names payload_names_ikev1orv2;
-extern const char *const payload_name_ikev1[];	/* suitable for bitnamesof() */
 extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
 extern enum_names xauth_type_names;
@@ -80,7 +77,7 @@ extern enum_names ikev2_auth_names;
 extern enum_names ikev2_hash_algorithm_names;
 extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
-extern enum_names ikev2_notify_protocol_id_names;	/* NONE=0, 2=AH, 3=ESP; NOT IKE! */
+extern enum_names ikev2_notify_protocol_id_names;	/* NONE=0, 1=IKE, 2=AH, 3=ESP */
 extern enum_names ikev2_trans_type_names;
 extern enum_names ikev2_trans_type_encr_names;
 extern enum_names ikev2_trans_type_prf_names;
@@ -111,7 +108,6 @@ extern enum_names dns_auth_level_names;
  */
 extern uint16_t secctx_attr_type;
 
-extern const char *const natt_bit_names[];
 extern enum_names natt_method_names;
 
 extern enum_names pkk_names;

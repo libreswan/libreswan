@@ -15,6 +15,7 @@
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,11 +33,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <ctype.h>
 
 #include "lswalloc.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "hunk.h"		/* for char_is_space() */
+#include "ip_cidr.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
@@ -108,7 +110,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # undef SOPT
 
-	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");
+	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
+	cfg->setup.strings[KSF_NSSDIR] = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
+	cfg->setup.strings[KSF_SECRETSFILE] = clone_str(IPSEC_SECRETS_FILE, "default ipsec.secrets file");
+	cfg->setup.strings[KSF_DUMPDIR] = clone_str(DEFAULT_RUNDIR, "default dumpdir");
+	cfg->setup.strings[KSF_IPSECDIR] = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
 
 	/* ==== end of config setup ==== */
 
@@ -165,15 +171,15 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
 	DOPT(KNCF_AUTO, STARTUP_IGNORE);
-	DOPT(KNCF_XFRM_IF_ID, yn_no);
+	DOPT(KNCF_XFRM_IF_ID, UINT32_MAX);
 
 # undef DOPT
 
+	d->ike_version = IKEv2;
 	d->policy =
 		POLICY_TUNNEL |
 		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
-		POLICY_IKEV2_ALLOW |
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
 
@@ -181,14 +187,16 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
 	d->left.host_family = &ipv4_info;
-	d->left.addr = address_any(&ipv4_info);
+	d->left.addr = ipv4_info.address.any;
 	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = address_any(&ipv4_info);
+	d->left.nexthop = ipv4_info.address.any;
 
 	d->right.host_family = &ipv4_info;
-	d->right.addr = address_any(&ipv4_info);
+	d->right.addr = ipv4_info.address.any;
 	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = address_any(&ipv4_info);
+	d->right.nexthop = ipv4_info.address.any;
+
+	d->xfrm_if_id = UINT32_MAX;
 
 	/* default is NOT to look in DNS */
 	d->left.key_from_DNS_on_demand = FALSE;
@@ -272,7 +280,7 @@ static char **tokens_from_string(const char *value, int *n)
 	int count = 0;
 	for (char *b = val; b < end; ) {
 		char *e;
-		for (e = b; *e != '\0' && !isblank(*e); e++)
+		for (e = b; *e != '\0' && !char_isspace(*e); e++)
 			;
 		*e = '\0';
 		if (e != b)
@@ -351,7 +359,7 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_bitstring:
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
@@ -386,7 +394,8 @@ static bool load_setup(struct starter_config *cfg,
  *
  * The function checks that IP addresses are valid, nexthops are
  * present (if needed) as well as policies, and sets the leftID
- * from the left= if it isn't set.
+ * from the left= if it isn't set. It sets the conn's sec_label
+ * into its left/right struct end options
  *
  * @param conn_st a connection definition
  * @param end a connection end
@@ -432,7 +441,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addrtype = end->options[KNCF_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = address_any(hostfam);
+		end->addr = hostfam->address.any;
 		break;
 
 	case KH_IFACE:
@@ -455,7 +464,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = numeric_to_address(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
+		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
@@ -503,7 +512,12 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];
-		err_t oops = text_cidr_to_subnet(shunk1(value), NULL, &end->vti_ip);
+		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->vti_ip);
+		if (oops != NULL) {
+			ERR_FOUND("bad addr %s%s=%s [%s]",
+				  leftright, "vti", value, oops);
+		}
+		oops = cidr_specified(end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
@@ -521,11 +535,15 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
+			if (conn_st->ike_version != IKEv1) {
+				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
+			}
+
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
-			er = ttosubnet(value, 0, AF_UNSPEC, '0',
+			er = ttosubnet(shunk1(value), AF_UNSPEC, '0',
 				       &end->subnet, logger);
 		}
 		if (er != NULL)
@@ -537,40 +555,35 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = address_any(hostfam);
+	end->nexthop = hostfam->address.any;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
-			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-				      &end->nexthop) != NULL) {
+			ip_address nexthop = unset_address;
 #ifdef USE_DNSSEC
+			if (ttoaddress_num(shunk1(value), hostfam, &nexthop) != NULL) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(value,
-						     strlen(value), AF_INET,
-						     &end->nexthop, logger) &&
-				    !unbound_resolve(value,
-						strlen(value), AF_INET6,
-						     &end->nexthop, logger))
+				if (!unbound_resolve(value, hostfam, &nexthop, logger))
 					ERR_FOUND("bad value for %snexthop=%s\n",
-						leftright, value);
-#else
-				er = ttoaddr(value, 0, AF_UNSPEC,
-						&end->nexthop);
-				if (er != NULL)
-					ERR_FOUND("bad value for %snexthop=%s [%s]",
-						leftright, value,
-						er);
-#endif
+						  leftright, value);
 			}
+#else
+			err_t e = ttoaddress_dns(shunk1(value), hostfam, &nexthop);
+			if (e != NULL) {
+				ERR_FOUND("bad value for %snexthop=%s [%s]",
+					  leftright, value, e);
+			}
+#endif
+			end->nexthop = nexthop;
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = address_any(hostfam);
+		end->nexthop = hostfam->address.any;
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
@@ -594,29 +607,29 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	if (end->options_set[KSCF_RSAKEY1]) {
-		end->rsakey1_type = end->options[KSCF_RSAKEY1];
-		end->rsakey2_type = end->options[KSCF_RSAKEY2];
+	/* Note label is conn option copied to both end's option */
+	if (conn_st->strings_set[KSCF_SA_SEC_LABEL]) {
+		char *value = conn_st->strings[KSCF_SA_SEC_LABEL];
 
-		switch (end->options[KSCF_RSAKEY1]) {
+		pfreeany(end->sec_label);
+		end->sec_label = clone_str(value, "end->sec_label");
+	}
+
+	if (end->options_set[KSCF_RSASIGKEY]) {
+		end->rsasigkey_type = end->options[KSCF_RSASIGKEY];
+
+		switch (end->options[KSCF_RSASIGKEY]) {
 		case PUBKEY_DNSONDEMAND:
 			end->key_from_DNS_on_demand = TRUE;
 			break;
 
 		default:
 			end->key_from_DNS_on_demand = FALSE;
-			/* validate the KSCF_RSAKEY1/RSAKEY2 */
-			if (end->strings[KSCF_RSAKEY1] != NULL) {
-				char *value = end->strings[KSCF_RSAKEY1];
-
-				pfreeany(end->rsakey1);
-				end->rsakey1 = clone_str(value, "end->rsakey1");
-			}
-			if (end->strings[KSCF_RSAKEY2] != NULL) {
-				char *value = end->strings[KSCF_RSAKEY2];
-
-				pfreeany(end->rsakey2);
-				end->rsakey2 = clone_str(value, "end->rsakey2");
+			/* validate the KSCF_RSASIGKEY1/RSASIGKEY2 */
+			if (end->strings[KSCF_RSASIGKEY] != NULL) {
+				char *value = end->strings[KSCF_RSASIGKEY];
+				pfreeany(end->rsasigkey);
+				end->rsasigkey = clone_str(value, "end->rsasigkey");
 			}
 		}
 	}
@@ -627,38 +640,34 @@ static bool validate_end(struct starter_conn *conn_st,
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
 
-		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
-			      &end->sourceip) != NULL) {
+		/*
+		 * XXX: suspect this lookup should be forced to use
+		 * the same family as the client.
+		 */
+		ip_address sourceip = unset_address;
 #ifdef USE_DNSSEC
+		/* try numeric first */
+		err_t e = ttoaddress_num(shunk1(value), NULL/*UNSPEC*/, &sourceip);
+		if (e != NULL) {
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
-			if (!unbound_resolve(value,
-					     strlen(value), AF_INET,
-					     &end->sourceip, logger) &&
-			    !unbound_resolve(value,
-					     strlen(value), AF_INET6,
-					     &end->sourceip, logger))
+			if (!unbound_resolve(value, &ipv4_info, &end->sourceip, logger) &&
+			    !unbound_resolve(value, &ipv6_info, &end->sourceip, logger))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
 					  leftright, value);
-#else
-			er = ttoaddr(value, 0, AF_UNSPEC, &end->sourceip);
-			if (er != NULL)
-				ERR_FOUND("bad addr %ssourceip=%s [%s]",
-					  leftright, value, er);
-#endif
-		} else {
-			er = tnatoaddr(value, 0, AF_UNSPEC, &end->sourceip);
-			if (er != NULL)
-				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
-					leftright, value, er);
 		}
+#else
+		/* try numeric then DNS */
+		err_t e = ttoaddress_dns(value, 0, AF_UNSPEC, &sourceip);
+		if (e != NULL) {
+			ERR_FOUND("bad addr %ssourceip=%s [%s]",
+				  leftright, value, e);
+		}
+#endif
+		end->sourceip = sourceip;
 		if (!end->has_client) {
-			er = endtosubnet(&end->sourceip, &end->subnet, HERE);
-			if (er != NULL) {
-				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
-					leftright, value, er);
-			}
+			end->subnet = subnet_from_address(end->sourceip);
 			end->has_client = TRUE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
@@ -714,13 +723,13 @@ static bool validate_end(struct starter_conn *conn_st,
 			    "connection's %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
-		er = ttorange(addresspool, NULL, &end->pool_range, logger);
+		er = ttorange(addresspool, NULL, &end->pool_range);
 		if (er != NULL)
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
 					addresspool, er);
 
-		if (address_type(&end->pool_range.start) == &ipv6_info &&
-				!end->pool_range.is_subnet) {
+		if (range_type(&end->pool_range) == &ipv6_info &&
+		    !end->pool_range.is_subnet) {
 			ERR_FOUND("bad IPv6 %saddresspool=%s not subnet", leftright,
 					addresspool);
 		}
@@ -728,7 +737,12 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
 		const char *value = end->strings[KSCF_INTERFACE_IP];
-		err_t oops = text_cidr_to_subnet(shunk1(value), NULL, &end->ifaceip);
+		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->ifaceip);
+		if (oops != NULL) {
+			ERR_FOUND("bad addr %s%s=%s [%s]",
+				  leftright, "interface-ip", value, oops);
+		}
+		oops = cidr_specified(end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
@@ -740,7 +754,6 @@ static bool validate_end(struct starter_conn *conn_st,
 					leftright,
 					end->strings[KSCF_SOURCEIP]);
 		}
-
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
@@ -888,7 +901,7 @@ static bool translate_conn(struct starter_conn *conn,
 			(*set_strings)[field] = TRUE;
 			break;
 
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_loose_enum:
 			assert(field <= KSCF_last_loose);
 
@@ -1245,6 +1258,8 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
 	KW_POLICY_FLAG(KNCF_DNS_MATCH_ID, POLICY_DNS_MATCH_ID);
 	KW_POLICY_FLAG(KNCF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
+	KW_POLICY_FLAG(KNCF_INTERMEDIATE, POLICY_INTERMEDIATE);
+	KW_POLICY_FLAG(KNCF_IGNORE_PEER_DNS, POLICY_IGNORE_PEER_DNS);
 
 	if (conn->options_set[KNCF_SAN_ON_CERT]) {
 		if (!conn->options[KNCF_SAN_ON_CERT])
@@ -1269,12 +1284,7 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-#ifdef HAVE_LABELED_IPSEC
-	str_to_conn(policy_label, KSCF_POLICY_LABEL);
-	if (conn->policy_label != NULL)
-		starter_log(LOG_LEVEL_DEBUG, "connection's policy label: %s",
-				conn->policy_label);
-#endif
+	str_to_conn(sec_label, KSCF_SA_SEC_LABEL); /* copied to left/right later */
 
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
@@ -1300,22 +1310,18 @@ static bool load_conn(struct starter_conn *conn,
 		switch (conn->options[KNCF_IKEv2]) {
 		case fo_never:
 		case fo_permit:
-			conn->policy |= POLICY_IKEV1_ALLOW;
-			/* clear any inherited default */
-			conn->policy &= ~POLICY_IKEV2_ALLOW;
+			conn->ike_version = IKEv1;
 			break;
 
 		case fo_propose:
 		case fo_insist:
-			conn->policy |= POLICY_IKEV2_ALLOW;
-			/* clear any inherited default */
-			conn->policy &= ~POLICY_IKEV1_ALLOW;
+			conn->ike_version = IKEv2;
 			break;
 		}
 	}
 
 	if (conn->options_set[KNCF_SEND_REDIRECT]) {
-		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_SEND_REDIRECT]) {
 			case yna_yes:
 				conn->policy |= POLICY_SEND_REDIRECT_ALWAYS;
@@ -1336,7 +1342,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	if (conn->options_set[KNCF_ACCEPT_REDIRECT]) {
-		if (!LIN(POLICY_IKEV1_ALLOW, conn->policy)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_ACCEPT_REDIRECT]) {
 			case yna_yes:
 				conn->policy |= POLICY_ACCEPT_REDIRECT_YES;
@@ -1359,7 +1365,7 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_PPK]) {
 		lset_t ppk = LEMPTY;
 
-		if (!(conn->policy & POLICY_IKEV1_ALLOW)) {
+		if (conn->ike_version >= IKEv2) {
 			switch (conn->options[KNCF_PPK]) {
 			case fo_propose:
 				ppk = POLICY_PPK_ALLOW;
@@ -1449,7 +1455,7 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (streq(val, "never")) {
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
-			} else if (conn->policy & POLICY_IKEV1_ALLOW) {
+			} else if (conn->ike_version == IKEv1) {
 				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
 				return TRUE;
 			} else if (streq(val, "null")) {
@@ -1501,12 +1507,16 @@ static bool load_conn(struct starter_conn *conn,
 	 */
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
-		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
-			POLICY_ESN_YES | POLICY_DECAP_DSCP |
-			POLICY_NOPMTUDISC) &
-			/* remove IKE related options */
-			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
-			POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE);
+		conn->ike_version = 0;
+		conn->policy &= (~(POLICY_PFS |
+				   POLICY_COMPRESS |
+				   POLICY_ESN_NO |
+				   POLICY_ESN_YES |
+				   POLICY_DECAP_DSCP |
+				   POLICY_NOPMTUDISC) &
+				 /* remove IKE related options */
+				 ~(POLICY_IKE_FRAG_ALLOW |
+				   POLICY_IKE_FRAG_FORCE));
 	}
 
 	err |= validate_end(conn, &conn->left, "left", perrl, logger);
@@ -1521,6 +1531,9 @@ static bool load_conn(struct starter_conn *conn,
 
 	if (conn->options_set[KNCF_AUTO])
 		conn->desired_state = conn->options[KNCF_AUTO];
+
+	if (conn->desired_state == STARTUP_KEEP)
+		conn->policy |= POLICY_UP; /* auto=keep means once up, keep up */
 
 	return err;
 }
@@ -1558,7 +1571,7 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
-	STR_FIELD(policy_label);
+	STR_FIELD(sec_label);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
@@ -1575,8 +1588,8 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsakey1);
-	STR_FIELD_END(rsakey2);
+	STR_FIELD_END(sec_label);
+	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
@@ -1736,7 +1749,7 @@ static void confread_free_conn(struct starter_conn *conn)
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
-	STR_FIELD(policy_label);
+	STR_FIELD(sec_label);
 	STR_FIELD(conn_mark_both);
 	STR_FIELD(conn_mark_in);
 	STR_FIELD(conn_mark_out);
@@ -1753,8 +1766,8 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsakey1);
-	STR_FIELD_END(rsakey2);
+	STR_FIELD_END(sec_label);
+	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);

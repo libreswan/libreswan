@@ -1,8 +1,0 @@
-[NetDev]
-Name=ipsec1
-Kind=xfrm
-Description=xfrmi test
-
-[Xfrm]
-InterfaceId=1
-Independent=yes

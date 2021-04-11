@@ -125,7 +125,10 @@ def main():
 
         if args.command:
 
-            console.output(args.output)
+            if interactive:
+                logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
+            else:
+                console.redirect_output(args.output)
             console.run("")
 
             status = console.run(' '.join(args.command), timeout=args.timeout)
@@ -134,16 +137,13 @@ def main():
         if interactive:
 
             print()
-            output = console.output(None)
-            if output:
-                logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
             if args.debug:
                 logger.info("info: pexpect ignores --debug in interactive mode!")
             logger.info("Escape character is ^]")
             # Hack so that the prompt appears
-            console.output(sys.stdout)
+            console.redirect_output(sys.stdout)
             console.run("")
-            console.output()
+            console.redirect_output(None)
             # Get this terminals properties.
             columns, rows = os.get_terminal_size()
             # Normal mode

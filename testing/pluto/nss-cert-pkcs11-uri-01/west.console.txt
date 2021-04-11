@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep --x509 --nsspw
+Preparing X.509 files
+Password changed successfully.
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "westnet-eastnet-ikev2" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
+002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ echo done
+done
+west #
+ 

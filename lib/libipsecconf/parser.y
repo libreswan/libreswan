@@ -19,7 +19,6 @@
  *
  */
 
-#include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -162,7 +161,7 @@ statement_kw:
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, value, FALSE);
 			break;
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_loose_enum:
 			number = parser_loose_enum(&kw, value);
 			break;
@@ -226,7 +225,7 @@ statement_kw:
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, $3, FALSE);
 			break;
-		case kt_rsakey:
+		case kt_rsasigkey:
 		case kt_loose_enum:
 			number = parser_loose_enum(&kw, $3);
 			break;

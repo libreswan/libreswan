@@ -5,9 +5,3 @@ sleep 30
 ipsec whack --trafficstatus
 # east howvever, should be attempting to connect to west because it has auto=start
 ipsec status |grep EVENT_RETRANSMIT | sed "s/EVENT_RETRANSMIT in .*$/EVENT_RETRANSMIT in .../"
-: ==== cut ====
-ipsec auto --status
-: ==== tuc ====
-../bin/check-for-core.sh
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-: ==== end ====

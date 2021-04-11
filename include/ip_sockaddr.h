@@ -45,14 +45,19 @@ typedef struct {
 	} sa;
 } ip_sockaddr;
 
+extern const ip_sockaddr unset_sockaddr;
+
+
 /*
  * conversions
+ *
+ * if a port is needed then, presumably, it's an endpoint?
  */
 
-/* convert the endpoint to a sockaddr */
-ip_sockaddr sockaddr_from_endpoint(const ip_endpoint *endpoint);
-/* convert sockaddr to an endpoint */
-err_t sockaddr_to_endpoint(const struct ip_protocol *protocol,
-			   const ip_sockaddr *sa, ip_endpoint *endpoint);
+ip_sockaddr sockaddr_from_address(const ip_address address);
+ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint);
+
+err_t sockaddr_to_address_port(const ip_sockaddr sa,
+			       ip_address *address, ip_port *port);
 
 #endif

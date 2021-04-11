@@ -15,6 +15,7 @@
     FINALINITDDIR=%{_initddir} \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     FINALRUNDIR=%{_rundir}/pluto \\\
     INITSYSTEM=%{initsystem} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
@@ -35,7 +36,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is replaced in make target
-Version: 3.30
+Version: 4.2
 Release: %{rel}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -85,7 +86,7 @@ This package contains the daemons and userland tools for setting up Libreswan.
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 
 %build
 make %{?_smp_mflags} \
@@ -186,6 +187,6 @@ export NSS_DISABLE_HW_GCM=1
 %{_mandir}/*/*
 
 %changelog
-* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - @IPSECBASEVERSION@
+* Sun Oct 18 2020 Team Libreswan <team@libreswan.org> - 4.1-1
 - Automated build for testing from git tree.
 - All compile time options are set in Makefile.inc.local not here.

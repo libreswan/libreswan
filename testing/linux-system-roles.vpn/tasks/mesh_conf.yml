@@ -1,0 +1,63 @@
+---
+# yamllint disable rule:line-length
+- name: Set current IP fact for each host
+  set_fact:
+    current_ip: "{{ ansible_default_ipv4.address | d(ansible_default_ipv6.address) }}"
+
+- name: Set IP with prefix register
+  shell: "ip addr show | grep {{ current_ip }} | awk '{print $2}'"
+  register:
+    ip_with_prefix_register
+  changed_when: false
+
+- name: Set net CIDR fact
+  set_fact:
+    current_subnet: "{{ ip_with_prefix_register.stdout | ipaddr('subnet') }}"
+
+- name: Set policies fact
+  set_fact:
+    policies: "{{ conn.policies | rejectattr('cidr', 'match', '^default$') | list }}"
+
+- name: Apply the default policy as needed
+  delegate_to: localhost
+  run_once: true
+  vars:
+    pol_default: >-
+      {% set pol = conn.policies | selectattr('cidr', 'match', '^default$') | map(attribute='policy') | join(',') %}
+      {%- if pol | length == 0 -%}{{ vpn_default_policy }}{%- else -%}{{ pol }}{%- endif -%}
+  set_fact:
+    policies: |
+      {% for node in ansible_play_hosts %}
+      {%   set node_in_pol = {'flag': false} %}
+      {%   for policy in policies %}
+      {%     if hostvars[node].current_ip | ipaddr(policy.cidr) | ipaddr('bool') %}
+      {%       if node_in_pol.update({'flag': true}) %}{% endif %}
+      {%     endif %}
+      {%   endfor %}
+      {%   if not node_in_pol.flag | bool %}
+      {%     set new_pol = {} %}
+      {%     set _ = new_pol.__setitem__('policy', pol_default) %}
+      {%     set _ = new_pol.__setitem__('cidr', hostvars[node].current_subnet) %}
+      {%     set _ = policies.append(new_pol) %}
+      {%   endif %}
+      {% endfor %}
+      {{ policies | unique }}
+
+- name: Write tunnel policies for each network
+  lineinfile:
+    dest: "/etc/ipsec.d/policies/{{ item.policy }}"
+    line: "{{ lookup('template', 'policy.j2') }}"
+    mode: '0644'
+  loop: "{{ policies }}"
+  notify:
+    - __vpn_handler_enable_start_vpn
+    - __vpn_handler_init_mesh_conns
+
+- name: Deploy opportunistic configuration to each node
+  template:
+    src: "{{ vpn_provider }}-mesh.conf.j2"
+    dest: "/etc/ipsec.d/mesh.conf"
+    mode: '0644'
+  notify:
+    - __vpn_handler_enable_start_vpn
+    - __vpn_handler_init_mesh_conns

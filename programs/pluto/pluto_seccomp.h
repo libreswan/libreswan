@@ -17,6 +17,8 @@
 #ifndef PLUTO_SECCOMP_H
 #define PLUTO_SECCOMP_H
 
+struct logger;
+
 extern enum seccomp_mode pluto_seccomp_mode;
 
 void init_seccomp_main(struct logger *logger);

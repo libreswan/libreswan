@@ -8,6 +8,6 @@ ip addr show dev eth0 | grep 192.1.3.209 || ip addr add 192.1.3.209/24 dev eth0
 ip route | grep default || ip route add default via 192.1.3.254
 # routes and addresses setup for the test
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add road-eastnet
 echo "initdone"

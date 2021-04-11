@@ -1,0 +1,15 @@
+Scaffolding test case for testing VPN System Roles
+
+Currently tailored for namespaces, will show different
+output in KVM
+
+The idea is that "nic" is the provisioning host that
+runs the system role tools to push updated configs to
+east and west over ssh.
+
+In this case the connection is loaded with auto=ondemand
+and the test sends a ping to trigger and test for the tunnel.
+
+Now the hosts are configured using certificates.
+Currently the VPN System Role can use these, but not
+install them. So we do that part ourselves.

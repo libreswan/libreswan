@@ -12,11 +12,12 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # give OE policies time to load
 west #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 west #
  echo "initdone"
 initdone
@@ -26,7 +27,8 @@ west #
  # this should fail AUTH on mismatched CA
 west #
  ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23
-002 initiate on demand from 192.1.2.45:0 to 192.1.2.23:0 proto=0 because: whack
+002 initiate on demand from 192.1.2.45:8 to 192.1.2.23:0 proto=1 because: whack
+002 can't find expected bare shunt to delete: 192.1.2.45/32:0 -ICMP-> 192.1.2.23/32:0
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: encountered fatal error in state STATE_PARENT_I2
@@ -34,7 +36,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -91,7 +93,4 @@ road                                                         P,,
 signedbyother                                                u,u,u
 west                                                         u,u,u
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

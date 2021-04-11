@@ -25,7 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -112,12 +111,12 @@ err_t atoid(const char *src, struct id *id)
 			&ipv4_info :
 			&ipv6_info;
 		ip_address addr;
-		err_t ugh = domain_to_address(shunk1(src), afi, &addr);
+		err_t ugh = ttoaddress_dns(shunk1(src), afi, &addr);
 		if (ugh != NULL) {
 			return ugh;
 		}
 		*id = (struct id) {
-			.kind = afi->id_addr,
+			.kind = afi->id_ip_addr,
 			.ip_addr = addr,
 		};
 		return NULL;
@@ -217,7 +216,8 @@ void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		if (isanyaddr(&id->ip_addr)) {
+		if (address_is_unset(&id->ip_addr) /*short-circuit*/||
+		    address_is_any(id->ip_addr)) {
 			jam(buf, "%%any");
 		} else {
 			jam_address(buf, &id->ip_addr);
@@ -282,7 +282,12 @@ void free_id_content(struct id *id)
 	}
 }
 
-/* is this a "match anything" id */
+/*
+ * Is this a "match anything" id
+ * MUST only be called on our configured ID's, not our received ID's,
+ * because we would bad_case() on a bogus value
+ * (our enum and the IKE IANA values are matching)
+ */
 bool any_id(const struct id *a)
 {
 	switch (a->kind) {
@@ -291,11 +296,12 @@ bool any_id(const struct id *a)
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		return isanyaddr(&a->ip_addr);
+		return (address_is_unset(&a->ip_addr) || address_is_any(a->ip_addr));
 
 	case ID_FQDN:
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
+	case ID_DER_ASN1_GN:
 	case ID_KEY_ID:
 	case ID_NULL:
 		return FALSE;
@@ -563,7 +569,7 @@ enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shun
 	shunk_t tl;
 	switch (id->kind) {
 	case ID_NONE:
-		type = address_type(host)->id_addr;
+		type = address_type(host)->id_ip_addr;
 		tl = address_as_shunk(host);
 		break;
 	case ID_FROMCERT:

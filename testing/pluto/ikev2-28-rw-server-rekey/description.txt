@@ -1,0 +1,4 @@
+Roadwarrior with IKEv2 using RSA - no NAT
+
+We rekey from the server to the client
+

@@ -7,12 +7,16 @@
 %global with_dnssec 0
 %global nss_version 3.36.0-7.1
 # Libreswan config options
+# For RHEL7 we need USE_NSS_KDF=false and USE_FIPSCHECK=true
+# Note that this means libreswan needs its own FIPS certification
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
-    PREFIX=%{_prefix} \\\
+    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
-    PYTHON_BINARY=%{__python} \\\
+    PREFIX=%{_prefix} \\\
+    PYTHON_BINARY=python2 \\\
+    SHELL_BINARY=/bin/sh \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
@@ -21,16 +25,17 @@
     USE_LIBCURL=true \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=true \\\
+    USE_NSS_KDF=false \\\
     USE_SECCOMP=true \\\
-    USE_XAUTHPAM=true \\\
+    USE_AUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
-    USE_NSS_PRF=true \\\
 %{nil}
-#global prever rc1
+
+#global prever dr1
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
-Version: IPSECBASEVERSION
+Version: 4.3
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -143,8 +148,6 @@ rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
-# used when setting --perpeerlog without --perpeerlogbase
-install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
@@ -214,12 +217,11 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %doc %{_mandir}/*/*
@@ -229,5 +231,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Sun Oct  7 2018 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Sun Feb 21 2021 Team Libreswan <team@libreswan.org> - 4.3-1
 - Automated build from release tar ball

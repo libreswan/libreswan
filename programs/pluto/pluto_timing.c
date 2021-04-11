@@ -14,8 +14,11 @@
  *
  */
 
+#include <errno.h>
+
 #include "defs.h"
 #include "state.h"
+#include "connections.h"
 #include "pluto_timing.h"
 #include "log.h"
 
@@ -27,9 +30,7 @@ static struct timespec thread_clock(void)
 	static const clockid_t clock_id = CLOCK_THREAD_CPUTIME_ID;
 	struct timespec now;
 	int e = clock_gettime(clock_id, &now);
-	if (e != 0) {
-		FATAL_ERRNO(e, "clock_gettime(%d,... failed in %s()", clock_id, __func__);
-	}
+	passert(e == 0);
 	return now;
 }
 
@@ -38,10 +39,7 @@ static struct timespec wall_clock(void)
 	struct timespec now;
 	/* assume never suspended; CLOCK_BOOTTIME is linux specific */
 	int e = clock_gettime(CLOCK_MONOTONIC, &now);
-	if (e != 0) {
-		FATAL_ERRNO(e, "clock_gettime(CLOCK_MONOTONIC,...) failed in %s()",
-			    __func__);
-	}
+	passert(e == 0);
 	return now;
 }
 

@@ -19,26 +19,23 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdlib.h>
+#include <stdlib.h>		/* for size_t */
 
 #include "err.h"
 #include "ip_port.h"
+#include "ip_protocol.h"
 
 struct jambuf;
 
 typedef struct {
 	bool any_port;
-	unsigned port;		/* 1..65535; 0->0-65535 */
-	unsigned protocol;	/* 1..255; 0->unset */
+	unsigned hport;		/* 1..65535; 0->0-65535 */
+	unsigned ipproto;	/* 1..255; 0->unset */
 } ip_protoport;
 
 extern const ip_protoport unset_protoport;
 
-ip_protoport protoport2(unsigned ipproto, ip_port port);
-
 err_t ttoprotoport(const char *src, ip_protoport *protoport);
-err_t ttoipproto(const char *text, unsigned *ipproto);
-err_t ttoport(const char *text, unsigned *port);
 
 bool protoport_is_set(const ip_protoport *protoport);
 bool protoport_has_any_port(const ip_protoport *protoport);

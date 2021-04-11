@@ -1,0 +1,102 @@
+/testing/guestbin/swan-prep
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ # there should be one tunnel, but there can be two. If two,
+road #
+ # their reqid cannot be the same.
+road #
+ ipsec trafficstatus
+006 #3: "static", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+road #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	output-mark 0x1
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	if_id 0x1
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	output-mark 0x1
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	if_id 0x1
+road #
+ ip xfrm pol
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 2084814 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 2084814 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 2084814 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16389 mode tunnel
+	if_id 0x1
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+road #
+ # test packet flow
+road #
+ ip addr add 192.0.1.254/24 dev eth0
+road #
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ # did it split over two IPsec SA's or not? just curious
+road #
+ ipsec trafficstatus
+006 #3: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+road #
+ # stop ipsec for a bit, then restart. see what happens
+road #
+ ipsec stop
+Redirecting to: [initsystem]
+road #
+ sleep 10
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ sleep 3
+road #
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec trafficstatus
+006 #2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+road #
+ ipsec status |grep STATE_
+000 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
+000 #2: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+road #
+ 

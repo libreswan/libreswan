@@ -11,7 +11,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -19,7 +19,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 road #
  echo "initdone"
 initdone
@@ -48,7 +49,7 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -60,7 +61,7 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp sport EPHEM dport 22 dev eth0 
 XFRM policy:
@@ -123,7 +124,4 @@ road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:22-22 6]
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

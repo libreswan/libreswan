@@ -2,7 +2,7 @@
 certutil -d sql:/etc/ipsec.d -D -n west
 #normal test things:
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert-ocsp
 ipsec auto --status |grep nss-cert-ocsp
 echo "initdone"

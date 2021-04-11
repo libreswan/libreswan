@@ -41,7 +41,7 @@ enum {
 };
 
 /*
- * This file was split into internal contants (Libreswan/pluto related),
+ * This file was split into internal constants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)
  *
  * Constants that are kernel/IPsec related are in appropriate
@@ -126,6 +126,20 @@ enum {
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
+#define thingeq(L, R)							\
+	({								\
+		/* check type compat by flipping types */		\
+		const typeof(R) *l_ = &(L);/* type flip */		\
+		const typeof(L) *r_ = &(R);/* type flip */		\
+		memeq(l_, r_, sizeof(L));				\
+	})
+
+/* Remember, THING 1 and THING 2 are inseparable */
+#define FOR_EACH_THING(THING, THING1, THING2, ...)			\
+	for (typeof(THING1) things_[] = { THING1, THING2, ##__VA_ARGS__ }, \
+		     *thingp_ = things_, THING;				\
+	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
+	     thingp_++)
 
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
@@ -191,49 +205,48 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * (e.g. a call to a log function).
  */
 
-/* Printing Enums:
+/*
+ * Printing Enums:
  *
  * An enum_names table describes an enumeration (a correspondence
  * between integer values and names).
  *
  * enum_name() returns the name of an enum value, or NULL if unnamed.
- * enum_show() is like enum_name, except it formats a numeric representation
- *    for any unnamed value (in a static area -- NOT RE-ENTRANT)
- * enum_showb() is like enum_show() but uses a caller-supplied buffer
- *    for any unnamed value and thus is re-entrant.
+ *
+ * enum_show() is like enum_name, except it formats a numeric
+ * representation for any unnamed value in a caller-supplied buffer.
  *
  * jam_enum() appends the name of an enum value; if unnamed, append a
  * mashup of the standard prefix and the numeric value.
  *
- * jam_enum_short() appends the name of an enum value with any
- * standard prefix removed; if unnamed, append a mashup of the
- * standard prefix and the numeric value.
+ * {*}_short() same as for root, but with any standard prefix removed.
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
-extern const char *enum_short_name(enum_names *ed, unsigned long val);
+extern const char *enum_name_short(enum_names *ed, unsigned long val);
 
 /* old names */
 size_t jam_enum(struct jambuf *, enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
 
-/* caller-allocated buffer for enum_showb */
-struct esb_buf {
-	/* enough space for decimal rep of any unsigned long + "??"
-	 * sizeof yields log-base-256 of maximum value.
-	 * Multiplying by 241/100 converts this to the number of decimal digits
-	 * (the common log), rounded up a little (instead of 2.40654...).
-	 * The addition of 99 ensures that the division rounds up to an integer
-	 * rather than truncates.
-	 */
+/*
+ * caller-allocated E[num] S[how] B[uffer] for enum_show*().
+ *
+ * enough space for decimal rep of any unsigned long + "??"  sizeof
+ * yields log-base-256 of maximum value.  Multiplying by 241/100
+ * converts this to the number of decimal digits (the common log),
+ * rounded up a little (instead of 2.40654...).  The addition of 99
+ * ensures that the division rounds up to an integer rather than
+ * truncates.
+ */
+typedef struct {
 	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
-};
-extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
-extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
+} esb_buf;
 
-extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
+extern const char *enum_show(enum_names *ed, unsigned long val, esb_buf *);
+extern const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *);
 
 /*
  * iterator
@@ -242,9 +255,6 @@ extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRA
  * ??? how are integers subject to rounding?
  */
 extern long next_enum(enum_names *en, long last);
-
-/* sometimes the prefix gets annoying */
-extern const char *strip_prefix(const char *s, const char *prefix);
 
 extern int enum_search(enum_names *ed, const char *string);
 
@@ -258,6 +268,15 @@ extern int enum_search(enum_names *ed, const char *string);
  * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
 extern int enum_match(enum_names *ed, shunk_t string);
+
+/*
+ * primitives:
+ *
+ * Return the enum_names range containing VAL; and using its result,
+ * the corresponding and adjusted name.
+ */
+const struct enum_names *enum_range(enum_names *en, unsigned long val, const char **prefix);
+const char *enum_range_name(enum_names *range, unsigned long val, const char *prefix, bool shorten);
 
 /*
  * Printing enum enums.
@@ -284,10 +303,10 @@ typedef const struct enum_enum_names enum_enum_names;
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
-const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
-			    unsigned long val, struct esb_buf *buf);
-const char *enum_enum_show_shortb(enum_enum_names *e, unsigned long table,
-				  unsigned long val, struct esb_buf *buf);
+const char *enum_enum_show(enum_enum_names *e, unsigned long table,
+			   unsigned long val, esb_buf *buf);
+const char *enum_enum_show_short(enum_enum_names *e, unsigned long table,
+				 unsigned long val, esb_buf *buf);
 
 size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);

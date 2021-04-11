@@ -1,0 +1,97 @@
+/testing/guestbin/swan-prep
+east #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+east #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+east #
+ rm ipsecspd.pp
+east #
+ setsebool domain_can_mmap_files=1
+east #
+ setsebool nis_enabled=1
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add labeled
+002 "labeled": added IKEv1 connection
+east #
+ runcon -t netutils_t ipsec getpeercon_server 4300 &
+[x] PID
+east #
+ echo "initdone"
+-> running as unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023
+-> creating socket ... ok
+-> listening on TCP port 4300 ... ok
+-> waiting ... initdone
+east #
+ ../../guestbin/ipsec-look.sh
+<- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
+   quit
+-> connection closed
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+east #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
+east #
+ 

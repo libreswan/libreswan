@@ -1,0 +1,51 @@
+#jinja2: lstrip_blocks: True
+{% for tunnel in vpn_connections %}
+{%   if item in tunnel.hosts %}
+{%     set otherhost = tunnel.hosts[item].hostname | d((hostvars[item] | d({})).ansible_host | d(item)) %}
+{%     for host in tunnel.hosts %}
+{%       if host == inventory_hostname or host == ansible_host %}
+{%         set host = tunnel.hosts[host].hostname | d((hostvars[host] | d({})).ansible_host | d(host)) %}
+conn {{ (tunnel | json_query('name')) | ternary((tunnel.name | d('', true)) + '-', '') }}{{ host }}-to-{{ otherhost }}
+  left={{ host }}
+  leftid={{ host | ipaddr | ternary('','@') }}{{ host }}
+{%         if tunnel.hosts[host] is mapping and 'subnets' in tunnel.hosts[host] %}
+  leftsubnets={
+{%-          for subnet in tunnel.hosts[host].subnets -%}
+{{ subnet }}
+{%- if not loop.last -%},{%- endif -%}
+{%-          endfor -%}
+}
+{%         endif %}
+{%       endif %}
+{%     endfor %}
+  right={{ otherhost }}
+{%     if tunnel.auth_method == 'psk' %}
+  rightid={{ otherhost | ipaddr | ternary('','@') }}{{ otherhost }}
+{%     endif %}
+{%     if tunnel.hosts[item] is mapping and 'subnets' in tunnel.hosts[item] %}
+  rightsubnets={
+{%-      for subnet in tunnel.hosts[item].subnets -%}
+{{ subnet  }}
+{%- if not loop.last -%},{%- endif -%}
+{%-      endfor -%}
+}
+{%     endif %}
+  ikev2={{ __vpn_ikev2 }}
+{%     if 'auto' in tunnel %}
+  auto={{ tunnel.auto }}
+{%     endif %}
+{%     if tunnel.auth_method == 'psk' %}
+  authby=secret
+{%     endif %}
+{%     if tunnel.auth_method == 'cert' %}
+  rightid=%fromcert
+  leftrsasigkey=%cert
+{%       for host in tunnel.hosts %}
+{%         if host == inventory_hostname or host == ansible_host %}
+  leftcert={{ tunnel.hosts[host].cert_name | d((hostvars[host] | d({})).cert_name) }}
+{%         endif %}
+{%       endfor %}
+  rightrsasigkey=%cert
+{%     endif %}
+{%   endif %}
+{% endfor %}

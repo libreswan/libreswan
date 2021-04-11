@@ -29,6 +29,7 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "shunk.h"
+#include "diag.h"
 
 struct jambuf;
 struct alg_info;
@@ -57,8 +58,7 @@ struct proposal_parser {
 	const struct proposal_protocol *protocol;
 	const struct proposal_param *param;
 	const struct proposal_policy *policy;
-	/* need to eliminate hardwired size */
-	char error[200];
+	diag_t diag;
 };
 
 /*
@@ -173,6 +173,9 @@ void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorith
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
 		      const struct ike_alg *alg, int enckeylen);
+void remove_duplicate_algorithms(struct proposal_parser *parser,
+				 struct proposal *proposal,
+				 enum proposal_algorithm algorithm);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -270,5 +273,27 @@ struct v1_proposal {
 };
 
 struct v1_proposal v1_proposal(const struct proposal *proposal);
+
+/*
+ * INTERNAL: tokenize <input> into <delim_before><current><delim_after><input>
+ */
+
+struct proposal_tokenizer {
+	char prev_term;
+	shunk_t this;
+	char this_term;
+	shunk_t next;
+	char next_term;
+	shunk_t input;
+	const char *delims;
+};
+
+struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
+void proposal_next_token(struct proposal_tokenizer *token);
+
+bool proposal_parse_encrypt(struct proposal_parser *parser,
+			    struct proposal_tokenizer *tokens,
+			    const struct ike_alg **encrypt,
+			    int *enckeylen);
 
 #endif /* PROPOSALS_H */

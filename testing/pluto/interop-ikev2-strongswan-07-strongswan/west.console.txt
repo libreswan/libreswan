@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -26,15 +26,8 @@ selected proposal: ESP:AES_CBC_128/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  echo done
 done
@@ -117,7 +110,7 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):
@@ -142,7 +135,4 @@ westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI
 westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA2_512_256, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

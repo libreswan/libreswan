@@ -17,7 +17,7 @@ Addresspool support added by Antony Antony in Libreswan
 
 Installation:
 
-1.  If you want to be able to yse PAM to authenticate XAUTH users, you need
+1.  If you want to be able to use PAM to authenticate XAUTH users, you need
     to also set USE_XAUTHPAM=true in Makefile.inc.
 
 2.  Build & Install as normal.

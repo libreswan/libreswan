@@ -16,6 +16,7 @@
  */
 
 #include <time.h>	/* for clock_*() + clockid_t */
+#include <errno.h>
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
 #include "lswlog.h"	/* for libreswan_exit_log_errno() */
@@ -60,15 +61,16 @@ realtime_t realnow(void)
 {
 	struct timespec ts;
 	int e = clock_gettime(realtime_clockid(), &ts);
-	if (e != 0) {
+	if (e < 0) {
 		/*
 		 * This code assumes clock_gettime() always succeeds -
 		 * if it were expected to fail then there'd either be
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
+		int err = errno;
 		PASSERT_FAIL("clock_gettime(%d,...) call in realnow() failed. "PRI_ERRNO,
-			     realtime_clockid(), pri_errno(e));
+			     realtime_clockid(), pri_errno(err));
 	}
 	realtime_t t = {
 		.rt = {

@@ -1,0 +1,2 @@
+ipv6 road with %defaultroute and east46, A and AAAA, source address selection
+

@@ -10,27 +10,27 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet
-002 added IKEv2 connection "northnet-eastnet"
+002 "northnet-eastnet": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet
-002 added IKEv2 connection "westnet-eastnet"
+002 "westnet-eastnet": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@north'
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
 east #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped overrun mcast   
-    672        8        0       0       0       0       
+    336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
-    672        8        0       0       0       0       
+    336        4        0       0       0       0       
 east #
  ip rule show
 0:	from all lookup local
@@ -48,7 +48,4 @@ default via 192.1.2.254 dev eth1
 192.0.3.0/24 dev ipsec1 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

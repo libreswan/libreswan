@@ -30,6 +30,9 @@
 #include "err.h"
 #include "realtime.h"
 #include "ckaid.h"
+#include "diag.h"
+#include "keyid.h"
+#include "refcnt.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -38,44 +41,9 @@ struct pubkey;		/* forward */
 union pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
+struct cert;
 
 struct RSA_public_key {
-	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
-
-	/*
-	 * The "adjusted" length of modulus n in octets:
-	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
-	 *
-	 * According to form_keyid() this is the modulus length less
-	 * any leading byte added by DER encoding.
-	 *
-	 * The adjusted length is used in sign_hash() as the signature
-	 * length - wouldn't PK11_SignatureLen be better?
-	 *
-	 * The adjusted length is used in same_RSA_public_key() as
-	 * part of comparing two keys - but wouldn't that be
-	 * redundant?  The direct n==n test would pick up the
-	 * difference.
-	 */
-	unsigned k;
-
-	/*
-	 * NSS's(?) idea of a unique ID for a public private key pair.
-	 * For RSA it is something like the SHA1 of the modulus.  It
-	 * replaces KEYID.
-	 *
-	 * This is the value returned by
-	 * PK11_GetLowLevelKeyIDForCert() or
-	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
-	 * form_ckaid_nss()), or computed by brute force from the
-	 * modulus (see form_ckaid_rsa()).
-	 *
-	 * XXX: When support for ECC is added this may need to be
-	 * moved to "pubkey"; or ECC will need its own value.  Think
-	 * of moving it here from RSA_private_key as a first step.
-	 */
-	ckaid_t ckaid;
-
 	/* public: */
 	chunk_t n;	/* modulus: p * q */
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
@@ -86,11 +54,8 @@ struct RSA_private_key {
 };
 
 struct ECDSA_public_key {
-	char keyid[KEYID_BUF];
-	unsigned int k;
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
-	ckaid_t ckaid;
 };
 
 struct ECDSA_private_key {
@@ -103,19 +68,15 @@ struct ECDSA_private_key {
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
 
-err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
-err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey); /* ASKK */
+err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+			    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+			    const chunk_t *pubkey);
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
+			      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+			      const chunk_t *pubkey);
 
 struct private_key_stuff {
 	enum PrivateKeyKind kind;
-	/*
-	 * Was this allocated on the heap and hence, should it be
-	 * freed (along with all members)?
-	 *
-	 * The old secrets file stuff passes around a pointer to a
-	 * cached structure so it shouldn't be freed.
-	 */
-	bool on_heap;
 	/*
 	 * This replaced "int lsw_secretlineno()", which assumes only
 	 * one file (no includes) and isn't applicable to NSS.  For
@@ -134,6 +95,21 @@ struct private_key_stuff {
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
 	SECKEYPrivateKey *private_key;
+	size_t size;
+	keyid_t keyid;
+
+	/*
+	 * NSS's(?) idea of a unique ID for a public private key pair.
+	 * For RSA it is something like the SHA1 of the modulus.  It
+	 * replaces KEYID.
+	 *
+	 * This is the value returned by
+	 * PK11_GetLowLevelKeyIDForCert() or
+	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
+	 * form_ckaid_nss()), or computed by brute force from the
+	 * modulus (see form_ckaid_rsa()).
+	 */
+	ckaid_t ckaid;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -172,13 +148,15 @@ struct pubkey_type {
 	enum pubkey_alg alg;
 	enum PrivateKeyKind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
-	err_t (*unpack_pubkey_content)(union pubkey_content *pkc, chunk_t key);
+	err_t (*unpack_pubkey_content)(union pubkey_content *pkc,
+				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				       chunk_t key);
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
-				       SECKEYPublicKey *pubkey_nss,
-				       SECItem *ckaid_nss);
-	void (*extract_private_key_stuff)(struct private_key_stuff *pks,
-					  SECKEYPublicKey *pubk,
-					  SECItem *cert_ckaid);
+				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
+	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
+						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
@@ -194,8 +172,11 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 
 /* public key machinery */
 struct pubkey {
+	refcnt_t refcnt;	/* reference counted! */
 	struct id id;
-	unsigned refcnt; /* reference counted! */
+	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
+	ckaid_t ckaid;
+	size_t size;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
@@ -214,12 +195,12 @@ struct pubkey {
  * All pointers are references into the underlying PK structure.
  */
 
-const char *pubkey_keyid(const struct pubkey *pk);
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
+const keyid_t *pubkey_keyid(const struct pubkey *pk);
 unsigned pubkey_size(const struct pubkey *pk);
 
 const ckaid_t *secret_ckaid(const struct secret *);
-const char *secret_keyid(const struct secret *);
+const keyid_t *secret_keyid(const struct secret *);
 
 struct pubkey_list {
 	struct pubkey *key;
@@ -230,40 +211,30 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
-extern void free_remembered_public_keys(void);
-extern void delete_public_keys(struct pubkey_list **head,
-			       const struct id *id,
-			       const struct pubkey_type *type);
-extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
+err_t add_public_key(const struct id *id, /* ASKK */
+		     enum dns_auth_level dns_auth_level,
+		     const struct pubkey_type *type,
+		     realtime_t install_time, realtime_t until_time,
+		     uint32_t ttl,
+		     const chunk_t *key,
+		     struct pubkey **pubkey,
+		     struct pubkey_list **head);
+void replace_public_key(struct pubkey_list **pubkey_db,
+			struct pubkey **pk);
+void delete_public_keys(struct pubkey_list **head,
+			const struct id *id,
+			const struct pubkey_type *type);
+extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize); /*XXX: make static? */
 
-extern struct pubkey *reference_key(struct pubkey *pk);
-extern void unreference_key(struct pubkey **pkp);
-
-extern err_t add_public_key(const struct id *id,
-			    enum dns_auth_level dns_auth_level,
-			    const struct pubkey_type *type,
-			    const chunk_t *key,
-			    struct pubkey_list **head);
-extern err_t add_ipseckey(const struct id *id,
-			  enum dns_auth_level dns_auth_level,
-			  const struct pubkey_type *type, uint32_t ttl,
-			  uint32_t ttl_used, const chunk_t *key,
-			  struct pubkey_list **head);
+struct pubkey *pubkey_addref(struct pubkey *pk, where_t where);
+extern void pubkey_delref(struct pubkey **pkp, where_t where);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);
-extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
-
-extern void free_public_key(struct pubkey *pk);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				       struct logger *logger);
 extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger);
-
-extern bool lsw_has_private_rawkey(const struct secret *secrets, const struct pubkey *pk);
-
-extern struct secret *lsw_find_secret_by_public_key(struct secret *secrets,
-						    const struct pubkey *my_public_key);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    enum PrivateKeyKind kind,
@@ -273,7 +244,13 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
-extern err_t lsw_add_secret(struct secret **secrets, CERTCertificate *cert, struct logger *logger);
+/* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
+err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
+				       const struct private_key_stuff **pks, bool *load_needed,
+				       struct logger *logger);
+err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
+					const struct private_key_stuff **pks, bool *load_needed,
+					struct logger *logger);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);
@@ -281,6 +258,8 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
 
-struct pubkey *allocate_pubkey_nss(CERTCertificate *cert, struct logger *logger);
+diag_t create_pubkey_from_cert(const struct id *id,
+			       CERTCertificate *cert, struct pubkey **pk,
+			       struct logger *logger) MUST_USE_RESULT;
 
 #endif /* _SECRETS_H */

@@ -1,5 +1,4 @@
 # sketch out pkgsrc
-LOCALBASE ?= /usr/pkg
 PKG_BASE ?= /usr/pkg
 PKG_DBDIR ?= /var/db/pkg
 PKG_PATH ?= /usr/pkgsrc/packages/All
@@ -28,5 +27,7 @@ INITSYSTEM=rc.d
 # not /run/pluto
 FINALRUNDIR=/var/run/pluto
 
-FINALSYSCONFDIR=/usr/local/etc
-FINALNSSDIR=/usr/local/etc/ipsec.d
+# PREFIX = /usr/local from mk/config.mk
+FINALSYSCONFDIR=$(PREFIX)/etc
+FINALNSSDIR=$(PREFIX)/etc/ipsec.d
+FINALEXAMPECONFDIR=$(PREFIX)/share/examples/libreswan

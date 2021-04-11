@@ -26,12 +26,12 @@ from fab import logutil
 
 MOUNTS = {}
 
-LOGIN = "root"
-LOGIN_PROMPT = "login: $"
+LOGIN = rb'root'
+LOGIN_PROMPT = rb'login: $'
 LOGIN_PROMPT_TIMEOUT = 120
 
-PASSWORD = "swan"
-PASSWORD_PROMPT = "Password:\s?$"
+PASSWORD = rb'swan'
+PASSWORD_PROMPT = rb'Password:\s?$'
 PASSWORD_PROMPT_TIMEOUT = 5
 
 def mounts(domain):
@@ -86,13 +86,14 @@ def mount_point(domain, console, device):
     if("bsd" in str(domain)):
         try:
             console.sendline("df -t nfs | awk 'NR==2 {print $6}'")
-            status, match = console.expect_prompt("(/\S+)")
+            status, match = console.expect_prompt(rb'(/\S+)')
         except:
             print("NFS is Mounted on OpenBSD!?")
     else:
         console.sendline("df --output=source,target | awk '$1==\"" + device + "\" { print $2 }'")
-        status, match = console.expect_prompt("(/\S+)")
-    mount = match.group(1)
+        status, match = console.expect_prompt(rb'(/\S+)')
+    # use strings for paths
+    mount = match.group(1).decode('utf-8')
     fstab[device] = mount
     domain.logger.debug("fstab has device '%s' mounted on '%s'", device, mount)
     return mount

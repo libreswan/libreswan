@@ -1,0 +1,5 @@
+An interop test of IKE and ESP set to chacha20poly1305 with strongswan as the responder.
+
+Due to a bug using strongswan 5.8.4 - 5.9.0 with openssl on fedora 33
+and chachaa20poly1305, this test case prioritizes the non-openssl chapoly
+plugin of strongswan. Using that plugin, interop succeeds.

@@ -5,5 +5,5 @@ Early kernels would fail non-blocking writes to the ESPINTCP socket.
 This test works around the problem by putting the socket into blocking
 mode before writing.
 
-If this test passes ikev2-tcp-03-basic-rawrsa-nonblocking fails then
+If this test passes and ikev2-tcp-03-basic-rawrsa-nonblocking fails then
 the kernel lacks the blocking fix.

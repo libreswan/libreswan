@@ -11,7 +11,7 @@
 # $ git diff
 
 ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
-cmp ../../check/enum/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
+cmp ../../programs/enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 
 # other checks
 
@@ -19,6 +19,7 @@ ipsec jambufcheck > /dev/null || echo failed
 ipsec timecheck > /dev/null || echo failed
 ipsec hunkcheck > /dev/null || echo failed
 ipsec dncheck > /dev/null || echo failed
+ipsec keyidcheck > /dev/null || echo failed
 
 # Need to disable DNS tests
 ipsec ipcheck --nodns > /dev/null || echo failed

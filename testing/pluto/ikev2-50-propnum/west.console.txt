@@ -2,13 +2,13 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive 192.0.2.254 -I 192.0.1.254
+ ../../guestbin/wait-until-alive 192.0.2.254 -I 192.0.1.254
 destination 192.0.2.254 -I 192.0.1.254 is alive
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- ../../pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -16,14 +16,13 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-propnum
-002 added IKEv2 connection "westnet-eastnet-propnum"
+002 "westnet-eastnet-propnum": added IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-propnum
 1v2 "westnet-eastnet-propnum" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-propnum" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-propnum" #1: sent IKE_AUTH request {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}
-002 "westnet-eastnet-propnum" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-propnum" #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-propnum" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-propnum" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-propnum" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -37,7 +36,7 @@ west #
 west #
  : weird pattern deals with optional length field
 west #
- grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
+ grep -v '| helper' /tmp/pluto.log | grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: '
 | ****emit IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
 |    prop #: 1 (01)
@@ -82,7 +81,4 @@ west #
 |    spi size: 4 (04)
 |    # transforms: 3 (03)
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

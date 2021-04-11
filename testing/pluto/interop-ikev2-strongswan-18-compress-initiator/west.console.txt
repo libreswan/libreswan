@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,10 +13,10 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -50,12 +50,8 @@ connection 'westnet-eastnet-ikev2' established successfully
 west #
  # first pings hit regular ESP since pings too small to compress
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -68,13 +64,8 @@ lifetime current:\	  0(bytes), 0(packets)\
 west #
  # test compression via large pings that can be compressed on IPCOMP SA
 west #
- ping -n -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
-PATTERN: 0xff
+ ping -n -q -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 8184(8212) bytes of data.
-8192 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -88,7 +79,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
@@ -177,7 +168,4 @@ src ::/0 dst ::/0
 src ::/0 dst ::/0 
 	socket out priority 0 ptype main 
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

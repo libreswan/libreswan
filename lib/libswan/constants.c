@@ -6,6 +6,7 @@
  * Copyright (C) 2016-2017 Andrew Cagney
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -158,12 +159,13 @@ enum_names version_names = {
  */
 
 static const char *const ike_version_name[] = {
+	"<do-not-negotiate>",
 	"IKEv1",
 	"IKEv2",
 };
 
 enum_names ike_version_names = {
-	IKEv1, IKEv2,
+	0, IKEv2,
 	ARRAY_REF(ike_version_name),
 	"IKE", /* prefix */
 	NULL,
@@ -194,8 +196,8 @@ enum_names ike_version_child_names = {
 };
 
 static const char *const ike_version_ike_name[] = {
-	"IKE",
 	"ISAKMP",
+	"IKE",
 };
 
 enum_names ike_version_ike_names = {
@@ -239,7 +241,7 @@ enum_names connection_kind_names = {
 };
 
 /* Payload types (RFC 2408 "ISAKMP" section 3.1) */
-const char *const payload_name_ikev1[] = {
+static const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NONE",
 	"ISAKMP_NEXT_SA",	/* 1 */
 	"ISAKMP_NEXT_P",
@@ -263,7 +265,6 @@ const char *const payload_name_ikev1[] = {
 	"ISAKMP_NEXT_NATD_RFC",
 	"ISAKMP_NEXT_NATOA_RFC",
 	"ISAKMP_NEXT_GAP",
-	NULL	/* termination for bitnamesof() */
 };
 
 static const char *const payload_name_ikev1_private_use[] = {
@@ -278,15 +279,15 @@ static enum_names payload_names_ikev1_private_use = {
 	ISAKMP_NEXT_NATD_DRAFTS,
 	ISAKMP_NEXT_IKE_FRAGMENTATION,
 	ARRAY_REF(payload_name_ikev1_private_use),
-	NULL, /* prefix */
+	"ISAKMP_NEXT_", /* prefix */
 	NULL
 };
 
 enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
-	ARRAY_REF(payload_name_ikev1)-1,	/* don't count NULL */
-	NULL, /* prefix */
+	ARRAY_REF(payload_name_ikev1),
+	"ISAKMP_NEXT_", /* prefix */
 	&payload_names_ikev1_private_use
 };
 
@@ -295,7 +296,6 @@ static const char *const payload_name_ikev2[] = {
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
-/* dual-use: for enum_name and for bitnamesof */
 static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
 	"ISAKMP_NEXT_v2KE",
@@ -318,7 +318,6 @@ static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2GSA", /* [draft-yeung-g-ikev2] */
 	"ISAKMP_NEXT_v2KD", /* [draft-yeung-g-ikev2] */
 	"ISAKMP_NEXT_v2SKF", /* RFC 7383 */
-	NULL	/* termination for bitnamesof() */
 };
 
 /*
@@ -340,7 +339,7 @@ static enum_names payload_names_ikev2_private_use = {
 static enum_names payload_names_ikev2_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
-	ARRAY_REF(payload_name_ikev2_main)-1,
+	ARRAY_REF(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev2_private_use
 };
@@ -357,7 +356,7 @@ enum_names ikev2_payload_names = {
 static enum_names payload_names_ikev2copy_main = {
 	ISAKMP_NEXT_v2SA,
 	ISAKMP_NEXT_v2SKF,
-	ARRAY_REF(payload_name_ikev2_main)-1,
+	ARRAY_REF(payload_name_ikev2_main),
 	NULL, /* prefix */
 	&payload_names_ikev1_private_use
 };
@@ -365,7 +364,7 @@ static enum_names payload_names_ikev2copy_main = {
 enum_names payload_names_ikev1orv2 = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
-	ARRAY_REF(payload_name_ikev1)-1,
+	ARRAY_REF(payload_name_ikev1),
 	NULL, /* prefix */
 	&payload_names_ikev2copy_main
 };
@@ -435,11 +434,11 @@ static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
 	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
-#if 0	/* we don't recognize these yet */
 	"ISAKMP_v2_GSA_AUTH", /* draft-yeung-g-ikev2 */
 	"ISAKMP_v2_GSA_REGISTRATION", /* draft-yeung-g-ikev2 */
 	"ISAKMP_v2_GSA_REKEY", /* draft-yeung-g-ikev2 */
-#endif
+	"ISAKMP_v2_UNASSIGNED_42", /* avoid hole in enum */
+	"ISAKMP_v2_IKE_INTERMEDIATE",
 };
 
 static const char *const exchange_name_private_use[] = {
@@ -473,7 +472,7 @@ enum_names ikev1_exchange_names = {
 
 enum_names ikev2_exchange_names = {
 	ISAKMP_v2_IKE_SA_INIT,
-	ISAKMP_v2_IKE_SESSION_RESUME,
+	ISAKMP_v2_IKE_INTERMEDIATE,
 	ARRAY_REF(exchange_name_ikev2),
 	"ISAKMP_v2_", /* prefix */
 	&exchange_names_private_use
@@ -506,7 +505,7 @@ enum_enum_names exchange_type_names = {
 };
 
 /* Flag BITS */
-const char *const isakmp_flag_names[] = {
+static const char *const isakmp_flag_name[] = {
 	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
 	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
 	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
@@ -515,15 +514,32 @@ const char *const isakmp_flag_names[] = {
 	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
 	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
 	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
-	NULL	/* termination for bitnamesof() */
 };
 
+const struct enum_names isakmp_flag_names = {
+	ISAKMP_FLAGS_v1_ENCRYPTION_IX,
+	ISAKMP_FLAGS_RESERVED_BIT7_IX,
+	ARRAY_REF(isakmp_flag_name),
+	NULL, /* prefix */
+	NULL, /* next */
+};
+
+
 /* Situation BITS definition for IPsec DOI */
-const char *const sit_bit_names[] = {
-	"SIT_IDENTITY_ONLY",
-	"SIT_SECRECY",
-	"SIT_INTEGRITY",
-	NULL	/* termination for bitnamesof() */
+
+static const char *const sit_bit_name[] = {
+#define P(N) [N##_IX] = #N
+	P(SIT_IDENTITY_ONLY),
+	P(SIT_SECRECY),
+	P(SIT_INTEGRITY),
+};
+
+const struct enum_names sit_bit_names = {
+	SIT_IDENTITY_ONLY_IX,
+	SIT_INTEGRITY_IX,
+	ARRAY_REF(sit_bit_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 /* Protocol IDs (RFC 2407 "IPsec DOI" section 4.4.1) */
@@ -833,24 +849,33 @@ enum_names certpolicy_type_names = {
  * and bit names.
  * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
-const char *const oakley_attr_bit_names[] = {
-	"OAKLEY_ENCRYPTION_ALGORITHM",
-	"OAKLEY_HASH_ALGORITHM",
-	"OAKLEY_AUTHENTICATION_METHOD",
-	"OAKLEY_GROUP_DESCRIPTION",
-	"OAKLEY_GROUP_TYPE",
-	"OAKLEY_GROUP_PRIME",
-	"OAKLEY_GROUP_GENERATOR_ONE",
-	"OAKLEY_GROUP_GENERATOR_TWO",
-	"OAKLEY_GROUP_CURVE_A",
-	"OAKLEY_GROUP_CURVE_B",
-	"OAKLEY_LIFE_TYPE",
-	"OAKLEY_LIFE_DURATION",
-	"OAKLEY_PRF",
-	"OAKLEY_KEY_LENGTH",
-	"OAKLEY_FIELD_SIZE",
-	"OAKLEY_GROUP_ORDER",
-	NULL	/* termination for bitnamesof() */
+static const char *const oakley_attr_bit_name[] = {
+#define S(E) [E - OAKLEY_ENCRYPTION_ALGORITHM] = #E
+	S(OAKLEY_ENCRYPTION_ALGORITHM),
+	S(OAKLEY_HASH_ALGORITHM),
+	S(OAKLEY_AUTHENTICATION_METHOD),
+	S(OAKLEY_GROUP_DESCRIPTION),
+	S(OAKLEY_GROUP_TYPE),
+	S(OAKLEY_GROUP_PRIME),
+	S(OAKLEY_GROUP_GENERATOR_ONE),
+	S(OAKLEY_GROUP_GENERATOR_TWO),
+	S(OAKLEY_GROUP_CURVE_A),
+	S(OAKLEY_GROUP_CURVE_B),
+	S(OAKLEY_LIFE_TYPE),
+	S(OAKLEY_LIFE_DURATION),
+	S(OAKLEY_PRF),
+	S(OAKLEY_KEY_LENGTH),
+	S(OAKLEY_FIELD_SIZE),
+	S(OAKLEY_GROUP_ORDER),
+#undef S
+};
+
+const struct enum_names oakley_attr_bit_names = {
+	OAKLEY_ENCRYPTION_ALGORITHM,
+	OAKLEY_GROUP_ORDER,
+	ARRAY_REF(oakley_attr_bit_name),
+	NULL, /*prefix*/
+	NULL, /*next*/
 };
 
 static const char *const oakley_var_attr_name[] = {
@@ -870,7 +895,7 @@ static const char *const oakley_var_attr_name[] = {
 static enum_names oakley_attr_desc_tv = {
 	OAKLEY_ENCRYPTION_ALGORITHM + ISAKMP_ATTR_AF_TV,
 	OAKLEY_GROUP_ORDER + ISAKMP_ATTR_AF_TV,
-	ARRAY_REF(oakley_attr_bit_names)-1,
+	ARRAY_REF(oakley_attr_bit_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -1761,11 +1786,12 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_USE_PPK", /* 16435 */
 	"v2N_PPK_IDENTITY",
 	"v2N_NO_PPK_AUTH",
+	"v2N_INTERMEDIATE_EXCHANGE_SUPPORTED" /* 16438*/,
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_NO_PPK_AUTH,
+	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
 	&ikev2_notify_names_private
@@ -1831,14 +1857,15 @@ enum_names ikev2_notify_names = {
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
 static const char *const ikev2_ts_type_name[] = {
-	"IKEv2_TS_IPV4_ADDR_RANGE",
-	"IKEv2_TS_IPV6_ADDR_RANGE",
-	"IKEv2_TS_FC_ADDR_RANGE",	/* not implemented */
+	"IKEv2_TS_IPV4_ADDR_RANGE",     /* 7 */
+	"IKEv2_TS_IPV6_ADDR_RANGE",     /* 8 */
+	"IKEv2_TS_FC_ADDR_RANGE",	/* 9; not implemented */
+	"IKEv2_TS_SECLABEL", /* 10; Early Code Point */
 };
 
 enum_names ikev2_ts_type_names = {
 	IKEv2_TS_IPV4_ADDR_RANGE,
-	IKEv2_TS_FC_ADDR_RANGE,
+	IKEv2_TS_SECLABEL,
 	ARRAY_REF(ikev2_ts_type_name),
 	NULL, /* prefix */
 	NULL
@@ -1867,7 +1894,7 @@ enum_names attr_msg_type_names = {
 /*
  * IKEv2 Critical bit and RESERVED (7) bits
  */
-const char *const critical_names[] = {
+static const char *const payload_flag_name[] = {
 	"RESERVED bit 0",	/* bit 0 */
 	"RESERVED bit 1",	/* bit 1 */
 	"RESERVED bit 2",	/* bit 2 */
@@ -1876,6 +1903,14 @@ const char *const critical_names[] = {
 	"RESERVED bit 5",	/* bit 5 */
 	"RESERVED bit 6",	/* bit 6 */
 	"PAYLOAD_CRITICAL",	/* bit 7 */
+};
+
+const enum_names payload_flag_names = {
+	ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS_IX,
+	ISAKMP_PAYLOAD_FLAG_CRITICAL_IX,
+	ARRAY_REF(payload_flag_name),
+	NULL, /* prefix */
+	NULL, /* next */
 };
 
 /*
@@ -1916,11 +1951,19 @@ enum_names ikev2_delete_protocol_id_names = {
 	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
 };
 
-/* notify payload allows NONE=0, (NO IKE,) AH=2, ESP=3 */
+/*
+ * Notify payload allows NONE=0, [IKE=1,] AH=2, ESP=3
+ * https://tools.ietf.org/html/rfc7296#section-3.10
+ * Technically 1 is not valid but is sent by by Cisco,
+ * and the RFC states we should accept and ignore it:
+ * "If the SPI field is empty, this field MUST be
+ *  sent as zero and MUST be ignored on receipt."
+ */
 
 static const char *const ikev2_protocol_id_notify_name[] = {
 #define E(V) [V] = #V
 	E(IKEv2_SEC_PROTO_NONE),
+	E(IKEv2_SEC_PROTO_IKE),
 	E(IKEv2_SEC_PROTO_AH),
 	E(IKEv2_SEC_PROTO_ESP),
 #undef E
@@ -2221,27 +2264,64 @@ long next_enum(enum_names *en, long l)
 	}
 }
 
-/* look up enum names in an enum_names */
-const char *enum_name(enum_names *ed, unsigned long val)
+/*
+ * the enum_name range containing VAL, or NULL.
+ */
+const struct enum_names *enum_range(const struct enum_names *en, unsigned long val, const char **prefix)
 {
-	enum_names  *p;
-
-	for (p = ed; p != NULL; p = p->en_next_range) {
+	*prefix = NULL;
+	for (enum_names *p = en; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		if (p->en_first <= val && val <= p->en_last)
-			/* can be NULL */
-			return p->en_names[val - p->en_first];
+		/* return most recent prefix */
+		if (p->en_prefix != NULL) {
+			*prefix = p->en_prefix;
+		}
+		if (p->en_first <= val && val <= p->en_last) {
+			return p;
+		}
 	}
-
 	return NULL;
 }
 
-const char *enum_short_name(enum_names *ed, unsigned long val)
+/*
+ * The actual name for VAL, using RANGE; possibly shortened using
+ * PREFIX.
+ */
+const char *enum_range_name(const struct enum_names *range, unsigned long val,
+			    const char *prefix, bool shorten)
 {
-	const char *p = enum_name(ed, val);
+	if (range == NULL) {
+		return NULL;
+	}
+	passert(range->en_first <= val && val <= range->en_last);
+	/* can be NULL */
+	const char *name = range->en_names[val - range->en_first];
+	if (name != NULL && prefix != NULL && shorten) {
+		/* grr: can't use eat() */
+		size_t pl = strlen(prefix);
+		return strneq(name, prefix, pl) ? name + pl : name;
+	} else {
+		return name;
+	}
+}
 
-	return p == NULL || ed->en_prefix == NULL ? p :
-		strip_prefix(p, ed->en_prefix);
+/* look up enum names in an enum_names */
+const char *enum_name(enum_names *ed, unsigned long val)
+{
+	const char *prefix = NULL;
+	/* can be NULL */
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* can be NULL */
+	return enum_range_name(range, val, prefix, /*shorten?*/false);
+}
+
+const char *enum_name_short(enum_names *ed, unsigned long val)
+{
+	const char *prefix = NULL;
+	/* can be NULL */
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* can be NULL */
+	return enum_range_name(range, val, prefix, /*shorten?*/true);
 }
 
 size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
@@ -2259,7 +2339,7 @@ size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
 
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
-	const char *name = enum_short_name(en, val);
+	const char *name = enum_name_short(en, val);
 	if (name == NULL) {
 		if (en->en_prefix != NULL) {
 			jam_string(buf, en->en_prefix);
@@ -2275,7 +2355,7 @@ size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
  *
  * Note: result may or may not be in b.
  */
-const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+const char *enum_show(enum_names *ed, unsigned long val, esb_buf *b)
 {
 	const char *p = enum_name(ed, val);
 
@@ -2286,34 +2366,17 @@ const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
 	return p;
 }
 
-const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *b)
+const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *b)
 {
-	const char *p = enum_showb(ed, val, b);
-
-	return ed->en_prefix == NULL ? p : strip_prefix(p, ed->en_prefix);
-}
-/*
- * find or construct a string to describe an enum value
- * Result may be in STATIC buffer -- NOT RE-ENTRANT!
- *
- * One consequence is that you cannot have two or more calls
- * as arguments in a single logging call.  Use enum_name instead.
- * (Of course that means that unnamed values will be shown
- * badly.)
- */
-const char *enum_show(enum_names *ed, unsigned long val)
-{
-	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
-
-	return enum_showb(ed, val, &buf);
-}
-
-/* sometimes the prefix gets annoying */
-const char *strip_prefix(const char *s, const char *prefix)
-{
-	size_t pl = strlen(prefix);
-
-	return strneq(s, prefix, pl) ? s + pl : s;
+	const char *prefix;
+	const struct enum_names *range = enum_range(ed, val, &prefix);
+	/* could be NULL */
+	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
+	if (name == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		name = b->buf;
+	}
+	return name;
 }
 
 /*
@@ -2342,8 +2405,10 @@ int enum_search(enum_names *ed, const char *str)
 
 int enum_match(enum_names *ed, shunk_t string)
 {
+	const char *prefix = NULL;
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
 		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
@@ -2359,17 +2424,13 @@ int enum_match(enum_names *ed, shunk_t string)
 			 * with and without suffix '(...)'
 			 */
 			size_t name_len = strlen(name);
-
-			/* pl: prefix length */
-			size_t pl = ed->en_prefix == NULL ? 0 :
-				strip_prefix(name, ed->en_prefix) - name;
+			size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
 
 			/* suffix must not and will not overlap prefix */
-			const char *suffix = strchr(name + pl, '(');
+			const char *suffix = strchr(name + prefix_len, '(');
 
-			/* sl: suffix length */
-			size_t sl = suffix != NULL && name[name_len - 1] == ')' ?
-				&name[name_len] - suffix : 0;
+			size_t suffix_len = (suffix != NULL && name[name_len - 1] == ')' ?
+					     &name[name_len] - suffix : 0);
 
 #			define try(guard, f, b) ( \
 				(guard) && \
@@ -2377,9 +2438,9 @@ int enum_match(enum_names *ed, shunk_t string)
 				strncaseeq(name + (f), string.ptr, string.len))
 
 			if (try(true, 0, 0) ||
-			    try(sl > 0, 0, sl) ||
-			    try(pl > 0, pl, 0) ||
-			    try(pl > 0 && sl > 0, pl, sl))
+			    try(suffix_len > 0, 0, suffix_len) ||
+			    try(prefix_len > 0, prefix_len, 0) ||
+			    try(suffix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
 			{
 				return en;
 			}
@@ -2410,8 +2471,8 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 	return en == NULL ? NULL : enum_name(en, val);
 }
 
-const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
-			    unsigned long val, struct esb_buf *b)
+const char *enum_enum_show(enum_enum_names *een, unsigned long table,
+			   unsigned long val, esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2420,11 +2481,11 @@ const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 		return b->buf;
 	}
 
-	return enum_showb(en, val, b);
+	return enum_show(en, val, b);
 }
 
-const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
-				  unsigned long val, struct esb_buf *b)
+const char *enum_enum_show_short(enum_enum_names *een, unsigned long table,
+				 unsigned long val, esb_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -2433,7 +2494,7 @@ const char *enum_enum_show_shortb(enum_enum_names *een, unsigned long table,
 		return b->buf;
 	}
 
-	return enum_show_shortb(en, val, b);
+	return enum_show_short(en, val, b);
 }
 
 size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
@@ -2482,7 +2543,7 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static struct esb_buf b;	/* STATIC!! */
+		static esb_buf b;	/* STATIC!! */
 
 		snprintf(b.buf, sizeof(b.buf), "%lu??", val);
 		p = b.buf;
@@ -2545,6 +2606,12 @@ static const enum_names *en_checklist[] = {
 	&ikev2_ppk_id_type_names,
 	&ikev2_redirect_gw_names,
 	&ip_protocol_id_names,
+	&ike_version_names,
+	&ike_version_liveness_names,
+	&ike_version_ike_names,
+	&ike_version_child_names,
+	&payload_flag_names,
+	&oakley_attr_bit_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

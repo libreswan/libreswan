@@ -1,0 +1,119 @@
+# Do not populate NSS DB, check it is empty
+east #
+ /testing/guestbin/swan-prep
+east #
+ certutl -L -d sql:/etc/ipsec.d
+-bash: certutl: command not found
+east #
+ # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
+east #
+ PA../../guestbin/update-crypto-policies
+Setting system policy to DEFAULT
+Note: System-wide crypto policies are applied on application start-up.
+It is recommended to restart the system for the change of policies
+to fully take place.
+east #
+ # setup softhsm with east's PKCS12 info
+east #
+ #SOFTHSM2_CONF="/etc/softhsm2.conf"
+east #
+ #SOFTHSM2_TOKEN_DIR="$(grep 'directories.tokendir' "$SOFTHSM2_CONF" | cut -d '=' -f 2 | sed 's/ //g')"
+east #
+ export GNUTLS_PIN=123456
+east #
+ export GNUTLS_SO_PIN=12345678
+east #
+ export GNUTLS_NEW_SO_PIN=12345678
+east #
+ # delete any old libreswan softhsm token - bug in p11tool that it does not delete everything ?
+east #
+ #OLDSOFTHSM=$(p11tool --list-tokens |grep libreswan |grep URL| sed "s/URL://")
+east #
+ #if [ -n "${OLDSOFTHSM}" ] ; then p11tool --batch --delete "${OLDSOFTHSM}" > /dev/null 2> /dev/null ; fi
+east #
+ rm -rf /var/lib/softhsm/tokens/*
+east #
+ # init new one - must use same CKAID for at least key+cert
+east #
+ softhsm2-util --init-token --slot 0 --label libreswan --so-pin ${GNUTLS_SO_PIN} --pin ${GNUTLS_PIN}
+The token has been initialized and is reassigned to slot XXXXX
+east #
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-certificate /testing/x509/certs/east.crt --label eastCert --login
+east #
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/keys/east.key --label eastKey --login
+east #
+ # note: --trusted --ca does not seem to set the trust bits needed for CA for nss - so fixup afterwards
+east #
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --trusted --ca --load-certificate /testing/x509/cacerts/mainca.crt --label eastCA --so-login
+east #
+ echo -n "123456" > /tmp/pin
+east #
+ certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -d sql:/etc/ipsec.d -f /tmp/pin
+east #
+ #p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login
+east #
+ CERT_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastCert |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
+east #
+ KEY_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastKey |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
+east #
+ echo "CERT_URI=${CERT_URI}"
+CERT_URI=pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;serial=XXXXXXXX;token=libreswan;id=%01;object=eastCert;type=cert
+east #
+ echo "KEY_URI=${KEY_URI}"
+KEY_URI=pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;serial=XXXXXXXX;token=libreswan;id=%01;object=eastKey;type=private
+east #
+ echo -e "conn eastcert\n\trightcert=${CERT_URI}" > OUTPUT/eastcert.conf
+east #
+ echo -e "NSS Certificate DB:${GNUTLS_PIN}\nNSS FIPS 140-2 Certificate DB:${GNUTLS_PIN}\nlibreswan:${GNUTLS_PIN}" > /etc/ipsec.d/nsspassword
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": NSS Password from file "/etc/ipsec.d/nsspassword" for token "libreswan" with length 6 passed to NSS
+002 "westnet-eastnet-ikev2": added IKEv2 connection
+east #
+ ipsec auto --listall
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000        ID_USER_FQDN 'user-east@testing.libreswan.org'
+000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000        ID_FQDN '@east.testing.libreswan.org'
+000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000        ID_USER_FQDN 'east@testing.libreswan.org'
+000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000        ID_IPV4_ADDR '192.1.2.23'
+000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000  
+000 List of Pre-shared secrets (from /etc/ipsec.secrets)
+000  
+000     0: RSA (none) (none)
+000        ckaid: 01
+000  
+000 List of X.509 End Certificates:
+000  
+000 List of X.509 CA Certificates:
+000  
+000 Root CA certificate "eastCA" - SN: 0xXX
+000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000   not before: TIMESTAMP
+000   not after: TIMESTAMP
+000   2048 bit RSA
+000  
+000 List of CRLs:
+east #
+ echo "initdone"
+initdone
+east #
+ 

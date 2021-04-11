@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT
+---
+dependency:
+  name: galaxy
+driver:
+  name: ${LSR_MOLECULE_DRIVER:-docker}
+platforms:
+  - name: centos-8
+    image: registry.centos.org/centos:8
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    command: /usr/lib/systemd/systemd --system
+provisioner:
+  name: ansible
+  log: true
+  playbooks:
+    converge: ../../tests/tests_default.yml
+scenario:
+  name: default
+  test_sequence:
+    - destroy
+    - create
+    - converge
+    - idempotence
+    - check
+    - destroy

@@ -3,10 +3,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-psk
-002 added IKEv1 connection "road-eastnet-psk"
+002 "road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
 initdone
@@ -18,14 +18,14 @@ road #
 1v1 "road-eastnet-psk" #1: sent Main Mode I3
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-002 "road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-eastnet-psk" #2: sent Quick Mode request
 004 "road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -61,7 +61,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

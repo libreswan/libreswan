@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep
+west #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+west #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+west #
+ rm ipsecspd.pp
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ # expected to fail
+west #
+ ipsec auto --up labeled
+1v2 "labeled" #1: initiating IKEv2 connection
+1v2 "labeled" #1: sent IKE_SA_INIT request
+1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "labeled" #2: IMPAIR: retransmit so deleting SA
+002 "labeled" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
+003 "labeled" #2: reschedule pending CHILD SA - the IKE SA #1 is going away
+002 "labeled" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+west #
+ echo done
+done
+west #
+ ipsec whack --shutdown
+west #
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
+west #
+ 

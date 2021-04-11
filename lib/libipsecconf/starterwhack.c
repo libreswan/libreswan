@@ -27,13 +27,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/queue.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ctype.h>
 
 #include "sysdep.h"
 
@@ -271,14 +269,9 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	return ret;
 }
 
-static void init_whack_msg(struct whack_message *msg)
-{
-	/* properly initializes pointers to NULL */
-	static const struct whack_message zwm;
-
-	*msg = zwm;
-	msg->magic = WHACK_MAGIC;
-}
+static const struct whack_message empty_whack_message = {
+	.magic = WHACK_MAGIC,
+};
 
 /* NOT RE-ENTRANT: uses a static buffer */
 static char *connection_name(const struct starter_conn *conn)
@@ -298,7 +291,9 @@ static void set_whack_end(char *lr,
 			struct whack_end *w,
 			const struct starter_end *l)
 {
+	w->leftright = lr;
 	w->id = l->id;
+	w->sec_label = l->sec_label;
 	w->host_type = l->addrtype;
 
 	switch (l->addrtype) {
@@ -310,18 +305,18 @@ static void set_whack_end(char *lr,
 	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
-		w->host_addr = address_any(l->host_family);
+		w->host_addr = l->host_family->address.any;
 		break;
 
 	case KH_OPPO:
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
-		w->host_addr = address_any(l->host_family);
+		w->host_addr = l->host_family->address.any;
 		break;
 
 	case KH_ANY:
-		w->host_addr = address_any(l->host_family);
+		w->host_addr = l->host_family->address.any;
 		break;
 
 	default:
@@ -342,7 +337,7 @@ static void set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		w->host_nexthop = address_any(l->host_family);
+		w->host_nexthop = l->host_family->address.any;
 		break;
 
 	default:
@@ -351,32 +346,43 @@ static void set_whack_end(char *lr,
 		break;
 	}
 
-	if (address_is_specified(&l->sourceip))
+	if (address_is_specified(l->sourceip))
 		w->host_srcip = l->sourceip;
 
-	if (subnet_is_specified(&l->vti_ip))
+	if (cidr_is_specified(l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
-	if (!isanyaddr(&l->ifaceip.addr))
+	if (cidr_is_specified(l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
 	w->has_client = l->has_client;
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		w->client = l->host_family->all_addresses;
+		w->client = l->host_family->subnet.all;
 	}
 
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
 	if (l->certx != NULL) {
-		w->pubkey = l->certx;
-		w->pubkey_type = WHACK_PUBKEY_CERTIFICATE_NICKNAME;
+		w->cert = l->certx;
 	}
 	if (l->ckaid != NULL) {
-		w->pubkey = l->ckaid;
-		w->pubkey_type = WHACK_PUBKEY_CKAID;
+		w->ckaid = l->ckaid;
+	}
+	if (l->rsasigkey_type == PUBKEY_PREEXCHANGED) {
+		/*
+		 * Only send over raw (prexchanged) rsapubkeys (i.e.,
+		 * not %cert et.a.)
+		 *
+		 * XXX: but what is with the two rsasigkeys?  Whack seems
+		 * to be willing to send pluto two raw pubkeys under
+		 * the same ID.  Just assume that the first key should
+		 * be used for the CKAID.
+		 */
+		passert(l->rsasigkey != NULL);
+		w->rsasigkey = l->rsasigkey;
 	}
 	w->ca = l->ca;
 	if (l->options_set[KNCF_SENDCERT])
@@ -415,19 +421,15 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	const char *err;
 	char err_buf[TTODATAV_BUF];
 	char keyspace[1024 + 4];
-	struct whack_message msg;
-	int ret;
+	int ret = 0;
 
-	ret = 0;
-
-	init_whack_msg(&msg);
-
-	msg.whack_key = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_key = true;
 	msg.pubkey_alg = PUBKEY_ALG_RSA;
-	if (end->id && end->rsakey1) {
+	if (end->id && end->rsasigkey) {
 		msg.keyid = end->id;
 
-		switch (end->rsakey1_type) {
+		switch (end->rsasigkey_type) {
 		case PUBKEY_DNSONDEMAND:
 			starter_log(LOG_LEVEL_DEBUG,
 				"conn %s/%s has key from DNS",
@@ -444,19 +446,19 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = ttodatav(end->rsakey1, 0, 0, keyspace,
+			err = ttodatav(end->rsasigkey, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
-					"conn %s/%s: rsakey malformed [%s]",
+					"conn %s/%s: rsasigkey malformed [%s]",
 					connection_name(conn), lr, err);
 				return 1;
 			} else {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "\tsending %s %srsasigkey=%s",
-					    connection_name(conn), lr, end->rsakey1);
+					    connection_name(conn), lr, end->rsasigkey);
 				msg.keyval.ptr = (unsigned char *)keyspace;
 				ret = send_whack_msg(&msg, cfg->ctlsocket);
 			}
@@ -466,39 +468,6 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 	if (ret < 0)
 		return ret;
 
-	init_whack_msg(&msg);
-
-	msg.whack_key = TRUE;
-	msg.pubkey_alg = PUBKEY_ALG_RSA;
-	if (end->id && end->rsakey2) {
-		/* printf("addkey2: %s\n", lr); */
-
-		msg.keyid = end->id;
-		switch (end->rsakey2_type) {
-		case PUBKEY_NOTSET:
-		case PUBKEY_DNSONDEMAND:
-		case PUBKEY_CERTIFICATE:
-			break;
-
-		case PUBKEY_PREEXCHANGED:
-			err = ttodatav(end->rsakey2, 0, 0, keyspace,
-				sizeof(keyspace),
-				&msg.keyval.len,
-				err_buf, sizeof(err_buf), 0);
-			if (err) {
-				starter_log(LOG_LEVEL_ERR,
-					"conn %s/%s: rsakey malformed [%s]",
-					connection_name(conn), lr, err);
-				return 1;
-			} else {
-				starter_log(LOG_LEVEL_DEBUG,
-					    "\tsending %s %srsasigkey2=%s",
-					    connection_name(conn), lr, end->rsakey1);
-				msg.keyval.ptr = (unsigned char *)keyspace;
-				return send_whack_msg(&msg, cfg->ctlsocket);
-			}
-		}
-	}
 	return 0;
 }
 
@@ -512,16 +481,11 @@ static void conn_log_val(const struct starter_conn *conn,
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
-	struct whack_message msg;
-	int r;
-
-	init_whack_msg(&msg);
-
-	msg.whack_connection = TRUE;
-	msg.whack_delete = TRUE;	/* always do replace for now */
+	struct whack_message msg = empty_whack_message;
+	msg.whack_connection = true;
+	msg.whack_delete = true;	/* always do replace for now */
 	msg.name = connection_name(conn);
 
-	msg.addr_family = conn->left.host_family->af;
 	msg.tunnel_addr_family = conn->left.host_family->af;
 
 	if (conn->right.addrtype == KH_IPHOSTNAME)
@@ -539,6 +503,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
 
+	msg.ike_version = conn->ike_version;
 	msg.policy = conn->policy;
 	msg.sighash_policy = conn->sighash_policy;
 
@@ -656,13 +621,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-	if (conn->strings_set[KSCF_POLICY_LABEL]) {
-		msg.policy_label = conn->policy_label;
-		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
-			conn->name, msg.policy_label);
+	if (conn->strings_set[KSCF_SA_SEC_LABEL]) {
+		msg.sec_label = conn->sec_label;
+		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" sec_label=%s",
+			conn->name, msg.sec_label);
 	}
-#endif
 
 	msg.modecfg_dns = conn->modecfg_dns;
 	conn_log_val(conn, "modecfgdns", msg.modecfg_dns);
@@ -703,16 +666,16 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike_crypto;
 	conn_log_val(conn, "ike", msg.ike);
 
-	r = send_whack_msg(&msg, cfg->ctlsocket);
+	int r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
 		return r;
 
-	if (conn->left.rsakey1 != NULL || conn->left.rsakey2 != NULL) {
+	if (conn->left.rsasigkey != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r != 0)
 			return r;
 	}
-	if (conn->right.rsakey1 != NULL || conn->right.rsakey2 != NULL) {
+	if (conn->right.rsasigkey != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
 		if (r != 0)
 			return r;
@@ -735,7 +698,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 		return FALSE;
 
 	/* find first non-space item */
-	while (*subnets != '\0' && (isspace(*subnets) || *subnets == ','))
+	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ','))
 		subnets++;
 
 	/* did we find something? */
@@ -745,10 +708,10 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	eln = subnets;
 
 	/* find end of this item */
-	while (*subnets != '\0' && !(isspace(*subnets) || *subnets == ','))
+	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ','))
 		subnets++;
 
-	e = ttosubnet(eln, subnets - eln, afi->af, '6', sn, logger);
+	e = ttosubnet(shunk2(eln, subnets - eln), afi, '6', sn, logger);
 	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
@@ -905,10 +868,8 @@ int starter_whack_add_conn(struct starter_config *cfg,
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_route = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_route = true;
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }
@@ -929,20 +890,16 @@ int starter_whack_route_conn(struct starter_config *cfg,
 int starter_whack_initiate_conn(struct starter_config *cfg,
 				struct starter_conn *conn)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_initiate = TRUE;
-	msg.whack_async = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_initiate = true;
+	msg.whack_async = true;
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_listen(struct starter_config *cfg)
 {
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_listen = TRUE;
+	struct whack_message msg = empty_whack_message;
+	msg.whack_listen = true;
 	return send_whack_msg(&msg, cfg->ctlsocket);
 }

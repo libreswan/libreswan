@@ -1,0 +1,64 @@
+/testing/guestbin/swan-prep
+road #
+ ip addr add 192.1.3.210/24 dev eth0
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ echo "initdone"
+initdone
+road #
+ # bring up server behind NAT "road"
+road #
+ ipsec auto --add road-east
+002 "road-east": added IKEv1 connection
+road #
+ ipsec auto --up road-east
+003 "road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+002 "road-east" #1: initiating IKEv1 Aggressive Mode connection
+1v1 "road-east" #1: sent Aggressive Mode request
+002 "road-east" #1: Peer ID is ID_FQDN: '@east'
+002 "road-east" #1: Peer ID is ID_FQDN: '@east'
+004 "road-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
+1v1 "road-east" #2: sent Quick Mode request
+004 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+road #
+ # sleep 3
+road #
+ ipsec trafficstatus
+006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+road #
+ # emulate bringing up second server behind same NAT "runner"
+road #
+ ipsec whack --impair send-no-delete
+road #
+ ipsec auto --delete road-east
+002 "road-east": terminating SAs using this connection
+002 "road-east" #2: deleting state (STATE_QUICK_I2) and NOT sending notification
+005 "road-east" #2: ESP traffic information: in=0B out=0B
+002 "road-east" #1: deleting state (STATE_AGGR_I2) and NOT sending notification
+road #
+ ipsec auto --add runner-east
+002 "runner-east": added IKEv1 connection
+road #
+ ipsec auto --up runner-east
+003 "runner-east" #3: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+002 "runner-east" #3: initiating IKEv1 Aggressive Mode connection
+1v1 "runner-east" #3: sent Aggressive Mode request
+002 "runner-east" #3: Peer ID is ID_FQDN: '@east'
+002 "runner-east" #3: Peer ID is ID_FQDN: '@east'
+004 "runner-east" #3: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "runner-east" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
+1v1 "runner-east" #4: sent Quick Mode request
+004 "runner-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+road #
+ echo done
+done
+road #
+ ipsec whack --trafficstatus
+006 #4: "runner-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+road #
+ 

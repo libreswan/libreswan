@@ -46,6 +46,8 @@ unsigned long pstats_ikev1_fail;
 unsigned long pstats_ikev2_fail;
 unsigned long pstats_ikev1_completed;
 unsigned long pstats_ikev2_completed;
+unsigned long pstats_ikev2_redirect_failed;
+unsigned long pstats_ikev2_redirect_completed;
 unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
@@ -82,9 +84,9 @@ unsigned long pstats_ike_dpd_replied;
 unsigned long pstats_iketcp_started[2];
 unsigned long pstats_iketcp_stopped[2];
 unsigned long pstats_iketcp_aborted[2];
-unsigned long pstats_xauth_started;
-unsigned long pstats_xauth_stopped;
-unsigned long pstats_xauth_aborted;
+unsigned long pstats_pamauth_started;
+unsigned long pstats_pamauth_stopped;
+unsigned long pstats_pamauth_aborted;
 
 #define PLUTO_STAT(TYPE, NAMES, WHAT, FLOOR, ROOF)			\
 	static unsigned long pstats_##TYPE##_count[ROOF-FLOOR +1/*overflow*/]; \
@@ -140,6 +142,7 @@ static const char *pstats_sa_reasons[DELETE_REASON_ROOF] = {
 	[REASON_EXCHANGE_TIMEOUT] = "exchange-timeout",
 	[REASON_CRYPTO_TIMEOUT] = "crypto-timeout",
 	[REASON_TOO_MANY_RETRANSMITS] = "too-many-retransmits",
+	[REASON_SUPERSEDED_BY_NEW_SA] = "superseeded-by-new-sa",
 	[REASON_AUTH_FAILED] = "auth-failed",
 	[REASON_CRYPTO_FAILED] = "crypto-failed",
 };
@@ -255,10 +258,12 @@ static void pstat_child_sa_established(struct state *st)
 {
 	struct connection *const c = st->st_connection;
 
+#ifdef USE_IKEv1
 	/* don't count IKEv1 half ipsec sa */
 	if (st->st_state->kind == STATE_QUICK_R1) {
 		pstats_ipsec_sa++;
 	}
+#endif
 
 	if (st->st_esp.present) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
@@ -318,7 +323,7 @@ static void whack_pluto_stat(struct show *s, const struct pluto_stat *stat)
 {
 	unsigned long other = stat->count[stat->roof - stat->floor];
 	for (unsigned long e = stat->floor; e < stat->roof; e++) {
-		const char *nm = enum_short_name(stat->names, e);
+		const char *nm = enum_name_short(stat->names, e);
 		unsigned long count = stat->count[e - stat->floor];
 		/* not logging "UNUSED" */
 		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
@@ -348,7 +353,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * XXX: the bug is that the enum table contains names
 		 * that include UNUSED.  Skip them.
 		 */
-		const char *name = enum_short_name(names, e);
+		const char *name = enum_name_short(names, e);
 		if (name != NULL && strstr(name, "UNUSED") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
 				 what, name, count[e]);
@@ -391,6 +396,8 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
 	show_raw(s, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
 	show_raw(s, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
+	show_raw(s, "total.ike.ikev2.redirect.completed=%lu", pstats_ikev2_redirect_completed);
+	show_raw(s, "total.ike.ikev2.redirect.failed=%lu", pstats_ikev2_redirect_failed);
 	show_raw(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
 	show_raw(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
 	show_raw(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
@@ -426,9 +433,9 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ike.traffic.in=%lu", pstats_ike_in_bytes);
 	show_raw(s, "total.ike.traffic.out=%lu", pstats_ike_out_bytes);
 
-	show_raw(s, "total.xauth.started=%lu", pstats_xauth_started);
-	show_raw(s, "total.xauth.stopped=%lu", pstats_xauth_stopped);
-	show_raw(s, "total.xauth.aborted=%lu", pstats_xauth_aborted);
+	show_raw(s, "total.pamauth.started=%lu", pstats_pamauth_started);
+	show_raw(s, "total.pamauth.stopped=%lu", pstats_pamauth_stopped);
+	show_raw(s, "total.pamauth.aborted=%lu", pstats_pamauth_aborted);
 
 	show_raw(s, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
 	show_raw(s, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
@@ -480,6 +487,7 @@ void clear_pluto_stats(void)
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;
 	pstats_ikev1_completed = pstats_ikev2_completed = 0;
+	pstats_ikev2_redirect_failed = pstats_ikev2_redirect_completed=0;
 
 	memset(pstats_sa_started, 0, sizeof pstats_sa_started);
 	memset(pstats_sa_finished, 0, sizeof pstats_sa_finished);
@@ -491,7 +499,7 @@ void clear_pluto_stats(void)
 	pstats_ipsec_encap_yes = pstats_ipsec_encap_no = 0;
 	pstats_ipsec_esn = pstats_ipsec_tfc = 0;
 	pstats_ike_dpd_recv = pstats_ike_dpd_sent = pstats_ike_dpd_replied = 0;
-	pstats_xauth_started = pstats_xauth_stopped = pstats_xauth_aborted = 0;
+	pstats_pamauth_started = pstats_pamauth_stopped = pstats_pamauth_aborted = 0;
 
 	memset(pstats_iketcp_started, 0, sizeof(pstats_iketcp_started));
 	memset(pstats_iketcp_stopped, 0, sizeof(pstats_iketcp_stopped));

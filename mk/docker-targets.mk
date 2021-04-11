@@ -5,14 +5,14 @@
 # make DISTRO=fedora DISTRO_REL=28 docker-image
 #
 # make DISTRO=fedora DISTRO_REL=28 DI_T=swanbase docker-image
-# 
+#
 # The variables above could be set from command line.
 #
 
 DOCKER_CMD ?= sudo podman
 D ?= testing/docker
 
-DI_T ?= swanbase 	#docker image tag
+DI_T ?= swanbase	#docker image tag
 
 W1 = $(firstword $(subst -, ,$1))
 W2 = $(or $(word 2, $(subst -, ,$1)), $(value 2))
@@ -21,7 +21,7 @@ W4 = $(or $(word 4, $(subst -, ,$1)), $(value 2))
 
 FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
-DISTRO_REL ?= 32 	# default release
+DISTRO_REL ?= 32	# default release
 
 D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
@@ -84,10 +84,13 @@ ifeq ($(DISTRO), centos)
 		LOCAL_MAKE_FLAGS += USE_DNSSEC=$(D_USE_DNSSEC)
 		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
+		LOCAL_MAKE_FLAGS += WERROR_CFLAGS='-Werror -Wfatal-errors -Wno-missing-field-initializers'
 	endif
 
 	ifeq ($(DISTRO_REL), 7)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
+		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
 	endif
 
 	ifeq ($(DISTRO_REL), 8)
@@ -160,9 +163,15 @@ install-rpm-build-dep:
 	$(SUDO_CMD) $(PKG_CMD) groupinstall $(POWER_TOOLS) -y 'Development Tools'
 	$(SUDO_CMD) $(PKG_BUILDDEP) $(REPO_POWERTOOLS) -y libreswan
 
+.PHONY: install-testing-deb-dep
+install-testing-deb-dep: install-deb-dep
+	apt-get update
+	$(if $(TESTING_DEB_PACKAGES), apt-get install -y --no-install-recommends \
+		$(TESTING_DEB_PACKAGES))
+
 .PHONY: install-deb-dep
 # RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
-# hard codde these two packages it fail on xenial and old ones.
+# hard code these two packages it fail on xenial and old ones.
 # on buster host is virtual package
 RUN_DEBS_OLD ?= bind9-host iptables
 RUN_DEBS ?= $$(test -f /usr/bin/apt-cache && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
@@ -229,7 +238,7 @@ docker-image: dockerfile $(TWEAKS) docker-ssh-image docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL) with ssh"
 
 
-# NEW tragets to get docker handling 201906
+# NEW targets to get docker handling 201906
 .PHONY: docker-instance-name
 docker-instance-name:
 	echo $(DI_T)

@@ -16,10 +16,6 @@ include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
-LEX=flex
-BISON=bison
-RM=rm
-
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
@@ -28,18 +24,10 @@ ifndef PROGRAMDIR
 PROGRAMDIR=${LIBEXECDIR}
 endif
 
-ifndef CONFDSUBDIR
-CONFDSUBDIR=.
-endif
-
-# the list of stuff to be built for "make programs"
-CONFIGLIST=$(CONFFILES) $(CONFDSUBDIRFILES)
-PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
-
-local-base: $(PROGRAMSLIST)
+local-base: $(PROGRAM)
 
 local-clean-base:
-	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
+	rm -f $(builddir)/*.o $(foreach p,$(PROGRAM), $(builddir)/$(p))
 
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
@@ -56,44 +44,9 @@ local-install-base:
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	@set -eu ; $(foreach file, $(CONFFILES), \
-		if [ ! -f $(CONFDIR)/$(file) ]; then \
-			echo $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
-			mkdir -p $(CONFDIR) ; \
-			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
-		fi ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
-		mkdir -p $(EXAMPLECONFDIR) ; \
-		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
-	)
-	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo $$src '->' $$destdir/$$file-sample ; \
-		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
-	)
-	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
-		fi ; \
-	)
 
 list-local-base:
 	@$(call foreach-file, $(PROGRAM), $(PROGRAMDIR), \
-		echo $$destdir/$$file ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $$destdir/$$file ; \
-	)
-	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo $(EXAMPLECONFDIR)/$$file-sample ; \
-	)
-	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo $$destdir/$$file-sample ; \
-	)
-	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		echo $$destdir/$$file ; \
 	)
 
@@ -109,29 +62,8 @@ ifdef OBJS
 # instance something is removed), a re-link is triggered.
 
 $(PROGRAM): $(OBJS) $(srcdir)/Makefile
-	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDFAGS)
-
-include $(top_srcdir)/mk/depend.mk
-
-else
-
-define transform_script
-	@echo  'IN' $< '->' $(builddir)/$@
-	${TRANSFORM_VARIABLES} < $< > $(builddir)/$@.tmp
-	@if [ -x $< ]; then chmod +x $(builddir)/$@.tmp; fi
-	@if [ "${PROGRAM}" = $* ]; then chmod +x $(builddir)/$@.tmp; fi
-	mv $(builddir)/$@.tmp $(builddir)/$@
-endef
-
-%: %.sh $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
-
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
-
-%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	$(transform_script)
+	cd $(builddir) && $(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS)  -o $@ $(OBJS) $(USERLAND_LDFLAGS) $(LDFLAGS)
 
 endif
 
-include $(top_srcdir)/mk/builddir.mk
+include $(top_srcdir)/mk/rules.mk

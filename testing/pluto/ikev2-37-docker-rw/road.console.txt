@@ -9,10 +9,10 @@ road #
 ipsec start
 Redirecting to: [initsystem]
 road #
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 road #
 ipsec auto --add road-eastnet-nonat
-002 added IKEv2 connection "road-eastnet-nonat"
+002 "road-eastnet-nonat": added IKEv2 connection
 road #
 ipsec auto --status
 000 using kernel interface: xfrm
@@ -30,9 +30,9 @@ ipsec auto --status
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
-000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto
-000 ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 nhelpers=-1, uniqueids=yes, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
+000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
+000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 global-redirect=no, global-redirect-to=<unset>
 000 secctx-attr-type=XXXX
 000 debug ...
@@ -95,12 +95,12 @@ ipsec auto --status
 000 "road-eastnet-nonat": 192.0.2.219/32===192.1.3.209[@road]---192.1.3.254...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "road-eastnet-nonat":     oriented; my_ip=192.0.2.219; their_ip=unset; my_updown=ipsec _updown;
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "road-eastnet-nonat":   policy_label:unset;
-000 "road-eastnet-nonat":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "road-eastnet-nonat":   sec_label:unset;
+000 "road-eastnet-nonat":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "road-eastnet-nonat":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-eastnet-nonat":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
@@ -122,16 +122,11 @@ ipsec auto --up road-eastnet-nonat
 1v2 "road-eastnet-nonat" #1: initiating IKEv2 connection
 1v2 "road-eastnet-nonat" #1: sent IKE_SA_INIT request
 1v2 "road-eastnet-nonat" #1: sent IKE_AUTH request {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "road-eastnet-nonat" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "road-eastnet-nonat" #2: negotiated connection [192.0.2.219-192.0.2.219:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-eastnet-nonat" #2: STATE_V2_ESTABLISHED_IKE_SA: established IKE SA tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 road #
 ping -n -c 4 -I 192.0.2.219  192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.2.219 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -140,7 +135,7 @@ road #
 ipsec whack --trafficstatus
 006 #2: "road-eastnet-nonat", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 road #
-../../pluto/bin/ipsec-look.sh
+../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -184,7 +179,7 @@ road #
 echo done
 done
 road #
-../../pluto/bin/ipsec-look.sh
+../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -225,8 +220,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 
 road #
- ../bin/check-for-core.sh
-road #
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
-
+road #
+ 

@@ -4,12 +4,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -18,9 +18,7 @@ road #
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
@@ -28,16 +26,11 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- ping -n -c 2 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
+006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
 road #
  # create havoc
 road #
@@ -46,19 +39,17 @@ road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=168B out=168B
+005 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: up-client output: updating resolvconf
@@ -72,15 +63,13 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: up-client output: updating resolvconf
@@ -94,33 +83,24 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: down-client output: restoring resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 road #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: up-client output: updating resolvconf
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- ping -n -c 4 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
+006 #8: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
 road #
  echo done
 done
@@ -159,7 +139,4 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

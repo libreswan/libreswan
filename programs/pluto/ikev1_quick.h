@@ -21,5 +21,4 @@ extern void quick_outI1(struct fd *whack_sock,
 			lset_t policy,
 			unsigned long try,
 			so_serial_t replacing,
-			struct xfrm_user_sec_ctx_ike *uctx
-			);
+			chunk_t sec_label);

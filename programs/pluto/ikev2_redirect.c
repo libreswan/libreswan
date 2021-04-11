@@ -37,6 +37,8 @@
 #include "ikev2_redirect.h"
 #include "initiate.h"
 #include "log.h"
+#include "pending.h"
+#include "pluto_stats.h"
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
@@ -50,9 +52,9 @@ static struct redirect_dests active_dests = { NULL, NULL };
 
 const char *global_redirect_to(void)
 {
-	return global_dests.whole == NULL || *global_dests.whole == '\0' ?
-		"<unset>" :
-		global_dests.whole;
+	if (global_dests.whole == NULL)
+		return ""; /* allows caller to strlen() */
+	return global_dests.whole;
 }
 
 static void free_redirect_dests(struct redirect_dests *dests)
@@ -133,7 +135,8 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		loglog(RC_LOG_SERIOUS, "redirect destination longer than 255 octets; ignoring");
+		llog(RC_LOG_SERIOUS, logger,
+			    "redirect destination longer than 255 octets; ignoring");
 		return empty_chunk;
 	}
 
@@ -149,9 +152,15 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	struct pbs_out gwid_pbs = open_pbs_out("gwid_pbs",
 					       buf, sizeof_buf,
 					       logger);
-	if (out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL) &&
-	    out_raw(id.ptr, id.len , &gwid_pbs, "redirect ID") &&
-	    (nonce == NULL || pbs_out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify")))
+	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
+		return empty_chunk;
+	}
+	diag_t d = pbs_out_hunk(&gwid_pbs, id, "redirect ID");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+		return empty_chunk;
+	}
+	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
 	{
 		close_output_pbs(&gwid_pbs);
 		return same_out_pbs_as_chunk(&gwid_pbs);
@@ -189,7 +198,7 @@ static chunk_t build_redirect_notification_data_str(const shunk_t dest,
 						    struct logger *logger)
 {
 	ip_address ip_addr;
-	err_t ugh = ttoaddr_num(dest.ptr, dest.len, AF_UNSPEC, &ip_addr);
+	err_t ugh = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
 
 	if (ugh != NULL) {
 		/*
@@ -223,24 +232,28 @@ bool redirect_global(struct msg_digest *md)
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
 		/* Ni is used as cookie to protect REDIRECT in IKE_SA_INIT */
 		dbg("Ni payload required for REDIRECT is missing");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	if (md->pbs[PBS_v2N_REDIRECTED_FROM] == NULL &&
 	    md->pbs[PBS_v2N_REDIRECT_SUPPORTED] == NULL) {
 		dbg("peer didn't indicate support for redirection");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len == 0) {
 		dbg("Initiator nonce should not be zero length");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	shunk_t dest = get_redirect_dest(&global_dests);
 	if (dest.len == 0) {
 		dbg("no (meaningful) destination for global redirection has been specified");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
@@ -250,37 +263,39 @@ bool redirect_global(struct msg_digest *md)
 							    logger);
 
 	if (data.len == 0) {
-		log_message(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG_SERIOUS, logger,
 			    "failed to construct REDIRECT notification data");
+		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
 	send_v2N_response_from_md(md, v2N_REDIRECT, &data);
+	pstats_ikev2_redirect_completed++;
 	return true;
 }
 
-bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *pbs)
+bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 {
 	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
-							    pbs->out_logger);
+							    outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, outs);
 }
 
-bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *pbs)
+bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	chunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
-							   pbs->out_logger);
+							   outs->outs_logger);
 
 	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, pbs);
+		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, outs);
 }
 
 /*
@@ -300,7 +315,7 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 			break;	/* no more */
 
 		ip_address ip_addr;
-		err_t ugh = ttoaddr_num(t, len, AF_UNSPEC, &ip_addr);
+		err_t ugh = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
 
 		if (ugh != NULL) {
 			dbg("address %.*s isn't a valid address", len, t);
@@ -325,8 +340,10 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	struct pbs_in input_pbs = *notify_pbs;
 	struct ikev2_redirect_part gw_info;
 
-	if (!pbs_in_struct(&input_pbs, &gw_info, sizeof(gw_info),
-			   &ikev2_redirect_desc, NULL, logger)) {
+	diag_t d = pbs_in_struct(&input_pbs, &ikev2_redirect_desc,
+				 &gw_info, sizeof(gw_info), NULL);
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return "received malformed REDIRECT payload";
 	}
 
@@ -359,19 +376,23 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		 */
 		unsigned char gw_str[0xFF];
 
-		if (!pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len,
-				"GW Identity", logger))
+		diag_t d = pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len, "GW Identity");
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
+		}
 
-		err_t ugh = ttoaddr((char *) gw_str, gw_info.gw_identity_len,
-					AF_UNSPEC, redirect_ip);
+		err_t ugh = ttoaddress_dns(shunk2(gw_str, gw_info.gw_identity_len),
+					   NULL/*UNSPEC*/, redirect_ip);
 		if (ugh != NULL)
 			return ugh;
 	} else {
 		if (gw_info.gw_identity_len < af->ip_size) {
 			return "transferred GW Identity Length is too small for an IP address";
 		}
-		if (!pbs_in_address(redirect_ip, af, &input_pbs, "REDIRECT address")) {
+		diag_t d = pbs_in_address(&input_pbs, redirect_ip, af, "REDIRECT address");
+		if (d != NULL) {
+			log_diag(RC_LOG, logger, &d, "%s", "");
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;
@@ -418,7 +439,8 @@ static void del_spi_trick(struct state *st)
 {
 	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
 		    &st->st_connection->temp_vars.old_gw_address,
-		    &st->st_connection->spd.this.host_addr)) {
+		    &st->st_connection->spd.this.host_addr,
+		    st->st_logger)) {
 		dbg("redirect: successfully deleted lingering SPI entry");
 	} else {
 		dbg("redirect: failed to delete lingering SPI entry");
@@ -427,18 +449,19 @@ static void del_spi_trick(struct state *st)
 
 void initiate_redirect(struct state *st)
 {
-	struct state *right_state = &ike_sa(st, HERE)->sa;
-	struct connection *c = right_state->st_connection;
+	struct ike_sa *ike = ike_sa(st, HERE);
+	struct connection *c = ike->sa.st_connection;
 	ip_address redirect_ip = c->temp_vars.redirect_ip;
 
 	/* stuff for loop detection */
 
 	if (c->temp_vars.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()), <,
-				  deltatime(REDIRECT_LOOP_DETECT_PERIOD)))
-		{
-			loglog(RC_LOG_SERIOUS, "redirect loop, stop initiating IKEv2 exchanges");
-			event_force(EVENT_SA_EXPIRE, right_state);
+		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()),
+				  <,
+				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "redirect loop, stop initiating IKEv2 exchanges");
+			event_force(EVENT_SA_EXPIRE, &ike->sa);
 
 			if (st->st_redirected_in_auth)
 				del_spi_trick(st);
@@ -459,15 +482,15 @@ void initiate_redirect(struct state *st)
 	/* update host_addr of other end, port stays the same */
 	c->spd.that.host_addr = redirect_ip;
 
-	ipstr_buf b;
-	libreswan_log("initiating a redirect to new gateway (address: %s)",
-			sensitive_ipstr(&redirect_ip, &b));
-
+	address_buf b;
+	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
+		  str_address_sensitive(&redirect_ip, &b));
+	flush_pending_by_state(ike);
 	initiate_connections_by_name(c->name, NULL,
-				     st->st_whack_sock,
-				     st->st_whack_sock == NULL/*background*/);
+				     st->st_logger->object_whackfd,
+				     /*background?*/(st->st_logger->object_whackfd == NULL));
 
-	event_force(EVENT_SA_EXPIRE, right_state);
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 	/*
 	 * if we were redirected in AUTH, we must delete one XFRM
 	 * state entry manually (to the old gateway), because
@@ -546,14 +569,14 @@ void send_active_redirect_in_informational(struct state *st)
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
 
-	ipstr_buf b;
+	endpoint_buf b;
 	dbg("redirection %ssent to peer %s", e == STF_OK ? "" : "not ",
-	    sensitive_ipstr(&st->st_remote_endpoint, &b));
+	    str_endpoint(&st->st_remote_endpoint, &b));
 }
 
-stf_status process_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
-						     struct child_sa *child,
-						     struct msg_digest *md)
+stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
+					       struct child_sa *child,
+					       struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
 	pexpect(child == NULL);

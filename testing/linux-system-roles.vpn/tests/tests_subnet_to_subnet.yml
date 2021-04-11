@@ -1,0 +1,63 @@
+---
+# yamllint disable rule:line-length
+- hosts: all
+
+  vars_files:
+    - './vars/main.yml'
+
+  vars:
+    __vpn_num_hosts: 1
+    # see RFC 5737, the following CIDRs are provided for documentation/testing use
+    __vpn_subnets:
+      - '192.0.2.0/24'
+      - '198.51.100.0/24'
+      - '203.0.113.0/24'
+
+  tasks:
+
+    - name: Set up test environment
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+
+        - name: Add subnets
+          set_fact:
+            vpn_connections: |
+              {% for tunnel in vpn_connections %}
+              {%   set temp_dict = {'subnets': __vpn_subnets} %}
+              {%   set _ = tunnel.hosts.__setitem__('host01.local', temp_dict) %}
+              {% endfor %}
+              {{ vpn_connections }}
+
+        - name: Use vpn role
+          include_role:
+            name: linux-system-roles.vpn
+
+        - name: Assert file existence
+          include_tasks: tasks/assert_conf_secrets_files_exist.yml
+
+        - name: reset success flag
+          set_fact:
+            __vpn_success: true
+
+        - name: get and store conf files
+          slurp:
+            src: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.conf"
+          register: __vpn_register_conf
+          loop: "{{ groups['testing'] }}"
+
+        - name: check that conf file contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            item.content | b64decode is not
+            search('rightsubnets={' + __vpn_subnets[0] + ',' + __vpn_subnets[1] + ',' + __vpn_subnets[2] + '}')
+          loop: '{{ __vpn_register_conf.results }}'
+          loop_control:
+            index_var: idx
+
+        - name: assert success for conf files
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in .conf files

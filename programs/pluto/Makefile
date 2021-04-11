@@ -1,4 +1,4 @@
-# Pluto Makefile
+# Pluto Makefile, for libreswan
 #
 # Copyright (C) 1997 Angelos D. Keromytis.
 # Copyright (C) 1998-2001 D. Hugh Redelmeier
@@ -49,8 +49,13 @@ include $(top_srcdir)/mk/config.mk
 OBJS =
 
 OBJS += send.o
-OBJS += ikev1_send.o
 
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_send.o
+endif
+
+OBJS += unpack.o
+OBJS += impair_message.o
 OBJS += ikev2_notify.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
@@ -104,21 +109,22 @@ endif
 
 OBJS += addresspool.o
 
+ifeq ($(USE_IKEv1),true)
 # ikev1_xauth.c calls crypt(), link it in.
 OBJS += ikev1_xauth.o
 USERLAND_LDFLAGS += $(CRYPT_LDFLAGS)
+endif
 
-ifeq ($(USE_XAUTHPAM),true)
-OBJS += xauth.o
+ifeq ($(USE_AUTHPAM),true)
+OBJS += pam_auth.o
 OBJS += pam_conv.o
 endif
-USERLAND_LDFLAGS += $(XAUTHPAM_LDFLAGS)
+USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)
 
-OBJS += ikev1_aggr.o
 
 # LABELED IPSEC support - requires SElinux
-ifeq ($(USE_LABELED_IPSEC),true)
 OBJS += security_selinux.o
+ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_LDFLAGS += -lselinux
 endif
 
@@ -135,7 +141,7 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-OBJS += db_ops.o
+OBJS += ikev1_db_ops.o
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
@@ -176,50 +182,52 @@ USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 OBJS += connections.o
 OBJS += connection_db.o
 OBJS += initiate.o terminate.o ikev2_rekey_now.o
-OBJS += cbc_test_vectors.o
-OBJS += ctr_test_vectors.o
-OBJS += gcm_test_vectors.o
-OBJS += prf_test_vectors.o
-OBJS += test_buffer.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o
-OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o
+OBJS += revival.o
+OBJS += orient.o
+OBJS += server.o
+OBJS += server_fork.o
+OBJS += server_pool.o
 OBJS += iface.o
 OBJS += iface_udp.o
 OBJS += iface_tcp.o
-OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
-OBJS += timer.o hostpair.o
-OBJS += retry.o
+OBJS += timer.o
+OBJS += host_pair.o ikev1_host_pair.o ikev2_host_pair.o
+OBJS += ikev1_retry.o
+OBJS += ikev2_retry.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o
 endif
-OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
-OBJS += ikev1_states.o
-OBJS += ikev1_hash.o
-OBJS += ikev1_message.o
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
+OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o
+OBJS += crypt_dh_v1.o
+endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJS += ikev2_states.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
-OBJS += ikev1_prf.o
-OBJS += ikev2_prf.o
 OBJS += cert_decode_helper.o
 OBJS += kernel.o
 OBJS += rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
-OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o
-OBJS += crypt_dh_v1.o
+OBJS += crypt_ke.o crypt_dh.o
 OBJS += crypt_dh_v2.o
-OBJS += rnd.o spdb.o spdb_struct.o
-OBJS += vendor.o nat_traversal.o virtual.o
+OBJS += rnd.o
+OBJS += ikev1_spdb.o
+OBJS += vendor.o nat_traversal.o
+OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
 OBJS += pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
+OBJS += pluto_shutdown.o
 OBJS += nss_cert_reread.o
 
 # Archives

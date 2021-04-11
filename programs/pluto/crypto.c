@@ -138,21 +138,19 @@ void show_ike_alg_status(struct show *s)
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
-			struct esb_buf v1namebuf, v2namebuf;
+			esb_buf v1namebuf, v2namebuf;
 			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
 			show_comment(s,
 				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 				  alg->common.ikev1_oakley_id,
-				  (alg->common.ikev1_oakley_id >= 0
-				   ? enum_showb(&oakley_enc_names,
-						alg->common.ikev1_oakley_id,
-						&v1namebuf)
+				  (alg->common.ikev1_oakley_id >= 0 ? enum_show(&oakley_enc_names,
+										alg->common.ikev1_oakley_id,
+										&v1namebuf)
 				   : "n/a"),
 				  alg->common.id[IKEv2_ALG_ID],
-				  (alg->common.id[IKEv2_ALG_ID] >= 0
-				   ? enum_showb(&ikev2_trans_type_encr_names,
-						alg->common.id[IKEv2_ALG_ID],
-						&v2namebuf)
+				  (alg->common.id[IKEv2_ALG_ID] >= 0 ? enum_show(&ikev2_trans_type_encr_names,
+										 alg->common.id[IKEv2_ALG_ID],
+										 &v2namebuf)
 				   : "n/a"),
 				  alg->enc_blocksize,
 				  alg->keydeflen);

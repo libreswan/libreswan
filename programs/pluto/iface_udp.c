@@ -21,7 +21,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <sys/types.h>
@@ -50,37 +49,38 @@
 #include "ip_sockaddr.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
+static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
+			   struct logger *logger)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in %s()", __func__);
+		log_errno(logger, errno, "socket() in %s()", __func__);
 		return -1;
 	}
 
 	int fcntl_flags;
-	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
+	static const int on = true;     /* by-reference parameter; constant, we hope */
 
 	/* Set socket Nonblocking */
 	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
 		if (!(fcntl_flags & O_NONBLOCK)) {
 			fcntl_flags |= O_NONBLOCK;
 			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
-				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+				log_errno(logger, errno, "fcntl(,, O_NONBLOCK) in create_socket()");
 			}
 		}
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
+		log_errno(logger, errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
 		close(fd);
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in create_socket()");
+		log_errno(logger, errno, "setsockopt SO_REUSEADDR in create_socket()");
 		close(fd);
 		return -1;
 	}
@@ -89,7 +89,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
 			(const void *)&so_prio, sizeof(so_prio)) < 0) {
-		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in create_udp_socket()");
+		log_errno(logger, errno, "setsockopt(SO_PRIORITY) in create_udp_socket()");
 		/* non-fatal */
 	}
 #endif
@@ -108,11 +108,11 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 #endif
 		if (setsockopt(fd, SOL_SOCKET, so_rcv,
 			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in create_udp_socket()");
+				log_errno(logger, errno, "setsockopt(SO_RCVBUFFORCE) in create_udp_socket()");
 		}
 		if (setsockopt(fd, SOL_SOCKET, so_snd,
 			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
-				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in create_udp_socket()");
+				log_errno(logger, errno, "setsockopt(SO_SNDBUFFORCE) in create_udp_socket()");
 		}
 	}
 
@@ -120,7 +120,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 #ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
+			log_errno(logger, errno, "setsockopt IP_RECVERR in create_socket()");
 			close(fd);
 			return -1;
 		}
@@ -138,7 +138,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 	if (type == &ipv6_info &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in create_udp_socket()");
+		log_errno(logger, errno, "setsockopt IPV6_USE_MIN_MTU in create_udp_socket()");
 		close(fd);
 		return -1;
 	}
@@ -151,7 +151,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 	 * 4500 IPv6 port 500
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
+	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd, logger)) {
 		close(fd);
 		return -1;
 	}
@@ -161,12 +161,13 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_udp,
-					    &ifd->id_address, port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+								      &ip_protocol_udp,
+								      port);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
-		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
+		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
 			  ifd->id_rname, str_endpoint(&if_endpoint, &b));
 		close(fd);
 		return -1;
@@ -174,7 +175,7 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 
 	/* poke a hole for IKE messages in the IPsec layer */
 	if (kernel_ops->exceptsocket != NULL) {
-		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
 			close(fd);
 			return -1;
 		}
@@ -183,7 +184,8 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port)
 	return fd;
 }
 
-static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
+static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd,
+				   struct logger *logger)
 {
 	const char *fam = address_type(&ifd->id_address)->ip_name;
 	dbg("NAT-Traversal: Trying sockopt style NAT-T");
@@ -218,10 +220,8 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 		dbg("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
 		    sol_value, fam, errno);
 		/* all methods failed to detect NAT-T support */
-		loglog(RC_LOG_SERIOUS,
-		       "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s",
-		       fam);
-		libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
+		llog(RC_LOG_SERIOUS, logger,
+			    "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", fam);
 		nat_traversal_enabled = false;
 		return false;
 	}
@@ -232,11 +232,14 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd)
 }
 
 #ifdef MSG_ERRQUEUE
-static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *func);
+static bool check_msg_errqueue(const struct iface_endpoint *ifp,
+			       short interest, const char *func,
+			       struct logger *logger);
 #endif
 
-static enum iface_status udp_read_packet(const struct iface_port *ifp,
-					 struct iface_packet *packet)
+static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
+					      struct iface_packet *packet,
+					      struct logger *logger)
 {
 #ifdef MSG_ERRQUEUE
 	/*
@@ -251,15 +254,22 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	 */
 	if (pluto_sock_errqueue) {
 		threadtime_t errqueue_start = threadtime_start();
-		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__);
+		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__,
+						      packet->logger);
 		threadtime_stop(&errqueue_start, SOS_NOBODY,
 				"%s() calling check_incoming_msg_errqueue()", __func__);
 		if (!errqueue_ok) {
-			return IFACE_IGNORE; /* no normal message to read */
+			return IFACE_READ_IGNORE; /* no normal message to read */
 		}
 	}
 #endif
 
+	/*
+	 * COVERITY reports an overflow because FROM.LEN (aka
+	 * sizeof(FROM.SA)) > sizeof(from.sa.sa).  That's the point.
+	 * The FROM.SA union is big enough to hold sockaddr,
+	 * sockaddr_in and sockaddr_in6.
+	 */
 	ip_sockaddr from = {
 		.len = sizeof(from.sa),
 	};
@@ -273,12 +283,14 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 	 * If that fails report some sense of error and then always
 	 * give up.
 	 */
-	const char *from_ugh = sockaddr_to_endpoint(&ip_protocol_udp, &from,
-						    &packet->sender);
+	ip_address sender_udp_address;
+	ip_port sender_udp_port;
+	const char *from_ugh = sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port);
 	if (from_ugh != NULL) {
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
-			plog_global("recvfrom on %s returned malformed source sockaddr: %s",
+			llog(RC_LOG, packet->logger,
+				    "recvfrom on %s returned malformed source sockaddr: %s",
 				    ifp->ip_dev->id_rname, from_ugh);
 		} else if (from.len == sizeof(from) &&
 			   all_zero((const void *)&from, sizeof(from)) &&
@@ -289,42 +301,49 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 			 * some datagram we sent, but we cannot tell
 			 * which one.
 			 */
-			plog_global("recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
+			llog(RC_LOG, packet->logger,
+				    "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
 				    ifp->ip_dev->id_rname);
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			plog_global("recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
+			llog(RC_LOG, packet->logger,
+				    "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
 				    ifp->ip_dev->id_rname, from_ugh,
 				    pri_errno(packet_errno));
 		}
-		return IFACE_IGNORE;
+		return IFACE_READ_IGNORE;
 	}
 
-	/*
-	 * Managed to decode the from address; fudge up a logger so
-	 * that it be used as log context prefix.
-	 */
+	packet->sender = endpoint_from_address_protocol_port(sender_udp_address,
+							     &ip_protocol_udp,
+							     sender_udp_port);
 
-	struct logger logger = FROM_LOGGER(&packet->sender);
+
+	/*
+	 * Managed to decode the from address; switch to a "from"
+	 * logger so that it be used as log context prefix.
+	 */
+	struct logger from_logger = logger_from(logger, &packet->sender);
+	logger = &from_logger;
 
 	if (packet->len < 0) {
-		log_message(RC_LOG, &logger, "recvfrom on %s failed "PRI_ERRNO,
+		llog(RC_LOG, logger, "recvfrom on %s failed "PRI_ERRNO,
 			    ifp->ip_dev->id_rname, pri_errno(packet_errno));
-		return IFACE_IGNORE;
+		return IFACE_READ_IGNORE;
 	}
 
 	if (ifp->esp_encapsulation_enabled) {
 		uint32_t non_esp;
 
 		if (packet->len < (int)sizeof(uint32_t)) {
-			log_message(RC_LOG, &logger, "too small packet (%zd)",
+			llog(RC_LOG, logger, "too small packet (%zd)",
 				    packet->len);
-			return IFACE_IGNORE;
+			return IFACE_READ_IGNORE;
 		}
 		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
-			log_message(RC_LOG, &logger, "has no Non-ESP marker");
-			return IFACE_IGNORE;
+			llog(RC_LOG, logger, "has no Non-ESP marker");
+			return IFACE_READ_IGNORE;
 		}
 		packet->ptr += sizeof(uint32_t);
 		packet->len -= sizeof(uint32_t);
@@ -341,14 +360,15 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		    packet->len >= NON_ESP_MARKER_SIZE &&
 		    memeq(packet->ptr, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			log_message(RC_LOG, &logger, "mangled with potential spurious non-esp marker");
-			return IFACE_IGNORE;
+			llog(RC_LOG, logger,
+				    "mangled with potential spurious non-esp marker");
+			return IFACE_READ_IGNORE;
 		}
 	}
 
 	if (packet->len == 1 && packet->ptr[0] == 0xff) {
 		/**
-		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
+		 * NAT-T Keep-alive packets should be discarded by kernel ESPinUDP
 		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
@@ -356,58 +376,52 @@ static enum iface_status udp_read_packet(const struct iface_port *ifp,
 		endpoint_buf eb;
 		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
 		    str_endpoint(&packet->sender, &eb)); /* sensitive? */
-		return IFACE_IGNORE;
+		return IFACE_READ_IGNORE;
 	}
 
-	return IFACE_OK;
+	return IFACE_READ_OK;
 }
 
-static ssize_t udp_write_packet(const struct iface_port *ifp,
+static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 				const void *ptr, size_t len,
-				const ip_endpoint *remote_endpoint)
+				const ip_endpoint *remote_endpoint,
+				struct logger *logger /*possibly*/UNUSED)
 {
 #ifdef MSG_ERRQUEUE
 	if (pluto_sock_errqueue) {
-		check_msg_errqueue(ifp, POLLOUT, __func__);
+		check_msg_errqueue(ifp, POLLOUT, __func__, logger);
 	}
 #endif
 
-	ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
+	ip_sockaddr remote_sa = sockaddr_from_endpoint(*remote_endpoint);
 	return sendto(ifp->fd, ptr, len, 0, &remote_sa.sa.sa, remote_sa.len);
 };
 
-static void handle_udp_packet_cb(evutil_socket_t unused_fd UNUSED,
-				 const short unused_event UNUSED,
-				 void *arg)
-{
-	const struct iface_port *ifp = arg;
-	handle_packet_cb(ifp);
-}
-
-static void udp_listen(struct iface_port *ifp,
+static void udp_listen(struct iface_endpoint *ifp,
 		       struct logger *unused_logger UNUSED)
 {
 	if (ifp->udp_message_listener == NULL) {
 		attach_fd_read_sensor(&ifp->udp_message_listener, ifp->fd,
-				      handle_udp_packet_cb, ifp);
+				      process_iface_packet, ifp);
 	}
 }
 
-static int udp_bind_iface_port(struct iface_dev *ifd, ip_port port,
-			       bool esp_encapsulation_enabled)
+static int udp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				   bool esp_encapsulation_enabled,
+				   struct logger *logger)
 {
-	int fd = bind_udp_socket(ifd, port);
+	int fd = bind_udp_socket(ifd, port, logger);
 	if (fd < 0) {
 		return -1;
 	}
 	if (esp_encapsulation_enabled &&
-	    !nat_traversal_espinudp(fd, ifd)) {
+	    !nat_traversal_espinudp(fd, ifd, logger)) {
 		dbg("nat-traversal failed");
 	}
 	return fd;
 }
 
-static void udp_cleanup(struct iface_port *ifp)
+static void udp_cleanup(struct iface_endpoint *ifp)
 {
 	event_free(ifp->udp_message_listener);
 	ifp->udp_message_listener = NULL;
@@ -419,7 +433,7 @@ const struct iface_io udp_iface_io = {
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
-	.bind_iface_port = udp_bind_iface_port,
+	.bind_iface_endpoint = udp_bind_iface_endpoint,
 	.cleanup = udp_cleanup,
 };
 
@@ -453,10 +467,10 @@ const struct iface_io udp_iface_io = {
  *   a normal read will hang.  poll(2) can tell when a MSG_ERRQUEUE
  *   message is pending.
  *
- *   This is dealt with by calling check_msg_errqueue after select
- *   has indicated that there is something to read, but before the
- *   read is performed.  check_msg_errqueue will return TRUE if there
- *   is something left to read.
+ *   This is dealt with by calling check_msg_errqueue after select has
+ *   indicated that there is something to read, but before the read is
+ *   performed.  check_msg_errqueue will return "true" if there is
+ *   something left to read.
  *
  * - A write to a socket may fail because there is a pending MSG_ERRQUEUE
  *   message, without there being anything wrong with the write.  This
@@ -482,32 +496,35 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
 		packet_len = sizeof_buffer;
 	}
+
+	static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
+	if (packet_len >= sizeof(non_ESP_marker) &&
+	    memeq(buffer, non_ESP_marker, sizeof(non_ESP_marker))) {
+		buffer += sizeof(non_ESP_marker);
+		packet_len -= sizeof(non_ESP_marker);
+		sizeof_buffer -= sizeof(non_ESP_marker);
+		dbg("MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
+	}
+
 	if (packet_len < sizeof(struct isakmp_hdr)) {
 		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
 		return NULL;
 	}
-	pb_stream packet_pbs;
+
+	struct pbs_in packet_pbs;
 	init_pbs(&packet_pbs, buffer, packet_len, __func__);
 	struct isakmp_hdr hdr;
-	if (!in_struct(&hdr, &raw_isakmp_hdr_desc, &packet_pbs, NULL)) {
+	diag_t d = pbs_in_struct(&packet_pbs, &raw_isakmp_hdr_desc,
+				 &hdr, sizeof(hdr), NULL);
+	if (d != NULL) {
 		/*
-		 * XXX:
-		 *
-		 * When in_struct() fails it logs an obscure and
-		 * typically context free error (for instance, cur_*
-		 * is unset when processing error messages); and
-		 * there's no clean for this or calling code to pass
-		 * in context.
-		 *
-		 * Fortunately, since the buffer is large enough to
-		 * hold the header, there's really not much left that
-		 * can trigger an error (everything in ISAKMP_HDR_DESC
-		 * that involves validation has its type set to FT_NAT
-		 * in RAW_ISAKMP_HDR_DESC).
+		 * XXX: Only thing interesting is that there was an
+		 * error, toss the message.
 		 */
-		libreswan_log("MSG_ERRQUEUE packet IKE header is corrupt");
+		pfree_diag(&d);
 		return NULL;
 	}
+
 	enum ike_version ike_version = hdr_ike_version(&hdr);
 	struct state *st;
 	switch (ike_version) {
@@ -547,13 +564,16 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		    enum_name(&ike_version_names, ike_version));
 		return NULL;
 	}
+
 	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
 	    enum_name(&ike_version_names, ike_version),
 	    st->st_serialno);
 	return st;
 }
 
-static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
+static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
+			       const char *before,
+			       struct logger *logger)
 {
 	struct pollfd pfd;
 	int again_count = 0;
@@ -561,24 +581,29 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 	pfd.fd = ifp->fd;
 	pfd.events = interest | POLLPRI | POLLOUT;
 
-	while (pfd.revents = 0,
-	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
+	while (/*clear .revents*/ pfd.revents = 0,
+		/*poll .revents*/ poll(&pfd, 1, -1) > 0 &&
+		/*test .revents*/ (pfd.revents & POLLERR)) {
+
 		/*
-		 * This buffer needs to be large enough to fit the IKE
-		 * header so that the IKE SPIs and flags can be
-		 * extracted and used to find the sender of the
+		 * A single IOV (I/O Vector) pointing at a buffer for
+		 * storing the message fragment.
+		 *
+		 * It needs to be large enough to fit the IKE header +
+		 * leading ESP:0 prefix so that the IKE SPIs and flags
+		 * can be extracted and used to find the sender of the
 		 * message.
 		 *
 		 * Give it double that.
 		 */
 		uint8_t buffer[sizeof(struct isakmp_hdr) * 2];
+		struct iovec eiov[1] = {
+			{
+				.iov_base = buffer, /* see readv(2) */
+				.iov_len = sizeof(buffer),
+			},
+		};
 
-		ip_sockaddr from;
-
-		ssize_t packet_len;
-
-		struct msghdr emh;
-		struct iovec eiov;
 		union {
 			/* force alignment (not documented as necessary) */
 			struct cmsghdr ecms;
@@ -587,56 +612,49 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			unsigned char space[256];
 		} ecms_buf;
 
-		struct cmsghdr *cm;
-		struct state *sender = NULL;
+		ip_sockaddr from = { 0, };
+		struct msghdr emh = {
+			.msg_name = &from.sa, /* ??? filled in? */
+			.msg_namelen = sizeof(from.sa),
+			.msg_iov = eiov,
+			.msg_iovlen = elemsof(eiov),
+			.msg_control = &ecms_buf,
+			.msg_controllen = sizeof(ecms_buf),
+			.msg_flags = 0,
+		};
 
-		zero(&from);
-
-		emh.msg_name = &from.sa; /* ??? filled in? */
-		emh.msg_namelen = sizeof(from.sa);
-		emh.msg_iov = &eiov;
-		emh.msg_iovlen = 1;
-		emh.msg_control = &ecms_buf;
-		emh.msg_controllen = sizeof(ecms_buf);
-		emh.msg_flags = 0;
-
-		eiov.iov_base = buffer; /* see readv(2) */
-		eiov.iov_len = sizeof(buffer);
-
-		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
+		ssize_t packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
 		if (packet_len == -1) {
+			/* XXX: all paths either break. return, or continue */
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
 				if (again_count == 32) {
-					loglog(RC_LOG_SERIOUS, "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
-					return FALSE;
+					llog(RC_LOG_SERIOUS, logger,
+						    "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
+					return false;
 				}
 				again_count++;
-				LOG_ERRNO(errno,
+				log_errno(logger, errno,
 					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
 					  ifp->ip_dev->id_rname, before, again_count);
 				continue;
-			} else {
-				LOG_ERRNO(errno,
-					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
-					  ifp->ip_dev->id_rname, before);
-				break;
 			}
-		} else {
-			/*
-			 * Getting back a truncated IKE datagram a big
-			 * deal - find_likely_sender() only needs the
-			 * header when figuring out which state sent
-			 * the packet.
-			 */
-			if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
-				DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
-					ifp->ip_dev->id_rname);
-			}
+			log_errno(logger, errno,
+				  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+				  ifp->ip_dev->id_rname, before);
+			break;
+		}
+		passert(packet_len >= 0);
 
-			sender = find_likely_sender((size_t) packet_len,
-						    buffer, sizeof(buffer));
+		/*
+		 * Getting back a truncated IKE datagram isn't a big
+		 * deal - find_likely_sender() only needs the header
+		 * when figuring out which state sent the packet.
+		 */
+		if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
+			DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
+				ifp->ip_dev->id_rname);
 		}
 
 		if (DBGP(DBG_BASE)) {
@@ -648,6 +666,9 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			DBG_dump(NULL, emh.msg_control,
 				 emh.msg_controllen);
 		}
+
+		struct state *sender = find_likely_sender((size_t) packet_len,
+							  buffer, sizeof(buffer));
 
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
@@ -665,19 +686,21 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 		/* usual case :-( */
 		char fromstr[sizeof(" for message to ?") + sizeof(endpoint_buf)] = "";
 		if (afi != NULL && emh.msg_namelen == afi->sockaddr_size) {
-			ip_endpoint endpoint;
-			/* this is a udp socket so presumably the endpoint is udp */
-			if (sockaddr_to_endpoint(&ip_protocol_udp, &from, &endpoint) == NULL) {
+			ip_address sender_udp_address;
+			ip_port sender_udp_port;
+			if (sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port) == NULL) {
+				/* this is a udp socket so presumably the endpoint is udp */
 				endpoint_buf ab;
+				ip_endpoint endpoint = endpoint_from_address_protocol_port(sender_udp_address,
+											   &ip_protocol_udp,
+											   sender_udp_port);
 				snprintf(fromstr, sizeof(fromstr),
 					 " for message to %s",
-					 str_sensitive_endpoint(&endpoint, &ab));
+					 str_endpoint_sensitive(&endpoint, &ab));
 			}
 		}
 
-		for (cm = CMSG_FIRSTHDR(&emh)
-		     ; cm != NULL
-		     ; cm = CMSG_NXTHDR(&emh, cm)) {
+		for (struct cmsghdr *cm = CMSG_FIRSTHDR(&emh); cm != NULL; cm = CMSG_NXTHDR(&emh, cm)) {
 			if (cm->cmsg_level == SOL_IP &&
 			    cm->cmsg_type == IP_RECVERR) {
 				/* ip(7) and recvmsg(2) specify:
@@ -760,14 +783,14 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					break;
 				}
 
-				enum stream logger;
+				enum stream log_to;
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_BASE) == 0) {
 					/*
 					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-					logger = NO_STREAM;
+					log_to = NO_STREAM;
 				} else if (sender != NULL && sender->st_connection != NULL &&
 					   LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)) {
 					/*
@@ -793,7 +816,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * explicit parameter to the
 					 * logging system?
 					 */
-					logger = ALL_STREAMS;
+					log_to = ALL_STREAMS;
 				} else if (DBGP(DBG_BASE)) {
 					/*
 					 * Since this output is forced
@@ -804,15 +827,13 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * matter - it just gets
 					 * ignored.
 					 */
-					logger = DEBUG_STREAM;
+					log_to = DEBUG_STREAM;
 				} else {
-					logger = NO_STREAM;
+					log_to = NO_STREAM;
 				}
-				if (logger != NO_STREAM) {
+				if (log_to != NO_STREAM) {
 					endpoint_buf epb;
-					struct logger log = (sender != NULL ? *(sender->st_logger) :
-							     GLOBAL_LOGGER(null_fd));
-					log_message(logger, &log,
+					llog(log_to, (sender != NULL ? sender->st_logger : logger),
 						    "ERROR: asynchronous network error report on %s (%s)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]",
 						    ifp->ip_dev->id_rname,
 						    str_endpoint(&ifp->local_endpoint, &epb),
@@ -825,13 +846,14 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 				   cm->cmsg_type == IP_PKTINFO) {
 				/* do nothing */
 			} else {
-				/* .cmsg_len is a kernel_size_t(!), but the value
-				 * certainly ought to fit in an unsigned long.
+				/* .cmsg_len is a kernel_size_t(!),
+				 * but the value certainly ought to
+				 * fit in a size_t.
 				 */
-				libreswan_log(
-					"unknown cmsg: level %d, type %d, len %zu",
-					cm->cmsg_level, cm->cmsg_type,
-					 cm->cmsg_len);
+				llog(RC_LOG, logger,
+				     "unknown cmsg: level %d, type %d, len %zu",
+				     cm->cmsg_level, cm->cmsg_type,
+				     cm->cmsg_len);
 			}
 		}
 	}

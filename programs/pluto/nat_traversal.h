@@ -71,7 +71,7 @@
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(deltatime_t keep_alive_period);
+void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger);
 
 extern bool nat_traversal_enabled;
 
@@ -88,9 +88,10 @@ extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
 struct hidden_variables;	/* forward */
 
 void nat_traversal_natoa_lookup(struct msg_digest *md,
-				struct hidden_variables *hv);
-bool nat_traversal_add_natoa(pb_stream *outs,
-			     struct state *st, bool initiator);
+				struct hidden_variables *hv,
+				struct logger *logger);
+bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st);
+
 /*
  * move initiator endpoints (src, dst) to NAT ports.
  */
@@ -102,7 +103,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st,
  * NAT-keep_alive
  */
 void nat_traversal_new_ka_event(void);
-void nat_traversal_ka_event(struct fd *whackfd);
+void nat_traversal_ka_event(struct logger *logger);
 
 extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 
@@ -113,12 +114,6 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
-
-/**
- * New NAT mapping
- */
-void nat_traversal_new_mapping(struct ike_sa *ike,
-			       const ip_endpoint *new_remote_endpoint);
 
 /**
  * IKE port floating
@@ -146,17 +141,17 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
 			? ENCAPSULATION_MODE_UDP_TUNNEL_RFC \
 			: ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS \
-			) \
+		      ) \
 		    : ( ((st)->hidden_variables.st_nat_traversal & \
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
 			? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC \
 			: ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS \
-			) \
-		    ) \
+		      ) \
+		  ) \
 		: ( ((st)->st_policy & POLICY_TUNNEL) \
 		    ? ENCAPSULATION_MODE_TUNNEL \
 		    : ENCAPSULATION_MODE_TRANSPORT \
-		    ) \
+		  ) \
 		)
 
 #endif /* _NAT_TRAVERSAL_H_ */

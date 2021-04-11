@@ -23,7 +23,4 @@ west #
 west #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

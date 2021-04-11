@@ -6,10 +6,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-x509
-002 added IKEv1 connection "westnet-eastnet-x509"
+002 "westnet-eastnet-x509": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -25,16 +25,16 @@ west #
 1v1 "westnet-eastnet-x509" #1: sent Main Mode I3
 002 "westnet-eastnet-x509" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 002 "westnet-eastnet-x509" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-x509" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-x509" #1: authenticated using RSA with SHA1 and preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-x509" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-x509" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-x509" #2: sent Quick Mode request
 004 "westnet-eastnet-x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -79,7 +79,4 @@ north                                                        P,,
 road                                                         P,,  
 west                                                         u,u,u
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

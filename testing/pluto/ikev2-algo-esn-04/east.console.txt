@@ -3,13 +3,13 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add replay
-002 added IKEv2 connection "replay"
+002 "replay": added IKEv2 connection
 east #
  ipsec auto --status | grep replay_window
-000 "replay":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 east #
  echo "initdone"
 initdone
@@ -20,7 +20,4 @@ east #
 	replay-window 0 flag af-unspec esn
 	replay-window 0 flag af-unspec esn
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

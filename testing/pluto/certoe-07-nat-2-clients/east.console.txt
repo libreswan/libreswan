@@ -16,40 +16,30 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
 east #
  # A tunnel should have established with non-zero byte counters
 east #
- ping -n -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 east #
  # jacob two two for east?
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.2/32
+006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.2/32
 east #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.2/32
-east #
- ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
+ ../../guestbin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
@@ -150,7 +140,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | hash algorithm identifier (network ordered)
@@ -165,10 +155,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null
+"clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

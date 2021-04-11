@@ -47,6 +47,8 @@ def add_arguments(parser):
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--tcpdump", action="store_true",
                        help="enable experimental TCPDUMP support")
+    group.add_argument("--run-post-mortem", default=None, action="store_true",
+                       help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
@@ -61,9 +63,9 @@ def log_arguments(logger, args):
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
-    logger.info("  stop-at: %s", args.stop_at)
     logger.info("  tcpdump: %s", args.tcpdump)
     logger.info("  backup-directory: %s", args.backup_directory)
+    logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
 TEST_TIMEOUT = 120
@@ -105,11 +107,7 @@ class TestDomain:
             console.expect([pexpect.EOF])
         # close the old console.
         if self.console:
-            output = self.console.output()
-            if output:
-                log("closing console output log")
-                output.close()
-            log("closing console")
+            self.console.close_output()
             self.console.close()
         self.console = None
 
@@ -128,7 +126,8 @@ class TestDomain:
         self.console.chdir(test_directory)
 
     def read_file_run(self, basename):
-        self.console.child.logfile.write("%s %s %s" % (post.CUT, basename, post.TUC))
+        # child's log is in binary
+        self.console.append_output("%s %s %s", post.CUT, basename, post.TUC)
         with self.logger.time("running script %s", basename):
             filename = os.path.join(self.test.directory, basename)
             with open(filename, "r") as file:
@@ -389,18 +388,19 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     except pexpect.TIMEOUT:
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
-                        logger.exception("timeout while booting domains")
+                        logger.exception("TIMEOUT while booting domains")
                         return
                     except pexpect.EOF:
                         # Bail.  Being unable to attach to the domains
                         # is a disaster.  The test is UNRESOLVED.
-                        logger.exception("eof (disconnect) while booting domains")
+                        logger.exception("EOF while booting domains")
                         return
+                    except:
+                        logger.exception("EXCEPTION while booting domains")
+                        raise
 
                 # Run the scripts directly
-                with logger.time("running scripts %s",
-                                 " ".join(("%s:%s" % (host, script))
-                                          for host, script in test.host_script_tuples)) as test_script_time:
+                with logger.time("running scripts %s", test.host_scripts) as test_script_time:
                     with tcpdump.Dump(logger, domain_prefix, test.output_directory,
                                       [test_domain.domain for test_domain in test_domains.values()],
                                       enable=args.tcpdump):
@@ -411,41 +411,90 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             for test_domain in test_domains.values():
                                 output = os.path.join(test.output_directory,
                                                       test_domain.domain.host_name + ".console.verbose.txt")
-                                test_domain.console.output(open(output, "w"))
+                                test_domain.console.redirect_output(open(output, "w"))
 
-                            for host, script in test.host_script_tuples:
-                                if args.stop_at == script:
-                                    logger.error("stopping test run at (before executing) script %s", script)
-                                    break
-                                test_domain = test_domains[host]
+                            # If a script times out, don't try to run
+                            # post-mortem.sh.
+                            host_timed_out = None
+
+                            for script in test.host_scripts:
+                                test_domain = test_domains[script.host_name]
                                 try:
-                                    test_domain.read_file_run(script)
+                                    test_domain.read_file_run(script.path)
                                 except pexpect.TIMEOUT as e:
-                                    # A test ending with a timeout
-                                    # gets treated as a FAIL.  A
-                                    # timeout while running a test
+                                    # A timeout while running a test
                                     # script is a sign that a command
                                     # hung.
-                                    post_timeout = "%s %s:%s" % (post.TIMEOUT, host, script)
-                                    logger.warning("*** %s ***" % post_timeout)
-                                    test_domain.console.child.logfile.write("%s %s %s" % (post.LHS, post_timeout, post.RHS))
+                                    message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
+                                    logger.warning("*** %s ***" % message)
+                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    host_timed_out = script.host_name
+                                    break
+                                except pexpect.EOF as e:
+                                    # An EOF while a script is running
+                                    # is a sign that libvirt crashed.
+                                    message = "%s while running script %s" % (post.Issues.EOF, script)
+                                    logger.exception("*** %s ***" % message)
+                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    host_timed_out = script.host_name
                                     break
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
-                                    test_domain.console.child.logfile.write("\n%s %s %s:%s %rhs\n%s" % (post.LHS, post.EXCEPTION, host, script, post.RHS, str(e)))
+                                    message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
+                                    logger.exception("*** %s ***" % message)
+                                    test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                     raise
 
+                            if args.run_post_mortem is False:
+                                logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
+                            elif host_timed_out:
+                                logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (host_timed_out))
+                            else: # None or True
+                                script = "../../guestbin/post-mortem.sh"
+                                for host_name in test.host_names:
+                                    test_domain = test_domains[host_name]
+                                    test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)
+                                    logger.info("running %s on %s", script, host_name)
+                                    try:
+                                        status = test_domain.console.run(script)
+                                        if status:
+                                            logger.error("%s failed on %s with status %s", script, host_name, status)
+                                        else:
+                                            test_domain.console.append_output("%s post-mortem %s", post.RHS, post.RHS)
+                                    except pexpect.TIMEOUT as e:
+                                        # A post-mortem ending with a
+                                        # TIMEOUT gets treated as a
+                                        # FAIL.
+                                        message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
+                                        logger.warning("*** %s ***" % message)
+                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        continue # always teardown
+                                    except pexpect.EOF as e:
+                                        # A post-mortem ending with an
+                                        # EOF gets treated as
+                                        # unresloved.
+                                        message = "%s while running script %s" % (post.Issues.EOF, script)
+                                        logger.exception("*** %s ***" % message)
+                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        continue # always teardown
+                                    except BaseException as e:
+                                        # if there is an exception, write
+                                        # it to the console
+                                        message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
+                                        logger.exception(message)
+                                        test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
+                                        raise
+
                             for test_domain in test_domains.values():
-                                test_domain.console.child.logfile.write(post.DONE)
+                                test_domain.console.append_output(post.DONE)
 
                         finally:
 
                             # Close the redirected test-result log files
                             logger.info("closing all the test domain log files")
                             for test_domain in test_domains.values():
-                                outfile = test_domain.console.output()
-                                outfile.close()
+                                test_domain.console.close_output()
 
                             # Always disconnect from the test domains.
                             logger.info("closing all the test domains")

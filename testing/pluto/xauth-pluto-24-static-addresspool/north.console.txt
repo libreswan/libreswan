@@ -3,12 +3,12 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 north #
  ipsec auto --add north-east
-002 added IKEv1 connection "north-east"
+002 "north-east": added IKEv1 connection
 north #
  ipsec whack --xauthname 'xnorth' --xauthpass 'use1pass' --name north-east --initiate
 002 "north-east" #1: initiating IKEv1 Main Mode connection
@@ -30,19 +30,16 @@ north #
 005 "north-east" #1: Received subnet 192.0.2.0/24
 005 "north-east" #1: Subnet 192.0.2.0/24 already has an spd_route - ignoring
 004 "north-east" #1: IKE SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "north-east" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "north-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO
 1v1 "north-east" #2: sent Quick Mode request
 002 "north-east" #2: up-client output: updating resolvconf
 004 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=xnorth}
 north #
- ping -q -c 4 -w 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 north #
  echo initdone
 initdone
@@ -51,10 +48,4 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec stop
 north #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

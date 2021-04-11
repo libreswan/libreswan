@@ -7,3 +7,5 @@ command.
 This test brings up two connections, then we send a delete
 for "first" one. The ISAKMP SA should not be terminated
 as it is used for the second connection.
+
+Note: this test case flipflops on the order of connections :/

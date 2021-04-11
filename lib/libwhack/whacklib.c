@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -182,7 +181,7 @@ static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 
 	unsigned char *s = (wp->str_next == end ? NULL : wp->str_next);
 
-	DBGF(DBG_TMI, "%s: '%s' is %zu bytes", __func__, what, end - wp->str_next);
+	DBGF(DBG_TMI, "%s: '%s' is %ld bytes", __func__, what, (long int)(end - wp->str_next));
 
 	*p = (char *)s;
 	wp->str_next = end + 1;
@@ -221,8 +220,12 @@ struct pickler pickle_unpacker = {
 static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 			     struct pickler *pickle)
 {
-	return (PICKLE_STRING(&end->id) &&
-		PICKLE_STRING(&end->pubkey) &&
+	return (PICKLE_STRING(&end->leftright) &&
+		PICKLE_STRING(&end->id) &&
+		PICKLE_STRING(&end->sec_label) &&
+		PICKLE_STRING(&end->cert) &&
+		PICKLE_STRING(&end->rsasigkey) &&
+		PICKLE_STRING(&end->ckaid) &&
 		PICKLE_STRING(&end->ca) &&
 		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->updown) &&
@@ -245,9 +248,6 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->string2) &&
 		PICKLE_STRING(&wp->msg->string3) &&
 		PICKLE_STRING(&wp->msg->dnshostname) &&
-#ifdef HAVE_LABELED_IPSEC
-		PICKLE_STRING(&wp->msg->policy_label) &&
-#endif
 		PICKLE_STRING(&wp->msg->modecfg_dns) &&
 		PICKLE_STRING(&wp->msg->modecfg_domains) &&
 		PICKLE_STRING(&wp->msg->modecfg_banner) &&
@@ -256,6 +256,7 @@ static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
 		PICKLE_STRING(&wp->msg->conn_mark_out) &&
 		PICKLE_STRING(&wp->msg->vti_iface) &&
 		PICKLE_STRING(&wp->msg->remote_host) &&
+		PICKLE_STRING(&wp->msg->global_redirect_to) &&
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
 		PICKLE_STRING(&wp->msg->active_redirect_dests) &&
@@ -291,14 +292,14 @@ err_t pack_whack_msg(struct whackpacker *wp)
 bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
 	if (wp->str_next > wp->str_roof) {
-		log_message(RC_BADWHACKMESSAGE, logger,
+		llog(RC_BADWHACKMESSAGE, logger,
 			    "ignoring truncated message from whack: got %d bytes; expected %zu",
 			    wp->n, sizeof(wp->msg));
 		return false;
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker)) {
-		log_message(RC_BADWHACKMESSAGE, logger,
+		llog(RC_BADWHACKMESSAGE, logger,
 			    "message from whack contains bad string or key");
 		return false;
 	}

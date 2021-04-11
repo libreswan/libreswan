@@ -15,7 +15,6 @@
 
 #include <string.h>
 
-#include "lswlog.h"
 
 #include "acvp.h"
 
@@ -26,25 +25,27 @@
 #include "test_buffer.h"
 #include "crypt_symkey.h"
 
-static bool table_entry(const struct cavp_entry *entries, const char *opt, const char *param)
+static bool table_entry(const struct cavp_entry *entries, const char *opt,
+			const char *param, struct logger *logger)
 {
 	const struct cavp_entry *entry = cavp_entry_by_opt(entries, opt);
 	if (entry != NULL) {
-		entry->op(entry, param);
+		entry->op(entry, param, logger);
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
+bool acvp_option(const struct cavp *cavp, const char *opt,
+		 const char *param, struct logger *logger)
 {
 	/* try the config table */
-	if (table_entry(cavp->config, opt, param)) {
+	if (table_entry(cavp->config, opt, param, logger)) {
 		return true;
 	}
 	/* try the data table */
-	if (table_entry(cavp->data, opt, param)) {
+	if (table_entry(cavp->data, opt, param, logger)) {
 		return true;
 	}
 	/* map PRF option onto config */
@@ -54,7 +55,7 @@ bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 		if (entry == NULL) {
 			return false;
 		}
-		entry->op(entry, NULL);
+		entry->op(entry, NULL, logger);
 		return true;
 	}
 	/* else unknown */

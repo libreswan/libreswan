@@ -5,6 +5,7 @@ FIPS mode enabled.
 west #
  ipsec newhostkey
 Generated RSA key pair with CKAID <<CKAID#1>> was stored in the NSS database
+The public key can be displayed using: ipsec showhostkey --left --ckaid <<CKAID#1>>
 west #
  ipsec showhostkey --list
 < 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
@@ -14,4 +15,6 @@ west #
  ipsec showhostkey --left --ckaid "$ckaid"
 	# rsakey <<KEYID#1>>
 	leftrsasigkey=<<RSASIGKEY#1>>
+west #
+ 
 

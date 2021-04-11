@@ -6,10 +6,10 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add test
-002 added IKEv1 connection "test"
+002 "test": added IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -18,7 +18,4 @@ east #
 east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

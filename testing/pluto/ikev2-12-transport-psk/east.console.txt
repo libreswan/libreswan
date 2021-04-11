@@ -3,22 +3,22 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2-transport
-002 added IKEv2 connection "ipv4-psk-ikev2-transport"
+002 "ipv4-psk-ikev2-transport": added IKEv2 connection
 east #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 000 "ipv4-psk-ikev2-transport": 192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]; unrouted; eroute owner: #0
 000 "ipv4-psk-ikev2-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret
-000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "ipv4-psk-ikev2-transport":   policy_label:unset;
-000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "ipv4-psk-ikev2-transport":   sec_label:unset;
+000 "ipv4-psk-ikev2-transport":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "ipv4-psk-ikev2-transport":   policy: IKEv2+PSK+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO;
 000 "ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
 000 "ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -30,7 +30,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -66,7 +66,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

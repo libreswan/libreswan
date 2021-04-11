@@ -1,0 +1,84 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev2-west-east
+002 "ikev2-west-east": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up ikev2-west-east
+1v2 "ikev2-west-east" #1: initiating IKEv2 connection
+1v2 "ikev2-west-east" #1: sent IKE_SA_INIT request
+1v2 "ikev2-west-east" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "ikev2-west-east" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+002 "ikev2-west-east" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "ikev2-west-east" #2: IPsec SA established transport mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+west #
+ ping -n -q -c 4 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "ikev2-west-east", type=ESP, add_time=1234567890, inBytes=256, outBytes=256, id='@east'
+west #
+ # should show tcp being used
+west #
+ ../../guestbin/ipsec-look.sh | grep encap
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ ipsec auto --down ikev2-west-east
+002 "ikev2-west-east": terminating SAs using this connection
+002 "ikev2-west-east" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "ikev2-west-east" #2: ESP traffic information: in=256B out=256B
+002 "ikev2-west-east" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+west #
+ echo "done"
+done
+west #
+ ipsec whack --shutdown
+west #
+ 

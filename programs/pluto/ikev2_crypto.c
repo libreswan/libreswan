@@ -40,7 +40,6 @@
 #include "packet.h"
 #include "crypto.h"
 #include "demux.h"
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ikev2_prf.h"
 #include "ike_alg.h"
@@ -110,11 +109,9 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	 */
 	PK11SymKey *shared = NULL;
 	if (st->st_pfs_group != NULL) {
-		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
-					st->st_serialno,
-					st->st_state->name,
-					st->st_shared_nss));
-		shared = st->st_shared_nss;
+		DBGF(DBG_CRYPT, "#%lu %s add g^ir to child key %p",
+		     st->st_serialno, st->st_state->name, st->st_dh_shared_secret);
+		shared = st->st_dh_shared_secret;
 	}
 
 	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
@@ -146,18 +143,18 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	 */
 	switch (child->sa.st_sa_role) {
 	case SA_RESPONDER:
-		DBG(DBG_PRIVATE, {
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			    DBG_dump_hunk("our  keymat", ikeymat);
 			    DBG_dump_hunk("peer keymat", rkeymat);
-		    });
+		}
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
 		break;
 	case SA_INITIATOR:
-		DBG(DBG_PRIVATE, {
-			    DBG_dump_hunk("our  keymat", rkeymat);
-			    DBG_dump_hunk("peer keymat", ikeymat);
-		    });
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("our  keymat", rkeymat);
+			DBG_dump_hunk("peer keymat", ikeymat);
+		}
 		ipi->peer_keymat = ikeymat.ptr;
 		ipi->our_keymat = rkeymat.ptr;
 		break;

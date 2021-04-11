@@ -24,7 +24,7 @@
 #include "err.h"
 
 /*
- * Think of shunk_t and shunk_t as opposite solutions to the same
+ * Think of shunk_t and chunk_t as opposite solutions to the same
  * problem - carving up streams of octets:
  *
  * shunk_t's buffer is constant making it good for manipulating static
@@ -48,13 +48,13 @@ typedef struct shunk shunk_t;
  * be used.
  */
 
-#define NULL_SHUNK { .ptr = NULL, .len = 0, }
 extern const shunk_t null_shunk;
 extern const shunk_t empty_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const void *ptr, int len);
 
+#define HUNK_AS_SHUNK(HUNK) ({ typeof(HUNK) h_ = (HUNK); shunk2(h_.ptr, h_.len); })
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
 /* shunk[START..END) */
@@ -89,7 +89,7 @@ shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
 
 /*
- * Return the sequence of charcters in ACCEPT, update INPUT.
+ * Return the sequence of characters in ACCEPT, update INPUT.
  *
  * When input is exhausted the NULL_SHUNK is returned (rather than the
  * EMPTY_SHUNK).
@@ -120,8 +120,8 @@ bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 /*
  * Number conversion.  like strtoul() et.al.
  */
-err_t shunk_to_uint(shunk_t input, shunk_t *cursor, unsigned base,
-		    uintmax_t *value, uintmax_t ceiling);
+err_t shunk_to_uintmax(shunk_t input, shunk_t *cursor, unsigned base,
+		       uintmax_t *value, uintmax_t ceiling);
 
 /*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));

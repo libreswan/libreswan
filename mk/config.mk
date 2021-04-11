@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
-# Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015,2017-2018 Andrew Cagney
 # Copyright (C) 2015-2019 Tuomo Soini <tis@foobar.fi>
 #
@@ -187,11 +187,6 @@ SYSCONFDIR ?= $(DESTDIR)$(FINALSYSCONFDIR)
 FINALCONFDDIR ?= $(FINALCONFDIR)/ipsec.d
 CONFDDIR ?= $(DESTDIR)$(FINALCONFDDIR)
 
-FINALNSSDIR ?= /etc/ipsec.d
-# Debian uses /var/lib/ipsec/nss
-#FINALNSSDIR ?= /var/lib/ipsec/nss
-NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
-
 # where dynamic PPKs go, for now
 FINALPPKDIR ?= $(FINALCONFDDIR)
 PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
@@ -217,8 +212,15 @@ VARDIR ?= $(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR ?= $(FINALVARDIR)/log
 LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
 
-# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+# Directory for logrotate config
+FINALLOGROTATEDDIR ?= $(FINALSYSCONFDIR)/logrotate.d
+LOGROTATEDDIR ?= $(DESTDIR)$(FINALLOGROTATEDDIR)
+
+# Where nss databases go
+FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
+# RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
+#FINALNSSDIR ?= /etc/ipsec.d
+NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
 
 DOCKER_PLUTONOFORK ?= --nofork
 
@@ -281,9 +283,6 @@ INSTBINFLAGS ?= -b
 INSTMANFLAGS ?= -m 0644
 INSTCONFFLAGS ?= -m 0644
 
-# flags for bison, overrode in packages/default/foo
-BISONOSFLAGS ?=
-
 # must be before all uses; invoking is expensive called once
 PKG_CONFIG ?= pkg-config
 
@@ -323,6 +322,7 @@ endif
 # is currently true for basically all distro's
 USE_XFRM_HEADER_COPY ?= true
 XFRM_LIFETIME_DEFAULT ?= 30
+USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 
 USE_XFRM_INTERFACE_IFLA_HEADER ?= false
 
@@ -365,6 +365,13 @@ POD2MAN ?= $(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
+# Enable or disable support for IKEv1. When disabled, the ike-policy= value
+# will be ignored and all IKEv1 packets will be dropped.
+USE_IKEv1 ?= true
+ifeq ($(USE_IKEv1),true)
+USERLAND_CFLAGS += -DUSE_IKEv1
+endif
+
 # Enable support for DNSSEC. This requires the unbound and ldns libraries.
 USE_DNSSEC ?= true
 
@@ -397,6 +404,12 @@ FIPSPRODUCTCHECK ?= /etc/system-fips
 
 # Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC ?= false
+
+ifeq ($(USE_LABELED_IPSEC),true)
+# Use when having an old version of libselinux  < 2.1.9 that uses avc_*
+# This is required for RHEL6 / CentOS6
+USE_OLD_SELINUX ?= false
+endif
 
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP ?= false
@@ -480,6 +493,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@FINALLOGDIR@:$(FINALLOGDIR):g" \
+			-e "s:@FINALLOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g" \
 			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
@@ -575,6 +589,9 @@ endif
 
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
+ifeq ($(USE_OLD_SELINUX),true)
+USERLAND_CFLAGS += -DHAVE_OLD_SELINUX
+endif
 endif
 
 ifeq ($(USE_SECCOMP),true)
@@ -612,12 +629,18 @@ endif
 # Link with -lrt (only for glibc versions before 2.17)
 RT_LDFLAGS ?= -lrt
 
-# include PAM support for XAUTH when available on the platform
+# Compatibility with old USE_XAUTHPAM which was changed to USE_AUTHPAM.
+# We will overwrite USE_AUTHPAM with USE_XAUTHPAM until libreswan 4.4
+ifdef USE_XAUTHPAM
+USE_AUTHPAM = $(USE_XAUTHPAM)
+$(warning Warning: Overriding USE_AUTHPAM with deprecated variable USE_XAUTHPAM)
+endif
 
-USE_XAUTHPAM?=true
-ifeq ($(USE_XAUTHPAM),true)
-USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
-XAUTHPAM_LDFLAGS ?= -lpam
+# include PAM support for IKEv1 XAUTH and IKE2 pam-authorize when available on the platform
+USE_AUTHPAM ?= true
+ifeq ($(USE_AUTHPAM),true)
+USERLAND_CFLAGS += -DAUTH_HAVE_PAM
+AUTHPAM_LDFLAGS ?= -lpam
 endif
 
 #
@@ -722,7 +745,8 @@ ifdef USE_NSS_PRF
 $(error ERROR: Deprecated USE_NSS_PRF variable set, use USE_NSS_KDF instead)
 endif
 
-USE_NSS_KDF ?= false
+# This is required for FIPS, but required a recent nss (see comment above)
+USE_NSS_KDF ?= true
 ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
@@ -796,12 +820,6 @@ ifeq ($(origin GCC_LINT),undefined)
 GCC_LINT = -DGCC_LINT
 endif
 USERLAND_CFLAGS += $(GCC_LINT)
-
-# This option was disabled at 2020-04-07
-# If this is not needed for longer time, it's safe to
-# remove this and code it enables.
-# Enable ALLOW_MICROSOFT_BAD_PROPOSAL
-#USERLAND_CFLAGS += -DALLOW_MICROSOFT_BAD_PROPOSAL
 
 # some systems require -lcrypt when calling crypt() some do not.
 CRYPT_LDFLAGS ?= -lcrypt

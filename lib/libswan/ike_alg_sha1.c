@@ -31,7 +31,7 @@
 #include "ike_alg_prf_mac_ops.h"
 #include "ike_alg_prf_ikev1_ops.h"
 #include "ike_alg_prf_ikev2_ops.h"
-#include "sadb.h"
+#include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
 static const uint8_t asn1_blob_ecdsa_sha1[] = { LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
 
@@ -77,7 +77,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 	.prf_output_size = SHA1_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha1,
 	.prf_mac_ops = &ike_alg_prf_mac_nss_ops,
-#ifdef USE_NSS_PRF
+#ifdef USE_NSS_KDF
 	.prf_ikev1_ops = &ike_alg_prf_ikev1_nss_ops,
 	.prf_ikev2_ops = &ike_alg_prf_ikev2_nss_ops,
 #else

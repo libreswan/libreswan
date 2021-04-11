@@ -1,0 +1,41 @@
+# @FINALCONFDIR@/ipsec.conf - Libreswan 4.0 configuration file
+#
+# see 'man ipsec.conf' and 'man pluto' for more information
+#
+# For example configurations and documentation, see https://libreswan.org/wiki/
+
+config setup
+	# If logfile= is unset, syslog is used to send log messages too.
+	# Note that on busy VPN servers, the amount of logging can trigger
+	# syslogd (or journald) to rate limit messages.
+	#logfile=@FINALLOGDIR@/pluto.log
+	#
+	# Debugging should only be used to find bugs, not configuration issues!
+	# "base" regular debug, "tmi" is excessive (!) and "private" will log
+	# sensitive key material (not available in FIPS mode). The "cpu-usage"
+	# value logs timing information and should not be used with other
+	# debug options as it will defeat getting accurate timing information.
+	# Default is "none"
+	# plutodebug="base"
+	# plutodebug="tmi"
+	#plutodebug="none"
+	#
+	# Some machines use a DNS resolver on localhost with broken DNSSEC
+	# support. This can be tested using the command:
+	# dig +dnssec DNSnameOfRemoveServer
+	# If that fails but omitting '+dnssec' works, the system's resolver is
+	# broken and you might need to disable DNSSEC.
+	# dnssec-enable=no
+	#
+	# To enable IKE and IPsec over TCP for VPN server. Requires at least
+	# Linux 5.7 kernel or a kernel with TCP backport (like RHEL8 4.18.0-291)
+	# listen-tcp=yes
+	# To enable IKE and IPsec over TCP for VPN client, also specify
+	# tcp-remote-port=4500 in the client's conn section.
+
+# if it exists, include system wide crypto-policy defaults
+# include /etc/crypto-policies/back-ends/libreswan.config
+
+# It is best to add your IPsec connections as separate files
+# in @IPSEC_CONFDDIR@/
+include @IPSEC_CONFDDIR@/*.conf

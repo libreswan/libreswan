@@ -40,27 +40,31 @@ LIB = libswan.a
 OBJS += x509dn.o asn1.o oid.o
 
 OBJS += constants.o \
-	alloc.o \
-	id.o initaddr.o initsubnet.o \
-        keyblobtoid.o \
+	id.o \
+	initaddr.o \
 	lex.o \
 	lswconf.o \
 	lswfips.o \
-	rangetosubnet.o sameaddr.o \
+	sameaddr.o \
 	secrets.o \
-	subnettypeof.o ttoaddr.o ttodata.o \
+	subnettypeof.o ttodata.o \
 	ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += ttoaddress.o
+OBJS += alloc.o
+OBJS += alloc_printf.o
+
+OBJS += diag.o
 OBJS += passert.o
 OBJS += pexpect.o
-OBJS += progname_logger.o
 OBJS += nss_cert_load.o
 OBJS += certs.o
 OBJS += reqid.o
+OBJS += keyid.o
 
 ifeq ($(USE_XFRM),true)
 OBJS += addr_lookup.o
@@ -77,9 +81,7 @@ OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
 OBJS += role.o
 
-OBJS += addrtot.o
 OBJS += addrtypeof.o
-OBJS += anyaddr.o
 OBJS += datatot.o
 OBJS += ultot.o
 
@@ -96,7 +98,9 @@ OBJS += chunk.o
 OBJS += shunk.o
 OBJS += hunk.o
 
+OBJS += ip_bytes.o
 OBJS += ip_address.o
+OBJS += ip_cidr.o
 OBJS += ip_encap.o
 OBJS += ip_endpoint.o
 OBJS += ip_info.o
@@ -141,10 +145,9 @@ OBJS += jam_nss_ckf.o
 OBJS += jam_nss_cka.o
 OBJS += jam_nss_secitem.o
 
-OBJS += lswlog_enum_lset_short.o
-
 # Crypto code:
 
+OBJS += test_buffer.o
 OBJS += ike_alg.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
@@ -191,10 +194,20 @@ ifeq ($(USE_SHA2),true)
 OBJS += ike_alg_sha2.o
 endif
 
+OBJS += ike_alg_encrypt_cbc_test_vectors.o
+OBJS += ike_alg_encrypt_ctr_test_vectors.o
+OBJS += ike_alg_encrypt_gcm_test_vectors.o
+OBJS += ike_alg_prf_test_vectors.o
+
 OBJS += crypt_mac.o
 OBJS += crypt_hash.o
 OBJS += crypt_prf.o
 OBJS += crypt_symkey.o
+
+ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_prf.o
+endif
+OBJS += ikev2_prf.o
 
 ifeq ($(USE_NSS_AVA_COPY),true)
 OBJS += nss_copies.o
@@ -212,7 +225,7 @@ OBJS += $(abs_builddir)/version.o
 # build version.c using version number from Makefile.ver
 $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
-	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
+	sed -e '/"/s/@IPSECVERSION@/$(subst /,\/,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \
 	    $(srcdir)/version.in.c \
 	    > $@.tmp

@@ -44,6 +44,7 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
  */
 void release_symkey(const char *prefix, const char *name, PK11SymKey **key);
 PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *key);
+void symkey_newref(const char *name, PK11SymKey *key);
 
 /*
  * Length of a symkey in bytes.
@@ -79,11 +80,6 @@ void prepend_bytes_to_symkey(const char *result,
 
 void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 			struct logger *logger);
-
-void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs,
-			size_t sizeof_rhs);
-#define append_chunk_hunk(NAME, LHS, RHS)			\
-	append_chunk_bytes(NAME, LHS, (RHS).ptr, (RHS).len)
 
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
 			 struct logger *logger);

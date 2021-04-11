@@ -60,7 +60,7 @@ local-clean-manpages:
 
 # Default rule for creating the TRANSFORMED_MANPAGES.
 #
-# Directories, such as programs/configs/, that generate the man page
+# Directories, such as configs/, that generate the man page
 # source, should provide a custom equivalent of this rule.
 
 $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)

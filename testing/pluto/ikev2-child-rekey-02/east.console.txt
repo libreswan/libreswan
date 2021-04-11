@@ -11,16 +11,16 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2a
-002 added IKEv2 connection "westnet-eastnet-ikev2a"
+002 "westnet-eastnet-ikev2a": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet-ikev2b
-002 added IKEv2 connection "westnet-eastnet-ikev2b"
+002 "westnet-eastnet-ikev2b": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet-ikev2c
-002 added IKEv2 connection "westnet-eastnet-ikev2c"
+002 "westnet-eastnet-ikev2c": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -36,7 +36,4 @@ east #
 000 #1: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #13: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

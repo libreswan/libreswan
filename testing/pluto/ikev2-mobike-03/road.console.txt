@@ -23,10 +23,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet
-002 added IKEv2 connection "road-eastnet"
+002 "road-eastnet": added IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -35,12 +35,12 @@ road #
 1v2 "road-eastnet"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "road-eastnet"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-eastnet"[1] 192.1.2.23 #1: authenticated using authby=secret
+003 "road-eastnet"[1] 192.1.2.23 #1: authenticated using authby=secret and peer ID_IPV4_ADDR '192.1.2.23'
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.10-192.0.3.10:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-eastnet"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 road #
- ping -W 1 -q -n -c 2 192.0.2.254
+ ping -n -q -W 1 -c 2 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
@@ -85,7 +85,7 @@ road #
 road #
  # note this end should be 192.1.33.222
 road #
- ping -W 1 -q -n -c 4 192.0.2.254
+ ping -n -q -W 1 -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -95,9 +95,9 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23', lease=192.0.3.10/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='192.1.2.23', lease=192.0.3.10/32
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.33.222
@@ -123,7 +123,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

@@ -1,0 +1,28 @@
+Test IKEv2 with addresspool and DNS CP payloads
+
+Do an --up, followed by another --up that should cause a proper child rekey (or a 2nd /replaced)
+IPsec SA - but not a failure.
+
+See also: ikev2-cp-rekey-01 which uses whack --ipsec-rekey instead of a 2nd --up
+
+This shows a few bugs:
+
+1) On initiator, why did we not include a CP request for the IPsec SA rekey ?
+   Answer: we don't need DNS CP and for rekey IP parameters are not allowed to change
+   so TSi/TSr is enough - no INTERNAL ADDRESS needed.
+2) On receiving CREATE_CHILD_SA without having send a CP request, why do we
+   reject a reply with no CP reply?
+   Answer: fixed with commit: 2088806e4580d3dd
+3) Why does the initiator send multiple proposals? We MUST only use the same
+   crypto parameters as the IPsec SA that is currently in use is using. Anything
+   else is not allowed.
+   Answer: code should be updated to only send 1 proposal with only one of the required
+   (current) algorithms.
+4) Is the responder and the initiator verifying the chosen proposal is identical
+   (other than in theory the CP IP address, but for us it is always the same) 
+   Answer: Rekeying to a different IP address is complicated. It could only be
+   allowed if the rekey used CP(INTERNAL_IP) payload, getting a new IP and then
+   installing TWO IPsec SA's that cover old + new IP, because a rekey MUST at
+   least cover the existing IPsec SA traffic ranges. libreswan does not support
+   this on either client or server side. As server, it always hands out the identical
+   IP address.

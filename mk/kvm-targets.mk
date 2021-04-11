@@ -30,6 +30,7 @@ KVM_GUEST_OS ?= f32
 KVM_GUEST_OS_BSD?= openbsd67
 include testing/libvirt/$(KVM_GUEST_OS).mk
 include testing/libvirt/BSD/$(KVM_GUEST_OS_BSD).mk
+include testing/libvirt/debian.mk
 
 #
 # where things live and what gets created
@@ -70,11 +71,13 @@ VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 # Should these live in the OS.mk file?
 KVM_USE_EFENCE ?= true
 KVM_USE_NSS_IPSEC_PROFILE ?= true
+KVM_USE_NSS_KDF ?= true
 KVM_ALL_ALGS ?= false
 KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
 KVM_SD_RESTART_TYPE=no
 KVM_USE_FIPSCHECK ?= false
+KVM_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
 
 KVM_MAKEFLAGS ?= \
 	USE_EFENCE=$(KVM_USE_EFENCE) \
@@ -84,6 +87,7 @@ KVM_MAKEFLAGS ?= \
 	USE_NSS_IPSEC_PROFILE=$(KVM_USE_NSS_IPSEC_PROFILE) \
 	SD_RESTART_TYPE=$(KVM_SD_RESTART_TYPE) \
 	USE_NSS_KDF=$(KVM_USE_NSS_KDF) \
+	FINALNSSDIR=$(KVM_FINALNSSDIR) \
 	USE_FIPSCHECK=$(KVM_USE_FIPSCHECK)
 
 
@@ -124,6 +128,22 @@ SNAPSHOT_REVERT ?= 								\
 	snapshot_revert
 
 # Take a new snapshot; delete any old snapshots.
+SNAPSHOT_DELETE ?=								\
+	snapshot_delete()							\
+	{									\
+		snapshot=$$1 ;							\
+		disk=$$2 ;							\
+		echo "$${disk}: deleting all '$$snapshot' snapshots" ;		\
+		$(QEMU_IMG) snapshot -l $${disk} |				\
+		grep $${snapshot} |						\
+		while read n s ignore ; do					\
+			echo "$${disk}: deleting '$${snapshot}' snapshot $${n}" ; \
+			$(QEMU_IMG) snapshot -d $${s} $${disk} ;		\
+		done ;								\
+	} ;									\
+	snapshot_delete
+
+# Take a new snapshot; delete any old snapshots.
 SNAPSHOT_TAKE ?=								\
 	snapshot_take()								\
 	{									\
@@ -147,11 +167,14 @@ VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
-VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
+VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
 KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
+
+VIRT_INSTALL_BASE_FLAGS = --memory 1024
+VIRT_INSTALL_BUILD_FLAGS = --memory 2048 --vcpus 2
 
 VIRT_INSTALL_COMMAND = \
 	$(VIRT_INSTALL) \
@@ -388,7 +411,7 @@ $(1): 		$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok \
 			--publish-hash $$(WEB_HASH) \
 			--publish-results $$(WEB_RESULTSDIR) \
 			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
-		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+		$(2) $$(KVMRUNNER_FLAGS) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-post, -s web-pages-disabled)
 endef
 
@@ -418,10 +441,10 @@ $(KVM_TEST_CLEAN_TARGETS):
 
 .PHONY: kvm-results
 kvm-results:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
+	$(KVMRESULTS) $(KVMRESULTS_FLAGS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE))
 .PHONY: kvm-diffs
 kvm-diffs:
-	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
+	$(KVMRESULTS) $(KVMRESULTS_FLAGS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) $(if $(KVM_BASELINE),--baseline $(KVM_BASELINE)) --print diffs
 
 KVM_MODIFIED_TESTS = git status testing/pluto/*/ | awk '/(modified|deleted|renamed):/ { print $$NF }' | cut -d/ -f1-3 | sort -u
 
@@ -740,8 +763,8 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
 	$(VIRT_INSTALL_COMMAND) \
+		$(VIRT_INSTALL_BASE_FLAGS) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--memory 1024 \
 		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
 		--location=$(KVM_POOLDIR)/$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
@@ -752,18 +775,19 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	touch $@
 
 .PHONY: kvm-downgrade
-kvm-downgrade: kvm-uninstall kvm-shutdown
-	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	: to back to the original image - looses upgrade and transmogrify
+kvm-downgrade:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall kvm-shutdown
+	: go back to the raw fresh kickstarted image
+	$(SNAPSHOT_DELETE) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(SNAPSHOT_REVERT) kickstarted $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
-	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
+	: remove all targets so that next make triggers everything
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmgorified
+	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).xml
 
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	: drop transmogrification but keep upgrades
-	$(MAKE) kvm-shutdown-base-domain
-	: to back to the upgrade snapshot - looses transmogrify
-	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
 	: update all packages
 	$(if $(KVM_PACKAGE_INSTALL), $(if $(KVM_INSTALL_PACKAGES), \
 		$(KVMSH) $(KVM_BASE_DOMAIN) $(KVM_PACKAGE_INSTALL) $(KVM_INSTALL_PACKAGES)))
@@ -779,27 +803,37 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).ki
 	touch $@
 
 .PHONY: kvm-upgrade
-kvm-upgrade: kvm-uninstall
+kvm-upgrade:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall kvm-shutdown-base-domain
+	: drop transmogrification but keep upgrades
+	$(SNAPSHOT_DELETE) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: force an upgrade
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 # run, or re-run transmogrify from scratch
 
-$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
-	$(MAKE) kvm-shutdown-base-domain
-	: to back to the upgrade snapshot - looses transmogrify
-	$(SNAPSHOT_REVERT) upgraded $(basename $@).qcow2
+$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: \
+		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded \
+		| \
+		testing/libvirt/$(KVM_GUEST_OS).transmogrify.sh
 	: transmogrify
-	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS)-transmogrify.sh
-	: re-snapshot
+	$(KVMSH) $(KVM_BASE_DOMAIN) sh /testing/libvirt/$(KVM_GUEST_OS).transmogrify.sh
+	: snapshot transmogrify result
 	$(MAKE) kvm-shutdown-base-domain
-	: snapshot upgrade so that next upgrade can be incremental
 	$(SNAPSHOT_TAKE) transmogrified $(basename $@).qcow2
 	touch $@
 
 .PHONY: kvm-transmogrify
-kvm-transmogrify: kvm-uninstall-local-domains
+kvm-transmogrify:
+	$(MAKE) $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok
+	$(MAKE) kvm-uninstall-local-domains kvm-shutdown-base-domain
+	: to back to the upgrade snapshot - looses transmogrify
+	$(SNAPSHOT_DELETE) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: force a fresh transmogrify
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
@@ -894,8 +928,8 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 	: build-domain $@
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(VIRT_INSTALL_COMMAND) \
+		$(VIRT_INSTALL_BUILD_FLAGS) \
 		--name $(KVM_BUILD_DOMAIN) \
-		--memory 1024 \
 		--import \
 		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		--noautoconsole
@@ -1027,7 +1061,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
 # $(KVM_BUILD_DOMAIN_CLONES), delete both $(KVM_BUILD_DOMAIN_CLONES) and
 # $(KVM_BUILD_DOMAIN) the install domains were cloned from.  This way,
-# in addition to giving kvm-install a 100% fresh start (no depdenence
+# in addition to giving kvm-install a 100% fresh start (no dependence
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
@@ -1326,7 +1360,7 @@ Domains and networks:
           directory's test domains
         - uninstall dependencies: test domains
 
-Manually building and modifing the base domain and network:
+Manually building and modifying the base domain and network:
 
   Normally kvm-install et.al, below, are sufficient.  However ....
 

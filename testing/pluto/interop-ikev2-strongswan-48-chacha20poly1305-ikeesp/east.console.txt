@@ -1,0 +1,12 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ ../../guestbin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
+east #
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then grep " verifying encrypted payload integrity failed" /tmp/charon.log ; fi
+east #
+ 

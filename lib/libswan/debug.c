@@ -44,8 +44,12 @@ static struct double_double debug = {
 	.name[N##_IX - DBG_floor_IX] = A "\0", \
 	.help[N##_IX - DBG_floor_IX] = H
 
+	/* start of debug-all */
 	D(DBG_BASE, "debug-base", "enable detailed debug logging"),
 	D(DBG_CPU_USAGE, "debug-cpu-usage", "estimate cpu used"),
+	D(DBG_REFCNT, "debug-refcnt", "debug reference counts"),
+	/* end of debug-all */
+
 	D(DBG_CRYPT, "debug-crypt", "encryption/decryption of messages: DANGER!"),
 	D(DBG_PRIVATE, "debug-private", "displays private information: DANGER!"),
 	D(DBG_WHACKWATCH, "debug-whackwatch", "never let WHACK go"),

@@ -17,20 +17,6 @@ PROGRAM_MANPAGE =
 
 PROGRAM = algparse
 OBJS += $(PROGRAM).o
-
-#
-# XXX: For the moment build things by pulling in chunks of pluto.
-# What, if anything, should be moved to libswan or another library?
-#
-PLUTOOBJS += test_buffer.o
-PLUTOOBJS += cbc_test_vectors.o
-PLUTOOBJS += ctr_test_vectors.o
-PLUTOOBJS += gcm_test_vectors.o
-PLUTOOBJS += prf_test_vectors.o
-# Need absolute path as 'make' (check dependencies) and 'ld' (do link)
-# are run from different directories.
-OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
-
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
@@ -43,5 +29,5 @@ else
 include ../../mk/program.mk
 endif
 
-local-selfcheck: $(PROGRAM)
-	$(top_srcdir)/testing/pluto/basic-pluto-00/algparse.sh $(builddir)/$(PROGRAM)
+local-check: $(PROGRAM)
+	$(top_srcdir)/testing/pluto/bin/algparse.sh $(builddir)/$(PROGRAM)

@@ -6,15 +6,15 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add rw-lte
-002 added IKEv2 connection "rw-lte"
+002 "rw-lte": added IKEv2 connection
 road #
  ipsec auto --add rw-wifi
-002 added IKEv2 connection "rw-wifi"
+002 "rw-wifi": added IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -23,9 +23,7 @@ road #
 1v2 "rw-lte"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "rw-lte"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "rw-lte"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "rw-lte"[1] 192.1.2.23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "rw-lte"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east.testing.libreswan.org'
-003 "rw-lte"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512
+003 "rw-lte"[1] 192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "rw-lte"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
 002 "rw-lte"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "rw-lte"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
@@ -33,24 +31,17 @@ road #
 002 "rw-lte"[1] 192.1.2.23 #2: negotiated connection [100.64.0.1-100.64.0.1:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "rw-lte"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
- ping -n -c 2 -I 100.64.0.1 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 100.64.0.1 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 100.64.0.1 192.0.2.254
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "rw-lte"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east.testing.libreswan.org', lease=100.64.0.1/32
+006 #2: "rw-lte"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east.testing.libreswan.org', lease=100.64.0.1/32
 road #
  ipsec auto --up rw-wifi
 1v2 "rw-wifi"[1] 192.1.2.23 #3: initiating IKEv2 connection
 1v2 "rw-wifi"[1] 192.1.2.23 #3: sent IKE_SA_INIT request
 1v2 "rw-wifi"[1] 192.1.2.23 #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "rw-wifi"[1] 192.1.2.23 #3: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "rw-wifi"[1] 192.1.2.23 #4: IKEv2 mode peer ID is ID_FQDN: '@east.testing.libreswan.org'
-003 "rw-wifi"[1] 192.1.2.23 #3: authenticated using RSA with SHA2_512
+003 "rw-wifi"[1] 192.1.2.23 #3: authenticated using RSA with SHA2_512 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "rw-wifi"[1] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 100.64.0.2
 002 "rw-wifi"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 1.2.3.4
 002 "rw-wifi"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 8.8.8.8
@@ -61,25 +52,15 @@ road #
 road #
  # both should remain up and working - aka wifi-assist
 road #
- ping -n -c 2 -I 100.64.0.2 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 100.64.0.2 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 100.64.0.2 192.0.2.254
+up
 road #
- ping -n -c 2 -I 100.64.0.1 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 100.64.0.1 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 100.64.0.1 192.0.2.254
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "rw-lte"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east.testing.libreswan.org', lease=100.64.0.1/32
-006 #4: "rw-wifi"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east.testing.libreswan.org', lease=100.64.0.2/32
+006 #2: "rw-lte"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east.testing.libreswan.org', lease=100.64.0.1/32
+006 #4: "rw-wifi"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east.testing.libreswan.org', lease=100.64.0.2/32
 road #
  echo done
 done
@@ -136,7 +117,4 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

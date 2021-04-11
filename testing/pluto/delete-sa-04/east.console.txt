@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # connections are loaded and initiated via auto=start
 east #
@@ -24,8 +24,4 @@ east #
  grep "already replacing" /tmp/pluto.log && echo "bug triggered"
 "west-east-auto" #1: received Delete SA payload: already replacing IPsec State #2 in 54 seconds
 bug triggered
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

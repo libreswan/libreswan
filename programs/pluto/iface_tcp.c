@@ -52,105 +52,361 @@
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 #include "pluto_stats.h"
 
+/* work around weird combo's of glibc and kernel header conflicts */
+#ifndef GLIBC_KERN_FLIP_HEADERS
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+# include "libreswan.h"
+#else
+# include "libreswan.h"
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+#endif
+
+/*
+ * IKETCP or TCP?
+ *
+ * In the code: TCP generally refers to the open TCP socket, and
+ * IKETCP refers to the stream running the IKETCP / ECPinTCP protocol.
+ */
+
+static void jam_iketcp_prefix(struct jambuf *buf, const struct iface_endpoint *ifp)
+{
+	static const char *iketcp_state_names[] = {
+		[0] = "UNDEFINED",
+#define D(X) [IKETCP_##X] = #X
+		D(ACCEPTED),
+		D(PREFIX_RECEIVED),
+		D(ENABLED),
+		D(STOPPED),
+#undef D
+	};
+	if (ifp == NULL) {
+		jam_string(buf, "TCP: ");
+	} else if (ifp->iketcp_state >= elemsof(iketcp_state_names)) {
+		jam(buf, "IKETCP %x?!?: ", ifp->iketcp_state);
+	} else {
+		jam_string(buf, "IKETCP ");
+		jam_string(buf, iketcp_state_names[ifp->iketcp_state]);
+		jam_string(buf, ": ");
+	}
+}
+
+static void dbg_iketcp(const struct iface_endpoint *ifp, const char *msg, ...) PRINTF_LIKE(2);
+void dbg_iketcp(const struct iface_endpoint *ifp, const char *msg, ...)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam_iketcp_prefix(buf, ifp);
+		va_list ap;
+		va_start(ap, msg);
+		jam_va_list(buf, msg, ap);
+		va_end(ap);
+	}
+}
+
+static void llog_iketcp(lset_t rc_flags, struct logger *logger, const struct iface_endpoint *ifp,
+			const char *msg, ...) PRINTF_LIKE(4);
+void llog_iketcp(lset_t rc_flags, struct logger *logger, const struct iface_endpoint *ifp UNUSED,
+		 const char *msg, ...)
+{
+	LLOG_JAMBUF(rc_flags, logger, buf) {
+		jam_iketcp_prefix(buf, ifp);
+		va_list ap;
+		va_start(ap, msg);
+		jam_va_list(buf, msg, ap);
+		va_end(ap);
+	}
+}
+
 static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 				 int accepted_fd,
 				 struct sockaddr *sockaddr, int sockaddr_len,
 				 void *arg);
 
-static enum iface_status iketcp_read_packet(const struct iface_port *ifp,
-					    struct iface_packet *packet)
+static enum iface_read_status read_raw_iketcp_packet(const char *prefix,
+						     const struct iface_endpoint *ifp,
+						     struct iface_packet *packet,
+						     struct logger *logger)
 {
-	/*
-	 * At this point there's no logger so log it against the
-	 * remote endpoint determined earlier.
-	 */
-	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
-
 	/*
 	 * Reads the entire packet _without_ length, if buffer isn't
 	 * big enough packet is truncated.
 	 */
-	dbg("TCP: socket %d reading packet", ifp->fd);
+	dbg_iketcp(ifp, "socket %d reading packet", ifp->fd);
 	packet->sender = ifp->iketcp_remote_endpoint;
 	size_t buf_size = packet->len;
 	errno = 0;
 	packet->len = read(ifp->fd, packet->ptr, buf_size);
 	int packet_errno = errno;
 	if (packet_errno != 0) {
-		log_message(RC_LOG, &logger,
-			    "TCP: read from socket %d failed "PRI_ERRNO,
-			    ifp->fd, pri_errno(packet_errno));
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "%ssocket %d: read failed "PRI_ERRNO,
+			    prefix, ifp->fd, pri_errno(packet_errno));
 		if (packet_errno == EAGAIN) {
-			return IFACE_IGNORE;
+			return IFACE_READ_IGNORE;
 		} else {
-			return IFACE_FATAL;
+			return IFACE_READ_ERROR;
 		}
 	}
 
-	dbg("TCP: socket %d read %zd of %zu bytes; "PRI_ERRNO"",
-	    ifp->fd, packet->len, buf_size, pri_errno(packet_errno));
+	dbg_iketcp(ifp, "socket %d read %zd of %zu bytes; "PRI_ERRNO"",
+		   ifp->fd, packet->len, buf_size, pri_errno(packet_errno));
 
 	if (packet->len == 0) {
 		/* interpret this as EOF */
-		log_message(RC_LOG, &logger,
-			    "TCP: %zd byte message from socket %d indicates EOF",
-			    packet->len, ifp->fd);
-		return IFACE_EOF;
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "%ssocket %d: %zd byte read indicates EOF",
+			    prefix, ifp->fd, packet->len);
+		return IFACE_READ_EOF;
 	}
 
 	if (packet->len < NON_ESP_MARKER_SIZE) {
-		log_message(RC_LOG, &logger,
-			    "TCP: %zd byte message from socket %d is way to small",
-			    packet->len, ifp->fd);
-		return IFACE_FATAL;
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "%ssocket %d: %zd byte message is way to small",
+			    prefix, ifp->fd, packet->len);
+		return IFACE_READ_ERROR;
 	}
 
 	static const uint8_t zero_esp_marker[NON_ESP_MARKER_SIZE] = { 0, };
 	if (!memeq(packet->ptr, zero_esp_marker, sizeof(zero_esp_marker))) {
-		log_message(RC_LOG, &logger,
-			    "TCP: %zd byte message from socket %d is missing %d byte zero ESP marker",
-			    packet->len, ifp->fd, NON_ESP_MARKER_SIZE);
-		return IFACE_FATAL;
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "%ssocket %d: %zd byte message is missing %d byte zero ESP marker",
+			    prefix, ifp->fd, packet->len, NON_ESP_MARKER_SIZE);
+		return IFACE_READ_ERROR;
 	}
 
 	packet->len -= sizeof(zero_esp_marker);
 	packet->ptr += sizeof(zero_esp_marker);
-	return IFACE_OK;
+	return IFACE_READ_OK;
 }
 
-static ssize_t iketcp_write_packet(const struct iface_port *ifp,
+static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
+						 struct iface_packet *packet,
+						 struct logger *logger)
+{
+	bool v6 = ifp->ip_dev->id_address.version == 6;
+
+	/*
+	 * At this point there's no so log it against the remote
+	 * endpoint determined when the connection was accepted.
+	 */
+	struct logger from_logger = logger_from(logger, &ifp->iketcp_remote_endpoint);
+	logger = &from_logger;
+
+	switch (ifp->iketcp_state) {
+
+	case IKETCP_ACCEPTED:
+	{
+		/*
+		 * Read the "IKETCP" prefix.
+		 *
+		 * XXX: Since there's no state sharing IFP (this is
+		 * first attempt at reading the socket) return
+		 * IFACE_READ_ABORT. The caller (the low-level event
+		 * handler) will then delete IFP.
+		 */
+
+		dbg_iketcp(ifp, "reading IKETCP prefix from socket %d", ifp->fd);
+		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
+		uint8_t buf[sizeof(iketcp)];
+		ssize_t len = read(ifp->fd, buf, sizeof(buf));
+
+		if (len < 0) {
+			/* too strict? */
+			int e = errno;
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: error reading 'IKETCP' prefix "PRI_ERRNO,
+				    ifp->fd, pri_errno(e));
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		if (len != sizeof(buf)) {
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: reading 'IKETCP' prefix returned %zd bytes but expecting %zu",
+				    ifp->fd, len, sizeof(buf));
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		dbg_iketcp(ifp, "socket %d verifying IKETCP prefix", ifp->fd);
+		if (!memeq(buf, iketcp, len)) {
+			/* discard this tcp connection */
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "closing socket %d: prefix did not match 'IKETCP'", ifp->fd);
+			return IFACE_READ_ABORT; /* i.e., delete IFP */
+		}
+
+		/*
+		 * Tell the kernel to load up the ESPINTCP Upper Layer
+		 * Protocol.
+		 *
+		 * From this point on all writes are auto-wrapped in
+		 * their length and reads are auto-blocked.
+		 */
+		if (impair.tcp_skip_setsockopt_espintcp) {
+			llog_iketcp(RC_LOG, logger, ifp,
+				    "IMPAIR: skipping setsockopt(ESPINTCP)");
+		} else {
+
+			dbg_iketcp(ifp, "socket %d enabling ESPINTCP", ifp->fd);
+
+			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
+				      "espintcp", sizeof("espintcp"))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "setsockopt(%d, SOL_TCP, TCP_ULP, \"espintcp\") failed; closing socket "PRI_ERRNO,
+					    ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+			struct xfrm_userpolicy_info policy_in = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_IN,
+			};
+
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "closing socket %d: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_in\") failed "PRI_ERRNO,
+					    ifp->fd, ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+			struct xfrm_userpolicy_info policy_out = {
+				.action = XFRM_POLICY_ALLOW,
+				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.dir = XFRM_POLICY_OUT,
+			};
+
+			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
+				int e = errno;
+				llog_iketcp(RC_LOG, logger, ifp,
+					    "closing socket %d: setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_out\") failed "PRI_ERRNO,
+					    ifp->fd, ifp->fd, pri_errno(e));
+				return IFACE_READ_ABORT; /* i.e., delete IFP */
+			}
+
+		}
+
+		/*
+		 * Return IGNORE so that the caller knows to not feed
+		 * the packet into the state machinery.
+		 *
+		 * Why not update the callback so that it points to a
+		 * simple handler?  This is easier, and it seems that
+		 * changing the event handler while in the event
+		 * handler isn't allowed.
+		 */
+		ifp->iketcp_state = IKETCP_PREFIX_RECEIVED;
+		return IFACE_READ_IGNORE;
+	}
+
+	case IKETCP_PREFIX_RECEIVED:
+	{
+		/*
+		 * Read the first packet; stop the timeout.
+		 *
+		 * XXX: Since there's no state sharing IFP (so far all
+		 * that's happened is "IKETCP" has been read), convert
+		 * errors into IFACE_READ_ABORT.  The caller (the
+		 * low-level event handler) will then delete IFP.
+		 */
+
+		dbg_iketcp(ifp, "reading first packet from socket %d", ifp->fd);
+		enum iface_read_status status = read_raw_iketcp_packet("closing ", ifp,
+								       packet, logger);
+
+		switch (status) {
+		case IFACE_READ_OK:
+			dbg_iketcp(ifp, "socket %d first packet ok; switching to running and freeing timeout",
+				   ifp->fd);
+			event_free(ifp->iketcp_timeout);
+			ifp->iketcp_timeout = NULL;
+			ifp->iketcp_state = IKETCP_ENABLED;
+			return IFACE_READ_OK;
+		case IFACE_READ_IGNORE:
+			return IFACE_READ_IGNORE;
+		case IFACE_READ_ABORT:
+		case IFACE_READ_EOF:
+		case IFACE_READ_ERROR:
+			return IFACE_READ_ABORT;
+		}
+		bad_case(status);
+	}
+
+	case IKETCP_ENABLED:
+	{
+		dbg_iketcp(ifp, "reading packet from socket %d", ifp->fd);
+		return read_raw_iketcp_packet("", ifp, packet, logger);
+	}
+
+	case IKETCP_STOPPED:
+	{
+		/*
+		 * XXX: Even though the event handler has been told to
+		 * shut down there may still be events outstanding;
+		 * drain them.
+		 */
+		char bytes[10];
+		ssize_t size = read(ifp->fd, &bytes, sizeof(bytes));
+		if (size < 0) {
+			llog_iketcp(RC_LOG, logger, ifp,
+				    "read to drain socket %d failed "PRI_ERRNO,
+				    ifp->fd, pri_errno(errno));
+		} else {
+			dbg_iketcp(ifp, "drained %zd bytes from socket %d",
+				   size, ifp->fd);
+		}
+		return IFACE_READ_IGNORE;
+	}
+	}
+	/* no default - all cases return - missing case error */
+	bad_case(ifp->iketcp_state);
+}
+
+static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 				   const void *ptr, size_t len,
-				   const ip_endpoint *remote_endpoint UNUSED)
+				   const ip_endpoint *remote_endpoint UNUSED,
+				   struct logger *logger)
 {
 	int flags = 0;
 	if (impair.tcp_use_blocking_write) {
-		libreswan_log("IMPAIR: TCP: socket %d switching off NONBLOCK before write",
-			      ifp->fd);
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "IMPAIR: socket %d: switching off NONBLOCK before write",
+			    ifp->fd);
 		flags = fcntl(ifp->fd, F_GETFL, 0);
 		if (flags == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+			int e = errno;
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "socket %d: fcntl(%d, F_GETFL, 0) failed "PRI_ERRNO,
+				    ifp->fd, ifp->fd, pri_errno(e));
 		}
 		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-			LOG_ERRNO(errno, "TCP: write - fcntl(F_GETFL)");
+			int e = errno;
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "socket %d: fcntl(%d, F_SETFL, 0%o) failed, "PRI_ERRNO,
+				    ifp->fd, ifp->fd, flags, pri_errno(e));
 		}
 	}
 	ssize_t wlen = write(ifp->fd, ptr, len);
-	dbg("TCP: socket %d wrote %zd of %zu bytes", ifp->fd, wlen, len);
+	dbg_iketcp(ifp, "socket %d wrote %zd of %zu bytes", ifp->fd, wlen, len);
 	if (impair.tcp_use_blocking_write && flags >= 0) {
-		libreswan_log("IMPAIR: TCP: socket %d restoring flags 0%o after write",
-			      ifp->fd, flags);
+		llog_iketcp(RC_LOG, logger, ifp,
+			    "IMPAIR: socket %d: restoring flags 0%o after write",
+			    ifp->fd, flags);
 		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
-			LOG_ERRNO(errno, "TCP: fcntl(F_GETFL)");
+			int e = errno;
+			llog_iketcp(RC_LOG_SERIOUS, logger, ifp,
+				    "socket %d: fcntl(%d, F_SETFL, 0%o) failed "PRI_ERRNO,
+				    ifp->fd, ifp->fd, flags, pri_errno(e));
 		}
 	}
 	return wlen;
 }
 
-static void iketcp_cleanup(struct iface_port *ifp)
+static void iketcp_cleanup(struct iface_endpoint *ifp)
 {
-	dbg("TCP: socket %d cleaning up interface", ifp->fd);
+	dbg_iketcp(ifp, "socket %d cleaning up interface", ifp->fd);
 	switch (ifp->iketcp_state) {
-	case IKETCP_RUNNING:
+	case IKETCP_ENABLED:
 		pstats_iketcp_stopped[ifp->iketcp_server]++;
 		break;
 	default:
@@ -158,20 +414,20 @@ static void iketcp_cleanup(struct iface_port *ifp)
 		break;
 	}
 	if (ifp->iketcp_message_listener != NULL) {
-		dbg("TCP: socket %d cleaning up message listener %p",
-		    ifp->fd, ifp->iketcp_message_listener);
+		dbg_iketcp(ifp, "socket %d cleaning up message listener %p",
+			   ifp->fd, ifp->iketcp_message_listener);
 		event_free(ifp->iketcp_message_listener);
 		ifp->iketcp_message_listener = NULL;
 	}
 	if (ifp->tcp_accept_listener != NULL) {
-		dbg("TCP: socket %d cleaning up accept listener %p",
-		    ifp->fd, ifp->tcp_accept_listener);
+		dbg_iketcp(ifp, "socket %d cleaning up accept listener %p",
+			   ifp->fd, ifp->tcp_accept_listener);
 		evconnlistener_free(ifp->tcp_accept_listener);
 		ifp->tcp_accept_listener = NULL;
 	}
 	if (ifp->iketcp_timeout != NULL) {
-		dbg("TCP: socket %d cleaning up timeout %p",
-		    ifp->fd, ifp->iketcp_timeout);
+		dbg_iketcp(ifp, "socket %d cleaning up timeout %p",
+			   ifp->fd, ifp->iketcp_timeout);
 		event_free(ifp->iketcp_timeout);
 		ifp->iketcp_timeout = NULL;
 	}
@@ -181,15 +437,18 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 				  const short unused_event UNUSED,
 				  void *arg UNUSED)
 {
-	struct iface_port *ifp = arg;
-	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
-	log_message(RC_LOG, &logger,
-		    "TCP: socket %d timed out before first message received",
+	struct iface_endpoint *ifp = arg;
+	/* build up the logger using the stack */
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
+	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
+	struct logger *logger = &from_logger;
+	llog_iketcp(RC_LOG, logger, ifp,
+		    "socket %d timed out before first message received",
 		    ifp->fd);
-	free_any_iface_port(&ifp);
+	free_any_iface_endpoint(&ifp);
 }
 
-static void iketcp_listen(struct iface_port *ifp,
+static void iketcp_listen(struct iface_endpoint *ifp,
 			  struct logger *logger)
 {
 	if (ifp->tcp_accept_listener == NULL) {
@@ -198,44 +457,45 @@ static void iketcp_listen(struct iface_port *ifp,
 							      ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
 							      -1, ifp->fd);
 		if (ifp->tcp_accept_listener == NULL) {
-			log_message(RC_LOG, logger,
-				    "TCP: socket %d failed to create IKE-in-TCP listener",
+			llog_iketcp(RC_LOG, logger, ifp,
+				    "failed to create IKE-in-TCP listener for socket %d",
 				    ifp->fd);
 		}
 	}
 }
 
-static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
+static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
+			   struct logger *logger)
 {
 	const struct ip_info *type = address_type(&ifd->id_address);
 	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in %s()", __func__);
+		log_errno(logger, errno, "socket() in %s()", __func__);
 		return -1;
 	}
 
 	int fcntl_flags;
-	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
+	static const int on = true;     /* by-reference parameter; constant, we hope */
 
 	/* Set socket Nonblocking */
 	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
 		if (!(fcntl_flags & O_NONBLOCK)) {
 			fcntl_flags |= O_NONBLOCK;
 			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
-				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+				log_errno(logger, errno, "fcntl(,, O_NONBLOCK) in create_socket()");
 			}
 		}
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
+		log_errno(logger, errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
 		close(fd);
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in create_socket()");
+		log_errno(logger, errno, "setsockopt SO_REUSEADDR in create_socket()");
 		close(fd);
 		return -1;
 	}
@@ -244,7 +504,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (const void *)&so_prio,
 		       sizeof(so_prio)) < 0) {
-		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in %s()", __func__);
+		log_errno(logger, errno, "setsockopt(SO_PRIORITY) in %s()", __func__);
 		/* non-fatal */
 	}
 #endif
@@ -263,11 +523,11 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 #endif
 		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in %s()", __func__);
+			log_errno(logger, errno, "setsockopt(SO_RCVBUFFORCE) in %s()", __func__);
 		}
 		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in %s()", __func__);
+			log_errno(logger, errno, "setsockopt(SO_SNDBUFFORCE) in %s()", __func__);
 		}
 	}
 
@@ -275,7 +535,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
+			log_errno(logger, errno, "setsockopt IP_RECVERR in create_socket()");
 			close(fd);
 			return -1;
 		}
@@ -292,7 +552,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 	if (addrtypeof(&ifd->id_address) == AF_INET6 &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
+		log_errno(logger, errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
 		close(fd);
 		return -1;
 	}
@@ -306,7 +566,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 	 * 4500 IPv6 port 500
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd)) {
+	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd, logger)) {
 		close(fd);
 		return -1;
 	}
@@ -316,12 +576,13 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 	 * Old code seemed to assume that it should be reset to pluto_port.
 	 * But only on successful bind.  Seems wrong or unnecessary.
 	 */
-	ip_endpoint if_endpoint = endpoint3(&ip_protocol_tcp,
-					    &ifd->id_address, port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(&if_endpoint);
+	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
+								      &ip_protocol_tcp,
+								      port);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		endpoint_buf b;
-		LOG_ERRNO(errno, "bind() for %s %s in process_raw_ifaces()",
+		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
 			  ifd->id_rname,
 			  str_endpoint(&if_endpoint, &b));
 		close(fd);
@@ -331,13 +592,13 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 #if defined(HAVE_UDPFROMTO)
 	/* we are going to use udpfromto.c, so initialize it */
 	if (udpfromto_init(fd) == -1) {
-		LOG_ERRNO(errno, "udpfromto_init() returned an error - ignored");
+		log_errno(logger, errno, "udpfromto_init() returned an error - ignored");
 	}
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
 	if (kernel_ops->exceptsocket != NULL) {
-		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
 			close(fd);
 			return -1;
 		}
@@ -346,10 +607,11 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port)
 	return fd;
 }
 
-static int iketcp_bind_iface_port(struct iface_dev *ifd, ip_port port,
-						 bool unused_esp_encapsulation_enabled UNUSED)
+static int iketcp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				      bool unused_esp_encapsulation_enabled UNUSED,
+				      struct logger *logger)
 {
-	return bind_tcp_socket(ifd, port);
+	return bind_tcp_socket(ifd, port, logger);
 }
 
 const struct iface_io iketcp_iface_io = {
@@ -359,200 +621,8 @@ const struct iface_io iketcp_iface_io = {
 	.write_packet = iketcp_write_packet,
 	.cleanup = iketcp_cleanup,
 	.listen = iketcp_listen,
-	.bind_iface_port = iketcp_bind_iface_port,
+	.bind_iface_endpoint = iketcp_bind_iface_endpoint,
 };
-
-static void iketcp_message_listener_cb(evutil_socket_t unused_fd UNUSED,
-				       const short unused_event UNUSED,
-				       void *arg)
-{
-	struct iface_port *ifp = arg;
-	struct logger logger = FROM_LOGGER(&ifp->iketcp_remote_endpoint);
-
-	switch (ifp->iketcp_state) {
-
-	case IKETCP_OPEN:
-		dbg("TCP: OPEN: socket %d reading IKETCP prefix", ifp->fd);
-		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
-		uint8_t buf[sizeof(iketcp)];
-
-		ssize_t len = read(ifp->fd, buf, sizeof(buf));
-		if (len < 0) {
-			/* too strict? */
-			int e = errno;
-			log_message(RC_LOG, &logger,
-				    "TCP: problem reading IKETCP prefix from socket %d "PRI_ERRNO,
-				    ifp->fd, pri_errno(e));
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_port(&ifp);
-			return;
-		}
-
-		if (len != sizeof(buf)) {
-			log_message(RC_LOG, &logger,
-				    "TCP: problem reading IKETCP prefix from socket %d - returned %zd bytes but expecting %zu; closing socket",
-				    ifp->fd, len, sizeof(buf));
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_port(&ifp);
-			return;
-		}
-
-		dbg("TCP: OPEN: socket %d verifying IKETCP prefix", ifp->fd);
-		if (!memeq(buf, iketcp, len)) {
-			/* discard this tcp connection */
-			log_message(RC_LOG, &logger,
-				    "TCP: did not receive the IKE-in-TCP stream prefix ; closing socket");
-			/*
-			 * XXX: Since this is the first attempt at
-			 * reading the socket, there isn't a state
-			 * that could be sharing IFP.
-			 */
-			free_any_iface_port(&ifp);
-			return;
-		}
-
-		/*
-		 * Tell the kernel to load up the ESPINTCP Upper Layer
-		 * Protocol.
-		 *
-		 * From this point on all writes are auto-wrapped in
-		 * their length and reads are auto-blocked.
-		 */
-		if (impair.tcp_skip_setsockopt_espintcp) {
-			log_message(RC_LOG, &logger, "IMPAIR: TCP: skipping setsockopt(ESPINTCP)");
-		} else {
-			dbg("TCP: OPEN: socket %d enabling ESPINTCP", ifp->fd);
-			if (setsockopt(ifp->fd, IPPROTO_TCP, TCP_ULP,
-				      "espintcp", sizeof("espintcp"))) {
-				int e = errno;
-				log_message(RC_LOG, &logger,
-					    "TCP: setsockopt(%d, SOL_TCP, TCP_ULP, \"espintcp\") failed; closing socket "PRI_ERRNO,
-					    ifp->fd, pri_errno(e));
-				/*
-				 * XXX: Since this is the first
-				 * attempt at reading the socket,
-				 * there isn't a state that could be
-				 * sharing IFP.
-				 */
-				free_any_iface_port(&ifp);
-				return;
-			}
-		}
-
-		/*
-		 * TCP: Should hack the callback to the non-IKETCP
-		 * version, but this is easier - it seems changing the
-		 * event handler while in the event handler isn't
-		 * allowed.
-		 */
-		ifp->iketcp_state = IKETCP_PREFIXED;
-		return;
-
-	case IKETCP_PREFIXED:
-		dbg("TCP: PREFIXED: socket %d trying to read first packet", ifp->fd);
-		/* received the first packet; stop the timeout */
-		switch (handle_packet_cb(ifp)) {
-		case IFACE_OK:
-			dbg("TCP: PREFIXED: socket %d first packet ok; switching to running and freeing timeout",
-			    ifp->fd);
-			event_free(ifp->iketcp_timeout);
-			ifp->iketcp_timeout = NULL;
-			ifp->iketcp_state = IKETCP_RUNNING;
-			return;
-			break;
-		case IFACE_IGNORE:
-			dbg("TCP: PREFIXED: socket %d first packet got try-again", ifp->fd);
-			return;
-		case IFACE_EOF:
-		case IFACE_FATAL:
-			/* already logged */
-			/*
-			 * XXX: Since the first packet couldn't be
-			 * read, no state was created so there's no
-			 * problem with state and event sharing IFP.
-			 */
-			free_any_iface_port(&ifp);
-			return;
-		}
-		bad_case(0);
-
-	case IKETCP_RUNNING:
-	{
-		/*
-		 * XXX: Both the state machine and this event handler
-		 * are sharing EVP.  If the read by handle_packet_cb()
-		 * is successful(IFACE_OK) then the message will be
-		 * dispatched to the state code and that (as in seen
-		 * in the wild) cal call delete_state() which will
-		 * delete IFP.
-		 */
-		int fd = ifp->fd; /* save FD for logging */
-		dbg("TCP: RUNNING: socket %d calling handle packet", fd);
-		switch (handle_packet_cb(ifp)) {
-		case IFACE_OK:
-			/* XXX: IFP is unsafe */
-			dbg("TCP: RUNNING: socket %d packet read ok; not trusting IFP", fd);
-			return;
-		case IFACE_IGNORE:
-			dbg("TCP: RUNNING: socket %d packet got try-again", fd);
-			return;
-		case IFACE_EOF:
-		case IFACE_FATAL:
-			/* already logged */
-			/*
-			 * XXX: IFP is safe - the read failed, which
-			 * means that the state code was never called.
-			 *
-			 *
-			 * Shutdown the event handler, but leave the
-			 * rest of EVP alone.  The state, when it is
-			 * deleted, will clean up EVP.
-			 *
-			 * According to the libevent2 book: It is safe
-			 * to call event_free() on an event that is
-			 * pending or active: doing so makes the event
-			 * non-pending and inactive before
-			 * deallocating it.
-			 */
-			event_free(ifp->iketcp_message_listener);
-			ifp->iketcp_message_listener = NULL;
-			ifp->iketcp_state = IKETCP_STOPPED;
-			return;
-		}
-		bad_case(0);
-	}
-
-	case IKETCP_STOPPED:
-	{
-		/*
-		 * XXX: Even though the event handler has been told to
-		 * shut down there may still be events outstanding;
-		 * drain them.
-		 */
-		char bytes[10];
-		ssize_t size = read(ifp->fd, &bytes, sizeof(bytes));
-		if (size < 0) {
-			log_message(RC_LOG, &logger,
-				    "TCP: STOPPING: read to drain socket %d failed "PRI_ERRNO,
-				    ifp->fd, pri_errno(errno));
-		} else {
-			dbg("TCP: STOPPING: socket %d drained %zd bytes",
-			    ifp->fd, size);
-		}
-		return;
-	}
-	}
-	/* no default - all cases return - missing case error */
-	bad_case(ifp->iketcp_state);
-}
 
 /*
  * Open a TCP socket connected to st_remote_endpoint.  Since this end
@@ -564,7 +634,7 @@ stf_status create_tcp_interface(struct state *st)
 	dbg("TCP: opening socket");
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		LOG_ERRNO(errno, "TCP: socket() failed");
+		log_errno(st->st_logger, errno, "TCP: socket() failed");
 		return STF_FATAL;
 	}
 
@@ -578,9 +648,10 @@ stf_status create_tcp_interface(struct state *st)
 	 */
 
 	dbg("TCP: socket %d connecting to other end", fd);
-	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(&st->st_remote_endpoint);
+	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(st->st_remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
-		LOG_ERRNO(errno, "TCP: connect(%d) failed", fd);
+		log_errno(st->st_logger, errno,
+			  "TCP: connect(%d) failed", fd);
 		close(fd);
 		return STF_FATAL;
 	}
@@ -593,18 +664,22 @@ stf_status create_tcp_interface(struct state *st)
 			.len = sizeof(local_sockaddr.sa),
 		};
 		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
-			LOG_ERRNO(errno, "TCP: failed to get local TCP address from socket %d",
+			log_errno(st->st_logger, errno,
+				  "TCP: failed to get local TCP address from socket %d",
 				  fd);
 			close(fd);
 			return STF_FATAL;
 		}
-		err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &local_sockaddr, &local_endpoint);
+		ip_address local_address;
+		ip_port local_port;
+		err_t err = sockaddr_to_address_port(local_sockaddr, &local_address, &local_port);
 		if (err != NULL) {
-			libreswan_log("TCP: failed to get local TCP address from socket %d, %s",
-				      fd, err);
+			log_state(RC_LOG, st,
+				  "TCP: failed to get local TCP address from socket %d, %s", fd, err);
 			close(fd);
 			return STF_FATAL;
 		}
+		local_endpoint = endpoint_from_address_protocol_port(local_address, &ip_protocol_tcp, local_port);
 	}
 
 	dbg("TCP: socket %d making things non-blocking", fd);
@@ -617,7 +692,8 @@ stf_status create_tcp_interface(struct state *st)
 		dbg("TCP: socket %d sending IKE-in-TCP prefix", fd);
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
-			LOG_ERRNO(errno, "TCP: send of IKE-in-TCP prefix through socket %d", fd);
+			log_errno(st->st_logger, errno,
+				  "TCP: send of IKE-in-TCP prefix through socket %d", fd);
 			close(fd);
 			return STF_FATAL;
 		}
@@ -633,15 +709,39 @@ stf_status create_tcp_interface(struct state *st)
 	if (impair.tcp_skip_setsockopt_espintcp) {
 		log_state(RC_LOG, st, "IMPAIR: TCP: skipping setsockopt(espintcp)");
 	} else {
+		bool v6 = st->st_remote_endpoint.version == 6;
+		struct xfrm_userpolicy_info policy_in = {
+			.action = XFRM_POLICY_ALLOW,
+			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.dir = XFRM_POLICY_IN,
+		};
+		struct xfrm_userpolicy_info policy_out = {
+			.action = XFRM_POLICY_ALLOW,
+			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.dir = XFRM_POLICY_OUT,
+		};
 		dbg("TCP: socket %d enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-			LOG_ERRNO(errno, "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+			log_errno(st->st_logger, errno,
+				  "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+			close(fd);
+			return STF_FATAL;
+		}
+		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
+			log_errno(st->st_logger, errno,
+				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
+			close(fd);
+			return STF_FATAL;
+		}
+		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
+			log_errno(st->st_logger, errno,
+				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
 			close(fd);
 			return STF_FATAL;
 		}
 	}
 
-	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface initiator");
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface initiator");
 	ifp->io = &iketcp_iface_io;
 	ifp->fd = fd;
 	ifp->local_endpoint = local_endpoint;
@@ -650,7 +750,7 @@ stf_status create_tcp_interface(struct state *st)
 	ifp->ip_dev = add_ref(st->st_interface->ip_dev);
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->iketcp_remote_endpoint = st->st_remote_endpoint;
-	ifp->iketcp_state = IKETCP_RUNNING;
+	ifp->iketcp_state = IKETCP_ENABLED;
 	ifp->iketcp_server = false;
 
 #if 0
@@ -659,7 +759,7 @@ stf_status create_tcp_interface(struct state *st)
 #endif
 
 	attach_fd_read_sensor(&ifp->iketcp_message_listener,
-			      fd, iketcp_message_listener_cb, ifp);
+			      fd, process_iface_packet, ifp);
 
 	st->st_interface = ifp; /* TCP: leaks old st_interface? */
 	pstats_iketcp_started[ifp->iketcp_server]++;
@@ -671,40 +771,48 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 			  struct sockaddr *sockaddr, int sockaddr_len,
 			  void *arg)
 {
-	struct iface_port *bind_ifp = arg;
+	struct iface_endpoint *bind_ifp = arg;
+
+	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
+	struct logger *logger = &global_logger;
 
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
 		.sa.sa = *sockaddr,
 	};
-	ip_endpoint tcp_remote_endpoint;
-	err_t err = sockaddr_to_endpoint(&ip_protocol_tcp, &sa, &tcp_remote_endpoint);
-	if (err) {
-		libreswan_log("TCP: invalid remote address: %s", err);
+	ip_address remote_tcp_address;
+	ip_port remote_tcp_port;
+	err_t err = sockaddr_to_address_port(sa, &remote_tcp_address, &remote_tcp_port);
+	if (err != NULL) {
+		llog(RC_LOG, logger, "TCP: invalid remote address: %s", err);
 		close(accepted_fd);
 		return;
 	}
+	ip_endpoint remote_tcp_endpoint = endpoint_from_address_protocol_port(remote_tcp_address,
+									      &ip_protocol_tcp,
+									      remote_tcp_port);
 
-	struct logger logger = FROM_LOGGER(&tcp_remote_endpoint);
-	log_message(RC_LOG, &logger, "TCP: accepting connection");
-
-	struct iface_port *ifp = alloc_thing(struct iface_port, "TCP iface responder");
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface responder");
 	ifp->fd = accepted_fd;
 	ifp->io = &iketcp_iface_io;
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->esp_encapsulation_enabled = true;
 	ifp->float_nat_initiator = false;
 	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
-	ifp->iketcp_remote_endpoint = tcp_remote_endpoint;
+	ifp->iketcp_remote_endpoint = remote_tcp_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;
-	ifp->iketcp_state = IKETCP_OPEN;
+	ifp->iketcp_state = IKETCP_ACCEPTED;
 	ifp->iketcp_server = true;
+
+	struct logger from_logger = logger_from(logger, &remote_tcp_endpoint);
+	logger = &from_logger;
+	llog_iketcp(RC_LOG, logger, ifp, "socket %d: accepted connection", ifp->fd);
 
 	/* set up a timeout to kill the socket when nothing happens */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
 	attach_fd_read_sensor(&ifp->iketcp_message_listener, ifp->fd,
-			      iketcp_message_listener_cb, ifp);
+			      process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
 }

@@ -3,16 +3,16 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  ipsec auto --add float-east
-002 added IKEv1 connection "float-east"
+002 "float-east": added IKEv1 connection
 west #
  ipsec auto --add west-float
-002 added IKEv1 connection "west-float"
+002 "west-float": added IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -23,16 +23,16 @@ west #
 1v1 "west-east" #1: sent Main Mode I2
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: authenticated using RSA with SHA-1
+003 "west-east" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
  arping -c 1 -U -I eth1 192.1.2.66
-ARPING 192.1.2.66 from 192.1.2.66 eth1
+ARPING 192.1.2.66 from 192.1.2.45 eth1
 Sent 1 probes (1 broadcast(s))
 Received 0 response(s)
 west #
@@ -44,7 +44,7 @@ west #
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
+002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up float-east #retransmits
 002 "float-east" #3: initiating IKEv1 Main Mode connection
@@ -52,9 +52,9 @@ west #
 1v1 "float-east" #3: sent Main Mode I2
 1v1 "float-east" #3: sent Main Mode I3
 002 "float-east" #3: Peer ID is ID_FQDN: '@east'
-003 "float-east" #3: authenticated using RSA with SHA-1
+003 "float-east" #3: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "float-east" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "float-east" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "float-east" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "float-east" #4: sent Quick Mode request
 004 "float-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
@@ -68,22 +68,25 @@ west #
 002 shutting down interface eth1 192.1.2.66:500
 002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
-003 ERROR: "float-east" #4: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
-002 unroute-host output: RTNETLINK answers: Network is unreachable
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
+002 no secrets filename matched "/etc/ipsec.d/*.secrets"
 west #
  ipsec auto --up west-float #retransmits
 002 "west-float" #5: initiating IKEv1 Main Mode connection
 1v1 "west-float" #5: sent Main Mode request
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
-031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
+031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  # wait for pending cleanups
@@ -95,7 +98,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -133,7 +136,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

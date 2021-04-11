@@ -1,0 +1,54 @@
+/testing/guestbin/swan-prep
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec auto --add road-eastnet-ikev2
+002 adding UDP interface eth0 192.1.3.209:6666
+002 "road-eastnet-ikev2": added IKEv2 connection
+road #
+ ipsec whack --impair suppress-retransmits
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec auto --up road-eastnet-ikev2
+1v2 "road-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "road-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "road-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "road-eastnet-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+002 "road-eastnet-ikev2" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "road-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+road #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+road #
+ ipsec traffic
+006 #2: "road-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+road #
+ ipsec auto --delete road-eastnet-ikev2
+002 "road-eastnet-ikev2": terminating SAs using this connection
+002 "road-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
+002 "road-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+road #
+ # give east time to re-trigger to us due to auto=keep
+road #
+ # we check in final to see if east cleaned up properly
+road #
+ sleep 20
+road #
+ echo done
+done
+road #
+ # should be empty for east and road
+road #
+ ipsec status |grep STATE_
+road #
+ # there should be no instance connections
+road #
+ ipsec status | grep "conn serial"
+road #
+ 

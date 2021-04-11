@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
@@ -8,7 +8,4 @@ east #
  hostname | grep east > /dev/null && (grep "ADDR ADDR" /tmp/charon.log || echo "good, no double ADDR payload seen")
 good, no double ADDR payload seen
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

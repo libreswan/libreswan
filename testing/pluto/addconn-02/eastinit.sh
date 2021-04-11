@@ -7,6 +7,6 @@ route add default gw 178.62.192.1
 # add many routes
 sh ./ips.sh
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec addconn --verbose test
 echo "initdone"

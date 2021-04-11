@@ -47,13 +47,5 @@ checkenabled: installinitfiles installsysconfig
 		echo "**********************************************************************" ; \
 	fi
 
-# XXX: identical to program.mk?
-
-$(builddir)/%: $(srcdir)/%.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	@echo  'IN' $< '->' $@
-	${TRANSFORM_VARIABLES} < $< | sed -e "s:@SYSVINIT_DEFAULT_START@:${SYSVINIT_DEFAULT_START}:g" > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $@; fi
-
 include ${top_srcdir}/mk/targets.mk
-include ${top_srcdir}/mk/builddir.mk
+include ${top_srcdir}/mk/rules.mk

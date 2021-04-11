@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -12,8 +12,8 @@ west #
 west #
  ipsec whack --impair ike-initiator-spi:0
 west #
- ../../pluto/bin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-002 added IKEv1 connection "aes128"
+ ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
+002 "aes128": added IKEv1 connection
 002 "aes128" #1: initiating IKEv1 Main Mode connection
 1v1 "aes128" #1: sent Main Mode request
 003 "aes128" #1: ignoring informational payload INVALID_COOKIE, msgid=00000000, length=12
@@ -21,7 +21,4 @@ west #
 002 "aes128" #1: IMPAIR: retransmit so deleting SA
 002 "aes128" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

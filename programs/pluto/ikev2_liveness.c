@@ -47,7 +47,7 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 	 * for the other end to identify which child this is for!
 	 *
 	 * XXX: See record 'n'_send for how screwed up all this is:
-	 * need to pass in the CHILD SA so that it's liveness
+	 * need to pass in the CHILD SA so that its liveness
 	 * timestamp (and not the IKE) gets updated.
 	 */
 	pstats_ike_dpd_sent++;
@@ -225,7 +225,7 @@ void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike)
 {
 	const struct state_v2_microcode *transition = &v2_liveness_probe;
 	if (ike->sa.st_state->kind != transition->state) {
-		log_message(RC_LOG, logger,
+		llog(RC_LOG, logger,
 			    "liveness: #%lu unexpectedly in state %s; should be %s",
 			    ike->sa.st_serialno, ike->sa.st_state->short_name,
 			    finite_states[transition->state]->short_name);

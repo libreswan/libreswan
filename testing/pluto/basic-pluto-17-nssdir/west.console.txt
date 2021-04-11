@@ -27,12 +27,7 @@ west #
 cert9.db
 key4.db
 west #
- ipsec newhostkey --nssdir ${IPSEC_TEST_DIR} --output ${IPSEC_TEST_DIR}/test.secrets > /dev/null 2> /dev/null
-west #
- # should show F4 (0x010001) is used for new keys
-west #
- grep "PublicExponent: 0x010001" ${IPSEC_TEST_DIR}/test.secrets
-	PublicExponent: 0x010001
+ ipsec newhostkey --nssdir ${IPSEC_TEST_DIR} > /dev/null 2> /dev/null
 west #
  rm -rf ${IPSEC_TEST_DIR}
 west #

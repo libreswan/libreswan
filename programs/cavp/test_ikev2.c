@@ -20,7 +20,6 @@
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
-#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -33,12 +32,12 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 			    PK11SymKey *g_ir, PK11SymKey *g_ir_new,
 			    const ike_spis_t *spi_ir,
 			    signed long nr_ike_sa_dkm_bytes,
-			    signed long nr_child_sa_dkm_bytes)
+			    signed long nr_child_sa_dkm_bytes,
+			    struct logger *logger)
 {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ni, nr, g_ir,
-						     &progname_logger);
-	print_symkey("SKEYSEED", "sKeySeed", skeyseed, 0);
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ni, nr, g_ir, logger);
+	print_symkey("SKEYSEED", "sKeySeed", skeyseed, 0, logger);
 	if (skeyseed == NULL) {
 		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
 		exit(1);
@@ -48,32 +47,32 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 	PK11SymKey *dkm = ikev2_ike_sa_keymat(prf, skeyseed,
 					      ni, nr, spi_ir,
 					      nr_ike_sa_dkm_bytes,
-					      &progname_logger);
-	print_symkey("DKM", "derivedKeyingMaterial", dkm, nr_ike_sa_dkm_bytes);
+					      logger);
+	print_symkey("DKM", "derivedKeyingMaterial", dkm, nr_ike_sa_dkm_bytes, logger);
 
 	/* prf+(SK_d, Ni | Nr) */
 	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size,
-						 HERE, &progname_logger);
+						 HERE, logger);
 	PK11SymKey *child_sa_dkm = ikev2_child_sa_keymat(prf, SK_d, NULL,
 							 ni, nr, nr_child_sa_dkm_bytes,
-							 &progname_logger);
+							 logger);
 	print_symkey("DKM(Child SA)", "derivedKeyingMaterialChild",
-		     child_sa_dkm, nr_child_sa_dkm_bytes);
+		     child_sa_dkm, nr_child_sa_dkm_bytes, logger);
 
 	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
 	PK11SymKey *child_sa_dkm_dh = ikev2_child_sa_keymat(prf, SK_d,
 							    g_ir_new, ni, nr,
 							    nr_child_sa_dkm_bytes,
-							    &progname_logger);
+							    logger);
 	print_symkey("DKM(Child SA D-H)", "derivedKeyingMaterialDh",
-		     child_sa_dkm_dh, nr_child_sa_dkm_bytes);
+		     child_sa_dkm_dh, nr_child_sa_dkm_bytes, logger);
 
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *skeyseed_rekey = ikev2_ike_sa_rekey_skeyseed(prf, SK_d, g_ir_new,
 								 ni, nr,
-								 &progname_logger);
+								 logger);
 	print_symkey("SKEYSEED(Rekey)", "sKeySeedReKey",
-		     skeyseed_rekey, 0);
+		     skeyseed_rekey, 0, logger);
 	if (skeyseed_rekey == NULL) {
 		print_line("failure in SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
 		exit(1);
@@ -146,13 +145,13 @@ static const struct cavp_entry data_entries[] = {
 	{ .op = NULL }
 };
 
-static void ikev2_run_test(void)
+static void ikev2_run_test(struct logger *logger)
 {
 	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("Ni", NULL, ni, 0);
 	print_chunk("Nr", NULL, nr, 0);
-	print_symkey("g^ir", NULL, g_ir, 0);
-	print_symkey("g^ir (new)", NULL, g_ir_new, 0);
+	print_symkey("g^ir", NULL, g_ir, 0, logger);
+	print_symkey("g^ir (new)", NULL, g_ir_new, 0, logger);
 	print_chunk("SPIi", NULL, spi_i, 0);
 	print_chunk("SPIr", NULL, spi_r, 0);
 
@@ -180,7 +179,8 @@ static void ikev2_run_test(void)
 			nr_ike_sa_dkm_bits / 8,
 			(nr_child_sa_dkm_bits > 0
 			 ? nr_child_sa_dkm_bits
-			 : nr_ike_sa_dkm_bits) / 8);
+			 : nr_ike_sa_dkm_bits) / 8,
+			logger);
 }
 
 const struct cavp test_ikev2 = {

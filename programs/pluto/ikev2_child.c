@@ -8,6 +8,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,7 +44,6 @@
 #include "ike_alg.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
-#include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
@@ -51,8 +51,7 @@
 #include "server.h"
 #include "vendor.h"
 #include "kernel.h"
-#include "virtual.h"	/* needs connections.h */
-#include "hostpair.h"
+#include "host_pair.h"
 #include "addresspool.h"
 #include "rnd.h"
 #include "ip_address.h"
@@ -70,12 +69,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
-	struct connection *c = md->st->st_connection;
 	struct state *cst = &child->sa;	/* child state */
 
 	/* switch to child */
 	pexpect(md->st == &child->sa);
-	c = cst->st_connection;
+	struct connection *c = cst->st_connection;
 
 	if (c->spd.that.has_lease &&
 	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
@@ -105,7 +103,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			if (res != STF_OK)
 				return res;
 		}
-		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
+							 child->sa.st_logger);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    child->sa.st_accepted_esp_or_ah_proposal,
@@ -118,11 +117,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 		pb_stream pb_nr;
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !pbs_out_hunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
+		    !out_hunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);
@@ -143,6 +142,9 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	 * Child SA and mark those on the child state. But this code
 	 * is used in IKE_AUTH as well as CREATE_CHILD_SA, so we end
 	 * up double logging bad payloads on the responder.
+	 *
+	 * XXX: all these notifications have already been decoded and
+	 * can be found in md->pbs[].
 	 */
 	/* Process all NOTIFY payloads */
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
@@ -153,6 +155,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 		case v2N_COOKIE:
 		case v2N_USE_PPK:
+		case v2N_INTERMEDIATE_EXCHANGE_SUPPORTED:
 			dbg("received %s which is not valid for current exchange",
 			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 			break;
@@ -168,17 +171,22 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 			dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 
-			if (!in_struct(&n_ipcomp, &ikev2notify_ipcomp_data_desc, &pbs, NULL)) {
+			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+						 &n_ipcomp, sizeof(n_ipcomp), NULL);
+			if (d != NULL) {
+				log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 
 			if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-				loglog(RC_LOG_SERIOUS, "Unsupported IPCOMP compression method %d",
-					n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
+				log_state(RC_LOG_SERIOUS, &child->sa,
+					  "Unsupported IPCOMP compression method %d",
+					  n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
 				return STF_FATAL;
 			}
 			if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-				loglog(RC_LOG_SERIOUS, "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+				log_state(RC_LOG_SERIOUS, &child->sa,
+					  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 				return STF_FATAL;
 			}
 			if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
@@ -218,9 +226,9 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			dbg("received NO_PPK_AUTH already processed");
 			break;
 		default:
-			libreswan_log("received unsupported NOTIFY %s ",
-				      enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
+			log_state(RC_LOG, &child->sa,
+				  "received unsupported NOTIFY %s ",
+				  enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 		}
 	}
 
@@ -229,13 +237,15 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			/* we should have received transport mode request - and send one */
 			if (!cst->st_seen_use_transport) {
-				libreswan_log("policy dictates Transport Mode, but peer requested Tunnel Mode");
+				log_state(RC_LOG, &child->sa,
+					  "policy dictates Transport Mode, but peer requested Tunnel Mode");
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		} else {
 			if (cst->st_seen_use_transport) {
 				/* RFC allows us to ignore their (wrong) request for transport mode */
-				libreswan_log("policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
+				log_state(RC_LOG, &child->sa,
+					  "policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
 			}
 		}
 
@@ -262,7 +272,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 	if (cst->st_seen_use_transport) {
 		if (c->policy & POLICY_TUNNEL) {
-			libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");
+			log_state(RC_LOG, &child->sa,
+				  "Local policy is tunnel mode - ignoring request for transport mode");
 		} else {
 			dbg("Local policy is transport mode and received USE_TRANSPORT_MODE");
 			if (cst->st_esp.present) {
@@ -280,7 +291,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	} else {
 		/* the peer wants tunnel mode */
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-			loglog(RC_LOG_SERIOUS, "Local policy is transport mode, but peer did not request that");
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "Local policy is transport mode, but peer did not request that");
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
@@ -307,7 +319,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		ike->sa.st_connection->newest_isakmp_sa = ike->sa.st_serialno;
 	} else {
 #ifdef USE_XFRM_INTERFACE
-		if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 			if (add_xfrmi(c, child->sa.st_logger))
 				return STF_FATAL;
 #endif
@@ -327,12 +339,16 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
 {
 	bool responder = (st->st_state->kind != STATE_PARENT_I2);
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
 
 	if (!responder) {
-		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN");
-		append_st_cfg_domain(st, safestr);
+		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
+						ignore, st->st_logger);
+		if (safestr != NULL) {
+			append_st_cfg_domain(st, safestr);
+		}
 	} else {
-		libreswan_log("initiator INTERNAL_DNS_DOMAIN CP ignored");
+		log_state(RC_LOG, st, "initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}
 }
 
@@ -340,23 +356,26 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 			  const struct ip_info *af)
 {
 	struct connection *c = st->st_connection;
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		libreswan_log("ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
-			      af->ip_version);
+		log_state(RC_LOG, st, "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
+			  af->ip_version);
 		return true;
 	}
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_DNS CP payload")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
 	/* i.e. all zeros */
-	if (address_is_any(&ip)) {
+	if (address_is_any(ip)) {
 		address_buf ip_str;
-		libreswan_log("ERROR INTERNAL_IP%d_DNS %s is invalid",
-			      af->ip_version, ipstr(&ip, &ip_str));
+		log_state(RC_LOG, st, "ERROR INTERNAL_IP%d_DNS %s is invalid",
+			  af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
@@ -364,12 +383,15 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	if (!responder) {
 		address_buf ip_buf;
 		const char *ip_str = ipstr(&ip, &ip_buf);
-		libreswan_log("received INTERNAL_IP%d_DNS %s",
-			      af->ip_version, ip_str);
-		append_st_cfg_dns(st, ip_str);
+
+		log_state(RC_LOG, st, "received %sINTERNAL_IP%d_DNS %s",
+			  ignore ? "and ignored " : "",
+			  af->ip_version, ip_str);
+		if (!ignore)
+			append_st_cfg_dns(st, ip_str);
 	} else {
-		libreswan_log("initiator INTERNAL_IP%d_DNS CP ignored",
-			      af->ip_version);
+		log_state(RC_LOG, st, "initiator INTERNAL_IP%d_DNS CP ignored",
+			  af->ip_version);
 	}
 
 	return true;
@@ -381,7 +403,9 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	struct connection *c = st->st_connection;
 
 	ip_address ip;
-	if (!pbs_in_address(&ip, af, cp_a_pbs, "INTERNAL_IP_ADDRESS")) {
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
+	if (d != NULL) {
+		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -390,22 +414,22 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	 * There should be one more byte in the pbs, 17th byte is prefix length.
 	 */
 
-	if (address_is_any(&ip)) {
+	if (address_is_any(ip)) {
 		ipstr_buf ip_str;
-		libreswan_log("ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
-			      af->ip_version, ipstr(&ip, &ip_str));
+		log_state(RC_LOG, st, "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
+			  af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
 	ipstr_buf ip_str;
-	libreswan_log("received INTERNAL_IP%d_ADDRESS %s%s",
-		      af->ip_version, ipstr(&ip, &ip_str),
-		      *seen_an_address ? "; discarded" : "");
+	log_state(RC_LOG, st, "received INTERNAL_IP%d_ADDRESS %s%s",
+		  af->ip_version, ipstr(&ip, &ip_str),
+		  *seen_an_address ? "; discarded" : "");
 
 
 	bool responder = st->st_state->kind != STATE_PARENT_I2;
 	if (responder) {
-		libreswan_log("bogus responder CP ignored");
+		log_state(RC_LOG, st, "bogus responder CP ignored");
 		return true;
 	}
 
@@ -420,24 +444,25 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	if (c->spd.this.cat) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
-		if (sameaddr(&c->spd.this.client.addr, &ip)) {
-			/* The address we received is same as this side
-			 * should we also check the host_srcip */
+		ip_address this_client_prefix = selector_prefix(c->spd.this.client);
+		if (address_eq_address(this_client_prefix, ip)) {
+			/*
+			 * The address we received is same as this
+			 * side should we also check the host_srcip.
+			 */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
 			    st->st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			c->spd.this.client.addr = ip;
-			c->spd.this.client.maskbits = af->mask_cnt;
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
-			c->spd.this.has_cat = TRUE; /* create iptable entry */
+			c->spd.this.client = selector_from_address(ip);
+			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
+			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {
-		endtosubnet(&ip, &c->spd.this.client, HERE);
-		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
+		c->spd.this.client = selector_from_address(ip);
 		/* only set sourceip= value if unset in configuration */
-		if (address_type(&c->spd.this.host_srcip) == NULL ||
-		    isanyaddr(&c->spd.this.host_srcip)) {
+		if (address_is_unset(&c->spd.this.host_srcip) ||
+		    address_is_any(c->spd.this.host_srcip)) {
 			dbg("setting host source IP address to %s",
 			    ipstr(&ip, &ip_str));
 			c->spd.this.host_srcip = ip;
@@ -457,14 +482,16 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 	    st->st_serialno, c->name, c->instance_serial);
 
 	if (st->st_state->kind == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
-		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
-			enum_name(&ikev2_cp_type_names, cp->isacp_type));
+		log_state(RC_LOG_SERIOUS, st,
+			  "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
+			  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 
 	if (st->st_state->kind == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
-		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
-			enum_name(&ikev2_cp_type_names, cp->isacp_type));
+		log_state(RC_LOG_SERIOUS, st,
+			  "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
+			  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 
@@ -473,24 +500,28 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
 
-		if (!in_struct(&cp_a, &ikev2_cp_attribute_desc,
-					attrs, &cp_a_pbs)) {
-			loglog(RC_LOG_SERIOUS, "ERROR malformed CP attribute");
-			return FALSE;
+		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
+					 &cp_a, sizeof(cp_a), &cp_a_pbs);
+		if (d != NULL) {
+			log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+				 "ERROR malformed CP attribute");
+			return false;
 		}
 
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv4_info,
 					  &seen_internal_address)) {
-				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
+				log_state(RC_LOG_SERIOUS, st,
+					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv4_info)) {
-				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_DNS attribute");
+				log_state(RC_LOG_SERIOUS, st,
+					  "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return FALSE;
 			}
 			break;
@@ -498,14 +529,16 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv6_info,
 						 &seen_internal_address)) {
-				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
+				log_state(RC_LOG_SERIOUS, st,
+					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv6_info)) {
-				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_DNS attribute");
+				log_state(RC_LOG_SERIOUS, st,
+					  "ERROR malformed INTERNAL_IP6_DNS attribute");
 				return FALSE;
 			}
 			break;
@@ -515,10 +548,10 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 			break;
 
 		default:
-			libreswan_log("unknown attribute %s length %u",
-				enum_name(&ikev2_cp_attribute_type_names,
-					cp_a.type),
-				cp_a.len);
+			log_state(RC_LOG, st,
+				  "unknown attribute %s length %u",
+				  enum_name(&ikev2_cp_attribute_type_names, cp_a.type),
+				  cp_a.len);
 			break;
 		}
 	}

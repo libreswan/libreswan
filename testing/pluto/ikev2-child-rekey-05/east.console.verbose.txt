@@ -53,7 +53,7 @@ initdone
 000 pluto_version=3.22_538_gd830a1b_ipsec_rekey_child-1, pluto_vendorid=OE-Libreswan-v3.22-538
 000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -128,10 +128,10 @@ initdone
 000 "east":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "east":   our auth:secret, their auth:secret
-000 "east":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "east":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, cat:unset;
 000 "east":   labeled_ipsec:no;
 000 "east":   policy_label:unset;
-000 "east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
+000 "east":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
 000 "east":   retransmit-interval: 15000ms; retransmit-timeout: 60s;
 000 "east":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "east":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+IKE_FRAG_ALLOW+ESN_NO;

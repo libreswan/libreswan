@@ -5,7 +5,7 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
- * Coprright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
 #ifndef _IPSEC_CONFREAD_H_
 #define _IPSEC_CONFREAD_H_
 
+#include <sys/queue.h>		/* for TAILQ_ENTRY() */
+
 #include "ipsecconf/keywords.h"
 
 # define DEFAULT_UPDOWN "ipsec _updown"
@@ -31,6 +33,7 @@
 #include "ip_range.h"
 #include "ip_subnet.h"
 #include "ip_protoport.h"
+#include "ip_cidr.h"
 #include "lswcdefs.h"
 
 struct logger;
@@ -62,17 +65,17 @@ struct starter_end {
 	ip_address sourceip;
 	bool has_client;
 	ip_subnet subnet;
-	ip_subnet vti_ip;
-	ip_subnet ifaceip;
+	ip_cidr vti_ip;
+	ip_cidr ifaceip;
 	char *iface;
 	char *id;
+	char *sec_label;
 	enum keyword_authby authby;
 
 	ip_protoport protoport;
 
-	enum keyword_pubkey rsakey1_type, rsakey2_type;
-	char *rsakey1;
-	char *rsakey2;
+	enum keyword_pubkey rsasigkey_type;
+	char *rsasigkey;
 	bool key_from_DNS_on_demand;
 	char *virt;
 	char *certx;
@@ -103,6 +106,7 @@ struct starter_conn {
 	str_set strings_set;
 	int_set options_set;
 
+	enum ike_version ike_version;
 	lset_t policy;
 	lset_t sighash_policy;
 
@@ -127,7 +131,7 @@ struct starter_conn {
 	char *modecfg_dns;
 	char *modecfg_domains;
 	char *modecfg_banner;
-	char *policy_label;
+	char *sec_label;
 	char *conn_mark_both;
 	char *conn_mark_in;
 	char *conn_mark_out;

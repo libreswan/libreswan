@@ -14,12 +14,12 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # other is loaded in another test case, ikev2-x509-17-multicert-03
 east #
  ipsec auto --add main
-002 added IKEv2 connection "main"
+002 "main": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -29,7 +29,4 @@ east #
  ipsec whack --trafficstatus
 006 #2: "main"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

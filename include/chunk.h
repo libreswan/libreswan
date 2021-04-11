@@ -26,7 +26,7 @@
 #include <stdint.h>	/* uint8_t */
 
 #include "hunk.h"
-#include "lswalloc.h"	/* for freeanychunk() refering to pfree() which can go away */
+#include "lswalloc.h"	/* for freeanychunk() referring to pfree() which can go away */
 
 /*
  * chunk is a simple pointer-and-size abstraction
@@ -43,14 +43,13 @@ typedef struct /*chunk*/ {
 	size_t len;
 } chunk_t;
 
-chunk_t chunk1(char *ptr);
 chunk_t chunk2(void *ptr, size_t len);
 
 /*
  * Convert writeable THING to a writeable CHUNK.  When compiled with
  * GCC (at least) and THING is read-only, a warning will be generated.
  *
- * This works because GCC doesn't like implictly converting a 'const'
+ * This works because GCC doesn't like implicitly converting a 'const'
  * &THING actual parameter to the non-const 'void*' formal parameter.
  * Using an explicit cast (such as in a static initializer) suppresses
  * this warning.
@@ -61,32 +60,50 @@ chunk_t chunk2(void *ptr, size_t len);
 
 chunk_t alloc_chunk(size_t count, const char *name);
 
-/* result is always a WRITEABLE chunk; NULL->NULL */
-#define clone_hunk(HUNK, NAME) ({					\
-			typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-			clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME); \
-		})
+/* result is always a WRITEABLE, hence chunk; NULL->NULL_CHUNK */
 
+chunk_t clone_bytes_as_chunk(const void *first_ptr, size_t first_len,
+			     const char *name);
 
-/* clone(first+second) */
-chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
-
-/* always NUL terminated; NULL is NULL */
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
-#define clone_hunk_as_string(HUNK, NAME)				\
+#define clone_hunk(HUNK, NAME)						\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+		clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME);	\
 	})
 
-/* BYTES==NULL => NULL_CHUNK */
-chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name);
+chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
+				   const void *second_ptr, size_t second_len,
+				   const char *name);
+
+#define clone_hunk_hunk(LHS, RHS, NAME)					\
+	({								\
+		typeof(LHS) lhs_ = LHS; /* evaluate once */		\
+		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
+		clone_bytes_bytes_as_chunk(lhs_.ptr, lhs_.len,		\
+					   rhs_.ptr, rhs_.len,		\
+					   NAME);			\
+	})
+
+/*
+ * replace RHS with the contatenation of LHS+RHS
+ *
+ * These functions have their name first which, while inconsistent
+ * with the other functions does read better.
+ */
+void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs, size_t sizeof_rhs);
+#define append_chunk_hunk(NAME, LHS, RHS)				\
+	({								\
+		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
+		append_chunk_bytes(NAME, LHS, (rhs_).ptr, (rhs_).len);	\
+	})
 
 /*
  * Free contents of chunk (if any) and blat chunk.
  */
 
 void free_chunk_content(chunk_t *chunk); /* blats *CHUNK */
+
+void replace_chunk(chunk_t *dest, chunk_t src);
 
 /*
  * misc ops.

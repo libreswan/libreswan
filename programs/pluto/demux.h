@@ -6,6 +6,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,9 +32,13 @@
 #include "where.h"
 
 struct state;   /* forward declaration of tag */
-struct iface_port;
+struct iface_endpoint;
 
-enum iface_status handle_packet_cb(const struct iface_port *ifp);
+/*
+ * Used by UDP and TCP to inject packets.
+ */
+
+void process_iface_packet(/*evutil_socket_t*/int fd, const short event, void *ifp_arg);
 
 /* State transition function infrastructure
  *
@@ -110,6 +115,8 @@ enum v2_pbs {
 	PBS_v2N_INVALID_KE_PAYLOAD,
 	PBS_v2N_INVALID_MAJOR_VERSION,
 	PBS_v2N_TS_UNACCEPTABLE,
+	PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+	PBS_v2N_UPDATE_SA_ADDRESSES,
 
 	PBS_v2_ROOF,
 };
@@ -128,11 +135,10 @@ enum v1_pbs {
 struct msg_digest {
 	refcnt_t refcnt;
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
-	const struct iface_port *iface;		/* interface on which message arrived */
+	const struct iface_endpoint *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
-	enum state_kind v1_from_state;		/* (v1) state we started in */
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
@@ -219,20 +225,21 @@ struct msg_digest {
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
 enum message_role v2_msg_role(const struct msg_digest *md);
 
-extern struct msg_digest *alloc_md(const struct iface_port *ifp,
+extern struct msg_digest *alloc_md(const struct iface_endpoint *ifp,
 				   const ip_endpoint *sender,
 				   where_t where);
 struct msg_digest *md_addref(struct msg_digest *md, where_t where);
 void md_delref(struct msg_digest **mdp, where_t where);
 
 /* only the buffer */
-struct msg_digest *clone_raw_md(struct msg_digest *md, const char *name);
+struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
 void schedule_md_event(const char *name, struct msg_digest *md);
 
 extern void process_packet(struct msg_digest **mdp);
 
-extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
+extern char *cisco_stringify(pb_stream *pbs, const char *attr_name,
+			     bool keep, struct logger *logger);
 
 extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
 
@@ -240,5 +247,7 @@ extern void lswlog_msg_digest(struct jambuf *log, const struct msg_digest *md);
  * old stuff.
  */
 #define release_any_md(MDP) md_delref(MDP, HERE)
+
+void free_demux(void);
 
 #endif /* _DEMUX_H */

@@ -1,0 +1,204 @@
+/testing/guestbin/swan-prep --x509 --46
+Preparing X.509 files
+road #
+ dig +short east46.testing.libreswan.org A
+192.1.2.23
+road #
+ dig +short east46.testing.libreswan.org AAAA
+2001:db8:1:2::23
+road #
+ ip -4 route
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+road #
+ ip -6 route
+2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
+fe80::/64 dev eth0 proto kernel metric 256 pref medium
+default via 2001:db8:1:3::254 dev eth0
+road #
+ ../../guestbin/wait-until-alive 2001:db8:0:2::254
+destination 2001:db8:0:2::254 is alive
+road #
+ ../../guestbin/wait-until-alive 2001:db8:1:2::23
+destination 2001:db8:1:2::23 is alive
+road #
+ ip route get to 2001:db8:1:2::23
+2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0 src 2001:db8:1:3::209 metric 1024 pref medium
+road #
+ # change the default route
+road #
+ ip -6 route del default
+road #
+ ../../guestbin/ping-once.sh --down 2001:db8:1:2::23
+connect: Network is unreachable
+../../guestbin/ping-once.sh: unexpected status 2
+road #
+ # add default via link local
+road #
+ ip -6 route add default dev eth0 via fe80::1000:ff:fe32:64ba
+road #
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
+up
+road #
+ ip6tables -A INPUT -i eth0 -s 2001:db8:0:2::254 -p ipv6-icmp -j DROP
+road #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+road #
+ ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
+down
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress-retransmits
+road #
+ # this test need --verbose to see source address selection
+road #
+ ipsec auto --add --verbose road
+opening file: /etc/ipsec.conf
+debugging mode enabled
+end of file /etc/ipsec.conf
+Loading conn road
+	while loading conn 'road' also including 'rw-eastnet-ipv6'
+starter: left is KH_DEFAULTROUTE
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+Loading conn east
+	while loading conn 'east' also including 'rw-eastnet-ipv6'
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+Loading conn rw-eastnet-ipv6
+starter: left is KH_NOTSET
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+starter: right is KH_NOTSET
+loading named conns: road
+seeking_src = 1, seeking_gateway = 1, has_peer = 1
+seeking_src = 0, seeking_gateway = 1, has_dst = 1
+dst 2001:db8:1:3:: via  dev eth0 src  table 254
+dst fe80:: via  dev eth0 src  table 254
+dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
+set nexthop: fe80::1000:ff:fe32:64ba
+dst ::1 via  dev lo src  table 255 (ignored)
+dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
+dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
+dst fe80:: via  dev eth0 src  table 255 (ignored)
+dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
+dst ff00:: via  dev eth0 src  table 255 (ignored)
+seeking_src = 1, seeking_gateway = 0, has_peer = 1
+seeking_src = 1, seeking_gateway = 0, has_dst = 1
+dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:1:3::209 table 254
+set addr: 2001:db8:1:3::209
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
+conn: "road" modecfgdns=<unset>
+conn: "road" modecfgdomains=<unset>
+conn: "road" modecfgbanner=<unset>
+conn: "road" mark=<unset>
+conn: "road" mark-in=<unset>
+conn: "road" mark-out=<unset>
+conn: "road" vti_iface=<unset>
+conn: "road" redirect-to=<unset>
+conn: "road" accept-redirect-to=<unset>
+conn: "road" esp=<unset>
+conn: "road" ike=<unset>
+002 "road": added IKEv2 connection
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec auto --up road
+1v2 "road"[1] 2001:db8:1:2::23 #1: initiating IKEv2 connection
+1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request
+1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "road"[1] 2001:db8:1:2::23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "road"[1] 2001:db8:1:2::23 #1: authenticated using RSA with SHA2_512 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+002 "road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
+002 "road"[1] 2001:db8:1:2::23 #2: negotiated connection [2001:db8:0:3:1::-2001:db8:0:3:1:::0-65535 0] -> [::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:0-65535 0]
+004 "road"[1] 2001:db8:1:2::23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+road #
+ ping6 -n -q -w 5 -c 2 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec trafficstatus
+006 #2: "road"[1] 2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=208, outBytes=208, id='@east.testing.libreswan.org', lease=2001:db8:0:3:1::/128
+road #
+ ../../guestbin/ip-addr-show.sh
+eth0 inet 192.1.3.209/24
+eth0 inet6 2001:db8:1:3::209/64
+lo inet6 2001:db8:0:3:1::/128
+road #
+ ip -6 route
+2001:db8:0:3:1:: dev lo proto kernel metric 256 pref medium
+2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
+2000::/3 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
+fe80::/64 dev eth0 proto kernel metric 256 pref medium
+default via fe80::1000:ff:fe32:64ba dev eth0
+road #
+ ip route get to 2001:db8:1:2::23
+2001:db8:1:2::23 from :: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
+road #
+ #
+road #
+ # addconn need a non existing --ctlsocket
+road #
+ # otherwise this add bring the connection down.
+road #
+ #
+road #
+ # see the source address selection when the tunnel is established
+road #
+ ipsec auto --add --verbose --ctlsocket /run/pluto/foo road
+opening file: /etc/ipsec.conf
+debugging mode enabled
+end of file /etc/ipsec.conf
+Loading conn road
+	while loading conn 'road' also including 'rw-eastnet-ipv6'
+starter: left is KH_DEFAULTROUTE
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+Loading conn east
+	while loading conn 'east' also including 'rw-eastnet-ipv6'
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+Loading conn rw-eastnet-ipv6
+starter: left is KH_NOTSET
+connection's leftaddresspool set to: 2001:db8:0:3:1::/97
+starter: right is KH_NOTSET
+loading named conns: road
+seeking_src = 1, seeking_gateway = 1, has_peer = 1
+seeking_src = 0, seeking_gateway = 1, has_dst = 1
+dst 2001:db8:0:3:1:: via  dev lo src  table 254
+dst 2001:db8:1:3:: via  dev eth0 src  table 254
+dst 2000:: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
+dst fe80:: via  dev eth0 src  table 254
+dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
+set nexthop: fe80::1000:ff:fe32:64ba
+dst ::1 via  dev lo src  table 255 (ignored)
+dst 2001:db8:0:3:1:: via  dev lo src  table 255 (ignored)
+dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
+dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
+dst fe80:: via  dev eth0 src  table 255 (ignored)
+dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
+dst ff00:: via  dev eth0 src  table 255 (ignored)
+seeking_src = 1, seeking_gateway = 0, has_peer = 1
+seeking_src = 1, seeking_gateway = 0, has_dst = 1
+dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
+set addr: 2001:db8:0:3:1::
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
+conn: "road" modecfgdns=<unset>
+conn: "road" modecfgdomains=<unset>
+conn: "road" modecfgbanner=<unset>
+conn: "road" mark=<unset>
+conn: "road" mark-in=<unset>
+conn: "road" mark-out=<unset>
+conn: "road" vti_iface=<unset>
+conn: "road" redirect-to=<unset>
+conn: "road" accept-redirect-to=<unset>
+conn: "road" esp=<unset>
+conn: "road" ike=<unset>
+connect(pluto_ctl) failed: No such file or directory
+road #
+ echo done
+done
+road #
+

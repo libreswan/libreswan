@@ -15,6 +15,7 @@
  * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,6 +62,8 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(INVALID_KE_PAYLOAD);
 	C(INVALID_MAJOR_VERSION);
 	C(TS_UNACCEPTABLE);
+	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
+	C(UPDATE_SA_ADDRESSES);
 	default: return PBS_v2_INVALID;
 	}
 #undef C

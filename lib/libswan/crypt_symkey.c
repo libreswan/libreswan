@@ -36,7 +36,7 @@ void init_crypt_symkey(struct logger *logger)
 		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
 		jam(buf, "NSS: ephemeral slot error: ");
 		jam_nss_error(buf);
-		fatal(logger, "%s", error);
+		fatal(PLUTO_EXIT_FAIL, logger, "%s", error);
 	}
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);
@@ -50,11 +50,11 @@ void release_symkey(const char *prefix, const char *name,
 		    PK11SymKey **key)
 {
 	if (*key != NULL) {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@%p",
 		     prefix, name, *key);
 		PK11_FreeSymKey(*key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: delref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: delref %s-key@NULL",
 		     prefix, name);
 	}
 	*key = NULL;
@@ -64,11 +64,11 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name,
 			     PK11SymKey *key)
 {
 	if (key != NULL) {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@%p",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@%p",
 		     prefix, name, key);
 		PK11_ReferenceSymKey(key);
 	} else {
-		DBGF(DBG_CRYPT, "%s: addref %s-key@NULL",
+		DBGF(DBG_REFCNT, "%s: addref %s-key@NULL",
 		     prefix, name);
 	}
 	return key;
@@ -101,19 +101,19 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key)
 
 void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key)
 {
-	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "%s: ", prefix);
 		jam_symkey(buf, name, key);
 	}
 #if 0
-	if (DBGP(DBG_PRIVATE)) {
+	if (DBGP(DBG_CRYPT)) {
 		if (libreswan_fipsmode()) {
 			DBG_log("%s secured by FIPS", prefix);
 		} else {
-			chunk_t bytes = chunk_from_symkey(prefix, 0, key);
+			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
 			DBG_dump_hunk(NULL, bytes);
-			freeanychunk(bytes);
+			free_chunk_content(&bytes);
 		}
 	}
 #endif
@@ -126,38 +126,38 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			 where_t where, struct logger *logger)
 {
 #define DBG_DERIVE()							\
-	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_nss_ckm(buf, derive);				\
 		jam_string(buf, ":");					\
 	}								\
-	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_string(buf, SPACES"target: ");			\
 		jam_nss_ckm(buf, target_mechanism);			\
 	}								\
 	if (flags != 0) {						\
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam_string(buf, SPACES"flags: ");		\
 			jam_nss_ckf(buf, flags);			\
 		}							\
 	}								\
 	if (key_size != 0) {						\
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam(buf, SPACES "key_size: %d-bytes",		\
 			    key_size);					\
 		}							\
 	}								\
-	LOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
 		jam_string(buf, SPACES"base: ");			\
 		jam_symkey(buf, "base", base_key);			\
 	}								\
 	if (operation != CKA_DERIVE) {					\
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam_string(buf, SPACES"operation: ");		\
 			jam_nss_cka(buf, operation);			\
 		}							\
 	}								\
 	if (params != NULL) {						\
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 			jam(buf, SPACES "params: %d-bytes@%p",		\
 			    params->len, params->data);			\
 		}							\
@@ -181,8 +181,8 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			pexpect_fail(logger, HERE, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 		DBG_DERIVE();
-	} else if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+	} else if (DBGP(DBG_REFCNT)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
 			jam(buf, PRI_WHERE, pri_where(where));
@@ -317,7 +317,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (DBGP(DBG_CRYPT)) {
+	if (DBGP(DBG_REFCNT)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic reference_symkey() */
 		    DBG_log("%s: slot-key@%p: addref sym-key@%p",
@@ -336,7 +336,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 				 &wrapped_key);
 	passert(status == SECSuccess);
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "wrapper: ");
 			jam_nss_secitem(buf, &wrapped_key);
 		}
@@ -463,6 +463,11 @@ void append_symkey_bytes(const char *name,
 			 size_t sizeof_rhs,
 			 struct logger *logger)
 {
+	if (sizeof_rhs == 0) {
+		/* no change required; stops nss crash */
+		return;
+	}
+
 	PK11SymKey *newkey = merge_symkey_bytes(name, *lhs, rhs, sizeof_rhs,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						PK11_GetMechanism(*lhs),
@@ -491,25 +496,13 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 	append_symkey_bytes("result", lhs, &rhs, sizeof(rhs), logger);
 }
 
-void append_chunk_bytes(const char *name, chunk_t *lhs,
-			const void *rhs, size_t sizeof_rhs)
-{
-	size_t len = lhs->len + sizeof_rhs;
-	chunk_t new = alloc_chunk(len, name);
-	memcpy(new.ptr, lhs->ptr, lhs->len);
-	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
-	free_chunk_content(lhs);
-	*lhs = new;
-}
-
 void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
 			 struct logger *logger)
 {
 	chunk_t rhs_chunk = chunk_from_symkey(name, rhs, logger);
-	chunk_t new = clone_chunk_chunk(*lhs, rhs_chunk, name);
+	chunk_t new = clone_hunk_hunk(*lhs, rhs_chunk, name);
 	free_chunk_content(&rhs_chunk);
-	free_chunk_content(lhs);
-	*lhs = new;
+	replace_chunk(lhs, new);
 }
 
 /*
@@ -608,7 +601,7 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
  * target=CKM_CONCATENATE_BASE_AND_DATA it used
  * target=hasher-to-ckm(hasher).
  *
- * hasher-to-ckm maped hasher->common.alg_id to CMK vis: OAKLEY_MD5 ->
+ * hasher-to-ckm mapped hasher->common.alg_id to CMK vis: OAKLEY_MD5 ->
  * CKM_MD5; OAKLEY_SHA1 -> CKM_SHA_1; OAKLEY_SHA2_256 -> CKM_SHA256;
  * OAKLEY_SHA2_384 -> CKM_SHA384; OAKLEY_SHA2_512 -> CKM_SHA512; only
  * in the default case it would set target to 0x80000000????

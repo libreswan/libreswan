@@ -10,6 +10,7 @@
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,7 +50,7 @@ enum ike_version {
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
  * We say maximum for either is 1d
  */
-#define IKE_SA_LIFETIME_DEFAULT secs_per_hour
+#define IKE_SA_LIFETIME_DEFAULT secs_per_hour * 8
 #define IKE_SA_LIFETIME_MAXIMUM secs_per_day
 #define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
 #define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
@@ -111,9 +112,9 @@ enum keyword_xauthby {
 };
 
 enum allow_global_redirect {
-	GLOBAL_REDIRECT_NO,
-	GLOBAL_REDIRECT_YES,
-	GLOBAL_REDIRECT_AUTO,
+	GLOBAL_REDIRECT_NO = 1,
+	GLOBAL_REDIRECT_YES = 2,
+	GLOBAL_REDIRECT_AUTO = 3,
 };
 
 enum keyword_xauthfail {
@@ -130,6 +131,12 @@ enum keyword_xauthfail {
 enum keyword_ocsp_method {
 	OCSP_METHOD_GET = 0, /* really GET plus POST - see NSS code */
 	OCSP_METHOD_POST = 1, /* only POST */
+};
+
+enum global_ikev1_policy {
+	GLOBAL_IKEv1_ACCEPT = 0,
+	GLOBAL_IKEv1_REJECT = 1,
+	GLOBAL_IKEv1_DROP = 2,
 };
 
 /* corresponding name table is sd_action_names */
@@ -355,9 +362,6 @@ typedef enum {
 
 #define PPK_ID_MAXLEN 64 /* fairly arbitrary */
 
-/* could overflow size uint32_t */
-#define IPV6_MIN_POOL_PREFIX_LEN 96
-
 /*
  * debugging settings: a set of selections for reporting These would
  * be more naturally situated in log.h, but they are shared with
@@ -382,6 +386,7 @@ enum {
 
 	/* below are also enabled by debug=all */
 	DBG_CPU_USAGE_IX,
+	DBG_REFCNT_IX,
 
 	/* below are excluded from debug=base */
 	DBG_TMI_IX,
@@ -401,7 +406,8 @@ enum {
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
 #define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
-#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE)
+#define DBG_REFCNT	LELEM(DBG_REFCNT_IX)
+#define DBG_ALL         (DBG_BASE | DBG_CPU_USAGE | DBG_REFCNT)
 
 /* singleton sets: must be kept in sync with the items! */
 
@@ -453,6 +459,7 @@ enum state_kind {
 
 	/* IKE states */
 
+#ifdef USE_IKEv1
 	STATE_IKEv1_FLOOR,
 
 	STATE_MAIN_R0 = STATE_IKEv1_FLOOR,
@@ -490,8 +497,8 @@ enum state_kind {
 
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
-
 	STATE_IKEv1_ROOF,	/* not a state! */
+#endif
 
 	/*
 	 * IKEv2 states.
@@ -547,14 +554,14 @@ enum state_kind {
 #define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
 /*
- * From whos perspective is the operation being performed.
+ * Perspective from which the operation is being performed.
  *
  * For instance, is the hash being computed from the LOCAL or REMOTE
  * perspective?
  */
 
 enum perspective {
-	NO_PERSPECTIVE,
+	NO_PERSPECTIVE,	/* invalid */
 	LOCAL_PERSPECTIVE,
 	REMOTE_PERSPECTIVE,
 };
@@ -566,7 +573,7 @@ extern enum_names perspective_names;
  * (to a request) as determined by the IKEv2 "R (Response)" flag.
  *
  * Since either end can initiate a request either end can set the
- * R(Repsonse) flag.
+ * R(Response) flag.
  *
  * During a CHILD_SA exchange it is the request initiator (receives
  * the MESSAGE_RESPONSE) and request responder (receives the
@@ -604,12 +611,11 @@ extern struct keywords message_role_names;
 enum sa_role {
 	SA_INITIATOR = 1,
 	SA_RESPONDER = 2,
-#define SA_ROLE_ROOF 3
 };
 
 extern struct keywords sa_role_names;
 
-
+#ifdef USE_IKEv1
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				  LELEM(STATE_MAIN_I2) | \
 				  LELEM(STATE_MAIN_I3) | \
@@ -621,13 +627,13 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_MODE_CFG_I1))
 
 
-#define IS_PHASE1_INIT(s) ((LELEM(s->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
+#define IS_PHASE1_INIT(ST) ((LELEM((ST)->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
-#define IS_PHASE1(s) (STATE_MAIN_R0 <= (s) && (s) <= STATE_AGGR_R2)
+#define IS_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
 
-#define IS_PHASE15(s) (STATE_XAUTH_R0 <= (s) && (s) <= STATE_XAUTH_I1)
+#define IS_PHASE15(ST) (STATE_XAUTH_R0 <= (ST) && (ST) <= STATE_XAUTH_I1)
 
-#define IS_QUICK(s) (STATE_QUICK_R0 <= (s) && (s) <= STATE_QUICK_R2)
+#define IS_QUICK(ST) (STATE_QUICK_R0 <= (ST) && (ST) <= STATE_QUICK_R2)
 
 #define ISAKMP_ENCRYPTED_STATES  (LRANGE(STATE_MAIN_R2, STATE_MAIN_I4) | \
 				  LRANGE(STATE_AGGR_R1, STATE_AGGR_R2) | \
@@ -635,17 +641,19 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_INFO_PROTECTED) | \
 				  LRANGE(STATE_XAUTH_R0, STATE_XAUTH_I1))
 
-#define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
+#define IS_ISAKMP_ENCRYPTED(ST) ((LELEM(ST) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s->kind) && \
-				    STATE_AGGR_R0 != (s->kind) && \
-				    STATE_AGGR_I1 != (s->kind))
+#define IS_ISAKMP_AUTHENTICATED(ST) (STATE_MAIN_R3 <= ((ST)->kind) && \
+				     STATE_AGGR_R0 != ((ST)->kind) && \
+				     STATE_AGGR_I1 != ((ST)->kind))
+#endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
 				       LELEM(STATE_PARENT_I1) |	\
 				       LELEM(STATE_PARENT_I2))
 
+#ifdef USE_IKEv1
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
 				       LELEM(STATE_AGGR_I2) | \
@@ -659,35 +667,49 @@ extern struct keywords sa_role_names;
 				       LELEM(STATE_XAUTH_I0) | \
 				       LELEM(STATE_XAUTH_I1) | \
 				       LELEM(STATE_V2_ESTABLISHED_IKE_SA))
+#else
+#define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
+#endif
 
-#define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
-#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) | \
-				LELEM(STATE_V2_NEW_CHILD_I0) | \
-				LELEM(STATE_V2_NEW_CHILD_R0) | \
-	/* due to a quirk in initiator duplication next one is also needed */ \
+#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
+				LELEM(STATE_V2_NEW_CHILD_I0) |		\
+				LELEM(STATE_V2_NEW_CHILD_R0) |		\
+				/* due to a quirk in initiator duplication next one is also needed */ \
 				LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
-#define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) &&			\
-				    ((s->st_state->kind) == STATE_QUICK_I2 || \
-				     (s->st_state->kind) == STATE_QUICK_R1 || \
-				     (s->st_state->kind) == STATE_QUICK_R2 || \
-				     (s->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
+#ifdef USE_IKEv1
+#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
+				     (((ST)->st_state->kind) == STATE_QUICK_I2 || \
+				      ((ST)->st_state->kind) == STATE_QUICK_R1 || \
+				      ((ST)->st_state->kind) == STATE_QUICK_R2 || \
+				      ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA))
+#else
+#define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
+				     ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
+#endif
 
-#define IS_MODE_CFG_ESTABLISHED(s) ((s->kind) == STATE_MODE_CFG_R2)
+#define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
 /* Only relevant to IKEv2 */
 
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
-#define IS_V2_ESTABLISHED(s) ((s->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
-			      (s->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
+#define IS_V2_ESTABLISHED(ST) (((ST)->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
+			       ((ST)->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 
+#ifdef USE_IKEv1
 #define IS_IKE_SA_ESTABLISHED(ST) \
 	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
 		(IS_PARENT_SA_ESTABLISHED(ST) && \
 		 ((ST)->st_clonedfrom == SOS_NOBODY)))
+#else
+#define IS_IKE_SA_ESTABLISHED(ST) \
+		(IS_PARENT_SA_ESTABLISHED(ST) && \
+		 ((ST)->st_clonedfrom == SOS_NOBODY))
+#endif
 
 /*
  * ??? Issue here is that our child SA appears as a
@@ -698,8 +720,8 @@ extern struct keywords sa_role_names;
 	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA && \
 	 IS_CHILD_SA(ST))
 
-#define IS_PARENT_SA_ESTABLISHED(st) (((st)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
-				      !IS_CHILD_SA(st))
+#define IS_PARENT_SA_ESTABLISHED(ST) (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
+				      !IS_CHILD_SA(ST))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
@@ -791,15 +813,21 @@ enum tcp_options {
        IKE_TCP_FALLBACK = 3,
 };
 
-/* Policies for establishing an SA
+/*
+ * Policies for establishing an SA
  *
- * These are used to specify attributes (eg. encryption) and techniques
- * (eg PFS) for an SA.
- * Note: certain CD_ definitions in whack.c parallel these -- keep them
- * in sync!
+ * These are used to specify attributes (eg. encryption) and
+ * techniques (eg PFS) for an SA.
+ *
+ * Note: certain CD_ definitions in whack.c parallel these -- keep
+ * them in sync!
  */
 
-extern const char *prettypolicy(lset_t policy);
+typedef struct {
+	char buf[512];/*arbitrary*/
+} policy_buf;
+const char *str_policy(lset_t policy, policy_buf *buf);
+size_t jam_policy(struct jambuf *buf, lset_t policy);
 
 /*
  * ISAKMP policy elements.
@@ -888,14 +916,6 @@ enum sa_policy_bits {
 	POLICY_AGGRESSIVE_IX,	/* do we do aggressive mode? */
 	POLICY_OVERLAPIP_IX,	/* can two conns that have subnet=vhost: declare the same IP? */
 
-	/*
-	 * this is mapped by parser's ikev2={four_state}. It is a bit richer
-	 * in that we can actually turn off everything, but it expands more
-	 * sensibly to an IKEv3 and other methods.
-	 */
-	POLICY_IKEV1_ALLOW_IX,	/* !accept IKEv1?  0x0100 0000 */
-	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
-
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 	POLICY_IKEV2_PAM_AUTHORIZE_IX,
 	POLICY_SEND_REDIRECT_ALWAYS_IX,		/* next three policies are for RFC 5685 */
@@ -913,6 +933,8 @@ enum sa_policy_bits {
 	POLICY_PPK_INSIST_IX,
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
+	POLICY_INTERMEDIATE_IX, /* allow Intermediate Exchange */
+	POLICY_IGNORE_PEER_DNS_IX, /* install obtained DNS servers locally */
 	POLICY_RSASIG_v1_5_IX,
 #define POLICY_IX_LAST	POLICY_RSASIG_v1_5_IX
 };
@@ -949,8 +971,6 @@ enum sa_policy_bits {
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
 #define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
 #define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
-#define POLICY_IKEV1_ALLOW	LELEM(POLICY_IKEV1_ALLOW_IX)	/* !accept IKEv1?  0x0100 0000 */
-#define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 #define POLICY_IKEV2_PAM_AUTHORIZE	LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
 #define POLICY_SEND_REDIRECT_ALWAYS	LELEM(POLICY_SEND_REDIRECT_ALWAYS_IX)
@@ -964,7 +984,19 @@ enum sa_policy_bits {
 #define POLICY_PPK_INSIST	LELEM(POLICY_PPK_INSIST_IX)
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+#define POLICY_INTERMEDIATE	LELEM(POLICY_INTERMEDIATE_IX) /* allow Intermediate Exchange */
+#define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
 #define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
+
+/*
+ * XXX: Danger!
+ *
+ * As well as IKEv2_HASH_ALGORITHM_* and the the lset_t constants
+ * NEGOTIATE_AUTH_HASH_*, pluto defines the enum POL_SIGHASH_*_IX and
+ * lset_t constants POL_SIGHHASH_* using different values.  Ulgh.
+ *
+ * sighash_policy_bit_names is for the _latter.
+ */
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */
@@ -977,6 +1009,9 @@ enum sighash_policy_bits {
 	POL_SIGHASH_SHA2_384_IX,
 	POL_SIGHASH_SHA2_512_IX,
 };
+
+extern const struct enum_names sighash_policy_bit_names;
+
 #define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
 #define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
 #define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
@@ -1055,6 +1090,12 @@ enum pluto_exit_code {
 	PLUTO_EXIT_SECCOMP_FAIL = 8,
 	PLUTO_EXIT_UNBOUND_FAIL = 9,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
+	PLUTO_EXIT_SELINUX_FAIL = 11,
+	PLUTO_EXIT_LEAVE_STATE = 12, /* leave kernel state and routes */
+	/**/
+	PLUTO_EXIT_GIT_BISECT_CAN_NOT_TEST = 125,
+	PLUTO_EXIT_SHELL_COMMAND_NOT_FOUND = 126,
+	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE = 127,
 };
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
@@ -1076,7 +1117,7 @@ extern void init_pluto_constants(void);
 #define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 20) - 1u)
 
 /*
- * Maximum data (inluding IKE HDR) allowed in a packet.
+ * Maximum data (including IKE HDR) allowed in a packet.
  *
  * v1 fragmentation is non-IETF magic voodoo we need to consider for interop:
  * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html

@@ -117,9 +117,9 @@ static int cmp_iface(const void *lv, const void *rv)
 		return i;
 	}
 	/* loopback=0 < addr=1 < any=2 < invalid */
-#define SCORE(I) (address_is_loopback(&I->addr) ? 0			\
-		  : address_is_specified(&I->addr) ? 1			\
-		  : address_is_any(&I->addr) ? 2			\
+#define SCORE(I) (address_is_loopback(I->addr) ? 0			\
+		  : address_is_specified(I->addr) ? 1			\
+		  : address_is_any(I->addr) ? 2				\
 		  : 3/*invalid*/)
 	i = SCORE(l) - SCORE(r);
 	if (i != 0) {
@@ -173,7 +173,7 @@ static void sort_ifaces(struct raw_iface **rifaces)
 	pfree(ifaces);
 }
 
-struct raw_iface *find_raw_ifaces6(void)
+struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *
@@ -237,9 +237,9 @@ struct raw_iface *find_raw_ifaces6(void)
 				 xb[0], xb[1], xb[2], xb[3], xb[4], xb[5],
 				 xb[6], xb[7]);
 
-			happy(ttoaddr_num(sb, 0, AF_INET6, &ri.addr));
+			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ri.addr));
 
-			if (address_is_specified(&ri.addr)) {
+			if (address_is_specified(ri.addr)) {
 				dbg("found %s with address %s",
 				    ri.name, sb);
 				ri.next = rifaces;
@@ -248,7 +248,7 @@ struct raw_iface *find_raw_ifaces6(void)
 		}
 		fclose(proc_sock);
 		/*
-		 * Sort the list by IPv6 address in assending order.
+		 * Sort the list by IPv6 address in ascending order.
 		 *
 		 * XXX: The code then inserts these interfaces in
 		 * _reverse_ order (why I don't know) - the loop-back

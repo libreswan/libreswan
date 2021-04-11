@@ -58,11 +58,10 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	tool_init_log(argv[0]);
+	struct logger *logger = tool_init_log(argv[0]);
 
 	int opt;
 	struct starter_config *cfg = NULL;
-	char *confdir = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
@@ -116,22 +115,8 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	/* find config file */
-	if (confdir == NULL)
-		confdir = IPSEC_CONFDIR;
-
-	if (configfile == NULL) {
-		/* ??? see code clone in programs/addconn/addconn.c */
-		configfile = alloc_bytes(strlen(confdir) +
-					 sizeof("/ipsec.conf"),
-					 "conf file");
-
-		/* calculate default value for configfile */
-		strcpy(configfile, confdir);	/* safe: see allocation above */
-		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");	/* safe: see allocation above */
-		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
-	}
+	if (configfile == NULL)
+		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
 
 	if (verbose > 3) {
 		yydebug = 1;
@@ -143,7 +128,7 @@ int main(int argc, char *argv[])
 	starter_use_log(verbose != 0, true, verbose == 0);
 
 	starter_errors_t errl = { NULL };
-	cfg = confread_load(configfile, &errl, NULL, false, &progname_logger);
+	cfg = confread_load(configfile, &errl, NULL, false, logger);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
@@ -167,5 +152,6 @@ int main(int argc, char *argv[])
 
 	confwrite(cfg, stdout, setup, name, verbose);
 	confread_free(cfg);
+	pfreeany(configfile);
 	exit(0);
 }

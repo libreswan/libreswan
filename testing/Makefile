@@ -13,9 +13,9 @@
 # for more details.
 
 SUBDIRS += pluto
-SUBDIRS += check
+SUBDIRS += programs
 
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif
-include $(top_srcdir)/mk/subdirs.mk
+include $(top_srcdir)/mk/targets.mk

@@ -1,9 +1,21 @@
-Basic pluto test (now using XFRM/NETKEY)
+ikev1 test with keyid+rsasigkey+raw key
 
-"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
+This is kind of the converse of ikev2-03-basic-rawrsa-ckaid.
 
-1) west 192.1.2.45 pings east-in/east-eth0/east 192.0.2.254 on eastnet 192.0.2.0/24
-2) west adds an iptable rule to block plaintext from eastnet
-3) west pings 192.0.2.254 again, but pong should be dropped by rule
-4) west initiates connection "westnet-eastnet"; east 192.1.2.23 responds
-5) confirm with ping
+- the NSS db contains west's raw private key
+
+- a connection specifying:
+  -- east/west's IDs
+  -- east/west's RSASIGKEY (i.e., raw signatures)
+  is loaded.
+
+- trying to up the connection fails because the private key can't be
+  found:
+
+| looking connection westnet-eastnet's RSA private key
+| lsw_get_secret() using IDs for @west->@east of kind PKK_RSA
+| concluding with best_match=000 best=(nil) (lineno=-1)
+| connection westnet-eastnet's RSA private key not found
+"westnet-eastnet" #1: unable to locate my private key for RSA Signature
+
+It should try the public key's ckaid instead?

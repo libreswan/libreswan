@@ -1,8 +1,0 @@
-
-getpeercon_server.c written by Paul Moore, licensed as GPLv2
-
-getpeercon_server displays the SElinux networking context (netlabel)
-of an incoming connection. This is used for testing labeled-ipsec.
-
-See testing/pluto/labeled-ipsec-*
-

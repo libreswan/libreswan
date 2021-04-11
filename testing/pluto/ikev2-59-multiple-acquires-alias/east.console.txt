@@ -6,34 +6,34 @@ east #
 east #
  ip addr show dev eth0 | grep 192.0.2.251 || (ip addr add 192.0.2.251/24 dev eth0)
 east #
- ping -c 10000 -I  192.0.2.254  192.0.3.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.2.254  192.0.3.254 2>&1 >/dev/null &
 [x] PID
 east #
- ping -c 10000 -I  192.0.2.251  192.0.3.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.2.251  192.0.3.254 2>&1 >/dev/null &
 [x] PID
 east #
- ping -c 10000 -I  192.0.22.254  192.0.3.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.22.254  192.0.3.254 2>&1 >/dev/null &
 [x] PID
 east #
- ping -c 10000 -I  192.0.22.251  192.0.3.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.22.251  192.0.3.254 2>&1 >/dev/null &
 [x] PID
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --status | grep north-eastnets
 000 "north-eastnets/0x1": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.3.33<192.1.3.33>[@north]===192.0.3.0/24; unrouted; eroute owner: #0
 000 "north-eastnets/0x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "north-eastnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-eastnets/0x1":   our auth:rsasig, their auth:rsasig
-000 "north-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "north-eastnets/0x1":   policy_label:unset;
-000 "north-eastnets/0x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "north-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "north-eastnets/0x1":   sec_label:unset;
+000 "north-eastnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "north-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x1":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -47,12 +47,12 @@ east #
 000 "north-eastnets/0x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "north-eastnets/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-eastnets/0x2":   our auth:rsasig, their auth:rsasig
-000 "north-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "north-eastnets/0x2":   policy_label:unset;
-000 "north-eastnets/0x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "north-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "north-eastnets/0x2":   sec_label:unset;
+000 "north-eastnets/0x2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "north-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -66,7 +66,4 @@ east #
  echo "initdone"
 initdone
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

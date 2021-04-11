@@ -1,0 +1,20 @@
+  <varlistentry>
+  <term><emphasis remap='B'>enable-tcp</emphasis></term>
+  <listitem>
+<para>
+Normally, IKE negotiation and ESP encapsulation happens over UDP. This option enables
+support for IKE and ESP over TCP as per RFC 8229. Acceptable values are 
+<emphasis remap='B'>no</emphasis>(the default), 
+<emphasis remap='B'>yes</emphasis> meaning only TCP will be used, or
+<emphasis remap='B'>fallback</emphasis> meaning that TCP will be attempted only after
+negotiation over UDP failed. Since performance over TCP is much less, and TCP sessions
+are vulnerable to simply RST resets and MITM attacks causing the TCP connection to close,
+this option should really only be used in fallback mode.
+If used in fallback mode, it is recommend to reduce the 
+<emphasis remap='B'>retransmit-timeout</emphasis> from the default 60s to a much shorter
+value such as 10s, so that one does not have to wait a minute for the TCP fallback to be
+attempted. 
+</para>
+  </listitem>
+  </varlistentry>
+

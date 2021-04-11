@@ -4,12 +4,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 road #
  ipsec auto --add x509
-002 added IKEv1 connection "x509"
+002 "x509": added IKEv1 connection
 road #
  echo done
 done
@@ -23,9 +23,9 @@ road #
 1v1 "x509" #1: sent Main Mode I3
 002 "x509" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "x509" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "x509" #1: authenticated using RSA with SHA-1
+003 "x509" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "x509" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "x509" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+IKE_FRAG_FORCE+ESN_NO
+002 "x509" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+IKE_FRAG_FORCE+ESN_NO
 1v1 "x509" #2: sent Quick Mode request
 004 "x509" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 road #
@@ -61,7 +61,4 @@ road #
 | received IKE fragment id '1', number '5'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

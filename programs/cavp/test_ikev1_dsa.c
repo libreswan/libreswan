@@ -20,7 +20,6 @@
 
 #include "ikev1_prf.h"
 #include "crypt_symkey.h"
-#include "lswlog.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -80,14 +79,14 @@ static void ikev1_dsa_print_config(void)
 	config_number("Nr length", nr_length);
 }
 
-static void ikev1_dsa_run_test(void)
+static void ikev1_dsa_run_test(struct logger *logger)
 {
 	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("CKY_I", NULL, cky_i, 0);
 	print_chunk("CKY_R", NULL, cky_r, 0);
 	print_chunk("Ni", NULL, ni, 0);
 	print_chunk("Nr", NULL, nr, 0);
-	print_symkey("g^xy", NULL, g_xy, 0);
+	print_symkey("g^xy", NULL, g_xy, 0, logger);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
 		fprintf(stderr, "WARNING: ignoring test with PRF %s\n", prf_entry->key);
@@ -95,9 +94,8 @@ static void ikev1_dsa_run_test(void)
 		return;
 	}
 	const struct prf_desc *prf = prf_entry->prf;
-	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy,
-						    &progname_logger);
-	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
+	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy, logger);
+	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid, logger);
 	release_symkey(__func__, "skeyid", &skeyid);
 }
 

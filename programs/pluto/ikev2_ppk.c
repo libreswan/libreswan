@@ -29,7 +29,6 @@
 
 #include "ike_alg.h"
 #include "crypt_symkey.h"
-#include "pluto_crypt.h"
 #include "ikev2.h"
 #include "ikev2_ppk.h"
 #include "ike_alg_hash.h"
@@ -52,11 +51,16 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *pbs)
+bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 {
-	u_char type = PPK_ID_FIXED;
-	return out_raw(&type, sizeof(type), pbs, "PPK_ID_FIXED") &&
-		pbs_out_hunk(payl->ppk_id, pbs, "PPK_ID");
+	diag_t d;
+	uint8_t type = PPK_ID_FIXED;
+	d = pbs_out_raw(outs, &type, sizeof(type), "PPK_ID_FIXED");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		return false;
+	}
+	return out_hunk(payl->ppk_id, outs, "PPK_ID");
 }
 
 /*
@@ -81,8 +85,10 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	}
 
 	uint8_t dst[PPK_ID_MAXLEN];
-	if (!pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload", ike->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID data could not be read");
+	diag_t d = pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload");
+	if (d != NULL) {
+		log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+			 "PPK ID data could not be read: ");
 		return false;
 	}
 
@@ -190,11 +196,11 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size, logger);
 	release_symkey(__func__, name, sk);
 	*sk = t;
-	DBG(DBG_PRIVATE, {
+	if (DBGP(DBG_CRYPT)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
 		DBG_dump_hunk(name, chunk_sk);
 		free_chunk_content(&chunk_sk);
-	});
+	}
 }
 
 void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
@@ -205,12 +211,10 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 {
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
 
-	DBG(DBG_CRYPT, {
+	if (DBGP(DBG_CRYPT)) {
 		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
 		DBG_dump_hunk("PPK:", *ppk);
-	});
-
-	DBGF(DBG_PRIVATE, "PPK recalculating SK_d, SK_pi, SK_pr");
+	}
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);
 	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi", logger);

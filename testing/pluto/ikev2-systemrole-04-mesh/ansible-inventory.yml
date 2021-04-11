@@ -1,0 +1,25 @@
+all:
+  hosts:
+    west:
+      ansible_host: 192.1.2.45
+      ansible_user: root
+      ansible_password: swan
+      ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+      cert_name: west
+    east:
+      ansible_host: 192.1.2.23
+      ansible_user: root
+      ansible_password: swan
+      ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+      cert_name: east
+  vars:
+    vpn_connections:
+      - opportunistic: true
+        auth_method: cert
+        policies:
+          - policy: private-or-clear
+            cidr: 192.1.2.0/24
+          - policy: clear
+            cidr: 192.1.2.254/32
+          - policy: private
+            cidr: 10.1.0.0/24

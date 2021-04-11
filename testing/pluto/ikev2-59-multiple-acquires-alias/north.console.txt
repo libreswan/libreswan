@@ -5,36 +5,36 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  echo "initdone"
 initdone
 north #
- ping -c 10000 -I  192.0.3.254  192.0.2.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.3.254  192.0.2.254 2>&1 >/dev/null &
 [x] PID
 north #
- ping -c 10000 -I  192.0.3.254  192.0.2.251 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.3.254  192.0.2.251 2>&1 >/dev/null &
 [x] PID
 north #
- ping -c 10000 -I  192.0.3.254  192.0.22.254 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.3.254  192.0.22.254 2>&1 >/dev/null &
 [x] PID
 north #
- ping -c 10000 -I  192.0.3.254  192.0.22.251 2>&1 >/dev/null &
+ ping -n -q -c 10000 -I  192.0.3.254  192.0.22.251 2>&1 >/dev/null &
 [x] PID
 north #
  ipsec auto --start north-eastnets
-002 added IKEv2 connection "north-eastnets/0x1"
-002 added IKEv2 connection "north-eastnets/0x2"
+002 "north-eastnets/0x1": added IKEv2 connection
+002 "north-eastnets/0x2": added IKEv2 connection
 000 initiating all conns with alias='north-eastnets'
 1v2 "north-eastnets/0x2" #1: initiating IKEv2 connection
 000 "north-eastnets/0x1": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "north-eastnets/0x2"
 1v2 "north-eastnets/0x2" #1: sent IKE_SA_INIT request
+002 "north-eastnets/0x2" #1: switching CHILD #2 to pending connection "north-eastnets/0x1"
 1v2 "north-eastnets/0x2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-002 "north-eastnets/0x1" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "north-eastnets/0x2" #1: authenticated using RSA with SHA2_512
+003 "north-eastnets/0x2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "north-eastnets/0x1" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "north-eastnets/0x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
-1v2 "north-eastnets/0x2" #3: sent IPsec Child req wait response
+1v2 "north-eastnets/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "north-eastnets/0x2" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.22.0-192.0.22.255:0-65535 0]
 004 "north-eastnets/0x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP3072 NATOA=none NATD=none DPD=passive}
 north #
@@ -43,18 +43,18 @@ north #
 000 "north-eastnets/0x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "north-eastnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-eastnets/0x1":   our auth:rsasig, their auth:rsasig
-000 "north-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "north-eastnets/0x1":   policy_label:unset;
-000 "north-eastnets/0x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "north-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "north-eastnets/0x1":   sec_label:unset;
+000 "north-eastnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "north-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x1":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "north-eastnets/0x1":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 000 "north-eastnets/0x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "north-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #2;
+000 "north-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $1;
 000 "north-eastnets/0x1":   aliases: north-eastnets
 000 "north-eastnets/0x1":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "north-eastnets/0x1":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
@@ -63,46 +63,40 @@ north #
 000 "north-eastnets/0x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "north-eastnets/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "north-eastnets/0x2":   our auth:rsasig, their auth:rsasig
-000 "north-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "north-eastnets/0x2":   policy_label:unset;
-000 "north-eastnets/0x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "north-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "north-eastnets/0x2":   sec_label:unset;
+000 "north-eastnets/0x2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "north-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "north-eastnets/0x2":   policy: RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "north-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 000 "north-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "north-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "north-eastnets/0x2":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 000 "north-eastnets/0x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
-000 "north-eastnets/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #3;
+000 "north-eastnets/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #3; conn serial: $2;
 000 "north-eastnets/0x2":   aliases: north-eastnets
 000 "north-eastnets/0x2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "north-eastnets/0x2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "north-eastnets/0x2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
 000 "north-eastnets/0x2":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=MODP3072
 000 #2: "north-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "north-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
+000 #2: "north-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
 000 #1: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
 000 #3: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "north-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 
-000 #4: "north-eastnets/0x2":500 STATE_PARENT_R1 (received v2I1, sent v2R1); EVENT_SO_DISCARD in XXs; idle;
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.2.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ipsec whack --trafficstatus
-006 #2: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='@east'
+006 #2: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=840, outBytes=840, id='@east'
 006 #3: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 north #
  echo done
 done
 north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

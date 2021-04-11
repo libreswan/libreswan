@@ -1,0 +1,29 @@
+[root@openbsdw interop-ikev2-openbsd-02]# iked -dvvvv
+set_policy: could not find pubkey for /etc/iked/pubkeys/fqdn/east
+ikev2 "eastnet-westnet-ikev2" passive tunnel esp inet from 192.0.1.0/24 to 192.0.2.0/24 from 192.1.2.45 to 192.0.2.0/24 from 192.0.1.0/24 to 192.1.2.23 local any peer 192.1.2.23 ikesa enc aes-256,aes-192,aes-128,3des prf hmac-sha2-256,hmac-sha1 auth hmac-sha2-256,hmac-sha1 group curve25519,ecp521,ecp384,ecp256,modp4096,modp3072,modp2048,modp1536,modp1024 childsa enc aes-256,aes-192,aes-128 auth hmac-sha2-256,hmac-sha1 esn,noesn srcid openbsdw dstid east lifetime 10800 bytes 2147483648 psk 0x4142434445464748494a4b4c4d4e4f505152535455565758595a31323334353637383930 tag "IKED"
+set_policy: could not find pubkey for /etc/iked/pubkeys/fqdn/east
+ikev2 "eastnet-westnet-ikev2-ipv6" passive tunnel esp inet from 192.0.1.0/24 to 192.0.2.0/24 from 192.1.2.45 to 192.0.2.0/24 from 192.0.1.0/24 to 192.1.2.23 local any peer 192.1.2.23 ikesa enc aes-256,aes-192,aes-128,3des prf hmac-sha2-256,hmac-sha1 auth hmac-sha2-256,hmac-sha1 group curve25519,ecp521,ecp384,ecp256,modp4096,modp3072,modp2048,modp1536,modp1024 childsa enc aes-256,aes-192,aes-128 auth hmac-sha2-256,hmac-sha1 esn,noesn srcid openbsdw dstid east lifetime 10800 bytes 2147483648 psk 0x4142434445464748494a4b4c4d4e4f505152535455565758595a31323334353637383930 tag "IKED"
+/etc/iked.conf: loaded 2 configuration rules
+ca_privkey_serialize: type RSA_KEY length 1193
+ca_pubkey_serialize: type RSA_KEY length 270
+ca_privkey_to_method: type RSA_KEY method RSA_SIG
+ca_getkey: received private key type RSA_KEY length 1193
+ca_getkey: received public key type RSA_KEY length 270
+ca_dispatch_parent: config reset
+ca_reload: local cert type RSA_KEY
+config_getocsp: ocsp_url none
+ikev2_dispatch_cert: updated local CERTREQ type RSA_KEY length 0
+config_getpolicy: received policy
+config_getpolicy: received policy
+config_getpfkey: received pfkey fd 3
+config_getcompile: compilation done
+config_getsocket: received socket fd 4
+config_getsocket: received socket fd 5
+config_getsocket: received socket fd 6
+config_getsocket: received socket fd 7
+config_getmobike: mobike
+config_getfragmentation: no fragmentation
+config_getnattport: nattport 4500
+
+
+

@@ -18,6 +18,7 @@ look()
          -o -type d -path '$d/BACKUP' -prune \
 	 -o -type d -path "$d/OBJ.*" -prune \
 	 -o -type d -path "$d/linux" -prune \
+	 -o -type d -path "$d/contrib" -prune \
 	 -o -type d -path "$d/testing/pluto/*/*" -prune \
 	 \
 	 -o -type f -path "$d/testing/utils/*" -print \

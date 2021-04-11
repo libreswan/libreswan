@@ -246,21 +246,14 @@ static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
 static ip_address lease_address(const struct ip_pool *pool,
 				const struct lease *lease)
 {
-	/* careful here manipulating raw bits and bytes  */
-	ip_address addr = pool->r.start;
-	chunk_t addr_chunk = address_as_chunk(&addr);
-	/* extract the end */
-	uint32_t addr_n;
-	passert(addr_chunk.len >= sizeof(addr_n));
-	uint8_t *ptr = addr_chunk.ptr; /* cast void */
-	ptr += addr_chunk.len - sizeof(addr_n);
-	memcpy(&addr_n, ptr, sizeof(addr_n));
-	/* new value - overflow? */
-	unsigned i = lease - pool->leases;
-	addr_n = htonl(ntohl(addr_n) + i);
-	/* put it back */
-	memcpy(ptr, &addr_n, sizeof(addr_n));
-	return addr;
+	ip_address address;
+	err_t err = range_offset_to_address(pool->r, lease - pool->leases, &address);
+	if (err != NULL) {
+		/* shouldn't happen!?! */
+		log_pexpect(HERE, "range+offset failed: %s", err);
+		return range_start(pool->r);
+	}
+	return address;
 }
 
 static void DBG_pool(bool verbose, const struct ip_pool *pool,
@@ -366,11 +359,19 @@ static bool can_reuse_lease(const struct connection *c)
 }
 
 /*
- * return the connection's current lease.
+ * If the connection has the lease, return it.
+ *
+ * Assuming that the connection things it has a lease, need to check
+ * that it still does (it may have been stolen by a newer connection
+ * with the same ID).
  */
 static struct lease *connection_lease(struct connection *c)
 {
-	if (!c->spd.that.has_lease) {
+	/*
+	 * No point looking for a lease when the connection doesn't
+	 * think it has one.
+	 */
+	if (!pexpect(c->spd.that.has_lease)) {
 		return NULL;
 	}
 
@@ -378,18 +379,39 @@ static struct lease *connection_lease(struct connection *c)
 	 * "i" is index of client.addr within pool's range.
 	 *
 	 * Using unsigned arithmetic means that if client.addr is less
-	 * than start, i will wrap around to a very large value.
+	 * than start, it will wrap around to a very large value.
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
 	struct ip_pool *pool = c->pool;
-	ip_address cp = subnet_prefix(&c->spd.that.client);
-	uint32_t i = ntohl_address(&cp) - ntohl_address(&pool->r.start);
+	ip_address prefix = selector_prefix(c->spd.that.client);
+	uintmax_t offset;
+	err_t err = address_to_range_offset(pool->r, prefix, &offset);
+	if (err != NULL) {
+		pexpect_fail(c->logger, HERE, "offset of address in range failed: %s", err);
+		return NULL;
+	}
 	passert(pool->nr_leases <= pool->size);
-	passert(i < pool->nr_leases);
-	struct lease *lease = &pool->leases[i];
-	pexpect(co_serial_is_set(lease->assigned_to));
-	pexpect(co_serial_eq(lease->assigned_to, c->serialno));
+	passert(offset < pool->nr_leases);
+	struct lease *lease = &pool->leases[offset];
+
+	/*
+	 * Has the lease been "stolen" by a newer connection with the
+	 * same ID?
+	 */
+	if (co_serial_cmp(lease->assigned_to, >, c->serialno)) {
+		if (DBGP(DBG_BASE)) {
+			DBG_lease(true, pool, lease, "stolen by "PRI_CO, pri_co(lease->assigned_to));
+		}
+		return NULL;
+	}
+	/*
+	 * The lease is still assigned to this connection (if it weren't the
+	 * connection wouldn't have .has_lease).
+	 */
+	if (!pexpect(co_serial_cmp(lease->assigned_to, ==, c->serialno))) {
+		return NULL;
+	}
 	return lease;
 }
 
@@ -408,10 +430,17 @@ static struct lease *connection_lease(struct connection *c)
 
 void free_that_address_lease(struct connection *c)
 {
-	passert(subnet_type(&c->spd.that.client) != NULL);
+	passert(!selector_is_unset(&c->spd.that.client));
+
+	if (!c->spd.that.has_lease) {
+		dbg("connection has no lease");
+		return;
+	}
 
 	struct lease *lease = connection_lease(c);
 	if (lease == NULL) {
+		dbg("connection lost its lease");
+		c->spd.that.has_lease = false;
 		return;
 	}
 
@@ -465,13 +494,23 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 		passert(lease->reusable_name != NULL);
 		if (streq(that_name, lease->reusable_name)) {
 			if (IS_INSERTED(lease, free_entry)) {
+				/* unused */
 				REMOVE(pool, free_list, free_entry, lease);
+				pexpect(co_serial_is_unset(lease->assigned_to));
 				pool->nr_in_use++;
-			}
-			if (DBGP(DBG_BASE)) {
-				connection_buf cb;
-				DBG_lease(false, pool, lease, "reclaimed by "PRI_CONNECTION" using '%s'",
-					  pri_connection(c, &cb), that_name);
+				if (DBGP(DBG_BASE)) {
+					connection_buf cb;
+					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was on free-list",
+						  pri_connection(c, &cb), that_name);
+				}
+			} else {
+				/* still assigned to older connection */
+				pexpect(co_serial_cmp(lease->assigned_to, <, c->serialno));
+				if (DBGP(DBG_BASE)) {
+					connection_buf cb;
+					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was in use by "PRI_CO,
+						  pri_connection(c, &cb), that_name, pri_co(lease->assigned_to));
+				}
 			}
 			return lease;
 		}
@@ -481,9 +520,9 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 
 err_t lease_that_address(struct connection *c, const struct state *st)
 {
-	struct lease *lease = connection_lease(c);
-	if (lease != NULL) {
-		/* already leased */
+	if (c->spd.that.has_lease &&
+	    connection_lease(c) != NULL) {
+		dbg("connection both thinks it has, and really has a lease");
 		return NULL;
 	}
 
@@ -510,12 +549,12 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 		 * connection's previously had a release then it may
 		 * still be the old value.
 		 */
-		subnet_buf b;
+		selector_buf b;
 		connection_buf cb;
 		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s' and old address %s",
 			 reusable ? "reusable" : "one-time",
 			 pri_connection(c, &cb), thatstr,
-			 str_subnet(&c->spd.that.client, &b));
+			 str_selector(&c->spd.that.client, &b));
 	}
 
 	struct lease *new_lease = NULL;
@@ -598,15 +637,18 @@ err_t lease_that_address(struct connection *c, const struct state *st)
          * convert index i in range to an IP_address
 	 *
 	 * XXX: does this update that.client addr as a side effect?
+	 *
+	 * Can't assert that .assigned_to is unset as this connection
+	 * may be in the process of stealing the lease.
 	 */
 	ip_address ia = lease_address(pool, new_lease);
 	c->spd.that.has_lease = true;
 	c->spd.that.has_client = true;
-	c->spd.that.client = selector_from_address(&ia, &unset_protoport);
+	c->spd.that.client = selector_from_address(ia);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {
-		subnet_buf a;
+		selector_buf a;
 		connection_buf cb;
 		DBG_lease(true, pool, new_lease,
 			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.client %s",
@@ -615,7 +657,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 			  pri_connection(c, &cb),
 			  pri_co(new_lease->assigned_to),
 			  thatstr,
-			  str_subnet(&c->spd.that.client, &a));
+			  str_selector(&c->spd.that.client, &a));
 	}
 
 	return NULL;
@@ -683,90 +725,103 @@ void reference_addresspool(struct connection *c)
 
 /*
  * Finds an ip_pool that has exactly matching bounds.
- * If a pool overlaps, an error is logged AND returned
- * *pool is set to the entry found; NULL if none found.
+ *
+ * If a pool overlaps, a diagnostic is returned.  Regardless *POOL is
+ * set to the entry found; NULL if none found.
  */
-err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
+
+diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool)
 {
 	struct ip_pool *h;
 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
-		const ip_range *a = pool_range;
-		const ip_range *b = &h->r;
 
-		int sc = addrcmp(&a->start, &b->start);
-
-		if (sc == 0 && addrcmp(&a->end, &b->end) == 0) {
+		if (range_eq_range(pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
-			break;
-		} else if (sc < 0 ? addrcmp(&a->end, &b->start) < 0 :
-				    addrcmp(&a->start, &b->end) > 0) {
-			/* before or after */
-		} else {
-			/* overlap */
+			return NULL;
+		}
+
+		if (range_overlaps_range(pool_range, h->r)) {
+			/* bad */
 			range_buf prbuf;
 			range_buf hbuf;
-
-			loglog(RC_CLASH,
-				"ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
-			       str_range(pool_range, &prbuf),
-			       str_range(&h->r, &hbuf));
-			return "ERROR: partial overlap of addresspool";
+			return diag("new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
+				    str_range(&pool_range, &prbuf),
+				    str_range(&h->r, &hbuf));
 		}
 	}
 	return NULL;
 }
 
 /*
- * the caller must enforce the following:
- * - Range must not include 0.0.0.0 or ::0
- * - The range must be non-empty
+ * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-struct ip_pool *install_addresspool(const ip_range *pool_range)
+diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 {
-	struct ip_pool **head = &pluto_pools;
-	struct ip_pool *pool = NULL;
-	err_t ugh = find_addresspool(pool_range, &pool);
+	*pool = NULL;
 
-	if (ugh != NULL) {
-		/* some problem: refuse to install bad addresspool */
-		/* ??? Assume diagnostic already logged? */
-	} else if (pool != NULL) {
+	/* can't be empty */
+	uintmax_t pool_size = range_size(pool_range);
+	if (pool_size == 0) {
+		range_buf rb;
+		return diag("address pool %s is empty",
+			    str_range(&pool_range, &rb));
+	}
+
+	if (pool_size >= UINT32_MAX) {
+		/*
+		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
+		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
+		 */
+		pool_size = UINT32_MAX;
+		dbg("WARNING addresspool size overflow truncated to %ju", pool_size);
+	}
+
+	/* can't start at 0 */
+	ip_address start = range_start(pool_range);
+	if (address_is_any(start)) {
+		range_buf rb;
+		return diag("address pool %s starts at address zero",
+			    str_range(&pool_range, &rb));
+	}
+
+	/* can't overlap or duplicate */
+	struct ip_pool **head = &pluto_pools;
+	diag_t d = find_addresspool(pool_range, pool);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (*pool != NULL) {
 		/* re-use existing pool */
 		if (DBGP(DBG_BASE)) {
-			DBG_pool(true, pool, "reusing existing address pool@%p", pool);
+			DBG_pool(true, *pool, "reusing existing address pool@%p", pool);
 		}
-	} else {
-		/* make a new pool */
-		pool = alloc_thing(struct ip_pool, "addresspool entry");
-
-		pool->pool_refcount = 0;
-		pool->r = *pool_range;
-		if (range_size(&pool->r, &pool->size)) {
-			/*
-			 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
-			 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
-			 */
-			dbg("WARNING addresspool size overflow truncated to %u", pool->size);
-		}
-		passert(pool->size > 0);
-
-		pool->nr_in_use = 0;
-		pool->nr_leases = 0;
-		pool->free_list = empty_list;
-		pool->leases = NULL;
-		/* insert */
-		pool->next = *head;
-		*head = pool;
-
-		if (DBGP(DBG_BASE)) {
-			DBG_pool(false, pool, "creating new address pool@%p", pool);
-		}
+		return NULL;
 	}
-	return pool;
+
+	/* make a new pool */
+	struct ip_pool *new_pool = alloc_thing(struct ip_pool, "addresspool entry");
+	new_pool->pool_refcount = 0;
+	new_pool->r = pool_range;
+	new_pool->size = pool_size;
+	new_pool->nr_in_use = 0;
+	new_pool->nr_leases = 0;
+	new_pool->free_list = empty_list;
+	new_pool->leases = NULL;
+
+	/* insert */
+	new_pool->next = *head;
+	*head = new_pool;
+
+	if (DBGP(DBG_BASE)) {
+		DBG_pool(false, new_pool, "creating new address pool@%p", new_pool);
+	}
+	*pool = new_pool;
+	return NULL;
 }
 
 void show_addresspool_status(struct show *s)

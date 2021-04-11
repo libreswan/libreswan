@@ -1,6 +1,5 @@
-# restart ipsec
+# restart ipsec; give OE conns time to load
 ipsec restart
-# give OE conns time to load
-sleep 5
+../../guestbin/wait-until-pluto-started
 # should be empty
 ipsec status |grep STATE_

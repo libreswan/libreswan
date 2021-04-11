@@ -16,6 +16,7 @@
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,7 +46,6 @@
 #include <pk11pub.h>
 #include <x509.h>
 
-#include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
@@ -54,6 +54,7 @@
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
 #include "ip_endpoint.h"
+#include "ip_selector.h"
 #include "crypt_mac.h"
 #include "show.h"
 
@@ -153,49 +154,13 @@ struct ipsec_proto_info {
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	ipsec_spi_t our_spi;
 	uint16_t keymat_len;           /* same for both */
-	u_char *our_keymat;
-	u_char *peer_keymat;
+	uint8_t *our_keymat;
+	uint8_t *peer_keymat;
 	uint64_t our_bytes;
 	uint64_t peer_bytes;
 	monotime_t our_lastused;
 	monotime_t peer_lastused;
 	uint64_t add_time;
-};
-
-struct v1_ike_rfrag {
-	struct v1_ike_rfrag *next;
-	struct msg_digest *md;
-	int index;
-	int last;
-	uint8_t *data;
-	size_t size;
-};
-
-struct v2_incomming_fragment {
-	chunk_t cipher;
-	unsigned int iv;
-};
-
-struct v2_incomming_fragments {
-	unsigned total;
-	unsigned count;
-	/*
-	 * Next-Payload from first fragment.
-	 */
-	int first_np;
-	/*
-	 * For simplicity, index by fragment number which is 1-based;
-	 * leaving element 0 empty.
-	 */
-	struct v2_incomming_fragment frags[MAX_IKE_FRAGMENTS + 1];
-};
-
-/* hunk like */
-
-struct v2_outgoing_fragment {
-	struct v2_outgoing_fragment *next;
-	size_t len;
-	uint8_t ptr[1]; /* can be bigger */
 };
 
 struct v2_id_payload {
@@ -278,6 +243,7 @@ enum delete_reason {
 	REASON_CRYPTO_TIMEOUT,
 	REASON_EXCHANGE_TIMEOUT,
 	REASON_TOO_MANY_RETRANSMITS,
+	REASON_SUPERSEDED_BY_NEW_SA,
 	REASON_CRYPTO_FAILED,
 	REASON_AUTH_FAILED,
 	REASON_COMPLETED,
@@ -343,8 +309,8 @@ struct state {
 	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
-#ifdef XAUTH_HAVE_PAM
-	struct xauth *st_xauth;			/* per state xauth/pam thread */
+#ifdef AUTH_HAVE_PAM
+	struct pamauth *st_pamauth;		/* per state auth/pam thread */
 #endif
 
 	/*
@@ -354,7 +320,7 @@ struct state {
 	 * XXX: Can these attributes be made "const".  Probably,
 	 * new_state() could use clone_thing(const state on stack).
 	 */
-	/*const*/ enum ike_version st_ike_version;	/* IKEv1, IKEv2, ... */
+#define st_ike_version st_connection->ike_version /* XXX: DBD */
 	/*const*/ enum sa_type st_establishing_sa;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
@@ -362,7 +328,6 @@ struct state {
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
-#define st_whack_sock st_logger->object_whackfd
 
 	struct trans_attrs st_oakley;
 
@@ -398,19 +363,20 @@ struct state {
 	 * local endpoint.  pexpect_st_local_endpoint() is a place
 	 * holder as that idear gets explored.
 	 */
-	const struct iface_port *st_interface;  /* where to send from */
+	const struct iface_endpoint *st_interface;  /* where to send from */
 #define pexpect_st_local_endpoint(ST) /* see above */
 
 	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
 	/* IKEv2 MOBIKE probe copies */
-	ip_address st_mobike_remote_endpoint;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
+	ip_endpoint st_mobike_remote_endpoint;
 	ip_endpoint st_mobike_local_endpoint;	/* new address to initiate MOBIKE */
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+#ifdef USE_IKEv1
 	struct {
 		msgid_t id;             /* MSG-ID from header. Network Order?!? */
 		bool reserved;		/* is msgid reserved yet? */
@@ -431,8 +397,6 @@ struct state {
 	 */
 	const struct state_v1_microcode *st_v1_last_transition;
 	const struct state_v1_microcode *st_v1_transition; /* anyone? */
-	const struct state_v2_microcode *st_v2_last_transition;
-	const struct state_v2_microcode *st_v2_transition;
 
 	/* Initialization Vectors for IKEv1 IKE encryption */
 
@@ -441,14 +405,18 @@ struct state {
 	struct crypt_mac st_v1_ph1_iv;	/* IV at end of phase 1 */
 
 	/* end of IKEv1-only things */
+#endif
 
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+	const struct state_v2_microcode *st_v2_last_transition;
+	const struct state_v2_microcode *st_v2_transition;
+
 	/* collected received fragments */
 	struct v2_ike_rfrags *st_v2_rfrags;
 	struct v2_outgoing_fragment *st_v2_outgoing[MESSAGE_ROLE_ROOF];
-	struct v2_incomming_fragments *st_v2_incomming[MESSAGE_ROLE_ROOF];
+	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_accepted_ike_proposal;
@@ -473,6 +441,8 @@ struct state {
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
 	shunk_t st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+	chunk_t st_intermediate_packet_me;	/* calculated from my last Intermediate Exchange packet */
+	chunk_t st_intermediate_packet_peer;	/* calculated from peers last Intermediate Exchange packet */
 
 	/** end of IKEv2-only things **/
 
@@ -499,20 +469,6 @@ struct state {
 	chunk_t st_gr;                          /* Responder public value */
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
-
-	/* my stuff */
-
-	struct xfrm_user_sec_ctx_ike *sec_ctx;
-
-	/* Phase 2 ID payload info about my user */
-	uint8_t st_myuserprotoid;             /* IDcx.protoid */
-	uint16_t st_myuserport;
-
-	/* peers stuff */
-
-	/* Phase 2 ID payload info about peer's user */
-	uint8_t st_peeruserprotoid;           /* IDcx.protoid */
-	uint16_t st_peeruserport;
 
 	/* end of symmetric stuff */
 
@@ -555,31 +511,31 @@ struct state {
 	 * In IKEv1, both the the DH exchange and authentication can
 	 * be combined into a single packet.  Consequently, processing
 	 * consists of: first DH is used to derive the shared secret
-	 * from DH_SECRET and the keying material; and then
+	 * from DH_LOCAL and the keying material; and then
 	 * authentication is performed.  However, should
 	 * authentication fail, everything thing derived from that
 	 * packet gets discarded and this includes the DH derived
 	 * shared secret.  When the real packet arrives (or a
 	 * re-transmit), the whole process is performed again, and
-	 * using the same DH_SECRET.
+	 * using the same DH_LOCAL.
 	 *
 	 * Consequently, when the crypto helper gets created, it gets
-	 * ownership of the DH_SECRET, and then when it finishes,
+	 * ownership of the DH_LOCAL, and then when it finishes,
 	 * ownership is passed back to state.
 	 *
 	 * This all assumes that the crypto helper gets to delete
-	 * DH_SECRET iff state has already been deleted.
+	 * DH_LOCAL iff state has already been deleted.
 	 *
-	 * (An alternative would be to reference count dh_secret; or
+	 * (An alternative would be to reference count dh_local; or
 	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
-	struct dh_secret *st_dh_secret;
+	struct dh_local_secret *st_dh_local_secret;
 
-	PK11SymKey *st_shared_nss;	/* Derived shared secret
-					 * Note: during Quick Mode,
-					 * presence indicates PFS
-					 * selected.
-					 */
+	PK11SymKey *st_dh_shared_secret;	/* Derived shared secret
+						 * Note: during Quick Mode,
+						 * presence indicates PFS
+						 * selected.
+						 */
 	/* end of DH values */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
@@ -669,7 +625,7 @@ struct state {
 	 * (before ST_OFFLOADED_TASK was added), its presence would
 	 * have also served as a state-is-busy marker.
 	 */
-	struct pluto_crypto_req_cont *st_offloaded_task;
+	struct job *st_offloaded_task;
 	bool st_v1_offloaded_task_in_background;
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */
@@ -712,6 +668,10 @@ struct state {
 	PK11SymKey *st_sk_pi_no_ppk;
 	PK11SymKey *st_sk_pr_no_ppk;
 
+	/* Intermediate Exchange used */
+	bool st_intermediate_used;	/* both ends agreed to use Intermediate Exchange */
+	bool st_seen_intermediate;	/* does remote peer support Intermediate Exchange? */
+
 	/* connection included in AUTH (v2) */
 	struct traffic_selector st_ts_this;
 	struct traffic_selector st_ts_that;
@@ -752,7 +712,7 @@ struct state {
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragmentation_supported;	/* v1 frag vid; v2 frag notify */
 	bool st_seen_hashnotify;		/* did we receive hash algo notification in IKE_INIT, then send in response as well */
-	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
+	bool st_v1_seen_fragments;              /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_use_ipcomp;		/* did we receive request for IPCOMP */
@@ -766,6 +726,8 @@ struct state {
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
+	chunk_t st_seen_sec_label;
+	chunk_t st_acquired_sec_label;
 };
 
 /*
@@ -806,18 +768,23 @@ extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
-struct ike_sa *new_v1_istate(struct fd *whackfd);
-struct ike_sa *new_v1_rstate(struct msg_digest *md);
+struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd);
+struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
+struct state *ikev1_duplicate_state(struct connection *c, struct state *st, struct fd *whackfd);
 
-struct ike_sa *new_v2_ike_state(const struct state_v2_microcode *transition,
+struct ike_sa *new_v2_ike_state(struct connection *c, 
+				const struct state_v2_microcode *transition,
 				enum sa_role sa_role,
 				const ike_spi_t ike_initiator_spi,
 				const ike_spi_t ike_responder_spi,
-				struct connection *c, lset_t policy,
+				lset_t policy,
 				int try, struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
-struct child_sa *new_v2_child_state(struct ike_sa *st, enum sa_type sa_type,
-				    enum sa_role sa_role, enum state_kind kind,
+struct child_sa *new_v2_child_state(struct connection *c,
+				    struct ike_sa *ike,
+				    enum sa_type sa_type,
+				    enum sa_role sa_role,
+				    enum state_kind kind,
 				    struct fd *whackfd);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
@@ -830,16 +797,15 @@ extern void init_states(void);
 extern void rehash_state(struct state *st,
 			 const ike_spi_t *ike_responder_spi);
 extern void release_any_whack(struct state *st, where_t where, const char *why);
-extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *peers,
+extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
+extern void delete_other_state(struct state *st, struct state *other_st);
 extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);
-extern void schedule_next_child_delete(struct state *st, struct ike_sa *ike);
-
-struct state *ikev1_duplicate_state(struct state *st, struct fd *whackfd);
+extern void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),
@@ -868,7 +834,6 @@ extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);
 
 extern void initialize_new_state(struct state *st,
-				 struct connection *c,
 				 lset_t policy,
 				 int try);
 
@@ -894,7 +859,7 @@ extern void v1_delete_state_by_username(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void delete_cryptographic_continuation(struct state *st);
-extern void delete_states_dead_interfaces(struct fd *whackfd);
+extern void delete_states_dead_interfaces(struct logger *logger);
 extern bool dpd_active_locally(const struct state *st);
 
 /*
@@ -926,7 +891,6 @@ extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void IKE_SA_established(const struct ike_sa *ike);
-extern void revive_conns(struct fd *whackfd);
 
 void list_state_events(struct show *s, monotime_t now);
 

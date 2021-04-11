@@ -4,12 +4,12 @@ west #
 west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 added IKEv2 connection "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -26,16 +26,9 @@ done
 west #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 |    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
-| ignoring unsupported v2N_NO_PROPOSAL_CHOSEN notify
+| error notification v2N_NO_PROPOSAL_CHOSEN is not supported
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
 west #
  ipsec whack --shutdown
 west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

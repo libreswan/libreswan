@@ -3,18 +3,18 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-nflog
-002 added IKEv1 connection "westnet-eastnet-nflog"
+002 "westnet-eastnet-nflog": added IKEv1 connection
 east #
  ipsec auto --add west-east-nflog
-002 added IKEv1 connection "west-east-nflog"
+002 "west-east-nflog": added IKEv1 connection
 east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -51,7 +51,4 @@ target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

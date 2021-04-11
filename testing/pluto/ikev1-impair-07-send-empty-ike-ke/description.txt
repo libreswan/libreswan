@@ -1,7 +1,14 @@
-IKEv1: send zero KE during the IKE exchange breaking the DH calculation
+IKEv1: send an empty KE during the IKE exchange breaking the DH calculation
 
-Interop #1: initiator sends zero KE, should get back quick response?
+Interop #1:
+- initiator sends empty KE, should get invalid KE response
 
-Interop #2: responder sends zero KE, should bail?
+Interop #2:
+- initiator sends valid KE
+- responder sends back empty KE, which is dropped
+
+Note: both the initiator and responder have their retransmits
+supressed - in IKEv1 the responder is free to retransmit without
+prompting.
 
 regardless should not dump core

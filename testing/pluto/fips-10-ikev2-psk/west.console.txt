@@ -4,7 +4,7 @@ FIPS mode enabled.
 west #
  # confirm that the network is alive
 west #
- ../bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -15,13 +15,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- ../bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -30,13 +30,12 @@ initdone
 west #
  : default algorithms
 west #
- ../bin/libreswan-up-down.sh ikev2-defaults -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ikev2-defaults"
+ ../../guestbin/libreswan-up-down.sh ikev2-defaults -I 192.0.1.254 192.0.2.254
+002 "ikev2-defaults": added IKEv2 connection
 1v2 "ikev2-defaults" #1: initiating IKEv2 connection
 1v2 "ikev2-defaults" #1: sent IKE_SA_INIT request
 1v2 "ikev2-defaults" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "ikev2-defaults" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ikev2-defaults" #1: authenticated using authby=secret
+003 "ikev2-defaults" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ikev2-defaults" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-defaults" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -48,13 +47,12 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  : other combinations
 west #
- ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha2 -I 192.0.1.254 192.0.2.254
-002 added IKEv2 connection "ikev2-ike=aes128-sha2"
+ ../../guestbin/libreswan-up-down.sh ikev2-ike=aes128-sha2 -I 192.0.1.254 192.0.2.254
+002 "ikev2-ike=aes128-sha2": added IKEv2 connection
 1v2 "ikev2-ike=aes128-sha2" #3: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha2" #3: sent IKE_SA_INIT request
 1v2 "ikev2-ike=aes128-sha2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-002 "ikev2-ike=aes128-sha2" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "ikev2-ike=aes128-sha2" #3: authenticated using authby=secret
+003 "ikev2-ike=aes128-sha2" #3: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ikev2-ike=aes128-sha2" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -67,7 +65,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -83,7 +81,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

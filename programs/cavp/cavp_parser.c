@@ -42,7 +42,7 @@ static void error_state(enum what state, enum what what,
 	exit(1);
 }
 
-static void next_state(const struct cavp *cavp, enum what what)
+static void next_state(const struct cavp *cavp, enum what what, struct logger *logger)
 {
 	switch (state) {
 	case HEADER:
@@ -83,11 +83,11 @@ static void next_state(const struct cavp *cavp, enum what what)
 		case DATA:
 			break;
 		case BLANK:
-			cavp->run_test();
+			cavp->run_test(logger);
 			state = IDLE;
 			break;
 		case END:
-			cavp->run_test();
+			cavp->run_test(logger);
 			state = END;
 			break;
 		default:
@@ -146,14 +146,14 @@ static struct fields parse_fields(char *line)
 	return fields;
 }
 
-void cavp_parser(const struct cavp *cavp)
+void cavp_parser(const struct cavp *cavp, struct logger *logger)
 {
 	/* size is arbitrary */
 	char line[65536] = "";
 	int line_nr = 0;
 
 	if (cavp != NULL) {
-		next_state(cavp, BODY);
+		next_state(cavp, BODY, logger);
 	}
 
 	for (;;) {
@@ -180,7 +180,7 @@ void cavp_parser(const struct cavp *cavp)
 		line[last + 1] = '\0';
 		/* break the line up */
 		if (line[0] == '\0') {
-			next_state(cavp, BLANK);
+			next_state(cavp, BLANK, logger);
 			/* blank */
 			print_line(line);
 		} else if (line[0] == '#') {
@@ -201,7 +201,7 @@ void cavp_parser(const struct cavp *cavp)
 							cavp = *cavpp;
 							fprintf(stderr, "\ntest: %s (header matched '%s')\n\n",
 								cavp->description, *match);
-							next_state(cavp, BODY);
+							next_state(cavp, BODY, logger);
 						}
 						regfree(&regex);
 					}
@@ -209,7 +209,7 @@ void cavp_parser(const struct cavp *cavp)
 			}
 			print_line(line);
 		} else if (line[0] == '[') {
-			next_state(cavp, CONFIG);
+			next_state(cavp, CONFIG, logger);
 			/* "[" <key> [ " "* "=" " "* <value> ] "]" */
 			char *rparen = strchr(line, ']');
 			*rparen = '\0';
@@ -223,10 +223,10 @@ void cavp_parser(const struct cavp *cavp)
 				fprintf(stderr, "ignoring config entry: ['%s' = '%s']\n",
 					fields.key, fields.value);
 			} else {
-				entry->op(entry, fields.value);
+				entry->op(entry, fields.value, logger);
 			}
 		} else {
-			next_state(cavp, DATA);
+			next_state(cavp, DATA, logger);
 			struct fields fields = parse_fields(line);
 			const struct cavp_entry *entry = cavp_entry_by_key(cavp->data, fields.key);
 			if (entry == NULL) {
@@ -237,9 +237,9 @@ void cavp_parser(const struct cavp *cavp)
 				fprintf(stderr, "ignoring data entry: '%s' = '%s'\n",
 					fields.key, fields.value);
 			} else {
-				entry->op(entry, fields.value);
+				entry->op(entry, fields.value, logger);
 			}
 		}
 	}
-	next_state(cavp, END);
+	next_state(cavp, END, logger);
 }

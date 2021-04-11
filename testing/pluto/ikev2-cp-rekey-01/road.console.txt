@@ -3,10 +3,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add eastnet-any
-002 added IKEv2 connection "eastnet-any"
+002 "eastnet-any": added IKEv2 connection
 road #
  # confirm we have stock resolv.conf
 road #
@@ -21,44 +21,38 @@ road #
 1v2 "eastnet-any"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "eastnet-any"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "eastnet-any"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "eastnet-any"[1] 192.1.2.23 #1: authenticated using authby=secret
+003 "eastnet-any"[1] 192.1.2.23 #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 5.6.7.8
 005 "eastnet-any"[1] 192.1.2.23 #2: Received INTERNAL_DNS_DOMAIN: libreswan.org
-002 "eastnet-any"[1] 192.1.2.23 #2: up-client output: updating local nameserver for libreswan.org with 1.2.3.4 5.6.7.8
-002 "eastnet-any"[1] 192.1.2.23 #2: up-client output: [1597182586] unbound-control[XXXXXX:X]  error: connect: Connection refused for 127.0.0.1 port 8953
-002 "eastnet-any"[1] 192.1.2.23 #2: up-client output: [1597182586] unbound-control[XXXXXX:X]  error: connect: Connection refused for 127.0.0.1 port 8953
-002 "eastnet-any"[1] 192.1.2.23 #2: up-client output: [1597182586] unbound-control[XXXXXX:X]  error: connect: Connection refused for 127.0.0.1 port 8953
+002 "eastnet-any"[1] 192.1.2.23 #2: up-client output: updating resolvconf
 002 "eastnet-any"[1] 192.1.2.23 #2: negotiated connection [100.64.13.2-100.64.13.2:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "eastnet-any"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
- ping -n -c 4 -I 100.64.13.2 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 100.64.13.2 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
+up
 road #
  ipsec whack --trafficstatus
-006 ESP #2: 100.64.13.2/32 <=> 192.0.2.0/24 "eastnet-any"[1] 192.1.2.23, age=XXX, inBytes=336, outBytes=336, id='@east', lease=100.64.13.2/32
+006 #2: "eastnet-any"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east', lease=100.64.13.2/32
 road #
- # trigger rekey
+ ipsec whack --rekey-ipsec --name eastnet-any
+1v2 "eastnet-any"[1] 192.1.2.23 #3: sent CREATE_CHILD_SA request to rekey IPsec SA
+002 "eastnet-any"[1] 192.1.2.23 #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+002 "eastnet-any"[1] 192.1.2.23 #3: negotiated connection [100.64.13.2-100.64.13.2:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "eastnet-any"[1] 192.1.2.23 #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "eastnet-any"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+005 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 road #
- ipsec auto --up eastnet-any
-1v2 "eastnet-any"[1] 192.1.2.23 #3: sent IPsec Child req wait response
-
-[add proper output here]
-
+ # not using: ipsec auto --up eastnet-any
+road #
+ ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+006 #3: "eastnet-any"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east', lease=100.64.13.2/32
 road #
  echo done
 done
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

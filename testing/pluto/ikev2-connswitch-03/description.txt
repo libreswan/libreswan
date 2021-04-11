@@ -1,0 +1,6 @@
+Test connection switching on east with one roadwarrior with two subnets
+
+This is https://bugs.libreswan.org/show_bug.cgi?id=298 which affects
+some libreswan versions before 4.4
+
+

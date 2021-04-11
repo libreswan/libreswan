@@ -37,13 +37,11 @@
 #include "ike_alg_dh_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_secret(const struct dh_desc *group,
-				SECKEYPrivateKey **privk,
-				SECKEYPublicKey **pubk,
-				uint8_t *ke, size_t sizeof_ke,
-				struct logger *logger)
+static void nss_ecp_calc_local_secret(const struct dh_desc *group,
+				      SECKEYPrivateKey **privk,
+				      SECKEYPublicKey **pubk,
+				      struct logger *logger)
 {
-	passert(sizeof_ke == group->bytes);
 	/*
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
@@ -55,7 +53,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 			     group->nss_oid, group->common.fqn);
 	}
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_data->oid: ");
 			jam_nss_secitem(buf, &pk11_data->oid);
 		}
@@ -73,7 +71,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	pk11_param->data[1] = pk11_data->oid.len;
 	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_param");
 			jam_nss_secitem(buf, pk11_param);
 		}
@@ -90,7 +88,7 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 	}
 
 	if (DBGP(DBG_CRYPT)) {
-		LOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
 			    (*pubk)->keyType,
 			    (*pubk)->u.ec.size,
@@ -99,7 +97,11 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 			jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
 		}
 	}
+}
 
+static chunk_t nss_ecp_clone_local_secret_ke(const struct dh_desc *group,
+					     const SECKEYPublicKey *local_pubk)
+{
 #ifdef USE_DH31
 	if (group->nss_oid == SEC_OID_CURVE25519) {
 		/*
@@ -107,24 +109,22 @@ static void nss_ecp_calc_secret(const struct dh_desc *group,
 		 * in pk11_get_EC_PointLenInBytes(), and that is what
 		 * needs to go over the wire.
 		 */
-		passert((*pubk)->u.ec.publicValue.len == group->bytes);
+		passert(local_pubk->u.ec.publicValue.len == group->bytes);
 		DBG_log("putting NSS raw CURVE25519 public key blob on wire");
-		memcpy(ke, (*pubk)->u.ec.publicValue.data, group->bytes);
-	} else {
-#endif
-		passert((*pubk)->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-		passert((*pubk)->u.ec.publicValue.len == group->bytes + 1);
-		memcpy(ke, (*pubk)->u.ec.publicValue.data + 1, group->bytes);
-#ifdef USE_DH31
+		return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data, group->bytes, "ECP KE");
 	}
 #endif
+	passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
+	passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
+	return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data + 1, group->bytes, "ECP KE");
 }
 
-static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
-				       SECKEYPrivateKey *local_privk,
-				       const SECKEYPublicKey *local_pubk,
-				       uint8_t *remote_ke, size_t sizeof_remote_ke,
-				       struct logger *logger)
+static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
+					 SECKEYPrivateKey *local_privk,
+					 const SECKEYPublicKey *local_pubk,
+					 chunk_t remote_ke,
+					 PK11SymKey **shared_secret,
+					 struct logger *logger)
 {
 	SECKEYPublicKey remote_pubk = {
 		.keyType = ecKey,
@@ -143,26 +143,34 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	};
 
 	/* Allocate same space for remote key as local key */
-	passert(sizeof_remote_ke == group->bytes);
-	SECITEM_AllocItem(NULL, &remote_pubk.u.ec.publicValue,
-			  local_pubk->u.ec.publicValue.len);
+	passert(remote_ke.len == group->bytes);
+	if (SECITEM_AllocItem(NULL, &remote_pubk.u.ec.publicValue,
+			      local_pubk->u.ec.publicValue.len) == NULL) {
+		return diag_nss_error("location of ECC public key failed");
+	}
+	/* must NSS-free remote_pubk.u.ec.publicValue */
 
 #ifdef USE_DH31
 	if (group->nss_oid == SEC_OID_CURVE25519) {
 		/*
-		 * NSS returns the plain EC X-point (see documentation
-		 * in pk11_get_EC_PointLenInBytes(), and that is what
-		 * needs to go over the wire.
+		 * NSS returns and expects the raw EC X-point as the
+		 * public part.  The raw remote KE matches this format
+		 * (see comments in pk11_get_EC_PointLenInBytes()).
 		 */
-		passert(sizeof_remote_ke == local_pubk->u.ec.publicValue.len);
+		passert(remote_ke.len == local_pubk->u.ec.publicValue.len);
 		DBG_log("passing raw CURVE25519 public key blob to NSS");
-		memcpy(remote_pubk.u.ec.publicValue.data, remote_ke, sizeof_remote_ke);
+		memcpy(remote_pubk.u.ec.publicValue.data, remote_ke.ptr, remote_ke.len);
 	} else {
 #endif
-		/* local has same keysize as remote */
-		passert(sizeof_remote_ke + 1 == local_pubk->u.ec.publicValue.len);
+		/*
+		 * NSS returns and expects the encoded EC X-point as
+		 * the public part.  Need to encode the raw remote KE
+		 * so it matches (which is easy, just prefix the
+		 * uncompressed tag to the raw value).
+		 */
+		passert(remote_ke.len + 1 == local_pubk->u.ec.publicValue.len);
 		remote_pubk.u.ec.publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
-		memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke, sizeof_remote_ke);
+		memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke.ptr, remote_ke.len);
 #ifdef USE_DH31
 	}
 #endif
@@ -185,6 +193,12 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_nss_get_password_context(logger));
+	if (temp == NULL) {
+		*shared_secret = NULL;
+		SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);
+		return diag_nss_error("shared key calculation using ECP failed");
+	}
+
 	if (DBGP(DBG_CRYPT)) {
 		DBG_symkey(logger, "g_ir ", "temp", temp);
 	}
@@ -195,14 +209,15 @@ static PK11SymKey *nss_ecp_calc_shared(const struct dh_desc *group,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
-	PK11SymKey *g_ir = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
-	DBGF(DBG_CRYPT, "NSS: extracted-key@%p from ECDH temp-key@%p (CKM_CONCATENATE_BASE_AND_KEY hack)",
-	     g_ir, temp);
+	*shared_secret = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
+	if (DBGP(DBG_BASE)) {
+		DBG_symkey(logger, "newref ", "ecp-key", *shared_secret);
+	}
 
 	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);
 
-	return g_ir;
+	return NULL;
 }
 
 static void nss_ecp_check(const struct dh_desc *dhmke, struct logger *logger)
@@ -214,6 +229,7 @@ static void nss_ecp_check(const struct dh_desc *dhmke, struct logger *logger)
 const struct dh_ops ike_alg_dh_nss_ecp_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
-	.calc_secret = nss_ecp_calc_secret,
-	.calc_shared = nss_ecp_calc_shared,
+	.calc_local_secret = nss_ecp_calc_local_secret,
+	.clone_local_secret_ke = nss_ecp_clone_local_secret_ke,
+	.calc_shared_secret = nss_ecp_calc_shared_secret,
 };

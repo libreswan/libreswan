@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ certutil -d sql:/etc/ipsec.d -D -n west
+certutil: could not find certificate named "west": SEC_ERROR_...
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-one
+002 "westnet-eastnet-one": added IKEv2 connection
+east #
+ ipsec auto --add westnet-eastnet-two
+002 "westnet-eastnet-two": added IKEv2 connection
+east #
+ ipsec auto --add westnet-eastnet-three
+002 "westnet-eastnet-three": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --shutdown
+east #
+ 

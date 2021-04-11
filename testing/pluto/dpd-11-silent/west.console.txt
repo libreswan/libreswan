@@ -3,10 +3,10 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-002 added IKEv1 connection "west-east"
+002 "west-east": added IKEv1 connection
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -17,11 +17,8 @@ west #
 west #
  # we can transmit in the clear
 west #
- ping -q -c 8 -n 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # bring up the tunnel
 west #
@@ -31,19 +28,16 @@ west #
 1v1 "west-east" #1: sent Main Mode I2
 1v1 "west-east" #1: sent Main Mode I3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: authenticated using RSA with SHA-1
+003 "west-east" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 west #
  # use the tunnel
 west #
- ping -q -c 8 -n 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # show the tunnel!
 west #
@@ -51,88 +45,88 @@ west #
 Tunnel should be up
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  # Wait more then 15 seconds while ensuring there is traffic
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  # force a rekey
 west #
  ipsec auto --up west-east
-002 "west-east" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "west-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #3: sent Quick Mode request
 004 "west-east" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  sleep 1
 west #
- ping -q -c 1 -n 192.1.2.23 >/dev/null
+ ping -n -q -c 1 192.1.2.23 >/dev/null
 west #
  echo done
 done
@@ -141,7 +135,4 @@ west #
 west #
  grep R_U_THERE /tmp/pluto.log
 west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

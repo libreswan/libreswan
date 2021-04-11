@@ -7,10 +7,10 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-psk
-002 added IKEv1 connection "road-east-psk"
+002 "road-east-psk": added IKEv1 connection
 road #
  echo "initdone"
 initdone
@@ -23,27 +23,20 @@ road #
 1v1 "road-east-psk" #1: sent Main Mode I2
 1v1 "road-east-psk" #1: sent Main Mode I3
 004 "road-east-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-002 "road-east-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "road-east-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-east-psk" #2: sent Quick Mode request
 004 "road-east-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 road #
- ping -n -c4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "road-east-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23'
+006 #2: "road-east-psk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.23'
 road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.174
@@ -79,7 +72,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

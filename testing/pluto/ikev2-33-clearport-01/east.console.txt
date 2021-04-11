@@ -5,9 +5,4 @@ east #
  echo "initdone"
 initdone
 east #
- : ==== tuc ====
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

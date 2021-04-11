@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 road #
  echo "initdone"
 initdone
@@ -32,15 +32,8 @@ selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
 CHILD_SA roadnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.1/32 === 0.0.0.0/0
 connection 'roadnet-eastnet-ikev2' established successfully
 road #
- ping -n -c 4 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  echo done
 done

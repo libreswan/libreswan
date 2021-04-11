@@ -3,18 +3,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add eastnet-any
-002 added IKEv2 connection "eastnet-any"
+002 "eastnet-any": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "eastnet-any"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.45'
+006 #2: "eastnet-any"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.45'
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

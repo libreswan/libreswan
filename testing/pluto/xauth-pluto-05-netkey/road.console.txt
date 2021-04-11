@@ -7,29 +7,29 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
-002 added IKEv1 connection "modecfg-road-eastnet-psk"
+002 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --replace modecfg-road-eastnet-psk
 002 "modecfg-road-eastnet-psk": terminating SAs using this connection
-002 added IKEv1 connection "modecfg-road-eastnet-psk"
+002 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk
 000 "modecfg-road-eastnet-psk": 192.1.3.194[@roadrandom,+MC+XC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[@east,MS+XS+S=C]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "modecfg-road-eastnet-psk":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "modecfg-road-eastnet-psk":   xauth us:client, xauth them:server,  my_username=[any]; their_username=[any]
 000 "modecfg-road-eastnet-psk":   our auth:secret, their auth:secret
-000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
-000 "modecfg-road-eastnet-psk":   policy_label:unset;
-000 "modecfg-road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "modecfg-road-eastnet-psk":   sec_label:unset;
+000 "modecfg-road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "modecfg-road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "modecfg-road-eastnet-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "modecfg-road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO;
+000 "modecfg-road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO;
 000 "modecfg-road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "modecfg-road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "modecfg-road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
@@ -57,24 +57,17 @@ road #
 002 "modecfg-road-eastnet-psk" #1: Received IP address 10.9.2.209/32
 002 "modecfg-road-eastnet-psk" #1: setting ip source address to 10.9.2.209/32
 004 "modecfg-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKE_FRAG_ALLOW+ESN_NO
+002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
 004 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=use3}
 road #
- ping -c4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 road #
  echo done.
 done.
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.194
@@ -111,7 +104,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 

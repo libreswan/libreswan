@@ -20,8 +20,8 @@ didn=`docker run -h nic --privileged --name $dnamen  -v /home/build/libreswan:/h
 #
 #
 sleep 5
-docker exec -ti $dnamer  /bin/bash -c 'cd /home/build/libreswan; make programs install' > /dev/null
-docker exec -ti $dnamee  /bin/bash -c 'cd /home/build/libreswan; make programs install' > /dev/null
+docker exec -ti $dnamer#!/bin/bash -c 'cd /home/build/libreswan; make programs install' > /dev/null
+docker exec -ti $dnamee#!/bin/bash -c 'cd /home/build/libreswan; make programs install' > /dev/null
 
 docker exec -ti $dnamee  ip address flush dev eth0
 docker exec -ti $dnamer  ip address flush dev eth0
@@ -43,11 +43,11 @@ eastc=OUTPUT/east.console.verbose.txt
 roadc=OUTPUT/road.console.verbose.txt
 nicc=OUTPUT/nic.console.verbose.txt
 cmd="/testing/guestbin/swan-docker-run $testname nicinit.sh"
-docker exec -ti $dnamen  /bin/bash -c "$cmd" > $nicc
+docker exec -ti $dnamen#!/bin/bash -c "$cmd" > $nicc
 cmd="/testing/guestbin/swan-docker-run $testname eastinit.sh"
-docker exec -ti $dnamee  /bin/bash -c "$cmd" > $eastc
+docker exec -ti $dnamee#!/bin/bash -c "$cmd" > $eastc
 cmd="/testing/guestbin/swan-docker-run $testname roadinit.sh"
-docker exec -ti $dnamer  /bin/bash -c "$cmd" > $roadc
+docker exec -ti $dnamer#!/bin/bash -c "$cmd" > $roadc
 cmd="/testing/guestbin/swan-docker-run $testname roadrun.sh"
-docker exec -ti $dnamer  /bin/bash -c "$cmd" >> $roadc
+docker exec -ti $dnamer#!/bin/bash -c "$cmd" >> $roadc
 ../../utils/sanitize.sh

@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --globalstatus
 config.setup.ike.ddos_threshold=25000
@@ -77,6 +77,8 @@ total.ipsec.traffic.out=0
 total.ike.ikev2.established=0
 total.ike.ikev2.failed=0
 total.ike.ikev2.completed=0
+total.ike.ikev2.redirect.completed=0
+total.ike.ikev2.redirect.failed=0
 total.ike.ikev1.established=0
 total.ike.ikev1.failed=0
 total.ike.ikev1.completed=0
@@ -97,9 +99,9 @@ total.ike.dpd.recv=0
 total.ike.dpd.replied=0
 total.ike.traffic.in=0
 total.ike.traffic.out=0
-total.xauth.started=0
-total.xauth.stopped=0
-total.xauth.aborted=0
+total.pamauth.started=0
+total.pamauth.stopped=0
+total.pamauth.aborted=0
 total.iketcp.client.started=0
 total.iketcp.client.stopped=0
 total.iketcp.client.aborted=0
@@ -489,6 +491,7 @@ total.ikev2.sent.notifies.status.PUZZLE=0
 total.ikev2.sent.notifies.status.USE_PPK=0
 total.ikev2.sent.notifies.status.PPK_IDENTITY=0
 total.ikev2.sent.notifies.status.NO_PPK_AUTH=0
+total.ikev2.sent.notifies.status.INTERMEDIATE_EXCHANGE_SUPPORTED=0
 total.ikev2.sent.notifies.status.other=0
 total.ikev2.recv.notifies.status.INITIAL_CONTACT=0
 total.ikev2.recv.notifies.status.SET_WINDOW_SIZE=0
@@ -544,6 +547,7 @@ total.ikev2.recv.notifies.status.PUZZLE=0
 total.ikev2.recv.notifies.status.USE_PPK=0
 total.ikev2.recv.notifies.status.PPK_IDENTITY=0
 total.ikev2.recv.notifies.status.NO_PPK_AUTH=0
+total.ikev2.recv.notifies.status.INTERMEDIATE_EXCHANGE_SUPPORTED=0
 total.ikev2.recv.notifies.status.other=0
 west #
  

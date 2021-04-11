@@ -89,6 +89,7 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				 const struct ike_alg_type *type,
 				 shunk_t name, shunk_t print_name)
 {
+	passert(parser->diag == NULL);
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);
 	if (alg == NULL) {
@@ -106,9 +107,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				       protocol->name, ike_alg_type_name(type),
 				       pri_shunk(print_name));
 		}
-		passert(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		DBGF(DBG_PROPOSAL_PARSER, "ike_alg_byname() failed: %s",
-		     parser->error);
+		     str_diag(parser->diag));
 		return NULL;
 	}
 
@@ -116,9 +117,9 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 	 * Does it pass muster?
 	 */
 	if (!alg_byname_ok(parser, alg, print_name)) {
-		passert(parser->error[0] != '\0');
+		passert(parser->diag != NULL);
 		DBGF(DBG_PROPOSAL_PARSER, "alg_byname_ok() failed: %s",
-		     parser->error);
+		     str_diag(parser->diag));
 		return NULL;
 	}
 
@@ -137,20 +138,29 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	if (!impair.send_key_size_check && key_bit_length > 0) {
 		if (encrypt->keylen_omitted) {
-			proposal_error(parser, "%s does not take variable key lengths",
-				       enum_short_name(&ikev2_trans_type_encr_names,
-						       encrypt->common.id[IKEv2_ALG_ID]));
+			proposal_error(parser, "%s encryption algorithm %s does not allow a key lengths",
+				       parser->protocol->name,
+				       encrypt->common.fqn);
 			if (!impair_proposal_errors(parser)) {
 				return NULL;
 			}
 		}
 		if (!encrypt_has_key_bit_length(encrypt, key_bit_length)) {
-			/*
-			 * XXX: make list up to keep tests happy;
-			 * should instead generate a real list from
-			 * encrypt.
-			 */
-			proposal_error(parser, "wrong encryption key length - key size must be 128 (default), 192 or 256");
+			JAMBUF(buf) {
+				jam(buf, "%s encryption algorithm %s with key length %zu invalid; valid key lengths:",
+				    parser->protocol->name,
+				    encrypt->common.fqn,
+				    key_bit_length);
+				/* reverse: table in descending order with trailing zeros */
+				const char *sep = " ";
+				for (int i = elemsof(encrypt->key_bit_lengths) - 1; i >= 0; i--) {
+					if (encrypt->key_bit_lengths[i] > 0) {
+						jam(buf, "%s%d", sep, encrypt->key_bit_lengths[i]);
+						sep = ", ";
+					}
+				}
+				proposal_error(parser, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+			}
 			if (!impair_proposal_errors(parser)) {
 				return NULL;
 			}

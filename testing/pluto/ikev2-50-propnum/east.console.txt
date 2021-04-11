@@ -3,10 +3,10 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- ../../pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-propnum
-002 added IKEv2 connection "westnet-eastnet-propnum"
+002 "westnet-eastnet-propnum": added IKEv2 connection
 east #
  ipsec whack --impair suppress-retransmits
 east #
@@ -17,7 +17,7 @@ east #
 east #
  : weird pattern deals with optional length field
 east #
- grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: ' /tmp/pluto.log
+ grep -v '| helper' /tmp/pluto.log | grep -B 1 -e '|    last proposal: ' -A 3 -e '|    prop #: '
 | ****parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
 |    length: 56 (00 38)
@@ -64,7 +64,4 @@ east #
 |    spi size: 4 (04)
 |    # transforms: 3 (03)
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-
+ 
