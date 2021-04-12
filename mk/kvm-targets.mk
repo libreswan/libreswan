@@ -893,10 +893,10 @@ $(KVM_BUILD_DISK_CLONES): \
 KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_OPENBSD_DOMAIN_CLONES)))
 $(KVM_OPENBSD_DISK_CLONES): \
 		| \
-		$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2 \
+		$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2 \
 		$(KVM_LOCALDIR)
 	: copy-build-disk $@
-	$(call shadow-kvm-disk,$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2,$@.tmp)
+	$(call shadow-kvm-disk,$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,$@.tmp)
 	mv $@.tmp $@
 
 #
@@ -1124,7 +1124,18 @@ kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-
 	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
 	$(MAKE) kvm-keys
 
-define kvm-base-openbsd
+$(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL_BSD)
+	mv $@.tmp $@
+
+.PHONY: kvm-uninstall-openbsd
+kvm-uninstall-openbsd:
+	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
+	rm -f $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2
+.PHONY: kvm-openbsd
+kvm-openbsd: $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2
+$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
+	$(MAKE) kvm-uninstall-openbsd
 	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
 	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" $(KVM_TESTINGDIR)/libvirt/BSD/rc.firsttime > $(KVM_POOLDIR)/rc.firsttime
 	sh $(KVM_TESTINGDIR)/libvirt/BSD/nfs.sh
@@ -1136,20 +1147,6 @@ define kvm-base-openbsd
 		--cdrom=$(KVM_POOLDIR)/install67.iso \
 		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
 		--graphics none --serial pty --check path_in_use=off"
-endef
-$(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL_BSD)
-	mv $@.tmp $@
-
-.PHONY: kvm-uninstall-openbsd
-kvm-uninstall-openbsd:
-	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
-	rm -f $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
-.PHONY: kvm-openbsd
-kvm-openbsd: $(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2
-$(KVM_LOCALDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
-	$(make kvm-uninstall-openbsd)
-	$(call kvm-base-openbsd)
 
 .PHONY: kvm-bisect
 kvm-bisect:
