@@ -1,4 +1,2 @@
-# ping should succeed
-echo "north is sending pings again"
-ping -n -q -c 5 -I 192.1.3.33 192.1.2.23
-echo "pings sent"
+echo "north is sending another ping"
+../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23

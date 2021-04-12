@@ -8,6 +8,5 @@ ipsec whack --impair suppress-retransmits
 ipsec auto --add road-east
 ipsec auto --add road-west
 # give OE a chance to load conns
-sleep 3
-ipsec auto --status
+../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
 echo "initdone"
