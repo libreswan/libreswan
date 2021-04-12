@@ -1,9 +1,27 @@
 #!/bin/sh
 
 # Wait until both whack can talk to pluto and the addconn process has
-# disappeared.  This will delay until pluto is started
+# has finished adding connections, i.e., until pluto has started.
+
+# When pluto starts it does:
+#
+# - creates whack socket
+#   -> whack requests will block
+# - vfork() then exec(addconn)
+#   -> addconn is added to pluto's process list
+# - starts event loop
+#   -> (blocked) whack requests will be processed
+#
+# This code checks things in reverse:
+#
+# - queries pluto for a process list
+#   -> so it waits until the event loop is running
+#      and addconn has been started
+# - checks the process list for addconn
+#   -> so it waits until addconn has finished
 
 echo ==== cut ====
+
 count=10
 while count=$(expr $count - 1) && test $count -gt 0 ; do
     # both need to attach ...
@@ -19,6 +37,7 @@ while count=$(expr $count - 1) && test $count -gt 0 ; do
     fi
     sleep 1
 done
+
 echo ==== tuc ====
 
 # what took so long?
