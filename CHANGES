@@ -10,6 +10,7 @@ v4.4 (unreleased)
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
 * contrib/munin: update plugin to use python3 and update doc header [Tuomo]
+* testing: enable OpenBSD interop tests [Paul/Ravi]
 
 v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]
