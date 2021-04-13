@@ -933,15 +933,6 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_impossible;
 	}
 
-	/* if routing would affect IKE messages, reject */
-	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
-	    c->spd.this.host_port != IKE_UDP_PORT &&
-	    address_in_selector_subnet(c->spd.that.host_addr, c->spd.that.client)) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "cannot install route: peer is within its client");
-		return route_impossible;
-	}
-
 	struct spd_route *esr, *rosr;
 	struct connection *ero,		/* who, if anyone, owns our eroute? */
 		*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
