@@ -58,8 +58,4 @@ west #
  echo done
 done
 west #
- if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsde.iked.log ; fi
-west #
- test -f /sbin/ipsecctl && ipsecctl -s all | sort
-west #
  
