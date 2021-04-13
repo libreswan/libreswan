@@ -422,9 +422,19 @@ void lswlog_pexpect_example(void *p)
 		assertion__; /* result */				\
 	})
 
-void pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
-
 void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
+
+#define llog_pexpect(LOGGER, ASSERTION)					\
+	({								\
+		bool assertion__ = ASSERTION;				\
+		if (!assertion__) {					\
+			llog_pexpect_fail(LOGGER, HERE, "%s", #ASSERTION); \
+		}							\
+		assertion__; /* result */				\
+	})
+
+void llog_pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
+#define pexpect_fail llog_pexpect_fail /* TBD: rename */
 
 /* for a switch statement */
 

@@ -7,7 +7,7 @@ east #
 east #
  echo "xroad:xOzlFlqtwJIu2:east-any" >> /etc/ipsec.d/passwd
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
 002 "east-any": added IKEv1 connection
@@ -21,13 +21,5 @@ east #
 east #
  hostname | grep east > /dev/null && ipsec stop
 Redirecting to: [initsystem]
-east #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

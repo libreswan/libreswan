@@ -7,7 +7,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
@@ -15,7 +15,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID
@@ -23,7 +24,7 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -41,11 +42,11 @@ road #
 000  
 000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failing
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
@@ -95,7 +96,7 @@ road #
 road #
  # ping should fail due to remote block rule
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -103,11 +104,11 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
@@ -154,9 +155,5 @@ road #
  # should not show any hits
 road #
  grep "negotiated connection" /tmp/pluto.log
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

@@ -6,7 +6,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -55,12 +55,4 @@ Redirecting to: [initsystem]
 west #
  ipsec status
 whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-west #
- grep '^leak' /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

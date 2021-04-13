@@ -1,10 +1,10 @@
 #!/bin/sh
 # we can transmit in the clear
-ping -q -c 8 -n 192.1.2.23
+ping -n -q -c 8 192.1.2.23
 # bring up the tunnel
 ipsec auto --up west-east
 # use the tunnel
-ping -q -c 8 -n 192.1.2.23
+ping -n -q -c 8 192.1.2.23
 # show the tunnel!
 echo "Tunnel should be up"
 ipsec whack --trafficstatus
@@ -32,6 +32,6 @@ sleep 10
 # Tunnel should be back up now even without triggering traffic
 echo "Tunnel should be up even without trigger traffic"
 ipsec whack --trafficstatus
-ping -q -c 8 -n 192.1.2.23
+ping -n -q -c 8 192.1.2.23
 ipsec whack --trafficstatus
 echo done

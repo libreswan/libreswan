@@ -262,7 +262,8 @@ uintmax_t range_size(const ip_range range)
 
 	/*
 	 * can't overflow; but could be 0xf..f and adding one will
-	 * overflow */
+	 * overflow
+	 */
 	uintmax_t diff = ntoh_bytes(diff_bytes.byte, afi->ip_size);
 	if (diff >= UINTMAX_MAX) {
 		/* size+1 would overflow */

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 
 # list certs in NSS DB
 ipsec whack --listcerts | grep east

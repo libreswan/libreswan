@@ -4,7 +4,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
 002 "westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
@@ -36,13 +36,5 @@ east #
 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as responder
 east #
  ipsec whack --shutdown
-east #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

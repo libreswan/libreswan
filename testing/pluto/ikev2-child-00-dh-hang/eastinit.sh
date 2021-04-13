@@ -7,7 +7,7 @@ ip route add 192.0.100.0/24 via 192.1.2.45  dev eth1
 ip route add 192.0.110.0/24 via 192.1.2.45  dev eth1
 
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
 ipsec auto --add westnet-eastnet-ikev2-00
 ipsec auto --add westnet-eastnet-ikev2-10

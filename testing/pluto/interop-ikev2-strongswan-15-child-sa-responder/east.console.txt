@@ -4,7 +4,7 @@ east #
 east #
  ip route add 192.0.100.0/24 via 192.1.2.23  dev eth1
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
@@ -22,9 +22,5 @@ westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: SPISPI_i SPISP
 westnet-eastnet-ikev2b{2}:   192.0.200.0/24 === 192.0.100.0/24
 westnet-eastnet-ikev2c{3}:  INSTALLED, TUNNEL, reqid 3, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2c{3}:   192.0.201.0/24 === 192.0.101.0/24
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

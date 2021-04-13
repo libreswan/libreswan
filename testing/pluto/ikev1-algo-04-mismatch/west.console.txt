@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --impair delete-on-retransmit
 west #
@@ -33,9 +33,5 @@ west #
 "westnet-eastnet-ipv4-psk-ikev1" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 | processing informational NO_PROPOSAL_CHOSEN (14)
 "westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

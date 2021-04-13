@@ -1,0 +1,51 @@
+#jinja2: lstrip_blocks: True
+conn private
+      type=tunnel
+      left=%defaultroute
+{% if conn.auth_method == 'cert' %}
+      leftid=%fromcert
+      rightid=%fromcert
+      rightrsasigkey=%cert
+      rightca=%same
+      leftcert={{ hostvars[inventory_hostname].cert_name }}
+{% endif %}
+{% if 'auto' in conn %}
+      auto={{ conn.auto }}
+{% else %}
+      auto=route
+{% endif %}
+      right=%opportunisticgroup
+      negotiationshunt=hold
+      failureshunt=drop
+      ikev2={{ __vpn_ikev2 }}
+      keyingtries=1
+      retransmit-timeout=2s
+
+conn private-or-clear
+      type=tunnel
+      left=%defaultroute
+{% if conn.auth_method == 'cert' %}
+      leftid=%fromcert
+      rightid=%fromcert
+      rightrsasigkey=%cert
+      rightca=%same
+      leftcert={{ hostvars[inventory_hostname].cert_name }}
+{% endif %}
+{% if 'auto' in conn %}
+      auto={{ conn.auto }}
+{% else %}
+      auto=route
+{% endif %}
+      right=%opportunisticgroup
+      negotiationshunt=hold
+      failureshunt=passthrough
+      ikev2={{ __vpn_ikev2 }}
+      keyingtries=1
+      retransmit-timeout=2s
+
+conn clear
+      type=passthrough
+      left=%defaultroute
+      right=%group
+      auto=route
+      authby=never

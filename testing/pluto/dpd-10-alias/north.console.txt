@@ -4,7 +4,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-dpd
 002 "north-dpd/0x1": added IKEv1 connection
@@ -24,7 +24,7 @@ north #
 1v1 "north-dpd/0x2" #1: sent Main Mode I3
 002 "north-dpd/0x2" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-dpd/0x2" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "north-dpd/0x2" #1: authenticated using RSA with SHA-1
+003 "north-dpd/0x2" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "north-dpd/0x2" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "north-dpd/0x1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 002 "north-dpd/0x2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
@@ -35,18 +35,14 @@ north #
 north #
  ipsec auto --status | grep northnet-eastnets
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.2.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.22.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
-From 192.1.3.254 icmp_seq=1 Destination Net Unreachable
-From 192.1.3.254 icmp_seq=2 Destination Net Unreachable
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, +2 errors, 100% packet loss, time XXXX
 north #
@@ -106,16 +102,14 @@ north #
 north #
  ip route del unreachable 192.1.2.23
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.2.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 1 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
- ping -n -c 2 -I 192.0.3.254 192.0.22.254
+ ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
-From 192.1.3.254 icmp_seq=2 Destination Net Unreachable
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
 north #
@@ -127,9 +121,5 @@ north #
 north #
  echo done
 done
-north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-ikev2
 002 "road-east-ikev2": added IKEv2 connection
@@ -48,9 +48,5 @@ east #
 000        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

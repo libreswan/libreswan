@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -31,13 +31,13 @@ initdone
 east #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1 and preloaded certificate '@west'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=secret
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -72,9 +72,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

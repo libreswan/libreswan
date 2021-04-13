@@ -6,10 +6,12 @@ v4.4 (unreleased)
 * IKEv2: Fixes to Labeled IPsec policies [Kavinda Wewegama/Paul]
 * IKEv2: Add redirect statistics to whack --globalstatus [Clive Zagno]
 * IKEv2: Connections would not always switch when needed [Andrew/Paul]
+* pluto: Fix for host-to-host connections use non-standard IKE ports [Paul]
 * pluto: Use peer ID (IKEv2 IDr, IKEv1 Aggr) to select best initial conn [Paul]
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
 * contrib/munin: update plugin to use python3 and update doc header [Tuomo]
+* testing: enable OpenBSD interop tests [Paul/Ravi]
 
 v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]

@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --whackrecord /var/tmp/east.record
 east #
@@ -17,9 +17,5 @@ Redirecting to: [initsystem]
 east #
  ls /var/tmp/east.record
 /var/tmp/east.record
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -15,7 +15,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-chain-B
 002 "road-chain-B": added IKEv2 connection
@@ -77,9 +77,5 @@ initdone
 east #
  hostname | grep east > /dev/null && grep "switched from" /tmp/pluto.log
 "road-A"[1] 192.1.2.45 #1: switched from "road-A"[1] 192.1.2.45 to "road-chain-B"
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

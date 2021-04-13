@@ -8,7 +8,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -23,7 +23,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -38,13 +38,13 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  sleep 10
 west #
  # this ping should fail due to the type=block connection
 west #
- ping -c 1 192.1.2.23
+ ping -n -q -c 1 192.1.2.23
 ping: connect: Operation not permitted
 west #
  ipsec stop

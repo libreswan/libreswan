@@ -12,7 +12,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -22,7 +22,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
+000 Total IPsec connections: loaded 7, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID
@@ -34,8 +35,7 @@ road #
 002 initiate on demand from 192.1.3.209:8 to 192.1.2.23:0 proto=1 because: whack
 002 can't find expected bare shunt to delete: 192.1.3.209/32:0 -ICMP-> 192.1.2.23/32:0
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
 002 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #
@@ -43,7 +43,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -54,7 +54,7 @@ road #
 000  
 000 192.1.3.209/32 -0-> 192.1.2.23/32 => %hold 0    oe-negotiating
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -138,7 +138,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384:
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using RSA with SHA2_512
+OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
@@ -154,10 +154,6 @@ OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash al
 OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
  

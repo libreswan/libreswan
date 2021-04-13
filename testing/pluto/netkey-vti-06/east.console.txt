@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-vti
 002 "road-east-vti": added IKEv1 connection
@@ -14,13 +14,9 @@ east #
  # 4 dropped packets should be visible on east because road leaked them
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "road-east-vti"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@road'
+006 #2: "road-east-vti"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@road'
 east #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmInTmplMismatch      	4
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+XfrmInTmplMismatch      	1
 east #
  

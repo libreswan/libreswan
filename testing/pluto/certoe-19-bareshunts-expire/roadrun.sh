@@ -1,6 +1,6 @@
 #sleep 30; # enable to get time to attach ip xfrm monitor
 # trigger a private-or-clear and check for shunt and shunt expiry
-ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 # wait on OE retransmits and rekeying
 sleep 3
 # should show nothing in shuntstatus (shunt is not bare, but with conn), should show up in xfrm policy and show partial STATE
@@ -19,7 +19,7 @@ ip -o xfrm pol | grep 192.1.2.23
 ipsec status | grep STATE_
 # repeat test with a hold shunt - but it really shouldn't matter
 # trigger a private and check for shunt and shunt expiry
-ping -n -c 1 -I 192.1.3.209 192.1.3.46
+ping -n -q -c 1 -I 192.1.3.209 192.1.3.46
 # wait on OE retransmits and rekeying
 sleep 3
 # should show nothing in shuntstatus (shunt is not bare, but with conn),

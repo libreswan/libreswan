@@ -121,7 +121,7 @@ static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
 
 void calc_v1_skeyid_and_iv(struct state *st)
 {
-	const chunk_t *pss = get_connection_psk(st->st_connection, st->st_logger);
+	const chunk_t *pss = get_connection_psk(st->st_connection);
 	calc_skeyids_iv(st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
 			st->st_oakley.ta_prf, st->st_oakley.ta_encrypt,
 			st->st_ni, st->st_nr,

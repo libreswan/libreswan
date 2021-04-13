@@ -1,5 +1,5 @@
 ipsec auto --up north
-ping -w 4 -c 4 -I 192.0.3.254 192.0.2.254
+ping -n -q -w 4 -c 4 -I 192.0.3.254 192.0.2.254
 ip -s link show ipsec1
 #kill -9 $(cat /tmp/tcpdump.pid)
 sleep 2

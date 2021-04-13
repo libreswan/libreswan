@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
@@ -43,11 +43,13 @@ west #
 031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
- # the state should have been deleted, but replaced via EVENT_SA_REPLACE with a new state trying
+ # The state should have been deleted, but replaced via event
 west #
- # if no STATE_s show up, this test failed
+ # SA_REPLACE with a new state.  If no STATE show up, this test
 west #
- ipsec status |grep STATE_  || echo "test failed, all states went away"
+ # failed
+west #
+ ../../guestbin/wait-for.sh --match 'sent IKE_AUTH request' -- ipsec status
 000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
 000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_RETRANSMIT in XXs; idle;
 west #
@@ -60,9 +62,5 @@ west #
 west #
  echo done
 done
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

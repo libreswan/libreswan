@@ -7,11 +7,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec auto --add passthrough-in
 002 "passthrough-in": added passthrough connection
@@ -30,9 +31,8 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -c 2 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 2 packets transmitted, 1 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -43,7 +43,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  sleep 5
@@ -65,7 +65,7 @@ road #
  echo done
 done
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
@@ -77,7 +77,7 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
@@ -147,9 +147,5 @@ road #
 road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

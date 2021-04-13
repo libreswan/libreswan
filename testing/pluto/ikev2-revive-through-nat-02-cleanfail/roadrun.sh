@@ -1,5 +1,5 @@
 ipsec auto --up road-eastnet-ikev2
-../../pluto/bin/ping-once.sh --up 192.0.2.254
+../../guestbin/ping-once.sh --up 192.0.2.254
 ipsec traffic
 ipsec auto --delete road-eastnet-ikev2
 # give east time to re-trigger to us due to auto=keep

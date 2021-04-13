@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
@@ -39,9 +39,5 @@ east #
 | byte at offset 5 (29) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 | byte at offset 1 (37) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 | byte at offset 5 (41) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

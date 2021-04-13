@@ -5,7 +5,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -19,8 +19,7 @@ road #
 1v2 "road" #1: initiating IKEv2 connection
 1v2 "road" #1: sent IKE_SA_INIT request
 1v2 "road" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "road" #1: authenticated using authby=secret
+003 "road" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "road" #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "road" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
@@ -30,22 +29,15 @@ road #
 road #
  # ip route add table 50 192.1.2.23/32 dev ipsec0 src 192.1.3.209
 road #
- ping -w 4 -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 road #
  ip -s link show ipsec0
 X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped overrun mcast   
-    336        4        0       0       0       0       
+    84         1        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    84         1        0       0       0       0       
 road #
  ip rule show
 0:	from all lookup local
@@ -81,10 +73,6 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "road", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+006 #2: "road", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 road #
  

@@ -194,7 +194,7 @@ kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
 kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
-kvmplutotest	ikev2-ikeport-06-host-to-host		wip
+kvmplutotest	ikev2-ikeport-06-host-to-host		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -903,11 +903,10 @@ kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 # Selinux / secure labeling tests
 kvmplutotest	ikev1-labeled-ipsec-01					wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
-kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			good
+kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-01					good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label				good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
 kvmplutotest	ikev2-labeled-ipsec-04-no-label				wip
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-reverse			wip
 
@@ -1208,9 +1207,12 @@ kvmplutotest	ikev2-tcp-02-timeout				wip
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		good
 kvmplutotest	ikev2-tcp-04-ikeport				wip
-kvmplutotest	ikev2-tcp-05-transport-mode			good
-kvmplutotest	ikev2-tcp-06-failtest				wip
-kvmplutotest	ikev2-tcp-07-failtest-ke			wip
+kvmplutotest	ikev2-tcp-05-transport-mode			wip
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie		skiptest
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke	skiptest
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect		wip
+kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication-failed	wip
+kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect		wip
 kvmplutotest	ikev2-tcp-10-rekey-child			good
 kvmplutotest	ikev2-tcp-10-rekey-ike				good
 kvmplutotest	ikev2-tcp-25-rw-nat				good
@@ -1226,7 +1228,10 @@ kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
 kvmplutotest	ikev2-intermediate-02-psk		good
 
 # VPN System Roles - skip automated testing for now
-kvmplutotest	ikev2-systemrole-01			skiptest
+kvmplutotest	ikev2-systemrole-01-host-to-host	good
+kvmplutotest	ikev2-systemrole-02-net-to-net		good
+kvmplutotest	ikev2-systemrole-03-certs		good
+kvmplutotest	ikev2-systemrole-04-mesh		good
 
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good

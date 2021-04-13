@@ -3,6 +3,6 @@
 # Because we cannot run ipsec import, fixup trust bits manually
 certutil -M -d sql:/etc/ipsec.d -n "strongSwan CA - strongSwan" -t CT,,
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2
 echo "initdone"

@@ -11,7 +11,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
 002 "road-chain-B": added IKEv1 connection
@@ -58,7 +58,7 @@ west #
 1v1 "road-chain-B" #1: sent Main Mode I3
 002 "road-chain-B" #1: Peer ID is ID_FQDN: '@east.testing.libreswan.org'
 002 "road-chain-B" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "road-chain-B" #1: authenticated using RSA with SHA-1
+003 "road-chain-B" #1: authenticated using RSA with SHA1 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "road-chain-B" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "road-chain-B" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-chain-B" #2: sent Quick Mode request
@@ -75,9 +75,5 @@ nic                                                          P,,
 west_chain_endcert                                           u,u,u
 west_chain_int_2                                             CT,, 
 west_chain_int_1                                             CT,, 
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

@@ -11,7 +11,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
@@ -25,8 +25,7 @@ road #
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: authenticated using authby=secret
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.0.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
@@ -88,7 +87,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # Since whack hangs - it does not know that pluto died - run it in the
 road #
@@ -111,8 +110,6 @@ road #
  # seccomp test for east should be empty
 road #
  hostname | grep east > /dev/null && ausearch -ts recent -i -m SECCOMP
-road #
- ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #

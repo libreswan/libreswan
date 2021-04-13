@@ -9,7 +9,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add test1
 002 "test1": added IKEv2 connection
@@ -78,9 +78,5 @@ east #
  ip link set dev eth3 down
 east #
  ip tunnel del eth3
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -10,6 +10,6 @@ ip route add 192.1.2.23 via 192.1.7.45 dev gre1 table 1
 ip route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
 echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add north
 echo "initdone"

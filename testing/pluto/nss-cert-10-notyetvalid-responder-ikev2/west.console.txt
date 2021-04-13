@@ -6,7 +6,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert
 002 "nss-cert": added IKEv2 connection
@@ -36,9 +36,5 @@ west #
 west #
  grep "certificate payload rejected" /tmp/pluto.log
 "nss-cert" #1: X509: certificate payload rejected for this connection
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

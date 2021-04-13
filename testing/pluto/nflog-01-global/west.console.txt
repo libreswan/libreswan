@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -45,42 +45,44 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- rm -fr /tmp/nflog-50.pcap
+ # suppress job monitoring; specify packet count
 west #
- (tcpdump -c 8 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 >/dev/null 2>/dev/null &)
+ rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
 west #
- ping -n -c 5 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=5 ttl=64 time=0.XXX ms
---- 192.0.2.254 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ set +m
+west #
+ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
+[B] PID
+west #
+ ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
+tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), snapshot length 262144 bytes
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ # wait for count to reach tcpdump then dump it
+west #
+ wait
 west #
  cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
 west #
  tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 2, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 2, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 3, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 3, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 4, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 4, length 64
+IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:
@@ -114,9 +116,5 @@ Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

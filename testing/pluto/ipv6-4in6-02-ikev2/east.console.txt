@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-4in6
 002 "westnet-eastnet-4in6": added IKEv2 connection
@@ -85,9 +85,5 @@ src ::/0 dst ::/0 proto ipv6-icmp type 136
 	dir fwd priority 1 ptype main 
 src ::/0 dst ::/0 proto ipv6-icmp type 136 
 	dir in priority 1 ptype main 
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

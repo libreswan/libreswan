@@ -1,4 +1,4 @@
 setenforce Permissive
-../../pluto/bin/start-dns.sh
+../../guestbin/start-dns.sh
 echo done
 : ==== end ====

@@ -4,7 +4,7 @@ nic #
 nic #
  iptables -X
 nic #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 nic #
  echo done
 done

@@ -29,7 +29,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
@@ -37,7 +37,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -112,9 +112,5 @@ C_CloseAllSessions                 1          0 z       0.00us      0.00%
 east #
  echo "for nspr logs, look at the verbose console log in OUTPUT"
 for nspr logs, look at the verbose console log in OUTPUT
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

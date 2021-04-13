@@ -35,7 +35,7 @@ except ImportError:
 
 
 def run_command(params):
-    """Run command and return it's output"""
+    """Run command and return its output"""
     try:
         output = subprocess.check_output(params, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError:

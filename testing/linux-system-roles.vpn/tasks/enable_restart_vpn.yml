@@ -1,0 +1,18 @@
+---
+- name: enable and restart vpn services
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  async: 1
+  poll: 0
+  loop: "{{ __vpn_services }}"
+
+- name: Wait for ssh connection to return
+  wait_for:
+    host: "{{ ansible_default_ipv4.address |\
+          d(ansible_default_ipv6.address) }}"
+    port: 22
+    delay: 3
+    state: started
+  delegate_to: localhost

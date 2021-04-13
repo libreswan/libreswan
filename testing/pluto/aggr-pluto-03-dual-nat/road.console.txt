@@ -5,7 +5,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  echo "initdone"
 initdone
@@ -60,9 +60,5 @@ done
 road #
  ipsec whack --trafficstatus
 006 #4: "runner-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

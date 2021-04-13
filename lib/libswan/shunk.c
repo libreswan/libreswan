@@ -146,7 +146,7 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
  *
  * If CEILING is non-ZERO, *dest can't be greater than CEILING.
  */
-err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
+err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base,
 		       uintmax_t *dest, uintmax_t ceiling)
 {
 	*dest = 0;
@@ -161,18 +161,29 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 	/*
 	 * Detect standard prefixes.
 	 *
-	 * MIMIC BSD - only auto detect the prefix when the number has
-	 * at least one valid digit.
+	 * MIMIC BSD:
+	 *
+	 * Only auto detect the 0[xb] prefix when it is followed by at
+	 * least one valid digit.  If the digit is missing, fall back
+	 * to decimal, and not octal, so that decimal errors are
+	 * returned.
 	 */
-	if (base == 0) {
-		if (hunk_strcasestarteq(input, "0x") &&
-		    char_isxdigit(hunk_char(input, 2))) {
-			shunk_strcaseeat(&input, "0x");
-			base = 16;
-		} else if (hunk_strcasestarteq(input, "0b") &&
-			   char_isbdigit(hunk_char(input, 2))) {
-			shunk_strcaseeat(&input, "0b");
-			base = 2;
+	unsigned base;
+	if (draft_base == 0) {
+		if (hunk_strcasestarteq(input, "0x")) {
+			if (char_isxdigit(hunk_char(input, 2))) {
+				shunk_strcaseeat(&input, "0x");
+				base = 16;
+			} else {
+				base = 10;
+			}
+		} else if (hunk_strcasestarteq(input, "0b")) {
+			if (char_isbdigit(hunk_char(input, 2))) {
+				shunk_strcaseeat(&input, "0b");
+				base = 2;
+			} else {
+				base = 10;
+			}
 		} else if (hunk_char(input, 0) == '0') {
 			/* so 0... is interpreted as 0 below */
 			base = 8;
@@ -185,6 +196,8 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 	} else if (base == 16) {
 		shunk_strcaseeat(&input, "0x");
 #endif
+	} else {
+		base = draft_base;
 	}
 
 	/* something to convert */
@@ -226,7 +239,9 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 
 	if (cursor.len == input.len) {
 		/* nothing valid */
-		switch (base) {
+		switch (draft_base) {
+		case 2:
+			return "first binary digit invalid";
 		case 8:
 			return "first octal digit invalid";
 		case 10:
@@ -242,6 +257,8 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned base,
 	if (output == NULL) {
 		if (cursor.len > 0) {
 			switch (base) {
+			case 2:
+				return "non-binary digit in number";
 			case 8:
 				return "non-octal digit in number";
 			case 10:

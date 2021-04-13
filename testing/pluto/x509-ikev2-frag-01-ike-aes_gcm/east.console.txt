@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add x509
 002 "x509": added IKEv2 connection
@@ -37,9 +37,5 @@ east #
 |    total fragments: 5 (00 05)
 |    fragment number: 5 (00 05)
 |    total fragments: 5 (00 05)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

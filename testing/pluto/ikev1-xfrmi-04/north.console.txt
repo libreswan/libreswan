@@ -7,7 +7,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-eastnet
 002 "northnet-eastnet": added IKEv1 connection
@@ -26,10 +26,8 @@ north #
 1v1 "northnet-eastnet" #2: sent Quick Mode request
 004 "northnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 north #
- ping -w 4 -c 2 -I 192.0.3.254 192.0.22.254
+ ping -n -q -w 4 -c 2 -I 192.0.3.254 192.0.22.254
 PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
-64 bytes from 192.0.22.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.22.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.22.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -61,9 +59,5 @@ default via 192.1.3.254 dev eth1
 192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
 192.0.22.0/24 dev ipsec1 scope link
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
-north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 north #
  

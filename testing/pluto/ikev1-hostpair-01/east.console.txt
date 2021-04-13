@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add roadnet-eastnet-ipv4-psk-ikev1
 002 "roadnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
@@ -51,10 +51,10 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (IKE SA established); EVENT_SA_REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; isakmp#1; idle;
-000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B! ESPmax=4194303B username=use3
+000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B! ESPmax=4194303B username=use3
 000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_MAIN_R3 (IKE SA established); EVENT_SA_REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:EPHEM STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B username=use3
+000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B! ESPmax=4194303B username=use3
 east #
  # should show no hits
 east #
@@ -65,9 +65,5 @@ east #
  hostname | grep nic || grep "cannot route" /tmp/pluto.log
 east #
  hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

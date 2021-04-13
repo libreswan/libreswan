@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet
 002 "westnet-eastnet": added IKEv1 connection
@@ -24,7 +24,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #1: authenticated using RSA with SHA-1
+"westnet-eastnet" #1: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -58,7 +58,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #3: authenticated using RSA with SHA-1
+"westnet-eastnet" #3: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -77,13 +77,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #4: authenticated using RSA with SHA-1
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| ***parse ISAKMP Hash Payload:
-|    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 4 (00 04)
-"westnet-eastnet" #4: received 'quick_inI1_outR1' message HASH(1) data is the wrong length (received 0 bytes but expected 32)
+"westnet-eastnet" #4: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -108,13 +102,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #5: authenticated using RSA with SHA-1
--- start message (HASH)
-|    next payload type: ISAKMP_NEXT_HASH (0x8)
-| ***parse ISAKMP Hash Payload:
-|    next payload type: ISAKMP_NEXT_SA (0x1)
-|    length: 36 (00 24)
-"westnet-eastnet" #5: received 'quick_inI1_outR1' message HASH(1) data does not match computed value
+"westnet-eastnet" #5: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -139,7 +127,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #6: authenticated using RSA with SHA-1
+"westnet-eastnet" #6: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -177,7 +165,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #8: authenticated using RSA with SHA-1
+"westnet-eastnet" #8: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -221,7 +209,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #10: authenticated using RSA with SHA-1
+"westnet-eastnet" #10: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -265,7 +253,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #12: authenticated using RSA with SHA-1
+"westnet-eastnet" #12: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -299,7 +287,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #14: authenticated using RSA with SHA-1
+"westnet-eastnet" #14: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -333,7 +321,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #16: authenticated using RSA with SHA-1
+"westnet-eastnet" #16: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -367,7 +355,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #18: authenticated using RSA with SHA-1
+"westnet-eastnet" #18: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -401,7 +389,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #20: authenticated using RSA with SHA-1
+"westnet-eastnet" #20: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -435,7 +423,7 @@ east #
 | ***parse ISAKMP Signature Payload:
 |    next payload type: ISAKMP_NEXT_NONE (0x0)
 |    length: 278 (01 16)
-"westnet-eastnet" #22: authenticated using RSA with SHA-1
+"westnet-eastnet" #22: authenticated using RSA with SHA1 and preloaded certificate '@west'
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | ***parse ISAKMP Hash Payload:
@@ -464,8 +452,4 @@ east #
 -- start message (HASH)
 |    next payload type: ISAKMP_NEXT_HASH (0x8)
 | Informational Exchange is for an unknown (expired?) SA with MSGID:0x....
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

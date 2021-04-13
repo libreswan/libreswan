@@ -9,7 +9,7 @@ iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
 iptables -A INPUT -i eth1 -s 192.1.2.23 -m policy --dir in --pol none -p udp --sport 1701 -j REJECT
 iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add north-east-l2tp
 (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
 ipsec auto --route north-east-l2tp

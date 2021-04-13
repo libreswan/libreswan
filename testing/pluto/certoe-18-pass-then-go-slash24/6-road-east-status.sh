@@ -3,4 +3,4 @@
 ipsec status |grep STATE_
 ipsec trafficstatus
 ipsec shuntstatus
-../../pluto/bin/ipsec-look.sh
+../../guestbin/ipsec-look.sh

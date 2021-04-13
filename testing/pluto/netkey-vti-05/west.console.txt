@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti
 002 "westnet-eastnet-vti": added IKEv1 connection
@@ -39,7 +39,7 @@ west #
 1v1 "westnet-eastnet-vti" #1: sent Main Mode I2
 1v1 "westnet-eastnet-vti" #1: sent Main Mode I3
 002 "westnet-eastnet-vti" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-vti" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-vti" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-vti" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-vti" #2: sent Quick Mode request
@@ -53,7 +53,7 @@ west #
 west #
  sleep 1
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.1.99.1 192.1.99.254
+ ../../guestbin/ping-once.sh --up -I 192.1.99.1 192.1.99.254
 up
 west #
  ipsec whack --trafficstatus
@@ -77,9 +77,5 @@ west #
  ip tun | sort
 ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
 vti0: ip/ip remote 192.1.2.23 local 192.1.2.45 ttl inherit key 20
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

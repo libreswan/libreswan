@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add replay
 002 "replay": added IKEv2 connection
@@ -23,9 +23,5 @@ east #
  grep "enabling ESN" /tmp/pluto.log
 | netlink: enabling ESN
 | netlink: enabling ESN
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

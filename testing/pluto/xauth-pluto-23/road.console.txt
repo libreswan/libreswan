@@ -4,7 +4,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east
 002 "road-east": added IKEv1 connection
@@ -12,7 +12,7 @@ road #
  echo initdone
 initdone
 road #
- ../bin/block-non-ipsec.sh
+ ../../guestbin/block-non-ipsec.sh
 road #
  ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
 002 "road-east" #1: initiating IKEv1 Main Mode connection
@@ -23,7 +23,7 @@ road #
 1v1 "road-east" #1: sent Main Mode I3
 002 "road-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "road-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "road-east" #1: authenticated using RSA with SHA-1
+003 "road-east" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "road-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 041 "road-east" #1: road-east prompt for Username:
 040 "road-east" #1: road-east prompt for Password:
@@ -43,14 +43,11 @@ road #
 002 "road-east" #2: up-client output: updating resolvconf
 004 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=xroad}
 road #
- ping -q -w 4 -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 road #
  echo done
 done
@@ -62,13 +59,5 @@ road #
  hostname | grep north > /dev/null && sleep 5
 road #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
-road #
- grep "^leak" /tmp/pluto.log
-leak-detective enabled
-leak detective found no leaks
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

@@ -34,7 +34,11 @@
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
 
-enum iface_status handle_packet_cb(const struct iface_endpoint *ifp, struct logger *logger);
+/*
+ * Used by UDP and TCP to inject packets.
+ */
+
+void process_iface_packet(/*evutil_socket_t*/int fd, const short event, void *ifp_arg);
 
 /* State transition function infrastructure
  *

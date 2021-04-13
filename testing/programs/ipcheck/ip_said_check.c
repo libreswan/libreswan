@@ -54,7 +54,8 @@ static void check_str_said(void)
 		{ LN, "es9@1.2.3.4", NULL, false, },
 		{ LN, "ah@1.2.3.4", NULL, false, },
 		{ LN, "esp7x7@1.2.3.4", NULL, false, },
-		{ LN, "esp77@1.0x2.3.4", NULL, false, },
+		{ LN, "esp77@1.0x02.0003.4", "esp.4d@1.2.3.4", false, },
+		{ LN, "esp77@1.0x0g.3.4", NULL, false, },
 		{ LN, PASSTHROUGHNAME, PASSTHROUGH4NAME, false, },
 		{ LN, PASSTHROUGH6NAME, PASSTHROUGH6NAME, false, },
 		{ LN, "%pass", "%pass", false, },
@@ -79,34 +80,22 @@ static void check_str_said(void)
 		{ LN, "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", "esp:3a7292a2@1000:2000:3000:4000:5000:6000:7000:8000", false, },
 	};
 
-#define PRINT_SA(FILE, FMT, ...)					\
-	PRINT("'%s' fudge: %s"FMT,					\
-	      t->in, bool_str(t->fudge),##__VA_ARGS__);
-
-#define FAIL_SA(FMT, ...)						\
-	{								\
-		fails++;						\
-		PRINT_SA(stderr, " "FMT" ("PRI_WHERE")",##__VA_ARGS__,	\
-			 pri_where(HERE));				\
-		continue;						\
-	}
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_SA(stdout, "");
+		PRINT("'%s' fudge: %s", t->in, bool_str(t->fudge));
 
 		/* convert it *to* internal format */
 		ip_said sa;
 		err_t err = ttosa(t->in, strlen(t->in), &sa);
 		if (err != NULL) {
 			if (t->out != NULL) {
-				FAIL_SA("ttosa() unexpectedly failed: %s", err);
+				FAIL("ttosa(%s) unexpectedly failed: %s", t->in, err);
 			} else {
 				/* all is good */
 				continue;
 			}
 		} else if (t->out == NULL) {
-			FAIL_SA("ttosa() unexpectedly succeeded");
+			FAIL("ttosa(%s) unexpectedly succeeded", t->in);
 		}
 
 		if (t->fudge) {
@@ -117,10 +106,9 @@ static void check_str_said(void)
 		said_buf buf;
 		const char *out = str_said(&sa, &buf);
 		if (out == NULL) {
-			FAIL_SA("str_said() failed");
+			FAIL("str_said() failed");
 		} else if (!strcaseeq(t->out, out)) {
-			FAIL_SA("str_said() returned '%s', expected '%s'",
-				out, t->out);
+			FAIL("str_said() returned '%s', expected '%s'", out, t->out);
 		}
 	}
 }

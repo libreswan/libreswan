@@ -1,0 +1,10 @@
+---
+__vpn_packages:
+  - libreswan
+
+__vpn_services:
+  - ipsec
+
+__vpn_ikev2: 'insist'
+
+__vpn_nss_location: '/var/lib/ipsec/nss'

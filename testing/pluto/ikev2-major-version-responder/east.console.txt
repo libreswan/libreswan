@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair major-version-bump
 east #
@@ -14,9 +14,5 @@ east #
 initdone
 east #
  grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

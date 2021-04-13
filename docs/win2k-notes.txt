@@ -9,7 +9,7 @@ The code cross compiles, and has passed approximately 90% of our test
 cases as of this time.
 
 The major change is that the IKE daemon ("pluto") normally discovers
-it's list of interfaces and local IP addresses automatically. That code
+its list of interfaces and local IP addresses automatically. That code
 does not port well, so for the moment, we require manual configuration
 in ipsec.conf. See the "ipsec.win2k.conf" file in the
 programs/_confread/ipsec.win2k.conf in the source tree.

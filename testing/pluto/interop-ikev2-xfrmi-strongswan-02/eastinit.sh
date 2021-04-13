@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
-#../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
-../../pluto/bin/strongswan-start.sh
+#../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+../../guestbin/strongswan-start.sh
 ip link set down dev ipsec0 2> /dev/null > /dev/null
 ip link del ipsec0 2> /dev/null > /dev/null
 #shouldn't charon clean up these two rules ??

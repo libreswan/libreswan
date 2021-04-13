@@ -15,6 +15,6 @@ journalctl  --unit=systemd-networkd --no-hostname
 ip link show ipsec2
 echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add north
 echo "initdone"

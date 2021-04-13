@@ -12,13 +12,14 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair suppress-retransmits
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 3' -- ipsec auto --status
+000 Total IPsec connections: loaded 3, active 0
 east #
  echo "initdone"
 initdone
@@ -47,7 +48,4 @@ east #
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk": added IKEv1 connection
@@ -71,9 +71,5 @@ west #
 "westnet-eastnet-ipv4-psk" #4: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

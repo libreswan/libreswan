@@ -1,5 +1,5 @@
 ipsec auto --up eastnet-any
-../../pluto/bin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
+../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
 ipsec whack --trafficstatus
 # check to see if our resolv.conf got updated
 cat /etc/resolv.conf

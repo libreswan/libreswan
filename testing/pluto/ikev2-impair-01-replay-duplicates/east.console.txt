@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair replay-duplicates
 east #
@@ -13,7 +13,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -52,9 +52,5 @@ packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 packet from 192.1.2.45:500: INFORMATIONAL message request has no corresponding IKE SA
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

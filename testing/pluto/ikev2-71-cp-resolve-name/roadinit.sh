@@ -4,7 +4,7 @@ dig +short east46.testing.libreswan.org AAAA
 ip -4 route
 ip -6 route
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
 ipsec auto --add road
 echo "initdone"

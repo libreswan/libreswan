@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-aes
 002 "westnet-eastnet-aes": added IKEv2 connection
@@ -79,9 +79,5 @@ east #
 --
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (00 80)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

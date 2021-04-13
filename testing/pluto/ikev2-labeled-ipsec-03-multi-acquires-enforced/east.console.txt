@@ -14,7 +14,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  echo 1 > /proc/sys/net/core/xfrm_acq_expires
 east #
@@ -30,7 +30,7 @@ east #
 -> listening on TCP port 4300 ... ok
 -> waiting ... initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 <- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
    quit
 -> connection closed
@@ -82,8 +82,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east #
- ../bin/check-for-core.sh
 east #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).

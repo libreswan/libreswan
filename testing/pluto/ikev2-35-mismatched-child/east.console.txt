@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-mismatch
 002 "westnet-eastnet-mismatch": added IKEv2 connection
@@ -24,9 +24,5 @@ east #
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 |    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -451,7 +451,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                             elif host_timed_out:
                                 logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (host_timed_out))
                             else: # None or True
-                                script = "../bin/post-mortem.sh"
+                                script = "../../guestbin/post-mortem.sh"
                                 for host_name in test.host_names:
                                     test_domain = test_domains[host_name]
                                     test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)

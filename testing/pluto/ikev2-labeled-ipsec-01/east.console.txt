@@ -1,18 +1,24 @@
 /testing/guestbin/swan-prep
 east #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+ # generate in output directory
+east #
+ rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
+east #
+ ln -s ../ipsecspd.te OUTPUT
+east #
+ make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
+make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
 east #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-east #
- rm ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
@@ -26,7 +32,7 @@ east #
 -> listening on TCP port 4300 ... ok
 -> waiting ... initdone
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 <- connect(192.1.2.45,unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023)
    quit
 -> connection closed
@@ -81,9 +87,5 @@ east #
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 east #
  rm -rf ipsecspd.fc ipsecspd.if tmp
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

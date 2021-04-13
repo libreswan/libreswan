@@ -6,5 +6,5 @@ cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
 cp /testing/x509/strongswan/strongEastCert.der /etc/strongswan/ipsec.d/certs/
 cp /testing/x509/strongswan/strongEastKey.der /etc/strongswan/ipsec.d/private/
 chmod 600 /etc/strongswan/ipsec.d/private/*
-../../pluto/bin/strongswan-start.sh
+../../guestbin/strongswan-start.sh
 echo "initdone"

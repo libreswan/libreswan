@@ -13,7 +13,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert
 002 "nss-cert": added IKEv1 connection
@@ -129,10 +129,6 @@ east #
 000   2048 bit RSA
 000  
 000 List of CRLs:
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  
 

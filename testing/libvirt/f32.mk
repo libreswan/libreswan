@@ -130,6 +130,7 @@ KVM_UPGRADE_PACKAGES ?= \
     libseccomp-devel \
     libselinux-devel \
     linux-firmware \
+    linux-system-roles \
     lsof \
     make \
     mtr \
@@ -149,6 +150,7 @@ KVM_UPGRADE_PACKAGES ?= \
     psmisc \
     python3-pyOpenSSL \
     python3-pexpect \
+    python3-netaddr \
     rpm-build \
     rsync \
     selinux-policy-devel \

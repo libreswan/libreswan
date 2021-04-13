@@ -7,11 +7,12 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 east #
  echo "initdone"
 initdone
@@ -42,9 +43,5 @@ east #
  ipsec status | grep "SAs: total"
 000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

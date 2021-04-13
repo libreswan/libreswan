@@ -4,7 +4,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
 002 "westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
@@ -32,17 +32,7 @@ initdone
 east #
  # east should fail PSK because it refuses PPK
 east #
- hostname | grep east > /dev/null && grep "PSK Authentication failed" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PSK Authentication failed: AUTH mismatch in I2 Auth Payload!
-east #
- ipsec whack --shutdown
-east #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ grep -e '^[^|].*: authentication failed: ' /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: authentication failed: computed hash does not match hash received from peer ID_FQDN '@west'
 east #
  

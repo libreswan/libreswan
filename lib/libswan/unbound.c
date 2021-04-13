@@ -306,9 +306,7 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 	}
 
 	struct ip_bytes bytes = unset_bytes;
-	for (unsigned b = 0; b < afi->ip_size; b++) {
-		bytes.byte[b] = result->data[0][b];
-	}
+	memcpy(bytes.byte, result->data[0], afi->ip_size);
 	*ipaddr = address_from_raw(HERE, afi->ip_version, bytes);
 	dbg("success for %s lookup", afi->ip_name);
 	return true;

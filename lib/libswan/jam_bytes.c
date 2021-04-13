@@ -22,8 +22,7 @@ size_t jam_hex_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	size_t n = 0;
 	const uint8_t *bytes = ptr;
 	for (unsigned i = 0; i < size; i++) {
-		uint8_t b = bytes[i];
-		n += jam(buf, "%02x", b);
+		n += jam(buf, "%02x", bytes[i]);
 	}
 	return n;
 }
@@ -33,8 +32,7 @@ size_t jam_HEX_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	size_t n = 0;
 	const uint8_t *bytes = ptr;
 	for (unsigned i = 0; i < size; i++) {
-		uint8_t b = bytes[i];
-		n += jam(buf, "%02X", b);
+		n += jam(buf, "%02X", bytes[i]);
 	}
 	return n;
 }

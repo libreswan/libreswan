@@ -1,17 +1,22 @@
 /testing/guestbin/swan-prep
 west #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
 west #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
 west #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+ rm ipsecspd.pp
 west #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ setsebool domain_can_mmap_files=1
+west #
+ setsebool nis_enabled=1
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
 002 "labeled": added IKEv1 connection
@@ -29,7 +34,7 @@ west #
 1v1 "labeled" #1: sent Main Mode I2
 1v1 "labeled" #1: sent Main Mode I3
 002 "labeled" #1: Peer ID is ID_FQDN: '@east'
-003 "labeled" #1: authenticated using RSA with SHA-1
+003 "labeled" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "labeled" #2: sent Quick Mode request
@@ -42,12 +47,14 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	security context system_u:object_r:ipsec_spd_t:s0 
 west #
  ip xfrm pol
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
@@ -85,7 +92,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+ echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
 NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
@@ -114,7 +121,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -141,11 +148,11 @@ Certificate Nickname                                         Trust Attributes
 west #
  ipsec whack --shutdown
 west #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
- ../bin/check-for-core.sh
+ rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 west #
  

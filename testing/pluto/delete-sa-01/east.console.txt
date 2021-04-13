@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # left as example/test for manually calling whack
 east #
@@ -14,7 +14,7 @@ east #
  ipsec whack --name SAwest-east --ikev1 --encrypt --tunnel --pfs --rsasig --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --to --host "%any" --nexthop "%direct" --updown "ipsec _updown" --id "@west" --ipseclifetime "28800" --rekeymargin "540" --keyingtries "1"
 002 "SAwest-east": added IKEv1 connection
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
@@ -33,9 +33,5 @@ east #
  # up to 3.26 we printed a bogus message, this is checking that no longer happens
 east #
  grep "received and ignored empty informational" /tmp/pluto.log
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

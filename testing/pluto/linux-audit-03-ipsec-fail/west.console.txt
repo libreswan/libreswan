@@ -5,7 +5,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-ipsec-fail
 002 "ikev1-ipsec-fail": added IKEv1 connection
@@ -31,49 +31,47 @@ west #
 1v1 "ikev1-ipsec-fail" #1: sent Main Mode I2
 1v1 "ikev1-ipsec-fail" #1: sent Main Mode I3
 002 "ikev1-ipsec-fail" #1: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-ipsec-fail" #1: authenticated using RSA with SHA-1
+003 "ikev1-ipsec-fail" #1: authenticated using RSA with SHA1 and preloaded certificate '@east-v1'
 004 "ikev1-ipsec-fail" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1-ipsec-fail" #2: sent Quick Mode request
 010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 010 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
 031 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits. No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-000 "ikev1-ipsec-fail" #2: starting keying attempt 2 of at most 1, but releasing whack
+002 "ikev1-ipsec-fail" #2: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-ipsec-fail
 002 "ikev1-ipsec-fail": terminating SAs using this connection
-002 "ikev1-ipsec-fail" #3: deleting state (STATE_QUICK_I1) and NOT sending notification
 002 "ikev1-ipsec-fail" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  ipsec auto --up ikev1-aggr-ipsec-fail #retransmits
-002 "ikev1-aggr-ipsec-fail" #4: initiating IKEv1 Aggressive Mode connection
-1v1 "ikev1-aggr-ipsec-fail" #4: sent Aggressive Mode request
-002 "ikev1-aggr-ipsec-fail" #4: Peer ID is ID_FQDN: '@east-v1'
-002 "ikev1-aggr-ipsec-fail" #4: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-aggr-ipsec-fail" #4: authenticated using RSA with SHA-1
-004 "ikev1-aggr-ipsec-fail" #4: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-002 "ikev1-aggr-ipsec-fail" #5: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
-1v1 "ikev1-aggr-ipsec-fail" #5: sent Quick Mode request
-010 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
-010 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
-031 "ikev1-aggr-ipsec-fail" #5: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits. No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-000 "ikev1-aggr-ipsec-fail" #5: starting keying attempt 2 of at most 1, but releasing whack
+002 "ikev1-aggr-ipsec-fail" #3: initiating IKEv1 Aggressive Mode connection
+1v1 "ikev1-aggr-ipsec-fail" #3: sent Aggressive Mode request
+002 "ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
+002 "ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
+003 "ikev1-aggr-ipsec-fail" #3: authenticated using RSA with SHA1 and preloaded certificate '@east-v1'
+004 "ikev1-aggr-ipsec-fail" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+002 "ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
+1v1 "ikev1-aggr-ipsec-fail" #4: sent Quick Mode request
+010 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
+010 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
+031 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: 2 second timeout exceeded after 2 retransmits. No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+002 "ikev1-aggr-ipsec-fail" #4: deleting state (STATE_QUICK_I1) and NOT sending notification
 west #
  ipsec auto --delete ikev1-aggr-ipsec-fail
 002 "ikev1-aggr-ipsec-fail": terminating SAs using this connection
-002 "ikev1-aggr-ipsec-fail" #6: deleting state (STATE_QUICK_I1) and NOT sending notification
-002 "ikev1-aggr-ipsec-fail" #4: deleting state (STATE_AGGR_I2) and sending notification
+002 "ikev1-aggr-ipsec-fail" #3: deleting state (STATE_AGGR_I2) and sending notification
 west #
  ipsec auto --up ikev2-ipsec-fail
-1v2 "ikev2-ipsec-fail" #7: initiating IKEv2 connection
-1v2 "ikev2-ipsec-fail" #7: sent IKE_SA_INIT request
-1v2 "ikev2-ipsec-fail" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "ikev2-ipsec-fail" #8: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-036 "ikev2-ipsec-fail" #8: encountered fatal error in state STATE_PARENT_I2
+1v2 "ikev2-ipsec-fail" #5: initiating IKEv2 connection
+1v2 "ikev2-ipsec-fail" #5: sent IKE_SA_INIT request
+1v2 "ikev2-ipsec-fail" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+002 "ikev2-ipsec-fail" #6: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
+036 "ikev2-ipsec-fail" #6: encountered fatal error in state STATE_PARENT_I2
 west #
  ipsec auto --delete ikev2-ipsec-fail
 002 "ikev2-ipsec-fail": terminating SAs using this connection
-002 "ikev2-ipsec-fail" #7: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "ikev2-ipsec-fail" #5: deleting state (STATE_PARENT_I2) and NOT sending notification
 west #
  echo done
 done
@@ -85,14 +83,10 @@ west #
 type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-ipsec-fail" connstate=1 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1-ipsec-fail" connstate=2, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
 type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev1-ipsec-fail" connstate=1 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-ipsec-fail" connstate=4 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1-aggr-ipsec-fail" connstate=5, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev1-aggr-ipsec-fail" connstate=4 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2-ipsec-fail" connstate=8, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-ipsec-fail" connstate=8 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-ipsec-fail" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1-aggr-ipsec-fail" connstate=4, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev1-aggr-ipsec-fail" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2-ipsec-fail" connstate=6, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-ipsec-fail" connstate=6 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
 west #
  

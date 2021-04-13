@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Wait until both whack can talk to pluto and the addconn process has
+# has finished adding connections, i.e., until pluto has started.
+
+# When pluto starts it does:
+#
+# - creates whack socket
+#   -> whack requests will block
+# - vfork() then exec(addconn)
+#   -> addconn is added to pluto's process list
+# - starts event loop
+#   -> (blocked) whack requests will be processed
+#
+# This code checks things in reverse:
+#
+# - queries pluto for a process list
+#   -> so it waits until the event loop is running
+#      and addconn has been started
+# - checks the process list for addconn
+#   -> so it waits until addconn has finished
+
+echo ==== cut ====
+
+count=10
+while count=$(expr $count - 1) && test $count -gt 0 ; do
+    # both need to attach ...
+    if ps=$(ipsec whack --processstatus) ; then
+	echo "${ps}"
+	# ... and not find addconn
+	if echo "${ps}" | grep addconn ; then
+	    echo try again
+	else
+	    echo addconn exited
+	    break
+	fi
+    fi
+    sleep 1
+done
+
+echo ==== tuc ====
+
+# what took so long?
+if [ $count -eq 0 ]
+then
+   if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+	echo "pluto in namespace failed to start - check logs or output"
+   else
+	systemctl --full status ipsec.service
+   fi
+fi

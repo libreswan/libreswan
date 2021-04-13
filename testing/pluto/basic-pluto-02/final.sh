@@ -1,8 +1,3 @@
-../../pluto/bin/ipsec-look.sh
-../../pluto/bin/xfrmcheck.sh
-: ==== cut ====
-ipsec auto --status
-: ==== tuc ====
+../../guestbin/ipsec-look.sh
+../../guestbin/xfrmcheck.sh
 ipsec whack --shutdown
-../bin/check-for-core.sh
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

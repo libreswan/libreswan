@@ -9,26 +9,18 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE policies time to load
 east #
- sleep 2
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+000 Total IPsec connections: loaded 9, active 0
 east #
  echo "initdone"
 initdone
 east #
- ping -n -c 4 10.0.10.1
-PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
-From 192.1.2.254 icmp_seq=1 Destination Net Unreachable
-From 192.1.2.254 icmp_seq=2 Destination Net Unreachable
-From 192.1.2.254 icmp_seq=3 Destination Net Unreachable
-From 192.1.2.254 icmp_seq=4 Destination Net Unreachable
---- 10.0.10.1 ping statistics ---
-4 packets transmitted, 0 received, +4 errors, 100% packet loss, time XXXX
-east #
  ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===192.1.2.45/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=192.1.2.45/32
+006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===192.1.2.45/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=192.1.2.45/32
 east #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
@@ -40,7 +32,7 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 east #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
@@ -95,9 +87,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

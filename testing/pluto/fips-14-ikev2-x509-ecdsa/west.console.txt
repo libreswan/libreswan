@@ -19,7 +19,7 @@ west #
 west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2": added IKEv2 connection
@@ -33,13 +33,11 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #1: certificate verified OK: CN=strongEast,O=strongSwan,C=CH
-002 "westnet-eastnet-ikev2" #1: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CH, O=strongSwan, CN=strongEast'
-003 "westnet-eastnet-ikev2" #1: authenticated using ECDSA with SHA2_384
+003 "westnet-eastnet-ikev2" #1: authenticated using ECDSA with SHA2_384 and peer certificate 'C=CH, O=strongSwan, CN=strongEast' issued by CA 'C=CH, O=strongSwan, CN=strongSwan CA'
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
@@ -68,9 +66,5 @@ west #
 done
 west #
  ipsec whack --shutdown
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

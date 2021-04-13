@@ -9,7 +9,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -19,7 +19,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec auto --status
+000 Total IPsec connections: loaded 6, active 0
 road #
  echo "initdone"
 initdone
@@ -28,7 +29,7 @@ road #
 002 initiate on demand from 192.1.3.209:8 to 192.1.2.23:0 proto=1 because: whack
 002 can't find expected bare shunt to delete: 192.1.3.209/32:0 -ICMP-> 192.1.2.23/32:0
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
 002 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #
@@ -36,7 +37,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -75,10 +76,6 @@ road #
 | hash algorithm identifier (network ordered)
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
 road #
  

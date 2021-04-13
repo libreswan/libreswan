@@ -30,16 +30,21 @@ static void check_shunk_to_address(void)
 		int line;
 		int family;
 		const char *in;
-		const char *cooked;
+		const char *str;
 		bool requires_dns;
 	} tests[] = {
 
-		/* any/unspec */
+		/* unset */
+		{ LN, 0, "", NULL, false, },
+
+		/* any */
 		{ LN, 4, "0.0.0.0", "0.0.0.0", false, },
 		{ LN, 6, "::", "::", false, },
 		{ LN, 6, "0:0:0:0:0:0:0:0", "::", false, },
 
-		/* local */
+		/* local (zero's fill) */
+		{ LN, 4, "127.1", "127.0.0.1", false, },
+		{ LN, 4, "127.0.1", "127.0.0.1", false, },
 		{ LN, 4, "127.0.0.1", "127.0.0.1", false, },
 		{ LN, 6, "::1", "::1", false, },
 		{ LN, 6, "0:0:0:0:0:0:0:1", "::1", false, },
@@ -48,9 +53,18 @@ static void check_shunk_to_address(void)
 		{ LN, 4, "255.255.255.255", "255.255.255.255", false, },
 		{ LN, 6, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", false, },
 
-		/* all bytes and '/' */
+		/* all bytes */
 		{ LN, 4, "1.2.3.4", "1.2.3.4", false, },
 		{ LN, 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", false, },
+
+		/* last digit is a big num - see wikepedia */
+		{ LN, 4, "127.254", "127.0.0.254", false, },
+		{ LN, 4, "127.65534", "127.0.255.254", false, },
+		{ LN, 4, "127.16777214", "127.255.255.254", false, },
+		/* last digit overflow */
+		{ LN, 4, "127.16777216", NULL, false, },
+		{ LN, 4, "127.0.65536", NULL, false, },
+		{ LN, 4, "127.0.0.256", NULL, false, },
 
 		/* suppress leading zeros - 01 vs 1 */
 		{ LN, 6, "0001:0012:0003:0014:0005:0016:0007:0018", "1:12:3:14:5:16:7:18", false, },
@@ -68,59 +82,56 @@ static void check_shunk_to_address(void)
 		{ LN, 6, "0:2:0:4:0:6:0:8", "0:2:0:4:0:6:0:8", false, },
 
 		{ LN, 4, "www.libreswan.org", "188.127.201.229", .requires_dns = true, },
+
+		/* hex/octal */
+		{ LN, 4, "0x01.0x02.0x03.0x04", "1.2.3.4", false, },
+		{ LN, 4, "0001.0002.0003.0004", "1.2.3.4", false, },
+		{ LN, 4, "0x01020304", "1.2.3.4", false, },
+
+		/* trailing garbage */
+		{ LN, 4, "1.2.3.4.", NULL, false, },
+		{ LN, 4, "1.2.3.4a", NULL, false, },
+		{ LN, 4, "1.2.3.0a", NULL, false, },
+
+		/* bad digits */
+		{ LN, 4, "256.2.3.4", NULL, false, },
+		{ LN, 4, "0008.2.3.4", NULL, false, },
+		{ LN, 4, "0x0g.2.3.4", NULL, false, },
+
 	};
 
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> cooked: %s dns: %s", pri_family(t->family), t->in,
-		      t->cooked == NULL ? "ERROR" : t->cooked,
+		PRINT("%s '%s' -> str: '%s' dns: %s", pri_family(t->family), t->in,
+		      t->str == NULL ? "ERROR" : t->str,
 		      bool_str(t->requires_dns));
 
-		const struct ip_info *type;
 		ip_address tmp, *address = &tmp;
 
 		/* NUMERIC/NULL */
 
-		type = NULL;
-		err = ttoaddress_num(shunk1(t->in), type, address);
-		if (err != NULL) {
-			if (t->cooked != NULL && !t->requires_dns) {
-				FAIL("numeric_to_address(%s,NULL) unexpecedly failed: %s",
-				     t->in, err);
+		FOR_EACH_THING(family, 0, t->family) {
+			const struct ip_info *afi = IP_TYPE(family);
+			err = ttoaddress_num(shunk1(t->in), afi, address);
+			if (err != NULL) {
+				if (t->str != NULL && !t->requires_dns) {
+					FAIL("ttoaddress_num(%s, %s) unexpecedly failed: %s",
+					     t->in, pri_family(family), err);
+				} else {
+					PRINT("ttoaddress_num(%s, %s) returned: %s",
+					      t->in, pri_family(family), err);
+				}
+			} else if (t->requires_dns) {
+				FAIL("ttoaddress_num(%s, %s) unexpecedly parsed a DNS address",
+				     t->in, pri_family(family));
+			} else if (t->str == NULL) {
+				FAIL("ttoaddress_num(%s, %s) unexpecedly succeeded",
+				     t->in, pri_family(family));
+			} else {
+				CHECK_TYPE(address);
 			}
-		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(%s, NULL) unexpecedly parsed a DNS address",
-			     t->in);
-		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(%s, NULL) unexpecedly succeeded", t->in);
-		} else {
-			CHECK_TYPE(address);
-		}
-
-		/* NUMERIC/TYPE */
-
-		type = IP_TYPE(t->family);
-		err = ttoaddress_num(shunk1(t->in), type, address);
-		if (err != NULL) {
-			if (!t->requires_dns) {
-				FAIL(" numeric_to_address(%s, %s) unexpecedly failed: %s",
-				     t->in, pri_family(t->family), err);
-			}
-		} else if (t->requires_dns) {
-			FAIL(" numeric_to_address(%s, %s) unexpecedly parsed a DNS address",
-			     t->in, pri_family(t->family));
-		} else if (t->cooked == NULL) {
-			FAIL(" numeric_to_address(%s, %s) unexpecedly succeeded",
-			     t->in, pri_family(t->family));
-		} else {
-			CHECK_TYPE(address);
-		}
-
-		if (t->requires_dns && !use_dns) {
-			PRINT("skipping str_address() tests as no DNS");
-			continue;
 		}
 
 		/* DNS/TYPE */
@@ -128,21 +139,30 @@ static void check_shunk_to_address(void)
 		if (t->requires_dns && !use_dns) {
 			PRINT("skipping dns_hunk_to_address(type) -- no DNS");
 		} else {
-			type = IP_TYPE(t->family);
-			err = ttoaddress_dns(shunk1(t->in), type, address);
+			const struct ip_info *afi = IP_TYPE(t->family);
+			err = ttoaddress_dns(shunk1(t->in), afi, address);
 			if (err != NULL) {
-				if (t->cooked != NULL) {
-					FAIL("dns_hunk_to_address(type) unexpecedly failed: %s", err);
+				if (t->str != NULL) {
+					FAIL("ttoaddress_dns(%s, %s) unexpecedly failed: %s",
+					     t->in, pri_family(t->family), err);
+				} else {
+					PRINT("ttoaddress_dns(%s, %s) returned: %s",
+					      t->in, pri_family(t->family), err);
 				}
-			} else if (t->cooked == NULL) {
-				FAIL(" dns_hunk_to_address(type) unexpecedly succeeded");
+			} else if (t->str == NULL) {
+				FAIL("ttoaddress_dns(%s, %s) unexpecedly succeeded",
+				     t->in, pri_family(t->family));
 			} else {
 				CHECK_TYPE(address);
 			}
 		}
 
 		/* now convert it back cooked */
-		CHECK_STR(address_buf, address, t->cooked, address);
+		if (t->requires_dns && !use_dns) {
+			PRINT("skipping str_*() -- no DNS");
+		} else if (t->str != NULL) {
+			CHECK_STR2(address);
+		}
 
 	}
 }

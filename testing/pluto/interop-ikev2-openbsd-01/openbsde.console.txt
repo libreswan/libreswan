@@ -18,22 +18,16 @@ openbsde #
 echo "initdone"
 initdone
 openbsde #
- if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsde.iked.log ; fi
-if [ -f /tmp/iked.log ]; then cp /tmlog ]; then cp /tmp/iked.log OUTPUT/openbsde.iked.log ; fi
+ cp /tmp/iked.log OUTPUT/openbsde.iked.log
+cp /tmp/iked.log OUTPUT/openbsde.ikeUTPUT/openbsde.iked.log
 openbsde #
- test -f /sbin/ipsecctl && ipsecctl -s all | sort
-test -f /sbin/ipsecctl && ipsecctl -cctl && ipsecctl -s all | sort
+ ipsecctl -s all | sort
+ipsecctl -s all | sort
 FLOWS:
 SAD:
 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
-openbsde #
- ../bin/check-for-core.sh
-../bin/check-for-core.sh
-openbsde #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi
 openbsde #
  

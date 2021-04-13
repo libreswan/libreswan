@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
@@ -48,9 +48,5 @@ west #
  grep -e v2N_INVALID_KE_PAYLOAD -e v2N_INVALID_SYNTAX /tmp/pluto.log | grep -v -e '^|'
 "westnet-eastnet-ipv4-psk-ikev2" #2: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed with v2N_INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #3: state transition 'Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE' failed with v2N_INVALID_SYNTAX
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

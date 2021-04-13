@@ -1,4 +1,4 @@
-ping -n -c 2 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
 sleep 5
 # should show no tunnels and no bare shunts and a state in STATE_PARENT_I1
 ipsec whack --trafficstatus

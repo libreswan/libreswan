@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-no-sha1
 002 "westnet-eastnet-no-sha1": added IKEv2 connection
@@ -142,9 +142,5 @@ west #
  # stop on east caused crash on west at some point in the past
 west #
  hostname |grep west > /dev/null || ipsec stop
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

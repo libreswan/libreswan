@@ -17,11 +17,12 @@ road #
 road #
  ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 10
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
+000 Total IPsec connections: loaded 13, active 0
 road #
  echo "initdone"
 initdone
@@ -30,7 +31,7 @@ road #
 road #
  # trigger a private-or-clear and check for shunt and shunt expiry
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -53,7 +54,7 @@ road #
 road #
  sleep 10
 road #
- # should show %pass in shuntstatus and xfrm policy and without partial STATE
+ # should show pass in shuntstatus and xfrm policy and without partial STATE
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -77,11 +78,11 @@ road #
 road #
  ipsec status | grep STATE_
 road #
- # repeat test with a %hold shunt - but it really shouldn't matter
+ # repeat test with a hold shunt - but it really shouldn't matter
 road #
  # trigger a private and check for shunt and shunt expiry
 road #
- ping -n -c 1 -I 192.1.3.209 192.1.3.46
+ ping -n -q -c 1 -I 192.1.3.209 192.1.3.46
 PING 192.1.3.46 (192.1.3.46) from 192.1.3.209 : 56(84) bytes of data.
 --- 192.1.3.46 ping statistics ---
 1 packets transmitted, 0 received, 100% packet loss, time XXXX
@@ -107,7 +108,7 @@ road #
 road #
  sleep 10
 road #
- # should show %pass in shuntstatus and xfrm policy and without partial STATE
+ # should show pass in shuntstatus and xfrm policy and without partial STATE
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:

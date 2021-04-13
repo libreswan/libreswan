@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# We temporary ship a copy of the VPN system role until it appears in the upstream package.
+# So we just link it in place if it is not there.
+# never produce output so tests dont show diff
+if [ ! -d /usr/share/ansible/roles ]
+then
+	echo "system role tests require linux-system-roles package to be installed"
+	exit
+fi
+(
+	if [ -e /usr/share/ansible/roles/linux-system-roles.vpn ]
+	then
+		exit
+	fi
+	cd /usr/share/ansible/roles/
+	ln -s /testing/linux-system-roles.vpn
+) > /dev/null
+

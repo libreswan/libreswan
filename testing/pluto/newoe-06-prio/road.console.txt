@@ -7,11 +7,12 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec auto --add road-east-ikev2
 002 "road-east-ikev2": added IKEv2 connection
@@ -27,11 +28,8 @@ road #
 road #
  # preferred over the OE trap policy
 road #
- ping -n -c 4 -I 192.1.3.209 192.1.2.23
+ ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -48,9 +46,5 @@ road #
 000 #1: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

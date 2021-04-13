@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
 002 "west-east": added IKEv1 connection
@@ -13,7 +13,7 @@ initdone
 west #
  # we can transmit in the clear
 west #
- ping -q -c 4 -n 192.1.2.23
+ ping -n -q -c 4 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -30,7 +30,7 @@ west #
 1v1 "west-east" #1: sent Aggressive Mode request
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: authenticated using RSA with SHA-1
+003 "west-east" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "west-east" #2: sent Quick Mode request
@@ -38,7 +38,7 @@ west #
 west #
  # use the tunnel
 west #
- ping -q -c 4 -n 192.1.2.23
+ ping -n -q -c 4 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -86,7 +86,7 @@ west #
 west #
  sleep 20
 west #
- ping -q -c 4 -n 192.1.2.23
+ ping -n -q -c 4 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
@@ -104,9 +104,5 @@ west #
 done
 west #
  # no tunnels left, Ma!
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

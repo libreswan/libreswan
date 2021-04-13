@@ -929,7 +929,11 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 					  const struct connection *d,
 					  const struct traffic_selectors *tsi,
 					  const struct traffic_selectors *tsr,
-					  struct logger *logger)
+					  struct logger *logger
+#ifndef HAVE_LABELED_IPSEC
+								UNUSED
+#endif
+)
 {
 	/* sec_labels are symmetric, pick from one end */
 	chunk_t sec_label = d->spd.this.sec_label;

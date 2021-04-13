@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet
 002 "westnet-eastnet-0": added IKEv2 connection
@@ -169,9 +169,5 @@ east #
 000 #3: "westnet-eastnet-1" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
 000 #4: "westnet-eastnet-2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #4: "westnet-eastnet-2" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B! ESPmax=0B 
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

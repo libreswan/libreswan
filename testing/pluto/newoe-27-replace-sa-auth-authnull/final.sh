@@ -4,8 +4,3 @@ ipsec whack --trafficstatus
 # then cannot find a (non-authnull) match and rejects it. So an
 # additional 'authenticated' partial state lingers
 ipsec status | grep STATE_
-: ==== cut ====
-ipsec auto --status
-: ==== tuc ====
-../bin/check-for-core.sh
-if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

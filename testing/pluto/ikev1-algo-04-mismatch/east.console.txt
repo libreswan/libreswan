@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec whack --impair delete-on-retransmit
 east #
@@ -18,9 +18,5 @@ east #
 "westnet-eastnet-ipv4-psk-ikev1" #2: sending encrypted notification NO_PROPOSAL_CHOSEN to 192.1.2.45:500
 |    Notify Message Type: NO_PROPOSAL_CHOSEN (0xe)
 | state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

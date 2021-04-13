@@ -1,0 +1,41 @@
+- hosts: all
+  tasks:
+    - name: create var file in caller that can override the one in called role
+      delegate_to: localhost
+      copy:
+        # usually the fake file will cause the called role to crash of
+        # overriding happens, but if not, set a variable that will
+        # allow to detect the bug
+        content: "__caller_override: true"
+        # XXX ugly, self-modifying code - changes the "caller" role on
+        # the controller
+        dest: "{{ playbook_dir }}/roles/caller/vars/{{ item }}.yml"
+      loop: "{{ varfiles | unique }}"
+      # In case the playbook is executed against multiple hosts, use
+      # only the first one. Otherwise the hosts would stomp on each
+      # other since they are changing files on the controller.
+      when: inventory_hostname == ansible_play_hosts_all[0]
+      vars:
+        # change to hostvars['localhost']['ansible_facts'] to use the
+        # information for localhost
+        facts: "{{ ansible_facts }}"
+        versions:
+          - "{{ facts['distribution_version'] }}"
+          - "{{ facts['distribution_major_version'] }}"
+        separators: [ "-", "_" ]
+        # create all variants like CentOS, CentOS_8.1, CentOS-8.1,
+        # CentOS-8, CentOS-8.1
+        # more formally:
+        # {{ ansible_distribution }}-{{ ansible_distribution_version }}
+        # {{ ansible_distribution }}-{{ ansible_distribution_major_version }}
+        # {{ ansible_distribution }}
+        # {{ ansible_os_family }}
+        # and the same for _ as separator.
+        varfiles: "{{ [facts['distribution']] | product(separators) |
+          map('join') | product(versions) | map('join') | list +
+          [facts['distribution'], facts['os_family']] }}"
+
+    - import_role:
+        name: caller
+      vars:
+        roletoinclude: linux-system-roles.vpn

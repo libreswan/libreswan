@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
 002 "east-any": added IKEv2 connection
@@ -54,9 +54,5 @@ src 192.1.2.254/32 dst 192.1.2.23/32
 	dir in priority 3129279 ptype main 
 src 192.1.2.23/32 dst 192.1.2.254/32 
 	dir out priority 3129279 ptype main 
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

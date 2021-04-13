@@ -6,7 +6,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # down'ed conn must remain down
 east #
@@ -53,9 +53,5 @@ east #
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -933,15 +933,6 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_impossible;
 	}
 
-	/* if routing would affect IKE messages, reject */
-	if (c->spd.this.host_port != NAT_IKE_UDP_PORT &&
-	    c->spd.this.host_port != IKE_UDP_PORT &&
-	    address_in_selector_subnet(c->spd.that.host_addr, c->spd.that.client)) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "cannot install route: peer is within its client");
-		return route_impossible;
-	}
-
 	struct spd_route *esr, *rosr;
 	struct connection *ero,		/* who, if anyone, owns our eroute? */
 		*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
@@ -1843,7 +1834,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	int encap_oneshot = mode;
 
-	struct kernel_sa said_boilerplate = {
+	const struct kernel_sa said_boilerplate = {
 		.src.address = &src,
 		.dst.address = &dst,
 		.src.client = &src_client,
@@ -1853,15 +1844,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-		.sec_label = c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
-	};
 
-	if (st->st_acquired_sec_label.len != 0) {
-		said_boilerplate.sec_label = st->st_acquired_sec_label;
-	}
-	if (st->st_seen_sec_label.len != 0) {
-		said_boilerplate.sec_label = st->st_seen_sec_label;
-	}
+		.sec_label =
+			st->st_seen_sec_label.len != 0 ? st->st_seen_sec_label :
+			st->st_acquired_sec_label.len != 0 ? st->st_acquired_sec_label :
+			c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
+	};
 
 	inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {

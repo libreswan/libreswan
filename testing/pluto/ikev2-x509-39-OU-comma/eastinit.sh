@@ -29,6 +29,6 @@ pk12util -i OUTPUT/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
 
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add x509
 echo "initdone"

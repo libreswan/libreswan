@@ -11,7 +11,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add north-east-21
 002 "north-east-21": added IKEv2 connection
@@ -29,10 +29,10 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@north'
-006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@north'
-006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@north'
-006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@north'
+006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
+006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
+006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
+006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
 east #
  ip -s link show ipsec1
 Device "ipsec1" does not exist.
@@ -69,9 +69,5 @@ X: ipsec23@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x17 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 
 X: ipsec24@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x18 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

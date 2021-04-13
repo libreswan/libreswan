@@ -4,7 +4,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert-chain
 002 "nss-cert-chain": added IKEv1 connection
@@ -65,13 +65,5 @@ west #
  # catch any cert chain specific leaks
 west #
  ipsec whack --shutdown
-west #
- grep -e leak /tmp/pluto.log | grep -v -e '|'
-leak-detective enabled
-leak detective found no leaks
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

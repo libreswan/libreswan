@@ -11,17 +11,15 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # give OE policies time to load
 west #
- sleep 2
+ ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
+timeout waiting 30 seconds for ipsec auto --status to match loaded 9,
 west #
- ping -c 4 -I 192.1.2.45 192.1.2.23
+ ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -43,7 +41,7 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.45
@@ -65,7 +63,7 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
@@ -126,9 +124,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

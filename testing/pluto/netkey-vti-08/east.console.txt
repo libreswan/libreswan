@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-vti
 002 "westnet-eastnet-vti": added IKEv1 connection
@@ -16,9 +16,5 @@ east #
  # unique mark translates -1 to random, make sure there is no -1
 east #
  ip xfrm policy | grep \\-1
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

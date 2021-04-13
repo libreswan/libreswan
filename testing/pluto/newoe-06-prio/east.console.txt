@@ -7,14 +7,15 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-ikev2
 002 "road-east-ikev2": added IKEv2 connection
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 11' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
@@ -28,9 +29,5 @@ east #
 000 #1: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -46,9 +46,9 @@ extern void ip_cidr_check(void);
 extern unsigned fails;
 extern bool use_dns;
 
-#define pri_family(FAMILY) ((FAMILY) == 0 ? "" :	\
-			    (FAMILY) == 4 ? " IPv4" :	\
-			    (FAMILY) == 6 ? " IPv6" :	\
+#define pri_family(FAMILY) ((FAMILY) == 0 ? "0" :	\
+			    (FAMILY) == 4 ? "IPv4" :	\
+			    (FAMILY) == 6 ? "IPv6" :	\
 			    " ???")
 
 #define SA_FAMILY(FAMILY) ((FAMILY) == 0 ? AF_UNSPEC :	\

@@ -7,7 +7,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -17,7 +17,8 @@ road #
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec status | grep "our auth" | grep private
 000 "clear-or-private":   our auth:null, their auth:null
@@ -30,7 +31,7 @@ initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down
 road #
  # wait on OE to establish
@@ -44,7 +45,7 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
@@ -56,10 +57,6 @@ road #
  # Authentication should be AUTH_NULL
 road #
  hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: authenticated using authby=null
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 road #
  

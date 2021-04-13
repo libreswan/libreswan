@@ -1,0 +1,7 @@
+Scaffolding test case for testing VPN System Roles
+
+The idea is that "nic" is the provisioning host that
+runs the system role tools to push updated configs to
+east and west over ssh.
+
+This System Role uses Opportunstic mesh and certificates.

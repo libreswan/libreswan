@@ -54,19 +54,18 @@
 #include "lswnss.h"
 #include "ikev2_auth.h"
 
-static try_signature_fn try_signature_ECDSA_ikev2; /* type assert */
+static authsig_using_pubkey_fn authsig_using_ECDSA_ikev2_pubkey; /* type assert */
 
-static err_t try_signature_ECDSA_ikev2(const struct crypt_mac *hash,
-				       shunk_t signature,
-				       struct pubkey *kr,
-				       const struct hash_desc *hash_algo_unused UNUSED,
-				       struct logger *logger)
+bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t signature,
+				      struct pubkey *kr,
+				      const struct hash_desc *unused_hash_algo UNUSED,
+				      diag_t *fatal_diag,
+				      struct logger *logger)
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
-		log_nss_error(RC_LOG, logger,
-			      "allocating ECDSA arena using PORT_NewArena() failed");
-		return "10" "NSS error: Not enough memory to create arena";
+		*fatal_diag = diag_nss_error("allocating ECDSA arena");
+		return false;
 	}
 
 	/*
@@ -78,39 +77,36 @@ static err_t try_signature_ECDSA_ikev2(const struct crypt_mac *hash,
 	SECKEYPublicKey *publicKey = (SECKEYPublicKey *)
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (publicKey == NULL) {
+		*fatal_diag = diag_nss_error("allocating ECDSA pubkey arena");
 		PORT_FreeArena(arena, PR_FALSE);
-		log_nss_error(RC_LOG, logger,
-			      "allocating ECDSA public key using PORT_ArenaZAlloc() failed");
-		return "11" "NSS error: Not enough memory to create publicKey";
+		return false;
 	}
+
 	publicKey->arena = arena;
 	publicKey->keyType = ecKey;
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/* copy k's public key value into the arena / publicKey */
+	/*
+	 * Copy k and ec params into the arena / publicKey.
+	 */
+
 	SECItem k_pub = same_chunk_as_secitem(k->pub, siBuffer);
 	if (SECITEM_CopyItem(arena, &publicKey->u.ec.publicValue, &k_pub) != SECSuccess) {
-		log_nss_error(RC_LOG, logger,
-			      "constructing ECDSA public value using SECITEM_CopyItem() failed");
+		*fatal_diag = diag_nss_error("copying 'k' to EDSA public key");
 		PORT_FreeArena(arena, PR_FALSE);
-		return "10" "NSS error: copy failed";
+		return false;
 	}
 
-	/* construct the EC Parameters */
 	SECItem k_ecParams = same_chunk_as_secitem(k->ecParams, siBuffer);
-	if (SECITEM_CopyItem(arena,
-			     &publicKey->u.ec.DEREncodedParams,
-			     &k_ecParams) != SECSuccess) {
-		log_nss_error(RC_LOG, logger,
-			      "construction of ecParams using SECITEM_CopyItem() failed");
+	if (SECITEM_CopyItem(arena, &publicKey->u.ec.DEREncodedParams, &k_ecParams) != SECSuccess) {
+		*fatal_diag = diag_nss_error("copying ecParams to ECDSA public key");
 		PORT_FreeArena(arena, PR_FALSE);
-		return "1" "NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
+		return false;
 	}
-
 
 	/*
-	 * Convert the signature into raw form
+	 * Convert the signature into raw form (NSS doesn't do const).
 	 */
 	SECItem der_signature = {
 		.type = siBuffer,
@@ -122,14 +118,18 @@ static err_t try_signature_ECDSA_ikev2(const struct crypt_mac *hash,
 		    der_signature.len);
 		jam_nss_secitem(buf, &der_signature);
 	}
+
 	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
 							SECKEY_SignatureLen(publicKey));
 	if (raw_signature == NULL) {
-		log_nss_error(RC_LOG, logger,
-			      "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen() failed:");
+		/* not fatal as dependent on key being tried */
+		log_nss_error(DEBUG_STREAM, logger,
+			      "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
 		PORT_FreeArena(arena, PR_FALSE);
-		return "1" "Decode failed";
+		*fatal_diag = NULL;
+		return false;
 	}
+
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "%d-byte raw ESCSA signature: ",
 		    raw_signature->len);
@@ -150,23 +150,25 @@ static err_t try_signature_ECDSA_ikev2(const struct crypt_mac *hash,
 
 	if (PK11_Verify(publicKey, raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
-		log_nss_error(RC_LOG, logger,
+		log_nss_error(DEBUG_STREAM, logger,
 			      "verifying AUTH hash using PK11_Verify() failed:");
 		PORT_FreeArena(arena, PR_FALSE);
 		SECITEM_FreeItem(raw_signature, PR_TRUE);
-		return "1" "NSS error: Not able to verify";
+		*fatal_diag = NULL;
+		return false;
 	}
 
 	dbg("NSS: verified signature");
 	SECITEM_FreeItem(raw_signature, PR_TRUE);
 
-	return NULL;
+	*fatal_diag = NULL;
+	return true;
 }
 
-stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
-				   const struct crypt_mac *idhash,
-				   shunk_t signature,
-				   const struct hash_desc *hash_algo)
+stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
+						 const struct crypt_mac *idhash,
+						 shunk_t signature,
+						 const struct hash_desc *hash_algo)
 {
 	if (hash_algo->common.ikev2_alg_id < 0) {
 		return STF_FATAL;
@@ -174,6 +176,7 @@ stf_status ikev2_verify_ecdsa_hash(struct ike_sa *ike,
 
 	struct crypt_mac calc_hash = v2_calculate_sighash(ike, idhash, hash_algo,
 							  REMOTE_PERSPECTIVE);
-	return check_signature_gen(ike, &calc_hash, signature, hash_algo,
-				   &pubkey_type_ecdsa, try_signature_ECDSA_ikev2);
+	return authsig_and_log_using_pubkey(ike, &calc_hash, signature, hash_algo,
+					    &pubkey_type_ecdsa,
+					    authsig_using_ECDSA_ikev2_pubkey);
 }

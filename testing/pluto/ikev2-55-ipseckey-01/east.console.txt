@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-ikev2
 002 "road-east-ikev2": added IKEv2 connection
@@ -52,10 +52,6 @@ east #
 000        ID_FQDN '@east'
 east #
  ipsec whack --trafficstatus
-006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@road.testing.libreswan.org'
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@road.testing.libreswan.org'
 east #
  

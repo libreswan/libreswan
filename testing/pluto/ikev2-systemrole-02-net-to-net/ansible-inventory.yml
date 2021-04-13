@@ -1,0 +1,21 @@
+all:
+  hosts:
+    west:
+      ansible_host: 192.1.2.45
+      ansible_user: root
+      ansible_password: swan
+      ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+    east:
+      ansible_host: 192.1.2.23
+      ansible_user: root
+      ansible_password: swan
+      ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no
+  vars:
+    vpn_connections:
+      - hosts:
+          west:
+            subnets=192.0.1.0/24
+          east:
+            subnets=192.0.2.0/24
+        auto: ondemand
+

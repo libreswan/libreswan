@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
 002 "west-east": added IKEv2 connection
@@ -15,9 +15,5 @@ east #
 east #
  grep "liveness: .* was replaced by "  /tmp/pluto.log
 | liveness: #2 was replaced by #3 so not needed
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

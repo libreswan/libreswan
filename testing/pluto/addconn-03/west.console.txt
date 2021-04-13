@@ -6,7 +6,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec addconn --verbose test
 opening file: /etc/ipsec.conf
@@ -629,8 +629,4 @@ west #
  # C=`ip -o route show scope global |wc -l`; echo "Global routes $C"
 west #
  # ipsec addconn --verbose test
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

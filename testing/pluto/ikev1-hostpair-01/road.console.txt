@@ -4,7 +4,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
@@ -23,7 +23,7 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
 040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
@@ -38,16 +38,11 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
- ping -n -c 2 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=168, outBytes=168
+006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 road #
  # change ip, emulating sudden switching network
 road #
@@ -63,7 +58,7 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
@@ -77,7 +72,7 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 041 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Username:
 040 "westnet-eastnet-ipv4-psk-ikev1" #1: westnet-eastnet-ipv4-psk-ikev1 prompt for Password:
@@ -94,18 +89,11 @@ road #
 road #
  # should not fail to ping
 road #
- ping -n -c 4 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 road #
  echo done
 done
@@ -131,7 +119,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_MAIN_I4 (IKE SA established); EVENT_RETRANSMIT in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (IPsec SA established); EVENT_SA_REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #2: "westnet-eastnet-ipv4-psk-ikev1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 Traffic: ESPin=336B ESPout=336B! ESPmax=4194303B username=use3
+000 #2: "westnet-eastnet-ipv4-psk-ikev1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 Traffic: ESPin=84B ESPout=84B! ESPmax=4194303B username=use3
 road #
  # should show no hits
 road #
@@ -142,9 +130,5 @@ road #
  hostname | grep nic || grep "cannot route" /tmp/pluto.log
 road #
  hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
  

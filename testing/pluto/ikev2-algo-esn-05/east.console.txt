@@ -3,7 +3,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add replay
 002 "replay": added IKEv2 connection
@@ -19,9 +19,5 @@ east #
  ip xfrm state |grep replay-window
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

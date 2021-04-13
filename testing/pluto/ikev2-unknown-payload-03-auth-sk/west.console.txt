@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -16,15 +16,14 @@ west #
 west #
  : good
 west #
- ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to IKE_AUTH SK request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 000 "westnet-eastnet-ipv4-psk-ikev2" #2: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: authenticated using authby=secret
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -44,7 +43,7 @@ west #
 west #
  ipsec whack --impair unknown-v2-payload-critical
 west #
- ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request
@@ -59,7 +58,7 @@ done
 west #
  grep 'Notify data: ff$' /tmp/pluto.log
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -78,9 +77,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

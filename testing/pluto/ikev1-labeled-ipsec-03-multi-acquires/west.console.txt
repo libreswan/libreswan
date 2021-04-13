@@ -1,9 +1,22 @@
 /testing/guestbin/swan-prep
 west #
+ make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+Compiling targeted ipsecspd module
+Creating targeted ipsecspd.pp policy package
+rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+west #
+ semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+west #
+ rm ipsecspd.pp
+west #
+ setsebool domain_can_mmap_files=1
+west #
+ setsebool nis_enabled=1
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add labeled
 002 "labeled": added IKEv1 connection
@@ -21,7 +34,7 @@ west #
 1v1 "labeled" #1: sent Main Mode I2
 1v1 "labeled" #1: sent Main Mode I3
 002 "labeled" #1: Peer ID is ID_FQDN: '@east'
-003 "labeled" #1: authenticated using RSA with SHA-1
+003 "labeled" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "labeled" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "labeled" #2: sent Quick Mode request
@@ -103,14 +116,10 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=148, outBytes=205, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
- ping -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -123,12 +132,12 @@ west #
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=148, outBytes=205, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -182,16 +191,11 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ../bin/check-for-core.sh
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+west #
+ rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
  if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
-#============= netutils_t ==============
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t bin_t:file map;
-allow netutils_t bin_t:file { entrypoint execute };
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
-allow netutils_t unreserved_port_t:tcp_socket name_bind;
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
 west #
  

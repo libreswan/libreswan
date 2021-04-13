@@ -2,7 +2,7 @@
 west #
  # run the parser tests
 west #
- ../bin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
+ ../../guestbin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
 ipsec algparse -v1 -pfs -t # algparse.v1.pfs.txt
 ipsec algparse -v1 -t # algparse.v1.txt
 ipsec algparse -v2 -pfs -t # algparse.v2.pfs.txt
@@ -18,7 +18,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  grep ^FIPS /tmp/pluto.log
 FIPS Mode: NO

@@ -91,7 +91,9 @@ void ipsecdoi_initiate(struct fd *whack_sock,
 		       const threadtime_t *inception,
 		       chunk_t sec_label)
 {
-	dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+	if (sec_label.len != 0)
+		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
 	 * go directly to Quick Mode.  We are even willing to use one

@@ -23,7 +23,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec whack --debug-all --impair suppress-retransmits
 west #
@@ -43,8 +43,7 @@ west #
 1v2 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2a" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret
+003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2a" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
@@ -116,9 +115,5 @@ west #
  grep "STATE_PARENT_I1 with STF_OK" /tmp/pluto.log
 west #
  grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

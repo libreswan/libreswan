@@ -6,7 +6,7 @@ east #
 east #
  ipsec pluto --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add test
 002 "test": added IKEv1 connection
@@ -17,9 +17,5 @@ east #
  # if east was already down, the fuzzer crashed it
 east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

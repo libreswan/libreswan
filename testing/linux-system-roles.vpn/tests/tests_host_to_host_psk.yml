@@ -1,0 +1,90 @@
+---
+- hosts: all
+
+  vars_files:
+    - './vars/main.yml'
+
+  vars:
+    __vpn_num_hosts: 2
+
+  tasks:
+
+    - name: Set up test environment
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+
+        - name: Add extra options to check
+          set_fact:
+            vpn_connections: |
+              {% for tunnel in vpn_connections %}
+              {%   set _ = tunnel.__setitem__("auto", "start") %}
+              {% endfor %}
+              {{ vpn_connections }}
+
+        - name: Use vpn role
+          include_role:
+            name: linux-system-roles.vpn
+
+        - name: Assert file existence
+          include_tasks: tasks/assert_conf_secrets_files_exist.yml
+
+        - name: reset success flag
+          set_fact:
+            __vpn_success: true
+
+        - name: get and store conf files
+          slurp:
+            src: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.conf"
+          register: __vpn_register_conf
+          loop: "{{ groups['testing'] }}"
+
+        - name: check that conf file contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            item.content | b64decode is not
+            search('left=' + __vpn_main_hostname) or
+            item.content | b64decode is not
+            search('leftid=@' + __vpn_main_hostname) or
+            item.content | b64decode is not
+            search('right=host0' + (idx+1)|string + '.local') or
+            item.content | b64decode is not
+            search('rightid=@host0' + (idx+1)|string + '.local') or
+            item.content | b64decode is not
+            search('ikev2=insist') or
+            item.content | b64decode is not
+            search('authby=secret') or
+            item.content | b64decode is not
+            search('auto=start')
+          loop: '{{ __vpn_register_conf.results }}'
+          loop_control:
+            index_var: idx
+
+        - name: assert success for conf files
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in .conf files
+
+        - name: get and store secrets files
+          slurp:
+            src: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.secrets"
+          register: __vpn_register_secrets
+          loop: "{{ groups['testing'] }}"
+
+        - name: check that secrets file contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            item.content | b64decode is not
+            search('^@' + __vpn_main_hostname + ' @host0' +
+            (idx+1)|string + '\.local : PSK *')
+          loop: '{{ __vpn_register_secrets.results }}'
+          loop_control:
+            index_var: idx
+
+        - name: assert success for secrets files
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in .conf files

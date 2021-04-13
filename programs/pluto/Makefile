@@ -196,7 +196,8 @@ OBJS += iface_tcp.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
 OBJS += host_pair.o ikev1_host_pair.o ikev2_host_pair.o
-OBJS += retry.o
+OBJS += ikev1_retry.o
+OBJS += ikev2_retry.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o

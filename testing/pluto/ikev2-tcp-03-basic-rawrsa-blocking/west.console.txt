@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # make sure that clear text does not get through
@@ -19,13 +19,13 @@ west #
 west #
  # confirm with a ping
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 up UNEXPECTED
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  echo "initdone"
 initdone
@@ -34,28 +34,27 @@ west #
 west #
  ipsec whack --impair tcp-use-blocking-write
 west #
- ../../pluto/bin/libreswan-up-down.sh westnet-eastnet-ikev2 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet-ikev2 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: switching off NONBLOCK before write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: restoring flags 04002 after write
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
-002 "westnet-eastnet-ikev2" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: switching off NONBLOCK before write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: restoring flags 04002 after write
+003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESPinTCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: switching off NONBLOCK before write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: restoring flags 04002 after write
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX switching off NONBLOCK before write
-002 "westnet-eastnet-ikev2" #1: IMPAIR: TCP: socket XX restoring flags 04002 after write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: switching off NONBLOCK before write
+002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: restoring flags 04002 after write
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 west #
  ipsec look
@@ -76,9 +75,5 @@ Certificate Nickname                                         Trust Attributes
 west #
  ipsec stop
 Redirecting to: [initsystem]
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

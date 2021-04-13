@@ -18,7 +18,7 @@ north #
  ipsec start
 Redirecting to: [initsystem]
 north #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 north #
  ipsec whack --impair suppress-retransmits
 north #
@@ -28,30 +28,28 @@ north #
 north #
  # give OE policies time to load
 north #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 north #
  # one packet, which gets eaten by XFRM, so east does not initiate
 north #
- ping -n -c 1 -I 192.1.3.33 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.33 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.33 192.1.2.23
+fired and forgotten
 north #
  # wait on OE IKE negotiation
 north #
- sleep 1
+ ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 north #
- ping -n -c 2 -I 192.1.3.33 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.33 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-north #
- # ping should succeed through tunnel
+ # ping should succeed through tunnel (road pings once, north twice)
 north #
  # should show established tunnel and no bare shunts
+north #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23
+up
 north #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
@@ -60,7 +58,7 @@ north #
 000 Bare Shunt list:
 000  
 north #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 north NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.33
@@ -74,7 +72,7 @@ src 192.1.3.33 dst 192.1.2.23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.3.33 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
@@ -145,33 +143,17 @@ Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
 SNAT       all  --  0.0.0.0/0            192.1.2.23           policy match dir out pol ipsec to:10.0.10.1
 north #
- echo done
-done
-north #
- echo "initdone"
-initdone
-north #
  # A tunnel should have established with non-zero byte counters
 north #
- ping -n -c 4 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 north #
  # jacob two two for east?
 north #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 north #
- hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
-north #
- ../../pluto/bin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
+ ../../guestbin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 north NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.33
@@ -184,6 +166,10 @@ src 192.1.3.33 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport XXXX dport XXXX addr 0.0.0.0
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 10.0.10.1/32 dst 192.1.2.23/32
 	dir out priority 3129279 ptype main
@@ -257,10 +243,6 @@ north #
 | hash algorithm identifier (network ordered)
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512
-north #
- ../bin/check-for-core.sh
-north #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 north #
  

@@ -1,0 +1,95 @@
+---
+# yamllint disable rule:line-length
+- hosts: all
+
+  vars_files:
+    - './vars/main.yml'
+
+  vars:
+    __vpn_num_hosts: 2
+    __vpn_unmanaged_host: "{{ 'host0' + (__vpn_num_hosts+1)|string + '.local' }}"
+    __vpn_unmanaged_hostname: '169.254.1.1'
+
+  tasks:
+
+    - name: Set up test environment
+      include_tasks: tasks/setup_test.yml
+
+    - name: Run the test
+      block:
+
+        - name: Add extra options and unmanaged host
+          set_fact:
+            vpn_connections: |
+              {% for tunnel in vpn_connections %}
+              {%   set temp_dict = {'hostname': __vpn_unmanaged_hostname } %}
+              {%   set _ = tunnel.hosts.__setitem__(__vpn_unmanaged_host, temp_dict) %}
+              {% endfor %}
+              {{ vpn_connections }}
+
+        - name: Use vpn role
+          include_role:
+            name: linux-system-roles.vpn
+
+        - name: stat unmanaged host conf file path
+          stat:
+            path: '/etc/ipsec.d/{{ inventory_hostname }}-to-{{ __vpn_unmanaged_host }}.conf'
+          register: unmanagedconf
+
+        - name: Assert existence of unmanaged host conf file
+          assert:
+            that:
+              - unmanagedconf.stat.exists
+
+        - name: stat unmanaged host secrets file path
+          stat:
+            path: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ __vpn_unmanaged_host }}.secrets"
+          register: unmanagedsecrets
+
+        - name: Assert existence of unmanaged host secrets file
+          assert:
+            that:
+              - unmanagedsecrets.stat.exists
+
+        - name: reset success flag
+          set_fact:
+            __vpn_success: true
+
+        - name: get and store conf file for unmanaged host
+          slurp:
+            src: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ __vpn_unmanaged_host }}.conf"
+          register: __vpn_register_unmanaged_conf
+
+        - name: check that unmanaged host conf file contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            __vpn_register_unmanaged_conf.content | b64decode is not
+            search('left=' + __vpn_main_hostname) or
+            __vpn_register_unmanaged_conf.content | b64decode is not
+            search('leftid=@' + __vpn_main_hostname) or
+            __vpn_register_unmanaged_conf.content | b64decode is not
+            search('right=' + __vpn_unmanaged_hostname) or
+            __vpn_register_unmanaged_conf.content | b64decode is not
+            search('rightid=' + __vpn_unmanaged_hostname)
+
+        - name: assert success for unmanaged host conf file
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in .conf file for unmanaged host
+
+        - name: get and store unmanaged host secrets files
+          slurp:
+            src: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ __vpn_unmanaged_host }}.secrets"
+          register: __vpn_register_unmanaged_secrets
+
+        - name: check that secrets file contains correct information
+          set_fact:
+            __vpn_success: false
+          when: >-
+            __vpn_register_unmanaged_secrets.content | b64decode is not search('^@' + __vpn_main_hostname + ' ' + __vpn_unmanaged_hostname + ' : PSK *')
+
+        - name: assert success for unmanaged host secrets files
+          assert:
+            that: __vpn_success | d(false)
+            msg: Found errors in .secrets file for unmanaged host

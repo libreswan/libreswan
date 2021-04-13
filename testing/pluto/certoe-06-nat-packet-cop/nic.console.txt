@@ -14,8 +14,4 @@ nic #
 nic #
  hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
 nic #
- ../bin/check-for-core.sh
-nic #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-nic #
  

@@ -9,11 +9,12 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  # give OE policies time to load
 east #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 11,' -- ipsec auto --status
+000 Total IPsec connections: loaded 11, active 0
 east #
  echo "initdone"
 initdone
@@ -21,9 +22,5 @@ east #
  # should not show any hits
 east #
  grep "initiate on demand" /tmp/pluto.log
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

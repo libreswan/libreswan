@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive 192.1.2.23
+ ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 west #
  # ensure that clear text does not get through
@@ -21,7 +21,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti-01
 002 "westnet-eastnet-vti-01": added IKEv2 connection
@@ -40,8 +40,7 @@ west #
 1v2 "westnet-eastnet-vti-01" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-vti-01" #1: IKEv2 mode peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-vti-01" #1: authenticated using RSA with SHA2_512
+003 "westnet-eastnet-vti-01" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
@@ -67,10 +66,10 @@ west #
 002 "westnet-eastnet-vti-02" #3: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
 004 "westnet-eastnet-vti-02" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
- ../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ping -n -c 4 -I 10.0.1.254 10.0.2.254
+ ping -n -q -c 4 -I 10.0.1.254 10.0.2.254
 ping: bind: Cannot assign requested address
 west #
  ipsec whack --trafficstatus
@@ -185,9 +184,5 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

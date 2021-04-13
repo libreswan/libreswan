@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
 002 "rw-east-pool-x509-ipv4": added IKEv2 connection
@@ -15,9 +15,5 @@ east #
  # should show there are no tunnels up
 east #
  ipsec whack --trafficstatus
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -11,7 +11,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add other
 002 "other": added IKEv2 connection
@@ -26,9 +26,5 @@ east #
 east #
  ipsec whack --trafficstatus
 006 #2: "other"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@otherwest.other.libreswan.org'
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

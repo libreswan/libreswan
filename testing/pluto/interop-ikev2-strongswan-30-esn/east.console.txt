@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- ../../pluto/bin/strongswan-start.sh
+ ../../guestbin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
@@ -10,9 +10,5 @@ east #
  ip xfrm state |grep replay-window
 	replay-window 0 flag af-unspec esn
 	replay-window 0 flag af-unspec esn
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

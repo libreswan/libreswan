@@ -13,6 +13,6 @@ export NSS_OUTPUT_FILE=/tmp/nss.log
 # 2 3 and 4 are more verbose
 export NSPR_LOG_MODULES="nss_mod_log:4"
 ipsec pluto --config /etc/ipsec.conf
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add ikev2-westnet-eastnet-x509-cr
 echo "initdone"

@@ -28,8 +28,8 @@ const struct ip_bytes unset_bytes;
  */
 
 struct ip_blit {
-	uint8_t and;
-	uint8_t or;
+	uint8_t and;	/* first operation */
+	uint8_t or;	/* second operation */
 };
 
 const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
@@ -106,17 +106,15 @@ struct ip_bytes bytes_sub(const struct ip_info *afi,
 	struct ip_bytes diff = unset_bytes;
 
 	/* subtract: diff = hi - lo */
-	int carry = 0;
+	unsigned borrow = 0;
 	for (int j = afi->ip_size - 1; j >= 0; j--) {
-		int val = l.byte[j] - r.byte[j] - carry;
-		if (val < 0) {
-			val += 0x100u;
-			carry = 1;
-		} else {
-			carry = 0;
-		}
+		unsigned val = l.byte[j] - r.byte[j] - borrow;
 		diff.byte[j] = val;
+		borrow = (val >> 8) & 1u;
 	}
+
+	/* ??? what should happen if l > r?  borrow will be 1. */
+	pexpect(borrow == 0);
 
 	return diff;
 }

@@ -2797,28 +2797,16 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	if (DBGP(DBG_BASE)) {
-		dn_buf b;
-		DBG_log("offered CA: '%s'",
-			str_dn_or_null(c->spd.this.ca, "%none", &b));
-	}
+	dn_buf dnb;
+	dbg("offered CA: '%s'", str_dn_or_null(c->spd.this.ca, "%none", &dnb));
 
-	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
-		id_buf idbuf;
-		esb_buf b;
-		log_state(RC_LOG, &ike->sa,
-			  "IKEv2 mode peer ID is %s: '%s'",
-			  enum_show(&ikev2_idtype_names, hik, &b),
-			  str_id(&peer_id, &idbuf));
-	} else if (DBGP(DBG_BASE)) {
-		id_buf idbuf;
-		esb_buf b;
-		DBG_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, hik, &b),
-			str_id(&peer_id, &idbuf));
-	}
+	id_buf idbuf;
+	esb_buf esb;
+	dbg("IKEv2 mode peer ID is %s: '%s'",
+	    enum_show(&ikev2_idtype_names, hik, &esb),
+	    str_id(&peer_id, &idbuf));
 
-	return TRUE;
+	return true;
 }
 
 bool ikev2_decode_peer_id(struct msg_digest *md)

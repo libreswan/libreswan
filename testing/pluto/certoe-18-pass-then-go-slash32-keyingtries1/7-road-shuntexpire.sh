@@ -7,6 +7,6 @@ ipsec shuntstatus
 # we should see one of each in/fwd/out (confirming %pass shunt delete didn't take out dir out tunnel policy
 ip xfrm pol
 # nic blocks cleartext, so confirm tunnel is working
-ping -c 4 -I 192.1.3.209 192.1.2.23
+ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
 ipsec trafficstatus
 : ==== end ====

@@ -3,7 +3,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  # These should load
 west #
@@ -20,7 +20,5 @@ west #
 west #
  ipsec auto --add subnet6-bad
 036 "subnet6-bad": failed to add connection: subnets must have the same address family
-west #
- ../bin/check-for-core.sh
 west #
  

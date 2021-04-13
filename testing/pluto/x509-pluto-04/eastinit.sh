@@ -3,7 +3,7 @@
 certutil -D -n west -d sql:/etc/ipsec.d
 certutil -D -n west-ec -d sql:/etc/ipsec.d
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-x509-cr
 ipsec auto --status | grep westnet-eastnet-x509-cr
 echo "initdone"

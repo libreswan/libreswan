@@ -2,7 +2,7 @@
 east #
  export PLUTO_CRYPTO_HELPER_DELAY=5; export EF_DISABLE_BANNER=1; ipsec pluto  --config /etc/ipsec.conf
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
 002 "west-east/1x0": added IKEv2 connection
@@ -24,9 +24,5 @@ east #
 006 #9: "west-east/4x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
 east #
  # policies and state should be multiple
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

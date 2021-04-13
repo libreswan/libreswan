@@ -2,7 +2,7 @@
 # We should already have a %trap policy because we have a 192.1.2.23/32 group-instance
 ip -o xfrm pol | grep 192.1.2.23
 # trigger a private-or-clear and check for shunt and shunt expiry
-../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 # wait on OE retransmits and rekeying
 sleep 3
 # should show nothing in shuntstatus (shunt is not bare, but with conn), should show up in xfrm policy and show partial STATE

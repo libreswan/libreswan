@@ -8,7 +8,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert-correct
 002 "nss-cert-correct": added IKEv1 connection
@@ -64,9 +64,5 @@ hashsha1                                                     P,,
 west-ec                                                      P,,  
 nic                                                          P,,  
 otherca                                                      CT,, 
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

@@ -4,7 +4,7 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet-nat
 002 "northnet-eastnet-nat": added IKEv1 connection
@@ -14,9 +14,5 @@ initdone
 east #
  grep 'Result using RFC 3947' /tmp/pluto.log
 | NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: peer behind NAT
-east #
- ../bin/check-for-core.sh
-east #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #
  

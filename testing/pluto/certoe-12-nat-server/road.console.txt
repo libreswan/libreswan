@@ -14,27 +14,28 @@ road #
  ipsec start
 Redirecting to: [initsystem]
 road #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 road #
  ipsec whack --impair suppress-retransmits
 road #
  # give OE policies time to load
 road #
- sleep 5
+ ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 road #
  echo "initdone"
 initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ../../pluto/bin/ping-once.sh --down -I 192.1.3.209 192.1.3.130
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.3.130
 down
 road #
  # wait on OE IKE negotiation
 road #
  # ping should succeed through tunnel
 road #
- ../../pluto/bin/ping-once.sh --up -I 192.1.3.209 192.1.3.130
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.3.130
 up
 road #
  sleep 1
@@ -55,11 +56,11 @@ road #
 road #
  hostname | grep nic > /dev/null || ipsec trafficstatus
 road #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.3.209 dst 192.1.3.130
-	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.3.130/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
@@ -125,10 +126,6 @@ road #
 | hash algorithm identifier (network ordered)
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
-"private-or-clear#192.1.3.128/27"[1] ...192.1.3.130 #1: authenticated using RSA with SHA2_512
-road #
- ../bin/check-for-core.sh
-road #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+"private-or-clear#192.1.3.128/27"[1] ...192.1.3.130 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
  

@@ -6,7 +6,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add san
 002 "san": added IKEv2 connection
@@ -34,9 +34,5 @@ west #
 |    ID type: ID_DER_ASN1_DN (0x9)
 west #
  grep "RSA authentication failed" /tmp/pluto.log
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

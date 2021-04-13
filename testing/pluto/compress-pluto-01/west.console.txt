@@ -2,7 +2,7 @@
 west #
  # confirm that the network is alive
 west #
- ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # ensure that clear text does not get through
@@ -13,13 +13,13 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../pluto/bin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
- /testing/pluto/bin/wait-until-pluto-started
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-compress
 002 "westnet-eastnet-compress": added IKEv1 connection
@@ -50,7 +50,7 @@ west #
 1v1 "westnet-eastnet-compress" #1: sent Main Mode I2
 1v1 "westnet-eastnet-compress" #1: sent Main Mode I3
 002 "westnet-eastnet-compress" #1: Peer ID is ID_FQDN: '@east'
-003 "westnet-eastnet-compress" #1: authenticated using RSA with SHA-1
+003 "westnet-eastnet-compress" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-compress" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-compress" #2: sent Quick Mode request
@@ -58,25 +58,16 @@ west #
 west #
  # this ping wont be compressed
 west #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # test compression via large pings that can be compressed on IPCOMP SA
 west #
- ping -n -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
-PATTERN: 0xff
+ ping -n -q -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 8184(8212) bytes of data.
-8192 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
-8192 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -84,7 +75,7 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=649, outBytes=652, id='@east'
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
@@ -156,7 +147,7 @@ west #
  echo done
 done
 west #
- ../../pluto/bin/ipsec-look.sh
+ ../../guestbin/ipsec-look.sh
 west NOW
 !!!! There should be no XFRM state/policy left here !!!
 XFRM state:
@@ -172,9 +163,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
- ../bin/check-for-core.sh
-west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 west #
  

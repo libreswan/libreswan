@@ -23,7 +23,7 @@ b end
   /^.* dev lo metric 1024.*$/d
 
   # fix up keys and other magic numbers; see also ip xfrm state
-  s/ spi 0x[^ ]* / spi 0xSPISPI /g
+  / spi 0x00000000 /! s/ spi 0x[^ ]* / spi 0xSPISPI /g
   s/ reqid [0-9][0-9]* / reqid REQID /g
 
   s/\tauth\(.*\) 0x[^ ]* \(.*\)$/\tauth\1 0xHASHKEY \2/g

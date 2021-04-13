@@ -1,0 +1,152 @@
+---
+# yamllint disable rule:line-length
+- name: set platform/version specific variables
+  include_tasks: tasks/set_vars.yml
+
+- name: Ensure required packages are installed
+  package:
+    name: "{{ __vpn_packages }}"
+    state: present
+  tags: packages
+
+- name: Controller tasks
+  block:
+    - name: Enforce default auth method as needed
+      set_fact:
+        vpn_connections: |
+          {% for tunnel in vpn_connections %}
+          {%   set _ = tunnel.__setitem__(
+            "auth_method", tunnel.auth_method | d(vpn_auth_method)
+            ) %}
+          {% endfor %}
+          {{ vpn_connections }}
+
+    - name: Make sure that the hosts list is not empty
+      vars:
+        failure: >-
+          {% for tunnel in vpn_connections %}
+          {%-  if not tunnel.opportunistic | d(vpn_opportunistic) -%}
+          {%-    if not 'hosts' in tunnel or not tunnel.hosts -%}
+          True
+          {%-    endif -%}
+          {%-  endif -%}
+          {% endfor %}
+      fail:
+        msg: list of hosts is empty for one or more tunnels
+      when: '"True" in failure'
+
+    - name: Ensure cert_names are populated when auth_method is cert
+      vars:
+        failure: >-
+          {% for tunnel in vpn_connections %}
+          {%   if tunnel.auth_method == 'cert' %}
+          {%     if tunnel.opportunistic | d(vpn_opportunistic) %}
+          {%       for host in ansible_play_hosts %}
+          {%-        if 'cert_name' not in hostvars[host] or hostvars[host].cert_name is none or not hostvars[host].cert_name | trim | length -%}
+          True
+          {%-         endif -%}
+          {%       endfor %}
+          {%     else %}
+          {%       for key, value in tunnel.hosts.items() %}
+          {%         if value is none or 'cert_name' not in value or value.cert_name is none or not value.cert_name | trim | length %}
+          {%-           if 'cert_name' not in hostvars[key] or hostvars[key].cert_name is none or not hostvars[key].cert_name | trim | length -%}
+          True
+          {%-           endif -%}
+          {%         endif %}
+          {%       endfor %}
+          {%     endif %}
+          {%   endif %}
+          {% endfor %}
+      fail:
+        msg: cert_name is missing or empty for one or more hosts in a tunnel
+      when: '"True" in failure'
+
+    - name: generate psks
+      no_log: true
+      set_fact:
+        __vpn_psks: |
+          {% set __vpn_psks = {} %}
+          {% for tunnel in vpn_connections %}
+          {%   if not tunnel.opportunistic | d(vpn_opportunistic) %}
+          {%     set __vpn_idx = loop.index0 %}
+          {%     if tunnel.auth_method == 'psk' %}
+          {%       set _ = __vpn_psks.__setitem__(__vpn_idx, {}) %}
+          {%       for host1, host2 in tunnel.hosts.keys() | combinations(2) %}
+          {%         if not host1 in __vpn_psks[__vpn_idx] %}
+          {%           set _ = __vpn_psks[__vpn_idx].__setitem__(host1, {}) %}
+          {%         endif %}
+          {%         if not host2 in __vpn_psks[__vpn_idx] %}
+          {%           set _ = __vpn_psks[__vpn_idx].__setitem__(host2, {}) %}
+          {%         endif %}
+          {%         set psk = lookup('lines', 'openssl rand -base64 48') %}
+          {%         set val = {'pre_shared_key':psk} %}
+          {%         set _ = __vpn_psks[__vpn_idx][host1].__setitem__(host2, val) %}
+          {%         set _ = __vpn_psks[__vpn_idx][host2].__setitem__(host1, val) %}
+          {%       endfor %}
+          {%     endif %}
+          {%   endif %}
+          {% endfor %}
+          {{ __vpn_psks }}
+
+  delegate_to: localhost
+  run_once: true
+
+# The run_once host might not be the first one in hostvars - we do not have
+# a good way to know which host in hostvars was the run_once, and it might
+# change (i.e. on python2 if a non-stable hash is used for the dict)
+# So, find the values for the first hostvars that has __vpn_psks set
+# and use that value.
+- name: set psks for hosts
+  no_log: true
+  vars:
+    __vpn_psk_hostvars: "{{ hostvars.values() | selectattr('__vpn_psks', 'defined') | first }}"
+  set_fact:
+    __vpn_psks: "{{ __vpn_psk_hostvars.__vpn_psks }}"
+
+- name: build host-to-host tunnels
+  vars:
+    tunnels: |
+      {% set unique_tunnels = [] %}
+      {% for tunnel in vpn_connections %}
+      {%   if not tunnel.opportunistic | d(vpn_opportunistic) %}
+      {%     if inventory_hostname in tunnel.hosts %}
+      {%       for node in tunnel.hosts %}
+      {%         if node != inventory_hostname %}
+      {%           set _ = unique_tunnels.append(node) %}
+      {%         endif %}
+      {%       endfor %}
+      {%     endif %}
+      {%   endif %}
+      {% endfor %}
+      {{ unique_tunnels | unique }}
+  block:
+    - name: create ipsec.conf files
+      template:
+        src: "{{ vpn_provider }}-host-to-host.conf.j2"
+        dest: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.conf"
+        mode: '0644'
+      loop: "{{ tunnels }}"
+      notify: __vpn_handler_enable_start_vpn
+
+    - name: check if secrets file already exists
+      stat:
+        path: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item }}.secrets"
+      register: secrets
+      loop: "{{ tunnels }}"
+
+    - name: create ipsec.secrets files
+      template:
+        src: "{{ vpn_provider }}-host-to-host.secrets.j2"
+        dest: "/etc/ipsec.d/{{ inventory_hostname }}-to-{{ item.item }}.secrets"
+        mode: '0600'
+      loop: "{{ secrets.results }}"
+      when:
+        - not item.stat.exists or vpn_regen_keys
+      notify: __vpn_handler_enable_start_vpn
+
+- name: build opportunistic configuration
+  include_tasks: tasks/mesh_conf.yml
+  when: conn.opportunistic | d(vpn_opportunistic)
+  loop: "{{ vpn_connections }}"
+  loop_control:
+    loop_var: conn

@@ -333,13 +333,9 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 		}
 	}
 	if (proposal->remote_spi.size > 0) {
-		pexpect(proposal->remote_spi.size <= sizeof(proposal->remote_spi.size));
+		passert(proposal->remote_spi.size <= sizeof(proposal->remote_spi.bytes));
 		jam_string(buf, " SPI=");
-		size_t i;
-		for (i = 0; i < proposal->remote_spi.size &&
-			    i < sizeof(proposal->remote_spi.size); i++) {
-			jam(buf, "%02x", proposal->remote_spi.bytes[i]);
-		}
+		jam_hex_bytes(buf, proposal->remote_spi.bytes, proposal->remote_spi.size);
 	}
 }
 
@@ -1738,7 +1734,9 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	/*
 	 * Start with ZERO for everything.
 	 */
-	pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size);
+	if (!pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size))
+		return false;
+
 	memcpy(&proto_info->attrs.spi, proposal->remote_spi.bytes,
 	       sizeof(proto_info->attrs.spi));
 

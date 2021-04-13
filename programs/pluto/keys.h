@@ -51,10 +51,8 @@ extern bool has_private_key(cert_t cert);
 extern void list_public_keys(struct show *s, bool utc, bool check_pub_keys);
 extern void list_psks(struct show *s);
 
-extern const chunk_t *get_connection_psk(const struct connection *c,
-					 struct logger *logger);
-extern chunk_t *get_connection_ppk(const struct connection *c,
-				   chunk_t **ppk_id, struct logger *logger);
+extern const chunk_t *get_connection_psk(const struct connection *c);
+extern chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id);
 extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(struct logger *logger);
@@ -70,19 +68,27 @@ extern struct pubkey_list *pluto_pubkeys;
 
 const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
 
-typedef err_t (try_signature_fn) (const struct crypt_mac *hash,
-				  shunk_t signature,
-				  struct pubkey *kr,
-				  const struct hash_desc *hash_algo,
-				  struct logger *logger);
+/*
+ * Danger! This function returns two values.
+ *
+ * true|false: did pubkey KR verify the signature
+ * FATAL_DIAG != NULL => operation should be aborted (implies false)
+ */
 
-extern try_signature_fn try_signature_RSA;
+typedef bool (authsig_using_pubkey_fn) (const struct crypt_mac *hash,
+					shunk_t signature,
+					struct pubkey *kr,
+					const struct hash_desc *hash_algo,
+					diag_t *fatal_diag,
+					struct logger *logger);
 
-extern stf_status check_signature_gen(struct ike_sa *ike,
-				      const struct crypt_mac *hash,
-				      shunk_t signature,
-				      const struct hash_desc *hash_algo,
-				      const struct pubkey_type *type,
-				      try_signature_fn *try_signature);
+extern authsig_using_pubkey_fn authsig_using_RSA_pubkey;
+
+extern stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
+					       const struct crypt_mac *hash,
+					       shunk_t signature,
+					       const struct hash_desc *hash_algo,
+					       const struct pubkey_type *type,
+					       authsig_using_pubkey_fn *try_pubkey);
 
 #endif /* _KEYS_H */

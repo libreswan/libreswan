@@ -4,6 +4,6 @@ certutil -d sql:/etc/ipsec.d -D -n "west"
 certutil -d sql:/etc/ipsec.d -A -n west -i west-alt.crt -t P,,
 certutil -d sql:/etc/ipsec.d -L
 ipsec start
-/testing/pluto/bin/wait-until-pluto-started
+../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-x509
 echo "initdone"

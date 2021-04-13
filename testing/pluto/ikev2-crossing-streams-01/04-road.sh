@@ -5,10 +5,10 @@ ip xfrm state
 ip xfrm pol
 # test packet flow
 ip addr add 192.0.1.254/24 dev eth0
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 # did it split over two IPsec SA's or not? just curious
 ipsec trafficstatus
 # delete one of the two identical conns
 ipsec whack --deletestate 1
 ipsec trafficstatus
-../../pluto/bin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

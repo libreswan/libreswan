@@ -22,8 +22,8 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y software-properties-common podman
   - sudo mkdir -p /etc/containers
-  - sudo sh -c 'echo "[registries.search]\nregistries = [\"docker.io\", \"registry.fedoraproject.org\", \"quay.io\", \"registry.access.redhat.com\", \"registry.centos.org\"]" > /etc/containers/registries.conf' 
-    #  - sudo sh -c 'echo -e "[registries.search]\nregistries = [\"docker.io\"]" > /etc/containers/registries.conf' 
+  - sudo sh -c 'echo "[registries.search]\nregistries = [\"docker.io\", \"registry.fedoraproject.org\", \"quay.io\", \"registry.access.redhat.com\", \"registry.centos.org\"]" > /etc/containers/registries.conf'
+    #  - sudo sh -c 'echo -e "[registries.search]\nregistries = [\"docker.io\"]" > /etc/containers/registries.conf'
   - cat /etc/containers/registries.conf
   - sudo podman --version
   - make TRAVIS_ENABLED=true travis-docker-image
