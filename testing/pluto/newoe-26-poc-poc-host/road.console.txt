@@ -27,31 +27,21 @@ initdone
 road #
  # one packet, which gets eaten by XFRM, so east does not initiate
 road #
- ping -n -q -w 2 -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
 road #
- # wait on OE to establish
+ # wait on OE to establish; should show established tunnel and no bare shunts
 road #
- sleep 2
-road #
- # should show established tunnel and no bare shunts
-road #
- ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
+ ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  # ping should succeed through tunnel
 road #
- ping -n -q -w 4 -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
  echo done
 done
