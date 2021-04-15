@@ -97,6 +97,7 @@
 #include "cert_decode_helper.h"
 #include "addresspool.h"
 #include "unpack.h"
+#include "ikev2_peer_id.h"
 
 struct mobike {
 	ip_endpoint remote;
