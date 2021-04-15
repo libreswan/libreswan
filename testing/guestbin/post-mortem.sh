@@ -70,6 +70,7 @@ if test -f /sbin/ausearch ; then
 	echo selinux audit records found
 	ok=false
     fi
+    ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${log}
 fi
 
 
