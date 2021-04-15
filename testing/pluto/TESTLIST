@@ -1220,8 +1220,8 @@ kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
 kvmplutotest	ikev2-udp-05-transport-mode 			good
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01		skiptest
-kvmplutotest	interop-ikev2-openbsd-02		skiptest
+kvmplutotest	interop-ikev2-openbsd-01-iked-responder	good
+kvmplutotest	interop-ikev2-openbsd-02-iked-initiator	good
 
 # Intermediary Exchange
 kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
@@ -1243,4 +1243,3 @@ kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
 kvmplutotest	ikev2-crossing-streams-01		good
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		good
-
