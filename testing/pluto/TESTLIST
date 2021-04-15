@@ -186,9 +186,9 @@ kvmplutotest	ikev2-63-anyid-nat			good
 kvmplutotest	ikev2-64-same-route-twice		wip
 kvmplutotest	ikev2-67-parallel-sa			wip
 kvmplutotest	ikev2-67-esp-null-iperf			wip
-kvmplutotest	ikev2-70-src-address-selection		wip
-kvmplutotest	ikev2-71-cp-resolve-name		wip
-kvmplutotest 	ikev2-72-cp-resolve-both		wip
+kvmplutotest	ikev2-70-src-address-selection		good
+kvmplutotest	ikev2-71-cp-resolve-name		good
+kvmplutotest 	ikev2-72-cp-resolve-both		good
 
 kvmplutotest	ikev2-ikeport-02-initiator		good
 kvmplutotest	ikev2-ikeport-03-responder		good
@@ -360,7 +360,7 @@ kvmplutotest	ikev2-x509-01				good
 kvmplutotest	ikev2-x509-01-nss-debug			skiptest
 kvmplutotest	ikev2-x509-02-eku			good
 # smoketest will replace -eku test
-kvmplutotest	ikev2-x509-02-smoketest			wip
+kvmplutotest	ikev2-x509-02-smoketest			good
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-05-san-firstemail-match-responder	good
@@ -486,7 +486,7 @@ kvmplutotest	ikev2-44-switch-initiator-strongswan	good
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
 kvmplutotest	ikev2-frag-03-retrans			good
-kvmplutotest	ikev2-frag-04-nofrag			wip
+kvmplutotest	ikev2-frag-04-nofrag			good
 
 kvmplutotest	dynamic-iface-01			good
 kvmplutotest	removed-iface-01			good
@@ -687,10 +687,10 @@ kvmplutotest	ikev2-child-rekey-05		wip # it exists, wasnt in thelist?
 kvmplutotest	ikev2-child-rekey-06-deadlock	good
 kvmplutotest	ikev2-child-rekey-07-deadlock	good
 kvmplutotest	ikev2-child-rekey-08-deadlock	wip
-kvmplutotest	ikev2-child-rekey-09-windows	wip
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-initiate-subnet	wip
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	wip
-kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-subnet	wip
+kvmplutotest	ikev2-child-rekey-09-windows	good
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-initiate-subnet	good
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	good
+kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-subnet	good
 kvmplutotest	ikev2-child-dual-asym-01	good
 kvmplutotest	ikev2-ike-rekey-01		good
 kvmplutotest	ikev2-ike-rekey-02		good
@@ -1220,8 +1220,8 @@ kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
 kvmplutotest	ikev2-udp-05-transport-mode 			good
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01		skiptest
-kvmplutotest	interop-ikev2-openbsd-02		skiptest
+kvmplutotest	interop-ikev2-openbsd-01-iked-responder	good
+kvmplutotest	interop-ikev2-openbsd-02-iked-initiator	good
 
 # Intermediary Exchange
 kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
@@ -1243,4 +1243,3 @@ kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
 kvmplutotest	ikev2-crossing-streams-01		good
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		good
-

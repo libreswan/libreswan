@@ -191,7 +191,6 @@ KVM_DEBUGINFO = \
 	libgpg-error-debuginfo \
 	libidn-debuginfo \
 	libidn2-debuginfo \
-	libnghttp2-debuginfo \
 	libpsl-debuginfo \
 	libseccomp-debuginfo \
 	libselinux-debuginfo \

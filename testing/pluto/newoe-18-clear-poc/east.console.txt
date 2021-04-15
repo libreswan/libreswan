@@ -17,6 +17,10 @@ east #
  echo "initdone"
 initdone
 east #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:

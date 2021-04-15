@@ -211,7 +211,7 @@ KVM_LIBVIRT_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_OPENBSD_HOSTS = $(filter openbsd%, $(KVM_LIBVIRT_HOSTS))
 KVM_LINUX_HOSTS = $(filter-out $(KVM_BASIC_HOSTS), $(filter-out openbsd%, $(KVM_LIBVIRT_HOSTS)))
 KVM_BASIC_HOSTS = nic
-KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS)
+KVM_TEST_HOSTS ?= $(KVM_LINUX_HOSTS) $(KVM_BASIC_HOSTS) $(KVM_OPENBSD_HOSTS)
 
 KVM_LOCAL_HOSTS = $(sort $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
@@ -992,7 +992,7 @@ define uninstall-kvm-domain-DOMAIN
 	rm -f $(2)/$(1).img
 endef
 
-$(foreach domain, $(KVM_BASE_DOMAIN), \
+$(foreach domain, $(KVM_BASE_DOMAIN) $(KVM_BSD_BASE_NAME), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
 $(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
@@ -1121,7 +1121,7 @@ endif
 .PHONY: kvm-install
 kvm-install: $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
+	$(MAKE) $(foreach domain, $(KVM_BUILD_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS) $(KVM_OPENBSD_DOMAIN_CLONES), install-kvm-domain-$(domain))
 	$(MAKE) kvm-keys
 
 $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
@@ -1129,9 +1129,7 @@ $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
 	mv $@.tmp $@
 
 .PHONY: kvm-uninstall-openbsd
-kvm-uninstall-openbsd:
-	$(call destroy-kvm-domain,$(KVM_BSD_BASE_NAME))
-	rm -f $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2
+kvm-uninstall-openbsd: $(foreach domain, $(KVM_BSD_BASE_NAME) $(KVM_OPENBSD_DOMAIN_CLONES), uninstall-kvm-domain-${domain})
 .PHONY: kvm-openbsd
 kvm-openbsd: $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2
 $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
@@ -1146,6 +1144,7 @@ $(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstal
 		--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_BSD_VARIANT) \
 		--cdrom=$(KVM_POOLDIR)/install67.iso \
 		--disk path=$(KVM_POOLDIR)/$(KVM_BSD_BASE_NAME).qcow2,size=4,bus=virtio,format=qcow2 \
+		--network=network:$(KVM_GATEWAY),model=virtio \
 		--graphics none --serial pty --check path_in_use=off"
 
 .PHONY: kvm-bisect

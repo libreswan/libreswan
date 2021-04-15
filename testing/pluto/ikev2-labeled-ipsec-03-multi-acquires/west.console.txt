@@ -184,14 +184,4 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 west #
  rm -rf tmp ipsecspd.fc ipsecspd.if
 west #
- if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
-#============= netutils_t ==============
-#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
-allow netutils_t bin_t:file map;
-allow netutils_t bin_t:file { entrypoint execute };
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
-allow netutils_t unreserved_port_t:tcp_socket name_bind;
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
-west #
  

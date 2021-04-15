@@ -24,14 +24,23 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # trigger OE; packet goes out in the clear but the response on east is
 road #
- # wait on OE retransmits and rekeying
+ # trapped (creating a shunt?).
+road #
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+road #
+ # wait on OE retransmits and rekeying?  Suspect this is waiting for
+road #
+ # nothing useful to happen - it is set to "clear".
 road #
  sleep 5
+road #
+ # ping should succeed by local clear and remote pass rule
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  # no tunnel and no bare shunts expected
 road #
@@ -89,16 +98,12 @@ road #
 road #
  cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 road #
- # ping should succeed by local clear and remote pass rule
-road #
- ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-road #
  echo done
 done
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
 road #
  ../../guestbin/ipsec-look.sh
 road NOW
