@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ certutil -D -n east -d sql:/etc/ipsec.d
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add san
+002 "san": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ # this should succeed
+west #
+ ipsec auto --up san
+1v2 "san" #1: initiating IKEv2 connection
+1v2 "san" #1: sent IKE_SA_INIT request
+1v2 "san" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "san" #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+002 "san" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "san" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ echo "done"
+done
+west #
+ # confirm the right ID types were sent/received
+west #
+ grep "ID type" /tmp/pluto.log | sort | uniq
+|    ID type: ID_DER_ASN1_DN (0x9)
+west #
+ 
