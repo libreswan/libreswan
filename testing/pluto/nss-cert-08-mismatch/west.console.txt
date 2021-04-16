@@ -51,7 +51,7 @@ west #
 002 "nss-cert-incorrect" #3: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "nss-cert-incorrect" #3: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 002 "nss-cert-incorrect" #3: Peer CERT payload SubjectAltName does not match peer ID for this connection
-002 "nss-cert-incorrect" #3: X509: connection failed due to unmatched IKE ID in certificate SAN
+003 "nss-cert-incorrect" #3: X509: connection failed due to unmatched IKE ID in certificate SAN
 west #
  echo done
 done
