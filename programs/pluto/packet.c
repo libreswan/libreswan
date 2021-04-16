@@ -419,7 +419,7 @@ static field_desc isaid_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names }, /* ??? depends on DOI? */
+	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names }, /* ??? depends on DOI? */
 	{ ft_nat, 8 / BITS_PER_BYTE, "DOI specific A", NULL },          /* ??? depends on DOI? */
 	{ ft_nat, 16 / BITS_PER_BYTE, "DOI specific B", NULL },         /* ??? depends on DOI? */
 	{ ft_end, 0, NULL, NULL }
@@ -451,7 +451,7 @@ static field_desc isaiid_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ip_protocol_id_names, },
 	{ ft_nat, 16 / BITS_PER_BYTE, "port", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -784,7 +784,7 @@ static field_desc isanat_oa_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names },
 	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -1068,7 +1068,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_ike_id_type_names },
 	{ ft_raw, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
@@ -2648,7 +2648,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 {
 	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2677,7 +2677,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

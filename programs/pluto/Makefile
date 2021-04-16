@@ -57,6 +57,7 @@ endif
 OBJS += unpack.o
 OBJS += impair_message.o
 OBJS += ikev2_notify.o
+OBJS += ikev2_peer_id.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
 OBJS += ikev2_cookie.o

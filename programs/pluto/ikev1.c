@@ -1691,7 +1691,7 @@ void process_v1_packet(struct msg_digest *md)
 		diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ikefrag_desc,
 					 &fraghdr, sizeof(fraghdr), &frag_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
@@ -2102,7 +2102,7 @@ void process_packet_tail(struct msg_digest *md)
 					diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ignore_desc,
 								 &pd->payload, sizeof(pd->payload), &pd->pbs);
 					if (d != NULL) {
-						log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						LOG_PACKET(RC_LOG_SERIOUS,
 							   "%smalformed payload in packet",
 							   excuse);
@@ -2171,7 +2171,7 @@ void process_packet_tail(struct msg_digest *md)
 						 &pd->payload, sizeof(pd->payload),
 						 &pd->pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				LOG_PACKET(RC_LOG_SERIOUS,
 					   "%smalformed payload in packet",
 					   excuse);
@@ -3090,7 +3090,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -3110,7 +3110,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		id_buf buf;
 		esb_buf b;
 		log_state(RC_LOG, st, "Peer ID is %s: '%s'",
-			  enum_show(&ike_idtype_names, id->isaid_idtype, &b),
+			  enum_show(&ike_id_type_names, id->isaid_idtype, &b),
 			  str_id(&peer, &buf));
 	}
 

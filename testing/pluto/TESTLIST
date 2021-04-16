@@ -396,6 +396,7 @@ kvmplutotest	ikev2-x509-31-wifi-assist		wip
 kvmplutotest	ikev2-x509-31-wifi-assist-nonat		good
 kvmplutotest	ikev2-x509-38-failureshunt		good
 kvmplutotest	ikev2-x509-39-OU-comma			good
+kvmplutotest	ikev2-x509-40-dn-wildcar		good
 
 # wildcard ID related tests
 kvmplutotest	ikev1-x509-17-id-any			good

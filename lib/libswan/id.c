@@ -385,6 +385,7 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 		*wildcards = MAX_WILDCARDS;
 		match = TRUE;
 	} else if (a->kind != b->kind) {
+		/* should this allow SAN match of cert with right ID_DER_ASN1_DN? */
 		match = FALSE;
 	} else if (a->kind == ID_DER_ASN1_DN) {
 		match = match_dn_any_order_wild(a->name, b->name, wildcards);

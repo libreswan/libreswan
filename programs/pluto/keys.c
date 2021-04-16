@@ -387,7 +387,8 @@ static bool try_all_keys(const char *cert_origin,
 			continue;
 		}
 
-		if (!same_id(&s->remote->id, &key->id)) {
+		int wildcards; /* value ignored */
+		if (!match_id(&key->id, &s->remote->id, &wildcards)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
@@ -904,7 +905,7 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 			id_buf idb;
 			esb_buf b;
 			show_comment(s, "       %s '%s'",
-				     enum_show(&ike_idtype_names, key->id.kind, &b),
+				     enum_show(&ike_id_type_names, key->id.kind, &b),
 				     str_id(&key->id, &idb));
 
 			if (key->issuer.len > 0) {

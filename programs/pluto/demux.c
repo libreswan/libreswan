@@ -152,7 +152,7 @@ void process_packet(struct msg_digest **mdp)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		log_diag(RC_LOG, md->md_logger, &d,
+		llog_diag(RC_LOG, md->md_logger, &d,
 			 "dropping packet with mangled IKE header: ");
 		return;
 	}

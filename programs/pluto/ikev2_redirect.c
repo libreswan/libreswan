@@ -157,7 +157,7 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	}
 	diag_t d = pbs_out_hunk(&gwid_pbs, id, "redirect ID");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return empty_chunk;
 	}
 	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
@@ -343,7 +343,7 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	diag_t d = pbs_in_struct(&input_pbs, &ikev2_redirect_desc,
 				 &gw_info, sizeof(gw_info), NULL);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 		return "received malformed REDIRECT payload";
 	}
 
@@ -378,7 +378,7 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 
 		diag_t d = pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len, "GW Identity");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 		}
 
@@ -392,7 +392,7 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		}
 		diag_t d = pbs_in_address(&input_pbs, redirect_ip, af, "REDIRECT address");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return "variable part of payload does not match transferred GW Identity Length";
 		}
 		address_buf b;

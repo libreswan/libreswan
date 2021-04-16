@@ -888,7 +888,7 @@ static int extract_end(struct connection *c,
 								   same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
-			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+			llog_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 			CERT_DestroyCertificate(cert);
 			return -1;
 		}
@@ -968,7 +968,7 @@ static int extract_end(struct connection *c,
 									   same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
-				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+				llog_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 				CERT_DestroyCertificate(cert);
 				return -1;
 			}
@@ -1087,7 +1087,7 @@ static int extract_end(struct connection *c,
 		}
 		diag_t d = install_addresspool(src->pool_range, &c->pool);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, c->logger, &d,
+			llog_diag(RC_LOG_SERIOUS, c->logger, &d,
 				 "invalid %saddresspool: ", leftright);
 			return -1;
 		}
@@ -1567,12 +1567,12 @@ static bool extract_connection(const struct whack_message *wm,
 
 	d = check_connection_end(&wm->right, &wm->left, wm);
 	if (d != NULL) {
-		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 	d = check_connection_end(&wm->left, &wm->right, wm);
 	if (d != NULL) {
-		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 
@@ -1679,7 +1679,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 			if (c->ike_proposals.p == NULL) {
 				pexpect(parser->diag != NULL); /* something */
-				log_diag(RC_FATAL, c->logger, &parser->diag,
+				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
@@ -1738,7 +1738,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->child_proposals.p = proposals_from_str(parser, wm->esp);
 			if (c->child_proposals.p == NULL) {
 				pexpect(parser->diag != NULL);
-				log_diag(RC_FATAL, c->logger, &parser->diag,
+				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
@@ -2013,9 +2013,7 @@ static bool extract_connection(const struct whack_message *wm,
 		add_group(c);
 	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
 		    !NEVER_NEGOTIATE(c->policy)) ||
-		c->spd.that.has_port_wildcard ||
-		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
-			c->spd.that.has_id_wildcards )) {
+		c->spd.that.has_port_wildcard) {
 		dbg("based upon policy, the connection is a template.");
 
 		/*
@@ -3237,12 +3235,12 @@ struct connection *refine_host_connection(const struct state *st,
 				esb_buf tzesb;
 				dbg("peer expects us to be %s (%s) according to its IDr payload",
 				    str_id(tarzan_id, &tzb),
-				    enum_show(&ike_idtype_names, tarzan_id->kind, &tzesb));
+				    enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
 				id_buf usb;
 				esb_buf usesb;
 				dbg("this connection's local id is %s (%s)",
 				    str_id(&d->spd.this.id, &usb),
-				    enum_show(&ike_idtype_names, d->spd.this.id.kind, &usesb));
+				    enum_show(&ike_id_type_names, d->spd.this.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg("peer IDr payload does not match our expected ID, this connection will not do");
@@ -4187,9 +4185,9 @@ void show_one_connection(struct show *s,
 	show_comment(s,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
-		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
+		enum_name(&ike_id_type_names, c->spd.this.id.kind),
 		str_id(&c->spd.this.id, &thisidb),
-		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
+		enum_name(&ike_id_type_names, c->spd.that.id.kind),
 		str_id(&c->spd.that.id, &thatidb));
 	}
 

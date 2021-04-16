@@ -224,12 +224,12 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		diag_t d;
 		d = pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		d = pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&ts_range_pbs);
@@ -260,7 +260,7 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 
 		diag_t d = pbs_out_hunk(&ts_label_pbs, out_label, "output Security label");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&ts_label_pbs);
@@ -441,7 +441,7 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			d = pbs_in_struct(&ts_body_pbs, &ikev2_ts_portrange_desc,
 				  &pr, sizeof(pr), NULL);
 			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d, "%s", "");
+				llog_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
 			}
 
@@ -471,14 +471,14 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			ip_address start;
 			d = pbs_in_address(&ts_body_pbs, &start, ipv, "TS IP start");
 			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d, "%s", "");
+				llog_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
 			}
 
 			ip_address end;
 			d = pbs_in_address(&ts_body_pbs, &end, ipv, "TS IP end");
 			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d, "%s", "");
+				llog_diag(RC_LOG, logger, &d, "%s", "");
 				return false;
 			}
 

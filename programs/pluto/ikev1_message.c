@@ -37,7 +37,7 @@ bool out_zero(size_t len, pb_stream *outs, const char *name)
 {
 	diag_t d = pbs_out_zero(outs, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -48,7 +48,7 @@ bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *na
 {
 	diag_t d = pbs_out_repeated_byte(outs, byte, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -59,7 +59,7 @@ bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
 	diag_t d = pbs_out_raw(outs, bytes, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

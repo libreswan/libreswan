@@ -482,7 +482,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 					 &remote_trans, sizeof(remote_trans),
 					 &trans_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d,
+			llog_diag(RC_LOG, logger, &d,
 				 "remote proposal %u transform %d is corrupt",
 				 remote_propnum, remote_transform_nr);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
@@ -510,7 +510,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
 						 &attr, sizeof(attr), &attr_pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d,
+				llog_diag(RC_LOG, logger, &d,
 					 "remote proposal %u transform %d contains corrupt attribute",
 					 remote_propnum, remote_transform_nr);
 				jam_string(remote_jam_buf, "[corrupt-attribute]");
@@ -907,7 +907,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 					 &remote_proposal, sizeof(remote_proposal),
 					 &proposal_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
+			llog_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
 			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 			break;
@@ -1008,7 +1008,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		if (remote_spi.size > 0) {
 			diag_t d = pbs_in_raw(&proposal_pbs, remote_spi.bytes, remote_spi.size, "remote SPI");
 			if (d != NULL) {
-				log_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
+				llog_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
 					 remote_proposal.isap_propnum);
 				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
 				jam_string(remote_jam_buf, "[corrupt-spi]");
@@ -1241,7 +1241,7 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 	diag_t d = pbs_out_struct(proposal_pbs, &ikev2_trans_desc,
 				  &trans, sizeof(trans), transform_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, proposal_pbs->outs_logger, &d,
+		llog_diag(RC_LOG_SERIOUS, proposal_pbs->outs_logger, &d,
 			 "out_struct() of transform failed: ");
 		return false;
 	}

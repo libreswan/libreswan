@@ -174,7 +174,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
 						 &n_ipcomp, sizeof(n_ipcomp), NULL);
 			if (d != NULL) {
-				log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 
@@ -367,7 +367,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -405,7 +405,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -503,7 +503,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d,
 				 "ERROR malformed CP attribute");
 			return false;
 		}

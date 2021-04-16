@@ -76,7 +76,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 			diag_t d = pbs_out_raw(&del_pbs, &st->st_esp.our_spi,
 					       sizeof(ipsec_spi_t), "local spis");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 				return false;
 			}
 		}

@@ -209,7 +209,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	{
 		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -220,7 +220,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		ip_address client_addr = selector_prefix(c->spd.this.client);
 		diag_t d = pbs_out_address(&attrval, client_addr, "IP4_subnet");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -257,7 +257,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			/* emit attribute's value */
 			diag_t d = pbs_out_address(&attrval, dnsip, "IP4_dns");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+				llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
@@ -906,7 +906,7 @@ static bool add_xauth_addresspool(struct connection *c,
 
 	diag_t d = install_addresspool(pool_range, &c->pool);
 	if (d != NULL) {
-		log_diag(RC_CLASH, logger, &d, "XAUTH: invalid addresspool for the conn %s user %s: ",
+		llog_diag(RC_CLASH, logger, &d, "XAUTH: invalid addresspool for the conn %s user %s: ",
 			 c->name, userid);
 		return false;
 	}
@@ -1284,7 +1284,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* fail if malformed */
 			return STF_FAIL;
 		}
@@ -1462,7 +1462,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1542,7 +1542,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -1555,7 +1555,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
 			c->spd.this.client = selector_from_address(a);
@@ -1664,7 +1664,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), NULL);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1701,7 +1701,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}
@@ -1714,7 +1714,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 				c->spd.this.client = selector_from_address(a);
@@ -1740,7 +1740,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1755,7 +1755,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
 
@@ -1805,7 +1805,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
-						log_diag(RC_INFORMATIONAL, st->st_logger, &d,
+						llog_diag(RC_INFORMATIONAL, st->st_logger, &d,
 							 "ignoring malformed CISCO_SPLIT_INC payload");
 						break;
 					}
@@ -2188,7 +2188,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
 			return STF_FAIL;
 		}
@@ -2434,7 +2434,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
 				return STF_FAIL;
 			}

@@ -97,6 +97,7 @@
 #include "cert_decode_helper.h"
 #include "addresspool.h"
 #include "unpack.h"
+#include "ikev2_peer_id.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -157,7 +158,7 @@ static bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_p
 		diag_t d = pbs_in_raw(&pbs, &nh_value, sizeof(nh_value),
 				      "hash algorithm identifier (network ordered)");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			return false;
 		}
 		uint16_t h_value = ntohs(nh_value);
@@ -299,7 +300,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		    id.kind != ID_IPV4_ADDR &&
 		    id.kind != ID_IPV6_ADDR) {
 			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-			err2 = enum_show(&ike_idtype_names, id.kind, &eb2);
+			err2 = enum_show(&ike_id_type_names, id.kind, &eb2);
 		}
 
 		id_buf thatid;
@@ -489,14 +490,14 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 		/* Only used to test sending/receiving bogus g^x */
 		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g->len, "ikev2 impair KE (g^x) == 0");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
 		llog(RC_LOG, outs->outs_logger, "IMPAIR: sending an empty KE value");
 		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	} else {
@@ -1080,7 +1081,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
 	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
 				 &sg, sizeof(sg), NULL);
 	if (d != NULL) {
-		log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 		return STF_IGNORE;
 	}
 
@@ -1600,7 +1601,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_address(&a_pbs, *ip, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1609,7 +1610,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
 		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1634,7 +1635,7 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 	if (attr.len > 0) {
 		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2155,7 +2156,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		{
 			esb_buf b;
 			dbg("Not sending IDr payload for remote ID type %s",
-			    enum_show(&ike_idtype_names, pc->spd.that.id.kind, &b));
+			    enum_show(&ike_id_type_names, pc->spd.that.id.kind, &b));
 			break;
 		}
 		}
@@ -2708,9 +2709,12 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
 
 	/* this call might update connection in md->st */
-	if (!ikev2_decode_peer_id(md)) {
+	diag_t d = ikev2_decode_peer_id(ike, md);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		/* already logged above! */
 		release_pending_whacks(st, "Authentication failed");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
@@ -2780,7 +2784,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
 			diag_t d = pbs_in_raw(&pbs, no_ppk_auth.ptr, len, "NO_PPK_AUTH extract");
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d,
 					 "failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
@@ -2802,7 +2806,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		null_auth = alloc_chunk(len, "NULL_AUTH");
 		diag_t d = pbs_in_raw(&pbs, null_auth.ptr, len, "NULL_AUTH extract");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
 				 "failed to extract %zd bytes of NULL_AUTH from Notify payload: ", len);
 			free_chunk_content(&null_auth);
 			return STF_FATAL;
@@ -3578,7 +3582,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
 					 &n_ipcomp, sizeof(n_ipcomp), NULL);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return STF_FATAL;
 		}
 
@@ -3712,9 +3716,12 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	struct ike_sa *ike = ike_sa(st, HERE);
 	struct state *pst = &ike->sa;
 
-	if (!ikev2_decode_peer_id(md)) {
+	diag_t d = ikev2_decode_peer_id(ike, md);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		/* already logged above! */
 		release_pending_whacks(st, "Authentication failed");
 		return STF_FATAL;
 	}
@@ -3976,7 +3983,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	ipsec_spi_t spi = 0;
 	diag_t d = pbs_in_raw(&rekey_sa_payload->pbs, &spi, sizeof(spi), "SPI");
 	if (d != NULL) {
-		log_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
 		return false; /* cannot happen; XXX: why? */
@@ -5532,7 +5539,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 
 					diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
 					if (d != NULL) {
-						log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+						llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 						return STF_INTERNAL_ERROR;	/* cannot happen */
 					}
 
@@ -5619,7 +5626,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 							       j * sizeof(spi_buf[0]),
 							       "local SPIs");
 					if (d != NULL) {
-						log_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
+						llog_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
 						return STF_INTERNAL_ERROR;
 					}
 

@@ -40,7 +40,7 @@ static bool nss_reread_cert(struct end *dst, struct logger *logger)
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
-		log_diag(RC_BADID, logger, &diag,
+		llog_diag(RC_BADID, logger, &diag,
 			 "rereading certificate failed for nickname '%s': ", nickname);
 		return false;
 	}

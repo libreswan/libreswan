@@ -340,10 +340,9 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ike_cert_type_names", &ike_cert_type_names);
 	test_enums("ikev2_cert_type_names", &ikev2_cert_type_names);
 	test_enum_range("modecfg_attr_names", &modecfg_attr_names, 0, 256);
-	test_enum_range("ike_idtype_names_extended", &ike_idtype_names_extended, -10, 0);
-	test_enum_range("ike_idtype_names_extended", &ike_idtype_names_extended0, 0, 256);
-	test_enums("ike_idtype_names", &ike_idtype_names);
-	test_enums("ikev2_idtype_names", &ikev2_idtype_names);
+	test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
+	test_enums("ikev2_ike_id_type_names", &ikev1_ike_id_type_names);
+	test_enums("ikev2_ike_id_type_names", &ikev2_ike_id_type_names);
 
 	/*
 	 * Some hard-wired checks of enum_enum_name.  If a lookup

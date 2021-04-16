@@ -298,7 +298,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		struct pbs_out *outs_ = OUTS;				\
 		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
 		if (d_ != NULL) {					\
-			log_diag(RC_LOG_SERIOUS, outs_->outs_logger, &d_, "%s", ""); \
+			llog_diag(RC_LOG_SERIOUS, outs_->outs_logger, &d_, "%s", ""); \
 		}							\
 		d_ == NULL;						\
 	})

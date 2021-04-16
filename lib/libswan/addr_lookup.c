@@ -262,7 +262,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 #else
 			(void)logger /* UNUSED */;
 
-			err_t er = ttoaddress_dns(peer->strings[KSCF_IP],
+			err_t er = ttoaddress_dns(shunk1(peer->strings[KSCF_IP]),
 						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
