@@ -257,14 +257,95 @@ static diag_t decode_peer_id_counted(struct ike_sa *ike,
 	return NULL;
 }
 
+static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const id_peer, struct id *peer_id)
+{
+	if (id_peer == NULL) {
+		return diag("authentication failed: %s did not include ID payload", peer);
+	}
+
+	diag_t d = unpack_peer_id(id_peer->payload.v2id.isai_type /* Peers Id Kind */,
+				  peer_id, &id_peer->pbs);
+	if (d != NULL) {
+		return diag_diag(&d, "authentication failed: %s ID payload invalid: ", peer);
+	}
+
+	id_buf idb;
+	esb_buf esb;
+	dbg("%s ID is %s: '%s'", peer,
+	    enum_show(&ike_id_type_names, peer_id->kind, &esb),
+	    str_id(peer_id, &idb));
+
+	return NULL;
+}
+
 diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md)
 {
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
-	return decode_peer_id_counted(ike, md, 0);
+	return decode_peer_id_counted(ike, initiator_id, md, 0);
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)
 {
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
-	return decode_peer_id_counted(ike, md, 0);
+
+	struct id responder_id;
+ 	diag_t d = decode_v2_peer_id("responder", md->chain[ISAKMP_NEXT_v2IDr], &responder_id);
+	if (d != NULL) {
+		return d;
+	}
+
+	/* start considering connection */
+
+	struct connection *c = ike->sa.st_connection;
+
+	/*
+	 * If there are certs, try re-running the id check.
+	 */
+	if (!ike->sa.st_peer_alt_id &&
+		ike->sa.st_remote_certs.verified != NULL) {
+		if (match_certs_id(ike->sa.st_remote_certs.verified,
+				   &c->spd.that.id /*ID_FROMCERT => updated*/,
+				   ike->sa.st_logger)) {
+			dbg("X509: CERT and ID matches current connection");
+			ike->sa.st_peer_alt_id = true;
+		} else {
+			log_state(RC_LOG, &ike->sa, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
+			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+				return diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
+			} else {
+				log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
+			}
+		}
+	}
+
+	/* process any CERTREQ payloads */
+	ikev2_decode_cr(md, ike->sa.st_logger);
+
+	/*
+	 * Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+	if (!ike->sa.st_peer_alt_id &&
+	    !same_id(&c->spd.that.id, &responder_id) &&
+	    c->spd.that.id.kind != ID_FROMCERT) {
+		id_buf expect, found;
+		return diag("we require IKEv2 peer to have ID '%s', but peer declares '%s'",
+			    str_id(&c->spd.that.id, &expect),
+			    str_id(&responder_id, &found));
+	}
+
+	if (c->spd.that.id.kind == ID_FROMCERT) {
+		if (responder_id.kind != ID_DER_ASN1_DN) {
+			return diag("peer ID is not a certificate type");
+		}
+		duplicate_id(&c->spd.that.id, &responder_id);
+	}
+
+	dn_buf dnb;
+	dbg("offered CA: '%s'", str_dn_or_null(c->spd.this.ca, "%none", &dnb));
+
+	return NULL;
 }
