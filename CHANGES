@@ -8,6 +8,7 @@ v4.4 (unreleased)
 * IKEv2: Connections would not always switch when needed [Andrew/Paul]
 * pluto: Fix for host-to-host connections use non-standard IKE ports [Paul]
 * pluto: Use peer ID (IKEv2 IDr, IKEv1 Aggr) to select best initial conn [Paul]
+* pluto: disable interface-ip= as the feature is not yet implemented [Paul]
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
 * contrib/munin: update plugin to use python3 and update doc header [Tuomo]
