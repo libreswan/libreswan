@@ -451,7 +451,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "sourceip",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_SOURCEIP, NULL, NULL, },
   { "ikeport",  kv_conn | kv_leftright,  kt_number,  KNCF_IKEPORT, NULL, NULL, },
 #if 0
-  /* requires pluto refcounting IP/mask addresses on ipsec interface
+  /* requires pluto refcounting IP/mask addresses on ipsec interface */
   { "interface-ip", kv_conn | kv_leftright,  kt_subnet, KSCF_INTERFACE_IP, NULL, NULL, },
 #endif
   { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP, NULL, NULL, },
