@@ -22,6 +22,7 @@
 struct ike_sa;
 struct msg_digest;
 
-diag_t ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md) MUST_USE_RESULT;
+diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md) MUST_USE_RESULT;
+diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md) MUST_USE_RESULT;
 
 #endif

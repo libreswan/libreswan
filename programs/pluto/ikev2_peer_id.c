@@ -1,4 +1,4 @@
-/* demultiplex incoming IKE messages
+/* identify the PEER, for libreswan
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010,2013-2017 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -257,7 +257,14 @@ static diag_t decode_peer_id_counted(struct ike_sa *ike,
 	return NULL;
 }
 
-diag_t ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md)
+diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md)
 {
+	passert(ike->sa.st_sa_role == SA_RESPONDER);
+	return decode_peer_id_counted(ike, md, 0);
+}
+
+diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)
+{
+	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	return decode_peer_id_counted(ike, md, 0);
 }

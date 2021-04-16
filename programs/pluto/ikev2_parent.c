@@ -2709,7 +2709,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
 
 	/* this call might update connection in md->st */
-	diag_t d = ikev2_decode_peer_id(ike, md);
+	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
@@ -3650,7 +3650,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md);
+static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md);
 
 stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
@@ -3699,24 +3699,24 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_cert_decode(ike, st, md, cert_payloads,
-				   v2_inR2_post_cert_decode,
+				   v2_in_IKE_AUTH_R_post_cert_decode,
 				   "initiator decoding certificates");
 		return STF_SUSPEND;
 	} else {
 		dbg("no certs to decode");
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
-		return v2_inR2_post_cert_decode(st, md);
+		return v2_in_IKE_AUTH_R_post_cert_decode(st, md);
 	}
 }
 
-static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *md)
+static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md)
 {
 	passert(md != NULL);
 	struct ike_sa *ike = ike_sa(st, HERE);
 	struct state *pst = &ike->sa;
 
-	diag_t d = ikev2_decode_peer_id(ike, md);
+	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
