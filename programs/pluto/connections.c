@@ -4367,7 +4367,6 @@ void update_state_connection(struct state *st, struct connection *new)
 	if (old != new) {
 		st->st_connection = new;
 		st->st_v1_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
-		st->st_v2_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
 			connection_delete_unused_instance(&old, st,
