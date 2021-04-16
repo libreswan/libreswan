@@ -659,7 +659,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 #else
 		/* try numeric then DNS */
-		err_t e = ttoaddress_dns(value, 0, AF_UNSPEC, &sourceip);
+		err_t e = ttoaddress_dns(shunk1(value), AF_UNSPEC, &sourceip);
 		if (e != NULL) {
 			ERR_FOUND("bad addr %ssourceip=%s [%s]",
 				  leftright, value, e);
