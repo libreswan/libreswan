@@ -544,18 +544,12 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
 	} else {
 		/*
-		 * we found a non-wildcard conn. double check if it needs
+		 * we found a non %any conn. double check if it needs
 		 * instantiation anyway (eg vnet=)
 		 */
-		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
+		if (c->kind == CK_TEMPLATE) {
 			dbgl(md->md_logger,
-			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			ip_address sender_address = endpoint_address(md->sender);
-			c = rw_instantiate(c, &sender_address, NULL, NULL);
-		}
-		if (c->kind == CK_TEMPLATE && c->spd.that.has_id_wildcards) {
-			dbgl(md->md_logger,
-			     "remote end has wildcard ID, needs instantiation");
+			     "local endpoint needs instantiation");
 			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);
 		}

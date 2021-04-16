@@ -2013,9 +2013,7 @@ static bool extract_connection(const struct whack_message *wm,
 		add_group(c);
 	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
 		    !NEVER_NEGOTIATE(c->policy)) ||
-		c->spd.that.has_port_wildcard ||
-		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
-			c->spd.that.has_id_wildcards )) {
+		c->spd.that.has_port_wildcard) {
 		dbg("based upon policy, the connection is a template.");
 
 		/*
