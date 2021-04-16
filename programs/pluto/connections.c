@@ -3235,12 +3235,12 @@ struct connection *refine_host_connection(const struct state *st,
 				esb_buf tzesb;
 				dbg("peer expects us to be %s (%s) according to its IDr payload",
 				    str_id(tarzan_id, &tzb),
-				    enum_show(&ike_idtype_names, tarzan_id->kind, &tzesb));
+				    enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
 				id_buf usb;
 				esb_buf usesb;
 				dbg("this connection's local id is %s (%s)",
 				    str_id(&d->spd.this.id, &usb),
-				    enum_show(&ike_idtype_names, d->spd.this.id.kind, &usesb));
+				    enum_show(&ike_id_type_names, d->spd.this.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg("peer IDr payload does not match our expected ID, this connection will not do");
@@ -4185,9 +4185,9 @@ void show_one_connection(struct show *s,
 	show_comment(s,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
-		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind),
+		enum_name(&ike_id_type_names, c->spd.this.id.kind),
 		str_id(&c->spd.this.id, &thisidb),
-		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind),
+		enum_name(&ike_id_type_names, c->spd.that.id.kind),
 		str_id(&c->spd.that.id, &thatidb));
 	}
 

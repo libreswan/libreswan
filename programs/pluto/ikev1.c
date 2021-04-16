@@ -3110,7 +3110,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		id_buf buf;
 		esb_buf b;
 		log_state(RC_LOG, st, "Peer ID is %s: '%s'",
-			  enum_show(&ike_idtype_names, id->isaid_idtype, &b),
+			  enum_show(&ike_id_type_names, id->isaid_idtype, &b),
 			  str_id(&peer, &buf));
 	}
 

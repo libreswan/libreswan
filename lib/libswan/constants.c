@@ -759,21 +759,23 @@ static const char *const ike_idtype_name[] = {
 	}
 
 /* IKEv1 */
-enum_names ike_idtype_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
+enum_names ikev1_ike_id_type_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
 
 /*
  * all names, including private-to-pluto
  * Tricky: lower bound and uppers bound are treated as unsigned long
  * so we have to tack two ranges onto ike_idtype_names.
+ *
+ * XXX: why not treat them as longs?
  */
-enum_names ike_idtype_names_extended0 = ID_NR(ID_NONE, ID_NONE, &ike_idtype_names);
-enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_FROMCERT, &ike_idtype_names_extended0);
+static enum_names ike_idtype_names_fromcert = ID_NR(ID_FROMCERT, ID_FROMCERT, NULL);
+enum_names ike_id_type_names = ID_NR(ID_NONE, ID_NULL, &ike_idtype_names_fromcert);
 
 /* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 
 static enum_names ikev2_idtype_names_3 = ID_NR(ID_DER_ASN1_DN, ID_NULL,	NULL);
 static enum_names ikev2_idtype_names_2 = ID_NR(ID_IPV6_ADDR, ID_IPV6_ADDR, &ikev2_idtype_names_3);
-enum_names ikev2_idtype_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_idtype_names_2);
+enum_names ikev2_ike_id_type_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_idtype_names_2);
 
 #undef ID_NR
 
@@ -2567,8 +2569,8 @@ static const enum_names *en_checklist[] = {
 	&ah_transformid_names,
 	&esp_transformid_names,
 	&ipcomp_transformid_names,
-	&ike_idtype_names,
-	&ikev2_idtype_names,
+	&ikev1_ike_id_type_names,
+	&ikev2_ike_id_type_names,
 	&ike_cert_type_names,
 	&ikev2_cert_type_names,
 	&certpolicy_type_names,

@@ -731,7 +731,7 @@ bool match_certs_id(const struct certs *certs,
 		esb_buf b;
 		llog(RC_LOG_SERIOUS, logger,
 			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-		     enum_show(&ike_idtype_names, peer_id->kind, &b));
+		     enum_show(&ike_id_type_names, peer_id->kind, &b));
 		return false;
 	}
 	}

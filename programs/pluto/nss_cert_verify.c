@@ -640,7 +640,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		id_buf name;
 		llog(RC_LOG_SERIOUS, logger,
 			    "certificate contains no subjectAltName extension to match %s '%s'",
-			    enum_name(&ike_idtype_names, id->kind),
+			    enum_name(&ike_id_type_names, id->kind),
 			    str_id(id, &name));
 		return false;
 	}
@@ -656,7 +656,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		id_buf name;
 		llog(RC_LOG_SERIOUS, logger,
 			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    enum_name(&ike_idtype_names, id->kind),
+			    enum_name(&ike_id_type_names, id->kind),
 			    str_id(id, &name));
 		/* XXX: is nss error set? */
 		PORT_FreeArena(arena, PR_FALSE);
@@ -786,7 +786,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 
 	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
 		jam(buf, "certificate subjectAltName extension does not match ");
-		jam_enum(buf, &ike_idtype_names, id->kind);
+		jam_enum(buf, &ike_id_type_names, id->kind);
 		jam(buf, " '");
 		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
 		jam(buf, "'");

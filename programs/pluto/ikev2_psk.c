@@ -266,7 +266,7 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
 			  sig.len,
-			  enum_show(&ikev2_idtype_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+			  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
 			  str_id(&ike->sa.st_connection->spd.that.id, &idb),
 			  hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
 		return false;
@@ -289,7 +289,7 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		esb_buf kb;
 		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "authentication failed: computed hash does not match hash received from peer %s '%s'",
-			  enum_show(&ikev2_idtype_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+			  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
 			  str_id(&ike->sa.st_connection->spd.that.id, &idb));
 		return false;
 	}
@@ -299,7 +299,7 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 	log_state(RC_LOG_SERIOUS, &ike->sa,
 		  "authenticated using authby=%s and peer %s '%s'",
 		  enum_name(&keyword_authby_names, authby),
-		  enum_show(&ikev2_idtype_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+		  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
 		  str_id(&ike->sa.st_connection->spd.that.id, &idb));
 	return true;
 }

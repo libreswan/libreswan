@@ -300,7 +300,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		    id.kind != ID_IPV4_ADDR &&
 		    id.kind != ID_IPV6_ADDR) {
 			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-			err2 = enum_show(&ike_idtype_names, id.kind, &eb2);
+			err2 = enum_show(&ike_id_type_names, id.kind, &eb2);
 		}
 
 		id_buf thatid;
@@ -2156,7 +2156,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		{
 			esb_buf b;
 			dbg("Not sending IDr payload for remote ID type %s",
-			    enum_show(&ike_idtype_names, pc->spd.that.id.kind, &b));
+			    enum_show(&ike_id_type_names, pc->spd.that.id.kind, &b));
 			break;
 		}
 		}

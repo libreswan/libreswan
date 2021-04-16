@@ -4016,10 +4016,8 @@ IETF registry enum_names:
          short_name 19: HOME_AGENT_ADDRESS OK
          jam_enum_short 19: HOME_AGENT_ADDRESS OK
 
-  ike_idtype_names_extended:
+  ike_id_type_names:
    -1 -> %fromcert
-
-  ike_idtype_names_extended:
     0 -> %none
          jam_enum 0: %none OK
          search %none: OK
@@ -4105,7 +4103,7 @@ IETF registry enum_names:
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
 
-  ike_idtype_names:
+  ikev2_ike_id_type_names:
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK
@@ -4185,7 +4183,7 @@ IETF registry enum_names:
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
 
-  ikev2_idtype_names:
+  ikev2_ike_id_type_names:
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK

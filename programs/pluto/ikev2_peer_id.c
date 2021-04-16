@@ -251,7 +251,7 @@ static diag_t decode_peer_id_counted(struct ike_sa *ike,
 	id_buf idbuf;
 	esb_buf esb;
 	dbg("IKEv2 mode peer ID is %s: '%s'",
-	    enum_show(&ikev2_idtype_names, hik, &esb),
+	    enum_show(&ike_id_type_names, hik, &esb),
 	    str_id(&peer_id, &idbuf));
 
 	return NULL;

@@ -1692,6 +1692,10 @@ enum ike_id_type {
 	/* 249-255 Reserved for private use */
 };
 
+extern const struct enum_names ike_id_type_names; /* all */
+extern const struct enum_names ikev1_ike_id_type_names;
+extern const struct enum_names ikev2_ike_id_type_names;
+
 /*
  * Certificate type values
  * RFC 2408 ISAKMP, chapter 3.9
