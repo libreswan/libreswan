@@ -2648,7 +2648,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 {
 	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2677,7 +2677,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

@@ -209,7 +209,7 @@ struct pbs_out open_v2_message(struct pbs_out *message,
 	struct pbs_out body;
 	diag_t d = pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), &body);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		return empty_pbs;
 	}
 	if (impair.add_unknown_v2_payload_to == exchange_type &&
@@ -233,7 +233,7 @@ static bool emit_v2SK_iv(v2SK_payload_t *sk)
 	/* make space */
 	diag_t d = pbs_out_zero(&sk->pbs, sk->iv.len, "IV");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
 		return false;
 	}
 	/* scribble on it */
@@ -310,7 +310,7 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	for (unsigned i = 0; i < padding; i++) {
 		diag_t d = pbs_out_repeated_byte(&sk->pbs, i, 1, "padding and length");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, sk->logger, &d,
+			llog_diag(RC_LOG_SERIOUS, sk->logger, &d,
 				 "error initializing padding for encrypted %s payload: ",
 				 sk->pbs.container->name);
 			return false;
@@ -331,7 +331,7 @@ bool close_v2SK_payload(v2SK_payload_t *sk)
 	sk->integrity = chunk2(sk->pbs.cur, integ_size);
 	diag_t d = pbs_out_zero(&sk->pbs, integ_size, "length of truncated HMAC/KEY");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
 		return false;
 	}
 
@@ -1278,7 +1278,7 @@ static bool record_outbound_fragments(const pb_stream *body,
 		init_pbs(&pbs, body->start, pbs_offset(body), "sk hdr");
 		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), NULL);
 		if (d != NULL) {
-			log_diag(RC_LOG, sk->logger, &d, "%s", "");
+			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -1295,7 +1295,7 @@ static bool record_outbound_fragments(const pb_stream *body,
 		struct ikev2_generic e;
 		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), NULL);
 		if (d != NULL) {
-			log_diag(RC_LOG, sk->logger, &d, "%s", "");
+			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;
 		}
 		skf_np = e.isag_np;

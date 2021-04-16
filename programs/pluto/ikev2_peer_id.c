@@ -63,7 +63,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	diag_t d = unpack_peer_id(hik, &peer_id, &id_peer->pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG, ike->sa.st_logger, &d,
+		llog_diag(RC_LOG, ike->sa.st_logger, &d,
 			 "IKEv2 mode peer ID extraction failed");
 		return false;
 	}
@@ -80,7 +80,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
 						  &tarzan_id, &tarzan_pld->pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG, ike->sa.st_logger, &d, "IDr payload extraction failed");
+				llog_diag(RC_LOG, ike->sa.st_logger, &d, "IDr payload extraction failed");
 				return false;
 			}
 			tip = &tarzan_id;

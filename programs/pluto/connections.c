@@ -888,7 +888,7 @@ static int extract_end(struct connection *c,
 								   same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
-			log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+			llog_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 			CERT_DestroyCertificate(cert);
 			return -1;
 		}
@@ -968,7 +968,7 @@ static int extract_end(struct connection *c,
 									   same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
-				log_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
+				llog_diag(RC_FATAL, logger, &diag, "failed to add connection: ");
 				CERT_DestroyCertificate(cert);
 				return -1;
 			}
@@ -1087,7 +1087,7 @@ static int extract_end(struct connection *c,
 		}
 		diag_t d = install_addresspool(src->pool_range, &c->pool);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, c->logger, &d,
+			llog_diag(RC_LOG_SERIOUS, c->logger, &d,
 				 "invalid %saddresspool: ", leftright);
 			return -1;
 		}
@@ -1567,12 +1567,12 @@ static bool extract_connection(const struct whack_message *wm,
 
 	d = check_connection_end(&wm->right, &wm->left, wm);
 	if (d != NULL) {
-		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 	d = check_connection_end(&wm->left, &wm->right, wm);
 	if (d != NULL) {
-		log_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
 		return false;
 	}
 
@@ -1679,7 +1679,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 			if (c->ike_proposals.p == NULL) {
 				pexpect(parser->diag != NULL); /* something */
-				log_diag(RC_FATAL, c->logger, &parser->diag,
+				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */
@@ -1738,7 +1738,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->child_proposals.p = proposals_from_str(parser, wm->esp);
 			if (c->child_proposals.p == NULL) {
 				pexpect(parser->diag != NULL);
-				log_diag(RC_FATAL, c->logger, &parser->diag,
+				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
 				free_proposal_parser(&parser);
 				/* caller will free C */

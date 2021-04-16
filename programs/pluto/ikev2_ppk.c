@@ -57,7 +57,7 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 	uint8_t type = PPK_ID_FIXED;
 	d = pbs_out_raw(outs, &type, sizeof(type), "PPK_ID_FIXED");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 	return out_hunk(payl->ppk_id, outs, "PPK_ID");
@@ -87,7 +87,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	uint8_t dst[PPK_ID_MAXLEN];
 	diag_t d = pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
 			 "PPK ID data could not be read: ");
 		return false;
 	}

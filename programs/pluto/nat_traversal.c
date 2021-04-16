@@ -522,7 +522,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	diag_t d = pbs_in_address(&pbs, &ip, ipv, "NAT-Traversal: NAT-OA IP");
 	if (d != NULL) {
-		log_diag(RC_LOG, logger, &d, "%s", "");
+		llog_diag(RC_LOG, logger, &d, "%s", "");
 		return;
 	}
 
@@ -553,7 +553,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 
 	diag_t d = pbs_out_address(&pbs, ip, nm);
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 

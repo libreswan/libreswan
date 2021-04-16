@@ -171,7 +171,7 @@ static bool emit_subnet_id(const ip_subnet net,
 	ip_address tp = subnet_prefix(net);
 	diag_t d = pbs_out_address(&id_pbs, tp, "client network");
 	if (d != NULL) {
-		log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -179,7 +179,7 @@ static bool emit_subnet_id(const ip_subnet net,
 		ip_address tm = subnet_prefix_mask(net);
 		diag_t d = pbs_out_address(&id_pbs, tm, "client mask");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 			return false;
 		}
 	}
@@ -413,7 +413,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address;
 		diag_t d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 		/* i.e., "zero" */
@@ -439,14 +439,14 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address;
 		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
 		ip_address temp_mask;
 		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
@@ -475,14 +475,14 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address_from;
 		d = pbs_in_address(id_pbs, &temp_address_from, afi, "ID from address");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 
 		ip_address temp_address_to;
 		d = pbs_in_address(id_pbs, &temp_address_to, afi, "ID to address");
 		if (d != NULL) {
-			log_diag(RC_LOG, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return false;
 		}
 

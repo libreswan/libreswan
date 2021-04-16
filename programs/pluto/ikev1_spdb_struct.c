@@ -77,7 +77,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 	struct xfrm_user_sec_ctx_ike uctx;
 	diag_t d = pbs_in_struct(pbs, &sec_ctx_desc, &uctx.ctx, sizeof(uctx.ctx), NULL);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -1659,7 +1659,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -1683,7 +1683,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			  &proposal, sizeof(proposal),
 			  &proposal_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1731,7 +1731,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 		diag_t d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
@@ -1773,7 +1773,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
 					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -1821,7 +1821,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, st->st_logger, &d, "invalid transform: ");
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "invalid transform: ");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -2382,7 +2382,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -2448,7 +2448,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
 					 &a, sizeof(a), &attr_pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			return FALSE;
 		}
 
@@ -2876,7 +2876,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	/* Situation */
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -2905,7 +2905,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			  &next_proposal, sizeof(next_proposal),
 			  &next_proposal_pbs);
 	if (d != NULL) {
-		log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
@@ -2967,7 +2967,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							      filler, sizeof(filler),
 							      "CPI filler");
 					if (d != NULL) {
-						log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						return INVALID_SPI;	/* reject whole SA */
 					}
 					if (!all_zero(filler, sizeof(filler))) {
@@ -2992,7 +2992,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						      IPCOMP_CPI_SIZE,
 						      "CPI");
 				if (d != NULL) {
-					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -3042,7 +3042,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						      sizeof(next_spi),
 						      "SPI");
 				if (d != NULL) {
-					log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -3128,7 +3128,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						 &next_proposal, sizeof(next_proposal),
 						 &next_proposal_pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 		} while (next_proposal.isap_proposal == propno);

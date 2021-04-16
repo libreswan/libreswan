@@ -798,7 +798,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
 						 &pd->payload, sizeof(pd->payload), &pd->pbs);
 			if (d != NULL) {
-				log_diag(RC_LOG_SERIOUS, log, &d,
+				llog_diag(RC_LOG_SERIOUS, log, &d,
 					 "malformed payload in packet");
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
@@ -854,7 +854,7 @@ static struct payload_summary ikev2_decode_payloads(struct logger *log,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
-			log_diag(RC_LOG_SERIOUS, log, &d,
+			llog_diag(RC_LOG_SERIOUS, log, &d,
 				 "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
@@ -1118,7 +1118,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
 						 &skf, sizeof(skf), NULL);
 			if (d != NULL) {
-				log_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;
@@ -1192,7 +1192,7 @@ static bool is_duplicate_request(struct ike_sa *ike,
 			pb_stream in_pbs = md->message_pbs; /* copy */
 			diag_t d = pbs_in_struct(&skf, &ikev2_skf_desc, &in_pbs, NULL);
 			if (d != NULL) {
-				log_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return true;
 			}
 			fragment = skf.isaskf_number;
