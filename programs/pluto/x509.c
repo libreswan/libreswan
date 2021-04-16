@@ -781,7 +781,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	st->st_remote_certs.processed = true;
 
 	/* if we already verified ID, no need to do it again */
-	if (st->st_peer_alt_id) {
+	if (st->st_v1_peer_alt_id) {
 		dbg("Peer ID was already confirmed");
 		return true;
 	}
@@ -883,7 +883,7 @@ bool v1_verify_certs(struct msg_digest *md)
 	passert(st->st_ike_version == IKEv1);
 
 	/* if we already verified ID, no need to do it again */
-	if (st->st_peer_alt_id) {
+	if (st->st_v1_peer_alt_id) {
 		dbg("Peer ID was already confirmed");
 		return true;
 	}
@@ -913,7 +913,7 @@ bool v1_verify_certs(struct msg_digest *md)
 		dbg("SAN ID matched, updating that.cert");
 	}
 
-	st->st_peer_alt_id = true;
+	st->st_v1_peer_alt_id = true;
 	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.that.cert.u.nss_cert != NULL) {
 		CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);

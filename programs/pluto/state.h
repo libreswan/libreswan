@@ -487,7 +487,8 @@ struct state {
 	 * can find them.  The first cert in the list is always the
 	 * end or EE cert.
 	 */
-	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
+	bool st_v1_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
+	bool st_v2_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 	struct {
 		bool processed;		/* do this once, may not be any */
 		bool harmless;		/* something nasty */
