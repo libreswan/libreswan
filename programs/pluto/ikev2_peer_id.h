@@ -16,11 +16,12 @@
 #ifndef IKEV2_PEER_ID_H
 #define IKEV2_PEER_ID_H
 
-#include <stdbool.h>
+#include "lswcdefs.h"
+#include "diag.h"
 
 struct ike_sa;
 struct msg_digest;
 
-bool ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md);
+diag_t ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md) MUST_USE_RESULT;
 
 #endif

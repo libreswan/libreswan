@@ -2709,9 +2709,12 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
 
 	/* this call might update connection in md->st */
-	if (!ikev2_decode_peer_id(ike, md)) {
+	diag_t d = ikev2_decode_peer_id(ike, md);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		/* already logged above! */
 		release_pending_whacks(st, "Authentication failed");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
@@ -3713,9 +3716,12 @@ static stf_status v2_inR2_post_cert_decode(struct state *st, struct msg_digest *
 	struct ike_sa *ike = ike_sa(st, HERE);
 	struct state *pst = &ike->sa;
 
-	if (!ikev2_decode_peer_id(ike, md)) {
+	diag_t d = ikev2_decode_peer_id(ike, md);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		/* already logged above! */
 		release_pending_whacks(st, "Authentication failed");
 		return STF_FATAL;
 	}

@@ -38,13 +38,12 @@
 #include "unpack.h"
 #include "pluto_x509.h"
 
-static bool decode_peer_id_counted(struct ike_sa *ike,
-				   struct msg_digest *md, int depth)
+static diag_t decode_peer_id_counted(struct ike_sa *ike,
+				     struct msg_digest *md, int depth)
 {
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
-		log_state(RC_LOG, &ike->sa, "decoding IKEv2 peer ID failed due to confusion");
-		return FALSE;
+		return diag("decoding IKEv2 peer ID failed due to confusion");
 	}
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 	bool must_switch = FALSE;
@@ -53,8 +52,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
 
 	if (id_peer == NULL) {
-		log_state(RC_LOG, &ike->sa, "IKEv2 mode no peer ID");
-		return FALSE;
+		return diag("IKEv2 mode no peer ID");
 	}
 
 	enum ike_id_type hik = id_peer->payload.v2id.isai_type;	/* Peers Id Kind */
@@ -63,9 +61,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 
 	diag_t d = unpack_peer_id(hik, &peer_id, &id_peer->pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.st_logger, &d,
-			 "IKEv2 mode peer ID extraction failed");
-		return false;
+		return diag_diag(&d, "IKEv2 mode peer ID extraction failed: ");
 	}
 
 	/* You Tarzan, me Jane? */
@@ -80,8 +76,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
 						  &tarzan_id, &tarzan_pld->pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, ike->sa.st_logger, &d, "IDr payload extraction failed");
-				return false;
+				return diag_diag(&d, "IDr payload extraction failed: ");
 			}
 			tip = &tarzan_id;
 		}
@@ -104,10 +99,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		} else {
 			log_state(RC_LOG, &ike->sa, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-				log_state(RC_LOG, &ike->sa, "X509: connection failed due to unmatched IKE ID in certificate SAN");
-				if (initiator)
-					return FALSE; /* cannot switch but switching required */
-				must_switch = TRUE;
+				diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
+				if (initiator) {
+					return d; /* cannot switch but switching required */
+				}
+				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+				must_switch = true;
 			} else {
 				log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
 			}
@@ -130,16 +127,12 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			id_buf expect, found;
 
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "we require IKEv2 peer to have ID '%s', but peer declares '%s'",
-				  str_id(&c->spd.that.id, &expect),
-				  str_id(&peer_id, &found));
-			return FALSE;
+			return diag("we require IKEv2 peer to have ID '%s', but peer declares '%s'",
+				    str_id(&c->spd.that.id, &expect),
+				    str_id(&peer_id, &found));
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer_id.kind != ID_DER_ASN1_DN) {
-				log_state(RC_LOG_SERIOUS, &ike->sa,
-					  "peer ID is not a certificate type");
-				return FALSE;
+				return diag("peer ID is not a certificate type");
 			}
 			duplicate_id(&c->spd.that.id, &peer_id);
 		}
@@ -193,17 +186,13 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				}
 				/* can we continue with what we had? */
 				if (must_switch) {
-					log_state(RC_LOG_SERIOUS, &ike->sa,
-						  "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-						  str_id(&peer_id, &peer_str));
-					return FALSE;
+					return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+						    str_id(&peer_id, &peer_str));
 				}
 				/* if X.509, we should have valid peer/san */
 				if (ike->sa.st_remote_certs.verified != NULL && ike->sa.st_peer_alt_id == FALSE) {
-					log_state(RC_LOG_SERIOUS, &ike->sa,
-						  "Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-						  str_id(&peer_id, &peer_str));
-					return FALSE;
+					return diag("`Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+						    str_id(&peer_id, &peer_str));
 				}
 				if (!ike->sa.st_peer_alt_id &&
 				    !same_id(&c->spd.that.id, &peer_id) &&
@@ -217,10 +206,8 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 						ike->sa.st_peer_wants_null = TRUE;
 					} else {
 						id_buf peer_str;
-						log_state(RC_LOG_SERIOUS, &ike->sa,
-							  "Peer ID '%s' mismatched on first found connection and no better connection found",
-							      str_id(&peer_id, &peer_str));
-						return FALSE;
+						return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
+							    str_id(&peer_id, &peer_str));
 					}
 				} else {
 					dbg("peer ID matches and no better connection found - continuing with existing connection");
@@ -244,10 +231,8 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 				return decode_peer_id_counted(ike, md, depth + 1);
 			} else if (must_switch) {
 					id_buf peer_str;
-					log_state(RC_LOG_SERIOUS, &ike->sa,
-						  "Peer ID '%s' mismatched on first found connection and no better connection found",
-						  str_id(&peer_id, &peer_str));
-					return FALSE;
+					return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
+						    str_id(&peer_id, &peer_str));
 			}
 
 			if (c->spd.that.has_id_wildcards) {
@@ -269,10 +254,10 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	    enum_show(&ikev2_idtype_names, hik, &esb),
 	    str_id(&peer_id, &idbuf));
 
-	return true;
+	return NULL;
 }
 
-bool ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md)
+diag_t ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md)
 {
 	return decode_peer_id_counted(ike, md, 0);
 }
