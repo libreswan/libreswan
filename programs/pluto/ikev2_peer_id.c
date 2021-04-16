@@ -272,7 +272,7 @@ static bool decode_peer_id_counted(struct ike_sa *ike,
 	return true;
 }
 
-bool ikev2_decode_peer_id(struct msg_digest *md)
+bool ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md)
 {
-	return decode_peer_id_counted(ike_sa(md->st, HERE), md, 0);
+	return decode_peer_id_counted(ike, md, 0);
 }

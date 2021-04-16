@@ -18,8 +18,9 @@
 
 #include <stdbool.h>
 
+struct ike_sa;
 struct msg_digest;
 
-bool ikev2_decode_peer_id(struct msg_digest *md);
+bool ikev2_decode_peer_id(struct ike_sa *ike, struct msg_digest *md);
 
 #endif
