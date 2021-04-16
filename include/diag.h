@@ -31,6 +31,7 @@ diag_t diag(const char *message, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_va_list(const char *fmt, va_list ap) PRINTF_LIKE_VA(1) MUST_USE_RESULT;
 diag_t diag_jambuf(struct jambuf *buf);
 
+diag_t diag_diag(diag_t *d, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
 void llog_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	       const char *fmt, ...) PRINTF_LIKE(4);
 
