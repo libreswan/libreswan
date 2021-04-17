@@ -679,7 +679,7 @@ if args.nsd or args.dnssec:
         subprocess.getoutput("sed -i 's/port: 5353$/port: 53/' /etc/nsd/server.d/nsd-server-libreswan.conf")
 
     if args.namespace:
-        cmd = "../../pluto/bin/nsd-start.sh start"
+        cmd = "../../guestbin/nsd-start.sh start"
         output = subprocess.check_output(cmd, shell=True, timeout=20, stderr=subprocess.STDOUT)
     else:
         subprocess.getoutput("systemctl start nsd-keygen")
@@ -707,7 +707,7 @@ if args.nsd or args.dnssec:
             rsync_ap(src, dst);
 
         if args.namespace:
-            cmd = "../../pluto/bin/unbound-start.sh restart"
+            cmd = "../../guestbin/unbound-start.sh restart"
             subprocess.check_output(cmd, shell=True, timeout=120, stderr=subprocess.STDOUT)
         else:
             subprocess.getoutput("systemctl start unbound")
