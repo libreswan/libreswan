@@ -8,28 +8,30 @@ west #
 west #
  cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 west #
+ # start; give OE policies time to load
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- # give OE policies time to load
-west #
- ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status
-timeout waiting 30 seconds for ipsec auto --status to match loaded 9,
-west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+000 Total IPsec connections: loaded 10, active 0
 west #
  echo "initdone"
 initdone
 west #
+ # trigger OE
+west #
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
-006 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
+006 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 west #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
