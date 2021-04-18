@@ -4,13 +4,18 @@ LC_CTYPE=C
 export LC_CTYPE
 
 #once unbound work properly replace the next lines; XXX: huh?
-sed -i 's/5353/53/' /etc/nsd/nsd.conf
+sed -i 's/5353/53/' /etc/nsd/nsd.conf /etc/nsd/server.d/nsd-server-libreswan.conf
 
 echo starting dns
 
 systemctl start nsd
 
 echo ==== cut ====
+for f in /etc/nsd/server.d/nsd-server-libreswan.conf /etc/nsd/nsd.conf ; do
+    echo $f
+    grep port: $f
+    grep 53 $f
+done
 systemctl status -l nsd-keygen
 systemctl status -l nsd
 echo ==== tuc ====
