@@ -429,6 +429,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	/* change VERSION when interface spec changes */
 	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
+	jam(buf, "PLUTO_CONNECTION_TYPE='%s' ", LIN(POLICY_TUNNEL, c->policy) ? "tunnel" : "transport");
 	jam(buf, "PLUTO_VIRT_INTERFACE='%s' ", id_vname);
 	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
 	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
