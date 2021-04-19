@@ -588,6 +588,17 @@ doroute() {
     st=0
     xfrmi_route="${PLUTO_XFRMI_ROUTE}"
 
+    if [ ${cmd} != del ]; then
+	oops="$(ip -${FAMILY} route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	case "${oops}" in
+	    'RTNETLINK answers: No route to host'*)
+		if [ -z "${PLUTO_XFRMI_ROUTE}" ]; then
+		    ROUTE=yes	# Routing is mandatory for IPsec
+		fi
+		;;
+	esac
+    fi
+
     if [ -n "${PLUTO_XFRMI_FWMARK}" ]; then
 	xfrmi_rule=yes	# we have to add "ip rules" and "ip route table"
 	ROUTE=no	# xfrmi_route will add the route
