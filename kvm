@@ -1,7 +1,7 @@
 #!/bin/sh
 
 pass1="sh modified"
-pass2="test diffs results retest upgrade patch install clean keys"
+pass2="test diffs results retest upgrade patch install clean keys kill"
 
 if test $# = 0; then
     cat <<EOF
@@ -75,11 +75,14 @@ fi
 status=0
 for op in ${ops} ; do
     case ${op} in
+	kill )
+	    gmake kvm-${op}
+	    ;;
 	upgrade | clean | install )
 	    gmake kvm-${op} || exit $?
 	    ;;
 	test | retest )
-	    gmake kvm-${modified}${op} KVM_TESTS="$*"
+	    gmake kvm-${modified}${op} KVM_TESTS="$*" || exit $?
 	    ;;
 	diffs | results )
 	    gmake kvm-${modified}${op} KVM_TESTS="$*"
