@@ -45,6 +45,9 @@ export LC_ALL
 #		is the name of the  connection	for  which  we	are
 #		routing.
 #
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
+#
 #	PLUTO_CONN_POLICY
 #		the policy of the connection, as in:
 #		RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC
@@ -123,8 +126,6 @@ export LC_ALL
 #
 #	PLUTO_CFG_SERVER=0|1
 #		is MODECFG or IKEv2 Config server.
-#
-#	PLUTO_CONNECTION_TYPE
 #
 #	PLUTO_CONN_ADDRFAMILY
 #		is the family type, "ipv4" or "ipv6"

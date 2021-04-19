@@ -42,6 +42,9 @@ export LC_ALL
 #		is the name of the  connection  for  which  we  are
 #		routing.
 #
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
+#
 #	PLUTO_CONN_POLICY
 #		the policy of the connection, as in:
 #		RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD
@@ -107,8 +110,6 @@ export LC_ALL
 #
 #	PLUTO_PEER_PORT
 #		is the peer's port. Useful for firewalling.
-#
-#	PLUTO_CONNECTION_TYPE
 #
 #	PLUTO_STACK
 #		The kernel level IPstack used (see protostack=)
