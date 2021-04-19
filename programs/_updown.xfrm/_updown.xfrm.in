@@ -33,11 +33,6 @@ export LC_ALL
 # Things that this script gets (from ipsec_pluto(8) man page)
 #
 #
-#	PLUTO_VERSION
-#		indicates  what  version of this interface is being
-#		used.  This document describes version  1.1.   This
-#		is upwardly compatible with version 1.0.
-#
 #	PLUTO_VERB
 #		specifies the name of the operation to be performed
 #		(prepare-host, prepare-client, up-host, up-client,

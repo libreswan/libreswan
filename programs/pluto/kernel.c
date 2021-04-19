@@ -426,8 +426,6 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	else
 		id_vname = "NULL";
 
-	/* change VERSION when interface spec changes */
-	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
 	jam(buf, "PLUTO_CONNECTION_TYPE='%s' ", LIN(POLICY_TUNNEL, c->policy) ? "tunnel" : "transport");
 	jam(buf, "PLUTO_VIRT_INTERFACE='%s' ", id_vname);
