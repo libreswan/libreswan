@@ -8,11 +8,14 @@ v4.4 (unreleased)
 * IKEv2: Connections would not always switch when needed [Andrew/Paul]
 * pluto: Fix for host-to-host connections use non-standard IKE ports [Paul]
 * pluto: Use peer ID (IKEv2 IDr, IKEv1 Aggr) to select best initial conn [Paul]
-* pluto: disable interface-ip= as the feature is not yet implemented [Paul]
+* pluto: Disable interface-ip= as the feature is not yet implemented [Paul]
+* pluto: Fix PLUTO_PEER_CLIENT* in updown for NAT + Transport Mode [Paul]
+* pluto: Remove never updated PLUTO_VERSION for updown scripts [Paul]
+* pluto: Actually set PLUTO_CONNECTION_TYPE= to transport or tunnel [Paul]
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
-* contrib/munin: update plugin to use python3 and update doc header [Tuomo]
-* testing: enable OpenBSD interop tests [Paul/Ravi]
+* contrib/munin: Update plugin to use python3 and update doc header [Tuomo]
+* testing: Enable OpenBSD interop tests [Paul/Ravi]
 
 v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]
