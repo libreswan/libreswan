@@ -116,8 +116,7 @@ class TestDomain:
 
     def boot_and_login(self):
         self.console = remote.boot_and_login(self.domain, self.console)
-        test_directory = remote.path(self.domain, self.console,
-                                     path=self.test.directory)
+        test_directory = self.domain.guest_path(self.console, host_path=self.test.directory)
         if not test_directory:
             abspath = os.path.abspath(self.test.directory)
             self.logger.error("directory %s not mounted on %s", abspath, self.domain)

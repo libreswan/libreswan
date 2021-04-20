@@ -130,37 +130,21 @@ cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 EOD
 
 
-# Mount points:
+# Mount points: /source /testing /pool
 #
-# /source, and /pool are mounted on swanbase; /testing on test
-# machines.  Either way, only available after a reboot as 9p isn't yet
-# configured.
+# Full KVM snapshots (saves) don't work with NFS/9p mounts.  Hence use
+# automount so that things are only mounted after the VM has booted
+# and a snapshot has been taken.
+#
+# To quote the systemd.mount documentation: In general, configuring
+# mount points through /etc/fstab is the preferred approach.
 
 for mount in testing source pool ; do
-    case ${mount} in
-    pool|source)
-	condition_host=ConditionHost=swanbase
-	;;
-    testing)
-	condition_host="# ConditionHost="
-    	;;
-    esac
-    cat <<EOF >/etc/systemd/system/${mount}.mount
-[Unit]
-  Description=libreswan ${mount}
-  ${condition_host}
-[Mount]
-  What=${mount}
-  Where=/${mount}
-  Type=9p
-  Options=defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0
-[Install]
-  WantedBy=multi-user.target
+    cat <<EOF >>/etc/fstab
+${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
     mkdir /${mount}
-    systemctl enable ${mount}.mount
 done
-
 
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
