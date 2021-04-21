@@ -3,7 +3,7 @@
 set -e
 
 # chop everything off after testing; assume this is run from topdir?
-testing=$(dirname $0 | sed "s;testing/.*;testing;")
+testing=$(realpath $0 | sed "s;testing/.*;testing;")
 
 # check NFS is installed and start it (no need to enable it).
 if test -f /lib/systemd/system/nfs-server.service ; then

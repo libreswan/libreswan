@@ -24,8 +24,6 @@ from fab import shell
 from fab import timing
 from fab import logutil
 
-MOUNTS = {}
-
 LOGIN = rb'root'
 LOGIN_PROMPT = rb'login: $'
 LOGIN_PROMPT_TIMEOUT = 120
@@ -33,93 +31,6 @@ LOGIN_PROMPT_TIMEOUT = 120
 PASSWORD = rb'swan'
 PASSWORD_PROMPT = rb'Password:\s?$'
 PASSWORD_PROMPT_TIMEOUT = 5
-
-def mounts(domain):
-    """Return a table of 9p mounts for the given domain"""
-    # maintain a local cache
-    if domain in MOUNTS:
-        mounts = MOUNTS[domain]
-        domain.logger.debug("using mounts from cache: %s", mounts)
-        return
-    mounts = {}
-    MOUNTS[domain] = mounts
-    status, output = domain.dumpxml()
-    if status:
-        # XXX: Throw an exception?
-        return mounts
-    for line in output.splitlines():
-        if re.compile("<filesystem type='mount' ").search(line):
-            source = ""
-            target = ""
-            continue
-        match = re.compile("<source dir='([^']*)'").search(line)
-        if match:
-            source = match.group(1)
-            # Strip trailing "/" along with other potential quirks
-            # such as the mount point being a soft link.
-            source = os.path.realpath(source)
-            continue
-        match = re.compile("<target dir='([^']*)'").search(line)
-        if match:
-            target = match.group(1)
-            continue
-        if re.compile("<\/filesystem>").search(line):
-            domain.logger.debug("filesystem target '%s' source '%s'", target, source)
-            mounts[target] = source
-            continue
-    domain.logger.debug("extracted mounts: %s", mounts)
-    return mounts
-
-
-FSTABS = {}
-
-def mount_point(domain, console, device):
-    """Find the mount-point for device"""
-    if not domain in FSTABS:
-        FSTABS[domain] = {}
-    fstab = FSTABS[domain]
-    if device in fstab:
-        mount = fstab[device]
-        domain.logger.debug("using fstab entry for %s (%s) from cache", device, mount)
-        return mount;
-    #if domain is OpenBSD
-    if("bsd" in str(domain)):
-        try:
-            console.sendline("df -t nfs | awk 'NR==2 {print $6}'")
-            status, match = console.expect_prompt(rb'(/\S+)')
-        except:
-            print("NFS is Mounted on OpenBSD!?")
-    else:
-        console.sendline("df --output=source,target | awk '$1==\"" + device + "\" { print $2 }'")
-        status, match = console.expect_prompt(rb'(/\S+)')
-    # use strings for paths
-    mount = match.group(1).decode('utf-8')
-    fstab[device] = mount
-    domain.logger.debug("fstab has device '%s' mounted on '%s'", device, mount)
-    return mount
-
-
-# Map the local PATH onto a domain DIRECTORY
-def path(domain, console, path):
-    path = os.path.realpath(path)
-    # Because .items() returns an unordered list (it can change across
-    # python invocations or even within python as the dictionary
-    # evolves) it first needs to be sorted.  Use the DIRECTORY sorted
-    # in reverse so that /source/testing comes before /source - and
-    # the longer path is prefered.
-    device_directory = sorted(mounts(domain).items(),
-                              key=lambda item: item[1],
-                              reverse=True)
-    domain.logger.debug("ordered device/directory %s", device_directory);
-    for device, directory in device_directory:
-        if os.path.commonprefix([directory, path]) == directory:
-            # found the local directory path that is mounted on the
-            # machine, now map that onto a remote path
-            root = mount_point(domain, console, device)
-            return root + path[len(directory):]
-
-    raise AssertionError("the host path '%s' is not mounted on the guest %s" % (path, domain))
-
 
 # Domain timeouts
 
@@ -143,21 +54,23 @@ def _login(domain, console, login, password,
             raise pexpect.TIMEOUT()
         tries = tries + 1
 
-        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, console.prompt],
+        # Hopefully "Last login" is matched before "login: "
+        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, "Last login", console.prompt],
                                timeout=timeout)
         if match == 0:
-            console.sendline(login)
-            timeout=PASSWORD_TIMEOUT
+            timeout = PASSWORD_TIMEOUT
             domain.logger.info("got login prompt after %s; sending '%s' and waiting %s seconds for password prompt",
                                lapsed_time, login, timeout)
-            continue
+            console.sendline(login)
         elif match == 1:
-            timeout=SHELL_TIMEOUT
-            console.sendline(password)
+            timeout = SHELL_TIMEOUT
             domain.logger.info("got password prompt after %s; sending '%s' and waiting %s seconds for shell prompt",
                                lapsed_time, password, timeout)
-            continue
+            console.sendline(password)
         elif match == 2:
+            # Last login: looks a lot like login: ulgh!  Skip.
+            domain.logger.info("got 'Last login' after %s; ignoring", lapsed_time)
+        elif match == 3:
             # shell prompt
             domain.logger.info("we're in after %s!", lapsed_time)
             break

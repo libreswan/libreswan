@@ -33,14 +33,6 @@ The interface to the script is documented in the pluto man page.</para>
 variables which can be used to act differently based on the information:</para>
 <variablelist remap='TP'>
  <varlistentry>
-  <term><emphasis remap='B'>PLUTO_VERSION</emphasis></term>
-  <listitem>
-   <para>indicates what version of this interface is being used. This
-document describes version 1.1. This is upwardly compatible with version 1.0.
-   </para>
-  </listitem>
- </varlistentry>
- <varlistentry>
   <term><emphasis remap='B'>PLUTO_VERB</emphasis></term>
   <listitem>
    <para>specifies the name of the operation to be performed, which

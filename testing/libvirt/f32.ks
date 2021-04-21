@@ -123,36 +123,27 @@ The root password is "swan"
 EOD
 
 
-# Mount /testing, /source, and /pool (swanbase only) using 9p (will
-# be available after a reboot).
-
 # load 9p modules in time for auto mounts
+
 cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 9pnet_virtio
 EOD
 
+
+# Mount points: /source /testing /pool
+#
+# Full KVM snapshots (saves) don't work with NFS/9p mounts.  Hence use
+# automount so that things are only mounted after the VM has booted
+# and a snapshot has been taken.
+#
+# To quote the systemd.mount documentation: In general, configuring
+# mount points through /etc/fstab is the preferred approach.
+
 for mount in testing source pool ; do
-
-    case ${mount} in
-    pool) condition_host= ;;
-    *)    condition_host="# " ;;
-    esac
-
-    cat <<EOF >/etc/systemd/system/${mount}.mount
-[Unit]
-  Description=libreswan ${mount}
-  ${condition_host}ConditionHost=swanbase
-[Mount]
-  What=${mount}
-  Where=/${mount}
-  Type=9p
-  Options=defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0
-[Install]
-  WantedBy=multi-user.target
+    cat <<EOF >>/etc/fstab
+${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
-
     mkdir /${mount}
-    systemctl enable ${mount}.mount
 done
 
 systemctl enable systemd-networkd

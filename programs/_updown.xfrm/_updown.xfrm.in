@@ -33,11 +33,6 @@ export LC_ALL
 # Things that this script gets (from ipsec_pluto(8) man page)
 #
 #
-#	PLUTO_VERSION
-#		indicates  what  version of this interface is being
-#		used.  This document describes version  1.1.   This
-#		is upwardly compatible with version 1.0.
-#
 #	PLUTO_VERB
 #		specifies the name of the operation to be performed
 #		(prepare-host, prepare-client, up-host, up-client,
@@ -49,6 +44,9 @@ export LC_ALL
 #	PLUTO_CONNECTION
 #		is the name of the  connection	for  which  we	are
 #		routing.
+#
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
 #
 #	PLUTO_CONN_POLICY
 #		the policy of the connection, as in:
@@ -128,8 +126,6 @@ export LC_ALL
 #
 #	PLUTO_CFG_SERVER=0|1
 #		is MODECFG or IKEv2 Config server.
-#
-#	PLUTO_CONNECTION_TYPE
 #
 #	PLUTO_CONN_ADDRFAMILY
 #		is the family type, "ipv4" or "ipv6"
@@ -592,6 +588,17 @@ doroute() {
     route_table=50
     st=0
     xfrmi_route="${PLUTO_XFRMI_ROUTE}"
+
+    if [ ${cmd} != del ]; then
+	oops="$(ip -${FAMILY} route get ${PLUTO_PEER_CLIENT_NET} 2>&1)"
+	case "${oops}" in
+	    'RTNETLINK answers: No route to host'*)
+		if [ -z "${PLUTO_XFRMI_ROUTE}" ]; then
+		    ROUTE=yes	# Routing is mandatory for IPsec
+		fi
+		;;
+	esac
+    fi
 
     if [ -n "${PLUTO_XFRMI_FWMARK}" ]; then
 	xfrmi_rule=yes	# we have to add "ip rules" and "ip route table"

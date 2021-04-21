@@ -3136,7 +3136,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 */
 
 	if (initiator) {
-		if (!st->st_peer_alt_id &&
+		if (!st->st_v1_peer_alt_id &&
 		    !same_id(&c->spd.that.id, &peer) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			id_buf expect;
@@ -3193,7 +3193,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			dbg("no more suitable connection for peer '%s'",
 			    str_id(&peer, &buf));
 			/* can we continue with what we had? */
-			if (!md->st->st_peer_alt_id &&
+			if (!md->st->st_v1_peer_alt_id &&
 			    !same_id(&c->spd.that.id, &peer) &&
 			    c->spd.that.id.kind != ID_FROMCERT) {
 				log_state(RC_LOG, md->st, "Peer mismatch on first found connection and no better connection found");

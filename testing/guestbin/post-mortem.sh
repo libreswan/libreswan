@@ -17,7 +17,12 @@ ok=true
 
 echo shutting down
 
-ps -elf | sed -n -e '1 p ; /sed/n ; /pluto/{p;n} ; /strongswan/{p;n} ; /iked/{p;n}'
+ps ajx | sed -n \
+	     -e '1 p' \
+	     -e '/sed/        {n;}' \
+	     -e '/pluto/      {p;n;}' \
+	     -e '/strongswan/ {p;n;}' \
+	     -e '/iked/       {p;n;}'
 
 if test -r /tmp/pluto.log ; then
     ipsec stop

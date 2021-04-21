@@ -22,10 +22,7 @@ from fab import logutil
 def _interfaces(domains):
     interfaces = set()
     for domain in domains:
-        status, output = domain.dumpxml()
-        if status:
-            domain.logger.error("dumpxml failed: %s" % (output))
-            continue
+        output = domain.dumpxml()
         bridges = re.compile(r"\<source network='[^']*' bridge='([^']*)'/\>").findall(output)
         if bridges:
             for bridge in bridges:

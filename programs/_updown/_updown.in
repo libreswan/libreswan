@@ -30,11 +30,6 @@ export LC_ALL
 # things that this script gets (from ipsec_pluto(8) man page)
 #
 #
-#	PLUTO_VERSION
-#		indicates  what  version of this interface is being
-#		used.  This document describes version  1.1.   This
-#		is upwardly compatible with version 1.0.
-#
 #	PLUTO_VERB
 #		specifies the name of the operation to be performed
 #		(prepare-host, prepare-client, up-host, up-client,
@@ -46,6 +41,9 @@ export LC_ALL
 #	PLUTO_CONNECTION
 #		is the name of the  connection  for  which  we  are
 #		routing.
+#
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
 #
 #	PLUTO_CONN_POLICY
 #		the policy of the connection, as in:
@@ -113,24 +111,11 @@ export LC_ALL
 #	PLUTO_PEER_PORT
 #		is the peer's port. Useful for firewalling.
 #
-#	PLUTO_CONNECTION_TYPE
-#
 #	PLUTO_STACK
 #		The kernel level IPstack used (see protostack=)
 #
 #	PLUTO_SA_REQID
 #		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
-
-case $PLUTO_VERSION in
-    1.*)
-	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "$0: obsolete interface version \"$PLUTO_VERSION\"," >&2
-	echo "$0: 	called by obsolete Pluto?" >&2
-	exit 2
-	;;
-    2.*)
-	;;
-esac
 
 if [ -x @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} ]; then
     exec @IPSEC_EXECDIR@/_updown.${PLUTO_STACK} $@
