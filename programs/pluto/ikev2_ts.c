@@ -958,17 +958,9 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 #ifdef HAVE_LABELED_IPSEC
 	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
-	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
-		/*
-		 * if neither TSi nor TSr contains a label, that is OK.
-		 * This case is expected for the initial child/IPsec SA setup
-		 * during IKE_AUTH when there is no ACQUIRE driving said IKE
-		 * negotiation (i.e. when using `auto=start` for the connection
-		 * configuration).
-		 *
-		 * ??? should we not check that we're in that special case?
-		 */
-		return NULL;	/* success: no label, as expected */
+	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
+		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
+		return &null_shunk;
 	}
 
 	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
