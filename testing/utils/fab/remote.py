@@ -54,21 +54,23 @@ def _login(domain, console, login, password,
             raise pexpect.TIMEOUT()
         tries = tries + 1
 
-        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, console.prompt],
+        # Hopefully "Last login" is matched before "login: "
+        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, "Last login", console.prompt],
                                timeout=timeout)
         if match == 0:
-            console.sendline(login)
-            timeout=PASSWORD_TIMEOUT
+            timeout = PASSWORD_TIMEOUT
             domain.logger.info("got login prompt after %s; sending '%s' and waiting %s seconds for password prompt",
                                lapsed_time, login, timeout)
-            continue
+            console.sendline(login)
         elif match == 1:
-            timeout=SHELL_TIMEOUT
-            console.sendline(password)
+            timeout = SHELL_TIMEOUT
             domain.logger.info("got password prompt after %s; sending '%s' and waiting %s seconds for shell prompt",
                                lapsed_time, password, timeout)
-            continue
+            console.sendline(password)
         elif match == 2:
+            # Last login: looks a lot like login: ulgh!  Skip.
+            domain.logger.info("got 'Last login' after %s; ignoring", lapsed_time)
+        elif match == 3:
             # shell prompt
             domain.logger.info("we're in after %s!", lapsed_time)
             break
