@@ -61,7 +61,7 @@ fixversion() {
 	kv="$(awk '{print $NF}' /proc/net/ipsec_version)"
     else
 	if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
-	    stack=" (netkey)"
+	    stack=" (XFRM)"
 	    kv="${version}"
 	else
 	    if [ -f /mach_kernel ]; then
