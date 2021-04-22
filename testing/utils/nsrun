@@ -3283,18 +3283,18 @@ def resanitize(args):
     #                       print "cat %s/%s"%(testdir,f)
 
 
-def check_host_netkey_stack():
-    # check if there is netkey stack on the host
+def check_host_xfrm_stack():
+    # check if there is XFRM stack on the host
 
     v_line = runcmd("ipsec version")
-    if v_line.split()[3] != '(netkey)':
-        logger.debug("no netkey stack found, try to load it %s", v_line)
-        runcmd("sudo ipsec _stackmanager start --netkey")
+    if v_line.split()[3] != '(XFRM)':
+        logger.debug("no XFRM stack found, try to load it %s", v_line)
+        runcmd("sudo ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
-        if v_line.split()[3] != '(netkey)':
+        if v_line.split()[3] != '(XFRM)':
             # give up
             logger.error(
-                "ABORT no netkey stack found. cannot run docker test, %s", v_line)
+                "ABORT no XFRM stack found. cannot run docker test, %s", v_line)
             return True
 
 
@@ -3304,7 +3304,7 @@ def run_docker_q(args, tests, st):
             "dtorun"], args.npool,
         args.testlist)
 
-    if check_host_netkey_stack():
+    if check_host_xfrm_stack():
         return True
 
     bootp = [1, 2, 3]
@@ -3748,7 +3748,7 @@ class Test():
         else:
             self.type = args.testtype
             if not tlr and self.type == "dockerplutotest" or self.type == "nsplutotest":
-                if check_host_netkey_stack():
+                if check_host_xfrm_stack():
                     return True
             if self.type == "nsplutotest":
                 # possible recursion ?? abort
@@ -4090,7 +4090,7 @@ class TestListRun():
         if self.nstorun or self.dnottorun:
             sudo = localhost_sudo(self.args, '')
             logger.info("run local host tweaks")
-            check_host_netkey_stack()
+            check_host_xfrm_stack()
 
             if self.nstorun:
                 ns_host_tweaks(self.args, sudo)

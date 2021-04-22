@@ -2,13 +2,13 @@
 # on the host
 # ipsec _stackmanager start
 # ipsec start
-# ipsec status should show stack is netkey
+# ipsec status should show stack is xfrm
 #
 #
 set -x
 docker stop $(docker ps -a -q)
 docker rm $(docker ps -a -q)
-ipsec version |grep klips && echo you need netkey && exit
+ipsec version |grep klips && echo you need XFRM && exit
 dimage=swanbase
 testname=ikev2-37-docker-rw
 dnamer="road-$testname"

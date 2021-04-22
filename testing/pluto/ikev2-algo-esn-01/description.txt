@@ -1,4 +1,4 @@
-Test of negotiating ESN with netkey
+Test of negotiating ESN with xfrm
 
 The test for this is difficult, it technically requires 2^32 packets to trigger.
 But a side effect of setting esn=yes is that the kernel xfrm state no longer

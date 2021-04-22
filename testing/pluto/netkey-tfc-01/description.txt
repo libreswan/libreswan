@@ -1,4 +1,4 @@
-tfc testing - requires netkey
+tfc testing - requires xfrm
 
 This uses tfc=0 which we can only really see when we look at recorded
 tcpdump showing ESP packets around 120 bytes. Currently, test cases

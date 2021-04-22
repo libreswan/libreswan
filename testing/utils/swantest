@@ -2298,7 +2298,7 @@ def setup_single_test(args, start='', st=None):
     logging.debug("try to run as single test")
     if args.docker:
         test["type"] = "dockerplutotest"
-        if check_host_netkey_stack():
+        if check_host_xfrm_stack():
             return True
     elif args.kvm:
         test["type"] = "kvmplutotest"
@@ -2440,18 +2440,18 @@ def resanitize(args):
     #                       print "cat %s/%s"%(testdir,f)
 
 
-def check_host_netkey_stack():
-    # check if there is netkey stack on the host
+def check_host_xfrm_stack():
+    # check if there is XFRM stack on the host
 
     v_line = runcmd("ipsec version")
-    if v_line.split()[3] != '(netkey)':
-        logging.debug("no netkey stack found, try to load it %s", v_line)
+    if v_line.split()[3] != '(XFRM)':
+        logging.debug("no XFRM stack found, try to load it %s", v_line)
         runcmd("sudo /usr/local/sbin/ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
-        if v_line.split()[3] != '(netkey)':
+        if v_line.split()[3] != '(XFRM)':
             # give up
             logging.error(
-                "ABORT no netkey stack found. cannot run docker test, %s", v_line)
+                "ABORT no XFRM stack found. cannot run docker test, %s", v_line)
             return True
 
 
@@ -2461,7 +2461,7 @@ def run_docker_q(args, tests, st):
             "dtorun"], args.npool,
         args.testlist)
 
-    if check_host_netkey_stack():
+    if check_host_xfrm_stack():
         return True
 
     bootp = [1, 2, 3]

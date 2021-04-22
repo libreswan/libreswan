@@ -1,4 +1,4 @@
-Basic pluto test with west has auto=ondemand and netkey stack.
+Basic pluto test with west has auto=ondemand and xfrm stack.
 
 It shows two packets are dropped while negotiating.
 tcpdump shows they don't leak in the clear

@@ -80,8 +80,11 @@ void ikev2_print_ts(const struct traffic_selector *ts)
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
-		if (ts->sec_label.len != 0)
+		if (ts->sec_label.len != 0) {
 			DBG_dump_hunk("security label:", ts->sec_label);
+		} else {
+			DBG_log("  security label: unset");
+		}
 	}
 }
 
@@ -150,7 +153,9 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state 
 	 */
 	ts.sec_label = HUNK_AS_SHUNK((st->st_seen_sec_label.len != 0) ?
 					st->st_seen_sec_label :
-					st->st_acquired_sec_label);
+					st->st_acquired_sec_label.len != 0 ?
+					st->st_acquired_sec_label :
+					e->sec_label);
 
 	return ts;
 }
@@ -941,10 +946,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 	if (sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
 		if (tsi->contains_sec_label || tsr->contains_sec_label) {
-			/*
-			 * Error: This end is *not* configured to use labeled
-			 * IPsec but the peer is.
-			 */
+			dbg("error: received sec_label but this end is *not* configured to use sec_label");
 			return &null_shunk;
 		}
 		/* No sec_label was found and none was expected */
@@ -956,17 +958,9 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 #ifdef HAVE_LABELED_IPSEC
 	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
-	if (!tsi->contains_sec_label && !tsr->contains_sec_label) {
-		/*
-		 * if neither TSi nor TSr contains a label, that is OK.
-		 * This case is expected for the initial child/IPsec SA setup
-		 * during IKE_AUTH when there is no ACQUIRE driving said IKE
-		 * negotiation (i.e. when using `auto=start` for the connection
-		 * configuration).
-		 *
-		 * ??? should we not check that we're in that special case?
-		 */
-		return NULL;	/* success: no label, as expected */
+	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
+		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
+		return &null_shunk;
 	}
 
 	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)

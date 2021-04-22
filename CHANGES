@@ -1,7 +1,9 @@
 
 See also https://libreswan.org/
 
-v4.4 (unreleased)
+v4.5 (unreleased)
+
+v4.4 (April 22, 2021)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]
 * IKEv2: Fixes to Labeled IPsec policies [Kavinda Wewegama/Paul]
 * IKEv2: Add redirect statistics to whack --globalstatus [Clive Zagno]
@@ -12,10 +14,13 @@ v4.4 (unreleased)
 * pluto: Fix PLUTO_PEER_CLIENT* in updown for NAT + Transport Mode [Paul]
 * pluto: Remove never updated PLUTO_VERSION for updown scripts [Paul]
 * pluto: Actually set PLUTO_CONNECTION_TYPE= to transport or tunnel [Paul]
+* pluto: Allow non-templated wildcard ID connections to match [Paul]
+* pluto: Reduce and merge various logging messages [Andrew]
 * libipsecconf: Do not allow vhost/vnet in IKEv2 connections [Paul]
 * XFRM: Restarting pluto when using ipsec-interface= could fail [Paul]
 * contrib/munin: Update plugin to use python3 and update doc header [Tuomo]
 * testing: Enable OpenBSD interop tests [Paul/Ravi]
+* testing: Make tests more reliable on KVM [Andrew]
 
 v4.3 (February 21, 2021)
 * pluto: Restore range checking on Labeled IPsec [Paul/Andrew]

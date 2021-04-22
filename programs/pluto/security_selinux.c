@@ -132,11 +132,13 @@ bool se_label_match(shunk_t a, chunk_t b, struct logger *logger)
 	if (a.ptr == NULL && b.ptr == NULL)
 		return true;
 
-	if (within_range(a.ptr, (char*)b.ptr, logger)) {
+	if (hunk_eq(a, b)) {
+		dbg_sec_label_match(a, b, "matched with hunk_eq()", logger);
+		return true;
+	} else if (within_range(a.ptr, (char*)b.ptr, logger)) {
 		dbg_sec_label_match(a, b, "matched with within_range()", logger);
 		return true;
 	}
-
 	dbg_sec_label_match(a, b, "did not match", logger);
 	return false;
 }
