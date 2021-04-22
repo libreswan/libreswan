@@ -46,3 +46,5 @@ s/ping: connect: Network is unreachable/connect: Network is unreachable/g
 # softhsm - pkcs-uri ephemerals
 s/serial=[^;]*;token=libreswan/serial=XXXXXXXX;token=libreswan/g
 s/and is reassigned to slot .*$/and is reassigned to slot XXXXX/g
+
+s/tcpdump: listening on .*$/tcpdump: listening on INTERFACE DETAILS/

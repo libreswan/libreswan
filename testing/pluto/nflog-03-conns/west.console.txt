@@ -93,7 +93,7 @@ west #
 [B] PID
 west #
  ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
-tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), snapshot length 262144 bytes
+tcpdump: listening on INTERFACE DETAILS
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up

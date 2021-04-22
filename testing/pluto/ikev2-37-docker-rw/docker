@@ -23,8 +23,8 @@ pipework br11063808 -i eth0 east-ikev2-37-docker-rw 192.1.2.23/24
 docker exec -ti road-ikev2-37-docker-rw ip route add default via 192.1.3.254
 tcpdump: WARNING: br46961960: no IPv4 address assigned
 tcpdump: WARNING: br11063808: no IPv4 address assigned
-tcpdump: listening on br11063808, link-type EN10MB (Ethernet), capture size 65535 bytes
-tcpdump: listening on br46961960, link-type EN10MB (Ethernet), capture size 65535 bytes
+tcpdump: listening on INTERFACE DETAILS
+tcpdump: listening on INTERFACE DETAILS
 docker exec -ti east-ikev2-37-docker-rw ip route add 192.0.1.0/24 via 192.1.2.45
 docker exec -ti east-ikev2-37-docker-rw ip route add default via 192.1.2.254
 docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /home/build/libreswan; make programs install'
