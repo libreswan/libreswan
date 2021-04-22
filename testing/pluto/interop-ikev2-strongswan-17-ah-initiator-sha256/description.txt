@@ -1,7 +1,7 @@
 An interop test of Authenticated Header (AH) using sha2_256 to ensure there
 is no trunc bug issue.
 
-This uses IKEv2. It requires netkey
+This uses IKEv2. It requires xfrm
 
 This test requires strongswan 5.1.1 or newer for AH support.
 

@@ -1,4 +1,4 @@
-Basic netkey test but now using marking and vti interfaces with routing.
+Basic xfrm test but now using marking and vti interfaces with routing.
 
 This test sets up a "routed vpn" with a 0.0.0.0/0 <-> 0.0.0.0/0 policy.
 

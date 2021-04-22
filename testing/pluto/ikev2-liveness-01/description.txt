@@ -1,4 +1,4 @@
-IKEv2 "Liveness" checking events using netkey.
+IKEv2 "Liveness" checking events using xfrm.
 
 east sends an INFORMATIONAL exchange and west responds.  when west is
 killed, east goes without a response until the liveness timeout is hit
