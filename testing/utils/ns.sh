@@ -256,14 +256,14 @@ prepare_mount()
 host_tweaks ()
 {
 
-	# load netkey stack on host
+	# load XFRM stack on host
 	# ipsec _stackmanager start --config /testing/pluto/ikev2-34-netns/west.conf
-	if [ -z "$(ipsec version | grep netkey)" ]; then
-		echo "WARNING no netkey stack found trying to start"
+	if [ -z "$(ipsec version | grep XFRM)" ]; then
+		echo "WARNING no XFRM stack found trying to start"
 	     	ipsec _stackmanager start
-		if [ -z "$(ipsec version | grep netkey)" ]; then
-			#echo "abort ttempt to load netkey stack failed"
-			echo "cannot find netkey stack"
+		if [ -z "$(ipsec version | grep XFRM)" ]; then
+			#echo "abort attempt to load XFRM stack failed"
+			echo "cannot find XFRM stack"
 			echo "ipsec _stackmanager start ; may help"
 			exit 1
 		fi
