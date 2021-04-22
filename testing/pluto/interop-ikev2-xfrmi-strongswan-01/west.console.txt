@@ -44,9 +44,6 @@ initiate completed successfully
 west #
  ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-From 192.0.1.254 icmp_seq=1 Destination Host Unreachable
-From 192.0.1.254 icmp_seq=2 Destination Host Unreachable
-From 192.0.1.254 icmp_seq=3 Destination Host Unreachable
 --- 192.0.2.254 ping statistics ---
 3 packets transmitted, 0 received, +3 errors, 100% packet loss, time XXXX
 pipe 3
