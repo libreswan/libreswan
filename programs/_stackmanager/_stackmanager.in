@@ -40,7 +40,7 @@ if [ -z "${action}" ]; then
     exit 1
 fi
 
-stopnetkey() {
+stop_xfrm() {
     local wait larval_drop
     wait=""
     larval_drop=""
@@ -64,7 +64,7 @@ stopnetkey() {
 		    echo 0 >/proc/sys/net/core/xfrm_larval_drop
 		fi
 	    fi
-	    # netkey stack found, let's unload.
+	    # XFRM stack found, let's unload.
 	    for mod in xfrm_ipcomp ipcomp ipcomp6 ip_vti xfrm6_tunnel \
 		xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
 		xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
@@ -106,7 +106,7 @@ stopnetkey() {
 }
 
 # We can get called even if we abort with "pluto already running"
-startnetkey() {
+start_xfrm() {
     # in case pluto crashed
     if pidof pluto > /dev/null; then
 	: pluto is running, skip cleanup
@@ -152,7 +152,7 @@ startnetkey() {
 }
 
 stop() {
-    stopnetkey
+    stop_xfrm
 }
 
 cryptomodules() {
@@ -188,17 +188,17 @@ fi
 
 if [ "$2" = "--netkey" -o "$2" = "--xfrm" ]; then
 	# manual override for use in docker
-	stack=netkey
+	stack=xfrm
 else
 	stack="$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF} --liststack | grep -v "#")"
 fi
 
 case ${stack} in
-    netkey|none)
+    xfrm|none)
 	;;
-    auto|mast|klips)
-	echo "protostack= values auto, klips and mast are not longer supported, defaulting to netkey" >&2
-	stack=netkey
+    auto|mast|klips|netkey)
+	echo "protostack= values auto, klips, mast and netkey are not longer supported, defaulting to xfrm" >&2
+	stack=xfrm
 	;;
     *)
 	echo "unknown stack ${stack}" >&2
@@ -218,8 +218,8 @@ case ${action} in
 	;;
     start)
 	case ${stack} in
-	    netkey)
-		startnetkey
+	    xfrm)
+		start_xfrm
 		;;
 	esac
 	;;
