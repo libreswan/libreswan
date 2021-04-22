@@ -1,4 +1,4 @@
-# algo-{esp,ah}-{klips,netkey}-to-{klips,netkey}-ikev{1,2}
+# algo-{esp,ah}-{netkey|xfrm}-to-{netkey|xfrm}-ikev{1,2}
 
 d=$(basename $(pwd))
 
@@ -9,14 +9,12 @@ esac
 echo "protocol=${protocol}"
 
 case $d in
-    *-klips-to-* ) initiator_stack=klips ;;
     *-netkey-to-* ) initiator_stack=xfrm ;;
     *-xfrm-to-* ) initiator_stack=xfrm ;;
 esac
 echo "initiator_stack=${initiator_stack}"
 
 case $d in
-    *-to-klips-* ) responder_stack=klips ;;
     *-to-netkey-* ) responder_stack=xfrm ;;
     *-to-xfrm-* ) responder_stack=xfrm ;;
 esac
@@ -30,7 +28,6 @@ echo "version=${version}"
 
 # order by lowest common denominator
 case -${initiator_stack}-${responder_stack}- in
-    *-klips-* ) encrypt="3des" ; integ="md5" ;;
     *-netkey-* ) encrypt="aes" ; integ="sha1" ;;
     *-xfrm-* ) encrypt="aes" ; integ="sha1" ;;
 esac
