@@ -32,12 +32,12 @@
     USE_AUTHPAM=true \\\
 %{nil}
 
-#global prever rc1
+%global prever dr1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 4.4
+Version: 4.5
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/

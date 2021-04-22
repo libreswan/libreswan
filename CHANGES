@@ -1,6 +1,8 @@
 
 See also https://libreswan.org/
 
+v4.5 (unreleased)
+
 v4.4 (April 22, 2021)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]
 * IKEv2: Fixes to Labeled IPsec policies [Kavinda Wewegama/Paul]
