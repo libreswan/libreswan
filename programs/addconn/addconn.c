@@ -83,7 +83,7 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger
 		return;	/* this end already figured out */
 
 	fatal(PLUTO_EXIT_FAIL, logger,
-	      "addcon: without XFRM/NETKEY, cannot resolve_defaultroute()");
+	      "addcon: without XFRM, cannot resolve_defaultroute()");
 #endif
 }
 
@@ -614,7 +614,7 @@ int main(int argc, char *argv[])
 						cfg->setup.strings[kd->field]);
 				} else {
 					/* implicit default */
-					printf("netkey\n");
+					printf("xfrm\n");
 				}
 			}
 		}
