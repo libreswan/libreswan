@@ -26,16 +26,13 @@ west #
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
  # Tunnel should be up
 west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  # Let R_U_THERE packets flow
 west #
@@ -45,26 +42,22 @@ west #
 west #
  ip route add unreachable 192.1.2.23
 west #
- ../../guestbin/wait-until-alive 192.1.2.23
-ping -n -c 1 -w 4 192.1.2.23
+ ../../guestbin/ping-once.sh --error 192.1.2.23
 connect: No route to host
-destination 192.1.2.23 is dead
 west #
- sleep 45
+ # wait for liveness/dpd to trigger: tunnel should be down with %trap
 west #
- # livness/dpd should have triggered now
+ # or %hold preventing packet leaks But shuntstatus only shows bare
 west #
- # Tunnel should be down with %trap or %hold preventing packet leaks
+ # shunts, not connection shunts :(
 west #
- # But shuntstatus only shows bare shunts, not connection shunts :(
+ ../../guestbin/wait-for.sh --timeout 90 --no-match '.' -- ipsec trafficstatus
 west #
  conntrack -L -n
 conntrack vA.B.C (conntrack-tools): 0 flow entries have been shown.
 west #
  conntrack -F
 conntrack vA.B.C (conntrack-tools): connection tracking table has been emptied.
-west #
- ipsec whack --trafficstatus
 west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -80,66 +73,63 @@ west #
 000 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
-000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
+000 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:3; timeout:10; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 #3: "westnet-eastnet-ikev2":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in XXs; idle;
+000 #3: pending CHILD SA for "westnet-eastnet-ikev2"
 west #
  # ping should be caught ip route unreachable
 west #
- ping -n -q -w 2 -c 3 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
 west #
- # Remove the null route
+ # Remove the null route; things should recover witout a trigger
 west #
  ip route del unreachable 192.1.2.23
 west #
  ../../guestbin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 west #
- ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
-west #
- sleep 2
-west #
- # ping should reply
-west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match ':' -- ipsec trafficstatus
+006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # Tunnel should be back up now even without triggering traffic
 west #
- ipsec whack --trafficstatus
-006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- ipsec whack --shuntstatus
+ ipsec trafficstatus
+006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+west #
+ ipsec shuntstatus
 000 Bare Shunt list:
 000  
 west #
  grep -E "liveness action|acquire" OUTPUT/west.pluto.log
-"westnet-eastnet-ikev2" #2: IKEv2 liveness action - putting connection into hold
-| xfrm acquire rtattribute type 5
-| xfrm acquire rtattribute type 16
-| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
+"westnet-eastnet-ikev2" #1: liveness action - putting connection into hold
+| xfrm acquire rtattribute type 5 ...
+| xfrm acquire rtattribute type 16 ...
+| %acquire-netlink looking for 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 (1)
+| %acquire-netlink looking for 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 (1)
+| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
-| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
+| comparing bare shunt 0x7f47b151df48 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 west #
  grep -E "liveness: action|acquire" OUTPUT/west.pluto.log
-| xfrm acquire rtattribute type 5
-| xfrm acquire rtattribute type 16
-| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
+| xfrm acquire rtattribute type 5 ...
+| xfrm acquire rtattribute type 16 ...
+| %acquire-netlink looking for 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 (1)
+| %acquire-netlink looking for 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 (1)
+| add bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 initiate on demand from 192.0.1.254:8 to 192.0.2.254:0 proto=1 because: acquire
-| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32 => %hold 0    %acquire-netlink
+| comparing bare shunt 0x7f47b151df48 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
+| delete bare shunt 0xPOINTER 192.0.1.254/32:8 --1--> 192.0.2.254/32:0 => %hold 0    %acquire-netlink
 west #
  echo done
 done
