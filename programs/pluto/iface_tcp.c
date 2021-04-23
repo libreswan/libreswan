@@ -53,12 +53,14 @@
 #include "pluto_stats.h"
 
 /* work around weird combo's of glibc and kernel header conflicts */
-#ifndef GLIBC_KERN_FLIP_HEADERS
-# include "linux/xfrm.h" /* local (if configured) or system copy */
-# include "libreswan.h"
-#else
-# include "libreswan.h"
-# include "linux/xfrm.h" /* local (if configured) or system copy */
+#if defined(linux)
+# ifndef GLIBC_KERN_FLIP_HEADERS
+#  include "linux/xfrm.h" /* local (if configured) or system copy */
+#  include "libreswan.h"
+# else
+#  include "libreswan.h"
+#  include "linux/xfrm.h" /* local (if configured) or system copy */
+# endif
 #endif
 
 /*
@@ -182,8 +184,6 @@ static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
 						 struct iface_packet *packet,
 						 struct logger *logger)
 {
-	bool v6 = ifp->ip_dev->id_address.version == 6;
-
 	/*
 	 * At this point there's no so log it against the remote
 	 * endpoint determined when the connection was accepted.
@@ -256,12 +256,13 @@ static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
 				return IFACE_READ_ABORT; /* i.e., delete IFP */
 			}
 
+#if defined(linux)
+			int af = address_type(&ifp->ip_dev->id_address)->af;
 			struct xfrm_userpolicy_info policy_in = {
 				.action = XFRM_POLICY_ALLOW,
-				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.sel.family = af,
 				.dir = XFRM_POLICY_IN,
 			};
-
 			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
 				int e = errno;
 				llog_iketcp(RC_LOG, logger, ifp,
@@ -269,13 +270,11 @@ static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
 					    ifp->fd, ifp->fd, pri_errno(e));
 				return IFACE_READ_ABORT; /* i.e., delete IFP */
 			}
-
 			struct xfrm_userpolicy_info policy_out = {
 				.action = XFRM_POLICY_ALLOW,
-				.sel.family = v6 ? AF_INET6 :AF_INET,
+				.sel.family = af,
 				.dir = XFRM_POLICY_OUT,
 			};
-
 			if (setsockopt(ifp->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
 				int e = errno;
 				llog_iketcp(RC_LOG, logger, ifp,
@@ -283,7 +282,7 @@ static enum iface_read_status iketcp_read_packet(struct iface_endpoint *ifp,
 					    ifp->fd, ifp->fd, pri_errno(e));
 				return IFACE_READ_ABORT; /* i.e., delete IFP */
 			}
-
+#endif
 		}
 
 		/*
@@ -708,16 +707,17 @@ stf_status create_tcp_interface(struct state *st)
 	 */
 	if (impair.tcp_skip_setsockopt_espintcp) {
 		log_state(RC_LOG, st, "IMPAIR: TCP: skipping setsockopt(espintcp)");
+#if defined(linux)
 	} else {
-		bool v6 = st->st_remote_endpoint.version == 6;
+		int af = endpoint_type(&st->st_remote_endpoint)->af;
 		struct xfrm_userpolicy_info policy_in = {
 			.action = XFRM_POLICY_ALLOW,
-			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.sel.family = af,
 			.dir = XFRM_POLICY_IN,
 		};
 		struct xfrm_userpolicy_info policy_out = {
 			.action = XFRM_POLICY_ALLOW,
-			.sel.family = v6 ? AF_INET6 :AF_INET,
+			.sel.family = af,
 			.dir = XFRM_POLICY_OUT,
 		};
 		dbg("TCP: socket %d enabling \"espintcp\"", fd);
@@ -739,6 +739,7 @@ stf_status create_tcp_interface(struct state *st)
 			close(fd);
 			return STF_FATAL;
 		}
+#endif
 	}
 
 	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface initiator");
