@@ -57,7 +57,8 @@ west #
 west #
  # give OE a chance to load
 west #
- sleep 3
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
+000 Total IPsec connections: loaded 6, active 0
 west #
  ipsec status
 000 using kernel interface: xfrm
@@ -254,18 +255,19 @@ west #
 000 Bare Shunt list:
 000  
 west #
- # trigger OE
+ # trigger OE; check flow when up
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
 west #
- # show non-zero IPsec traffic counters
+ ../../guestbin/wait-for.sh --match private-or-clear -- ipsec trafficstatus
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  echo done
 done
