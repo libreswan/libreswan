@@ -107,7 +107,7 @@ static void check_str_subnet(struct logger *logger)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'", pri_family(t->family), t->in,
-		      t->str == NULL ? t->str : "<error>");
+		      t->str == NULL ? "<error>" : t->str);
 
 		ip_subnet tmp, *subnet = &tmp;
 		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
