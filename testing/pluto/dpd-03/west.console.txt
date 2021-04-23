@@ -11,15 +11,12 @@ west #
  echo "initdone"
 initdone
 west #
- : we can transmit in the clear
+ # we can transmit in the clear
 west #
- ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
- : bring up the tunnel
+ # bring up the tunnel
 west #
  ipsec auto --up west-east
 002 "west-east" #1: initiating IKEv1 Main Mode connection
@@ -33,51 +30,40 @@ west #
 1v1 "west-east" #2: sent Quick Mode request
 004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active}
 west #
- : use the tunnel
+ # use the tunnel; show the tunnel
 west #
- ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- : show the tunnel
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- : Let R_U_THERE packets flow
-west #
- sleep 10
+ # Let R_U_THERE packets flow
 west #
  sleep 10
 west #
- : Create the block
+ sleep 10
+west #
+ # Create the block; wait for DPD to trigger
 west #
  iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- sleep 10
+ ../../guestbin/wait-for.sh --no-match '#2:' -- ipsec whack --trafficstatus
 west #
- sleep 10
-west #
- : DPD should have triggered now
-west #
- ipsec whack --trafficstatus
-west #
- # remove the block
+ # remove the block; wait for tunnel
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- ping -n -q -c 8 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 6 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match 'west-east' -- ipsec whack --trafficstatus
+006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # Tunnel should be back up now
 west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
  ipsec whack --trafficstatus
-006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, id='@east'
+006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  echo done
 done
@@ -95,10 +81,6 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority 2080702 ptype main

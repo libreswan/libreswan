@@ -19,11 +19,8 @@ initdone
 west #
  # we can transmit in the clear
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
  # bring up the tunnel
 west #
@@ -51,65 +48,77 @@ west #
 west #
  # use the tunnel
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
 west #
  # show the tunnel
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 006 #3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 006 #4: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- : Let R_U_THERE packets flow
+ # Let R_U_THERE packets flow
 west #
  sleep 10
 west #
  sleep 10
 west #
- : Create the block
+ # Create the block; wait for DPD to trigger
 west #
  iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- sleep 10
-west #
- sleep 10
-west #
- : DPD should have triggered now
-west #
- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --no-match ':' -- ipsec whack --trafficstatus
 west #
  # remove the block
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 2 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # wait for west-east
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.1.254 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match '"west-east"' -- ipsec whack --trafficstatus
+006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- ping -n -q -c 4 -I 192.1.2.45 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.1.2.45 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ # trigger westnet-east
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.1.2.23
+down
+west #
+ ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
+006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ # trigger west-eastnet
+west #
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.0.2.254
+down
+west #
+ ../../guestbin/wait-for.sh --match '"west-eastnet"' -- ipsec whack --trafficstatus
+006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+up
 west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
-006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
+006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
  echo done
 done
@@ -155,10 +164,6 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority 2080702 ptype main
