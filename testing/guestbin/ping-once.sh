@@ -6,7 +6,7 @@ if test $# -lt 2; then
     cat <<EOF
 Usage:
 
-    $0 --up|--down|--forget [-I <interface>] <destination>" 1>&2
+    $0 --up|--down|--forget|--error [-I <interface>] <destination>" 1>&2
 
 Send one ping packet.  Options:
 
@@ -14,7 +14,7 @@ Send one ping packet.  Options:
   --down    expect the remote end to be down (wait a short while)
   --forget  do not wait around (ok 1 seconds)
             XXX: is this useful or should --down|--up be used
-
+  --error   expect a strange error code
 EOF
     exit 1
 fi
@@ -43,6 +43,9 @@ case "${op}" in
 	# XXX: 0 doesn't seem to do anything?
 	wait=1
 	;;
+    --error)
+	wait=1
+	;;
     *)
 	echo "Unrecognized option: ${op}" 1>&2
 	exit 1
@@ -63,19 +66,23 @@ echo ==== tuc ====
 # 'cut', ping's 'cut' output is only displayed after the ping has
 # finished.
 
-output=$(${ping})
+output=$(${ping} 2>&1)
 status=$?
 case "${status}" in
-    0) status=up ;;
-    1) status=down ;;
+    0) result=up ;;
+    1) result=down ;;
+    2) result=error ;;
+    *) result=${status} ;;
 esac
+
 echo ==== cut ====
 echo "${output}"
 echo ==== tuc ====
 
-case "${status}${op}" in
-    up--up | down--down ) echo ${status} ; exit 0 ;;
-    down--up | up--down ) echo ${status} UNEXPECTED ; exit 1 ;;
-    up--forget | down--forget ) echo fired and forgotten ; exit 0 ;;
-    * ) echo $0: unexpected status ${status} 1>&2 ; exit ${status} ;;
+case "${result}${op}" in
+    up--up | down--down )       echo ${result} ;                         exit 0 ;;
+    down--up | up--down )       echo ${result} UNEXPECTED ;              exit 1 ;;
+    up--forget | down--forget ) echo fired and forgotten ;               exit 0 ;;
+    error--error )              echo "${output}" | sed -e 's/ping: //' ; exit 0 ;;
+    * ) echo unexpected status ${status} ; echo ${output} ;              exit 1 ;;
 esac
