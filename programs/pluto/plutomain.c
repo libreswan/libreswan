@@ -159,7 +159,7 @@ static const char compile_time_interop_options[] = ""
 	" IKEv1"
 #endif
 #ifdef XFRM_SUPPORT
-	" XFRM(netkey)"
+	" XFRM"
 #endif
 #ifdef USE_XFRM_INTERFACE
 	" XFRMI"
