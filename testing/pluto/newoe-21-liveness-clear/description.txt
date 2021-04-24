@@ -1,4 +1,7 @@
-OE test with dpd enabled. east has clear.
+OE test with liveness enabled. east has clear.
 road kill the pluto and restart ipsec. 
 east will have two SA, an old and new IKE and ESP SA.
 Old IKE and ESP will timeout/dpd clear eventually.
+
+XXX: liveness was changed so it treated the same as any other
+retransmit; this test needs updating.

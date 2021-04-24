@@ -24,18 +24,12 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # trigger OE; wait for it to establish with no bare shunts
 road #
- # wait on OE retransmits and rekeying
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
 road #
- sleep 5
-road #
- # should show established tunnel and no bare shunts
-road #
- ipsec whack --trafficstatus
+ ../../guestbin/wait-for.sh --match private-or-clear -- ipsec trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
@@ -115,14 +109,14 @@ road #
  ipsec stop
 Redirecting to: [initsystem]
 road #
- sleep 40
+ sleep 40 # waiting for what?
 road #
  ipsec start
 Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- sleep 10
+ sleep 10 # waiting for what?
 road #
  ipsec whack --trafficstatus
 road #
@@ -134,11 +128,11 @@ road #
 road #
  # ping should succeed through tunnel
 road #
- ping -n -q -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  killall ip > /dev/null 2> /dev/null
 road #
