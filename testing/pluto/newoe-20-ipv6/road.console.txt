@@ -30,10 +30,13 @@ road #
  echo "initdone"
 initdone
 road #
+ ../../guestbin/ping-once.sh --forget -6 2001:db8:1:2::23
+fired and forgotten
+road #
  ping6 -n -q -c 8 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
-8 packets transmitted, 7 received, 12% packet loss, time XXXX
+8 packets transmitted, 8 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
