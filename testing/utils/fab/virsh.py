@@ -117,9 +117,13 @@ class Domain:
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
         # will get an EOF.
-        if console.expect(["Connected to domain %s\r\nEscape character is \\^]" % self.name,
-                           pexpect.EOF],
-                          timeout=timeout):
+        if console.expect([pexpect.EOF,
+                           # earlier
+                           "Connected to domain %s\r\nEscape character is \\^]" % self.name,
+                           # libvirt >= 7.0
+                           "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.name
+                           ],
+                          timeout=timeout) == 0:
             self.logger.debug("got EOF from console")
             console.close()
             console = None
