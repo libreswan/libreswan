@@ -176,12 +176,12 @@ static stf_status cert_decode_completed(struct state *st,
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
-               /*
-                * The 'end-cert' was bad so all the certs have been
-                * tossed.  However, since this is the responder
-                * stumble on.  There might be a connection that still
-                * authenticates (after a switch?).
-                */
+	       /*
+		* The 'end-cert' was bad so all the certs have been
+		* tossed.  However, since this is the responder
+		* stumble on.  There might be a connection that still
+		* authenticates (after a switch?).
+		*/
 	}
 
 	return task->cb(st, md);

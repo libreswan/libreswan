@@ -1749,7 +1749,7 @@ static struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *i
 	/* skip PayloadHeader; hash: IDType | RESERVED */
 	crypt_prf_update_bytes(id_ctx, "IDType", &ike->sa.st_v2_id_payload.header.isai_type,
 				sizeof(ike->sa.st_v2_id_payload.header.isai_type));
-        /* note that res1+res2 is 3 zero bytes */
+	/* note that res1+res2 is 3 zero bytes */
 	crypt_prf_update_byte(id_ctx, "RESERVED 1", ike->sa.st_v2_id_payload.header.isai_res1);
 	crypt_prf_update_byte(id_ctx, "RESERVED 2", ike->sa.st_v2_id_payload.header.isai_res2);
 	crypt_prf_update_byte(id_ctx, "RESERVED 3", ike->sa.st_v2_id_payload.header.isai_res3);
@@ -4533,7 +4533,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 				v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 					ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
-               }
+		}
 
 		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
 		break;

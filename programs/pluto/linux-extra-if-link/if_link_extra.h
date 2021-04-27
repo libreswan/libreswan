@@ -4,8 +4,8 @@
 
 /* XFRM section */
 enum {
-        IFLA_XFRM_UNSPEC,
-        IFLA_XFRM_LINK,
-        IFLA_XFRM_IF_ID,
-        __IFLA_XFRM_MAX
+	IFLA_XFRM_UNSPEC,
+	IFLA_XFRM_LINK,
+	IFLA_XFRM_IF_ID,
+	__IFLA_XFRM_MAX
 };

@@ -214,7 +214,7 @@ void db_trans_add(struct db_context *ctx, uint8_t transid)
 		ctx->trans_cur++;
 	/*
 	 *	Strategy: if more space is needed, expand by
-	 *	          <current_size>/2 + 1
+	 *		<current_size>/2 + 1
 	 *
 	 *	This happens to produce a "reasonable" sequence
 	 *	after few allocations, eg.:
@@ -234,7 +234,7 @@ static void db_attr_add(struct db_context *ctx, const struct db_attr *a)
 {
 	/*
 	 *	Strategy: if more space is needed, expand by
-	 *	          <current_size>/2 + 1
+	 *		<current_size>/2 + 1
 	 */
 	if ((ctx->attrs_cur - ctx->attrs0) >= ctx->max_attrs) {
 		db_attrs_expand(ctx, ctx->max_attrs / 2 + 1);

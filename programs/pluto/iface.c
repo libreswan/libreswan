@@ -346,7 +346,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 */
 	static int num = 64;
 
-        /* Get a UDP socket */
+	/* Get a UDP socket */
 
 	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp_sock == -1) {

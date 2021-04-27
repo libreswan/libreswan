@@ -49,7 +49,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-        return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
+	return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
 			    /*key,flags*/ 0, 0,
 			    HERE, logger);

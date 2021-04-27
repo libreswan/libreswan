@@ -87,7 +87,7 @@ static void bsdkame_init_pfkey(struct logger *logger)
 }
 
 static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces,
-                                       struct logger *logger)
+				       struct logger *logger)
 {
 	struct raw_iface *ifp;
 
@@ -443,7 +443,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 				 enum routing_t rt_kind,
 				 enum pluto_sadb_operations op,
 				 const char *opname,
-                                 struct logger *logger)
+				 struct logger *logger)
 {
 	ipsec_spi_t spi =
 		shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
@@ -527,7 +527,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 						    RT_ROUTED_PROSPECTIVE,
 						    ERO_REPLACE,
 						    "restoring eclipsed",
-                                                    logger);
+						    logger);
 		}
 	}
 
@@ -786,7 +786,7 @@ static bool bsdkame_sag_eroute(const struct state *st,
 }
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
-                           struct logger *logger)
+			   struct logger *logger)
 {
 	ip_sockaddr saddr = sockaddr_from_address(*sa->src.address);
 	ip_sockaddr daddr = sockaddr_from_address(*sa->dst.address);
@@ -821,7 +821,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	if ((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
 		llog(RC_LOG, logger,
 			    "Key material is too big for kernel interface: %d>%zu",
-                            (sa->enckeylen + sa->authkeylen),
+			    (sa->enckeylen + sa->authkeylen),
 			    sizeof(keymat));
 		return FALSE;
 	}
@@ -885,7 +885,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 
 	if (ret < 0) {
 		llog(RC_LOG, logger,
-                            "ret = %d from add_sa: %s seq=%d", ret,
+			    "ret = %d from add_sa: %s seq=%d", ret,
 			    ipsec_strerror(), pfkey_seq);
 		return FALSE;
 	}
@@ -894,7 +894,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 }
 
 static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED,
-                           struct logger *logger UNUSED)
+				   struct logger *logger UNUSED)
 {
 	return TRUE;
 }
@@ -959,7 +959,7 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 }
 
 static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED,
-                                   struct logger *logger UNUSED)
+				   struct logger *logger UNUSED)
 {
 	dbg("%s: nothing to do", __func__);
 	return false;

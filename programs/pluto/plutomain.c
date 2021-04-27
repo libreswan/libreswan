@@ -191,9 +191,9 @@ static const char compile_time_interop_options[] = ""
 	" (IPsec profile)"
 #endif
 #ifdef USE_NSS_KDF
-        " (NSS-PRF)"
+	" (NSS-PRF)"
 #else
-        " (native-PRF)"
+	" (native-PRF)"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
@@ -665,7 +665,7 @@ int main(int argc, char **argv)
 	 * malloc() call, so scan for them here.
 	 *
 	 * - leak-detective is immutable, it must come before the
-         *   first malloc()
+	 *   first malloc()
 	 *
 	 * - efence-protect seems to be less strict, but enabling it
 	 *   early must be a good thing (TM) right

@@ -776,7 +776,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	 * (causing a cert payload the be decoded multiple times)
 	 *
 	 * - it is called to decode cert payloads that aren't there
-         * (for instance the first aggressive request)
+	 * (for instance the first aggressive request)
 	 */
 	st->st_remote_certs.processed = true;
 

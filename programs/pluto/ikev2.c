@@ -3130,8 +3130,8 @@ void complete_v2_state_transition(struct state *st,
 	 *   belongs in ST
 	 *
 	 * - store the CHILD SA when created midway through a state
-         *   transition (see IKE_AUTH); but that should be either a
-         *   nested or separate transition
+	*   transition (see IKE_AUTH); but that should be either a
+	*   nested or separate transition
 	 *
 	 * - signal that the SA was deleted mid-transition by clearing
 	 *   MD.ST (so presumably it was previously set); but that

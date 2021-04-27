@@ -325,7 +325,7 @@ typedef enum {
 	STF_OK,                 /*    yes        no     message? tbd? */
 	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
 	STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA,
-                                /*   forced    maybe     maybe  'success' */
+				/*   forced    maybe     maybe  'success' */
 	STF_FATAL,		/*     no      always    never   fail */
 	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
 	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */

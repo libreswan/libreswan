@@ -43,8 +43,8 @@
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
 struct redirect_dests {
-        char *whole;
-        const char *next;	/* points into whole */
+	char *whole;
+	const char *next;	/* points into whole */
 };
 
 static struct redirect_dests global_dests = { NULL, NULL };

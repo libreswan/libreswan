@@ -184,12 +184,12 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 {
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
-        struct id peer_id;
+	struct id peer_id;
 	struct id *ppeer_id = NULL;
 
 	struct payload_digest *const pl_id_peer = md->chain[ISAKMP_NEXT_v2IDi];
 	if (pl_id_peer == NULL) {
-                dbg("IKEv2 no peer ID received");
+		dbg("IKEv2 no peer ID received");
 	} else {
 		enum ike_id_type hik = pl_id_peer->payload.v2id.isai_type; /* Peers Id Kind */
 		diag_t d = unpack_peer_id(hik, &peer_id, &pl_id_peer->pbs);

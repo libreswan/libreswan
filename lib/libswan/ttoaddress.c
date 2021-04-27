@@ -204,7 +204,7 @@ static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
 		 * (play with wget).
 		 *
 		 * The alternative is to do a very strict check.
-                 */
+		 */
 #if 0
 		unsigned base;
 		if (token.len == strlen("0xXX") && shunk_strcaseeat(&token, "0x")) {

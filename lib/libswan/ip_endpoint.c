@@ -268,19 +268,19 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 		return;
 	}
 
-        /*
-         * XXX: xfrm generates tcp acquires of the form:
-         *
-         *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
-         *
+	/*
+	 * XXX: xfrm generates tcp acquires of the form:
+	 *
+	 *   192.1.2.45:TCP/0 -> 192.1.2.23:TCP/80 (0x5000)
+	 *
 	 * Presumably source port 0 is because the connect(?) call
 	 * specified no source port.
 	 *
-         * Until there's an ip_traffic object to wrap this up, this
-         * passert can't require a port.
+	 * Until there's an ip_traffic object to wrap this up, this
+	 * passert can't require a port.
 	 *
 	 * XXX: is [::]:TCP/10 valid?
-         */
+	 */
 
 	const ip_protocol *protocol = endpoint_protocol(*e);
 	if (e->is_set == false ||
