@@ -1539,10 +1539,9 @@ int main(int argc, char **argv)
 		/* List options */
 
 		case LST_UTC:	/* --utc */
-			msg.whack_utc = TRUE;
+			msg.whack_utc = true;
 			continue;
 
-		case LST_PUBKEYS:	/* --listpubkeys */
 		case LST_CERTS:	/* --listcerts */
 		case LST_CACERTS:	/* --listcacerts */
 		case LST_CRLS:	/* --listcrls */
@@ -1552,10 +1551,14 @@ int main(int argc, char **argv)
 			ignore_errors = TRUE;
 			continue;
 
+		case LST_PUBKEYS:	/* --listpubkeys */
+			msg.whack_listpubkeys = true;
+			ignore_errors = true;
+			continue;
+
 		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			msg.whack_list |= LELEM(LST_PUBKEYS - LST_PUBKEYS);
-			msg.whack_check_pub_keys = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_checkpubkeys = true;
+			ignore_errors = true;
 			continue;
 
 		case LST_ALL:	/* --listall */
@@ -2620,7 +2623,8 @@ int main(int argc, char **argv)
 	      msg.whack_process_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
-	      msg.whack_rekey_ike || msg.whack_rekey_ipsec))
+	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
+	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
