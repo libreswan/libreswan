@@ -155,19 +155,6 @@ done
 restorecon -R /etc/sysconfig/
 
 
-title unbound -- for nic
-
-cp -av /testing/baseconfigs/all/etc/unbound /etc/
-cp -av /testing/baseconfigs/all/etc/systemd/system/unbound.service /etc/systemd/system/
-restorecon -R /etc/unbound
-
-
-title nsd -- for nic
-
-cp -av /testing/baseconfigs/all/etc/nsd /etc/
-restorecon -R /etc/nsd
-
-
 title fixup /etc/sysctl.conf
 
 cp -av /testing/baseconfigs/all/etc/sysctl.conf /etc/
