@@ -207,7 +207,8 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 		.len = sizeof(mechanism),
 	};
 	/* for when ENCRYPTER isn't NSS */
-	if (target == 0) target = CKM_EXTRACT_KEY_FROM_KEY;
+	if (target == 0)
+		target = CKM_EXTRACT_KEY_FROM_KEY;
 
 	return crypt_derive(skeyid_e, CKM_NSS_IKE1_APP_B_PRF_DERIVE,
 			    &params, "keymat_e", target, CKA_ENCRYPT,

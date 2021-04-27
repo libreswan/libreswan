@@ -129,7 +129,8 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 	pam_handle_t *pamh = NULL;
 	const char *what;
 
-	/* This do-while structure is designed to allow a logical cascade
+	/*
+	 * This do-while structure is designed to allow a logical cascade
 	 * without excessive indentation.  No actual looping happens.
 	 * Failure is handled by "break".
 	 */

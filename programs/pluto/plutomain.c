@@ -729,7 +729,8 @@ int main(int argc, char **argv)
 		 */
 		int longindex = -1;
 		int c = getopt_long(argc, argv, "", long_opts, &longindex);
-		if (c < 0) break;
+		if (c < 0)
+			break;
 
 		if (longindex >= 0) {
 			passert(c != '?' && c != ':'); /* no error */

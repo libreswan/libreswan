@@ -31,10 +31,12 @@
 		/*hack*/const typeof(L##_tests[0]) *t = &L##_tests[tl];	\
 		/*hack*/size_t ti = tl;					\
 		const ip_##L *l = L##_tests[tl].L;			\
-		if (l == NULL) continue;				\
+		if (l == NULL)						\
+			continue;					\
 		for (size_t tr = 0; tr < elemsof(R##_tests); tr++) {	\
 			const ip_##R *r = R##_tests[tr].R;		\
-			if (r == NULL) continue;			\
+			if (r == NULL)					\
+				continue;				\
 			bool expected = false;				\
 			for (size_t to = 0; to < elemsof(L##_op_##R); to++) { \
 				const typeof(L##_op_##R[0]) *op = &L##_op_##R[to]; \

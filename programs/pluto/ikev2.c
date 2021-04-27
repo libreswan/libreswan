@@ -3310,8 +3310,12 @@ void complete_v2_state_transition(struct state *st,
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+
 		/* kill all st pointers */
-		st = NULL; ike = NULL; if (md != NULL) md->st = NULL;
+		st = NULL;
+		ike = NULL;
+		if (md != NULL)
+			md->st = NULL;
 		break;
 
 	case STF_FAIL:
@@ -3334,8 +3338,12 @@ void complete_v2_state_transition(struct state *st,
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+
 		/* kill all st pointers */
-		st = NULL; ike = NULL; if (md != NULL) md->st = NULL;
+		st = NULL;
+		ike = NULL;
+		if (md != NULL)
+			md->st = NULL;
 		break;
 
 	default: /* STF_FAIL+notification */
