@@ -2093,7 +2093,7 @@ static stf_status xauth_client_resp(struct state *st,
 				default:
 				{
 					esb_buf b;
-					log_state(RC_LOG, st, 
+					log_state(RC_LOG, st,
 						"trying to send XAUTH reply, sending %s instead.",
 						  enum_show(&modecfg_attr_names, attr_type, &b));
 					break;
@@ -2165,7 +2165,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		log_state(RC_LOG, st, 
+		log_state(RC_LOG, st,
 			"Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
 			enum_name(&attr_msg_type_names,
 				  ma->isama_type));
@@ -2232,7 +2232,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				log_state(RC_LOG, st, 
+				log_state(RC_LOG, st,
 					"XAUTH: Unsupported type: %d",
 					attr.isaat_lv);
 				return STF_IGNORE;
@@ -2313,13 +2313,13 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			XAUTHLELEM(XAUTH_USER_PASSWORD)))
 		{
 			if (st->st_connection->spd.this.xauth_client) {
-				log_state(RC_LOG, st, 
+				log_state(RC_LOG, st,
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		} else {
 			if (!st->st_connection->spd.this.xauth_client) {
-				log_state(RC_LOG, st, 
+				log_state(RC_LOG, st,
 					"XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;
 			}
@@ -2420,7 +2420,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		log_state(RC_LOG, st, 
+		log_state(RC_LOG, st,
 			"Expecting MODE_CFG_SET, got %x instead.",
 			ma->isama_type);
 		return STF_IGNORE;
@@ -2459,7 +2459,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			default:
 			{
 				esb_buf b;
-				log_state(RC_LOG, st, 
+				log_state(RC_LOG, st,
 					"while waiting for XAUTH_STATUS, got %s %s instead.",
 					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
 					enum_show(&modecfg_attr_names,
@@ -2474,7 +2474,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	/* first check if we might be done! */
 	if (!got_status || status == XAUTH_STATUS_FAIL) {
 		/* oops, something seriously wrong */
-		log_state(RC_LOG, st, 
+		log_state(RC_LOG, st,
 			"did not get status attribute in xauth_inI1, looking for new challenge.");
 		change_state(st, STATE_XAUTH_I0);
 		return xauth_inI0(st, md);

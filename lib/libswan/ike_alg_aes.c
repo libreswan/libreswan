@@ -224,7 +224,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
  * https://tools.ietf.org/html/rfc4309#section-7.1
  */
 
-const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 = 
+const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.fqn = "AES_CCM_8",

@@ -38,7 +38,7 @@ static enum lsw_fips_mode lsw_fips_system(void)
 }
 
 /*
- * Legacy FIPS product test. This is only used for RHEL6 to RHEL8 
+ * Legacy FIPS product test. This is only used for RHEL6 to RHEL8
  *
  * Return TRUE if we are a fips product.
  * This is irrespective of whether we are running in FIPS mode

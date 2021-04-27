@@ -819,7 +819,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	}
 
 	if ((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
-		llog(RC_LOG, logger, 
+		llog(RC_LOG, logger,
 			    "Key material is too big for kernel interface: %d>%zu",
                             (sa->enckeylen + sa->authkeylen),
 			    sizeof(keymat));
