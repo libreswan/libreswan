@@ -56,24 +56,13 @@ export IPSEC_VERSION
 
 # function for the funky user/kernel version stuff
 fixversion() {
-    if [ -f /proc/net/ipsec_version ]; then
-	stack=" (klips)"
-	kv="$(awk '{print $NF}' /proc/net/ipsec_version)"
+    stack=" (none)"
+    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
+	stack=" (XFRM)"
     else
-	if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
-	    stack=" (XFRM)"
-	    kv="${version}"
-	else
-	    if [ -f /mach_kernel ]; then
-		stack=" (OSX)"
-		kv="$(uname -r)"
-	    else
-		kv="(no kernel code presently loaded)"
-	    fi
+	if [ -f /mach_kernel ]; then
+	    stack=" (OSX)"
 	fi
-    fi
-    if [ "${kv}" != "${version}" ]; then
-	version="U${version}/K${kv}"
     fi
     version="${version}${stack} on $(uname -r)"
 }

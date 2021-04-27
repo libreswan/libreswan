@@ -2,11 +2,8 @@
 west #
  # confirm that the network is alive
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-until-alive -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+destination -6 -I 2001:db8:1:2::45 2001:db8:1:2::23 is alive
 west #
  # ensure that clear text does not get through
 west #
@@ -16,10 +13,8 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+down
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -31,11 +26,17 @@ initdone
 west #
  # one ping will get lost in the ondemand as only TCP is cached
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --forget -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match v6-transport -- ipsec whack --trafficstatus
+006 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ ../../guestbin/ping-once.sh --up -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+up
+west #
+ ipsec whack --trafficstatus
+006 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, id='@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

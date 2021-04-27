@@ -79,9 +79,9 @@ static const struct list empty_list = {
 			passert(WHAT->LIST.first < pool->nr_leases);	\
 			passert(WHAT->LIST.last != SENTINEL);		\
 			passert(WHAT->LIST.last < pool->nr_leases);	\
-                }							\
-	        empty_;							\
-        })
+		}							\
+		empty_;							\
+	})
 
 #define HEAD(WHAT, LIST, ENTRY)						\
 	({								\
@@ -634,7 +634,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	}
 
 	/*
-         * convert index i in range to an IP_address
+	 * convert index i in range to an IP_address
 	 *
 	 * XXX: does this update that.client addr as a side effect?
 	 *

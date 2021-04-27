@@ -26,10 +26,10 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -q -c 1 -i 0.05  -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # trigger OE
+road #
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
 road #
  # wait on OE retransmits and rekeying
 road #

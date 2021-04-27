@@ -22,23 +22,17 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -q -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time XXXX
-road #
  # wait on OE to install %pass due to east not running ipsec
-road #
- sleep 10
 road #
  # should show no tunnels and a bare shunt
 road #
- ipsec trafficstatus
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
 road #
- ipsec shuntstatus
-000 Bare Shunt list:
-000  
+ ../../guestbin/wait-for.sh --timeout 60 --match oe-failing -- ipsec shuntstatus
 000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failing
+road #
+ ipsec trafficstatus
 road #
  # verify xfrm policy got added for %pass
 road #
@@ -127,6 +121,10 @@ src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3129279 ptype main
@@ -188,9 +186,7 @@ west-ec                                                      P,,
 road #
  # letting 60s shunt expire
 road #
- sleep 30
-road #
- sleep 30
+ ../../guestbin/wait-for.sh --timeout 60 --no-match ' spi 0x00000000 ' -- ip xfrm state
 road #
  # we should have 1 or 2 tunnels, no shunts
 road #
@@ -263,11 +259,17 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 road #
  # nic blocks cleartext, so confirm tunnel is working
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  ipsec trafficstatus
 006 #3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'

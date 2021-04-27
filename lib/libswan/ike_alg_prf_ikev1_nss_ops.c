@@ -49,7 +49,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 		.len = sizeof(ike_prf_params),
 	};
 
-        return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
+	return crypt_derive(dh_secret, CKM_NSS_IKE_PRF_DERIVE, &params,
 			    "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
 			    /*key,flags*/ 0, 0,
 			    HERE, logger);
@@ -207,7 +207,8 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf,
 		.len = sizeof(mechanism),
 	};
 	/* for when ENCRYPTER isn't NSS */
-	if (target == 0) target = CKM_EXTRACT_KEY_FROM_KEY;
+	if (target == 0)
+		target = CKM_EXTRACT_KEY_FROM_KEY;
 
 	return crypt_derive(skeyid_e, CKM_NSS_IKE1_APP_B_PRF_DERIVE,
 			    &params, "keymat_e", target, CKA_ENCRYPT,

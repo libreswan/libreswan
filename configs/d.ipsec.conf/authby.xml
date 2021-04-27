@@ -3,7 +3,7 @@
   <listitem>
 <para>how the two security gateways should authenticate each other;
 the default value is <emphasis remap='B'>rsasig,ecdsa</emphasis> which allows
-ECDSA with SHA-2 and RSA with SHA-1 or SHA2. To limit this further, there are
+ECDSA with SHA-2 and RSA with SHA2 or SHA1. To limit this further, there are
 the options of
 <emphasis remap='B'>ecdsa</emphasis> for ECDSA digital signatures using SHA-2,
 <emphasis remap='B'>rsa-sha2</emphasis> for RSASSA-PSS digital signatures based
@@ -28,7 +28,7 @@ should be used instead of authby.
 <para>
 For IKEv1, SHA2 based signatures are not defined and ECDSA is not implemented, so the
 default authby= value is rsa-sha1. Using authby=rsasig results in only rsa-sha1 as well.
-For IKEv2, using authby=rsasig means using rsa-sha2, rsa-sha2_384,rsa-sha2_512, rsa-sha1,
+For IKEv2, using authby=rsasig means using rsa-sha2_512, rsa-sha2_384, rsa-sha2_256 and rsa-sha1,
 where rsa-sha1 will used only if RFC 7427 is not supported by the peer.
 </para>
 <para>

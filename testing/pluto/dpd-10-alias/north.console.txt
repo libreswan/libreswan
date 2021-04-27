@@ -13,6 +13,8 @@ north #
  echo "initdone"
 initdone
 north #
+ # brings up both north-dpd/0x[12]
+north #
  ipsec auto --up north-dpd
 000 initiating all conns with alias='north-dpd'
 002 "north-dpd/0x2" #1: initiating IKEv1 Main Mode connection
@@ -35,20 +37,15 @@ north #
 north #
  ipsec auto --status | grep northnet-eastnets
 north #
- ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+up
 north #
- ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
-PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.22.254 ping statistics ---
-2 packets transmitted, 0 received, +2 errors, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
+up
 north #
  ipsec whack --trafficstatus
-006 #2: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #3: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #3: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  #
 north #
@@ -102,22 +99,17 @@ north #
 north #
  ip route del unreachable 192.1.2.23
 north #
- ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+up
 north #
- ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
-PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.22.254 ping statistics ---
-2 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+up
 north #
  # state number shuld be higher than the previous one
 north #
  ipsec whack --trafficstatus
 006 #6: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #7: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #7: "north-dpd/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

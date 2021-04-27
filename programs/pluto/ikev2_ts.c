@@ -319,7 +319,7 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 			ts_i_impaired =  impair_ts_to_supernet(ts_i);
 			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
 			range_buf tsi_buf;
-                        range_buf tsr_buf;
+			range_buf tsr_buf;
 			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
 					str_range(&ts_i->net, &tsi_buf),
 					str_range(&ts_r->net, &tsr_buf));
@@ -360,7 +360,7 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 			ts_i_impaired =  impair_ts_to_supernet(ts_i);
 			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
 			range_buf tsi_buf;
-                        range_buf tsr_buf;
+			range_buf tsr_buf;
 			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
 					str_range(&ts_i->net, &tsi_buf),
 					str_range(&ts_r->net, &tsr_buf));

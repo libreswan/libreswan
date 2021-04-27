@@ -51,8 +51,7 @@ def _login(domain, console, login, password,
         if tries > 3:
             domain.logger.error("giving up after %s and %d attempts at logging in",
                                 lapsed_time, tries)
-            raise pexpect.TIMEOUT()
-        tries = tries + 1
+            raise pexpect.TIMEOUT("too many login attempts with domain %s" % domain)
 
         # Hopefully "Last login" is matched before "login: "
         match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, "Last login", console.prompt],
@@ -62,6 +61,7 @@ def _login(domain, console, login, password,
             domain.logger.info("got login prompt after %s; sending '%s' and waiting %s seconds for password prompt",
                                lapsed_time, login, timeout)
             console.sendline(login)
+            tries = tries + 1
         elif match == 1:
             timeout = SHELL_TIMEOUT
             domain.logger.info("got password prompt after %s; sending '%s' and waiting %s seconds for shell prompt",

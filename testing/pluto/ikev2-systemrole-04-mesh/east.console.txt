@@ -59,7 +59,8 @@ east #
 east #
  # give OE a chance to load
 east #
- sleep 3
+ ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
+000 Total IPsec connections: loaded 6, active 0
 east #
  ipsec status
 000 using kernel interface: xfrm

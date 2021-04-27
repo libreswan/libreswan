@@ -158,10 +158,10 @@ static sparse_names rtm_type_names = {
 #undef NE
 
 #define RTA_TAIL(rta) ((struct rtattr *) (((void *) (rta)) + \
-                                    RTA_ALIGN((rta)->rta_len)))
+				    RTA_ALIGN((rta)->rta_len)))
 
 #define NLMSG_TAIL(nmsg) \
-        ((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
+	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
 /* Compress Algs */
 static sparse_names calg_list = {

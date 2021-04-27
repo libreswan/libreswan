@@ -851,18 +851,98 @@ void free_remembered_public_keys(void)
 /*
  *  list all public keys in the chained list
  */
-void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
-{
-	struct pubkey_list *p = pluto_pubkeys;
 
-	if (!check_pub_keys) {
-		/*
-		 * XXX: when there are no keys, the tests expect the
-		 * title with blank lines either side. Using the
-		 * current show_separator() would suppress that.  But
-		 * should this change, or should show_separator()
-		 * change to always wrap output in blank lines?
-		 */
+/*
+ * checks if the expiration date has been reached and warns during the
+ * warning_interval of the imminent expiry.
+ *
+ * warning interval is in days.
+ *
+ * strict == TRUE: expiry yields an error message
+ * strict == FALSE: expiry yields a warning message
+ */
+
+typedef struct {
+	/* note: 20 is a guess at the maximum digits in an intmax_t */
+	char buf[sizeof("warning (expires in %jd minutes)") + 20];
+} expiry_buf;
+
+static const char *check_expiry(realtime_t expiration_date, time_t warning_interval, expiry_buf *eb)
+{
+	if (is_realtime_epoch(expiration_date))
+		return "ok (expires never)";
+
+	time_t time_left = deltasecs(realtimediff(expiration_date, realnow()));
+
+	if (time_left < 0)
+		return "fatal (expired)";
+
+	if (time_left > warning_interval)
+		return NULL;
+
+	const char *unit;
+	if (time_left > 2 * secs_per_day) {
+		time_left /= secs_per_day;
+		unit = "day";
+	} else if (time_left > 2 * secs_per_hour) {
+		time_left /= secs_per_hour;
+		unit = "hour";
+	} else if (time_left > 2 * secs_per_minute) {
+		time_left /= secs_per_minute;
+		unit = "minute";
+	} else {
+		unit = "second";
+	}
+
+	snprintf(eb->buf, sizeof(eb->buf), "warning (expires in %jd %s%s)",
+		 (intmax_t) time_left, unit,
+		 (time_left == 1) ? "" : "s");
+	return eb->buf;
+}
+
+static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char *expiry_message)
+{
+	bool load_needed;
+	err_t load_err = preload_private_key_by_ckaid(&key->ckaid,
+						      &load_needed,
+						      show_logger(s));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam_realtime(buf, key->installed_time, utc);
+		jam(buf, ",");
+		jam(buf, " %4zd", 8 * key->size);
+		jam(buf, " %s", key->type->name);
+		jam(buf, " Key %s", str_keyid(key->keyid));
+		jam(buf, " (%s private key),",
+		    (load_err != NULL ? "no" :
+		     load_needed ? "loaded" : "has"));
+		jam(buf, " until ");
+		jam_realtime(buf, key->until_time, utc);
+		jam(buf, " %s", expiry_message == NULL ? "ok" : expiry_message);
+	}
+
+	id_buf idb;
+	esb_buf b;
+	show_comment(s, "       %s '%s'",
+		     enum_show(&ike_id_type_names, key->id.kind, &b),
+		     str_id(&key->id, &idb));
+
+	if (key->issuer.len > 0) {
+		dn_buf b;
+		show_comment(s, "       Issuer '%s'",
+			     str_dn(key->issuer, &b));
+	}
+}
+
+void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
+{
+	/*
+	 * XXX: when there are no keys, the tests expect the title
+	 * with blank lines either side. Using the current
+	 * show_separator() would suppress that.  But should this
+	 * change, or should show_separator() change to always wrap
+	 * output in blank lines?
+	 */
+	if (keys_to_show == SHOW_ALL_KEYS) {
 #if 0
 		show_separator(s);
 #else
@@ -876,45 +956,20 @@ void list_public_keys(struct show *s, bool utc, bool check_pub_keys)
 #endif
 	}
 
-	while (p != NULL) {
-		struct pubkey *key = p->key;
-		const char *check_expiry_msg = check_expiry(key->until_time,
-							    PUBKEY_WARNING_INTERVAL,
-							    TRUE);
-		if (!check_pub_keys ||
-		    !startswith(check_expiry_msg, "ok")) {
-			bool load_needed;
-			err_t load_err = preload_private_key_by_ckaid(&key->ckaid,
-								      &load_needed,
-								      show_logger(s));
-			SHOW_JAMBUF(RC_COMMENT, s, buf) {
-				jam_realtime(buf, key->installed_time, utc);
-				jam(buf, ",");
-				jam(buf, " %4zd", 8 * key->size);
-				jam(buf, " %s", key->type->name);
-				jam(buf, " Key %s", str_keyid(key->keyid));
-				jam(buf, " (%s private key),",
-				    (load_err != NULL ? "no" :
-				     load_needed ? "loaded" : "has"));
-				jam(buf, " until ");
-				jam_realtime(buf, key->until_time, utc);
-				jam(buf, " %s", check_expiry_msg);
+	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
+		struct pubkey *pubkey = p->key;
+		expiry_buf eb;
+		const char *expiry_msg = check_expiry(pubkey->until_time, PUBKEY_WARNING_INTERVAL, &eb);
+		switch (keys_to_show) {
+		case SHOW_ALL_KEYS:
+			show_pubkey(s, pubkey, utc, expiry_msg);
+			break;
+		case SHOW_EXPIRED_KEYS:
+			if (expiry_msg != NULL) {
+				show_pubkey(s, pubkey, utc, expiry_msg);
 			}
-
-			/* XXX could be ikev2_idtype_names */
-			id_buf idb;
-			esb_buf b;
-			show_comment(s, "       %s '%s'",
-				     enum_show(&ike_id_type_names, key->id.kind, &b),
-				     str_id(&key->id, &idb));
-
-			if (key->issuer.len > 0) {
-				dn_buf b;
-				show_comment(s, "       Issuer '%s'",
-					     str_dn(key->issuer, &b));
-			}
+			break;
 		}
-		p = p->next;
 	}
 }
 

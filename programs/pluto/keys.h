@@ -48,8 +48,10 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger);
 
 extern bool has_private_key(cert_t cert);
-extern void list_public_keys(struct show *s, bool utc, bool check_pub_keys);
 extern void list_psks(struct show *s);
+
+enum keys_to_show { SHOW_ALL_KEYS = 1, SHOW_EXPIRED_KEYS, };
+extern void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show);
 
 extern const chunk_t *get_connection_psk(const struct connection *c);
 extern chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id);

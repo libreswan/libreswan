@@ -705,12 +705,12 @@ enum_names ipcomp_transformid_names = {
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
  */
 static const char *const ikev2_hash_algorithm_name[] = {
-        "IKEv2_HASH_ALGORITHM_RESERVED",
-        "IKEv2_HASH_ALGORITHM_SHA1",
-        "IKEv2_HASH_ALGORITHM_SHA2_256",
-        "IKEv2_HASH_ALGORITHM_SHA2_384",
-        "IKEv2_HASH_ALGORITHM_SHA2_512",
-        "IKEv2_HASH_ALGORITHM_IDENTITY"
+	"IKEv2_HASH_ALGORITHM_RESERVED",
+	"IKEv2_HASH_ALGORITHM_SHA1",
+	"IKEv2_HASH_ALGORITHM_SHA2_256",
+	"IKEv2_HASH_ALGORITHM_SHA2_384",
+	"IKEv2_HASH_ALGORITHM_SHA2_512",
+	"IKEv2_HASH_ALGORITHM_IDENTITY"
 	/* 6-1023 Unassigned */
 };
 

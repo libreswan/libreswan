@@ -673,10 +673,16 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg("whack: ... reread & REREAD_SECRETS");
 	}
 
-	if (m->whack_list & LIST_PUBKEYS) {
-		dbg("whack: list & LIST_PUBKEYS ...");
-		list_public_keys(s, m->whack_utc, m->whack_check_pub_keys);
+	if (m->whack_listpubkeys) {
+		dbg("whack: listpubkeys ...");
+		show_pubkeys(s, m->whack_utc, SHOW_ALL_KEYS);
 		dbg("whack: ... list & LIST_PUBKEYS");
+	}
+
+	if (m->whack_checkpubkeys) {
+		dbg("whack: checkpubkeys ...");
+		show_pubkeys(s, m->whack_utc, SHOW_EXPIRED_KEYS);
+		dbg("whack: ... check_pubkeys");
 	}
 
 	if (m->whack_purgeocsp) {

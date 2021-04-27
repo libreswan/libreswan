@@ -159,7 +159,7 @@ static const char compile_time_interop_options[] = ""
 	" IKEv1"
 #endif
 #ifdef XFRM_SUPPORT
-	" XFRM(netkey)"
+	" XFRM"
 #endif
 #ifdef USE_XFRM_INTERFACE
 	" XFRMI"
@@ -191,9 +191,9 @@ static const char compile_time_interop_options[] = ""
 	" (IPsec profile)"
 #endif
 #ifdef USE_NSS_KDF
-        " (NSS-PRF)"
+	" (NSS-PRF)"
 #else
-        " (native-PRF)"
+	" (native-PRF)"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
@@ -665,7 +665,7 @@ int main(int argc, char **argv)
 	 * malloc() call, so scan for them here.
 	 *
 	 * - leak-detective is immutable, it must come before the
-         *   first malloc()
+	 *   first malloc()
 	 *
 	 * - efence-protect seems to be less strict, but enabling it
 	 *   early must be a good thing (TM) right
@@ -729,7 +729,8 @@ int main(int argc, char **argv)
 		 */
 		int longindex = -1;
 		int c = getopt_long(argc, argv, "", long_opts, &longindex);
-		if (c < 0) break;
+		if (c < 0)
+			break;
 
 		if (longindex >= 0) {
 			passert(c != '?' && c != ':'); /* no error */

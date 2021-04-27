@@ -302,17 +302,23 @@ $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)entropy-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR
 
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
 
+#
+# Use $(KVM_BOOT_FILE) to trigger a check that the qemudir is still ok.
+#
+# (assumes that the machine is rebooted after a qemu update)
+#
+
 $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)qemudir-ok: $(KVM_BOOT_FILE) | $(KVM_LOCALDIR)
-	echo $(KVM_BOOT_FILE)
 	@if ! test -w $(KVM_QEMUDIR) ; then				\
 		echo ;							\
-		echo  The directory:					\
+		echo "  The directory:" ;				\
 		echo ;							\
-		echo      $(KVM_QEMUDIR) ;				\
+		echo "     $(shell ls -ld $(KVM_QEMUDIR))" ;		\
 		echo ;							\
-		echo  is not writeable. ;				\
-		echo  This will break virsh which is ;			\
-		echo  used to manipulate the domains. ;			\
+		echo "  is not writeable." ;				\
+		echo ;							\
+		echo "  This will break virsh which is"	;		\
+		echo "  used to manipulate the domains." ;		\
 		echo ;							\
 		false ;							\
 	fi

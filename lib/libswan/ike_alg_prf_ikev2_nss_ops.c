@@ -55,7 +55,7 @@ static PK11SymKey *prfplus_key_data(const char *target_name,
 		.len = sizeof(ike_prf_plus_params),
 	};
 
-        return crypt_derive(key, CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
+	return crypt_derive(key, CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
 			    target_name, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 			    /*keysize*/required_keymat, /*flags*/0,
 			    HERE, logger);

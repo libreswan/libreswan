@@ -73,14 +73,14 @@ err_t sockaddr_to_address_port(const ip_sockaddr sa, ip_address *address, ip_por
  * Construct and return a sockaddr structure.
  */
 
-static ip_sockaddr sockaddr_from_address_port(const ip_address *address, ip_port port)
+ip_sockaddr sockaddr_from_address_port(const ip_address address, ip_port port)
 {
-	if (address_is_unset(address)) {
+	if (address_is_unset(&address)) {
 		return unset_sockaddr;
 	}
 
-	const struct ip_info *afi = address_type(address);
-	shunk_t src_addr = address_as_shunk(address);
+	const struct ip_info *afi = address_type(&address);
+	shunk_t src_addr = address_as_shunk(&address);
 	chunk_t dst_addr;
 	ip_sockaddr sa = unset_sockaddr;
 
@@ -114,7 +114,7 @@ static ip_sockaddr sockaddr_from_address_port(const ip_address *address, ip_port
 
 ip_sockaddr sockaddr_from_address(const ip_address address)
 {
-	return sockaddr_from_address_port(&address, unset_port);
+	return sockaddr_from_address_port(address, unset_port);
 }
 
 ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint)
@@ -123,7 +123,6 @@ ip_sockaddr sockaddr_from_endpoint(const ip_endpoint endpoint)
 		return unset_sockaddr;
 	}
 
-	ip_address address = endpoint_address(endpoint);
-	ip_port port = endpoint_port(endpoint);
-	return sockaddr_from_address_port(&address, port);
+	return sockaddr_from_address_port(endpoint_address(endpoint),
+					  endpoint_port(endpoint));
 }

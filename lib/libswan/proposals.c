@@ -282,7 +282,7 @@ struct algorithm *next_algorithm(const struct proposal *proposal,
 	}
 }
 
-void free_algorithms(struct proposal *proposal, 
+void free_algorithms(struct proposal *proposal,
 		     enum proposal_algorithm algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));

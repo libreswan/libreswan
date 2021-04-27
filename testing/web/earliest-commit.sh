@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -u
+
 if test $# -lt 1 ; then
     cat >>/dev/stderr <<EOF
 
@@ -52,5 +54,5 @@ fi
 # merge-base are needed.  If that turns out to be false then "fixing"
 # merge-base to take stdin would be better.
 
-git show --no-patch --format=%h \
+git show --no-patch --format=%H \
     $(git merge-base --octopus ${hashes})

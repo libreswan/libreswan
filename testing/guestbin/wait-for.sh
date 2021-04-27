@@ -74,7 +74,7 @@ count=0
 while true ; do
     if output=$("$@" | grep "${regex}"); then
 	if ${match} ; then
-	    echo "$output"
+	    echo "${output}"
 	    exit 0
 	fi
     elif ! ${match} ; then
@@ -83,6 +83,7 @@ while true ; do
     count=$(expr ${count} + 1)
     if test ${count} -ge ${timeout} ; then
 	echo timeout waiting ${timeout} seconds for "$@" to $(${match} && echo match || echo mismatch) "${regex}" 1>&2
+	echo "${output}"
 	exit 1
     fi
     sleep 1

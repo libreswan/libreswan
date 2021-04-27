@@ -1,24 +1,53 @@
 #!/bin/sh
 
+# not -e; systemctl has strange exit codes
+set -u
+
+# default to hidden output
+echo ==== cut ====
+
 LC_CTYPE=C
 export LC_CTYPE
 
-#once unbound work properly replace the next lines; XXX: huh?
-sed -i 's/5353/53/' /etc/nsd/nsd.conf /etc/nsd/server.d/nsd-server-libreswan.conf
+# install NSD config files into tmpfs mounted directory.  This way a
+# reboot clears everything out.
 
-echo starting dns
+for d in etc/nsd/conf.d etc/nsd/server.d ; do
+    echo mounting $d:
+    umount /$d || true
+    mount -t tmpfs tmpfs /$d
+    cp -av /testing/baseconfigs/all/$d/* /$d
+    restorecon -R /$d
+done
 
-systemctl start nsd
+# Fix NSD's port.
+#
+# Once unbound work properly replace the next lines.
+#
+# XXX: huh?
+#
+# The idea is to point NSD on port 53 at UNBOUND, or is that UNBOUND
+# on port 53 at NSD?
 
-echo ==== cut ====
+sed -i -e 's/5353/53/' /etc/nsd/server.d/nsd-server-libreswan.conf
 for f in /etc/nsd/server.d/nsd-server-libreswan.conf /etc/nsd/nsd.conf ; do
-    echo $f
+    echo checking $f:
     grep port: $f
     grep 53 $f
 done
-systemctl status -l nsd-keygen
-systemctl status -l nsd
+
+# cp -av /testing/baseconfigs/all/etc/unbound /etc/
+# cp -av /testing/baseconfigs/all/etc/systemd/system/unbound.service /etc/systemd/system/
+# restorecon -R /etc/unbound
+
 echo ==== tuc ====
+echo starting dns
+echo ==== cut ====
+
+# next lines are combination nsd-keygen.service and nsd.service
+/usr/sbin/nsd-control-setup -d /etc/nsd/
+# fork and run in the background
+/usr/sbin/nsd -c /etc/nsd/nsd.conf
 
 # only interested in errors
 $(dirname $0)/wait-for.sh --match 'notice: nsd started' -- systemctl status nsd > /dev/null
@@ -28,20 +57,18 @@ $(dirname $0)/wait-for.sh --match 'notice: nsd started' -- systemctl status nsd 
 
 domain=road.testing.libreswan.org
 
+echo ==== tuc ====
 echo digging for ${domain} IPSECKEY
+echo ==== cut ====
 
 dig @127.0.0.1 ${domain} IPSECKEY > /tmp/dns.log
 status=$?
-
-test ${status} -ne 0 || echo ==== cut ====
 cat /tmp/dns.log
-systemctl status -l nsd-keygen
-systemctl status -l nsd
-test ${status} -ne 0 || echo ==== tuc ====
 
 # These dig return code descriptions are lifted directly from the
 # manual page.
 
+echo ==== tuc ====
 case ${status} in
     0) echo Everything went well, including things like NXDOMAIN.
        echo Found $(grep "^${domain}" /tmp/dns.log | wc -l) records
@@ -52,10 +79,4 @@ case ${status} in
     10) echo Internal error. ;;
     *) echo Unknown return code: $? ;;
 esac
-
-# this prints the NSD server version
-echo ==== cut ====
-dig @192.1.2.254 chaos version.server txt
-echo ==== tuc ====
-
 exit ${status}

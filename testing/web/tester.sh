@@ -1,11 +1,13 @@
 #!/bin/sh
 
+set -u
+
 if test $# -lt 2 -o $# -gt 3; then
     cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <repodir> <summarydir> [ <hash> ]
+    $0 <repodir> <summarydir> [ <earliest_commit> ]
 
 Track <repodir>'s current branch and test each "interesting" commit.
 Publish results under <summarydir>.
@@ -32,23 +34,22 @@ kvm_setup=kvm-purge
 
 # Select the oldest commit to test.
 #
-# Will search [HEAD..oldest_commit] for something interesting and
+# Will search [earliest_commit..HEAD] for something interesting and
 # untested.
 #
 # When recovering from an error (and when just starting) set
-# oldest_commit to HEAD so that only a new commit, which hopefully
-# fixes, the barf will be tested (if there's no new commit things go
+# earliest_commit to HEAD so that only a new commit, which hopefully
+# fixes the barf will be tested (if there's no new commit things go
 # idle).
-
-oldest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
-
+#
 # If a commit was specified explicitly, start with that.
 
 if test $# -gt 0 ; then
-    # could be a tag; convert after updating repo
-    first_test_commit=$1; shift
+    # Could be a tag; gime-work.sh deals with that after the repo is
+    # updated.
+    earliest_commit=$1; shift
 else
-    first_test_commit=
+    earliest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
 fi
 
 json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
@@ -120,17 +121,11 @@ while true ; do
 
     # Select the next commit to test
     #
-    # Search [HEAD..oldest_commit] for something interesting and
+    # Search [earliest_commit..HEAD] for something interesting and
     # untested.
 
     ${status} "looking for work"
-    if test "${first_test_commit}" != "" ; then
-	# Use ^{} + rev-parse to convert the potentially signed tag
-	# into the hash that the tag is refering to.  Without ^{}
-	# rev-parse returns the hash of the tag.
-	commit=$(cd ${repodir} && git rev-parse ${first_test_commit}^{})
-	first_test_commit=
-    elif ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${oldest_commit}) ; then \
+    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
 	seconds=$(expr 10 \* 60)

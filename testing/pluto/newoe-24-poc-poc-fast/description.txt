@@ -13,7 +13,13 @@ to replace each other (unlike in the case of non-AUTH_NULL)
 two IPsec SA's establish
 
 
-Note: this test seems vulnerable to a race condition where one connection is already terminated?
+Note: this test seems vulnerable to a race condition where one
+connection is already terminated?
 
-Note2: Is this premise true? It seems negotiationshunt=passthrough might not
-work as expected with XFRM/NETKEY?  That is what this test now shows.
+Note2: Is this premise true? It seems negotiationshunt=passthrough
+might not work as expected with XFRM/NETKEY?  That is what this test
+now shows.
+
+XXX: Either this description, or the test, is wrong.  The test sends
+and expects one packet and a single SA; not a packet storm and
+multiple SAs.
