@@ -46,6 +46,16 @@ struct p_dns_req;
 
 typedef void dnsr_cb_fn(struct p_dns_req *);
 
+struct dns_pubkey {
+	/* ID? */
+	const struct pubkey_type *type;
+	struct dns_pubkey *next;
+	uint32_t ttl;
+	/* chunk_t like */
+	size_t len;
+	uint8_t ptr[];
+};
+
 struct p_dns_req {
 	stf_status stf_status;
 
@@ -82,12 +92,6 @@ struct p_dns_req {
 
 	int secure;	/* dnsec validiation returned by libunbound */
 	char *why_bogus;	/* returned by libunbound if the security is bogus */
-
-	/*
-	 * if TRUE, delete all existing keys, of same keyid, before adding
-	 * pluto can hold multiple keys with same keyid different rsakey
-	 */
-	bool delete_existing_keys;
 
 	dnsr_cb_fn *cb;	/* continue function for pluto, not the unbbound cb */
 
@@ -165,8 +169,7 @@ static char *next_rr_field(char **stringp)
 	}
 }
 
-static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
-				chunk_t *keyval)
+static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t ttl, struct dns_pubkey **dns_pubkeys)
 {
 	/* ??? would it not be easier to deal with the RDF form? */
 	ldns_buffer *ldns_pkey = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 + 1));
@@ -190,35 +193,80 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	const char *pubkey = next_rr_field(&rrcursor);	/* Public Key Block */
 	const char *trailer = next_rr_field(&rrcursor);	/* whatever is left over */
 
-	/* sanity check the fields (except for Precedence) */
+	/*
+	 * sanity check the fields (except for Precedence).
+	 *
+	 * Use the do() while(false) hack do deal with all the error
+	 * exits.
+	 */
 
-	err_t ugh = NULL;
+	err_t ugh;
 
-	if (pubkey == NULL) {
-		ugh = "too few fields";
-	} else if (trailer != NULL) {
-		ugh = "too many fields";
-	} else if (!streq(gwt + strspn(gwt, "0"), "")) {
-		ugh = "Gateway Type must be 0";
-	} else if (!streq(algt + strspn(algt, "0"), "2")) {
-		ugh = "Algorithm type must be 2 (RSA)";
-	} else if (!streq(gw, ".")) {
-		ugh = "Gateway must be `.'";
-	} else {
-		size_t len = strlen(pubkey);
-		/* allocate enough space; probably too much */
-		char *keyspace = alloc_things(char, len, "temp pubkey bin store");
-		size_t bin_len;
-		char err_buf[TTODATAV_BUF];
-		ugh = ttodatav(pubkey, len, 64, keyspace, len,
-				&bin_len, err_buf, sizeof(err_buf), 0);
-
-		if (ugh == NULL) {
-			/* make a copy, allocating the exact space required */
-			*keyval = clone_bytes_as_chunk(keyspace, bin_len, "ipseckey from dns");
+	do {
+		if (pubkey == NULL) {
+			ugh = "too few fields";
+			break;
 		}
-		pfreeany(keyspace);
-	}
+		if (trailer != NULL) {
+			ugh = "too many fields";
+			break;
+		}
+		if (!streq(gwt + strspn(gwt, "0"), "")) {
+			ugh = "Gateway Type must be 0";
+			break;
+		}
+		if (!streq(algt + strspn(algt, "0"), "2")) {
+			ugh = "Algorithm type must be 2 (RSA)";
+			break;
+		}
+		if (!streq(gw, ".")) {
+			ugh = "Gateway must be `.'";
+			break;
+		}
+
+		/* over-allocate space to hold the key */
+		size_t len = strlen(pubkey);
+		struct dns_pubkey *dns_pubkey = alloc_bytes(sizeof(struct dns_pubkey) + len,
+							    "temp pubkey bin store");
+		dns_pubkey->type = &pubkey_type_rsa;
+		dns_pubkey->ttl = ttl;
+
+		char err_buf[TTODATAV_BUF];
+		ugh = ttodatav(pubkey, len, 64, (char*)dns_pubkey->ptr, len, &dns_pubkey->len,
+			       err_buf, sizeof(err_buf), 0);
+		if (ugh != NULL) {
+			pfree(dns_pubkey);
+			break;
+		}
+
+		/*
+		 * Sort the keys before inserting; sort key is
+		 * arbitrary.
+		 *
+		 * This way test keys are added to pubkey DB in a
+		 * predictable order.
+		 *
+		 * The alternative would be to keep the pubkey DB
+		 * sorted.  What won't work is only sorting the keys
+		 * when being listed - it turns out that the pubkey DB
+		 * order is exposed when trying keys.
+		 */
+		while (*dns_pubkeys != NULL) {
+			/* XXX: hunk_cmp()!?! */
+			if (memcmp((*dns_pubkeys)->ptr, dns_pubkey->ptr,
+				   min((*dns_pubkeys)->len, dns_pubkey->len)) < 0) {
+				break;
+			}
+			if ((*dns_pubkeys)->len < dns_pubkey->len) {
+				break;
+			}
+			dns_pubkeys = &(*dns_pubkeys)->next;
+		}
+		dns_pubkey->next = *dns_pubkeys;
+		*dns_pubkeys = dns_pubkey;
+		ugh = NULL;
+
+	} while (false);
 
 	if (ugh != NULL) {
 		llog(RC_LOG_SERIOUS, dnsr->logger,
@@ -230,75 +278,65 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	return ugh == NULL;
 }
 
-static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
-				     uint32_t ttl)
+static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *dns_pubkeys)
 {
+	passert(dns_pubkeys != NULL);
+
 	const struct state *st = state_with_serialno(dnsr->so_serial);
 	const struct id *keyid = &st->st_connection->spd.that.id;
 
-	/*
-	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey does not expire while
-	 * negotiating
-	 */
-	uint32_t ttl_used = max(ttl, (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
-	char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
-
-	if (ttl_used == ttl) {
-		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
-	} else {
-		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
-			ttl, ttl_used);
-	}
-
-	chunk_t keyval;
-	if (!get_keyval_chunk(dnsr, rdf, &keyval))
-		return "could not get key to add";
-
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
-	if (dnsr->delete_existing_keys) {
-		if (DBGP(DBG_BASE)) {
-			id_buf thatidbuf;
-			dbg("delete RSA public keys(s) from pluto id=%s",
-			    str_id(&st->st_connection->spd.that.id, &thatidbuf));
-		}
-		/* delete only once. then multiple keys could be added */
-		delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
-		dnsr->delete_existing_keys = FALSE;
-	}
-
-	enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
-		DNSSEC_SECURE : DNSSEC_INSECURE;
-
-	if (DBGP(DBG_BASE)) {
-		if (keyid->kind == ID_FQDN) {
-			id_buf thatidbuf;
-			DBG_log("add IPSECKEY pluto as publickey %s %s %s",
-				str_id(&st->st_connection->spd.that.id, &thatidbuf),
-				ttl_buf, enum_name(&dns_auth_level_names, al));
-		} else {
-			id_buf thatidbuf;
-			DBG_log("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-				str_id(&st->st_connection->spd.that.id, &thatidbuf),
-				dnsr->qname, ttl_buf,
-				enum_name(&dns_auth_level_names, al));
-		}
-	}
+	/* delete only once. then multiple keys could be added */
+	delete_public_keys(&pluto_pubkeys, keyid, &pubkey_type_rsa);
 
 	realtime_t install_time = realnow();
-	err_t ugh = add_public_key(keyid, /*dns_auth_level*/al,
-				   &pubkey_type_rsa,
-				   install_time, realtimesum(install_time, deltatime(ttl_used)),
-				   ttl, &keyval, NULL/*don't-return-pubkey*/, &pluto_pubkeys);
-	if (ugh != NULL) {
-		id_buf thatidbuf;
-		llog(RC_LOG_SERIOUS, dnsr->logger,
-			    "add publickey failed %s, %s, %s", ugh,
-			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
-			    dnsr->log_buf);
-	}
+	for (struct dns_pubkey *dns_pubkey = dns_pubkeys; dns_pubkey != NULL; dns_pubkey = dns_pubkey->next) {
 
-	free_chunk_content(&keyval);
-	return NULL;
+		/*
+		 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey
+		 * does not expire while negotiating
+		 */
+
+		uint32_t ttl = dns_pubkey->ttl;
+		uint32_t ttl_used = max(ttl, (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+		char ttl_buf[ULTOT_BUF + 32]; /* 32 is arbitrary */
+
+		if (ttl_used == ttl) {
+			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
+		} else {
+			snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u",
+				 ttl, ttl_used);
+		}
+
+		enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
+			DNSSEC_SECURE : DNSSEC_INSECURE;
+
+		if (keyid->kind == ID_FQDN) {
+			id_buf thatidbuf;
+			dbg("add IPSECKEY pluto as publickey %s %s %s",
+			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			    ttl_buf, enum_name(&dns_auth_level_names, al));
+		} else {
+			id_buf thatidbuf;
+			dbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			    dnsr->qname, ttl_buf,
+			    enum_name(&dns_auth_level_names, al));
+		}
+
+		chunk_t keyval = chunk2(dns_pubkey->ptr, dns_pubkey->len);
+		err_t ugh = add_public_key(keyid, /*dns_auth_level*/al,
+					   &pubkey_type_rsa,
+					   install_time, realtimesum(install_time, deltatime(ttl_used)),
+					   ttl, &keyval, NULL/*don't-return-pubkey*/, &pluto_pubkeys);
+		if (ugh != NULL) {
+			id_buf thatidbuf;
+			llog(RC_LOG_SERIOUS, dnsr->logger,
+			     "add publickey failed %s, %s, %s", ugh,
+			     str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			     dnsr->log_buf);
+		}
+	}
 }
 
 static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
@@ -335,21 +373,18 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 {
 	ldns_rr_list *answers = ldns_pkt_answer(ldnspkt);
 	ldns_buffer *output = NULL;
-	err_t err = "nothing to add";
 	size_t i;
 
 	dbg_log_dns_question(dnsr, ldnspkt);
 
-	dnsr->delete_existing_keys = TRUE;	/* there could something to add */
+	struct dns_pubkey *dns_pubkeys = NULL;
 
 	for (i = 0; i < ldns_rr_list_rr_count(answers); i++) {
 		ldns_rr *ans = ldns_rr_list_rr(answers, i);
 		ldns_rr_type atype = ldns_rr_get_type(ans);
 		ldns_rr_class qclass = ldns_rr_get_class(ans);
-		ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes,
-				qclass);
-		ldns_lookup_table *class_e = ldns_lookup_by_id(ldns_rr_classes,
-				dnsr->qclass);
+		ldns_lookup_table *class = ldns_lookup_by_id(ldns_rr_classes, qclass);
+		ldns_lookup_table *class_e = ldns_lookup_by_id(ldns_rr_classes, dnsr->qclass);
 		ldns_rdf *rdf;
 		ldns_status status = LDNS_STATUS_OK;
 
@@ -425,9 +460,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		validate_address(dnsr, ldns_rdf_data(rdf));
 
 		if (dnsr->qtype == atype && atype == LDNS_RR_TYPE_IPSECKEY) {
-			/* the real work done here -- add key to pluto store */
-			err = add_rsa_pubkey_to_pluto(dnsr, rdf,
-					ldns_rr_ttl(ans));
+			extract_dns_pubkey(dnsr, rdf, ldns_rr_ttl(ans), &dns_pubkeys);
 		}
 
 		if (atype != dnsr->qtype) {
@@ -437,7 +470,17 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		}
 	}
 
-	return err;
+	if (dns_pubkeys == NULL) {
+		return "nothing to add";
+	}
+
+	add_dns_pubkeys_to_pluto(dnsr, dns_pubkeys);
+	while (dns_pubkeys != NULL) {
+		struct dns_pubkey *tbd = dns_pubkeys;
+		dns_pubkeys = dns_pubkeys->next;
+		pfree(tbd);
+	}
+	return NULL;
 }
 
 /* This is called when dns response arrives */
