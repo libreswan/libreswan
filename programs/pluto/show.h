@@ -45,24 +45,35 @@ void jambuf_to_show(struct jambuf *jambuf, struct show *s, enum rc_type rc);
  * Flag that the next line needs to be preceded by a separator (aka
  * blank line).  For instance:
  *
- *    struct show *s = new_show(whackfd);
+ * Example 1:
+ *
  *    show_separator(s);
  *    show_comment(s, "heading 1");
  *    show_separator(s);
  *    show_separator(s);
  *    show_comment(s, "heading 2");
  *    show_separator(s);
- *    free_show(&s);
+ *
+ *    heading 1
+ *    <blank>
+ *    heading 2
+ *    <blank>
+ *
+ * Example 2:
+ *
+ *    show_blank(s);
+ *    show_separator(s);
+ *    show_blank(s);
+ *    show_comment(s, "heading 1");
  *
  * will output:
  *
+ *    <blank>
  *    line 1
- *    <blank>
- *    line 2
- *    <blank>
  *
  */
 void show_separator(struct show *s);
+void show_blank(struct show *s);
 
 /*
  * If necessary show the separator (aka blank line), and then show the
