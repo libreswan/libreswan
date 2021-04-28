@@ -1563,6 +1563,7 @@ int main(int argc, char **argv)
 
 		case LST_ALL:	/* --listall */
 			msg.whack_list = LIST_ALL;
+			msg.whack_listpubkeys = true;
 			ignore_errors = TRUE;
 			continue;
 
