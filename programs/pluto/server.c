@@ -269,17 +269,18 @@ void call_global_event_inline(enum global_timer timer,
 			      struct logger *logger)
 {
 	passert(in_main_thread());
-	if (!pexpect(timer < elemsof(global_timers))) {
-		/* timer is hardwired so shouldn't happen */
-		return;
-	}
+	/* timer is hardwired so shouldn't happen */
+	passert(timer < elemsof(global_timers));
+
 	struct global_timer_desc *gt = &global_timers[timer];
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
 		llog(RC_LOG, logger,
 			    "inject: timer %s is not initialized",
 			    gt->name);
+		return;
 	}
+
 	llog(RC_LOG, logger, "inject: injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);

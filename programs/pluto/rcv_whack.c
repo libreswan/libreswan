@@ -125,32 +125,36 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 	return loggers;
 }
 
-static void whack_impair_action(enum impair_action action, unsigned event,
-				unsigned biased_what, bool background,
-				struct logger *logger)
+static void whack_impair_action(enum impair_action impairment_action,
+				unsigned impairment_param,
+				unsigned biased_value,
+				bool background, struct logger *logger)
 {
-	switch (action) {
+	switch (impairment_action) {
 	case CALL_IMPAIR_UPDATE:
 		/* err... */
 		break;
 	case CALL_GLOBAL_EVENT:
-		call_global_event_inline(event, logger);
+	{
+		passert(biased_value > 0);
+		call_global_event_inline(biased_value, logger);
 		break;
+	}
 	case CALL_STATE_EVENT:
 	{
-		struct state *st = find_impaired_state(biased_what, logger);
+		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
 		}
 		/* will log */
 		struct logger loggers = merge_loggers(st, background, logger);
-		call_state_event_inline(&loggers, st, event);
+		call_state_event_inline(&loggers, st, impairment_param);
 		break;
 	}
 	case CALL_INITIATE_v2_LIVENESS:
 	{
-		struct state *st = find_impaired_state(biased_what, logger);
+		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -168,7 +172,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 	case CALL_INITIATE_v2_DELETE:
 	{
-		struct state *st = find_impaired_state(biased_what, logger);
+		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -180,7 +184,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 	case CALL_INITIATE_v2_REKEY:
 	{
-		struct state *st = find_impaired_state(biased_what, logger);
+		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -192,7 +196,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 	case CALL_SEND_KEEPALIVE:
 	{
-		struct state *st = find_impaired_state(biased_what, logger);
+		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
 			/* already logged */
 			return;
@@ -205,7 +209,7 @@ static void whack_impair_action(enum impair_action action, unsigned event,
 	}
 	case CALL_IMPAIR_DROP_INCOMING:
 	case CALL_IMPAIR_DROP_OUTGOING:
-		add_message_impairment(biased_what - 1, action, logger);
+		add_message_impairment(biased_value - 1, impairment_action, logger);
 	}
 }
 
