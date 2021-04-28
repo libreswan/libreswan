@@ -56,9 +56,4 @@ west #
 west #
  ipsec auto --listcrls | grep issuer
 west #
- ipsec stop
-Redirecting to: [initsystem]
-west #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

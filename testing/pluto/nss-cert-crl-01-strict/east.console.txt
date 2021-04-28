@@ -39,9 +39,4 @@ Libreswan test CA for mainca - Libreswan CRL
 east #
  ipsec auto --listall | grep -A10 "List of CRLs" | grep -E 'Issuer|Entry|Serial'
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 
