@@ -935,25 +935,21 @@ static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char
 
 void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 {
-	/*
-	 * XXX: when there are no keys, the tests expect the title
-	 * with blank lines either side. Using the current
-	 * show_separator() would suppress that.  But should this
-	 * change, or should show_separator() change to always wrap
-	 * output in blank lines?
-	 */
 	if (keys_to_show == SHOW_ALL_KEYS) {
+		/*
+		 * XXX: when there are no keys, the tests expect the title
+		 * with blank lines either side.
+		 *
+		 * show_separator() suppresses this when the only
+		 * output.  Need to update tests.
+		 */
 #if 0
 		show_separator(s);
 #else
 		show_comment(s, " ");
 #endif
 		show_comment(s, "List of Public Keys:");
-#if 0
 		show_separator(s);
-#else
-		show_comment(s, " ");
-#endif
 	}
 
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
