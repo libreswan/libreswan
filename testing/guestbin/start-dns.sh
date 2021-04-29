@@ -3,16 +3,18 @@
 # not -e; systemctl has strange exit codes
 set -u
 
-# default to hidden output
-echo ==== cut ====
-
 LC_CTYPE=C
 export LC_CTYPE
 
-# install NSD config files into tmpfs mounted directory.  This way a
-# reboot clears everything out.
+# default to hidden output
+echo ==== cut ====
 
-for d in etc/nsd/conf.d etc/nsd/server.d ; do
+# Install NSD and UNBOUND config files into a tmpfs mounted
+# directories.  This way a reboot clears everything out.
+#
+# NSD only requires a few tweaks; UNBOUND replaces everything :-/
+
+for d in etc/nsd/conf.d etc/nsd/server.d etc/unbound ; do
     echo mounting $d:
     umount /$d || true
     mount -t tmpfs tmpfs /$d
@@ -20,37 +22,13 @@ for d in etc/nsd/conf.d etc/nsd/server.d ; do
     restorecon -R /$d
 done
 
-# Fix NSD's port.
-#
-# Once unbound work properly replace the next lines.
-#
-# XXX: huh?
-#
-# The idea is to point NSD on port 53 at UNBOUND, or is that UNBOUND
-# on port 53 at NSD?
-
-sed -i -e 's/5353/53/' /etc/nsd/server.d/nsd-server-libreswan.conf
-for f in /etc/nsd/server.d/nsd-server-libreswan.conf /etc/nsd/nsd.conf ; do
-    echo checking $f:
-    grep port: $f
-    grep 53 $f
-done
-
-# cp -av /testing/baseconfigs/all/etc/unbound /etc/
-# cp -av /testing/baseconfigs/all/etc/systemd/system/unbound.service /etc/systemd/system/
-# restorecon -R /etc/unbound
 
 echo ==== tuc ====
 echo starting dns
 echo ==== cut ====
 
-# next lines are combination nsd-keygen.service and nsd.service
-/usr/sbin/nsd-control-setup -d /etc/nsd/
-# fork and run in the background
-/usr/sbin/nsd -c /etc/nsd/nsd.conf
-
-# only interested in errors
-$(dirname $0)/wait-for.sh --match 'notice: nsd started' -- systemctl status nsd > /dev/null
+/testing/guestbin/nsd-start.sh start
+/testing/guestbin/unbound-start.sh start
 
 # grr, dig writes dns lookup failures to stdout.  Need to save stdout
 # and then, depending on the exit code, display it.
@@ -61,9 +39,16 @@ echo ==== tuc ====
 echo digging for ${domain} IPSECKEY
 echo ==== cut ====
 
-dig @127.0.0.1 ${domain} IPSECKEY > /tmp/dns.log
-status=$?
-cat /tmp/dns.log
+# Probe NSD directly before probing it via UNBOUND.
+
+for port in 5353 53 ; do
+    log=/tmp/dns.${port}.log
+    dig -p ${port} @127.0.0.1 ${domain} IPSECKEY > ${log}
+    status=$?
+    echo dig ${port} returned ${status}
+    cat ${log}
+    test ${status} -eq 0 || break
+done
 
 # These dig return code descriptions are lifted directly from the
 # manual page.
@@ -71,12 +56,13 @@ cat /tmp/dns.log
 echo ==== tuc ====
 case ${status} in
     0) echo Everything went well, including things like NXDOMAIN.
-       echo Found $(grep "^${domain}" /tmp/dns.log | wc -l) records
+       echo Found $(grep "^${domain}" ${log} | wc -l) records
        ;;
-    1) echo Usage error. ;;
-    8) echo Could not open batch file. ;;
-    9) echo No reply from server. ;;
-    10) echo Internal error. ;;
-    *) echo Unknown return code: $? ;;
+    1) echo "Usage error (port ${port})." ;;
+    8) echo "Could not open batch file (port ${port})." ;;
+    9) echo "No reply from server (port ${port})." ;;
+    10) echo "Internal error (port ${port})." ;;
+    *) echo "Unknown error: ${status} (port ${port}).";;
 esac
+
 exit ${status}
