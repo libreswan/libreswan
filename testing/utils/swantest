@@ -1833,7 +1833,7 @@ def docker_flush_eth0(dhost, dname):
 def docker_restart_network(test):
     for host in test["test_hosts"]:
         dname = host + "-" + test["name"]
-        runcmd("sudo docker exec -ti %s /testing/guestbin/swan-transmogrify" % dname)
+        runcmd("sudo docker exec -ti %s /testing/guestbin/docker-transmogrify" % dname)
 
 def docker_add_route(test, dnamei, dnamer, dnamen):
 
