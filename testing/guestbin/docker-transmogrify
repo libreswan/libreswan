@@ -191,7 +191,7 @@ if GUESTOS == "redhat":
             subprocess.getoutput("sed -i 's/alias mv/# alias mv/g' /root/.bashrc")
 
 elif GUESTOS == "debian":
-    shutil.copyfile("/testing/baseconfigs/%s/etc/network/interfaces" %
+    shutil.copyfile("/testing/baseconfigs/%s/etc/network/debian.interfaces" %
                     hostname, "/etc/network/interfaces")
     output += "\n" + subprocess.getoutput("/etc/init.d/networking restart")
 
