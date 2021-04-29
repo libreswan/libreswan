@@ -1,6 +1,0 @@
-/dev/root                 /                         hostfs   defaults 0 0
-/dev/shm		   /tmp			     tmpfs    defaults 0 0
-/dev/shm		   /var/run		     tmpfs    defaults 0 0
-proc                        /proc                     proc   defaults
-devpts                    /dev/pts                devpts  mode=0622       0 0
-
