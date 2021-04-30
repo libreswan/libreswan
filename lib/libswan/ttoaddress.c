@@ -86,39 +86,35 @@ static err_t tryname(const char *p,
 {
 	struct hostent *h = gethostbyname2(p, af);
 	if (h != NULL) {
-		if (h->h_addrtype != af) {
-			return "address-type mismatch from gethostbyname2!!!";
-		}
-
+		passert(h->h_addrtype == af);
 		return data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst);
 	}
 
 	if (af == AF_INET6) {
-		if (suggested_af == AF_INET6) {
-			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
-		} else /* AF_UNSPEC */ {
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
-		}
+		/* note: if suggested_af != AF_INET6 this message will not be displayed */
+		return "not a numeric IPv6 address and name lookup failed (no validation performed)";
 	}
 
-	pexpect(af == AF_INET);
+	passert(af == AF_INET);
 
-	/* like, windows even has an /etc/networks? */
+	/*
+	 * try a name from /etc/networks
+	 *
+	 * Seems pretty obsolete:
+	 * - latest RFC, 1101, dated April 1989
+	 * - IPv4 only
+	 * - doesn't support classless networks
+	 * - Window has it
+	 */
 	struct netent *ne = getnetbyname(p);
-	if (ne == NULL) {
+	if (ne == NULL || ne->n_addrtype != AF_INET) {
 		/* intricate because we cannot compose a static string */
-		if (suggested_af == AF_INET) {
-			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
-		} else {
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
-		}
+		return suggested_af == AF_INET ?
+			"not a numeric IPv4 address and name lookup failed (no validation performed)" :
+			"not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
 	}
 
-	if (ne->n_addrtype != af) {
-		return "address-type mismatch from getnetbyname!!!";
-	}
-
-	/* apparently .n_net is in host order */
+	/* apparently .n_net is in host order! */
 	struct in_addr in = { htonl(ne->n_net), };
 	*dst = address_from_in_addr(&in);
 	return NULL;
