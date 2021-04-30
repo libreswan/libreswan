@@ -24,7 +24,7 @@
 #include "where.h"
 
 typedef struct {
-	unsigned count;
+	volatile unsigned count;
 } refcnt_t;
 
 /*
