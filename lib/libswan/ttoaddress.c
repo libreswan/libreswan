@@ -415,7 +415,7 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		}
 	}
 
-	/* err == non-numeric */
+	/* not numeric: try DNS */
 
 	for (const char *cp = src.ptr, *end = cp + src.len; cp < end; cp++) {
 		/*
