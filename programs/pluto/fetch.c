@@ -130,10 +130,9 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 /*
  * fetches a binary blob from a url with libcurl
  */
-static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
+static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "";
-	char *uri;
 	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
 	long timeout = FETCH_CMD_TIMEOUT;
 	CURLcode res;
@@ -142,16 +141,12 @@ static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
 	CURL *curl = curl_easy_init();
 
 	if (curl != NULL) {
-		/* we need a NUL-terminated string for curl */
-		uri = clone_hunk_as_string(url, "NUL-terminated url");
-
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
 
-		dbg("Trying cURL '%s' with connect timeout of %ld",
-			uri, timeout);
+		dbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
 
-		curl_easy_setopt(curl, CURLOPT_URL, uri);
+		curl_easy_setopt(curl, CURLOPT_URL, url);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
@@ -169,16 +164,14 @@ static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
 			*blob = clone_hunk(response, "curl blob");
 		} else {
 			llog(RC_LOG, logger,
-				    "fetching uri (%s) with libcurl failed: %s", uri,
-				    errorbuffer);
+			     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);
 		}
 		curl_easy_cleanup(curl);
 
 		/* ??? where/how should this be logged? */
 		if (errorbuffer[0] != '\0') {
-			dbg("libcurl(%s) yielded %s", uri, errorbuffer);
+			dbg("libcurl(%s) yielded %s", url, errorbuffer);
 		}
-		pfreeany(uri);
 
 		if (response.ptr != NULL)
 			free(response.ptr);	/* allocated via realloc(3) */
@@ -189,7 +182,7 @@ static err_t fetch_curl(chunk_t url, chunk_t *blob, struct logger *logger)
 
 #else	/* LIBCURL */
 
-static err_t fetch_curl(chunk_t url UNUSED,
+static err_t fetch_curl(const char *url UNUSED,
 			chunk_t *blob UNUSED)
 {
 	return "not compiled with libcurl support";
@@ -254,7 +247,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
 /*
  * fetches a binary blob from an ldap url
  */
-static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
+static err_t fetch_ldap_url(const char *url, chunk_t *blob, struct logger *logger)
 {
 	LDAPURLDesc *lurl;
 	err_t ugh = NULL;
@@ -334,7 +327,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob, struct logger *logger)
 
 #else
 
-static err_t fetch_ldap_url(chunk_t url UNUSED,
+static err_t fetch_ldap_url(const char *url UNUSED,
 			    chunk_t *blob UNUSED,
 			    struct logger *logger UNUSED)
 {
@@ -348,17 +341,23 @@ static err_t fetch_ldap_url(chunk_t url UNUSED,
  * Returns error message or NULL.
  * Iff no error, *blob contains fetched ASN.1 blob (to be freed by caller).
  */
-static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob, struct logger *logger)
+
+static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logger)
 {
 	err_t ugh = NULL;
 
 	*blob = EMPTY_CHUNK;
-	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
+	if (startswith(url, "ldap:")) {
 		ugh = fetch_ldap_url(url, blob, logger);
-	else
+	} else {
 		ugh = fetch_curl(url, blob, logger);
+	}
 	if (ugh != NULL) {
-	} else if (is_asn1(*blob)) {
+		free_chunk_content(blob);
+		return ugh;
+	}
+
+	if (is_asn1(*blob)) {
 		dbg("  fetched blob coded in DER format");
 	} else {
 		ugh = pemtobin(blob);
@@ -377,11 +376,10 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob, struct logger *logger)
 }
 
 /* Note: insert_crl_nss frees *blob */
-static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const chunk_t crl_uri, struct logger *logger)
+static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct logger *logger)
 {
 	/* for CRL use the name passed to helper for the uri */
-	char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
-	int r = send_crl_to_import(blob.ptr, blob.len, uri_str, logger);
+	int r = send_crl_to_import(blob.ptr, blob.len, url, logger);
 	bool ret;
 	if (r == -1) {
 		ret = false;
@@ -395,17 +393,35 @@ static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const chunk_t crl_uri, 
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "imported CRL for '");
 			jam_dn(buf, issuer, jam_sanitized_bytes);
-			jam(buf, "' from: ");
-			jam_sanitized_hunk(buf, crl_uri);
+			jam(buf, "' from: %s", url);
 		}
 	}
-	pfreeany(uri_str);
 	return ret;
 }
 
 /*
  * try to fetch the crls defined by the fetch requests
  */
+
+static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
+{
+	/* err?!?! */
+	if (!pexpect(url != NULL && strlen(url) > 0)) {
+		return false;
+	}
+
+	chunk_t blob = empty_chunk; /* must free */
+	err_t ugh = fetch_asn1_blob(url, &blob, logger);
+	if (ugh != NULL) {
+		dbg("fetch failed:  %s", ugh);
+		return false;
+	}
+
+	bool ok = insert_crl_nss(blob, issuer_dn, url, logger);
+	free_chunk_content(&blob);
+	return ok;
+}
+
 static void fetch_crls(struct logger *logger)
 {
 	lock_crl_fetch_list("fetch_crls");
@@ -424,31 +440,18 @@ static void fetch_crls(struct logger *logger)
 				break;
 			}
 
-			/* err?!?! */
-			if (!pexpect(gn->name.len > 0)) {
-				continue;
-			}
+			char *url = clone_hunk_as_string(gn->name, "NUL-terminated URI");
+			bool ok = fetch_crl(req->issuer, url, logger);
+			pfree(url);
 
-			chunk_t blob = empty_chunk; /* must free */
-			err_t ugh = fetch_asn1_blob(gn->name, &blob, logger);
-			if (ugh != NULL) {
-				dbg("fetch failed:  %s", ugh);
-				continue;
+			if (ok) {
+				dbg("we have a valid crl");
+				/* delete fetch request */
+				*reqp = req->next;	/* remove from list; advance */
+				free_fetch_request(req);
+				/* *reqp advanced (so don't change reqp) for outer loop */
+				break;
 			}
-
-			bool ok = insert_crl_nss(blob, (*reqp)->issuer, gn->name, logger);
-			free_chunk_content(&blob);
-			if (!ok) {
-				dbg("fetch failed");
-				continue;
-			}
-
-			dbg("we have a valid crl");
-			/* delete fetch request */
-			*reqp = req->next;	/* remove from list; advance */
-			free_fetch_request(req);
-			/* *reqp advanced (so don't change reqp) for outer loop */
-			break;
 		}
 	}
 
