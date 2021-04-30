@@ -51,10 +51,8 @@ struct crl_fetch_queue {
 	chunk_t issuer_dn;
 	struct crl_distribution_point *volatile distribution_points;
 	int trials;
-	struct crl_fetch_queue *volatile next;
-#if 0
 	struct logger *logger;
-#endif
+	struct crl_fetch_queue *volatile next;
 };
 
 struct crl_fetch_request {
@@ -79,6 +77,7 @@ static void free_crl_fetch_request(struct crl_fetch_queue **request)
 {
 	free_crl_distribution_points(&(*request)->distribution_points);
 	free_chunk_content(&(*request)->issuer_dn);
+	free_logger(&(*request)->logger, HERE);
 	pfree((*request));
 	*request = NULL;
 }
@@ -170,15 +169,13 @@ void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logge
 				.request_time = realnow(),
 				.issuer_dn = clone_hunk(request->issuer_dn, "crl issuer dn"),
 				.distribution_points = NULL,
-#if 0
 				.logger = clone_logger(logger, HERE),
-#endif
+				.next = NULL,
 			};
 			/* copy distribution points */
 			unlocked_append_distribution_points(&new_entry.distribution_points,
 							    request->url, request->dps);
 			*entry = clone_thing(new_entry, "crl entry");
-			llog(RC_LOG, logger, "crl fetch request added");
 		}
 	}
 	dbg("pokeing the sleeping dragon");
@@ -262,7 +259,7 @@ void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger)
 	submit_crl_fetch_requests(&requests, logger);
 }
 
-void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger)
+void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_logger UNUSED)
 {
 	pthread_mutex_lock(&crl_queue_mutex);
 	while (!exiting_pluto) {
@@ -285,10 +282,7 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger)
 				 */
 				dbg("unlocking crl queue");
 				pthread_mutex_unlock(&crl_queue_mutex);
-				if (fetch_crl((*reqp)->issuer_dn, dp->url, logger)) {
-#if 0
-					req->logger;
-#endif
+				if (fetch_crl(req->issuer_dn, dp->url, req->logger)) {
 					fetched = true;
 				}
 				dbg("locked crl queue");
