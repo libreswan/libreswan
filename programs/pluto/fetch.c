@@ -46,6 +46,7 @@
 #include "keys.h"
 #include "crl_queue.h"
 #include "server.h"
+#include "lswnss.h"			/* for llog_nss_error() */
 #include "pluto_shutdown.h"		/* for exiting_pluto */
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
@@ -376,29 +377,29 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob, struct logger *logger)
 }
 
 /* Note: insert_crl_nss frees *blob */
-static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri, struct logger *logger)
+static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const chunk_t crl_uri, struct logger *logger)
 {
 	/* for CRL use the name passed to helper for the uri */
-	bool ret = false;
-
-	if (crl_uri.len == 0) {
-		dbg("no CRL URI available");
+	char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
+	int r = send_crl_to_import(blob.ptr, blob.len, uri_str, logger);
+	bool ret;
+	if (r == -1) {
+		ret = false;
+		llog(RC_LOG, logger, "_import_crl internal error");
+	} else if (r != 0) {
+		ret = false;
+		llog(RC_LOG, logger, "NSS CRL import error: %s",
+		     nss_err_str((PRInt32)r));
 	} else {
-		char *uri_str = clone_hunk_as_string(crl_uri, "NUL-terminated URI");
-		int r = send_crl_to_import(blob->ptr, blob->len, uri_str, logger);
-		if (r == -1) {
-			llog(RC_LOG, logger, "_import_crl internal error");
-		} else if (r != 0) {
-			llog(RC_LOG, logger, "NSS CRL import error: %s",
-				    nss_err_str((PRInt32)r));
-		} else {
-			dbg("CRL imported");
-			ret = true;
+		ret = true;
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "imported CRL for '");
+			jam_dn(buf, issuer, jam_sanitized_bytes);
+			jam(buf, "' from: ");
+			jam_sanitized_hunk(buf, crl_uri);
 		}
-		pfreeany(uri_str);
 	}
-
-	free_chunk_content(blob);
+	pfreeany(uri_str);
 	return ret;
 }
 
@@ -413,7 +414,7 @@ static void fetch_crls(struct logger *logger)
 	     *reqp != NULL && !exiting_pluto; ) {
 		fetch_req_t *req = *reqp;
 
-		for (generalName_t *gn = req->distributionPoints; ;
+		for (generalName_t *gn = req->distributionPoints; /*see loop body*/;
 		     gn = gn->next) {
 			if (gn == NULL) {
 				/* retain fetch request for next time */
@@ -423,19 +424,31 @@ static void fetch_crls(struct logger *logger)
 				break;
 			}
 
-			chunk_t blob;
-			err_t ugh = fetch_asn1_blob(gn->name, &blob, logger);
+			/* err?!?! */
+			if (!pexpect(gn->name.len > 0)) {
+				continue;
+			}
 
+			chunk_t blob = empty_chunk; /* must free */
+			err_t ugh = fetch_asn1_blob(gn->name, &blob, logger);
 			if (ugh != NULL) {
 				dbg("fetch failed:  %s", ugh);
-			} else if (insert_crl_nss(&blob, gn->name, logger)) {
-				dbg("we have a valid crl");
-				/* delete fetch request */
-				*reqp = req->next;	/* remove from list */
-				free_fetch_request(req);
-				/* *reqp advanced (so don't change reqp) for outer loop */
-				break;
+				continue;
 			}
+
+			bool ok = insert_crl_nss(blob, (*reqp)->issuer, gn->name, logger);
+			free_chunk_content(&blob);
+			if (!ok) {
+				dbg("fetch failed");
+				continue;
+			}
+
+			dbg("we have a valid crl");
+			/* delete fetch request */
+			*reqp = req->next;	/* remove from list; advance */
+			free_fetch_request(req);
+			/* *reqp advanced (so don't change reqp) for outer loop */
+			break;
 		}
 	}
 
