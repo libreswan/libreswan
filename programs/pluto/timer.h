@@ -48,8 +48,6 @@ extern void init_timer(void);
 
 void call_state_event_inline(struct logger *logger, struct state *st,
 			     enum event_type type);
-void call_global_event_inline(enum global_timer type,
-			      struct logger *logger);
 
 extern void list_timers(struct show *s, monotime_t now);
 extern char *revive_conn;
