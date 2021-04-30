@@ -289,63 +289,6 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	}
 }
 
-generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
-{
-	SECItem crlval;
-
-	if (cert == NULL)
-		return NULL;
-
-	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
-						       &crlval) != SECSuccess) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
-			jam_nss_error(buf);
-		}
-		return NULL;
-	}
-
-	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena,
-						    &crlval);
-	if (dps == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
-			jam_nss_error(buf);
-		}
-		return NULL;
-	}
-
-	CRLDistributionPoint **points = dps->distPoints;
-	generalName_t *gndp_list = NULL;
-
-	/* Certificate can have multiple distribution points */
-	for (; points != NULL && *points != NULL; points++) {
-		CRLDistributionPoint *point = *points;
-
-		if (point->distPointType == generalName &&
-			point->distPoint.fullName != NULL) {
-			CERTGeneralName *first_name, *name;
-
-			/* Each point is a linked list. */
-			first_name = name = point->distPoint.fullName;
-			do {
-				if (name->type == certURI) {
-					/* Add single point to return list */
-					generalName_t *gndp =
-						alloc_thing(generalName_t,
-							    "gndp_from_nss_cert: general name");
-					same_nss_gn_as_pluto_gn(name, gndp);
-					gndp->next = gndp_list;
-					gndp_list = gndp;
-				}
-				name = CERT_GetNextGeneralName(name);
-			} while (name != NULL && name != first_name);
-		}
-	}
-
-	return gndp_list;
-}
-
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
 	generalName_t *top = NULL;
