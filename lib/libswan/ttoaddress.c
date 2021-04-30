@@ -406,11 +406,13 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		return "empty string";
 	}
 
-	bool was_numeric = true;
-	err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
-	if (was_numeric) {
-		/* no-point in continuing */
-		return err;
+	{
+		bool was_numeric = true;
+		err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
+		if (was_numeric) {
+			/* no-point in continuing */
+			return err;
+		}
 	}
 
 	/* err == non-numeric */
@@ -441,16 +443,15 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	 */
 	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
 	int suggested_af = afi == NULL ? AF_UNSPEC : afi->af;
-	err_t v4err = NULL, v6err = NULL;
-	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET)) {
-		err = v4err = tryname(name, AF_INET, suggested_af, dst);
+	err_t err = NULL;
+	if (suggested_af == AF_UNSPEC || suggested_af == AF_INET) {
+		err = tryname(name, AF_INET, suggested_af, dst);
 	}
-	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET6)) {
-		err = v6err = tryname(name, AF_INET6, suggested_af, dst);
-	}
-	/* prefer the IPv4 error */
-	if (err != NULL && v4err != NULL) {
-		err = v4err;
+	if ((err != NULL && suggested_af == AF_UNSPEC) || suggested_af == AF_INET6) {
+		err_t v6err = tryname(name, AF_INET6, suggested_af, dst);
+		/* on double failure, leave the IPv4 diagnostic */
+		if (err == NULL || v6err == NULL)
+			err = v6err;
 	}
 	pfree(name);
 	return err;
