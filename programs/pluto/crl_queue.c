@@ -128,27 +128,39 @@ void free_crl_fetch_requests(struct crl_fetch_request **requests)
  *
  * Allow NULL - this is used to wake up the fetch helper.
  */
-void add_crl_fetch_requests(struct crl_fetch_request *requests)
+void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger UNUSED)
 {
-	struct crl_fetch_request *end = requests;
-	if (end != NULL) {
-		while (end->next != NULL) {
-			end = end->next;
+	struct crl_fetch_request *last_request = NULL;
+	if (requests != NULL && *requests != NULL) {
+		last_request = *requests;
+		while (last_request->next != NULL) {
+			last_request = last_request->next;
 		}
 	}
 	/* add to front of queue */
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
-		/* if end's NULL; just wake the helper */
-		if (end != NULL) {
-			end->next = crl_fetch_requests;
-			crl_fetch_requests = requests;
+		/*
+		 * When there's no last request this just wakes the
+		 * helper.
+		 */
+		if (last_request != NULL) {
+			last_request->next = crl_fetch_requests;
+			crl_fetch_requests = *requests;
+			*requests = NULL; /* stolen away */
 		}
 		/* wake up threads waiting for work */
 		pthread_cond_signal(&crl_queue_cond);
 	}
 	pthread_mutex_unlock(&crl_queue_mutex);
 	dbg("crl fetch request sent");
+}
+
+void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger)
+{
+	SECItem fdn = same_chunk_as_secitem(issuer_dn, siBuffer);
+	struct crl_fetch_request *requests = crl_fetch_request(&fdn, NULL, NULL, logger);
+	submit_crl_fetch_requests(&requests, logger);
 }
 
 struct crl_fetch_request *get_crl_fetch_requests(void)

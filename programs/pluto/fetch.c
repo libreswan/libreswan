@@ -535,7 +535,7 @@ void check_crls(struct logger *logger)
 		}
 		CERT_DestroyCertList(certs);
 	}
-	add_crl_fetch_requests(requests);
+	submit_crl_fetch_requests(&requests, logger);
 }
 
 static void merge_crl_fetch_request(struct crl_fetch_request *);
@@ -628,7 +628,7 @@ void stop_crl_fetch_helper(struct logger *logger)
 		llog(RC_LOG, logger, "shutting down the CRL fetch helper thread");
 		pexpect(exiting_pluto);
 		/* wake the sleeping dragon from its slumber */
-		add_crl_fetch_requests(NULL);
+		submit_crl_fetch_requests(NULL, logger);
 		/* use a timer? */
 		int status = pthread_join(fetch_thread_id, NULL);
 		if (status != 0) {

@@ -703,7 +703,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 #if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_reread & REREAD_FETCH) {
 		dbg("whack: reread & REREAD_FETCH ...");
-		add_crl_fetch_requests(NULL);
+		submit_crl_fetch_requests(NULL, logger);
 		dbg("whack: ... reread & REREAD_FETCH");
 	}
 #endif

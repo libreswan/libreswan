@@ -74,8 +74,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 				      enum sa_role role);
 
 #if defined(LIBCURL) || defined(LIBLDAP)
-bool find_fetch_dn(SECItem *dn, struct connection *c,
-		   CERTCertificate *cert);
+bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c);
 #endif
 
 #endif /* _PLUTO_X509_H */
