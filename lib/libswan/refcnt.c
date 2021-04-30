@@ -59,7 +59,7 @@ void refcnt_init(const char *what, const void *pointer,
 		new = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
-	if (old != 0) {
+	if (old != 0 || new != 1) {
 		log_pexpect(where, "refcnt for %s@%p should have been 0 initialized",
 			    what, pointer);
 	}
