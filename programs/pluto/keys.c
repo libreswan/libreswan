@@ -211,7 +211,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 	const SECItem nss_n = same_chunk_as_secitem(k->n, siBuffer);
 	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.modulus, &nss_n);
 	if (retVal != SECSuccess) {
-		log_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
+		llog_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
 		SECKEY_DestroyPublicKey(publicKey);
 		return false;
 	}
@@ -219,7 +219,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 	const SECItem nss_e = same_chunk_as_secitem(k->e, siBuffer);
 	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.publicExponent, &nss_e);
 	if (retVal != SECSuccess) {
-		log_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
+		llog_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
 		SECKEY_DestroyPublicKey(publicKey);
 		return false;
 	}
@@ -241,7 +241,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 		};
 		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
 				      signature.len) == NULL) {
-			log_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
+			llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
 			SECKEY_DestroyPublicKey(publicKey);
 			return false;
 		}

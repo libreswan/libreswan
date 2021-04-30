@@ -123,8 +123,8 @@ bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t sign
 							SECKEY_SignatureLen(publicKey));
 	if (raw_signature == NULL) {
 		/* not fatal as dependent on key being tried */
-		log_nss_error(DEBUG_STREAM, logger,
-			      "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
 		PORT_FreeArena(arena, PR_FALSE);
 		*fatal_diag = NULL;
 		return false;
@@ -150,8 +150,8 @@ bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t sign
 
 	if (PK11_Verify(publicKey, raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
-		log_nss_error(DEBUG_STREAM, logger,
-			      "verifying AUTH hash using PK11_Verify() failed:");
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "verifying AUTH hash using PK11_Verify() failed:");
 		PORT_FreeArena(arena, PR_FALSE);
 		SECITEM_FreeItem(raw_signature, PR_TRUE);
 		*fatal_diag = NULL;

@@ -37,8 +37,8 @@ static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap
 	jam_nss_error(buf);
 }
 
-void log_nss_error(lset_t rc_flags, struct logger *logger,
-		   const char *message, ...)
+void llog_nss_error(lset_t rc_flags, struct logger *logger,
+		    const char *message, ...)
 {
 	LLOG_JAMBUF(rc_flags, logger, buf) {
 		va_list ap;
