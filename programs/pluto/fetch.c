@@ -51,54 +51,7 @@
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 
-typedef struct fetch_req fetch_req_t;
-
-struct fetch_req {
-	fetch_req_t *next;
-	realtime_t installed;
-	int trials;
-	chunk_t issuer;
-	generalName_t *distributionPoints;
-};
-
-/* chained list of crl fetch requests */
-static fetch_req_t *crl_fetch_reqs = NULL;
-
 static pthread_t fetch_thread_id;
-static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-static const char *crl_fetch_list_mutex_who;
-
-/*
- * lock access to the chained crl fetch request list
- */
-static void lock_crl_fetch_list(const char *who)
-{
-	pthread_mutex_lock(&crl_fetch_list_mutex);
-	passert(crl_fetch_list_mutex_who == NULL);
-	crl_fetch_list_mutex_who = who;
-	dbg("crl fetch request list locked by '%s'", who);
-}
-
-/*
- * unlock access to the chained crl fetch request list
- */
-static void unlock_crl_fetch_list(const char *who)
-{
-	passert(streq(crl_fetch_list_mutex_who, who));
-	crl_fetch_list_mutex_who = NULL;
-	pthread_mutex_unlock(&crl_fetch_list_mutex);
-	dbg("crl fetch request list unlocked by '%s'", who);
-}
-
-/*
- *  free the dynamic memory used to store fetch requests
- */
-static void free_fetch_request(fetch_req_t *req)
-{
-	pfree(req->issuer.ptr);
-	free_generalNames(req->distributionPoints, true);
-	pfree(req);
-}
 
 #ifdef LIBCURL
 
@@ -403,6 +356,8 @@ static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct
  * try to fetch the crls defined by the fetch requests
  */
 
+static fetch_crl_fn fetch_crl; /* type check */
+
 static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 {
 	/* err?!?! */
@@ -422,57 +377,31 @@ static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 	return ok;
 }
 
-static void fetch_crls(struct logger *logger)
-{
-	lock_crl_fetch_list("fetch_crls");
-
-	for (fetch_req_t **reqp = &crl_fetch_reqs;
-	     *reqp != NULL && !exiting_pluto; ) {
-		fetch_req_t *req = *reqp;
-
-		for (generalName_t *gn = req->distributionPoints; /*see loop body*/;
-		     gn = gn->next) {
-			if (gn == NULL) {
-				/* retain fetch request for next time */
-				req->trials++;
-				/* advance reqp for outer loop */
-				reqp = &req->next;
-				break;
-			}
-
-			char *url = clone_hunk_as_string(gn->name, "NUL-terminated URI");
-			bool ok = fetch_crl(req->issuer, url, logger);
-			pfree(url);
-
-			if (ok) {
-				dbg("we have a valid crl");
-				/* delete fetch request */
-				*reqp = req->next;	/* remove from list; advance */
-				free_fetch_request(req);
-				/* *reqp advanced (so don't change reqp) for outer loop */
-				break;
-			}
-		}
-	}
-
-	unlock_crl_fetch_list("fetch_crls");
-}
-
 /*
- * Create a possibly duplicate list of all known CRLS and send them
- * off to fetch_crls() for a refresh.
+ * Submit all known CRLS for processing using
+ * append_crl_fetch_request().
  *
- * Any duplicates will be eliminated by fetch_crls() when it merges
- * these requests with any still unprocessed requests.
+ * Any duplicates will be eliminated by submit_crl_fetch_request()
+ * when it merges these requests with any still unprocessed requests.
  *
  * Similarly, if check_crls() is called more frequently than
- * fetch_crls() can process, redundant fetches will be merged.
+ * fetch_crl() can process, redundant fetches will be merged.
  */
 
 void check_crls(struct logger *logger)
 {
-	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
+	/*
+	 * Shallow - contents point into existing structures.
+	 */
 	struct crl_fetch_request *requests = NULL;
+
+	if (deltasecs(crl_check_interval) <= 0) {
+		llog(RC_LOG_SERIOUS, logger, "config crlcheckinterval= is unset");
+		return;
+	}
+
+	/* schedule the next probe */
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -483,106 +412,74 @@ void check_crls(struct logger *logger)
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 
-	CERTCrlHeadNode *crl_list = NULL;
+	/*
+	 * Add NSS's CRLs.
+	 */
 
-	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
+	CERTCrlHeadNode *crl_list = NULL; /* must free; but after submitting requests */
+	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
 		return;
+	}
 
 	for (CERTCrlNode *n = crl_list->first; n != NULL; n = n->next) {
 		if (n->crl != NULL) {
-			SECItem *issuer = &n->crl->crl.derName;
-
-			if (n->crl->url == NULL) {
-				requests = crl_fetch_request(issuer, NULL,
-							     requests, logger);
-			} else {
-				generalName_t end_dp = {
-					.kind = GN_URI,
-					.name = {
-						.ptr = (uint8_t *)n->crl->url,
-						.len = strlen(n->crl->url)
-					},
-					.next = NULL
-				};
-				requests = crl_fetch_request(issuer, &end_dp,
-							     requests, logger);
-			}
+			chunk_t issuer = same_secitem_as_chunk(n->crl->crl.derName);
+			/* XXX: URL can be null, gets filled in later */
+			add_crl_fetch_request(issuer, shunk1(n->crl->url), &requests, logger);
 		}
 	}
-	dbg("releasing crl list in %s", __func__);
-	PORT_FreeArena(crl_list->arena, PR_FALSE);
 
-	/* add the pubkeys distribution points to fetch list */
+	/*
+	 * Add the pubkeys distribution points to fetch list.
+	 */
 
 	for (struct pubkey_list *pkl = pluto_pubkeys; pkl != NULL; pkl = pkl->next) {
 		struct pubkey *key = pkl->key;
 		if (key != NULL) {
-			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
-			requests = crl_fetch_request(&issuer, NULL,
-						     requests, logger);
+			add_crl_fetch_request(key->issuer, null_shunk, &requests, logger);
 		}
 	}
 
 	/*
 	 * Iterate all X.509 certificates in database. This is needed to
 	 * process middle and end certificates.
+	 *
+	 * Free this after the requests have been appended.
 	 */
-	CERTCertList *certs = get_all_certificates(logger);
-
+	CERTCertList *certs = get_all_certificates(logger); /* must free; but after submitting requests */
 	if (certs != NULL) {
 		for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
 		     !CERT_LIST_END(node, certs);
 		     node = CERT_LIST_NEXT(node)) {
-			requests = crl_fetch_request(&node->cert->derSubject,
-						     NULL, requests, logger);
+			chunk_t issuer = same_secitem_as_chunk(node->cert->derSubject);
+			add_crl_fetch_request(issuer, null_shunk, &requests, logger);
 		}
+	}
+
+	/*
+	 * Submit the requests and then release them.
+	 *
+	 * Only then release all the data structures that the requests
+	 * are pointing into.
+	 */
+
+	submit_crl_fetch_requests(&requests, logger);
+
+	dbg("releasing cert list in %s()", __func__);
+	if (certs != NULL) {
 		CERT_DestroyCertList(certs);
 	}
-	submit_crl_fetch_requests(&requests, logger);
-}
 
-static void merge_crl_fetch_request(struct crl_fetch_request *);
+	dbg("releasing crl list in %s()", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
+}
 
 static void *fetch_thread(void *arg UNUSED)
 {
+	dbg("fetch thread started");
 	/* XXX: on thread so no whack */
 	struct logger *logger = string_logger(null_fd, HERE, "crl thread: "); /* must free */
-
-	dbg("fetch thread started");
-	while (true) {
-		dbg("fetching crl requests (may block)");
-		struct crl_fetch_request *requests = get_crl_fetch_requests();
-		if (requests == NULL) {
-			pexpect(exiting_pluto);
-			break;
-		}
-
-		/*
-		 * Merge in the next batch of newest-to-oldest ordered
-		 * requests.
-		 *
-		 * If a request isn't present, then it will be
-		 * prepended, and since the oldest request is
-		 * processed last, it is put right at the front.
-		 */
-		dbg("merging new fetch requests");
-		for (struct crl_fetch_request *r = requests; r != NULL; r = r->next) {
-			merge_crl_fetch_request(r);
-		}
-		free_crl_fetch_requests(&requests);
-
-		/*
-		 * Process all outstanding requests.
-		 *
-		 * Any brand new requests, prepended by the above, get
-		 * processed first (and due to the double reversal) in
-		 * the order they were submitted.
-		 *
-		 * Old requests then get processed at the end.
-		 */
-		fetch_crls(logger);
-	}
-	dbg("shutting down crl fetch thread");
+	process_crl_fetch_requests(fetch_crl, logger);
 	free_logger(&logger, HERE);
 	return NULL;
 }
@@ -642,153 +539,12 @@ void stop_crl_fetch_helper(struct logger *logger)
 
 void free_crl_fetch(void)
 {
-	lock_crl_fetch_list("free_crl_fetch");
-
-	while (crl_fetch_reqs != NULL) {
-		fetch_req_t *req = crl_fetch_reqs;
-		crl_fetch_reqs = req->next;
-		free_fetch_request(req);
-	}
-
-	unlock_crl_fetch_list("free_crl_fetch");
-
 #ifdef LIBCURL
 	if (deltasecs(crl_check_interval) > 0) {
 		/* cleanup curl */
 		curl_global_cleanup();
 	}
 #endif
-}
-
-/*
- * Add additional distribution points.
- * Note: clones anything it needs to keep.
- */
-static void add_distribution_points(const generalName_t *newPoints,
-				    generalName_t **distributionPoints)
-{
-	for (; newPoints != NULL; newPoints = newPoints->next) {
-		for (generalName_t *gn = *distributionPoints; ; gn = gn->next) {
-			if (gn == NULL) {
-				/*
-				 * End of list; not found.
-				 * Clone additional distribution point.
-				 */
-				generalName_t *ngn = clone_const_thing(*newPoints, "generalName");
-				ngn->name = clone_hunk(newPoints->name,
-							"add_distribution_points: general name name");
-				/* insert additional CRL distribution point */
-				ngn->next = *distributionPoints;
-				*distributionPoints = ngn;
-				break;
-			}
-			if (gn->kind == newPoints->kind &&
-			    hunk_eq(gn->name, newPoints->name)) {
-				/* newPoint already present */
-				break;
-			}
-		}
-	}
-}
-
-/*
- * Add a crl fetch request to the chained list.
- * Note: clones anything that needs to persist.
- */
-static void merge_crl_fetch_request(struct crl_fetch_request *request)
-{
-	dbg("attempting to add a new CRL fetch request");
-
-	chunk_t idn = same_secitem_as_chunk(*request->issuer_dn);
-
-	/* LOCK: matching unlock is at end of loop -- must be executed */
-	lock_crl_fetch_list("add_crl_fetch_request");
-
-	for (fetch_req_t *req = crl_fetch_reqs; ; req = req->next) {
-		if (req == NULL) {
-			/* end of list; no match found */
-
-			/* create a new fetch request */
-			fetch_req_t *nr = alloc_thing(fetch_req_t, "fetch request");
-
-			*nr = (fetch_req_t) {
-				/* insert new fetch request at the head of the queue */
-				.next = crl_fetch_reqs,
-
-				/* note current time */
-				.installed = request->request_time,
-
-				.trials = 0,
-
-				/* clone issuer (again) */
-				.issuer = clone_hunk(idn, "issuer dn"),
-
-				.distributionPoints = NULL,
-			};
-
-			/* copy distribution points */
-			add_distribution_points(request->dps, &nr->distributionPoints);
-			crl_fetch_reqs = nr;
-
-			dbg("crl fetch request added");
-			break;
-		}
-		if (same_dn(idn, req->issuer)) {
-			/* there is already a fetch request */
-			dbg("crl fetch request already exists");
-
-			/* there might be new distribution points */
-			add_distribution_points(request->dps, &req->distributionPoints);
-
-			dbg("crl fetch request augmented");
-			break;
-		}
-	}
-	/* UNLOCK: matching lock is before loop */
-	unlock_crl_fetch_list("add_crl_fetch_request");
-}
-
-/*
- * list all distribution points
- */
-static void list_distribution_points(struct fd *whackfd,
-				     const generalName_t *first_gn)
-{
-	for (const generalName_t *gn = first_gn; gn != NULL; gn = gn->next) {
-		whack_comment(whackfd, "       %s '%.*s'",
-			gn == first_gn ? "distPts:" : "        ",
-			(int)gn->name.len,
-			gn->name.ptr);
-	}
-}
-
-/*
- *  list all fetch requests in the chained list
- */
-void list_crl_fetch_requests(struct fd *whackfd, bool utc)
-{
-	lock_crl_fetch_list("list_crl_fetch_requests");
-
-	fetch_req_t *req = crl_fetch_reqs;
-
-	if (req != NULL) {
-		whack_comment(whackfd, " ");
-		whack_comment(whackfd, "List of CRL fetch requests:");
-		whack_comment(whackfd, " ");
-	}
-
-	for (; req != NULL; req = req->next) {
-		realtime_buf rtb;
-		whack_comment(whackfd, "%s, trials: %d",
-			      str_realtime(req->installed, utc, &rtb),
-			      req->trials);
-		dn_buf buf;
-		whack_comment(whackfd, "       issuer:  '%s'",
-			  str_dn(req->issuer, &buf));
-		list_distribution_points(whackfd, req->distributionPoints);
-	}
-
-	unlock_crl_fetch_list("list_crl_fetch_requests");
 }
 
 #else /* defined(LIBCURL) || defined(LIBLDAP) */

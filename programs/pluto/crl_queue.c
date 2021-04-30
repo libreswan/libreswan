@@ -25,39 +25,203 @@
 #include "defs.h"		/* for exiting_pluto */
 #include "log.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "show.h"
 
+/*
+ * List of lists.
+ *
+ * The main thread appends to these lists (with everything locked).
+ *
+ * The fetch thread traverses these lists.  While traversing these
+ * structures the lock is held.  However once it reaches a node it
+ * releases the lock (it then re-claims it when traversal is resumed).
+ *
+ * This means that, while the fetch thread is processing a node
+ * (distribution point), the lists can be growing.  Hence the
+ * volatile's sprinkled across this code.
+ */
+
+struct crl_distribution_point {
+	char *url;
+	struct crl_distribution_point *volatile next;
+};
+
+struct crl_fetch_queue {
+	realtime_t request_time;
+	chunk_t issuer_dn;
+	struct crl_distribution_point *volatile distribution_points;
+	int trials;
+	struct crl_fetch_queue *volatile next;
+#if 0
+	struct logger *logger;
+#endif
+};
+
+struct crl_fetch_request {
+	chunk_t issuer_dn;
+	shunk_t url;
+	CERTCertificate *ca; /* must free */
+	CERTCrlDistributionPoints *dps; /* points into CA */
+	struct crl_fetch_request *next;
+};
+
+static void free_crl_distribution_points(struct crl_distribution_point *volatile *dp)
+{
+	while (*dp != NULL) {
+		struct crl_distribution_point *tbd = *dp;
+		*dp = (*dp)->next;
+		pfree(tbd->url);
+		pfree(tbd);
+	}
+}
+
+static void free_crl_fetch_request(struct crl_fetch_queue **request)
+{
+	free_crl_distribution_points(&(*request)->distribution_points);
+	free_chunk_content(&(*request)->issuer_dn);
+	pfree((*request));
+	*request = NULL;
+}
 
 static pthread_mutex_t crl_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t crl_queue_cond = PTHREAD_COND_INITIALIZER;
+static struct crl_fetch_queue *volatile crl_fetch_queue = NULL;
 
-static struct crl_fetch_request *volatile crl_fetch_requests = NULL;
+/*
+ * *ALWAYS* Append additional distribution points.
+ */
 
-static generalName_t *deep_clone_general_names(generalName_t *orig)
+static void unlocked_append_distribution_point(struct crl_distribution_point *volatile *dps, shunk_t url)
 {
-	generalName_t *clone = NULL;
-	generalName_t **new = &clone;
-	while (orig != NULL) {
-		*new = alloc_thing(generalName_t, "crl_queue: general name");
-		(*new)->kind = orig->kind;
-		(*new)->name = clone_hunk(orig->name, "crl_queue: general name name");
-		(*new)->next = NULL;
-		orig = orig->next;
-		new = &(*new)->next;
+	struct crl_distribution_point *volatile *dp;
+	for (dp = dps; *dp != NULL; dp = &(*dp)->next) {
+		if (hunk_streq(url, (*dp)->url)) {
+			/* newPoint already present */
+			break;
+		}
 	}
-	return clone;
+	if (*dp == NULL) {
+		/*
+		 * End of list; not found.  Clone additional
+		 * distribution point.
+		 */
+		struct crl_distribution_point new_point = {
+			.url = clone_hunk_as_string(url, "dp url"),
+			.next = NULL,
+		};
+		*dp = clone_thing(new_point, "add distributin point");
+	}
 }
 
-struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
-					    generalName_t *end_dps,
-					    struct crl_fetch_request *next,
-					    struct logger *logger)
+static void unlocked_append_distribution_points(struct crl_distribution_point *volatile *dps,
+						shunk_t url, CERTCrlDistributionPoints *cert_dps)
 {
-	if (!pexpect(issuer_dn != NULL)) {
-		return next;
+	if (cert_dps != NULL) {
+		/*
+		 * Certificate can have multiple distribution points
+		 * stored in a NULL terminated ARRAY.
+		 */
+		for (CRLDistributionPoint **points = cert_dps->distPoints;
+		     points != NULL && *points != NULL; points++) {
+			CRLDistributionPoint *point = *points;
+			/*
+			 * Each point has a circular list of
+			 * CERTGeneralNames.
+			 */
+			if (point->distPointType == generalName &&
+			    point->distPoint.fullName != NULL) {
+				CERTGeneralName *first_name, *name;
+				first_name = name = point->distPoint.fullName;
+				do {
+					if (name->type == certURI) {
+						/* Add single point */
+						shunk_t u = same_secitem_as_shunk(name->name.other);
+						unlocked_append_distribution_point(dps, u);
+					}
+					name = CERT_GetNextGeneralName(name);
+				} while (name != NULL && name != first_name);
+			}
+		}
+	} else {
+		unlocked_append_distribution_point(dps, url);
 	}
-	if (!pexpect(issuer_dn->data != NULL && issuer_dn->len > 0)) {
-		return next;
+}
+
+void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger)
+{
+	pthread_mutex_lock(&crl_queue_mutex);
+	for (struct crl_fetch_request *request = requests != NULL ? *requests : NULL;
+	     request != NULL; request = request->next) {
+		struct crl_fetch_queue *volatile *entry;
+		for (entry = &crl_fetch_queue; *entry != NULL; entry = &(*entry)->next) {
+			if (same_dn(request->issuer_dn, (*entry)->issuer_dn)) {
+				/* there is already a fetch request */
+				dbg("crl fetch request already exists");
+				/* there might be new distribution points */
+				unlocked_append_distribution_points(&(*entry)->distribution_points,
+								    request->url, request->dps);
+				dbg("crl fetch request augmented");
+				break;
+			}
+		}
+		if (*entry == NULL) {
+			/* APPEND new requests */
+			struct crl_fetch_queue new_entry = {
+				.request_time = realnow(),
+				.issuer_dn = clone_hunk(request->issuer_dn, "crl issuer dn"),
+				.distribution_points = NULL,
+#if 0
+				.logger = clone_logger(logger, HERE),
+#endif
+			};
+			/* copy distribution points */
+			unlocked_append_distribution_points(&new_entry.distribution_points,
+							    request->url, request->dps);
+			*entry = clone_thing(new_entry, "crl entry");
+			llog(RC_LOG, logger, "crl fetch request added");
+		}
 	}
+	dbg("pokeing the sleeping dragon");
+	pthread_cond_signal(&crl_queue_cond);
+	pthread_mutex_unlock(&crl_queue_mutex);
+
+	/* clean up */
+	if (requests != NULL) {
+		while (*requests != NULL) {
+			struct crl_fetch_request *tbd = *requests;
+			*requests = tbd->next;
+			if (tbd->ca != NULL) {
+				CERT_DestroyCertificate(tbd->ca);
+				tbd->dps = NULL; /* points into CA's arena */
+			}
+			pfree(tbd);
+		}
+	}
+}
+
+static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *cert, struct logger *logger)
+{
+	SECItem crls;
+	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
+				   &crls) != SECSuccess) {
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "finding CRL distribution points using CERT_FindCertExtension() failed");
+		return NULL;
+	}
+
+	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena, &crls);
+	if (dps == NULL) {
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed");
+		return NULL;
+	}
+
+	return dps;
+}
+
+void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url, struct crl_fetch_request **requests,
+			   struct logger *logger)
+{
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -66,134 +230,124 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
-	CERTCertificate *ca = CERT_FindCertByName(handle, issuer_dn);
+	SECItem issuer_secitem = same_chunk_as_secitem(issuer_dn, siBuffer);
+	CERTCertificate *ca = CERT_FindCertByName(handle, &issuer_secitem);
 	if (ca == NULL) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam_string(buf, "NSS error finding CA to add to fetch request: ");
-			jam_nss_error(buf);
-		}
-		return next;
+		llog_nss_error(RC_LOG, logger, "error finding CA to add to fetch request");
+		return;
 	}
-	generalName_t *request_dps = NULL;
-	generalName_t *cert_dps = gndp_from_nss_cert(ca);
-	if (cert_dps != NULL) {
-		request_dps = deep_clone_general_names(cert_dps);
-		free_generalNames(cert_dps, false /*shallow*/);
-	} else if (end_dps != NULL) {
-		dbg("no CA crl DP available; using provided DP");
-		request_dps = deep_clone_general_names(end_dps);
-	} else {
+
+	CERTCrlDistributionPoints *cert_dps = get_cert_distribution_points(ca, logger);
+	if (cert_dps == NULL && url.len == 0) {
 		dbg("no distribution point available for new fetch request");
 		CERT_DestroyCertificate(ca);
-		return next;
+		return;
 	}
-	CERT_DestroyCertificate(ca);
 
-	/*
-	 * Prepend the new request - keeping new requests ordered
-	 * newest-to-oldest.
-	 *
-	 * When the requests are merged into the fetch queue proper,
-	 * their order gets re-reversed putting oldest first.
-	 */
-	struct crl_fetch_request *request = alloc_thing(struct crl_fetch_request, "crl_queue: request");
-	*request = (struct crl_fetch_request) {
-		.request_time = realnow(),
-		.issuer_dn = SECITEM_DupItem(issuer_dn),
-		.dps = request_dps,
-		.next = next,
+	struct crl_fetch_request new_request = {
+		.issuer_dn = issuer_dn,
+		.url = url,
+		.ca = ca,
+		.dps = cert_dps,
+		.next = *requests,
 	};
-	return request;
-}
 
-void free_crl_fetch_requests(struct crl_fetch_request **requests)
-{
-	struct crl_fetch_request *request = *requests;
-	while (request != NULL) {
-		free_generalNames(request->dps, true /*deep*/);
-		SECITEM_FreeItem(request->issuer_dn, PR_TRUE);
-		struct crl_fetch_request *tbd = request;
-		request = request->next;
-		pfree(tbd);
-	}
-	*requests = NULL;
-}
-
-/*
- * Prepend the new request[s], keeping the list ordered
- * newest-to-oldest.
- *
- * When the requests are merged into the fetch queue, their order gets
- * re-reversed putting oldest first.
- *
- * Allow NULL - this is used to wake up the fetch helper.
- */
-void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger UNUSED)
-{
-	struct crl_fetch_request *last_request = NULL;
-	if (requests != NULL && *requests != NULL) {
-		last_request = *requests;
-		while (last_request->next != NULL) {
-			last_request = last_request->next;
-		}
-	}
-	/* add to front of queue */
-	pthread_mutex_lock(&crl_queue_mutex);
-	{
-		/*
-		 * When there's no last request this just wakes the
-		 * helper.
-		 */
-		if (last_request != NULL) {
-			last_request->next = crl_fetch_requests;
-			crl_fetch_requests = *requests;
-			*requests = NULL; /* stolen away */
-		}
-		/* wake up threads waiting for work */
-		pthread_cond_signal(&crl_queue_cond);
-	}
-	pthread_mutex_unlock(&crl_queue_mutex);
-	dbg("crl fetch request sent");
+	*requests = clone_thing(new_request, "crl request");
 }
 
 void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger)
 {
-	SECItem fdn = same_chunk_as_secitem(issuer_dn, siBuffer);
-	struct crl_fetch_request *requests = crl_fetch_request(&fdn, NULL, NULL, logger);
+	struct crl_fetch_request *requests = NULL;
+	add_crl_fetch_request(issuer_dn, /*URL*/null_shunk, &requests, logger);
 	submit_crl_fetch_requests(&requests, logger);
 }
 
-struct crl_fetch_request *get_crl_fetch_requests(void)
+void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger)
 {
-	struct crl_fetch_request *requests = NULL;
+	pthread_mutex_lock(&crl_queue_mutex);
+	while (!exiting_pluto) {
+		/* if there's something process it */
+		dbg("processing CRL fetch requests");
+		for (struct crl_fetch_queue *volatile *volatile reqp = &crl_fetch_queue;
+		     *reqp != NULL && !exiting_pluto; ) {
+			struct crl_fetch_queue *req = *reqp;
+			pexpect(req->distribution_points != NULL);
+			bool fetched = false;
+			for (struct crl_distribution_point *volatile dp = req->distribution_points;
+			     dp != NULL && !fetched && !exiting_pluto; dp = dp->next) {
+				/*
+				 * While fetching unlock the QUEUE.
+				 *
+				 * While the table is unlocked, the
+				 * main thread can append to either
+				 * crl_fetch_request list, or its
+				 * crl_distribution_point list.
+				 */
+				dbg("unlocking crl queue");
+				pthread_mutex_unlock(&crl_queue_mutex);
+				if (fetch_crl((*reqp)->issuer_dn, dp->url, logger)) {
+#if 0
+					req->logger;
+#endif
+					fetched = true;
+				}
+				dbg("locked crl queue");
+				pthread_mutex_lock(&crl_queue_mutex);
+			}
+			if (fetched) {
+				*reqp = req->next;
+				free_crl_fetch_request(&req);
+			} else {
+				req->trials++;
+				reqp = &req->next;
+			}
+		}
+		if (exiting_pluto) {
+			break;
+		}
+		dbg("waiting for more CRL fetch requests");
+		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
+		passert(status == 0);
+	}
+	pthread_mutex_unlock(&crl_queue_mutex);
+}
+
+/*
+ * list all fetch requests
+ */
+
+static void list_distribution_points(struct show *s, const struct crl_distribution_point *first_gn)
+{
+	for (const struct crl_distribution_point *gn = first_gn; gn != NULL; gn = gn->next) {
+		if (gn == first_gn) {
+			show_comment(s, "       distPts: '%s'", gn->url);
+		} else {
+			show_comment(s, "                '%s'", gn->url);
+		}
+	}
+}
+
+void list_crl_fetch_requests(struct show *s, bool utc)
+{
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
-		while (!exiting_pluto) {
-			/* if there's something grab it */
-			if (crl_fetch_requests != NULL) {
-				dbg("grabbing crl_queue contents");
-				requests = crl_fetch_requests;
-				crl_fetch_requests = NULL;
-				break;
+		if (crl_fetch_queue != NULL) {
+			show_blank(s);
+			show_comment(s, "List of CRL fetch requests:");
+			show_blank(s);
+			for (struct crl_fetch_queue *req = crl_fetch_queue; req != NULL; req = req->next) {
+				realtime_buf rtb;
+				show_comment(s, "%s, trials: %d",
+					     str_realtime(req->request_time, utc, &rtb),
+					     req->trials);
+				dn_buf buf;
+				show_comment(s, "       issuer:  '%s'",
+					     str_dn(req->issuer_dn, &buf));
+				list_distribution_points(s, req->distribution_points);
 			}
-			dbg("waiting for crl_queue to fill");
-			int status = pthread_cond_wait(&crl_queue_cond,
-						       &crl_queue_mutex);
-			if (status != 0) {
-				break;
-			} /* else ? */
-		}
-		/*
-		 * REQUEST == NULL implies EXITING_PLUTO but not the
-		 * reverse.  Could grab a request while pluto is
-		 * starting to exit.
-		 */
-		if (requests == NULL) {
-			pexpect(exiting_pluto);
 		}
 	}
 	pthread_mutex_unlock(&crl_queue_mutex);
-	return requests;
 }
 
 void free_crl_queue(void)
@@ -201,8 +355,12 @@ void free_crl_queue(void)
 	pexpect(exiting_pluto);
 	/* technical overkill - thread is dead */
 	pthread_mutex_lock(&crl_queue_mutex);
-	struct crl_fetch_request *requests = crl_fetch_requests;
-	crl_fetch_requests = NULL;
-	free_crl_fetch_requests(&requests);
+	{
+		while (crl_fetch_queue != NULL) {
+			struct crl_fetch_queue *tbd = crl_fetch_queue;
+			crl_fetch_queue = tbd->next;
+			free_crl_fetch_request(&tbd);
+		}
+	}
 	pthread_mutex_unlock(&crl_queue_mutex);
 }

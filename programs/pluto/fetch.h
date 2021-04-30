@@ -13,8 +13,6 @@
  * for more details.
  */
 
-extern void list_crl_fetch_requests(struct fd *whackfd, bool utc);
-
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
