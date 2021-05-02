@@ -84,6 +84,21 @@ void refcnt_add(const char *what, const void *pointer,
 	DEBUG_LOG("add");
 }
 
+/*
+ * look at refcnt atomically
+ * This is a bit slow but it is used rarely.
+ */
+unsigned refcnt_peek(refcnt_t *refcnt)
+{
+	unsigned val;
+	pthread_mutex_lock(&refcnt_mutex);
+	{
+		val = refcnt->count;
+	}
+	pthread_mutex_unlock(&refcnt_mutex);
+	return val;
+}
+
 bool refcnt_delete(const char *what, const void *pointer,
 		   refcnt_t *refcnt, where_t where)
 {

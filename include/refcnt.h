@@ -43,6 +43,9 @@ void refcnt_init(const char *what, const void *pointer,
 		t_;						       \
 	})
 
+/* look at refcnt atomically */
+unsigned refcnt_peek(refcnt_t *refcnt);
+
 /*
  * Add a reference.
  *
