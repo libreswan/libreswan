@@ -15,13 +15,19 @@ echo ==== cut ====
 # NSD only requires a few tweaks; UNBOUND replaces everything :-/
 
 for d in etc/nsd/conf.d etc/nsd/server.d etc/unbound ; do
-    echo mounting $d:
+    echo tmpfs mounting $d:
     umount /$d || true
     mount -t tmpfs tmpfs /$d
     cp -av /testing/baseconfigs/all/$d/* /$d
     restorecon -R /$d
 done
 
+# same for /var/run
+for d in /run/nsd /run/unbound ; do
+    echo tmpfs mounting $d:
+    umount $d || true
+    mount -t tmpfs tmpfs $d
+done
 
 echo ==== tuc ====
 echo starting dns
