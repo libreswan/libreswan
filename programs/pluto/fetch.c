@@ -206,12 +206,9 @@ static err_t fetch_ldap_url(const char *url, chunk_t *blob, struct logger *logge
 	err_t ugh = NULL;
 	int rc;
 
-	char *ldap_url = clone_hunk_as_string(url, "ldap query");
+	dbg("Trying LDAP URL '%s'", url);
 
-	dbg("Trying LDAP URL '%s'", ldap_url);
-
-	rc = ldap_url_parse(ldap_url, &lurl);
-	pfreeany(ldap_url);
+	rc = ldap_url_parse(url, &lurl);
 
 	if (rc == LDAP_SUCCESS) {
 		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
