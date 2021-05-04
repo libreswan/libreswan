@@ -21,7 +21,7 @@ algparse=$1 ; shift
 if test $# -eq 0 ; then
     dir=$(dirname $(dirname $0))
 
-    set - ${dir}/algparse-*/algparse.*.txt
+    set - ${dir}/pluto/algparse-*/algparse.*.txt
 fi
 
 set -e
