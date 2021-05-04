@@ -2859,9 +2859,11 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		size_t len = pbs_left(&pbs);
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					ike, &idhash_in, &pbs_no_ppk_auth,
-					ike->sa.st_connection->spd.that.authby)) {
+		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+					      ike, &idhash_in, &pbs_no_ppk_auth,
+					      ike->sa.st_connection->spd.that.authby);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -2886,8 +2888,10 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 
 			dbg("going to try to verify NULL_AUTH from Notify payload");
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						&pbs_null_auth, AUTHBY_NULL)) {
+			diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
+						      &pbs_null_auth, AUTHBY_NULL);
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("NULL_auth from Notify Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -2899,9 +2903,11 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("NULL_AUTH verified");
 		} else {
 			dbg("verifying AUTH payload");
-			if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						st->st_connection->spd.that.authby)) {
+			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						      st->st_connection->spd.that.authby);
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -3788,9 +3794,10 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 	/* process AUTH payload */
 
 	dbg("verifying AUTH payload");
-	if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				that_authby)) {
+	d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+			       ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		dbg("R2 Auth Payload failed");
 		/*
 		 * We cannot send a response as we are processing

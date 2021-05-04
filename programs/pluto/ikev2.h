@@ -176,15 +176,15 @@ extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct crypt_mac *idhash,
 				  chunk_t *additional_auth /* output */);
 
-extern stf_status v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
-						      const struct crypt_mac *idhash,
-						      shunk_t signature,
-						      const struct hash_desc *hash_algo);
+diag_t v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
+					   const struct crypt_mac *idhash,
+					   shunk_t signature,
+					   const struct hash_desc *hash_algo);
 
-extern stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
-							const struct crypt_mac *idhash,
-							shunk_t signature,
-							const struct hash_desc *hash_algo);
+diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
+					     const struct crypt_mac *idhash,
+					     shunk_t signature,
+					     const struct hash_desc *hash_algo);
 
 extern void ikev2_derive_child_keys(struct child_sa *child);
 

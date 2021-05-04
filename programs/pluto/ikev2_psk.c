@@ -54,13 +54,15 @@
 #include "ikev2_prf.h"
 #include "ikev2_psk.h"
 
-static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
-						    const struct ike_sa *ike,
-						    enum keyword_authby authby,
-						    const struct crypt_mac *idhash,
-						    const chunk_t firstpacket)
+static diag_t ikev2_calculate_psk_sighash(bool verify,
+					  const struct ike_sa *ike,
+					  enum keyword_authby authby,
+					  const struct crypt_mac *idhash,
+					  const chunk_t firstpacket,
+					  struct crypt_mac *sighash)
 {
 	const struct connection *c = ike->sa.st_connection;
+	*sighash = empty_mac;
 	passert(authby == AUTHBY_PSK || authby == AUTHBY_NULL);
 
 	dbg("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
@@ -151,10 +153,8 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		pss = get_connection_psk(c);
 		if (pss == NULL) {
 			id_buf idb;
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "authentication failed: no PSK found for '%s'",
-				  str_id(&c->spd.this.id, &idb));
-			return empty_mac;
+			return diag("authentication failed: no PSK found for '%s'",
+				    str_id(&c->spd.this.id, &idb));
 		}
 
 		/* XXX: this should happen during connection load */
@@ -162,13 +162,11 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 		if (pss->len < key_size_min) {
 			if (libreswan_fipsmode()) {
 				id_buf idb;
-				log_state(RC_LOG_SERIOUS, &ike->sa,
-					  "FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
-					  str_id(&c->spd.this.id, &idb),
-					  pss->len,
-					  ike->sa.st_oakley.ta_prf->common.fqn,
-					  key_size_min);
-				return empty_mac;
+				return diag("FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
+					    str_id(&c->spd.this.id, &idb),
+					    pss->len,
+					    ike->sa.st_oakley.ta_prf->common.fqn,
+					    key_size_min);
 			}
 
 			id_buf idb;
@@ -198,11 +196,11 @@ static struct crypt_mac ikev2_calculate_psk_sighash(bool verify,
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	struct crypt_mac mac = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss,
-					      firstpacket, *nonce, idhash,
-					      intermediate_auth, ike->sa.st_logger);
+	*sighash = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, *pss,
+				  firstpacket, *nonce, idhash,
+				  intermediate_auth, ike->sa.st_logger);
 	free_chunk_content(&intermediate_auth);
-	return mac;
+	return NULL;
 }
 
 bool ikev2_emit_psk_auth(enum keyword_authby authby,
@@ -210,9 +208,12 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 			 const struct crypt_mac *idhash,
 			 pb_stream *a_pbs)
 {
-	struct crypt_mac signed_octets = ikev2_calculate_psk_sighash(FALSE, ike, authby, idhash,
-								     ike->sa.st_firstpacket_me);
-	if (signed_octets.len == 0) {
+	struct crypt_mac signed_octets = empty_mac;
+	diag_t d = ikev2_calculate_psk_sighash(false, ike, authby, idhash,
+					       ike->sa.st_firstpacket_me,
+					       &signed_octets);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -230,9 +231,12 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			   chunk_t *additional_auth /* output */)
 {
 	*additional_auth = empty_chunk;
-	struct crypt_mac signed_octets = ikev2_calculate_psk_sighash(FALSE, ike, authby, idhash,
-								     ike->sa.st_firstpacket_me);
-	if (signed_octets.len == 0) {
+	struct crypt_mac signed_octets = empty_mac;
+	diag_t d = ikev2_calculate_psk_sighash(FALSE, ike, authby, idhash,
+					       ike->sa.st_firstpacket_me,
+					       &signed_octets);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -250,10 +254,11 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
  *
  * The log message must mention both the peer's ID and kind.
  */
-bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
-				  const struct ike_sa *ike,
-				  const struct crypt_mac *idhash,
-				  struct pbs_in *sig_pbs)
+
+diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
+				    const struct ike_sa *ike,
+				    const struct crypt_mac *idhash,
+				    struct pbs_in *sig_pbs)
 {
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
@@ -263,20 +268,19 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 	if (sig.len != hash_len) {
 		esb_buf kb;
 		id_buf idb;
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
-			  sig.len,
-			  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-			  str_id(&ike->sa.st_connection->spd.that.id, &idb),
-			  hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
-		return false;
+		return diag("authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
+			    sig.len,
+			    enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+			    str_id(&ike->sa.st_connection->spd.that.id, &idb),
+			    hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
 	}
 
-	struct crypt_mac calc_hash = ikev2_calculate_psk_sighash(true, ike, authby, idhash,
-								 ike->sa.st_firstpacket_peer);
-	if (calc_hash.len == 0) {
-		/* already logged */
-		return false;
+	struct crypt_mac calc_hash = empty_mac;
+	diag_t d = ikev2_calculate_psk_sighash(true, ike, authby, idhash,
+					       ike->sa.st_firstpacket_peer,
+					       &calc_hash);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (DBGP(DBG_CRYPT)) {
@@ -287,11 +291,9 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 	if (!hunk_eq(sig, calc_hash)) {
 		id_buf idb;
 		esb_buf kb;
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "authentication failed: computed hash does not match hash received from peer %s '%s'",
-			  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-			  str_id(&ike->sa.st_connection->spd.that.id, &idb));
-		return false;
+		return diag("authentication failed: computed hash does not match hash received from peer %s '%s'",
+			    enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+			    str_id(&ike->sa.st_connection->spd.that.id, &idb));
 	}
 
 	id_buf idb;
@@ -301,5 +303,5 @@ bool v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		  enum_name(&keyword_authby_names, authby),
 		  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
 		  str_id(&ike->sa.st_connection->spd.that.id, &idb));
-	return true;
+	return NULL;
 }

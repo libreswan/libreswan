@@ -388,11 +388,11 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
-			struct ike_sa *ike,
-			const struct crypt_mac *idhash_in,
-			struct pbs_in *signature_pbs,
-			const enum keyword_authby that_authby)
+diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
+			  struct ike_sa *ike,
+			  const struct crypt_mac *idhash_in,
+			  struct pbs_in *signature_pbs,
+			  const enum keyword_authby that_authby)
 {
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTHBY matches
@@ -403,37 +403,34 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 	case IKEv2_AUTH_RSA:
 	{
 		if (that_authby != AUTHBY_RSASIG) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "authentication failed: peer attempted RSA authentication but we want %s",
-				  enum_name(&keyword_authby_names, that_authby));
-			return false;
+			return diag("authentication failed: peer attempted RSA authentication but we want %s",
+				    enum_name(&keyword_authby_names, that_authby));
 		}
 
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
-		stf_status authstat = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in,
-									  signature,
-									  &ike_alg_hash_sha1);
-		if (authstat != STF_OK) {
-			return false;
+		diag_t d = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in, signature,
+							       &ike_alg_hash_sha1);
+		if (d != NULL) {
+			return d;
 		}
 
-		return true;
+		return NULL;
 	}
 
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_authby != AUTHBY_PSK) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "authentication failed: peer attempted PSK authentication but we want %s",
-				  enum_name(&keyword_authby_names, that_authby));
-			return false;
+			return diag("authentication failed: peer attempted PSK authentication but we want %s",
+				    enum_name(&keyword_authby_names, that_authby));
 		}
 
-		if (!v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs)) {
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs);
+		if (d != NULL) {
 			dbg("authentication failed: PSK AUTH mismatch");
-			return false;
+			return d;
 		}
-		return TRUE;
+
+		return NULL;
 	}
 
 	case IKEv2_AUTH_NULL:
@@ -446,22 +443,21 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			return false;
 		}
 
-		if (!v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs)) {
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs);
+		if (d != NULL) {
 			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
-			return false;
+			return d;
 		}
 
 		ike->sa.st_ikev2_anon = true;
-		return true;
+		return NULL;
 	}
 
 	case IKEv2_AUTH_DIGSIG:
 	{
 		if (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				  enum_name(&keyword_authby_names, that_authby));
-			return false;
+			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
+				    enum_name(&keyword_authby_names, that_authby));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -484,9 +480,6 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 		for (hap = ha; ; hap++) {
 			if (hap == &ha[elemsof(ha)]) {
-				log_state(RC_LOG_SERIOUS, &ike->sa,
-					  "authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-					  enum_name(&keyword_authby_names, that_authby));
 				if (DBGP(DBG_BASE)) {
 					size_t dl = min(pbs_left(signature_pbs),
 							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
@@ -495,7 +488,8 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 									    ASN1_SHA2_ECDSA_SIZE))));
 					DBG_dump("offered blob", signature_pbs->cur, dl);
 				}
-				return false;	/* none recognized */
+				return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
+					    enum_name(&keyword_authby_names, that_authby));
 			}
 
 			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, signature_pbs, that_authby))
@@ -506,37 +500,27 @@ bool v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		}
 
 		/* try to match the hash */
-		stf_status authstat;
+		diag_t d;
 
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 		switch (that_authby) {
 		case AUTHBY_RSASIG:
-			authstat = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in,
-								       signature,
-								       hap->algo);
+			d = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in, signature, hap->algo);
 			break;
 
 		case AUTHBY_ECDSA:
-			authstat = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in,
-									 signature,
-									 hap->algo);
+			d = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in, signature, hap->algo);
 			break;
 
 		default:
 			bad_case(that_authby);
 		}
 
-		if (authstat != STF_OK) {
-			return false;
-		}
-
-		return true;
+		return d;
 	}
 
 	default:
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "authentication failed: method %s not supported",
-			  enum_name(&ikev2_auth_names, recv_auth));
-		return false;
+		return diag("authentication failed: method %s not supported",
+			    enum_name(&ikev2_auth_names, recv_auth));
 	}
 }

@@ -1253,7 +1253,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
-			bool aggrmode)
+			      bool aggrmode)
 {
 	struct state *st = md->st;
 	stf_status r = STF_OK;
@@ -1328,15 +1328,16 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	case OAKLEY_RSA_SIG:
 	{
 		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
-		r = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
-						 &ike_alg_hash_sha1, /*always*/
-						 &pubkey_type_rsa,
-						 authsig_using_RSA_pubkey);
-		if (r != STF_OK) {
-			/* already logged */
+		diag_t d = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
+							&ike_alg_hash_sha1, /*always*/
+							&pubkey_type_rsa,
+							authsig_using_RSA_pubkey);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			dbg("received '%s' message SIG_%s data did not match computed value",
 			    aggrmode ? "Aggr" : "Main",
 			    initiator ? "R" : "I" /*reverse*/);
+			r = STF_FAIL + INVALID_KEY_INFORMATION;
 		}
 		break;
 	}
