@@ -349,7 +349,7 @@ err_t getpiece(const char **srcp,	/* *srcp is updated */
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
-	struct addrinfo *res = NULL;
+	struct addrinfo *res;
 	const struct addrinfo hints = (struct addrinfo) {
 		.ai_family = afi == NULL ? AF_UNSPEC : afi->af,
 	};
