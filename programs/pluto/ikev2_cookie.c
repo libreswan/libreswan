@@ -157,9 +157,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 
 	/* done: !me_want_cookie && cookie_digest == NULL */
 	/* done: me_want_cookie && cookie_digest == NULL */
-	if (!pexpect(cookie_digest != NULL)) {
-		return true; /* reject cookie */
-	}
+	passert(cookie_digest != NULL);
 
 	/*
 	 * Check that the cookie notification is well constructed.
