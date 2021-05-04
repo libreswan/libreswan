@@ -30,9 +30,4 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

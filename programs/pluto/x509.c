@@ -604,35 +604,24 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
  * Do our best to find the CA for the fetch request
  * However, this might be overkill, and only spd.this.ca should be used
  */
-bool find_fetch_dn(SECItem *dn, struct connection *c,
-		   CERTCertificate *cert)
+bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 {
-	if (dn == NULL) {
-		dbg("%s invalid use", __func__);
-		return FALSE;
-	}
-
-	if (cert != NULL) {
-		*dn = cert->derIssuer;
-		return TRUE;
-	}
-
 	if (c->spd.that.ca.ptr != NULL && c->spd.that.ca.len > 0) {
-		*dn = same_chunk_as_dercert_secitem(c->spd.that.ca);
-		return TRUE;
+		*issuer_dn = c->spd.that.ca;
+		return true;
 	}
 
 	if (c->spd.that.cert.u.nss_cert != NULL) {
-		*dn = c->spd.that.cert.u.nss_cert->derIssuer;
-		return TRUE;
+		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.u.nss_cert->derIssuer);
+		return true;
 	}
 
 	if (c->spd.this.ca.ptr != NULL && c->spd.this.ca.len > 0) {
-		*dn = same_chunk_as_dercert_secitem(c->spd.this.ca);
-		return TRUE;
+		*issuer_dn = c->spd.this.ca;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 #endif
 
@@ -845,10 +834,10 @@ bool v1_decode_certs(struct msg_digest *md)
 			 *
 			 * Trigger a refresh.
 			 */
-			SECItem fdn = { siBuffer, NULL, 0 };
-			if (find_fetch_dn(&fdn, c, NULL)) {
-				add_crl_fetch_requests(crl_fetch_request(&fdn, NULL,
-									 NULL, st->st_logger));
+			chunk_t fdn = empty_chunk;
+			if (find_crl_fetch_dn(&fdn, c)) {
+				/* FDN contains issuer_dn */
+				submit_crl_fetch_request(fdn, st->st_logger);
 			}
 		}
 #endif

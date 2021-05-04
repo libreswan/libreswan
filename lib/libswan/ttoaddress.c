@@ -85,43 +85,19 @@ static err_t tryname(const char *p,
 		     ip_address *dst)
 {
 	struct hostent *h = gethostbyname2(p, af);
-	if (h != NULL) {
-		if (h->h_addrtype != af) {
-			return "address-type mismatch from gethostbyname2!!!";
-		}
 
-		return data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst);
-	}
+	passert(h == NULL || h->h_addrtype == af);
 
-	if (af == AF_INET6) {
-		if (suggested_af == AF_INET6) {
-			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
-		} else /* AF_UNSPEC */ {
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
-		}
-	}
+	/* tailor message to context */
 
-	pexpect(af == AF_INET);
-
-	/* like, windows even has an /etc/networks? */
-	struct netent *ne = getnetbyname(p);
-	if (ne == NULL) {
-		/* intricate because we cannot compose a static string */
-		if (suggested_af == AF_INET) {
-			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
-		} else {
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
-		}
-	}
-
-	if (ne->n_addrtype != af) {
-		return "address-type mismatch from getnetbyname!!!";
-	}
-
-	/* apparently .n_net is in host order */
-	struct in_addr in = { htonl(ne->n_net), };
-	*dst = address_from_in_addr(&in);
-	return NULL;
+	return 
+		h != NULL ?
+			data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst) :
+		af == AF_INET6 ?
+			"not a numeric IPv6 address and name lookup failed (no validation performed)" :
+		suggested_af == AF_INET ?
+			"not a numeric IPv4 address and name lookup failed (no validation performed)" :
+			"not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
 }
 
 /*
@@ -406,14 +382,16 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		return "empty string";
 	}
 
-	bool was_numeric = true;
-	err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
-	if (was_numeric) {
-		/* no-point in continuing */
-		return err;
+	{
+		bool was_numeric = true;
+		err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
+		if (was_numeric) {
+			/* no-point in continuing */
+			return err;
+		}
 	}
 
-	/* err == non-numeric */
+	/* not numeric: try DNS */
 
 	for (const char *cp = src.ptr, *end = cp + src.len; cp < end; cp++) {
 		/*
@@ -441,16 +419,15 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	 */
 	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
 	int suggested_af = afi == NULL ? AF_UNSPEC : afi->af;
-	err_t v4err = NULL, v6err = NULL;
-	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET)) {
-		err = v4err = tryname(name, AF_INET, suggested_af, dst);
+	err_t err = NULL;
+	if (suggested_af == AF_UNSPEC || suggested_af == AF_INET) {
+		err = tryname(name, AF_INET, suggested_af, dst);
 	}
-	if (err && (suggested_af == AF_UNSPEC || suggested_af == AF_INET6)) {
-		err = v6err = tryname(name, AF_INET6, suggested_af, dst);
-	}
-	/* prefer the IPv4 error */
-	if (err != NULL && v4err != NULL) {
-		err = v4err;
+	if ((err != NULL && suggested_af == AF_UNSPEC) || suggested_af == AF_INET6) {
+		err_t v6err = tryname(name, AF_INET6, suggested_af, dst);
+		/* on double failure, leave the IPv4 diagnostic */
+		if (err == NULL || v6err == NULL)
+			err = v6err;
 	}
 	pfree(name);
 	return err;

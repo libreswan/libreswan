@@ -69,8 +69,8 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 						    "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
 						    trust_cert_name);
 				} else {
-					log_nss_error(RC_LOG_SERIOUS, logger,
-						      "error enabling OCSP default responder");
+					llog_nss_error(RC_LOG_SERIOUS, logger,
+						       "error enabling OCSP default responder");
 				}
 			}
 		} else {
@@ -81,7 +81,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 					    trust_cert_name);
 			} else {
 				/* uses global value */
-				log_nss_error(RC_LOG, logger, "error setting default responder");
+				llog_nss_error(RC_LOG, logger, "error setting default responder");
 			}
 		}
 	}
@@ -90,7 +90,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		dbg("OCSP timeout of %d seconds", timeout);
 		if (CERT_SetOCSPTimeout(timeout) != SECSuccess) {
 			/* don't shoot pluto over this */
-			log_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout");
+			llog_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout");
 		}
 	}
 
@@ -113,7 +113,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		log_nss_error(RC_LOG_SERIOUS, logger, "error enabling OCSP POST method");
+		llog_nss_error(RC_LOG_SERIOUS, logger, "error enabling OCSP POST method");
 	}
 
 	/*
@@ -127,9 +127,9 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	rv = CERT_OCSPCacheSettings(cache_size, cache_min, cache_max);
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		log_nss_error(RC_LOG_SERIOUS, logger,
-			      "error setting OCSP cache parameters (size=%d, min=%d, max=%d)",
-			      cache_size, cache_min, cache_max);
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "error setting OCSP cache parameters (size=%d, min=%d, max=%d)",
+			       cache_size, cache_min, cache_max);
 	}
 
 	return NULL;

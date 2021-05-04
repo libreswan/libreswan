@@ -29,7 +29,7 @@
 #include "log.h"
 #include "lswalloc.h"
 #include "nss_err.h"
-#include "lswnss.h"	/* for lswlog_nss_error() */
+#include "lswnss.h"	/* for llog_nss_error() */
 
 static const char crl_name[] = "_import_crl";
 
@@ -93,7 +93,7 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 
 	arg[0] = clone_str(crl_path_space, "crl path");
 
-	DBG_log("Calling %s to import CRL - url: %s, der size: %s",
+	dbg("Calling %s to import CRL - url: %s, der size: %s",
 		arg[0],
 		arg[1],
 		arg[2]);
@@ -130,7 +130,7 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 	}
 
 	if (pipe(pfd) == -1) {
-		DBG_log("pipe() error: %s", strerror(errno));
+		dbg("pipe() error: %s", strerror(errno));
 		goto end;
 	}
 
@@ -138,42 +138,42 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 
 	switch (child) {
 	case -1:
-		DBG_log("fork() error: %s", strerror(errno));
+		dbg("fork() error: %s", strerror(errno));
 		break;
 	case 0: /*child*/
 		if (close(pfd[1]) == -1) {
-			DBG_log("close(pfd[1]) error: %s",
+			dbg("close(pfd[1]) error: %s",
 				 strerror(errno));
 			break;
 		}
 
 		if (pfd[0] != STDIN_FILENO) {
 			if (dup2(pfd[0], STDIN_FILENO) == -1) {
-				DBG_log("dup2() error: %s",
+				dbg("dup2() error: %s",
 					 strerror(errno));
 				break;
 			}
 			if (close(pfd[0]) == -1) {
-				DBG_log("close() error: %s",
+				dbg("close() error: %s",
 					 strerror(errno));
 				break;
 			}
 		}
 		execve(arg[0], arg, NULL);
-		DBG_log("execve() error: %s", strerror(errno));
+		dbg("execve() error: %s", strerror(errno));
 		break;
 	default: /*parent*/
 		if (close(pfd[0]) == -1) {
-			DBG_log("close(pfd[0]) error: %s",
+			dbg("close(pfd[0]) error: %s",
 				 strerror(errno));
 			break;
 		}
 		if (write(pfd[1], der, len) != (ssize_t)len) {
-			DBG_log("partial/failed write");
+			dbg("partial/failed write");
 			break;
 		}
 		if (close(pfd[1]) == -1) {
-			DBG_log("close(pfd[1]) error: %s",
+			dbg("close(pfd[1]) error: %s",
 					strerror(errno));
 			break;
 		}
@@ -181,7 +181,7 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 		waitpid(child, &wstatus, 0);
 
 		if (WIFEXITED(wstatus)) {
-			DBG_log("CRL helper exited with status: %d",
+			dbg("CRL helper exited with status: %d",
 					 WEXITSTATUS(wstatus));
 			ret = WEXITSTATUS(wstatus);
 		}

@@ -13,7 +13,11 @@
  * for more details.
  */
 
+#include <pthread.h>
+
 #include "refcnt.h"
+
+static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void dbg_ref(const char *what, const void *pointer, where_t where,
 		    int old_count, int new_count, const char *why)
@@ -25,8 +29,8 @@ static void dbg_ref(const char *what, const void *pointer, where_t where,
 	}
 }
 
-#define DEBUG_LOG(OLD_COUNT, WHY)				\
-	dbg_ref(what, pointer, where, OLD_COUNT, refcnt->count, WHY)
+#define DEBUG_LOG(WHY)					\
+	dbg_ref(what, pointer, where, old, new, WHY)
 
 /*
  * So existing code can use the refcnt tracer.
@@ -47,39 +51,72 @@ void dbg_free(const char *what, const void *pointer, where_t where)
 void refcnt_init(const char *what, const void *pointer,
 		 refcnt_t *refcnt, where_t where)
 {
-	/* on main thread */
-	if (refcnt->count != 0) {
+	unsigned old, new;
+	pthread_mutex_lock(&refcnt_mutex);
+	{
+		old = refcnt->count;
+		refcnt->count++;
+		new = refcnt->count;
+	}
+	pthread_mutex_unlock(&refcnt_mutex);
+	if (old != 0 || new != 1) {
 		log_pexpect(where, "refcnt for %s@%p should have been 0 initialized",
 			    what, pointer);
 	}
-	unsigned old = refcnt->count++;
-	DEBUG_LOG(old, "new");
+	DEBUG_LOG("new");
 }
 
 void refcnt_add(const char *what, const void *pointer,
 		refcnt_t *refcnt, where_t where)
 {
-	/* on main thread */
-	if (refcnt->count == 0) {
+	unsigned old, new;
+	pthread_mutex_lock(&refcnt_mutex);
+	{
+		old = refcnt->count;
+		refcnt->count++;
+		new = refcnt->count;
+	}
+	pthread_mutex_unlock(&refcnt_mutex);
+	if (old == 0) {
 		log_pexpect(where, "refcnt for %s@%p should have been non-0",
 			    what, pointer);
 	}
-	unsigned old = refcnt->count++;
-	DEBUG_LOG(old, "add");
+	DEBUG_LOG("add");
+}
+
+/*
+ * look at refcnt atomically
+ * This is a bit slow but it is used rarely.
+ */
+unsigned refcnt_peek(refcnt_t *refcnt)
+{
+	unsigned val;
+	pthread_mutex_lock(&refcnt_mutex);
+	{
+		val = refcnt->count;
+	}
+	pthread_mutex_unlock(&refcnt_mutex);
+	return val;
 }
 
 bool refcnt_delete(const char *what, const void *pointer,
 		   refcnt_t *refcnt, where_t where)
 {
 	/* on main thread */
-	unsigned old;
-	if (refcnt->count == 0) {
+	unsigned old, new;
+	pthread_mutex_lock(&refcnt_mutex);
+	{
+		old = refcnt->count;
+		if (old > 0) {
+			refcnt->count--;
+		}
+		new = refcnt->count;
+	}
+	pthread_mutex_unlock(&refcnt_mutex);
+	if (old == 0) {
 		log_pexpect(where, "refcnt for %s@%p should have been non-0",
 			    what, pointer);
-		old = 0;
-	} else {
-		old = refcnt->count--;
 	}
-	DEBUG_LOG(old, "del");
-	return refcnt->count == 0;
+	DEBUG_LOG("del");
+	return new == 0;
 }

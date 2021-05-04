@@ -859,6 +859,10 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
+kvmplutotest	ikev1-rw-multiple-subnets wip
+kvmplutotest	ikev2-rw-multiple-subnets wip
+kvmplutotest	ikev2-rw-multiple-subnets-2 wip
+kvmplutotest	ikev2-rw-multiple-subnets-3 wip
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good

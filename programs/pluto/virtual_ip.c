@@ -36,7 +36,7 @@ struct virtual_ip {
 	refcnt_t refcnt;
 	unsigned short flags;	/* union of F_VIRTUAL_* */
 	unsigned short n_net;
-	ip_subnet net[0];
+	ip_subnet net[0 /*n_net*/];	/* 0-length array is a GCC extension */
 };
 
 /*

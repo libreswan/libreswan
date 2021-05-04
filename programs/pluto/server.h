@@ -138,4 +138,7 @@ typedef void callback_cb(struct state *st, void *context);
 void schedule_callback(const char *name, so_serial_t serialno,
 		       callback_cb *callback, void *context);
 
+void call_global_event_inline(enum global_timer type,
+			      struct logger *logger);
+
 #endif /* _SERVER_H */

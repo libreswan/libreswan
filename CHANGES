@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v4.5 (unreleased)
+* libswan: use getaddrinfo(3) instead of gethostbyname2(3) [Hugh]
+* X509: directly append new CRL requests to the fetch queue [Andrew]
 
 v4.4 (April 22, 2021)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]

@@ -389,7 +389,7 @@ static void check_range_op_range(void)
 				FAIL("ttorange(%s) failed: %s", t->R, oops); \
 			}						\
 		} else {						\
-			l = unset_range;				\
+			R = unset_range;				\
 		}
 		TT(l);
 		TT(r);

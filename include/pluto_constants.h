@@ -194,6 +194,8 @@ enum global_timer {
 	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
 };
 
+extern const struct enum_names global_timer_names;
+
 enum event_type {
 	EVENT_NULL,			/* non-event */
 

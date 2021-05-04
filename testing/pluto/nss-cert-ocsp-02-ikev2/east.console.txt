@@ -40,9 +40,4 @@ east #
  grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
 "nss-cert-ocsp" #1: certificate revoked!
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

@@ -49,9 +49,4 @@ west #
 west #
  grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
 west #
- ipsec stop
-Redirecting to: [initsystem]
-west #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

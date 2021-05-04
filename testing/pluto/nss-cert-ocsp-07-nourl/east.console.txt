@@ -38,9 +38,4 @@ east #
 east #
  hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

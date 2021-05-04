@@ -164,7 +164,7 @@ extern struct impair impair;
 
 struct whack_impair {
 	unsigned what;
-	unsigned how;
+	unsigned biased_value;
 };
 
 enum impair_status {

@@ -2222,6 +2222,31 @@ enum_names spi_names = {
 };
 
 /*
+ * enum global_timers
+ */
+static const char *global_timer_name[] = {
+#define E(T) [T] = #T
+	E(EVENT_REINIT_SECRET),
+	E(EVENT_SHUNT_SCAN),
+	E(EVENT_PENDING_DDNS),
+	E(EVENT_SD_WATCHDOG),
+	E(EVENT_PENDING_PHASE2),
+	E(EVENT_CHECK_CRLS),
+	E(EVENT_REVIVE_CONNS),
+	E(EVENT_FREE_ROOT_CERTS),
+	E(EVENT_RESET_LOG_RATE_LIMIT),
+	E(EVENT_PROCESS_KERNEL_QUEUE),
+	E(EVENT_NAT_T_KEEPALIVE),
+#undef E
+};
+const struct enum_names global_timer_names = {
+	0, elemsof(global_timer_name) - 1,
+	ARRAY_REF(global_timer_name),
+	"EVENT_",
+	NULL,
+};
+
+/*
  * Iterate over the enum_names returning all the valid indexes.
  *
  * Use -1 as the starting point / sentinel.
@@ -2614,6 +2639,7 @@ static const enum_names *en_checklist[] = {
 	&ike_version_child_names,
 	&payload_flag_names,
 	&oakley_attr_bit_names,
+	&global_timer_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

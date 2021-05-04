@@ -40,9 +40,4 @@ east #
  grep ERROR /tmp/pluto.log
 "nss-cert-ocsp" #1: NSS ERROR: Peer's Certificate has been revoked.
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

@@ -211,7 +211,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 	const SECItem nss_n = same_chunk_as_secitem(k->n, siBuffer);
 	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.modulus, &nss_n);
 	if (retVal != SECSuccess) {
-		log_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
+		llog_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
 		SECKEY_DestroyPublicKey(publicKey);
 		return false;
 	}
@@ -219,7 +219,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 	const SECItem nss_e = same_chunk_as_secitem(k->e, siBuffer);
 	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.publicExponent, &nss_e);
 	if (retVal != SECSuccess) {
-		log_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
+		llog_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
 		SECKEY_DestroyPublicKey(publicKey);
 		return false;
 	}
@@ -241,7 +241,7 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
 		};
 		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
 				      signature.len) == NULL) {
-			log_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
+			llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
 			SECKEY_DestroyPublicKey(publicKey);
 			return false;
 		}
@@ -935,25 +935,10 @@ static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char
 
 void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 {
-	/*
-	 * XXX: when there are no keys, the tests expect the title
-	 * with blank lines either side. Using the current
-	 * show_separator() would suppress that.  But should this
-	 * change, or should show_separator() change to always wrap
-	 * output in blank lines?
-	 */
 	if (keys_to_show == SHOW_ALL_KEYS) {
-#if 0
-		show_separator(s);
-#else
-		show_comment(s, " ");
-#endif
+		show_blank(s);
 		show_comment(s, "List of Public Keys:");
-#if 0
-		show_separator(s);
-#else
-		show_comment(s, " ");
-#endif
+		show_blank(s);
 	}
 
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {

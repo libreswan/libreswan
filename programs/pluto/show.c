@@ -114,6 +114,11 @@ void show_separator(struct show *s)
 	}
 }
 
+void show_blank(struct show *s)
+{
+	s->separator = SEPARATE_NEXT_OUTPUT;
+}
+
 struct jambuf *show_jambuf(struct show *s)
 {
 	s->scratch_jambuf = ARRAY_AS_JAMBUF(s->scratch_array);

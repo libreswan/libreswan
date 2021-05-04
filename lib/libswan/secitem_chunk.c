@@ -30,11 +30,12 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type)
 
 chunk_t same_secitem_as_chunk(SECItem si)
 {
-	chunk_t chunk = {
-		.ptr = si.data,
-		.len = si.len,
-	};
-	return chunk;
+	return chunk2(si.data, si.len);
+}
+
+shunk_t same_secitem_as_shunk(SECItem si)
+{
+	return shunk2(si.data, si.len);
 }
 
 chunk_t clone_secitem_as_chunk(SECItem si, const char *name)

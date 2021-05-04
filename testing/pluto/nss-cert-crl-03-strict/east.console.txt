@@ -40,9 +40,4 @@ east #
  ipsec auto --listcrls | grep issuer
 000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
- ipsec status
-whack: Pluto is not running (no "/run/pluto/pluto.ctl")
-
+ 

@@ -24,13 +24,13 @@
 #include "where.h"
 
 typedef struct {
-	unsigned count;
+	volatile unsigned count;
 } refcnt_t;
 
 /*
  * Initialize the refcnt.
  *
- * Note that ref_init(O,HERE) breaks as HERE contains braces.
+ * Note that ref_init(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_init(const char *what, const void *pointer,
@@ -43,79 +43,82 @@ void refcnt_init(const char *what, const void *pointer,
 		t_;						       \
 	})
 
+/* look at refcnt atomically */
+unsigned refcnt_peek(refcnt_t *refcnt);
+
 /*
  * Add a reference.
  *
- * Note that ref_add(O,HERE) breaks as HERE contains braces.
+ * Note that ref_add(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_add(const char *what, const void *pointer,
 		refcnt_t *refcnt, where_t where);
 
-#define refcnt_addref(O, WHERE)						\
+#define refcnt_addref(OBJ, WHERE)					\
 	({								\
-		if ((O) == NULL) {					\
-			dbg("addref "#O"@NULL "PRI_WHERE"", pri_where(WHERE)); \
+		if ((OBJ) == NULL) {					\
+			dbg("addref "#OBJ"@NULL "PRI_WHERE"", pri_where(WHERE)); \
 		} else {						\
-			refcnt_add(#O, O, &(O)->refcnt, WHERE);		\
+			refcnt_add(#OBJ, (OBJ), &(OBJ)->refcnt, WHERE);	\
 		}							\
-		(O); /* result */					\
+		(OBJ); /* result */					\
 	})
 
-#define add_ref(O)							\
+#define add_ref(OBJ)							\
 	({								\
 		where_t here_ = HERE;					\
-		refcnt_addref(O, here_);				\
+		refcnt_addref((OBJ), here_);				\
 	})
 
 /*
  * Delete a reference.
  *
- * Note that ref_delete(O,FREE,HERE) breaks as HERE contains braces.
+ * Note that ref_delete(OBJ,FREE,HERE) breaks as HERE contains braces.
  */
 
 bool refcnt_delete(const char *what, const void *pointer,
 		   refcnt_t *refcnt, where_t where) MUST_USE_RESULT;
 
-#define refcnt_delref(O, FREE, WHERE)					\
+#define refcnt_delref(OBJ, FREE, WHERE)					\
 	{								\
-		if (*(O) == NULL) {					\
-			dbg("delref "#O"@NULL "PRI_WHERE"", pri_where(WHERE)); \
-		} else if (refcnt_delete(#O, *(O), &(*(O))->refcnt,	\
+		if (*(OBJ) == NULL) {					\
+			dbg("delref "#OBJ"@NULL "PRI_WHERE"", pri_where(WHERE)); \
+		} else if (refcnt_delete(#OBJ, *(OBJ), &(*(OBJ))->refcnt, \
 					 WHERE)) {			\
-			FREE(O, WHERE);					\
-			passert(*(O) == NULL);				\
+			FREE((OBJ), WHERE);				\
+			passert(*(OBJ) == NULL);			\
 		} else {						\
-			*(O) = NULL; /* kill pointer */			\
+			*(OBJ) = NULL; /* kill pointer */		\
 		}							\
 	}
 
-#define delete_ref(O, FREE)						\
+#define delete_ref(OBJ, FREE)						\
 	{								\
 		where_t here_ = HERE;					\
-		refcnt_delref(O, FREE, here_);				\
+		refcnt_delref((OBJ), FREE, here_);			\
 	}
 
 /*
  * Replace an existing reference.
  *
- * Note that ref_replace(O,NEW,FREE,HERE) breaks as HERE contains
+ * Note that ref_replace(OBJ,NEW,FREE,HERE) breaks as HERE contains
  * braces.
  */
 
-#define refcnt_replace(O, NEW, FREE, WHERE)				\
+#define refcnt_replace(OBJ, NEW, FREE, WHERE)				\
 	{								\
 		/* add new before deleting old */			\
 		ref_add(NEW, WHERE);					\
-		ref_delete(O, FREE, WHERE);				\
-		*(O) = NEW;						\
+		ref_delete((OBJ), FREE, WHERE);				\
+		*(OBJ) = NEW;						\
 	}
 
-#define replace_ref(O, NEW, FREE)					\
+#define replace_ref(OBJ, NEW, FREE)					\
 	{								\
 		where_t here_ = HERE;					\
 		/* add new before deleting old */			\
-		refcnt_replace(O, NEW, FREE, here_);			\
+		refcnt_replace((OBJ), NEW, FREE, here_);		\
 	}
 
 /* for code wanting to use refcnt for normal allocs */

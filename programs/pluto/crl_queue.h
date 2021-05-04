@@ -16,29 +16,28 @@
 #ifndef CRL_QUEUE
 #define CRL_QUEUE
 
+#include <stdbool.h>
+
 #include <secitem.h>
 
 #include "chunk.h"
+#include "shunk.h"
 #include "realtime.h"
 #include "lswlog.h"
 
-#include "x509.h"		/* for generalName_t */
+struct crl_fetch_request;
 
-struct crl_fetch_request {
-	realtime_t request_time;
-	SECItem *issuer_dn;
-	generalName_t *dps;
-	struct crl_fetch_request *next;
-};
+void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger);
+void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger);
 
-struct crl_fetch_request *crl_fetch_request(SECItem *issuer, generalName_t *end_dp,
-					    struct crl_fetch_request *next,
-					    struct logger *logger);
-void free_crl_fetch_requests(struct crl_fetch_request **request);
+void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url/*could be empty*/,
+			   struct crl_fetch_request **requests,
+			   struct logger *logger);
 
-void add_crl_fetch_requests(struct crl_fetch_request *requests);
-struct crl_fetch_request *get_crl_fetch_requests(void);
+typedef bool (fetch_crl_fn)(chunk_t issuer, const char *url, struct logger *logger);
+void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger);
 
 void free_crl_queue(void);
+void list_crl_fetch_requests(struct show *s, bool utc);
 
 #endif
