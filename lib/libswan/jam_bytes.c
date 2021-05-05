@@ -115,15 +115,14 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 }
 
 /*
- * For shell variables - output the string but (assuming text is
- * enclosed in single quotes) convert any shell meta characters into
- * equivalent escape codes.
+ * For shell variables.  Output the string in a format suitable for
+ * use by shell scripts, but wrapped in single quotes.
  *
  * XXX: bonus points for anyone encoding \r \n ... correctly?  But is
  * it even safe?
  */
 
-size_t jam_meta_escaped_bytes(struct jambuf *buf, const void *ptr, size_t size)
+size_t jam_shell_quoted_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
 	size_t n = 0;
 	const char *chars = ptr;

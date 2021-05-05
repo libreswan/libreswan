@@ -284,7 +284,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jam_bytes(FN(dump), BYTES, "09 20 21 22  23 24 25 26  27 28 29 2a  2b 2c 2d 2e  2f 3a 3b 3c  3d 3e 3f 40  5b 5c 5e 2b  60 7b 7c 7d  7e 00");
 	check_jam_bytes(FN(raw), BYTES, "\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~");
 	check_jam_bytes(FN(sanitized), BYTES, "\\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~\\0");
-	check_jam_bytes(FN(meta_escaped), BYTES, "\\011 !\\042#\\044%&\\047()*+,-./:;<=>?@[\\134^+\\140{|}~\\000");
+	check_jam_bytes(FN(shell_quoted), BYTES, "\\011 !\\042#\\044%&\\047()*+,-./:;<=>?@[\\134^+\\140{|}~\\000");
 #undef FN
 #undef BYTES
 
