@@ -1952,7 +1952,7 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 
 	if (st->st_xauth_username[0] == '\0') {
 		jam(buf, ", id='");
-		jam_id(buf, &c->spd.that.id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &c->spd.that.id, jam_sanitized_bytes);
 		jam(buf, "'");
 	}
 

@@ -677,10 +677,8 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * academic - any escape character ('\', '?') is invalid and
 	 * can't match.
 	 */
-	char raw_id_buf[IDTOA_BUF];
-	struct jambuf raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
-	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
-	const char *raw_id = raw_id_buf;
+	id_buf raw_id_buf;
+	const char *raw_id = str_id_bytes(id, jam_raw_bytes, &raw_id_buf);
 	if (id->kind == ID_FQDN) {
 		if (pexpect(raw_id[0] == '@'))
 			raw_id++;

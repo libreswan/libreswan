@@ -202,7 +202,7 @@ err_t atoid(const char *src, struct id *id)
 	return NULL;
 }
 
-void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
+void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 {
 	switch (id->kind) {
 	case ID_FROMCERT:
@@ -243,11 +243,11 @@ void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 	}
 }
 
-const char *str_id(const struct id *id, id_buf *dst)
+const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *dst)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	/* JAM_ID() only emits printable ASCII */
-	jam_id(&buf, id, jam_raw_bytes);
+	jam_id_bytes(&buf, id, jam_bytes);
 	return dst->buf;
 }
 

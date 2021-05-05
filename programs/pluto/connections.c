@@ -570,7 +570,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 	       sameaddr(&this->id.ip_addr, &this->host_addr)))) {
 		open_paren = true;
 		jam_string(buf, "[");
-		jam_id(buf, &this->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &this->id, jam_sanitized_bytes);
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||

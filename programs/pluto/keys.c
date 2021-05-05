@@ -115,10 +115,10 @@ static int print_secrets(struct secret *secret,
 		if (ids == NULL) {
 			jam(buf, "%%any");
 		} else {
-			jam_id(buf, &ids->id, jam_sanitized_bytes);
+			jam_id_bytes(buf, &ids->id, jam_sanitized_bytes);
 			if (ids->next != NULL) {
 				jam(buf, " ");
-				jam_id(buf, &ids->next->id, jam_sanitized_bytes);
+				jam_id_bytes(buf, &ids->next->id, jam_sanitized_bytes);
 				if (ids->next->next != NULL) {
 					jam(buf, " more");
 				}
@@ -547,7 +547,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		    type->name, hash_algo->common.fqn,
 		    s.cert_origin);
 		jam(buf, "'");
-		jam_id(buf, &s.key->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);
 		jam(buf, "'");
 		/* this is so that the cert verified line can be deleted */
 		if (s.key->issuer.ptr != NULL) {
