@@ -627,8 +627,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	return result;
 }
 
-bool cert_VerifySubjectAltName(const CERTCertificate *cert,
-			       const struct id *id, struct logger *logger)
+diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id *id)
 {
 	/*
 	 * Get a handle on the certificate's subject alt name.
@@ -637,12 +636,10 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
 					      &subAltName);
 	if (rv != SECSuccess) {
-		id_buf name;
-		llog(RC_LOG_SERIOUS, logger,
-			    "certificate contains no subjectAltName extension to match %s '%s'",
+		id_buf idb;
+		return diag("certificate contains no subjectAltName extension to match %s '%s'",
 			    enum_name(&ike_id_type_names, id->kind),
-			    str_id(id, &name));
-		return false;
+			    str_id(id, &idb));
 	}
 
 	/*
@@ -653,14 +650,11 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	passert(arena != NULL);
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
-		id_buf name;
-		llog(RC_LOG_SERIOUS, logger,
-			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    enum_name(&ike_id_type_names, id->kind),
-			    str_id(id, &name));
-		/* XXX: is nss error set? */
 		PORT_FreeArena(arena, PR_FALSE);
-		return false;
+		id_buf idb;
+		return diag("certificate subjectAltName extension failed to decode while looking for %s '%s'",
+			    enum_name(&ike_id_type_names, id->kind),
+			    str_id(id, &idb));
 	}
 
 	/*
@@ -750,7 +744,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 					jam(buf, "' in certificate");
 				}
 				PORT_FreeArena(arena, PR_FALSE);
-				return TRUE;
+				return NULL;
 			}
 			break;
 		}
@@ -771,7 +765,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 				dbg("subjectAltname matches address %s",
 				    str_address(&myip, &b));
 				PORT_FreeArena(arena, PR_FALSE);
-				return true;
+				return NULL;
 			}
 			address_buf b;
 			dbg("subjectAltname does not match address %s",
@@ -785,13 +779,11 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	esb_buf esb;
-	llog(RC_LOG_SERIOUS, logger, "certificate subjectAltName extension does not match %s '%s'",
-	     enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
-
 	/* Don't free nameList, it's part of the arena. */
 	PORT_FreeArena(arena, PR_FALSE);
-	return false;
+	esb_buf esb;
+	return diag("certificate subjectAltName extension does not match %s '%s'",
+		    enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
 }
 
 SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)

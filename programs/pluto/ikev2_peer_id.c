@@ -59,12 +59,13 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 */
 	bool remote_cert_matches_id = false;
 	if (ike->sa.st_remote_certs.verified != NULL) {
-		if (match_certs_id(ike->sa.st_remote_certs.verified,
-				   &c->spd.that.id /*ID_FROMCERT => updated*/,
-				   ike->sa.st_logger)) {
+		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
+					     &c->spd.that.id /*ID_FROMCERT => updated*/);
+		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
 			remote_cert_matches_id = true;
 		} else {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			log_state(RC_LOG, &ike->sa, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 				diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
@@ -272,12 +273,13 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	 */
 	bool remote_cert_matches_id = false;
 	if (ike->sa.st_remote_certs.verified != NULL) {
-		if (match_certs_id(ike->sa.st_remote_certs.verified,
-				   &c->spd.that.id /*ID_FROMCERT => updated*/,
-				   ike->sa.st_logger)) {
+		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
+					     &c->spd.that.id /*ID_FROMCERT => updated*/);
+		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
 			remote_cert_matches_id = true;
 		} else {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			log_state(RC_LOG, &ike->sa, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 				return diag("X509: connection failed due to unmatched IKE ID in certificate SAN");

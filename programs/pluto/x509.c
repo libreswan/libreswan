@@ -576,16 +576,14 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
  * "certs" is a list, a certificate chain.
  * We only deal with the head and it must be an endpoint cert.
  */
-bool match_certs_id(const struct certs *certs,
-		    struct id *peer_id /*ID_FROMCERT => updated*/,
-		    struct logger *logger)
+
+diag_t match_end_cert_id(const struct certs *certs,
+			 struct id *peer_id /*ID_FROMCERT => updated*/)
 {
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "cannot use CA certificate for endpoint");
-		return false;
+		return diag("cannot use CA certificate for endpoint");
 	}
 
 	switch (peer_id->kind) {
@@ -596,7 +594,7 @@ bool match_certs_id(const struct certs *certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_VerifySubjectAltName(end_cert, peer_id, logger);
+		return cert_verify_subject_alt_name(end_cert, peer_id);
 	}
 
 	case ID_FROMCERT:
@@ -616,7 +614,7 @@ bool match_certs_id(const struct certs *certs,
 			.name = end_cert_der_subject,
 		};
 		duplicate_id(peer_id, &id);
-		return true;
+		return NULL;
 	}
 
 	case ID_DER_ASN1_DN:
@@ -646,25 +644,24 @@ bool match_certs_id(const struct certs *certs,
 			 * all about certificates.
 			 */
 			id_buf idb;
-			llog(RC_LOG_SERIOUS, logger,
-				    "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			return diag("ID_DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
-		} else if (DBGP(DBG_BASE)) {
+		}
+
+		if (DBGP(DBG_BASE)) {
 			id_buf idb;
 			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
 				end_cert->subjectName,
 				str_id(peer_id, &idb));
 		}
-		return m;
+		return NULL;
 	}
 
 	default:
 	{
 		esb_buf b;
-		llog(RC_LOG_SERIOUS, logger,
-			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-		     enum_show(&ike_id_type_names, peer_id->kind, &b));
-		return false;
+		return diag("unhandled ID type %s; cannot match peer's certificate with expected peer ID",
+			    enum_show(&ike_id_type_names, peer_id->kind, &b));
 	}
 	}
 }
@@ -838,7 +835,9 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
-		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/, st->st_logger)) {
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			log_state(RC_LOG, st, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			return false;
 		}

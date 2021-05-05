@@ -4482,9 +4482,13 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
 	if (this->cert.ty != CERT_NONE &&
-	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN) &&
-	    cert_VerifySubjectAltName(this->cert.u.nss_cert, idr, logger))
-		return true;
+	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
+		diag_t d = cert_verify_subject_alt_name(this->cert.u.nss_cert, idr);
+		if (d == NULL) {
+			return true;
+		}
+		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+	}
 
 	const struct id *wild = &this->id;
 
