@@ -835,20 +835,19 @@ static int extract_end(struct connection *c,
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &dst->ca); /* static result! */
+			free_chunk_content(&dst->ca);
+			ugh = atodn(src->ca, &dst->ca);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
-					    "bad %s CA string '%s': %s (ignored)",
-					    leftright, src->ca, ugh);
-				dst->ca = EMPTY_CHUNK;
+				     "bad %s CA string '%s': %s (ignored)",
+				     leftright, src->ca, ugh);
 			} else {
-				dst->ca = clone_hunk(dst->ca, "ca string");
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(dst->ca);
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
-						    "error parsing %s CA converted to DN: %s",
-						    leftright, ugh);
+					     "error parsing %s CA converted to DN: %s",
+					     leftright, ugh);
 					DBG_dump_hunk(NULL, dst->ca);
 				}
 			}

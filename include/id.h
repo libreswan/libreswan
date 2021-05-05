@@ -72,7 +72,6 @@ void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_byt
 typedef struct {
 	char buf[512];
 } id_buf;
-#define IDTOA_BUF	sizeof(id_buf)
 
 const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *buf);
 #define str_id(ID, BUF) str_id_bytes(ID, jam_raw_bytes, BUF) /* see above */

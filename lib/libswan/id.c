@@ -79,14 +79,14 @@ err_t atoid(const char *src, struct id *id)
 		 * to ASN.1 DN
 		 * discard optional @ character in front of DN
 		 */
-		chunk_t name; /* shunk_t */
+		chunk_t name = empty_chunk;
 		err_t ugh = atodn((*src == '@') ? src + 1 : src, &name);
 		if (ugh != NULL) {
 			return ugh;
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = clone_hunk(name, "asn1"),
+			.name = name,
 		};
 		return NULL;
 	}
