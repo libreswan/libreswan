@@ -531,9 +531,8 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	bool reusable = can_reuse_lease(c);
 
 	id_buf that_idb;
-	char thatstr[IDTOA_BUF + MAX_XAUTH_USERNAME_LEN];
+	char thatstr[sizeof(id_buf) + MAX_XAUTH_USERNAME_LEN];
 	const char *that_name = str_id(that_id, &that_idb);
-	const char *story;
 
 	jam_str(thatstr, sizeof(thatstr), that_name);
 
@@ -558,6 +557,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	}
 
 	struct lease *new_lease = NULL;
+	const char *story;
 	if (reusable) {
 		new_lease = recover_lease(c, thatstr);
 		story = "recovered";
