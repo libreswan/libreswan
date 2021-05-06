@@ -267,14 +267,14 @@ int dn_count_wildcards(chunk_t dn)
  * Distinguished Names - in 1995.
  *
  * XXX: added OID.N.N.N; added '#' prefix; added \ escape; according
- * to NSS bug 210584 this was all added to NSS 2019-12 years ago.
-
+ * to NSS bug 210584 this was all added in 2007.
+ *
  * RFC-1779 was obsoleted by RFC-2253 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
  * in 1997.
  *
  * XXX: deprecated OID.N.N.N; according to NSS bug 1342137 this was
- * fixed 2019-2 years ago.
+ * fixed in 2017.
  *
  * RFC-2253 was obsoleted by RFC-4514 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
@@ -282,6 +282,8 @@ int dn_count_wildcards(chunk_t dn)
  *
  * Hence this tries to implement https://tools.ietf.org/html/rfc4514
  * using \<CHAR> for printable and \XX for non-printable.
+ *
+ * See also NSS bug 1709676.
  */
 
 static err_t format_dn(struct jambuf *buf, chunk_t dn,
@@ -388,7 +390,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 		if (oid_code == OID_UNKNOWN ||
 		    /*
 		     * NSS totally screws up a leading '#' - stripping
-		     * of the escape and then interpreting it as a
+		     * off the escape and then interpreting it as a
 		     * #BER.
 		     */
 		    (nss_compatible &&
