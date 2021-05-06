@@ -81,7 +81,19 @@ static void check_shunk_to_address(void)
 		/* need two 0 */
 		{ LN, 6, "0:2:0:4:0:6:0:8", "0:2:0:4:0:6:0:8", false, },
 
+		{ LN, 0, "localhost", "127.0.0.1", .requires_dns = true, },
+		{ LN, 4, "localhost", "127.0.0.1", .requires_dns = true, },
+
+		{ LN, 0, "localhost6", "::1", .requires_dns = true, },
+		{ LN, 6, "localhost6", "::1", .requires_dns = true, },
+
+		{ LN, 0, "www.libreswan.org", "188.127.201.229", .requires_dns = true, },
 		{ LN, 4, "www.libreswan.org", "188.127.201.229", .requires_dns = true, },
+		{ LN, 6, "www.libreswan.org", "2a00:1190:c00a:f00::229", .requires_dns = true, },
+
+		{ LN, 0, "nowhere.libreswan.org", NULL, .requires_dns = true, },
+		{ LN, 4, "nowhere.libreswan.org", NULL, .requires_dns = true, },
+		{ LN, 6, "nowhere.libreswan.org", NULL, .requires_dns = true, },
 
 		/* hex/octal */
 		{ LN, 4, "0x01.0x02.0x03.0x04", "1.2.3.4", false, },
@@ -152,7 +164,7 @@ static void check_shunk_to_address(void)
 			} else if (t->str == NULL) {
 				FAIL("ttoaddress_dns(%s, %s) unexpecedly succeeded",
 				     t->in, pri_family(t->family));
-			} else {
+			} else if (t->family != AF_UNSPEC) {
 				CHECK_TYPE(address);
 			}
 		}
@@ -163,7 +175,6 @@ static void check_shunk_to_address(void)
 		} else if (t->str != NULL) {
 			CHECK_STR2(address);
 		}
-
 	}
 }
 
