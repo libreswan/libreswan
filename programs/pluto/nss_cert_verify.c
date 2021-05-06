@@ -667,6 +667,11 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * Convert the ID with no special escaping (other than that
 	 * specified for converting an ASN.1 DN to text).
 	 *
+	 * The result is printable without sanitizing - str_id_bytes()
+	 * only emits printable ASCII (the JAM_BYTES parameter is for
+	 * converting the printable ASCII to something suitable for
+	 * quoted shell).
+	 *
 	 * XXX: Is there any point in continuing when KIND isn't
 	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
 	 * code was calling this with the ID's first character - not
@@ -677,13 +682,13 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * academic - any escape character ('\', '?') is invalid and
 	 * can't match.
 	 */
-	id_buf raw_id_buf;
-	const char *raw_id = str_id_bytes(id, jam_raw_bytes, &raw_id_buf);
+	id_buf ascii_id_buf;
+	const char *ascii_id = str_id_bytes(id, jam_raw_bytes, &ascii_id_buf);
 	if (id->kind == ID_FQDN) {
-		if (pexpect(raw_id[0] == '@'))
-			raw_id++;
+		if (pexpect(ascii_id[0] == '@'))
+			ascii_id++;
 	} else {
-		pexpect(raw_id[0] != '@');
+		pexpect(ascii_id[0] != '@');
 	}
 
 	/*
@@ -694,7 +699,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * and an ID_FQDN containing a textual IP address?
 	 */
 	ip_address myip;
-	bool san_ip = (ttoaddress_num(shunk1(raw_id), NULL/*UNSPEC*/, &myip) == NULL);
+	bool san_ip = (ttoaddress_num(shunk1(ascii_id), NULL/*UNSPEC*/, &myip) == NULL);
 
 	/*
 	 * nameList is a pointer into a non-empty circular linked
@@ -722,7 +727,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 			const char *c_ptr = (const void *) current->name.other.data;
 			size_t c_len =  current->name.other.len;
 
-			const char *n_ptr = raw_id;
+			const char *n_ptr = ascii_id;
 			static const char wild[] = "*.";
 			const size_t wild_len = sizeof(wild) - 1;
 
@@ -739,9 +744,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
 				LSWDBGP(DBG_BASE, buf) {
-					jam(buf, "subjectAltname '");
-					jam_sanitized_bytes(buf, raw_id, strlen(raw_id)),
-					jam(buf, "' matched '");
+					jam(buf, "subjectAltname '%s' matched '", ascii_id),
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);
 					jam(buf, "' in certificate");
@@ -782,13 +785,9 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
-		jam(buf, "certificate subjectAltName extension does not match ");
-		jam_enum(buf, &ike_id_type_names, id->kind);
-		jam(buf, " '");
-		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
-		jam(buf, "'");
-	}
+	esb_buf esb;
+	llog(RC_LOG_SERIOUS, logger, "certificate subjectAltName extension does not match %s '%s'",
+	     enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
 
 	/* Don't free nameList, it's part of the arena. */
 	PORT_FreeArena(arena, PR_FALSE);
