@@ -188,6 +188,7 @@ OBJS += ike_alg_none.o
 
 ifeq ($(USE_SHA1),true)
 OBJS += ike_alg_sha1.o
+USERLAND_CFLAGS += -DUSE_SHA1
 endif
 
 ifeq ($(USE_SHA2),true)
