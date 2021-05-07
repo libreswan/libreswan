@@ -637,7 +637,7 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf idb;
-		return diag("certificate contains no subjectAltName extension to match %s '%s'",
+		return diag("peer certificate contains no subjectAltName extension to match %s '%s'",
 			    enum_name(&ike_id_type_names, id->kind),
 			    str_id(id, &idb));
 	}
@@ -652,7 +652,7 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 	if (nameList == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 		id_buf idb;
-		return diag("certificate subjectAltName extension failed to decode while looking for %s '%s'",
+		return diag("peer certificate subjectAltName extension failed to decode while looking for %s '%s'",
 			    enum_name(&ike_id_type_names, id->kind),
 			    str_id(id, &idb));
 	}
@@ -738,10 +738,9 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
 				LSWDBGP(DBG_BASE, buf) {
-					jam(buf, "subjectAltname '%s' matched '", ascii_id),
+					jam(buf, "peer certificate subjectAltname '%s' matched '", ascii_id),
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);
-					jam(buf, "' in certificate");
 				}
 				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
@@ -762,13 +761,13 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 			if (hunk_memeq(as, current->name.other.data,
 				       current->name.other.len)) {
 				address_buf b;
-				dbg("subjectAltname matches address %s",
+				dbg("peer certificate subjectAltname matches address %s",
 				    str_address(&myip, &b));
 				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
 			}
 			address_buf b;
-			dbg("subjectAltname does not match address %s",
+			dbg("peer certificate subjectAltname does not match address %s",
 			    str_address(&myip, &b));
 			break;
 		}
@@ -779,10 +778,12 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	/* Don't free nameList, it's part of the arena. */
+	/*
+	 * Don't need to free nameList, it's part of the arena.
+	 */
 	PORT_FreeArena(arena, PR_FALSE);
 	esb_buf esb;
-	return diag("certificate subjectAltName extension does not match %s '%s'",
+	return diag("peer certificate subjectAltName extension does not match %s '%s'",
 		    enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
 }
 

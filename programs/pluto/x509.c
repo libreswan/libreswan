@@ -582,7 +582,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
-		return diag("cannot use CA certificate for endpoint");
+		return diag("cannot use peer CA certificate");
 	}
 
 	switch (peer_id->kind) {
@@ -643,7 +643,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 			 * all about certificates.
 			 */
 			id_buf idb;
-			return diag("ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			return diag("peer ID_DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
 		}
 
@@ -837,7 +837,6 @@ bool v1_verify_certs(struct msg_digest *md)
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			log_state(RC_LOG, st, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
 			return false;
 		}
 		dbg("SAN ID matched, updating that.cert");
