@@ -100,11 +100,6 @@ SECItem same_chunk_as_dercert_secitem(chunk_t chunk)
 	return same_chunk_as_secitem(chunk, siDERCertBuffer);
 }
 
-chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
-{
-	return same_secitem_as_chunk(cert->derCert);
-}
-
 static const char *dntoasi(dn_buf *dst, SECItem si)
 {
 	return str_dn(same_secitem_as_chunk(si), dst);
@@ -488,11 +483,15 @@ void free_auth_chain(chunk_t *chain, int chain_len)
 	}
 }
 
-int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
-						     bool full_chain)
+int get_auth_chain(chunk_t *out_chain, int chain_max,
+		   const struct cert *cert, bool full_chain)
 {
-	if (end_cert == NULL)
+	if (cert == NULL)
 		return 0;
+	CERTCertificate *end_cert = cert->nss_cert;
+	if (end_cert == NULL) {
+		return 0;
+	}
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -554,8 +553,8 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 		return true;
 	}
 
-	if (c->spd.that.cert.u.nss_cert != NULL) {
-		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.u.nss_cert->derIssuer);
+	if (c->spd.that.cert.nss_cert != NULL) {
+		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.nss_cert->derIssuer);
 		return true;
 	}
 
@@ -845,12 +844,10 @@ bool v1_verify_certs(struct msg_digest *md)
 	}
 
 	st->st_v1_peer_alt_id = true;
-	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
-	    c->spd.that.cert.u.nss_cert != NULL) {
-		CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
+	if (c->spd.that.cert.nss_cert != NULL) {
+		CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
 	}
-	c->spd.that.cert.u.nss_cert = CERT_DupCertificate(certs->cert);
-	c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+	c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	return true;
 }
 
@@ -1021,7 +1018,7 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert,
 	return result;
 }
 
-bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs)
+bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
 {
 	pb_stream cert_pbs;
 	struct isakmp_cert cert_hd = {
@@ -1147,7 +1144,7 @@ bool ikev2_send_cert_decision(const struct state *st)
 		policy_buf pb;
 		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
 		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
-	} else if (this->cert.ty == CERT_NONE || this->cert.u.nss_cert == NULL) {
+	} else if (this->cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
 		   st->hidden_variables.st_got_certrequest) {
@@ -1234,14 +1231,13 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
 stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
-	const cert_t mycert = c->spd.this.cert;
+	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 	bool send_authcerts = c->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
 		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
-						send_full_chain);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1271,39 +1267,24 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					mycert.u.nss_cert,
-					send_full_chain ? TRUE : FALSE);
+					   mycert,
+					   send_full_chain ? TRUE : FALSE);
 	}
-
-#if 0
-	if (chain_len == 0)
-		send_authcerts = FALSE;
-
- need to make that function v2 aware and move it
-
-	doi_log_cert_thinking(st->st_oakley.auth,
-		mycert.ty,
-		st->st_connection->spd.this.sendcert,
-		st->hidden_variables.st_got_certrequest,
-		send_cert,
-		send_authcerts);
-#endif
 
 	const struct ikev2_cert certhdr = {
 		.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
-		.isac_enc = mycert.ty,
+		.isac_enc = cert_ike_type(mycert),
 	};
 
 	/*   send own (Initiator CERT) */
 	{
 		pb_stream cert_pbs;
 
-		dbg("sending [CERT] of certificate: %s", mycert.u.nss_cert->subjectName);
+		dbg("sending [CERT] of certificate: %s", cert_nickname(mycert));
 
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs) ||
-		    !out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-							&cert_pbs, "CERT")) {
+		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1589,9 +1570,7 @@ void list_certs(struct show *s)
  */
 const char *cert_nickname(const cert_t *cert)
 {
-	return cert->ty == CERT_X509_SIGNATURE &&
-		cert->u.nss_cert != NULL ?
-			cert->u.nss_cert->nickname : NULL;
+	return cert != NULL && cert->nss_cert != NULL ? cert->nss_cert->nickname : NULL;
 }
 
 void list_authcerts(struct show *s)

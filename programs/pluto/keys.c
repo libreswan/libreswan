@@ -717,8 +717,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
-	if (c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
-	    c->spd.this.cert.u.nss_cert != NULL) {
+	if (c->spd.this.cert.nss_cert != NULL) {
 		const char *nickname = cert_nickname(&c->spd.this.cert);
 
 		id_buf this_buf, that_buf;
@@ -953,7 +952,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, st
 	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
 						     &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
-			cert->u.nss_cert->nickname);
+			cert->nss_cert->nickname);
 	return err;
 }
 

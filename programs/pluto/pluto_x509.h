@@ -35,6 +35,7 @@ struct connection;
 struct msg_digest;
 struct certs;
 struct ike_sa;
+struct cert;
 
 bool v1_decode_certs(struct msg_digest *md);
 bool v1_verify_certs(struct msg_digest *md);
@@ -58,10 +59,9 @@ extern void load_authcerts(const char *type, const char *path,
 extern bool match_requested_ca(const generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 
-extern bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs);
+extern bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs);
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
-					      CERTCertificate *end_cert,
-					      bool full_chain);
+			  const struct cert *end_cert, bool full_chain);
 extern void free_auth_chain(chunk_t *chain, int chain_len);
 extern bool ikev2_send_cert_decision(const struct state *st);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,

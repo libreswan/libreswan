@@ -56,14 +56,12 @@ struct show;
  * currently X.509 certificates are supported
  */
 typedef struct cert {
-	enum ike_cert_type ty;
-	union {
-		/* some day we may support more */
-		CERTCertificate *nss_cert;	/* CERT_X509_SIGNATURE */
-	} u;
+	CERTCertificate *nss_cert;	/* CERT_X509_SIGNATURE */
 } cert_t;
 
-const char *cert_nickname(const cert_t *cert);
+const char *cert_nickname(const struct cert *cert);
+enum ike_cert_type cert_ike_type(const struct cert *cert);
+shunk_t cert_der(const struct cert *cert);
 
 extern void list_certs(struct show *s);
 

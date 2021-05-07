@@ -786,7 +786,7 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 		    enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
 }
 
-SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
+SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -797,7 +797,7 @@ SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 	SEC_PKCS7ContentInfo *content
-		= SEC_PKCS7CreateCertsOnly(cert,
+		= SEC_PKCS7CreateCertsOnly(cert->nss_cert,
 					   send_full_chain ? PR_TRUE : PR_FALSE,
 					   handle);
 	SECItem *pkcs7 = SEC_PKCS7EncodeItem(NULL, NULL, content,

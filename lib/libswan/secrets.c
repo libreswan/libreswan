@@ -1820,17 +1820,17 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 {
 	*load_needed = false;
 
-	if (cert == NULL || cert->u.nss_cert == NULL) {
+	if (cert == NULL || cert->nss_cert == NULL) {
 		return "NSS cert not found";
 	}
 
-	SECKEYPublicKey *pubk = SECKEY_ExtractPublicKey(&cert->u.nss_cert->subjectPublicKeyInfo);
+	SECKEYPublicKey *pubk = SECKEY_ExtractPublicKey(&cert->nss_cert->subjectPublicKeyInfo);
 	if (pubk == NULL) {
 		/* dbg(... nss error) */
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
-	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->u.nss_cert, pks, load_needed, logger,
+	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->nss_cert, pks, load_needed, logger,
 						       /* extracted fields */
 						       pubk);
 	SECKEY_DestroyPublicKey(pubk);

@@ -3248,7 +3248,7 @@ bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 		      uint8_t type)
 {
 	for (int i = 0; i < n; i++) {
-		if (!ikev1_ship_CERT(type, chain[i], outs))
+		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(chain[i]), outs))
 			return false;
 	}
 
@@ -3256,11 +3256,11 @@ bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 }
 
 void doi_log_cert_thinking(uint16_t auth,
-				enum ike_cert_type certtype,
-				enum certpolicy policy,
-				bool gotcertrequest,
-				bool send_cert,
-				bool send_chain)
+			   enum ike_cert_type certtype,
+			   enum certpolicy policy,
+			   bool gotcertrequest,
+			   bool send_cert,
+			   bool send_chain)
 {
 	if (DBGP(DBG_BASE)) {
 		DBG_log("thinking about whether to send my certificate:");

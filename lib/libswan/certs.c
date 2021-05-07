@@ -25,6 +25,7 @@
 
 #include "lswalloc.h"
 #include "passert.h"
+#include "lswnss.h"		/* for same_secitem_as_shunk() */
 
 void release_certs(struct certs **head)
 {
@@ -61,4 +62,23 @@ CERTCertificate *make_end_cert_first(struct certs **head)
 		}
 	}
 	return NULL;
+}
+
+
+enum ike_cert_type cert_ike_type(const struct cert *cert UNUSED)
+{
+	if (cert == NULL || cert->nss_cert == NULL) {
+		return CERT_NONE;
+	} else {
+		return CERT_X509_SIGNATURE;
+	}
+}
+
+shunk_t cert_der(const struct cert *cert)
+{
+	if (cert == NULL || cert->nss_cert == NULL) {
+		return null_shunk;
+	} else {
+		return same_secitem_as_shunk(cert->nss_cert->derCert);
+	}
 }
