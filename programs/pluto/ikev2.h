@@ -285,4 +285,13 @@ bool emit_v2N_compression(struct state *cst,
 			bool OK,
 			pb_stream *s);
 
+struct payload_summary ikev2_decode_payloads(struct logger *log,
+					     struct msg_digest *md,
+					     pb_stream *in_pbs,
+					     enum next_payload_types_ikev2 np);
+
+void v2_dispatch(struct ike_sa *ike, struct state *st,
+		 struct msg_digest *md,
+		 const struct state_v2_microcode *transition);
+
 #endif
