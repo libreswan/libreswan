@@ -1,3 +1,6 @@
+set +o emacs
+set +o vi
+set +o gmacs
 # note swan-prep does not yet supprt iked 
 #/testing/guestbin/swan-prep
 cp openbsde.conf /etc/iked.conf
