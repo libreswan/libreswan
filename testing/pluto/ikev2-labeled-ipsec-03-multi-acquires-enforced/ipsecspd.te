@@ -87,3 +87,9 @@ corecmd_bin_entry_type(netutils_t)
 corecmd_shell_entry_type(netutils_t)
 corenet_tcp_bind_generic_port(netutils_t)
 files_exec_usr_files(netutils_t)
+
+#============= ifconfig_t ==============
+allow ifconfig_t netutils_t:association setcontext;
+
+#============= unconfined_t ==============
+allow unconfined_t netutils_t:association setcontext;
