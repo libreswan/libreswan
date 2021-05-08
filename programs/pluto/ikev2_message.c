@@ -1276,7 +1276,8 @@ static bool record_outbound_fragments(const pb_stream *body,
 	{
 		pb_stream pbs;
 		init_pbs(&pbs, body->start, pbs_offset(body), "sk hdr");
-		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), NULL);
+		pb_stream ignored;
+		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &ignored);
 		if (d != NULL) {
 			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;
@@ -1293,7 +1294,8 @@ static bool record_outbound_fragments(const pb_stream *body,
 	{
 		pb_stream pbs = same_chunk_as_in_pbs(sk->payload, "sk");
 		struct ikev2_generic e;
-		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), NULL);
+		pb_stream ignored;
+		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);
 		if (d != NULL) {
 			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
 			return false;

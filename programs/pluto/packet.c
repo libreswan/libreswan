@@ -2009,6 +2009,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 	passert(dest_size >= sd->size);
 	uint8_t *roof = cur + sd->size; /* may be changed by a length field */
+	bool length_field_found = false;
 	uint8_t *dest = dest_start;
 	uint8_t *dest_end = dest + dest_size;
 	bool immediate = false;
@@ -2076,6 +2077,8 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			case ft_len:    /* length of this struct and any following crud */
 			case ft_lv:     /* length/value field of attribute */
 			{
+				passert(!length_field_found && obj_pbs != NULL);
+				length_field_found = true;
 				size_t len = fp->field_type ==
 					ft_len ? n :
 					immediate ? sd->size :
@@ -2178,6 +2181,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 	passert(cur == ins->cur + sd->size);
 	if (obj_pbs != NULL) {
+		passert(length_field_found);
 		init_pbs(obj_pbs, ins->cur,
 			 roof - ins->cur, sd->name);
 		obj_pbs->container = ins;

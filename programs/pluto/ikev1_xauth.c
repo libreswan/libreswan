@@ -1661,8 +1661,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			struct isakmp_attribute attr;
 
+			pb_stream ignored;	/* we ignore the attribute value */
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
-						 &attr, sizeof(attr), NULL);
+						 &attr, sizeof(attr), &ignored);
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
