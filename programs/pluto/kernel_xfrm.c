@@ -1030,6 +1030,11 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
+	/*
+	 * Note: Coverity believes that req.n will be overrun
+	 * but that is wrong: the type of req.n only covers the header.
+	 * Maybe there is a way to write this that doesn't mislead Coverity.
+	 */
 	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
 				  "mobike", sa->text_said, logger);
 	if (!r)
