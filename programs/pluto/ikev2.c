@@ -2114,7 +2114,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 */
 	statetime_t start = statetime_start(st);
 	so_serial_t old_st = st->st_serialno;
-	so_serial_t old_md_st = md != NULL && md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
+	so_serial_t old_md_st = md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
 	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 	stf_status e = svm->processor(ike, child, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
