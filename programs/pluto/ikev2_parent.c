@@ -3491,7 +3491,7 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	struct state *rst = state_with_serialno(pred);
 	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
 
-	if (rst !=  NULL && IS_V2_ESTABLISHED(rst->st_state)) {
+	if (rst != NULL && IS_V2_ESTABLISHED(rst->st_state)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
 		monotime_t now = mononow();
 		const struct pluto_event *ev = rst->st_event;
@@ -3503,10 +3503,14 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	deltatime_buf lb;
 	log_state(RC_LOG, st, "rekeyed #%lu %s %s remaining life %ss", pred,
 		  st->st_state->name,
-		  rst ==  NULL ? "and the state is gone" : "and expire it",
+		  rst == NULL ? "and the state is gone" : "and expire it",
 		  str_deltatime(lifetime, &lb));
 
-	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
+	/*
+	 * ??? added pexpect to avoid NULL dereference.
+	 * Why do we test this three times?  Should it not be done once and for all?
+	 */
+	if (pexpect(rst != NULL) && deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}
