@@ -38,8 +38,10 @@ void retransmit_v2_msg(struct state *st)
 	passert(st != NULL);
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
+		/* we cannot do anything useful */
 		dbg("no ike sa so going away");
 		delete_state(st);
+		return;
 	}
 
 	struct connection *c = st->st_connection;
