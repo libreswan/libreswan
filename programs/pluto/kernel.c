@@ -2294,9 +2294,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			i++;
 		}
 
-		dbg("%s() before proto %d", __func__, proto_info[0].proto);
 		/* ??? setting .proto to 0, an invalid value.  See /usr/include/linux/in.h. */
 		proto_info[i].proto = 0;
+
+		dbg("%s() before proto %d", __func__, proto_info[0].proto);
 
 		/*
 		 * ??? why is mode overwritten ONLY if true
