@@ -938,10 +938,17 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 	 * XXX: Still a mess.  Should call processor with the IKE SA.
 	 * The processor can then create a nested state.
 	 */
-	enum sa_type sa_type = (svm->state == STATE_V2_NEW_CHILD_R0 ? IPSEC_SA :
-				svm->state == STATE_V2_REKEY_CHILD_R0 ? IPSEC_SA :
-				pexpect(svm->state == STATE_V2_REKEY_IKE_R0) ? IKE_SA :
-				IKE_SA);
+	enum sa_type sa_type;
+	switch (svm->state) {
+	case STATE_V2_NEW_CHILD_R0:
+	case STATE_V2_REKEY_CHILD_R0:
+		sa_type = IPSEC_SA;
+		break;
+	default:
+		pexpect(svm->state == STATE_V2_REKEY_IKE_R0);
+		sa_type = IKE_SA;		
+	}
+
 	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
 						    ike, sa_type,
 						    SA_RESPONDER,
