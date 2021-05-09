@@ -1128,9 +1128,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			return STF_IGNORE;
 		default:
 		{
-			struct logger *logger = (st != NULL ? st->st_logger :
-						 md != NULL ? md->md_logger :
-						 &failsafe_logger);
+			struct logger *logger = st != NULL ? st->st_logger :
+							     md->md_logger;
 			llog(RC_LOG_SERIOUS, logger,
 				    "received and ignored notification payload: %s",
 				    enum_name(&ikev1_notify_names, n->isan_type));
