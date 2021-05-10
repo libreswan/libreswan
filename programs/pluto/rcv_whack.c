@@ -734,7 +734,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_list & LIST_CRLS) {
 		dbg("whack: list & LIST_CRLS ...");
-		list_crls(whackfd);
+		list_crls(s);
 #if defined(LIBCURL) || defined(LIBLDAP)
 		list_crl_fetch_requests(s, m->whack_utc);
 #endif
