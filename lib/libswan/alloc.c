@@ -163,7 +163,7 @@ void pfree(void *ptr)
 	}
 }
 
-void report_leaks(struct logger *logger)
+bool report_leaks(struct logger *logger)
 {
 	union mhdr *p,
 		*pprev = NULL;
@@ -206,6 +206,8 @@ void report_leaks(struct logger *logger)
 	} else {
 		llog(RC_LOG, logger, "leak detective found no leaks");
 	}
+
+	return numleaks != 0;
 }
 
 static void *zalloc(size_t size)

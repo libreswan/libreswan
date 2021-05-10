@@ -43,7 +43,7 @@ extern void *clone_bytes(const void *orig, size_t size,
 void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *name);
 
 extern bool leak_detective;
-extern void report_leaks(struct logger *logger);
+extern bool report_leaks(struct logger *logger); /* true is bad */
 
 /*
  * Notes on __typeof__().
