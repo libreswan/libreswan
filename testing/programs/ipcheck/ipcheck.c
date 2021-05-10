@@ -25,21 +25,36 @@
 #include "lswtool.h"
 
 unsigned fails;
-bool use_dns = true;
+enum have_dns have_dns = DNS_NO;
 
 int main(int argc, char *argv[])
 {
 	struct logger *logger = tool_init_log(argv[0]);
 	log_ip = false; /* force sensitive */
 
-	for (char **argp = argv+1; argp < argv+argc; argp++) {
-		if (streq(*argp, "--nodns")) {
-			use_dns = false;
-		} else {
-			fprintf(stderr, "%s: unknown option '%s'\n",
-				argv[0], *argp);
-			return 1;
-		}
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s --dns={no,hosts-file,yes}\n", argv[0]);
+		return 1;
+	}
+
+	/* only one option for now */
+	const char *dns = argv[1];
+	if (!eat(dns, "--dns")) {
+		fprintf(stderr, "%s: unknown option '%s'\n",
+			argv[0], argv[1]);
+		return 1;
+	}
+
+	if (streq(dns, "=no")) {
+		have_dns = DNS_NO;
+	} else if (streq(dns, "=hosts-file") || streq(dns, "")) {
+		have_dns = HAVE_HOSTS_FILE;
+	} else if (streq(dns, "=yes")) {
+		have_dns = DNS_YES;
+	} else {
+		fprintf(stderr, "%s: unknown --dns param '%s'\n",
+			argv[0], dns);
+		return 1;
 	}
 
 	ip_address_check();
@@ -54,6 +69,10 @@ int main(int argc, char *argv[])
 	ip_port_check();
 	ip_port_range_check();
 	ip_cidr_check();
+
+	if (report_leaks(logger)) {
+		fails++;
+	}
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

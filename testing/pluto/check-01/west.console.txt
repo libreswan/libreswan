@@ -35,8 +35,9 @@ west #
 west #
  ipsec keyidcheck > /dev/null || echo failed
 west #
- # Need to disable DNS tests
+ # Need to disable DNS tests; localhost is ok
 west #
- ipsec ipcheck --nodns > /dev/null || echo failed
+ ipsec ipcheck --dns=hosts-file > /dev/null || echo failed
+ipcheck: leak detective found no leaks
 west #
  
