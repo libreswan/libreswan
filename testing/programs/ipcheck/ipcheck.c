@@ -29,8 +29,9 @@ enum have_dns have_dns = DNS_NO;
 
 int main(int argc, char *argv[])
 {
-	struct logger *logger = tool_init_log(argv[0]);
+	leak_detective = true;
 	log_ip = false; /* force sensitive */
+	struct logger *logger = tool_init_log(argv[0]);
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s --dns={no,hosts-file,yes}\n", argv[0]);

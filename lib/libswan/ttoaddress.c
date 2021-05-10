@@ -363,54 +363,57 @@ err_t getpiece(const char **srcp,	/* *srcp is updated */
  */
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
+	*dst = unset_address;
+
 	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
-	struct addrinfo *res = NULL;
+	struct addrinfo *res = NULL; /* must-free when EAI==0 */
 	const struct addrinfo hints = (struct addrinfo) {
 		.ai_family = afi == NULL ? AF_UNSPEC : afi->af,
 	};
-	*dst = unset_address;
-
 	int eai = getaddrinfo(name, NULL, &hints, &res);
-	err_t err = NULL;
 
 	if (eai != 0) {
 		/*
-		 * return system-supplied diagnostic
-		 * except where it is particularly confusing.
-		 * "Name or service not unknown." is terrible.
+		 * Return what the pluto testsuite expects for now.
+		 *
+		 * XXX: How portable are errors returned by
+		 * gai_strerror(eai)?
+		 *
+		 * XXX: what is with "(no validation performed)"?
+		 * Perhaps it is refering to DNSSEC.
 		 */
-		err = eai == EAI_NONAME ? "NAME is unknown" : gai_strerror(eai);
-	} else if (res == NULL) {
-		err = "not a numeric IP address and name lookup failed (no validation performed)";
-	} else {
-		/* always choose IPv4 result if there is one */
-		struct addrinfo *winner = res;
+		pfree(name);
+		/* RES is not defined */
+		return "not a numeric IP address and name lookup failed (no validation performed)";
+	}
 
+	/*
+	 * When AFI is specified, use the first entry; and prefer IPv4
+	 * when it wasn't.
+	 *
+	 * Linux orders things IPv4->IPv6, but NetBSD at least is the
+	 * reverse; hence the search.
+	 */
+	struct addrinfo *winner = res;
+	if (afi == NULL) {
 		for (struct addrinfo *r = res; r!= NULL; r = r->ai_next) {
 			if (r->ai_family == AF_INET) {
 				winner = r;
 				break;
 			}
 		}
-
-		ip_port mbz = { .hport = 0 };
-		ip_sockaddr sa = {
-			.len = winner->ai_addrlen,
-		};
-		passert(sizeof(sa.sa) >= winner->ai_addrlen);
-		memcpy(&sa.sa, winner->ai_addr, winner->ai_addrlen);
-		passert(sa.sa.sa.sa_family == winner->ai_family);
-		/* boneheaded getaddrinfo(3) leaves port field uninitialized */
-		if (winner->ai_family == AF_INET) {
-			sa.sa.sin.sin_port = 0;
-		} else if (winner->ai_family == AF_INET6) {
-			sa.sa.sin6.sin6_port = 0;
-		} else {
-			bad_case(winner->ai_family);
-		}
-		err = sockaddr_to_address_port(sa, dst, &mbz);
-		passert(hport(mbz) == 0);
 	}
+
+	/* ai_addrlen is probably shorter than (sa.sa) */
+	ip_sockaddr sa = {
+		.len = winner->ai_addrlen,
+	};
+	passert(winner->ai_addrlen <= sizeof(sa.sa));
+	memcpy(&sa.sa, winner->ai_addr, winner->ai_addrlen);
+	passert(sa.sa.sa.sa_family == winner->ai_family);
+
+	/* boneheaded getaddrinfo(3) leaves port field undefined */
+	err_t err = sockaddr_to_address_port(sa, dst, NULL/*ignore port*/);
 
 	freeaddrinfo(res);
 	pfree(name);
