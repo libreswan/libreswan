@@ -38,7 +38,7 @@ static err_t colon(shunk_t src, ip_address *);
 static err_t getpiece(const char **, const char *, unsigned *);
 
 /*
- * ttoaddr_num - convert "numeric" IP address to binary address.
+ * ttoaddress_num - convert "numeric" IP address to binary address.
  *
  * NULL for success, else static string literal diagnostic.
  */
@@ -59,20 +59,28 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	 * the more typical code report an error.
 	 */
 
-	if (afi == &ipv4_info || afi == NULL) {
+	if (afi == &ipv4_info) {
 		if (tryhex(src, dst)) {
 			return NULL;
 		}
+		return trydotted(src, dst);
 	}
 
-	if (memchr(src.ptr, ':', src.len) != NULL) {
-		if (afi == &ipv4_info) {
-			return "IPv4 address may not contain `:'";
-		}
+	if (afi == &ipv6_info) {
 		return colon(src, dst);
 	}
 
-	return trydotted(src, dst);
+	if (afi == NULL) {
+		if (tryhex(src, dst)) {
+			return NULL;
+		}
+		if (memchr(src.ptr, ':', src.len) != NULL) {
+			return colon(src, dst);
+		}
+		return trydotted(src, dst);
+	}
+
+	return "address family unknown";
 }
 
 /*
