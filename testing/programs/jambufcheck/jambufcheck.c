@@ -20,6 +20,8 @@
 
 #include "jambuf.h"		/* for struct jambuf */
 #include "constants.h"		/* for streq() */
+#include "lswalloc.h"		/* for leaks */
+#include "lswtool.h"		/* for tool_init_log() */
 
 unsigned fails;
 
@@ -195,8 +197,11 @@ static void check_jam_bytes(const char *what, jam_bytes_fn *jam_bytes,
 	}
 }
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	check_jambuf(true, "(null)", NULL, NULL);
 	check_jambuf(true, "0", "0", NULL);
 	check_jambuf(true, "01", "0", "1", NULL);
@@ -296,6 +301,10 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_sanitized("\177", "\\177");
 	check_sanitized("\1779", "\\1779");
 	check_sanitized("\177a", "\\177a");
+
+	if (report_leaks(logger)) {
+		fails++;
+	}
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

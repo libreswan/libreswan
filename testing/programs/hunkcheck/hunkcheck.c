@@ -24,6 +24,8 @@
 #include "chunk.h"
 #include "where.h"
 
+#include "lswtool.h"		/* for tool_init_log() */
+
 unsigned fails;
 
 #define PRINT(FMT, ...)							\
@@ -782,8 +784,11 @@ static void check_ntoh_hton_hunk(void)
 	}
 }
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	check_hunk_eq();
 	check_shunk_slice();
 	check_shunk_token();
@@ -793,6 +798,10 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_hunk_char_is();
 	check_shunk_to_uintmax();
 	check_ntoh_hton_hunk();
+
+	if (report_leaks(logger)) {
+		fails++;
+	}
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
