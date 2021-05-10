@@ -32,6 +32,7 @@ west #
  ipsec hunkcheck > /dev/null || echo failed
 west #
  ipsec dncheck > /dev/null || echo failed
+dncheck: leak detective found no leaks
 west #
  ipsec keyidcheck > /dev/null || echo failed
 west #

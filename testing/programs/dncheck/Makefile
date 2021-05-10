@@ -31,3 +31,6 @@ include $(top_srcdir)/mk/program.mk
 else
 include ../../../mk/program.mk
 endif
+
+local-check: $(PROGRAM)
+	$(builddir)/$(PROGRAM)

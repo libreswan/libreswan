@@ -19,6 +19,8 @@
 
 #include <cert.h>
 
+#include "lswtool.h"		/* for tool_init_log() */
+
 #include "x509.h"
 #include "asn1.h"
 
@@ -242,6 +244,7 @@ static void dn_check(void)
 					FAIL(" jam_dn(atodn('%s')) returned '%s', expecting '%s'", \
 					     IN, adnbuf.buf, t->out);	\
 				}					\
+				free_chunk_content(&adn);		\
 			}						\
 		}
 
@@ -253,14 +256,21 @@ static void dn_check(void)
 	}
 }
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	dn_check();
+
+	if (report_leaks(logger)) {
+		fails++;
+	}
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
 		return 1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }
