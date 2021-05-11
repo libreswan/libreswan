@@ -3081,47 +3081,6 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 	return true;
 }
 
-/*
- * The caller could have done the linux_audit_conn() call, except one case
- * here deletes the state before returning an STF error
- */
-
-static stf_status ike_auth_child_responder(struct ike_sa *ike,
-					   struct child_sa **child_out,
-					   struct msg_digest *md)
-{
-	pexpect(md->st != NULL);
-	pexpect(md->st == &ike->sa); /* passed in parent */
-	struct connection *c = md->st->st_connection;
-	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
-
-	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
-						    STATE_V2_IKE_AUTH_CHILD_R0,
-						    null_fd);
-	binlog_refresh_state(&child->sa);
-
-	/*
-	 * XXX: This is to hack around the broken responder code that
-	 * switches from the IKE SA to the CHILD SA before sending the
-	 * reply.  Instead, because the CHILD SA can fail, the IKE SA
-	 * should be the one processing the message?
-	 */
-	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-
-	if (!assign_child_responder_client(ike, child, md)) {
-		/* already logged; already recorded */
-		/*
-		 * XXX: while the CHILD SA failed, the IKE SA should
-		 * continue to exist.  This STF_FAIL will blame MD->ST
-		 * aka the IKE SA.
-		 */
-		v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
-		return STF_FAIL; /* XXX: better? */
-	}
-	*child_out = child;
-	return STF_OK;
-}
-
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(struct ike_sa *ike,
 									     struct msg_digest *md,
 									     const struct hash_signature *auth_sig)
@@ -3288,16 +3247,35 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
-		struct child_sa *child = NULL;
 		stf_status ret;
-		ret = ike_auth_child_responder(ike, &child, md);
-		if (ret != STF_OK) {
-			pexpect(child == NULL);
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ike_auth_child_responder() returned ");
-				jam_v2_stf_status(buf, ret);
-			}
-			return ret; /* we should continue building a valid reply packet */
+		pexpect(md->st != NULL);
+		pexpect(md->st == &ike->sa); /* passed in parent */
+		struct connection *c = md->st->st_connection;
+		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
+
+		struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
+							    STATE_V2_IKE_AUTH_CHILD_R0,
+							    null_fd);
+		binlog_refresh_state(&child->sa);
+
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
+		if (!assign_child_responder_client(ike, child, md)) {
+			/* already logged; already recorded */
+			/*
+			 * XXX: while the CHILD SA failed, the IKE SA
+			 * should continue to exist.  This STF_FAIL
+			 * will blame MD->ST aka the IKE SA.
+			 */
+			v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
+			/* we should continue building a valid reply packet */
+			return STF_FAIL; /* XXX: better? */
 		}
 		pexpect(child != NULL);
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
