@@ -2261,7 +2261,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	}
 
 	if (LIN(POLICY_MOBIKE, cc->policy)) {
-		child->sa.st_sent_mobike = ike->sa.st_sent_mobike = TRUE;
+		ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2792,11 +2792,11 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			replace_chunk(&st->st_no_ppk_auth, no_ppk_auth);
 		}
 	}
-	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
+	ike->sa.st_ike_seen_v2n_mobike_supported = md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL;
+	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
-		    st->st_sent_mobike ?
+		    ike->sa.st_ike_sent_v2n_mobike_supported ?
 		    "and sent" : "while it did not sent");
-		st->st_seen_mobike = true;
 	}
 	if (md->pbs[PBS_v2N_NULL_AUTH] != NULL) {
 		pb_stream pbs = *md->pbs[PBS_v2N_NULL_AUTH];
@@ -2812,7 +2812,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			return STF_FATAL;
 		}
 	}
-	st->st_seen_initialc = md->pbs[PBS_v2N_INITIAL_CONTACT] != NULL;
+	ike->sa.st_ike_seen_v2n_initial_contact = md->pbs[PBS_v2N_INITIAL_CONTACT] != NULL;
 
 	/*
 	 * If we found proper PPK ID and policy allows PPK, use that.
@@ -3111,10 +3111,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 
 	/* send response */
-	if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
+	if (LIN(POLICY_MOBIKE, c->policy) && st->st_ike_seen_v2n_mobike_supported) {
 		if (c->spd.that.host_type == KH_ANY) {
 			/* only allow %any connection to mobike */
-			st->st_sent_mobike = TRUE;
+			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
 			log_state(RC_LOG, st, "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
@@ -3163,7 +3163,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 
 	/* send any NOTIFY payloads */
-	if (st->st_sent_mobike) {
+	if (st->st_ike_sent_v2n_mobike_supported) {
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -3644,12 +3644,12 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 {
 	pexpect(child != NULL);
 	struct state *st = &child->sa;
-	struct state *pst = &ike->sa;
 
-	if (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL) {
+	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL);
+	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
-		    pst->st_sent_mobike ? "and sent" : "while it did not sent");
-		st->st_seen_mobike = pst->st_seen_mobike = true;
+		    (ike->sa.st_ike_sent_v2n_mobike_supported ? "and sent" :
+		     "while it did not sent"));
 	}
 	if (md->pbs[PBS_v2N_REDIRECT] != NULL) {
 		dbg("received v2N_REDIRECT in IKE_AUTH reply");
@@ -5041,10 +5041,10 @@ static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
 static bool mobike_check_established(const struct state *st)
 {
 	struct connection *c = st->st_connection;
-	/* notice tricky use of & on booleans */
-	bool ret = LIN(POLICY_MOBIKE, c->policy) &
-		   st->st_seen_mobike & st->st_sent_mobike &
-		   IS_ISAKMP_SA_ESTABLISHED(st->st_state);
+	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
+		    st->st_ike_seen_v2n_mobike_supported &&
+		    st->st_ike_sent_v2n_mobike_supported &&
+		    IS_ISAKMP_SA_ESTABLISHED(st->st_state));
 
 	return ret;
 }

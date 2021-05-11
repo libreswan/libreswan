@@ -3119,7 +3119,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 		 * of QuickMode is installed, so the remote endpoints view
 		 * this IKE SA still as the active one?
 		 */
-		if (ike->sa.st_seen_initialc) {
+		if (ike->sa.st_ike_seen_v2n_initial_contact) {
 			if (c->newest_isakmp_sa != SOS_NOBODY &&
 			    c->newest_isakmp_sa != ike->sa.st_serialno) {
 				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);

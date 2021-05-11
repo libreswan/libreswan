@@ -2479,7 +2479,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/*
 		 * Things are looking plausible.
 		 */
-		if ((ike->sa.st_sent_mobike && st->st_seen_mobike) &&
+		if (ike->sa.st_ike_sent_v2n_mobike_supported &&
+		    ike->sa.st_ike_seen_v2n_mobike_supported &&
 		    md->hdr.isa_xchg == ISAKMP_v2_INFORMATIONAL) {
 			/*
 			 * Only when MOBIKE has not been negotiated ...

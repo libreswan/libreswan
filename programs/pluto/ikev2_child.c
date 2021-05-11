@@ -208,14 +208,6 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
 			cst->st_seen_no_tfc = TRUE;
 			break;
-		case v2N_MOBIKE_SUPPORTED:
-			dbg("received v2N_MOBIKE_SUPPORTED");
-			cst->st_seen_mobike = ike->sa.st_seen_mobike = TRUE;
-			break;
-		case v2N_INITIAL_CONTACT:
-			dbg("received v2N_INITIAL_CONTACT");
-			cst->st_seen_initialc = ike->sa.st_seen_initialc = TRUE;
-			break;
 		case v2N_REKEY_SA:
 			dbg("received REKEY_SA already proceesd");
 			break;
