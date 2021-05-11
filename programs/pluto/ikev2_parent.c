@@ -386,12 +386,6 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		if (DBGP(DBG_BASE)) {
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
-			st->st_ts_that = ikev2_end_to_ts(&c->spd.that, st);
-			ikev2_print_ts(&st->st_ts_this);
-			ikev2_print_ts(&st->st_ts_that);
-		}
 		add_pending(whack_sock, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    sec_label, true /*part of initiate*/);
