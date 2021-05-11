@@ -269,11 +269,6 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_replace(struct state *st);
 
-/* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
-bool emit_v2N_compression(struct state *cst,
-			bool OK,
-			pb_stream *s);
-
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
 					     pb_stream *in_pbs,

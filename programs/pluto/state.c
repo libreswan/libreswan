@@ -1499,7 +1499,6 @@ static struct state *duplicate_state(struct connection *c,
 	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
-	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
 	nst->st_sent_redirect = st->st_sent_redirect;
 	nst->st_event = NULL;
 

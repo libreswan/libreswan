@@ -2196,7 +2196,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	lset_t policy = pc->policy;
 
-	/* child connection */
+	/* Child Connection */
 	struct connection *cc = first_pending(ike, &policy, &child->sa.st_logger->object_whackfd);
 
 	if (cc == NULL) {
@@ -2244,8 +2244,13 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
 	}
 
-	if (!emit_v2N_compression(&child->sa, true, &sk.pbs)) {
-		return STF_INTERNAL_ERROR;
+	/*
+	 * Propose IPCOMP based on policy.
+	 */
+	if (cc->policy & POLICY_COMPRESS) {
+		if (!emit_v2N_ipcomp_supported(child, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (cc->send_no_esp_tfc) {
@@ -3179,9 +3184,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (!emit_v2N_compression(st, st->st_seen_use_ipcomp, &sk.pbs))
-		return STF_INTERNAL_ERROR;
-
 	if (c->send_no_esp_tfc) {
 		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
 			return STF_INTERNAL_ERROR;
@@ -3581,8 +3583,7 @@ static stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa 
 		child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 		child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
 		child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
-		child->sa.st_ipcomp.present = TRUE;
-		child->sa.st_seen_use_ipcomp = TRUE;
+		child->sa.st_ipcomp.present = true;
 	}
 
 	ikev2_derive_child_keys(child);

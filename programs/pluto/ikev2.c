@@ -2983,53 +2983,6 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned status)
 	}
 }
 
-/* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
-bool emit_v2N_compression(struct state *cst,
-			  bool OK,
-			  pb_stream *s)
-{
-	const struct connection *c = cst->st_connection;
-
-	if ((c->policy & POLICY_COMPRESS) && OK) {
-		uint16_t c_spi;
-
-		dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
-
-		/* calculate and keep our CPI */
-		if (cst->st_ipcomp.our_spi == 0) {
-			/* CPI is stored in network low order end of an ipsec_spi_t */
-			cst->st_ipcomp.our_spi = get_my_cpi(&c->spd,
-							    LIN(POLICY_TUNNEL, c->policy),
-							    cst->st_logger);
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-			if (c_spi < IPCOMP_FIRST_NEGOTIATED) {
-				/* get_my_cpi() failed */
-				log_state(RC_LOG_SERIOUS, cst,
-					  "kernel failed to calculate compression CPI (CPI=%d)", c_spi);
-				return false;
-			}
-			dbg("calculated compression CPI=%d", c_spi);
-		} else {
-			c_spi = (uint16_t)ntohl(cst->st_ipcomp.our_spi);
-		}
-
-		struct ikev2_notify_ipcomp_data d = {
-			.ikev2_cpi = c_spi,
-			.ikev2_notify_ipcomp_trans = IPCOMP_DEFLATE,
-		};
-		pb_stream d_pbs;
-
-		bool r =
-			emit_v2Npl(v2N_IPCOMP_SUPPORTED, s, &d_pbs) &&
-			out_struct(&d, &ikev2notify_ipcomp_data_desc, &d_pbs, NULL);
-		close_output_pbs(&d_pbs);
-		return r;
-	} else {
-		dbg("initiator child policy is compress=no, NOT sending v2N_IPCOMP_SUPPORTED");
-		return true;
-	}
-}
-
 static void reinitiate_ike_sa_init(struct state *st, void *arg)
 {
 	if (st == NULL) {

@@ -38,6 +38,7 @@
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
+#include "kernel.h"	/* for get_my_cpi() */
 
 bool send_recorded_v2_message(struct ike_sa *ike,
 			      const char *where,
@@ -661,4 +662,42 @@ void free_v2_message_queues(struct state *st)
 		free_v2_outgoing_fragments(&st->st_v2_outgoing[message]);
 		free_v2_incoming_fragments(&st->st_v2_incoming[message]);
 	}
+}
+
+/* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
+bool emit_v2N_ipcomp_supported(struct child_sa *child, struct pbs_out *s)
+{
+	const struct connection *c = child->sa.st_connection;
+
+	dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+
+	/* calculate and keep our CPI */
+	uint16_t c_spi;
+	if (child->sa.st_ipcomp.our_spi == 0) {
+		/* CPI is stored in network low order end of an ipsec_spi_t */
+		child->sa.st_ipcomp.our_spi = get_my_cpi(&c->spd,
+							 LIN(POLICY_TUNNEL, c->policy),
+							 child->sa.st_logger);
+		c_spi = (uint16_t)ntohl(child->sa.st_ipcomp.our_spi);
+		if (c_spi < IPCOMP_FIRST_NEGOTIATED) {
+			/* get_my_cpi() failed */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "kernel failed to calculate compression CPI (CPI=%d)", c_spi);
+			return false;
+		}
+		dbg("calculated compression CPI=%d", c_spi);
+	} else {
+		c_spi = (uint16_t)ntohl(child->sa.st_ipcomp.our_spi);
+	}
+
+	struct ikev2_notify_ipcomp_data d = {
+		.ikev2_cpi = c_spi,
+		.ikev2_notify_ipcomp_trans = IPCOMP_DEFLATE,
+	};
+	struct pbs_out d_pbs;
+
+	bool r = (emit_v2Npl(v2N_IPCOMP_SUPPORTED, s, &d_pbs) &&
+		  out_struct(&d, &ikev2notify_ipcomp_data_desc, &d_pbs, NULL));
+	close_output_pbs(&d_pbs);
+	return r;
 }

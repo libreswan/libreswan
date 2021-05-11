@@ -173,8 +173,9 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
 			child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
 			child->sa.st_ipcomp.present = true;
-			child->sa.st_seen_use_ipcomp = true;
 		}
+	} else if (c->policy & POLICY_COMPRESS) {
+		dbg("policy suggested compression, but peer did not offer support");
 	}
 
 	if (md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
@@ -196,16 +197,6 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				/* RFC allows us to ignore their (wrong) request for transport mode */
 				log_state(RC_LOG, &child->sa,
 					  "policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
-			}
-		}
-
-		if (c->policy & POLICY_COMPRESS) {
-			if (!child->sa.st_seen_use_ipcomp) {
-				dbg("policy suggested compression, but peer did not offer support");
-			}
-		} else {
-			if (child->sa.st_seen_use_ipcomp) {
-				dbg("policy did not allow compression, ignoring peer's request");
 			}
 		}
 
@@ -252,8 +243,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (!emit_v2N_compression(&child->sa, child->sa.st_seen_use_ipcomp, outpbs))
-		return STF_INTERNAL_ERROR;
+	if (child->sa.st_ipcomp.present) {
+		/* logic above decided to enable IPCOMP */
+		if (!emit_v2N_ipcomp_supported(child, outpbs))
+			return STF_INTERNAL_ERROR;
+	}
 
 	ikev2_derive_child_keys(child);
 
