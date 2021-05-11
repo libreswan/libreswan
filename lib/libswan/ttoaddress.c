@@ -367,14 +367,18 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 
 	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
 	struct addrinfo *res = NULL; /* must-free when EAI==0 */
+	int family = afi == NULL ? AF_UNSPEC : afi->af;
 	const struct addrinfo hints = (struct addrinfo) {
-		.ai_family = afi == NULL ? AF_UNSPEC : afi->af,
+		.ai_family = family,
 	};
 	int eai = getaddrinfo(name, NULL, &hints, &res);
 
 	if (eai != 0) {
 		/*
 		 * Return what the pluto testsuite expects for now.
+		 *
+		 * Error return is intricate because we cannot compose
+		 * a static string.
 		 *
 		 * XXX: How portable are errors returned by
 		 * gai_strerror(eai)?
@@ -384,7 +388,14 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		 */
 		pfree(name);
 		/* RES is not defined */
-		return "not a numeric IP address and name lookup failed (no validation performed)";
+		switch (family) {
+		case AF_INET6:
+			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
+		case AF_INET:
+			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
+		default:
+			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
+		}
 	}
 
 	/*
