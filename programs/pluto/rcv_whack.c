@@ -214,12 +214,12 @@ static void whack_impair_action(enum impair_action impairment_action,
 }
 
 static int whack_route_connection(struct connection *c,
-				  struct fd *whackfd,
-				  void *unused_arg UNUSED)
+				  void *unused_arg UNUSED,
+				  struct logger *logger)
 {
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = dup_any(logger->global_whackfd);
 
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
@@ -240,8 +240,8 @@ static int whack_route_connection(struct connection *c,
 }
 
 static int whack_unroute_connection(struct connection *c,
-				    struct fd *whackfd,
-				    void *unused_arg UNUSED)
+				    void *unused_arg UNUSED,
+				    struct logger *logger)
 {
 	const struct spd_route *sr;
 	int fail = 0;
@@ -253,8 +253,7 @@ static int whack_unroute_connection(struct connection *c,
 			fail++;
 	}
 	if (fail > 0) {
-		whack_log(RC_RTBUSY, whackfd,
-			  "cannot unroute: route busy");
+		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
 		unroute_group(c);
 	} else {
@@ -477,8 +476,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			llog(RC_FATAL, logger,
 			     "received whack command to rekey IKE SA of connection, but did not receive the connection name or state number - ignored");
 		} else {
-			rekey_now(m->name, IKE_SA, whackfd,
-				  m->whack_async/*background*/);
+			rekey_now(m->name, IKE_SA, m->whack_async/*background*/, logger);
 		}
 		dbg("whack: ... rekey_ike '%s' ...", m->name == NULL ? "NULL" : m->name);
 	}
@@ -490,8 +488,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			llog(RC_FATAL, logger,
 			     "received whack command to rekey IPsec SA of connection, but did not receive the connection name or state number - ignored");
 		} else {
-			rekey_now(m->name, IPSEC_SA, whackfd,
-				  m->whack_async/*background*/);
+			rekey_now(m->name, IPSEC_SA, m->whack_async/*background*/, logger);
 		}
 		dbg("whack: ... rekey_ipsec '%s'", m->name == NULL ? "NULL" : m->name);
 	}
@@ -764,10 +761,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			struct connection *c = conn_by_name(m->name, true/*strict*/);
 
 			if (c != NULL) {
-				whack_route_connection(c, whackfd, NULL);
-			} else if (0 == foreach_connection_by_alias(m->name, whackfd,
-								    whack_route_connection,
-								    NULL)) {
+				whack_route_connection(c, NULL, logger);
+			} else if (0 == foreach_connection_by_alias(m->name, whack_route_connection,
+								    NULL, logger)) {
 				whack_log(RC_ROUTE, whackfd,
 					  "no connection or alias '%s'",
 					  m->name);
@@ -783,9 +779,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
 		if (c != NULL) {
 			whack_unroute_connection(c, whackfd, NULL);
-		} else if (0 == foreach_connection_by_alias(m->name, whackfd,
-							    whack_unroute_connection,
-							    NULL)) {
+		} else if (0 == foreach_connection_by_alias(m->name, whack_unroute_connection,
+							    NULL, logger)) {
 			whack_log(RC_ROUTE, whackfd,
 				  "no connection or alias '%s'",
 				  m->name);

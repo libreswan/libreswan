@@ -32,23 +32,22 @@ struct rekey_how {
 	enum sa_type sa_type;
 };
 
-static void rekey_state(struct state *st, struct fd *whackfd, bool background)
+static void rekey_state(struct state *st, bool background, struct logger *logger)
 {
 	if (!background) {
-		/* XXX: something better */
+		/* XXX: something better? */
 		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = dup_any(whackfd);
+		st->st_logger->object_whackfd = dup_any(logger->global_whackfd);
 	}
 	event_force(EVENT_SA_REKEY, st);
 }
 
 static int rekey_connection_now(struct connection *c,
-				struct fd *whackfd,
-				void *arg)
+				void *arg, struct logger *logger)
 {
 	if (c->ike_version != IKEv2) {
-		log_global(RC_LOG, whackfd, "cannot force rekey of %s connection",
-			   enum_name(&ike_version_names, c->ike_version));
+		llog(RC_LOG, logger, "cannot force rekey of %s connection",
+		     enum_name(&ike_version_names, c->ike_version));
 		return 1;
 	}
 	struct rekey_how *how = arg;
@@ -64,16 +63,16 @@ static int rekey_connection_now(struct connection *c,
 		bad_case(how->sa_type);
 	}
 	if (st == NULL) {
-		log_global(RC_LOG, whackfd, "connection does not have %s",
-			   enum_enum_name(&sa_type_names, c->ike_version, how->sa_type));
+		llog(RC_LOG, logger, "connection does not have %s",
+		     enum_enum_name(&sa_type_names, c->ike_version, how->sa_type));
 		return 1;
 	}
-	rekey_state(st, whackfd, how->background);
+	rekey_state(st, how->background, logger);
 	return 0;
 }
 
 void rekey_now(const char *str, enum sa_type sa_type,
-	       struct fd *whackfd, bool background)
+	       bool background, struct logger *logger)
 {
 	struct rekey_how how = {
 		.background = background,
@@ -102,42 +101,41 @@ void rekey_now(const char *str, enum sa_type sa_type,
 				if (streq(c->name, str) &&
 				    c->kind >= CK_PERMANENT &&
 				    !NEVER_NEGOTIATE(c->policy)) {
-					rekey_connection_now(c, whackfd, &how);
+					rekey_connection_now(c, &how, logger);
 				}
 				c = c->ac_next;
 			}
 		} else {
-			int count = foreach_connection_by_alias(str, whackfd,
-								rekey_connection_now,
-								&how);
+			int count = foreach_connection_by_alias(str, rekey_connection_now,
+								&how, logger);
 			if (count == 0) {
-				log_global(RC_UNKNOWN_NAME, whackfd,
-					   "no such connection or aliased connection named \"%s\"", str);
+				llog(RC_UNKNOWN_NAME, logger,
+				     "no such connection or aliased connection named \"%s\"", str);
 			} else {
-				log_global(RC_COMMENT, whackfd,
-					   "terminated %d connections from aliased connection \"%s\"",
-					   count, str);
+				llog(RC_COMMENT, logger,
+				     "terminated %d connections from aliased connection \"%s\"",
+				     count, str);
 			}
 		}
 	} else {
 		/* str is a state number - this overrides ike vs ipsec rekey command */
 		struct state *st = state_by_serialno(num);
 		if (st == NULL) {
-			log_global(RC_LOG, whackfd, "can't find SA #%d to rekey", num);
+			llog(RC_LOG, logger, "can't find SA #%d to rekey", num);
 			return;
 		}
 
 		struct connection *c = st->st_connection;
 		if (IS_IKE_SA(st)) {
 			connection_buf cb;
-			log_global(RC_LOG, whackfd, "rekeying IKE SA state #%d of connection "PRI_CONNECTION"",
-				   num, pri_connection(c, &cb));
-			rekey_state(st, whackfd, background);
+			llog(RC_LOG, logger, "rekeying IKE SA state #%d of connection "PRI_CONNECTION"",
+			     num, pri_connection(c, &cb));
+			rekey_state(st, background, logger);
 		} else {
 			connection_buf cb;
-			log_global(RC_LOG, whackfd, "rekeying IPsec SA state #%d of connection "PRI_CONNECTION"",
-				   num, pri_connection(c, &cb));
-			rekey_state(st, whackfd, background);
+			llog(RC_LOG, logger, "rekeying IPsec SA state #%d of connection "PRI_CONNECTION"",
+			     num, pri_connection(c, &cb));
+			rekey_state(st, background, logger);
 		}
 	}
 }

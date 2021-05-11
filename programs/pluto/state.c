@@ -2317,8 +2317,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 }
 
 static int show_newest_state_traffic(struct connection *c,
-				     struct fd *unused_whackfd UNUSED,
-				     void *arg)
+				     void *arg, struct logger *logger UNUSED)
 {
 	struct show *s = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
@@ -2351,12 +2350,11 @@ void show_traffic_status(struct show *s, const char *name)
 
 		if (c != NULL) {
 			/* cast away const sillyness */
-			show_newest_state_traffic(c, NULL, s);
+			show_newest_state_traffic(c, s, show_logger(s));
 		} else {
 			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name, NULL,
-								show_newest_state_traffic,
-								s);
+			int count = foreach_connection_by_alias(name, show_newest_state_traffic,
+								s, show_logger(s));
 			if (count == 0) {
 				/*
 				 * XXX: don't bother implementing
