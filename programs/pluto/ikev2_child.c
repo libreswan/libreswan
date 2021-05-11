@@ -95,9 +95,10 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			= ikev2_child_sa_proto_info(child, c->policy);
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
-			stf_status res = ikev2_process_child_sa_pl(ike, child, md, FALSE);
-			if (res != STF_OK)
-				return res;
+			if (!ikev2_process_child_sa_payload(ike, child, md,
+							    /*expect-accepted-proposal?*/false)) {
+				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			}
 		}
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
 							 child->sa.st_logger);
@@ -284,30 +285,32 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void ikev2_set_domain(pb_stream *cp_a_pbs, struct state *st)
+static void ikev2_set_domain(pb_stream *cp_a_pbs, struct child_sa *child)
 {
-	bool responder = (st->st_state->kind != STATE_PARENT_I2);
-	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
+	bool responder = (child->sa.st_state->kind != STATE_PARENT_I2);
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, child->sa.st_connection->policy);
 
 	if (!responder) {
 		char *safestr = cisco_stringify(cp_a_pbs, "INTERNAL_DNS_DOMAIN",
-						ignore, st->st_logger);
+						ignore, child->sa.st_logger);
 		if (safestr != NULL) {
-			append_st_cfg_domain(st, safestr);
+			append_st_cfg_domain(&child->sa, safestr);
 		}
 	} else {
-		log_state(RC_LOG, st, "initiator INTERNAL_DNS_DOMAIN CP ignored");
+		log_state(RC_LOG, &child->sa,
+			  "initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}
 }
 
-static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
+static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 			  const struct ip_info *af)
 {
-	struct connection *c = st->st_connection;
-	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, st->st_connection->policy);
+	struct connection *c = child->sa.st_connection;
+	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		log_state(RC_LOG, st, "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
+		log_state(RC_LOG, &child->sa,
+			  "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
 			  af->ip_version);
 		return true;
 	}
@@ -315,45 +318,48 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		return false;
 	}
 
 	/* i.e. all zeros */
 	if (address_is_any(ip)) {
 		address_buf ip_str;
-		log_state(RC_LOG, st, "ERROR INTERNAL_IP%d_DNS %s is invalid",
+		log_state(RC_LOG, &child->sa,
+			  "ERROR INTERNAL_IP%d_DNS %s is invalid",
 			  af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
-	bool responder = (st->st_state->kind != STATE_PARENT_I2);
+	bool responder = (child->sa.st_state->kind != STATE_PARENT_I2);
 	if (!responder) {
 		address_buf ip_buf;
 		const char *ip_str = ipstr(&ip, &ip_buf);
 
-		log_state(RC_LOG, st, "received %sINTERNAL_IP%d_DNS %s",
+		log_state(RC_LOG, &child->sa,
+			  "received %sINTERNAL_IP%d_DNS %s",
 			  ignore ? "and ignored " : "",
 			  af->ip_version, ip_str);
 		if (!ignore)
-			append_st_cfg_dns(st, ip_str);
+			append_st_cfg_dns(&child->sa, ip_str);
 	} else {
-		log_state(RC_LOG, st, "initiator INTERNAL_IP%d_DNS CP ignored",
+		log_state(RC_LOG, &child->sa,
+			  "initiator INTERNAL_IP%d_DNS CP ignored",
 			  af->ip_version);
 	}
 
 	return true;
 }
 
-static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
+static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct child_sa *child,
 			 const struct ip_info *af, bool *seen_an_address)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		return false;
 	}
 
@@ -364,20 +370,22 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 
 	if (address_is_any(ip)) {
 		ipstr_buf ip_str;
-		log_state(RC_LOG, st, "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
+		log_state(RC_LOG, &child->sa,
+			  "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
 			  af->ip_version, ipstr(&ip, &ip_str));
 		return false;
 	}
 
 	ipstr_buf ip_str;
-	log_state(RC_LOG, st, "received INTERNAL_IP%d_ADDRESS %s%s",
+	log_state(RC_LOG, &child->sa,
+		  "received INTERNAL_IP%d_ADDRESS %s%s",
 		  af->ip_version, ipstr(&ip, &ip_str),
 		  *seen_an_address ? "; discarded" : "");
 
 
-	bool responder = st->st_state->kind != STATE_PARENT_I2;
+	bool responder = child->sa.st_state->kind != STATE_PARENT_I2;
 	if (responder) {
-		log_state(RC_LOG, st, "bogus responder CP ignored");
+		log_state(RC_LOG, &child->sa, "bogus responder CP ignored");
 		return true;
 	}
 
@@ -399,11 +407,11 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 			 * side should we also check the host_srcip.
 			 */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
-			    st->st_serialno, c->name, c->instance_serial,
+			    child->sa.st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client = selector_from_address(ip);
-			st->st_ts_this = ikev2_end_to_ts(&c->spd.this, st);
+			child->sa.st_ts_this = ikev2_end_to_ts(&c->spd.this, child);
 			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {
@@ -420,24 +428,24 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st,
 	return true;
 }
 
-bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
+bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 {
 	struct ikev2_cp *cp =  &cp_pd->payload.v2cp;
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	pb_stream *attrs = &cp_pd->pbs;
 
 	dbg("#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
-	    st->st_serialno, c->name, c->instance_serial);
+	    child->sa.st_serialno, c->name, c->instance_serial);
 
-	if (st->st_state->kind == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
-		log_state(RC_LOG_SERIOUS, st,
+	if (child->sa.st_state->kind == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
+		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 			  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 
-	if (st->st_state->kind == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
-		log_state(RC_LOG_SERIOUS, st,
+	if (child->sa.st_state->kind == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
+		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 			  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
@@ -451,52 +459,52 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+			llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d,
 				 "ERROR malformed CP attribute");
 			return false;
 		}
 
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv4_info,
+			if (!ikev2_set_ia(&cp_a_pbs, child, &ipv4_info,
 					  &seen_internal_address)) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv4_info)) {
-				log_state(RC_LOG_SERIOUS, st,
+			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
+				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st, &ipv6_info,
-						 &seen_internal_address)) {
-				log_state(RC_LOG_SERIOUS, st,
+			if (!ikev2_set_ia(&cp_a_pbs, child, &ipv6_info,
+					  &seen_internal_address)) {
+				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_dns(&cp_a_pbs, st, &ipv6_info)) {
-				log_state(RC_LOG_SERIOUS, st,
+			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
+				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
 				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_DNS_DOMAIN | ISAKMP_ATTR_AF_TLV:
-			ikev2_set_domain(&cp_a_pbs, st); /* can't fail */
+			ikev2_set_domain(&cp_a_pbs, child); /* can't fail */
 			break;
 
 		default:
-			log_state(RC_LOG, st,
+			log_state(RC_LOG, &child->sa,
 				  "unknown attribute %s length %u",
 				  enum_name(&ikev2_cp_attribute_type_names, cp_a.type),
 				  cp_a.len);

@@ -110,7 +110,7 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state *st)
+struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct child_sa *child)
 {
 	struct traffic_selector ts;
 
@@ -151,12 +151,10 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct state 
 	 * Points into either the END, or
 	 * .st_{seen,acquired}_sec_label.
 	 */
-	ts.sec_label = HUNK_AS_SHUNK((st->st_seen_sec_label.len != 0) ?
-					st->st_seen_sec_label :
-					st->st_acquired_sec_label.len != 0 ?
-					st->st_acquired_sec_label :
-					e->sec_label);
-
+	chunk_t sec_label = (child->sa.st_seen_sec_label.len != 0 ? child->sa.st_seen_sec_label :
+			     child->sa.st_acquired_sec_label.len != 0 ? child->sa.st_acquired_sec_label :
+			     e->sec_label);
+	ts.sec_label = HUNK_AS_SHUNK(sec_label);
 	return ts;
 }
 
@@ -1436,8 +1434,8 @@ bool v2_process_ts_request(struct child_sa *child,
 		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
 	}
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, &child->sa);
-	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, &child->sa);
+	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, child);
+	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, child);
 
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
