@@ -18,20 +18,31 @@
 
 #include "lswcdefs.h"	/* for UNUSED */
 
+#include "lswalloc.h"		/* for leaks */
+#include "lswtool.h"		/* for tool_init_log() */
+
 #include "timecheck.h"
 
 int fails = 0;
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	check_deltatime();
 	check_monotime();
 	check_realtime();
 
+	if (report_leaks(logger)) {
+		fails++;
+	}
+
+
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
 		return 1;
-	} else {
-		return 0;
 	}
+
+	return 0;
 }

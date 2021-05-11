@@ -176,15 +176,15 @@ extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct crypt_mac *idhash,
 				  chunk_t *additional_auth /* output */);
 
-extern stf_status v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
-						      const struct crypt_mac *idhash,
-						      shunk_t signature,
-						      const struct hash_desc *hash_algo);
+diag_t v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,
+					   const struct crypt_mac *idhash,
+					   shunk_t signature,
+					   const struct hash_desc *hash_algo);
 
-extern stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
-							const struct crypt_mac *idhash,
-							shunk_t signature,
-							const struct hash_desc *hash_algo);
+diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
+					     const struct crypt_mac *idhash,
+					     shunk_t signature,
+					     const struct hash_desc *hash_algo);
 
 extern void ikev2_derive_child_keys(struct child_sa *child);
 
@@ -284,5 +284,14 @@ void v2_event_sa_replace(struct state *st);
 bool emit_v2N_compression(struct state *cst,
 			bool OK,
 			pb_stream *s);
+
+struct payload_summary ikev2_decode_payloads(struct logger *log,
+					     struct msg_digest *md,
+					     pb_stream *in_pbs,
+					     enum next_payload_types_ikev2 np);
+
+void v2_dispatch(struct ike_sa *ike, struct state *st,
+		 struct msg_digest *md,
+		 const struct state_v2_microcode *transition);
 
 #endif

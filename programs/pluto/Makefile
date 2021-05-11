@@ -68,6 +68,7 @@ OBJS += ikev2_auth_helper.o
 OBJS += ikev2_delete.o
 OBJS += ikev2_rekey.o
 OBJS += ikev2_liveness.o
+OBJS += ikev2_ike_sa_init.o
 
 OBJS += state_db.o
 OBJS += show.o

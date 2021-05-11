@@ -993,16 +993,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 		    (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			char idfqdn[IDTOA_BUF];
-			size_t idlen = pbs_room(&IDcr->pbs);
-
-			if (idlen >= sizeof(idfqdn)) {
-				/* ??? truncation seems rude and dangerous */
-				idlen = sizeof(idfqdn) - 1;
-			}
-			/* ??? what should happen if fqdn contains '\0'? */
-			memcpy(idfqdn, IDcr->pbs.cur, idlen);
-			idfqdn[idlen] = '\0';
+			shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
 
 			hv = p1st->hidden_variables;
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
@@ -1011,12 +1002,13 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
-				selector_buf buf;
-				log_state(RC_LOG_SERIOUS, p1st,
-					  "IDci was FQDN: %s, using NAT_OA=%s %d as IDci",
-					  idfqdn, str_selector(&remote_client, &buf),
-					  (address_is_unset(&hv.st_nat_oa) ||
-					   address_is_any(hv.st_nat_oa)/*XXX: always 0?*/));
+				LLOG_JAMBUF(RC_LOG_SERIOUS, p1st->st_logger, buf) {
+					jam(buf, "IDci was FQDN: ");
+					jam_sanitized_hunk(buf, idfqdn);
+					jam(buf, ", using NAT_OA=");
+					jam_selector(buf, &remote_client);
+					jam(buf, " as IDci");
+				}
 			}
 		}
 	} else {
@@ -1599,24 +1591,16 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-				char idfqdn[IDTOA_BUF];
-				size_t idlen = pbs_room(&IDcr->pbs);
-
-				if (idlen >= sizeof(idfqdn)) {
-					/* ??? truncation seems rude and dangerous */
-					idlen = sizeof(idfqdn) - 1;
-				}
-				/* ??? what should happen if fqdn contains '\0'? */
-				memcpy(idfqdn, IDcr->pbs.cur, idlen);
-				idfqdn[idlen] = '\0';
-
+				shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
 				st->st_connection->spd.that.client =
 					selector_from_address(st->hidden_variables.st_nat_oa);
-				subnet_buf buf;
-				log_state(RC_LOG_SERIOUS, st,
-					  "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
-					  idfqdn,
-					  str_selector_subnet(&st->st_connection->spd.that.client, &buf));
+				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
+					jam(buf, "IDcr was FQDN: ");
+					jam_sanitized_hunk(buf, idfqdn);
+					jam(buf, ", using NAT_OA=");
+					jam_selector_subnet(buf, &st->st_connection->spd.that.client);
+					jam(buf, " as IDcr");
+				}
 			}
 		} else {
 			/*

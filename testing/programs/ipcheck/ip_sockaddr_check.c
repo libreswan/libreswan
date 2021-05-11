@@ -20,6 +20,8 @@
 #include "ip_info.h"
 #include "ip_protocol.h"
 
+#include "lswlog.h"		/* for DBG_dump_thing() */
+
 #include "ipcheck.h"
 
 static void check_sockaddr_as_endpoint(void)
@@ -52,20 +54,25 @@ static void check_sockaddr_as_endpoint(void)
 		PRINT("%s '%s' -> '%s' len=%zd", pri_family(t->family), t->in, expect_out, t->size);
 
 		/* construct a raw sockaddr */
-		ip_sockaddr sa = {
-			.sa.sa = {
-				.sa_family = SA_FAMILY(t->family),
-			},
+		ip_sockaddr sa = {	
 			.len = t->size,
 		};
 		switch (t->family) {
 		case 4:
 			memcpy(&sa.sa.sin.sin_addr, t->addr, sizeof(sa.sa.sin.sin_addr));
+			sa.sa.sin.sin_family = AF_INET;
 			sa.sa.sin.sin_port = htons(t->port);
+#ifdef NEED_SIN_LEN
+                	sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 			break;
 		case 6:
 			memcpy(&sa.sa.sin6.sin6_addr, t->addr, sizeof(sa.sa.sin6.sin6_addr));
+			sa.sa.sin6.sin6_family = AF_INET6;
 			sa.sa.sin6.sin6_port = htons(t->port);
+#ifdef NEED_SIN_LEN
+                	sa.sa.sin6.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 			break;
 		}
 
@@ -107,6 +114,8 @@ static void check_sockaddr_as_endpoint(void)
 					esa.len, sizeof(esa.sa));
 			} else if (!memeq(&esa.sa, &sa.sa, sizeof(esa.sa))) {
 				/* compare the entire buffer, not just size */
+				DBG_dump_thing("esa.sa", esa.sa);
+				DBG_dump_thing("sa.sa", sa.sa);
 				FAIL("endpoint_to_sockaddr() returned a different value");
 			}
 		} else {

@@ -20,6 +20,8 @@
 
 #include "jambuf.h"		/* for struct jambuf */
 #include "constants.h"		/* for streq() */
+#include "lswalloc.h"		/* for leaks */
+#include "lswtool.h"		/* for tool_init_log() */
 
 unsigned fails;
 
@@ -195,8 +197,11 @@ static void check_jam_bytes(const char *what, jam_bytes_fn *jam_bytes,
 	}
 }
 
-int main(int argc UNUSED, char *argv[] UNUSED)
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	check_jambuf(true, "(null)", NULL, NULL);
 	check_jambuf(true, "0", "0", NULL);
 	check_jambuf(true, "01", "0", "1", NULL);
@@ -284,7 +289,7 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_jam_bytes(FN(dump), BYTES, "09 20 21 22  23 24 25 26  27 28 29 2a  2b 2c 2d 2e  2f 3a 3b 3c  3d 3e 3f 40  5b 5c 5e 2b  60 7b 7c 7d  7e 00");
 	check_jam_bytes(FN(raw), BYTES, "\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~");
 	check_jam_bytes(FN(sanitized), BYTES, "\\t !\"#$%&'()*+,-./:;<=>?@[\\^+`{|}~\\0");
-	check_jam_bytes(FN(meta_escaped), BYTES, "\\011 !\\042#\\044%&\\047()*+,-./:;<=>?@[\\134^+\\140{|}~\\000");
+	check_jam_bytes(FN(shell_quoted), BYTES, "\\011 !\\042#\\044%&\\047()*+,-./:;<=>?@[\\134^+\\140{|}~\\000");
 #undef FN
 #undef BYTES
 
@@ -296,6 +301,10 @@ int main(int argc UNUSED, char *argv[] UNUSED)
 	check_sanitized("\177", "\\177");
 	check_sanitized("\1779", "\\1779");
 	check_sanitized("\177a", "\\177a");
+
+	if (report_leaks(logger)) {
+		fails++;
+	}
 
 	if (fails > 0) {
 		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);

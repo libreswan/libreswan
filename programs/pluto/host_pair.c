@@ -164,9 +164,15 @@ struct host_pair *find_host_pair(const ip_address local,
 		if (!address_eq_address(hp->local, local)) {
 			address_buf lb;
 			connection_buf cb;
-			dbg("host_pair: local %s does not match connection="PRI_CONNECTION,
-			    str_address(&local, &lb),
-			    pri_connection(hp->connections, &cb));
+			if (hp->connections == NULL) {
+				/* ??? what should we report? */
+				dbg("host_pair: local %s does not match connection=<NULL>",
+				    str_address(&local, &lb));
+			} else {
+				dbg("host_pair: local %s does not match connection="PRI_CONNECTION,
+				    str_address(&local, &lb),
+				    pri_connection(hp->connections, &cb));
+			}
 			continue;
 		}
 

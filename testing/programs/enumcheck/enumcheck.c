@@ -285,6 +285,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 
 int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
 	struct logger *logger = tool_init_log(argv[0]);
 
 	/* don't hold back */
@@ -363,6 +364,14 @@ int main(int argc UNUSED, char *argv[])
 	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CPU_USAGE);
 	printf("\n");
 
-	report_leaks(logger);
-	exit(errors > 0 ? 1 : 0);
+	if (report_leaks(logger)) {
+		errors++;
+	}
+
+	if (errors > 0) {
+		fprintf(stderr, "TOTAL FAILURES: %d\n", errors);
+		return 1;
+	}
+
+	return 0;
 }

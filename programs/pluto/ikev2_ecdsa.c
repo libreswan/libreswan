@@ -165,18 +165,22 @@ bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t sign
 	return true;
 }
 
-stf_status v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
-						 const struct crypt_mac *idhash,
-						 shunk_t signature,
-						 const struct hash_desc *hash_algo)
+diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
+					     const struct crypt_mac *idhash,
+					     shunk_t signature,
+					     const struct hash_desc *hash_algo)
 {
+	statetime_t start = statetime_start(&ike->sa);
+
 	if (hash_algo->common.ikev2_alg_id < 0) {
-		return STF_FATAL;
+		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
 	struct crypt_mac calc_hash = v2_calculate_sighash(ike, idhash, hash_algo,
 							  REMOTE_PERSPECTIVE);
-	return authsig_and_log_using_pubkey(ike, &calc_hash, signature, hash_algo,
-					    &pubkey_type_ecdsa,
-					    authsig_using_ECDSA_ikev2_pubkey);
+	diag_t d = authsig_and_log_using_pubkey(ike, &calc_hash, signature, hash_algo,
+						&pubkey_type_ecdsa,
+						authsig_using_ECDSA_ikev2_pubkey);
+	statetime_stop(&start, "%s()", __func__);
+	return d;
 }

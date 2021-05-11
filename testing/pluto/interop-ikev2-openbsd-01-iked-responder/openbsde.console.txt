@@ -1,28 +1,27 @@
-# note swan-prep does not yet supprt iked
-# note swan-prep does not yet supprtoes not yet supprt iked
+set +o emacs
+set +o emacs
+openbsde #
+ set +o vi
+openbsde #
+ set +o gmacs
+openbsde #
+ # note swan-prep does not yet supprt iked
 openbsde #
  #/testing/guestbin/swan-prep
-#/testing/guestbin/swan-prep
 openbsde #
  cp openbsde.conf /etc/iked.conf
-cp openbsde.conf /etc/iked.conf
 openbsde #
  chmod 600 /etc/iked.conf
-chmod 600 /etc/iked.conf
 openbsde #
  /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
-/sbin/iked -dvvv > /tmp/iked.log 2>& /tmp/iked.log 2>&1 &
 [x] PID
 openbsde #
  echo "initdone"
-echo "initdone"
 initdone
 openbsde #
  cp /tmp/iked.log OUTPUT/openbsde.iked.log
-cp /tmp/iked.log OUTPUT/openbsde.ikeUTPUT/openbsde.iked.log
 openbsde #
  ipsecctl -s all | sort
-ipsecctl -s all | sort
 FLOWS:
 SAD:
 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes-256

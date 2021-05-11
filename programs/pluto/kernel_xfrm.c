@@ -1030,6 +1030,11 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
+	/*
+	 * Note: Coverity believes that req.n will be overrun
+	 * but that is wrong: the type of req.n only covers the header.
+	 * Maybe there is a way to write this that doesn't mislead Coverity.
+	 */
 	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
 				  "mobike", sa->text_said, logger);
 	if (!r)
@@ -1654,7 +1659,6 @@ static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
-	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	chunk_t sec_label = {
 		.ptr = NULL,
 		.len = 0
@@ -1755,11 +1759,6 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 				llog(RC_LOG, logger,
 				     "Acquire message for unknown sec_label LSM %d; ignoring Acquire message",
 				     xuctx->ctx_alg);
-				return;
-			}
-			if (uctx != NULL) {
-				llog(RC_LOG, logger,
-				     "Second sec_label in a single Acquire message; ignoring Acquire message");
 				return;
 			}
 

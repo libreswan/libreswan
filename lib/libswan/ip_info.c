@@ -97,6 +97,30 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
+static ip_address address_from_ipv4_sockaddr(const ip_sockaddr sa)
+{
+	passert(sa.sa.sa.sa_family == AF_INET);
+	return address_from_in_addr(&sa.sa.sin.sin_addr);
+}
+
+static ip_address address_from_ipv6_sockaddr(const ip_sockaddr sa)
+{
+	passert(sa.sa.sa.sa_family == AF_INET6);
+	return address_from_in6_addr(&sa.sa.sin6.sin6_addr);
+}
+
+static ip_port port_from_ipv4_sockaddr(const ip_sockaddr sa)
+{
+	passert(sa.sa.sa.sa_family == AF_INET);
+	return ip_nport(sa.sa.sin.sin_port);
+}
+
+static ip_port port_from_ipv6_sockaddr(const ip_sockaddr sa)
+{
+	passert(sa.sa.sa.sa_family == AF_INET6);
+	return ip_nport(sa.sa.sin6.sin6_port);
+}
+
 /*
  * Construct well known addresses.
  */
@@ -134,6 +158,8 @@ const struct ip_info ipv4_info = {
 	.af = AF_INET,
 	.af_name = "AF_INET",
 	.sockaddr_size = sizeof(struct sockaddr_in),
+	.address_from_sockaddr = address_from_ipv4_sockaddr,
+	.port_from_sockaddr = port_from_ipv4_sockaddr,
 
 	/* id */
 	.id_ip_addr = ID_IPV4_ADDR,
@@ -177,6 +203,8 @@ const struct ip_info ipv6_info = {
 	.af = AF_INET6,
 	.af_name = "AF_INET6",
 	.sockaddr_size = sizeof(struct sockaddr_in6),
+	.address_from_sockaddr = address_from_ipv6_sockaddr,
+	.port_from_sockaddr = port_from_ipv6_sockaddr,
 
 	/* id */
 	.id_ip_addr = ID_IPV6_ADDR,

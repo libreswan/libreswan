@@ -16,7 +16,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>		/* for exit() */
+
+#include "lswalloc.h"		/* for leaks */
+#include "lswtool.h"		/* for tool_init_log(*) */
 
 #include "keyid.h"
 #include "constants.h"		/* for streq() */
@@ -24,7 +26,7 @@
 
 void regress(void);
 
-static int st;
+static int fails;
 
 static void check_keyblob_to_keyid(void)
 {
@@ -35,13 +37,13 @@ static void check_keyblob_to_keyid(void)
 	if (e != NULL) {
 		fprintf(stderr, "%s: keyblob_to_keyid returned '%s' not NULL\n",
 			__func__, e);
-		st += 1;
+		fails += 1;
 		return;
 	}
 	if (!streq(str_keyid(buf), b64nine)) {
 		fprintf(stderr, "%s: keyblobtoid generated `%s' not `%s'\n",
 			__func__, str_keyid(buf), b64nine);
-		st += 1;
+		fails += 1;
 		return;
 	}
 }
@@ -56,24 +58,33 @@ static void check_splitkey_to_keyid(void)
 	if (e != NULL) {
 		fprintf(stderr, "%s: keyblob_to_keyid returned '%s' not NULL\n",
 			__func__, e);
-		st += 1;
+		fails += 1;
 		return;
 	}
 	if (!streq(str_keyid(buf), b64nine)) {
 		fprintf(stderr, "%s: splitkeytoid generated `%s' not `%s'\n",
 			__func__, str_keyid(buf), b64nine);
-		st += 1;
+		fails += 1;
 		return;
 	}
 }
 
-int main()
+int main(int argc UNUSED, char *argv[])
 {
+	leak_detective = true;
+	struct logger *logger = tool_init_log(argv[0]);
+
 	check_keyblob_to_keyid();
 	check_splitkey_to_keyid();
 
-	if (st > 0) {
-		fprintf(stderr, "%d errors", st);
+	if (report_leaks(logger)) {
+		fails++;
 	}
-	exit(st > 0);
+
+	if (fails > 0) {
+		fprintf(stderr, "TOTAL FAILURES: %d\n", fails);
+		return 1;
+	}
+
+	return 0;
 }

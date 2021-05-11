@@ -202,12 +202,12 @@ jam_bytes_fn jam_sanitized_bytes;
 		jam_sanitized_bytes(BUF, hunk_.ptr, hunk_.len);		\
 	})
 
-/* (ismeta(b1)) ? \NNN : b1)... (i.e., shell escaped) */
-jam_bytes_fn jam_meta_escaped_bytes;
-#define jam_meta_escaped_hunk(BUF, HUNK)				\
+/* (ismeta(b1)) ? \NNN : b1)... (i.e., escaped for shell within quotes) */
+jam_bytes_fn jam_shell_quoted_bytes;
+#define jam_shell_quoted_hunk(BUF, HUNK)				\
 	({								\
 		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
-		jam_meta_escaped_bytes(BUF, hunk_.ptr, hunk_.len);	\
+		jam_shell_quoted_bytes(BUF, hunk_.ptr, hunk_.len);	\
 	})
 
 /*

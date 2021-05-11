@@ -23,9 +23,13 @@ const ip_sockaddr unset_sockaddr;
 
 err_t sockaddr_to_address_port(const ip_sockaddr sa, ip_address *address, ip_port *port)
 {
-	/* always clear */
-	*address = unset_address;
-	*port = unset_port;
+	/* always clear; both are optional */
+	if (address != NULL) {
+		*address = unset_address;
+	}
+	if (port != NULL) {
+		*port = unset_port;
+	}
 
 	/* paranoia from demux.c */
 	socklen_t min_len = offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t);
@@ -33,39 +37,22 @@ err_t sockaddr_to_address_port(const ip_sockaddr sa, ip_address *address, ip_por
 		return "truncated";
 	}
 
-	/*
-	 * The text used in the below errors originated in demux.c.
-	 *
-	 * XXX: While af_info seems useful, trying to make it work
-	 * here resulted in convoluted over-engineering.  Instead
-	 * ensure these code paths work using testing.
-	 */
-	switch (sa.sa.sa.sa_family) {
-	case AF_INET:
-	{
-		/* XXX: to strict? */
-		if (sa.len != sizeof(sa.sa.sin)) {
-			return "wrong length";
-		}
-		*address = address_from_in_addr(&sa.sa.sin.sin_addr);
-		*port = ip_nport(sa.sa.sin.sin_port);
-		break;
+	const struct ip_info *afi = aftoinfo(sa.sa.sa.sa_family);
+	if (afi == NULL) {
+		return "unexpected address family";
 	}
-	case AF_INET6:
-	{
-		/* XXX: to strict? */
-		if (sa.len != sizeof(sa.sa.sin6)) {
-			return "wrong length";
-		}
-		*address = address_from_in6_addr(&sa.sa.sin6.sin6_addr);
-		*port = ip_nport(sa.sa.sin6.sin6_port);
-		break;
+	if (sa.len != afi->sockaddr_size) {
+		return "wrong length";
 	}
-	case AF_UNSPEC:
-		return "unspecified";
-	default:
-		return "unexpected Address Family";
+
+	if (address != NULL) {
+		*address = afi->address_from_sockaddr(sa);
 	}
+
+	if (port != NULL) {
+		*port = afi->port_from_sockaddr(sa);
+	}
+
 	return NULL;
 }
 

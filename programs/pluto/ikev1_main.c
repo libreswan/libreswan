@@ -997,7 +997,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 				       rbody, st->st_logger);
 
 	const struct connection *c = st->st_connection;
-	const cert_t mycert = c->spd.this.cert;
+	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md, st->st_logger);
@@ -1010,11 +1010,11 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((c->spd.this.sendcert == CERT_SENDIFASKED &&
-		  st->hidden_variables.st_got_certrequest) ||
-		 c->spd.this.sendcert == CERT_ALWAYSSEND);
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
+			  mycert != NULL &&
+			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
+			    st->hidden_variables.st_got_certrequest) ||
+			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -1028,19 +1028,16 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	int chain_len = 0;
 
 	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					   mycert.u.nss_cert,
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
 					   c->send_ca == CA_SEND_ALL);
 		if (chain_len == 0)
 			send_authcerts = FALSE;
 	}
 
-	doi_log_cert_thinking(st->st_oakley.auth,
-			mycert.ty,
-			c->spd.this.sendcert,
-			st->hidden_variables.st_got_certrequest,
-			send_cert,
-			send_authcerts);
+	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
+			      c->spd.this.sendcert,
+			      st->hidden_variables.st_got_certrequest,
+			      send_cert, send_authcerts);
 
 	/*
 	 * send certificate request, if we don't have a preloaded RSA
@@ -1111,13 +1108,13 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	/* CERT out */
 	if (send_cert && impair.send_pkcs7_thingie) {
 		log_state(RC_LOG, st, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
-				     same_secitem_as_chunk(*pkcs7),
+				     same_secitem_as_shunk(*pkcs7),
 				     rbody)) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			free_auth_chain(auth_chain, chain_len);
@@ -1126,9 +1123,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	} else if (send_cert) {
 		log_state(RC_LOG, st, "I am sending my cert");
 
-		if (!ikev1_ship_CERT(mycert.ty,
-				   get_dercert_from_nss_cert(mycert.u.nss_cert),
-				   rbody)) {
+		if (!ikev1_ship_CERT(cert_ike_type(mycert), cert_der(mycert), rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1139,7 +1134,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 			if (!ikev1_ship_chain(auth_chain,
 					      chain_len,
 					      rbody,
-					      mycert.ty)) {
+					      cert_ike_type(mycert))) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}
@@ -1153,7 +1148,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	/* CR out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(mycert.ty,
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert),
 					     c->spd.that.ca,
 					     rbody))
 			return STF_INTERNAL_ERROR;
@@ -1253,7 +1248,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
-			bool aggrmode)
+			      bool aggrmode)
 {
 	struct state *st = md->st;
 	stf_status r = STF_OK;
@@ -1328,15 +1323,16 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	case OAKLEY_RSA_SIG:
 	{
 		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
-		r = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
-						 &ike_alg_hash_sha1, /*always*/
-						 &pubkey_type_rsa,
-						 authsig_using_RSA_pubkey);
-		if (r != STF_OK) {
-			/* already logged */
+		diag_t d = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
+							&ike_alg_hash_sha1, /*always*/
+							&pubkey_type_rsa,
+							authsig_using_RSA_pubkey);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			dbg("received '%s' message SIG_%s data did not match computed value",
 			    aggrmode ? "Aggr" : "Main",
 			    initiator ? "R" : "I" /*reverse*/);
+			r = STF_FAIL + INVALID_KEY_INFORMATION;
 		}
 		break;
 	}
@@ -1385,13 +1381,13 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection;
 
 	/* send certificate if we have one and auth is RSA */
-	cert_t mycert = c->spd.this.cert;
+	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 
-	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((c->spd.this.sendcert == CERT_SENDIFASKED &&
-		  st->hidden_variables.st_got_certrequest) ||
-		 c->spd.this.sendcert == CERT_ALWAYSSEND);
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
+			  mycert != NULL &&
+			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
+			    st->hidden_variables.st_got_certrequest) ||
+			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -1405,19 +1401,16 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	int chain_len = 0;
 
 	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					   mycert.u.nss_cert,
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
 					   c->send_ca == CA_SEND_ALL);
 		if (chain_len == 0)
 			send_authcerts = FALSE;
 	}
 
-	doi_log_cert_thinking(st->st_oakley.auth,
-			mycert.ty,
-			c->spd.this.sendcert,
-			st->hidden_variables.st_got_certrequest,
-			send_cert,
-			send_authcerts);
+	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
+			      c->spd.this.sendcert,
+			      st->hidden_variables.st_got_certrequest,
+			      send_cert, send_authcerts);
 
 	/*
 	 * Build output packet HDR*;IDir;HASH/SIG_R
@@ -1466,13 +1459,13 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	/* CERT out, if we have one */
 	if (send_cert && impair.send_pkcs7_thingie) {
 		log_state(RC_LOG, st, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
-				     same_secitem_as_chunk(*pkcs7),
+				     same_secitem_as_shunk(*pkcs7),
 				     &rbody)) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			free_auth_chain(auth_chain, chain_len);
@@ -1480,9 +1473,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	} else if (send_cert) {
 		log_state(RC_LOG, st, "I am sending my cert");
-		if (!ikev1_ship_CERT(mycert.ty,
-				     get_dercert_from_nss_cert(mycert.u.nss_cert),
-				     &rbody)) {
+		if (!ikev1_ship_CERT(cert_ike_type(mycert), cert_der(mycert), &rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1490,7 +1481,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		if (send_authcerts) {
 			log_state(RC_LOG, st, "I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain, chain_len,
-					      &rbody, mycert.ty)) {
+					      &rbody, cert_ike_type(mycert))) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}

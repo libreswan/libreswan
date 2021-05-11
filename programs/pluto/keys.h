@@ -86,11 +86,11 @@ typedef bool (authsig_using_pubkey_fn) (const struct crypt_mac *hash,
 
 extern authsig_using_pubkey_fn authsig_using_RSA_pubkey;
 
-extern stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
-					       const struct crypt_mac *hash,
-					       shunk_t signature,
-					       const struct hash_desc *hash_algo,
-					       const struct pubkey_type *type,
-					       authsig_using_pubkey_fn *try_pubkey);
+extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
+					   const struct crypt_mac *hash,
+					   shunk_t signature,
+					   const struct hash_desc *hash_algo,
+					   const struct pubkey_type *type,
+					   authsig_using_pubkey_fn *try_pubkey);
 
 #endif /* _KEYS_H */

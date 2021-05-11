@@ -1,4 +1,4 @@
-/* unix socaddr mashup, for libreswan
+/* unix sockaddr mashup, for libreswan
 
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
@@ -26,7 +26,7 @@
 #include <ip_endpoint.h>
 
 /*
- * Size the socaddr buffer big enough for all known
+ * Size the sockaddr buffer big enough for all known
  * alternatives.  On linux, at least, this isn't true:
  *
  * passert(sizeof(struct sockaddr) >= sizeof(struct sockaddr_in));

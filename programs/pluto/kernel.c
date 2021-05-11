@@ -442,7 +442,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_ME='%s' ", ipstr(&sr->this.host_addr, &bme));
 
 	jam(buf, "PLUTO_MY_ID='");
-	jam_id(buf, &sr->this.id, jam_meta_escaped_bytes);
+	jam_id_bytes(buf, &sr->this.id, jam_shell_quoted_bytes);
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_MY_CLIENT='");
@@ -483,7 +483,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_PEER='%s' ", ipstr(&sr->that.host_addr, &bpeer));
 
 	jam(buf, "PLUTO_PEER_ID='");
-	jam_id(buf, &sr->that.id, jam_meta_escaped_bytes);
+	jam_id_bytes(buf, &sr->that.id, jam_shell_quoted_bytes);
 	jam(buf, "' ");
 
 	/* for transport mode, things are complicated */
@@ -519,7 +519,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		if (key->type == &pubkey_type_rsa &&
 		    same_id(&sr->that.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
-			jam_dn_or_null(buf, key->issuer, "", jam_meta_escaped_bytes);
+			jam_dn_or_null(buf, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}
 	}
@@ -2294,9 +2294,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			i++;
 		}
 
-		dbg("%s() before proto %d", __func__, proto_info[0].proto);
 		/* ??? setting .proto to 0, an invalid value.  See /usr/include/linux/in.h. */
 		proto_info[i].proto = 0;
+
+		dbg("%s() before proto %d", __func__, proto_info[0].proto);
 
 		/*
 		 * ??? why is mode overwritten ONLY if true

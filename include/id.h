@@ -49,21 +49,32 @@ err_t atoid(const char *src, struct id *id);
 /*
  * Formatting.
  *
- * jam_id() only emits printable ASCII.  Non-printable characters, for
- * instance, are escaped using the RFC compliant sequence \<HEX><HEX>.
+ * The primitive jam_id_bytes() only outputs printable ASCII.  This
+ * means that the two calls:
  *
- * While good for logging, it isn't good for shell commands.  Use
- * JAM_BYTES to apply additional escaping.
+ *     jam_id_bytes(jam_raw_bytes)
+ *     jam_id_bytes(jam_sanitized_bytes)
+ *
+ * are equivalent (the latter would never encounter a character
+ * needing sanitizing).
+ *
+ * Hence str_id() is implemented using jam_id_bytes(jam_raw_bytes).
+ * However, callers will often specify jam_sanitized_bytes() just to
+ * be sure.
+ *
+ * However, it isn't good for shell commands et.al..  Use
+ * jam_shell_quoted_bytes(), for instance, to apply additional
+ * escaping.
  */
 
-void jam_id(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes);
+void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes);
 
 typedef struct {
 	char buf[512];
 } id_buf;
-#define IDTOA_BUF	sizeof(id_buf)
 
-const char *str_id(const struct id *id, id_buf *buf);
+const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *buf);
+#define str_id(ID, BUF) str_id_bytes(ID, jam_raw_bytes, BUF) /* see above */
 
 /*
  * Operations.

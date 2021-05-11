@@ -8,6 +8,7 @@
 #include "ip_address.h"
 #include "ip_subnet.h"
 #include "ip_selector.h"
+#include "ip_sockaddr.h"
 
 struct ip_info {
 	/*
@@ -70,6 +71,8 @@ struct ip_info {
 	int af; /* AF_INET or AF_INET6 */
 	const char *af_name;
 	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
+	ip_address (*address_from_sockaddr)(const ip_sockaddr sa);
+	ip_port (*port_from_sockaddr)(const ip_sockaddr sa);
 
 	/*
 	 * ID stuff.

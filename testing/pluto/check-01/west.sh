@@ -21,5 +21,5 @@ ipsec hunkcheck > /dev/null || echo failed
 ipsec dncheck > /dev/null || echo failed
 ipsec keyidcheck > /dev/null || echo failed
 
-# Need to disable DNS tests
-ipsec ipcheck --nodns > /dev/null || echo failed
+# Need to disable DNS tests; localhost is ok
+ipsec ipcheck --dns=hosts-file > /dev/null || echo failed

@@ -100,11 +100,6 @@ SECItem same_chunk_as_dercert_secitem(chunk_t chunk)
 	return same_chunk_as_secitem(chunk, siDERCertBuffer);
 }
 
-chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
-{
-	return same_secitem_as_chunk(cert->derCert);
-}
-
 static const char *dntoasi(dn_buf *dst, SECItem si)
 {
 	return str_dn(same_secitem_as_chunk(si), dst);
@@ -287,63 +282,6 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 		end_id->name = clone_secitem_as_chunk(cert->derSubject, "cert id");
 		end_id->kind = ID_DER_ASN1_DN;
 	}
-}
-
-generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
-{
-	SECItem crlval;
-
-	if (cert == NULL)
-		return NULL;
-
-	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
-						       &crlval) != SECSuccess) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
-			jam_nss_error(buf);
-		}
-		return NULL;
-	}
-
-	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena,
-						    &crlval);
-	if (dps == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
-			jam_nss_error(buf);
-		}
-		return NULL;
-	}
-
-	CRLDistributionPoint **points = dps->distPoints;
-	generalName_t *gndp_list = NULL;
-
-	/* Certificate can have multiple distribution points */
-	for (; points != NULL && *points != NULL; points++) {
-		CRLDistributionPoint *point = *points;
-
-		if (point->distPointType == generalName &&
-			point->distPoint.fullName != NULL) {
-			CERTGeneralName *first_name, *name;
-
-			/* Each point is a linked list. */
-			first_name = name = point->distPoint.fullName;
-			do {
-				if (name->type == certURI) {
-					/* Add single point to return list */
-					generalName_t *gndp =
-						alloc_thing(generalName_t,
-							    "gndp_from_nss_cert: general name");
-					same_nss_gn_as_pluto_gn(name, gndp);
-					gndp->next = gndp_list;
-					gndp_list = gndp;
-				}
-				name = CERT_GetNextGeneralName(name);
-			} while (name != NULL && name != first_name);
-		}
-	}
-
-	return gndp_list;
 }
 
 generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
@@ -545,11 +483,15 @@ void free_auth_chain(chunk_t *chain, int chain_len)
 	}
 }
 
-int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
-						     bool full_chain)
+int get_auth_chain(chunk_t *out_chain, int chain_max,
+		   const struct cert *cert, bool full_chain)
 {
-	if (end_cert == NULL)
+	if (cert == NULL)
 		return 0;
+	CERTCertificate *end_cert = cert->nss_cert;
+	if (end_cert == NULL) {
+		return 0;
+	}
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -611,8 +553,8 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 		return true;
 	}
 
-	if (c->spd.that.cert.u.nss_cert != NULL) {
-		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.u.nss_cert->derIssuer);
+	if (c->spd.that.cert.nss_cert != NULL) {
+		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.nss_cert->derIssuer);
 		return true;
 	}
 
@@ -633,16 +575,14 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
  * "certs" is a list, a certificate chain.
  * We only deal with the head and it must be an endpoint cert.
  */
-bool match_certs_id(const struct certs *certs,
-		    struct id *peer_id /*ID_FROMCERT => updated*/,
-		    struct logger *logger)
+
+diag_t match_end_cert_id(const struct certs *certs,
+			 struct id *peer_id /*ID_FROMCERT => updated*/)
 {
 	CERTCertificate *end_cert = certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "cannot use CA certificate for endpoint");
-		return false;
+		return diag("cannot use peer CA certificate");
 	}
 
 	switch (peer_id->kind) {
@@ -653,7 +593,7 @@ bool match_certs_id(const struct certs *certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_VerifySubjectAltName(end_cert, peer_id, logger);
+		return cert_verify_subject_alt_name(end_cert, peer_id);
 	}
 
 	case ID_FROMCERT:
@@ -673,7 +613,7 @@ bool match_certs_id(const struct certs *certs,
 			.name = end_cert_der_subject,
 		};
 		duplicate_id(peer_id, &id);
-		return true;
+		return NULL;
 	}
 
 	case ID_DER_ASN1_DN:
@@ -703,25 +643,24 @@ bool match_certs_id(const struct certs *certs,
 			 * all about certificates.
 			 */
 			id_buf idb;
-			llog(RC_LOG_SERIOUS, logger,
-				    "ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			return diag("peer ID_DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
-		} else if (DBGP(DBG_BASE)) {
+		}
+
+		if (DBGP(DBG_BASE)) {
 			id_buf idb;
 			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
 				end_cert->subjectName,
 				str_id(peer_id, &idb));
 		}
-		return m;
+		return NULL;
 	}
 
 	default:
 	{
 		esb_buf b;
-		llog(RC_LOG_SERIOUS, logger,
-			    "unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-		     enum_show(&ike_id_type_names, peer_id->kind, &b));
-		return false;
+		return diag("unhandled ID type %s; cannot match peer's certificate with expected peer ID",
+			    enum_show(&ike_id_type_names, peer_id->kind, &b));
 	}
 	}
 }
@@ -895,20 +834,19 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
-		if (!match_certs_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/, st->st_logger)) {
-			log_state(RC_LOG, st, "Peer CERT payload SubjectAltName does not match peer ID for this connection");
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
 		}
 		dbg("SAN ID matched, updating that.cert");
 	}
 
 	st->st_v1_peer_alt_id = true;
-	if (c->spd.that.cert.ty == CERT_X509_SIGNATURE &&
-	    c->spd.that.cert.u.nss_cert != NULL) {
-		CERT_DestroyCertificate(c->spd.that.cert.u.nss_cert);
+	if (c->spd.that.cert.nss_cert != NULL) {
+		CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
 	}
-	c->spd.that.cert.u.nss_cert = CERT_DupCertificate(certs->cert);
-	c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+	c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	return true;
 }
 
@@ -1079,7 +1017,7 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert,
 	return result;
 }
 
-bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs)
+bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
 {
 	pb_stream cert_pbs;
 	struct isakmp_cert cert_hd = {
@@ -1205,7 +1143,7 @@ bool ikev2_send_cert_decision(const struct state *st)
 		policy_buf pb;
 		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
 		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
-	} else if (this->cert.ty == CERT_NONE || this->cert.u.nss_cert == NULL) {
+	} else if (this->cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
 		   st->hidden_variables.st_got_certrequest) {
@@ -1292,14 +1230,13 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
 stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
-	const cert_t mycert = c->spd.this.cert;
+	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 	bool send_authcerts = c->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 
 	if (impair.send_pkcs7_thingie) {
 		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
-						send_full_chain);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1329,39 +1266,24 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					mycert.u.nss_cert,
-					send_full_chain ? TRUE : FALSE);
+					   mycert,
+					   send_full_chain ? TRUE : FALSE);
 	}
-
-#if 0
-	if (chain_len == 0)
-		send_authcerts = FALSE;
-
- need to make that function v2 aware and move it
-
-	doi_log_cert_thinking(st->st_oakley.auth,
-		mycert.ty,
-		st->st_connection->spd.this.sendcert,
-		st->hidden_variables.st_got_certrequest,
-		send_cert,
-		send_authcerts);
-#endif
 
 	const struct ikev2_cert certhdr = {
 		.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
-		.isac_enc = mycert.ty,
+		.isac_enc = cert_ike_type(mycert),
 	};
 
 	/*   send own (Initiator CERT) */
 	{
 		pb_stream cert_pbs;
 
-		dbg("sending [CERT] of certificate: %s", mycert.u.nss_cert->subjectName);
+		dbg("sending [CERT] of certificate: %s", cert_nickname(mycert));
 
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs) ||
-		    !out_hunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-							&cert_pbs, "CERT")) {
+		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1647,9 +1569,7 @@ void list_certs(struct show *s)
  */
 const char *cert_nickname(const cert_t *cert)
 {
-	return cert->ty == CERT_X509_SIGNATURE &&
-		cert->u.nss_cert != NULL ?
-			cert->u.nss_cert->nickname : NULL;
+	return cert != NULL && cert->nss_cert != NULL ? cert->nss_cert->nickname : NULL;
 }
 
 void list_authcerts(struct show *s)

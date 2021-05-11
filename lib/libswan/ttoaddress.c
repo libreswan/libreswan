@@ -16,34 +16,35 @@
  *
  */
 
+/*
+ * Unit testing is available through
+ *   OBJ.$WHATEVER/testing/programs/ipcheck/ipcheck
+ * This does not require KVM and is built by "make base".
+ */
+
 #include <string.h>
 #include <netdb.h>		/* for gethostbyname2() */
 
 #include "ip_address.h"
+#include "ip_sockaddr.h"
 #include "ip_info.h"
 #include "lswalloc.h"		/* for alloc_things(), pfree() */
 #include "lswlog.h"		/* for pexpect() */
 #include "hunk.h"		/* for char_is_xdigit() */
 
 static bool tryhex(shunk_t hex, ip_address *dst);
-static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *);
+static err_t trydotted(shunk_t src, ip_address *);
 static err_t colon(shunk_t src, ip_address *);
 static err_t getpiece(const char **, const char *, unsigned *);
 
 /*
- * ttoaddr - convert text name or dotted-decimal address to binary
- * address.
+ * ttoaddress_num - convert "numeric" IP address to binary address.
  *
- * NULL for success, else string literal.  WAS_NUMERIC is true when
- * the the string is non-numeric.
+ * NULL for success, else static string literal diagnostic.
  */
 
-static err_t ttoaddr_base(shunk_t src,
-			  const struct ip_info *afi,	/* address family; could be NULL */
-			  bool *was_numeric,
-			  ip_address *dst)
+err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
-	*was_numeric = true;
 	*dst = unset_address;
 
 	if (src.len == 0) {
@@ -58,46 +59,28 @@ static err_t ttoaddr_base(shunk_t src,
 	 * the more typical code report an error.
 	 */
 
-	if (afi == &ipv4_info || afi == NULL) {
+	if (afi == &ipv4_info) {
 		if (tryhex(src, dst)) {
 			return NULL;
 		}
+		return trydotted(src, dst);
 	}
 
-	if (memchr(src.ptr, ':', src.len) != NULL) {
-		if (afi == &ipv4_info) {
-			return "IPv4 address may not contain `:'";
-		}
+	if (afi == &ipv6_info) {
 		return colon(src, dst);
 	}
 
-	return trydotted(src, was_numeric, dst);
-}
+	if (afi == NULL) {
+		if (tryhex(src, dst)) {
+			return NULL;
+		}
+		if (memchr(src.ptr, ':', src.len) != NULL) {
+			return colon(src, dst);
+		}
+		return trydotted(src, dst);
+	}
 
-/*
- * tryname - try it as a name
- *
- * Error return is intricate because we cannot compose a static string.
- */
-static err_t tryname(const char *p,
-		     int af,
-		     int suggested_af,	/* kind(s) of numeric addressing tried */
-		     ip_address *dst)
-{
-	struct hostent *h = gethostbyname2(p, af);
-
-	passert(h == NULL || h->h_addrtype == af);
-
-	/* tailor message to context */
-
-	return 
-		h != NULL ?
-			data_to_address(h->h_addr, h->h_length, aftoinfo(af), dst) :
-		af == AF_INET6 ?
-			"not a numeric IPv6 address and name lookup failed (no validation performed)" :
-		suggested_af == AF_INET ?
-			"not a numeric IPv4 address and name lookup failed (no validation performed)" :
-			"not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
+	return "address family unknown";
 }
 
 /*
@@ -141,7 +124,7 @@ static bool tryhex(shunk_t hex,
  * fields when they match a very limited format.
  */
 
-static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
+static err_t trydotted(shunk_t src, ip_address *dst)
 {
 	struct ip_bytes bytes = unset_bytes;
 
@@ -163,7 +146,6 @@ static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
 		shunk_t token = shunk_token(&cursor, NULL, ".");
 		if (token.len == 0) {
 			/* ex: 0xa. */
-			*was_numeric = false;
 			return "empty dotted-numeric address field";
 		}
 #if 0
@@ -200,7 +182,6 @@ static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
 		err_t err = shunk_to_uintmax(token, NULL, 0, &byte, 0/*no-celing*/);
 #endif
 		if (err != NULL) {
-			*was_numeric = false;
 			return err;
 		}
 
@@ -242,7 +223,6 @@ static err_t trydotted(shunk_t src, bool *was_numeric, ip_address *dst)
 		bytes.byte[b] = byte;
 	}
 	if (cursor.ptr != NULL) {
-		*was_numeric = false;
 		return "garbage at end of dotted-address";
 	}
 
@@ -375,66 +355,67 @@ err_t getpiece(const char **srcp,	/* *srcp is updated */
 	return NULL;
 }
 
+/*
+ * ttoaddress_dns
+ *
+ * ??? numeric addresses are handled by getaddrinfo; perhaps the hex form is lost.
+ * ??? change: we no longer filter out bad characters.  Surely getaddrinfo(3) does.
+ */
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	*dst = unset_address;
-	if (src.len == 0) {
-		return "empty string";
-	}
 
-	{
-		bool was_numeric = true;
-		err_t err = ttoaddr_base(src, afi, &was_numeric, dst);
-		if (was_numeric) {
-			/* no-point in continuing */
-			return err;
-		}
-	}
+	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
+	struct addrinfo *res = NULL; /* must-free when EAI==0 */
+	const struct addrinfo hints = (struct addrinfo) {
+		.ai_family = afi == NULL ? AF_UNSPEC : afi->af,
+	};
+	int eai = getaddrinfo(name, NULL, &hints, &res);
 
-	/* not numeric: try DNS */
-
-	for (const char *cp = src.ptr, *end = cp + src.len; cp < end; cp++) {
+	if (eai != 0) {
 		/*
-		 * Legal ASCII characters in a domain name.
-		 * Underscore technically is not, but is a common
-		 * misunderstanding.  Non-ASCII characters are simply
-		 * exempted from checking at the moment, to allow for
-		 * UTF-8 encoded stuff; the purpose of this check is
-		 * merely to catch blatant errors.
+		 * Return what the pluto testsuite expects for now.
 		 *
-		 * XXX: Suspect the ISASCII() check can be dropped -
-		 * utf-8 isn't allowed in DNS names and without a
-		 * utf-8 parser the check is flawed.
+		 * XXX: How portable are errors returned by
+		 * gai_strerror(eai)?
+		 *
+		 * XXX: what is with "(no validation performed)"?
+		 * Perhaps it is refering to DNSSEC.
 		 */
-		static const char namechars[] =
-			"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_.";
-#define ISASCII(c) (((c) & 0x80) == 0)
-		if (ISASCII(*cp) && strchr(namechars, *cp) == NULL) {
-			return "illegal (non-DNS-name) character in name";
-		}
+		pfree(name);
+		/* RES is not defined */
+		return "not a numeric IP address and name lookup failed (no validation performed)";
 	}
 
 	/*
-	 * need a guarenteed null terminated string
+	 * When AFI is specified, use the first entry; and prefer IPv4
+	 * when it wasn't.
+	 *
+	 * Linux orders things IPv4->IPv6, but NetBSD at least is the
+	 * reverse; hence the search.
 	 */
-	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
-	int suggested_af = afi == NULL ? AF_UNSPEC : afi->af;
-	err_t err = NULL;
-	if (suggested_af == AF_UNSPEC || suggested_af == AF_INET) {
-		err = tryname(name, AF_INET, suggested_af, dst);
+	struct addrinfo *winner = res;
+	if (afi == NULL) {
+		for (struct addrinfo *r = res; r!= NULL; r = r->ai_next) {
+			if (r->ai_family == AF_INET) {
+				winner = r;
+				break;
+			}
+		}
 	}
-	if ((err != NULL && suggested_af == AF_UNSPEC) || suggested_af == AF_INET6) {
-		err_t v6err = tryname(name, AF_INET6, suggested_af, dst);
-		/* on double failure, leave the IPv4 diagnostic */
-		if (err == NULL || v6err == NULL)
-			err = v6err;
-	}
+
+	/* ai_addrlen is probably shorter than (sa.sa) */
+	ip_sockaddr sa = {
+		.len = winner->ai_addrlen,
+	};
+	passert(winner->ai_addrlen <= sizeof(sa.sa));
+	memcpy(&sa.sa, winner->ai_addr, winner->ai_addrlen);
+	passert(sa.sa.sa.sa_family == winner->ai_family);
+
+	/* boneheaded getaddrinfo(3) leaves port field undefined */
+	err_t err = sockaddr_to_address_port(sa, dst, NULL/*ignore port*/);
+
+	freeaddrinfo(res);
 	pfree(name);
 	return err;
-}
-
-err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
-{
-	bool was_numeric; /* ignored */
-	return ttoaddr_base(src, afi, &was_numeric, dst);
 }

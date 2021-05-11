@@ -627,8 +627,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	return result;
 }
 
-bool cert_VerifySubjectAltName(const CERTCertificate *cert,
-			       const struct id *id, struct logger *logger)
+diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id *id)
 {
 	/*
 	 * Get a handle on the certificate's subject alt name.
@@ -637,12 +636,10 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
 					      &subAltName);
 	if (rv != SECSuccess) {
-		id_buf name;
-		llog(RC_LOG_SERIOUS, logger,
-			    "certificate contains no subjectAltName extension to match %s '%s'",
+		id_buf idb;
+		return diag("peer certificate contains no subjectAltName extension to match %s '%s'",
 			    enum_name(&ike_id_type_names, id->kind),
-			    str_id(id, &name));
-		return false;
+			    str_id(id, &idb));
 	}
 
 	/*
@@ -653,19 +650,21 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	passert(arena != NULL);
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
-		id_buf name;
-		llog(RC_LOG_SERIOUS, logger,
-			    "certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    enum_name(&ike_id_type_names, id->kind),
-			    str_id(id, &name));
-		/* XXX: is nss error set? */
 		PORT_FreeArena(arena, PR_FALSE);
-		return false;
+		id_buf idb;
+		return diag("peer certificate subjectAltName extension failed to decode while looking for %s '%s'",
+			    enum_name(&ike_id_type_names, id->kind),
+			    str_id(id, &idb));
 	}
 
 	/*
 	 * Convert the ID with no special escaping (other than that
 	 * specified for converting an ASN.1 DN to text).
+	 *
+	 * The result is printable without sanitizing - str_id_bytes()
+	 * only emits printable ASCII (the JAM_BYTES parameter is for
+	 * converting the printable ASCII to something suitable for
+	 * quoted shell).
 	 *
 	 * XXX: Is there any point in continuing when KIND isn't
 	 * ID_FQDN?  For instance, ID_DER_ASN1_DN (in fact, for DN,
@@ -677,15 +676,13 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * academic - any escape character ('\', '?') is invalid and
 	 * can't match.
 	 */
-	char raw_id_buf[IDTOA_BUF];
-	struct jambuf raw_id_jambuf = ARRAY_AS_JAMBUF(raw_id_buf);
-	jam_id(&raw_id_jambuf, id, jam_raw_bytes);
-	const char *raw_id = raw_id_buf;
+	id_buf ascii_id_buf;
+	const char *ascii_id = str_id_bytes(id, jam_raw_bytes, &ascii_id_buf);
 	if (id->kind == ID_FQDN) {
-		if (pexpect(raw_id[0] == '@'))
-			raw_id++;
+		if (pexpect(ascii_id[0] == '@'))
+			ascii_id++;
 	} else {
-		pexpect(raw_id[0] != '@');
+		pexpect(ascii_id[0] != '@');
 	}
 
 	/*
@@ -696,7 +693,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 	 * and an ID_FQDN containing a textual IP address?
 	 */
 	ip_address myip;
-	bool san_ip = (ttoaddress_num(shunk1(raw_id), NULL/*UNSPEC*/, &myip) == NULL);
+	bool san_ip = (ttoaddress_num(shunk1(ascii_id), NULL/*UNSPEC*/, &myip) == NULL);
 
 	/*
 	 * nameList is a pointer into a non-empty circular linked
@@ -724,7 +721,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 			const char *c_ptr = (const void *) current->name.other.data;
 			size_t c_len =  current->name.other.len;
 
-			const char *n_ptr = raw_id;
+			const char *n_ptr = ascii_id;
 			static const char wild[] = "*.";
 			const size_t wild_len = sizeof(wild) - 1;
 
@@ -741,15 +738,12 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
 				LSWDBGP(DBG_BASE, buf) {
-					jam(buf, "subjectAltname '");
-					jam_sanitized_bytes(buf, raw_id, strlen(raw_id)),
-					jam(buf, "' matched '");
+					jam(buf, "peer certificate subjectAltname '%s' matched '", ascii_id),
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);
-					jam(buf, "' in certificate");
 				}
 				PORT_FreeArena(arena, PR_FALSE);
-				return TRUE;
+				return NULL;
 			}
 			break;
 		}
@@ -767,13 +761,13 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 			if (hunk_memeq(as, current->name.other.data,
 				       current->name.other.len)) {
 				address_buf b;
-				dbg("subjectAltname matches address %s",
+				dbg("peer certificate subjectAltname matches address %s",
 				    str_address(&myip, &b));
 				PORT_FreeArena(arena, PR_FALSE);
-				return true;
+				return NULL;
 			}
 			address_buf b;
-			dbg("subjectAltname does not match address %s",
+			dbg("peer certificate subjectAltname does not match address %s",
 			    str_address(&myip, &b));
 			break;
 		}
@@ -784,20 +778,16 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert,
 		current = CERT_GetNextGeneralName(current);
 	} while (current != nameList);
 
-	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
-		jam(buf, "certificate subjectAltName extension does not match ");
-		jam_enum(buf, &ike_id_type_names, id->kind);
-		jam(buf, " '");
-		jam_sanitized_bytes(buf, raw_id, strlen(raw_id));
-		jam(buf, "'");
-	}
-
-	/* Don't free nameList, it's part of the arena. */
+	/*
+	 * Don't need to free nameList, it's part of the arena.
+	 */
 	PORT_FreeArena(arena, PR_FALSE);
-	return false;
+	esb_buf esb;
+	return diag("peer certificate subjectAltName extension does not match %s '%s'",
+		    enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
 }
 
-SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
+SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -808,7 +798,7 @@ SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 	SEC_PKCS7ContentInfo *content
-		= SEC_PKCS7CreateCertsOnly(cert,
+		= SEC_PKCS7CreateCertsOnly(cert->nss_cert,
 					   send_full_chain ? PR_TRUE : PR_FALSE,
 					   handle);
 	SECItem *pkcs7 = SEC_PKCS7EncodeItem(NULL, NULL, content,

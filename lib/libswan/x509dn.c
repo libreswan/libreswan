@@ -267,14 +267,14 @@ int dn_count_wildcards(chunk_t dn)
  * Distinguished Names - in 1995.
  *
  * XXX: added OID.N.N.N; added '#' prefix; added \ escape; according
- * to NSS bug 210584 this was all added to NSS 2019-12 years ago.
-
+ * to NSS bug 210584 this was all added in 2007.
+ *
  * RFC-1779 was obsoleted by RFC-2253 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
  * in 1997.
  *
  * XXX: deprecated OID.N.N.N; according to NSS bug 1342137 this was
- * fixed 2019-2 years ago.
+ * fixed in 2017.
  *
  * RFC-2253 was obsoleted by RFC-4514 - Lightweight Directory Access
  * Protocol (v3): UTF-8 String Representation of Distinguished Names -
@@ -282,6 +282,8 @@ int dn_count_wildcards(chunk_t dn)
  *
  * Hence this tries to implement https://tools.ietf.org/html/rfc4514
  * using \<CHAR> for printable and \XX for non-printable.
+ *
+ * See also NSS bug 1709676.
  */
 
 static err_t format_dn(struct jambuf *buf, chunk_t dn,
@@ -388,7 +390,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 		if (oid_code == OID_UNKNOWN ||
 		    /*
 		     * NSS totally screws up a leading '#' - stripping
-		     * of the escape and then interpreting it as a
+		     * off the escape and then interpreting it as a
 		     * #BER.
 		     */
 		    (nss_compatible &&
@@ -605,25 +607,6 @@ const char *str_dn(chunk_t dn, dn_buf *dst)
 }
 
 /*
- * Note that there may be as many as six IDs that are temporary at
- * one time before unsharing the two ends of a connection. So we need
- * at least six temporary buffers for DER_ASN1_DN IDs.
- * We rotate them. Be careful!
- */
-#define MAX_BUF 6
-
-static unsigned char *temporary_cyclic_buffer(void)
-{
-	/* MAX_BUF internal buffers */
-	static unsigned char buf[MAX_BUF][IDTOA_BUF];
-	static int counter;	/* cyclic counter */
-
-	if (++counter == MAX_BUF)
-		counter = 0;	/* next internal buffer */
-	return buf[counter];	/* assign temporary buffer */
-}
-
-/*
  * Converts an LDAP-style human-readable ASCII-encoded
  * ASN.1 distinguished name into binary DER-encoded format.
  *
@@ -649,21 +632,23 @@ static unsigned char *temporary_cyclic_buffer(void)
  *		}
  *	}
  * }
+ *
+ * See https://bugzilla.mozilla.org/show_bug.cgi?id=1709676 for why
+ * this doesn't use the NSS code.  Sigh.
  */
 
 err_t atodn(const char *src, chunk_t *dn)
 {
 	dbg("ASCII to DN <= \"%s\"", src);
+	*dn = empty_chunk;
 
 	/* stack of unfilled lengths */
-	unsigned char *(patchpoint[5]);	/* only 4 are actually needed */
-	unsigned char **ppp = patchpoint;
+	uint8_t *(patchpoint[5]);	/* only 4 are actually needed */
+	uint8_t **ppp = patchpoint;
 
-	/* space for result */
-	dn->ptr = temporary_cyclic_buffer();	/* nasty! */
-
-	unsigned char *dn_ptr = dn->ptr;	/* growth point */
-	unsigned char *dn_redline = dn_ptr + IDTOA_BUF;
+	uint8_t dn_buf[sizeof(id_buf)];	/* space for result */
+	uint8_t *dn_ptr = dn_buf;	/* growth point */
+	uint8_t *dn_redline = dn_buf + sizeof(dn_buf);
 
 #	define START_OBJ() { *ppp++ = dn_ptr; }
 
@@ -853,7 +838,8 @@ err_t atodn(const char *src, chunk_t *dn)
 	}
 
 	END_OBJ(ASN1_SEQUENCE);	/* 0 */
-	dn->len = dn_ptr - dn->ptr;
+
+	*dn = clone_bytes_as_chunk(dn_buf, dn_ptr - dn_buf, "atodn");
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("ASCII to DN =>", *dn);
 	}

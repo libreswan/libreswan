@@ -115,10 +115,10 @@ static int print_secrets(struct secret *secret,
 		if (ids == NULL) {
 			jam(buf, "%%any");
 		} else {
-			jam_id(buf, &ids->id, jam_sanitized_bytes);
+			jam_id_bytes(buf, &ids->id, jam_sanitized_bytes);
 			if (ids->next != NULL) {
 				jam(buf, " ");
-				jam_id(buf, &ids->next->id, jam_sanitized_bytes);
+				jam_id_bytes(buf, &ids->next->id, jam_sanitized_bytes);
 				if (ids->next->next != NULL) {
 					jam(buf, " more");
 				}
@@ -360,10 +360,9 @@ struct tac_state {
  * return false when searching can continue.
  *
  *   Returns  FATAL_DIAG  KEY     tried_cnt
- *    false                                 can try again
+ *    false     NULL     NULL        0      no key, try again
+ *    false     NULL     NULL       >0      no key worked, try again
  *    true    <valid>   <valid>     N/A     fatal error caused by KEY
- *    true      NULL     NULL        0      no key found
- *    true      NULL     NULL       >0      no key worked
  *    true      NULL    <valid>     N/A     KEY worked
  */
 
@@ -446,12 +445,9 @@ static bool try_all_keys(const char *cert_origin,
 			jam(&s->tried_jambuf, "(fatal)");
 			s->key = key; /* also return failing key */
 			return true; /* stop searching; enough is enough */
-		} else if (passed) {
-			/*
-			 * Success: copy successful key into state.
-			 * There might be an old one if we previously
-			 * aborted this state transition.
-			 */
+		}
+
+		if (passed) {
 			dbg("  '%s' passed", keyid_str);
 			s->key = key;
 			return true; /* stop searching */
@@ -461,15 +457,16 @@ static bool try_all_keys(const char *cert_origin,
 		dbg("  '%s' failed", keyid_str);
 		pexpect(s->key == NULL);
 	}
+
 	return false; /* keep searching */
 }
 
-stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
-					const struct crypt_mac *hash,
-					shunk_t signature,
-					const struct hash_desc *hash_algo,
-					const struct pubkey_type *type,
-					authsig_using_pubkey_fn *try_pubkey)
+diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
+				    const struct crypt_mac *hash,
+				    shunk_t signature,
+				    const struct hash_desc *hash_algo,
+				    const struct pubkey_type *type,
+				    authsig_using_pubkey_fn *try_pubkey)
 {
 	const struct connection *c = ike->sa.st_connection;
 	struct tac_state s = {
@@ -495,9 +492,7 @@ stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
 	dbg("required %s CA is '%s'", type->name,
 	    str_dn_or_null(c->spd.that.ca, "%any", &buf));
 
-	if (!pexpect(ike->sa.st_remote_certs.processed)) {
-		return STF_FATAL;
-	}
+	passert(ike->sa.st_remote_certs.processed);
 
 	/*
 	 * Prune the expired public keys from the pre-loaded public
@@ -524,32 +519,25 @@ stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
 	}
 
 	if (s.fatal_diag != NULL) {
-		LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
-			jam(buf, "authentication aborted: problem with '");
-			jam_id(buf, &s.key->id, jam_sanitized_bytes);
-			jam(buf, "': ");
-			jam_diag(buf, s.fatal_diag);
-			pfree_diag(&s.fatal_diag);
-		}
-		return STF_FATAL;
+		passert(s.key != NULL);
+		id_buf idb;
+		return diag_diag(&s.fatal_diag, "authentication aborted: problem with '%s': ",
+				 str_id(&s.key->id, &idb));
 	}
 
 	if (s.key == NULL) {
-		LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
-			jam(buf, "authentication failed: ");
-			if (s.tried_cnt == 0) {
-				jam(buf, "no certificate matched %s with %s and '",
-				    type->name, hash_algo->common.fqn);
-				jam_id(buf, &c->spd.that.id, jam_sanitized_bytes);
-				jam(buf, "'");
-			} else {
-				jam(buf, "using %s with %s for '",
-				    type->name, hash_algo->common.fqn);
-				jam_id(buf, &c->spd.that.id, jam_sanitized_bytes);
-				jam(buf, "' tried%s", s.tried);
-			}
+		if (s.tried_cnt == 0) {
+			id_buf idb;
+			return diag("authentication failed: no certificate matched %s with %s and '%s'",
+				    type->name, hash_algo->common.fqn,
+				    str_id(&c->spd.that.id, &idb));
+		} else {
+			id_buf idb;
+			return diag("authentication failed: using %s with %s for '%s' tried%s",
+				    type->name, hash_algo->common.fqn,
+				    str_id(&c->spd.that.id, &idb),
+				    s.tried);
 		}
-		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 
 	pexpect(s.key != NULL);
@@ -559,7 +547,7 @@ stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
 		    type->name, hash_algo->common.fqn,
 		    s.cert_origin);
 		jam(buf, "'");
-		jam_id(buf, &s.key->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);
 		jam(buf, "'");
 		/* this is so that the cert verified line can be deleted */
 		if (s.key->issuer.ptr != NULL) {
@@ -570,7 +558,7 @@ stf_status authsig_and_log_using_pubkey(struct ike_sa *ike,
 	}
 	pubkey_delref(&ike->sa.st_peer_pubkey, HERE);
 	ike->sa.st_peer_pubkey = pubkey_addref(s.key, HERE);
-	return STF_OK;
+	return NULL;
 }
 
 /*
@@ -729,8 +717,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
-	if (c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
-	    c->spd.this.cert.u.nss_cert != NULL) {
+	if (c->spd.this.cert.nss_cert != NULL) {
 		const char *nickname = cert_nickname(&c->spd.this.cert);
 
 		id_buf this_buf, that_buf;
@@ -965,7 +952,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, st
 	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
 						     &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
-			cert->u.nss_cert->nickname);
+			cert->nss_cert->nickname);
 	return err;
 }
 

@@ -155,8 +155,8 @@ static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
 
-	if (e->cert.u.nss_cert != NULL)
-		CERT_DestroyCertificate(e->cert.u.nss_cert);
+	if (e->cert.nss_cert != NULL)
+		CERT_DestroyCertificate(e->cert.nss_cert);
 
 	free_chunk_content(&e->ca);
 	pfreeany(e->updown);
@@ -570,7 +570,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 	       sameaddr(&this->id.ip_addr, &this->host_addr)))) {
 		open_paren = true;
 		jam_string(buf, "[");
-		jam_id(buf, &this->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &this->id, jam_sanitized_bytes);
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||
@@ -684,9 +684,9 @@ void unshare_connection_end(struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
 
-	if (e->cert.u.nss_cert != NULL) {
-		e->cert.u.nss_cert = CERT_DupCertificate(e->cert.u.nss_cert);
-		passert(e->cert.u.nss_cert != NULL);
+	if (e->cert.nss_cert != NULL) {
+		e->cert.nss_cert = CERT_DupCertificate(e->cert.nss_cert);
+		passert(e->cert.nss_cert != NULL);
 	}
 
 	e->ca = clone_hunk(e->ca, "ca string");
@@ -835,20 +835,19 @@ static int extract_end(struct connection *c,
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &dst->ca); /* static result! */
+			free_chunk_content(&dst->ca);
+			ugh = atodn(src->ca, &dst->ca);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
-					    "bad %s CA string '%s': %s (ignored)",
-					    leftright, src->ca, ugh);
-				dst->ca = EMPTY_CHUNK;
+				     "bad %s CA string '%s': %s (ignored)",
+				     leftright, src->ca, ugh);
 			} else {
-				dst->ca = clone_hunk(dst->ca, "ca string");
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(dst->ca);
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
-						    "error parsing %s CA converted to DN: %s",
-						    leftright, ugh);
+					     "error parsing %s CA converted to DN: %s",
+					     leftright, ugh);
 					DBG_dump_hunk(NULL, dst->ca);
 				}
 			}
@@ -1192,8 +1191,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct logger *logger)
 {
 	passert(cert != NULL);
-	dst_end->cert.ty = CERT_NONE;
-	dst_end->cert.u.nss_cert = NULL;
+	dst_end->cert.nss_cert = NULL;
 	const char *nickname = cert->nickname;
 
 	/*
@@ -1235,8 +1233,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 			    dst_end->leftright, nickname);
 	}
 
-	dst_end->cert.ty = CERT_X509_SIGNATURE;
-	dst_end->cert.u.nss_cert = cert;
+	dst_end->cert.nss_cert = cert;
 
 	/*
 	 * If no CA is defined, use issuer as default; but only when
@@ -4482,10 +4479,14 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->cert.ty != CERT_NONE &&
-	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN) &&
-	    cert_VerifySubjectAltName(this->cert.u.nss_cert, idr, logger))
-		return true;
+	if (this->cert.nss_cert != NULL &&
+	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
+		diag_t d = cert_verify_subject_alt_name(this->cert.nss_cert, idr);
+		if (d == NULL) {
+			return true;
+		}
+		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+	}
 
 	const struct id *wild = &this->id;
 

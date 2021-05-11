@@ -1,37 +1,35 @@
-# note swan-prep does not yet support iked
-# note swan-prep does not yet supporoes not yet support iked
+set +o emacs
+set +o emacs
+openbsdw #
+ set +o vi
+openbsdw #
+ set +o gmacs
+openbsdw #
+ # note swan-prep does not yet support iked
 openbsdw #
  cp openbsdw.conf /etc/iked.conf
-cp openbsdw.conf /etc/iked.conf
 openbsdw #
  chmod 600 /etc/iked.conf
-chmod 600 /etc/iked.conf
 openbsdw #
  /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
-/sbin/iked -dvvv > /tmp/iked.log 2>& /tmp/iked.log 2>&1 &
 [x] PID
 openbsdw #
  echo "initdone"
-echo "initdone"
 initdone
 openbsdw #
  ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
-ping -n -c 1 -I 192.0.1.254 192.0.2.2.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 0 packets received, 100.0% packet loss
 openbsdw #
  sleep 3
-sleep 3
 openbsdw #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-ping -n -c 4 -I 192.0.1.254 192.0.2.2.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 packets received, 0.0% packet loss
 openbsdw #
  ipsecctl -s all | sort
-ipsecctl -s all | sort
 FLOWS:
 SAD:
 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes
@@ -44,8 +42,5 @@ flow esp out from 192.0.1.0/24 to 192.1.2.23 peer 192.1.2.23 srcid FQDN/west dst
 flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 openbsdw #
  if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
-if [ -f /tmp/iked.log ]; then cp /tmlog ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
-../../guestbin/check-for-core.sh
-if [ -f /sbin/ausearch ]; then auseaarch ]; then ausearch -r -m avc -ts recent ; fi
 openbsdw #
  

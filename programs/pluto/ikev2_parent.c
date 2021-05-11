@@ -2859,9 +2859,11 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		size_t len = pbs_left(&pbs);
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					ike, &idhash_in, &pbs_no_ppk_auth,
-					ike->sa.st_connection->spd.that.authby)) {
+		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+					      ike, &idhash_in, &pbs_no_ppk_auth,
+					      ike->sa.st_connection->spd.that.authby);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -2886,8 +2888,10 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 
 			dbg("going to try to verify NULL_AUTH from Notify payload");
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			if (!v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						&pbs_null_auth, AUTHBY_NULL)) {
+			diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
+						      &pbs_null_auth, AUTHBY_NULL);
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("NULL_auth from Notify Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -2899,9 +2903,11 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("NULL_AUTH verified");
 		} else {
 			dbg("verifying AUTH payload");
-			if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						st->st_connection->spd.that.authby)) {
+			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						      st->st_connection->spd.that.authby);
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -3075,47 +3081,6 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 	return true;
 }
 
-/*
- * The caller could have done the linux_audit_conn() call, except one case
- * here deletes the state before returning an STF error
- */
-
-static stf_status ike_auth_child_responder(struct ike_sa *ike,
-					   struct child_sa **child_out,
-					   struct msg_digest *md)
-{
-	pexpect(md->st != NULL);
-	pexpect(md->st == &ike->sa); /* passed in parent */
-	struct connection *c = md->st->st_connection;
-	pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
-
-	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
-						    STATE_V2_IKE_AUTH_CHILD_R0,
-						    null_fd);
-	binlog_refresh_state(&child->sa);
-
-	/*
-	 * XXX: This is to hack around the broken responder code that
-	 * switches from the IKE SA to the CHILD SA before sending the
-	 * reply.  Instead, because the CHILD SA can fail, the IKE SA
-	 * should be the one processing the message?
-	 */
-	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-
-	if (!assign_child_responder_client(ike, child, md)) {
-		/* already logged; already recorded */
-		/*
-		 * XXX: while the CHILD SA failed, the IKE SA should
-		 * continue to exist.  This STF_FAIL will blame MD->ST
-		 * aka the IKE SA.
-		 */
-		v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
-		return STF_FAIL; /* XXX: better? */
-	}
-	*child_out = child;
-	return STF_OK;
-}
-
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(struct ike_sa *ike,
 									     struct msg_digest *md,
 									     const struct hash_signature *auth_sig)
@@ -3282,16 +3247,35 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
-		struct child_sa *child = NULL;
 		stf_status ret;
-		ret = ike_auth_child_responder(ike, &child, md);
-		if (ret != STF_OK) {
-			pexpect(child == NULL);
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ike_auth_child_responder() returned ");
-				jam_v2_stf_status(buf, ret);
-			}
-			return ret; /* we should continue building a valid reply packet */
+		pexpect(md->st != NULL);
+		pexpect(md->st == &ike->sa); /* passed in parent */
+		struct connection *c = md->st->st_connection;
+		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
+
+		struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
+							    STATE_V2_IKE_AUTH_CHILD_R0,
+							    null_fd);
+		binlog_refresh_state(&child->sa);
+
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
+		if (!assign_child_responder_client(ike, child, md)) {
+			/* already logged; already recorded */
+			/*
+			 * XXX: while the CHILD SA failed, the IKE SA
+			 * should continue to exist.  This STF_FAIL
+			 * will blame MD->ST aka the IKE SA.
+			 */
+			v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
+			/* we should continue building a valid reply packet */
+			return STF_FAIL; /* XXX: better? */
 		}
 		pexpect(child != NULL);
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
@@ -3485,7 +3469,7 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	struct state *rst = state_with_serialno(pred);
 	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
 
-	if (rst !=  NULL && IS_V2_ESTABLISHED(rst->st_state)) {
+	if (rst != NULL && IS_V2_ESTABLISHED(rst->st_state)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
 		monotime_t now = mononow();
 		const struct pluto_event *ev = rst->st_event;
@@ -3497,10 +3481,14 @@ static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	deltatime_buf lb;
 	log_state(RC_LOG, st, "rekeyed #%lu %s %s remaining life %ss", pred,
 		  st->st_state->name,
-		  rst ==  NULL ? "and the state is gone" : "and expire it",
+		  rst == NULL ? "and the state is gone" : "and expire it",
 		  str_deltatime(lifetime, &lb));
 
-	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
+	/*
+	 * ??? added pexpect to avoid NULL dereference.
+	 * Why do we test this three times?  Should it not be done once and for all?
+	 */
+	if (pexpect(rst != NULL) && deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}
@@ -3788,9 +3776,10 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 	/* process AUTH payload */
 
 	dbg("verifying AUTH payload");
-	if (!v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-				ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-				that_authby)) {
+	d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+			       ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		dbg("R2 Auth Payload failed");
 		/*
 		 * We cannot send a response as we are processing
