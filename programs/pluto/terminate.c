@@ -91,7 +91,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 		 */
 		connection_still_exists = c->kind != CK_INSTANCE;
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		delete_states_by_connection(c, false, logger->global_whackfd);
+		delete_states_by_connection(c, /*relations?*/false);
 	}
 
 	if (connection_still_exists) {

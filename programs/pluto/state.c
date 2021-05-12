@@ -1279,8 +1279,7 @@ bool v2_child_connection_probably_shared(struct child_sa *child)
 static void foreach_state_by_connection_func_delete(struct connection *c,
 						    bool (*comparefunc)(
 							    struct state *st,
-							    struct connection *c),
-						    struct fd *whackfd)
+							    struct connection *c))
 {
 	/* this kludge avoids an n^2 algorithm */
 
@@ -1303,15 +1302,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
-				/*
-				 * XXX: this simingly redundant
-				 * push/pop has the side effect
-				 * suppressing the message 'deleting
-				 * other state'.
-				 */
-				/* XXX: better way? */
+				/* XXX: something better? */
 				close_any(&this->st_logger->global_whackfd);
-				this->st_logger->global_whackfd = dup_any(whackfd);
+				this->st_logger->global_whackfd = dup_any(c->logger->global_whackfd);
 				delete_state(this);
 			}
 		}
@@ -1370,7 +1363,7 @@ static bool same_phase1_sa_relations(struct state *this,
 		this->st_clonedfrom == parent_sa);
 }
 
-void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd)
+void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
 
@@ -1385,9 +1378,7 @@ void delete_states_by_connection(struct connection *c, bool relations, struct fd
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_state_by_connection_func_delete(c,
-						relations ? same_phase1_sa_relations : same_phase1_sa,
-						whackfd);
+	foreach_state_by_connection_func_delete(c, relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	const struct spd_route *sr;
 
@@ -1402,7 +1393,7 @@ void delete_states_by_connection(struct connection *c, bool relations, struct fd
 
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
-		delete_connection(c, relations);
+		delete_connection(&c, relations);
 	}
 }
 
@@ -3092,15 +3083,18 @@ void IKE_SA_established(const struct ike_sa *ike)
 					suppress_delete_notify(ike, "ISAKMP", d->newest_isakmp_sa);
 					suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
 					/*
-					 * XXX: assume this call
+					 * XXX: Assume this call
 					 * doesn't want to log to
-					 * whack(?).  While PST still
-					 * has an attached whack, the
-					 * global whack that this call
-					 * would have used detached
-					 * long ago.
+					 * whack?  Even though the IKE
+					 * SA may have whack attached,
+					 * don't transfer it to the
+					 * old connection.
 					 */
-					release_connection(d, false, null_fd); /* this deletes the states */
+					if (d->kind == CK_INSTANCE) {
+						delete_connection(&d, /*relations?*/false);
+					} else {
+						release_connection(d, /*relations?*/false); /* this deletes the states */
+					}
 				}
 			}
 			d = next;

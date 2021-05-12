@@ -2342,8 +2342,7 @@ bool accept_delete(struct msg_digest *md,
 					if (!shared_phase1_connection(rc)) {
 						flush_pending_by_connection(rc);
 						/* why loop? there can be only one IKE SA, just delete_state(st) ? */
-						delete_states_by_connection(rc, FALSE,
-									    null_fd/*no-whack?*/);
+						delete_states_by_connection(rc, /*relations*/false);
 						md->st = NULL;
 					}
 				}

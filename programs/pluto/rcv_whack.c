@@ -504,7 +504,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connection(m->name, true, whackfd);
-			delete_connections_by_name(m->name, !m->whack_connection, whackfd);
+			delete_connections_by_name(m->name, !m->whack_connection, logger);
 		}
 		dbg("whack: ... delete '%s'", m->name == NULL ? "NULL" : m->name);
 	}
