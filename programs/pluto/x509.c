@@ -1381,7 +1381,7 @@ static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 			'x', dst, dstlen);
 }
 
-static void cert_detail_to_whacklog(struct show *s, CERTCertificate *cert)
+static void show_cert_detail(struct show *s, CERTCertificate *cert)
 {
 	bool is_CA = CERT_IsCACert(cert, NULL);
 	bool is_root = cert->isRoot;
@@ -1396,9 +1396,6 @@ static void cert_detail_to_whacklog(struct show *s, CERTCertificate *cert)
 		return;
 
 	KeyType pub_k_t = SECKEY_GetPublicKeyType(pub_k);
-
-
-	show_comment(s, " ");
 
 	show_comment(s, "%s%s certificate \"%s\" - SN: %s",
 		     is_root ? "Root " : "",
@@ -1435,6 +1432,7 @@ static void cert_detail_to_whacklog(struct show *s, CERTCertificate *cert)
 		     SECKEY_PublicKeyStrengthInBits(pub_k),
 		     pub_k_t == rsaKey ? " RSA" : "(other)",
 		     has_priv ? ": has private key" : "");
+	show_blank(s);
 }
 
 typedef enum {
@@ -1549,8 +1547,9 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 
 	for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
 	     !CERT_LIST_END(node, certs); node = CERT_LIST_NEXT(node)) {
-		if (is_cert_of_type(node->cert, type))
-			cert_detail_to_whacklog(s, node->cert);
+		if (is_cert_of_type(node->cert, type)) {
+			show_cert_detail(s, node->cert);
+		}
 	}
 
 	CERT_DestroyCertList(certs);

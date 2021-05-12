@@ -141,10 +141,10 @@ static int print_secrets(struct secret *secret,
 void list_psks(struct show *s)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
-	show_comment(s, " "); /* show_separator(s); */
+	show_blank(s);
 	show_comment(s, "List of Pre-shared secrets (from %s)",
 		     oco->secretsfile);
-	show_comment(s, " "); /* show_separator(s); */
+	show_blank(s);
 	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
