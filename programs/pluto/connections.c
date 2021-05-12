@@ -698,6 +698,7 @@ void unshare_connection_end(struct end *e)
 	if (e->ckaid != NULL) {
 		e->ckaid = clone_thing(*e->ckaid, "ckaid");
 	}
+	e->sec_label = clone_hunk(e->sec_label, "unshare connection policy label");
 }
 
 /*
