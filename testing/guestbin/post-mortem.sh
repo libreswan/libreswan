@@ -74,8 +74,11 @@ if test -f /sbin/ausearch ; then
 	    ${log} ; then
 	echo selinux audit records found
 	ok=false
+
+	# Output SELinux reference policy for missing rules.
+	rules=OUTPUT/$(hostname).audit2allow.rules
+	ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${rules}
     fi
-    ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${log}
 fi
 
 
