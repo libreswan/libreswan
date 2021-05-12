@@ -262,11 +262,10 @@ static bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	return false;
 }
 
-static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
+static bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 {
-	const struct connection *c = st->st_connection;
-	struct id id = st->st_connection->spd.that.id;
-
+	const struct connection *c = ike->sa.st_connection;
+	struct id id = c->spd.that.id;
 
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return FALSE;
@@ -306,9 +305,9 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		id_buf thatid;
 		endpoint_buf ra;
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
-			c->name, st->st_serialno,
+			c->name, ike->sa.st_serialno,
 			err1, err2,
-			str_endpoint(&st->st_remote_endpoint, &ra),
+			str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 			str_id(&id, &thatid));
 	}
 	return FALSE;
@@ -355,11 +354,10 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
-	struct state *st = &ike->sa;
-	passert(st->st_ike_version == IKEv2);
-	passert(st->st_state->kind == STATE_PARENT_I0);
-	passert(st->st_sa_role == SA_INITIATOR);
-	st->st_try = try;
+	passert(ike->sa.st_ike_version == IKEv2);
+	passert(ike->sa.st_state->kind == STATE_PARENT_I0);
+	passert(ike->sa.st_sa_role == SA_INITIATOR);
+	ike->sa.st_try = try;
 
 	if (sec_label.len != 0) {
 		dbg("%s: received security label from acquire: \"%.*s\"", __FUNCTION__,
@@ -370,19 +368,32 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 		 * Should we have a within_range() check here? In theory, the ACQUIRE came
 		 * from a policy we gave the kernel, so it _should_ be within our range?
 		 */
-		st->st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
+		ike->sa.st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
 	}
 
 	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
-		    st->st_serialno, c->remote_tcpport);
-		update_endpoint_port(&st->st_remote_endpoint, ip_hport(c->remote_tcpport));
-		stf_status ret = create_tcp_interface(st);
-		if (ret != STF_OK) {
+		    ike->sa.st_serialno, c->remote_tcpport);
+		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(c->remote_tcpport));
+		struct iface_endpoint *ret = create_tcp_interface(ike->sa.st_interface->ip_dev,
+								  ike->sa.st_remote_endpoint,
+								  ike->sa.st_logger);
+		if (ret == NULL) {
 			/* TCP: already logged? */
-			delete_state(st);
+			delete_state(&ike->sa);
 			return;
 		}
+		/*
+		 * TCP: leaks old st_interface?
+		 *
+		 * XXX: perhaps; first time through .st_interface
+		 * points at the packet interface (ex UDP) which is
+		 * shared between states; but once that is replaced by
+		 * a per-state interface it could well leak?
+		 *
+		 * Fix by always refcnting struct iface_endpoint?
+		 */
+		ike->sa.st_interface = ret;
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
@@ -416,41 +427,50 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 			  "initiating IKEv2 connection to replace #%lu",
 			  predecessor->st_serialno);
 		if (IS_V2_ESTABLISHED(predecessor->st_state)) {
+#if 0
+			/*
+			 * XXX: TYPO (as in ST should be PREDECESSOR)
+			 * or intended be behaviour?  ST is the just
+			 * created IKE SA so ...
+			 */
 			if (IS_CHILD_SA(st))
-				st->st_ipsec_pred = predecessor->st_serialno;
+				ike->sa.st_ipsec_pred = predecessor->st_serialno;
 			else
-				st->st_ike_pred = predecessor->st_serialno;
+				ike->sa.st_ike_pred = predecessor->st_serialno;
+#else
+			ike->sa.st_ike_pred = predecessor->st_serialno;
+#endif
 		}
-		update_pending(ike_sa(predecessor, HERE), pexpect_ike_sa(st));
+		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection");
 	}
 
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
-		stf_status ret = idr_ipseckey_fetch(st);
+	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
+		stf_status ret = idr_ipseckey_fetch(ike);
 		if (ret != STF_OK) {
 			return;
 		}
 	}
 
 	/*
-	 * Initialize st->st_oakley, including the group number.
+	 * Initialize ike->sa.st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA initiator selecting KE", ike->sa.st_logger);
-	st->st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
-	if (st->st_oakley.ta_dh == NULL) {
-		log_state(RC_LOG, st, "proposals do not contain a valid DH");
-		delete_state(st); /* pops state? */
+	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
+	if (ike->sa.st_oakley.ta_dh == NULL) {
+		log_state(RC_LOG, &ike->sa, "proposals do not contain a valid DH");
+		delete_state(&ike->sa);
 		return;
 	}
 
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
 			    ikev2_parent_outI1_continue,
 			    "ikev2_outI1 KE");
 	statetime_stop(&start, "%s()", __func__);
@@ -2722,8 +2742,8 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 	}
 
 	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
-		stf_status ret = idi_ipseckey_fetch(md);
+	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
+		stf_status ret = idi_ipseckey_fetch(ike);
 		if (ret != STF_OK) {
 			log_state(RC_LOG_SERIOUS, st, "DNS: IPSECKEY not found or usable");
 			return ret;

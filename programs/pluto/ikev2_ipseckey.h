@@ -10,6 +10,6 @@
 
 struct p_dns_req;
 
-extern stf_status idi_ipseckey_fetch(struct msg_digest *md);
+extern stf_status idi_ipseckey_fetch(struct ike_sa *ike);
 extern void free_ipseckey_dns(struct p_dns_req *pp);
-extern stf_status idr_ipseckey_fetch(struct state *st);
+extern stf_status idr_ipseckey_fetch(struct ike_sa *ike);

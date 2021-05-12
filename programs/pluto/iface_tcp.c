@@ -628,13 +628,14 @@ const struct iface_io iketcp_iface_io = {
  * opend the socket, this end sends the IKE-in-TCP magic word.
  */
 
-stf_status create_tcp_interface(struct state *st)
+struct iface_endpoint *create_tcp_interface(struct iface_dev *local_dev, ip_endpoint remote_endpoint,
+					    struct logger *logger)
 {
 	dbg("TCP: opening socket");
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		log_errno(st->st_logger, errno, "TCP: socket() failed");
-		return STF_FATAL;
+		log_errno(logger, errno, "TCP: socket() failed");
+		return NULL;
 	}
 
 	/*
@@ -647,12 +648,11 @@ stf_status create_tcp_interface(struct state *st)
 	 */
 
 	dbg("TCP: socket %d connecting to other end", fd);
-	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(st->st_remote_endpoint);
+	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
-		log_errno(st->st_logger, errno,
-			  "TCP: connect(%d) failed", fd);
+		log_errno(logger, errno, "TCP: connect(%d) failed", fd);
 		close(fd);
-		return STF_FATAL;
+		return NULL;
 	}
 
 	dbg("TCP: socket %d extracting local randomly assigned port", fd);
@@ -663,20 +663,17 @@ stf_status create_tcp_interface(struct state *st)
 			.len = sizeof(local_sockaddr.sa),
 		};
 		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
-			log_errno(st->st_logger, errno,
-				  "TCP: failed to get local TCP address from socket %d",
-				  fd);
+			log_errno(logger, errno, "TCP: failed to get local TCP address from socket %d", fd);
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 		ip_address local_address;
 		ip_port local_port;
 		err_t err = sockaddr_to_address_port(local_sockaddr, &local_address, &local_port);
 		if (err != NULL) {
-			log_state(RC_LOG, st,
-				  "TCP: failed to get local TCP address from socket %d, %s", fd, err);
+			llog(RC_LOG, logger, "TCP: failed to get local TCP address from socket %d, %s", fd, err);
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 		local_endpoint = endpoint_from_address_protocol_port(local_address, &ip_protocol_tcp, local_port);
 	}
@@ -691,10 +688,10 @@ stf_status create_tcp_interface(struct state *st)
 		dbg("TCP: socket %d sending IKE-in-TCP prefix", fd);
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
-			log_errno(st->st_logger, errno,
+			log_errno(logger, errno,
 				  "TCP: send of IKE-in-TCP prefix through socket %d", fd);
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 	}
 
@@ -706,10 +703,10 @@ stf_status create_tcp_interface(struct state *st)
 	 * length and reads are auto-blocked.
 	 */
 	if (impair.tcp_skip_setsockopt_espintcp) {
-		log_state(RC_LOG, st, "IMPAIR: TCP: skipping setsockopt(espintcp)");
+		llog(RC_LOG, logger, "IMPAIR: TCP: skipping setsockopt(espintcp)");
 #if defined(linux)
 	} else {
-		int af = endpoint_type(&st->st_remote_endpoint)->af;
+		int af = endpoint_type(&remote_endpoint)->af;
 		struct xfrm_userpolicy_info policy_in = {
 			.action = XFRM_POLICY_ALLOW,
 			.sel.family = af,
@@ -722,22 +719,22 @@ stf_status create_tcp_interface(struct state *st)
 		};
 		dbg("TCP: socket %d enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-			log_errno(st->st_logger, errno,
+			log_errno(logger, errno,
 				  "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
-			log_errno(st->st_logger, errno,
+			log_errno(logger, errno,
 				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
-			log_errno(st->st_logger, errno,
+			log_errno(logger, errno,
 				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
 			close(fd);
-			return STF_FATAL;
+			return NULL;
 		}
 #endif
 	}
@@ -748,9 +745,9 @@ stf_status create_tcp_interface(struct state *st)
 	ifp->local_endpoint = local_endpoint;
 	ifp->esp_encapsulation_enabled = true;
 	ifp->float_nat_initiator = false;
-	ifp->ip_dev = add_ref(st->st_interface->ip_dev);
+	ifp->ip_dev = add_ref(local_dev);
 	ifp->protocol = &ip_protocol_tcp;
-	ifp->iketcp_remote_endpoint = st->st_remote_endpoint;
+	ifp->iketcp_remote_endpoint = remote_endpoint;
 	ifp->iketcp_state = IKETCP_ENABLED;
 	ifp->iketcp_server = false;
 
@@ -762,9 +759,8 @@ stf_status create_tcp_interface(struct state *st)
 	attach_fd_read_sensor(&ifp->iketcp_message_listener,
 			      fd, process_iface_packet, ifp);
 
-	st->st_interface = ifp; /* TCP: leaks old st_interface? */
 	pstats_iketcp_started[ifp->iketcp_server]++;
-	return STF_OK;
+	return ifp;
 }
 
 void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
