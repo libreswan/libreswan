@@ -715,11 +715,7 @@ struct state {
 	bool st_v1_seen_fragments;              /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
-	bool st_seen_use_ipcomp;		/* did we receive request for IPCOMP */
-	bool st_seen_mobike;			/* did we receive MOBIKE */
-	bool st_sent_mobike;			/* sent MOBIKE notify */
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
-	bool st_seen_initialc;			/* did we receive INITIAL_CONTACT */
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
 	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
@@ -728,6 +724,11 @@ struct state {
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
 	chunk_t st_seen_sec_label;
 	chunk_t st_acquired_sec_label;
+
+	/* IKEv2 IKE SA only */
+	bool st_ike_sent_v2n_mobike_supported;	/* sent MOBIKE_SUPPORTED notify */
+	bool st_ike_seen_v2n_mobike_supported;	/* did we receive MOBIKE_SUPPORTED */
+	bool st_ike_seen_v2n_initial_contact;	/* did we receive INITIAL_CONTACT */
 };
 
 /*

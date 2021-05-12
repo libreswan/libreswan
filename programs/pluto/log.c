@@ -300,14 +300,6 @@ void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, .
 	va_end(args);
 }
 
-void whack_comment(const struct fd *whackfd, const char *message, ...)
-{
-	va_list args;
-	va_start(args, message);
-	whack_va_list(RC_COMMENT, whackfd, message, args);
-	va_end(args);
-}
-
 void set_debugging(lset_t deb)
 {
 	cur_debugging = deb;

@@ -1447,14 +1447,14 @@ static bool is_cert_of_type(CERTCertificate *cert, show_cert_t type)
 	return CERT_IsCACert(cert, NULL) == (type == CERT_TYPE_CA);
 }
 
-static void crl_detail_to_whacklog(const struct fd *whackfd, CERTCrl *crl)
+static void crl_detail_to_whacklog(struct show *s, CERTCrl *crl)
 {
-	whack_comment(whackfd, " ");
+	show_blank(s);
 
 	{
 		dn_buf ibuf;
 
-		whack_comment(whackfd, "issuer: %s",
+		show_comment(s, "issuer: %s",
 			dntoasi(&ibuf, crl->derName));
 	}
 
@@ -1465,25 +1465,25 @@ static void crl_detail_to_whacklog(const struct fd *whackfd, CERTCrl *crl)
 			while (crl->entries[entries] != NULL)
 				entries++;
 		}
-		whack_comment(whackfd, "revoked certs: %d", entries);
+		show_comment(s, "revoked certs: %d", entries);
 	}
 
 	{
 		char lu[256];
 
 		if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
-			whack_comment(whackfd, "updates: this %s", lu);
+			show_comment(s, "updates: this %s", lu);
 	}
 
 	{
 		char nu[256];
 
 		if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
-			whack_comment(whackfd, "         next %s", nu);
+			show_comment(s, "         next %s", nu);
 	}
 }
 
-static void crl_detail_list(const struct fd *whackfd)
+static void crl_detail_list(struct show *s)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -1494,8 +1494,9 @@ static void crl_detail_list(const struct fd *whackfd)
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 
-	whack_comment(whackfd, " ");
-	whack_comment(whackfd, "List of CRLs:");
+	show_blank(s);
+	show_comment(s, "List of CRLs:");
+	show_blank(s);
 
 	CERTCrlHeadNode *crl_list = NULL;
 
@@ -1505,7 +1506,7 @@ static void crl_detail_list(const struct fd *whackfd)
 	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
 	     crl_node = crl_node->next) {
 		if (crl_node->crl != NULL) {
-			crl_detail_to_whacklog(whackfd, &crl_node->crl->crl);
+			crl_detail_to_whacklog(s, &crl_node->crl->crl);
 		}
 	}
 	dbg("releasing crl list in %s", __func__);
@@ -1537,8 +1538,9 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 		bad_case(type);
 	}
 
-	show_comment(s, " ");
+	show_blank(s);
 	show_comment(s, "List of X.509 %s Certificates:", tstr);
+	show_blank(s);
 
 	CERTCertList *certs = get_all_certificates(show_logger(s));
 
@@ -1554,9 +1556,9 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 	CERT_DestroyCertList(certs);
 }
 
-void list_crls(const struct fd *whackfd)
+void list_crls(struct show *s)
 {
-	crl_detail_list(whackfd);
+	crl_detail_list(s);
 }
 
 void list_certs(struct show *s)

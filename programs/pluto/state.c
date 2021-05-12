@@ -1499,7 +1499,6 @@ static struct state *duplicate_state(struct connection *c,
 	nst->st_v1_seen_fragments = st->st_v1_seen_fragments;
 	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_seen_redirect_sup = st->st_seen_redirect_sup;
-	nst->st_seen_use_ipcomp = st->st_seen_use_ipcomp;
 	nst->st_sent_redirect = st->st_sent_redirect;
 	nst->st_event = NULL;
 
@@ -2318,8 +2317,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 }
 
 static int show_newest_state_traffic(struct connection *c,
-				     struct fd *unused_whackfd UNUSED,
-				     void *arg)
+				     void *arg, struct logger *logger UNUSED)
 {
 	struct show *s = arg;
 	struct state *st = state_by_serialno(c->newest_ipsec_sa);
@@ -2352,12 +2350,11 @@ void show_traffic_status(struct show *s, const char *name)
 
 		if (c != NULL) {
 			/* cast away const sillyness */
-			show_newest_state_traffic(c, NULL, s);
+			show_newest_state_traffic(c, s, show_logger(s));
 		} else {
 			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name, NULL,
-								show_newest_state_traffic,
-								s);
+			int count = foreach_connection_by_alias(name, show_newest_state_traffic,
+								s, show_logger(s));
 			if (count == 0) {
 				/*
 				 * XXX: don't bother implementing
@@ -3119,7 +3116,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 		 * of QuickMode is installed, so the remote endpoints view
 		 * this IKE SA still as the active one?
 		 */
-		if (ike->sa.st_seen_initialc) {
+		if (ike->sa.st_ike_seen_v2n_initial_contact) {
 			if (c->newest_isakmp_sa != SOS_NOBODY &&
 			    c->newest_isakmp_sa != ike->sa.st_serialno) {
 				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);

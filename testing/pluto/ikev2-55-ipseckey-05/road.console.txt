@@ -53,7 +53,9 @@ road #
  echo done
 done
 road #
- # both ends should have two public keys.The second from reverse dns
+ # both ends should have three public keys.  The first two from reverse
+road #
+ # DNS.
 road #
  ipsec auto --listpubkeys
 000  

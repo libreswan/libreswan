@@ -829,27 +829,27 @@ static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 }
 
 
-static struct p_dns_req *qry_st_init(struct state *st,
-					enum ldns_enum_rr_type qtype,
-					const char *qtype_name,
-					dnsr_cb_fn dnsr_cb)
+static struct p_dns_req *qry_st_init(struct ike_sa *ike,
+				     enum ldns_enum_rr_type qtype,
+				     const char *qtype_name,
+				     dnsr_cb_fn dnsr_cb)
 {
-	struct id id = st->st_connection->spd.that.id;
+	struct id id = ike->sa.st_connection->spd.that.id;
 
 	char qname[SWAN_MAX_DOMAIN_LEN];
 	struct jambuf qbuf = ARRAY_AS_JAMBUF(qname);
 	err_t err = build_dns_name(&qbuf, &id);
 	if (err != NULL) {
 		/* is there qtype to name lookup function */
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "could not build dns query name %s %d",
 			  err, qtype);
 		return NULL;
 	}
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
-	p->so_serial = st->st_serialno;
-	p->logger = clone_logger(st->st_logger, HERE);
+	p->so_serial = ike->sa.st_serialno;
+	p->logger = clone_logger(ike->sa.st_logger, HERE);
 	p->qname = clone_str(qname, "dns qname");
 
 	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",
@@ -867,11 +867,10 @@ static struct p_dns_req *qry_st_init(struct state *st,
 	return p;
 }
 
-static struct p_dns_req *ipseckey_qry_st_init(struct state *st,
-		dnsr_cb_fn dnsr_cb)
+static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike, dnsr_cb_fn dnsr_cb)
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */
-	return qry_st_init(st, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb);
+	return qry_st_init(ike, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb);
 }
 
 static stf_status dns_qry_start(struct p_dns_req *dnsr)
@@ -918,11 +917,10 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
  * Note libunbound call back quirck, if the data is local or cached
  * the call back function will be called without returning.
  */
-stf_status idr_ipseckey_fetch(struct state *st)
+stf_status idr_ipseckey_fetch(struct ike_sa *ike)
 {
 	stf_status ret;
-	struct p_dns_req *dnsr = ipseckey_qry_st_init(st,
-			idr_ipseckey_fetch_continue);
+	struct p_dns_req *dnsr = ipseckey_qry_st_init(ike, idr_ipseckey_fetch_continue);
 
 	if (dnsr == NULL) {
 		return STF_FAIL;
@@ -931,7 +929,7 @@ stf_status idr_ipseckey_fetch(struct state *st)
 	ret = dns_qry_start(dnsr);
 
 	if (ret == STF_SUSPEND) {
-		st->ipseckey_dnsr = dnsr;
+		ike->sa.ipseckey_dnsr = dnsr;
 		ret = STF_OK;	/* while querying IDr do not suspend */
 	}
 
@@ -949,14 +947,12 @@ stf_status idr_ipseckey_fetch(struct state *st)
  * Note: libunbound call back quirck, if the data is local or cached
  * the call back function will be called without returning.
  */
-stf_status idi_ipseckey_fetch(struct msg_digest *md)
+stf_status idi_ipseckey_fetch(struct ike_sa *ike)
 {
 	stf_status ret_idi;
 	stf_status ret_a = STF_OK;
-	struct state *st = md->st;
 	struct p_dns_req *dnsr_a = NULL;
-	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(st,
-			idi_ipseckey_fetch_continue);
+	struct p_dns_req *dnsr_idi = ipseckey_qry_st_init(ike, idi_ipseckey_fetch_continue);
 
 	if (dnsr_idi == NULL) {
 		return STF_FAIL;
@@ -966,14 +962,16 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 
 	if (ret_idi != STF_SUSPEND && ret_idi != STF_OK) {
 		return ret_idi;
-	} else if (ret_idi == STF_SUSPEND) {
-		st->ipseckey_dnsr = dnsr_idi;
 	}
 
-	if (LIN(st->st_connection->policy, POLICY_DNS_MATCH_ID)) {
-		struct id id = st->st_connection->spd.that.id;
+	if (ret_idi == STF_SUSPEND) {
+		ike->sa.ipseckey_dnsr = dnsr_idi;
+	}
+
+	if (LIN(ike->sa.st_connection->policy, POLICY_DNS_MATCH_ID)) {
+		struct id id = ike->sa.st_connection->spd.that.id;
 		if (id.kind == ID_FQDN) {
-			dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
+			dnsr_a = qry_st_init(ike, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
 
 			if (dnsr_a == NULL) {
 				free_ipseckey_dns(dnsr_idi);
@@ -984,7 +982,7 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 	}
 
 	if (ret_a == STF_SUSPEND)
-		st->ipseckey_fwd_dnsr = dnsr_a;
+		ike->sa.ipseckey_fwd_dnsr = dnsr_a;
 
 	if (ret_a != STF_SUSPEND && ret_a != STF_OK) {
 		free_ipseckey_dns(dnsr_idi);

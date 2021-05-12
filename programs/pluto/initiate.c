@@ -241,12 +241,12 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	return true;
 }
 
-static int initiate_a_connection(struct connection *c, struct fd *whackfd, void *arg)
+static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
 {
 	const struct initiate_stuff *is = arg;
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = dup_any(logger->global_whackfd);
 	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
@@ -256,6 +256,8 @@ static int initiate_a_connection(struct connection *c, struct fd *whackfd, void 
 void initiate_connections_by_name(const char *name, const char *remote_host,
 				  struct fd *whackfd, bool background)
 {
+	struct logger logger[] = { GLOBAL_LOGGER(whackfd), }; /* placeholder */
+
 	passert(name != NULL);
 
 	struct connection *c = conn_by_name(name, /*strict-match?*/false);
@@ -272,15 +274,15 @@ void initiate_connections_by_name(const char *name, const char *remote_host,
 		return;
 	}
 
-	log_global(RC_COMMENT, whackfd, "initiating all conns with alias='%s'", name);
+	llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
 	struct initiate_stuff is = {
 		.background = background,
 		.remote_host = remote_host,
 	};
-	int count = foreach_connection_by_alias(name, whackfd, initiate_a_connection, &is);
+	int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
 
 	if (count == 0) {
-		log_global(RC_UNKNOWN_NAME, whackfd, "no connection named \"%s\"", name);
+		llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
 	}
 }
 
@@ -1082,7 +1084,7 @@ void connection_check_phase2(struct logger *logger)
 				struct initiate_stuff is = {
 					.remote_host = NULL,
 				};
-				initiate_a_connection(c, logger->global_whackfd, &is);
+				initiate_a_connection(c, &is, logger);
 			}
 		}
 	}

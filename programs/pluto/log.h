@@ -169,13 +169,11 @@ void rate_log(const struct msg_digest *md,
  * name).  If that's really really needed then use
  * log_*(WHACK_STREAM,...) above.
  *
- * whack_comment() output includes the '000 ' prefix (RC_COMMENT).  It
  * also requires a valid whackfd.  It should only be used by show
  * commands.
  */
 
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
-void whack_comment(const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(2);
 
 extern void show_status(struct show *s);
 extern void show_setup_plutomain(struct show *s);

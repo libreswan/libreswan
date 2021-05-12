@@ -24,6 +24,7 @@
 struct msg_digest;
 struct dh_desc;
 struct ike_sa;
+struct child_sa;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
@@ -142,5 +143,7 @@ bool emit_v2V(const char *string, pb_stream *outs);
 
 bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
 					pb_stream *outs);
+
+bool emit_v2N_ipcomp_supported(struct child_sa *child, struct pbs_out *s);
 
 #endif

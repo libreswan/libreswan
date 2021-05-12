@@ -38,7 +38,9 @@ east #
  echo "initdone"
 initdone
 east #
- # both ends should have two public keys.The second from reverse dns
+ # both ends should have three public keys.  The first two from reverse
+east #
+ # DNS.
 east #
  ipsec auto --listpubkeys
 000  

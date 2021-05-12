@@ -78,17 +78,6 @@ void ikev2_rekey_ike_start(struct ike_sa *ike);
 
 extern void ikev2_child_outI(struct state *st);
 
-/* MAGIC: perform f, a function that returns notification_t
- * and return from the ENCLOSING stf_status returning function if it fails.
- */
-/* macro that returns STF_STATUS on failure */
-#define RETURN_STF_FAILURE_STATUS(f) { \
-	stf_status res = (f); \
-	if (res != STF_OK) { \
-		return res; \
-	} \
-}
-
 struct ikev2_proposal;
 struct ikev2_proposals;
 
@@ -200,7 +189,7 @@ bool emit_v2_child_configuration_payload(struct connection *c,
 					 struct child_sa *child,
 					 pb_stream *outpbs);
 
-bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
+bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 
 struct ikev2_payload_errors {
 	bool bad;
@@ -264,8 +253,8 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 
 struct ikev2_ipseckey_dns;
 
-extern stf_status ikev2_process_child_sa_pl(struct ike_sa *ike, struct child_sa *child,
-					    struct msg_digest *md, bool expect_accepted);
+bool ikev2_process_child_sa_payload(struct ike_sa *ike, struct child_sa *child,
+				    struct msg_digest *md, bool expect_accepted_proposal);
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
@@ -279,11 +268,6 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 
 void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_replace(struct state *st);
-
-/* used by parent and child to emit v2N_IPCOMP_SUPPORTED if appropriate */
-bool emit_v2N_compression(struct state *cst,
-			bool OK,
-			pb_stream *s);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,

@@ -486,8 +486,8 @@ extern struct connection *route_owner(struct connection *c,
 
 extern struct connection *shunt_owner(const ip_selector *ours,
 				      const ip_selector *peers);
-extern void rekey_now(const char *name, enum sa_type sa_type, struct fd *whackfd,
-		      bool background);
+extern void rekey_now(const char *name, enum sa_type sa_type,
+		      bool background, struct logger *logger);
 
 #define remote_id_was_instantiated(c) \
 	( (c)->kind == CK_INSTANCE && \
@@ -585,11 +585,9 @@ void connection_check_phase2(struct logger *logger);
 void init_connections(void);
 
 extern int foreach_connection_by_alias(const char *alias,
-				       struct fd *whackfd,
 				       int (*f)(struct connection *c,
-						struct fd *whackfd,
-						void *arg),
-				       void *arg);
+						void *arg, struct logger *logger),
+				       void *arg, struct logger *logger);
 
 extern void unshare_connection_end(struct end *e);
 
