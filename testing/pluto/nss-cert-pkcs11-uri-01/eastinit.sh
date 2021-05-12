@@ -2,7 +2,7 @@
 /testing/guestbin/swan-prep
 certutl -L -d sql:/etc/ipsec.d
 # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
-/u../../guestbin/update-crypto-policies
+/usr/bin/update-crypto-policies
 # setup softhsm with east's PKCS12 info
 #SOFTHSM2_CONF="/etc/softhsm2.conf"
 #SOFTHSM2_TOKEN_DIR="$(grep 'directories.tokendir' "$SOFTHSM2_CONF" | cut -d '=' -f 2 | sed 's/ //g')"
