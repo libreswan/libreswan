@@ -523,25 +523,22 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-stf_status ikev2_parent_outI1_continue(struct state *st,
+stf_status ikev2_parent_outI1_continue(struct state *ike_st,
 				       struct msg_digest *unused_md,
 				       struct dh_local_secret *local_secret,
 				       chunk_t *nonce)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(unused_md == NULL);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-
+	pexpect(unused_md == NULL);
 	/* I1 is from INVALID KE */
-	pexpect(st->st_state->kind == STATE_PARENT_I0 ||
-		st->st_state->kind == STATE_PARENT_I1);
+	pexpect(ike->sa.st_state->kind == STATE_PARENT_I0 ||
+		ike->sa.st_state->kind == STATE_PARENT_I1);
+	dbg("%s() for #%lu %s",
+	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	unpack_KE_from_helper(st, local_secret, &st->st_gi);
-	unpack_nonce(&st->st_ni, nonce);
+	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gi);
+	unpack_nonce(&ike->sa.st_ni, nonce);
 	return record_v2_IKE_SA_INIT_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
@@ -834,30 +831,27 @@ stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R(struct ike_sa *ike,
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state *st,
+static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state *ike_st,
 								    struct msg_digest *md,
 								    struct dh_local_secret *local_secret,
 								    chunk_t *nonce)
 {
-	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-
-	pexpect(st->st_state->kind == STATE_PARENT_R0);
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == &ike->sa);
+	pexpect(ike->sa.st_state->kind == STATE_PARENT_R0);
+	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	/*
 	 * XXX: sanity check that this call does not screw around with
 	 * MD.ST (it isn't creating a child, and can return STF_FATAL
 	 * et.al.)
 	 */
-	md->st = st;
+	md->st = &ike->sa;
 
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	bool send_certreq = FALSE;
 
 	/* note that we don't update the state here yet */
@@ -868,7 +862,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	 * Should this code use clone_in_pbs_as_chunk() which uses
 	 * pbs_room() (.roof-.start)?  The original code:
 	 *
-	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
+	 * 	clonetochunk(ike->sa.st_firstpacket_peer, md->message_pbs.start,
 	 *		     pbs_offset(&md->message_pbs),
 	 *		     "saved first received packet");
 	 *
@@ -880,7 +874,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	 * "trim padding (not actually legit)".
 	 */
 	/* record first packet for later checking of signature */
-	replace_chunk(&st->st_firstpacket_peer,
+	replace_chunk(&ike->sa.st_firstpacket_peer,
 		clone_out_pbs_as_chunk(&md->message_pbs,
 			"saved first received packet in inI1outR1_continue_tail"));
 
@@ -890,9 +884,9 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 						   ike->sa.st_logger);
 
 	/* HDR out */
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
-					  md /* response */,
-					  ISAKMP_v2_IKE_SA_INIT);
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       md /* response */,
+					       ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -904,15 +898,15 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
-		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL)) {
+		passert(ike->sa.st_accepted_ike_proposal != NULL);
+		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_accepted_ike_proposal, NULL)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* Ni in */
-	if (!accept_v2_nonce(st->st_logger, md, &st->st_ni, "Ni")) {
+	if (!accept_v2_nonce(ike->sa.st_logger, md, &ike->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  Syntax errors kill the
 		 * family, hence FATAL.
@@ -937,22 +931,22 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	 * reused should the initial responder flip-flop) and only set
 	 * st_oakley.ta_dh once the proposal has been accepted.
 	 */
-	pexpect(st->st_oakley.ta_dh == dh_local_secret_desc(local_secret));
-	unpack_KE_from_helper(st, local_secret, &st->st_gr);
-	if (!emit_v2KE(&st->st_gr, dh_local_secret_desc(local_secret), &rbody)) {
+	pexpect(ike->sa.st_oakley.ta_dh == dh_local_secret_desc(local_secret));
+	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
+	if (!emit_v2KE(&ike->sa.st_gr, dh_local_secret_desc(local_secret), &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* send NONCE */
-	unpack_nonce(&st->st_nr, nonce);
+	unpack_nonce(&ike->sa.st_nr, nonce);
 	{
 		pb_stream pb;
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, st->st_logger),
+			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
-		    !out_hunk(st->st_nr, &pb, "IKEv2 nonce"))
+		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb);
@@ -960,8 +954,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 
 	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
 	send_certreq = (((c->policy & POLICY_RSASIG) &&
-		!has_preloaded_public_key(st))
-		);
+			 !has_preloaded_public_key(&ike->sa)));
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
@@ -970,7 +963,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	}
 
 	/* Send USE_PPK Notify payload */
-	if (st->st_seen_ppk) {
+	if (ike->sa.st_seen_ppk) {
 		if (!emit_v2N(v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	 }
@@ -984,17 +977,17 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!impair.ignore_hash_notify_request) {
-		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
+		if (ike->sa.st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->sighash_policy, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
-		log_state(RC_LOG, st, "Impair: Not sending out signature hash notify");
+		log_state(RC_LOG, &ike->sa, "Impair: Not sending out signature hash notify");
 	}
 
 	/* Send NAT-T Notify payloads */
-	if (!ikev2_out_nat_v2n(&rbody, st, &st->st_ike_spis.responder)) {
+	if (!ikev2_out_nat_v2n(&rbody, &ike->sa, &ike->sa.st_ike_spis.responder)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1003,7 +996,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	/* send CERTREQ  */
 	if (send_certreq) {
 		dbg("going to send a certreq");
-		ikev2_send_certreq(st, md, &rbody);
+		ikev2_send_certreq(&ike->sa, md, &rbody);
 	}
 
 	if (c->send_vendorid) {
@@ -1029,15 +1022,13 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 			  MESSAGE_RESPONSE);
 
 	/* save packet for later signing */
-	replace_chunk(&st->st_firstpacket_me,
+	replace_chunk(&ike->sa.st_firstpacket_me,
 		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
 
 	/*
 	 * sanity check nothing has screwed around with md.st.
 	 */
-	if (!pexpect(md->st == st)) {
-		st = md->st;
-	}
+	pexpect(md->st == &ike->sa);
 
 	return STF_OK;
 }
@@ -1319,8 +1310,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 											     struct child_sa *unused_child UNUSED,
 											     struct msg_digest *md)
 {
-	struct state *st = &ike->sa;
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
@@ -1344,10 +1334,10 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 	 * streams could mean the lower serial established later and is
 	 * the "newest". Should > be replaced with !=   ?
 	 */
-	if (c->newest_ipsec_sa > st->st_serialno) {
+	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
 		log_state(RC_LOG, &ike->sa,
 			  "state superseded by #%lu try=%lu, drop this negotiation",
-			  c->newest_ipsec_sa, st->st_try);
+			  c->newest_ipsec_sa, ike->sa.st_try);
 		return STF_FATAL;
 	}
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
@@ -1381,8 +1371,8 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 		dbg("ikev2 parent inR1: calculating g^{xy} in order to send I2");
 
 		/* KE in */
-		if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-			       md->chain[ISAKMP_NEXT_v2KE], st->st_logger)) {
+		if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
+			       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
 			/*
 			* XXX: Initiator - so this code will not trigger a
 			* notify.  Since packet isn't trusted, should it be
@@ -1392,7 +1382,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 		}
 
 		/* Ni in */
-		if (!accept_v2_nonce(st->st_logger, md, &st->st_nr, "Nr")) {
+		if (!accept_v2_nonce(ike->sa.st_logger, md, &ike->sa.st_nr, "Nr")) {
 			/*
 			* Presumably not our fault.  Syntax errors in a
 			* response kill the family (and trigger no further
@@ -1417,18 +1407,19 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 								/*expect_spi*/ FALSE,
 								/*expect_accepted*/ TRUE,
 								LIN(POLICY_OPPORTUNISTIC, c->policy),
-								&st->st_accepted_ike_proposal,
+								&ike->sa.st_accepted_ike_proposal,
 								ike_proposals, ike->sa.st_logger);
 			if (ret != STF_OK) {
 				dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 				return ret; /* initiator; no response */
 			}
 
-			if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
-						   &st->st_oakley, ike->sa.st_logger)) {
-				log_state(RC_LOG_SERIOUS, st, "IKE initiator proposed an unsupported algorithm");
-				free_ikev2_proposal(&st->st_accepted_ike_proposal);
-				passert(st->st_accepted_ike_proposal == NULL);
+			if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
+						   &ike->sa.st_oakley, ike->sa.st_logger)) {
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "IKE initiator proposed an unsupported algorithm");
+				free_ikev2_proposal(&ike->sa.st_accepted_ike_proposal);
+				passert(ike->sa.st_accepted_ike_proposal == NULL);
 				/*
 				* Assume caller et.al. will clean up the
 				* reset of the mess?
@@ -1436,7 +1427,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 				return STF_FAIL;
 			}
 		}
-		replace_chunk(&st->st_firstpacket_peer,
+		replace_chunk(&ike->sa.st_firstpacket_peer,
 			clone_out_pbs_as_chunk(&md->message_pbs,
 				"saved first received packet in inR1outI2"));
 
@@ -1492,37 +1483,34 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 			ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue :
 		ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue;
 
-	submit_dh_shared_secret(st, st->st_gr/*initiator needs responder KE*/,
+	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
 				pcrc_func, HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue(struct state *st,
+static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue(struct state *ike_st,
 											       struct msg_digest *mdp)
 {
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(mdp->st == NULL || mdp->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(mdp->st == NULL || mdp->st == &ike->sa);
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	ike->sa.st_intermediate_used = true;
 
-	if (st->st_dh_shared_secret == NULL) {
+	if (ike->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		pstat_sa_failed(st, REASON_CRYPTO_FAILED);
+		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
 		return STF_FAIL;
 	}
 
-	calc_v2_keymat(st,
-		       NULL, NULL, /*previous keymat*/
-		       &st->st_ike_rekey_spis);
+	calc_v2_keymat(&ike->sa, NULL, NULL, /*previous keymat*/
+		       &ike->sa.st_ike_rekey_spis);
 
 	/*
 	 * All systems are go.
@@ -1538,7 +1526,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 	 * with SPIr.
 	 */
 	rehash_state(&ike->sa, &mdp->hdr.isa_ike_responder_spi);
-	
+
 	/* beginning of data going out */
 
 	/* make sure HDR is at start of a clean buffer */
@@ -1548,22 +1536,22 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
-					  NULL /* request */,
-					  ISAKMP_v2_IKE_INTERMEDIATE);
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       NULL /* request */,
+					       ISAKMP_v2_IKE_INTERMEDIATE);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike_sa(st, HERE));
+	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* send NOTIFY payload */
-	if (st->st_seen_intermediate) {
+	if (ike->sa.st_seen_intermediate) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1579,11 +1567,9 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 	if (ret != STF_OK) {
 		return ret;
 	}
-	
+
 	record_v2_message(ike, &reply_stream, "reply packet for intermediate exchange",
 				  MESSAGE_REQUEST);
-	dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
-			     __func__);
 	return STF_OK;
 }
 
@@ -1792,33 +1778,29 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 												 const struct hash_signature *sig);
 
 
-static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *st,
+static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *ike_st,
 										       struct msg_digest *md)
 {
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending I2",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == &ike->sa);
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	struct state *pst = &ike->sa; /* TBD: hack-to-avoid-code-churn */
-	struct connection *const pc = pst->st_connection;	/* parent connection */
+	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
 	if (!(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) {
-		if (st->st_dh_shared_secret == NULL) {
+		if (ike->sa.st_dh_shared_secret == NULL) {
 			/*
 			* XXX: this is the initiator so returning a
 			* notification is kind of useless.
 			*/
-			pstat_sa_failed(pst, REASON_CRYPTO_FAILED);
+			pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
 			return STF_FAIL;
 		}
-		calc_v2_keymat(st,
-			       NULL, NULL, /*no old keymat*/
-			       &st->st_ike_rekey_spis);
+		calc_v2_keymat(&ike->sa, NULL, NULL, /*no old keymat*/
+			       &ike->sa.st_ike_rekey_spis);
 	}
 
 	/*
@@ -1864,7 +1846,8 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_co
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
 					ike->sa.st_logger);
-			log_state(RC_LOG, st, "PPK AUTH calculated as initiator");
+			log_state(RC_LOG, &ike->sa,
+				  "PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
 				log_state(RC_LOG_SERIOUS, &ike->sa,
@@ -1898,7 +1881,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_co
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 							  "st_skey_pi_nss",
 							  ike->sa.st_skey_pi_nss);
-	if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
+	if (ike->sa.st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
 		/* ID payload that we've build is the same */
 		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
 			v2_hash_id_payload("IDi (no-PPK)", ike,
@@ -2379,21 +2362,18 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 static pamauth_callback_t ikev2_pam_continue;	/* type assertion */
 
-static void ikev2_pam_continue(struct state *st,
+static void ikev2_pam_continue(struct state *ike_st,
 			       struct msg_digest *md,
 			       const char *name UNUSED,
 			       bool success)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-
-	pexpect(st->st_state->kind == STATE_PARENT_R1);
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == &ike->sa);
+	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	dbg("%s() for #%lu %s",
+	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	stf_status stf;
 	if (success) {
@@ -2461,7 +2441,6 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid(struct ike_sa *ike,
 							struct msg_digest *md UNUSED)
 {
 	pexpect(child == NULL);
-	struct state *st = &ike->sa;
 
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
@@ -2471,29 +2450,26 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid(struct ike_sa *ike,
 	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
-	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
+	submit_dh_shared_secret(&ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
 				ikev2_ike_sa_process_auth_request_no_keymat_continue,
 				HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct state *st,
+static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct state *ike_st,
 								       struct msg_digest *md)
 {
-	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
- 	struct ike_sa *ike = pexpect_ike_sa(st);
+ 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-
-	pexpect(st->st_state->kind == STATE_PARENT_R1);
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == &ike->sa);
+	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	/* extract calculated values from r */
 
-	if (st->st_dh_shared_secret  == NULL) {
+	if (ike->sa.st_dh_shared_secret  == NULL) {
 		/*
 		 * Since dh failed, the channel isn't end-to-end
 		 * encrypted.  Send back a clear text notify and then
@@ -2504,12 +2480,10 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(st,
-		       NULL/*old_skey_d*/,
-		       NULL/*old_prf*/,
-		       &st->st_ike_spis/*new SPIs*/);
+	calc_v2_keymat(&ike->sa, NULL/*old_skey_d*/, NULL/*old_prf*/,
+		       &ike->sa.st_ike_spis/*new SPIs*/);
 
-	ikev2_process_state_packet(pexpect_ike_sa(st), st, md);
+	ikev2_process_state_packet(ike, &ike->sa, md);
 	/* above does complete state transition */
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
@@ -2521,7 +2495,7 @@ stf_status ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid(struct i
 									struct msg_digest *md UNUSED)
 {
 	pexpect(child == NULL);
-	struct state *st = &ike->sa;
+
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
@@ -2530,27 +2504,24 @@ stf_status ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid(struct i
 	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
-	submit_dh_shared_secret(st, st->st_gi/*responder needs initiator KE*/,
+	submit_dh_shared_secret(&ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
 				ikev2_ike_sa_process_intermediate_request_no_skeyid_continue,
 				HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct state *st,
+static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(struct state *ike_st,
 									       struct msg_digest *md)
 {
-	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
-	    __func__, st->st_serialno, st->st_state->name);
-
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(md->st == NULL || md->st == &ike->sa);
+	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	pexpect(st->st_state->kind == STATE_PARENT_R1);
-
-	if (st->st_dh_shared_secret == NULL) {
+	if (ike->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * Since dh failed, the channel isn't end-to-end
 		 * encrypted.  Send back a clear text notify and then
@@ -2561,11 +2532,10 @@ static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(s
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(st,
-		       NULL, NULL, /* no old keymat */
-		       &st->st_ike_spis);
+	calc_v2_keymat(&ike->sa, NULL, NULL, /* no old keymat */
+		       &ike->sa.st_ike_spis);
 
-	ikev2_process_state_packet(pexpect_ike_sa(st), st, md);
+	ikev2_process_state_packet(ike, &ike->sa, md);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
@@ -2577,7 +2547,6 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 					      struct msg_digest *md)
 {
 	if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
-		struct state *st = &ike->sa;
 
 		/*
 		* All systems are go.
@@ -2605,22 +2574,22 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 
 		/* HDR out */
 
-		pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
-						md /* response */,
-						ISAKMP_v2_IKE_INTERMEDIATE);
+		pb_stream rbody = open_v2_message(&reply_stream, ike,
+						  md /* response */,
+						  ISAKMP_v2_IKE_INTERMEDIATE);
 		if (!pbs_ok(&rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 
 		/* insert an Encryption payload header (SK) */
-		
-		v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike_sa(st, HERE));
+
+		v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 
 		/* send NOTIFY payload */
-		if (st->st_seen_intermediate) {
+		if (ike->sa.st_seen_intermediate) {
 			if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
 				return STF_INTERNAL_ERROR;
 		}
@@ -2637,11 +2606,9 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 			return ret;
 		}
 
-		record_v2_message(ike, &reply_stream, "reply packet for intermediate exchange",
-					MESSAGE_RESPONSE);
-
-		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
-					__func__);
+		record_v2_message(ike, &reply_stream,
+				  "reply packet for intermediate exchange",
+				  MESSAGE_RESPONSE);
 		return STF_OK;
 	}
 
@@ -2755,9 +2722,8 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 
 stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 {
-	struct state *const st = md->st;
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	lset_t policy = st->st_connection->policy;
+	struct ike_sa *ike = pexpect_ike_sa(md->st);
+	lset_t policy = ike->sa.st_connection->policy;
 	bool found_ppk = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;
 
@@ -2781,15 +2747,17 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		}
 
 		if (found_ppk && LIN(POLICY_PPK_ALLOW, policy)) {
-			ppk_recalculate(ppk, st->st_oakley.ta_prf,
-					&st->st_skey_d_nss,
-					&st->st_skey_pi_nss,
-					&st->st_skey_pr_nss,
-					st->st_logger);
-			st->st_ppk_used = TRUE;
-			log_state(RC_LOG, st, "PPK AUTH calculated as responder");
+			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
+					&ike->sa.st_skey_d_nss,
+					&ike->sa.st_skey_pi_nss,
+					&ike->sa.st_skey_pr_nss,
+					ike->sa.st_logger);
+			ike->sa.st_ppk_used = TRUE;
+			log_state(RC_LOG, &ike->sa,
+				  "PPK AUTH calculated as responder");
 		} else {
-			log_state(RC_LOG, st, "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
+			log_state(RC_LOG, &ike->sa,
+				  "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
 	if (md->pbs[PBS_v2N_NO_PPK_AUTH] != NULL) {
@@ -2803,12 +2771,12 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
 			diag_t d = pbs_in_raw(&pbs, no_ppk_auth.ptr, len, "NO_PPK_AUTH extract");
 			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d,
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
 					 "failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
 				free_chunk_content(&no_ppk_auth);
 				return STF_FATAL;
 			}
-			replace_chunk(&st->st_no_ppk_auth, no_ppk_auth);
+			replace_chunk(&ike->sa.st_no_ppk_auth, no_ppk_auth);
 		}
 	}
 	ike->sa.st_ike_seen_v2n_mobike_supported = md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL;
@@ -2838,7 +2806,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 	 * Otherwise use NO_PPK_AUTH
 	 */
 	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
-		free_chunk_content(&st->st_no_ppk_auth);
+		free_chunk_content(&ike->sa.st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
 		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
@@ -2852,7 +2820,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 	/* calculate hash of IDi for AUTH below */
 	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash",
 						"IDi", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
-						"skey_pi", st->st_skey_pi_nss);
+						"skey_pi", ike->sa.st_skey_pi_nss);
 
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
@@ -2862,7 +2830,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 
 	/* process AUTH payload */
 
-	enum keyword_authby that_authby = st->st_connection->spd.that.authby;
+	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
@@ -2893,8 +2861,8 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 		}
 		dbg("NO_PPK_AUTH verified");
 	} else {
-		bool policy_null = LIN(POLICY_AUTH_NULL, st->st_connection->policy);
-		bool policy_rsasig = LIN(POLICY_RSASIG, st->st_connection->policy);
+		bool policy_null = LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy);
+		bool policy_rsasig = LIN(POLICY_RSASIG, ike->sa.st_connection->policy);
 
 		/*
 		 * if received NULL_AUTH in Notify payload and we only allow NULL Authentication,
@@ -2924,7 +2892,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			dbg("verifying AUTH payload");
 			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						      st->st_connection->spd.that.authby);
+						      ike->sa.st_connection->spd.that.authby);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
@@ -2943,20 +2911,20 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 	free_chunk_content(&null_auth);
 
 #ifdef AUTH_HAVE_PAM
-	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
-		return ikev2_start_pam_authorize(st);
+	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
+		return ikev2_start_pam_authorize(&ike->sa);
 #endif
-	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(st, md, TRUE);
+	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(&ike->sa, md, TRUE);
 }
 
 static v2_auth_signature_cb ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue; /* type check */
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
+static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 							  struct msg_digest *md,
 							  bool pam_status)
 {
-	struct connection *const c = st->st_connection;
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+	struct connection *const c = ike->sa.st_connection;
 
 	if (!pam_status) {
 		/*
@@ -3047,7 +3015,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
 			return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(ike, md, &sig);
 		}
 		default:
-			log_state(RC_LOG, st,
+			log_state(RC_LOG, &ike->sa,
 				  "authentication method %s not supported",
 				  enum_name(&ikev2_auth_names, auth_method));
 			return STF_FATAL;
@@ -3105,7 +3073,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 									     const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
-	struct state *st = &ike->sa; /* avoid rename for now */
+
 	/*
 	 * Now create child state.
 	 * As we will switch to child state, force the parent to the
@@ -3121,7 +3089,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
-	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
 			/* XXX: just trigger this event? */
@@ -3130,23 +3098,25 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 
 	/* send response */
-	if (LIN(POLICY_MOBIKE, c->policy) && st->st_ike_seen_v2n_mobike_supported) {
+	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
 		if (c->spd.that.host_type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
-			log_state(RC_LOG, st, "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
+			log_state(RC_LOG, &ike->sa,
+				  "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
 	}
 
 	bool send_redirect = FALSE;
 
-	if (st->st_seen_redirect_sup &&
+	if (ike->sa.st_seen_redirect_sup &&
 	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
 	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
 	      require_ddos_cookies()))) {
 		if (c->redirect_to == NULL) {
-			log_state(RC_LOG_SERIOUS, st, "redirect-to is not specified, can't redirect requests");
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "redirect-to is not specified, can't redirect requests");
 		} else {
 			send_redirect = TRUE;
 		}
@@ -3159,16 +3129,16 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike_sa(st, HERE),
-					  md /* response */,
-					  ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       md /* response */,
+					       ISAKMP_v2_IKE_AUTH);
 
 	/* decide to send CERT payload before we generate IDr */
-	bool send_cert = ikev2_send_cert_decision(st);
+	bool send_cert = ikev2_send_cert_decision(&ike->sa);
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(st->st_logger, &rbody, ike);
+	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -3182,12 +3152,12 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 
 	/* send any NOTIFY payloads */
-	if (st->st_ike_sent_v2n_mobike_supported) {
+	if (ike->sa.st_ike_sent_v2n_mobike_supported) {
 		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (st->st_ppk_used) {
+	if (ike->sa.st_ppk_used) {
 		if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -3196,10 +3166,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		if (!emit_redirect_notification(shunk1(c->redirect_to), &sk.pbs))
 			return STF_INTERNAL_ERROR;
 
-		st->st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
+		ike->sa.st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 
-	if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
+	if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && ike->sa.st_seen_use_transport) {
 		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -3227,7 +3197,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(st->st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}
@@ -3241,7 +3211,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		/* initiator didn't propose anything. Weird. Try unpending our end. */
 		/* UNPEND XXX */
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			log_state(RC_LOG, st, "No CHILD SA proposals received.");
+			log_state(RC_LOG, &ike->sa, "No CHILD SA proposals received.");
 		} else {
 			dbg("no CHILD SA proposals received");
 		}
@@ -3713,7 +3683,6 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 	passert(md != NULL);
 	struct child_sa *child = pexpect_child_sa(st);
 	struct ike_sa *ike = ike_sa(st, HERE);
-	struct state *pst = &ike->sa;
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
@@ -3759,16 +3728,16 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 
 		log_state(RC_LOG, st, "Peer wants to continue without PPK - switching to NO_PPK");
 
-		release_symkey(__func__, "st_skey_d_nss",  &pst->st_skey_d_nss);
-		pst->st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", pst->st_sk_d_no_ppk);
+		release_symkey(__func__, "st_skey_d_nss",  &ike->sa.st_skey_d_nss);
+		ike->sa.st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", ike->sa.st_sk_d_no_ppk);
 
-		release_symkey(__func__, "st_skey_pi_nss", &pst->st_skey_pi_nss);
-		pst->st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", pst->st_sk_pi_no_ppk);
+		release_symkey(__func__, "st_skey_pi_nss", &ike->sa.st_skey_pi_nss);
+		ike->sa.st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", ike->sa.st_sk_pi_no_ppk);
 
-		release_symkey(__func__, "st_skey_pr_nss", &pst->st_skey_pr_nss);
-		pst->st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", pst->st_sk_pr_no_ppk);
+		release_symkey(__func__, "st_skey_pr_nss", &ike->sa.st_skey_pr_nss);
+		ike->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", ike->sa.st_sk_pr_no_ppk);
 
-		if (pst != st) {
+		if (&ike->sa != st) {
 			release_symkey(__func__, "st_skey_d_nss",  &st->st_skey_d_nss);
 			st->st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", st->st_sk_d_no_ppk);
 
@@ -3782,7 +3751,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 
 	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2",
 						"IDr", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
-						"skey_pr", pst->st_skey_pr_nss);
+						"skey_pr", ike->sa.st_skey_pr_nss);
 
 	/* process AUTH payload */
 
@@ -3800,7 +3769,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 		 */
 		return STF_FATAL;
 	}
-	st->st_ikev2_anon = pst->st_ikev2_anon; /* was set after duplicate_state() */
+	st->st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
 
 	/* AUTH succeeded */
 
@@ -3816,7 +3785,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 	 * SA invoke the CHILD SA's transition.
 	 */
 	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
-	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm, STATE_V2_ESTABLISHED_IKE_SA);
+	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
 	if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
