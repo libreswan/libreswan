@@ -474,8 +474,6 @@ struct connection *add_group_instance(struct connection *group,
 				      uint16_t sport,
 				      uint16_t dport);
 
-extern void remove_group_instance(const struct connection *group,
-				  const char *name);
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,

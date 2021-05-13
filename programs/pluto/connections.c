@@ -2198,15 +2198,6 @@ struct connection *add_group_instance(struct connection *group,
 	return t;
 }
 
-/* An old target has disappeared for a group: delete instance. */
-void remove_group_instance(const struct connection *group,
-			const char *name)
-{
-	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
-	passert(group->kind == CK_GROUP);
-	delete_connections_by_name(name, false, logger);
-}
-
 /*
  * Common part of instantiating a Road Warrior or Opportunistic connection.
  * peers_id can be used to carry over an ID discovered in Phase 1.
