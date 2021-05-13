@@ -62,6 +62,7 @@
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
+#include "ikev2_cp.h"
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
@@ -69,23 +70,18 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct pbs_out *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
+	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
 	struct connection *c = child->sa.st_connection;
 
-	if (c->spd.that.has_lease &&
-	    md->chain[ISAKMP_NEXT_v2CP] != NULL &&
-	    child->sa.st_state->kind != STATE_V2_REKEY_IKE_R0) {
-		/*
-		 * XXX: should this be passed the CHILD SA's
-		 * .st_connection?  Here things are negotiating a new
-		 * CHILD?
-		 */
-		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
-							 child, outpbs)) {
-			return STF_INTERNAL_ERROR;
+	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		if (c->spd.that.has_lease) {
+			if (!emit_v2_child_configuration_payload(child, outpbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
+			dbg("#%lu %s ignoring unexpected v2CP payload",
+			    child->sa.st_serialno, child->sa.st_state->name);
 		}
-	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		dbg("#%lu %s ignoring unexpected v2CP payload",
-		    child->sa.st_serialno, child->sa.st_state->name);
 	}
 
 	/* start of SA out */

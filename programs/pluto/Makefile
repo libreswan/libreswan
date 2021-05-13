@@ -61,6 +61,7 @@ OBJS += ikev2_peer_id.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
 OBJS += ikev2_cookie.o
+OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
 OBJS += ikev2_msgid.o
 OBJS += ikev2_auth.o

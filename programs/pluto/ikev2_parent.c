@@ -98,6 +98,7 @@
 #include "addresspool.h"
 #include "unpack.h"
 #include "ikev2_peer_id.h"
+#include "ikev2_cp.h"
 
 struct mobike {
 	ip_endpoint remote;
@@ -1576,162 +1577,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 	return STF_OK;
 }
 
-/* Misleading name, also used for NULL sized type's */
-static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
-					const char *story, struct pbs_out *outpbs)
-{
-	struct pbs_out a_pbs;
-
-	struct ikev2_cp_attribute attr = {
-		.type = type,
-	};
-
-	/* could be NULL */
-	const struct ip_info *afi = address_type(ip);
-
-	if (afi == NULL) {
-		attr.len = 0;
-	} else if (afi == &ipv6_info) {
-		attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
-	} else {
-		attr.len = address_type(ip)->ip_size;
-	}
-
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
-				&a_pbs))
-		return STF_INTERNAL_ERROR;
-
-	if (attr.len > 0) {
-		diag_t d = pbs_out_address(&a_pbs, *ip, story);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	if (attr.len == INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
-		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
-		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	close_output_pbs(&a_pbs);
-	return STF_OK;
-}
-
-static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
-		const char *story, pb_stream *outpbs)
-{
-	pb_stream a_pbs;
-	struct ikev2_cp_attribute attr = {
-		.type = type,
-		.len = (str == NULL) ? 0 : strlen(str),
-	};
-
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
-				&a_pbs))
-		return STF_INTERNAL_ERROR;
-
-	if (attr.len > 0) {
-		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	close_output_pbs(&a_pbs);
-	return STF_OK;
-}
-
-/*
- * CHILD is asking for configuration; hence log against child.
- */
-
-bool emit_v2_child_configuration_payload(struct connection *c,
-					 struct child_sa *child,
-					 pb_stream *outpbs)
-{
-	pb_stream cp_pbs;
-	bool cfg_reply = c->spd.that.has_lease;
-	struct ikev2_cp cp = {
-		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST,
-	};
-
-	dbg("Send Configuration Payload %s ",
-	    cfg_reply ? "reply" : "request");
-
-	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
-		return false;
-
-	if (cfg_reply) {
-		ip_address that_client_address = selector_prefix(c->spd.that.client);
-		ikev2_ship_cp_attr_ip(selector_type(&c->spd.that.client) == &ipv4_info ?
-				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
-				      &that_client_address, "Internal IP Address", &cp_pbs);
-
-		if (c->modecfg_dns != NULL) {
-			char *ipstr;
-
-			ipstr = strtok(c->modecfg_dns, ", ");
-			while (ipstr != NULL) {
-				if (strchr(ipstr, '.') != NULL) {
-					ip_address ip;
-					err_t e  = ttoaddress_num(shunk1(ipstr), &ipv4_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, &ip,
-							"IP4_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else if (strchr(ipstr, ':') != NULL) {
-					ip_address ip;
-					err_t e  = ttoaddress_num(shunk1(ipstr), &ipv6_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, &ip,
-							"IP6_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else {
-					log_state(RC_LOG_SERIOUS, &child->sa,
-						  "Ignored bogus DNS IP address '%s'", ipstr);
-				}
-				ipstr = strtok(NULL, ", ");
-			}
-		}
-
-		if (c->modecfg_domains != NULL) {
-			char *domain;
-
-			domain = strtok(c->modecfg_domains, ", ");
-			while (domain != NULL) {
-				if (ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, domain,
-					"IKEv2_INTERNAL_DNS_DOMAIN", &cp_pbs) != STF_OK)
-						return false;
-				domain = strtok(NULL, ", ");
-			}
-		}
-	} else { /* cfg request */
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPV4 Address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPV6 Address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
-	}
-
-	close_output_pbs(&cp_pbs);
-	return true;
-}
-
 static bool need_configuration_payload(const struct connection *const pc,
 			    const lset_t st_nat_traversal)
 {
@@ -2178,13 +2023,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	}
 
 	if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
-		/*
-		 * XXX: should this be passed the CHILD SA's
-		 * .st_connection?  Here CHILD and IKE SAs share a
-		 * connection?
-		 */
-		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
-							 child, &sk.pbs)) {
+		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -2335,13 +2174,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* send CP payloads */
 	if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
-		/*
-		 * XXX: should this be passed the CHILD SA's
-		 * .st_connection?  Here IKE and CHILD SAs share a
-		 * connection?
-		 */
-		if (!emit_v2_child_configuration_payload(ike->sa.st_connection,
-							 child, &sk.pbs)) {
+		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
