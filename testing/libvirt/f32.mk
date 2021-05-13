@@ -107,7 +107,6 @@ KVM_UPGRADE_PACKAGES ?= \
     crypto-policies-scripts \
     curl-devel \
     elfutils-libelf-devel \
-    fipscheck-devel \
     flex \
     fping \
     gcc \
