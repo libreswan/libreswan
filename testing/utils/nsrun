@@ -3291,10 +3291,10 @@ def check_host_xfrm_stack():
         logger.debug("no XFRM stack found, try to load it %s", v_line)
         runcmd("sudo ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
-        if v_line.split()[3] != '(XFRM)':
+        if v_line.split()[3] != '(XFRM)' and v_line.split()[3] != '(netkey)':
             # give up
             logger.error(
-                "ABORT no XFRM stack found. cannot run docker test, %s", v_line)
+                "ABORT no XFRM stack found. cannot run test, %s", v_line)
             return True
 
 
