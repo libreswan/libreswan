@@ -302,9 +302,8 @@ static bool same_in_some_sense(const struct connection *a,
 			b->dnshostname, &b->spd.that.host_addr);
 }
 
-void restart_connections_by_peer(struct connection *const c)
+void restart_connections_by_peer(struct connection *const c, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
 	/*
 	 * If c is a CK_INSTANCE, it will be removed by terminate_connection.
 	 * Any parts of c we need after that must be copied first.
@@ -1075,7 +1074,7 @@ void connection_check_phase2(struct logger *logger)
 			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */
 				if (c->dnshostname != NULL) {
-					restart_connections_by_peer(c);
+					restart_connections_by_peer(c, logger);
 				} else {
 					event_force(EVENT_SA_REPLACE, p1st);
 				}

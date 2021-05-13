@@ -453,7 +453,7 @@ struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_ends_from_this_host_addr(struct end *this, struct end *that);
-extern void restart_connections_by_peer(struct connection *c);
+extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 
 extern void initiate_ondemand(const ip_endpoint *our_client,

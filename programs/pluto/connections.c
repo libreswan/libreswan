@@ -4420,32 +4420,43 @@ void liveness_clear_connection(struct connection *c, const char *v)
 	}
 }
 
-void liveness_action(struct state *st)
+void liveness_action(struct state *tbd_st)
 {
-	struct connection *c = st->st_connection;
-	const char *ikev = enum_name(&ike_version_liveness_names, st->st_ike_version);
-	passert(ikev != NULL);
+	/*
+	 * XXX: Danger! These connection calls, notably
+	 * restart_connections_by_peer(), can end up deleting TBD_ST
+	 *
+	 * So that the logger is valid after TBD_ST's been deleted,
+	 * create a clone of TBD_ST's logger and kill the TBD_ST
+	 * pointer.
+	 */
+	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
+	struct connection *c = tbd_st->st_connection;
+	const char *liveness_name = enum_name(&ike_version_liveness_names, tbd_st->st_ike_version);
+	passert(liveness_name != NULL);
+	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		log_state(RC_LOG, st,
-			  "%s action - clearing connection kind %s", ikev,
-			  enum_name(&connection_kind_names, c->kind));
-		liveness_clear_connection(c, ikev);
+		llog(RC_LOG, logger,
+		     "%s action - clearing connection kind %s",
+		     liveness_name, enum_name(&connection_kind_names, c->kind));
+		liveness_clear_connection(c, liveness_name);
 		break;
 
 	case DPD_ACTION_RESTART:
-		log_state(RC_LOG, st,
-			  "%s action - restarting all connections that share this peer",
-			  ikev);
-		restart_connections_by_peer(c);
+		llog(RC_LOG, logger,
+		     "%s action - restarting all connections that share this peer",
+		     liveness_name);
+		restart_connections_by_peer(c, logger);
 		break;
 
 	case DPD_ACTION_HOLD:
-		log_state(RC_LOG, st,
-			  "%s action - putting connection into hold", ikev);
+		llog(RC_LOG, logger,
+		     "%s action - putting connection into hold",
+		     liveness_name);
 		if (c->kind == CK_INSTANCE) {
-			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
+			dbg("%s warning dpdaction=hold on instance futile - will be deleted", liveness_name);
 		}
 		delete_states_by_connection(c, /*relations?*/true);
 		break;
@@ -4453,6 +4464,7 @@ void liveness_action(struct state *st)
 	default:
 		bad_case(c->dpd_action);
 	}
+	free_logger(&logger, HERE);
 }
 
 /*
