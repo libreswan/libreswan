@@ -1,0 +1,8 @@
+Test for NAT-t with %priv,%no when there is no NAT and "public ip" is in exclude list.
+
+This tests for the common deployment where a remote host cannot use the enterprise IP range
+as their own NAT range. so the server has a virtual-private %exclude to drop these.
+But if the road warriors then connects from inside the enterprise, there is no NAT but
+it WILL use the IP that is in %exclude but it should not trigger the block because there
+is no NAT.
+
