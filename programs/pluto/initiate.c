@@ -328,11 +328,10 @@ void restart_connections_by_peer(struct connection *const c)
 		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
 
 		if (same_host(dnshostname, &host_addr,
-				d->dnshostname, &d->spd.that.host_addr))
-		{
+			      d->dnshostname, &d->spd.that.host_addr)) {
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name, false, logger->global_whackfd);
+			terminate_connections_by_name(d->name, /*quiet?*/false, logger);
 		}
 		d = next;
 	}

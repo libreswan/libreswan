@@ -102,10 +102,8 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 	return 1;
 }
 
-void terminate_connection(const char *name, bool quiet, struct fd *whackfd)
+void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), }; /* placeholder */
-
 	/*
 	 * Loop because more than one may match (template and
 	 * instances).  But at least one is required (enforced by

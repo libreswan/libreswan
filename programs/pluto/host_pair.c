@@ -336,9 +336,7 @@ void release_dead_interfaces(struct logger *logger)
 		 */
 		release_connection(c, /*relations?*/true);
 		passert(c == *cp);
-		terminate_connection(c->name,
-				     false/*quiet?*/,
-				     logger->global_whackfd);
+		terminate_connections_by_name(c->name, /*quiet?*/false, logger);
 
 		/*
 		 * disorient connection and then put on the unoriented
