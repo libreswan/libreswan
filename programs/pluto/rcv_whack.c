@@ -810,7 +810,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				}
 			}
 			initiate_connections_by_name(m->name, pass_remote ? m->remote_host : NULL,
-						     whackfd, m->whack_async);
+						     m->whack_async, logger);
 		}
 		dbg("whack: ... initiate");
 	}

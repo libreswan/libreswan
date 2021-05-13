@@ -486,9 +486,11 @@ void initiate_redirect(struct state *st)
 	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
 		  str_address_sensitive(&redirect_ip, &b));
 	flush_pending_by_state(ike);
-	initiate_connections_by_name(c->name, NULL,
-				     st->st_logger->object_whackfd,
-				     /*background?*/(st->st_logger->object_whackfd == NULL));
+	/* XXX: why not just call initiate_connection()? */
+	struct logger logger[] = { GLOBAL_LOGGER(st->st_logger->object_whackfd), }; /*placeholder*/
+	initiate_connections_by_name(c->name, /*remote-host*/NULL,
+				     /*background?*/(st->st_logger->object_whackfd == NULL),
+				     logger);
 
 	event_force(EVENT_SA_EXPIRE, &ike->sa);
 	/*

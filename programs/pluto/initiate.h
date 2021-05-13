@@ -19,6 +19,6 @@
 
 bool initiate_connection(struct connection *c, const char *remote_host, bool background);
 void initiate_connections_by_name(const char *name, const char *remote_host,
-				  struct fd *whackfd, bool background);
+				  bool background, struct logger *logger);
 
 #endif

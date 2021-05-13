@@ -38,11 +38,6 @@
 #include "state_db.h"
 #include "orient.h"
 
-struct initiate_stuff {
-	bool background;
-	const char *remote_host;
-};
-
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
 
@@ -243,6 +238,12 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	return true;
 }
 
+struct initiate_stuff {
+	bool background;
+	const char *remote_host;
+	bool log_failure;
+};
+
 static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
 {
 	const struct initiate_stuff *is = arg;
@@ -250,41 +251,37 @@ static int initiate_a_connection(struct connection *c, void *arg, struct logger 
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = dup_any(logger->global_whackfd);
 	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
+	if (!result && is->log_failure) {
+		llog(RC_FATAL, c->logger, "failed to initiate connection");
+	}
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
 	return result;
 }
 
 void initiate_connections_by_name(const char *name, const char *remote_host,
-				  struct fd *whackfd, bool background)
+				  bool background, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), }; /* placeholder */
-
 	passert(name != NULL);
-
 	struct connection *c = conn_by_name(name, /*strict-match?*/false);
 	if (c != NULL) {
-		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
-		c->logger->global_whackfd = dup_any(whackfd);
-		bool ok = initiate_connection(c, remote_host, background);
-		if (!ok) {
-			llog(RC_FATAL, c->logger, "failed to initiate connection");
+		struct initiate_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = true,
+		};
+		initiate_a_connection(c, &is, logger);
+	} else {
+		struct initiate_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = false,
+		};
+		llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
+		int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
+		if (count == 0) {
+			llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
 		}
-		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
-		return;
-	}
-
-	llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
-	struct initiate_stuff is = {
-		.background = background,
-		.remote_host = remote_host,
-	};
-	int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
-
-	if (count == 0) {
-		llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
 	}
 }
 
@@ -307,7 +304,7 @@ static bool same_in_some_sense(const struct connection *a,
 
 void restart_connections_by_peer(struct connection *const c)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
+	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
 	/*
 	 * If c is a CK_INSTANCE, it will be removed by terminate_connection.
 	 * Any parts of c we need after that must be copied first.
@@ -335,7 +332,7 @@ void restart_connections_by_peer(struct connection *const c)
 		{
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name, false, whackfd);
+			terminate_connection(d->name, false, logger->global_whackfd);
 		}
 		d = next;
 	}
@@ -355,8 +352,8 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connections_by_name(d->name, NULL,
-							     null_fd, true/*background*/);
+				initiate_connections_by_name(d->name, /*remote-host*/NULL,
+							     /*background?*/true, logger);
 		}
 	}
 	pfreeany(dnshostname);
@@ -878,7 +875,7 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
  * The order matters, we try to do the cheapest checks first.
  */
 
-static void connection_check_ddns1(struct connection *c)
+static void connection_check_ddns1(struct connection *c, struct logger *logger)
 {
 	struct connection *d;
 	ip_address new_addr;
@@ -981,7 +978,9 @@ static void connection_check_ddns1(struct connection *c)
 		connection_buf cib;
 		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
-		initiate_connections_by_name(c->name, NULL, null_fd, true/*background*/);
+		/* XXX: why not call initiate_connection() directly? */
+		initiate_connections_by_name(c->name, /*remote-host*/NULL,
+					     /*background?*/true, logger);
 	} else {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
@@ -995,13 +994,13 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP)) {
-			initiate_connections_by_name(d->name, NULL,
-						     null_fd, true/*background*/);
+			initiate_connections_by_name(d->name, /*remote-host*/NULL,
+						     /*background?*/true, logger);
 		}
 	}
 }
 
-void connection_check_ddns(struct logger *unused_logger UNUSED)
+void connection_check_ddns(struct logger *logger)
 {
 	struct connection *c, *cnext;
 	threadtime_t start = threadtime_start();
@@ -1009,7 +1008,7 @@ void connection_check_ddns(struct logger *unused_logger UNUSED)
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
-		connection_check_ddns1(c);
+		connection_check_ddns1(c, logger);
 	}
 	check_orientations();
 

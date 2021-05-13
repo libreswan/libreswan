@@ -1120,9 +1120,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				tmp_c->host_pair->remote = new_peer;
 
 				/* Initiating connection to the redirected peer */
-				initiate_connections_by_name(tmp_name, NULL,
-							     tmp_whack_sock,
-							     tmp_whack_sock == NULL/*guess*/);
+				struct logger logger[] = { GLOBAL_LOGGER(tmp_whack_sock), }; /*placeholder*/
+				initiate_connections_by_name(tmp_name, /*remote-name*/NULL,
+							     /*background?*/tmp_whack_sock == NULL/*guess*/,
+							     logger);
 				close_any(&tmp_whack_sock);
 			}
 			return STF_IGNORE;
