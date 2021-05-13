@@ -136,17 +136,7 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 
 void release_connection(struct connection *c, bool relations)
 {
-	if (c->kind == CK_INSTANCE) {
-		/* punexpected(...)? */
-		/*
-		 * This does everything we need.
-		 * Note that we will be called recursively by delete_connection,
-		 * but kind will be CK_GOING_AWAY.
-		 */
-		delete_connection(&c, relations);
-		return;
-	}
-
+	pexpect(c->kind != CK_INSTANCE);
 	flush_pending_by_connection(c);
 	delete_states_by_connection(c, relations);
 	unroute_connection(c);
