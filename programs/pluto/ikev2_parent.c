@@ -4229,16 +4229,17 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 static dh_shared_secret_cb ikev2_child_ike_inR_continue;
 
 stf_status ikev2_child_ike_inR(struct ike_sa *ike,
-			       struct child_sa *child,
+			       struct child_sa *larval_ike,
 			       struct msg_digest *md)
 {
-	pexpect(child != NULL);
+	pexpect(larval_ike != NULL);
+	struct state *st = &larval_ike->sa;
 	pexpect(ike != NULL);
-	pexpect(ike->sa.st_serialno == child->sa.st_clonedfrom);
-	struct connection *c = child->sa.st_connection;
+	pexpect(ike->sa.st_serialno == larval_ike->sa.st_clonedfrom); /* not yet emancipated */
+	struct connection *c = st->st_connection;
 
 	/* Ni in */
-	if (!accept_v2_nonce(child->sa.st_logger, md, &child->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(larval_ike->sa.st_logger, md, &larval_ike->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family and trigger no further
@@ -4250,7 +4251,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	/* Get the proposals ready.  */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA accept response to rekey",
-				     child->sa.st_logger);
+				     larval_ike->sa.st_logger);
 
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
@@ -4259,8 +4260,8 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 						  /*expect_spi*/ TRUE,
 						  /*expect_accepted*/ TRUE,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &child->sa.st_accepted_ike_proposal,
-						  ike_proposals, child->sa.st_logger);
+						  &larval_ike->sa.st_accepted_ike_proposal,
+						  ike_proposals, larval_ike->sa.st_logger);
 	if (ret != STF_OK) {
 		dbg("failed to accept IKE SA, REKEY, response, in ikev2_child_ike_inR");
 		return ret; /* initiator; no response */
@@ -4268,21 +4269,21 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       child->sa.st_accepted_ike_proposal);
+				       larval_ike->sa.st_accepted_ike_proposal);
 	}
-	if (!ikev2_proposal_to_trans_attrs(child->sa.st_accepted_ike_proposal,
-					   &child->sa.st_oakley, child->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &child->sa, "IKE responder accepted an unsupported algorithm");
+	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_accepted_ike_proposal,
+					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
+		log_state(RC_LOG_SERIOUS, &larval_ike->sa, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
-		free_ikev2_proposal(&child->sa.st_accepted_ike_proposal);
-		passert(child->sa.st_accepted_ike_proposal == NULL);
+		free_ikev2_proposal(&larval_ike->sa.st_accepted_ike_proposal);
+		passert(larval_ike->sa.st_accepted_ike_proposal == NULL);
 		switch_md_st(md, &ike->sa, HERE);
 		return STF_FAIL;
 	}
 
 	 /* KE in */
-	if (!unpack_KE(&child->sa.st_gr, "Gr", child->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], child->sa.st_logger)) {
+	if (!unpack_KE(&larval_ike->sa.st_gr, "Gr", larval_ike->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
 		/*
 		 * XXX: Initiator so returning this notification will
 		 * go no where.  Need to check RFC for what to do
@@ -4293,13 +4294,13 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 	}
 
 	/* fill in the missing responder SPI */
-	passert(!ike_spi_is_zero(&child->sa.st_ike_rekey_spis.initiator));
-	passert(ike_spi_is_zero(&child->sa.st_ike_rekey_spis.responder));
-	ikev2_copy_cookie_from_sa(child->sa.st_accepted_ike_proposal,
-				  &child->sa.st_ike_rekey_spis.responder);
+	passert(!ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.initiator));
+	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
+	ikev2_copy_cookie_from_sa(larval_ike->sa.st_accepted_ike_proposal,
+				  &larval_ike->sa.st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
-	submit_dh_shared_secret(&child->sa, child->sa.st_gr/*initiator needs responder's KE*/,
+	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gr/*initiator needs responder's KE*/,
 				ikev2_child_ike_inR_continue,
 				HERE);
 	return STF_SUSPEND;
@@ -4352,13 +4353,13 @@ static stf_status ikev2_child_ike_inR_continue(struct state *larval_ike_sa,
 
 static dh_shared_secret_cb ikev2_child_inR_continue;
 
-stf_status ikev2_child_inR(struct ike_sa *ike,
-			   struct child_sa *child, struct msg_digest *md)
+stf_status ikev2_child_inR(struct ike_sa *ike, struct child_sa *larval_child,
+			   struct msg_digest *md)
 {
-	pexpect(child != NULL);
+	pexpect(larval_child != NULL);
 
 	/* Ni in */
-	if (!accept_v2_nonce(child->sa.st_logger, md, &child->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(larval_child->sa.st_logger, md, &larval_child->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family (and trigger no further
@@ -4367,13 +4368,14 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (!ikev2_process_child_sa_payload(ike, child, md, /*expect-accepted-proposal?*/true)) {
+	if (!ikev2_process_child_sa_payload(ike, larval_child, md,
+					    /*expect-accepted-proposal?*/true)) {
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
 	/* XXX: only for rekey child? */
-	if (child->sa.st_pfs_group == NULL) {
-		return ikev2_process_ts_and_rest(ike, child, md);
+	if (larval_child->sa.st_pfs_group == NULL) {
+		return ikev2_process_ts_and_rest(ike, larval_child, md);
 	}
 
 	/*
@@ -4383,17 +4385,17 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 	 * st_oakley.ta_dh, presumably they are the same? Lets find
 	 * out.
 	 */
-	pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
-	if (!unpack_KE(&child->sa.st_gr, "Gr", child->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], child->sa.st_logger)) {
+	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
+	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
 		/*
 		 * XXX: Initiator so this notification result is going
 		 * no where.  What should happen?
 		 */
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
 	}
-	chunk_t remote_ke = child->sa.st_gr;
-	submit_dh_shared_secret(&child->sa, remote_ke, ikev2_child_inR_continue, HERE);
+	chunk_t remote_ke = larval_child->sa.st_gr;
+	submit_dh_shared_secret(&larval_child->sa, remote_ke, ikev2_child_inR_continue, HERE);
 	return STF_SUSPEND;
 }
 
@@ -4444,16 +4446,16 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
 static ke_and_nonce_cb ikev2_child_inIoutR_continue;
 
 stf_status ikev2_child_inIoutR(struct ike_sa *ike,
-			       struct child_sa *child,
+			       struct child_sa *larval_child,
 			       struct msg_digest *md)
 {
-	pexpect(child != NULL);
+	pexpect(larval_child != NULL);
 
-	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
-	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
+	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	if (!accept_v2_nonce(child->sa.st_logger, md, &child->sa.st_ni, "Ni")) {
+	if (!accept_v2_nonce(larval_child->sa.st_logger, md, &larval_child->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  Syntax error response
 		 * impicitly kills the family.
@@ -4464,7 +4466,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
-	if (!ikev2_process_child_sa_payload(ike, child, md, /*expect-accepted-proposal?*/false)) {
+	if (!ikev2_process_child_sa_payload(ike, larval_child, md,
+					    /*expect-accepted-proposal?*/false)) {
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -4476,42 +4479,42 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	 * replacement has KE or has SA processor handled that by only
 	 * accepting a proposal with KE?
 	 */
-	if (child->sa.st_pfs_group != NULL) {
-		pexpect(child->sa.st_oakley.ta_dh == child->sa.st_pfs_group);
-		if (!unpack_KE(&child->sa.st_gi, "Gi", child->sa.st_oakley.ta_dh,
-			       md->chain[ISAKMP_NEXT_v2KE], child->sa.st_logger)) {
-			record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+	if (larval_child->sa.st_pfs_group != NULL) {
+		pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
+		if (!unpack_KE(&larval_child->sa.st_gi, "Gi", larval_child->sa.st_oakley.ta_dh,
+			       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
+			record_v2N_response(larval_child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
 	}
 
 	/* check N_REKEY_SA in the negotiation */
-	switch (child->sa.st_state->kind) {
+	switch (larval_child->sa.st_state->kind) {
 	case STATE_V2_REKEY_CHILD_R0:
-		if (!ikev2_rekey_child_resp(ike, child, md)) {
+		if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
 			/* already logged; already recorded */
 			return STF_FAIL;
 		}
-		if (!child_rekey_responder_ts_verify(child, md)) {
+		if (!child_rekey_responder_ts_verify(larval_child, md)) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
 				v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 					ENCRYPTED_PAYLOAD);
 			return STF_FAIL;
 		}
 
-		pexpect(child->sa.st_ipsec_pred != SOS_NOBODY);
+		pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
 		break;
 	case STATE_V2_NEW_CHILD_R0:
 		/* state m/c created CHILD SA */
-		pexpect(child->sa.st_ipsec_pred == SOS_NOBODY);
-		if (!assign_child_responder_client(ike, child, md)) {
+		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
+		if (!assign_child_responder_client(ike, larval_child, md)) {
 			/* already logged; already recorded */
 			return STF_FAIL;
 		}
 		break;
 	default:
-		bad_case(child->sa.st_state->kind);
+		bad_case(larval_child->sa.st_state->kind);
 	}
 
 	/*
@@ -4524,7 +4527,7 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	 * XXX: 'see above' is lost; this is a responder state
 	 * which _always_ has an MD.
 	 */
-	switch (child->sa.st_state->kind) {
+	switch (larval_child->sa.st_state->kind) {
 	case STATE_V2_NEW_CHILD_R0:
 		/*
 		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
@@ -4532,8 +4535,8 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		 * acting more like a flag or perhaps, even though DH
 		 * was negotiated it can be ignored?
 		 */
-		submit_ke_and_nonce(&child->sa,
-				    child->sa.st_pfs_group != NULL ? child->sa.st_oakley.ta_dh : NULL,
+		submit_ke_and_nonce(&larval_child->sa,
+				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
 				    ikev2_child_inIoutR_continue,
 				    "Child Responder KE and nonce nr");
 		return STF_SUSPEND;
@@ -4544,13 +4547,13 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		 * acting more like a flag or perhaps, even though DH
 		 * was negotiated it can be ignored?
 		 */
-		submit_ke_and_nonce(&child->sa,
-				    child->sa.st_pfs_group != NULL ? child->sa.st_oakley.ta_dh : NULL,
+		submit_ke_and_nonce(&larval_child->sa,
+				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
 				    ikev2_child_inIoutR_continue,
 				    "Child Rekey Responder KE and nonce nr");
 		return STF_SUSPEND;
 	default:
-		bad_case(child->sa.st_state->kind);
+		bad_case(larval_child->sa.st_state->kind);
 	}
 }
 
