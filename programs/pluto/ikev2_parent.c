@@ -4397,38 +4397,36 @@ stf_status ikev2_child_inR(struct ike_sa *ike,
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_child_inR_continue(struct state *st,
+static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
 					   struct msg_digest *md)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* initiator getting back an answer */
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = ike_sa(st, HERE);
-	struct child_sa *child = pexpect_child_sa(st);
-	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+	pexpect(md->st == NULL || md->st == &larval_child->sa);
+	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
+	dbg("%s() for #%lu %s",
+	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state->kind == STATE_V2_NEW_CHILD_I1 ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_I1);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1);
 
 	/* and a parent? */
 	if (ike == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(larval_child->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
-			     st->st_serialno, st->st_clonedfrom);
+			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
 		/* XXX: release what? */
 		return STF_FATAL;
 	}
 
-	if (st->st_dh_shared_secret == NULL) {
+	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
@@ -4436,7 +4434,7 @@ static stf_status ikev2_child_inR_continue(struct state *st,
 		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
-	return ikev2_process_ts_and_rest(ike, child, md);
+	return ikev2_process_ts_and_rest(ike, larval_child, md);
 }
 
 /*
@@ -4558,21 +4556,20 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 
 static dh_shared_secret_cb ikev2_child_inIoutR_continue_continue;
 
-static stf_status ikev2_child_inIoutR_continue(struct state *st,
+static stf_status ikev2_child_inIoutR_continue(struct state *larval_child_sa,
 					       struct msg_digest *md,
 					       struct dh_local_secret *local_secret,
 					       chunk_t *nonce)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
 
 	/* responder processing request */
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = ike_sa(st, HERE);
-	struct child_sa *child = pexpect_child_sa(st);
-	pexpect(child->sa.st_sa_role == SA_RESPONDER);
+	pexpect(md->st == NULL || md->st == &larval_child->sa);
+	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
+	dbg("%s() for #%lu %s",
+	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -4582,69 +4579,68 @@ static stf_status ikev2_child_inIoutR_continue(struct state *st,
 	 * Instead of computing the entire DH as a single crypto task,
 	 * does a second continue. Yuck!
 	 */
-	pexpect(st->st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	/* and a parent? */
 	if (ike == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(larval_child->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
-			     st->st_serialno, st->st_clonedfrom);
+			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
 		/* XXX: release what? */
 		return STF_INTERNAL_ERROR;
 	}
 
-	unpack_nonce(&st->st_nr, nonce);
+	unpack_nonce(&larval_child->sa.st_nr, nonce);
 	if (local_secret != NULL) {
-		unpack_KE_from_helper(st, local_secret, &st->st_gr);
+		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 		/* initiate calculation of g^xy */
-		submit_dh_shared_secret(st, st->st_gi, ikev2_child_inIoutR_continue_continue,
+		submit_dh_shared_secret(&larval_child->sa, larval_child->sa.st_gi,
+					ikev2_child_inIoutR_continue_continue,
 					HERE);
 		return STF_SUSPEND;
 	} else {
-		return ikev2_child_out_tail(ike, child, md);
+		return ikev2_child_out_tail(ike, larval_child, md);
 	}
 }
 
-static stf_status ikev2_child_inIoutR_continue_continue(struct state *st,
+static stf_status ikev2_child_inIoutR_continue_continue(struct state *larval_child_sa,
 							struct msg_digest *md)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* 'child' responding to request */
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == st);
-
-	struct ike_sa *ike = ike_sa(st, HERE);
-	struct child_sa *child = pexpect_child_sa(st);
-	passert(child->sa.st_sa_role == SA_RESPONDER);
+	pexpect(md->st == NULL || md->st == &larval_child->sa);
+	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
+	dbg("%s() for #%lu %s",
+	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	/* didn't loose parent? */
 	if (ike == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(larval_child->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
-			     st->st_serialno, st->st_clonedfrom);
+			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
 		/* XXX: release child? */
 		return STF_FATAL;
 	}
 
-	if (st->st_dh_shared_secret == NULL) {
-		log_state(RC_LOG, &child->sa, "DH failed");
-		record_v2N_response(child->sa.st_logger, ike, md,
+	if (larval_child->sa.st_dh_shared_secret == NULL) {
+		log_state(RC_LOG, &larval_child->sa, "DH failed");
+		record_v2N_response(larval_child->sa.st_logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
 	}
-	return ikev2_child_out_tail(ike, child, md);
+	return ikev2_child_out_tail(ike, larval_child, md);
 }
 
 /*
@@ -5880,67 +5876,65 @@ void ikev2_child_outI(struct state *st)
 
 static v2_msgid_pending_cb ikev2_child_outI_continue_2;
 
-static stf_status ikev2_child_outI_continue(struct state *st,
+static stf_status ikev2_child_outI_continue(struct state *larval_child_sa,
 					    struct msg_digest *unused_md,
 					    struct dh_local_secret *local_secret,
 					    chunk_t *nonce)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, st->st_serialno, st->st_state->name);
-
 	/* child initiating exchange */
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	pexpect(unused_md == NULL);
-
-	struct ike_sa *ike = ike_sa(st, HERE);
-	struct child_sa *child = pexpect_child_sa(st);
-	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
+	dbg("%s() for #%lu %s",
+	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(st->st_state->kind == STATE_V2_NEW_CHILD_I0 ||
-		st->st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
-		st->st_state->kind == STATE_V2_REKEY_IKE_I0);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0);
 
 	/* and a parent? */
 	if (ike == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(larval_child->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
-			     st->st_serialno, st->st_clonedfrom);
+			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
 		/* XXX: release child? */
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* IKE SA => DH */
-	pexpect(st->st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
 
-	unpack_nonce(&st->st_ni, nonce);
+	unpack_nonce(&larval_child->sa.st_ni, nonce);
 	if (local_secret != NULL) {
-		unpack_KE_from_helper(st, local_secret, &st->st_gi);
+		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gi);
 	}
 
 	dbg("queueing child sa with acquired label %.*s",
-			(int)st->st_acquired_sec_label.len, st->st_acquired_sec_label.ptr);
+	    (int)larval_child->sa.st_acquired_sec_label.len, larval_child->sa.st_acquired_sec_label.ptr);
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
-	    child->sa.st_serialno, ike->sa.st_serialno);
-	v2_msgid_queue_initiator(ike, &child->sa, ISAKMP_v2_CREATE_CHILD_SA,
+	    larval_child->sa.st_serialno, ike->sa.st_serialno);
+	v2_msgid_queue_initiator(ike, &larval_child->sa, ISAKMP_v2_CREATE_CHILD_SA,
 				 NULL, ikev2_child_outI_continue_2);
 
 	return STF_SUSPEND;
 }
 
-stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *st,
+stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *larval_child_sa,
 				       struct msg_digest *md UNUSED)
 {
-	struct child_sa *child = pexpect_child_sa(st);
-	stf_status e = ikev2_start_new_exchange(ike, child);
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	stf_status e = ikev2_start_new_exchange(ike, larval_child);
 	if (e != STF_OK) {
 		return e;
 	}
-	return ikev2_child_out_tail(ike, child, NULL);
+	return ikev2_child_out_tail(ike, larval_child, NULL);
 }
 
 void ikev2_record_newaddr(struct state *st, void *arg_ip)
