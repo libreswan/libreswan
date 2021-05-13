@@ -15,7 +15,7 @@
     FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
     PREFIX=%{_prefix} \\\
-    PYTHON_BINARY=python2 \\\
+    PYTHON_BINARY=%{__python2} \\\
     SHELL_BINARY=/bin/sh \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
