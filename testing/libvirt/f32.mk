@@ -155,6 +155,7 @@ KVM_UPGRADE_PACKAGES ?= \
     selinux-policy-devel \
     screen \
     strace \
+    softhsm \
     systemd-devel \
     tar \
     tcpdump \

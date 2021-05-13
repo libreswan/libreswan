@@ -7,7 +7,7 @@ east #
 east #
  # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
 east #
- PA../../guestbin/update-crypto-policies
+ PATH/bin/update-crypto-policies
 Setting system policy to DEFAULT
 Note: System-wide crypto policies are applied on application start-up.
 It is recommended to restart the system for the change of policies
@@ -112,6 +112,7 @@ east #
 000   2048 bit RSA
 000  
 000 List of CRLs:
+000  
 east #
  echo "initdone"
 initdone
