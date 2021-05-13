@@ -316,24 +316,30 @@ void release_dead_interfaces(struct logger *logger)
 		dbg("connection interface deleted: "PRI_CONNECTION,
 		    pri_connection(c, &cb));
 
-		/* this connection's interface is going away */
-		enum connection_kind kind = c->kind;
+		/* XXX: something better? */
+		close_any(&c->logger->global_whackfd);
+		c->logger->global_whackfd = dup_any(logger->global_whackfd);
+
+		/*
+		 * This connection instance interface is going away.
+		 */
 		passert(c == *cp);
-		release_connection(c, true/*relations*/, logger->global_whackfd);
-		if (kind == CK_INSTANCE) {
-			/* C invalid; was deleted */
-			pexpect(c != *cp);
+		if (c->kind == CK_INSTANCE) {
+			delete_connection(&c, /*relations?*/true);
+			pexpect(c == NULL);
 			continue;
 		}
 
 		/*
-		 * The connection should have survived release: move
-		 * it to the unoriented_connections list.
+		 * The connection is somewhat permenant; release it
+		 * and move it to the unoriented_connections list.
 		 */
+		release_connection(c, /*relations?*/true);
 		passert(c == *cp);
 		terminate_connection(c->name,
 				     false/*quiet?*/,
 				     logger->global_whackfd);
+
 		/*
 		 * disorient connection and then put on the unoriented
 		 * list.
@@ -344,6 +350,10 @@ void release_dead_interfaces(struct logger *logger)
 		c->hp_next = unoriented_connections;
 		unoriented_connections = c;
 		pexpect(c->host_pair == NULL);
+
+		/* XXX: something better? */
+		close_any(&c->logger->global_whackfd);
+
 		/* advance */
 		cp = &c->ac_next;
 	}

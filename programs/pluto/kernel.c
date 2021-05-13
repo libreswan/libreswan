@@ -2671,13 +2671,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 				  "route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
 				  pri_connection(o, &cib),
 				  str_address_sensitive(&o->spd.that.host_addr, &b));
-			/*
-			 * XXX: Assume this call shouldn't log to
-			 * whack(?).  While ST has an attached whack,
-			 * the global whack, which this code would
-			 * have been using, detached long-ago.
-			 */
-			release_connection(o, false, null_fd);
+			if (o->kind == CK_INSTANCE) {
+				delete_connection(&o, /*relations?*/false);
+			} else {
+				release_connection(o, /*relations?*/false);
+			}
 		}
 	}
 

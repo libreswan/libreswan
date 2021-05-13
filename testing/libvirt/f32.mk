@@ -107,7 +107,6 @@ KVM_UPGRADE_PACKAGES ?= \
     crypto-policies-scripts \
     curl-devel \
     elfutils-libelf-devel \
-    fipscheck-devel \
     flex \
     fping \
     gcc \
@@ -156,6 +155,7 @@ KVM_UPGRADE_PACKAGES ?= \
     selinux-policy-devel \
     screen \
     strace \
+    softhsm \
     systemd-devel \
     tar \
     tcpdump \

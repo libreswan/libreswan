@@ -802,7 +802,7 @@ extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 extern void delete_other_state(struct state *st, struct state *other_st);
-extern void delete_states_by_connection(struct connection *c, bool relations, struct fd *whackfd);
+extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void rekey_p2states_by_connection(struct connection *c);
 enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);

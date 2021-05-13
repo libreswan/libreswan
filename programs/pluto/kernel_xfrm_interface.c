@@ -758,7 +758,7 @@ void reference_xfrmi(struct connection *c)
 			c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->refcount);
 }
 
-void unreference_xfrmi(struct connection *c, struct logger *logger)
+void unreference_xfrmi(struct connection *c)
 {
 	passert(c->xfrmi->refcount > 0);
 	c->xfrmi->refcount--;
@@ -768,5 +768,5 @@ void unreference_xfrmi(struct connection *c, struct logger *logger)
 			c->xfrmi->if_id, c->xfrmi->refcount,
 			c->xfrmi->refcount == 0 ? "delete interface." : ".");
 	if (c->xfrmi->refcount == 0)
-		free_xfrmi(c->xfrmi, logger);
+		free_xfrmi(c->xfrmi, c->logger);
 }

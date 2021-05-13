@@ -134,20 +134,22 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 	return p;
 }
 
-void release_connection(struct connection *c, bool relations, struct fd *whackfd)
+void release_connection(struct connection *c, bool relations)
 {
 	if (c->kind == CK_INSTANCE) {
+		/* punexpected(...)? */
 		/*
 		 * This does everything we need.
 		 * Note that we will be called recursively by delete_connection,
 		 * but kind will be CK_GOING_AWAY.
 		 */
-		delete_connection(c, relations);
-	} else {
-		flush_pending_by_connection(c);
-		delete_states_by_connection(c, relations, whackfd);
-		unroute_connection(c);
+		delete_connection(&c, relations);
+		return;
 	}
+
+	flush_pending_by_connection(c);
+	delete_states_by_connection(c, relations);
+	unroute_connection(c);
 }
 
 /* Delete a connection */
@@ -182,16 +184,12 @@ static void delete_sr(struct spd_route *sr)
  *
  */
 
-static void discard_connection(struct connection *c,
-			       bool connection_valid,
-			       struct logger *connection_logger);
+static void discard_connection(struct connection **cp, bool connection_valid);
 
-void delete_connection(struct connection *c, bool relations)
+void delete_connection(struct connection **cp, bool relations)
 {
-	struct fd *whackfd = whack_log_fd;
-	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd); /* freed by discard_conection() */
+	struct connection *c = *cp;
+	*cp = NULL;
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -211,17 +209,15 @@ void delete_connection(struct connection *c, bool relations)
 			free_that_address_lease(c);
 		}
 	}
-	release_connection(c, relations, whackfd); /* won't delete c */
-	/* make a copy of the logger so it works even after the delete */
-	struct logger *logger = clone_logger(c->logger, HERE); /* must-free */
-	discard_connection(c, true/*connection_valid*/, logger);
-	free_logger(&logger, HERE);
+	release_connection(c, relations);
+	discard_connection(&c, true/*connection_valid*/);
 }
 
-static void discard_connection(struct connection *c,
-			       bool connection_valid,
-			       struct logger *connection_logger)
+static void discard_connection(struct connection **cp, bool connection_valid)
 {
+	struct connection *c = *cp;
+	*cp = NULL;
+
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
@@ -229,7 +225,7 @@ static void discard_connection(struct connection *c,
 		unreference_addresspool(c);
 
 	if (IS_XFRMI && c->xfrmi != NULL)
-		unreference_xfrmi(c, connection_logger);
+		unreference_xfrmi(c);
 
 	/* find and delete c from connections list */
 	/* XXX: if in list, remove_list_entry(c->ac_next); */
@@ -241,6 +237,8 @@ static void discard_connection(struct connection *c,
 			break;
 		}
 	}
+
+	struct logger *connection_logger = clone_logger(c->logger, HERE);
 
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
@@ -291,6 +289,7 @@ static void discard_connection(struct connection *c,
 	remove_connection_from_db(c);
 
 	pfree(c);
+	free_logger(&connection_logger, HERE);
 }
 
 int foreach_connection_by_alias(const char *alias,
@@ -311,36 +310,38 @@ int foreach_connection_by_alias(const char *alias,
 	return count;
 }
 
-static int delete_connection_wrap(struct connection *c, void *arg, struct logger *logger UNUSED)
+static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
 {
-	bool *barg = (bool *)arg;
+	/* XXX: something better? */
+	close_any(&c->logger->global_whackfd);
+	c->logger->global_whackfd = dup_any(logger->global_whackfd); /* freed by discard_conection() */
 
-	delete_connection(c, *barg);
+	delete_connection(&c, false);
 	return 1;
 }
 
 /* Delete connections with the specified name */
-void delete_connections_by_name(const char *name, bool strict, struct fd *whackfd)
+void delete_connections_by_name(const char *name, bool strict, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), }; /* placeholder */
-
-	bool f = FALSE;
-
 	passert(name != NULL);
 	struct connection *c = conn_by_name(name, strict);
-
-	if (c == NULL) {
-		foreach_connection_by_alias(name, delete_connection_wrap, &f, logger);
+	if (c != NULL) {
+		do {
+			/* XXX: something better? */
+			delete_connection_wrap(c, NULL, logger);
+			c = conn_by_name(name, false/*!strict*/);
+		} while (c != NULL);
 	} else {
-		for (; c != NULL; c = conn_by_name(name, false/*!strict*/))
-			delete_connection(c, FALSE);
+		foreach_connection_by_alias(name, delete_connection_wrap, NULL, logger);
 	}
 }
 
 void delete_every_connection(void)
 {
-	while (connections != NULL)
-		delete_connection(connections, TRUE);
+	while (connections != NULL) {
+		struct connection *c = connections;
+		delete_connection(&c, true);
+	}
 }
 
 ip_port end_host_port(const struct end *end, const struct end *other)
@@ -2082,9 +2083,7 @@ void add_connection(struct fd *whackfd, const struct whack_message *wm)
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
-		struct logger *logger = clone_logger(c->logger, HERE);
-		discard_connection(c, false/*not-valid*/, logger);
-		free_logger(&logger, HERE);
+		discard_connection(&c, false/*not-valid*/);
 		return;
 	}
 
@@ -2213,10 +2212,9 @@ struct connection *add_group_instance(struct connection *group,
 void remove_group_instance(const struct connection *group,
 			const char *name)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
+	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
 	passert(group->kind == CK_GROUP);
-
-	delete_connections_by_name(name, false, whackfd);
+	delete_connections_by_name(name, false, logger);
 }
 
 /*
@@ -4343,7 +4341,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = dup_any(whackfd);
-	delete_connection(c, false);
+	delete_connection(&c, false);
 }
 
 /*
@@ -4422,10 +4420,10 @@ void liveness_clear_connection(struct connection *c, const char *v)
 	 * to remember what it was to know if we still need to unroute after delete
 	 */
 	if (c->kind == CK_INSTANCE) {
-		delete_states_by_connection(c, TRUE, null_fd/*no-whack?*/);
+		delete_states_by_connection(c, /*relations?*/true);
 	} else {
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-		delete_states_by_connection(c, TRUE, null_fd/*no-whack?*/);
+		delete_states_by_connection(c, /*relations?*/true);
 		dbg("%s: unrouting connection %s action - clearing",
 		    enum_name(&connection_kind_names, c->kind), v);
 		unroute_connection(c); /* --unroute */
@@ -4459,7 +4457,7 @@ void liveness_action(struct state *st)
 		if (c->kind == CK_INSTANCE) {
 			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
 		}
-		delete_states_by_connection(c, TRUE, null_fd/*no-whack?*/);
+		delete_states_by_connection(c, /*relations?*/true);
 		break;
 
 	default:

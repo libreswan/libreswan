@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add road-east-psk
+002 "road-east-psk": added IKEv1 connection
+east #
+ # confirm loaded exclude entry
+east #
+ ipsec status |grep exclude
+000 - excluded subnet: 192.1.3.0/24
+east #
+ echo "initdone"
+initdone
+east #
+ 

@@ -46,5 +46,5 @@ extern bool add_xfrmi(struct connection *c, struct logger *logger);
 extern void stale_xfrmi_interfaces(struct logger *logger);
 extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
-extern void unreference_xfrmi(struct connection *c, struct logger *logger);
+extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);

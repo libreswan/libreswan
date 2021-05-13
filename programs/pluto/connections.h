@@ -465,10 +465,9 @@ extern void initiate_ondemand(const ip_endpoint *our_client,
 
 extern void terminate_connection(const char *name, bool quiet,
 				 struct fd *whack);
-extern void release_connection(struct connection *c, bool relations, struct fd *whackfd);
-extern void delete_connection(struct connection *c, bool relations);
-extern void delete_connections_by_name(const char *name, bool strict,
-				       struct fd *whack);
+extern void release_connection(struct connection *c, bool relations);
+extern void delete_connection(struct connection **cp, bool relations);
+extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
 extern void delete_every_connection(void);
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
