@@ -3038,7 +3038,6 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 					  struct child_sa *child,
 					  struct msg_digest *md)
 {
-	pexpect(md->st == &child->sa);
 	struct connection *c = child->sa.st_connection;
 
 	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -3048,7 +3047,7 @@ static bool assign_child_responder_client(struct ike_sa *ike,
 		 * constantly clawed back as the SA keeps trying to
 		 * establish / replace / rekey.
 		 */
-		err_t e = lease_that_address(c, md->st);
+		err_t e = lease_that_address(c, &child->sa);
 		if (e != NULL) {
 			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
 			/* XXX: record what? */
@@ -3237,9 +3236,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
 		stf_status ret;
-		pexpect(md->st != NULL);
-		pexpect(md->st == &ike->sa); /* passed in parent */
-		struct connection *c = md->st->st_connection;
+		struct connection *c = ike->sa.st_connection;
 		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 
 		struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
@@ -3247,6 +3244,14 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 							    null_fd);
 		binlog_refresh_state(&child->sa);
 
+		if (!assign_child_responder_client(ike, child, md)) {
+			/* already logged; already recorded */
+			delete_state(&child->sa);
+			child = NULL;
+			/* we should continue building a valid reply packet */
+			return STF_FAIL; /* XXX: better? */
+		}
+		pexpect(child != NULL);
 		/*
 		 * XXX: This is to hack around the broken responder
 		 * code that switches from the IKE SA to the CHILD SA
@@ -3255,18 +3260,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * processing the message?
 		 */
 		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-		if (!assign_child_responder_client(ike, child, md)) {
-			/* already logged; already recorded */
-			/*
-			 * XXX: while the CHILD SA failed, the IKE SA
-			 * should continue to exist.  This STF_FAIL
-			 * will blame MD->ST aka the IKE SA.
-			 */
-			v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
-			/* we should continue building a valid reply packet */
-			return STF_FAIL; /* XXX: better? */
-		}
-		pexpect(child != NULL);
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
 					     ISAKMP_v2_IKE_AUTH);
 		/* note: st: parent; md->st: child */
