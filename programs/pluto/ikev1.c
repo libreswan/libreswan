@@ -750,9 +750,8 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 #undef P
 };
 
-void init_ikev1(void)
+void init_ikev1(struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	dbg("checking IKEv1 state table");
 
 	/*

@@ -11,7 +11,7 @@ struct ike_proposals;
 
 /* ikev1.c */
 
-extern void init_ikev1(void);
+extern void init_ikev1(struct logger *logger);
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 

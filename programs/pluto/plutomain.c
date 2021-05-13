@@ -1746,7 +1746,7 @@ int main(int argc, char **argv)
 	init_root_certs();
 	init_secret(logger);
 #ifdef USE_IKEv1
-	init_ikev1();
+	init_ikev1(logger);
 #endif
 	init_ikev2();
 	init_states();
