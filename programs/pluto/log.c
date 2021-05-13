@@ -241,15 +241,6 @@ void jambuf_to_debug_stream(struct jambuf *buf)
 	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
 }
 
-void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
-{
-	log_raw(LOG_WARNING, "", buf);
-	if (in_main_thread() && fd_p(whack_log_fd)) {
-		/* don't whack-log from helper threads */
-		jambuf_to_whack(buf, whack_log_fd, rc);
-	}
-}
-
 void close_log(void)
 {
 	if (log_to_syslog)

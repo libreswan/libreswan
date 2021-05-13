@@ -205,8 +205,6 @@ extern void linux_audit_init(int do_audit, struct logger *logger);
 # endif
 #endif
 
-void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc);
-
 #define LSWLOG_DEBUG(BUF)					\
 	JAMBUF(BUF)						\
 		/* no-prefix */					\
