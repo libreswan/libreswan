@@ -2064,12 +2064,12 @@ static const char *const policy_shunt_names[4] = {
 	"reject",
 };
 
-void add_connection(struct fd *whackfd, const struct whack_message *wm)
+void add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = dup_any(logger->global_whackfd);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */

@@ -450,7 +450,7 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 	     bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
-extern void add_connection(struct fd *whackfd, const struct whack_message *wm);
+extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_ends_from_this_host_addr(struct end *this, struct end *that);
 extern void restart_connections_by_peer(struct connection *c);

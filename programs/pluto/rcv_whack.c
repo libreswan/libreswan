@@ -579,7 +579,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_connection) {
 		dbg("whack: add-connection '%s' ...", m->name == NULL ? "NULL" : m->name);
-		add_connection(whackfd, m);
+		add_connection(m, logger);
 		dbg("whack: ... add-connection '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
