@@ -82,9 +82,6 @@ extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
-extern const struct logger_object_vec logger_string_vec;
-
-extern struct logger failsafe_logger;
 
 struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
 	PRINTF_LIKE(3) MUST_USE_RESULT; /* must free */
@@ -209,13 +206,13 @@ extern void linux_audit_init(int do_audit, struct logger *logger);
 	JAMBUF(BUF)						\
 		/* no-prefix */					\
 		for (; BUF != NULL;				\
-		     jambuf_to_debug_stream(BUF), BUF = NULL)
+		     jambuf_to_logger(BUF, &failsafe_logger, DEBUG_STREAM), BUF = NULL)
 
 #define LSWDBGP(DEBUG, BUF)						\
 	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
 		JAMBUF(BUF)						\
 			/* no-prefix */					\
 			for (; BUF != NULL;				\
-			     jambuf_to_debug_stream(BUF), BUF = NULL)
+			     jambuf_to_logger(BUF, &failsafe_logger, DEBUG_STREAM), BUF = NULL)
 
 #endif /* _PLUTO_LOG_H */

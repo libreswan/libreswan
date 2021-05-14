@@ -871,7 +871,7 @@ void proposal_next_token(struct proposal_tokenizer *tokens)
 			} else {
 				jam(buf, "''");
 			}
-			jambuf_to_debug_stream(buf); /* XXX: grrr */
+			jambuf_to_logger(buf, &failsafe_logger, DEBUG_STREAM);
 		}
 	}
 }

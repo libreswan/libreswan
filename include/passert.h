@@ -31,36 +31,37 @@ struct logger;
 
 /* our versions of assert: log result */
 
-/* preferred; can log with prefix to whack from a thread */
-extern void passert_fail(struct logger *logger, where_t where,
+/*
+ * preferredL can log with prefix to whack from a thread.
+ */
+
+extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
+
 #define PASSERT(LOGGER, ASSERTION)					\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			where_t here = HERE;				\
-			passert_fail(LOGGER, here, "%s", #ASSERTION);	\
+			const struct logger *logger_ = LOGGER;		\
+			llog_passert(logger_, here, "%s", #ASSERTION);	\
 		}							\
 	}
 
-/* older; don't work correctly on a thread */
+/*
+ * older: message does not reach whack
+ */
 
-extern void lsw_passert_fail(where_t where, const char *fmt, ...) /* TBD: use log_passert() */
-	NEVER_RETURNS
-	PRINTF_LIKE(2);
+#ifndef FAILSAFE_LOGGER
+extern const struct logger failsafe_logger;
+#define FAILSAFE_LOGGER
+#endif
 
-#define PASSERT_FAIL(FMT, ...) /* TBD: use log_pexpect() */	\
-	lsw_passert_fail(HERE, FMT,##__VA_ARGS__)
-
-#define passert(ASSERTION) /* TBD: use PASSERT(LOGGER, ...) */		\
-	{								\
-		/* wrapping ASSERTION in parens suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no parens */		\
-		if (!assertion__) {					\
-			PASSERT_FAIL("%s", #ASSERTION);			\
-		}							\
-	}
+#define PASSERT_FAIL(FMT, ...) llog_passert(&failsafe_logger, HERE, FMT,##__VA_ARGS__)
+#define passert(ASSERTION)     PASSERT(&failsafe_logger, ASSERTION)
+#define lsw_passert_fail(WHERE, FMT, ...) llog_passert(&failsafe_logger, WHERE, FMT,##__VA_ARGS__)
+#define passert_fail llog_passert
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
 #define happy(x) /* TBD: use ??? */			\

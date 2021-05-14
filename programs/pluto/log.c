@@ -44,12 +44,6 @@
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
-struct logger failsafe_logger = {
-	.where = { .basename = "<global>", .func = "<global>", },
-	.object = NULL,
-	.object_vec = &logger_global_vec,
-};
-
 const struct log_param default_log_param = {
 	.log_with_timestamp = true,	/* but testsuite requires no timestamps */
 };
@@ -227,20 +221,6 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 	/* not whack */
 }
 
-void jambuf_to_error_stream(struct jambuf *buf)
-{
-	log_raw(LOG_ERR, "", buf);
-	if (in_main_thread() && fd_p(whack_log_fd)) {
-		/* don't whack-log from helper threads */
-		jambuf_to_whack(buf, whack_log_fd, RC_LOG_SERIOUS);
-	}
-}
-
-void jambuf_to_debug_stream(struct jambuf *buf)
-{
-	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
-}
-
 void close_log(void)
 {
 	if (log_to_syslog)
@@ -406,27 +386,10 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	}
 }
 
-static bool always_suppress_log(const void *object UNUSED)
-{
-	return true;
-}
-
-static bool never_suppress_log(const void *object UNUSED)
-{
-	return false;
-}
-
-static size_t jam_global_prefix(struct jambuf *unused_buf UNUSED,
-			      const void *unused_object UNUSED)
-{
-	/* jam(buf, "") - nothing to add */
-	return 0;
-}
-
 const struct logger_object_vec logger_global_vec = {
 	.name = "global",
-	.suppress_object_log = never_suppress_log,
-	.jam_object_prefix = jam_global_prefix,
+	.suppress_object_log = suppress_object_log_false,
+	.jam_object_prefix = jam_object_prefix_none,
 	.free_object = false,
 };
 
@@ -464,7 +427,7 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_from_vec = {
 	.name = "from",
-	.suppress_object_log = always_suppress_log,
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_from_prefix,
 	.free_object = false,
 };
@@ -485,7 +448,7 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_message_vec = {
 	.name = "message",
-	.suppress_object_log = always_suppress_log,
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_message_prefix,
 	.free_object = false,
 };
@@ -566,9 +529,16 @@ static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 	return jam_string(buf, string);
 }
 
-const struct logger_object_vec logger_string_vec = {
+static const struct logger_object_vec logger_string_vec = {
 	.name = "string(never-suppress)",
-	.suppress_object_log = never_suppress_log,
+	.suppress_object_log = suppress_object_log_false,
+	.jam_object_prefix = jam_string_prefix,
+	.free_object = true,
+};
+
+static const struct logger_object_vec logger_string_suppress_vec = {
+	.name = "string(always-suppressed)",
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_string_prefix,
 	.free_object = true,
 };
@@ -600,13 +570,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 */
 	const struct logger_object_vec *object_vec;
 	if (suppress_log(stack)) {
-		static const struct logger_object_vec always_suppress_vec = {
-			.name = "string(always-suppressed)",
-			.suppress_object_log = always_suppress_log,
-			.jam_object_prefix = jam_string_prefix,
-			.free_object = true,
-		};
-		object_vec = &always_suppress_vec;
+		object_vec = &logger_string_suppress_vec;
 	} else {
 		object_vec = &logger_string_vec;
 	}

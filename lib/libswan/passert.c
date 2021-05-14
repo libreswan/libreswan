@@ -17,21 +17,7 @@
 #include "passert.h"
 #include "lswlog.h"
 
-void lsw_passert_fail(where_t where, const char *fmt, ...)
-{
-	JAMBUF(buf) {
-		jam_string(buf, "ABORT: ASSERTION FAILED: ");
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jam(buf, " "PRI_WHERE, pri_where(where));
-		jambuf_to_error_stream(buf); /* XXX: grrr */
-	}
-	abort();
-}
-
-void passert_fail(struct logger *logger, where_t where, const char *fmt, ...)
+void llog_passert(const struct logger *logger, where_t where, const char *fmt, ...)
 {
 	JAMBUF(buf) {
 		jam_string(buf, "ABORT: ASSERTION FAILED: ");

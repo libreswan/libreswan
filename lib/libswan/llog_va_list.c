@@ -21,19 +21,7 @@
 void llog_va_list(lset_t rc_flags, const struct logger *logger,
 		 const char *message, va_list ap)
 {
-	if (logger != NULL) {
-		LLOG_JAMBUF(rc_flags, logger, buf) {
-			jam_va_list(buf, message, ap);
-		}
-	} else {
-		/* should not happen; but get the word out */
-		JAMBUF(buf) {
-			if (DBGP(DBG_BASE)) {
-				/* debugging so complain */
-				jam(buf, "[EXPECTATION FAILED: logger != NULL] ");
-			}
-			jam_va_list(buf, message, ap);
-			jambuf_to_error_stream(buf);
-		}
+	LLOG_JAMBUF(rc_flags, logger, buf) {
+		jam_va_list(buf, message, ap);
 	}
 }
