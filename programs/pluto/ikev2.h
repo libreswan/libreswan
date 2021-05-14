@@ -20,6 +20,7 @@ struct spd_route;
 struct crypt_mac;
 struct hash_desc;
 struct payload_digest;
+struct ikev2_ipseckey_dns;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
@@ -246,11 +247,6 @@ void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposa
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
 			      enum state_kind new_state);
-
-struct ikev2_ipseckey_dns;
-
-bool ikev2_process_child_sa_payload(struct ike_sa *ike, struct child_sa *child,
-				    struct msg_digest *md, bool expect_accepted_proposal);
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 

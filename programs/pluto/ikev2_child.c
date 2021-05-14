@@ -63,6 +63,8 @@
 # include "kernel_xfrm_interface.h"
 #endif
 #include "ikev2_cp.h"
+#include "ikev2_child.h"
+#include "ike_alg_dh.h"
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
@@ -495,4 +497,120 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 		}
 	}
 	return TRUE;
+}
+
+bool ikev2_process_childs_sa_payload(const char *what,
+				     struct ike_sa *ike, struct child_sa *child,
+				     struct msg_digest *md, bool expect_accepted_proposal)
+{
+	struct connection *c = child->sa.st_connection;
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
+	struct ipsec_proto_info *proto_info =
+		ikev2_child_sa_proto_info(child, c->policy);
+	stf_status ret;
+
+	struct ikev2_proposals *child_proposals;
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		const struct dh_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
+			? ike->sa.st_oakley.ta_dh
+			: &ike_alg_dh_none;
+		child_proposals = get_v2_create_child_proposals(c, what, default_dh,
+								child->sa.st_logger);
+	} else {
+		child_proposals = get_v2_ike_auth_child_proposals(c, what,
+								  child->sa.st_logger);
+	}
+
+	ret = ikev2_process_sa_payload(what,
+				       &sa_pd->pbs,
+				       /*expect_ike*/ FALSE,
+				       /*expect_spi*/ TRUE,
+				       expect_accepted_proposal,
+				       LIN(POLICY_OPPORTUNISTIC, c->policy),
+				       &child->sa.st_accepted_esp_or_ah_proposal,
+				       child_proposals, child->sa.st_logger);
+
+	if (ret != STF_OK) {
+		LLOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
+			jam_string(buf, what);
+			jam(buf, " failed, responder SA processing returned ");
+			jam_v2_stf_status(buf, ret);
+		}
+		if (child->sa.st_sa_role == SA_RESPONDER) {
+			pexpect(ret > STF_FAIL);
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    ret - STF_FAIL, NULL,
+					    ENCRYPTED_PAYLOAD);
+		}
+		return false;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		DBG_log_ikev2_proposal(what, child->sa.st_accepted_esp_or_ah_proposal);
+	}
+	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info,
+					  child->sa.st_logger)) {
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "%s proposed/accepted a proposal we don't actually support!", what);
+		return false;
+	}
+
+	/*
+	 * Update/check the PFS.
+	 *
+	 * For the responder, go with what ever was negotiated.  For
+	 * the initiator, check what was negotiated against what was
+	 * sent.
+	 *
+	 * Because code expects .st_pfs_group to use NULL, and not
+	 * &ike_alg_dh_none, to indicate no-DH algorithm, the value
+	 * returned by the proposal parser needs to be patched up.
+	 */
+	const struct dh_desc *accepted_dh =
+		proto_info->attrs.transattrs.ta_dh == &ike_alg_dh_none ? NULL
+		: proto_info->attrs.transattrs.ta_dh;
+	switch (child->sa.st_sa_role) {
+	case SA_INITIATOR:
+		pexpect(expect_accepted_proposal);
+		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "expecting %s but remote's accepted proposal includes %s",
+				  child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
+				  accepted_dh->common.fqn);
+			return false;
+		}
+		child->sa.st_pfs_group = accepted_dh;
+		break;
+	case SA_RESPONDER:
+		pexpect(!expect_accepted_proposal);
+		pexpect(child->sa.st_sa_role == SA_RESPONDER);
+		pexpect(child->sa.st_pfs_group == NULL);
+		child->sa.st_pfs_group = accepted_dh;
+		break;
+	default:
+		bad_case(child->sa.st_sa_role);
+	}
+
+	/*
+	 * Update the state's st_oakley parameters from the proposal,
+	 * but retain the previous PRF.  A CHILD_SA always uses the
+	 * PRF negotiated when creating initial IKE SA.
+	 *
+	 * XXX: The mystery is, why is .st_oakley even being updated?
+	 * Perhaps it is to prop up code getting the CHILD_SA's PRF
+	 * from the child when that code should use the CHILD_SA's IKE
+	 * SA; or perhaps it is getting things ready for an IKE SA
+	 * re-key?
+	 */
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
+		dbg("updating #%lu's .st_oakley with preserved PRF, but why update?",
+			child->sa.st_serialno);
+		struct trans_attrs accepted_oakley = proto_info->attrs.transattrs;
+		pexpect(accepted_oakley.ta_prf == NULL);
+		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
+		child->sa.st_oakley = accepted_oakley;
+	}
+
+	return true;
 }
