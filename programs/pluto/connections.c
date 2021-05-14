@@ -192,7 +192,7 @@ void delete_connection(struct connection **cp, bool relations)
 			llog(RC_LOG, c->logger,
 			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
 			     str_address_sensitive(&c->spd.that.host_addr, &b),
-			     c->newest_isakmp_sa, c->newest_ipsec_sa);
+			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL) {
@@ -1966,7 +1966,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->instance_serial = 0;
 	c->interface = NULL;
 	c->spd.routing = RT_UNROUTED;
-	c->newest_isakmp_sa = SOS_NOBODY;
+	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->spd.eroute_owner = SOS_NOBODY;
 	c->temp_vars.num_redirects = 0;
@@ -2262,7 +2262,7 @@ struct connection *instantiate(struct connection *c,
 	d->ac_next = connections;
 	connections = d;
 	d->spd.routing = RT_UNROUTED;
-	d->newest_isakmp_sa = SOS_NOBODY;
+	d->newest_ike_sa = SOS_NOBODY;
 	d->newest_ipsec_sa = SOS_NOBODY;
 	d->spd.eroute_owner = SOS_NOBODY;
 
@@ -4201,7 +4201,7 @@ void show_one_connection(struct show *s,
 		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name,
 		    instance,
-		    c->newest_isakmp_sa,
+		    c->newest_ike_sa,
 		    c->newest_ipsec_sa,
 		    pri_co(c->serialno));
 		if (c->serial_from.co/*oops*/ != 0) {
@@ -4565,8 +4565,8 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 	so_serial_t newest;
 
 	if (IS_IKE_SA(st)) {
-		newest = c->newest_isakmp_sa;
-		dbg("picked newest_isakmp_sa #%lu for #%lu",
+		newest = c->newest_ike_sa;
+		dbg("picked newest_ike_sa #%lu for #%lu",
 		    newest, st->st_serialno);
 	} else {
 		newest = c->newest_ipsec_sa;

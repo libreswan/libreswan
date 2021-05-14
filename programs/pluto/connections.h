@@ -354,7 +354,7 @@ struct connection {
 	struct ephemeral_variables temp_vars;
 
 	so_serial_t		/* state object serial number */
-		newest_isakmp_sa,
+		newest_ike_sa,
 		newest_ipsec_sa;
 
 	lmod_t extra_debugging;

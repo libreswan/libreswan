@@ -54,7 +54,7 @@ static int rekey_connection_now(struct connection *c,
 	struct state *st;
 	switch (how->sa_type) {
 	case IKE_SA:
-		st = state_by_serialno(c->newest_isakmp_sa);
+		st = state_by_serialno(c->newest_ike_sa);
 		break;
 	case IPSEC_SA:
 		st = state_by_serialno(c->newest_ipsec_sa);

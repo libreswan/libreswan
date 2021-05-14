@@ -250,7 +250,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	 */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* skip check for rekey */
-		ike->sa.st_connection->newest_isakmp_sa = ike->sa.st_serialno;
+		ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
 	} else {
 #ifdef USE_XFRM_INTERFACE
 		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)

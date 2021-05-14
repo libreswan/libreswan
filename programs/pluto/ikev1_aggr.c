@@ -771,7 +771,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_isakmp_sa != SOS_NOBODY && c->spd.this.xauth_client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -784,7 +784,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		}
 	}
 
-	if (c->newest_isakmp_sa != SOS_NOBODY && c->spd.this.xauth_client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -797,7 +797,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		}
 	}
 
-	c->newest_isakmp_sa = st->st_serialno;
+	c->newest_ike_sa = st->st_serialno;
 
 	/* save last IV from phase 1 so it can be restored later so anything
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
@@ -896,7 +896,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_isakmp_sa != SOS_NOBODY &&
+	if (c->newest_ike_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
@@ -910,7 +910,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	if (c->newest_isakmp_sa != SOS_NOBODY &&
+	if (c->newest_ike_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
@@ -924,7 +924,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	c->newest_isakmp_sa = st->st_serialno;
+	c->newest_ike_sa = st->st_serialno;
 
 	update_iv(st);  /* Finalize our Phase 1 IV */
 

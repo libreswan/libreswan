@@ -601,7 +601,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		llog(RC_LOG, b->logger,
 			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
 			    pri_connection(c, &cib),
-			    c->newest_isakmp_sa, c->newest_ipsec_sa);
+			    c->newest_ike_sa, c->newest_ipsec_sa);
 		return;
 #endif
 	}
@@ -930,8 +930,8 @@ static void connection_check_ddns1(struct connection *c)
 	}
 
 	/* do not touch what is not broken */
-	if ((c->newest_isakmp_sa != SOS_NOBODY) &&
-	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa))) {
+	if ((c->newest_ike_sa != SOS_NOBODY) &&
+	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_ike_sa))) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" is established",
 		    pri_connection(c, &cib));

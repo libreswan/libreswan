@@ -170,7 +170,7 @@ struct connection *find_v1_host_connection(const ip_address local_address,
 	     candidate != NULL;
 	     candidate = find_next_v1_host_connection(candidate->hp_next,
 						      req_policy, policy_exact_mask, peer_id)) {
-		if (candidate->newest_isakmp_sa != SOS_NOBODY)
+		if (candidate->newest_ike_sa != SOS_NOBODY)
 			return candidate;
 	}
 

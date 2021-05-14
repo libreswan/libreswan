@@ -224,7 +224,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 * authenticated properly.
 	 */
 	change_state(&ike->sa, new_state);
-	c->newest_isakmp_sa = ike->sa.st_serialno;
+	c->newest_ike_sa = ike->sa.st_serialno;
 	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);

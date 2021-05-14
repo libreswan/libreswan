@@ -604,7 +604,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 		 */
 		so_serial_t replacing_sa;
 		switch (child->sa.st_establishing_sa) {
-		case IKE_SA: replacing_sa = c->newest_isakmp_sa; break;
+		case IKE_SA: replacing_sa = c->newest_ike_sa; break;
 		case IPSEC_SA: replacing_sa = c->newest_ipsec_sa; break;
 		default: bad_case(child->sa.st_establishing_sa);
 		}
@@ -1038,8 +1038,8 @@ void delete_state_tail(struct state *st)
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
 		st->st_connection->newest_ipsec_sa = SOS_NOBODY;
 
-	if (st->st_connection->newest_isakmp_sa == st->st_serialno)
-		st->st_connection->newest_isakmp_sa = SOS_NOBODY;
+	if (st->st_connection->newest_ike_sa == st->st_serialno)
+		st->st_connection->newest_ike_sa = SOS_NOBODY;
 
 	/*
 	 * If policy dictates, try to keep the state's connection
@@ -1056,7 +1056,7 @@ void delete_state_tail(struct state *st)
 
 	/* XXX: hack to avoid reference counting iface_port. */
 	if (st->st_interface != NULL && IS_IKE_SA(st) &&
-	    st->st_serialno >= st->st_connection->newest_isakmp_sa) {
+	    st->st_serialno >= st->st_connection->newest_ike_sa) {
 		/*
 		 * XXX: don't try to delete the iface port of an old
 		 * TCP IKE SA.  Its replacement will have taken
@@ -1220,7 +1220,7 @@ void delete_state_tail(struct state *st)
 
 bool shared_phase1_connection(const struct connection *c)
 {
-	so_serial_t serial_us = c->newest_isakmp_sa;
+	so_serial_t serial_us = c->newest_ike_sa;
 
 	if (serial_us == SOS_NOBODY)
 		return FALSE;
@@ -1356,7 +1356,7 @@ static bool same_phase1_sa(struct state *this,
 static bool same_phase1_sa_relations(struct state *this,
 				     struct connection *c)
 {
-	so_serial_t parent_sa = c->newest_isakmp_sa;
+	so_serial_t parent_sa = c->newest_ike_sa;
 
 	return this->st_connection == c ||
 	       (parent_sa != SOS_NOBODY &&
@@ -1990,7 +1990,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	const struct connection *c = st->st_connection;
 	char dpdbuf[128];
 	char traffic_buf[512], *mbcp;
-	const char *np1 = c->newest_isakmp_sa == st->st_serialno ?
+	const char *np1 = c->newest_ike_sa == st->st_serialno ?
 			  "; newest ISAKMP" : "";
 	const char *np2 = c->newest_ipsec_sa == st->st_serialno ?
 			  "; newest IPSEC" : "";
@@ -3080,7 +3080,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 					 * suppress sending delete
 					 * notify
 					 */
-					suppress_delete_notify(ike, "ISAKMP", d->newest_isakmp_sa);
+					suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
 					suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
 					/*
 					 * XXX: Assume this call
@@ -3111,9 +3111,9 @@ void IKE_SA_established(const struct ike_sa *ike)
 		 * this IKE SA still as the active one?
 		 */
 		if (ike->sa.st_ike_seen_v2n_initial_contact) {
-			if (c->newest_isakmp_sa != SOS_NOBODY &&
-			    c->newest_isakmp_sa != ike->sa.st_serialno) {
-				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
+			if (c->newest_ike_sa != SOS_NOBODY &&
+			    c->newest_ike_sa != ike->sa.st_serialno) {
+				struct state *old_p1 = state_by_serialno(c->newest_ike_sa);
 
 				dbg("deleting replaced IKE state for %s",
 				    old_p1->st_connection->name);
@@ -3135,7 +3135,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 		}
 	}
 
-	c->newest_isakmp_sa = ike->sa.st_serialno;
+	c->newest_ike_sa = ike->sa.st_serialno;
 }
 
 static void list_state_event(struct show *s, struct state *st,

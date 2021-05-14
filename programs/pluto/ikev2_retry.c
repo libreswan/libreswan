@@ -82,10 +82,10 @@ void retransmit_v2_msg(struct state *st)
 	 * the "newest". Should > be replaced with !=   ?
 	 */
 	if (st->st_establishing_sa == IKE_SA &&
-	    c->newest_isakmp_sa > st->st_serialno) {
+	    c->newest_ike_sa > st->st_serialno) {
 		log_state(RC_LOG, st,
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
-			  c->newest_isakmp_sa, st->st_try);
+			  c->newest_ike_sa, st->st_try);
 		pstat_sa_failed(st, REASON_SUPERSEDED_BY_NEW_SA);
 		delete_state(st);
 		return;
