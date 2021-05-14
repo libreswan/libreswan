@@ -122,13 +122,13 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		}
 	}
 
-	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) {
+	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		dbg("received USE_TRANSPORT_MODE");
 		child->sa.st_seen_use_transport = TRUE;
 	}
 
-	if (md->pbs[PBS_v2N_IPCOMP_SUPPORTED] != NULL) {
-		struct pbs_in pbs = *md->pbs[PBS_v2N_IPCOMP_SUPPORTED];
+	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
@@ -167,7 +167,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		dbg("policy suggested compression, but peer did not offer support");
 	}
 
-	if (md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
+	if (md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
 		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
 		child->sa.st_seen_no_tfc = true;
 	}

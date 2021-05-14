@@ -109,7 +109,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	    pexpect(md->chain[ISAKMP_NEXT_v2N] != NULL) &&
 	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
 		cookie_digest = md->chain[ISAKMP_NEXT_v2N];
-		pexpect(&cookie_digest->pbs == md->pbs[PBS_v2N_COOKIE]);
+		pexpect(cookie_digest == md->pd[PD_v2N_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
 		dbg("DDOS disabled and no cookie sent, continuing");
@@ -202,10 +202,10 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_COOKIE(struct ike_sa *ike,
 					     struct msg_digest *md)
 {
 	pexpect(child == NULL);
-	const struct pbs_in *cookie_pbs = md->pbs[PBS_v2N_COOKIE];
-	if (!pexpect(cookie_pbs != NULL)) {
+	if (!pexpect(md->pd[PD_v2N_COOKIE] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
+	const struct pbs_in *cookie_pbs = &md->pd[PD_v2N_COOKIE]->pbs;
 
 	/*
 	 * Responder replied with N(COOKIE) for DOS avoidance.  See

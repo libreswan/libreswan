@@ -788,11 +788,11 @@ stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R(struct ike_sa *ike,
 	}
 
 	/* extract results */
-	ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
-	ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
-	ike->sa.st_seen_intermediate = md->pbs[PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL;
-	ike->sa.st_seen_redirect_sup = (md->pbs[PBS_v2N_REDIRECTED_FROM] != NULL ||
-					md->pbs[PBS_v2N_REDIRECT_SUPPORTED] != NULL);
+	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
+	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+	ike->sa.st_seen_intermediate = md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL;
+	ike->sa.st_seen_redirect_sup = (md->pd[PD_v2N_REDIRECTED_FROM] != NULL ||
+					md->pd[PD_v2N_REDIRECT_SUPPORTED] != NULL);
 
 	/*
 	 * Responder: check v2N_NAT_DETECTION_DESTINATION_IP or/and
@@ -815,10 +815,10 @@ stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R(struct ike_sa *ike,
 		/* should this check that a port is available? */
 	}
 
-	if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
+	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (impair.ignore_hash_notify_response) {
 			log_state(RC_LOG, &ike->sa, "IMPAIR: ignoring the hash notify in IKE_SA_INIT request");
-		} else if (!negotiate_hash_algo_from_notification(md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS], ike)) {
+		} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
 			return STF_FATAL;
 		}
 		ike->sa.st_seen_hashnotify = true;
@@ -1063,10 +1063,10 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
 	struct connection *c = ike->sa.st_connection;
 
 	pexpect(child == NULL);
-	if (!pexpect(md->pbs[PBS_v2N_INVALID_KE_PAYLOAD] != NULL)) {
+	if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
-	struct pbs_in invalid_ke_pbs = *md->pbs[PBS_v2N_INVALID_KE_PAYLOAD];
+	struct pbs_in invalid_ke_pbs = md->pd[PD_v2N_INVALID_KE_PAYLOAD]->pbs;
 
 	/* careful of DDOS, only log with debugging on? */
 	/* we treat this as a "retransmit" event to rate limit these */
@@ -1354,14 +1354,14 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 		ike->sa.st_seen_ppk = false;
 		ike->sa.st_seen_intermediate = false;
 
-		ike->sa.st_seen_fragmentation_supported = md->pbs[PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
-		ike->sa.st_seen_ppk = md->pbs[PBS_v2N_USE_PPK] != NULL;
-		ike->sa.st_seen_intermediate = md->pbs[PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL;
-		if (md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
+		ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
+		ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+		ike->sa.st_seen_intermediate = md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL;
+		if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 			if (impair.ignore_hash_notify_request) {
 				log_state(RC_LOG, &ike->sa,
 					  "IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
-			} else if (!negotiate_hash_algo_from_notification(md->pbs[PBS_v2N_SIGNATURE_HASH_ALGORITHMS], ike)) {
+			} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
 				return STF_FATAL;
 			}
 			ike->sa.st_seen_hashnotify = true;
@@ -1483,7 +1483,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_IN
 
 	/* If we seen the intermediate AND we are configured to use intermediate */
 	/* for now, do only one Intermediate Exchange round and proceed with IKE_AUTH */
-	dh_shared_secret_cb (*pcrc_func) = (ike->sa.st_seen_intermediate && (md->pbs[PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) && !(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) ?
+	dh_shared_secret_cb (*pcrc_func) = (ike->sa.st_seen_intermediate && (md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) && !(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) ?
 			ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue :
 		ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue;
 
@@ -2568,10 +2568,10 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 	 * either related to the IKE SA, or the Child SA. Here we only
 	 * process the ones related to the IKE SA.
 	 */
-	if (md->pbs[PBS_v2N_PPK_IDENTITY] != NULL) {
+	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		dbg("received PPK_IDENTITY");
 		struct ppk_id_payload payl;
-		if (!extract_v2N_ppk_identity(md->pbs[PBS_v2N_PPK_IDENTITY], &payl, ike)) {
+		if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
 			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 			return STF_FATAL;
 		}
@@ -2596,8 +2596,8 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 				  "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
-	if (md->pbs[PBS_v2N_NO_PPK_AUTH] != NULL) {
-		pb_stream pbs = *md->pbs[PBS_v2N_NO_PPK_AUTH];
+	if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
+		pb_stream pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
 		dbg("received NO_PPK_AUTH");
 		if (LIN(POLICY_PPK_INSIST, policy)) {
@@ -2615,14 +2615,14 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			replace_chunk(&ike->sa.st_no_ppk_auth, no_ppk_auth);
 		}
 	}
-	ike->sa.st_ike_seen_v2n_mobike_supported = md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL;
+	ike->sa.st_ike_seen_v2n_mobike_supported = md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL;
 	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    ike->sa.st_ike_sent_v2n_mobike_supported ?
 		    "and sent" : "while it did not sent");
 	}
-	if (md->pbs[PBS_v2N_NULL_AUTH] != NULL) {
-		pb_stream pbs = *md->pbs[PBS_v2N_NULL_AUTH];
+	if (md->pd[PD_v2N_NULL_AUTH] != NULL) {
+		pb_stream pbs = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
 
 		dbg("received v2N_NULL_AUTH");
@@ -2635,7 +2635,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 			return STF_FATAL;
 		}
 	}
-	ike->sa.st_ike_seen_v2n_initial_contact = md->pbs[PBS_v2N_INITIAL_CONTACT] != NULL;
+	ike->sa.st_ike_seen_v2n_initial_contact = md->pd[PD_v2N_INITIAL_CONTACT] != NULL;
 
 	/*
 	 * If we found proper PPK ID and policy allows PPK, use that.
@@ -3343,7 +3343,7 @@ static stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa 
 	}
 
 	/* check for Child SA related NOTIFY payloads */
-	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) {
+	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (c->policy & POLICY_TUNNEL) {
 			/*
 			 * This means we did not send
@@ -3361,9 +3361,9 @@ static stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa 
 			}
 		}
 	}
-	child->sa.st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
-	if (md->pbs[PBS_v2N_IPCOMP_SUPPORTED] != NULL) {
-		pb_stream pbs = *md->pbs[PBS_v2N_IPCOMP_SUPPORTED];
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+		pb_stream pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
@@ -3450,19 +3450,19 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 {
 	pexpect(child != NULL);
 
-	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pbs[PBS_v2N_MOBIKE_SUPPORTED] != NULL);
+	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
 	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
 		dbg("received v2N_MOBIKE_SUPPORTED %s",
 		    (ike->sa.st_ike_sent_v2n_mobike_supported ? "and sent" :
 		     "while it did not sent"));
 	}
-	if (md->pbs[PBS_v2N_REDIRECT] != NULL) {
+	if (md->pd[PD_v2N_REDIRECT] != NULL) {
 		dbg("received v2N_REDIRECT in IKE_AUTH reply");
 		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, child->sa.st_connection->policy)) {
 			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
 		} else {
 			ip_address redirect_ip;
-			err_t err = parse_redirect_payload(md->pbs[PBS_v2N_REDIRECT],
+			err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
 							   child->sa.st_connection->accept_redirect_to,
 							   NULL,
 							   &redirect_ip,
@@ -3475,7 +3475,7 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 			}
 		}
 	}
-	child->sa.st_seen_no_tfc = md->pbs[PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
 	/*
 	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
@@ -3524,7 +3524,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
-	if (md->pbs[PBS_v2N_PPK_IDENTITY] != NULL) {
+	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
 			log_state(RC_LOG_SERIOUS, &child->sa,
 				  "Received PPK_IDENTITY but connection does not allow PPK");
@@ -3547,7 +3547,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 	 * payload. We should revert our key material to NO_PPK versions.
 	 */
 	if (ike->sa.st_seen_ppk &&
-	    md->pbs[PBS_v2N_PPK_IDENTITY] == NULL &&
+	    md->pd[PD_v2N_PPK_IDENTITY] == NULL &&
 	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 
@@ -3621,7 +3621,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */
-	if (md->pbs[PBS_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, &child->sa,
 				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
@@ -3636,7 +3636,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 		}
 	}
 
-	if (md->pbs[PBS_v2N_REDIRECT] != NULL) {
+	if (md->pd[PD_v2N_REDIRECT] != NULL) {
 		child->sa.st_redirected_in_auth = true;
 		event_force(EVENT_v2_REDIRECT, &child->sa);
 		return STF_SUSPEND;

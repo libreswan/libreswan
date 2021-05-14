@@ -236,8 +236,8 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	if (md->pbs[PBS_v2N_REDIRECTED_FROM] == NULL &&
-	    md->pbs[PBS_v2N_REDIRECT_SUPPORTED] == NULL) {
+	if (md->pd[PD_v2N_REDIRECTED_FROM] == NULL &&
+	    md->pd[PD_v2N_REDIRECT_SUPPORTED] == NULL) {
 		dbg("peer didn't indicate support for redirection");
 		pstats_ikev2_redirect_failed++;
 		return true;
@@ -580,10 +580,10 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 	pexpect(child == NULL);
-	if (!pexpect(md->pbs[PBS_v2N_REDIRECT] != NULL)) {
+	if (!pexpect(md->pd[PD_v2N_REDIRECT] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
-	struct pbs_in redirect_pbs = *md->pbs[PBS_v2N_REDIRECT];
+	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 
 	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
 		log_state(RC_LOG, &ike->sa,

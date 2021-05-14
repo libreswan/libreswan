@@ -924,14 +924,14 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	passert(md->iface != NULL);
 
 	/* must have both */
-	if (md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
-	    md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
+	if (md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
+	    md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
 		return false;
 	}
 	/* table of both */
 	const struct pbs_in *(detection_payloads[]) = {
-		md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP],
-		md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP],
+		&md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP]->pbs,
+		&md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP]->pbs,
 	};
 
 	/*
