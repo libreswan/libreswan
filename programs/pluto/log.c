@@ -361,15 +361,14 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
-		       const struct fd *object_whackfd, struct jambuf *buf)
+static void log_whacks(enum rc_type rc, const struct logger *logger, struct jambuf *buf)
 {
-	if (fd_p(object_whackfd)) {
-		jambuf_to_whack(buf, object_whackfd, rc);
+	if (fd_p(logger->object_whackfd)) {
+		jambuf_to_whack(buf, logger->object_whackfd, rc);
 	}
-	if (fd_p(global_whackfd) &&
-	    !same_fd(object_whackfd, global_whackfd)) {
-		jambuf_to_whack(buf, global_whackfd, rc);
+	if (fd_p(logger->global_whackfd) &&
+	    !same_fd(logger->object_whackfd, logger->global_whackfd)) {
+		jambuf_to_whack(buf, logger->global_whackfd, rc);
 	}
 }
 
@@ -383,17 +382,17 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		break;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
 		break;
 	case WHACK_STREAM:
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case ERROR_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case NO_STREAM:
 		/*
