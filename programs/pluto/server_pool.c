@@ -431,8 +431,9 @@ static stf_status handle_helper_answer(struct state *st,
 		passert(job->handler->completed_cb != NULL);
 		status = job->handler->completed_cb(st, md, job->task);
 	}
+	esb_buf buf;
 	dbg(PRI_JOB": final status %s; cleaning up",
-	    pri_job(job), enum_name(&stf_status_names, status));
+	    pri_job(job), enum_show(&stf_status_names, status, &buf));
 	passert(job->handler->cleanup_cb != NULL);
 	job->handler->cleanup_cb(&job->task);
 	pexpect(job->task == NULL); /* did your job */
