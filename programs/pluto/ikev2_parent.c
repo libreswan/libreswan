@@ -3106,16 +3106,39 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * processing the message?
 		 */
 		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
-					     ISAKMP_v2_IKE_AUTH);
-		/* note: st: parent; md->st: child */
+		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs);
 		if (ret != STF_OK) {
+			/* already logged; response already recorded */
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "ikev2_child_sa_respond returned ");
 				jam_v2_stf_status(buf, ret);
 			}
-			return ret; /* we should continue building a valid reply packet */
+			/* we should continue building a valid reply packet */
+			return ret;
 		}
+
+		/*
+		 * Check to see if we need to release an old instance
+		 * Note that this will call delete on the old
+		 * connection we should do this after installing
+		 * ipsec_sa, but that will give us a "eroute in use"
+		 * error.
+		 */
+#ifdef USE_XFRM_INTERFACE
+		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
+			if (add_xfrmi(c, child->sa.st_logger))
+				return STF_FATAL;
+#endif
+		IKE_SA_established(ike);
+
+		/* install inbound and outbound SPI info */
+		if (!install_ipsec_sa(&child->sa, true))
+			return STF_FATAL;
+
+		/* mark the connection as now having an IPsec SA associated with it. */
+		set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				    &child->sa);
+
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -4564,30 +4587,71 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	case STATE_V2_REKEY_IKE_R0:
 	case STATE_V2_REKEY_IKE_I0:
 		ret = ikev2_child_add_ike_payloads(child, &sk.pbs);
+		if (ret != STF_OK) {
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "ikev2_child_add_ike_payloads() returned ");
+				jam_v2_stf_status(buf, ret);
+			}
+			return ret; /* abort building the response message */
+		}
 		break;
 	case STATE_V2_NEW_CHILD_I0:
 	case STATE_V2_REKEY_CHILD_I0:
 		ret = ikev2_child_add_ipsec_payloads(child, &sk.pbs);
+		if (ret != STF_OK) {
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "ikev2_child_add_ipsec_payloads returned ");
+				jam_v2_stf_status(buf, ret);
+			}
+			return ret; /* abort building the response message */
+		}
 		break;
 	case STATE_V2_NEW_CHILD_R0:
-		if (!pexpect(child->sa.st_ipsec_pred == SOS_NOBODY)) {
-			return STF_INTERNAL_ERROR;
-		}
-		ret = ikev2_child_sa_respond(ike, child,
-					     request_md, &sk.pbs,
-					     ISAKMP_v2_CREATE_CHILD_SA);
-		break;
 	case STATE_V2_REKEY_CHILD_R0:
-		if (!pexpect(child->sa.st_ipsec_pred != SOS_NOBODY)) {
+		/*
+		 * XXX: this function needs an overhaul, much is dead.
+		 */
+		if (child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0) {
+			if (!pexpect(child->sa.st_ipsec_pred == SOS_NOBODY))
+				return STF_INTERNAL_ERROR;
+		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+			if (!pexpect(child->sa.st_ipsec_pred != SOS_NOBODY))
+				return STF_INTERNAL_ERROR;
+			if (!ikev2_rekey_child_copy_ts(child)) {
+				/* Should "just work", not working is a screw up */
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
 			return STF_INTERNAL_ERROR;
 		}
-		if (!ikev2_rekey_child_copy_ts(child)) {
-			/* Should "just work", not working is a screw up */
-			return STF_INTERNAL_ERROR;
+		ret = ikev2_child_sa_respond(ike, child, request_md, &sk.pbs);
+		if (ret != STF_OK) {
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "ikev2_child_sa_respond returned ");
+				jam_v2_stf_status(buf, ret);
+			}
+			return ret; /* abort building the response message */
 		}
-		ret = ikev2_child_sa_respond(ike, child,
-					     request_md, &sk.pbs,
-					     ISAKMP_v2_CREATE_CHILD_SA);
+
+		/*
+		 * Check to see if we need to release an old instance
+		 * Note that this will call delete on the old
+		 * connection we should do this after installing
+		 * ipsec_sa, but that will give us a "eroute in use"
+		 * error.
+		 */
+		ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
+
+		/* install inbound and outbound SPI info */
+		if (!install_ipsec_sa(&child->sa, true)) {
+			return STF_FATAL;
+		}
+
+		/* mark the connection as now having an IPsec SA associated with it. */
+		set_newest_ipsec_sa(enum_name(&ikev2_exchange_names,
+					      request_md->hdr.isa_xchg),
+				    &child->sa);
+
 		break;
 	case STATE_V2_REKEY_IKE_I1:
 	case STATE_V2_NEW_CHILD_I1:
@@ -4596,16 +4660,6 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	default:
 		bad_case(child->sa.st_state->kind);
 	}
-
-	if (ret != STF_OK) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "ikev2_child_sa_respond returned ");
-			jam_v2_stf_status(buf, ret);
-		}
-		return ret; /* abort building the response message */
-	}
-
-	/* note: pst: parent; md->st: child */
 
 	/* const unsigned int len = pbs_offset(&sk.pbs); */
 	if (!close_v2SK_payload(&sk)) {

@@ -69,10 +69,10 @@
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
 				  struct msg_digest *md,
-				  struct pbs_out *outpbs,
-				  enum isakmp_xchg_types isa_xchg)
+				  struct pbs_out *outpbs)
 {
 	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
+	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
 	struct connection *c = child->sa.st_connection;
 
 	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -241,32 +241,6 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 	}
 
 	ikev2_derive_child_keys(child);
-
-	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old connection
-	 * we should do this after installing ipsec_sa, but that will
-	 * give us a "eroute in use" error.
-	 */
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		/* skip check for rekey */
-		ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
-	} else {
-#ifdef USE_XFRM_INTERFACE
-		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-			if (add_xfrmi(c, child->sa.st_logger))
-				return STF_FATAL;
-#endif
-		IKE_SA_established(ike);
-	}
-
-	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&child->sa, TRUE))
-		return STF_FATAL;
-
-	/* mark the connection as now having an IPsec SA associated with it. */
-	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, isa_xchg), &child->sa);
-
 	return STF_OK;
 }
 

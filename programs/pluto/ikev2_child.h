@@ -21,4 +21,11 @@ bool ikev2_process_childs_sa_payload(const char *what, struct ike_sa *ike,
 				     struct msg_digest *md,
 				     bool expect_accepted_proposal);
 
+stf_status ikev2_child_sa_respond(struct ike_sa *ike,
+				  struct child_sa *child,
+				  struct msg_digest *md,
+				  struct pbs_out *outpbs);
+
+void CHILD_SA_established();
+
 #endif
