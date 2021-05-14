@@ -89,13 +89,6 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_child_sa_proto_info(child, c->policy);
-
-		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
-			if (!ikev2_process_child_sa_payload(ike, child, md,
-							    /*expect-accepted-proposal?*/false)) {
-				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			}
-		}
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
 							 child->sa.st_logger);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);

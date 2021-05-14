@@ -3093,6 +3093,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * processing the message?
 		 */
 		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
+		if (!ikev2_process_child_sa_payload(ike, child, md,
+						    /*expect-accepted-proposal?*/false)) {
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
 					     ISAKMP_v2_IKE_AUTH);
 		/* note: st: parent; md->st: child */
@@ -3313,13 +3317,6 @@ static stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa 
 		 * wrong.  XXX: does this delete the child state?
 		 */
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
-	}
-
-	/* examine and accept SA ESP/AH proposals */
-	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA) {
-		if (!ikev2_process_child_sa_payload(ike, child, md, /*expect-accepted-proposal?*/true)) {
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
 	}
 
 	/*
@@ -3661,6 +3658,10 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
+	/* examine and accept SA ESP/AH proposals */
+	if (!ikev2_process_child_sa_payload(ike, child, md, /*expect-accepted-proposal?*/true)) {
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
 	return ikev2_process_ts_and_rest(ike, child, md);
 }
 
@@ -4318,10 +4319,12 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	/* check N_REKEY_SA in the negotiation */
 	switch (larval_child->sa.st_state->kind) {
 	case STATE_V2_REKEY_CHILD_R0:
+		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
 		if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
 			/* already logged; already recorded */
 			return STF_FAIL;
 		}
+		pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
 		if (!child_rekey_responder_ts_verify(larval_child, md)) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
 				v2N_TS_UNACCEPTABLE, NULL/*no data*/,
@@ -4329,44 +4332,6 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 			return STF_FAIL;
 		}
 
-		pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
-		break;
-	case STATE_V2_NEW_CHILD_R0:
-		/* state m/c created CHILD SA */
-		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
-		if (!assign_child_responder_client(ike, larval_child, md)) {
-			/* already logged; already recorded */
-			return STF_FAIL;
-		}
-		break;
-	default:
-		bad_case(larval_child->sa.st_state->kind);
-	}
-
-	/*
-	 * XXX: a quick eyeball suggests that the only difference
-	 * between these two cases is the description.
-	 *
-	 * ??? if we don't have an md (see above) why are we referencing it?
-	 * ??? clang 6.0.0 warns md might be NULL
-	 *
-	 * XXX: 'see above' is lost; this is a responder state
-	 * which _always_ has an MD.
-	 */
-	switch (larval_child->sa.st_state->kind) {
-	case STATE_V2_NEW_CHILD_R0:
-		/*
-		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
-		 * switch-a-roo.  Is this because .st_pfs_group is
-		 * acting more like a flag or perhaps, even though DH
-		 * was negotiated it can be ignored?
-		 */
-		submit_ke_and_nonce(&larval_child->sa,
-				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
-				    ikev2_child_inIoutR_continue,
-				    "Child Responder KE and nonce nr");
-		return STF_SUSPEND;
-	case STATE_V2_REKEY_CHILD_R0:
 		/*
 		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
 		 * switch-a-roo.  Is this because .st_pfs_group is
@@ -4377,6 +4342,24 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
 				    ikev2_child_inIoutR_continue,
 				    "Child Rekey Responder KE and nonce nr");
+		return STF_SUSPEND;
+	case STATE_V2_NEW_CHILD_R0:
+		/* state m/c created CHILD SA */
+		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
+		if (!assign_child_responder_client(ike, larval_child, md)) {
+			/* already logged; already recorded */
+			return STF_FAIL;
+		}
+		/*
+		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
+		 * switch-a-roo.  Is this because .st_pfs_group is
+		 * acting more like a flag or perhaps, even though DH
+		 * was negotiated it can be ignored?
+		 */
+		submit_ke_and_nonce(&larval_child->sa,
+				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
+				    ikev2_child_inIoutR_continue,
+				    "Child Responder KE and nonce nr");
 		return STF_SUSPEND;
 	default:
 		bad_case(larval_child->sa.st_state->kind);
