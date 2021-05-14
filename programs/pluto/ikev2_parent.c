@@ -3079,13 +3079,25 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		binlog_refresh_state(&child->sa);
 
 		if (!assign_child_responder_client(ike, child, md)) {
-			/* already logged; already recorded */
+			/* already logged; response already recorded */
 			delete_state(&child->sa);
 			child = NULL;
 			/* we should continue building a valid reply packet */
 			return STF_FAIL; /* XXX: better? */
 		}
+
 		pexpect(child != NULL);
+
+		if (!ikev2_process_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
+						     ike, child, md,
+						     /*expect-accepted-proposal?*/false)) {
+			/* already logged; response already recorded */
+			delete_state(&child->sa);
+			child = NULL;
+			/* we should continue building a valid reply packet */
+			return STF_FAIL;
+		}
+
 		/*
 		 * XXX: This is to hack around the broken responder
 		 * code that switches from the IKE SA to the CHILD SA
@@ -3094,11 +3106,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * processing the message?
 		 */
 		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
-		if (!ikev2_process_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
-						     ike, child, md,
-						     /*expect-accepted-proposal?*/false)) {
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs,
 					     ISAKMP_v2_IKE_AUTH);
 		/* note: st: parent; md->st: child */
