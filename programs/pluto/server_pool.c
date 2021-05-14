@@ -87,12 +87,10 @@ struct job {
 	struct logger *logger;
 };
 
-#define dbg_job(JOB, FMT, ...)						\
-	dbg("job %u for #%lu: %s (%s): "FMT,				\
-	    JOB->job_id, JOB->so_serialno,				\
-	    JOB->name,							\
-	    JOB->handler->name,						\
-	    ##__VA_ARGS__)
+#define PRI_JOB "job %u helper %u #%lu %s (%s)"
+#define pri_job(JOB)							\
+	JOB->job_id, JOB->helper_id, JOB->so_serialno,			\
+		JOB->name, JOB->handler->name
 
 /*
  * The work queue.  Accesses must be locked.
@@ -169,27 +167,25 @@ static int helper_thread_delay;
 
 static void do_job(struct job *job, helper_id_t helper_id)
 {
-	if (job->cancelled) {
-		dbg_job(job, "helper %d skipping job as cancelled", helper_id);
-		return;
-	}
-
 	logtime_t start = logtime_start(job->logger);
 
-	dbg_job(job, "helper %d starting job", helper_id);
 	if (helper_thread_delay > 0) {
-		DBG_log("helper %d is pausing for %u seconds",
-			helper_id, helper_thread_delay);
+		DBG_log(PRI_JOB": helper is pausing for %u seconds",
+			pri_job(job), helper_thread_delay);
 		sleep(helper_thread_delay);
 	}
 
-	job->handler->computer_fn(job->logger, job->task, helper_id);
+	if (job->cancelled) {
+		dbg(PRI_JOB": skipping as cancelled", pri_job(job));
+	} else {
+		dbg(PRI_JOB": started", pri_job(job));
+		job->handler->computer_fn(job->logger, job->task, helper_id);
+		dbg(PRI_JOB": finished", pri_job(job));
+	}
 
-	job->time_used =
-		logtime_stop(&start,
-			     "helper %u processing job %u for state #%lu: %s (%s)",
-			     helper_id, job->job_id, job->so_serialno,
-			     job->name, job->handler->name);
+	job->time_used = logtime_stop(&start, PRI_JOB, pri_job(job));
+	schedule_resume("sending job back to main thread",
+			job->so_serialno, handle_helper_answer, job);
 }
 
 /* IN A HELPER THREAD */
@@ -198,7 +194,7 @@ static void *helper_thread(void *arg)
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	const struct helper_thread *w = arg;
 
-	dbg("starting helper thread %d", w->helper_id);
+	dbg("helper %u: starting thread", w->helper_id);
 
 #ifdef HAVE_SECCOMP
 	init_seccomp_cryptohelper(w->helper_id, logger);
@@ -209,7 +205,7 @@ static void *helper_thread(void *arg)
 	/* OS X does not have pthread_setschedprio */
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
-	dbg("status value returned by setting the priority of this helper thread %d: %d",
+	dbg("helper %u: status value returned by setting the priority of this thread: %d",
 	    w->helper_id, status);
 #endif
 
@@ -231,13 +227,15 @@ static void *helper_thread(void *arg)
 					 * Assign the entry to this
 					 * thread, removing it from
 					 * the backlog.
+					 *
+					 * XXX: logged when job
+					 * started.
 					 */
 					remove_list_entry(&job->backlog);
 					job->helper_id = w->helper_id;
 					break;
 				}
-				dbg("helper thread %d has nothing to do",
-				    w->helper_id);
+				dbg("helper %u: waiting for work", w->helper_id);
 				pthread_cond_wait(&backlog_cond, &backlog_mutex);
 			}
 			if (job == NULL) {
@@ -256,13 +254,9 @@ static void *helper_thread(void *arg)
 		}
 		/* might be cancelled */
 		do_job(job, w->helper_id);
-		dbg_job(job, "helper thread %d sending result back to state",
-			w->helper_id);
-		schedule_resume("sending helper answer back to state",
-				job->so_serialno,
-				handle_helper_answer, job);
 	}
-	dbg("telling main thread that the helper thread %d is done", w->helper_id);
+
+	dbg("helper %u: telling main thread that it is exiting", w->helper_id);
 	schedule_callback("helper stopped", SOS_NOBODY,
 			  helper_thread_stopped_callback, NULL);
 	return NULL;
@@ -284,9 +278,6 @@ static void inline_worker(struct state *unused_st UNUSED,
 	struct job *job = arg;
 	/* might be cancelled */
 	do_job(job, -1);
-	schedule_resume("inline worker sending helper answer",
-			job->so_serialno,
-			handle_helper_answer, job);
 }
 
 /*
@@ -361,7 +352,7 @@ void submit_task(const struct logger *logger,
 	st->st_offloaded_task = job;
 	st->st_v1_offloaded_task_in_background = false;
 	job->logger = clone_logger(logger, HERE);
-	dbg_job(job, "adding job to queue");
+	dbg(PRI_JOB": added to pending queue", pri_job(job));
 
 	/*
 	 * do it all ourselves?
@@ -412,12 +403,8 @@ static stf_status handle_helper_answer(struct state *st,
 				       void *arg)
 {
 	passert(in_main_thread());
-
 	struct job *job = arg;
-	dbg_job(job, "processing response from helper %d", job->helper_id);
-
-	const struct task_handler *h = job->handler;
-	passert(h != NULL);
+	passert(job->handler != NULL);
 
 	/*
 	 * call the continuation (skip if suppressed)
@@ -425,20 +412,15 @@ static stf_status handle_helper_answer(struct state *st,
 	stf_status status;
 	if (job->cancelled) {
 		/* suppressed */
-		dbg_job(job, "was cancelled; ignoring response");
+		dbg(PRI_JOB": job cancelled!", pri_job(job));
 		pexpect(st == NULL || st->st_offloaded_task == NULL);
-		h->cleanup_cb(&job->task);
-		pexpect(job->task == NULL); /* did your job */
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
-		pexpect_fail(job->logger, HERE,
-			     "state #%lu for job %u disappeared!",
-			     job->so_serialno, job->job_id);
-		h->cleanup_cb(&job->task);
-		pexpect(job->task == NULL); /* did your job */
+		pexpect_fail(job->logger, HERE, PRI_JOB": state disappeared!", pri_job(job));
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
+		dbg(PRI_JOB": calling state's callback function", pri_job(job));
 		pexpect(st->st_offloaded_task == job);
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
@@ -446,13 +428,14 @@ static stf_status handle_helper_answer(struct state *st,
 		cpu_usage_add(st->st_timing.helper_usage, job->time_used);
 		/* wall clock time not billed */
 		/* run the callback */
-		dbg_job(job, "calling continuation function %p", h->completed_cb);
-		status = h->completed_cb(st, md, job->task);
-		dbg_job(job, "calling cleanup function %p", h->cleanup_cb);
-		h->cleanup_cb(&job->task);
-		pexpect(job->task == NULL); /* did your job */
+		passert(job->handler->completed_cb != NULL);
+		status = job->handler->completed_cb(st, md, job->task);
 	}
-	pexpect(job->task == NULL); /* cross check - re-check */
+	dbg(PRI_JOB": final status %s; cleaning up",
+	    pri_job(job), enum_name(&stf_status_names, status));
+	passert(job->handler->cleanup_cb != NULL);
+	job->handler->cleanup_cb(&job->task);
+	pexpect(job->task == NULL); /* did your job */
 	/* now free up the continuation */
 	free_logger(&job->logger, HERE);
 	pfree(job);
@@ -560,7 +543,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 static void helper_thread_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
 	nr_helper_threads--;
-	dbg("helper thread exited, %u remaining", nr_helper_threads);
+	dbg("one helper thread exited, %u remaining", nr_helper_threads);
 
 	/* wait for more? */
 	if (nr_helper_threads > 0) {
