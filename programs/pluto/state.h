@@ -891,7 +891,9 @@ extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
-extern void IKE_SA_established(const struct ike_sa *ike);
+
+void suppress_delete_notify(const struct ike_sa *ike,
+			    const char *what, so_serial_t so);
 
 void list_state_events(struct show *s, monotime_t now);
 

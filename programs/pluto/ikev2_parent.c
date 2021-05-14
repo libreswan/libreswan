@@ -6080,3 +6080,122 @@ void v2_event_sa_replace(struct state *st)
 	event_delete(EVENT_v2_LIVENESS, st);
 	event_force(EVENT_SA_EXPIRE, st);
 }
+
+/*
+ * an ISAKMP SA has been established.
+ * Note the serial number, and release any connections with
+ * the same peer ID but different peer IP address.
+ *
+ * Called by IKEv1 and IKEv2 when the IKE SA is established.
+ * It checks if the freshly established connection needs is
+ * replacing an established version of itself.
+ *
+ * The use of uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections,
+ * which only act based on being a "server using PSK".
+ *
+ * IKEv1 code does not send or process INITIAL_CONTACT
+ * IKEv2 codes does so we take it into account.
+ */
+
+void IKE_SA_established(const struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTHBY_NULL);
+
+	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		/*
+		 * If we are a server and use PSK, all clients use the same group ID
+		 * Note that "xauth_server" also refers to IKEv2 CP
+		 */
+		dbg("We are a server using PSK and clients are using a group ID");
+	} else if (!uniqueIDs) {
+		dbg("uniqueIDs disabled, not contemplating releasing older self");
+	} else {
+		/*
+		 * for all existing connections: if the same Phase 1 IDs are used,
+		 * unorient the (old) connection (if different from current connection)
+		 * Only do this for connections with the same name (can be shared ike sa)
+		 */
+		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
+		for (struct connection *d = connections; d != NULL; ) {
+			/* might move underneath us */
+			struct connection *next = d->ac_next;
+
+			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
+			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+			    same_id(&c->spd.this.id, &d->spd.this.id) &&
+			    same_id(&c->spd.that.id, &d->spd.that.id))
+			{
+				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
+				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
+
+				if (same_remote_ip && (!old_is_nullauth && authnull)) {
+					log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
+				} else if (!same_remote_ip && old_is_nullauth && authnull) {
+					log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
+				} else {
+					dbg("unorienting old connection with same IDs");
+					/*
+					 * When replacing an old
+					 * existing connection,
+					 * suppress sending delete
+					 * notify
+					 */
+					suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
+					suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
+					/*
+					 * XXX: Assume this call
+					 * doesn't want to log to
+					 * whack?  Even though the IKE
+					 * SA may have whack attached,
+					 * don't transfer it to the
+					 * old connection.
+					 */
+					if (d->kind == CK_INSTANCE) {
+						delete_connection(&d, /*relations?*/false);
+					} else {
+						release_connection(d, /*relations?*/false); /* this deletes the states */
+					}
+				}
+			}
+			d = next;
+		}
+
+		/*
+		 * This only affects IKEv2, since we don't store any
+		 * received INITIAL_CONTACT for IKEv1.
+		 * We don't do this on IKEv1, because it seems to
+		 * confuse various third parties (Windows, Cisco VPN 300,
+		 * and juniper
+		 * likely because this would be called before the IPsec SA
+		 * of QuickMode is installed, so the remote endpoints view
+		 * this IKE SA still as the active one?
+		 */
+		if (ike->sa.st_ike_seen_v2n_initial_contact) {
+			if (c->newest_ike_sa != SOS_NOBODY &&
+			    c->newest_ike_sa != ike->sa.st_serialno) {
+				struct state *old_p1 = state_by_serialno(c->newest_ike_sa);
+
+				dbg("deleting replaced IKE state for %s",
+				    old_p1->st_connection->name);
+				old_p1->st_dont_send_delete = true;
+				event_force(EVENT_SA_EXPIRE, old_p1);
+			}
+
+			if (c->newest_ipsec_sa != SOS_NOBODY) {
+				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
+					    c->newest_ipsec_sa, c->name);
+					old_p2->st_dont_send_delete = true;
+					event_force(EVENT_SA_EXPIRE, old_p2);
+				}
+			}
+		}
+	}
+
+	c->newest_ike_sa = ike->sa.st_serialno;
+}
