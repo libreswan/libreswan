@@ -3067,15 +3067,16 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_intermediate_used = false;
 
+	struct child_sa *child = NULL;
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
 		stf_status ret;
 		struct connection *c = ike->sa.st_connection;
 		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 
-		struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
-							    STATE_V2_IKE_AUTH_CHILD_R0,
-							    null_fd);
+		child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
+					   STATE_V2_IKE_AUTH_CHILD_R0,
+					   null_fd);
 		binlog_refresh_state(&child->sa);
 
 		if (!assign_child_responder_client(ike, child, md)) {
@@ -3108,15 +3109,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			/* we should continue building a valid reply packet */
 			return ret;
 		}
-
-		/*
-		 * XXX: This is to hack around the broken responder
-		 * code that switches from the IKE SA to the CHILD SA
-		 * before sending the reply.  Instead, because the
-		 * CHILD SA can fail, the IKE SA should be the one
-		 * processing the message?
-		 */
-		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 		/*
 		 * Check to see if we need to release an old instance
@@ -3153,9 +3145,20 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	 * The attempt to create the CHILD SA could have
 	 * failed.
 	 */
-	return record_v2SK_message(&reply_stream, &sk,
-				   "replying to IKE_AUTH request",
-				   MESSAGE_RESPONSE);
+	stf_status status = record_v2SK_message(&reply_stream, &sk,
+						"replying to IKE_AUTH request",
+						MESSAGE_RESPONSE);
+
+	/*
+	 * XXX: This is to hack around the broken responder
+	 * code that switches from the IKE SA to the CHILD SA
+	 * before sending the reply.  Instead, because the
+	 * CHILD SA can fail, the IKE SA should be the one
+	 * processing the message?
+	 */
+	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
+
+	return status;
 }
 
 static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
