@@ -3098,14 +3098,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			return STF_FAIL;
 		}
 
-		/*
-		 * XXX: This is to hack around the broken responder
-		 * code that switches from the IKE SA to the CHILD SA
-		 * before sending the reply.  Instead, because the
-		 * CHILD SA can fail, the IKE SA should be the one
-		 * processing the message?
-		 */
-		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs);
 		if (ret != STF_OK) {
 			/* already logged; response already recorded */
@@ -3116,6 +3108,15 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			/* we should continue building a valid reply packet */
 			return ret;
 		}
+
+		/*
+		 * XXX: This is to hack around the broken responder
+		 * code that switches from the IKE SA to the CHILD SA
+		 * before sending the reply.  Instead, because the
+		 * CHILD SA can fail, the IKE SA should be the one
+		 * processing the message?
+		 */
+		v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 		/*
 		 * Check to see if we need to release an old instance
