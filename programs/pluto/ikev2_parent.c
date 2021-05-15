@@ -2019,7 +2019,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	/* send out the AUTH payload */
 
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
-		v2_msgid_switch_responder_from_aborted_child(ike, &child, md, HERE);
 		return STF_INTERNAL_ERROR;
 	}
 

@@ -279,48 +279,6 @@ void v2_msgid_switch_responder_to_child(struct ike_sa *ike, struct child_sa *chi
 	switch_md_st(md, &child->sa, where);
 }
 
-void v2_msgid_switch_responder_from_aborted_child(struct ike_sa *ike, struct child_sa **childp,
-						  struct msg_digest *md, where_t where)
-{
-	struct child_sa *child = *childp;
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_REQUEST)) {
-		return;
-	}
-	intmax_t md_msgid = md->hdr.isa_msgid;
-	/* out with the old */
-	{
-		const struct v2_msgid_wip child_wip = child->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && child_wip.responder != md_msgid) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.responder should be %jd (MD's msgid); was %jd",
-				      md_msgid, child_wip.responder);
-		}
-		child->sa.st_v2_msgid_wip.responder = -1;
-		dbg_msgids_update("switching from CHILD SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &child->sa, &child_wip);
-	}
-	/* in with the new */
-	{
-		const struct v2_msgid_wip ike_wip = ike->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && ike_wip.responder != -1) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.responder should be -1; was %jd",
-				      ike_wip.responder);
-		}
-		ike->sa.st_v2_msgid_wip.responder = md_msgid;
-		dbg_msgids_update("switching to IKE SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &ike->sa, &ike_wip);
-	}
-	/* and don't forget MD.ST */
-	switch_md_st(md, &ike->sa, where);
-	child->sa.st_dont_send_delete = true; /* just to be sure */
-	delete_state(&child->sa);
-	*childp = NULL;
-}
-
 void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
 			       const struct msg_digest *md)
 {
