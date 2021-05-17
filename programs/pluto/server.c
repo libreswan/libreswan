@@ -76,6 +76,7 @@
 #include "state_db.h"
 #include "iface.h"
 #include "server_fork.h"
+#include "pluto_shutdown.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -935,12 +936,7 @@ static void huphandler_cb(struct logger *logger)
 
 static void termhandler_cb(struct logger *logger)
 {
-#if 1
-	llog(RC_LOG, logger, "terminated");
-	libreswan_exit(PLUTO_EXIT_OK);
-#else
-	fatal(PLUTO_EXIT_OK, logger, "terminated");
-#endif
+	shutdown_pluto(logger, PLUTO_EXIT_OK);
 }
 
 #ifdef HAVE_SECCOMP
