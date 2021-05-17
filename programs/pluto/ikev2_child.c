@@ -65,6 +65,7 @@
 #include "ikev2_cp.h"
 #include "ikev2_child.h"
 #include "ike_alg_dh.h"
+#include "pluto_stats.h"
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
@@ -587,4 +588,28 @@ bool ikev2_process_childs_sa_payload(const char *what,
 	}
 
 	return true;
+}
+
+void v2_child_sa_established(struct child_sa *child)
+{
+	change_state(&child->sa, STATE_V2_ESTABLISHED_CHILD_SA);
+	pstat_sa_established(&child->sa);
+	log_ipsec_sa_established("negotiated connection", &child->sa);
+	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
+		jam(buf, "%s", child->sa.st_state->story);
+		/* document SA details for admin's pleasure */
+		lswlog_child_sa_established(buf, &child->sa);
+	}
+	v2_schedule_replace_event(&child->sa);
+	/*
+	 * start liveness checks if set, making sure we only schedule
+	 * once when moving from I2->I3 or R1->R2
+	 */
+	if (dpd_active_locally(&child->sa)) {
+		dbg("dpd enabled, scheduling ikev2 liveness checks");
+		deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay,
+						  deltatime(MIN_LIVENESS));
+		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
+	}
+
 }

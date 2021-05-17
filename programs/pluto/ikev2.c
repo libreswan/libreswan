@@ -421,17 +421,10 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
-	/*
-	 * XXX: Danger! This state transition mashes the IKE SA's
-	 * initial state and the CHILD SA's final state.  There should
-	 * instead be two separate state transitions: IKE SA:
-	 * STATE_PARENT_R1->STATE_PARENT_R2; CHILD SA:: ??? ->
-	 * STATE_V2_ESTABLISHED_CHILD_SA.  The IKE SA could then
-	 * initiate the CHILD SA's transaction.
-	 */
+
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags = SMF2_ESTABLISHED,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -1625,7 +1618,7 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		} else {
 			transition = &state->v2_transitions[3];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
-			pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		}
 		pexpect((transition->flags & SMF2_NO_SKEYSEED) == 0);
 		pexpect(transition->state == STATE_PARENT_R1);

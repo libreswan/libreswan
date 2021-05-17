@@ -2889,19 +2889,18 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	struct connection *c = ike->sa.st_connection;
 
 	/*
-	 * Now create child state.
-	 * As we will switch to child state, force the parent to the
-	 * new state now.
+	 * Update the parent state to make sure that it knows we have
+	 * authenticated properly.
 	 *
-	 * XXX: Danger!  md->svm points to a state transition that
-	 * mashes the IKE SA's initial state in and the CHILD SA's
-	 * final state.  Hence, the need to explicitly force the final
-	 * IKE SA state.  There should instead be separate state
-	 * transitions for the IKE and CHILD SAs and then have the IKE
-	 * SA invoke the CHILD SA's transition.
+	 * XXX: is this double book keeping?  Same action happens in
+	 * success_v2_state_transition() and almost happens in
+	 * ikev2_ike_sa_established().
 	 */
-	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
-	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
+	c->newest_ike_sa = ike->sa.st_serialno;
+	v2_schedule_replace_event(&ike->sa);
+	ike->sa.st_viable_parent = true;
+	linux_audit_conn(&ike->sa, LAK_PARENT_START);
+	pstat_sa_established(&ike->sa);
 
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
@@ -3045,13 +3044,13 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_intermediate_used = false;
 
-	struct child_sa *child = NULL;
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
 		stf_status ret;
 		struct connection *c = ike->sa.st_connection;
 		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
 
+		struct child_sa *child = NULL;
 		child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
 					   STATE_V2_IKE_AUTH_CHILD_R0,
 					   null_fd);
@@ -3110,6 +3109,14 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				    &child->sa);
 
+		/*
+		 * XXX: fudge a state transition.
+		 *
+		 * Code extracted and simplified from
+		 * success_v2_state_transition(); suspect very similar
+		 * code will appear in the initiator.
+		 */
+		v2_child_sa_established(child);
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -3126,15 +3133,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	stf_status status = record_v2SK_message(&reply_stream, &sk,
 						"replying to IKE_AUTH request",
 						MESSAGE_RESPONSE);
-
-	/*
-	 * XXX: This is to hack around the broken responder
-	 * code that switches from the IKE SA to the CHILD SA
-	 * before sending the reply.  Instead, because the
-	 * CHILD SA can fail, the IKE SA should be the one
-	 * processing the message?
-	 */
-	v2_msgid_switch_responder_to_child(ike, child, md, HERE);
 
 	return status;
 }

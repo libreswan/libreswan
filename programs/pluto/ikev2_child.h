@@ -26,6 +26,6 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct msg_digest *md,
 				  struct pbs_out *outpbs);
 
-void CHILD_SA_established();
+void v2_child_sa_established(struct child_sa *child);
 
 #endif
