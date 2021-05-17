@@ -52,6 +52,9 @@
  * XXX: This functionality totally overlaps both "initiate" and
  * "pending" and should be merged (however, this simple code might
  * prove to be a better starting point).
+ *
+ * XXX: during shutdown delete_all_connections() should flush any
+ * outstanding revivals; hence no need to free revivals.
  */
 
 struct revival {
@@ -238,11 +241,4 @@ static void revive_conns(struct logger *logger)
 void init_revival(void)
 {
 	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
-}
-
-void free_revivals(void)
-{
-	while (revivals != NULL) {
-		free_revival(&revivals);
-	}
 }

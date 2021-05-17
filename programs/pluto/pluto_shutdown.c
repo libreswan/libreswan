@@ -95,11 +95,6 @@ static void exit_prologue(enum pluto_exit_code exit_code)
  #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_STOPPING, exit_code);
  #endif
-
-	/*
-	 * don't try to bring back existing connections.
-	 */
-	free_revivals();
 }
 
 void exit_epilogue(void)
@@ -117,7 +112,12 @@ void exit_epilogue(void)
 		exit(PLUTO_EXIT_LEAVE_STATE);
 	}
 
+	/*
+	 * This should wipe pretty much everything: states, revivals,
+	 * ...
+	 */
 	delete_every_connection();
+
 	free_root_certs(logger);
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
