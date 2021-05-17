@@ -541,6 +541,8 @@ void start_server_helpers(int nhelpers, struct logger *logger)
  * and a specific thread join may block waiting for the wrong thread.
  */
 
+static void (*server_helpers_stopped_callback)(void);
+
 static void helper_thread_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
 	nr_helper_threads--;
@@ -553,24 +555,29 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 		return;
 	}
 
-	/*
-	 * Finish things using a callback so this code can cleanup all
-	 * its allocated data.
-	 */
 	pfreeany(helper_threads);
-	schedule_callback("all helper threads stopped", SOS_NOBODY,
-			  server_helpers_stopped_callback, NULL);
+	server_helpers_stopped_callback();
 }
 
-void stop_server_helpers(void)
+static void call_server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
 {
+	server_helpers_stopped_callback();
+}
+
+void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
+{
+	server_helpers_stopped_callback = server_helpers_stopped_cb;
 	if (nr_helper_threads > 0) {
 		/* poke threads waiting for work */
 		message_helpers(NULL);
 	} else {
+		/*
+		 * Always finish things using a callback so this call stack
+		 * can cleanup all its allocated data.
+		 */
 		dbg("no helper threads to shutdown");
 		pexpect(helper_threads == NULL);
 		schedule_callback("no helpers to stop", SOS_NOBODY,
-				  server_helpers_stopped_callback, NULL);
+				  call_server_helpers_stopped_callback, NULL);
 	}
 }

@@ -72,6 +72,7 @@ static enum pluto_exit_code pluto_exit_code;
 
 static void exit_prologue(enum pluto_exit_code code);
 static void exit_epilogue(void) NEVER_RETURNS;
+static void server_helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
@@ -211,7 +212,7 @@ void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_server_helpers();
+	stop_server_helpers(server_helpers_stopped_callback);
 	/*
 	 * helper_threads_stopped_callback() is called once both all
 	 * helper-threads have exited, and all helper-thread events
@@ -221,7 +222,7 @@ void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 
 static void server_stopped_callback(int r) NEVER_RETURNS;
 
-void server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+void server_helpers_stopped_callback(void)
 {
 	/*
 	 * As libevent to shutdown the event-loop, once completed
