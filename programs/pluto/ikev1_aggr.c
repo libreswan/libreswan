@@ -174,7 +174,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = &ike->sa;
-	md->st = st;  /* (caller will reset cur_state) */
+	md->v1_st = st;  /* (caller will reset cur_state) */
 	change_state(st, STATE_AGGR_R1);
 
 	/* warn for especially dangerous Aggressive Mode and PSK */
@@ -196,7 +196,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
@@ -529,7 +529,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
@@ -587,7 +587,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	passert(st != NULL);
 	passert(md != NULL);
-	passert(md->st == st);
+	passert(md->v1_st == st);
 
 	if (st->st_dh_shared_secret == NULL) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
@@ -1037,7 +1037,7 @@ static stf_status aggr_outI1_continue(struct state *st,
 	 * MD.  This hacks around it.
 	 */
 	struct msg_digest *fake_md = alloc_md(NULL/*iface-port*/, &unset_endpoint, HERE);
-	fake_md->st = st;
+	fake_md->v1_st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->fake_dne = true;
 

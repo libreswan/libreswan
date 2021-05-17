@@ -494,7 +494,7 @@ void delete_state_by_id_name(struct state *st, void *name)
 	const char *thatidbuf = str_id(&c->spd.that.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
-		/* note: no md->st to clear */
+		/* note: no md->v1_st to clear */
 	}
 }
 
@@ -506,7 +506,7 @@ void v1_delete_state_by_username(struct state *st, void *name)
 
 	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
 		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
-		/* note: no md->st to clear */
+		/* note: no md->v1_st to clear */
 	}
 }
 
@@ -1336,7 +1336,7 @@ void delete_states_dead_interfaces(struct logger *logger)
 			close_any(&this->st_logger->global_whackfd);
 			this->st_logger->global_whackfd = dup_any(logger->global_whackfd);
 			delete_state(this);
-			/* note: no md->st to clear */
+			/* note: no md->v1_st to clear */
 		}
 	}
 }
@@ -3099,10 +3099,10 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 {
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "switching IKEv%d MD.ST from ", st->st_ike_version);
-		jam_st(buf, md->st);
+		jam_st(buf, md->v1_st);
 		jam(buf, " to ");
 		jam_st(buf, st);
 		jam(buf, " "PRI_WHERE, pri_where(where));
 	}
-	md->st = st;
+	md->v1_st = st;
 }

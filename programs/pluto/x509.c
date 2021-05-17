@@ -690,7 +690,7 @@ diag_t match_end_cert_id(const struct certs *certs,
  */
 bool v1_decode_certs(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	passert(st->st_ike_version == IKEv1);
 
 	/*
@@ -805,7 +805,7 @@ bool v1_decode_certs(struct msg_digest *md)
 
 bool v1_verify_certs(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	struct ike_sa *ike = ike_sa(st, HERE);
 	struct connection *c = st->st_connection;
 	passert(st->st_ike_version == IKEv1);
@@ -890,8 +890,8 @@ void ikev1_decode_cr(struct msg_digest *md, struct logger *logger)
 
 				gn->name = clone_hunk(ca_name, "ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = md->st->st_requested_ca;
-				md->st->st_requested_ca = gn;
+				gn->next = md->v1_st->st_requested_ca;
+				md->v1_st->st_requested_ca = gn;
 			}
 
 			if (DBGP(DBG_BASE)) {
@@ -938,8 +938,8 @@ void ikev2_decode_cr(struct msg_digest *md, struct logger *logger)
 					alloc_thing(generalName_t, "generalName");
 				gn->name = clone_hunk(ca_name, "ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = md->st->st_requested_ca;
-				md->st->st_requested_ca = gn;
+				gn->next = md->v1_st->st_requested_ca;
+				md->v1_st->st_requested_ca = gn;
 			}
 
 			if (DBGP(DBG_BASE)) {

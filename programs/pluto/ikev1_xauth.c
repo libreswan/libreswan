@@ -1516,7 +1516,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
  */
 static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 {
-	struct state *const st = md->st;
+	struct state *const st = md->v1_st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	uint16_t isama_id = ma->isama_identifier;

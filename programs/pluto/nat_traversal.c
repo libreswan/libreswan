@@ -405,7 +405,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 				  const struct msg_digest *md)
 {
-	const struct state *st = md->st;
+	const struct state *st = md->v1_st;
 	/*
 	 * XXX: This seems to be a very convoluted way of coming up
 	 * with the RCOOKIE.  It would probably be easier to just pass
@@ -603,7 +603,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->st->st_oakley.ta_prf == NULL) {
+		if (md->v1_st->st_oakley.ta_prf == NULL) {
 			/*
 			 * This connection is doomed - no PRF for NATD hash
 			 * Probably in FIPS trying MD5 ?

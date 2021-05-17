@@ -2216,7 +2216,7 @@ static void ikev2_pam_continue(struct state *ike_st,
 	}
 
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, md, stf);
+	complete_v2_state_transition(md->v1_st, md, stf);
 }
 
 /*
@@ -2537,7 +2537,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 
 stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 {
-	struct ike_sa *ike = pexpect_ike_sa(md->st);
+	struct ike_sa *ike = pexpect_ike_sa(md->v1_st);
 	lset_t policy = ike->sa.st_connection->policy;
 	bool found_ppk = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;
@@ -4747,7 +4747,7 @@ static bool mobike_check_established(const struct state *st)
 
 static bool process_mobike_resp(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	struct ike_sa *ike = ike_sa(st, HERE);
 	bool may_mobike = mobike_check_established(st);
 	/* ??? there is currently no need for separate natd_[sd] variables */
@@ -4792,7 +4792,7 @@ static void process_informational_notify_req(struct msg_digest *md, bool *redire
 		chunk_t *cookie2)
 {
 	struct payload_digest *ntfy;
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	struct ike_sa *ike = ike_sa(st, HERE);
 	bool may_mobike = mobike_check_established(st);
 	bool ntfy_update_sa = FALSE;
@@ -4919,7 +4919,7 @@ static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 /* MOBIKE liveness/update response. set temp remote address/interface */
 static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 
 	est_remote->interface = NULL;
 
@@ -4947,7 +4947,7 @@ static stf_status add_mobike_response_payloads(
 
 	stf_status r = STF_INTERNAL_ERROR;
 
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	/* assumptions from ikev2_out_nat_v2n() and caller */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
@@ -5176,7 +5176,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 * they cannot matter: we delete the family.
 		 */
 		delete_ike_family(ike, DONT_SEND_DELETE);
-		md->st = NULL;
+		md->v1_st = NULL;
 		ike = NULL;
 	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		/*
@@ -5388,7 +5388,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 		 */
 		if (del_ike) {
 			delete_ike_family(ike, DONT_SEND_DELETE);
-			md->st = NULL;
+			md->v1_st = NULL;
 			ike = NULL;
 		}
 	}

@@ -629,7 +629,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;
-		so_serial_t old_md_st = md != NULL && md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
+		so_serial_t old_md_st = md != NULL && md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
 		enum ike_version ike_version = st->st_ike_version;
 		/* when MD.ST it matches ST */
 		pexpect(old_md_st == SOS_NOBODY || old_md_st == old_st);
@@ -642,10 +642,10 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			/* MD.ST may have been freed! */
 			dbg("resume %s for #%lu suppresed complete_v%d_state_transition()%s",
 			    e->name, e->serialno, ike_version,
-			    (old_md_st != SOS_NOBODY && md->st == NULL ? "; MD.ST disappeared" :
-			     old_md_st != SOS_NOBODY && md->st != st ? "; MD.ST was switched" :
+			    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
+			     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
 			     ""));
-		} else if (old_md_st != SOS_NOBODY && md->st == NULL) {
+		} else if (old_md_st != SOS_NOBODY && md->v1_st == NULL) {
 			/*
 			 * XXX: yes, MD.ST can be set to NULL.
 			 *
@@ -704,13 +704,13 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			case IKEv1:
 				/* no switching MD.ST */
 				if (old_md_st == SOS_NOBODY) {
-					/* (old)md->st == (new)md->st == NULL */
-					pexpect(md == NULL || md->st == NULL);
+					/* (old)md->v1_st == (new)md->v1_st == NULL */
+					pexpect(md == NULL || md->v1_st == NULL);
 				} else {
-					/* md->st didn't change */
+					/* md->v1_st didn't change */
 					pexpect(md != NULL &&
-						md->st != NULL &&
-						md->st->st_serialno == old_md_st);
+						md->v1_st != NULL &&
+						md->v1_st->st_serialno == old_md_st);
 				}
 				pexpect(st != NULL); /* see above */
 				complete_v1_state_transition(st, md, status);
@@ -718,12 +718,12 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 #endif
 			case IKEv2:
 				if (old_md_st == SOS_NOBODY) {
-					pexpect(md == NULL || md->st == NULL);
-				} else if (pexpect(md != NULL && md->st != NULL)) {
-					if (md->st->st_serialno != old_st) {
+					pexpect(md == NULL || md->v1_st == NULL);
+				} else if (pexpect(md != NULL && md->v1_st != NULL)) {
+					if (md->v1_st->st_serialno != old_st) {
 						dbg("XXX: resume %s for #%lu switched MD.ST to #%lu",
-						    e->name, old_st, md->st->st_serialno);
-						st = md->st;
+						    e->name, old_st, md->v1_st->st_serialno);
+						st = md->v1_st;
 					}
 				}
 				complete_v2_state_transition(st, md, status);

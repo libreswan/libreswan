@@ -905,8 +905,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 	/*
 	 * XXX: Danger: ST is deleted midway through this function.
 	 */
-	pexpect(st == md->st);
-	st = md->st;    /* may be NULL */
+	pexpect(st == md->v1_st);
+	st = md->v1_st;    /* may be NULL */
 
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
@@ -968,7 +968,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 						  st->hidden_variables.st_malformed_sent,
 						  st->hidden_variables.st_malformed_received);
 					delete_state(st);
-					md->st = st = NULL;
+					md->v1_st = st = NULL;
 				}
 			}
 
@@ -1014,7 +1014,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
-				md->st = st = NULL;
+				md->v1_st = st = NULL;
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
@@ -1853,7 +1853,7 @@ void process_v1_packet(struct msg_digest *md)
 	/* save values for use in resumption of processing below.
 	 * (may be suspended due to crypto operation not yet complete)
 	 */
-	md->st = st;
+	md->v1_st = st;
 	md->smc = smc;
 	md->new_iv_set = new_iv_set;
 
@@ -1898,7 +1898,7 @@ void process_v1_packet(struct msg_digest *md)
  */
 void process_packet_tail(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
 	bool new_iv_set = md->new_iv_set;
@@ -2391,10 +2391,10 @@ void process_packet_tail(struct msg_digest *md)
 				DBG_dump("del:", p->pbs.cur,
 					 pbs_left(&p->pbs));
 			}
-			if (md->st != st) {
-				pexpect(md->st == NULL);
+			if (md->v1_st != st) {
+				pexpect(md->v1_st == NULL);
 				dbg("zapping ST as accept_delete() zapped MD.ST");
-				st = md->st;
+				st = md->v1_st;
 			}
 			p = p->next;
 		}
@@ -2410,18 +2410,18 @@ void process_packet_tail(struct msg_digest *md)
 
 	if (self_delete) {
 		accept_self_delete(md);
-		st = md->st;
+		st = md->v1_st;
 		/* note: st ought to be NULL from here on */
 	}
 
-	pexpect(st == md->st);
-	statetime_t start = statetime_start(md->st);
+	pexpect(st == md->v1_st);
+	statetime_t start = statetime_start(md->v1_st);
 	/*
 	 * XXX: danger - the .informational() processor deletes ST;
 	 * and then tunnels this loss through MD.ST.
 	 */
 	stf_status e =smc->processor(st, md);
-	complete_v1_state_transition(md->st, md, e);
+	complete_v1_state_transition(md->v1_st, md, e);
 	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
 }
@@ -2503,7 +2503,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * XXX: some initiator code creates a fake MD (there
 		 * isn't a real one); save that as well.
 		 */
-		suspend_any_md(md->st, md);
+		suspend_any_md(md->v1_st, md);
 		return;
 	case STF_IGNORE:
 		return;
@@ -2514,13 +2514,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* safe to refer to *md */
 
 	enum state_kind from_state = md->smc->state;
-	st = md->st;
+	st = md->v1_st;
 
 	passert(st != NULL);
 	pexpect(!state_is_busy(st));
 
 	if (result > STF_OK) {
-		linux_audit_conn(md->st, IS_IKE_SA_ESTABLISHED(md->st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
+		linux_audit_conn(md->v1_st, IS_IKE_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
 	}
 
 	switch (result) {
@@ -2980,7 +2980,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 #endif
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
-		md->st = st = NULL;
+		md->v1_st = st = NULL;
 		break;
 
 	default:        /* a shortcut to STF_FAIL, setting md->note */
@@ -3035,7 +3035,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (IS_QUICK(st->st_state->kind)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
-			md->st = NULL;
+			md->v1_st = NULL;
 		}
 		break;
 	}
@@ -3043,12 +3043,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 }
 
 /*
- * note: may change which connection is referenced by md->st->st_connection.
+ * note: may change which connection is referenced by md->v1_st->st_connection.
  * But only if we are a Main Mode Responder.
  */
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
-	struct state *const st = md->st;
+	struct state *const st = md->v1_st;
 	struct connection *c = st->st_connection;
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
@@ -3193,10 +3193,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			dbg("no more suitable connection for peer '%s'",
 			    str_id(&peer, &buf));
 			/* can we continue with what we had? */
-			if (!md->st->st_v1_peer_alt_id &&
+			if (!md->v1_st->st_v1_peer_alt_id &&
 			    !same_id(&c->spd.that.id, &peer) &&
 			    c->spd.that.id.kind != ID_FROMCERT) {
-				log_state(RC_LOG, md->st, "Peer mismatch on first found connection and no better connection found");
+				log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
 				return FALSE;
 			} else {
 				dbg("Peer ID matches and no better connection found - continuing with existing connection");

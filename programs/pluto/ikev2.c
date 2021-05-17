@@ -2078,7 +2078,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct state_v2_microcode *svm)
 {
-	md->st = st;
+	md->v1_st = st;
 	md->svm = svm;
 
 	/*
@@ -2114,13 +2114,13 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 */
 	statetime_t start = statetime_start(st);
 	so_serial_t old_st = st->st_serialno;
-	so_serial_t old_md_st = md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
+	so_serial_t old_md_st = md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
 	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 	stf_status e = svm->processor(ike, child, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
 	/*
-	 * Processor may screw around with md->st, for instance
+	 * Processor may screw around with md->v1_st, for instance
 	 * switching it to the CHILD SA, or a newly created state.
 	 * Hence use that version for now.
 	 */
@@ -2129,13 +2129,13 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		/* MD.ST may have been freed! */
 		dbg("processor '%s' for #%lu suppresed complete st_v2_transition%s",
 		    svm->story, st->st_serialno,
-		    (old_md_st != SOS_NOBODY && md->st == NULL ? "; MD.ST disappeared" :
-		     old_md_st != SOS_NOBODY && md->st != st ? "; MD.ST was switched" :
+		    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
+		     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
 		     ""));
 		return;
 	}
 
-	if (md->st == NULL) {
+	if (md->v1_st == NULL) {
 		if (old_md_st != SOS_NOBODY) {
 			/* MD.ST may have been freed! */
 			dbg("XXX: processor '%s' for #%lu deleted state MD.ST",
@@ -2143,11 +2143,11 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 			return;
 		}
 	} else {
-		if (md->st->st_serialno != old_st) {
+		if (md->v1_st->st_serialno != old_st) {
 			/* MD.ST may have been freed! */
 			dbg("XXX: processor '%s' for #%lu switched state to #%lu",
-			    svm->story, old_st, md->st->st_serialno);
-			st = md->st;
+			    svm->story, old_st, md->v1_st->st_serialno);
+			st = md->v1_st;
 		}
 	}
 
@@ -2355,7 +2355,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_I2) {
 		/*
-		 * Hack around md->st being forced to the CHILD_SA
+		 * Hack around md->v1_st being forced to the CHILD_SA
 		 * with an IKE SA state.
 		 */
 		pexpect(IS_CHILD_SA(st));
@@ -2719,12 +2719,12 @@ void complete_v2_state_transition(struct state *st,
 	 *   should be handled by returning an STF_ZOMBIFY and having
 	 *   this code delete the SA.
 	 */
-	if (md != NULL && md->st != NULL && md->st != st) {
+	if (md != NULL && md->v1_st != NULL && md->v1_st != st) {
 		/* can't happen, must match */
 		pexpect_fail(st->st_logger, HERE,
 			     "MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
-			     IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
-			     md->st->st_serialno,
+			     IS_CHILD_SA(md->v1_st) ? "CHILD" : "IKE",
+			     md->v1_st->st_serialno,
 			     IS_CHILD_SA(st) ? "CHILD" : "IKE",
 			     st->st_serialno);
 		return;
@@ -2896,7 +2896,7 @@ void complete_v2_state_transition(struct state *st,
 		st = NULL;
 		ike = NULL;
 		if (md != NULL)
-			md->st = NULL;
+			md->v1_st = NULL;
 		break;
 
 	case STF_FAIL:
@@ -2924,7 +2924,7 @@ void complete_v2_state_transition(struct state *st,
 		st = NULL;
 		ike = NULL;
 		if (md != NULL)
-			md->st = NULL;
+			md->v1_st = NULL;
 		break;
 
 	default: /* STF_FAIL+notification */
@@ -2955,7 +2955,7 @@ void complete_v2_state_transition(struct state *st,
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 				delete_state(st);
 				/* kill all st pointers */
-				st = NULL; ike = NULL; md->st = NULL;
+				st = NULL; ike = NULL; md->v1_st = NULL;
 			} else {
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);

@@ -924,7 +924,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
-	passert(p1st != NULL && p1st == md->st);
+	passert(p1st != NULL && p1st == md->v1_st);
 	struct connection *c = p1st->st_connection;
 	ip_selector local_client;
 	ip_selector remote_client;
@@ -1040,7 +1040,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 					const ip_selector *remote_client,
 					struct crypt_mac new_iv)
 {
-	pexpect(p1st == md->st);
+	pexpect(p1st == md->v1_st);
 	struct connection *c = p1st->st_connection;
 	struct hidden_variables hv;
 
@@ -1206,7 +1206,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			/* ??? this partially overwrites what was done via hv */
 			st->hidden_variables.st_nat_traversal =
 				p1st->hidden_variables.st_nat_traversal;
-			nat_traversal_change_port_lookup(md, md->st);
+			nat_traversal_change_port_lookup(md, md->v1_st);
 			v1_maybe_natify_initiator_endpoints(st, HERE);
 		} else {
 			/* ??? this partially overwrites what was done via hv */
