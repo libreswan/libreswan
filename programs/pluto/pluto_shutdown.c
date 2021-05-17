@@ -175,7 +175,7 @@ void exit_epilogue(void)
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
+void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 {
 	/*
 	 * Leak the whack FD so that only when pluto finally exits the
@@ -185,7 +185,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 	 * Note that this means that the entire exit process is radio
 	 * silent.
 	 */
-	fd_leak(whackfd, HERE);
+	fd_leak(logger->global_whackfd, HERE);
 
 	/*
 	 * Start the shutdown process.
