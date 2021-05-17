@@ -398,6 +398,19 @@ void delete_cryptographic_continuation(struct state *st)
  * thread using the event loop.
  *
  */
+
+static void free_job(struct job **jobp)
+{
+	struct job *job = *jobp;
+	passert(job->handler->cleanup_cb != NULL);
+	job->handler->cleanup_cb(&job->task);
+	pexpect(job->task == NULL); /* did your job */
+	/* now free up the continuation */
+	free_logger(&job->logger, HERE);
+	pfree(job);
+	*jobp = NULL;
+}
+
 static stf_status handle_helper_answer(struct state *st,
 				       struct msg_digest *md,
 				       void *arg)
@@ -434,12 +447,7 @@ static stf_status handle_helper_answer(struct state *st,
 	esb_buf buf;
 	dbg(PRI_JOB": final status %s; cleaning up",
 	    pri_job(job), enum_show(&stf_status_names, status, &buf));
-	passert(job->handler->cleanup_cb != NULL);
-	job->handler->cleanup_cb(&job->task);
-	pexpect(job->task == NULL); /* did your job */
-	/* now free up the continuation */
-	free_logger(&job->logger, HERE);
-	pfree(job);
+	free_job(&job);
 	return status;
 }
 
@@ -555,7 +563,7 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 		return;
 	}
 
-	pfreeany(helper_threads);
+	pfreeany(helper_threads); helper_threads = NULL;
 	server_helpers_stopped_callback();
 }
 
@@ -579,5 +587,17 @@ void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 		pexpect(helper_threads == NULL);
 		schedule_callback("no helpers to stop", SOS_NOBODY,
 				  call_server_helpers_stopped_callback, NULL);
+	}
+}
+
+void free_server_helper_jobs(void)
+{
+	passert(nr_helper_threads == 0); /* all stopped */
+	passert(helper_threads == NULL);
+
+	struct job *job = NULL;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) {
+		remove_list_entry(&job->backlog);
+		free_job(&job);
 	}
 }
