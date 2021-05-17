@@ -1236,6 +1236,7 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 
 	if (impair.send_pkcs7_thingie) {
 		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
+		passert(mycert != NULL);
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
