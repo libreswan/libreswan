@@ -1040,7 +1040,7 @@ bool v2_process_ts_request(struct child_sa *child,
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	struct connection *c = child->sa.st->st_connection;
+	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selectors tsi = { .nr = 0, };
 	struct traffic_selectors tsr = { .nr = 0, };

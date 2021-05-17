@@ -841,17 +841,9 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &ike->sa);
 	pexpect(ike->sa.st_state->kind == STATE_PARENT_R0);
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
-
-	/*
-	 * XXX: sanity check that this call does not screw around with
-	 * MD.ST (it isn't creating a child, and can return STF_FATAL
-	 * et.al.)
-	 */
-	md->st = &ike->sa;
 
 	struct connection *c = ike->sa.st_connection;
 	bool send_certreq = FALSE;
@@ -1026,11 +1018,6 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
 		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
-
-	/*
-	 * sanity check nothing has screwed around with md.st.
-	 */
-	pexpect(md->st == &ike->sa);
 
 	return STF_OK;
 }
@@ -1499,7 +1486,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(mdp->st == NULL || mdp->st == &ike->sa);
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -1633,7 +1619,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_co
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &ike->sa);
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -2206,7 +2191,6 @@ static void ikev2_pam_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &ike->sa);
 	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
@@ -2298,7 +2282,6 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
  	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &ike->sa);
 	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
@@ -2352,7 +2335,6 @@ static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(s
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &ike->sa);
 	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
@@ -2450,7 +2432,6 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 
 	/* The connection is "up", start authenticating it */
 	pexpect(child == NULL);
-	pexpect(md->st == NULL || md->st == &ike->sa);
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
@@ -2486,7 +2467,6 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 	if (e >= STF_FAIL &&
 	    (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC)) {
 		dbg("deleting opportunistic IKE SA with no Child SA");
-		pexpect(md->st == &ike->sa);
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -2530,7 +2510,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 
 	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
 
-	/* this call might update connection in md->st */
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
@@ -4050,7 +4029,6 @@ static stf_status ikev2_child_ike_inR_continue(struct state *larval_ike_sa,
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_ike->sa);
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
 	dbg("%s() for #%lu %s",
@@ -4145,7 +4123,6 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_child->sa);
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -4291,7 +4268,6 @@ static stf_status ikev2_child_inIoutR_continue(struct state *larval_child_sa,
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_child->sa);
 	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -4336,7 +4312,6 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *larval_chi
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_child->sa);
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -4477,7 +4452,6 @@ static stf_status ikev2_child_ike_inIoutR_continue(struct state *larval_ike_sa,
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_ike->sa);
 	pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
@@ -4518,7 +4492,6 @@ static stf_status ikev2_child_ike_inIoutR_continue_continue(struct state *larval
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(md->st == NULL || md->st == &larval_ike->sa);
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
@@ -5313,7 +5286,6 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 							}
 						}
 						delete_or_replace_child(ike, dst);
-						/* note: md->st != dst */
 					}
 				} /* for each spi */
 
