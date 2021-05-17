@@ -294,14 +294,6 @@ void fatal(enum pluto_exit_code rc, struct logger *logger,
 	}
 
 /*
- * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
- *
- *   _Errno E: <strerror(E)>
- */
-#define PRI_ERRNO "Errno %d: %s"
-#define pri_errno(E) (E), strerror(E)
-
-/*
  * Log debug messages to the main log stream, but not the WHACK log
  * stream.
  *

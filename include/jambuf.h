@@ -243,4 +243,14 @@ jam_bytes_fn jam_shell_quoted_bytes;
  */
 extern int (*jambuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
+/*
+ * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
+ *
+ *   _Errno E: <strerror(E)>
+ *
+ * somewhere better?
+ */
+#define PRI_ERRNO "Errno %d: %s"
+#define pri_errno(E) (E), strerror(E)
+
 #endif

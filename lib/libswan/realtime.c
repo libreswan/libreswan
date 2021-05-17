@@ -19,7 +19,8 @@
 #include <errno.h>
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
-#include "lswlog.h"	/* for libreswan_exit_log_errno() */
+#include "passert.h"
+#include "jambuf.h"
 
 #include "realtime.h"
 

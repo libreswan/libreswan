@@ -20,7 +20,8 @@
 #include <errno.h>
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
-#include "lswlog.h"	/* for libreswan_exit_log_errno() */
+#include "jambuf.h" 
+#include "passert.h"
 
 #include "monotime.h"
 
