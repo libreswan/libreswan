@@ -266,7 +266,6 @@ static void check_str_address_sensitive(void)
 		err_t err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			FAIL("ttoaddress_num() failed: %s", err);
-			continue;
 		}
 		CHECK_TYPE(address);
 		CHECK_STR(address_buf, address_sensitive, t->out, address);
@@ -297,7 +296,6 @@ static void check_str_address_reversed(void)
 		err_t err = ttoaddress_num(shunk1(t->in), type, address);
 		if (err != NULL) {
 			FAIL("ttoaddress_num() returned: %s", err);
-			continue;
 		}
 		CHECK_TYPE(address);
 		CHECK_STR(address_reversed_buf, address_reversed, t->out, address);
@@ -470,14 +468,12 @@ static void check_addresses_to(void)
 		oops = ttoaddress_num(shunk1(t->lo), type, &lo);
 		if (oops != NULL) {
 			FAIL("ttoaddress_num(lo=%s) failed: %s", t->lo, oops);
-			continue;
 		}
 
 		ip_address hi;
 		oops = ttoaddress_num(shunk1(t->hi), type, &hi);
 		if (oops != NULL) {
 			FAIL("ttoaddress_num(hi=%s) failed: %s", t->hi, oops);
-			continue;
 		}
 
 		ip_subnet s;
