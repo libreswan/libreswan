@@ -39,7 +39,7 @@ static const struct logger_object_vec logger_failsafe_vec = {
 };
 
 const struct logger failsafe_logger = {
-	.where = { .basename = "<failsafe>", .func = "<failsafe>", },
+	.where = { .line = 0, .file = "<failsafe>", .func = "<failsafe>", },
 	.object = NULL,
 	.object_vec = &logger_failsafe_vec,
 };

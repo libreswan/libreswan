@@ -1,6 +1,6 @@
 # Define autoconf style directory variables, for Libreswan.
 #
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015, 2021  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -67,23 +67,15 @@ $(error this will never happen ...)
 endif
 
 
-# Given a path to a higher directory (e.g., ../..) convert it to the
-# path from that directory down.  For instance: given "../.." ($(1)
-# variable) and the current directory "/libreswan/OBJ.linux/foo/bar",
-# "/foo/bar" is returned; given "." ($(1) variable) and the current
-# directory "/libreswan", "" is returned.
-dirs.mk.down.path.from = $(subst $(abspath $(1)),,$(abspath .))
-
-
+#
 # Determine top_srcdir
 #
 # The last item in the GNU make variable MAKEFILE_LIST is the relative
-# path to the most recent included file (i.e., dirs.mk).  Since the
-# location of dirs.mk is known relative to top_srcdir, top_srcdir can
-# be determined.  These variables are "simply expanded" so that they
-# capture the current value.  For more information see MAKEFILE_LIST
-# and "simply expanded variables" in "info make".
-#
+# path to the most recent included file (i.e., this file - dirs.mk).
+# Since the location of dirs.mk is known relative to top_srcdir,
+# top_srcdir can be determined.  These variables are "simply expanded"
+# so that they capture the current value.  For more information see
+# MAKEFILE_LIST and "simply expanded variables" in "info make".
 # Extract the relative path to this file
 dirs.mk.file := $(lastword $(MAKEFILE_LIST))
 # Convert the relative path to this file into a relative path to this
@@ -93,6 +85,7 @@ dirs.mk.dir := $(patsubst %/,%,$(dir $(dirs.mk.file)))
 # Finally, drop the mk/ sub-directory.  Again, since $(dir) appends a
 # trailing / (such as "./" or "../") that needs to be stripped.
 top_srcdir := $(patsubst %/,%,$(dir $(dirs.mk.dir)))
+abs_top_srcdir := $(abspath $(top_srcdir))
 
 
 # Pull in sufficient stuff to get a definition of OBJDIR.  It might be
@@ -101,20 +94,9 @@ include $(top_srcdir)/mk/local.mk
 include $(top_srcdir)/mk/objdir.mk
 
 
-# Is this being included from the source directory (i.e., $(OBJDIR)
-# isn't found in the path)?
-ifeq ($(findstring /$(OBJDIR)/,$(abspath .)/),)
-dirs.mk.included.from.srcdir := true
-else
-dirs.mk.included.from.srcdir := false
-endif
-
-
-ifeq ($(dirs.mk.included.from.srcdir),true)
-
-# In the source tree ...
-
 srcdir := .
+abs_srcdir := $(abspath $(srcdir))
+
 ifeq ($(patsubst /%,/,$(OBJDIR)),/)
   # absolute
   top_builddir := $(OBJDIR)
@@ -124,28 +106,12 @@ else ifeq ($(top_srcdir),.)
 else
   top_builddir := $(top_srcdir)/$(OBJDIR)
 endif
-builddir := $(top_builddir)$(call dirs.mk.down.path.from,$(top_srcdir))
-
-else
-
-# In the build (OBJDIR) tree ...
-
-builddir := .
-ifeq ($(top_srcdir),..)
-# avoid ""
-top_builddir := .
-else
-top_builddir := $(patsubst ../%,%,$(top_srcdir))
-endif
-srcdir := $(top_srcdir)$(call dirs.mk.down.path.from,$(top_builddir))
-
-endif
-
-# Absolute versions
-abs_srcdir := $(abspath $(srcdir))
-abs_top_srcdir := $(abspath $(top_srcdir))
-abs_builddir := $(abspath $(builddir))
 abs_top_builddir := $(abspath $(top_builddir))
+
+# path down from $(top_srcdir)
+path_srcdir := $(subst $(abs_top_srcdir)/,,$(abs_srcdir))
+builddir := $(top_builddir)/$(path_srcdir)
+abs_builddir := $(abspath $(builddir))
 
 # Always include the other directory in the search path.
 #
