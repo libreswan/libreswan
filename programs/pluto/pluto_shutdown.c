@@ -58,7 +58,6 @@
 #include "impair_message.h"	/* for free_impair_message() */
 
 volatile bool exiting_pluto = false;
-static bool pluto_leave_state = false;
 static enum pluto_exit_code pluto_exit_code;
 
 /*
@@ -71,16 +70,16 @@ static enum pluto_exit_code pluto_exit_code;
  * 10 lock file exists
  */
 
-static void exit_prologue(enum pluto_exit_code code, bool leave_state);
+static void exit_prologue(enum pluto_exit_code code);
 static void exit_epilogue(void) NEVER_RETURNS;
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
-	exit_prologue(exit_code, /*leave-state?*/false);
+	exit_prologue(exit_code);
 	exit_epilogue();
 }
 
-static void exit_prologue(enum pluto_exit_code exit_code, bool leave_state)
+static void exit_prologue(enum pluto_exit_code exit_code)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -89,7 +88,6 @@ static void exit_prologue(enum pluto_exit_code exit_code, bool leave_state)
 	 * this instead.
 	 */
 	exiting_pluto = true;
-	pluto_leave_state = leave_state;
 	pluto_exit_code = exit_code;
 
 	/* needed because we may be called in odd state */
@@ -107,7 +105,7 @@ void exit_epilogue(void)
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 
-	if (pluto_leave_state) {
+	if (pluto_exit_code == PLUTO_EXIT_LEAVE_STATE) {
 		lsw_nss_shutdown();
 		free_preshared_secrets(logger);
 		delete_lock();	/* delete any lock files */
@@ -177,7 +175,7 @@ void exit_epilogue(void)
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state)
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status)
 {
 	/*
 	 * Leak the whack FD so that only when pluto finally exits the
@@ -195,7 +193,7 @@ void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_
 	 * Flag that things are going down and delete anything that
 	 * isn't asynchronous (or depends on something asynchronous).
 	 */
-	exit_prologue(status, leave_state);
+	exit_prologue(status);
 
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO

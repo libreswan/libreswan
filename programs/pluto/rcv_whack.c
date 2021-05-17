@@ -972,7 +972,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		if (m->whack_leave_state) {
 			llog(DEBUG_STREAM|RC_LOG, logger, "shutting down, leavings state");
 		}
-		shutdown_pluto(whackfd, PLUTO_EXIT_OK, m->whack_leave_state);
+		shutdown_pluto(whackfd, m->whack_leave_state ? PLUTO_EXIT_LEAVE_STATE : PLUTO_EXIT_OK);
 		dbg("whack: ... shutdown");
 	}
 
@@ -1057,7 +1057,8 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 		if (msg.whack_shutdown) {
 			llog(RC_LOG, whack_logger, "shutting down%s",
 				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-			shutdown_pluto(whackfd, PLUTO_EXIT_OK, msg.whack_leave_state);
+			/* magic invalid; msg.whack_leave_state is untouchable */
+			shutdown_pluto(whackfd, PLUTO_EXIT_OK);
 			return; /* force shutting down */
 		}
 

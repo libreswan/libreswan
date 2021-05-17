@@ -52,6 +52,6 @@ extern volatile bool exiting_pluto;
  * shutdown state (rather than special abort paths).
  */
 
-void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status, bool leave_state);
+void shutdown_pluto(struct fd *whackfd, enum pluto_exit_code status);
 
 #endif
