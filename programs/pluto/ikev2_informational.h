@@ -17,8 +17,16 @@
 #ifndef IKEV2_INFORMATIONAL_H
 #define IKEV2_INFORMATIONAL_H
 
-stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
-						 struct child_sa *null_child,
-						 struct msg_digest *md);
+stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
+					    struct child_sa *null_child,
+					    struct msg_digest *md);
+
+stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
+					     struct child_sa *null_child,
+					     struct msg_digest *md);
+
+stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
+							struct child_sa *null_child,
+							struct msg_digest *md);
 
 #endif
