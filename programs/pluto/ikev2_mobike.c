@@ -189,34 +189,26 @@ void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 	return;
 }
 
-void mobike_reset_remote(struct state *st, struct mobike *est_remote)
+void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 {
-	if (est_remote->interface == NULL)
-		return;
-
-	st->st_remote_endpoint = est_remote->remote;
-	st->st_interface = est_remote->interface;
-	pexpect_st_local_endpoint(st);
-	st->st_mobike_remote_endpoint = unset_endpoint;
-}
-
-/* MOBIKE liveness/update response. set temp remote address/interface */
-void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote)
-{
-	struct state *st = md->v1_st;
-
-	est_remote->interface = NULL;
-
-	if (mobike_check_established(st) &&
-	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    !endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
+	if (mobike_check_established(&ike->sa) &&
+	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
+	    !endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
 		/* remember the established/old address and interface */
-		est_remote->remote = st->st_remote_endpoint;
-		est_remote->interface = st->st_interface;
-
+		ip_endpoint remote = ike->sa.st_remote_endpoint;
+		const struct iface_endpoint *interface = ike->sa.st_interface;
 		/* set temp one and after the message sent reset it */
-		st->st_remote_endpoint = md->sender;
-		st->st_interface = md->iface;
+		ike->sa.st_remote_endpoint = md->sender;
+		ike->sa.st_interface = md->iface;
+		/*
+		 * XXX: hopefully this call doesn't muddle the IKE
+		 * Message IDs.
+		 */
+		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
+					 MESSAGE_RESPONSE);
+		/* restore established address and interface */
+		ike->sa.st_remote_endpoint = remote;
+		ike->sa.st_interface = interface;
 		pexpect_st_local_endpoint(st);
 	}
 }

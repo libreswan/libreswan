@@ -489,27 +489,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		return STF_SKIP_COMPLETE_STATE_TRANSITION;
 	}
 
-	struct mobike mobike_remote;
-
-	mobike_switch_remote(md, &mobike_remote);
-
-	send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
-				 MESSAGE_RESPONSE);
-
-	/*
-	 * XXX: This code should be neither using record 'n'
-	 * send (which leads to RFC violations because it
-	 * doesn't wait for an ACK) and/or be deleting the
-	 * state midway through a state transition.
-	 *
-	 * When DEL_IKE, the update isn't needed but what
-	 * ever.
-	 */
-	dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_ike_family()",
-		     __func__);
-	v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
-
-	mobike_reset_remote(&ike->sa, &mobike_remote);
+	mobike_possibly_send_recorded(ike, md);
 
 	/*
 	 * This is a special case. When we have site to site connection

@@ -27,12 +27,6 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 				 struct v2SK_payload *sk);
 void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md);
 
-struct mobike {
-	ip_endpoint remote;
-	const struct iface_endpoint *interface;
-};
-
-void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote);
-void mobike_reset_remote(struct state *st, struct mobike *est_remote);
+void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md);
 
 #endif
