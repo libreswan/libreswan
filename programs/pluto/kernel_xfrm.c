@@ -98,6 +98,7 @@
 
 #include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
 #include "security_selinux.h"	/* for vet_seclabel() */
+#include "ikev2_mobike.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC

@@ -65,6 +65,7 @@
 #include "pluto_stats.h"
 #include "iface.h"
 #include "ikev2_liveness.h"
+#include "ikev2_mobike.h"
 
 struct pluto_event **state_event(struct state *st, enum event_type type)
 {

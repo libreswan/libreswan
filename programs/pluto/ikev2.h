@@ -54,8 +54,6 @@ extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
 
-extern ikev2_state_transition_fn process_encrypted_informational_ikev2;
-
 extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
 extern ikev2_state_transition_fn ikev2_child_ike_inR;
 extern ikev2_state_transition_fn ikev2_child_inR;
@@ -245,10 +243,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
 extern void init_ikev2(void);
-
-extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
-extern void ikev2_record_deladdr(struct state *st, void *arg_ip);
-extern void ikev2_addr_change(struct state *st);
 
 void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 
