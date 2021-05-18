@@ -1810,7 +1810,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	 * get confused.  If the IKE->CHILD switch didn't happen this
 	 * wouldn't be needed.
 	 */
-	v2_msgid_switch_initiator(ike, child, md);
+	v2_msgid_switch_initiator_to_child(ike, child, md);
 
 	binlog_refresh_state(&child->sa);
 	switch_md_st(md, &child->sa, HERE);
