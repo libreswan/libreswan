@@ -224,7 +224,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md)
 {
-	const bool responding = true;
 	pexpect(null_child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = false;	/* any IKE SA Deletions? */
@@ -249,16 +248,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	bool send_mobike_resp = false;	/* only if responding */
 
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		if (responding) {
-			process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
-		} else {
-			if (process_mobike_resp(md)) {
-				log_state(RC_LOG, &ike->sa,
-					  "MOBIKE response: updating IPsec SA");
-			} else {
-				dbg("MOBIKE response: not updating IPsec SA");
-			}
-		}
+		process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
 	} else {
 		/*
 		 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
@@ -278,12 +268,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
-				if (!responding) {
-					log_state(RC_LOG, &ike->sa,
-						  "Response to Delete improperly includes IKE SA");
-					return STF_FAIL + v2N_INVALID_SYNTAX;
-				}
-
 				if (del_ike) {
 					log_state(RC_LOG, &ike->sa,
 						  "Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
@@ -345,58 +329,45 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
 
-	/*
-	 * Variables for generating response.
-	 * NOTE: only meaningful if "responding" is true!
-	 * These declarations must be placed so early because they must be in scope for
-	 * all of the several chunks of code that handle responding.
-	 *
-	 * XXX: in terms of readability and reliability, this
-	 * interleaving of initiator vs response code paths is pretty
-	 * screwed up.
-	 */
-
 	struct pbs_out reply_stream;
 	pb_stream rbody;
 	v2SK_payload_t sk;
 	zero(&rbody);
 	zero(&sk);
 
-	if (responding) {
-		/* make sure HDR is at start of a clean buffer */
-		reply_stream = open_pbs_out("information exchange reply packet",
-					    reply_buffer, sizeof(reply_buffer),
-					    ike->sa.st_logger);
+	/* make sure HDR is at start of a clean buffer */
+	reply_stream = open_pbs_out("information exchange reply packet",
+				    reply_buffer, sizeof(reply_buffer),
+				    ike->sa.st_logger);
 
 
-		/* authenticated decrypted response - It's alive, alive! */
-		dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
-		ike->sa.st_last_liveness = mononow();
-		ike->sa.st_pend_liveness = false;
+	/* authenticated decrypted response - It's alive, alive! */
+	dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
+	ike->sa.st_last_liveness = mononow();
+	ike->sa.st_pend_liveness = false;
 
-		/* HDR out */
+	/* HDR out */
 
-		rbody = open_v2_message(&reply_stream, ike,
-					md /* response */,
-					ISAKMP_v2_INFORMATIONAL);
-		if (!pbs_ok(&rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
+	rbody = open_v2_message(&reply_stream, ike,
+				md /* response */,
+				ISAKMP_v2_INFORMATIONAL);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
 
-		/* insert an Encryption payload header */
+	/* insert an Encryption payload header */
 
-		sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-		if (!pbs_ok(&sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
+	sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
 
-		if (send_mobike_resp) {
-			stf_status e = add_mobike_response_payloads(
-				&cookie2,	/* will be freed */
-				md, &sk.pbs);
-			if (e != STF_OK)
-				return e;
-		}
+	if (send_mobike_resp) {
+		stf_status e = add_mobike_response_payloads(
+			&cookie2,	/* will be freed */
+			md, &sk.pbs);
+		if (e != STF_OK)
+			return e;
 	}
 
 	/*
@@ -408,43 +379,25 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		event_force(EVENT_v2_REDIRECT, &ike->sa);
 
 	/*
-	 * Do the actual deletion.
-	 * If responding, build the body of the response.
+	 * Do the actual deletion, build the body of the response.
 	 */
 
-	if (!responding && ike->sa.st_state->kind == STATE_IKESA_DEL) {
+	if (del_ike) {
 		/*
-		 * this must be a response to our IKE SA delete request
-		 * Even if there are are other Delete Payloads,
-		 * they cannot matter: we delete the family.
-		 */
-		delete_ike_family(ike, DONT_SEND_DELETE);
-		md->v1_st = NULL;
-		ike = NULL;
-	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		/*
-		 * A liveness update response is handled here
-		 */
-		dbg("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending.");
-		ike->sa.st_last_liveness = mononow();
-		ike->sa.st_pend_liveness = false;
-	} else if (del_ike) {
-		/*
-		 * If we are deleting the Parent SA, the Child SAs will be torn down as well,
-		 * so no point processing the other Delete SA payloads.
-		 * We won't catch nonsense in those payloads.
+		 * If we are deleting the Parent SA, the Child SAs
+		 * will be torn down as well, so no point processing
+		 * the other Delete SA payloads.  We won't catch
+		 * nonsense in those payloads.
 		 *
 		 * But wait: we cannot delete the IKE SA until after
 		 * we've sent the response packet.  To be continued
 		 * below ...
 		 */
-		passert(responding);
 	} else {
 		/*
-		 * Pass 2 over the Delete Payloads:
-		 * Actual IPsec SA deletion.
-		 * If responding, build response Delete Payloads.
-		 * If there is no payload, this loop is a no-op.
+		 * Pass 2 over the Delete Payloads: Actual IPsec SA
+		 * deletion, build response Delete Payloads.  If there
+		 * is no payload, this loop is a no-op.
 		 */
 		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
 		     p != NULL; p = p->next) {
@@ -513,52 +466,49 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 						/* st is a parent */
 						passert(&ike->sa != &dst->sa);
 						passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-						if (!del_ike && responding) {
-							struct ipsec_proto_info *pr =
-								v2del->isad_protoid == PROTO_IPSEC_AH ?
-								&dst->sa.st_ah :
-								&dst->sa.st_esp;
+						struct ipsec_proto_info *pr =
+							v2del->isad_protoid == PROTO_IPSEC_AH ?
+							&dst->sa.st_ah :
+							&dst->sa.st_esp;
 
-							if (j < elemsof(spi_buf)) {
-								spi_buf[j] = pr->our_spi;
-								j++;
-							} else {
-								log_state(RC_LOG, &ike->sa,
-									  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-									  ntohl(spi));
-							}
+						if (j < elemsof(spi_buf)) {
+							spi_buf[j] = pr->our_spi;
+							j++;
+						} else {
+							log_state(RC_LOG, &ike->sa,
+								  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
+								  ntohl(spi));
 						}
 						delete_or_replace_child(ike, dst);
 					}
 				} /* for each spi */
 
-				if (!del_ike && responding) {
-					/* build output Delete Payload */
-					struct ikev2_delete v2del_tmp = {
-						.isad_protoid = v2del->isad_protoid,
-						.isad_spisize = v2del->isad_spisize,
-						.isad_nrspi = j,
-					};
+				/* build output Delete Payload */
+				struct ikev2_delete v2del_tmp = {
+					.isad_protoid = v2del->isad_protoid,
+					.isad_spisize = v2del->isad_spisize,
+					.isad_nrspi = j,
+				};
 
-					/* Emit delete payload header and SPI values */
-					pb_stream del_pbs;	/* output stream */
+				/* Emit delete payload header and SPI values */
+				pb_stream del_pbs;	/* output stream */
 
-					if (!out_struct(&v2del_tmp,
-							&ikev2_delete_desc,
-							&sk.pbs,
-							&del_pbs))
-						return false;
-					diag_t d = pbs_out_raw(&del_pbs,
-							       spi_buf,
-							       j * sizeof(spi_buf[0]),
-							       "local SPIs");
-					if (d != NULL) {
-						llog_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
-						return STF_INTERNAL_ERROR;
-					}
-
-					close_output_pbs(&del_pbs);
+				if (!out_struct(&v2del_tmp,
+						&ikev2_delete_desc,
+						&sk.pbs,
+						&del_pbs))
+					return false;
+				diag_t d = pbs_out_raw(&del_pbs,
+						       spi_buf,
+						       j * sizeof(spi_buf[0]),
+						       "local SPIs");
+				if (d != NULL) {
+					llog_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
+					return STF_INTERNAL_ERROR;
 				}
+
+				close_output_pbs(&del_pbs);
+
 			}
 			break;
 
@@ -569,71 +519,69 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		}  /* for each Delete Payload */
 	}
 
-	if (responding) {
-		/*
-		 * We've now build up the content (if any) of the Response:
-		 *
-		 * - empty, if there were no Delete Payloads or if we are
-		 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
-		 *   Treat as a check for liveness.  Correct response is this
-		 *   empty Response.
-		 *
-		 * - if an ISAKMP SA is mentioned in input message,
-		 *   we are sending an empty Response, as per standard.
-		 *
-		 * - for IPsec SA mentioned, we are sending its mate.
-		 *
-		 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a COOKIE2
-		 *
-		 * Close up the packet and send it.
-		 */
+	/*
+	 * We've now build up the content (if any) of the Response:
+	 *
+	 * - empty, if there were no Delete Payloads or if we are
+	 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
+	 *   Treat as a check for liveness.  Correct response is this
+	 *   empty Response.
+	 *
+	 * - if an ISAKMP SA is mentioned in input message,
+	 *   we are sending an empty Response, as per standard.
+	 *
+	 * - for IPsec SA mentioned, we are sending its mate.
+	 *
+	 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a COOKIE2
+	 *
+	 * Close up the packet and send it.
+	 */
 
-		/* const size_t len = pbs_offset(&sk.pbs); */
-		if (!close_v2SK_payload(&sk)) {
-			return STF_INTERNAL_ERROR;
-		}
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-;
-		stf_status ret = encrypt_v2SK_payload(&sk);
-		if (ret != STF_OK)
-			return ret;
+	/* const size_t len = pbs_offset(&sk.pbs); */
+	if (!close_v2SK_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
 
-		struct mobike mobike_remote;
+	stf_status ret = encrypt_v2SK_payload(&sk);
+	if (ret != STF_OK)
+		return ret;
 
-		mobike_switch_remote(md, &mobike_remote);
+	struct mobike mobike_remote;
 
-		/* ??? should we support fragmenting?  Maybe one day. */
-		record_v2_message(ike, &reply_stream, "reply packet for process_encrypted_informational_ikev2",
-				  MESSAGE_RESPONSE);
-		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
-					 MESSAGE_RESPONSE);
+	mobike_switch_remote(md, &mobike_remote);
 
-		/*
-		 * XXX: This code should be neither using record 'n'
-		 * send (which leads to RFC violations because it
-		 * doesn't wait for an ACK) and/or be deleting the
-		 * state midway through a state transition.
-		 *
-		 * When DEL_IKE, the update isn't needed but what
-		 * ever.
-		 */
-		dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_ike_family()",
-			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
+	/* ??? should we support fragmenting?  Maybe one day. */
+	record_v2_message(ike, &reply_stream, "reply packet for process_encrypted_informational_ikev2",
+			  MESSAGE_RESPONSE);
+	send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
+				 MESSAGE_RESPONSE);
 
-		mobike_reset_remote(&ike->sa, &mobike_remote);
+	/*
+	 * XXX: This code should be neither using record 'n'
+	 * send (which leads to RFC violations because it
+	 * doesn't wait for an ACK) and/or be deleting the
+	 * state midway through a state transition.
+	 *
+	 * When DEL_IKE, the update isn't needed but what
+	 * ever.
+	 */
+	dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_ike_family()",
+		     __func__);
+	v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
 
-		/*
-		 * ... now we can delete the IKE SA if we want to.
-		 *
-		 * The response is hopefully empty.
-		 */
-		if (del_ike) {
-			delete_ike_family(ike, DONT_SEND_DELETE);
-			md->v1_st = NULL;
-			ike = NULL;
-		}
+	mobike_reset_remote(&ike->sa, &mobike_remote);
+
+	/*
+	 * ... now we can delete the IKE SA if we want to.
+	 *
+	 * The response is hopefully empty.
+	 */
+	if (del_ike) {
+		delete_ike_family(ike, DONT_SEND_DELETE);
+		md->v1_st = NULL;
+		ike = NULL;
 	}
 
 	/*
@@ -652,10 +600,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	/* count as DPD/liveness only if there was no Delete */
 	if (!del_ike && ndp == 0) {
-		if (responding)
-			pstats_ike_dpd_replied++;
-		else
-			pstats_ike_dpd_recv++;
+		pstats_ike_dpd_replied++;
 	}
 	return STF_OK;
 }
@@ -664,10 +609,8 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 					     struct child_sa *null_child,
 					     struct msg_digest *md)
 {
-	const bool responding = false;
 	pexpect(null_child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
-	bool del_ike = false;	/* any IKE SA Deletions? */
 	bool seen_and_parsed_redirect = FALSE;
 
 	/*
@@ -681,23 +624,17 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 */
 	struct connection *c = ike->sa.st_connection;
 	bool do_unroute = ike->sa.st_sent_redirect && c->kind == CK_PERMANENT;
-	chunk_t cookie2 = empty_chunk;
 
 	/*
 	 * Process NOTIFY payloads - ignore MOBIKE when deleting
 	 */
-	bool send_mobike_resp = false;	/* only if responding */
 
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		if (responding) {
-			process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
+		if (process_mobike_resp(md)) {
+			log_state(RC_LOG, &ike->sa,
+				  "MOBIKE response: updating IPsec SA");
 		} else {
-			if (process_mobike_resp(md)) {
-				log_state(RC_LOG, &ike->sa,
-					  "MOBIKE response: updating IPsec SA");
-			} else {
-				dbg("MOBIKE response: not updating IPsec SA");
-			}
+			dbg("MOBIKE response: not updating IPsec SA");
 		}
 	} else {
 		/*
@@ -718,26 +655,9 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
-				if (!responding) {
-					log_state(RC_LOG, &ike->sa,
-						  "Response to Delete improperly includes IKE SA");
-					return STF_FAIL + v2N_INVALID_SYNTAX;
-				}
-
-				if (del_ike) {
-					log_state(RC_LOG, &ike->sa,
-						  "Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
-					return STF_FAIL + v2N_INVALID_SYNTAX;
-				}
-
-				if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
-					log_state(RC_LOG, &ike->sa,
-						  "IKE SA Delete has non-zero SPI size or number of SPIs");
-					return STF_FAIL + v2N_INVALID_SYNTAX;
-				}
-
-				del_ike = true;
-				break;
+				log_state(RC_LOG, &ike->sa,
+					  "Response to Delete improperly includes IKE SA");
+				return STF_FAIL + v2N_INVALID_SYNTAX;
 
 			case PROTO_IPSEC_AH:
 			case PROTO_IPSEC_ESP:
@@ -764,10 +684,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 					  "Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 			}
 		}
-
-		if (del_ike && ndp != 0)
-			log_state(RC_LOG, &ike->sa,
-				  "Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
 	/*
@@ -786,60 +702,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 */
 
 	/*
-	 * Variables for generating response.
-	 * NOTE: only meaningful if "responding" is true!
-	 * These declarations must be placed so early because they must be in scope for
-	 * all of the several chunks of code that handle responding.
-	 *
-	 * XXX: in terms of readability and reliability, this
-	 * interleaving of initiator vs response code paths is pretty
-	 * screwed up.
-	 */
-
-	struct pbs_out reply_stream;
-	pb_stream rbody;
-	v2SK_payload_t sk;
-	zero(&rbody);
-	zero(&sk);
-
-	if (responding) {
-		/* make sure HDR is at start of a clean buffer */
-		reply_stream = open_pbs_out("information exchange reply packet",
-					    reply_buffer, sizeof(reply_buffer),
-					    ike->sa.st_logger);
-
-
-		/* authenticated decrypted response - It's alive, alive! */
-		dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
-		ike->sa.st_last_liveness = mononow();
-		ike->sa.st_pend_liveness = false;
-
-		/* HDR out */
-
-		rbody = open_v2_message(&reply_stream, ike,
-					md /* response */,
-					ISAKMP_v2_INFORMATIONAL);
-		if (!pbs_ok(&rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-
-		/* insert an Encryption payload header */
-
-		sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-		if (!pbs_ok(&sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-
-		if (send_mobike_resp) {
-			stf_status e = add_mobike_response_payloads(
-				&cookie2,	/* will be freed */
-				md, &sk.pbs);
-			if (e != STF_OK)
-				return e;
-		}
-	}
-
-	/*
 	 * This happens when we are original initiator,
 	 * and we received REDIRECT payload during the active
 	 * session.
@@ -849,10 +711,9 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 
 	/*
 	 * Do the actual deletion.
-	 * If responding, build the body of the response.
 	 */
 
-	if (!responding && ike->sa.st_state->kind == STATE_IKESA_DEL) {
+	if (ike->sa.st_state->kind == STATE_IKESA_DEL) {
 		/*
 		 * this must be a response to our IKE SA delete request
 		 * Even if there are are other Delete Payloads,
@@ -861,30 +722,18 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 		delete_ike_family(ike, DONT_SEND_DELETE);
 		md->v1_st = NULL;
 		ike = NULL;
-	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
+	} else if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		/*
 		 * A liveness update response is handled here
 		 */
 		dbg("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending.");
 		ike->sa.st_last_liveness = mononow();
 		ike->sa.st_pend_liveness = false;
-	} else if (del_ike) {
-		/*
-		 * If we are deleting the Parent SA, the Child SAs will be torn down as well,
-		 * so no point processing the other Delete SA payloads.
-		 * We won't catch nonsense in those payloads.
-		 *
-		 * But wait: we cannot delete the IKE SA until after
-		 * we've sent the response packet.  To be continued
-		 * below ...
-		 */
-		passert(responding);
 	} else {
 		/*
-		 * Pass 2 over the Delete Payloads:
-		 * Actual IPsec SA deletion.
-		 * If responding, build response Delete Payloads.
-		 * If there is no payload, this loop is a no-op.
+		 * Pass 2 over the Delete Payloads: Actual IPsec SA
+		 * deletion.  If there is no payload, this loop is a
+		 * no-op.
 		 */
 		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
 		     p != NULL; p = p->next) {
@@ -897,12 +746,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 			case PROTO_IPSEC_AH: /* Child SAs */
 			case PROTO_IPSEC_ESP: /* Child SAs */
 			{
-				/* stuff for responding */
-				ipsec_spi_t spi_buf[128];
-				uint16_t j = 0;	/* number of SPIs in spi_buf */
-				uint16_t i;
-
-				for (i = 0; i < v2del->isad_nrspi; i++) {
+				for (unsigned i = 0; i < v2del->isad_nrspi; i++) {
 					ipsec_spi_t spi;
 
 					diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
@@ -953,52 +797,10 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 						/* st is a parent */
 						passert(&ike->sa != &dst->sa);
 						passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-						if (!del_ike && responding) {
-							struct ipsec_proto_info *pr =
-								v2del->isad_protoid == PROTO_IPSEC_AH ?
-								&dst->sa.st_ah :
-								&dst->sa.st_esp;
-
-							if (j < elemsof(spi_buf)) {
-								spi_buf[j] = pr->our_spi;
-								j++;
-							} else {
-								log_state(RC_LOG, &ike->sa,
-									  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-									  ntohl(spi));
-							}
-						}
 						delete_or_replace_child(ike, dst);
 					}
 				} /* for each spi */
 
-				if (!del_ike && responding) {
-					/* build output Delete Payload */
-					struct ikev2_delete v2del_tmp = {
-						.isad_protoid = v2del->isad_protoid,
-						.isad_spisize = v2del->isad_spisize,
-						.isad_nrspi = j,
-					};
-
-					/* Emit delete payload header and SPI values */
-					pb_stream del_pbs;	/* output stream */
-
-					if (!out_struct(&v2del_tmp,
-							&ikev2_delete_desc,
-							&sk.pbs,
-							&del_pbs))
-						return false;
-					diag_t d = pbs_out_raw(&del_pbs,
-							       spi_buf,
-							       j * sizeof(spi_buf[0]),
-							       "local SPIs");
-					if (d != NULL) {
-						llog_diag(RC_LOG_SERIOUS, sk.logger, &d, "%s", "");
-						return STF_INTERNAL_ERROR;
-					}
-
-					close_output_pbs(&del_pbs);
-				}
 			}
 			break;
 
@@ -1007,73 +809,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 				break;
 			}
 		}  /* for each Delete Payload */
-	}
-
-	if (responding) {
-		/*
-		 * We've now build up the content (if any) of the Response:
-		 *
-		 * - empty, if there were no Delete Payloads or if we are
-		 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
-		 *   Treat as a check for liveness.  Correct response is this
-		 *   empty Response.
-		 *
-		 * - if an ISAKMP SA is mentioned in input message,
-		 *   we are sending an empty Response, as per standard.
-		 *
-		 * - for IPsec SA mentioned, we are sending its mate.
-		 *
-		 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a COOKIE2
-		 *
-		 * Close up the packet and send it.
-		 */
-
-		/* const size_t len = pbs_offset(&sk.pbs); */
-		if (!close_v2SK_payload(&sk)) {
-			return STF_INTERNAL_ERROR;
-		}
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-;
-		stf_status ret = encrypt_v2SK_payload(&sk);
-		if (ret != STF_OK)
-			return ret;
-
-		struct mobike mobike_remote;
-
-		mobike_switch_remote(md, &mobike_remote);
-
-		/* ??? should we support fragmenting?  Maybe one day. */
-		record_v2_message(ike, &reply_stream, "reply packet for process_encrypted_informational_ikev2",
-				  MESSAGE_RESPONSE);
-		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
-					 MESSAGE_RESPONSE);
-
-		/*
-		 * XXX: This code should be neither using record 'n'
-		 * send (which leads to RFC violations because it
-		 * doesn't wait for an ACK) and/or be deleting the
-		 * state midway through a state transition.
-		 *
-		 * When DEL_IKE, the update isn't needed but what
-		 * ever.
-		 */
-		dbg_v2_msgid(ike, &ike->sa, "XXX: in %s() hacking around record 'n' send bypassing send queue hacking around delete_ike_family()",
-			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
-
-		mobike_reset_remote(&ike->sa, &mobike_remote);
-
-		/*
-		 * ... now we can delete the IKE SA if we want to.
-		 *
-		 * The response is hopefully empty.
-		 */
-		if (del_ike) {
-			delete_ike_family(ike, DONT_SEND_DELETE);
-			md->v1_st = NULL;
-			ike = NULL;
-		}
 	}
 
 	/*
@@ -1091,11 +826,8 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	}
 
 	/* count as DPD/liveness only if there was no Delete */
-	if (!del_ike && ndp == 0) {
-		if (responding)
-			pstats_ike_dpd_replied++;
-		else
-			pstats_ike_dpd_recv++;
+	if (ndp == 0) {
+		pstats_ike_dpd_recv++;
 	}
 	return STF_OK;
 }
