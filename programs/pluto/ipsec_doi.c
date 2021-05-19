@@ -285,7 +285,7 @@ void initialize_new_state(struct state *st,
 	struct connection *c = st->st_connection;
 	pexpect(oriented(*c));
 	c->interface = NULL;
-	(void)orient(c);
+	orient(c, st->st_logger);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
 	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,

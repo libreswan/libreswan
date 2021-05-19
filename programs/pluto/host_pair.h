@@ -61,7 +61,7 @@ extern struct connection *connections;
 extern void update_host_pairs(struct connection *c);
 
 extern void release_dead_interfaces(struct logger *logger);
-extern void check_orientations(void);
+extern void check_orientations(struct logger *logger);
 
 void init_host_pair(void);
 

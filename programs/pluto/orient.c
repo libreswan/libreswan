@@ -146,9 +146,8 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }
 
-bool orient(struct connection *c)
+bool orient(struct connection *c, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
 	if (oriented(*c)) {
 		dbg("already oriented");
 		return true;

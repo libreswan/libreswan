@@ -2048,7 +2048,7 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
-	(void)orient(c);
+	orient(c, c->logger);
 
 	connect_to_host_pair(c);
 	/* non configurable */

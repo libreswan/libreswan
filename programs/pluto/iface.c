@@ -184,7 +184,7 @@ static void free_dead_ifaces(struct logger *logger)
 	 */
 	if (some_dead || some_new) {
 		dbg("updating interfaces - checking orientation");
-		check_orientations();
+		check_orientations(logger);
 	}
 }
 

@@ -2652,7 +2652,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	ike->sa.st_last_liveness = monotime_epoch;
 
 	delete_oriented_hp(c); /* hp list may have changed */
-	if (!orient(c)) {
+	if (!orient(c, ike->sa.st_logger)) {
 		pexpect_fail(ike->sa.st_logger, HERE,
 			     "%s after mobike failed", "orient");
 	}

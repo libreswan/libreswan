@@ -475,7 +475,7 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Adjust orientations of connections to reflect newly added interfaces. */
-void check_orientations(void)
+void check_orientations(struct logger *logger)
 {
 	/*
 	 * Try to orient unoriented connections by re-building the
@@ -490,7 +490,7 @@ void check_orientations(void)
 	while (c != NULL) {
 		/* step off */
 		struct connection *nxt = c->hp_next;
-		orient(c);
+		orient(c, logger);
 		/*
 		 * Either put C back on unoriented, or add to a host
 		 * pair.
@@ -536,7 +536,7 @@ void check_orientations(void)
 						c->interface = NULL;
 						c->host_pair = NULL;
 						c->hp_next = NULL;
-						orient(c);
+						orient(c, logger);
 						connect_to_host_pair(c);
 						c = nxt;
 					}

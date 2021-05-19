@@ -550,7 +550,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
+	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
@@ -1008,7 +1008,7 @@ void connection_check_ddns(struct logger *logger)
 		cnext = c->ac_next;
 		connection_check_ddns1(c, logger);
 	}
-	check_orientations();
+	check_orientations(logger);
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
 }
