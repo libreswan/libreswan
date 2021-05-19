@@ -31,7 +31,7 @@ struct fd {
 	refcnt_t refcnt;
 };
 
-struct fd *dup_any_fd(struct fd *fd, where_t where)
+struct fd *fd_dup(struct fd *fd, where_t where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
 	refcnt_addref(fd, where);

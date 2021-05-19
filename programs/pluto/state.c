@@ -395,10 +395,12 @@ union sas { struct child_sa child; struct ike_sa ike; struct state st; };
 static struct state *new_state(struct connection *c,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
-			       enum sa_type sa_type, struct fd *whackfd)
+			       enum sa_type sa_type,
+			       struct fd *whackfd,
+			       where_t where)
 {
 	static so_serial_t next_so = SOS_FIRST;
-	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
+	union sas *sas = alloc_thing(union sas, "struct state");
 	passert(&sas->st == &sas->child.sa);
 	passert(&sas->st == &sas->ike.sa);
 	struct state *st = &sas->st;
@@ -415,8 +417,8 @@ static struct state *new_state(struct connection *c,
 	};
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
-	st->st_logger = alloc_logger(st, &logger_state_vec, HERE);
-	st->st_logger->object_whackfd = dup_any(whackfd);
+	st->st_logger = alloc_logger(st, &logger_state_vec, where);
+	st->st_logger->object_whackfd = fd_dup(whackfd, where);
 
 	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
 	st->hidden_variables.st_natd = ipv4_info.address.any;
@@ -430,8 +432,8 @@ static struct state *new_state(struct connection *c,
 
 struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd)
 {
-	struct state *st = new_state(c, ike_initiator_spi(),
-				     zero_ike_spi, IKE_SA, whackfd);
+	struct state *st = new_state(c, ike_initiator_spi(), zero_ike_spi,
+				     IKE_SA, whackfd, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	return ike;
 }
@@ -440,7 +442,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 {
 	struct state *st = new_state(c, md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender, md->md_logger),
-				     IKE_SA, null_fd);
+				     IKE_SA, null_fd, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	update_ike_endpoints(ike, md);
 	return ike;
@@ -455,7 +457,7 @@ struct ike_sa *new_v2_ike_state(struct connection *c,
 				int try, struct fd *whack_sock)
 {
 	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
-				     IKE_SA, whack_sock);
+				     IKE_SA, whack_sock, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	ike->sa.st_sa_role = sa_role;
 	const struct finite_state *fs = finite_states[transition->state];
@@ -722,7 +724,7 @@ static void send_delete(struct state *st)
 
 		/* XXX: something better? */
 		struct fd *ike_whack = ike->sa.st_logger->global_whackfd;
-		ike->sa.st_logger->global_whackfd = dup_any(st->st_logger->global_whackfd);
+		ike->sa.st_logger->global_whackfd = fd_dup(st->st_logger->global_whackfd, HERE);
 
 		record_v2_delete(ike, st);
 		send_recorded_v2_message(ike, "delete notification",
@@ -1304,7 +1306,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 			if ((*comparefunc)(this, c)) {
 				/* XXX: something better? */
 				close_any(&this->st_logger->global_whackfd);
-				this->st_logger->global_whackfd = dup_any(c->logger->global_whackfd);
+				this->st_logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
 				delete_state(this);
 			}
 		}
@@ -1334,7 +1336,7 @@ void delete_states_dead_interfaces(struct logger *logger)
 				    this->st_serialno, id_vname);
 			/* XXX: better? */
 			close_any(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = dup_any(logger->global_whackfd);
+			this->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 			delete_state(this);
 			/* note: no md->v1_st to clear */
 		}
@@ -1461,7 +1463,7 @@ static struct state *duplicate_state(struct connection *c,
 	nst = new_state(c,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
-			sa_type, whackfd);
+			sa_type, whackfd, HERE);
 
 	connection_buf cib;
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
@@ -2761,7 +2763,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	    &ike->sa != st &&
 	    fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
-		st->st_logger->global_whackfd = dup_any(ike->sa.st_logger->global_whackfd);
+		st->st_logger->global_whackfd = fd_dup(ike->sa.st_logger->global_whackfd, HERE);
 	}
 	switch (st->st_ike_version) {
 	case IKEv1:

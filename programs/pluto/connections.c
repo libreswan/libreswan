@@ -304,7 +304,7 @@ static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct
 {
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd); /* freed by discard_conection() */
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE); /* freed by discard_conection() */
 
 	delete_connection(&c, false);
 	return 1;
@@ -2069,7 +2069,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
@@ -2187,7 +2187,7 @@ struct connection *add_group_instance(struct connection *group,
 	if (group->policy & POLICY_GROUTED) {
 		/* XXX: something better? */
 		close_any(&t->logger->global_whackfd);
-		t->logger->global_whackfd = dup_any(group->logger->global_whackfd);
+		t->logger->global_whackfd = fd_dup(group->logger->global_whackfd, HERE);
 		if (!trap_connection(t)) {
 			llog(WHACK_STREAM|RC_ROUTE, group->logger,
 			     "could not route");
@@ -4321,7 +4321,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	dbg("connection instance %s is not being used, deleting", c->name);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = fd_dup(whackfd, HERE);
 	delete_connection(&c, false);
 }
 

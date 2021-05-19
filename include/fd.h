@@ -42,8 +42,7 @@ struct fd;
 
 struct fd *fd_accept(int socket, where_t where, struct logger *logger);
 
-#define dup_any(FD) dup_any_fd((FD), HERE)
-struct fd *dup_any_fd(struct fd *fd, where_t where);
+struct fd *fd_dup(struct fd *fd, where_t where);
 
 #define close_any(FD) close_any_fd((FD), HERE)
 void close_any_fd(struct fd **fd, where_t where);
@@ -70,7 +69,7 @@ bool same_fd(const struct fd *l, const struct fd *r);
  * PRI_... names are consistent with shunk_t and hopefully avoid
  * clashes with reserved PRI* names.
  */
-#define PRI_FD "fd-fd@%p"
+#define PRI_FD "fd@%p"
 #define pri_fd(FD) (FD)
 
 #endif

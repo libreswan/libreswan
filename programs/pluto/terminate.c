@@ -64,7 +64,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 {
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 	llog(RC_LOG, c->logger,
 	     "terminating SAs using this connection");
@@ -81,7 +81,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 			struct state *st = state_with_serialno(c->newest_ipsec_sa);
 			/* XXX: something better? */
 			close_any(&st->st_logger->global_whackfd);
-			st->st_logger->global_whackfd = dup_any(logger->global_whackfd);
+			st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 			delete_state(st);
 		}
 	} else {

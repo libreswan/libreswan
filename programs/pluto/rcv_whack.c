@@ -120,7 +120,7 @@ static struct logger merge_loggers(struct state *st, bool background, struct log
 	if (!background) {
 		/* XXX: something better */
 		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = dup_any(logger->global_whackfd);
+		st->st_logger->object_whackfd = fd_dup(logger->global_whackfd, HERE);
 	}
 	return loggers;
 }
@@ -219,7 +219,7 @@ static int whack_route_connection(struct connection *c,
 {
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 	if (!oriented(*c)) {
 		/* XXX: why whack only? */
@@ -547,7 +547,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			/* needs an abstraction */
 			close_any(&st->st_logger->global_whackfd);
-			st->st_logger->global_whackfd = dup_any(whackfd);
+			st->st_logger->global_whackfd = fd_dup(whackfd, HERE);
 			log_state(LOG_STREAM/*not-whack*/, st,
 				  "received whack to delete %s state #%lu %s",
 				  enum_name(&ike_version_names, st->st_ike_version),

@@ -568,8 +568,8 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	}
 	/* construct the clone */
 	struct logger heap = {
-		.global_whackfd = dup_any(stack->global_whackfd),
-		.object_whackfd = dup_any(stack->object_whackfd),
+		.global_whackfd = fd_dup(stack->global_whackfd, where),
+		.object_whackfd = fd_dup(stack->object_whackfd, where),
 		.where = stack->where,
 		.object_vec = object_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
@@ -597,7 +597,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	}
 	/* construct the clone */
 	struct logger logger = {
-		.global_whackfd = dup_any(whackfd),
+		.global_whackfd = fd_dup(whackfd, where),
 		.object_whackfd = null_fd,
 		.where = where,
 		.object_vec = &logger_string_vec,
@@ -612,8 +612,8 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 void free_logger(struct logger **logp, where_t where)
 {
 	dbg_free("logger", *logp, where);
-	close_any(&(*logp)->global_whackfd);
-	close_any(&(*logp)->object_whackfd);
+	close_any_fd(&(*logp)->global_whackfd, where);
+	close_any_fd(&(*logp)->object_whackfd, where);
 	/*
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.

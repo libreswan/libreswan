@@ -59,7 +59,7 @@ void reread_cert(struct fd *whackfd, struct connection *c)
 
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = fd_dup(whackfd, HERE);
 
 	dst = &c->spd.this;
 	reread_end_cert(dst, c->logger);

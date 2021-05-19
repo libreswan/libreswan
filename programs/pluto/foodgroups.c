@@ -377,7 +377,7 @@ void load_groups(struct logger *logger)
 					struct connection *g = np->group->connection;
 					/* XXX: something better? */
 					close_any(&g->logger->global_whackfd);
-					g->logger->global_whackfd = dup_any(logger->global_whackfd);
+					g->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
 					/* XXX: something better? */

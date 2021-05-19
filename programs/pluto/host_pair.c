@@ -318,7 +318,7 @@ void release_dead_interfaces(struct logger *logger)
 
 		/* XXX: something better? */
 		close_any(&c->logger->global_whackfd);
-		c->logger->global_whackfd = dup_any(logger->global_whackfd);
+		c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 		/*
 		 * This connection instance interface is going away.

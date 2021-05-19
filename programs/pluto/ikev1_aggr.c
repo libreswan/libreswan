@@ -23,7 +23,7 @@
 
 #include <unistd.h>
 
-#include "constants.h"		/* for dup_any()!?! ... */
+#include "constants.h"
 
 #include "defs.h"
 #include "state.h"
