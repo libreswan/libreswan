@@ -667,15 +667,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_start(ap, msg);
 	if (pexpect((st) != NULL) &&
 	    pexpect(in_main_thread())) {
-		struct logger logger = *(st->st_logger);
-		/*
-		 * XXX: the state logger still needs to pick up the
-		 * global whack FD :-(
-		 */
-		if (whack_log_fd != NULL) {
-			logger.global_whackfd = whack_log_fd;
-		}
-		llog_va_list(rc_flags, &logger, msg, ap);
+		llog_va_list(rc_flags, st->st_logger, msg, ap);
 	} else {
 		/* still get the message out */
 		llog_va_list(rc_flags, &failsafe_logger, msg, ap);
