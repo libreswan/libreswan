@@ -1119,6 +1119,7 @@ stf_status ikev2_in_IKE_AUTH_R_failure_notification(struct ike_sa *ike,
 	 * XXX: ST here should be the IKE SA.  The state machine,
 	 * however, directs the AUTH response to the CHILD!
 	 */
+	child = ike->sa.st_v2_larval_sa;
 	pexpect(child != NULL);
 
 	v2_notification_t n = md->svm->encrypted_payloads.notification;
@@ -1158,7 +1159,7 @@ stf_status ikev2_in_IKE_AUTH_R_failure_notification(struct ike_sa *ike,
 	}
 }
 
-stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *unused_ike UNUSED,
+stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 						    struct child_sa *child,
 						    struct msg_digest *md)
 {
@@ -1166,6 +1167,7 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *unused_ike UN
 	 * XXX: ST here should be the IKE SA.  The state machine,
 	 * however, directs the AUTH response to the CHILD!
 	 */
+	child = ike->sa.st_v2_larval_sa;
 	pexpect(child != NULL);
 
 	/*
@@ -1795,6 +1797,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
 						    ike->sa.st_logger->object_whackfd);
+	ike->sa.st_v2_larval_sa = child;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	child->sa.st_try = ike->sa.st_try;
@@ -1886,9 +1889,9 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike,
-					  NULL /* request */,
-					  ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       NULL /* request */,
+					       ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -3329,6 +3332,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 
 stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
+	child = ike->sa.st_v2_larval_sa;
 	pexpect(child != NULL);
 
 	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);

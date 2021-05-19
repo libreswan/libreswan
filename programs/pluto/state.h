@@ -410,6 +410,9 @@ struct state {
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+	/* for initiator during IKE_AUTH and CREATE_CHILD_SA */
+	struct child_sa *st_v2_larval_sa;
+
 	const struct state_v2_microcode *st_v2_last_transition;
 	const struct state_v2_microcode *st_v2_transition;
 
