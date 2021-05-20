@@ -44,8 +44,10 @@
 
 #include "ikev2_mobike.h"
 
+static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md, pb_stream *pbs);
+
 /* can an established state initiate or respond to mobike probe */
-bool mobike_check_established(const struct state *st)
+static bool mobike_check_established(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
@@ -56,46 +58,134 @@ bool mobike_check_established(const struct state *st)
 	return ret;
 }
 
-bool process_mobike_resp(struct msg_digest *md)
+bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
+				 v2SK_payload_t *sk)
 {
-	struct state *st = md->v1_st;
-	struct ike_sa *ike = ike_sa(st, HERE);
-	bool may_mobike = mobike_check_established(st);
-	/* ??? there is currently no need for separate natd_[sd] variables */
-	bool natd_s = FALSE;
-	bool natd_d = FALSE;
-	struct payload_digest *ntfy;
-
-	if (!may_mobike) {
-		return FALSE;
+	if (!mobike_check_established(&ike->sa)) {
+		return true;
 	}
 
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-			natd_d =  TRUE;
-			dbg("TODO: process %s in MOBIKE response ",
-			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-			break;
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			natd_s = TRUE;
-			dbg("TODO: process %s in MOBIKE response ",
-			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+	shunk_t cookie2 = null_shunk;
+	bool ntfy_update_sa = false;
+	bool ntfy_natd = false;
 
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_UPDATE_SA_ADDRESSES:
+			ntfy_update_sa = TRUE;
+			dbg("Need to process v2N_UPDATE_SA_ADDRESSES");
+			break;
+
+		case v2N_NO_NATS_ALLOWED:
+			ike->sa.st_seen_nonats = TRUE;
+			break;
+
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			ntfy_natd = TRUE;
+			dbg("TODO: Need to process NAT DETECTION payload if we are initiator");
+			break;
+
+		case v2N_NO_ADDITIONAL_ADDRESSES:
+			dbg("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
+			break;
+
+		case v2N_COOKIE2:
+			/* copy cookie */
+			if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
+				dbg("MOBIKE COOKIE2 notify payload too big - ignored");
+			} else {
+				cookie2 = pbs_in_left_as_shunk(&ntfy->pbs);
+				if (DBGP(DBG_BASE)) {
+					DBG_dump_hunk("MOBIKE COOKIE2 received:", cookie2);
+				}
+			}
+			break;
+
+		case v2N_ADDITIONAL_IP4_ADDRESS:
+			dbg("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
+			/* not supported yet */
+			break;
+
+		case v2N_ADDITIONAL_IP6_ADDRESS:
+			dbg("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
+			/* not supported yet */
+			break;
+
+		default:
+			dbg("Received unexpected %s notify - ignored",
+			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 			break;
 		}
 	}
 
-	/* use of bitwise & on bool values is correct but odd */
-	bool ret  = natd_s & natd_d;
+	if (ntfy_update_sa) {
+		if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+			log_state(RC_LOG, &ike->sa,
+				  "Ignoring MOBIKE UPDATE_SA since we are behind NAT");
+		} else {
+			if (!update_mobike_endpoints(ike, md))
+				ntfy_natd = false;
+			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+		}
+	}
+
+	if (!ntfy_update_sa && ntfy_natd &&
+	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+		/*
+		 * If this is a MOBIKE probe, use the received IP:port
+		 * for only this reply packet, without updating IKE
+		 * endpoint and without UPDATE_SA.
+		 */
+		ike->sa.st_mobike_remote_endpoint = md->sender;
+	}
+
+	if (ntfy_update_sa) {
+		log_state(RC_LOG, &ike->sa,
+			  "MOBIKE request: updating IPsec SA by request");
+	} else {
+		dbg("MOBIKE request: not updating IPsec SA");
+	}
+
+	if (ntfy_natd) {
+		return add_mobike_response_payloads(cookie2, md, &sk->pbs);
+	}
+
+	return true;
+
+}
+
+void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
+{
+	bool may_mobike = mobike_check_established(&ike->sa);
+	if (!may_mobike) {
+		dbg("MOBIKE response: not updating IPsec SA");
+		return;
+	}
+
+	/* ??? there is currently no need for separate natd_[sd] variables */
+	bool natd_s = md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] != NULL;
+	bool natd_d = md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] != NULL;
+	bool ret = natd_s && natd_d;
+
+	/* XXX: keep testsuite happy */
+	if (natd_s) {
+		dbg("TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response ");
+	}
+	if (natd_d) {
+		dbg("TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
+	}
 
 	if (ret && !update_mobike_endpoints(ike, md)) {
 		/* IPs already updated from md */
-		return FALSE;
+		dbg("MOBIKE response: update MOBIKE failed; not updating IPsec SA");
+		return;
 	}
-	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
 
-	return ret;
+	log_state(RC_LOG, &ike->sa, "MOBIKE response: updating IPsec SA");
+	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+	return;
 }
 
 void mobike_reset_remote(struct state *st, struct mobike *est_remote)
@@ -130,25 +220,17 @@ void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote)
 	}
 }
 
-stf_status add_mobike_response_payloads(chunk_t *cookie2,	/* freed by us */
-					struct msg_digest *md,
-					pb_stream *pbs)
+bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md, struct pbs_out *pbs)
 {
 	dbg("adding NATD%s payloads to MOBIKE response",
-	    cookie2->len != 0 ? " and cookie2" : "");
-
-	stf_status r = STF_INTERNAL_ERROR;
+	    cookie2.len != 0 ? " and cookie2" : "");
 
 	struct state *st = md->v1_st;
 	/* assumptions from ikev2_out_nat_v2n() and caller */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
-	if (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
-	    (cookie2->len == 0 || emit_v2N_hunk(v2N_COOKIE2, *cookie2, pbs)))
-		r = STF_OK;
-
-	free_chunk_content(cookie2);
-	return r;
+	return (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
+		(cookie2.len == 0 || emit_v2N_hunk(v2N_COOKIE2, cookie2, pbs)));
 }
 
 #ifdef XFRM_SUPPORT

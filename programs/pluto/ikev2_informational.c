@@ -86,122 +86,48 @@ static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
 	}
 }
 
-/* currently we support only MOBIKE notifies and v2N_REDIRECT notify */
-static void process_informational_notify_req(struct msg_digest *md, bool *redirect, bool *ntfy_natd,
-		chunk_t *cookie2)
+/*
+ ***************************************************************
+ *                       Notify                            *****
+ ***************************************************************
+ */
+
+static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
+				 v2SK_payload_t *sk)
 {
-	struct payload_digest *ntfy;
-	struct state *st = md->v1_st;
-	struct ike_sa *ike = ike_sa(st, HERE);
-	bool may_mobike = mobike_check_established(st);
-	bool ntfy_update_sa = FALSE;
-	ip_address redirect_ip;
-
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_REDIRECT:
-			dbg("received v2N_REDIRECT in informational");
-			err_t e = parse_redirect_payload(&ntfy->pbs,
-							 st->st_connection->accept_redirect_to,
-							 NULL,
-							 &redirect_ip,
-							 ike->sa.st_logger);
-			if (e != NULL) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "warning: parsing of v2N_REDIRECT payload failed: %s", e);
-			} else {
-				*redirect = TRUE;
-				st->st_connection->temp_vars.redirect_ip = redirect_ip;
-			}
-			return;
-
-		case v2N_UPDATE_SA_ADDRESSES:
-			if (may_mobike) {
-				ntfy_update_sa = TRUE;
-				dbg("Need to process v2N_UPDATE_SA_ADDRESSES");
-			} else {
-				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring UPDATE_SA_ADDRESSES");
-			}
-			break;
-
-		case v2N_NO_NATS_ALLOWED:
-			if (may_mobike)
-				st->st_seen_nonats = TRUE;
-			else
-				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring v2N_NO_NATS_ALLOWED");
-			break;
-
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			*ntfy_natd = TRUE;
-			dbg("TODO: Need to process NAT DETECTION payload if we are initiator");
-			break;
-
-		case v2N_NO_ADDITIONAL_ADDRESSES:
-			if (may_mobike) {
-				dbg("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
-			} else {
-				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring NO_ADDITIONAL_ADDRESSES payload");
-			}
-			break;
-
-		case v2N_COOKIE2:
-			if (may_mobike) {
-				/* copy cookie */
-				if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
-					dbg("MOBIKE COOKIE2 notify payload too big - ignored");
-				} else {
-					const pb_stream *dc_pbs = &ntfy->pbs;
-
-					*cookie2 = clone_bytes_as_chunk(dc_pbs->cur, pbs_left(dc_pbs),
-									"saved cookie2");
-					DBG_dump_hunk("MOBIKE COOKIE2 received:", *cookie2);
-				}
-			} else {
-				log_state(RC_LOG, st, "Connection does not allow MOBIKE, ignoring COOKIE2");
-			}
-			break;
-
-		case v2N_ADDITIONAL_IP4_ADDRESS:
-			dbg("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
-			/* not supported yet */
-			break;
-		case v2N_ADDITIONAL_IP6_ADDRESS:
-			dbg("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
-			/* not supported yet */
-			break;
-
-		default:
-			dbg("Received unexpected %s notify - ignored",
-			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-			break;
-		}
-	}
-
-	if (ntfy_update_sa) {
-		if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-			log_state(RC_LOG, st, "Ignoring MOBIKE UPDATE_SA since we are behind NAT");
+	/*
+	 * This happens when we are original initiator, and we
+	 * received REDIRECT payload during the active session.
+	 *
+	 * It trumps everything else.  Should delete also be ignored?
+	 */
+	if (md->pd[PD_v2N_REDIRECT] != NULL) {
+		struct pbs_in pbs = md->pd[PD_v2N_REDIRECT]->pbs;
+		dbg("received v2N_REDIRECT in informational");
+		ip_address redirect_to;
+		err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->accept_redirect_to,
+						 NULL, &redirect_to, ike->sa.st_logger);
+		if (e != NULL) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "warning: parsing of v2N_REDIRECT payload failed: %s", e);
 		} else {
-			if (!update_mobike_endpoints(ike, md))
-				*ntfy_natd = FALSE;
-			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+			ike->sa.st_connection->temp_vars.redirect_ip = redirect_to;
+			event_force(EVENT_v2_REDIRECT, &ike->sa);
 		}
+		return true;
 	}
 
-	if (may_mobike && !ntfy_update_sa && *ntfy_natd &&
-	    !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-		/*
-		 * If this is a MOBIKE probe, use the received IP:port
-		 * for only this reply packet, without updating IKE
-		 * endpoint and without UPDATE_SA.
-		 */
-		st->st_mobike_remote_endpoint = md->sender;
+	if (!process_v2N_mobike_requests(ike, md, sk)) {
+		return false;
 	}
 
-	if (ntfy_update_sa)
-		log_state(RC_LOG, st, "MOBIKE request: updating IPsec SA by request");
-	else
-		dbg("MOBIKE request: not updating IPsec SA");
+	return true;
+}
+
+static bool process_v2N_responses(struct ike_sa *ike, struct msg_digest *md)
+{
+	process_v2N_mobike_responses(ike, md);
+	return true;
 }
 
 /*
@@ -227,7 +153,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	pexpect(null_child == NULL);
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = false;	/* any IKE SA Deletions? */
-	bool seen_and_parsed_redirect = FALSE;
 
 	/*
 	 * we need connection and boolean below
@@ -240,16 +165,55 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 */
 	struct connection *c = ike->sa.st_connection;
 	bool do_unroute = ike->sa.st_sent_redirect && c->kind == CK_PERMANENT;
-	chunk_t cookie2 = empty_chunk;
 
 	/*
-	 * Process NOTIFY payloads - ignore MOBIKE when deleting
+	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
+	 *
+	 * There can be at most one Delete Payload for an IKE SA.
+	 * It means that this very SA is to be deleted.
+	 *
+	 * For each non-IKE Delete Payload we receive,
+	 * we respond with a corresponding Delete Payload.
+	 * Note that that means we will have an empty response
+	 * if no Delete Payloads came in or if the only
+	 * Delete Payload is for an IKE SA.
+	 *
+	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
-	bool send_mobike_resp = false;	/* only if responding */
 
-	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		process_informational_notify_req(md, &seen_and_parsed_redirect, &send_mobike_resp, &cookie2);
-	} else {
+	/* make sure HDR is at start of a clean buffer */
+	struct pbs_out reply_stream = open_pbs_out("information exchange reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
+
+	/* authenticated decrypted request - It's alive, alive! */
+	dbg("Received an INFORMATIONAL request");
+	ike->sa.st_last_liveness = mononow();
+	ike->sa.st_pend_liveness = false;
+
+	/* HDR out */
+
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       md /* response */,
+					       ISAKMP_v2_INFORMATIONAL);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* insert an Encryption payload header */
+
+	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		if (!process_v2N_requests(ike, md, &sk)) {
+			return STF_FAIL + v2N_INVALID_SYNTAX;
+		}
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
 		/*
 		 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
 		 */
@@ -314,69 +278,10 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 				  "Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
-	/*
-	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
-	 *
-	 * There can be at most one Delete Payload for an IKE SA.
-	 * It means that this very SA is to be deleted.
-	 *
-	 * For each non-IKE Delete Payload we receive,
-	 * we respond with a corresponding Delete Payload.
-	 * Note that that means we will have an empty response
-	 * if no Delete Payloads came in or if the only
-	 * Delete Payload is for an IKE SA.
-	 *
-	 * If we received NAT detection payloads as per MOBIKE, send answers
-	 */
-
-	struct pbs_out reply_stream;
-	pb_stream rbody;
-	v2SK_payload_t sk;
-	zero(&rbody);
-	zero(&sk);
-
-	/* make sure HDR is at start of a clean buffer */
-	reply_stream = open_pbs_out("information exchange reply packet",
-				    reply_buffer, sizeof(reply_buffer),
-				    ike->sa.st_logger);
-
-
 	/* authenticated decrypted response - It's alive, alive! */
 	dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
 	ike->sa.st_last_liveness = mononow();
 	ike->sa.st_pend_liveness = false;
-
-	/* HDR out */
-
-	rbody = open_v2_message(&reply_stream, ike,
-				md /* response */,
-				ISAKMP_v2_INFORMATIONAL);
-	if (!pbs_ok(&rbody)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* insert an Encryption payload header */
-
-	sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	if (send_mobike_resp) {
-		stf_status e = add_mobike_response_payloads(
-			&cookie2,	/* will be freed */
-			md, &sk.pbs);
-		if (e != STF_OK)
-			return e;
-	}
-
-	/*
-	 * This happens when we are original initiator,
-	 * and we received REDIRECT payload during the active
-	 * session.
-	 */
-	if (seen_and_parsed_redirect)
-		event_force(EVENT_v2_REDIRECT, &ike->sa);
 
 	/*
 	 * Do the actual deletion, build the body of the response.
@@ -629,14 +534,13 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * Process NOTIFY payloads - ignore MOBIKE when deleting
 	 */
 
-	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		if (process_mobike_resp(md)) {
-			log_state(RC_LOG, &ike->sa,
-				  "MOBIKE response: updating IPsec SA");
-		} else {
-			dbg("MOBIKE response: not updating IPsec SA");
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		if (!process_v2N_responses(ike, md)) {
+			return STF_FATAL;
 		}
-	} else {
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
 		/*
 		 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
 		 */

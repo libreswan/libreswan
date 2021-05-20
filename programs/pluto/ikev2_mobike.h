@@ -16,15 +16,15 @@
 #ifndef IKEV2_MOBIKE_H
 #define IKEV2_MOBIKE_H
 
+#include "ikev2_message.h"		/* for v2SK_payload_t */
+
 extern void ikev2_addr_change(struct state *st);
 
 extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);
 
-stf_status add_mobike_response_payloads(chunk_t *cookie2,	/* freed by us */
-					struct msg_digest *md,
-					pb_stream *pbs);
-bool process_mobike_resp(struct msg_digest *md);
+bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md, v2SK_payload_t *sk);
+void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md);
 
 struct mobike {
 	ip_endpoint remote;
@@ -33,8 +33,5 @@ struct mobike {
 
 void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote);
 void mobike_reset_remote(struct state *st, struct mobike *est_remote);
-
-/* can an established state initiate or respond to mobike probe */
-bool mobike_check_established(const struct state *st);
 
 #endif
