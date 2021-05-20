@@ -57,16 +57,6 @@ extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-/* Context for logging.
- *
- * Global variables: must be carefully adjusted at transaction boundaries!
- * All are to be left in RESET condition and will be checked.
- * There are several pairs of routines to set and reset them.
- * If the context provides a whack file descriptor, messages
- * should be copied to it -- see whack_log()
- */
-extern struct fd *whack_log_fd;           /* only set during whack_handle() */
-
 extern bool whack_prompt_for(struct state *st, const char *prompt,
 			     bool echo, char *ansbuf, size_t ansbuf_len);
 

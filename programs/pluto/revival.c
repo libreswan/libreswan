@@ -209,10 +209,6 @@ static void revive_conns(struct logger *logger)
 	/*
 	 * XXX: Revive all listed connections regardless of their
 	 * DELAY.  See note above in add_revival().
-	 *
-	 * XXX: since this is called from the event loop, the global
-	 * whack_log_fd is invalid so specifying RC isn't exactly
-	 * useful.
 	 */
 	dbg("revive_conns() called");
 	while (revivals != NULL) {

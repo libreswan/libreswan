@@ -993,10 +993,8 @@ void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
 			return;
 		}
 
-		whack_log_fd = whackfd;
 		struct logger whack_logger[1] = { GLOBAL_LOGGER(whackfd), }; /*event-handler*/
 		whack_handle(whackfd, whack_logger);
-		whack_log_fd = null_fd;
 		close_any(&whackfd);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");

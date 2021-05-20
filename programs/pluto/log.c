@@ -64,14 +64,6 @@ static FILE *pluto_log_fp = NULL;
 char *pluto_stats_binary = NULL;
 
 /*
- * If valid, wack and log_whack streams write to this.
- *
- * (apparently) If the context provides a whack file descriptor,
- * messages should be copied to it -- see whack_log()
- */
-struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
-
-/*
  * Initialization.
  */
 
