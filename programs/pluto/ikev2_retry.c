@@ -182,14 +182,14 @@ void retransmit_v2_msg(struct state *st)
 	/* note: no md->st to clear */
 }
 
-bool ikev2_schedule_retry(struct state *st)
+void ikev2_schedule_retry(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 	if (try_limit > 0 && try >= try_limit) {
 		dbg("maximum number of retries reached - deleting state");
-		return false;
+		return;
 	}
 	LLOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
 		jam(buf, "scheduling retry attempt %ld of ", try);
@@ -212,11 +212,4 @@ bool ikev2_schedule_retry(struct state *st)
 	 * XXX: The child SA 'diging a hole' is likely a bug.
 	 */
 	release_pending_whacks(st, "scheduling a retry");
-
-	/*
-	 * XXX: Should the parent or child get re-scheduled?  Does it
-	 * flip to the parent when the child's timer expires?
-	 */
-	suppress_retransmits(st);
-	return true;
 }

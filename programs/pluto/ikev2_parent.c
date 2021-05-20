@@ -1151,12 +1151,12 @@ stf_status ikev2_in_IKE_AUTH_R_failure_notification(struct ike_sa *ike,
 	 *   to treat the information with caution.
 	 *
 	 * So assume MITM and schedule a retry.
+	 *
+	 * Continuing to retransmit is pointless - it will get back
+	 * the same response.
 	 */
-	if (ikev2_schedule_retry(&child->sa)) {
-		return STF_IGNORE; /* drop packet */
-	} else {
-		return STF_FATAL;
-	}
+	ikev2_schedule_retry(&child->sa);
+	return STF_FATAL;
 }
 
 stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
@@ -1181,7 +1181,6 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 	 *   ignored, and they should be logged.
 	 */
 
-	bool ignore = true;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
 		const char *name = enum_name_short(&ikev2_notify_names, n);
@@ -1191,7 +1190,7 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 			log_state(RC_LOG, &child->sa,
 				  "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
 				  name);
-			return STF_FATAL;
+			break;
 		}
 
 		if (n >= v2N_STATUS_FLOOR) {
@@ -1206,7 +1205,6 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 			}
 		} else {
 			pstat(ikev2_recv_notifies_e, n);
-			ignore = false;
 			if (name == NULL) {
 				log_state(RC_LOG, &child->sa,
 					  "IKE_AUTH response contained an unknown error notification (%d)", n);
@@ -1234,9 +1232,6 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 			}
 		}
 	}
-	if (ignore) {
-		return STF_IGNORE;
-	}
 	/*
 	 * 2.21.2.  Error Handling in IKE_AUTH
 	 *
@@ -1248,12 +1243,12 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 	 *   to treat the information with caution.
 	 *
 	 * So assume MITM and schedule a retry.
+	 *
+	 * Continuing to retransmit is pointless - it will get back
+	 * the same response.
 	 */
-	if (ikev2_schedule_retry(&child->sa)) {
-		return STF_IGNORE; /* drop packet */
-	} else {
-		return STF_FATAL;
-	}
+	ikev2_schedule_retry(&child->sa);
+	return STF_FATAL;
 }
 
 /* STATE_PARENT_I1: R1 --> I2
