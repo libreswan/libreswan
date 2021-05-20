@@ -961,7 +961,7 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
-/* extern initiator_function aggr_outI1; */	/* type assertion */
+
 void aggr_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,

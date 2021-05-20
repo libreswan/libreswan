@@ -233,8 +233,8 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
-			  c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label);
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label,
+			  background, c->logger);
 	return true;
 }
 
@@ -638,8 +638,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
 
-		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-				  c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label);
+		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
+				  b->background, b->logger);
 		endpoint_buf b1;
 		endpoint_buf b2;
 		dbg("initiate on demand using %s from %s to %s",
@@ -807,9 +807,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 	}
 
-	ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-			  c, c->policy, 1,
-			  SOS_NOBODY, &inception, b->sec_label);
+	ipsecdoi_initiate(c, c->policy, 1,
+			  SOS_NOBODY, &inception, b->sec_label,
+			  b->background, b->logger);
 }
 
 void initiate_ondemand(const ip_endpoint *local_client,

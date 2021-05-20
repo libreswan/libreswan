@@ -102,7 +102,7 @@
  * --> HDR;SA
  * Note: this is not called from demux.c
  */
-/* extern initiator_function main_outI1; */	/* type assertion */
+
 void main_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,

@@ -233,6 +233,9 @@ struct logger {
 	int timing_level;
 };
 
+#define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
+#define pri_logger(LOGGER) (LOGGER), (LOGGER) == NULL ? NULL : (LOGGER)->global_whackfd, (LOGGER) == NULL ? NULL : (LOGGER)->object_whackfd
+
 void llog(lset_t rc_flags,
 	  const struct logger *log,
 	  const char *format, ...) PRINTF_LIKE(3);

@@ -36,7 +36,6 @@ extern void process_packet_tail(struct msg_digest *md);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
-/* extern initiator_function main_outI1; */
 extern void main_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
@@ -45,7 +44,6 @@ extern void main_outI1(struct fd *whack_sock,
 		       const threadtime_t *inception,
 		       chunk_t sec_label);
 
-/* extern initiator_function aggr_outI1; */
 extern void aggr_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,

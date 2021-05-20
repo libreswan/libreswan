@@ -325,15 +325,13 @@ static bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype
  */
 static ke_and_nonce_cb ikev2_parent_outI1_continue;
 
-/* extern initiator_function ikev2_parent_outI1; */	/* type assertion */
-
-void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
-			     struct connection *c,
+void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 			     struct state *predecessor,
 			     lset_t policy,
 			     unsigned long try,
 			     const threadtime_t *inception,
-			     chunk_t sec_label)
+			     chunk_t sec_label,
+			     bool background, struct logger *logger)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -347,7 +345,7 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
 	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
 					      ike_initiator_spi(), zero_ike_spi,
-					      policy, try, whack_sock);
+					      policy, try, logger->global_whackfd);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
@@ -394,7 +392,7 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		add_pending(whack_sock, ike, c, policy, 1,
+		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    sec_label, true /*part of initiate*/);
 	}
@@ -404,7 +402,7 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 	 * This was, after all, triggered by something that happened
 	 * at this end.
 	 */
-	enum stream logger = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
+	enum stream log_stream = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
 
 	if (predecessor != NULL) {
 		/*
@@ -420,7 +418,7 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 		    enum_enum_name(&sa_type_names, predecessor->st_ike_version,
 				   predecessor->st_establishing_sa),
 		    predecessor->st_state->name);
-		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection to replace #%lu",
 			  predecessor->st_serialno);
 		if (IS_V2_ESTABLISHED(predecessor->st_state)) {
@@ -440,8 +438,17 @@ void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
 		}
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
-		log_state(logger | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection");
+	}
+
+	/*
+	 * XXX: hack: detach from whack _after_ the above message has
+	 * been logged.  Better to do that in the caller?
+	 */
+	if (background) {
+		close_any(&ike->sa.st_logger->object_whackfd);
+		close_any(&ike->sa.st_logger->global_whackfd);
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
@@ -4684,7 +4691,7 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 void ikev2_rekey_ike_start(struct ike_sa *ike)
 {
 	struct pending p = {
-		.whack_sock = ike->sa.st_logger->object_whackfd,/*on-stack*/
+		.whack_sock = ike->sa.st_logger->global_whackfd,/*on-stack*/
 		.ike = ike,
 		.connection = ike->sa.st_connection,
 		.policy = LEMPTY,
@@ -5086,7 +5093,7 @@ void v2_event_sa_rekey(struct state *st)
 		event_force(EVENT_SA_REPLACE, st);
 	}
 
-	dbg("rekeying stale %s SA", satype);
+	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
 	if (IS_IKE_SA(st)) {
 		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
 		ikev2_rekey_ike_start(pexpect_ike_sa(st));

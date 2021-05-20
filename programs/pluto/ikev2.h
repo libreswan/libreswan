@@ -33,14 +33,13 @@ typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
 					     struct msg_digest *md /* could be NULL */);
 
-/* extern initiator_function ikev2_parent_outI1; */
-extern void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
-				    struct connection *c,
+extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 				    struct state *predecessor,
 				    lset_t policy,
 				    unsigned long try,
 				    const threadtime_t *inception,
-				    chunk_t sec_label);
+				    chunk_t sec_label,
+				    bool background, struct logger *logger);
 
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
