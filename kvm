@@ -1,6 +1,6 @@
 #!/bin/sh
 
-pass1="sh modified"
+pass1="sh modified baseline"
 pass2="test diffs results retest upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status test-clean"
 
 if test $# = 0; then
@@ -40,6 +40,7 @@ fi
 
 ops=
 modified=
+baseline=
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -50,7 +51,20 @@ while test $# -gt 0 ; do
 		sh ) exec gmake kvmsh-$2 ;;
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
-		modified | --modified ) modified=modified- ;;
+		modified )
+		    modified=$(git status testing/pluto/ \
+				   | awk '/(modified|deleted|renamed):/ { print $NF }' \
+				   | grep '/.*/.*/' \
+				   | cut -d/ -f1-3 \
+				   | sort -u)
+		    if test -z "${modified}" ; then
+			echo "no modified tests" 1>&2
+			exit 1
+		    fi
+		    ;;
+		baseline )
+		    baseline=$(sed -n -e 's/KVM_BASELINE.*=//p' Makefile.inc.local)
+		    ;;
 		* ) # check first trailing argument is a directory
 		    if test ! -d "$1" ; then
 			if test -z "${ops}" ; then
@@ -67,13 +81,22 @@ while test $# -gt 0 ; do
     shift
 done
 
+if test -n "${modified}" ; then
+    if test -z "${ops}" ; then
+	echo "${modified}"
+	exit 0
+    elif test $# -ne 0 ; then
+	echo "both modified and tests specified" 1>&2
+	exit 1
+    fi
+    set ${modified}
+elif test $# -eq 0 ; then
+    set testing/pluto
+fi
+
 if test -z "${ops}" ; then
     echo "nothing to do!" 1>&2
     exit 1
-fi
-
-if test $# -eq 0 ; then
-    set testing/pluto
 fi
 
 # second pass
@@ -87,14 +110,28 @@ for op in ${ops} ; do
 	    gmake kvm-${op} || exit $?
 	    ;;
 	test | retest )
-	    gmake kvm-${modified}${op} KVM_TESTS="$*" || exit $?
+	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
-	diffs | results )
-	    gmake kvm-${modified}${op} KVM_TESTS="$*"
-	    status=$?
+	diffs )
+	    if test -n "${baseline}" ; then
+		./testing/utils/kvmresults.py --baseline ${baseline} --stats none "$*" | grep --line-buffered -e baseline-passed | while read test eol ; do
+		    gmake kvm-diffs KVM_TESTS="${test}" "KVMRESULTS_FLAGS+=--stats none"
+		done
+	    else
+		gmake kvm-diffs KVM_TESTS="$*"
+		status=$?
+	    fi
+	    ;;
+	results )
+	    if test -n "${baseline}" ; then
+		./testing/utils/kvmresults.py --baseline ${baseline} "$*" | grep --line-buffered -e baseline-passed
+	    else
+		gmake kvm-results KVM_TESTS="$*"
+		status=$?
+	    fi
 	    ;;
 	patch )
-	    gmake kvm-${modified}diffs KVM_TESTS="$*" | patch -p1
+	    gmake kvm-diffs KVM_TESTS="$*" | patch -p1
 	    ;;
 	keys )
 	    gmake kvm-keys-clean kvm-keys
