@@ -451,13 +451,13 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	if (ret != STF_OK)
 		return ret;
 
+	/* ??? should we support fragmenting?  Maybe one day. */
+	record_v2_message(ike, &reply_stream, "v2 INFORMATIONAL response", MESSAGE_RESPONSE);
+
 	struct mobike mobike_remote;
 
 	mobike_switch_remote(md, &mobike_remote);
 
-	/* ??? should we support fragmenting?  Maybe one day. */
-	record_v2_message(ike, &reply_stream, "reply packet for process_encrypted_informational_ikev2",
-			  MESSAGE_RESPONSE);
 	send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
 				 MESSAGE_RESPONSE);
 
