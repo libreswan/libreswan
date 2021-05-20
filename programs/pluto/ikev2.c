@@ -2014,7 +2014,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * If a request, should it send an un-encrypted
 		 * v2N_INVALID_SYNTAX?
 		 */
-		log_state(RC_LOG, st, "no useful state microcode entry found for incoming packet");
+		log_state(RC_LOG, &ike->sa, "no useful state microcode entry found for incoming packet");
 		/* "dropping message with no matching microcode" */
 		return;
 	}
