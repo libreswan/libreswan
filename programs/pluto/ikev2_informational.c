@@ -189,7 +189,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	/* authenticated decrypted request - It's alive, alive! */
 	dbg("Received an INFORMATIONAL request");
 	ike->sa.st_last_liveness = mononow();
-	ike->sa.st_pend_liveness = false;
 
 	/* HDR out */
 
@@ -281,7 +280,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	/* authenticated decrypted response - It's alive, alive! */
 	dbg("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness");
 	ike->sa.st_last_liveness = mononow();
-	ike->sa.st_pend_liveness = false;
 
 	/*
 	 * Do the actual deletion, build the body of the response.
@@ -632,7 +630,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 		 */
 		dbg("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending.");
 		ike->sa.st_last_liveness = mononow();
-		ike->sa.st_pend_liveness = false;
 	} else {
 		/*
 		 * Pass 2 over the Delete Payloads: Actual IPsec SA

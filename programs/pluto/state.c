@@ -2650,7 +2650,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	pexpect_st_local_endpoint(&child->sa);
 
 	/* reset liveness */
-	ike->sa.st_pend_liveness = FALSE;
 	ike->sa.st_last_liveness = monotime_epoch;
 
 	delete_oriented_hp(c); /* hp list may have changed */

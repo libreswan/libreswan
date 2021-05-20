@@ -625,7 +625,6 @@ stf_status record_v2_informational_request(const char *name,
 		return ret;
 	}
 
-	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 	record_v2_message(ike, &packet, name, MESSAGE_REQUEST);
 	return STF_OK;
 }

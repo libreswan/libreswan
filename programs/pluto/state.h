@@ -695,7 +695,6 @@ struct state {
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
-	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct pluto_event *st_liveness_event;	/* IKEv2 only event */
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
