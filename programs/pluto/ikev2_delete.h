@@ -21,8 +21,13 @@
 struct state;
 struct ike_sa;
 struct child_sa;
+struct v2SK_payload;
 
 bool record_v2_delete(struct ike_sa *ike, struct state *st);
 void initiate_v2_delete(struct ike_sa *ike, struct state *st);
+
+bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
+			  struct v2SK_payload *sk);
+bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
 
 #endif
