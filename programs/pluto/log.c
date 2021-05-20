@@ -649,7 +649,7 @@ void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 	passert(p != NULL);
 	struct logger logger = {
 		.where = HERE,
-		.global_whackfd = whack_log_fd,
+		.global_whackfd = null_fd,
 		.object_whackfd = p->whack_sock,
 		.object = p->connection,
 		.object_vec = &logger_connection_vec,
