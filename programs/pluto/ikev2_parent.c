@@ -1533,7 +1533,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDI
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1898,7 +1898,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* insert an Encryption payload header (SK) */
 
-	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -2399,7 +2399,7 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
 
 		/* insert an Encryption payload header (SK) */
 
-		v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+		struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 		if (!pbs_ok(&sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -2949,7 +2949,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -4551,7 +4551,7 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}

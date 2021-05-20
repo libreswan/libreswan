@@ -93,7 +93,7 @@ static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
  */
 
 static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
-				 v2SK_payload_t *sk)
+				 struct v2SK_payload *sk)
 {
 	/*
 	 * This happens when we are original initiator, and we
@@ -202,7 +202,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	/* insert an Encryption payload header */
 
-	v2SK_payload_t sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}

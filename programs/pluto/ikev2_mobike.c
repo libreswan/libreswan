@@ -41,6 +41,7 @@
 #include "kernel.h"
 #include "addr_lookup.h"
 #include "ipsecconf/confread.h"
+#include "ikev2_message.h"
 
 #include "ikev2_mobike.h"
 
@@ -59,7 +60,7 @@ static bool mobike_check_established(struct state *st)
 }
 
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
-				 v2SK_payload_t *sk)
+				 struct v2SK_payload *sk)
 {
 	if (!mobike_check_established(&ike->sa)) {
 		return true;

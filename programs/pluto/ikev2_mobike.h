@@ -16,14 +16,15 @@
 #ifndef IKEV2_MOBIKE_H
 #define IKEV2_MOBIKE_H
 
-#include "ikev2_message.h"		/* for v2SK_payload_t */
+struct v2SK_payload;
 
 extern void ikev2_addr_change(struct state *st);
 
 extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);
 
-bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md, v2SK_payload_t *sk);
+bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
+				 struct v2SK_payload *sk);
 void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md);
 
 struct mobike {

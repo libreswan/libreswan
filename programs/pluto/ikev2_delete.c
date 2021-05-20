@@ -44,7 +44,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 		return false;
 	}
 
-	v2SK_payload_t sk = open_v2SK_payload(st->st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(st->st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return false;
 	}
