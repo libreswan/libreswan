@@ -2555,7 +2555,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			 */
 			dbg("checking that a retransmit timeout_event was already");
 			delete_event(st); /* relying on retransmit */
-			pexpect(st->st_retransmit_event != NULL);
+			pexpect(ike->sa.st_retransmit_event != NULL);
 			pexpect(transition->send == MESSAGE_REQUEST);
 			break;
 

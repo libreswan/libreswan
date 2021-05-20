@@ -99,7 +99,7 @@ void retransmit_v2_msg(struct state *st)
 		return;
 	}
 
-	switch (retransmit(st)) {
+	switch (retransmit(&ike->sa)) {
 	case RETRANSMIT_YES:
 		send_recorded_v2_message(ike, "EVENT_RETRANSMIT",
 					 MESSAGE_REQUEST);
