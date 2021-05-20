@@ -186,10 +186,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 						   reply_buffer, sizeof(reply_buffer),
 						   ike->sa.st_logger);
 
-	/* authenticated decrypted request - It's alive, alive! */
-	dbg("Received an INFORMATIONAL request");
-	ike->sa.st_last_liveness = mononow();
-
 	/* HDR out */
 
 	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
@@ -505,8 +501,14 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		unroute_connection(c);
 	}
 
-	/* count as DPD/liveness only if there was no Delete */
-	if (!del_ike && ndp == 0) {
+	/* authenticated decrypted request - It's alive, alive! */
+	dbg("Received an INFORMATIONAL request");
+	ike->sa.st_last_liveness = mononow();
+
+	/*
+	 * Only count empty requests as liveness probes.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE) {
 		pstats_ike_dpd_replied++;
 	}
 	return STF_OK;
@@ -619,13 +621,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * Do the actual deletion.
 	 */
 
-	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		/*
-		 * A liveness update response is handled here
-		 */
-		dbg("Received an INFORMATIONAL non-delete request; updating liveness, no longer pending.");
-		ike->sa.st_last_liveness = mononow();
-	} else {
+	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
 		/*
 		 * Pass 2 over the Delete Payloads: Actual IPsec SA
 		 * deletion.  If there is no payload, this loop is a
@@ -721,8 +717,12 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 		unroute_connection(c);
 	}
 
-	/* count as DPD/liveness only if there was no Delete */
-	if (ndp == 0) {
+	/*
+	 * Only count empty responses as liveness.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE) {
+		dbg("Received an INFORMATIONAL liveness response");
+		ike->sa.st_last_liveness = mononow();
 		pstats_ike_dpd_recv++;
 	}
 	return STF_OK;
