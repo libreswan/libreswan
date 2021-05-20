@@ -2110,11 +2110,8 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 		/* MD.ST may have been freed! */
-		dbg("processor '%s' for #%lu suppresed complete st_v2_transition%s",
-		    svm->story, st->st_serialno,
-		    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
-		     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
-		     ""));
+		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
+		    svm->story, old_st);
 		return;
 	}
 

@@ -454,6 +454,41 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	/* ??? should we support fragmenting?  Maybe one day. */
 	record_v2_message(ike, &reply_stream, "v2 INFORMATIONAL response", MESSAGE_RESPONSE);
 
+	/*
+	 * ... now we can delete the IKE SA if we want to.
+	 * The response is hopefully empty.
+	 */
+	if (del_ike) {
+		/*
+		 * Record 'n' send the message inline.  Should be
+		 * handling this better.  Perhaps signaling the death
+		 * by returning STF_ZOMBIFY?  Tthe IKE SA should
+		 * linger so that it can sink retransmits.
+		 *
+		 * Since the IKE SA is about to disappear the update
+		 * isn't needed but what ever (i.e., be consistent).
+		 */
+		send_recorded_v2_message(ike, "v2_INFORMATIONAL IKE SA Delete response",
+					 MESSAGE_RESPONSE);
+		dbg_v2_msgid(ike, &ike->sa,
+			     "XXX: in %s() hacking around record 'n' send as calling delete_ike_family() inline",
+			     __func__);
+		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
+		/*
+		 * Danger!
+		 *
+		 * The call to delete_ike_family() deletes this IKE
+		 * SA.  Signal this up the chain by returning
+		 * STF_SKIP_COMPLETE_STATE_TRANSITION.
+		 *
+		 * Killing .v1_st is an extra safety net.
+		 */
+		delete_ike_family(ike, DONT_SEND_DELETE);
+		md->v1_st = NULL;
+		ike = NULL;
+		return STF_SKIP_COMPLETE_STATE_TRANSITION;
+	}
+
 	struct mobike mobike_remote;
 
 	mobike_switch_remote(md, &mobike_remote);
@@ -475,17 +510,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
 
 	mobike_reset_remote(&ike->sa, &mobike_remote);
-
-	/*
-	 * ... now we can delete the IKE SA if we want to.
-	 *
-	 * The response is hopefully empty.
-	 */
-	if (del_ike) {
-		delete_ike_family(ike, DONT_SEND_DELETE);
-		md->v1_st = NULL;
-		ike = NULL;
-	}
 
 	/*
 	 * This is a special case. When we have site to site connection
@@ -615,16 +639,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * Do the actual deletion.
 	 */
 
-	if (ike->sa.st_state->kind == STATE_IKESA_DEL) {
-		/*
-		 * this must be a response to our IKE SA delete request
-		 * Even if there are are other Delete Payloads,
-		 * they cannot matter: we delete the family.
-		 */
-		delete_ike_family(ike, DONT_SEND_DELETE);
-		md->v1_st = NULL;
-		ike = NULL;
-	} else if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
+	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		/*
 		 * A liveness update response is handled here
 		 */
