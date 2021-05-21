@@ -99,17 +99,6 @@ void free_logger(struct logger **logp, where_t where);
 	}
 
 /*
- * Log with no context.
- */
-
-#define log_global(RC, WHACKFD, MESSAGE, ...)				\
-	{								\
-		struct logger log_ = GLOBAL_LOGGER(WHACKFD);		\
-		llog(RC,	&log_,					\
-			    MESSAGE,##__VA_ARGS__);			\
-	}
-
-/*
  * Log with a connection context.
  *
  * Unlike state and pending, connections do not have an attached
