@@ -256,16 +256,16 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		unroute_connection(c);
 	}
 
-	/* authenticated decrypted request - It's alive, alive! */
-	dbg("Received an INFORMATIONAL request");
-	ike->sa.st_last_liveness = mononow();
-
 	/*
 	 * Only count empty requests as liveness probes.
 	 */
 	if (md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE) {
+		dbg("received an INFORMATIONAL liveness check request");
 		pstats_ike_dpd_replied++;
 	}
+
+	/* authenticated decrypted request - It's alive, alive! */
+	ike->sa.st_last_liveness = mononow();
 
 	return STF_OK;
 }
@@ -323,10 +323,13 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * Only count empty responses as liveness.
 	 */
 	if (md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE) {
-		dbg("Received an INFORMATIONAL liveness response");
-		ike->sa.st_last_liveness = mononow();
+		dbg("received an INFORMATIONAL liveness check response");
 		pstats_ike_dpd_recv++;
 	}
+
+	/* authenticated decrypted response - It's alive, alive! */
+	ike->sa.st_last_liveness = mononow();
+
 	return STF_OK;
 }
 
