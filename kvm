@@ -40,7 +40,8 @@ fi
 
 ops=
 modified=
-baseline=
+baseline=false
+__baseline=$(sed -n -e 's/KVM_BASELINE.*=/--baseline /p' Makefile.inc.local)
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -63,7 +64,11 @@ while test $# -gt 0 ; do
 		    fi
 		    ;;
 		baseline )
-		    baseline=$(sed -n -e 's/KVM_BASELINE.*=//p' Makefile.inc.local)
+		    if test -z "${__baseline}" ; then
+			echo "no KVM_BASELINE" 1&2
+			exit 1
+		    fi
+		    baseline=true
 		    ;;
 		* ) # check first trailing argument is a directory
 		    if test ! -d "$1" ; then
@@ -113,20 +118,22 @@ for op in ${ops} ; do
 	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
 	diffs )
-	    if test -n "${baseline}" ; then
-		./testing/utils/kvmresults.py --baseline ${baseline} --stats none "$*" | grep --line-buffered -e baseline-passed | while read test eol ; do
-		    gmake kvm-diffs KVM_TESTS="${test}" "KVMRESULTS_FLAGS+=--stats none"
+	    if ${baseline} ; then
+		./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
+		    | grep --line-buffered -e baseline-passed \
+		    | while read test eol ; do
+		    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
 		done
 	    else
-		gmake kvm-diffs KVM_TESTS="$*"
+		./testing/utils/kvmresults.py --stats none --print diffs "$@"
 		status=$?
 	    fi
 	    ;;
 	results )
-	    if test -n "${baseline}" ; then
-		./testing/utils/kvmresults.py --baseline ${baseline} "$*" | grep --line-buffered -e baseline-passed
+	    if ${baseline} ; then
+		./testing/utils/kvmresults.py ${__baseline} "$@" | grep --line-buffered -e baseline
 	    else
-		gmake kvm-results KVM_TESTS="$*"
+		./testing/utils/kvmresults.py ${__baseline} "$@"
 		status=$?
 	    fi
 	    ;;
