@@ -61,14 +61,6 @@ enum pluto_sadb_operations {
 
 #define IPSEC_PROTO_ANY         255
 
-/* KLIPS has:
- * #define ERO_DELETE	SADB_X_DELFLOW
- * #define ERO_ADD	SADB_X_ADDFLOW
- * #define ERO_REPLACE	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_REPLACEFLOW << ERO_FLAG_SHIFT))
- * #define ERO_ADD_INBOUND	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
- * #define ERO_DEL_INBOUND	(SADB_X_DELFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
- */
-
 struct pfkey_proto_info {
 	int proto;
 	int mode;
@@ -80,7 +72,8 @@ extern const struct pfkey_proto_info null_proto_info[2];
 struct sadb_msg;
 
 /*
- * replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values
+ * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
+ * SADB_SATYPE values
  *
  * XXX: Seems largely redundant.  Only place that eroute and
  * ip_protocol have different "values" is when netkey is inserting a
@@ -185,12 +178,6 @@ struct raw_iface {
 };
 
 extern char *pluto_listen;	/* from --listen flag */
-
-
-/* KAME has a different name for AES */
-#if !defined(SADB_X_EALG_AESCBC) && defined(SADB_X_EALG_AES)
-#define SADB_X_EALG_AESCBC SADB_X_EALG_AES
-#endif
 
 struct kernel_ops {
 	enum kernel_interface type;
