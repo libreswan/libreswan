@@ -834,7 +834,6 @@ kvmplutotest	psk-pluto-03		good
 kvmplutotest	psk-pluto-04		good
 kvmplutotest	psk-pluto-05		good
 kvmplutotest	psk-pluto-06		good
-kvmplutotest	psk-pluto-07		good
 
 #
 # tests using alternative ESP algorithms
