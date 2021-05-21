@@ -161,23 +161,14 @@ void retransmit_v2_msg(struct state *st)
 		dbg("maximum number of keyingtries reached - deleting state");
 	}
 
-	if (&ike->sa != st) {
-		if (ike->sa.st_state->kind == STATE_PARENT_I2) {
-			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			delete_state(&ike->sa);
-		} else {
-			free_v2_message_queues(st);
-		}
-	}
-
-
 	/*
 	 * XXX There should not have been a child sa unless this was a timeout of
 	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
 	 */
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
-	delete_state(st);
+	/* can't send delete as message window is full */
+	delete_ike_family(ike, DONT_SEND_DELETE);
 
 	/* note: no md->st to clear */
 }
