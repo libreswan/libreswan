@@ -400,9 +400,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			 * child's retransmits when what is needed is
 			 * to clear the IKE SA's retransmits.
 			 */
-			if (receiver->st_retransmit_event != NULL) {
+			if (ike->sa.st_retransmit_event != NULL) {
 				dbg_v2_msgid(ike, receiver, "clearing EVENT_RETRANSMIT as response received");
-				clear_retransmits(receiver);
+				clear_retransmits(&ike->sa);
 			} else {
 				dbg_v2_msgid(ike, receiver, "XXX: no EVENT_RETRANSMIT to clear; suspect IKE->CHILD switch");
 			}
@@ -472,9 +472,9 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 				     old_sender.initiator);
 		}
 #endif
-		if (sender->st_retransmit_event == NULL) {
+		if (ike->sa.st_retransmit_event == NULL) {
 			dbg_v2_msgid(ike, sender, "scheduling EVENT_RETRANSMIT");
-			start_retransmits(sender);
+			start_retransmits(&ike->sa);
 		} else {
 			dbg_v2_msgid(ike, sender, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
 		}
