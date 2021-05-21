@@ -54,11 +54,10 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
-#ifdef SADB_X_EALG_AESCBC
-	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCBC,
-#endif
-#ifdef SADB_X_EALG_AES
-	.encrypt_sadb_ealg_id = SADB_X_EALG_AES,
+#if defined SADB_X_EALG_AES
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES, /* Orig, NetBSD, FreeBSD */
+#elif defined SADB_X_EALG_AESCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCBC,  /* also FreeBSD; ulgh */
 #endif
 	.encrypt_netlink_xfrm_name = "aes",
 	.encrypt_tcpdump_name = "aes",
