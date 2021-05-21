@@ -353,7 +353,7 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
 					      const ip_endpoint *peer_client,
 					      const chunk_t sec_label,
-					      const char *why);
+					      const char *why, struct logger *logger);
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
@@ -444,7 +444,7 @@ void shutdown_kernel(struct logger *logger);
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
-			   const char *why);
+			   const char *why, struct logger *logger);
 
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,

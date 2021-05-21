@@ -1792,7 +1792,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		attr = RTA_NEXT(attr, remaining);
 	}
 	record_and_initiate_opportunistic(&local, &remote, sec_label,
-					  "%acquire-netlink");
+					  "%acquire-netlink", logger);
 }
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,

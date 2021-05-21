@@ -726,7 +726,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,
-			       shunt_protocol->ipproto, SPI_HOLD, addwidemsg);
+			       shunt_protocol->ipproto, SPI_HOLD,
+			       addwidemsg, b->logger);
 	}
 	/*
 	 * Now delete the (obsoleted) narrow bare kernel shunt - we have

@@ -137,29 +137,33 @@ static struct bare_shunt *bare_shunts = NULL;
 static int num_ipsec_eroute = 0;
 #endif
 
-static void log_bare_shunt(lset_t rc_flags, const char *op, const struct bare_shunt *bs)
+static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
-	said_buf sat;
-	selector_buf ourb;
-	selector_buf peerb;
-	policy_prio_buf prio;
+	jam(buf, "bare shunt %p ", bs);
+	jam_selector(buf, &bs->our_client);
+	jam(buf, " --%d--> ", bs->transport_proto);
+	jam_selector(buf, &bs->peer_client);
+	jam(buf, " => ");
+	jam_said(buf, &bs->said);
+	jam(buf, " ");
+	jam_policy_prio(buf, bs->policy_prio);
+	jam(buf, "    %s", bs->why);
+}
 
-	log_global(rc_flags, null_fd,
-		   "%s bare shunt %p %s --%d--> %s => %s %s    %s",
-		   op, (const void *)bs,
-		   str_selector(&bs->our_client, &ourb),
-		   bs->transport_proto,
-		   str_selector(&bs->peer_client, &peerb),
-		   str_said(&bs->said, &sat),
-		   str_policy_prio(bs->policy_prio, &prio),
-		   bs->why);
+static void llog_bare_shunt(lset_t rc_flags, struct logger *logger,
+			    const struct bare_shunt *bs, const char *op)
+{
+	LLOG_JAMBUF(rc_flags, logger, buf) {
+		jam(buf, "%s ", op);
+		jam_bare_shunt(buf, bs);
+	}
 }
 
 static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	/* same as log_bare_shunt but goes to debug log */
-	if (DBGP(DBG_BASE)) {
-		log_bare_shunt(DEBUG_STREAM, op, bs);
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "%s ", op);
+		jam_bare_shunt(buf, bs);
 	}
 }
 
@@ -171,18 +175,18 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
 void add_bare_shunt(const ip_selector *our_client,
 		    const ip_selector *peer_client,
 		    int transport_proto, ipsec_spi_t shunt_spi,
-		    const char *why)
+		    const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, transport_proto, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
-		log_bare_shunt(RC_LOG, "CONFLICTING existing", *bspp);
+		llog_bare_shunt(RC_LOG, logger, *bspp,
+				"CONFLICTING existing");
 	}
 
-	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
-					"bare shunt");
+	struct bare_shunt *bs = alloc_thing(struct bare_shunt, "bare shunt");
 
 	bs->why = why;
 	bs->from_cn = NULL;
@@ -202,10 +206,10 @@ void add_bare_shunt(const ip_selector *our_client,
 
 	/* report duplication; this should NOT happen */
 	if (bspp != NULL) {
-		log_bare_shunt(RC_LOG, "CONFLICTING      new", bs);
+		llog_bare_shunt(RC_LOG, logger, bs,
+				"CONFLICTING      new");
 	}
 }
-
 
 /*
  * Note: "why" must be in stable storage (not auto, not heap)
@@ -216,9 +220,8 @@ void add_bare_shunt(const ip_selector *our_client,
 void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 				       const ip_endpoint *remote_client,
 				       const chunk_t sec_label,
-				       const char *why)
+				       const char *why, struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	/*
 	 * Port's value and interpretation depends on protocol (ICMP,
 	 * TCP, UDP, ...) and ends may not be equal.
@@ -247,10 +250,11 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	if (bspp != NULL &&
 	    (*bspp)->said.proto == &ip_protocol_internal &&
 	    (*bspp)->said.spi == htonl(SPI_HOLD)) {
-		log_global(RC_LOG_SERIOUS, null_fd, "existing bare shunt found - refusing to add a duplicate");
+		llog_bare_shunt(RC_LOG_SERIOUS, logger, *bspp,
+				"existing bare shunt found - refusing to add a duplicate");
 		/* should we continue with initiate_ondemand() ? */
 	} else {
-		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why);
+		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
 	}
 
 	/* actually initiate opportunism / ondemand */
@@ -1358,7 +1362,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 					       "removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
-				log_bare_shunt(RC_LOG, "failed to delete", p);
+				llog_bare_shunt(RC_LOG, logger, p, "failed to delete");
 				break;	/* unlikely to succeed a second time */
 			} else if (*pp == p) {
 				/*
@@ -1368,7 +1372,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 				 * different one.
 				 * Log it!  And keep deleting.
 				 */
-				log_bare_shunt(RC_LOG, "UNEXPECTEDLY SURVIVING", p);
+				llog_bare_shunt(RC_LOG, logger, p, "UNEXPECTEDLY SURVIVING");
 				pp = &bare_shunts;	/* just in case, start over */
 			}
 			/*
