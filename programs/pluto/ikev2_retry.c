@@ -33,17 +33,28 @@
 #include "pending.h"
 #include "ipsec_doi.h"
 
-void retransmit_v2_msg(struct state *st)
+/*
+ * XXX: it is the IKE SA that is responsible for all retransmits.
+ */
+
+void retransmit_v2_msg(struct state *ike_sa)
 {
-	passert(st != NULL);
-	struct ike_sa *ike = ike_sa(st, HERE);
+	passert(ike_sa != NULL);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
-		/* we cannot do anything useful */
-		dbg("no ike sa so going away");
-		delete_state(st);
 		return;
 	}
 
+	/*
+	 * XXX: Keep using ST for now - it helps to understand how the
+	 * code is going wrong.
+	 */
+	struct state *st = ike_sa;
+
+	/*
+	 * XXX: this is the IKE SA's retry limit; a second child
+	 * trying to establish may have a different policy.
+	 */
 	struct connection *c = st->st_connection;
 	unsigned long try_limit = c->sa_keying_tries;
 	unsigned long try = st->st_try + 1;
@@ -68,7 +79,13 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	/*
-	 * if this connection has a newer Child SA than this state
+	 * XXX: This is trying to be smart and abandon establishing an
+	 * SA because it established some other way.  For IKEv2, that
+	 * only works during the initial exchange.  Once the IKE SA is
+	 * established dropping a message isn't possible.
+	 */
+
+	/* if this connection has a newer Child SA than this state
 	 * this negotiation is not relevant any more.  would this
 	 * cover if there are multiple CREATE_CHILD_SA pending on this
 	 * IKE negotiation ???
@@ -77,10 +94,11 @@ void retransmit_v2_msg(struct state *st)
 	 * brings up the connection first?  For that case, shouldn't
 	 * this state have been deleted?
 	 *
-	 *  NOTE: a larger serialno does not mean superseded. crossed
-	 * streams could mean the lower serial established later and is
-	 * the "newest". Should > be replaced with !=   ?
+	 * NOTE: a larger serialno does not mean superseded. crossed
+	 * streams could mean the lower serial established later and
+	 * is the "newest". Should > be replaced with != ?
 	 */
+
 	if (st->st_establishing_sa == IKE_SA &&
 	    c->newest_ike_sa > st->st_serialno) {
 		log_state(RC_LOG, st,
@@ -115,7 +133,7 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	/*
-	 * The entire family is dead dead head
+	 * The entire family is dead dead head.
 	 */
 	if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 		/*
@@ -130,6 +148,11 @@ void retransmit_v2_msg(struct state *st)
 		return;
 	}
 
+	/*
+	 * XXX: This is looking at the failed to establish IKE SA.
+	 * The retry is probably valid.  However, would it be easier
+	 * to just let the replace code handle this?
+	 */
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
@@ -162,8 +185,8 @@ void retransmit_v2_msg(struct state *st)
 	}
 
 	/*
-	 * XXX There should not have been a child sa unless this was a timeout of
-	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
+	 * XXX: There might be a larval child.  Just use the biggest
+	 * stick available.
 	 */
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
