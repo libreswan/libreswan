@@ -66,6 +66,7 @@
 #include "ikev2_child.h"
 #include "ike_alg_dh.h"
 #include "pluto_stats.h"
+#include "pending.h"
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
@@ -596,17 +597,31 @@ bool ikev2_process_childs_sa_payload(const char *what,
 	return true;
 }
 
-void v2_child_sa_established(struct child_sa *child)
+void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
+	struct connection *c = child->sa.st_connection;
 	change_state(&child->sa, STATE_V2_ESTABLISHED_CHILD_SA);
+
 	pstat_sa_established(&child->sa);
 	log_ipsec_sa_established("negotiated connection", &child->sa);
-	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
-		jam(buf, "%s", child->sa.st_state->story);
-		/* document SA details for admin's pleasure */
-		lswlog_child_sa_established(buf, &child->sa);
+
+	/*
+	 * ULGH, mixing debug and non debug output.
+	 */
+	lset_t rc_flags =
+		(!(c->policy & POLICY_OPPORTUNISTIC) ? ALL_STREAMS|RC_SUCCESS :
+		 (c->policy & POLICY_OPPORTUNISTIC) && DBGP(DBG_BASE) ? DEBUG_STREAM :
+		 NO_STREAM);
+	if (rc_flags != NO_STREAM) {
+		LLOG_JAMBUF(rc_flags, child->sa.st_logger, buf) {
+			jam(buf, "%s", child->sa.st_state->story);
+			/* document SA details for admin's pleasure */
+			lswlog_child_sa_established(buf, &child->sa);
+		}
 	}
+
 	v2_schedule_replace_event(&child->sa);
+
 	/*
 	 * start liveness checks if set, making sure we only schedule
 	 * once when moving from I2->I3 or R1->R2
@@ -618,4 +633,9 @@ void v2_child_sa_established(struct child_sa *child)
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 	}
 
+	connection_buf cb;
+	dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
+	    ike->sa.st_serialno, child->sa.st_serialno,
+	    pri_connection(child->sa.st_connection, &cb));
+	unpend(ike, child->sa.st_connection);
 }

@@ -1272,10 +1272,16 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
        release_pending_whacks(&child->sa, "scheduling a retry");
 
 	/*
-	 * XXX: this kills the CHILD SA; the IKE SA lives until a
-	 * timeout.
+	 * HACK: let the state linger so that any replace event isn't
+	 * immediate.
 	 */
-	return STF_FATAL;
+#if 0
+	if (child != NULL) {
+		delete_state(&child->sa);
+		ike->sa.st_v2_larval_sa = NULL;
+	}
+#endif
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 /* STATE_PARENT_I1: R1 --> I2
@@ -1822,63 +1828,9 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	ike->sa.st_v2_larval_sa = child;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
+	/* XXX: huh?!? */
 	child->sa.st_try = ike->sa.st_try;
-
-	/*
-	 * XXX: This is so lame.  Need to move the current initiator
-	 * from IKE to the CHILD so that the post processor doesn't
-	 * get confused.  If the IKE->CHILD switch didn't happen this
-	 * wouldn't be needed.
-	 */
-	v2_msgid_switch_initiator_to_child(ike, child, md);
-
 	binlog_refresh_state(&child->sa);
-	switch_md_st(md, &child->sa, HERE);
-
-	/*
-	 * XXX: Danger!
-	 *
-	 * Because the code above has blatted MD->ST with the child
-	 * state (CST) and this function's caller is going to try to
-	 * complete the V2 state transition on MD->ST (i.e., CST) and
-	 * using the state-transition MD->SVM the IKE SA (PST) will
-	 * never get to complete its state transition.
-	 *
-	 * Get around this by forcing the state transition here.
-	 *
-	 * But what should happen?  A guess is to just leave MD->ST
-	 * alone.  The CHILD SA doesn't really exist until after the
-	 * IKE SA has processed and approved of the response to this
-	 * IKE_AUTH request.
-	 *
-	 * XXX: Danger!
-	 *
-	 * Set the replace timeout but ensure it is larger than the
-	 * retransmit timeout (the default for both is 60-seconds and
-	 * it would appear that libevent can sometimes deliver the
-	 * retransmit before the replay).  This way the retransmit
-	 * will timeout and initiate the replace (but if things really
-	 * really screw up the replace will kick in).
-	 *
-	 * XXX: Danger:
-	 *
-	 * In success_v2_state_transition() there's a call to
-	 * clear_retransmits() however, because of the IKE->CHILD
-	 * switch it ends up clearing the CHILD letting the retransmit
-	 * timer expire.  Making things worse, the retransmit code
-	 * doesn't know how to properly replace an IKE family -
-	 * flush_incomplete_child() schedules replace events for the
-	 * CHILD states that trigger _after_ the IKE SA has been
-	 * deleted leaving them orphaned.
-	 */
-
-	pexpect(md->svm->timeout_event == EVENT_RETRANSMIT); /* for CST */
-	delete_event(&ike->sa);
-	clear_retransmits(&ike->sa);
-	deltatime_t halfopen = deltatime_max(deltatime_mulu(ike->sa.st_connection->r_timeout, 2),
-					     deltatime(PLUTO_HALFOPEN_SA_LIFE));
-	event_schedule(EVENT_SA_REPLACE, halfopen, &ike->sa);
-	change_state(&ike->sa, STATE_PARENT_I2);
 
 	/*
 	 * XXX:
@@ -3136,7 +3088,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * success_v2_state_transition(); suspect very similar
 		 * code will appear in the initiator.
 		 */
-		v2_child_sa_established(child);
+		v2_child_sa_established(ike, child);
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -3398,7 +3350,7 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 	 */
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
-		submit_cert_decode(ike, &child->sa, md, cert_payloads,
+		submit_cert_decode(ike, &ike->sa, md, cert_payloads,
 				   v2_in_IKE_AUTH_R_post_cert_decode,
 				   "initiator decoding certificates");
 		return STF_SUSPEND;
@@ -3406,15 +3358,16 @@ stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struc
 		dbg("no certs to decode");
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
-		return v2_in_IKE_AUTH_R_post_cert_decode(&child->sa, md);
+		return v2_in_IKE_AUTH_R_post_cert_decode(&ike->sa, md);
 	}
 }
 
-static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, struct msg_digest *md)
+static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct msg_digest *md)
 {
-	passert(md != NULL);
-	struct child_sa *child = pexpect_child_sa(child_sa);
-	struct ike_sa *ike = ike_sa(&child->sa, HERE);
+	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	struct child_sa *child = ike->sa.st_v2_larval_sa;
+	passert(child != NULL);
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
@@ -3508,15 +3461,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 	/*
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
-	 *
-	 * XXX: Danger!  md->svm points to a state transition that
-	 * mashes the IKE SA's initial state in and the CHILD SA's
-	 * final state.  Hence, the need to explicitly force the final
-	 * IKE SA state.  There should instead be separate state
-	 * transitions for the IKE and CHILD SAs and then have the IKE
-	 * SA invoke the CHILD SA's transition.
 	 */
-	pexpect(md->svm->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
 	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
 	if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
@@ -3571,7 +3516,15 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *child_sa, stru
 					     md, /*expect-accepted-proposal?*/true)) {
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
-	return ikev2_process_ts_and_rest(ike, child, md);
+
+	stf_status status = ikev2_process_ts_and_rest(ike, child, md);
+	if (status == STF_OK) {
+		v2_child_sa_established(ike, child);
+		/* hack; cover all bases; handled by close any whacks? */
+		close_any(&child->sa.st_logger->object_whackfd);
+		close_any(&child->sa.st_logger->global_whackfd);
+	}
+	return status;
 }
 
 static bool ikev2_rekey_child_req(struct child_sa *child,

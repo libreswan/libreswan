@@ -324,8 +324,8 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags = SMF2_ESTABLISHED,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
@@ -1600,10 +1600,10 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		pexpect(state->nr_transitions == 6);
-		transition = &state->v2_transitions[4];
+		pexpect(state->nr_transitions == 3);
+		transition = &state->v2_transitions[1];
 		pexpect(transition->state == STATE_PARENT_I2);
-		pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
@@ -2478,7 +2478,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
 			/* with failed child sa, we end up here with an orphan?? */
-			struct ike_sa *ike = ike_sa(st, HERE);
 			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
 			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
@@ -2851,7 +2850,7 @@ void complete_v2_state_transition(struct state *st,
 			break;
 		}
 		release_pending_whacks(st, "fatal error");
-		delete_state(st);
+		delete_ike_family(ike, DONT_SEND_DELETE);
 
 		/* kill all st pointers */
 		st = NULL;
