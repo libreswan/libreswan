@@ -330,11 +330,11 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 				 * From our POV, that's the outbound
 				 * SPI.
 				 */
-				struct child_sa *dst = find_v2_child_sa_by_outbound_spi(ike,
-											v2del->isad_protoid,
-											spi);
+				struct child_sa *child = find_v2_child_sa_by_outbound_spi(ike,
+											  v2del->isad_protoid,
+											  spi);
 
-				if (dst == NULL) {
+				if (child == NULL) {
 					esb_buf b;
 					log_state(RC_LOG, &ike->sa,
 						  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
@@ -349,26 +349,21 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					dst->sa.st_dont_send_delete = true;
-					/* st is a parent */
-					passert(&ike->sa != &dst->sa);
-					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-					if (!del_ike) {
-						struct ipsec_proto_info *pr =
-							v2del->isad_protoid == PROTO_IPSEC_AH ?
-							&dst->sa.st_ah :
-							&dst->sa.st_esp;
-
-						if (j < elemsof(spi_buf)) {
-							spi_buf[j] = pr->our_spi;
-							j++;
-						} else {
-							log_state(RC_LOG, &ike->sa,
-								  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-								  ntohl(spi));
-						}
+					child->sa.st_dont_send_delete = true;
+					passert(ike->sa.st_serialno == child->sa.st_clonedfrom);
+					struct ipsec_proto_info *pr =
+						(v2del->isad_protoid == PROTO_IPSEC_AH
+						 ? &child->sa.st_ah
+						 : &child->sa.st_esp);
+					if (j < elemsof(spi_buf)) {
+						spi_buf[j] = pr->our_spi;
+						j++;
+					} else {
+						log_state(RC_LOG, &ike->sa,
+							  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
+							  ntohl(spi));
 					}
-					delete_or_replace_child(ike, dst);
+					delete_or_replace_child(ike, child);
 				}
 			} /* for each spi */
 
