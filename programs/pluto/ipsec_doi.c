@@ -144,7 +144,8 @@ void ipsecdoi_initiate(struct connection *c,
 						background, logger);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
-			add_pending(logger->global_whackfd, pexpect_ike_sa(st),
+			add_pending(background ? null_fd : logger->global_whackfd,
+				    pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing, sec_label,
 				    false /*part of initiate*/);
