@@ -14,6 +14,8 @@
  * for more details.
  */
 
+#include <stdlib.h>		/* for abort() */
+
 #include "passert.h"
 #include "lswlog.h"
 

@@ -25,7 +25,7 @@
 #define FD_H
 
 #include <stdbool.h>
-#include <stdlib.h>		/* for ssize_t */
+#include <sys/types.h>		/* for size_t+ssize_t */
 
 #include "where.h"
 
