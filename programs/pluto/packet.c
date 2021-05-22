@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
 #include "constants.h"
 #include "lswalloc.h"
