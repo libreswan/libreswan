@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdlib.h>		/* for size_t */
+#include <stddef.h>		/* for size_t */
 
 #include "err.h"
 #include "ip_port.h"
