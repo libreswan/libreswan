@@ -43,6 +43,10 @@ static bool initiate_connection_2(struct connection *c, const char *remote_host,
 
 bool initiate_connection(struct connection *c, const char *remote_host, bool background)
 {
+	connection_buf cb;
+	dbg("initiating connection to "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    pri_connection(c, &cb), background ? "background" : "forground",
+	    pri_logger(c->logger));
 	threadtime_t inception  = threadtime_start();
 	bool ok;
 

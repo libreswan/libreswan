@@ -112,10 +112,12 @@ void ipsecdoi_initiate(struct connection *c,
 	switch (c->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
+	{
+		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
-			aggr_outI1(logger->global_whackfd, c, NULL, policy, try, inception, sec_label);
+			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
 		} else if (st == NULL) {
-			main_outI1(logger->global_whackfd, c, NULL, policy, try, inception, sec_label);
+			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
 		} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
@@ -123,16 +125,17 @@ void ipsecdoi_initiate(struct connection *c,
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(logger->global_whackfd, st, c, policy, try,
+			quick_outI1(whackfd, st, c, policy, try,
 				    replacing, sec_label);
 		} else {
 			/* leave our Phase 2 negotiation pending */
-			add_pending(logger->global_whackfd, pexpect_ike_sa(st),
+			add_pending(whackfd, pexpect_ike_sa(st),
 				    c, policy, try,
 				    replacing, sec_label,
 				    false /*part of initiate*/);
 		}
 		break;
+	}
 #endif
 	case IKEv2:
 		if (st == NULL) {
