@@ -3,6 +3,7 @@
 # not -e; systemctl has strange exit codes
 set -u
 
+# Stop systemctl going all graphical
 LC_CTYPE=C
 export LC_CTYPE
 
