@@ -112,18 +112,12 @@ void retransmit_v2_msg(struct state *ike_sa)
 	}
 
 	/*
-	 * XXX: Keep using ST for now - it helps to understand how the
-	 * code is going wrong.
-	 */
-	struct state *st = ike_sa;
-
-	/*
 	 * XXX: this is the IKE SA's retry limit; a second child
 	 * trying to establish may have a different policy.
 	 */
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	unsigned long try_limit = c->sa_keying_tries;
-	unsigned long try = st->st_try + 1;
+	unsigned long try = ike->sa.st_try + 1;
 
 	/*
 	 * Paul: this line can stay attempt 3 of 2 because the cleanup
@@ -135,7 +129,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 		DBG_log("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu attempt %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			pri_connection(c, &cib),
-			st->st_serialno, try, try_limit);
+			ike->sa.st_serialno, try, try_limit);
 		DBG_log("and parent for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			pri_connection(c, &cib),
@@ -143,13 +137,6 @@ void retransmit_v2_msg(struct state *ike_sa)
 			ike->sa.st_try, try_limit,
 			retransmit_count(&ike->sa) + 1);
 	}
-
-	/*
-	 * XXX: This is trying to be smart and abandon establishing an
-	 * SA because it established some other way.  For IKEv2, that
-	 * only works during the initial exchange.  Once the IKE SA is
-	 * established dropping a message isn't possible.
-	 */
 
 	/* if this connection has a newer Child SA than this state
 	 * this negotiation is not relevant any more.  would this
@@ -165,21 +152,12 @@ void retransmit_v2_msg(struct state *ike_sa)
 	 * is the "newest". Should > be replaced with != ?
 	 */
 
-	if (st->st_establishing_sa == IKE_SA &&
-	    c->newest_ike_sa > st->st_serialno) {
-		log_state(RC_LOG, st,
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->newest_ike_sa > ike->sa.st_serialno) {
+		log_state(RC_LOG, &ike->sa,
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
-			  c->newest_ike_sa, st->st_try);
-		pstat_sa_failed(st, REASON_SUPERSEDED_BY_NEW_SA);
-		delete_state(st);
-		return;
-	} else if (st->st_establishing_sa == IPSEC_SA &&
-		   c->newest_ipsec_sa > st->st_serialno) {
-		log_state(RC_LOG, st,
-			  "suppressing retransmit because CHILD SA was superseded by #%lu try=%lu; drop this negotiation",
-			  c->newest_ipsec_sa, st->st_try);
-		pstat_sa_failed(st, REASON_SUPERSEDED_BY_NEW_SA);
-		delete_state(st);
+			  c->newest_ike_sa, ike->sa.st_try);
+		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
+		delete_ike_family(ike, DONT_SEND_DELETE);
 		return;
 	}
 
@@ -209,7 +187,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		liveness_action(st);
+		liveness_action(&ike->sa);
 		/* presumably liveness_action() deletes the state? */
 		return;
 	}
@@ -232,20 +210,21 @@ void retransmit_v2_msg(struct state *ike_sa)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
-		if (fd_p(st->st_logger->object_whackfd)) {
+		if (fd_p(ike->sa.st_logger->object_whackfd)) {
 			/*
 			 * Release whack because the observer will
 			 * get bored.
 			 */
-			log_state(RC_COMMENT, st, "%s, but releasing whack",
-				story);
-			release_pending_whacks(st, story);
+			log_state(RC_COMMENT, &ike->sa,
+				  "%s, but releasing whack",
+				  story);
+			release_pending_whacks(&ike->sa, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			/* no whack: just log to syslog */
-			log_state(RC_LOG, st, "%s", story);
+			log_state(RC_LOG, &ike->sa, "%s", story);
 		}
 
-		ipsecdoi_replace(st, try);
+		ipsecdoi_replace(&ike->sa, try);
 	} else {
 		dbg("maximum number of keyingtries reached - deleting state");
 	}
@@ -255,7 +234,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 	 * stick available.
 	 */
 
-	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
+	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 	/* can't send delete as message window is full */
 	delete_ike_family(ike, DONT_SEND_DELETE);
 
