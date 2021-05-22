@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include <netdb.h>		/* for gethostbyname2() */
+#include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
 
 #include "ip_address.h"
 #include "ip_sockaddr.h"

@@ -16,6 +16,8 @@
  * License for more details.
  */
 
+#include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
+
 #include "jambuf.h"
 #include "ip_address.h"
 #include "lswlog.h"		/* for dbg() */

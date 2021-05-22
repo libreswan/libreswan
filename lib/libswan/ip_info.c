@@ -17,6 +17,8 @@
  * for more details.
  */
 
+#include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
+
 #include "ietf_constants.h"
 #include "ip_info.h"
 #include "passert.h"

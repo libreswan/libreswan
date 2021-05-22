@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
 #include "ip_info.h"
 #include "ip_address.h"

@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/socket.h>		/* for AF_UNSPEC */
 
 #include "lswalloc.h"
 #include "ip_address.h"

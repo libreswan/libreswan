@@ -14,6 +14,8 @@
  *
  */
 
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
+
 #include "jambuf.h"
 #include "ip_endpoint.h"
 #include "constants.h"		/* for memeq() */

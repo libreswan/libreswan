@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
 #include <libreswan.h>
 #include "constants.h"

@@ -28,6 +28,9 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#if defined(__FreeBSD__)
+#include <sys/queue.h>		/* for TAILQ_xx macros */
+#endif
 
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>

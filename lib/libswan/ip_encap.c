@@ -19,6 +19,7 @@
 #ifdef linux
 #  include <linux/udp.h>		/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
 #else
+#  include <sys/types.h>		/* for u_short that netinet/udp.h needs on FreeBSD */
 #  include <netinet/udp.h>		/* for UDP_ENCAP_ESPINUDP aka NAT */
 #endif
 
