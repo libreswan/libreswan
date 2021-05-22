@@ -32,6 +32,72 @@
 #include "ikev2_send.h"
 #include "pending.h"
 #include "ipsec_doi.h"
+#include "kernel.h"
+
+static void liveness_clear_connection(struct connection *c, const char *v)
+{
+	/*
+	 * For CK_INSTANCE, delete_states_by_connection() will clear
+	 * Note that delete_states_by_connection changes c->kind but we need
+	 * to remember what it was to know if we still need to unroute after delete
+	 */
+	if (c->kind == CK_INSTANCE) {
+		delete_states_by_connection(c, /*relations?*/true);
+	} else {
+		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+		delete_states_by_connection(c, /*relations?*/true);
+		dbg("%s: unrouting connection %s action - clearing",
+		    enum_name(&connection_kind_names, c->kind), v);
+		unroute_connection(c); /* --unroute */
+	}
+}
+
+static void liveness_action(struct state *tbd_st)
+{
+	/*
+	 * XXX: Danger! These connection calls, notably
+	 * restart_connections_by_peer(), can end up deleting TBD_ST
+	 *
+	 * So that the logger is valid after TBD_ST's been deleted,
+	 * create a clone of TBD_ST's logger and kill the TBD_ST
+	 * pointer.
+	 */
+	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
+	struct connection *c = tbd_st->st_connection;
+	const char *liveness_name = enum_name(&ike_version_liveness_names, tbd_st->st_ike_version);
+	passert(liveness_name != NULL);
+	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
+
+	switch (c->dpd_action) {
+	case DPD_ACTION_CLEAR:
+		llog(RC_LOG, logger,
+		     "%s action - clearing connection kind %s",
+		     liveness_name, enum_name(&connection_kind_names, c->kind));
+		liveness_clear_connection(c, liveness_name);
+		break;
+
+	case DPD_ACTION_RESTART:
+		llog(RC_LOG, logger,
+		     "%s action - restarting all connections that share this peer",
+		     liveness_name);
+		restart_connections_by_peer(c, logger);
+		break;
+
+	case DPD_ACTION_HOLD:
+		llog(RC_LOG, logger,
+		     "%s action - putting connection into hold",
+		     liveness_name);
+		if (c->kind == CK_INSTANCE) {
+			dbg("%s warning dpdaction=hold on instance futile - will be deleted", liveness_name);
+		}
+		delete_states_by_connection(c, /*relations?*/true);
+		break;
+
+	default:
+		bad_case(c->dpd_action);
+	}
+	free_logger(&logger, HERE);
+}
 
 /*
  * XXX: it is the IKE SA that is responsible for all retransmits.
