@@ -333,19 +333,6 @@ void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
 
 static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 {
-	int j;	/* index into buf */
-	struct ifconf ifconf;
-	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
-	struct raw_iface *rifaces = NULL;
-	static const int on = true;     /* by-reference parameter; constant, we hope */
-
-	/*
-	 * Current upper bound on number of interfaces.
-	 * Tricky: because this is a static, we won't have to start from
-	 * 64 in subsequent calls.
-	 */
-	static int num = 64;
-
 	/* Get a UDP socket */
 
 	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -360,6 +347,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 * Without SO_REUSEADDR, bind() of udp_sock will cause
 	 * 'address already in use?
 	 */
+	static const int on = true;     /* by-reference parameter; constant, we hope */
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
@@ -382,20 +370,30 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 		}
 	}
 
-	/* a million interfaces is probably the maximum, ever... */
+	/*
+	 * Load buf with array of raw interfaces from kernel.
+	 *
+	 * We have to guess at the upper bound (num).
+	 * If we guess low, double num and repeat.
+	 * But don't go crazy: stop before 1024**2.
+	 *
+	 * Tricky: num is a static so that we won't have to start from
+	 * 64 in subsequent calls to find_raw_ifaces4.
+	 */
+	static int num = 64;
+	struct ifconf ifconf;
+	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	for (; num < (1024 * 1024); num *= 2) {
 		/* Get num local interfaces.  See netdevice(7). */
 		ifconf.ifc_len = num * sizeof(struct ifreq);
 
-		struct ifreq *tmpbuf = realloc(buf, ifconf.ifc_len);
-
-		if (tmpbuf == NULL) {
-			free(buf);
+		free(buf);
+		buf = malloc(ifconf.ifc_len);
+		if (buf == NULL) {
 			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-				    "realloc of %d in find_raw_ifaces4()",
+				    "malloc of %d in find_raw_ifaces4()",
 				    ifconf.ifc_len);
 		}
-		buf = tmpbuf;
 		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 
@@ -410,7 +408,8 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	}
 
 	/* Add an entry to rifaces for each interesting interface. */
-	for (j = 0; (j + 1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++) {
+	struct raw_iface *rifaces = NULL;
+	for (int j = 0; (j + 1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++) {
 		struct raw_iface ri;
 		const struct sockaddr_in *rs =
 			(struct sockaddr_in *) &buf[j].ifr_addr;
@@ -461,7 +460,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 		rifaces = clone_thing(ri, "struct raw_iface");
 	}
 
-	free(buf);	/* was allocated via realloc() */
+	free(buf);	/* was allocated via malloc() */
 	close(udp_sock);
 	return rifaces;
 }
