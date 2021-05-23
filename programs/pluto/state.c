@@ -2396,7 +2396,7 @@ void show_states(struct show *s)
 			struct state *st = array[i];
 
 			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH];
+			char state_buf2[LOG_WIDTH*2];
 			fmt_state(st, n, state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			show_comment(s, "%s", state_buf);
