@@ -153,7 +153,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #10: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
+002 "westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
 002 "westnet-eastnet" #9: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
 002 "westnet-eastnet": terminating SAs using this connection
@@ -178,7 +178,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #12: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
+002 "westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
 002 "westnet-eastnet" #11: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
 002 "westnet-eastnet": terminating SAs using this connection
@@ -203,7 +203,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #14: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
+002 "westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
 002 "westnet-eastnet" #13: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
 002 "westnet-eastnet": terminating SAs using this connection
@@ -441,7 +441,7 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
-"westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
+"westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
@@ -455,7 +455,7 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
-"westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
+"westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
@@ -469,7 +469,7 @@ west #
 |    next payload type: ISAKMP_NEXT_SA (0x1)
 |    length: 36 (00 24)
 | received 'quick_inR1_outI2' message HASH(2) data ok
-"westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
+"westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
 "westnet-eastnet" #13: IMPAIR: setting HASH payload bytes to 00
 -- start message (ID)
 |    next payload type: ISAKMP_NEXT_ID (0x5)
