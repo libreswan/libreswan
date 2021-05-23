@@ -88,7 +88,6 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
-#include "nss_cert_reread.h"
 #include "security_selinux.h"
 #include "orient.h"
 
@@ -4526,15 +4525,4 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 	return same_id(&c->spd.this.id, &d->spd.this.id) &&
 	       same_id(peer_id == NULL ? &c->spd.that.id : peer_id,
 		       &d->spd.that.id);
-}
-
-/* reread all left/right certificates from NSS DB */
-void reread_cert_connections(struct fd *whackfd)
-{
-	struct connection *c;
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
-		reread_cert(whackfd, c);
-	}
 }

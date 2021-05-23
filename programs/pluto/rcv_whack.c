@@ -722,7 +722,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_reread & REREAD_CERTS) {
 		dbg_whack(s, "reread & REREAD_CERTS ...");
-		reread_cert_connections(whackfd);
+		reread_cert_connections(logger);
 		dbg_whack(s, "... reread & REREAD_CERTS");
 	}
 
