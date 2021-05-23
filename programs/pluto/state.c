@@ -1984,9 +1984,10 @@ static void show_state_traffic(struct show *s,
 /*
  * odd fact: st cannot be const because we call get_sa_info on it
  */
-void fmt_state(struct state *st, const monotime_t now,
-	       char *state_buf, const size_t state_buf_len,
-	       char *state_buf2, const size_t state_buf2_len)
+
+static void fmt_state(struct state *st, const monotime_t now,
+		      char *state_buf, const size_t state_buf_len,
+		      char *state_buf2, const size_t state_buf2_len)
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
