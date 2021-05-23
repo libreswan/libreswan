@@ -65,9 +65,9 @@ void flush_pending_by_connection(const struct connection *c);
 void flush_pending_by_state(struct ike_sa *ike);
 
 bool connection_is_pending(const struct connection *c);
-void show_pending_phase2(struct show *s,
-			 const struct connection *c,
-			 const struct ike_sa *ike);
+void show_pending_child_details(struct show *s,
+				const struct connection *c,
+				const struct ike_sa *ike);
 bool pending_check_timeout(const struct connection *c);
 
 extern struct connection *first_pending(const struct ike_sa *ike,

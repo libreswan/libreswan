@@ -339,6 +339,28 @@ static char *readable_humber(uint64_t num,
 	return buf + ret;
 }
 
+static size_t jam_readable_humber(struct jambuf *buf, uint64_t num, bool kilos)
+{
+	uint64_t to_print = num;
+	const char *suffix;
+
+	if (!kilos && num < 1024) {
+		suffix = "B";
+	} else {
+		if (!kilos)
+			to_print /= 1024;
+
+		if (to_print < 1024) {
+			suffix = "KB";
+		} else {
+			to_print /= 1024;
+			suffix = "MB";
+		}
+	}
+
+	return jam(buf, "%" PRIu64 "%s", to_print, suffix + kilos);
+}
+
 /*
  * Get the IKE SA managing the security association.
  */
@@ -1985,231 +2007,194 @@ static void show_state_traffic(struct show *s,
  * odd fact: st cannot be const because we call get_sa_info on it
  */
 
-static void fmt_state(struct state *st, const monotime_t now,
-		      char *state_buf, const size_t state_buf_len,
-		      char *state_buf2, const size_t state_buf2_len)
+static void show_state(struct show *s, struct state *st, const monotime_t now)
 {
 	/* what the heck is interesting about a state? */
-	const struct connection *c = st->st_connection;
-	char dpdbuf[128];
-	char traffic_buf[512], *mbcp;
-	const char *np1 = c->newest_ike_sa == st->st_serialno ?
-			  "; newest ISAKMP" : "";
-	const char *np2 = c->newest_ipsec_sa == st->st_serialno ?
-			  "; newest IPSEC" : "";
-	/* XXX spd-enum */
-	const char *eo = c->spd.eroute_owner == st->st_serialno ?
-			 "; eroute owner" : "";
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 
-	connection_buf cib;
-	const char *inst = str_connection_instance(c, &cib);
+		const struct connection *c = st->st_connection;
 
-	dpdbuf[0] = '\0';	/* default to empty string */
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
-			 st->st_clonedfrom);
-	} else {
-		if (st->hidden_variables.st_peer_supports_dpd) {
+		jam(buf, "#%lu: ", st->st_serialno);
+		jam_connection(buf, c);
+		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint));
+		if (st->st_interface->protocol == &ip_protocol_tcp) {
+			jam(buf, "(tcp)");
+		}
+		jam(buf, " %s (%s); ", st->st_state->name, st->st_state->story);
+
+		/*
+		 * Hunt and peck for an event?  Should it show the first?
+		 */
+		struct pluto_event *liveness_events[] = {
+			st->st_event,
+			st->st_retransmit_event,
+		};
+		struct pluto_event *liveness = NULL;
+		for (unsigned e = 0; e < elemsof(liveness_events); e++) {
+			liveness = liveness_events[e];
+			if (liveness != NULL) {
+				break;
+			}
+		}
+		if (liveness == NULL) {
+			jam(buf, "none");
+		} else {
+			jam_enum(buf, &timer_event_names, liveness->ev_type);
+		}
+
+		intmax_t delta = (liveness == NULL ? -1 : /* ??? sort of odd signifier */
+				  deltasecs(monotimediff(liveness->ev_time, now)));
+		jam(buf, " in %jds", delta);
+
+		if (c->newest_ike_sa == st->st_serialno) {
+			jam(buf, "; newest ISAKMP");
+		}
+
+		if (c->newest_ipsec_sa == st->st_serialno) {
+			jam(buf, "; newest IPSEC");
+		}
+
+		/* XXX spd-enum */ /* XXX: huh? */
+		if (c->spd.eroute_owner == st->st_serialno) {
+			jam(buf, "; eroute owner");
+		}
+
+		if (IS_IPSEC_SA_ESTABLISHED(st)) {
+			jam(buf, "; isakmp#%lu", st->st_clonedfrom);
+		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
-			snprintf(dpdbuf, sizeof(dpdbuf),
-				 "; lastdpd=%jds(seq in:%u out:%u)",
-				 !is_monotime_epoch(st->st_last_dpd) ?
-					deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
-				 st->st_dpd_seqno,
-				 st->st_dpd_expectseqno);
+			jam(buf, "; lastdpd=%jds(seq in:%u out:%u)",
+			    !is_monotime_epoch(st->st_last_dpd) ?
+			    deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
+			    st->st_dpd_seqno,
+			    st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && (st->st_ike_version == IKEv2)) {
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
 				struct state *pst = state_with_serialno(st->st_clonedfrom);
-
 				if (pst != NULL) {
-					snprintf(dpdbuf, sizeof(dpdbuf),
-						"; lastlive=%jds",
-						 !is_monotime_epoch(pst->st_last_liveness) ?
-						 deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
-						0);
+					jam(buf, "; lastlive=%jds",
+					    !is_monotime_epoch(pst->st_last_liveness) ?
+					    deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+					    0);
 				}
 			}
+		} else if (st->st_ike_version == IKEv1) {
+			jam(buf, "; nodpd");
+		}
+
+		if (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background) {
+			jam(buf, "; crypto_calculating");
+		} else if (st->st_suspended_md != NULL) {
+			jam(buf, "; crypto/dns-lookup");
 		} else {
-			if (st->st_ike_version == IKEv1)
-				snprintf(dpdbuf, sizeof(dpdbuf), "; nodpd");
+			jam(buf, "; idle");
 		}
+		jam(buf, ";");
 	}
+}
 
-	/*
-	 * Hunt and peck for an event?  Should it show the first?
-	 */
-	struct pluto_event *liveness_events[] = {
-		st->st_event,
-		st->st_retransmit_event,
-	};
-	struct pluto_event *liveness = NULL;
-	for (unsigned e = 0; e < elemsof(liveness_events); e++) {
-		liveness = liveness_events[e];
-		if (liveness != NULL) {
-			break;
-		}
-	}
-	intmax_t delta = (liveness == NULL ? -1 : /* ??? sort of odd signifier */
-			  deltasecs(monotimediff(liveness->ev_time, now)));
+static void show_established_child_details(struct show *s, struct state *st)
+{
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		const struct connection *c = st->st_connection;
 
-	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u%s %s (%s); %s in %jds%s%s%s%s; %s;",
-		 st->st_serialno,
-		 c->name, inst,
-		 endpoint_hport(st->st_remote_endpoint),
-		 (st->st_interface->protocol == &ip_protocol_tcp) ? "(tcp)" : "",
-		 st->st_state->name,
-		 st->st_state->story,
-		 (liveness == NULL ? "none" :
-		  enum_name(&timer_event_names, liveness->ev_type)),
-		 delta,
-		 np1, np2, eo, dpdbuf,
-		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
-		 ? "crypto_calculating" :
-			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
-			"idle");
-
-	/* print out SPIs if SAs are established */
-	if (state_buf2_len != 0)
-		state_buf2[0] = '\0';   /* default to empty */
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
-		char lastused[40];      /* should be plenty long enough */
-		char saids_buf[(1 + SATOT_BUF) * 6];
-		struct jambuf buf = ARRAY_AS_JAMBUF(saids_buf);
-
-#	define add_said(ADST, ASPI, APROTO)				\
-		{							\
-			ip_said s = said3(ADST, ASPI, APROTO);		\
-			jam(&buf, " ");					\
-			jam_said(&buf, &s);				\
-		}
+		jam(buf, "#%lu: ", st->st_serialno);
+		jam_connection(buf, c);
 
 		/*
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		lastused[0] = '\0';
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
-			snprintf(lastused, sizeof(lastused),
-				 " used %jds ago;",
-				 deltasecs(monotimediff(mononow(),
-							st->st_outbound_time)));
+			jam(buf, " used %jds ago;",
+			    deltasecs(monotimediff(mononow(),
+						   st->st_outbound_time)));
 		}
 
-		mbcp = traffic_buf +
-		       snprintf(traffic_buf, sizeof(traffic_buf) - 1,
-				"Traffic:");
+#define add_said(ADST, ASPI, APROTO)				\
+		{						\
+			ip_said s = said3(ADST, ASPI, APROTO);	\
+			jam(buf, " ");				\
+			jam_said(buf, &s);			\
+		}
+
+		/* SAIDs */
 
 		if (st->st_ah.present) {
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 &ip_protocol_ah);
-			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = readable_humber(st->st_ah.peer_bytes,
-						       mbcp,
-						       traffic_buf +
-							  sizeof(traffic_buf),
-						       " AHout=");
-			}
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 &ip_protocol_ah);
-			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = readable_humber(st->st_ah.our_bytes,
-						       mbcp,
-						       traffic_buf +
-							 sizeof(traffic_buf),
-						       " AHin=");
-			}
-			mbcp = readable_humber(
-					(u_long)st->st_ah.attrs.life_kilobytes,
-					mbcp,
-					traffic_buf +
-					  sizeof(traffic_buf),
-					"! AHmax=");
 		}
 		if (st->st_esp.present) {
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 &ip_protocol_esp);
-			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = readable_humber(st->st_esp.our_bytes,
-						       mbcp,
-						       traffic_buf +
-							 sizeof(traffic_buf),
-						       " ESPin=");
-			}
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 &ip_protocol_esp);
-			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = readable_humber(st->st_esp.peer_bytes,
-						       mbcp,
-						       traffic_buf +
-							 sizeof(traffic_buf),
-						       " ESPout=");
-			}
-
-			mbcp = readable_humber(
-					(u_long)st->st_esp.attrs.life_kilobytes,
-					mbcp,
-					traffic_buf +
-					  sizeof(traffic_buf),
-					"! ESPmax=");
 		}
 		if (st->st_ipcomp.present) {
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, &ip_protocol_comp);
-			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = readable_humber(
-						st->st_ipcomp.peer_bytes,
-						mbcp,
-						traffic_buf +
-						  sizeof(traffic_buf),
-						" IPCOMPout=");
-			}
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 &ip_protocol_comp);
-			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = readable_humber(
-						st->st_ipcomp.our_bytes,
-						mbcp,
-						traffic_buf +
-						  sizeof(traffic_buf),
-						" IPCOMPin=");
-			}
-
-			/* mbcp not subsequently used */
-			mbcp = readable_humber(
-					(u_long)st->st_ipcomp.attrs.life_kilobytes,
-					mbcp,
-					traffic_buf + sizeof(traffic_buf),
-					"! IPCOMPmax=");
 		}
-
 #if defined(XFRM_SUPPORT)
-		if (st->st_ah.attrs.mode ==
-			ENCAPSULATION_MODE_TUNNEL ||
-			st->st_esp.attrs.mode ==
-			ENCAPSULATION_MODE_TUNNEL ||
-			st->st_ipcomp.attrs.mode ==
-			ENCAPSULATION_MODE_TUNNEL) {
+		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
 			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
 				 &ip_protocol_ipip);
 			add_said(&c->spd.this.host_addr, st->st_tunnel_in_spi,
 				 &ip_protocol_ipip);
 		}
 #endif
-
-		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s %s %s%s",
-			st->st_serialno,
-			c->name, inst,
-			lastused,
-			saids_buf,
-			traffic_buf,
-			st->st_xauth_username[0] != '\0' ? "username=" : "",
-			st->st_xauth_username);
-
 #       undef add_said
+
+		jam(buf, " Traffic:");
+
+		if (st->st_ah.present) {
+			if (get_sa_info(st, false, NULL)) {
+				jam(buf, " AHout=");
+				jam_readable_humber(buf, st->st_ah.peer_bytes, false);
+			}
+			if (get_sa_info(st, TRUE, NULL)) {
+				jam(buf, " AHin=");
+				jam_readable_humber(buf, st->st_ah.our_bytes, false);
+			}
+			jam(buf, "! AHmax=");		/* TBD: "The ! is not printed." */
+			jam_readable_humber(buf, st->st_ah.attrs.life_kilobytes, true);
+		}
+		if (st->st_esp.present) {
+			if (get_sa_info(st, TRUE, NULL)) {
+				jam(buf, " ESPin=");
+				jam_readable_humber(buf, st->st_esp.our_bytes, false);
+			}
+			if (get_sa_info(st, FALSE, NULL)) {
+				jam(buf, " ESPout=");
+				jam_readable_humber(buf, st->st_esp.peer_bytes, false);
+			}
+			jam(buf, "! ESPmax=");		/* TBD: "The ! is not printed." */
+			jam_readable_humber(buf, st->st_esp.attrs.life_kilobytes, true);
+		}
+		if (st->st_ipcomp.present) {
+			if (get_sa_info(st, FALSE, NULL)) {
+				jam(buf, " IPCOMPout=");
+				jam_readable_humber(buf, st->st_ipcomp.peer_bytes, false);
+			}
+			if (get_sa_info(st, TRUE, NULL)) {
+				jam(buf, " IPCOMPin=");
+				jam_readable_humber(buf, st->st_ipcomp.our_bytes, false);
+			}
+			jam(buf, "! IPCOMPmax=");	/* TBD: "The ! is not printed." */
+			jam_readable_humber(buf, st->st_ipcomp.attrs.life_kilobytes, true);
+		}
+
+		jam(buf, " "); /* TBD: trailing blank */
+		if (st->st_xauth_username[0] != '\0') {
+			jam(buf, "username=%s", st->st_xauth_username);
+		}
 	}
 }
 
@@ -2389,24 +2374,21 @@ void show_states(struct show *s)
 					   __func__);
 
 	if (array != NULL) {
-		monotime_t n = mononow();
+		monotime_t now = mononow();
 		/* now print sorted results */
 		int i;
 		for (i = 0; array[i] != NULL; i++) {
 			struct state *st = array[i];
+			show_state(s, st, now);
+			if (IS_IPSEC_SA_ESTABLISHED(st)) {
+				/* print out SPIs if SAs are established */
+				show_established_child_details(s, st);
+			}  else if (IS_IKE_SA(st)) {
+				/* show any associated pending Phase 2s */
+				show_pending_child_details(s, st->st_connection,
+							   pexpect_ike_sa(st));
+			}
 
-			char state_buf[LOG_WIDTH];
-			char state_buf2[LOG_WIDTH*2];
-			fmt_state(st, n, state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			show_comment(s, "%s", state_buf);
-			if (state_buf2[0] != '\0')
-				show_comment(s, "%s", state_buf2);
-
-			/* show any associated pending Phase 2s */
-			if (IS_IKE_SA(st))
-				show_pending_phase2(s, st->st_connection,
-						    pexpect_ike_sa(st));
 		}
 		pfree(array);
 	}

@@ -417,9 +417,9 @@ void flush_pending_by_connection(const struct connection *c)
 	}
 }
 
-void show_pending_phase2(struct show *s,
-			 const struct connection *c,
-			 const struct ike_sa *ike)
+void show_pending_child_details(struct show *s,
+				const struct connection *c,
+				const struct ike_sa *ike)
 {
 	struct pending **pp, *p;
 
