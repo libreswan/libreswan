@@ -55,15 +55,15 @@ enum v1_hash_type {
 struct v1_hash_fixup {
 	chunk_t hash_data;
 	const uint8_t *body;
-	msgid_t msgid;
 	const char *what;
 	enum impair_emit impair;
 	enum v1_hash_type hash_type;
+	struct logger *logger;
 };
 
 bool emit_v1_HASH(enum v1_hash_type type, const char *what,
 		  enum impair_v1_exchange exchange, struct state *st,
-		  struct v1_hash_fixup *hash_fixup, pb_stream *out_pbs);
+		  struct v1_hash_fixup *hash_fixup, struct pbs_out *out_pbs);
 
 void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *data,
 		   msgid_t msgid, const uint8_t *roof);
