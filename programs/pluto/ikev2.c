@@ -1555,7 +1555,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
 		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 	md->message_payloads =
-		ikev2_decode_payloads(st->st_logger, md,
+		ikev2_decode_payloads(ike->sa.st_logger, md,
 				      &md->message_pbs,
 				      md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1847,7 +1847,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-			md->encrypted_payloads = ikev2_decode_payloads(st->st_logger, md, &sk->pbs,
+			md->encrypted_payloads = ikev2_decode_payloads(ike->sa.st_logger, md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 				/*
