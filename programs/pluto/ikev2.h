@@ -74,8 +74,6 @@ extern void ikev2_initiate_child_sa(struct pending *p);
 
 void ikev2_rekey_ike_start(struct ike_sa *ike);
 
-extern void ikev2_child_outI(struct state *st);
-
 struct ikev2_proposal;
 struct ikev2_proposals;
 

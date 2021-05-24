@@ -4701,6 +4701,8 @@ void ikev2_rekey_ike_start(struct ike_sa *ike)
 	ikev2_initiate_child_sa(&p);
 }
 
+static ke_and_nonce_cb ikev2_child_outI_continue;
+
 void ikev2_initiate_child_sa(struct pending *p)
 {
 	struct ike_sa *ike = p->ike;
@@ -4824,40 +4826,33 @@ void ikev2_initiate_child_sa(struct pending *p)
 		    ike->sa.st_serialno);
 	}
 
-	event_force(EVENT_v2_INITIATE_CHILD, &child->sa);
-}
-
-static ke_and_nonce_cb ikev2_child_outI_continue;
-
-void ikev2_child_outI(struct state *st)
-{
 	/*
 	 * XXX: the combination of .st_pfs_group and .st_oakley.ta_dh
 	 * is weird.  Should this instead extract the tentative DH
 	 * from the proposals (providing a default)?
 	 */
-	switch (st->st_state->kind) {
+	switch (child->sa.st_state->kind) {
 
 	case STATE_V2_REKEY_CHILD_I0:
-		submit_ke_and_nonce(st, st->st_pfs_group,
-				    ikev2_child_outI_continue /*possibly-null*/,
+		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
+				    ikev2_child_outI_continue,
 				    "Child Rekey Initiator KE and nonce ni");
 		break; /* return STF_SUSPEND; */
 
 	case STATE_V2_NEW_CHILD_I0:
-		submit_ke_and_nonce(st, st->st_pfs_group /*possibly-null*/,
+		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
 				    ikev2_child_outI_continue,
 				    "Child Initiator KE? and nonce");
 		break; /* return STF_SUSPEND; */
 
 	case STATE_V2_REKEY_IKE_I0:
-		submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+		submit_ke_and_nonce(&child->sa, child->sa.st_oakley.ta_dh,
 				    ikev2_child_outI_continue /*never-null?*/,
 				    "IKE REKEY Initiator KE and nonce ni");
 		break; /* return STF_SUSPEND; */
 
 	default:
-		bad_case(st->st_state->kind);
+		bad_case(child->sa.st_state->kind);
 	}
 }
 

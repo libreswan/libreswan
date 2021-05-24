@@ -99,7 +99,6 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v1_SA_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
-	case EVENT_v2_INITIATE_CHILD:
 	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
@@ -224,10 +223,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		xauth_send_request(st);
 		break;
 #endif
-
-	case EVENT_v2_INITIATE_CHILD:
-		ikev2_child_outI(st);
-		break;
 
 	case EVENT_v2_LIVENESS:
 		liveness_check(st);
