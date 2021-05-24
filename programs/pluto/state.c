@@ -1001,7 +1001,6 @@ void delete_state_tail(struct state *st)
 
 	event_delete(EVENT_DPD, st);
 	event_delete(EVENT_v2_LIVENESS, st);
-	event_delete(EVENT_v2_RELEASE_WHACK, st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 	event_delete(EVENT_v2_ADDR_CHANGE, st);
 
@@ -3019,7 +3018,6 @@ void list_state_events(struct show *s, monotime_t now)
 	FOR_EACH_STATE_OLD2NEW(st) {
 		list_state_event(s, st, st->st_event, now);
 		list_state_event(s, st, st->st_liveness_event, now);
-		list_state_event(s, st, st->st_rel_whack_event, now);
 		list_state_event(s, st, st->st_send_xauth_event, now);
 		list_state_event(s, st, st->st_addr_change_event, now);
 		list_state_event(s, st, st->st_dpd_event, now);

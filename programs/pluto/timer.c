@@ -86,9 +86,6 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v2_LIVENESS:
 		return &st->st_liveness_event;
 
-	case EVENT_v2_RELEASE_WHACK:
-		return &st->st_rel_whack_event;
-
 	case EVENT_v1_SEND_XAUTH:
 		return &st->st_send_xauth_event;
 
@@ -203,18 +200,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		dbg("#%lu IKEv2 local address change", st->st_serialno);
 		ikev2_addr_change(st);
 		break;
-
-	case EVENT_v2_RELEASE_WHACK:
-	{
-		esb_buf b;
-		dbg("%s releasing whack for #%lu %s (sock="PRI_FD")",
-		    enum_show(&timer_event_names, type, &b),
-		    st->st_serialno,
-		    st->st_state->name,
-		    pri_fd(st->st_logger->object_whackfd));
-		release_pending_whacks(st, "release whack");
-		break;
-	}
 
 	case EVENT_RETRANSMIT:
 		dbg("IKEv%d retransmit event", st->st_ike_version);

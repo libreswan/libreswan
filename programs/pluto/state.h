@@ -696,7 +696,6 @@ struct state {
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	struct pluto_event *st_liveness_event;	/* IKEv2 only event */
-	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
 	struct pluto_event *st_addr_change_event;
 	struct pluto_event *st_retransmit_event;

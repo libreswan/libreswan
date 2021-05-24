@@ -222,7 +222,6 @@ enum event_type {
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
-	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */

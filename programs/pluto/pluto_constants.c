@@ -127,7 +127,6 @@ static const char *const timer_event_name[] = {
 	E(EVENT_PAM_TIMEOUT),
 
 	E(EVENT_v2_LIVENESS),
-	E(EVENT_v2_RELEASE_WHACK),
 	E(EVENT_v2_INITIATE_CHILD),
 	E(EVENT_v2_ADDR_CHANGE),
 	E(EVENT_v2_REDIRECT),
