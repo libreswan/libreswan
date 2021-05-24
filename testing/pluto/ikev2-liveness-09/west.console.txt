@@ -80,7 +80,7 @@ west #
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:3; timeout:10; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
-000 #3: "westnet-eastnet-ikev2":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in XXs; idle;
+000 #3: "westnet-eastnet-ikev2":500 STATE_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 000 #3: pending CHILD SA for "westnet-eastnet-ikev2"
 west #
  # ping should be caught ip route unreachable

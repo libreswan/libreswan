@@ -11,7 +11,7 @@ s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
 s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
 s,{msgid.*},,
 
-s,\( EVENT_[a-z0-9A-Z_]\+ in \)[0-9]\+s,\1XXs,g
+s,; \([a-z0-9A-Z_]\+\) in [0-9]\+s;,; \1 in XXs;,g
 s, remaining life [0-9][0-9\.]*s, remaining life XXs,
 
 s,\(003 .* received Vendor ID payload \[Libreswan \).*,\1,

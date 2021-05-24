@@ -39,8 +39,8 @@ road #
  sleep 3
 road #
  ipsec status |grep STATE_
-000 #3: "road-eastnet-ikev2":4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #4: "road-eastnet-ikev2":4500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #3: "road-eastnet-ikev2":4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
+000 #4: "road-eastnet-ikev2":4500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 road #
  ipsec traffic
 006 #4: "road-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'

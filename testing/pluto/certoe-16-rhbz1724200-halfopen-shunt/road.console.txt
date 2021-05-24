@@ -31,7 +31,7 @@ road #
 000  
 road #
  ipsec status |grep STATE_
-000 #5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_PARENT_I1 (sent IKE_SA_INIT request); EVENT_RETRANSMIT in -1s; idle;
+000 #5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
 road #
  # east triggered OE, we still have our #1 which is now obsoleted
 road #
@@ -40,8 +40,8 @@ road #
  # state #1 should be gone by now. State #2 and #3 should be there.
 road #
  ipsec status |grep STATE_
-000 #7: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #8: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #7: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
+000 #8: "private#192.1.2.23/32"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  # confirm it didn't create a shunt and did not nuke out policy
 road #
