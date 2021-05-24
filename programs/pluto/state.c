@@ -2019,31 +2019,20 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		if (st->st_interface->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
-		jam(buf, " %s (%s); ", st->st_state->name, st->st_state->story);
+		jam(buf, " %s (%s)", st->st_state->name, st->st_state->story);
 
 		/*
 		 * Hunt and peck for an event?  Should it show the first?
 		 */
-		struct pluto_event *liveness_events[] = {
-			st->st_event,
-			st->st_retransmit_event,
-		};
-		struct pluto_event *liveness = NULL;
-		for (unsigned e = 0; e < elemsof(liveness_events); e++) {
-			liveness = liveness_events[e];
+		FOR_EACH_THING(liveness, st->st_event, st->st_retransmit_event) {
 			if (liveness != NULL) {
+				jam(buf, "; ");
+				jam_enum(buf, &timer_event_names, liveness->ev_type);
+				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
+				jam(buf, " in %jds", delta);
 				break;
 			}
 		}
-		if (liveness == NULL) {
-			jam(buf, "none");
-		} else {
-			jam_enum(buf, &timer_event_names, liveness->ev_type);
-		}
-
-		intmax_t delta = (liveness == NULL ? -1 : /* ??? sort of odd signifier */
-				  deltasecs(monotimediff(liveness->ev_time, now)));
-		jam(buf, " in %jds", delta);
 
 		if (c->newest_ike_sa == st->st_serialno) {
 			jam(buf, "; newest ISAKMP");
