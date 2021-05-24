@@ -1,7 +1,7 @@
 #!/bin/sh
 
 pass1="sh modified baseline baseline-passed baseline-failed"
-pass2="test diffs results retest upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status test-clean"
+pass2="test diffs results retest upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status test-clean shutdown"
 
 if test $# = 0; then
     cat <<EOF
@@ -136,7 +136,7 @@ for op in ${ops} ; do
 	kill )
 	    gmake kvm-${op}
 	    ;;
-	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | test-clean )
+	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | test-clean | shutdown )
 	    gmake kvm-${op} || exit $?
 	    ;;
 	test | retest )
