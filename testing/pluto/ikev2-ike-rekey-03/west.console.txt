@@ -78,10 +78,10 @@ west #
 006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec status |grep STATE_
-000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # Wait intil 30(23+10) - between 23 and 46
 west #
@@ -106,10 +106,10 @@ west #
 006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec status |grep STATE_|sort
-000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
-000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # Wait intil 60(30+30) - between 46 and 69, after 53
 west #
@@ -141,10 +141,10 @@ west #
 006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec status |grep STATE_ | sort
-000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
-000 #11: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
-000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
-000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #11: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
+000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#11; idle;
 west #
  # there should be only one IKE_INIT exchange created on west
 west #
