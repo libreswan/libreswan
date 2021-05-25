@@ -240,35 +240,3 @@ void retransmit_v2_msg(struct state *ike_sa)
 
 	/* note: no md->st to clear */
 }
-
-void ikev2_schedule_retry(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	unsigned long try = st->st_try;
-	unsigned long try_limit = c->sa_keying_tries;
-	if (try_limit > 0 && try >= try_limit) {
-		dbg("maximum number of retries reached - deleting state");
-		return;
-	}
-	LLOG_JAMBUF(RC_COMMENT, st->st_logger, buf) {
-		jam(buf, "scheduling retry attempt %ld of ", try);
-		if (try_limit == 0) {
-			jam_string(buf, "an unlimited number");
-		} else {
-			jam(buf, "at most %ld", try_limit);
-		}
-		if (fd_p(st->st_logger->object_whackfd)) {
-			jam_string(buf, ", but releasing whack");
-		}
-	}
-
-	/*
-	 * release_pending_whacks() will release ST (and ST's parent
-	 * if it exists and has the same whack).  For instance, when
-	 * the AUTH exchange somehow digs a hole where the child sa
-	 * gets a timeout.
-	 *
-	 * XXX: The child SA 'diging a hole' is likely a bug.
-	 */
-	release_pending_whacks(st, "scheduling a retry");
-}

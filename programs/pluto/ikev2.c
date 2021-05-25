@@ -313,27 +313,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
-	{ .story      = "Initiator: process INVALID_SYNTAX AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_INVALID_SYNTAX, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
-	{ .story      = "Initiator: process AUTHENTICATION_FAILED AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_AUTHENTICATION_FAILED, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
-	{ .story      = "Initiator: process UNSUPPORTED_CRITICAL_PAYLOAD AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
+
 	/*
 	 * XXX: Danger! This state transition mashes the IKE SA's
 	 * initial state and the CHILD SA's final state.  There should
@@ -353,13 +333,15 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
-	{ .story      = "IKE SA: process IKE_AUTH response containing unknown notification",
+
+	{ .story      = "Initiator: processing IKE_AUTH failure response",
 	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
 	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), },
-	  .processor  = ikev2_in_IKE_AUTH_R_unknown_notification,
+	  /* .encrypted_payloads = { .required = P(N), }, */
+	  .processor  = ikev2_in_IKE_AUTH_R_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	},
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni

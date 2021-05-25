@@ -1118,108 +1118,86 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
 	return STF_OK;
 }
 
-stf_status ikev2_in_IKE_AUTH_R_failure_notification(struct ike_sa *ike,
-						    struct child_sa *child,
-						    struct msg_digest *md)
+/*
+ * 2.21.2.  Error Handling in IKE_AUTH
+ *
+ *             ...  If the error occurred on the responder, the
+ *   notification is returned in the protected response, and is
+ *   usually the only payload in that response.  Although the IKE_AUTH
+ *   messages are encrypted and integrity protected, if the peer
+ *   receiving this notification has not authenticated the other end
+ *   yet, that peer needs to treat the information with caution.
+ *
+ * Continuing to retransmit is pointless - it will get back
+ * the same response.
+ */
+
+stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
+						struct child_sa *child,
+						struct msg_digest *md)
 {
-	/*
-	 * XXX: ST here should be the IKE SA.  The state machine,
-	 * however, directs the AUTH response to the CHILD!
-	 */
 	child = ike->sa.st_v2_larval_sa;
 	pexpect(child != NULL);
 
-	v2_notification_t n = md->svm->encrypted_payloads.notification;
-	pstat(ikev2_recv_notifies_e, n);
 	/*
-	 * Always log the notification error and fail;
-	 * but do it in slightly different ways so it
-	 * is possible to figure out which code path
-	 * was taken.
-	 */
-	log_state(RC_LOG, &ike->sa, "IKE SA authentication request rejected by peer: %s",
-		  enum_name_short(&ikev2_notify_names, n));
-
-	/*
-	 * XXX: ST here should be the IKE SA.  The state machine,
-	 * however, directs the AUTH response to the CHILD!  Find the
-	 * IKE SA and mark it as failing.
+	 * Mark IKE SA as failing.
 	 */
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 
 	/*
-	 * 2.21.2.  Error Handling in IKE_AUTH
-	 *
-	 *             ...  If the error occurred on the responder, the
-	 *   notification is returned in the protected response, and is usually
-	 *   the only payload in that response.  Although the IKE_AUTH messages
-	 *   are encrypted and integrity protected, if the peer receiving this
-	 *   notification has not authenticated the other end yet, that peer needs
-	 *   to treat the information with caution.
-	 *
-	 * So assume MITM and schedule a retry.
-	 *
-	 * Continuing to retransmit is pointless - it will get back
-	 * the same response.
-	 */
-	ikev2_schedule_retry(&child->sa);
-	return STF_FATAL;
-}
-
-stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
-						    struct child_sa *child,
-						    struct msg_digest *md)
-{
-	/*
-	 * XXX: ST here should be the IKE SA.  The state machine,
-	 * however, directs the AUTH response to the CHILD!
-	 */
-	child = ike->sa.st_v2_larval_sa;
-	pexpect(child != NULL);
-
-	/*
-	 * 3.10.1.  Notify Message Types:
-	 *
-	 *   Types in the range 0 - 16383 are intended for reporting errors.  An
-	 *   implementation receiving a Notify payload with one of these types
-	 *   that it does not recognize in a response MUST assume that the
-	 *   corresponding request has failed entirely.  Unrecognized error types
-	 *   in a request and status types in a request or response MUST be
-	 *   ignored, and they should be logged.
+	 * Try to print a meaningful log of the notification error;
+	 * but do it in slightly different ways so it is possible to
+	 * figure out which code path was taken.
 	 */
 
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		v2_notification_t n = ntfy->payload.v2n.isan_type;
-		const char *name = enum_name_short(&ikev2_notify_names, n);
-
-		if (ntfy->payload.v2n.isan_spisize != 0) {
-			/* invalid-syntax, but can't do anything about it */
-			log_state(RC_LOG, &child->sa,
-				  "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
-				  name);
+	bool logged = false;
+	FOR_EACH_THING(pd, PD_v2N_INVALID_SYNTAX, PD_v2N_AUTHENTICATION_FAILED,
+		       PD_v2N_UNSUPPORTED_CRITICAL_PAYLOAD) {
+		if (md->pd[pd] != NULL) {
+			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
+			pstat(ikev2_recv_notifies_e, n);
+			const char *why = enum_name_short(&ikev2_notify_names, n);
+			log_state(RC_LOG/*XXX:TBD:RC_LOG_SERIOUS*/, &ike->sa,
+				  "IKE SA authentication request rejected by peer: %s", why);
+			logged = true;
 			break;
 		}
+	}
 
-		if (n >= v2N_STATUS_FLOOR) {
-			/* just log */
-			pstat(ikev2_recv_notifies_s, n);
-			if (name == NULL) {
+	if (!logged) {
+		/*
+		 * Dump as much information as possible.
+		 */
+		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+		     ntfy != NULL; ntfy = ntfy->next) {
+			v2_notification_t n = ntfy->payload.v2n.isan_type;
+			logged = true;
+			/* same scope */
+			esb_buf esb;
+			const char *name = enum_show_short(&ikev2_notify_names, n, &esb);
+
+			if (ntfy->payload.v2n.isan_spisize != 0) {
+				/* invalid-syntax, but can't do anything about it */
 				log_state(RC_LOG, &child->sa,
-					  "IKE_AUTH response contained an unknown status notification (%d)", n);
-			} else {
+					  "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+					  name);
+				break;
+			}
+
+			if (n >= v2N_STATUS_FLOOR) {
+				/* just log */
+				pstat(ikev2_recv_notifies_s, n);
 				log_state(RC_LOG, &child->sa,
 					  "IKE_AUTH response contained the status notification %s", name);
-			}
-		} else {
-			pstat(ikev2_recv_notifies_e, n);
-			if (name == NULL) {
-				log_state(RC_LOG, &child->sa,
-					  "IKE_AUTH response contained an unknown error notification (%d)", n);
 			} else {
-				log_state(RC_LOG, &child->sa,
+				pstat(ikev2_recv_notifies_e, n);
+				log_state(RC_LOG/*XXX:TBD:RC_LOG_SERIOUS*/, &child->sa,
 					  "IKE_AUTH response contained the error notification %s", name);
 				/*
-				 * There won't be a child state transition, so log if error is child related.
+				 * There won't be a child state
+				 * transition, so log if error is
+				 * child related.
+				 *
 				 * see RFC 7296 Section 1.2
 				 */
 				switch(n) {
@@ -1239,22 +1217,56 @@ stf_status ikev2_in_IKE_AUTH_R_unknown_notification(struct ike_sa *ike,
 			}
 		}
 	}
+
+	if (!logged) {
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "IKE SA authentication request rejected by peer: unrecognized response");
+	}
+
 	/*
-	 * 2.21.2.  Error Handling in IKE_AUTH
+	 * XXX: This output is mostly to keep test results happy.  The
+	 * real action happens (and should be logged) elsewhere.
 	 *
-	 *             ...  If the error occurred on the responder, the
-	 *   notification is returned in the protected response, and is usually
-	 *   the only payload in that response.  Although the IKE_AUTH messages
-	 *   are encrypted and integrity protected, if the peer receiving this
-	 *   notification has not authenticated the other end yet, that peer needs
-	 *   to treat the information with caution.
-	 *
-	 * So assume MITM and schedule a retry.
-	 *
-	 * Continuing to retransmit is pointless - it will get back
-	 * the same response.
+	 * XXX: An assumption here is that the IKE SA and the first
+	 * child have the same try parameters.
 	 */
-	ikev2_schedule_retry(&child->sa);
+
+	struct connection *c = child->sa.st_connection;
+	unsigned long try = child->sa.st_try;
+	unsigned long try_limit = c->sa_keying_tries;
+	if (try_limit > 0 && try >= try_limit) {
+		dbg("maximum number of retries reached - deleting state");
+	} else {
+		LLOG_JAMBUF(RC_COMMENT, child->sa.st_logger, buf) {
+			jam(buf, "scheduling retry attempt %ld of ", try);
+			if (try_limit == 0) {
+				jam_string(buf, "an unlimited number");
+			} else {
+				jam(buf, "at most %ld", try_limit);
+			}
+			if (fd_p(child->sa.st_logger->object_whackfd)) {
+				jam_string(buf, ", but releasing whack");
+			}
+		}
+	}
+
+	/*
+	 * release_pending_whacks() will release the CHILD (and
+	 * CHILD's parent if it exists and has the same whack).  For
+	 * instance, when the AUTH exchange somehow digs a hole where
+	 * the child sa gets a timeout.
+	 *
+	 * XXX: The child SA 'diging a hole' is likely a bug.
+	 *
+	 * XXX: this call is mostely to keep tests happy; the real
+	 * action which is elsewhere is being hidden.
+	 */
+       release_pending_whacks(&child->sa, "scheduling a retry");
+
+	/*
+	 * XXX: this kills the CHILD SA; the IKE SA lives until a
+	 * timeout.
+	 */
 	return STF_FATAL;
 }
 
