@@ -36,7 +36,7 @@ west #
 1v2 "westnet-eastnet-bar" #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-bar" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-000 "westnet-eastnet-bar" #4: scheduling retry attempt 1 of an unlimited number, but releasing whack
+000 "westnet-eastnet-bar" #3: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
 done
