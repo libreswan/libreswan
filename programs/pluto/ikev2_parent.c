@@ -1150,49 +1150,52 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 	 * figure out which code path was taken.
 	 */
 
-	bool logged = false;
+	/*
+	 * These are all IKE SA failures - try to blame IKE first.
+	 */
+
+	bool logged_something_serious = false;
 	FOR_EACH_THING(pd, PD_v2N_INVALID_SYNTAX, PD_v2N_AUTHENTICATION_FAILED,
 		       PD_v2N_UNSUPPORTED_CRITICAL_PAYLOAD) {
 		if (md->pd[pd] != NULL) {
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
 			const char *why = enum_name_short(&ikev2_notify_names, n);
-			log_state(RC_LOG/*XXX:TBD:RC_LOG_SERIOUS*/, &ike->sa,
+			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "IKE SA authentication request rejected by peer: %s", why);
-			logged = true;
+			logged_something_serious = true;
 			break;
 		}
 	}
 
-	if (!logged) {
+	if (!logged_something_serious) {
 		/*
 		 * Dump as much information as possible.
 		 */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
 			v2_notification_t n = ntfy->payload.v2n.isan_type;
-			logged = true;
 			/* same scope */
 			esb_buf esb;
 			const char *name = enum_show_short(&ikev2_notify_names, n, &esb);
 
 			if (ntfy->payload.v2n.isan_spisize != 0) {
 				/* invalid-syntax, but can't do anything about it */
-				log_state(RC_LOG, &child->sa,
+				log_state(RC_LOG_SERIOUS, &ike->sa,
 					  "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
 					  name);
+				logged_something_serious = true;
 				break;
 			}
 
 			if (n >= v2N_STATUS_FLOOR) {
 				/* just log */
 				pstat(ikev2_recv_notifies_s, n);
-				log_state(RC_LOG, &child->sa,
+				log_state(RC_LOG, &ike->sa,
 					  "IKE_AUTH response contained the status notification %s", name);
 			} else {
 				pstat(ikev2_recv_notifies_e, n);
-				log_state(RC_LOG/*XXX:TBD:RC_LOG_SERIOUS*/, &child->sa,
-					  "IKE_AUTH response contained the error notification %s", name);
+				logged_something_serious = true;
 				/*
 				 * There won't be a child state
 				 * transition, so log if error is
@@ -1208,17 +1211,22 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 				case v2N_FAILED_CP_REQUIRED:
 				case v2N_TS_UNACCEPTABLE:
 				case v2N_INVALID_SELECTORS:
-					/* fallthrough */
 					linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
+					log_state(RC_LOG_SERIOUS, &child->sa,
+						  "IKE_AUTH response contained the error notification %s", name);
 					break;
 				default:
+					log_state(RC_LOG_SERIOUS, &ike->sa,
+						  "IKE_AUTH response contained the error notification %s", name);
 					break;
 				}
+				/* first is enough */
+				break;
 			}
 		}
 	}
 
-	if (!logged) {
+	if (!logged_something_serious) {
 		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "IKE SA authentication request rejected by peer: unrecognized response");
 	}
@@ -1231,13 +1239,13 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 	 * child have the same try parameters.
 	 */
 
-	struct connection *c = child->sa.st_connection;
-	unsigned long try = child->sa.st_try;
+	struct connection *c = ike->sa.st_connection;
+	unsigned long try = ike->sa.st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 	if (try_limit > 0 && try >= try_limit) {
 		dbg("maximum number of retries reached - deleting state");
 	} else {
-		LLOG_JAMBUF(RC_COMMENT, child->sa.st_logger, buf) {
+		LLOG_JAMBUF(RC_COMMENT, ike->sa.st_logger, buf) {
 			jam(buf, "scheduling retry attempt %ld of ", try);
 			if (try_limit == 0) {
 				jam_string(buf, "an unlimited number");

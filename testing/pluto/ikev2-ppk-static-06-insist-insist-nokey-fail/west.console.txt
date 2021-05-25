@@ -46,8 +46,8 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request
 002 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
 1v2 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ppk" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-000 "westnet-eastnet-ipv4-psk-ppk" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
+003 "westnet-eastnet-ipv4-psk-ppk" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+000 "westnet-eastnet-ipv4-psk-ppk" #1: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
 done
