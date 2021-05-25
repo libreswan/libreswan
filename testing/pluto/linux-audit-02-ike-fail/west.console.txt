@@ -61,7 +61,6 @@ west #
 1v2 "ikev2-failtest" #5: sent IKE_SA_INIT request
 1v2 "ikev2-failtest" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-failtest" #5: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "ikev2-failtest" #6: encountered fatal error in state STATE_PARENT_I2
 west #
  ipsec auto --delete ikev2-failtest
 002 "ikev2-failtest": terminating SAs using this connection

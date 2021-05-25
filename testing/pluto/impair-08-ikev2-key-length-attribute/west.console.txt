@@ -60,7 +60,7 @@ west #
 002 "aes128" #5: IMPAIR: emitting fixed-length key-length attribute with 0 key
 1v2 "aes128" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #6: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
-000 "aes128" #6: scheduling retry attempt 1 of an unlimited number, but releasing whack
+000 "aes128" #5: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  ipsec whack --impair none
 west #
@@ -139,7 +139,7 @@ west #
 002 "aes128" #13: IMPAIR: omitting fixed-size key-length attribute
 1v2 "aes128" #13: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #14: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
-000 "aes128" #14: scheduling retry attempt 1 of an unlimited number, but releasing whack
+000 "aes128" #13: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  ipsec whack --impair none
 west #
