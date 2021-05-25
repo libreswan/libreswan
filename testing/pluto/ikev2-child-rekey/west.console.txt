@@ -57,8 +57,8 @@ west #
  # expect IKE #1 CHILD #3
 west #
  ipsec status |grep STATE_
-000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
-000 #3: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #3: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -91,8 +91,8 @@ west #
  # expect IKE #1 CHILD #4
 west #
  ipsec status |grep STATE_
-000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); SA_REKEY in XXs; newest ISAKMP; idle;
-000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

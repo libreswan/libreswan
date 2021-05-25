@@ -288,7 +288,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR),
-	  EVENT_SO_DISCARD,
+	  EVENT_SA_DISCARD,
 	  FM(main_inI1_outR1),
 	  .hash_type = V1_HASH_NONE, },
 
@@ -483,7 +483,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC),
-	  EVENT_SO_DISCARD,
+	  EVENT_SA_DISCARD,
 	  FM(aggr_inI1_outR1),
 	  /* N/A */
 	  .hash_type = V1_HASH_NONE, },
@@ -1208,11 +1208,11 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			(st->st_state->flags & SMF_RETRANSMIT_ON_DUPLICATE);
 		if (replied && retransmit_on_duplicate) {
 			/*
-			 * Transitions with EVENT_SO_DISCARD should
+			 * Transitions with EVENT_SA_DISCARD should
 			 * always respond to re-transmits (why?); else
 			 * cap.
 			 */
-			if (st->st_v1_last_transition->timeout_event == EVENT_SO_DISCARD ||
+			if (st->st_v1_last_transition->timeout_event == EVENT_SA_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				log_state(RC_RETRANSMISSION, st,
 					  "retransmitting in response to duplicate packet; already %s",
@@ -2757,7 +2757,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				if (agreed_time &&
 				    (c->policy & POLICY_DONT_REKEY)) {
 					kind = (smc->flags & SMF_INITIATOR) ?
-					       EVENT_v1_SA_REPLACE_IF_USED :
+					       EVENT_v1_REPLACE_IF_USED :
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
@@ -2785,8 +2785,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				event_schedule(kind, deltatime_ms(delay_ms), st);
 				break;
 
-			case EVENT_SO_DISCARD:
-				event_schedule(EVENT_SO_DISCARD, c->r_timeout, st);
+			case EVENT_SA_DISCARD:
+				event_schedule(EVENT_SA_DISCARD, c->r_timeout, st);
 				break;
 
 			default:

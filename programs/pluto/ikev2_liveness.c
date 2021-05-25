@@ -101,8 +101,8 @@ void liveness_check(struct state *st)
 		 */
 		dbg("liveness: state #%lu has no IKE SA; deleting orphaned child",
 		    st->st_serialno);
-		event_delete(EVENT_SO_DISCARD, st);
-		event_schedule(EVENT_SO_DISCARD, deltatime(0), st);
+		event_delete(EVENT_SA_DISCARD, st);
+		event_schedule(EVENT_SA_DISCARD, deltatime(0), st);
 		return;
 	}
 	struct ike_sa *ike = pexpect_ike_sa(pst);

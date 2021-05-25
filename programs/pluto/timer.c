@@ -92,11 +92,11 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
-	case EVENT_SO_DISCARD:
+	case EVENT_SA_DISCARD:
 	case EVENT_SA_REKEY:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
-	case EVENT_v1_SA_REPLACE_IF_USED:
+	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
 	case EVENT_v2_REDIRECT:
@@ -234,7 +234,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 
 	case EVENT_SA_REPLACE:
-	case EVENT_v1_SA_REPLACE_IF_USED:
+	case EVENT_v1_REPLACE_IF_USED:
 		switch (st->st_ike_version) {
 		case IKEv2:
 			pexpect(type == EVENT_SA_REPLACE);
@@ -242,7 +242,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			break;
 		case IKEv1:
 			pexpect(type == EVENT_SA_REPLACE ||
-				type == EVENT_v1_SA_REPLACE_IF_USED);
+				type == EVENT_v1_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
 			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
@@ -251,7 +251,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				/* not very interesting: no need to replace */
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
-			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
+			} else if (type == EVENT_v1_REPLACE_IF_USED &&
 				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
@@ -359,7 +359,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 	}
 
-	case EVENT_SO_DISCARD:
+	case EVENT_SA_DISCARD:
 		/*
 		 * The state failed to complete within a reasonable
 		 * time, or the state failed but was left to live for
