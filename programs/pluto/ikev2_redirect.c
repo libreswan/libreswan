@@ -510,9 +510,8 @@ void initiate_redirect(struct state *st)
 		del_spi_trick(st);
 }
 
-void find_states_and_redirect(const char *conn_name,
-			      char *ard_str,
-			      struct fd *whackfd)
+void find_states_and_redirect(const char *conn_name, char *ard_str,
+			      struct logger *logger)
 {
 	passert(ard_str != NULL);
 	set_redirect_dests(ard_str, &active_dests);
@@ -534,14 +533,19 @@ void find_states_and_redirect(const char *conn_name,
 	}
 
 	if (cnt == 0) {
-		whack_log(RC_INFORMATIONAL, whackfd, "no active tunnels found %s\"%s\"",
-			  conn_name != NULL ? "for connection " : "",
-			  conn_name != NULL ? conn_name : "");
+		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+			jam(buf, "no active tunnels found");
+			if (conn_name != NULL) {
+				jam(buf, " for connection \"%s\"", conn_name);
+			}
+		}
 	} else {
-		whack_log(RC_INFORMATIONAL, whackfd,
-			  "redirections sent for %d tunnels %s\"%s\"",
-			  cnt, conn_name != NULL ? "of connection " : "",
-			  conn_name != NULL ? conn_name : "");
+		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+			jam(buf, "redirections sent for %d tunnels", cnt);
+			if (conn_name != NULL) {
+				jam(buf, " of connection \"%s\"", conn_name);
+			}
+		}
 	}
 	free_redirect_dests(&active_dests);
 }

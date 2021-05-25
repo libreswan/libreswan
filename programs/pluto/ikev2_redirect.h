@@ -98,11 +98,9 @@ extern void initiate_redirect(struct state *st);
  * 	  redirected. If it's NULL, that means redirect ALL active
  * 	  peers on the machine.
  * @param ard_str comma-separated string containing the destinations.
- * @param whackfd whack file descriptor used for whack log
  */
-extern void find_states_and_redirect(const char *conn_name,
-				     char *ard_str,
-				     struct fd *whackfd);
+extern void find_states_and_redirect(const char *conn_name, char *ard_str,
+				     struct logger *logger);
 
 /*
  * Send IKEv2 INFORMATIONAL exchange with REDIRECT payload.

@@ -603,7 +603,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		/*
 		 * we are redirecting all peers of one or all connections
 		 */
-		find_states_and_redirect(m->name, m->active_redirect_dests, whackfd);
+		find_states_and_redirect(m->name, m->active_redirect_dests, logger);
 		dbg_whack(s, "... active_redirect_dests '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
