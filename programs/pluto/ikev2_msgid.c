@@ -234,51 +234,6 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 			  responder, &wip);
 }
 
-/*
- * XXX: This is to hack around the broken code that switches from the
- * IKE SA to the CHILD SA before continuing.  Instead, because the
- * CHILD SA can fail, the IKE SA should be the one processing the
- * message?
- */
-
-void v2_msgid_switch_initiator_to_child(struct ike_sa *ike, struct child_sa *child,
-					const struct msg_digest *md)
-{
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_RESPONSE)) {
-		return;
-	}
-	intmax_t msgid = md->hdr.isa_msgid;
-	/* out with the old */
-	{
-		const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) &&
-		    ike->sa.st_v2_msgid_wip.initiator != msgid) {
-			FAIL_V2_MSGID(ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.initiator == %jd(msgid); was %jd",
-				      msgid, ike->sa.st_v2_msgid_wip.initiator);
-		}
-		ike->sa.st_v2_msgid_wip.initiator = -1;
-		dbg_msgids_update("switching from IKE SA initiator", role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &ike->sa, &wip);
-	}
-	/* in with the new */
-	{
-		const struct v2_msgid_wip wip = child->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) &&
-		    child->sa.st_v2_msgid_wip.initiator != -1) {
-			FAIL_V2_MSGID(ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.initiator == -1; was %jd",
-				      child->sa.st_v2_msgid_wip.initiator);
-		}
-		child->sa.st_v2_msgid_wip.initiator = msgid;
-		dbg_msgids_update("switching to CHILD SA initiator", role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &child->sa, &wip);
-	}
-}
-
 void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 			       const struct msg_digest *md)
 {
