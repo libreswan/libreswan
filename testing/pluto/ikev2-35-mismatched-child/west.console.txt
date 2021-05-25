@@ -16,8 +16,8 @@ west #
 1v2 "westnet-eastnet-mismatch" #1: sent IKE_SA_INIT request
 002 "westnet-eastnet-mismatch" #1: WARNING: '@west' PSK length of 6 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
 1v2 "westnet-eastnet-mismatch" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-mismatch" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-000 "westnet-eastnet-mismatch" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
+003 "westnet-eastnet-mismatch" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
+000 "westnet-eastnet-mismatch" #1: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
 done
