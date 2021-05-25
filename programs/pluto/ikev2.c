@@ -1505,8 +1505,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		 */
 		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
 		if (md->fake_clone) {
-			log_state(RC_LOG, st != NULL ? st : &ike->sa,
-				  "IMPAIR: processing a fake (cloned) message");
+			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
 		if (is_duplicate_response(ike, st, md)) {
 			return;
