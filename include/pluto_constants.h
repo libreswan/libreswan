@@ -196,6 +196,10 @@ enum global_timer {
 
 extern const struct enum_names global_timer_names;
 
+/*
+ * State based events and timers.
+ */
+
 enum event_type {
 	EVENT_NULL,			/* non-event */
 
@@ -203,24 +207,24 @@ enum event_type {
 
 	/* events associated with states */
 
-	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
 	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
-
-	/*
-	 * For IKEv2 'replace' is really either a re-key a full
-	 * replace, or expire.  IKEv1 should be the same but isn't.
-	 */
-	EVENT_SA_REKEY,			/* v2 SA rekey event */
-	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
-	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
 
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
+	/*
+	 * For IKEv2 'replace' is really either a re-key a full
+	 * replace, or expire.  IKEv1 should be the same but isn't.
+	 */
+	EVENT_SA_DISCARD,		/* v1/v2 discard unfinished state object */
+	EVENT_SA_REKEY,			/* v2 SA rekey event */
+	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
+	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
+
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
-	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
+	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
 
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */

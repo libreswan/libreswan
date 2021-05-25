@@ -111,11 +111,7 @@ enum_names sd_action_names = {
 static const char *const event_name[] = {
 #define E(EVENT) [EVENT - EVENT_NULL] = #EVENT
 	E(EVENT_NULL),
-	E(EVENT_SO_DISCARD),
 	E(EVENT_RETRANSMIT),
-	E(EVENT_SA_REKEY),
-	E(EVENT_SA_REPLACE),
-	E(EVENT_SA_EXPIRE),
 	E(EVENT_DPD),
 	E(EVENT_DPD_TIMEOUT),
 	E(EVENT_CRYPTO_TIMEOUT),
@@ -130,18 +126,34 @@ static const enum_names event_names = {
 	NULL
 };
 
+static const char *const event_sa_name[] = {
+#define E(EVENT) [EVENT - EVENT_SA_DISCARD] = #EVENT
+	E(EVENT_SA_DISCARD),
+	E(EVENT_SA_REKEY),
+	E(EVENT_SA_REPLACE),
+	E(EVENT_SA_EXPIRE),
+#undef E
+};
+
+static const enum_names event_sa_names = {
+	EVENT_SA_DISCARD, EVENT_SA_EXPIRE,
+	ARRAY_REF(event_sa_name),
+	"EVENT_SA_", /* prefix */
+	&event_names,
+};
+
 static const char *const event_v1_name[] = {
 #define E(EVENT) [EVENT - EVENT_v1_SEND_XAUTH] = #EVENT
 	E(EVENT_v1_SEND_XAUTH),
-	E(EVENT_v1_SA_REPLACE_IF_USED),
+	E(EVENT_v1_REPLACE_IF_USED),
 #undef E
 };
 
 static const enum_names event_v1_names = {
-	EVENT_v1_SEND_XAUTH, EVENT_v1_SA_REPLACE_IF_USED,
+	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE_IF_USED,
 	ARRAY_REF(event_v1_name),
 	"EVENT_v1_", /* prefix */
-	&event_names
+	&event_sa_names
 };
 
 static const char *const event_v2_name[] = {

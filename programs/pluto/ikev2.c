@@ -253,7 +253,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor = ikev2_in_IKE_SA_INIT_R_v2N_COOKIE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received IKE_SA_INIT INVALID_KE_PAYLOAD notify response; resending IKE_SA_INIT with new KE payload",
 	  .state      = STATE_PARENT_I1,
@@ -264,7 +264,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor = ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received REDIRECT notify response; resending IKE_SA_INIT request to new destination",
 	  .state      = STATE_PARENT_I1,
@@ -355,7 +355,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -2545,7 +2545,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			v2_schedule_replace_event(st);
 			break;
 
-		case EVENT_SO_DISCARD:
+		case EVENT_SA_DISCARD:
 			delete_event(st);
 			event_schedule(kind, MAXIMUM_RESPONDER_WAIT_DELAY, st);
 			break;
@@ -2922,7 +2922,7 @@ void complete_v2_state_transition(struct state *st,
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);
 				delete_event(st);
-				event_schedule(EVENT_SO_DISCARD,
+				event_schedule(EVENT_SA_DISCARD,
 					       MAXIMUM_RESPONDER_WAIT_DELAY,
 					       st);
 			}
