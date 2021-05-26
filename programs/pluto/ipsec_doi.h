@@ -24,13 +24,6 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern void ipsecdoi_initiate(struct connection *c,
-			      lset_t policy, unsigned long try,
-			      so_serial_t replacing,
-			      const threadtime_t *inception,
-			      chunk_t sec_label,
-			      bool background, struct logger *logger);
-
 extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
