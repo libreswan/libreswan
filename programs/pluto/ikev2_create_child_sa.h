@@ -16,9 +16,11 @@
 #ifndef IKEV2_CREATE_CHILD_SA_H
 #define IKEV2_CREATE_CHILD_SA_H
 
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_create_child_request;
+
 extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
 extern ikev2_state_transition_fn ikev2_child_ike_inR;
 extern ikev2_state_transition_fn ikev2_child_inR;
-extern ikev2_state_transition_fn ikev2_child_inIoutR;
 
 #endif

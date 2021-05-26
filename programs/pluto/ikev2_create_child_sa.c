@@ -58,6 +58,10 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike,
 				       struct child_sa *child,
 				       struct msg_digest *request_md);
 
+static stf_status ikev2_child_inIoutR(struct ike_sa *ike,
+				      struct child_sa *larval_child,
+				      struct msg_digest *md);
+
 /*
  * Initiate a CREATE_CHILD_SA exchange.
  */
@@ -385,36 +389,25 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
-	struct payload_digest *rekey_sa_payload = NULL;
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_REKEY_SA:
-			if (rekey_sa_payload != NULL) {
-				/* will tolerate multiple */
-				log_state(RC_LOG_SERIOUS, &child->sa,
-					  "ignoring duplicate v2N_REKEY_SA in exchange");
-				break;
-			}
-			dbg("received v2N_REKEY_SA");
-			rekey_sa_payload = ntfy;
-			break;
-		default:
-			/*
-			 * there is another pass of notify payloads
-			 * after this that will handle all other but
-			 * REKEY
-			 */
-			break;
-		}
-	}
-
+	/*
+	 * Previously found by the state machine.
+	 */
+	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
 		pexpect_fail(child->sa.st_logger, HERE,
 			     "rekey child can't find its rekey_sa payload");
 		return STF_INTERNAL_ERROR;
 	}
+#if 0
+	/* XXX: this would require a separate .pd_next link? */
+	if (rekey_sa_payload->next != NULL) {
+		/* will tolerate multiple */
+		log_state(RC_LOG_SERIOUS, &child->sa,
+			  "ignoring duplicate v2N_REKEY_SA in exchange");
+	}
+#endif
 
-	struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
+	const struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
 	/*
 	 * find old state to rekey
 	 */
@@ -432,7 +425,8 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	}
 
 	ipsec_spi_t spi = 0;
-	diag_t d = pbs_in_raw(&rekey_sa_payload->pbs, &spi, sizeof(spi), "SPI");
+	struct pbs_in rekey_pbs = rekey_sa_payload->pbs;
+	diag_t d = pbs_in_raw(&rekey_pbs, &spi, sizeof(spi), "SPI");
 	if (d != NULL) {
 		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
@@ -701,6 +695,53 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 }
 
 /*
+ * Process a CREATE_CHILD_SA rekey request.
+ */
+
+stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
+							  struct child_sa *larval_child,
+							  struct msg_digest *md)
+{
+	pexpect(larval_child != NULL);
+
+	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
+	if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
+		/* already logged; already recorded */
+		return STF_FAIL;
+	}
+	pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
+
+	if (!child_rekey_responder_ts_verify(larval_child, md)) {
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
+	}
+
+	return ikev2_child_inIoutR(ike, larval_child, md);
+}
+
+/*
+ * Process a CREATE_CHILD_SA create child request.
+ */
+
+stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
+							   struct child_sa *larval_child,
+							   struct msg_digest *md)
+{
+	pexpect(larval_child != NULL);
+
+	/* state m/c created CHILD SA */
+	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
+	if (!assign_v2_responders_child_client(ike, larval_child, md)) {
+		/* already logged; already recorded */
+		return STF_FAIL;
+	}
+
+	return ikev2_child_inIoutR(ike, larval_child, md);
+}
+
+/*
  * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
  */
 
@@ -751,54 +792,17 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		}
 	}
 
-	/* check N_REKEY_SA in the negotiation */
-	switch (larval_child->sa.st_state->kind) {
-	case STATE_V2_REKEY_CHILD_R0:
-		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
-		if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
-			/* already logged; already recorded */
-			return STF_FAIL;
-		}
-		pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
-		if (!child_rekey_responder_ts_verify(larval_child, md)) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
-				v2N_TS_UNACCEPTABLE, NULL/*no data*/,
-					ENCRYPTED_PAYLOAD);
-			return STF_FAIL;
-		}
-
-		/*
-		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
-		 * switch-a-roo.  Is this because .st_pfs_group is
-		 * acting more like a flag or perhaps, even though DH
-		 * was negotiated it can be ignored?
-		 */
-		submit_ke_and_nonce(&larval_child->sa,
-				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
-				    ikev2_child_inIoutR_continue,
-				    "Child Rekey Responder KE and nonce nr");
-		return STF_SUSPEND;
-	case STATE_V2_NEW_CHILD_R0:
-		/* state m/c created CHILD SA */
-		pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
-		if (!assign_v2_responders_child_client(ike, larval_child, md)) {
-			/* already logged; already recorded */
-			return STF_FAIL;
-		}
-		/*
-		 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
-		 * switch-a-roo.  Is this because .st_pfs_group is
-		 * acting more like a flag or perhaps, even though DH
-		 * was negotiated it can be ignored?
-		 */
-		submit_ke_and_nonce(&larval_child->sa,
-				    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
-				    ikev2_child_inIoutR_continue,
-				    "Child Responder KE and nonce nr");
-		return STF_SUSPEND;
-	default:
-		bad_case(larval_child->sa.st_state->kind);
-	}
+	/*
+	 * XXX: note the .st_pfs_group vs .st_oakley.ta_dh
+	 * switch-a-roo.  Is this because .st_pfs_group is
+	 * acting more like a flag or perhaps, even though DH
+	 * was negotiated it can be ignored?
+	 */
+	submit_ke_and_nonce(&larval_child->sa,
+			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
+			    ikev2_child_inIoutR_continue,
+			    "Child Rekey Responder KE and nonce nr");
+	return STF_SUSPEND;
 }
 
 static dh_shared_secret_cb ikev2_child_inIoutR_continue_continue;
