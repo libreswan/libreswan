@@ -2978,6 +2978,8 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
 					   STATE_V2_IKE_AUTH_CHILD_R0,
 					   null_fd);
+		pexpect(ike->sa.st_v2_larval_responder_sa == NULL);
+		ike->sa.st_v2_larval_responder_sa = child;
 
 		if (!assign_v2_responders_child_client(ike, child, md)) {
 			/* already logged; response already recorded */

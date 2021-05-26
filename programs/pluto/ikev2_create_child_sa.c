@@ -136,6 +136,9 @@ void ikev2_initiate_child_sa(struct pending *p)
 		child->sa.st_ike_pred = ike->sa.st_serialno;
 	}
 
+	pexpect(ike->sa.st_v2_larval_initiator_sa == NULL);
+	ike->sa.st_v2_larval_initiator_sa = child;
+
 	/* share the love; XXX: something better? */
 	close_any(&ike->sa.st_logger->object_whackfd);
 	ike->sa.st_logger->object_whackfd = fd_dup(p->whack_sock, HERE);
@@ -711,6 +714,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct msg_digest *md)
 {
 	pexpect(larval_child != NULL);
+	pexpect(ike->sa.st_v2_larval_responder_sa == NULL);
+	ike->sa.st_v2_larval_responder_sa = larval_child;
 
 	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
 	if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
@@ -738,6 +743,8 @@ stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
 							   struct msg_digest *md)
 {
 	pexpect(larval_child != NULL);
+	pexpect(ike->sa.st_v2_larval_initiator_sa == NULL);
+	ike->sa.st_v2_larval_initiator_sa = larval_child;
 
 	/* state m/c created CHILD SA */
 	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
@@ -992,7 +999,12 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
 		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
-	return ikev2_process_ts_and_rest(ike, larval_child, md);
+	stf_status status = ikev2_process_ts_and_rest(ike, larval_child, md);
+	if (status == STF_OK) {
+		pexpect(ike->sa.st_v2_larval_initiator_sa == larval_child);
+		ike->sa.st_v2_larval_initiator_sa = NULL;
+	}
+	return status;
 }
 
 /*
@@ -1005,8 +1017,10 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 				   struct child_sa *larval_ike,
 				   struct msg_digest *md)
 {
-	pexpect(larval_ike != NULL); /* not yet emancipated */
 	pexpect(ike != NULL);
+	pexpect(larval_ike != NULL); /* not yet emancipated */
+	pexpect(ike->sa.st_v2_larval_responder_sa == NULL);
+	ike->sa.st_v2_larval_responder_sa = larval_ike;
 	struct connection *c = larval_ike->sa.st_connection;
 
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
@@ -1291,6 +1305,9 @@ static stf_status ikev2_child_ike_inR_continue(struct state *larval_ike_sa,
 		       &larval_ike->sa.st_ike_rekey_spis/* new SPIs */);
 
 	ikev2_rekey_expire_pred(&larval_ike->sa, larval_ike->sa.st_ike_pred);
+	pexpect(ike->sa.st_v2_larval_initiator_sa == larval_ike);
+	ike->sa.st_v2_larval_initiator_sa = NULL;
+
 	return STF_OK;
 }
 
