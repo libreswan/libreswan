@@ -1590,6 +1590,7 @@ struct child_sa *new_v2_child_state(struct connection *c,
 	change_state(&child->sa, kind);
 	const struct state_v2_microcode *transition = child->sa.st_state->v2_transitions;
 	set_v2_transition(&child->sa, transition, HERE);
+	binlog_refresh_state(&child->sa);
 	return child;
 }
 

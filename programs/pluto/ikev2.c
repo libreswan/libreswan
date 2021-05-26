@@ -912,7 +912,7 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 		break;
 	default:
 		pexpect(svm->state == STATE_V2_REKEY_IKE_R0);
-		sa_type = IKE_SA;		
+		sa_type = IKE_SA;
 	}
 
 	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
@@ -920,7 +920,6 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 						    SA_RESPONDER,
 						    svm->state,
 						    null_fd);
-	binlog_refresh_state(&child->sa);
 
 	connection_buf ibuf;
 	connection_buf cbuf;

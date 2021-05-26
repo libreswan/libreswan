@@ -150,8 +150,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	child->sa.st_policy = p->policy;
 
-	binlog_refresh_state(&child->sa);
-
 	char replacestr[256] = "";
 	if (p->replacing != SOS_NOBODY) {
 		snprintf(replacestr, sizeof(replacestr), " to replace #%lu",

@@ -1826,7 +1826,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	/* XXX: huh?!? */
 	child->sa.st_try = ike->sa.st_try;
-	binlog_refresh_state(&child->sa);
 
 	/*
 	 * XXX:
@@ -2978,7 +2977,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
 					   STATE_V2_IKE_AUTH_CHILD_R0,
 					   null_fd);
-		binlog_refresh_state(&child->sa);
 
 		if (!assign_v2_responders_child_client(ike, child, md)) {
 			/* already logged; response already recorded */
