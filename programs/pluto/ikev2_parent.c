@@ -100,6 +100,7 @@
 #include "ikev2_peer_id.h"
 #include "ikev2_cp.h"
 #include "ikev2_child.h"
+#include "ikev2_create_child_sa.h"	/* for ikev2_rekey_ike_start() */
 
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
 							  struct msg_digest *md,

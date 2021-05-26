@@ -29,16 +29,17 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel.h"		/* for replace_bare_shunt()! */
+#include "kernel.h"			/* for replace_bare_shunt()! */
 #include "log.h"
-#include "ikev1_spdb.h"		/* for kernel_alg_makedb() !?! */
+#include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
 #include "host_pair.h"
 #include "state_db.h"
 #include "orient.h"
-#include "ikev1.h"		/* for aggr_outI1() and main_outI1() */
-#include "ikev1_quick.h"	/* for quick_outI1() */
-#include "ikev2.h"		/* for ikev2_out_IKE_SA_INIT_I() */
+#include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
+#include "ikev1_quick.h"		/* for quick_outI1() */
+#include "ikev2.h"			/* for ikev2_out_IKE_SA_INIT_I() */
+#include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);

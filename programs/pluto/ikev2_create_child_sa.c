@@ -136,6 +136,14 @@ void ikev2_initiate_child_sa(struct pending *p)
 		child->sa.st_ike_pred = ike->sa.st_serialno;
 	}
 
+	/* share the love; XXX: something better? */
+	close_any(&ike->sa.st_logger->object_whackfd);
+	ike->sa.st_logger->object_whackfd = fd_dup(p->whack_sock, HERE);
+	if (child_being_replaced != NULL) {
+		close_any(&child_being_replaced->sa.st_logger->object_whackfd);
+		child_being_replaced->sa.st_logger->object_whackfd = fd_dup(p->whack_sock, HERE);
+	}
+
 	child->sa.st_try = p->try;
 
 	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */

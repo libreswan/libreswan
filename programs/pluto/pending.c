@@ -51,6 +51,7 @@
 #include "ikev2.h"
 #include "ip_address.h"
 #include "host_pair.h"
+#include "ikev2_create_child_sa.h"		/* for ikev2_initiate_child_sa() */
 
 /*
  * queue an IPsec SA negotiation pending completion of a

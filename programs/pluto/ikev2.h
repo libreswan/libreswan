@@ -65,10 +65,6 @@ void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD;
 
-extern void ikev2_initiate_child_sa(struct pending *p);
-
-void ikev2_rekey_ike_start(struct ike_sa *ike);
-
 struct ikev2_proposal;
 struct ikev2_proposals;
 
