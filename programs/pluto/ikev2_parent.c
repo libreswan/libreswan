@@ -1868,7 +1868,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* insert an Encryption payload header (SK) */
 
-	struct v2SK_payload sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1913,19 +1913,19 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(child->sa.st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
 		/* send CERTREQ  */
-		bool send_certreq = ikev2_send_certreq_INIT_decision(&child->sa, SA_INITIATOR);
+		bool send_certreq = ikev2_send_certreq_INIT_decision(&ike->sa, SA_INITIATOR);
 		if (send_certreq) {
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
 				DBG_log("Sending [CERTREQ] of %s",
-					str_dn(child->sa.st_connection->spd.that.ca, &buf));
+					str_dn(ike->sa.st_connection->spd.that.ca, &buf));
 			}
-			ikev2_send_certreq(&child->sa, md, &sk.pbs);
+			ikev2_send_certreq(&ike->sa, md, &sk.pbs);
 		}
 	}
 
