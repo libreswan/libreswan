@@ -52,21 +52,21 @@ static void liveness_clear_connection(struct connection *c, const char *v)
 	}
 }
 
-static void liveness_action(struct state *tbd_st)
+static void retry_action(struct ike_sa *ike_tbd)
 {
 	/*
 	 * XXX: Danger! These connection calls, notably
-	 * restart_connections_by_peer(), can end up deleting TBD_ST
+	 * restart_connections_by_peer(), can end up deleting IKE_TBD.
 	 *
-	 * So that the logger is valid after TBD_ST's been deleted,
-	 * create a clone of TBD_ST's logger and kill the TBD_ST
+	 * So that the logger is valid after IKE_TBD's been deleted,
+	 * create a clone of IKE_TBD's logger and kill the IKE_TBD
 	 * pointer.
 	 */
-	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
-	struct connection *c = tbd_st->st_connection;
-	const char *liveness_name = enum_name(&ike_version_liveness_names, tbd_st->st_ike_version);
+	struct logger *logger = clone_logger(ike_tbd->sa.st_logger, HERE);
+	struct connection *c = ike_tbd->sa.st_connection;
+	const char *liveness_name = enum_name(&ike_version_liveness_names, ike_tbd->sa.st_ike_version);
 	passert(liveness_name != NULL);
-	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
+	ike_tbd = NULL; /* kill IKE_TBD; can no longer be trusted */
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
@@ -171,9 +171,8 @@ void retransmit_v2_msg(struct state *ike_sa)
 	case RETRANSMITS_TIMED_OUT:
 		break;
 	case DELETE_ON_RETRANSMIT:
-		/* disable revival code */
-		try = 0;
-		break;
+		delete_ike_family(ike, DONT_SEND_DELETE);
+		return;
 	}
 
 	/*
@@ -187,8 +186,8 @@ void retransmit_v2_msg(struct state *ike_sa)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		liveness_action(&ike->sa);
-		/* presumably liveness_action() deletes the state? */
+		retry_action(ike);
+		/* presumably retry_action() deletes the state? */
 		return;
 	}
 
