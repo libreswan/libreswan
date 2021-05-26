@@ -1136,7 +1136,7 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 						struct child_sa *child,
 						struct msg_digest *md)
 {
-	child = ike->sa.st_v2_larval_sa;
+	child = ike->sa.st_v2_larval_initiator_sa;
 	pexpect(child != NULL);
 
 	/*
@@ -1825,7 +1825,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 						    SA_INITIATOR,
 						    STATE_V2_IKE_AUTH_CHILD_I0,
 						    ike->sa.st_logger->object_whackfd);
-	ike->sa.st_v2_larval_sa = child;
+	ike->sa.st_v2_larval_initiator_sa = child;
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	/* XXX: huh?!? */
@@ -3306,7 +3306,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg
 
 stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
-	child = ike->sa.st_v2_larval_sa;
+	child = ike->sa.st_v2_larval_initiator_sa;
 	pexpect(child != NULL);
 
 	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
@@ -3366,7 +3366,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 {
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	struct child_sa *child = ike->sa.st_v2_larval_sa;
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
 	passert(child != NULL);
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
