@@ -639,3 +639,190 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	    pri_connection(child->sa.st_connection, &cb));
 	unpend(ike, child->sa.st_connection);
 }
+
+/*
+ * Deal with either CP or TS.
+ *
+ * A CREATE_CHILD_SA can, technically, include a CP (Configuration)
+ * payload.  However no one does it.  Allow it here so that the code
+ * paths are consistent (and it seems that pluto has supported it).
+ */
+
+bool assign_v2_responders_child_client(struct ike_sa *ike,
+				       struct child_sa *child,
+				       struct msg_digest *md)
+{
+	struct connection *c = child->sa.st_connection;
+
+	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		struct spd_route *spd = &child->sa.st_connection->spd;
+		/*
+		 * See ikev2-hostpair-02 where the connection is
+		 * constantly clawed back as the SA keeps trying to
+		 * establish / replace / rekey.
+		 */
+		err_t e = lease_that_address(c, &child->sa);
+		if (e != NULL) {
+			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+			/* XXX: record what? */
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    v2N_INTERNAL_ADDRESS_FAILURE, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return false;
+		}
+		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child);
+		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child);
+	} else {
+		if (!v2_process_ts_request(child, md)) {
+			/* already logged? */
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			return false;
+		}
+	}
+	return true;
+}
+
+stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
+				     struct msg_digest *md)
+{
+	struct connection *c = child->sa.st_connection;
+
+	/*
+	 * IP parameters on rekey MUST be identical, so CP payloads
+	 * not needed.
+	 */
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1 ||
+	    child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1) {
+		dbg("CP is not required in an IPsec  REKEY exchange");
+	} else if (need_configuration_payload(c, ike->sa.hidden_variables.st_nat_traversal)) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+			/* not really anything to here... but it would be worth unpending again */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "missing v2CP reply, not attempting to setup child SA");
+			/*
+			 * ??? this isn't really a failure, is it?  If
+			 * none of those payloads appeared, isn't this
+			 * is a legitimate negotiation of a parent?
+			 */
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], child)) {
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+	}
+
+	if (!v2_process_ts_response(child, md)) {
+		/*
+		 * XXX: will this will cause the state machine to
+		 * overwrite the AUTH part of the message - which is
+		 * wrong.  XXX: does this delete the child state?
+		 */
+		return STF_FAIL + v2N_TS_UNACCEPTABLE;
+	}
+
+	/*
+	 * examine notification payloads for Child SA errors
+	 * (presumably any error reaching this point is for the
+	 * child?).
+	 *
+	 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting
+	 *   errors.  An implementation receiving a Notify payload
+	 *   with one of these types that it does not recognize in a
+	 *   response MUST assume that the corresponding request has
+	 *   failed entirely.  Unrecognized error types in a request
+	 *   and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 */
+	if (md->v2N_error != v2N_NOTHING_WRONG) {
+		esb_buf esb;
+		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
+			  md->v2N_error,
+			  enum_show(&ikev2_notify_names, md->v2N_error, &esb));
+		return STF_FATAL;
+	}
+
+	/* check for Child SA related NOTIFY payloads */
+	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
+		if (c->policy & POLICY_TUNNEL) {
+			/*
+			 * This means we did not send
+			 * v2N_USE_TRANSPORT, however responder is
+			 * sending it in now, seems incorrect
+			 */
+			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
+		} else {
+			dbg("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode");
+			if (child->sa.st_esp.present) {
+				child->sa.st_esp.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+			}
+			if (child->sa.st_ah.present) {
+				child->sa.st_ah.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+			}
+		}
+	}
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+		pb_stream pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
+		size_t len = pbs_left(&pbs);
+		struct ikev2_notify_ipcomp_data n_ipcomp;
+
+		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
+		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+
+		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+					 &n_ipcomp, sizeof(n_ipcomp), NULL);
+		if (d != NULL) {
+			llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
+			return STF_FATAL;
+		}
+
+		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "Unsupported IPCOMP compression method %d",
+			       n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
+			return STF_FATAL;
+		}
+
+		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+			return STF_FATAL;
+		}
+		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
+
+		//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
+		child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+		child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+		child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
+		child->sa.st_ipcomp.present = true;
+	}
+
+	ikev2_derive_child_keys(child);
+
+#ifdef USE_XFRM_INTERFACE
+	/* before calling do_command() */
+	if (child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I1)
+		if (c->xfrmi != NULL &&
+				c->xfrmi->if_id != 0)
+			if (add_xfrmi(c, child->sa.st_logger))
+				return STF_FATAL;
+#endif
+	/* now install child SAs */
+	if (!install_ipsec_sa(&child->sa, TRUE))
+		return STF_FATAL; /* does this affect/kill the IKE SA ? */
+
+	set_newest_ipsec_sa("inR2", &child->sa);
+
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
+		ikev2_rekey_expire_pred(&child->sa, child->sa.st_ipsec_pred);
+
+	return STF_OK;
+}

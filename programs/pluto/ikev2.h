@@ -21,6 +21,7 @@ struct crypt_mac;
 struct hash_desc;
 struct payload_digest;
 struct ikev2_ipseckey_dns;
+enum payload_security;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
@@ -52,11 +53,6 @@ extern void log_ipsec_sa_established(const char *m, const struct state *st);
 extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
-
-extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
-extern ikev2_state_transition_fn ikev2_child_ike_inR;
-extern ikev2_state_transition_fn ikev2_child_inR;
-extern ikev2_state_transition_fn ikev2_child_inIoutR;
 
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_failure_response;
 extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid;
@@ -255,5 +251,17 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 const struct state_v2_microcode *transition);
 
 void IKE_SA_established(const struct ike_sa *ike);
+
+bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
+		     chunk_t *dest, const char *name);
+
+bool v2_accept_ke_for_proposal(struct ike_sa *ike,
+			       struct state *st,
+			       struct msg_digest *md,
+			       const struct dh_desc *accepted_dh,
+			       enum payload_security security);
+bool need_configuration_payload(const struct connection *const pc,
+				const lset_t st_nat_traversal);
+void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred);
 
 #endif

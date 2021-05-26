@@ -16,6 +16,11 @@
 #ifndef IKEV2_CHILD_H
 #define IKEV2_CHILD_H
 
+struct child_sa;
+struct msg_digest;
+struct ike_sa;
+struct pbs_out;
+
 bool ikev2_process_childs_sa_payload(const char *what, struct ike_sa *ike,
 				     struct child_sa *larval_child,
 				     struct msg_digest *md,
@@ -27,5 +32,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct pbs_out *outpbs);
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
+
+bool assign_v2_responders_child_client(struct ike_sa *ike,
+				       struct child_sa *child,
+				       struct msg_digest *md);
+stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
+				     struct msg_digest *md);
 
 #endif

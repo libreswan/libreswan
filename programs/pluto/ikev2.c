@@ -80,6 +80,7 @@
 #include "ikev2_host_pair.h"
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_informational.h"
+#include "ikev2_create_child_sa.h"
 
 /*
  * IKEv2 has slightly different states than IKEv1.
