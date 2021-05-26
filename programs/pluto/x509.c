@@ -1128,16 +1128,17 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 /*
  * For IKEv2, returns TRUE if we should be sending a cert
  */
-bool ikev2_send_cert_decision(const struct state *st)
+bool ikev2_send_cert_decision(const struct ike_sa *ike)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 	const struct end *this = &c->spd.this;
 
 	dbg("IKEv2 CERT: send a certificate?");
 
-	bool sendit = FALSE;
+	bool sendit = false;
 
-	if (st->st_peer_wants_null) {
+	if (ike->sa.st_peer_wants_null) {
+		/* XXX: only ever true on responder */
 		/* ??? should we log something?  All others do. */
 	} else if (LDISJOINT(c->policy, POLICY_ECDSA | POLICY_RSASIG)) {
 		policy_buf pb;
@@ -1146,12 +1147,12 @@ bool ikev2_send_cert_decision(const struct state *st)
 	} else if (this->cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
-		   st->hidden_variables.st_got_certrequest) {
+		   ike->sa.hidden_variables.st_got_certrequest) {
 		dbg("IKEv2 CERT: OK to send requested certificate");
-		sendit = TRUE;
+		sendit = true;
 	} else if (this->sendcert == CERT_ALWAYSSEND) {
 		dbg("IKEv2 CERT: OK to send a certificate (always)");
-		sendit = TRUE;
+		sendit = true;
 	} else {
 		dbg("IKEv2 CERT: no cert requested or we don't want to send");
 	}

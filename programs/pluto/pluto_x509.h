@@ -63,7 +63,7 @@ extern bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *ou
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 			  const struct cert *end_cert, bool full_chain);
 extern void free_auth_chain(chunk_t *chain, int chain_len);
-extern bool ikev2_send_cert_decision(const struct state *st);
+extern bool ikev2_send_cert_decision(const struct ike_sa *ike);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     pb_stream *outpbs);
 

@@ -1878,7 +1878,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	/* decide whether to send CERT payload */
 
 	/* it should use parent not child state */
-	bool send_cert = ikev2_send_cert_decision(&child->sa);
+	bool send_cert = ikev2_send_cert_decision(ike);
 	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
 	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
 				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
@@ -2871,7 +2871,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 					       ISAKMP_v2_IKE_AUTH);
 
 	/* decide to send CERT payload before we generate IDr */
-	bool send_cert = ikev2_send_cert_decision(&ike->sa);
+	bool send_cert = ikev2_send_cert_decision(ike);
 
 	/* insert an Encryption payload header */
 
