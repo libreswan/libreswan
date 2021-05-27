@@ -422,50 +422,97 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	return NULL;
 }
 
-/*
- * if we were redirected in AUTH, we must delete one XFRM
- * state entry manually (to the old gateway), because
- * teardown_half_ipsec_sa() in kernel.c, that is called eventually
- * following the above EVENT_SA_EXPIRE, does not delete
- * it. It does not delete it (via del_spi) because
- * st->st_esp.present was not still at that point set to
- * TRUE. (see the method teardown_half_ipsec_sa for more details)
- *
- * note: the IPsec SA is not truly and fully established when
- * we are doing redirect in IKE_AUTH, and because of that
- * we may delete XFRM state entry without any worries.
- */
-static void del_spi_trick(struct state *st)
+bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *redirect_status)
 {
-	if (del_spi(st->st_esp.our_spi, &ip_protocol_esp,
-		    &st->st_connection->temp_vars.old_gw_address,
-		    &st->st_connection->spd.this.host_addr,
-		    st->st_logger)) {
-		dbg("redirect: successfully deleted lingering SPI entry");
-	} else {
-		dbg("redirect: failed to delete lingering SPI entry");
+	if (md->pd[PD_v2N_REDIRECT] == NULL) {
+		dbg("redirect: no redirect payload in IKE_AUTH reply");
+		return false;
 	}
+
+	dbg("redirect: received v2N_REDIRECT in authenticated IKE_AUTH reply");
+	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
+		dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
+		return false;
+	}
+
+	ip_address redirect_ip;
+	err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
+					   ike->sa.st_connection->accept_redirect_to,
+					   NULL,
+					   &redirect_ip,
+					   ike->sa.st_logger);
+	if (err != NULL) {
+		dbg("redirect: warning: parsing of v2N_REDIRECT payload failed: %s", err);
+		return false;
+	}
+
+	/* will use this when initiating in a callback */
+	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+
+	/*
+	 * As we are redirected in AUTH, and there's a larval CHILD
+	 * SA, we must delete one XFRM state entry manually (to the
+	 * old gateway), because teardown_half_ipsec_sa() in kernel.c,
+	 * that is called eventually following the above
+	 * EVENT_SA_EXPIRE, does not delete it. It does not delete it
+	 * (via del_spi) because st->st_esp.present was not set to
+	 * TRUE. (see the method teardown_half_ipsec_sa for more
+	 * details)
+	 *
+	 * note: the IPsec SA is not truly and fully established when
+	 * we are doing redirect in IKE_AUTH, and because of that
+	 * we may delete XFRM state entry without any worries.
+	 *
+	 * Do this before initiate_redirect() has had a chance to move
+	 * around all the temp_vars.
+	 */
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	if (child != NULL) {
+		if (del_spi(child->sa.st_esp.our_spi, &ip_protocol_esp,
+			    &child->sa.st_connection->spd.that.host_addr,
+			    &child->sa.st_connection->spd.this.host_addr,
+			    child->sa.st_logger)) {
+			dbg("redirect: successfully deleted lingering SPI entry");
+		} else {
+			dbg("redirect: failed to delete lingering SPI entry");
+		}
+	}
+
+	/* so redirect code knows to delete half SPI */
+	event_force(EVENT_v2_REDIRECT, &ike->sa); /* see initiate_redirect() */
+	*redirect_status = STF_SUSPEND;
+	return true;
+
 }
 
-void initiate_redirect(struct state *st)
+void initiate_redirect(struct state *ike_sa)
 {
-	struct ike_sa *ike = ike_sa(st, HERE);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	struct connection *c = ike->sa.st_connection;
 	ip_address redirect_ip = c->temp_vars.redirect_ip;
+	realtime_t now = realnow();
+
+	/*
+	 * Schedule event to wipe this SA family and do it first.
+	 * Remember, it won't run until after this function returns,
+	 * however, it will run before any connections have had a
+	 * chance to initiate vis:
+	 *
+	 * - code below queues up pending connections
+	 * - IKE SA is expired (skips revival as connections are pending)
+	 * - connections initiate
+	 *
+	 * This event also deletes any larval children.
+	 */
+	event_force(EVENT_SA_EXPIRE, &ike->sa);
 
 	/* stuff for loop detection */
 
 	if (c->temp_vars.num_redirects >= MAX_REDIRECTS) {
-		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, realnow()),
+		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, now),
 				  <,
 				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "redirect loop, stop initiating IKEv2 exchanges");
-			event_force(EVENT_SA_EXPIRE, &ike->sa);
-
-			if (st->st_redirected_in_auth)
-				del_spi_trick(st);
-
+			llog_sa(RC_LOG_SERIOUS, ike, "redirect loop, stop initiating IKEv2 exchanges");
 			return;
 		}
 
@@ -473,8 +520,9 @@ void initiate_redirect(struct state *st)
 		c->temp_vars.num_redirects = 0;
 	}
 
-	if (c->temp_vars.num_redirects == 0)
-		  c->temp_vars.first_redirect_time = realnow();
+	if (c->temp_vars.num_redirects == 0) {
+		  c->temp_vars.first_redirect_time = now;
+	}
 	c->temp_vars.num_redirects++;
 
 	/* save old address for REDIRECTED_FROM notify */
@@ -483,31 +531,20 @@ void initiate_redirect(struct state *st)
 	c->spd.that.host_addr = redirect_ip;
 
 	address_buf b;
-	log_state(RC_LOG, st, "initiating a redirect to new gateway (address: %s)",
-		  str_address_sensitive(&redirect_ip, &b));
+	llog_sa(RC_LOG, ike, "initiating a redirect to new gateway (address: %s)",
+		str_address_sensitive(&redirect_ip, &b));
 	flush_pending_by_state(ike);
-	/* XXX: why not just call initiate_connection()? */
-	struct logger logger[] = { GLOBAL_LOGGER(st->st_logger->object_whackfd), }; /*placeholder*/
-	initiate_connections_by_name(c->name, /*remote-host*/NULL,
-				     /*background?*/(st->st_logger->object_whackfd == NULL),
-				     logger);
 
-	event_force(EVENT_SA_EXPIRE, &ike->sa);
 	/*
-	 * if we were redirected in AUTH, we must delete one XFRM
-	 * state entry manually (to the old gateway), because
-	 * teardown_half_ipsec_sa() in kernel.c, that is called eventually
-	 * following the above EVENT_SA_EXPIRE, does not delete
-	 * it. It does not delete it (via del_spi) because
-	 * st->st_esp.present was not set to TRUE. (see the method
-	 * teardown_half_ipsec_sa for more details)
-	 *
-	 * note: the IPsec SA is not truly and fully established when
-	 * we are doing redirect in IKE_AUTH, and because of that
-	 * we may delete XFRM state entry without any worries.
+	 * XXX: switch object whackfd to global whackfd; the
+	 * connection code should instead add all the logger's
+	 * whackfds to the connection.
 	 */
-	if (st->st_redirected_in_auth)
-		del_spi_trick(st);
+	struct logger logger[] = { GLOBAL_LOGGER(ike->sa.st_logger->object_whackfd), }; /*placeholder*/
+	/* XXX: why not just call initiate_connection()? */
+	initiate_connections_by_name(c->name, /*remote-host*/NULL,
+				     /*background?*/false /* try to keep it in the forground */,
+				     logger);
 }
 
 void find_states_and_redirect(const char *conn_name, char *ard_str,

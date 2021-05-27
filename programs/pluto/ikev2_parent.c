@@ -3224,10 +3224,14 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 	 */
 	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
 
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
-	passert(child != NULL);
-
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
+	/*
+	 * IF there's a redirect, process it and return immediately.
+	 * Function gets to decide status.
+	 */
+	stf_status redirect_status = STF_OK;
+	if (redirect_ike_auth(ike, md, &redirect_status)) {
+		return redirect_status;
+	}
 
 	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
 	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
@@ -3236,25 +3240,9 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		     "while it did not sent"));
 	}
 
-	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		dbg("received v2N_REDIRECT in IKE_AUTH reply");
-		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, child->sa.st_connection->policy)) {
-			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
-		} else {
-			ip_address redirect_ip;
-			err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
-							   child->sa.st_connection->accept_redirect_to,
-							   NULL,
-							   &redirect_ip,
-							   ike->sa.st_logger);
-			if (err != NULL) {
-				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
-			} else {
-				/* initiate later, because we need to wait for AUTH success */
-				child->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-			}
-		}
-	}
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	passert(child != NULL);
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
 	if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
@@ -3279,12 +3267,6 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
 		}
-	}
-
-	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		child->sa.st_redirected_in_auth = true;
-		event_force(EVENT_v2_REDIRECT, &child->sa);
-		return STF_SUSPEND;
 	}
 
 	/* See if there is a child SA available */

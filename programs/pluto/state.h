@@ -720,7 +720,6 @@ struct state {
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
-	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */

@@ -86,6 +86,8 @@ extern err_t parse_redirect_payload(const struct pbs_in *pbs,
 				    ip_address *redirect_ip /* result */,
 				    struct logger *logger);
 
+bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
+
 /*
  * Initiate via initiate_connection new IKE_SA_INIT exchange
  */
