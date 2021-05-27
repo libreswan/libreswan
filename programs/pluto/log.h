@@ -113,12 +113,12 @@ void log_pending(lset_t rc_flags, const struct pending *p,
 		 const char *msg, ...) PRINTF_LIKE(3);
 
 /*
- * log the state; notice how it still needs to pick up the global
- * whackfd.
+ * Log the state.
  */
 
 void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...) PRINTF_LIKE(3);
+#define llog_sa(RC_FLAGS, SA, MSG, ...) llog(RC_FLAGS, (SA)->sa.st_logger, MSG, ##__VA_ARGS__)
 
 /*
  * Wrappers.

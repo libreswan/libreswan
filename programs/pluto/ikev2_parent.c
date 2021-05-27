@@ -388,7 +388,9 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		ike->sa.st_interface = ret;
 	}
 
-	if (HAS_IPSEC_POLICY(policy)) {
+	if (impair.omit_first_child) {
+		log_sa(RC_LOG, ike, "IMPAIR: omitting first CHILD SA");
+	} else if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			    sec_label, true /*part of initiate*/);
