@@ -3107,58 +3107,22 @@ void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md);
 
 stf_status process_v2_IKE_AUTH_response_no_child(struct ike_sa *ike,
-						 struct child_sa *child,
+						 struct child_sa *unused_child UNUSED,
 						 struct msg_digest *md)
 {
 	if (!impair.omit_first_child) {
 		return STF_FATAL;
 	}
-	return ikev2_in_IKE_AUTH_R(ike, child, md);
+	return ikev2_in_IKE_AUTH_R(ike, NULL, md);
 }
 
-stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
+stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *unused_child UNUSED, struct msg_digest *md)
 {
-	child = ike->sa.st_v2_larval_initiator_sa;
-	pexpect(child != NULL);
-
-	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
-	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
-		dbg("received v2N_MOBIKE_SUPPORTED %s",
-		    (ike->sa.st_ike_sent_v2n_mobike_supported ? "and sent" :
-		     "while it did not sent"));
-	}
-	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		dbg("received v2N_REDIRECT in IKE_AUTH reply");
-		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, child->sa.st_connection->policy)) {
-			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
-		} else {
-			ip_address redirect_ip;
-			err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
-							   child->sa.st_connection->accept_redirect_to,
-							   NULL,
-							   &redirect_ip,
-							   ike->sa.st_logger);
-			if (err != NULL) {
-				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
-			} else {
-				/* initiate later, because we need to wait for AUTH success */
-				child->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-			}
-		}
-	}
-	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
-
 	/*
-	 * On the initiator, we can STF_FATAL on IKE SA errors, because no
-	 * packet needs to be sent anymore. And we cannot recover. Unlike
-	 * IKEv1, we cannot send an updated IKE_AUTH request that would use
-	 * different credentials.
+	 * If the initiator rejects the responders authentication it
+	 * should immediately send a delete notification and wipe the SA.
 	 *
-	 * On responder (code elsewhere), we have to STF_FAIL to get out
-	 * the response packet (we need a zombie state for these)
-	 *
-	 * Note: once AUTH succeeds, we can still return STF_FAIL's because
-	 * those apply to the Child SA and should not tear down the IKE SA.
+	 * This doesn't happen.  Instead the SA is deleted.
 	 */
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
@@ -3178,34 +3142,30 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 {
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
-	passert(child != NULL);
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-		event_force(EVENT_SA_EXPIRE, &child->sa);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/* already logged above! */
-		release_pending_whacks(&child->sa, "Authentication failed");
+		release_pending_whacks(&ike->sa, "authentication failed");
 		return STF_FATAL;
 	}
 
-	struct connection *c = child->sa.st_connection;
+	struct connection *c = ike->sa.st_connection;
 	enum keyword_authby that_authby = c->spd.that.authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
 	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "Received PPK_IDENTITY but connection does not allow PPK");
+			llog_sa(RC_LOG_SERIOUS, ike, "received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
 		}
 	} else {
 		if (LIN(POLICY_PPK_INSIST, c->policy)) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "failed to receive PPK confirmation and connection has ppk=insist");
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"failed to receive PPK confirmation and connection has ppk=insist");
 			dbg("should be initiating a notify that kills the state");
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
@@ -3223,7 +3183,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 
-		log_state(RC_LOG, &child->sa, "Peer wants to continue without PPK - switching to NO_PPK");
+		log_state(RC_LOG, &ike->sa, "peer wants to continue without PPK - switching to NO_PPK");
 
 		release_symkey(__func__, "st_skey_d_nss",  &ike->sa.st_skey_d_nss);
 		ike->sa.st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", ike->sa.st_sk_d_no_ppk);
@@ -3233,17 +3193,6 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 
 		release_symkey(__func__, "st_skey_pr_nss", &ike->sa.st_skey_pr_nss);
 		ike->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", ike->sa.st_sk_pr_no_ppk);
-
-		if (&ike->sa != &child->sa) {
-			release_symkey(__func__, "st_skey_d_nss",  &child->sa.st_skey_d_nss);
-			child->sa.st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", child->sa.st_sk_d_no_ppk);
-
-			release_symkey(__func__, "st_skey_pi_nss", &child->sa.st_skey_pi_nss);
-			child->sa.st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", child->sa.st_sk_pi_no_ppk);
-
-			release_symkey(__func__, "st_skey_pr_nss", &child->sa.st_skey_pr_nss);
-			child->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", child->sa.st_sk_pr_no_ppk);
-		}
 	}
 
 	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2",
@@ -3266,15 +3215,47 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		 */
 		return STF_FATAL;
 	}
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
-
-	/* AUTH succeeded */
 
 	/*
+	 * AUTH succeeed
+	 *
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
 	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
+
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	passert(child != NULL);
+
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
+
+	ike->sa.st_ike_seen_v2n_mobike_supported = (md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL);
+	if (ike->sa.st_ike_seen_v2n_mobike_supported) {
+		dbg("received v2N_MOBIKE_SUPPORTED %s",
+		    (ike->sa.st_ike_sent_v2n_mobike_supported ? "and sent" :
+		     "while it did not sent"));
+	}
+
+	if (md->pd[PD_v2N_REDIRECT] != NULL) {
+		dbg("received v2N_REDIRECT in IKE_AUTH reply");
+		if (!LIN(POLICY_ACCEPT_REDIRECT_YES, child->sa.st_connection->policy)) {
+			dbg("ignoring v2N_REDIRECT, we don't accept being redirected");
+		} else {
+			ip_address redirect_ip;
+			err_t err = parse_redirect_payload(&md->pd[PD_v2N_REDIRECT]->pbs,
+							   child->sa.st_connection->accept_redirect_to,
+							   NULL,
+							   &redirect_ip,
+							   ike->sa.st_logger);
+			if (err != NULL) {
+				dbg("warning: parsing of v2N_REDIRECT payload failed: %s", err);
+			} else {
+				/* initiate later, because we need to wait for AUTH success */
+				child->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
+			}
+		}
+	}
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
 	if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
