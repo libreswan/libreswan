@@ -1800,33 +1800,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 												 const struct hash_signature *auth_sig)
 {
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
-
 	ikev2_log_parentSA(&ike->sa);
-
-	/*
-	 * XXX This is too early and many failures could lead to not
-	 * needing a child state.
-	 *
-	 * XXX: The problem isn't so much that the child state is
-	 * created - it provides somewhere to store all the child's
-	 * state - but that things switch to the child before the IKE
-	 * SA is finished.  Consequently, code is forced to switch
-	 * back to the IKE SA.
-	 *
-	 * Start with the CHILD SA bound to the same whackfd as it IKE
-	 * SA.  It might later change when its discovered that the
-	 * child is for something pending?
-	 */
-	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
-						    ike, IPSEC_SA,
-						    SA_INITIATOR,
-						    STATE_V2_IKE_AUTH_CHILD_I0,
-						    ike->sa.st_logger->object_whackfd);
-	ike->sa.st_v2_larval_initiator_sa = child;
-
-	/* XXX because the early child state ends up with the try counter check, we need to copy it */
-	/* XXX: huh?!? */
-	child->sa.st_try = ike->sa.st_try;
 
 	/*
 	 * XXX:
@@ -1877,7 +1851,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 	/* decide whether to send CERT payload */
 
-	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(ike);
 	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
 	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
@@ -1975,39 +1948,57 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
-		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
 	/*
-	 * Switch to first pending child request for this host pair.
-	 * ??? Why so late in this game?
+	 * Now that the AUTH payload is done(?), create and emit the
+	 * child using the first pending connection (or the IKE SA's
+	 * connection) if there isn't one.
 	 *
-	 * Then emit SA2i, TSi and TSr and NOTIFY payloads related
-	 * to the IPsec SA.
+	 * Then emit SA2i, TSi and TSr and NOTIFY payloads related to
+	 * the IPsec SA.
 	 */
 
-	/* so far child's connection is same as parent's */
-	passert(pc == child->sa.st_connection);
-
-	lset_t policy = pc->policy;
-
 	/* Child Connection */
-	struct connection *cc = first_pending(ike, &policy, &child->sa.st_logger->object_whackfd);
-
+	lset_t child_policy = pc->policy; /* unused */
+	struct fd *child_whackfd = null_fd; /* must-free */
+	struct connection *cc = first_pending(ike, &child_policy, &child_whackfd);
 	if (cc == NULL) {
 		cc = pc;
 		dbg("no pending CHILD SAs found for %s Reauthentication so use the original policy",
 		    cc->name);
-	} else if (cc != child->sa.st_connection) {
+	}
+
+	/*
+	 * XXX This is too early and many failures could lead to not
+	 * needing a child state.
+	 *
+	 * XXX: The problem isn't so much that the child state is
+	 * created - it provides somewhere to store all the child's
+	 * state - but that things switch to the child before the IKE
+	 * SA is finished.  Consequently, code is forced to switch
+	 * back to the IKE SA.
+	 */
+	struct child_sa *child = new_v2_child_state(cc, ike, IPSEC_SA,
+						    SA_INITIATOR,
+						    STATE_V2_IKE_AUTH_CHILD_I0,
+						    child_whackfd);
+	close_any(&child_whackfd);
+	ike->sa.st_v2_larval_initiator_sa = child;
+	/* XXX because the early child state ends up with the try counter check, we need to copy it */
+	/* XXX: huh?!? */
+	child->sa.st_try = ike->sa.st_try;
+
+	if (cc != pc) {
+		/* lie */
 		connection_buf cib;
 		log_state(RC_LOG, &ike->sa,
 			  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
 			  child->sa.st_serialno, pri_connection(cc, &cib));
-		/* ??? this seems very late to change the connection */
-		update_state_connection(&child->sa, cc);
+	}
+
+	if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
+		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
