@@ -184,6 +184,8 @@ struct impairment impairments[] = {
 	  .how_enum_names = &ikev2_exchange_names),
 	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
 	  "include the unknown payload in the encrypted SK payload"),
+	V("omit-first-child", omit_first_child,
+	  "omit the CHILD SA payloads normally included in the IKE_AUTH message"),
 
 	A("trigger", GLOBAL_EVENT, 0, "trigger the global event", "EVENT",
 	  .how_enum_names = &global_timer_names),

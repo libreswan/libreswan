@@ -149,6 +149,7 @@ struct impair {
 	unsigned add_unknown_v2_payload_to;
 	unsigned add_unknown_v2_payload_to_sk;
 	bool unknown_v2_payload_critical;
+	bool omit_first_child;
 
 	/*
 	 * add more here
