@@ -3149,7 +3149,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/* already logged above! */
 		release_pending_whacks(&ike->sa, "authentication failed");
-		return STF_FATAL;
+		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -3213,7 +3213,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		 * IKE_AUTH was okay, and then send an INFORMATIONAL
 		 * DELETE IKE SA but we have not implemented that yet.
 		 */
-		return STF_FATAL;
+		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
 	}
 
 	/*
@@ -3241,65 +3241,72 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 	}
 
 	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
-	passert(child != NULL);
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
-	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
+	if (child != NULL) {
 
-	if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
-		/* ensure we run keepalives if needed */
-		if (c->nat_keepalive) {
-			/* XXX: just trigger this event */
-			nat_traversal_ka_event(ike->sa.st_logger);
-		}
-	}
-
-	/* AUTH is ok, we can trust the notify payloads */
-	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
-		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+		/* See if there is a child SA available */
+		if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
+		    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
+		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
+			/* not really anything to here... but it would be worth unpending again */
 			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
-			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
-
+				  "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
+			/*
+			 * ??? this isn't really a failure, is it?
+			 * If none of those payloads appeared, isn't this is a
+			 * legitimate negotiation of a parent?
+			 * Paul: this notify is never sent because w
+			 */
+			return STF_FATAL;
 		}
-	} else {
-		if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
-			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
-		}
-	}
 
-	/* See if there is a child SA available */
-	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
-	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
-	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
-		/* not really anything to here... but it would be worth unpending again */
-		log_state(RC_LOG_SERIOUS, &child->sa,
-			  "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
+		child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
+		child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
+
 		/*
-		 * ??? this isn't really a failure, is it?
-		 * If none of those payloads appeared, isn't this is a
-		 * legitimate negotiation of a parent?
-		 * Paul: this notify is never sent because w
+		 * XXX: is this an IKE thing or a CHILD thing; or both?
 		 */
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-	}
+		if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+			/* ensure we run keepalives if needed */
+			if (c->nat_keepalive) {
+				/* XXX: just trigger this event */
+				nat_traversal_ka_event(ike->sa.st_logger);
+			}
+		}
 
-	/* examine and accept SA ESP/AH proposals */
-	if (!ikev2_process_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-					     ike, child,
-					     md, /*expect-accepted-proposal?*/true)) {
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-	}
+		/* AUTH is ok, we can trust the notify payloads */
+		if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+			if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+				log_state(RC_LOG_SERIOUS, &child->sa,
+					  "local policy requires Tunnel Mode but peer requires required Transport Mode");
+				return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
+			}
+		} else {
+			if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+				log_state(RC_LOG_SERIOUS, &child->sa,
+					  "local policy requires Transport Mode but peer requires required Tunnel Mode");
+				return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
+			}
+		}
 
-	stf_status status = ikev2_process_ts_and_rest(ike, child, md);
-	if (status == STF_OK) {
+		/* examine and accept SA ESP/AH proposals */
+		if (!ikev2_process_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+						     ike, child,
+						     md, /*expect-accepted-proposal?*/true)) {
+			return STF_FATAL;
+		}
+
+		stf_status status = ikev2_process_ts_and_rest(ike, child, md);
+		if (status != STF_OK) {
+			return status;
+		}
+
 		v2_child_sa_established(ike, child);
 		/* hack; cover all bases; handled by close any whacks? */
 		close_any(&child->sa.st_logger->object_whackfd);
 		close_any(&child->sa.st_logger->global_whackfd);
 	}
-	return status;
+
+	return STF_OK;
 }
 
 /*
