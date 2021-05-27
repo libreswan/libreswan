@@ -316,12 +316,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 
 	/*
-	 * XXX: Danger! This state transition mashes the IKE SA's
-	 * initial state and the CHILD SA's final state.  There should
-	 * instead be two separate state transitions: IKE SA:
-	 * STATE_PARENT_I2 -> STATE_PARENT_I3; CHILD SA: ??? ->
-	 * STATE_V2_ESTABLISHED_CHILD_SA -> ???.  The IKE SA could
-	 * then initiate the CHILD SA's transaction.
+	 * This pair of state transitions should be merged?
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
@@ -333,10 +328,24 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2_in_IKE_AUTH_R,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_SA_REPLACE,
+	},
+	{ .story      = "Initiator: process IKE_AUTH response (no CHILD SA)",
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDr) | P(AUTH),
+	  .opt_enc_payloads = P(CERT),
+	  .processor  = process_v2_IKE_AUTH_response_no_child,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_REPLACE,
+	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_PARENT_I2,
 	  .message_payloads = { .required = P(SK), },
 	  /* .encrypted_payloads = { .required = P(N), }, */
 	  .processor  = ikev2_in_IKE_AUTH_R_failure_response,
@@ -432,7 +441,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr),
-	  .processor  = process_v2_IKE_AUTH_request,
+	  .processor  = process_v2_IKE_AUTH_request_no_child,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -1618,7 +1627,7 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		pexpect(state->nr_transitions == 3);
+		pexpect(state->nr_transitions == 4);
 		transition = &state->v2_transitions[1];
 		pexpect(transition->state == STATE_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);

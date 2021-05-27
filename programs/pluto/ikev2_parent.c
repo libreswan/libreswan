@@ -2311,9 +2311,9 @@ static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(s
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state *st,
 								   struct msg_digest *md);
 
-stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
-				       struct child_sa *child,
-				       struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_request_no_child(struct ike_sa *ike,
+						struct child_sa *child,
+						struct msg_digest *md)
 {
 	if (!impair.omit_first_child) {
 		return STF_FATAL;
@@ -3105,6 +3105,16 @@ void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
  */
 
 static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md);
+
+stf_status process_v2_IKE_AUTH_response_no_child(struct ike_sa *ike,
+						 struct child_sa *child,
+						 struct msg_digest *md)
+{
+	if (!impair.omit_first_child) {
+		return STF_FATAL;
+	}
+	return ikev2_in_IKE_AUTH_R(ike, child, md);
+}
 
 stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
