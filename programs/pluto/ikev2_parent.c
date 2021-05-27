@@ -389,7 +389,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	}
 
 	if (impair.omit_first_child) {
-		log_sa(RC_LOG, ike, "IMPAIR: omitting first CHILD SA");
+		llog_sa(RC_LOG, ike, "IMPAIR: omitting first CHILD SA");
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
@@ -1954,20 +1954,13 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	 */
 
 	/* Child Connection */
-	lset_t child_policy = pc->policy; /* unused */
+	lset_t unused_policy = pc->policy; /* unused */
 	struct fd *child_whackfd = null_fd; /* must-free */
-	struct connection *cc = first_pending(ike, &child_policy, &child_whackfd);
+	struct connection *cc = first_pending(ike, &unused_policy, &child_whackfd);
 	if (cc == NULL) {
-		cc = pc;
-		dbg("no pending CHILD SAs found for %s Reauthentication so use the original policy",
-		    cc->name);
-	}
-
-	if (!impair.omit_first_child) {
+		llog_sa(RC_LOG, ike, "omitting CHILD SA payloads");
+	} else {
 		/*
-		 * XXX This is too early and many failures could lead to not
-		 * needing a child state.
-		 *
 		 * XXX: The problem isn't so much that the child state is
 		 * created - it provides somewhere to store all the child's
 		 * state - but that things switch to the child before the IKE
@@ -1980,6 +1973,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 							    child_whackfd);
 		close_any(&child_whackfd);
 		ike->sa.st_v2_larval_initiator_sa = child;
+
 		/* XXX because the early child state ends up with the try counter check, we need to copy it */
 		/* XXX: huh?!? */
 		child->sa.st_try = ike->sa.st_try;
