@@ -1130,11 +1130,10 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
  */
 
 stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
-						struct child_sa *child,
+						struct child_sa *unused_child UNUSED,
 						struct msg_digest *md)
 {
-	child = ike->sa.st_v2_larval_initiator_sa;
-	pexpect(child != NULL);
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
 
 	/*
 	 * Mark IKE SA as failing.
@@ -1208,9 +1207,14 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 				case v2N_FAILED_CP_REQUIRED:
 				case v2N_TS_UNACCEPTABLE:
 				case v2N_INVALID_SELECTORS:
-					linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
-					log_state(RC_LOG_SERIOUS, &child->sa,
-						  "IKE_AUTH response contained the error notification %s", name);
+					if (child == NULL) {
+						log_state(RC_LOG_SERIOUS, &ike->sa,
+							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child", name);
+					} else {
+						linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
+						log_state(RC_LOG_SERIOUS, &child->sa,
+							  "IKE_AUTH response contained the error notification %s", name);
+					}
 					break;
 				default:
 					log_state(RC_LOG_SERIOUS, &ike->sa,
@@ -1249,7 +1253,7 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 			} else {
 				jam(buf, "at most %ld", try_limit);
 			}
-			if (fd_p(child->sa.st_logger->object_whackfd)) {
+			if (fd_p(ike->sa.st_logger->object_whackfd)) {
 				jam_string(buf, ", but releasing whack");
 			}
 		}
@@ -1266,18 +1270,8 @@ stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
 	 * XXX: this call is mostely to keep tests happy; the real
 	 * action which is elsewhere is being hidden.
 	 */
-       release_pending_whacks(&child->sa, "scheduling a retry");
+	release_pending_whacks(child == NULL ? &ike->sa : &child->sa, "scheduling a retry");
 
-	/*
-	 * HACK: let the state linger so that any replace event isn't
-	 * immediate.
-	 */
-#if 0
-	if (child != NULL) {
-		delete_state(&child->sa);
-		ike->sa.st_v2_larval_sa = NULL;
-	}
-#endif
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
@@ -1967,91 +1961,100 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		    cc->name);
 	}
 
-	/*
-	 * XXX This is too early and many failures could lead to not
-	 * needing a child state.
-	 *
-	 * XXX: The problem isn't so much that the child state is
-	 * created - it provides somewhere to store all the child's
-	 * state - but that things switch to the child before the IKE
-	 * SA is finished.  Consequently, code is forced to switch
-	 * back to the IKE SA.
-	 */
-	struct child_sa *child = new_v2_child_state(cc, ike, IPSEC_SA,
-						    SA_INITIATOR,
-						    STATE_V2_IKE_AUTH_CHILD_I0,
-						    child_whackfd);
-	close_any(&child_whackfd);
-	ike->sa.st_v2_larval_initiator_sa = child;
-	/* XXX because the early child state ends up with the try counter check, we need to copy it */
-	/* XXX: huh?!? */
-	child->sa.st_try = ike->sa.st_try;
+	if (!impair.omit_first_child) {
+		/*
+		 * XXX This is too early and many failures could lead to not
+		 * needing a child state.
+		 *
+		 * XXX: The problem isn't so much that the child state is
+		 * created - it provides somewhere to store all the child's
+		 * state - but that things switch to the child before the IKE
+		 * SA is finished.  Consequently, code is forced to switch
+		 * back to the IKE SA.
+		 */
+		struct child_sa *child = new_v2_child_state(cc, ike, IPSEC_SA,
+							    SA_INITIATOR,
+							    STATE_V2_IKE_AUTH_CHILD_I0,
+							    child_whackfd);
+		close_any(&child_whackfd);
+		ike->sa.st_v2_larval_initiator_sa = child;
+		/* XXX because the early child state ends up with the try counter check, we need to copy it */
+		/* XXX: huh?!? */
+		child->sa.st_try = ike->sa.st_try;
 
-	if (cc != pc) {
-		/* lie */
-		connection_buf cib;
-		log_state(RC_LOG, &ike->sa,
-			  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
-			  child->sa.st_serialno, pri_connection(cc, &cib));
-	}
+		if (cc != pc) {
+			/* lie */
+			connection_buf cib;
+			log_state(RC_LOG, &ike->sa,
+				  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
+				  child->sa.st_serialno, pri_connection(cc, &cib));
+		}
 
-	if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
-		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+		if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
+			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		/* code does not support AH+ESP, which not recommended as per RFC 8247 */
+		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
+		const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
+
+		/*
+		 * A CHILD_SA established during an AUTH exchange does
+		 * not propose DH - the IKE SA's SKEYSEED is always
+		 * used.
+		 */
+		struct ikev2_proposals *child_proposals =
+			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
+							child->sa.st_logger);
+		if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals, &local_spi)) {
 			return STF_INTERNAL_ERROR;
 		}
-	}
 
-	/* code does not support AH+ESP, which not recommended as per RFC 8247 */
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
-	const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
+		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child);
+		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
 
-	/*
-	 * A CHILD_SA established during an AUTH exchange does
-	 * not propose DH - the IKE SA's SKEYSEED is always
-	 * used.
-	 */
-	struct ikev2_proposals *child_proposals =
-		get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
-						child->sa.st_logger);
-	if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals, &local_spi)) {
-		return STF_INTERNAL_ERROR;
-	}
+		v2_emit_ts_payloads(child, &sk.pbs, cc);
 
-	child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child);
-	child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
-
-	v2_emit_ts_payloads(child, &sk.pbs, cc);
-
-	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
-		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
-		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
+		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
+			dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+			/* In v2, for parent, protoid must be 0 and SPI must be empty */
+			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
+			dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
 		}
-	} else {
-		dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
-	}
 
-	/*
-	 * Propose IPCOMP based on policy.
-	 */
-	if (cc->policy & POLICY_COMPRESS) {
-		if (!emit_v2N_ipcomp_supported(child, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
+		/*
+		 * Propose IPCOMP based on policy.
+		 */
+		if (cc->policy & POLICY_COMPRESS) {
+			if (!emit_v2N_ipcomp_supported(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
-	}
 
-	if (cc->send_no_esp_tfc) {
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
+		if (cc->send_no_esp_tfc) {
+			if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
-	}
 
-	if (LIN(POLICY_MOBIKE, cc->policy)) {
-		ike->sa.st_ike_sent_v2n_mobike_supported = true;
-		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
+		if (LIN(POLICY_MOBIKE, cc->policy)) {
+			ike->sa.st_ike_sent_v2n_mobike_supported = true;
+			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		/* send CP payloads */
+		if (cc->modecfg_domains != NULL || cc->modecfg_dns != NULL) {
+			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
 	}
 
@@ -2114,13 +2117,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			return STF_INTERNAL_ERROR;
 		}
 		free_chunk_content(&null_auth);
-	}
-
-	/* send CP payloads */
-	if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
-		if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
 	}
 
 	if (!close_v2SK_payload(&sk)) {
