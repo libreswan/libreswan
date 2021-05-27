@@ -633,22 +633,6 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 	}
 
-	/*
-	 * Find and clear the ike->child link
-	 */
-	switch (child->sa.st_sa_role) {
-	case SA_INITIATOR:
-		pexpect(ike->sa.st_v2_larval_initiator_sa == child);
-		ike->sa.st_v2_larval_initiator_sa = NULL;
-		break;
-	case SA_RESPONDER:
-		pexpect(ike->sa.st_v2_larval_responder_sa == child);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		break;
-	default:
-		bad_case(child->sa.st_sa_role);
-	}
-
 	connection_buf cb;
 	dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
 	    ike->sa.st_serialno, child->sa.st_serialno,
