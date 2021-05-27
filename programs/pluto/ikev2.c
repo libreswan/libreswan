@@ -406,6 +406,11 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
+	/*
+	 * These two transitions should be merged; the no-child
+	 * variant is just so that the code can be hobbled.
+	 */
+
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -415,6 +420,19 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Responder: process IKE_AUTH request (no CHILD SA)",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_ESTABLISHED,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDi) | P(AUTH),
+	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr),
+	  .processor  = process_v2_IKE_AUTH_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },

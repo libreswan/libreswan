@@ -58,6 +58,7 @@ extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_failure_response;
 extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid;
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid;
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R;
+extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
