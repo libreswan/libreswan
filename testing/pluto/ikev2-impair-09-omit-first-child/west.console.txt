@@ -1,0 +1,51 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair send-nonzero-reserved
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: setting zero/ignore field to 0x01
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+west #
+ echo done
+done
+west #
+ hostname | grep east > /dev/null && grep "byte at offset" /tmp/pluto.log
+west #
+ 

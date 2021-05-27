@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep "byte at offset" /tmp/pluto.log
+| byte at offset 6 (86) of 'IKEv2 Key Exchange Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 7 (87) of 'IKEv2 Key Exchange Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (5) of 'IKEv2 Proposal Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (9) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (13) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (21) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (25) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (33) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (37) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (41) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (45) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (29) of 'IKEv2 Authentication Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 6 (30) of 'IKEv2 Authentication Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 7 (31) of 'IKEv2 Authentication Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (117) of 'IKEv2 Traffic Selector - Initiator - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 6 (118) of 'IKEv2 Traffic Selector - Initiator - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 7 (119) of 'IKEv2 Traffic Selector - Initiator - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (141) of 'IKEv2 Traffic Selector - Responder - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 6 (142) of 'IKEv2 Traffic Selector - Responder - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 7 (143) of 'IKEv2 Traffic Selector - Responder - Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (5) of 'IKEv2 Proposal Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (13) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (17) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (25) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (29) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 1 (37) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+| byte at offset 5 (41) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
+east #
+ 
