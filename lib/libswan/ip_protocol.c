@@ -383,7 +383,7 @@ const struct ip_protocol ip_protocols[] = {
 		.ikev1_protocol_id = PROTO_IPSEC_AH,
 	},
 	[52] = {
-		.description = "Integrated Net Layer Security  TUBA",
+		.description = "Integrated Net Layer Security TUBA",
 		.name = "I-NLSP",
 		.ipproto = 52,
 		.reference = "[K_Robert_Glenn]",

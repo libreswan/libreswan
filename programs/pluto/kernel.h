@@ -122,7 +122,7 @@ struct kernel_sa {
 	struct kernel_end dst;
 
 	bool inbound;
-	int  xfrm_dir;			/* xfrm has 3, in,out & fwd */
+	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
 	bool add_selector;
 	bool esn;
 	bool decap_dscp;

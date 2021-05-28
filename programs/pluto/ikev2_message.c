@@ -317,7 +317,7 @@ bool close_v2SK_payload(struct v2SK_payload *sk)
 		}
 	}
 
-	/* emit space for integrity checksum data; save location  */
+	/* emit space for integrity checksum data; save location */
 
 	size_t integ_size = (encrypt_desc_is_aead(sk->ike->sa.st_oakley.ta_encrypt)
 			     ? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
@@ -648,7 +648,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
 		pexpect_fail(ike->sa.st_logger, HERE,
-			     "received encrypted packet from %s  but no exponents for state #%lu to decrypt it",
+			     "received encrypted packet from %s but no exponents for state #%lu to decrypt it",
 			     str_endpoint(&md->sender, &b),
 			     ike->sa.st_serialno);
 		return false;

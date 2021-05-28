@@ -357,7 +357,7 @@ err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		af = &ipv6_info;
 		break;
 	case GW_FQDN:
-		af  = NULL;
+		af = NULL;
 		break;
 	default:
 		return "bad GW Ident Type";

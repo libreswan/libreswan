@@ -78,7 +78,7 @@ extern bool emit_redirect_notification(
  * 	  nonce isn't NULL.
  * @param redirect_ip ip address we need to redirect to
  * @return err_t NULL if everything went right,
- * 		 otherwise (non-NULL)  what went wrong
+ * 		 otherwise (non-NULL) what went wrong
  */
 extern err_t parse_redirect_payload(const struct pbs_in *pbs,
 				    const char *allowed_targets_list,

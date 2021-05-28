@@ -142,7 +142,7 @@ bool emit_v2_child_configuration_payload(struct child_sa *child, struct pbs_out 
 			while (ipstr != NULL) {
 				if (strchr(ipstr, '.') != NULL) {
 					ip_address ip;
-					err_t e  = ttoaddress_num(shunk1(ipstr), &ipv4_info, &ip);
+					err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &ip);
 					if (e != NULL) {
 						log_state(RC_LOG_SERIOUS, &child->sa,
 							  "Ignored bogus DNS IP address '%s'", ipstr);
@@ -153,7 +153,7 @@ bool emit_v2_child_configuration_payload(struct child_sa *child, struct pbs_out 
 					}
 				} else if (strchr(ipstr, ':') != NULL) {
 					ip_address ip;
-					err_t e  = ttoaddress_num(shunk1(ipstr), &ipv6_info, &ip);
+					err_t e = ttoaddress_num(shunk1(ipstr), &ipv6_info, &ip);
 					if (e != NULL) {
 						log_state(RC_LOG_SERIOUS, &child->sa,
 							  "Ignored bogus DNS IP address '%s'", ipstr);

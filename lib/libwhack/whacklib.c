@@ -47,7 +47,7 @@ static bool pack_raw(struct whackpacker *wp,
 		     void **bytes, size_t nr_bytes,
 		     const char *what)
 {
-	if (wp->str_next + nr_bytes > wp->str_roof)  {
+	if (wp->str_next + nr_bytes > wp->str_roof) {
 		DBGF(DBG_TMI, "%s: buffer overflow for '%s'",
 		    __func__, what);
 		return false; /* would overflow buffer */

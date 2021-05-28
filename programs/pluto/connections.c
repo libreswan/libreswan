@@ -1380,7 +1380,7 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 	} else {
-		switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
 		case LEMPTY:
 			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
 				llog(RC_FATAL, c->logger,

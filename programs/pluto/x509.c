@@ -324,7 +324,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
  */
 static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger)
 {
-	*id  = empty_id;
+	*id = empty_id;
 
 	switch (gn->kind) {
 	case GN_DNS_NAME:	/* ID type: ID_FQDN */
@@ -531,7 +531,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
 	/* only non-root CAs in the resulting chain */
 	for (i = 0, j = 0; i < n; i++) {
 		if (!CERT_IsRootDERCert(&chain->certs[i]) &&
-				CERT_IsCADERCert(&chain->certs[i], NULL))  {
+				CERT_IsCADERCert(&chain->certs[i], NULL)) {
 			out_chain[j++] = clone_secitem_as_chunk(chain->certs[i], "cert");
 		}
 	}
@@ -1228,7 +1228,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 	return TRUE;
 }
 
-/* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
+/* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
 stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
 	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;

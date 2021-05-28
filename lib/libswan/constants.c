@@ -442,8 +442,8 @@ static const char *const exchange_name_ikev2[] = {
 };
 
 static const char *const exchange_name_private_use[] = {
-	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE",	/* 244 - Used by libreswan  */
-	"ISAKMP_XCHG_ECHOREPLY_PRIVATE",	/* 245 - Used by libreswan  */
+	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE",	/* 244 - Used by libreswan */
+	"ISAKMP_XCHG_ECHOREPLY_PRIVATE",	/* 245 - Used by libreswan */
 };
 
 static enum_names exchange_names_private_use = {
@@ -1151,7 +1151,7 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* IKEv1 XAUTH-STATUS attribute names  */
+/* IKEv1 XAUTH-STATUS attribute names */
 static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",

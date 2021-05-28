@@ -137,7 +137,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	}
 	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
-		rate_log(md, "DOS cookie failed as Ni payload invalid  - dropping message");
+		rate_log(md, "DOS cookie failed as Ni payload invalid - dropping message");
 		return true; /* reject cookie */
 	}
 

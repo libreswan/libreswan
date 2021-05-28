@@ -722,7 +722,7 @@ bool do_command(const struct connection *c,
 	/* must free */
 	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
 				 "PLUTO_VERB='%s%s' "
-				 "%s"         /* other stuff   */
+				 "%s"         /* other stuff */
 				 "%s",        /* actual script */
 				 verb, verb_suffix,
 				 common_shell_out_str,
@@ -1318,7 +1318,7 @@ bool raw_eroute(const ip_address *this_host,
 	    text_said,
 	    proto_info->reqid,
 	    proto_info->proto,
-	    sec_label == NULL  ? "with" : "without");
+	    sec_label == NULL ? "with" : "without");
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					     that_host, that_client,
@@ -2009,7 +2009,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* Fixup key lengths for special cases */
 #ifdef USE_3DES
 		if (ta->ta_encrypt == &ike_alg_encrypt_3des_cbc) {
-			/* Grrrrr.... f*cking 7 bits jurassic algos  */
+			/* Grrrrr.... f*cking 7 bits jurassic algos */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
 			if (encrypt_keymat_size == 21) {
 				dbg("%s requires a 7-bit jurassic adjust",
@@ -2568,7 +2568,7 @@ void init_kernel(struct logger *logger)
 		add_fd_read_event_handler(*kernel_ops->async_fdp, kernel_process_msg_cb,
 				  (void *)kernel_ops, "KERNEL_XRM_FD");
 
-	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp  > NULL_FD) {
+	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp > NULL_FD) {
 		add_fd_read_event_handler(*kernel_ops->route_fdp, kernel_process_msg_cb,
 					  (void *)kernel_ops, "KERNEL_ROUTE_FD");
 	}

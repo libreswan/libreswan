@@ -74,7 +74,7 @@ void ip_endpoint_check()
 		ip_address a;
 		oops = ttoaddress_num(shunk1(t->in), type, &a);
 		if (oops != NULL) {
-			/* Error occurred, but we didn't expect one  */
+			/* Error occurred, but we didn't expect one */
 			FAIL("ttosubnet failed: %s", oops);
 		}
 

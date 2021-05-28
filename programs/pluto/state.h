@@ -432,7 +432,7 @@ struct state {
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
+	msgid_t st_msgid_lastack;               /* last one peer acknowledged - host order */
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
 	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
@@ -763,7 +763,7 @@ struct child_sa *pexpect_child_sa(struct state *st);
 
 /* global variables */
 
-extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
+extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging */
 extern uint16_t pluto_xfrmlifetime;	/* only used to display in status */
 
 extern bool states_use_connection(const struct connection *c);

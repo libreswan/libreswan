@@ -43,7 +43,7 @@
 #include "ip_sockaddr.h"
 #include "ip_encap.h"
 
-struct iface_endpoint  *interfaces = NULL;  /* public interfaces */
+struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
 /*
  * The interfaces - eth0 ...
@@ -274,7 +274,7 @@ static void add_new_ifaces(struct logger *logger)
 			if (bind_iface_endpoint(ifd, &udp_iface_io, ip_hport(IKE_UDP_PORT),
 						false /*esp_encapsulation_enabled*/,
 						true /*float_nat_initiator*/,
-						logger)  == NULL) {
+						logger) == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
 			}

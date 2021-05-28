@@ -188,7 +188,7 @@ static void check_ttorange__to__str_range(void)
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
-			/* Error occurred, but we didn't expect one  */
+			/* Error occurred, but we didn't expect one */
 			FAIL("ttorange() failed: %s", oops);
 		}
 

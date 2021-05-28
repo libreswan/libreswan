@@ -269,7 +269,7 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 		}
 		jam(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
-		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
+		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL) {
 			jam_string(buf, "-");
 			jam_string(buf, st->st_pfs_group->common.fqn);
 		}

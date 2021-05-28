@@ -51,7 +51,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 	dbg("initiating connection to "PRI_CONNECTION" in the %s with "PRI_LOGGER,
 	    pri_connection(c, &cb), background ? "background" : "forground",
 	    pri_logger(c->logger));
-	threadtime_t inception  = threadtime_start();
+	threadtime_t inception = threadtime_start();
 	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
@@ -401,7 +401,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	 */
 
 	struct host_pair *hp = c->host_pair;
-	enum connection_kind c_kind  = c->kind;
+	enum connection_kind c_kind = c->kind;
 	struct connection *hp_next = hp->connections->hp_next;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
@@ -435,7 +435,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	}
 
 	if (c_kind == CK_INSTANCE && hp_next == NULL) {
-		/* in simple cases this is  a dangling hp */
+		/* in simple cases this is a dangling hp */
 		dbg("no connection to restart after termination");
 	} else {
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
@@ -824,7 +824,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
 	 * a (possibly broadened) negotiationshunt replacement installed.
 	 */
-	const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+	const char *const delmsg = "delete bare kernel shunt - was replaced with negotiationshunt";
 	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
 			       b->transport_proto,
 			       SPI_HOLD /* kernel dictated */,

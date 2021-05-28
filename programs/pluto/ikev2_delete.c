@@ -180,9 +180,9 @@ static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
 		delete_state(&child->sa);
 	} else if (child->sa.st_event->ev_type == EVENT_SA_EXPIRE) {
 		/*
-		 * this state  was going to EXPIRE: hurry it along
+		 * this state was going to EXPIRE: hurry it along
 		 *
-		 * ??? why is this treated specially.  Can we not
+		 * ??? why is this treated specially?  Can we not
 		 * delete_state()?
 		 */
 		log_state(RC_LOG_SERIOUS, &ike->sa,

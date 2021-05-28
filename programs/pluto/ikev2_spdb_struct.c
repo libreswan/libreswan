@@ -1267,7 +1267,7 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				return false;
 			}
 		}
-	} else  {
+	} else {
 		switch (impair_key_length_attribute) {
 		case IMPAIR_EMIT_NO:
 			PASSERT_FAIL("%s", "should have been handled");

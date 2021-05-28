@@ -527,7 +527,7 @@ static char *fmt_xfrmi_ifname(uint32_t if_id)
 {
 	char *if_name = alloc_things(char, IFNAMSIZ, "xfrmi name");
 	/* remap if_id PLUTO_XFRMI_REMAP_IF_ID_ZERO to ipsec0 as special case */
-	int n  = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT,
+	int n = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT,
 		 if_id == PLUTO_XFRMI_REMAP_IF_ID_ZERO ? 0  : if_id);
 	passert(n < IFNAMSIZ);
 	return if_name;
@@ -690,7 +690,7 @@ static void free_xfrmi(struct pluto_xfrmi *xfrmi /*non-NULL*/, struct logger *lo
 	for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
 		if (p == xfrmi) {
 			*pp = p->next;
-			if (xfrmi->pluto_added)  {
+			if (xfrmi->pluto_added) {
 				ip_link_del(xfrmi->name, logger);
 				llog(RC_LOG, logger,
 					    "delete ipsec-interface=%s if_id=%u added by pluto", xfrmi->name, xfrmi->if_id);

@@ -1787,7 +1787,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 					  bool *bogus)
 {
 	const struct connection *p1c = p1st->st_connection;
-	struct state  *bogusst = NULL;
+	struct state *bogusst = NULL;
 
 	*bogus = FALSE;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
@@ -2580,7 +2580,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
 			log_state(RC_LOG, &ike->sa,
-				  "MOBIKE success no change to kernel SA same IP address and port  %s",
+				  "MOBIKE success no change to kernel SA same IP address and port %s",
 				  str_endpoint_sensitive(&old_endpoint, &b));
 
 			return true;
@@ -2601,7 +2601,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.leftright,
 		    c->spd.this.host_port, endpoint_hport(child->sa.st_mobike_local_endpoint));
 		c->spd.this.host_port = endpoint_hport(child->sa.st_mobike_local_endpoint);
-		c->spd.this.host_nexthop  = child->sa.st_mobike_host_nexthop;
+		c->spd.this.host_nexthop = child->sa.st_mobike_host_nexthop;
 
 		ike->sa.st_interface = child->sa.st_interface = md->iface;
 		break;

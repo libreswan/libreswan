@@ -819,7 +819,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
-static void  set_migration_attr(const struct kernel_sa *sa,
+static void set_migration_attr(const struct kernel_sa *sa,
 		struct xfrm_user_migrate *m)
 {
 	m->old_saddr = xfrm_from_address(sa->src.address);
@@ -1278,11 +1278,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 * significant 8 bits of port field. Although Libreswan does
 		 * not have any configuration options for
 		 * icmp type/code values, it is possible to specify icmp type
-		 * and code  using protoport option. For example,
+		 * and code using protoport option. For example,
 		 * icmp echo request (type 8/code 0) needs to be encoded as
 		 * 0x0800 in the port field and can be specified
 		 * as left/rightprotoport=icmp/2048. Now with XFRM,
-		 * icmp type and code  need to be passed as source and
+		 * icmp type and code need to be passed as source and
 		 * destination ports, respectively. Therefore, this code
 		 * extracts upper 8 bits and lower 8 bits and puts
 		 * into source and destination ports before passing to XFRM.
@@ -1390,7 +1390,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 * 128 bits for SHA256 and 256 for SHA512. The XFRM
 		 * kernel uses a default of 96, which was the value in
 		 * an earlier draft. The kernel then introduced a new struct
-		 * xfrm_algo_auth to  replace struct xfrm_algo to deal with
+		 * xfrm_algo_auth to replace struct xfrm_algo to deal with
 		 * this.
 		 */
 
@@ -1845,7 +1845,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 					    "ERROR IFA_LOCAL invalid %s", ugh);
-			} else  {
+			} else {
 				if (n->nlmsg_type == RTM_DELADDR)
 					record_deladdr(&ip, "IFA_LOCAL");
 				else if (n->nlmsg_type == RTM_NEWADDR)
@@ -1859,7 +1859,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 					    "ERROR IFA_ADDRESS invalid %s", ugh);
-			} else  {
+			} else {
 				address_buf ip_str;
 				dbg("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
 				    str_address(&ip, &ip_str));
@@ -1926,7 +1926,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
 		    req.id.dir, req.id.index, rsp.u.pol.index);
 	} else if (upe->pol.curlft.add_time != rsp.u.pol.curlft.add_time) {
-		dbg("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
+		dbg("netlink_policy_expire: policy was replaced and you have won the lottery: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else {
 		switch (upe->pol.dir) {
@@ -2543,7 +2543,7 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
-		req.u.p.dir  = XFRM_POLICY_OUT;
+		req.u.p.dir = XFRM_POLICY_OUT;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
@@ -2554,7 +2554,7 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
-		req.u.p.dir  = XFRM_POLICY_OUT;
+		req.u.p.dir = XFRM_POLICY_OUT;
 
 		req.u.p.sel.sport = htons(port);
 		req.u.p.sel.sport_mask = 0xffff;
@@ -2799,7 +2799,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.migrate_sa = netlink_migrate_sa,
 	/*
 	 * We should implement netlink_remove_orphaned_holds
-	 * if netlink  specific changes are needed.
+	 * if netlink-specific changes are needed.
 	 */
 	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,

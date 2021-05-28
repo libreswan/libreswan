@@ -127,7 +127,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		 * XXX: shouldn't this be conditional on the local end
 		 * having computed KE and not what the remote sent?
 		 */
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL)  {
+		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			if (!emit_v2KE(&child->sa.st_gr, child->sa.st_oakley.ta_dh, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
@@ -689,7 +689,7 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 	 */
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1 ||
 	    child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1) {
-		dbg("CP is not required in an IPsec  REKEY exchange");
+		dbg("CP is not required in an IPsec REKEY exchange");
 	} else if (need_configuration_payload(c, ike->sa.hidden_variables.st_nat_traversal)) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */

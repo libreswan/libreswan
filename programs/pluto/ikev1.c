@@ -938,7 +938,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		case R_U_THERE:
 			if (st == NULL) {
 				llog(RC_LOG, md->md_logger,
-				     "received bogus  R_U_THERE informational message");
+				     "received bogus R_U_THERE informational message");
 				return STF_IGNORE;
 			}
 			return dpd_inI_outR(st, n, n_pbs);
@@ -1566,7 +1566,7 @@ void process_v1_packet(struct msg_digest *md)
 				/* XXX Could send notification back */
 				return;
 			}
-			dbg(" call  init_phase2_iv");
+			dbg(" call init_phase2_iv");
 			init_phase2_iv(st, &md->hdr.isa_msgid);
 			new_iv_set = TRUE;
 
@@ -1627,7 +1627,7 @@ void process_v1_packet(struct msg_digest *md)
 				    st->st_connection ->spd.this.xauth_server ? " xauthserver" : "",
 				    st->st_connection->spd.this.xauth_client ? " xauthclient" : "",
 				    st->st_connection->spd.this.modecfg_server ? " modecfgserver" : "",
-				    st->st_connection->spd.this.modecfg_client  ? " modecfgclient" : "",
+				    st->st_connection->spd.this.modecfg_client ? " modecfgclient" : "",
 				    st->st_state->name);
 				return;
 			}

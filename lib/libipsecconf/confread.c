@@ -672,7 +672,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->has_client = TRUE;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
-			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
+			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
 					end->strings[KSCF_INTERFACE_IP],
 					leftright,
@@ -749,7 +749,7 @@ static bool validate_end(struct starter_conn *conn_st,
 				  leftright, "interface-ip", value, oops);
 		}
 		if (end->strings_set[KSCF_SOURCEIP]) {
-			ERR_FOUND("can  not specify  %sinterface-ip=%s and  %sssourceip=%s",
+			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
 					end->strings[KSCF_INTERFACE_IP],
 					leftright,

@@ -162,7 +162,7 @@ static bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_p
 		}
 		uint16_t h_value = ntohs(nh_value);
 
-		switch (h_value)  {
+		switch (h_value) {
 		/* We no longer support SHA1 (as per RFC 8247) */
 		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
@@ -993,7 +993,7 @@ static stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R_continue(struct state
 
 	/* something the other end won't like */
 
-	/* send CERTREQ  */
+	/* send CERTREQ */
 	if (send_certreq) {
 		dbg("going to send a certreq");
 		ikev2_send_certreq(&ike->sa, md, &rbody);
@@ -1291,7 +1291,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 static dh_shared_secret_cb ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue;	/* forward decl and type assertion */
 static dh_shared_secret_cb ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue;	/* forward decl and type assertion */
-static  ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;	/* forward decl and type assertion */
+static ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;	/* forward decl and type assertion */
 
 /*
  * XXX: there's a lot of code duplication between the IKE_AUTH and
@@ -1891,7 +1891,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		if (certstat != STF_OK)
 			return certstat;
 
-		/* send CERTREQ  */
+		/* send CERTREQ */
 		bool send_certreq = ikev2_send_certreq_INIT_decision(&ike->sa, SA_INITIATOR);
 		if (send_certreq) {
 			if (DBGP(DBG_BASE)) {
@@ -2242,7 +2242,7 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
 
 	/* extract calculated values from r */
 
-	if (ike->sa.st_dh_shared_secret  == NULL) {
+	if (ike->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * Since dh failed, the channel isn't end-to-end
 		 * encrypted.  Send back a clear text notify and then

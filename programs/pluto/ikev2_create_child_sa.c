@@ -603,7 +603,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 		return STF_INTERNAL_ERROR;
 	close_output_pbs(&pb_nr);
 
-	if (child->sa.st_pfs_group != NULL)  {
+	if (child->sa.st_pfs_group != NULL) {
 		if (!emit_v2KE(&child->sa.st_gi, child->sa.st_pfs_group, outpbs)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -673,7 +673,7 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals,
-					     &local_spi))  {
+					     &local_spi)) {
 			log_state(RC_LOG, &child->sa, "outsa fail");
 			dbg("problem emitting connection ike proposals in CREATE_CHILD_SA");
 			return STF_INTERNAL_ERROR;

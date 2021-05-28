@@ -248,7 +248,7 @@ static void ikev2_record_newaddr(struct state *st, void *arg_ip)
 	if (address_is_specified(st->st_deleted_local_addr)) {
 		/*
 		 * A work around for delay between new address and new route
-		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE
+		 * A better fix would be listen to RTM_NEWROUTE, RTM_DELROUTE
 		 */
 		if (st->st_addr_change_event == NULL) {
 			event_schedule(EVENT_v2_ADDR_CHANGE,

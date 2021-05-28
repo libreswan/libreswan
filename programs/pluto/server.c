@@ -105,7 +105,7 @@ char *pluto_vendorid;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
-static  struct pluto_event *pluto_events_head = NULL;
+static struct pluto_event *pluto_events_head = NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -115,7 +115,7 @@ struct sockaddr_un ctl_addr = {
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
-	.sun_path  = DEFAULT_CTL_SOCKET
+	.sun_path = DEFAULT_CTL_SOCKET
 };
 
 /* Initialize the control socket.
@@ -472,7 +472,7 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 	/* unlink this pluto_event from the list */
 	if (e->ev != NULL) {
 		event_free(e->ev);
-		e->ev  = NULL;
+		e->ev = NULL;
 	}
 
 	dbg_free("pe", e, HERE);

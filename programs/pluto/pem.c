@@ -201,7 +201,7 @@ err_t pemtobin(chunk_t *blob)
 		PEM_ABORT  = 5
 	} state_t;
 
-	state_t state  = PEM_PRE;
+	state_t state = PEM_PRE;
 
 	chunk_t src = *blob;
 	chunk_t dst = *blob;

@@ -2615,7 +2615,7 @@ class NS_GuestNetwork():
             self.eth1.ipv4 = "192.1.2.23/24"
             self.eth1.gwv4 = "192.1.2.254"
             self.eth1.ipv6 = "2001:db8:1:2::23/64"
-            self.eth1.gwv6  = "2001:db8:1:2::254"
+            self.eth1.gwv6 = "2001:db8:1:2::254"
             self.eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
                                 'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45']
             self.eth1.br = "brswan12-" + self.tcsum
@@ -2642,7 +2642,7 @@ class NS_GuestNetwork():
             self.eth0.ipv4 = "192.1.3.209/24"
             self.eth0.gwv4 = "192.1.3.254"
             self.eth0.ipv6 = "2001:db8:1:3::209/64"
-            self.eth0.gwv6  = "2001:db8:1:3::254"
+            self.eth0.gwv6 = "2001:db8:1:3::254"
             self.eth0.br = "brswan13-" + self.tcsum
             self.eth0.macaddress = "12:00:00:ab:cd:02"
 
@@ -2655,7 +2655,7 @@ class NS_GuestNetwork():
             self.eth1.ipv4 = "192.1.3.33/24"
             self.eth1.gwv4 = "192.1.3.254"
             self.eth1.ipv6 = "2001:db8:1:3::33/64"
-            self.eth1.gwv6  = "2001:db8:1:3::254"
+            self.eth1.gwv6 = "2001:db8:1:3::254"
             self.eth1.br = "brswan13-" + self.tcsum
             self.eth0.macaddress = "12:00:00:de:cd:49"
             self.eth1.macaddress = "12:00:00:96:96:49"
@@ -2769,7 +2769,7 @@ class NS_GuestNetwork():
 
         ipshow = "%s link show dev %s" % (DEF.ip_c, eth.name)
         delay = 2
-        cmd  = ipshow
+        cmd = ipshow
         while (delay < 17):
             cmd = "sleep 0.%s && %s" % (delay, ipshow)
             if not sudo_shell_run(cmd, self.shell):

@@ -857,7 +857,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		}
 	}
 
-	/* finish computing  HASH(1), inserting it in output */
+	/* finish computing HASH(1), inserting it in output */
 	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
 
 	/* encrypt message, except for fixed part of header */

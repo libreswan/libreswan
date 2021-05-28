@@ -506,7 +506,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL) {
-		if (ix == ISAKMP_v2_INFORMATIONAL  && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
+		if (ix == ISAKMP_v2_INFORMATIONAL && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
 			dbg("%s %d inserting v2D task for #%lu before #%lu CREATE_CHILD_SA",  __func__, __LINE__, st->st_serialno, (*pp)->st_serialno);
 			break;
 		}
