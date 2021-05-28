@@ -186,9 +186,9 @@ struct impairment impairments[] = {
 	  "include the unknown payload in the encrypted SK payload"),
 
 	V("omit-v2-ike-auth-child", omit_v2_ike_auth_child,
-	  "omit the CHILD SA payloads included in the IKE_AUTH message"),
+	  "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
 	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,
-	  "ignore the CHILD SA payloads included in the IKE_AUTH message"),
+	  "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
 
 	A("trigger", GLOBAL_EVENT, 0, "trigger the global event", "EVENT",
 	  .how_enum_names = &global_timer_names),

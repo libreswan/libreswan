@@ -2954,14 +2954,22 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_intermediate_used = false;
 
-	if (impair.ignore_v2_ike_auth_child) {
+	if (impair.omit_v2_ike_auth_child) {
+		/* only omit when missing */
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
+			return STF_FATAL;
+		}
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request omitted CHILD SA payloads");
+	} else if (impair.ignore_v2_ike_auth_child) {
 		/* try to ignore the child */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: can't ignore IKE_AUTH request's CHILD SA payloads as they are missing");
+				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
 			return STF_FATAL;
 		}
-		llog_sa(RC_LOG, ike, "IMPAIR: ignoring CHILD SA payloads in IKE_AUTH request");
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request included CHILD SA payloads; ignoring them");
 	} else {
 		/* try to process them */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -3196,11 +3204,19 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		/* Try to ignore the CHILD SA payloads. */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: can't ignore IKE_AUTH responses CHILD SA payloads as they are missing");
+				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
 			return STF_FATAL;
 		}
 		llog_sa(RC_LOG, ike,
-			"IMPAIR: ignoring CHILD SA payloads in IKE_AUTH response");
+			"IMPAIR: as expected, IKE_AUTH response includes CHILD SA payloads; ignoring them");
+	} else if (impair.omit_v2_ike_auth_child) {
+		/* Try to ignore missing CHILD SA payloads. */
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
+			return STF_FATAL;
+		}
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads");
 	} else if (larval_child == NULL) {
 		/* Don't expect CHILD SA payloads. */
 		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
