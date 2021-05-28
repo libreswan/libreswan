@@ -49,7 +49,7 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	if (SECITEM_ItemsAreEqual(ckaid, &ckaid_match_arg->ckaid)) {
 		dbg("CKAID matched cert %s", cert->nickname);
 		ckaid_match_arg->cert = CERT_DupCertificate(cert);
-		/* bail early, but how?  */
+		/* bail early, but how? */
 	}
 	SECITEM_FreeItem(ckaid, PR_TRUE);
 	return SECSuccess;

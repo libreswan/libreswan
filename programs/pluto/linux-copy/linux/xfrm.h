@@ -152,7 +152,7 @@ enum {
 #define XFRM_MODE_BEET 4
 #define XFRM_MODE_MAX 5
 
-/* Netlink configuration messages.  */
+/* Netlink configuration messages. */
 enum {
 	XFRM_MSG_BASE = 0x10,
 
@@ -272,7 +272,7 @@ struct xfrm_userpolicy_type {
 	__u8		reserved2;
 };
 
-/* Netlink message attributes.  */
+/* Netlink message attributes. */
 enum xfrm_attr_type_t {
 	XFRMA_UNSPEC,
 	XFRMA_ALG_AUTH,		/* struct xfrm_algo */
@@ -289,7 +289,7 @@ enum xfrm_attr_type_t {
 	XFRMA_ETIMER_THRESH,
 	XFRMA_SRCADDR,		/* xfrm_address_t */
 	XFRMA_COADDR,		/* xfrm_address_t */
-	XFRMA_LASTUSED,		/* unsigned long  */
+	XFRMA_LASTUSED,		/* unsigned long */
 	XFRMA_POLICY_TYPE,	/* struct xfrm_userpolicy_type */
 	XFRMA_MIGRATE,
 	XFRMA_ALG_AEAD,		/* struct xfrm_algo_aead */

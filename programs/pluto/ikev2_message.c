@@ -526,7 +526,7 @@ stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
 		bad_case(ike->sa.st_sa_role);
 	}
 
-	/* size of plain or cipher text.  */
+	/* size of plain or cipher text. */
 	size_t enc_size = integ_start - enc_start;
 
 	/*

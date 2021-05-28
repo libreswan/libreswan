@@ -2279,7 +2279,7 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 		array[p] = NULL;
 	}
 
-	/* sort it!  */
+	/* sort it! */
 	qsort(array, count, sizeof(struct state *), sort_fn);
 
 	return array;

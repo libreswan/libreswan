@@ -1038,7 +1038,7 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 		return STF_FATAL; /* we're doomed */
 	}
 
-	/* Get the proposals ready.  */
+	/* Get the proposals ready. */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA responding to rekey", ike->sa.st_logger);
 
@@ -1213,7 +1213,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 		return STF_FATAL; /* NEED RESTART? */
 	}
 
-	/* Get the proposals ready.  */
+	/* Get the proposals ready. */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA accept response to rekey",
 				     larval_ike->sa.st_logger);

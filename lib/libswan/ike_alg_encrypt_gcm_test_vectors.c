@@ -154,7 +154,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	free_chunk_content(&tag);
 	free_chunk_content(&text_and_tag);
 
-	/* Clean up.  */
+	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBGF(DBG_CRYPT, "test_gcm_vector: %s", ok ? "passed" : "failed");

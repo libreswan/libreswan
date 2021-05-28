@@ -732,7 +732,7 @@ stf_status ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R(struct ike_sa *ike,
 		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE, ike->sa.st_logger);
 	}
 
-	/* Get the proposals ready.  */
+	/* Get the proposals ready. */
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA responder matching remote proposals", ike->sa.st_logger);
 

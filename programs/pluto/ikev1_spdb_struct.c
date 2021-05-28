@@ -789,12 +789,12 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		}
 
 		 if (emp_sp != NULL) {
-			 /*
-			  * Exclude 3des et.al. which do not include
-			  * default key lengths in the proposal.
-			  */
-			 if (algs.enckeylen == 0 &&
-			     !algs.encrypt->keylen_omitted) {
+			/*
+			 * Exclude 3des et.al. which do not include
+			 * default key lengths in the proposal.
+			 */
+			if (algs.enckeylen == 0 &&
+			    !algs.encrypt->keylen_omitted) {
 				const struct encrypt_desc *enc_desc = algs.encrypt;
 				int def_ks = enc_desc->keydeflen;
 				passert(def_ks); /* ike=null not supported */
@@ -950,7 +950,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 			passert(revised_sadb->prop_conjs->prop_cnt == 1);
 
-			/* construct the IPcomp proposal  */
+			/* construct the IPcomp proposal */
 			ipcomp_trans->transid = IPCOMP_DEFLATE;
 			ipcomp_trans->attrs = NULL;
 			ipcomp_trans->attr_cnt = 0;

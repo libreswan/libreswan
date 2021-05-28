@@ -54,7 +54,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	param.data = (void*)&counter_param;
 	param.len = sizeof(counter_param);
 
-	/* Output buffer for transformed data.  */
+	/* Output buffer for transformed data. */
 	uint8_t *out_buf = PR_Malloc((PRUint32)buf_len);
 	unsigned int out_len = 0;
 

@@ -908,7 +908,7 @@ extern struct_desc isakmp_ikefrag_desc;
  */
 extern struct_desc *v1_payload_desc(unsigned p);
 
-/* descriptor for V2 payload type.  */
+/* descriptor for V2 payload type. */
 extern struct_desc *v2_payload_desc(unsigned p);
 
 

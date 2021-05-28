@@ -599,9 +599,9 @@ static const char *const ah_transform_name[] = {
 	"AH_RIPEMD",
 	"AH_AES_XCBC_MAC",
 	"AH_RSA(UNUSED)",
-	"AH_AES_128_GMAC",	/* RFC4543 Errata1821  */
-	"AH_AES_192_GMAC",	/* RFC4543 Errata1821  */
-	"AH_AES_256_GMAC",	/* RFC4543 Errata1821  */
+	"AH_AES_128_GMAC",	/* RFC4543 Errata1821 */
+	"AH_AES_192_GMAC",	/* RFC4543 Errata1821 */
+	"AH_AES_256_GMAC",	/* RFC4543 Errata1821 */
 	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };

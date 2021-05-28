@@ -484,7 +484,7 @@ bool v2_msgid_request_outstanding(struct ike_sa *ike)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	intmax_t unack = (initiator->sent - initiator->recv);
-	return (unack != 0); /* well >0  */
+	return (unack != 0); /* well >0 */
 }
 
 bool v2_msgid_request_pending(struct ike_sa *ike)

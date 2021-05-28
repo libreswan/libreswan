@@ -77,7 +77,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
  */
 static void prf_update(struct prf_context *prf)
 {
-	/* create the prf key from KEY.  */
+	/* create the prf key from KEY. */
 	passert(prf->key != NULL);
 
 	passert(prf->desc->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
@@ -146,7 +146,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 						     prf->logger);
 	release_symkey(prf->name, "inner", &prf->inner);
 
-	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
+	/* Input to outer hash: (key^OPAD)|hashed_inner. */
 	passert(prf->desc->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
 	unsigned char op[MAX_HMAC_BLOCKSIZE];
 	memset(op, HMAC_OPAD, prf->desc->hasher->hash_block_size);

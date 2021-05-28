@@ -328,7 +328,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	}
 
 	SECItem wrapped_key;
-	/* Round up the wrapped key length to a 16-byte boundary.  */
+	/* Round up the wrapped key length to a 16-byte boundary. */
 	wrapped_key.len = (sizeof_bytes + 15) & ~15;
 	wrapped_key.data = alloc_bytes(wrapped_key.len, name);
 	DBGF(DBG_CRYPT, "sizeof bytes %d", wrapped_key.len);
@@ -481,7 +481,7 @@ void prepend_bytes_to_symkey(const char *result,
 			     PK11SymKey **rhs,
 			     struct logger *logger)
 {
-	/* copy the existing KEY's type (mechanism).  */
+	/* copy the existing KEY's type (mechanism). */
 	PK11SymKey *newkey = merge_symkey_bytes(result, *rhs, lhs, sizeof_lhs,
 						CKM_CONCATENATE_DATA_AND_BASE,
 						PK11_GetMechanism(*rhs),
