@@ -2854,11 +2854,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		}
 	}
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
 	/*
 	 * Wipes any connections that were using an old version of
 	 * this SA?  Is this too early or too late?
@@ -2874,6 +2869,11 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	 * created.  But now it happens before.  Is this a problem?
 	 */
 	IKE_SA_established(ike);
+
+	/* make sure HDR is at start of a clean buffer */
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
 
 	/* HDR out */
 
@@ -2957,100 +2957,32 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_intermediate_used = false;
 
-	unsigned int auth_np;
-
-	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-		/* initiator didn't propose anything. Weird. Try unpending our end. */
-		/* UNPEND XXX */
-		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			log_state(RC_LOG, &ike->sa, "No CHILD SA proposals received.");
-		} else {
-			dbg("no CHILD SA proposals received");
+	if (impair.ignore_v2_ike_auth_child) {
+		/* try to ignore the child */
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: can't ignore IKE_AUTH request's CHILD SA payloads as they are missing");
+			return STF_FATAL;
 		}
-		auth_np = ISAKMP_NEXT_v2NONE;
+		llog_sa(RC_LOG, ike, "IMPAIR: ignoring CHILD SA payloads in IKE_AUTH request");
 	} else {
-		dbg("CHILD SA proposals received");
-		auth_np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
-			ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
-	}
-
-	dbg("going to assemble AUTH payload");
-
-	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
-		/* must have enough to build an CHILD_SA */
-		stf_status ret;
-		struct connection *c = ike->sa.st_connection;
-		pexpect(md->hdr.isa_xchg == ISAKMP_v2_IKE_AUTH); /* redundant */
-
-		struct child_sa *child = NULL;
-		child = new_v2_child_state(c, ike, IPSEC_SA, SA_RESPONDER,
-					   STATE_V2_IKE_AUTH_CHILD_R0,
-					   null_fd);
-
-		v2_notification_t n = assign_v2_responders_child_client(child, md);
-		if (n != v2N_NOTHING_WRONG) {
-			/* already logged */
-			record_v2N_response(child->sa.st_logger, ike, md,
-					    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-			/* XXX: should break instead */
-			delete_state(&child->sa);
-			child = NULL;
-			/* we should continue building a valid reply packet */
-			return STF_FAIL; /* XXX: better? */
+		/* try to process them */
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			/*
+			 * XXX: not right, need way to determine that
+			 * policy allows this.
+			 */
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			llog_sa(RC_LOG, ike, "No CHILD SA proposals received.");
+			return STF_FATAL;
 		}
 
-		pexpect(child != NULL);
-
-		if (!ikev2_process_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
-						     ike, child, md,
-						     /*expect-accepted-proposal?*/false)) {
-			/* already logged; response already recorded */
-			delete_state(&child->sa);
-			child = NULL;
-			/* we should continue building a valid reply packet */
-			return STF_FAIL;
-		}
-
-		ret = ikev2_child_sa_respond(ike, child, md, &sk.pbs);
+		stf_status ret = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
 		if (ret != STF_OK) {
-			/* already logged; response already recorded */
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ikev2_child_sa_respond returned ");
-				jam_v2_stf_status(buf, ret);
-			}
-			/* we should continue building a valid reply packet */
 			return ret;
 		}
-
-		/*
-		 * Check to see if we need to release an old instance
-		 * Note that this will call delete on the old
-		 * connection we should do this after installing
-		 * ipsec_sa, but that will give us a "eroute in use"
-		 * error.
-		 */
-#ifdef USE_XFRM_INTERFACE
-		struct connection *cc = child->sa.st_connection;
-		if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0)
-			if (add_xfrmi(cc, child->sa.st_logger))
-				return STF_FATAL;
-#endif
-		/* install inbound and outbound SPI info */
-		if (!install_ipsec_sa(&child->sa, true))
-			return STF_FATAL;
-
-		/* mark the connection as now having an IPsec SA associated with it. */
-		set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				    &child->sa);
-
-		/*
-		 * XXX: fudge a state transition.
-		 *
-		 * Code extracted and simplified from
-		 * success_v2_state_transition(); suspect very similar
-		 * code will appear in the initiator.
-		 */
-		v2_child_sa_established(ike, child);
 	}
 
 	if (!close_v2SK_payload(&sk)) {

@@ -826,6 +826,83 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 	return STF_OK;
 }
 
+stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, struct msg_digest *md,
+							 struct pbs_out *sk_pbs)
+{
+	/* must have enough to build an CHILD_SA */
+	struct child_sa *child = new_v2_child_state(ike->sa.st_connection, ike,
+						    IPSEC_SA, SA_RESPONDER,
+						    STATE_V2_IKE_AUTH_CHILD_R0,
+						    null_fd);
+
+	v2_notification_t n = assign_v2_responders_child_client(child, md);
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
+		record_v2N_response(child->sa.st_logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		/* XXX: should break instead */
+		delete_state(&child->sa);
+		child = NULL;
+		/* we should continue building a valid reply packet */
+		return STF_FAIL; /* XXX: better? */
+	}
+
+	pexpect(child != NULL);
+
+	if (!ikev2_process_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
+					     ike, child, md,
+					     /*expect-accepted-proposal?*/false)) {
+		/* already logged; response already recorded */
+		delete_state(&child->sa);
+		child = NULL;
+		/* we should continue building a valid reply packet */
+		return STF_FAIL;
+	}
+
+	stf_status ret = ikev2_child_sa_respond(ike, child, md, sk_pbs);
+	if (ret != STF_OK) {
+		/* already logged; response already recorded */
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "ikev2_child_sa_respond returned ");
+			jam_v2_stf_status(buf, ret);
+		}
+		/* we should continue building a valid reply packet */
+		return ret;
+	}
+
+	/*
+	 * Check to see if we need to release an old instance
+	 * Note that this will call delete on the old
+	 * connection we should do this after installing
+	 * ipsec_sa, but that will give us a "eroute in use"
+	 * error.
+	 */
+#ifdef USE_XFRM_INTERFACE
+	struct connection *cc = child->sa.st_connection;
+	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0)
+		if (add_xfrmi(cc, child->sa.st_logger))
+			return STF_FATAL;
+#endif
+
+	/* install inbound and outbound SPI info */
+	if (!install_ipsec_sa(&child->sa, true))
+		return STF_FATAL;
+
+	/* mark the connection as now having an IPsec SA associated with it. */
+	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			    &child->sa);
+
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar
+	 * code will appear in the initiator.
+	 */
+	v2_child_sa_established(ike, child);
+	return STF_OK;
+}
+
 bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct child_sa *child,
 						 struct msg_digest *md)
 {
