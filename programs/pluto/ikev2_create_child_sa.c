@@ -741,8 +741,11 @@ stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
 
 	/* state m/c created CHILD SA */
 	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
-	if (!assign_v2_responders_child_client(ike, larval_child, md)) {
-		/* already logged; already recorded */
+	v2_notification_t n = assign_v2_responders_child_client(larval_child, md);
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
+		record_v2N_response(larval_child->sa.st_logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
 

@@ -33,9 +33,8 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 
-bool assign_v2_responders_child_client(struct ike_sa *ike,
-				       struct child_sa *child,
-				       struct msg_digest *md);
+v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
+						    struct msg_digest *md);
 stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *md);
 

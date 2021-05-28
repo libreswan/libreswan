@@ -2970,8 +2970,12 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 					   STATE_V2_IKE_AUTH_CHILD_R0,
 					   null_fd);
 
-		if (!assign_v2_responders_child_client(ike, child, md)) {
-			/* already logged; response already recorded */
+		v2_notification_t n = assign_v2_responders_child_client(child, md);
+		if (n != v2N_NOTHING_WRONG) {
+			/* already logged */
+			record_v2N_response(child->sa.st_logger, ike, md,
+					    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+			/* XXX: should break instead */
 			delete_state(&child->sa);
 			child = NULL;
 			/* we should continue building a valid reply packet */

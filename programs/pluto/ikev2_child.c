@@ -655,9 +655,8 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
  * paths are consistent (and it seems that pluto has supported it).
  */
 
-bool assign_v2_responders_child_client(struct ike_sa *ike,
-				       struct child_sa *child,
-				       struct msg_digest *md)
+v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
+						    struct msg_digest *md)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -671,24 +670,17 @@ bool assign_v2_responders_child_client(struct ike_sa *ike,
 		err_t e = lease_that_address(c, &child->sa);
 		if (e != NULL) {
 			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
-			/* XXX: record what? */
-			record_v2N_response(child->sa.st_logger, ike, md,
-					    v2N_INTERNAL_ADDRESS_FAILURE, NULL/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			return false;
+			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
 		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child);
 		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child);
 	} else {
 		if (!v2_process_ts_request(child, md)) {
 			/* already logged? */
-			record_v2N_response(child->sa.st_logger, ike, md,
-					    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			return false;
+			return v2N_TS_UNACCEPTABLE;
 		}
 	}
-	return true;
+	return v2N_NOTHING_WRONG;
 }
 
 stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
