@@ -3240,6 +3240,22 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		     "while it did not sent"));
 	}
 
+	/*
+	 * Keep the portal open ...
+	 */
+	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+		/* ensure we run keepalives if needed */
+		if (c->nat_keepalive) {
+			/*
+			 * Trigger a keep alive for all states.
+			 *
+			 * XXX: call nat_traversal_new_ka_event()
+			 * instead?  There's no hurry right?
+			 */
+			nat_traversal_ka_event(ike->sa.st_logger);
+		}
+	}
+
 	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
 	if (child != NULL) {
 
@@ -3261,17 +3277,6 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 
 		child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
 		child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
-
-		/*
-		 * XXX: is this an IKE thing or a CHILD thing; or both?
-		 */
-		if (LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
-			/* ensure we run keepalives if needed */
-			if (c->nat_keepalive) {
-				/* XXX: just trigger this event */
-				nat_traversal_ka_event(ike->sa.st_logger);
-			}
-		}
 
 		/* AUTH is ok, we can trust the notify payloads */
 		if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
