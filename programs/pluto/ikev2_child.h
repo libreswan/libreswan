@@ -39,8 +39,10 @@ bool assign_v2_responders_child_client(struct ike_sa *ike,
 stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *md);
 
-bool process_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
-						 struct child_sa *child,
-						 struct msg_digest *md);
+bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
+						    struct child_sa *child,
+						    struct msg_digest *md);
+
+bool has_v2_IKE_AUTH_child_sa_payloads(struct msg_digest *md);
 
 #endif

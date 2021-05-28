@@ -2935,9 +2935,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	/* authentication good, see if there is a child SA being proposed */
 	unsigned int auth_np;
 
-	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
-	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
-	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
+	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 		/* initiator didn't propose anything. Weird. Try unpending our end. */
 		/* UNPEND XXX */
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
@@ -3240,14 +3238,11 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 	 * Figure out of the child is both expected and viable.
 	 */
 
-	bool has_child_sa_payloads = (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
-				      md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
-				      md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 	struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
 
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
-		if (!has_child_sa_payloads) {
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_pexpect(ike->sa.st_logger, HERE,
 				     "IMPAIR: can't ignore IKE_AUTH responses CHILD SA payloads as they are missing");
 			return STF_FATAL;
@@ -3256,7 +3251,7 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 			"IMPAIR: ignoring CHILD SA payloads in IKE_AUTH response");
 	} else if (larval_child == NULL) {
 		/* Don't expect CHILD SA payloads. */
-		if (has_child_sa_payloads) {
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
@@ -3264,12 +3259,12 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		dbg("IKE SA #%lu has no and expects no CHILD SA", ike->sa.st_serialno);
 	} else {
 		/* Expect CHILD SA payloads. */
-		if (!has_child_sa_payloads) {
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_sa(RC_LOG_SERIOUS, larval_child,
 				"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 		}
-		if (!process_IKE_AUTH_response_child_sa_payloads(ike, larval_child, md)) {
+		if (!process_v2_IKE_AUTH_response_child_sa_payloads(ike, larval_child, md)) {
 			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 		}
 	}

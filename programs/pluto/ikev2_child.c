@@ -68,6 +68,13 @@
 #include "pluto_stats.h"
 #include "pending.h"
 
+bool has_v2_IKE_AUTH_child_sa_payloads(struct msg_digest *md)
+{
+	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
+		md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
+		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
+}
+
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
 				  struct msg_digest *md,
@@ -827,7 +834,7 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 	return STF_OK;
 }
 
-bool process_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct child_sa *child,
+bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct child_sa *child,
 						 struct msg_digest *md)
 {
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
