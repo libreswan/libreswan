@@ -2801,6 +2801,14 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 	}
 }
 
+
+static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
+{
+	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
+		md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
+		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
+}
+
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(struct ike_sa *ike,
 									     struct msg_digest *md,
 									     const struct hash_signature *auth_sig)

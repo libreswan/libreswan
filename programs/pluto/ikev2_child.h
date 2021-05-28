@@ -45,6 +45,4 @@ bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, struct msg_digest *md,
 							 struct pbs_out *pbs);
 
-bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md);
-
 #endif

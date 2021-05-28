@@ -68,13 +68,6 @@
 #include "pluto_stats.h"
 #include "pending.h"
 
-bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
-{
-	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
-		md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
-		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
-}
-
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,
 				  struct msg_digest *md,
