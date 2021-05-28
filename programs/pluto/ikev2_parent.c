@@ -1304,7 +1304,7 @@ stf_status ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I(stru
 	 * when it's been peformed earlier (there's something in the
 	 * intermediate echange about this?).
 	 *
-	 * So that things don't pexpect, blow away the old shared securet.
+	 * So that things don't pexpect, blow away the old shared secret.
 	 */
 	dbg("HACK: blow away old shared secret as going to re-compute it");
 	release_symkey(__func__, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
