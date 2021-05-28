@@ -388,8 +388,8 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		ike->sa.st_interface = ret;
 	}
 
-	if (impair.omit_first_child) {
-		llog_sa(RC_LOG, ike, "IMPAIR: omitting first CHILD SA");
+	if (impair.omit_v2_ike_auth_child) {
+		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
 			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
@@ -2315,7 +2315,7 @@ stf_status process_v2_IKE_AUTH_request_no_child(struct ike_sa *ike,
 						struct child_sa *child,
 						struct msg_digest *md)
 {
-	if (!impair.omit_first_child) {
+	if (!impair.ignore_v2_ike_auth_child) {
 		return STF_FATAL;
 	}
 	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(ike, child, md);
@@ -3110,7 +3110,7 @@ stf_status process_v2_IKE_AUTH_response_no_child(struct ike_sa *ike,
 						 struct child_sa *unused_child UNUSED,
 						 struct msg_digest *md)
 {
-	if (!impair.omit_first_child) {
+	if (!impair.omit_v2_ike_auth_child && !impair.ignore_v2_ike_auth_child) {
 		return STF_FATAL;
 	}
 	return ikev2_in_IKE_AUTH_R(ike, NULL, md);
