@@ -106,6 +106,8 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
 							  struct msg_digest *md,
 							  bool pam_status);
 
+static void IKE_SA_established(const struct ike_sa *ike);
+
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name)
 {
@@ -2857,6 +2859,22 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 						   reply_buffer, sizeof(reply_buffer),
 						   ike->sa.st_logger);
 
+	/*
+	 * Wipes any connections that were using an old version of
+	 * this SA?  Is this too early or too late?
+	 *
+	 * XXX: The call was originally sandwiched vis:
+	 *
+	 *    - create child sa()
+	 *    - add_xfrmi()
+	 *    - IKE_SA_established()
+	 *    - install_ipsec_sa()
+	 *
+	 * which means things were deleted after the child sa was
+	 * created.  But now it happens before.  Is this a problem?
+	 */
+	IKE_SA_established(ike);
+
 	/* HDR out */
 
 	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
@@ -3017,8 +3035,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			if (add_xfrmi(cc, child->sa.st_logger))
 				return STF_FATAL;
 #endif
-		IKE_SA_established(ike);
-
 		/* install inbound and outbound SPI info */
 		if (!install_ipsec_sa(&child->sa, true))
 			return STF_FATAL;

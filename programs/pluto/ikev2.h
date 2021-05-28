@@ -247,8 +247,6 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct state_v2_microcode *transition);
 
-void IKE_SA_established(const struct ike_sa *ike);
-
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name);
 
