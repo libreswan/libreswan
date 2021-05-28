@@ -826,3 +826,43 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 
 	return STF_OK;
 }
+
+bool process_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct child_sa *child,
+						 struct msg_digest *md)
+{
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
+
+	/* AUTH is ok, we can trust the notify payloads */
+	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
+		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
+			return false;
+		}
+	} else {
+		if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
+			return false;
+		}
+	}
+
+	/* examine and accept SA ESP/AH proposals */
+	if (!ikev2_process_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+					     ike, child,
+					     md, /*expect-accepted-proposal?*/true)) {
+		return false;
+	}
+
+	stf_status status = ikev2_process_ts_and_rest(ike, child, md);
+	if (status != STF_OK) {
+		return false;
+	}
+
+	v2_child_sa_established(ike, child);
+	/* hack; cover all bases; handled by close any whacks? */
+	close_any(&child->sa.st_logger->object_whackfd);
+	close_any(&child->sa.st_logger->global_whackfd);
+	return true;
+}

@@ -3256,59 +3256,42 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 		}
 	}
 
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
-	if (child != NULL) {
+	/*
+	 * Figure out of the child is both expected and viable.
+	 */
 
-		/* See if there is a child SA available */
-		if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
-		    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
-		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
-			/* not really anything to here... but it would be worth unpending again */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
-			/*
-			 * ??? this isn't really a failure, is it?
-			 * If none of those payloads appeared, isn't this is a
-			 * legitimate negotiation of a parent?
-			 * Paul: this notify is never sent because w
-			 */
+	bool has_child_sa_payloads = (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
+				      md->chain[ISAKMP_NEXT_v2TSi] != NULL &&
+				      md->chain[ISAKMP_NEXT_v2TSr] != NULL);
+	struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
+
+	if (impair.ignore_v2_ike_auth_child) {
+		/* Try to ignore the CHILD SA payloads. */
+		if (!has_child_sa_payloads) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: can't ignore IKE_AUTH responses CHILD SA payloads as they are missing");
 			return STF_FATAL;
 		}
-
-		child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
-		child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
-
-		/* AUTH is ok, we can trust the notify payloads */
-		if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) { /* FIXME: use new RFC logic turning this into a request, not requirement */
-			if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
-					  "local policy requires Tunnel Mode but peer requires required Transport Mode");
-				return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
-			}
-		} else {
-			if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
-					  "local policy requires Transport Mode but peer requires required Tunnel Mode");
-				return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child */
-			}
+		llog_sa(RC_LOG, ike,
+			"IMPAIR: ignoring CHILD SA payloads in IKE_AUTH response");
+	} else if (larval_child == NULL) {
+		/* Don't expect CHILD SA payloads. */
+		if (has_child_sa_payloads) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
+			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 		}
-
-		/* examine and accept SA ESP/AH proposals */
-		if (!ikev2_process_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-						     ike, child,
-						     md, /*expect-accepted-proposal?*/true)) {
-			return STF_FATAL;
+		dbg("IKE SA #%lu has no and expects no CHILD SA", ike->sa.st_serialno);
+	} else {
+		/* Expect CHILD SA payloads. */
+		if (!has_child_sa_payloads) {
+			llog_sa(RC_LOG_SERIOUS, larval_child,
+				"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
+			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 		}
-
-		stf_status status = ikev2_process_ts_and_rest(ike, child, md);
-		if (status != STF_OK) {
-			return status;
+		if (!process_IKE_AUTH_response_child_sa_payloads(ike, larval_child, md)) {
+			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 		}
-
-		v2_child_sa_established(ike, child);
-		/* hack; cover all bases; handled by close any whacks? */
-		close_any(&child->sa.st_logger->object_whackfd);
-		close_any(&child->sa.st_logger->global_whackfd);
 	}
 
 	return STF_OK;
