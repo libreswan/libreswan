@@ -779,10 +779,17 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
-	if (!ikev2_process_childs_sa_payload("CREATE_CHILD_SA request",
-					     ike, larval_child, md,
-					     /*expect-accepted-proposal?*/false)) {
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	stf_status ps = process_v2_childs_sa_payload("CREATE_CHILD_SA request",
+						     ike, larval_child, md,
+						     /*expect-accepted-proposal?*/false);
+	if (ps > STF_FAIL) {
+		v2_notification_t n = ps - STF_FAIL;
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		return STF_FAIL; /* CHILD, NOT IKE */
+	}
+	if (ps != STF_OK) {
+		return ps;
 	}
 
 	/*
@@ -927,10 +934,14 @@ stf_status ikev2_child_inR(struct ike_sa *ike, struct child_sa *larval_child,
 		return STF_FATAL;
 	}
 
-	if (!ikev2_process_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
-					     ike, larval_child, md,
-					     /*expect-accepted-proposal?*/true)) {
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	stf_status ps = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
+						     ike, larval_child, md,
+						     /*expect-accepted-proposal?*/true);
+	if (ps != STF_OK) {
+		/*
+		 * Kill the child, but not the IKE SA.
+		 */
+		return STF_FAIL;
 	}
 
 	/* XXX: only for rekey child? */

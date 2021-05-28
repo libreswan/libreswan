@@ -488,9 +488,9 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 	return TRUE;
 }
 
-bool ikev2_process_childs_sa_payload(const char *what,
-				     struct ike_sa *ike, struct child_sa *child,
-				     struct msg_digest *md, bool expect_accepted_proposal)
+stf_status process_v2_childs_sa_payload(const char *what,
+					struct ike_sa *ike, struct child_sa *child,
+					struct msg_digest *md, bool expect_accepted_proposal)
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
@@ -526,13 +526,8 @@ bool ikev2_process_childs_sa_payload(const char *what,
 			jam(buf, " failed, responder SA processing returned ");
 			jam_v2_stf_status(buf, ret);
 		}
-		if (child->sa.st_sa_role == SA_RESPONDER) {
-			pexpect(ret > STF_FAIL);
-			record_v2N_response(child->sa.st_logger, ike, md,
-					    ret - STF_FAIL, NULL,
-					    ENCRYPTED_PAYLOAD);
-		}
-		return false;
+		pexpect(ret > STF_FAIL);
+		return ret;
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -542,7 +537,7 @@ bool ikev2_process_childs_sa_payload(const char *what,
 					  child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "%s proposed/accepted a proposal we don't actually support!", what);
-		return false;
+		return STF_FATAL;
 	}
 
 	/*
@@ -567,7 +562,7 @@ bool ikev2_process_childs_sa_payload(const char *what,
 				  "expecting %s but remote's accepted proposal includes %s",
 				  child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
 				  accepted_dh->common.fqn);
-			return false;
+			return STF_FATAL;
 		}
 		child->sa.st_pfs_group = accepted_dh;
 		break;
@@ -601,7 +596,7 @@ bool ikev2_process_childs_sa_payload(const char *what,
 		child->sa.st_oakley = accepted_oakley;
 	}
 
-	return true;
+	return STF_OK;
 }
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
@@ -837,37 +832,29 @@ stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, str
 
 	v2_notification_t n = assign_v2_responders_child_client(child, md);
 	if (n != v2N_NOTHING_WRONG) {
+		delete_state(&child->sa);
 		/* already logged */
-		record_v2N_response(child->sa.st_logger, ike, md,
-				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		/* XXX: should break instead */
-		delete_state(&child->sa);
-		child = NULL;
-		/* we should continue building a valid reply packet */
-		return STF_FAIL; /* XXX: better? */
+		return STF_FAIL + n;
 	}
 
-	pexpect(child != NULL);
-
-	if (!ikev2_process_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
-					     ike, child, md,
-					     /*expect-accepted-proposal?*/false)) {
-		/* already logged; response already recorded */
+	stf_status ps = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
+						     ike, child, md,
+						     /*expect-accepted-proposal?*/false);
+	if (ps != STF_OK) {
+		/* already logged */
 		delete_state(&child->sa);
-		child = NULL;
-		/* we should continue building a valid reply packet */
-		return STF_FAIL;
+		return ps;
 	}
 
-	stf_status ret = ikev2_child_sa_respond(ike, child, md, sk_pbs);
-	if (ret != STF_OK) {
-		/* already logged; response already recorded */
+	stf_status rs = ikev2_child_sa_respond(ike, child, md, sk_pbs);
+	if (rs != STF_OK) {
+		/* already logged */
+		delete_state(&child->sa);
 		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "ikev2_child_sa_respond returned ");
-			jam_v2_stf_status(buf, ret);
+			jam_v2_stf_status(buf, rs);
 		}
-		/* we should continue building a valid reply packet */
-		return ret;
+		return rs;
 	}
 
 	/*
@@ -879,14 +866,21 @@ stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, str
 	 */
 #ifdef USE_XFRM_INTERFACE
 	struct connection *cc = child->sa.st_connection;
-	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0)
-		if (add_xfrmi(cc, child->sa.st_logger))
+	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
+		if (add_xfrmi(cc, child->sa.st_logger)) {
+			/* already logged? */
+			delete_state(&child->sa);
 			return STF_FATAL;
+		}
+	}
 #endif
 
 	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&child->sa, true))
+	if (!install_ipsec_sa(&child->sa, true)) {
+		/* already logged? */
+		delete_state(&child->sa);
 		return STF_FATAL;
+	}
 
 	/* mark the connection as now having an IPsec SA associated with it. */
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
@@ -900,6 +894,7 @@ stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, str
 	 * code will appear in the initiator.
 	 */
 	v2_child_sa_established(ike, child);
+
 	return STF_OK;
 }
 
@@ -925,9 +920,10 @@ bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct c
 	}
 
 	/* examine and accept SA ESP/AH proposals */
-	if (!ikev2_process_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-					     ike, child,
-					     md, /*expect-accepted-proposal?*/true)) {
+	stf_status ps = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+						     ike, child,
+						     md, /*expect-accepted-proposal?*/true);
+	if (ps != STF_OK) {
 		return false;
 	}
 

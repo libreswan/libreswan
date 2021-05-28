@@ -21,10 +21,10 @@ struct msg_digest;
 struct ike_sa;
 struct pbs_out;
 
-bool ikev2_process_childs_sa_payload(const char *what, struct ike_sa *ike,
-				     struct child_sa *larval_child,
-				     struct msg_digest *md,
-				     bool expect_accepted_proposal);
+stf_status process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
+					struct child_sa *larval_child,
+					struct msg_digest *md,
+					bool expect_accepted_proposal);
 
 stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 				  struct child_sa *child,

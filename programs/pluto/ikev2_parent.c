@@ -2980,7 +2980,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		}
 
 		stf_status ret = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
-		if (ret != STF_OK) {
+		if (ret > STF_FAIL) {
+			v2_notification_t n = ret - STF_FAIL;
+			emit_v2N(n, &sk.pbs);
+		} else if (ret != STF_OK) {
 			return ret;
 		}
 	}
