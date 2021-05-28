@@ -102,6 +102,9 @@
 #include "ikev2_child.h"
 #include "ikev2_create_child_sa.h"	/* for ikev2_rekey_ike_start() */
 
+stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
+					      struct child_sa *child,
+					      struct msg_digest *md);
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
 							  struct msg_digest *md,
 							  bool pam_status);
@@ -1133,7 +1136,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
  * the same response.
  */
 
-stf_status ikev2_in_IKE_AUTH_R_failure_response(struct ike_sa *ike,
+stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 						struct child_sa *unused_child UNUSED,
 						struct msg_digest *md)
 {
@@ -2209,12 +2212,10 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 
 static dh_shared_secret_cb ikev2_ike_sa_process_auth_request_no_keymat_continue;	/* type assertion */
 
-stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid(struct ike_sa *ike,
-							struct child_sa *child,
-							struct msg_digest *md UNUSED)
+stf_status process_v2_IKE_AUTH_request_no_skeyid(struct ike_sa *ike,
+						 struct child_sa *unused_child UNUSED,
+						 struct msg_digest *md UNUSED)
 {
-	pexpect(child == NULL);
-
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
@@ -2262,12 +2263,10 @@ static stf_status ikev2_ike_sa_process_auth_request_no_keymat_continue(struct st
 
 static dh_shared_secret_cb ikev2_ike_sa_process_intermediate_request_no_skeyid_continue;	/* type assertion */
 
-stf_status ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid(struct ike_sa *ike,
-									struct child_sa *child,
-									struct msg_digest *md UNUSED)
+stf_status process_v2_IKE_INTERMEDIATE_request_no_skeyid(struct ike_sa *ike,
+							 struct child_sa *unused_child UNUSED,
+							 struct msg_digest *md UNUSED)
 {
-	pexpect(child == NULL);
-
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
@@ -2313,88 +2312,78 @@ static stf_status ikev2_ike_sa_process_intermediate_request_no_skeyid_continue(s
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state *st,
 								   struct msg_digest *md);
 
-stf_status process_v2_IKE_AUTH_request_no_child(struct ike_sa *ike,
-						struct child_sa *child,
-						struct msg_digest *md)
+stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
+					       struct child_sa *unused_child UNUSED,
+					       struct msg_digest *md)
 {
-	if (!impair.ignore_v2_ike_auth_child) {
-		return STF_FATAL;
+	/*
+	 * All systems are go.
+	 *
+	 * Since DH succeeded, a secure (but unauthenticated) SA
+	 * (channel) is available.  From this point on, should things
+	 * go south, the state needs to be abandoned (but it shouldn't
+	 * happen).
+	 */
+
+	/*
+	 * Since systems are go, start updating the state, starting
+	 * with SPIr.
+	 */
+	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+
+	/* send Intermediate Exchange response packet */
+
+	/* beginning of data going out */
+
+	/* make sure HDR is at start of a clean buffer */
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
+
+	/* HDR out */
+
+	pb_stream rbody = open_v2_message(&reply_stream, ike,
+					  md /* response */,
+					  ISAKMP_v2_IKE_INTERMEDIATE);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
 	}
-	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(ike, child, md);
+
+	/* insert an Encryption payload header (SK) */
+
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* send NOTIFY payload */
+	if (ike->sa.st_seen_intermediate) {
+		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (!close_v2SK_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
+
+	stf_status ret = encrypt_v2SK_payload(&sk);
+
+	if (ret != STF_OK) {
+		return ret;
+	}
+
+	record_v2_message(ike, &reply_stream,
+			  "reply packet for intermediate exchange",
+			  MESSAGE_RESPONSE);
+	return STF_OK;
 }
 
-stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R(struct ike_sa *ike,
-					      struct child_sa *child,
-					      struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
+				       struct child_sa *unused_child UNUSED,
+				       struct msg_digest *md)
 {
-	if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
-
-		/*
-		* All systems are go.
-		*
-		* Since DH succeeded, a secure (but unauthenticated) SA
-		* (channel) is available.  From this point on, should things
-		* go south, the state needs to be abandoned (but it shouldn't
-		* happen).
-		*/
-
-		/*
-		* Since systems are go, start updating the state, starting
-		* with SPIr.
-		*/
-		rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
-
-		/* send Intermediate Exchange response packet */
-
-		/* beginning of data going out */
-
-		/* make sure HDR is at start of a clean buffer */
-		struct pbs_out reply_stream = open_pbs_out("reply packet",
-							reply_buffer, sizeof(reply_buffer),
-							ike->sa.st_logger);
-
-		/* HDR out */
-
-		pb_stream rbody = open_v2_message(&reply_stream, ike,
-						  md /* response */,
-						  ISAKMP_v2_IKE_INTERMEDIATE);
-		if (!pbs_ok(&rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-
-		/* insert an Encryption payload header (SK) */
-
-		struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-		if (!pbs_ok(&sk.pbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-
-		/* send NOTIFY payload */
-		if (ike->sa.st_seen_intermediate) {
-			if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
-				return STF_INTERNAL_ERROR;
-		}
-
-		if (!close_v2SK_payload(&sk)) {
-			return STF_INTERNAL_ERROR;
-		}
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-
-		stf_status ret = encrypt_v2SK_payload(&sk);
-
-		if (ret != STF_OK) {
-			return ret;
-		}
-
-		record_v2_message(ike, &reply_stream,
-				  "reply packet for intermediate exchange",
-				  MESSAGE_RESPONSE);
-		return STF_OK;
-	}
-
-	/* The connection is "up", start authenticating it */
-	pexpect(child == NULL);
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {

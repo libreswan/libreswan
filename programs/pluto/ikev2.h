@@ -53,11 +53,11 @@ extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
 
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_failure_response;
-extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_child;
+extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request_no_skeyid;
+extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;
+extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_skeyid;
+extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
+extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
