@@ -2467,7 +2467,7 @@ int enum_match(enum_names *ed, shunk_t string)
 			if (try(true, 0, 0) ||
 			    try(suffix_len > 0, 0, suffix_len) ||
 			    try(prefix_len > 0, prefix_len, 0) ||
-			    try(suffix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
+			    try(prefix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
 			{
 				return en;
 			}
