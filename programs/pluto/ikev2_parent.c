@@ -2932,7 +2932,13 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 			return certstat;
 	}
 
-	/* authentication good, see if there is a child SA being proposed */
+	/* now send AUTH payload */
+
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_intermediate_used = false;
+
 	unsigned int auth_np;
 
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -2951,13 +2957,6 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 
 	dbg("going to assemble AUTH payload");
-
-	/* now send AUTH payload */
-
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-	ike->sa.st_intermediate_used = false;
 
 	if (auth_np == ISAKMP_NEXT_v2SA || auth_np == ISAKMP_NEXT_v2CP) {
 		/* must have enough to build an CHILD_SA */
