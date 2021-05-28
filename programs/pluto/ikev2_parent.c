@@ -3012,8 +3012,9 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 		 * error.
 		 */
 #ifdef USE_XFRM_INTERFACE
-		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-			if (add_xfrmi(c, child->sa.st_logger))
+		struct connection *cc = child->sa.st_connection;
+		if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0)
+			if (add_xfrmi(cc, child->sa.st_logger))
 				return STF_FATAL;
 #endif
 		IKE_SA_established(ike);
