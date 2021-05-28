@@ -45,7 +45,6 @@ extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
 extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R;
 extern stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest * md);
 
 extern void log_ipsec_sa_established(const char *m, const struct state *st);
@@ -59,7 +58,7 @@ extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIAT
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid;
 extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_child;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_response_no_child;
+extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));

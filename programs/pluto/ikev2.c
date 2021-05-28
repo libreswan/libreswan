@@ -323,21 +323,9 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(CERT)|P(CP),
-	  .processor  = ikev2_in_IKE_AUTH_R,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH,
-	  .timeout_event = EVENT_SA_REPLACE,
-	},
-	{ .story      = "Initiator: process IKE_AUTH response (no CHILD SA)",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
-	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH),
-	  .opt_enc_payloads = P(CERT),
-	  .processor  = process_v2_IKE_AUTH_response_no_child,
+	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE,
@@ -1622,16 +1610,19 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		pexpect(transition->state == STATE_PARENT_R1);
 		break;
 	case STATE_PARENT_I2:
+	{
 		/*
 		 * Receiving IKE_AUTH response: it is buried deep
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		pexpect(state->nr_transitions == 4);
-		transition = &state->v2_transitions[1];
+		unsigned transition_nr = 0;
+		pexpect(state->nr_transitions > transition_nr);
+		transition = &state->v2_transitions[transition_nr];
 		pexpect(transition->state == STATE_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
+	}
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2_transitions[state->nr_transitions - 1];

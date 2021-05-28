@@ -3084,20 +3084,9 @@ void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 	/* else it should be on its way to expire no need to kick dead state */
 }
 
-/*
- s
- ***************************************************************
- *                       PARENT_inR2    (I3 state)         *****
- ***************************************************************
- *  - there are no cryptographic continuations, but be certain
- *    that there will have to be DNS continuations, but they
- *    just aren't implemented yet.
- *
- */
-
 /* STATE_PARENT_I2: R2 --> I3
  *                     <--  HDR, SK {IDr, [CERT,] AUTH,
- *                               SAr2, TSi, TSr}
+ *                               [SAr2,] [TSi,] [TSr,]}
  * [Parent SA established]
  *
  * For error handling in this function, please read:
@@ -3106,17 +3095,8 @@ void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 
 static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md);
 
-stf_status process_v2_IKE_AUTH_response_no_child(struct ike_sa *ike,
-						 struct child_sa *unused_child UNUSED,
-						 struct msg_digest *md)
-{
-	if (!impair.omit_v2_ike_auth_child && !impair.ignore_v2_ike_auth_child) {
-		return STF_FATAL;
-	}
-	return ikev2_in_IKE_AUTH_R(ike, NULL, md);
-}
-
-stf_status ikev2_in_IKE_AUTH_R(struct ike_sa *ike, struct child_sa *unused_child UNUSED, struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unused_child UNUSED,
+					struct msg_digest *md)
 {
 	/*
 	 * If the initiator rejects the responders authentication it
