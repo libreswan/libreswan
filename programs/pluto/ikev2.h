@@ -53,8 +53,6 @@ extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
 
-extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request_no_skeyid;
-extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_skeyid;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;

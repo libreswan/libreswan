@@ -81,6 +81,7 @@
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_informational.h"
 #include "ikev2_create_child_sa.h"
+#include "ikev2_ike_intermediate.h"
 
 /*
  * IKEv2 has slightly different states than IKEv1.
@@ -385,7 +386,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
-	  .processor  = process_v2_IKE_INTERMEDIATE_request_no_skeyid,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request_no_skeyseed,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
