@@ -971,12 +971,13 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 
 	switch (process_v2_IKE_AUTH_response_child_sa_payloads(ike, md)) {
 	case CHILD_FATAL:
+		/* already logged */
 		return STF_FATAL;
 	case CHILD_CREATED:
-		break;
 	case CHILD_SKIPPED:
 		break;
 	case CHILD_FAILED:
+		/* already logged */
 		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 	}
 

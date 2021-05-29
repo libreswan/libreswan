@@ -989,16 +989,40 @@ enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	}
 
 	/* examine and accept SA ESP/AH proposals */
-	stf_status ps = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-						     ike, child,
-						     md, /*expect-accepted-proposal?*/true);
-	if (ps != STF_OK) {
+	stf_status res;
+
+	res = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+					   ike, child,
+					   md, /*expect-accepted-proposal?*/true);
+	if (res > STF_FAIL) {
+#if 0
+		v2_notification_t n = res - STF_FAIL;
+		llog_sa(RC_LOG_SERIOUS, child,
+			"CHILD SA failed: %s",
+			enum_name_short(&ikev2_notify_names, n));
+#endif
 		return CHILD_FAILED;
+	} else if (res != STF_OK) {
+#if 0
+		llog_sa(RC_LOG_SERIOUS, child,
+			"CHILD SA encountered fatal error: %s",
+			enum_name_short(&stf_status_names, res));
+#endif
+		return CHILD_FATAL;
 	}
 
-	stf_status ts = ikev2_process_ts_and_rest(ike, child, md);
-	if (ts != STF_OK) {
+	res = ikev2_process_ts_and_rest(ike, child, md);
+	if (res > STF_FAIL) {
+		v2_notification_t n = res - STF_FAIL;
+		llog_sa(RC_LOG_SERIOUS, child,
+			"CHILD SA failed: %s",
+			enum_name_short(&ikev2_notify_names, n));
 		return CHILD_FAILED;
+	} else if (res != STF_OK) {
+		llog_sa(RC_LOG_SERIOUS, child,
+			"CHILD SA encountered fatal error: %s",
+			enum_name_short(&stf_status_names, res));
+		return CHILD_FATAL;
 	}
 
 	v2_child_sa_established(ike, child);
