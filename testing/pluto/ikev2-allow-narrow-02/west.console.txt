@@ -38,12 +38,8 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-238 "westnet-eastnet-ikev2" #2: state transition 'Initiator: process IKE_AUTH response' failed with v2N_TS_UNACCEPTABLE
-031 "westnet-eastnet-ikev2" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-002 "westnet-eastnet-ikev2" #1: liveness action - putting connection into hold
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_I2) and NOT sending notification
-003 "westnet-eastnet-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.23 included errno 3: No such process
-003 "westnet-eastnet-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
+003 "westnet-eastnet-ikev2" #2: CHILD SA failed: TS_UNACCEPTABLE
+002 "westnet-eastnet-ikev2" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
