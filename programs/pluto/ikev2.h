@@ -53,11 +53,6 @@ extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
 
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_skeyid;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
-
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
@@ -256,5 +251,15 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 bool need_configuration_payload(const struct connection *const pc,
 				const lset_t st_nat_traversal);
 void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred);
+
+struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
+			    const char *id_name, shunk_t id_payload,
+			    const char *key_name, PK11SymKey *key);
+bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
+struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
+				    const char *key_name, PK11SymKey *key);
+
+void IKE_SA_established(const struct ike_sa *ike);
+
 
 #endif
