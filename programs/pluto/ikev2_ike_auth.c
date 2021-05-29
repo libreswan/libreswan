@@ -969,43 +969,15 @@ static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct
 	 * Figure out of the child is both expected and viable.
 	 */
 
-	struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
-
-	if (impair.ignore_v2_ike_auth_child) {
-		/* Try to ignore the CHILD SA payloads. */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
-			return STF_FATAL;
-		}
-		llog_sa(RC_LOG, ike,
-			"IMPAIR: as expected, IKE_AUTH response includes CHILD SA payloads; ignoring them");
-	} else if (impair.omit_v2_ike_auth_child) {
-		/* Try to ignore missing CHILD SA payloads. */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
-			return STF_FATAL;
-		}
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads");
-	} else if (larval_child == NULL) {
-		/* Don't expect CHILD SA payloads. */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_sa(RC_LOG_SERIOUS, ike,
-				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
-			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
-		}
-		dbg("IKE SA #%lu has no and expects no CHILD SA", ike->sa.st_serialno);
-	} else {
-		/* Expect CHILD SA payloads. */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_sa(RC_LOG_SERIOUS, larval_child,
-				"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
-			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
-		}
-		if (!process_v2_IKE_AUTH_response_child_sa_payloads(ike, larval_child, md)) {
-			return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
-		}
+	switch (process_v2_IKE_AUTH_response_child_sa_payloads(ike, md)) {
+	case CHILD_FATAL:
+		return STF_FATAL;
+	case CHILD_CREATED:
+		break;
+	case CHILD_SKIPPED:
+		break;
+	case CHILD_FAILED:
+		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
 	}
 
 	return STF_OK;

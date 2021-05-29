@@ -898,9 +898,78 @@ stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, str
 	return STF_OK;
 }
 
-bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct child_sa *child,
-						 struct msg_digest *md)
+enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
+								 struct msg_digest *md)
 {
+	if (impair.ignore_v2_ike_auth_child) {
+		/* Try to ignore the CHILD SA payloads. */
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
+			return CHILD_FATAL;
+		}
+		llog_sa(RC_LOG, ike,
+			"IMPAIR: as expected, IKE_AUTH response includes CHILD SA payloads; ignoring them");
+		return CHILD_SKIPPED;
+	}
+
+	if (impair.omit_v2_ike_auth_child) {
+		/* Try to ignore missing CHILD SA payloads. */
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
+			return CHILD_FATAL;
+		}
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads");
+		return CHILD_SKIPPED;
+	}
+
+	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	if (child == NULL) {
+		/* Don't expect CHILD SA payloads. */
+		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
+			return CHILD_FATAL;
+		}
+		dbg("IKE SA #%lu has no and expects no CHILD SA", ike->sa.st_serialno);
+		return CHILD_SKIPPED;
+	}
+
+	/*
+	 * Was there a child error notification?  The RFC says this
+	 * list isn't definitive.
+	 *
+	 * XXX: can this code assume that the response contains only
+	 * one notify and that is for the child?  Given notifies are
+	 * used to communicate compression I've my doubt.
+	 */
+	FOR_EACH_THING(pd, PD_v2N_NO_PROPOSAL_CHOSEN, PD_v2N_TS_UNACCEPTABLE,
+		       PD_v2N_SINGLE_PAIR_REQUIRED, PD_v2N_INTERNAL_ADDRESS_FAILURE,
+		       PD_v2N_FAILED_CP_REQUIRED) {
+		if (md->pd[pd] != NULL) {
+			/* convert PD to N */
+			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
+			esb_buf esb;
+			/*
+			 * Log something the testsuite expects for
+			 * now.  It provides an anchor when looking at
+			 * test changes.
+			 */
+			llog_sa(RC_LOG_SERIOUS, child,
+				"IKE_AUTH response contained the error notification %s",
+				enum_show_short(&ikev2_notify_names, n, &esb));
+			return CHILD_FAILED;
+		}
+	}
+
+	/* Expect CHILD SA payloads. */
+	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		llog_sa(RC_LOG_SERIOUS, child,
+			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
+		return CHILD_FAILED;
+	}
+
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
 
@@ -909,13 +978,13 @@ bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct c
 		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, &child->sa,
 				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
-			return false;
+			return CHILD_FAILED;
 		}
 	} else {
 		if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, &child->sa,
 				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
-			return false;
+			return CHILD_FAILED;
 		}
 	}
 
@@ -924,17 +993,18 @@ bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike, struct c
 						     ike, child,
 						     md, /*expect-accepted-proposal?*/true);
 	if (ps != STF_OK) {
-		return false;
+		return CHILD_FAILED;
 	}
 
-	stf_status status = ikev2_process_ts_and_rest(ike, child, md);
-	if (status != STF_OK) {
-		return false;
+	stf_status ts = ikev2_process_ts_and_rest(ike, child, md);
+	if (ts != STF_OK) {
+		return CHILD_FAILED;
 	}
 
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
 	close_any(&child->sa.st_logger->object_whackfd);
 	close_any(&child->sa.st_logger->global_whackfd);
-	return true;
+
+	return CHILD_CREATED;
 }

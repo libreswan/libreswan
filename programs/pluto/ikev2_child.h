@@ -38,9 +38,21 @@ v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
 stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *md);
 
-bool process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
-						    struct child_sa *child,
-						    struct msg_digest *md);
+/*
+ * Result of processing CHILD SA payloads.  Don't use STF_STATUS as it
+ * is too ill defined.  Caller needs to see this and decide what
+ * action to take.
+ */
+
+enum child_status {
+	CHILD_CREATED = 1,
+	CHILD_SKIPPED,
+	CHILD_FAILED,
+	CHILD_FATAL,
+};
+
+enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
+								 struct msg_digest *md);
 
 stf_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike, struct msg_digest *md,
 							 struct pbs_out *pbs);
