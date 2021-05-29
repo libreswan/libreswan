@@ -1,7 +1,7 @@
 #!/bin/sh
 
-pass1="sh modified baseline baseline-passed baseline-failed"
-pass2="test diffs results retest upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status test-clean shutdown"
+pass1="commit sh modified baseline baseline-passed baseline-failed"
+pass2="add check diffs results recheck upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status check-clean shutdown"
 
 if test $# = 0; then
     cat <<EOF
@@ -47,11 +47,19 @@ while test $# -gt 0 ; do
     case " ${pass2} " in
 	*" $1 "* ) ops="${ops} $1" ;;
 	* )
-	    # must be a pass1 command
+	    # must be a pass0 or pass1 command
 	    case "$1" in
-		sh ) exec gmake kvmsh-$2 ;;
+		# aliases for pass2 commands
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
+		check ) ops="${ops} recheck" ;;
+		recheck ) ops="${ops} check" ;;
+		check-clean ) ops="${ops} check-clean" ;;
+		# git wrappers
+		commit ) shift ; exec git commit "$@" ;;
+		# invoke now
+		sh ) exec gmake kvmsh-$2 ;;
+		# wrappers
 		modified )
 		    modified=$(git status testing/pluto/ \
 				   | awk '/(modified|deleted|renamed):/ { print $NF }' \
@@ -133,6 +141,9 @@ diffs_command()
 status=0
 for op in ${ops} ; do
     case ${op} in
+	add )
+	    git add "$@"
+	    ;;
 	kill )
 	    gmake kvm-${op}
 	    ;;
