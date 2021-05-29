@@ -1128,45 +1128,5 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			  "IKE SA authentication request rejected by peer: unrecognized response");
 	}
 
-	/*
-	 * XXX: This output is mostly to keep test results happy.  The
-	 * real action happens (and should be logged) elsewhere.
-	 *
-	 * XXX: An assumption here is that the IKE SA and the first
-	 * child have the same try parameters.
-	 */
-
-	struct connection *c = ike->sa.st_connection;
-	unsigned long try = ike->sa.st_try;
-	unsigned long try_limit = c->sa_keying_tries;
-	if (try_limit > 0 && try >= try_limit) {
-		dbg("maximum number of retries reached - deleting state");
-	} else {
-		LLOG_JAMBUF(RC_COMMENT, ike->sa.st_logger, buf) {
-			jam(buf, "scheduling retry attempt %ld of ", try);
-			if (try_limit == 0) {
-				jam_string(buf, "an unlimited number");
-			} else {
-				jam(buf, "at most %ld", try_limit);
-			}
-			if (fd_p(ike->sa.st_logger->object_whackfd)) {
-				jam_string(buf, ", but releasing whack");
-			}
-		}
-	}
-
-	/*
-	 * release_pending_whacks() will release the CHILD (and
-	 * CHILD's parent if it exists and has the same whack).  For
-	 * instance, when the AUTH exchange somehow digs a hole where
-	 * the child sa gets a timeout.
-	 *
-	 * XXX: The child SA 'diging a hole' is likely a bug.
-	 *
-	 * XXX: this call is mostely to keep tests happy; the real
-	 * action which is elsewhere is being hidden.
-	 */
-	release_pending_whacks(child == NULL ? &ike->sa : &child->sa, "scheduling a retry");
-
-	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+	return STF_FATAL;
 }

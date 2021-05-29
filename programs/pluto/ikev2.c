@@ -2856,7 +2856,6 @@ void complete_v2_state_transition(struct state *st,
 		case NO_MESSAGE:
 			break;
 		}
-		release_pending_whacks(st, "fatal error");
 		delete_ike_family(ike, DONT_SEND_DELETE);
 
 		/* kill all st pointers */
