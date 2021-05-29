@@ -2811,11 +2811,18 @@ void complete_v2_state_transition(struct state *st,
 		break;
 
 	case STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA:
-		/* initiator processing response */
-		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		/* lie -- the delete _hopefully_ does what is wanted? */
-		log_state(RC_LOG, &ike->sa, "sending IKE SA delete");
+		/*
+		 * XXX: this is a hack so that IKE SA initiator can
+		 * both delete the IKE SA and send an IKE SA delete
+		 * notification because the IKE_AUTH response was
+		 * rejected.
+		 */
+		/*
+		 * Initiator processing response, finish current
+		 * exchange ready for delete request.
+		 */
 		dbg("Message ID: forcing a response received update");
+		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 		v2_msgid_update_recv(ike, NULL, md);
 		/*
 		 * XXX: this call will fire and forget.  It should
@@ -2824,6 +2831,9 @@ void complete_v2_state_transition(struct state *st,
 		 */
 		delete_ike_family(ike, PROBABLY_SEND_DELETE);
 		/* get out of here -- everything is invalid */
+		ike = NULL;
+		st = NULL;
+		md->v1_st = NULL;
 		return;
 
 	case STF_FATAL:
