@@ -52,9 +52,9 @@ while test $# -gt 0 ; do
 		# aliases for pass2 commands
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
-		check ) ops="${ops} recheck" ;;
-		recheck ) ops="${ops} check" ;;
-		check-clean ) ops="${ops} check-clean" ;;
+		test ) ops="${ops} recheck" ;;
+		retest ) ops="${ops} check" ;;
+		test-clean ) ops="${ops} check-clean" ;;
 		# git wrappers
 		commit ) shift ; exec git commit "$@" ;;
 		# invoke now
@@ -147,10 +147,10 @@ for op in ${ops} ; do
 	kill )
 	    gmake kvm-${op}
 	    ;;
-	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | test-clean | shutdown )
+	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | check-clean | shutdown )
 	    gmake kvm-${op} || exit $?
 	    ;;
-	test | retest )
+	check | recheck )
 	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
 	diffs )
