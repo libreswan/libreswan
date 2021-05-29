@@ -513,7 +513,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 		pp = &(*pp)->next;
 	}
 	/* append */
-	struct v2_msgid_pending new =  {
+	struct v2_msgid_pending new = {
 		.st_serialno = st->st_serialno,
 		.ix = ix,
 		.cb = callback,

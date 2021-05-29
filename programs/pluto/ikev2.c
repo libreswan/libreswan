@@ -2272,7 +2272,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    from_state == STATE_V2_REKEY_IKE_I1) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
-	} else  {
+	} else {
 		change_state(st, transition->next_state);
 	}
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);

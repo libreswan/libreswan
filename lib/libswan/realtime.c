@@ -84,7 +84,7 @@ realtime_t realnow(void)
 
 struct timespec realtime_as_timespec(realtime_t t)
 {
-	struct timespec ts =  {
+	struct timespec ts = {
 		.tv_sec = t.rt.tv_sec,
 		.tv_nsec = t.rt.tv_usec * 1000,
 	};
