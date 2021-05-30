@@ -1533,21 +1533,14 @@ static struct state *duplicate_state(struct connection *c,
 		clone_nss_symkey_field(st_skey_pi_nss);
 		clone_nss_symkey_field(st_skey_pr_nss);
 		clone_nss_symkey_field(st_enc_key_nss);
-
-		clone_nss_symkey_field(st_sk_d_no_ppk);
-		clone_nss_symkey_field(st_sk_pi_no_ppk);
-		clone_nss_symkey_field(st_sk_pr_no_ppk);
 #   undef clone_nss_symkey_field
 
 		/* v2 duplication of state */
-#   define state_clone_chunk(CHUNK) \
-		nst->CHUNK = clone_hunk(st->CHUNK, #CHUNK " in duplicate state")
-
+#   define state_clone_chunk(CHUNK) nst->CHUNK = clone_hunk(st->CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
 		state_clone_chunk(st_skey_initiator_salt);
 		state_clone_chunk(st_skey_responder_salt);
-
 #   undef state_clone_chunk
 	}
 
