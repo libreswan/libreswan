@@ -1,6 +1,6 @@
 #!/bin/sh
 
-pass1="commit sh modified baseline baseline-passed baseline-failed"
+pass1="commit sh modified baseline baseline-passed baseline-failed --baseline --baseline-passed --baseline-failed"
 pass2="add check diffs results recheck upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status check-clean shutdown"
 
 if test $# = 0; then
@@ -47,8 +47,13 @@ while test $# -gt 0 ; do
     case " ${pass2} " in
 	*" $1 "* ) ops="${ops} $1" ;;
 	* )
-	    # must be a pass0 or pass1 command
+	    # must be a pass1 command
 	    case "$1" in
+		--baseline* )
+		    baseline=$(expr $1 : '--\(.*\)')
+		    shift
+		    __baseline="--baseline $1"
+		    ;;
 		# aliases for pass2 commands
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
@@ -116,6 +121,7 @@ results_command()
 {
     if test -n "${baseline}" ; then
 	./testing/utils/kvmresults.py ${__baseline} "$@" \
+	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
 	./testing/utils/kvmresults.py ${__baseline} "$@"
@@ -127,6 +133,7 @@ diffs_command()
 {
     if test -n "${baseline}" ; then
 	./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
+	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
 	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
