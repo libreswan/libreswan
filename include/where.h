@@ -39,7 +39,7 @@ typedef const struct {
 } where_t;
 
 #define HERE (where_t) { .func = __func__, .file = HERE_FILENAME , .line = __LINE__}
-#define PRI_WHERE "(in %s() at %s:%lu)"
-#define pri_where(SC) (SC).func, (SC).file, (SC).line
+#define PRI_WHERE "(%s() +%lu %s)"
+#define pri_where(SC) (SC).func, (SC).line, (SC).file
 
 #endif
