@@ -135,8 +135,6 @@ struct kernel_sa {
 	unsigned replay_window;
 	reqid_t reqid;
 
-	unsigned authalg; /* use INTEG */
-
 	const struct integ_desc *integ;
 	unsigned authkeylen;
 	unsigned char *authkey;

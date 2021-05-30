@@ -2083,8 +2083,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 		}
 #endif
-		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
-
 		if (st->st_esp.attrs.transattrs.esn_enabled) {
 			dbg("Enabling ESN");
 			said_next->esn = true;
@@ -2194,7 +2192,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
 		said_next->integ = integ;
-		said_next->authalg = authalg;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
 		said_next->mode = encap_oneshot;
