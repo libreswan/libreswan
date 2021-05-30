@@ -156,7 +156,7 @@ diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
 					     shunk_t signature,
 					     const struct hash_desc *hash_algo);
 
-extern void ikev2_derive_child_keys(struct child_sa *child);
+extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 
 void v2_schedule_replace_event(struct state *st);
 

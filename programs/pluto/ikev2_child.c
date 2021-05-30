@@ -249,7 +249,7 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 	}
 
-	ikev2_derive_child_keys(child);
+	ikev2_derive_child_keys(ike, child);
 	return STF_OK;
 }
 
@@ -799,7 +799,7 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 		child->sa.st_ipcomp.present = true;
 	}
 
-	ikev2_derive_child_keys(child);
+	ikev2_derive_child_keys(ike, child);
 
 #ifdef USE_XFRM_INTERFACE
 	/* before calling do_command() */
