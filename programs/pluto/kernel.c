@@ -2395,6 +2395,53 @@ fail:
 	return false;
 }
 
+/*
+ * XXX: Two cases:
+ *
+ * - the protocol was negotiated (and presumably installed)
+ *   (.present)
+ *
+ * - the protocol was proposed but never finished (.out_spi
+ *   inbound)
+ */
+
+struct dead_spi {	/* XXX: this is ip_said+src */
+	const struct ip_protocol *protocol;
+	ipsec_spi_t spi;
+	ip_address src;
+	ip_address dst;
+};
+
+static unsigned append_teardown(struct dead_spi *dead, bool inbound,
+				const struct ipsec_proto_info *proto,
+				ip_address host_addr, ip_address effective_remote_address)
+{
+	bool present = proto->present;
+#if 0
+	if (!present && inbound && proto->our_spi != 0 && proto->attrs.spi == 0) {
+		dbg("kernel: forcing inbound delete of %s as .our_spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
+		    proto->protocol->name,
+		    pri_ipsec_spi(proto->our_spi),
+		    pri_ipsec_spi(proto->attrs.spi));
+		present = true;
+	}
+#endif
+	if (present) {
+		dead->protocol = proto->protocol;
+		if (inbound) {
+			dead->spi = proto->our_spi; /* incoming */
+			dead->src = effective_remote_address;
+			dead->dst = host_addr;
+		} else {
+			dead->spi = proto->attrs.spi; /* outgoing */
+			dead->src = host_addr;
+			dead->dst = effective_remote_address;
+		}
+		return 1;
+	}
+	return 0;
+}
+
 static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 {
 	/* Delete any AH, ESP, and IP in IP SPIs. */
@@ -2442,58 +2489,30 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	/* collect each proto SA that needs deleting */
 
-	struct {
-		const struct ip_protocol *proto;
-		const struct ipsec_proto_info *info;
-	} protos[4];	/* at most 3 entries + terminator */
-	int i = 0;
-
-	if (st->st_ah.present) {
-		protos[i].proto = &ip_protocol_ah;
-		protos[i].info = &st->st_ah;
-		i++;
-	}
-
-	if (st->st_esp.present) {
-		protos[i].proto = &ip_protocol_esp;
-		protos[i].info = &st->st_esp;
-		i++;
-	}
-
-	if (st->st_ipcomp.present) {
-		protos[i].proto = &ip_protocol_comp;
-		protos[i].info = &st->st_ipcomp;
-		i++;
-	}
+	struct dead_spi dead[3];	/* at most 3 entries */
+	unsigned nr = 0;
+	nr += append_teardown(dead + nr, inbound, &st->st_ah,
+			      c->spd.this.host_addr, effective_remote_address);
+	nr += append_teardown(dead + nr, inbound, &st->st_esp,
+			      c->spd.this.host_addr, effective_remote_address);
+	nr += append_teardown(dead + nr, inbound, &st->st_ipcomp,
+			      c->spd.this.host_addr, effective_remote_address);
+	passert(nr < elemsof(dead));
 
 	/*
-	 * If the SAs have been grouped, deleting any one will do:
-	 * we just delete the first one found (protos[0]).
+	 * If the SAs have been grouped, deleting any one will do: we
+	 * just delete the first one found.
 	 */
-	if (kernel_ops->grp_sa != NULL && i > 0)
-		i = 1;
-
-	protos[i].proto = NULL;
+	if (kernel_ops->grp_sa != NULL && nr > 1) {
+		nr = 1;
+	}
 
 	/* delete each proto that needs deleting */
 	bool result = true;
 
-	for (i = 0; protos[i].proto != NULL; i++) {
-		const struct ip_protocol *proto = protos[i].proto;
-		ipsec_spi_t spi;
-		const ip_address *src, *dst;
-
-		if (inbound) {
-			spi = protos[i].info->our_spi;
-			src = &effective_remote_address;
-			dst = &c->spd.this.host_addr;
-		} else {
-			spi = protos[i].info->attrs.spi;
-			src = &c->spd.this.host_addr;
-			dst = &effective_remote_address;
-		}
-
-		result &= del_spi(spi, proto, src, dst, st->st_logger);
+	for (unsigned i = 0; i < nr; i++) {
+		const struct dead_spi *tbd = &dead[i];
+		result &= del_spi(tbd->spi, tbd->protocol, &tbd->src, &tbd->dst, st->st_logger);
 	}
 
 	return result;
