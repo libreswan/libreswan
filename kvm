@@ -57,8 +57,8 @@ while test $# -gt 0 ; do
 		# aliases for pass2 commands
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
-		test ) ops="${ops} recheck" ;;
-		retest ) ops="${ops} check" ;;
+		test ) ops="${ops} check" ;;
+		retest ) ops="${ops} recheck" ;;
 		test-clean ) ops="${ops} check-clean" ;;
 		# git wrappers
 		commit ) shift ; exec git commit "$@" ;;
