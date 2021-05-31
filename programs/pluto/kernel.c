@@ -314,29 +314,30 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
 
+	ipsec_spi_t network_spi;
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
 		set_text_said(text_said, &sr->this.host_addr, 0, proto);
-		return kernel_ops->get_spi(&sr->that.host_addr,
-					   &sr->this.host_addr, proto, tunnel,
-					   get_proto_reqid(sr->reqid, proto),
-					   IPSEC_DOI_SPI_OUR_MIN, 0xffffffff,
-					   text_said, logger);
+		network_spi = kernel_ops->get_spi(&sr->that.host_addr,
+						  &sr->this.host_addr, proto, tunnel,
+						  get_proto_reqid(sr->reqid, proto),
+						  IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
+						  text_said, logger);
 	} else {
-		static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
-
-		spi++;
-		while (spi < IPSEC_DOI_SPI_OUR_MIN || spi == ntohl(avoid))
-			get_rnd_bytes((uint8_t *)&spi, sizeof(spi));
-
-		if (DBGP(DBG_BASE)) {
-			ipsec_spi_t spi_net = htonl(spi);
-			DBG_dump("generate SPI:", (uint8_t *)&spi_net,
-				 sizeof(spi_net));
-		}
-
-		return htonl(spi);
+		static ipsec_spi_t host_spi; /* host order, so not returned directly! */
+		do {
+			get_rnd_bytes(&host_spi, sizeof(host_spi));
+			network_spi = htonl(host_spi);
+		} while (host_spi < IPSEC_DOI_SPI_OUR_MIN || network_spi == avoid);
 	}
+
+	char text_said[SATOT_BUF];
+	set_text_said(text_said, &sr->this.host_addr, network_spi, proto);
+	address_buf rb;
+	dbg("kernel: allocated incoming spi %s -> %s%s",
+	    str_address(&sr->that.host_addr, &rb), text_said,
+	    tunnel ? " in tunnel-mode" : "");
+	return network_spi;
 }
 
 /* Generate Unique CPI numbers.
