@@ -1952,29 +1952,29 @@ static bool netlink_get(int fd, struct logger *logger)
 
 		if (errno != EINTR) {
 			log_errno(logger, errno,
-				  "recvfrom() failed in netlink_get: errno(%d): %s",
+				  "kernel: recvfrom() failed in netlink_get: errno(%d): %s",
 				  errno, strerror(errno));
 		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		llog(RC_LOG, logger,
-			    "netlink_get read truncated message: %zd bytes; ignore message",
+			    "kernel: netlink_get read truncated message: %zd bytes; ignore message",
 			    r);
 		return true;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */
-		dbg("netlink_get: ignoring %s message from process %u",
+		dbg("kernel: netlink_get: ignoring %s message from process %u",
 		    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
 		    addr.nl_pid);
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		llog(RC_LOG, logger,
-			    "netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
-			    r, (size_t) rsp.n.nlmsg_len);
+		     "kernel: netlink_get: read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
+		     r, (size_t) rsp.n.nlmsg_len);
 		return true;
 	}
 
-	dbg("netlink_get: %s message",
+	dbg("kernel: netlink_get: %s message",
 	    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 
 	switch (rsp.n.nlmsg_type) {
@@ -2011,8 +2011,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				   const struct ip_protocol *proto,
 				   bool tunnel_mode,
 				   reqid_t reqid,
-				   ipsec_spi_t min,
-				   ipsec_spi_t max,
+				   uintmax_t min, uintmax_t max,
 				   const char *text_said,
 				   struct logger *logger)
 {
@@ -2045,13 +2044,13 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
 		llog(RC_LOG, logger,
-			    "netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
-			    (size_t) rsp.n.nlmsg_len,
-			    sizeof(rsp.u.sa));
+		     "kernel: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
+		     (size_t) rsp.n.nlmsg_len,
+		     sizeof(rsp.u.sa));
 		return 0;
 	}
 
-	dbg("netlink_get_spi: allocated 0x%x for %s",
+	dbg("kernel: netlink_get_spi: allocated 0x%x for %s",
 	    ntohl(rsp.u.sa.id.spi), text_said);
 	return rsp.u.sa.id.spi;
 }

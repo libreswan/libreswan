@@ -237,8 +237,7 @@ struct kernel_ops {
 			       const struct ip_protocol *proto,
 			       bool tunnel_mode,
 			       reqid_t reqid,
-			       ipsec_spi_t min,
-			       ipsec_spi_t max,
+			       uintmax_t min, uintmax_t max,
 			       const char *text_said,
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);

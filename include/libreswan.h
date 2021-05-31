@@ -43,8 +43,15 @@
 #define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */
 #endif
 
-/* and the SA ID stuff */
+/*
+ * And the SA ID stuff.
+ *
+ * XXX: this should be hunk like
+ */
+
 typedef uint32_t ipsec_spi_t;
+#define PRI_IPSEC_SPI "%08x"
+#define pri_ipsec_spi(SPI) htonl(SPI)
 
 /*
  * definitions for user space, taken linux/include/libreswan/ipsec_sa.h
