@@ -150,7 +150,8 @@ struct ipsec_trans_attrs {
 
 /* IPsec per protocol state information */
 struct ipsec_proto_info {
-	bool present;                   /* was this transform specified? */
+	const struct ip_protocol *protocol;	/* ESP, AH, COMP, ... */
+	bool present;				/* was this transform negotiated? */
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	ipsec_spi_t our_spi;
 	uint16_t keymat_len;           /* same for both */

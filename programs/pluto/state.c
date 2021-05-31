@@ -406,13 +406,17 @@ struct child_sa *pexpect_child_sa(struct state *st)
 	return (struct child_sa*) st;
 }
 
-union sas { struct child_sa child; struct ike_sa ike; struct state st; };
-
 /*
  * Get a state object.
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
+
+union sas {
+	struct child_sa child;
+	struct ike_sa ike;
+	struct state st;
+};
 
 static struct state *new_state(struct connection *c,
 			       const ike_spi_t ike_initiator_spi,
@@ -422,28 +426,42 @@ static struct state *new_state(struct connection *c,
 			       where_t where)
 {
 	static so_serial_t next_so = SOS_FIRST;
-	union sas *sas = alloc_thing(union sas, "struct state");
-	passert(&sas->st == &sas->child.sa);
-	passert(&sas->st == &sas->ike.sa);
-	struct state *st = &sas->st;
-	*st = (struct state) {
-		.st_state = &state_undefined,
-		.st_serialno = next_so++,
-		.st_inception = realnow(),
-		.st_establishing_sa = sa_type,
-		.st_connection = c,
-		.st_ike_spis = {
-			.initiator = ike_initiator_spi,
-			.responder = ike_responder_spi,
+	union sas sas = {
+		.st = {
+			.st_state = &state_undefined,
+			.st_serialno = next_so++,
+			.st_inception = realnow(),
+			.st_establishing_sa = sa_type,
+			.st_connection = c,
+			.st_ike_spis = {
+				.initiator = ike_initiator_spi,
+				.responder = ike_responder_spi,
+			},
+			.st_ah = {
+				.protocol = &ip_protocol_ah,
+			},
+			.st_esp = {
+				.protocol = &ip_protocol_esp,
+			},
+			.st_ipcomp = {
+				.protocol = &ip_protocol_comp,
+			},
+			.hidden_variables = {
+				.st_nat_oa = ipv4_info.address.any,
+				.st_natd = ipv4_info.address.any,
+			},
 		},
 	};
+	union sas *sap = clone_thing(sas, "struct state");
+	passert(&sap->st == &sap->child.sa);
+	passert(&sap->st == &sap->ike.sa);
+	struct state *st = &sap->st;
+
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
+	/* XXX: something better? Note: needs real ST */
 	st->st_logger = alloc_logger(st, &logger_state_vec, where);
 	st->st_logger->object_whackfd = fd_dup(whackfd, where);
-
-	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
-	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 	add_state_to_db(st);
