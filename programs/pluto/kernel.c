@@ -2417,7 +2417,6 @@ static unsigned append_teardown(struct dead_spi *dead, bool inbound,
 				ip_address host_addr, ip_address effective_remote_address)
 {
 	bool present = proto->present;
-#if 0
 	if (!present && inbound && proto->our_spi != 0 && proto->attrs.spi == 0) {
 		dbg("kernel: forcing inbound delete of %s as .our_spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
 		    proto->protocol->name,
@@ -2425,7 +2424,6 @@ static unsigned append_teardown(struct dead_spi *dead, bool inbound,
 		    pri_ipsec_spi(proto->attrs.spi));
 		present = true;
 	}
-#endif
 	if (present) {
 		dead->protocol = proto->protocol;
 		if (inbound) {
