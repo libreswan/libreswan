@@ -42,6 +42,7 @@ west #
 010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 32 seconds for response
 031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
 west #
  # The state should have been deleted, but replaced via event
 west #
@@ -50,15 +51,14 @@ west #
  # failed
 west #
  ../../guestbin/wait-for.sh --match 'sent IKE_AUTH request' -- ipsec status
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; REPLACE in XXs; idle;
-000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
 west #
  # only one pending CHILD SA event should show up
 west #
  ipsec status |egrep "STATE_|pending"
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; REPLACE in XXs; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
 000 #3: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
-000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); idle;
+000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_IKE_AUTH_CHILD_I0 (ephemeral: initiator creating child from IKE exchange); idle;
 west #
  echo done
 done
