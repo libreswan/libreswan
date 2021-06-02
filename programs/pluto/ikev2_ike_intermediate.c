@@ -43,8 +43,6 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_c
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	ike->sa.st_intermediate_used = true;
-
 	if (ike->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
@@ -93,12 +91,6 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_c
 	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
-	}
-
-	/* send NOTIFY payload */
-	if (ike->sa.st_seen_intermediate) {
-		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
-			return STF_INTERNAL_ERROR;
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -206,12 +198,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs)) {
 		return STF_INTERNAL_ERROR;
-	}
-
-	/* send NOTIFY payload */
-	if (ike->sa.st_seen_intermediate) {
-		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
-			return STF_INTERNAL_ERROR;
 	}
 
 	if (!close_v2SK_payload(&sk)) {

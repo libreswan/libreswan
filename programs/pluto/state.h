@@ -446,8 +446,13 @@ struct state {
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
 	shunk_t st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+
+	/*
+	 * IKEv2 intermediate exchange.
+	 */
 	chunk_t st_intermediate_packet_me;	/* calculated from my last Intermediate Exchange packet */
 	chunk_t st_intermediate_packet_peer;	/* calculated from peers last Intermediate Exchange packet */
+	bool st_v2_ike_intermediate_used;	/* both ends agree/use Intermediate Exchange */
 
 	/** end of IKEv2-only things **/
 
@@ -672,10 +677,6 @@ struct state {
 	PK11SymKey *st_sk_d_no_ppk;
 	PK11SymKey *st_sk_pi_no_ppk;
 	PK11SymKey *st_sk_pr_no_ppk;
-
-	/* Intermediate Exchange used */
-	bool st_intermediate_used;	/* both ends agreed to use Intermediate Exchange */
-	bool st_seen_intermediate;	/* does remote peer support Intermediate Exchange? */
 
 	/* connection included in AUTH (v2) */
 	struct traffic_selector st_ts_this;

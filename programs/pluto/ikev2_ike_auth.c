@@ -543,7 +543,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
-		ike->sa.st_intermediate_used = false;
+		ike->sa.st_v2_ike_intermediate_used = false;
 		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
 			free_chunk_content(&null_auth);
 			return STF_INTERNAL_ERROR;
@@ -1054,7 +1054,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 			struct crypt_mac hash_to_sign =
 				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
 						     hash_algo, LOCAL_PERSPECTIVE);
-			ike->sa.st_intermediate_used = false;
+			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue)) {
@@ -1078,7 +1078,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 			struct crypt_mac hash_to_sign =
 				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
 						     hash_algo, LOCAL_PERSPECTIVE);
-			ike->sa.st_intermediate_used = false;
+			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue)) {
@@ -1259,7 +1259,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_intermediate_used = false;
+	ike->sa.st_v2_ike_intermediate_used = false;
 
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
