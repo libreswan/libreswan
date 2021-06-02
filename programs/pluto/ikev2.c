@@ -2857,11 +2857,9 @@ void complete_v2_state_transition(struct state *st,
 				v2_msgid_update_sent(ike, st, md, transition->send);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
-				release_pending_whacks(st, "fatal error");
-				delete_ike_family(ike, DONT_SEND_DELETE);
-				return;
+			} else {
+				dbg("Message ID: exchange zombie as no response?");
 			}
-			dbg("Message ID: exchange zombie as no response?");
 			break;
 		case NO_MESSAGE:
 			break;
