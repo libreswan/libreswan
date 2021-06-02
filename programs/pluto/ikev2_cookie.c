@@ -37,6 +37,7 @@
 #include "log.h"
 #include "state.h"
 #include "ikev2.h"
+#include "ikev2_ike_sa_init.h"
 
 /*
  * That the cookie size of 32-bytes happens to match

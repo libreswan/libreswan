@@ -83,6 +83,7 @@
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 #include "orient.h"
 #include "initiate.h"
+#include "ikev2_ike_sa_init.h"
 
 /* Replace SA with a fresh one that is similar
  *

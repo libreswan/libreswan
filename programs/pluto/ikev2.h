@@ -34,15 +34,6 @@ typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
 					     struct msg_digest *md /* could be NULL */);
 
-extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
-				    struct state *predecessor,
-				    lset_t policy,
-				    unsigned long try,
-				    const threadtime_t *inception,
-				    chunk_t sec_label,
-				    bool background, struct logger *logger);
-
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
 extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
 extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
 extern stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest * md);
@@ -55,9 +46,6 @@ extern void complete_v2_state_transition(struct state *st,
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
-
-bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD;
 
 struct ikev2_proposal;
 struct ikev2_proposals;
@@ -261,5 +249,7 @@ struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
 
 void IKE_SA_established(const struct ike_sa *ike);
 
+bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
+					   struct ike_sa *ike);
 
 #endif

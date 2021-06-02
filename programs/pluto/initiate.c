@@ -38,7 +38,8 @@
 #include "orient.h"
 #include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
 #include "ikev1_quick.h"		/* for quick_outI1() */
-#include "ikev2.h"			/* for ikev2_out_IKE_SA_INIT_I() */
+#include "ikev2.h"			/* for ikev2_state_transition_fn; */
+#include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
