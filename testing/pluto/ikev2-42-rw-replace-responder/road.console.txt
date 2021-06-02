@@ -172,10 +172,10 @@ road #
 up
 road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep -e '#[0-9]' | grep -v pe@
-| inserting event EVENT_SA_REPLACE, timeout in 120 seconds for #1
-| state #1 deleting .st_event EVENT_SA_REPLACE
 | inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #1
 | inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #2
+| state #1 deleting .st_event EVENT_SA_EXPIRE
+| inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #1
 | inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #3
 | state #3 deleting .st_event EVENT_SA_EXPIRE
 | inserting event EVENT_SA_EXPIRE, timeout in 28800 seconds for #3

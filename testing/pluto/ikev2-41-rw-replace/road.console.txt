@@ -174,8 +174,6 @@ road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep '#' | sed -e 's/ timeout in [1-9][^ ]* / timeout in N.N /'
 | inserting event EVENT_SA_REPLACE, timeout in N.N seconds for #1
 | state #1 deleting .st_event EVENT_SA_REPLACE
-| inserting event EVENT_SA_REPLACE, timeout in N.N seconds for #1
-| state #1 deleting .st_event EVENT_SA_REPLACE
 | inserting event EVENT_SA_EXPIRE, timeout in N.N seconds for #1
 | handling event EVENT_SA_EXPIRE for parent state #1
 road #

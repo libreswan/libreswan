@@ -39,9 +39,9 @@ west #
 	replay-window 32 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
-| setting IPsec SA replay-window to 32
+| kernel: setting IPsec SA replay-window to 32
 | netlink: setting IPsec SA replay-window to 32 using old-style req
-| setting IPsec SA replay-window to 32
+| kernel: setting IPsec SA replay-window to 32
 | netlink: setting IPsec SA replay-window to 32 using old-style req
 west #
  ipsec restart
@@ -62,9 +62,9 @@ west #
 	replay-window 0 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
-| setting IPsec SA replay-window to 0
+| kernel: setting IPsec SA replay-window to 0
 | netlink: setting IPsec SA replay-window to 0 using old-style req
-| setting IPsec SA replay-window to 0
+| kernel: setting IPsec SA replay-window to 0
 | netlink: setting IPsec SA replay-window to 0 using old-style req
 west #
  ipsec restart
@@ -87,9 +87,9 @@ west #
 	replay-window 0 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
-| setting IPsec SA replay-window to 64
+| kernel: setting IPsec SA replay-window to 64
 | netlink: setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
-| setting IPsec SA replay-window to 64
+| kernel: setting IPsec SA replay-window to 64
 | netlink: setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
 west #
  echo done
