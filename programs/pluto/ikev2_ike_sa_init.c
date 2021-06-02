@@ -39,6 +39,8 @@
 #include "ikev2_cookie.h"
 #include "ikev2.h"
 #include "ikev2_ike_sa_init.h"
+#include "ikev2_ike_intermediate.h"
+#include "ikev2_ike_auth.h"
 #include "connections.h"
 #include "crypt_ke.h"
 #include "nat_traversal.h"
@@ -1244,4 +1246,198 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 */
 	schedule_reinitiate_v2_ike_sa_init(ike, resubmit_ke_and_nonce);
 	return STF_OK;
+}
+
+/* STATE_PARENT_I1: R1 --> I2
+ *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
+ * HDR, SK {IDi, [CERT,] [CERTREQ,]
+ *      [IDr,] AUTH, SAi2,
+ *      TSi, TSr}      -->
+ */
+
+/*
+ * XXX: there's a lot of code duplication between the IKE_AUTH and
+ * IKE_INTERMEDIATE paths.
+ */
+
+stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
+					   struct child_sa *unused_child UNUSED,
+					   struct msg_digest *md)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	/* for testing only */
+	if (impair.send_no_ikev2_auth) {
+		log_state(RC_LOG, &ike->sa,
+			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		return STF_IGNORE;
+	}
+
+	/*
+	 * if this connection has a newer Child SA than this state
+	 * this negotiation is not relevant any more.  would this
+	 * cover if there are multiple CREATE_CHILD_SA pending on this
+	 * IKE negotiation ???
+	 *
+	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * a newer IKE SA (not child).  Suspect this is to handle a
+	 * race where the other end brings up the IKE SA first?  For
+	 * that case, shouldn't this state have been deleted?
+	 *
+	 * NOTE: a larger serialno does not mean superseded. crossed
+	 * streams could mean the lower serial established later and is
+	 * the "newest". Should > be replaced with !=   ?
+	 */
+	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
+		log_state(RC_LOG, &ike->sa,
+			  "state superseded by #%lu try=%lu, drop this negotiation",
+			  c->newest_ipsec_sa, ike->sa.st_try);
+		return STF_FATAL;
+	}
+
+	/*
+	 * XXX: this iteration over the notifies modifies state
+	 * _before_ the code's committed to creating an SA.  Hack this
+	 * by resetting any flags that might be set.
+	 */
+	ike->sa.st_seen_fragmentation_supported = false;
+	ike->sa.st_seen_ppk = false;
+	ike->sa.st_seen_intermediate = false;
+
+	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
+	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+	ike->sa.st_seen_intermediate = md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL;
+	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
+		if (impair.ignore_hash_notify_request) {
+			log_state(RC_LOG, &ike->sa,
+				  "IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
+		} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
+			return STF_FATAL;
+		}
+		ike->sa.st_seen_hashnotify = true;
+	}
+
+	/*
+	 * the responder sent us back KE, Gr, Nr, and it's our time to calculate
+	 * the shared key values.
+	 */
+
+	dbg("ikev2 parent inR1: calculating g^{xy} in order to send I2");
+
+	/* KE in */
+	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
+		/*
+		 * XXX: Initiator - so this code will not trigger a
+		 * notify.  Since packet isn't trusted, should it be
+		 * ignored?
+		 */
+		return STF_FAIL + v2N_INVALID_SYNTAX;
+	}
+
+	/* Ni in */
+	if (!accept_v2_nonce(ike->sa.st_logger, md, &ike->sa.st_nr, "Nr")) {
+		/*
+		 * Presumably not our fault.  Syntax errors in a
+		 * response kill the family (and trigger no further
+		 * exchange).
+		 */
+		return STF_FATAL;
+	}
+
+	/* We're missing processing a CERTREQ in here */
+
+	/* process and confirm the SA selected */
+	{
+		/* SA body in and out */
+		struct payload_digest *const sa_pd =
+			md->chain[ISAKMP_NEXT_v2SA];
+		struct ikev2_proposals *ike_proposals =
+			get_v2_ike_proposals(c, "IKE SA initiator accepting remote proposal", ike->sa.st_logger);
+
+		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
+							  &sa_pd->pbs,
+							  /*expect_ike*/ TRUE,
+							  /*expect_spi*/ FALSE,
+							  /*expect_accepted*/ TRUE,
+							  LIN(POLICY_OPPORTUNISTIC, c->policy),
+							  &ike->sa.st_accepted_ike_proposal,
+							  ike_proposals, ike->sa.st_logger);
+		if (ret != STF_OK) {
+			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
+			return ret; /* initiator; no response */
+		}
+
+		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
+						   &ike->sa.st_oakley, ike->sa.st_logger)) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "IKE initiator proposed an unsupported algorithm");
+			free_ikev2_proposal(&ike->sa.st_accepted_ike_proposal);
+			passert(ike->sa.st_accepted_ike_proposal == NULL);
+			/*
+			 * Assume caller et.al. will clean up the
+			 * reset of the mess?
+			 */
+			return STF_FAIL;
+		}
+	}
+	replace_chunk(&ike->sa.st_firstpacket_peer,
+		      clone_out_pbs_as_chunk(&md->message_pbs,
+					     "saved first received packet in inR1outI2"));
+
+	/*
+	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP.
+	 *
+	 *   2.23.  NAT Traversal
+	 *
+	 *   The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP
+	 *   or NAT_DETECTION_DESTINATION_IP payloads if present, and
+	 *   if they do not match the addresses in the outer packet,
+	 *   MUST tunnel all future IKE and ESP packets associated
+	 *   with this IKE SA over UDP port 4500.
+	 *
+	 * When detected, float to the NAT port as needed (*ikeport
+	 * can't float but already supports NAT).  When the ports
+	 * can't support NAT, give up.
+	 */
+
+	if (v2_nat_detected(ike, md)) {
+		pexpect(ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
+		if (!v2_natify_initiator_endpoints(ike, HERE)) {
+			/* already logged */
+			return STF_FATAL;
+		}
+	}
+
+	/*
+	 * Initiate the calculation of g^xy.
+	 *
+	 * Form and pass in the full SPI[ir] that will eventually be
+	 * used by this IKE SA.  Only once DH has been computed and
+	 * the SA is secure (but not authenticated) should the state's
+	 * IKE SPIr be updated.
+	 */
+
+	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
+		.initiator = ike->sa.st_ike_spis.initiator,
+		.responder = md->hdr.isa_ike_responder_spi,
+	};
+
+	/*
+	 * If we seen the intermediate AND we are configured to use
+	 * intermediate.
+	 *
+	 * For now, do only one Intermediate Exchange round and
+	 * proceed with IKE_AUTH.
+	 */
+	bool intermediate = ((c->policy & POLICY_INTERMEDIATE) &&
+			     md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL);
+	dh_shared_secret_cb (*pcrc_func) = (intermediate ? ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue :
+					    ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue);
+
+	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
+				pcrc_func, HERE);
+	return STF_SUSPEND;
 }

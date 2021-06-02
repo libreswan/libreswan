@@ -24,8 +24,99 @@
 #include "ikev2_send.h"
 #include "ikev2_message.h"
 #include "ikev2_ike_intermediate.h"
+#include "crypt_symkey.h"
+#include "log.h"
+#include "connections.h"
+#include "unpack.h"
+#include "nat_traversal.h"
+#include "ikev2_ike_auth.h"
+#include "pluto_stats.h"
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_request_no_skeyseed_post_dh_shared;	/* type assertion */
+
+stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue(struct state *ike_st,
+											struct msg_digest *mdp)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+
+	ike->sa.st_intermediate_used = true;
+
+	if (ike->sa.st_dh_shared_secret == NULL) {
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
+		return STF_FAIL;
+	}
+
+	calc_v2_keymat(&ike->sa, NULL, NULL, /*previous keymat*/
+		       &ike->sa.st_ike_rekey_spis);
+
+	/*
+	 * All systems are go.
+	 *
+	 * Since DH succeeded, a secure (but unauthenticated) SA
+	 * (channel) is available.  From this point on, should things
+	 * go south, the state needs to be abandoned (but it shouldn't
+	 * happen).
+	 */
+
+	/*
+	 * Since systems are go, start updating the state, starting
+	 * with SPIr.
+	 */
+	rehash_state(&ike->sa, &mdp->hdr.isa_ike_responder_spi);
+
+	/* beginning of data going out */
+
+	/* make sure HDR is at start of a clean buffer */
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
+
+	/* HDR out */
+
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       NULL /* request */,
+					       ISAKMP_v2_IKE_INTERMEDIATE);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* insert an Encryption payload header (SK) */
+
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* send NOTIFY payload */
+	if (ike->sa.st_seen_intermediate) {
+		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (!close_v2SK_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
+
+	stf_status ret = encrypt_v2SK_payload(&sk);
+
+	if (ret != STF_OK) {
+		return ret;
+	}
+
+	record_v2_message(ike, &reply_stream, "reply packet for intermediate exchange",
+				  MESSAGE_REQUEST);
+	return STF_OK;
+}
 
 stf_status process_v2_IKE_INTERMEDIATE_request_no_skeyseed(struct ike_sa *ike,
 							   struct child_sa *unused_child UNUSED,
@@ -139,4 +230,96 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			  "reply packet for intermediate exchange",
 			  MESSAGE_RESPONSE);
 	return STF_OK;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
+						struct child_sa *unused_child UNUSED,
+						struct msg_digest *md)
+{
+	/*
+	 * The function below always schedules a dh calculation - even
+	 * when it's been peformed earlier (there's something in the
+	 * intermediate echange about this?).
+	 *
+	 * So that things don't pexpect, blow away the old shared secret.
+	 */
+	dbg("HACK: blow away old shared secret as going to re-compute it");
+	release_symkey(__func__, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
+	struct connection *c = ike->sa.st_connection;
+
+	/*
+	 * if this connection has a newer Child SA than this state
+	 * this negotiation is not relevant any more.  would this
+	 * cover if there are multiple CREATE_CHILD_SA pending on this
+	 * IKE negotiation ???
+	 *
+	 * XXX: this is testing for an IKE SA that's been superseed by
+	 * a newer IKE SA (not child).  Suspect this is to handle a
+	 * race where the other end brings up the IKE SA first?  For
+	 * that case, shouldn't this state have been deleted?
+	 *
+	 * NOTE: a larger serialno does not mean superseded. crossed
+	 * streams could mean the lower serial established later and is
+	 * the "newest". Should > be replaced with !=   ?
+	 */
+	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
+		log_state(RC_LOG, &ike->sa,
+			  "state superseded by #%lu try=%lu, drop this negotiation",
+			  c->newest_ipsec_sa, ike->sa.st_try);
+		return STF_FATAL;
+	}
+
+	dbg("No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
+
+	/*
+	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and
+	 * v2N_NAT_DETECTION_SOURCE_IP.
+	 *
+	 *   2.23.  NAT Traversal
+	 *
+	 *   The IKE initiator MUST check the NAT_DETECTION_SOURCE_IP
+	 *   or NAT_DETECTION_DESTINATION_IP payloads if present, and
+	 *   if they do not match the addresses in the outer packet,
+	 *   MUST tunnel all future IKE and ESP packets associated
+	 *   with this IKE SA over UDP port 4500.
+	 *
+	 * When detected, float to the NAT port as needed (*ikeport
+	 * can't float but already supports NAT).  When the ports
+	 * can't support NAT, give up.
+	 */
+
+	if (v2_nat_detected(ike, md)) {
+		pexpect(ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
+		if (!v2_natify_initiator_endpoints(ike, HERE)) {
+			/* already logged */
+			return STF_FATAL;
+		}
+	}
+
+	/*
+	 * Initiate the calculation of g^xy.
+	 *
+	 * Form and pass in the full SPI[ir] that will eventually be
+	 * used by this IKE SA.  Only once DH has been computed and
+	 * the SA is secure (but not authenticated) should the state's
+	 * IKE SPIr be updated.
+	 */
+
+	pexpect(!ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
+		.initiator = ike->sa.st_ike_spis.initiator,
+		.responder = md->hdr.isa_ike_responder_spi,
+	};
+
+	/*
+	 * If we seen the intermediate AND we are configured to use
+	 * intermediate.
+	 *
+	 * For now, do only one Intermediate Exchange round and
+	 * proceed with IKE_AUTH.
+	 */
+	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
+				ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue,
+				HERE);
+	return STF_SUSPEND;
 }

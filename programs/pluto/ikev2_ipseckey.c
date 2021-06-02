@@ -41,6 +41,7 @@
 #include "secrets.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "ikev2_ike_auth.h"
 
 struct p_dns_req;
 

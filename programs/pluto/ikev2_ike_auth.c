@@ -56,10 +56,515 @@
 #include "ikev2_ppk.h"
 #include "keys.h"
 #include "ike_alg_hash.h"
+#include "ikev2_cp.h"
 
 static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
 							  struct msg_digest *md,
 							  bool pam_status);
+
+static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(struct ike_sa *ike,
+												 struct msg_digest *md,
+												 const struct hash_signature *sig);
+
+
+stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *ike_st,
+										struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+
+	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
+
+	if (!(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) {
+		if (ike->sa.st_dh_shared_secret == NULL) {
+			/*
+			* XXX: this is the initiator so returning a
+			* notification is kind of useless.
+			*/
+			pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
+			return STF_FAIL;
+		}
+		calc_v2_keymat(&ike->sa, NULL, NULL, /*no old keymat*/
+			       &ike->sa.st_ike_rekey_spis);
+	}
+
+	/*
+	 * All systems are go.
+	 *
+	 * Since DH succeeded, a secure (but unauthenticated) SA
+	 * (channel) is available.  From this point on, should things
+	 * go south, the state needs to be abandoned (but it shouldn't
+	 * happen).
+	 */
+
+	/*
+	 * Since systems are go, start updating the state, starting
+	 * with SPIr.
+	 */
+	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+
+	/*
+	 * If we and responder are willing to use a PPK, we need to
+	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload.
+	 *
+	 * Stash the no-ppk keys in st_skey_*_no_ppk, and then
+	 * scramble the st_skey_* keys with PPK.
+	 */
+	if (LIN(POLICY_PPK_ALLOW, pc->policy) && ike->sa.st_seen_ppk) {
+		chunk_t *ppk_id;
+		chunk_t *ppk = get_connection_ppk(ike->sa.st_connection, &ppk_id);
+
+		if (ppk != NULL) {
+			dbg("found PPK and PPK_ID for our connection");
+
+			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
+			ike->sa.st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", ike->sa.st_skey_d_nss);
+
+			pexpect(ike->sa.st_sk_pi_no_ppk == NULL);
+			ike->sa.st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", ike->sa.st_skey_pi_nss);
+
+			pexpect(ike->sa.st_sk_pr_no_ppk == NULL);
+			ike->sa.st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", ike->sa.st_skey_pr_nss);
+
+			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
+					&ike->sa.st_skey_d_nss,
+					&ike->sa.st_skey_pi_nss,
+					&ike->sa.st_skey_pr_nss,
+					ike->sa.st_logger);
+			log_state(RC_LOG, &ike->sa,
+				  "PPK AUTH calculated as initiator");
+		} else {
+			if (pc->policy & POLICY_PPK_INSIST) {
+				log_state(RC_LOG_SERIOUS, &ike->sa,
+					  "connection requires PPK, but we didn't find one");
+				return STF_FATAL;
+			} else {
+				log_state(RC_LOG, &ike->sa,
+					  "failed to find PPK and PPK_ID, continuing without PPK");
+				/* we should omit sending any PPK Identity, so we pretend we didn't see USE_PPK */
+				ike->sa.st_seen_ppk = FALSE;
+			}
+		}
+	}
+
+	/*
+	 * Construct the IDi payload and store it in state so that it
+	 * can be emitted later.  Then use that to construct the
+	 * "MACedIDFor[I]".
+	 *
+	 * Code assumes that struct ikev2_id's "IDType|RESERVED" is
+	 * laid out the same as the packet.
+	 */
+
+	{
+		shunk_t data;
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd.this, &data,
+								      "my IDi", ike->sa.st_logger);
+		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+	}
+
+	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
+							  "st_skey_pi_nss",
+							  ike->sa.st_skey_pi_nss);
+	if (ike->sa.st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
+		/* ID payload that we've build is the same */
+		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
+			v2_hash_id_payload("IDi (no-PPK)", ike,
+					   "sk_pi_no_pkk",
+					   ike->sa.st_sk_pi_no_ppk);
+	}
+
+	{
+		enum keyword_authby authby = v2_auth_by(ike);
+		enum ikev2_auth_method auth_method = v2_auth_method(ike, authby);
+		switch (auth_method) {
+		case IKEv2_AUTH_RSA:
+		{
+			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
+		}
+		case IKEv2_AUTH_DIGSIG:
+		{
+			const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
+			if (hash_algo == NULL) {
+				return STF_FATAL;
+			}
+			struct crypt_mac hash_to_sign =
+				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
+						     hash_algo, LOCAL_PERSPECTIVE);
+			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
+						      authby, auth_method,
+						      ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue)) {
+				dbg("submit_v2_auth_signature() died, fatal");
+				return STF_FATAL;
+			}
+			return STF_SUSPEND;
+		}
+		case IKEv2_AUTH_PSK:
+		case IKEv2_AUTH_NULL:
+		{
+			struct hash_signature sig = { .len = 0, };
+			return ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(ike, md, &sig);
+		}
+		default:
+			log_state(RC_LOG, &ike->sa,
+				  "authentication method %s not supported",
+				  enum_name(&ikev2_auth_names, auth_method));
+			return STF_FATAL;
+		}
+	}
+}
+
+static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(struct ike_sa *ike,
+												 struct msg_digest *md,
+												 const struct hash_signature *auth_sig)
+{
+	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
+	ikev2_log_parentSA(&ike->sa);
+
+	/*
+	 * XXX:
+	 *
+	 * Should this code use clone_in_pbs_as_chunk() which uses
+	 * pbs_room() (.roof-.start)?  The original code:
+	 *
+	 * 	clonetochunk(st->st_firstpacket_peer, md->message_pbs.start,
+	 *		     pbs_offset(&md->message_pbs),
+	 *		     "saved first received packet");
+	 *
+	 * and clone_out_pbs_as_chunk() both use pbs_offset()
+	 * (.cur-.start).
+	 *
+	 * Suspect it doesn't matter as the code initializing
+	 * .message_pbs forces .roof==.cur - look for the comment
+	 * "trim padding (not actually legit)".
+	 */
+	/* record first packet for later checking of signature */
+	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
+		replace_chunk(&ike->sa.st_firstpacket_peer,
+			clone_out_pbs_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
+	}
+	/* beginning of data going out */
+
+	/* make sure HDR is at start of a clean buffer */
+	struct pbs_out reply_stream = open_pbs_out("reply packet",
+						   reply_buffer, sizeof(reply_buffer),
+						   ike->sa.st_logger);
+
+	/* HDR out */
+
+	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
+					       NULL /* request */,
+					       ISAKMP_v2_IKE_AUTH);
+	if (!pbs_ok(&rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* insert an Encryption payload header (SK) */
+
+	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* actual data */
+
+	/* decide whether to send CERT payload */
+
+	bool send_cert = ikev2_send_cert_decision(ike);
+	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
+	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
+				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
+
+	if (impair.send_no_idr) {
+		log_state(RC_LOG, &ike->sa, "IMPAIR: omitting IDr payload");
+		send_idr = false;
+	}
+
+	dbg("IDr payload will %sbe sent", send_idr ? "" : "NOT ");
+
+	/* send out the IDi payload */
+
+	{
+		pb_stream i_id_pbs;
+		if (!out_struct(&ike->sa.st_v2_id_payload.header,
+				&ikev2_id_i_desc,
+				&sk.pbs,
+				&i_id_pbs) ||
+		    !out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
+			return STF_INTERNAL_ERROR;
+		close_output_pbs(&i_id_pbs);
+	}
+
+	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
+		if (!emit_v2UNKNOWN("SK request",
+				    impair.add_unknown_v2_payload_to_sk,
+				    &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
+	if (send_cert) {
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
+		if (certstat != STF_OK)
+			return certstat;
+
+		/* send CERTREQ */
+		bool send_certreq = ikev2_send_certreq_INIT_decision(&ike->sa, SA_INITIATOR);
+		if (send_certreq) {
+			if (DBGP(DBG_BASE)) {
+				dn_buf buf;
+				DBG_log("Sending [CERTREQ] of %s",
+					str_dn(ike->sa.st_connection->spd.that.ca, &buf));
+			}
+			ikev2_send_certreq(&ike->sa, md, &sk.pbs);
+		}
+	}
+
+	/* you Tarzan, me Jane support */
+	if (send_idr) {
+		switch (pc->spd.that.id.kind) {
+		case ID_DER_ASN1_DN:
+		case ID_FQDN:
+		case ID_USER_FQDN:
+		case ID_KEY_ID:
+		case ID_NULL:
+		{
+			shunk_t id_b;
+			struct ikev2_id r_id = build_v2_id_payload(&pc->spd.that, &id_b,
+								   "their IDr",
+								   ike->sa.st_logger);
+			pb_stream r_id_pbs;
+			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
+				&r_id_pbs) ||
+			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
+				return STF_INTERNAL_ERROR;
+
+			close_output_pbs(&r_id_pbs);
+			break;
+		}
+		default:
+		{
+			esb_buf b;
+			dbg("Not sending IDr payload for remote ID type %s",
+			    enum_show(&ike_id_type_names, pc->spd.that.id.kind, &b));
+			break;
+		}
+		}
+	}
+
+	if (ic) {
+		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
+		if (!emit_v2N(v2N_INITIAL_CONTACT, &sk.pbs))
+			return STF_INTERNAL_ERROR;
+	} else {
+		dbg("not sending INITIAL_CONTACT");
+	}
+
+	/* send out the AUTH payload */
+
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * Now that the AUTH payload is done(?), create and emit the
+	 * child using the first pending connection (or the IKE SA's
+	 * connection) if there isn't one.
+	 *
+	 * Then emit SA2i, TSi and TSr and NOTIFY payloads related to
+	 * the IPsec SA.
+	 */
+
+	/* Child Connection */
+	lset_t unused_policy = pc->policy; /* unused */
+	struct fd *child_whackfd = null_fd; /* must-free */
+	struct connection *cc = first_pending(ike, &unused_policy, &child_whackfd);
+	if (cc == NULL) {
+		llog_sa(RC_LOG, ike, "omitting CHILD SA payloads");
+	} else {
+		/*
+		 * XXX: The problem isn't so much that the child state is
+		 * created - it provides somewhere to store all the child's
+		 * state - but that things switch to the child before the IKE
+		 * SA is finished.  Consequently, code is forced to switch
+		 * back to the IKE SA.
+		 */
+		struct child_sa *child = new_v2_child_state(cc, ike, IPSEC_SA,
+							    SA_INITIATOR,
+							    STATE_V2_IKE_AUTH_CHILD_I0,
+							    child_whackfd);
+		close_any(&child_whackfd);
+		ike->sa.st_v2_larval_initiator_sa = child;
+
+		/* XXX because the early child state ends up with the try counter check, we need to copy it */
+		/* XXX: huh?!? */
+		child->sa.st_try = ike->sa.st_try;
+
+		if (cc != pc) {
+			/* lie */
+			connection_buf cib;
+			log_state(RC_LOG, &ike->sa,
+				  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
+				  child->sa.st_serialno, pri_connection(cc, &cib));
+		}
+
+		if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
+			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		/* code does not support AH+ESP, which not recommended as per RFC 8247 */
+		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
+		const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
+
+		/*
+		 * A CHILD_SA established during an AUTH exchange does
+		 * not propose DH - the IKE SA's SKEYSEED is always
+		 * used.
+		 */
+		struct ikev2_proposals *child_proposals =
+			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
+							child->sa.st_logger);
+		if (!ikev2_emit_sa_proposals(&sk.pbs, child_proposals, &local_spi)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child);
+		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
+
+		v2_emit_ts_payloads(child, &sk.pbs, cc);
+
+		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
+			dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+			/* In v2, for parent, protoid must be 0 and SPI must be empty */
+			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		} else {
+			dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
+		}
+
+		/*
+		 * Propose IPCOMP based on policy.
+		 */
+		if (cc->policy & POLICY_COMPRESS) {
+			if (!emit_v2N_ipcomp_supported(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		if (cc->send_no_esp_tfc) {
+			if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		if (LIN(POLICY_MOBIKE, cc->policy)) {
+			ike->sa.st_ike_sent_v2n_mobike_supported = true;
+			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		/* send CP payloads */
+		if (cc->modecfg_domains != NULL || cc->modecfg_dns != NULL) {
+			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+	}
+
+	/*
+	 * If we and responder are willing to use a PPK, we need to
+	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload
+	 */
+	if (ike->sa.st_seen_ppk) {
+		chunk_t *ppk_id;
+		get_connection_ppk(ike->sa.st_connection, &ppk_id);
+		struct ppk_id_payload ppk_id_p = { .type = 0, };
+		create_ppk_id_payload(ppk_id, &ppk_id_p);
+		if (DBGP(DBG_BASE)) {
+			DBG_log("ppk type: %d", (int) ppk_id_p.type);
+			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
+		}
+
+		pb_stream ppks;
+		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
+		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
+			return STF_INTERNAL_ERROR;
+		}
+		close_output_pbs(&ppks);
+
+		if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
+			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
+						    &ike->sa.st_no_ppk_auth)) {
+				dbg("ikev2_calc_no_ppk_auth() failed dying");
+				return STF_FATAL;
+			}
+
+			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
+					   ike->sa.st_no_ppk_auth, &sk.pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+	}
+
+	/*
+	 * The initiator:
+	 *
+	 * We sent normal IKEv2_AUTH_RSA but if the policy also allows
+	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
+	 * chunk. This is only done on the initiator in IKE_AUTH, and
+	 * not repeated in rekeys.
+	 */
+	if (v2_auth_by(ike) == AUTHBY_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+		/* store in null_auth */
+		chunk_t null_auth = NULL_HUNK;
+		if (!ikev2_create_psk_auth(AUTHBY_NULL, ike,
+					   &ike->sa.st_v2_id_payload.mac,
+					   &null_auth)) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "Failed to calculate additional NULL_AUTH");
+			return STF_FATAL;
+		}
+		ike->sa.st_intermediate_used = false;
+		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
+			free_chunk_content(&null_auth);
+			return STF_INTERNAL_ERROR;
+		}
+		free_chunk_content(&null_auth);
+	}
+
+	if (!close_v2SK_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&reply_stream);
+
+	/*
+	 * For AUTH exchange, store the message in the IKE SA.  The
+	 * attempt to create the CHILD SA could have failed.
+	 */
+	return record_v2SK_message(&reply_stream, &sk,
+				   "sending IKE_AUTH request",
+				   MESSAGE_REQUEST);
+}
 
 /* STATE_PARENT_R1: I2 --> R2
  *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]

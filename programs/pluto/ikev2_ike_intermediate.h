@@ -18,5 +18,9 @@
 
 extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request_no_skeyseed;
 extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;
+extern ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_response;
+
+stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue(struct state *ike_st,
+											struct msg_digest *mdp);
 
 #endif
