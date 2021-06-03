@@ -15,7 +15,7 @@ EOF
     exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
 
 json=
 resultsdir=

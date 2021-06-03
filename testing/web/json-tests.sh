@@ -19,7 +19,7 @@ EOF
     exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
 
 repodir=$(cd $1 && pwd) ; shift
 testsdir=$(cd $1 && pwd) ; shift
@@ -28,8 +28,8 @@ for rundir in "$@"; do
 
     run=$(basename ${rundir})
 
-    hash=$(${webdir}/gime-git-rev.sh ${rundir})
-    hash=$(cd ${repodir} && git show --no-patch --format=%H ${hash})
+    rev=$(${bindir}/gime-git-rev.sh ${rundir})
+    hash=$(${bindir}/gime-git-hash.sh ${repodir} ${rev})
     if test "${hash}" = "" ; then
 	hash=null
     fi

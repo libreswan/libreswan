@@ -1,22 +1,17 @@
 #!/bin/sh
 
-if test $# -lt 1; then
+if test $# -ne 1; then
     cat >>/dev/stderr <<EOF
-
 Usage:
-
     $0 <repodir>
-
 Use a heuristic to determine the branch name of the current detached
 head.
-
 EOF
     exit 1
 fi
 
-repodir=$(cd $1 && pwd) ; shift
-
-cd ${repodir}
+# switch to repodir
+cd $1 ; shift
 
 # Easy way, see what branch HEAD is on.
 

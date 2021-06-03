@@ -26,11 +26,11 @@ EOF
     exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
-utilsdir=$(cd ${webdir}/../utils && pwd)
-makedir=$(cd ${webdir}/../.. && pwd)
+bindir=$(cd $(dirname $0) && pwd)
+utilsdir=$(cd ${bindir}/../utils && pwd)
+makedir=$(cd ${bindir}/../.. && pwd)
 repodir=$(cd $1 && pwd) ; shift
-branch=$(${webdir}/gime-git-branch.sh ${repodir})
+branch=$(${bindir}/gime-git-branch.sh ${repodir})
 origin=$(cd ${repodir} && git config --get branch.${branch}.remote)
 
 echo
@@ -63,7 +63,7 @@ for resultsdir in "$@" ; do
     fi
 
     # determine the version
-    gitrev=$(${webdir}/gime-git-rev.sh $(basename $(cd ${resultsdir} ; pwd)))
+    gitrev=$(${bindir}/gime-git-rev.sh $(basename $(cd ${resultsdir} ; pwd)))
     if test -z "${gitrev}" ; then
 	echo "skipping ${d}: no git revision in directory name"
 	continue
