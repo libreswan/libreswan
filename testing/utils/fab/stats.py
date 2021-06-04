@@ -19,7 +19,7 @@ import threading
 
 from fab import logutil
 
-class Counts:
+class Results:
 
     def __init__(self):
         # Use a default dict so no need to worry about initializing
@@ -66,35 +66,25 @@ class Counts:
                             log("%s%s:%s", prefix, key, line)
                 footer and log(footer)
 
-
-class Tests(Counts):
-    def add(self, test, *stats):
-        Counts._add(self, *stats, test.name)
-
-# Record results:
-#
-# total/{passed,failed,ignored,unresolved} must add up
-
-class Results(Counts):
-
     def _count_result(self, result):
-        self._add("total", result.test.name, )
-        self._add("total", str(result), result.test.name)
-        self._add("total", str(result), result.test.status, result.test.name)
+        self._add("total",                                              result.test.name)
+        self._add("total",                                 str(result), result.test.name)
+        self._add("tests", result.test.status, "results", str(result), result.test.name)
         # details
         for issue in result.issues:
             for domain in result.issues[issue]:
-                self._add("total", str(result), result.test.status, issue, result.test.name, domain=domain)
+                self._add("tests", result.test.status, "errors", issue, result.test.name, domain=domain)
 
     def _count_previous(self, result, previous):
-        self._add("status", previous.test.status,
+        self._add("stats", previous.test.status,
                    result, "previous=" + str(previous), previous.test.name)
 
     def add_ignored(self, test, reason):
         """The test has been excluded from the test run"""
         self._add("total", test.name)
         self._add("total", "ignored", test.name)
-        self._add("status", test.status, "ignored", reason, test.name)
+        self._add("tests", test.status, "results", "untested", test.name)
+        self._add("stats", test.status, "ignored", reason, test.name)
 
     def add_skipped(self, result):
         """The test wasn't run; log the previous result"""

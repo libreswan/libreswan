@@ -253,13 +253,12 @@ def _boot_test_domains(logger, test, domain_prefix, executor):
         futures.wait(jobs)
 
 
-def _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor):
+def _process_test(domain_prefix, test, args, result_stats, test_count, tests_count, boot_executor):
 
     logger = logutil.getLogger(domain_prefix, __name__, test.name)
 
     prefix = "******"
     suffix = "******"
-    test_stats.add(test, "total")
 
     test_runtime = test_boot_time = test_script_time = test_post_time = None
     old_result = None
@@ -285,7 +284,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
                 os.rename(test.output_directory, backup_directory)
             result_stats.add_ignored(test, ignored)
-            test_stats.add(test, "ignored")
             logger.info("%s %s ignored (%s) %s",
                         prefix, test_prefix, details, suffix)
             return
@@ -310,7 +308,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
-            test_stats.add(test, "skipped")
             result_stats.add_skipped(old_result)
             publish.everything(logger, args, old_result)
             return
@@ -323,13 +320,10 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
         try:
 
             if old_result:
-                test_stats.add(test, "tests", "retry")
                 logger.info("%s %s started (previously %s) ....",
                             prefix, test_prefix, old_result)
             else:
-                test_stats.add(test, "tests", "try")
                 logger.info("%s %s started ....", prefix, test_prefix)
-            test_stats.add(test, "tests")
 
             # Create just the OUTPUT/ directory.
             #
@@ -544,19 +538,17 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             publish.everything(logger, args, result)
             publish.json_status(logger, args, "finished %s" % test_prefix)
 
-            test_stats.add(test, "tests", str(result))
             result_stats.add_result(result, old_result)
-            # test_stats.log_summary(logger.info, header="updated test stats:", prefix="  ")
             result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger):
+def _serial_test_processor(domain_prefix, tests, args, result_stats, boot_executor, logger):
 
     test_count = 0
     tests_count = len(tests)
     for test in tests:
         test_count += 1
-        _process_test(domain_prefix, test, args, test_stats, result_stats, test_count, tests_count, boot_executor)
+        _process_test(domain_prefix, test, args, result_stats, test_count, tests_count, boot_executor)
 
 
 class Task:
@@ -566,19 +558,19 @@ class Task:
         self.test = test
 
 
-def _process_test_queue(domain_prefix, test_queue, args, done, test_stats, result_stats, boot_executor):
+def _process_test_queue(domain_prefix, test_queue, args, done, result_stats, boot_executor):
     logger = logutil.getLogger(domain_prefix, __name__)
     try:
         while True:
             task = test_queue.get(block=False)
-            _process_test(domain_prefix, task.test, args, test_stats, result_stats, task.count, task.total, boot_executor)
+            _process_test(domain_prefix, task.test, args, result_stats, task.count, task.total, boot_executor)
     except queue.Empty:
         None
     finally:
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_stats, boot_executor, logger):
+def _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_executor, logger):
 
     # Convert the test list into a queue.
     #
@@ -598,7 +590,7 @@ def _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_st
                                         daemon=True,
                                         args=(domain_prefix, test_queue,
                                               args, done,
-                                              test_stats, result_stats,
+                                              result_stats,
                                               boot_executor)))
     for thread in threads:
         thread.start()
@@ -623,7 +615,7 @@ def _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_st
         thread.join()
 
 
-def run_tests(logger, args, tests, test_stats, result_stats):
+def run_tests(logger, args, tests, result_stats):
     if args.workers == 1:
         logger.info("using 1 worker thread to reboot domains")
     else:
@@ -632,9 +624,9 @@ def run_tests(logger, args, tests, test_stats, result_stats):
         domain_prefixes = args.prefix or [""]
         if args.parallel or len(domain_prefixes) > 1:
             logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
-            _parallel_test_processor(domain_prefixes, tests, args, test_stats, result_stats, boot_executor, logger)
+            _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_executor, logger)
         else:
             domain_prefix = domain_prefixes[0]
             logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-            _serial_test_processor(domain_prefix, tests, args, test_stats, result_stats, boot_executor, logger)
+            _serial_test_processor(domain_prefix, tests, args, result_stats, boot_executor, logger)
     publish.json_status(logger, args, "finished")

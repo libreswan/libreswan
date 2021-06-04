@@ -86,22 +86,17 @@ def main():
         logger.warning("skipping post-mortem.sh as only one test; use --run-post-mortem true to override this")
         args.run_post_mortem = False
 
-    test_stats = stats.Tests()
     result_stats = stats.Results()
 
     try:
         exit_code = 0
         logger.info("run started at %s", timing.START_TIME)
-        runner.run_tests(logger, args, tests, test_stats, result_stats)
+        runner.run_tests(logger, args, tests, result_stats)
     except KeyboardInterrupt:
         logger.exception("**** interrupted ****")
         exit_code = 1
 
-    test_stats.log_details(args.verbose and logger.info or logger.debug,
-                           header="final stat details:", prefix="  ")
     result_stats.log_details(logger.info, header="final test details:", prefix="  ")
-
-    test_stats.log_summary(logger.info, header="final test stats:", prefix="  ")
     result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
 
     stop_time = datetime.now()
