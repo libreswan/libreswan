@@ -27,7 +27,9 @@ class Counts:
         self.counts = defaultdict(lambda: defaultdict(set))
         self.lock = threading.Lock()
 
-    def add(self, value, *keys, domain=None):
+    def _add(self, *keys_value, domain=None):
+        keys = keys_value[0:-1]
+        value = keys_value[-1]
         with self.lock:
             key = "/".join(keys)
             # Include the "None" domain in the set so that it is always
@@ -67,7 +69,7 @@ class Counts:
 
 class Tests(Counts):
     def add(self, test, *stats):
-        Counts.add(self, test.name, *stats)
+        Counts._add(self, *stats, test.name)
 
 # Record results:
 #
@@ -75,35 +77,31 @@ class Tests(Counts):
 
 class Results(Counts):
 
-    def count_result(self, result):
-        Counts.add(self, result.test.name, "total")
-        Counts.add(self, result.test.name, "total", str(result))
-        Counts.add(self, result.test.name, "total", str(result), result.test.status)
+    def _count_result(self, result):
+        self._add("total", result.test.name, )
+        self._add("total", str(result), result.test.name)
+        self._add("total", str(result), result.test.status, result.test.name)
         # details
         for issue in result.issues:
             for domain in result.issues[issue]:
-                Counts.add(self, result.test.name, "total", str(result),
-                           result.test.status, issue, domain=domain)
+                self._add("total", str(result), result.test.status, issue, result.test.name, domain=domain)
 
-    def count_previous(self, result, previous):
-        Counts.add(self, previous.test.name,
-                   "status", previous.test.status,
-                   result, "previous=" + str(previous))
+    def _count_previous(self, result, previous):
+        self._add("status", previous.test.status,
+                   result, "previous=" + str(previous), previous.test.name)
 
     def add_ignored(self, test, reason):
         """The test has been excluded from the test run"""
-        Counts.add(self, test.name, "total")
-        Counts.add(self, test.name, "total", "ignored")
-        Counts.add(self, test.name,
-                   "status", test.status,
-                   "ignored", reason)
+        self._add("total", test.name)
+        self._add("total", "ignored", test.name)
+        self._add("status", test.status, "ignored", reason, test.name)
 
     def add_skipped(self, result):
         """The test wasn't run; log the previous result"""
-        self.count_result(result)
-        self.count_previous("skipped", result)
+        self._count_result(result)
+        self._count_previous("skipped", result)
 
     def add_result(self, result, old_result=None):
-        self.count_result(result)
+        self._count_result(result)
         if old_result:
-            self.count_previous(str(result), old_result)
+            self._count_previous(str(result), old_result)
