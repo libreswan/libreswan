@@ -1261,43 +1261,20 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
 	}
 	ike->sa.st_v2_ike_intermediate_used = false;
 
-	if (impair.omit_v2_ike_auth_child) {
-		/* only omit when missing */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
-			return STF_FATAL;
-		}
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request omitted CHILD SA payloads");
-	} else if (impair.ignore_v2_ike_auth_child) {
-		/* try to ignore the child */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_pexpect(ike->sa.st_logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
-			return STF_FATAL;
-		}
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH request included CHILD SA payloads; ignoring them");
-	} else {
-		/* try to process them */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			/*
-			 * XXX: not right, need way to determine that
-			 * policy allows this.
-			 */
-			record_v2N_response(ike->sa.st_logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
-					    ENCRYPTED_PAYLOAD);
-			llog_sa(RC_LOG, ike, "No CHILD SA proposals received.");
-			return STF_FATAL;
-		}
-
-		stf_status ret = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
-		if (ret > STF_FAIL) {
-			v2_notification_t n = ret - STF_FAIL;
-			emit_v2N(n, &sk.pbs);
-		} else if (ret != STF_OK) {
-			return ret;
-		}
+	switch (process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs)) {
+	case CHILD_SKIPPED:
+	case CHILD_CREATED:
+	case CHILD_FAILED:
+		/*
+		 * Since things have been authenticated, it is up to
+		 * the other end to delete the SA.  CHILD_FAILED
+		 * implies that a child failure notification was added
+		 * to the payload.
+		 */
+		break;
+	case CHILD_FATAL:
+		/* bad */
+		return STF_FATAL;
 	}
 
 	if (!close_v2SK_payload(&sk)) {
