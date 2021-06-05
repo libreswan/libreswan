@@ -67,6 +67,7 @@
 #include "ike_alg_dh.h"
 #include "pluto_stats.h"
 #include "pending.h"
+#include "kernel.h"			/* for raw_eroute() hack */
 
 static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 {
@@ -827,6 +828,20 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 {
 	stf_status ret;
 
+	struct connection *c = ike->sa.st_connection;
+	if (c->spd.this.sec_label.len > 0 &&
+	    impair.childless_v2_sec_label) {
+		/*
+		 * PAUL: should this use shunt_eroute() instead of API
+		 * violation into raw_eroute()?
+		 */
+		llog_sa(RC_LOG, ike, "IMPAIR: adding bare shunt for security label '"PRI_SHUNK"'",
+			pri_shunk(c->spd.this.sec_label));
+		shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD,
+			     "add label", ike->sa.st_logger);
+		return CHILD_SKIPPED;
+	}
+
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
 		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -954,6 +969,19 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *md)
 {
+	struct connection *c = ike->sa.st_connection;
+	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+		/*
+		 * PAUL: should this use shunt_eroute() instead of API
+		 * violation into raw_eroute()?
+		 */
+		llog_sa(RC_LOG, ike, "IMPAIR: adding bare shunt for security label '"PRI_SHUNK"'",
+			pri_shunk(c->spd.this.sec_label));
+		shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD,
+			     "add label", ike->sa.st_logger);
+		return CHILD_SKIPPED;
+	}
+
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {

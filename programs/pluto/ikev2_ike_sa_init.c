@@ -566,7 +566,11 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		ike->sa.st_interface = ret;
 	}
 
-	if (impair.omit_v2_ike_auth_child) {
+	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+		llog_sa(RC_LOG, ike,
+			"IMPAIR: connection has security label '"PRI_SHUNK"'; omitting CHILD SA payloads from the IKE_AUTH request",
+			pri_shunk(c->spd.this.sec_label));
+	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
