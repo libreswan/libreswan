@@ -450,6 +450,13 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const chunk_t *sec_label,
 		       struct logger *logger);
 
+bool shunt_eroute(const struct connection *c,
+		  const struct spd_route *sr,
+		  enum routing_t rt_kind,
+		  enum pluto_sadb_operations op,
+		  const char *opname,
+		  struct logger *logger);
+
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,
 			  ipsec_spi_t spi, const struct ip_protocol *sa_proto);

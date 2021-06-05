@@ -1070,21 +1070,19 @@ bool trap_connection(struct connection *c)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool shunt_eroute(const struct connection *c,
-			 const struct spd_route *sr,
-			 enum routing_t rt_kind,
-			 enum pluto_sadb_operations op,
-			 const char *opname,
-			 struct logger *logger)
+bool shunt_eroute(const struct connection *c,
+		  const struct spd_route *sr,
+		  enum routing_t rt_kind,
+		  enum pluto_sadb_operations op,
+		  const char *opname,
+		  struct logger *logger)
 {
-	if (DBGP(DBG_BASE)) {
-		selector_buf thisb, thatb;
-		DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
-			c->name, opname, enum_name(&routing_story, rt_kind),
-			str_selector(&sr->this.client, &thisb),
-			sr->this.protocol,
-			str_selector(&sr->that.client, &thatb));
-	}
+	selector_buf thisb, thatb;
+	dbg("kernel: shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
+	    c->name, opname, enum_name(&routing_story, rt_kind),
+	    str_selector(&sr->this.client, &thisb),
+	    sr->this.protocol,
+	    str_selector(&sr->that.client, &thatb));
 
 	if (kernel_ops->shunt_eroute != NULL) {
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname, logger);
