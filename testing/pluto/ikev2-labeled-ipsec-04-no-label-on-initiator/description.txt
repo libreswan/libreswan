@@ -1,0 +1,9 @@
+As ikev2-labeled-ipsec-01 but initiator is not using lables
+
+The connection should fail:
+
+- initiator sends IKE_AUTH that contains a child
+- responder authenticates and ignores child (?)
+- initiator authenticates, but aborts as no child
+
+

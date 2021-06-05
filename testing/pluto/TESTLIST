@@ -914,8 +914,8 @@ kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-01					good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label				wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-reverse			wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		wip
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
