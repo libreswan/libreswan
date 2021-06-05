@@ -4457,25 +4457,28 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 		return 0;
 	}
 
-	uint32_t pmax =
+	/* XXX: assume unsigned >= 32-bits */
+	passert(sizeof(unsigned) >= sizeof(uint32_t));
+
+	unsigned pmax =
 		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
 			(LIN(POLICY_AUTH_NULL, c->policy)) ?
 				PLUTO_SPD_OPPO_ANON_MAX :
 				PLUTO_SPD_OPPO_MAX :
 			PLUTO_SPD_STATIC_MAX;
 
-	uint32_t portsw = /* max 2 (2 bits) */
+	unsigned portsw = /* max 2 (2 bits) */
 		(c->spd.this.port == 0 ? 0 : 1) +
 		(c->spd.that.port == 0 ? 0 : 1);
 
-	uint32_t protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
+	unsigned protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
 
 
 	/*
 	 * For transport mode or /32 to /32, the client mask bits are
 	 * set based on the host_addr parameters.
 	 */
-	uint32_t srcw, dstw;	/* each max 128 (8 bits) */
+	unsigned srcw, dstw;	/* each max 128 (8 bits) */
 	srcw = c->spd.this.client.maskbits;
 	dstw = c->spd.that.client.maskbits;
 	/* if opportunistic, override the template destination mask with /32 or /128 */
@@ -4484,12 +4487,12 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	}
 
 	/* ensure an instance of a template/OE-group always has preference */
-	uint32_t instw = (c->kind == CK_INSTANCE ? 0u : 1u);
+	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
 
 	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-
-	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32")",
-	    c->name, prio, prio);
+	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    c->name, prio, prio,
+	    pmax, portsw, protow, srcw, dstw, instw);
 	return prio;
 }
 
