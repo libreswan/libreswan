@@ -133,9 +133,9 @@ rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
 install -d %{buildroot}%{_sbindir}
 
-install -d %{buildroot}%{_sysconfdir}/sysctl.d
-install -m 0644 packaging/fedora/libreswan-sysctl.conf \
-  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+install -d %{buildroot}%{_sysctldir}
+install -m 0644 packaging/rhel/libreswan-sysctl.conf \
+  %{buildroot}%{_sysctldir}/50-libreswan.conf
 
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
      > %{buildroot}%{_sysconfdir}/ipsec.secrets
@@ -173,6 +173,7 @@ certutil -N -d sql:$tmpdir --empty-password
 
 %post
 %systemd_post ipsec.service
+%sysctl_apply 50-libreswan.conf
 
 %preun
 %systemd_preun ipsec.service
@@ -188,7 +189,7 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
+%attr(0644,root,root) %config(noreplace) %{_sysctldir}/50-libreswan.conf
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service

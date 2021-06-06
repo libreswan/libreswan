@@ -150,9 +150,9 @@ rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
 install -d -m 0755 %{buildroot}%{_rundir}/pluto
 install -d %{buildroot}%{_sbindir}
 
-install -d %{buildroot}%{_sysconfdir}/sysctl.d
+install -d %{buildroot}%{_sysctldir}
 install -m 0644 packaging/rhel/libreswan-sysctl.conf \
-    %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+    %{buildroot}%{_sysctldir}/50-libreswan.conf
 
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
@@ -200,6 +200,7 @@ certutil -N -d sql:$tmpdir --empty-password
 
 %post
 %systemd_post ipsec.service
+%sysctl_apply 50-libreswan.conf
 prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 
 %preun
@@ -216,7 +217,7 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
+%attr(0644,root,root) %config(noreplace) %{_sysctldir}/50-libreswan.conf
 %attr(0755,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
