@@ -284,6 +284,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
                 os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
                 os.rename(test.output_directory, backup_directory)
             result_stats.add_ignored(test, ignored)
+            publish.everything(logger, args, post.mortem(test, args, quick=True))
             logger.info("%s %s ignored (%s) %s",
                         prefix, test_prefix, details, suffix)
             return
