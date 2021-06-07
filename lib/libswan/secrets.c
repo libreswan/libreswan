@@ -146,7 +146,7 @@ static void process_secrets_file(struct file_lex_position *flp,
 				 struct secret **psecrets, const char *file_pat);
 
 struct secret {
-	struct secret  *next;
+	struct secret *next;
 	struct id_list *ids;
 	struct private_key_stuff pks;
 };
@@ -850,7 +850,7 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 	err_t ugh = NULL;
 
 	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
-		size_t len = flp->cur - flp->tok  - 2;
+		size_t len = flp->cur - flp->tok - 2;
 
 		if (len < 8) {
 			llog(RC_LOG_SERIOUS, flp->logger,
@@ -927,7 +927,7 @@ static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 	return ugh;
 }
 
-/* parse static PPK  */
+/* parse static PPK */
 static err_t process_ppk_static_secret(struct file_lex_position *flp,
 				       chunk_t *ppk, chunk_t *ppk_id)
 {

@@ -86,11 +86,14 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west
 1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-031 "west" #4: STATE_V2_REKEY_CHILD_I1: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-002 "west" #4: liveness action - putting connection into hold
+031 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+002 "west" #1: liveness action - putting connection into hold
 002 "west" #4: deleting state (STATE_V2_REKEY_CHILD_I1) and NOT sending notification
+003 "west" #4: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
 002 "west" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #3: ESP traffic information: in=0B out=0B
+002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "west" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  # this rekey, 3 #5, message will not be sent, #1.#5
 west #

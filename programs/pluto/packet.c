@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
 #include "constants.h"
 #include "lswalloc.h"
@@ -1671,7 +1672,7 @@ struct_desc *v1_payload_desc(unsigned p)
 		&isakmp_notification_desc,      /* 11 ISAKMP_NEXT_N (Notification) */
 		&isakmp_delete_desc,            /* 12 ISAKMP_NEXT_D (Delete) */
 		&isakmp_vendor_id_desc,         /* 13 ISAKMP_NEXT_VID (Vendor ID) */
-		&isakmp_attr_desc,              /* 14 ISAKMP_NEXT_MCFG_ATTR (ModeCfg)  */
+		&isakmp_attr_desc,              /* 14 ISAKMP_NEXT_MCFG_ATTR (ModeCfg) */
 		NULL,                           /* 15 */
 		NULL,                           /* 16 */
 		NULL,                           /* 17 */

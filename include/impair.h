@@ -150,6 +150,10 @@ struct impair {
 	unsigned add_unknown_v2_payload_to_sk;
 	bool unknown_v2_payload_critical;
 
+	bool omit_v2_ike_auth_child;
+	bool ignore_v2_ike_auth_child;
+	bool childless_v2_sec_label;
+
 	/*
 	 * add more here
 	 */

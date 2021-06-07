@@ -96,7 +96,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
-		if (ike->sa.st_intermediate_used) {
+		if (ike->sa.st_v2_ike_intermediate_used) {
 			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_me,
 							    ike->sa.st_intermediate_packet_peer,
 							    "IntAuth_*_I_A | IntAuth_*_R");
@@ -117,7 +117,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 		break;
 
 	case SA_RESPONDER:
-		if (ike->sa.st_intermediate_used) {
+		if (ike->sa.st_v2_ike_intermediate_used) {
 			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_peer,
 							    ike->sa.st_intermediate_packet_me,
 							    "IntAuth_*_I_A | IntAuth_*_R");

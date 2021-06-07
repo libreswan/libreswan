@@ -28,15 +28,17 @@
 bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		  enum impair_v1_exchange exchange,
 		  struct state *st, struct v1_hash_fixup *fixup,
-		  pb_stream *rbody)
+		  struct pbs_out *rbody)
 {
 	zero(fixup);
 	fixup->what = what;
 	fixup->hash_type = hash_type;
+	fixup->logger = rbody->outs_logger; /* not ST; might be parent SA */
 	fixup->impair = (impair.v1_hash_exchange == exchange
 			 ? impair.v1_hash_payload : IMPAIR_EMIT_NO);
 	if (fixup->impair == IMPAIR_EMIT_OMIT) {
-		log_state(RC_LOG, st, "IMPAIR: omitting HASH payload for %s", what);
+		llog(RC_LOG, fixup->logger,
+		     "IMPAIR: omitting HASH payload for %s", what);
 		return true;
 	}
 	pb_stream hash_pbs;
@@ -44,7 +46,8 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		return false;
 	}
 	if (fixup->impair == IMPAIR_EMIT_EMPTY) {
-		log_state(RC_LOG, st, "IMPAIR: sending HASH payload with no data for %s", what);
+		llog(RC_LOG, fixup->logger,
+		     "IMPAIR: sending HASH payload with no data for %s", what);
 	} else {
 		/* reserve space for HASH data */
 		fixup->hash_data = chunk2(hash_pbs.cur, st->st_oakley.ta_prf->prf_output_size);
@@ -61,20 +64,23 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		   msgid_t msgid, const uint8_t *roof)
 {
 	if (fixup->impair >= IMPAIR_EMIT_ROOF) {
-		log_state(RC_LOG, st, "IMPAIR: setting HASH payload bytes to %02x",
-			      fixup->impair - IMPAIR_EMIT_ROOF);
+		unsigned byte = fixup->impair - IMPAIR_EMIT_ROOF;
+		llog(RC_LOG, fixup->logger,
+		     "IMPAIR: setting HASH payload bytes to %02x", byte);
 		/* chunk_fill()? */
-		memset(fixup->hash_data.ptr, fixup->impair - IMPAIR_EMIT_ROOF,
-		       fixup->hash_data.len);
+		memset(fixup->hash_data.ptr, byte, fixup->hash_data.len);
 		return;
-	} else if (fixup->impair != IMPAIR_EMIT_NO) {
+	}
+
+	if (fixup->impair != IMPAIR_EMIT_NO) {
 		/* already logged above? */
 		return;
 	}
+
 	struct crypt_prf *hash =
 		crypt_prf_init_symkey("HASH(1)", st->st_oakley.ta_prf,
 				      "SKEYID_a", st->st_skeyid_a_nss,
-				      st->st_logger);
+				      fixup->logger);
 	/* msgid */
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(msgid);
@@ -147,6 +153,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		.body = received_hash.ptr + received_hash.len,
 		.what = what,
 		.hash_type = type,
+		.logger = st->st_logger,
 	};
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */

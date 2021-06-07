@@ -51,6 +51,7 @@
 #include "ikev2.h"
 #include "ip_address.h"
 #include "host_pair.h"
+#include "ikev2_create_child_sa.h"		/* for ikev2_initiate_child_sa() */
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -84,7 +85,7 @@ void add_pending(struct fd *whack_sock,
 	}
 
 	struct pending *p = alloc_thing(struct pending, "struct pending");
-	p->whack_sock = dup_any(whack_sock); /*on heap*/
+	p->whack_sock = fd_dup(whack_sock, HERE); /*on heap*/
 	p->ike = ike;
 	p->connection = c;
 	p->policy = policy;
@@ -320,7 +321,7 @@ struct connection *first_pending(const struct ike_sa *ike,
 	{
 		if (p->ike == ike) {
 			close_any(p_whack_sock); /*on-heap*/
-			*p_whack_sock = dup_any(p->whack_sock); /*on-heap*/
+			*p_whack_sock = fd_dup(p->whack_sock, HERE); /*on-heap*/
 			*policy = p->policy;
 			return p->connection;
 		}
@@ -417,9 +418,9 @@ void flush_pending_by_connection(const struct connection *c)
 	}
 }
 
-void show_pending_phase2(struct show *s,
-			 const struct connection *c,
-			 const struct ike_sa *ike)
+void show_pending_child_details(struct show *s,
+				const struct connection *c,
+				const struct ike_sa *ike)
 {
 	struct pending **pp, *p;
 

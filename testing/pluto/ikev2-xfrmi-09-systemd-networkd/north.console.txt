@@ -36,16 +36,22 @@ north #
 north #
  sleep  2
 north #
- tcpdump -w /tmp/north-ikev2-xfrmi-09-systemd-networkd-ipsec2.pcap -s 0 -n -i ipsec2 & echo $! > /tmp/north-ikev2-xfrmi-09-systemd-networkd-tcpdump.pid
-[x] PID
-north #
- ping -n -q -w 4 -c 4 192.0.2.254
+ ../../guestbin/tcpdump.sh --start -i ipsec2
+tcpdump is not running
 [ 00.00] device ipsec2 entered promiscuous mode
-tcpdump: listening on INTERFACE DETAILS
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+tcpdump started
+north #
+ ../../guestbin/ping-once.sh --up  192.0.2.254
+up
+north #
+ ../../guestbin/ping-once.sh --up  192.0.2.254
+up
+north #
+ ../../guestbin/ping-once.sh --up  192.0.2.254
+up
+north #
+ ../../guestbin/ping-once.sh --up  192.0.2.254
+up
 north #
  ip -s link show ipsec2
 X: ipsec2@lo: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -69,15 +75,9 @@ north #
 Error: ipv4: FIB table does not exist.
 Dump terminated
 north #
- kill -9 $(cat /tmp/north-ikev2-xfrmi-09-systemd-networkd-tcpdump.pid)
+ ../../guestbin/tcpdump.sh --kill
 [ 00.00] device ipsec2 left promiscuous mode
-[1]+  Killed                  tcpdump -w /tmp/north-ikev2-xfrmi-09-systemd-networkd-ipsec2.pcap -s 0 -n -i ipsec2
-north #
- sync
-north #
- sleep 2
-north #
- cp /tmp/north-ikev2-xfrmi-09-systemd-networkd-ipsec2.pcap OUTPUT/
+tcpdump stopped
 north #
  # rm the test specific systemd-networkd file for next test
 north #

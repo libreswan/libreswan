@@ -67,8 +67,7 @@ extern void submit_task(const struct logger *logger,
 			const char *name);
 
 extern void start_server_helpers(int nhelpers, struct logger *logger);
-void stop_server_helpers(void);
-void server_helpers_stopped_callback(struct state *st, void *context); /* see pluto_shutdown.c */
+void stop_server_helpers(void (*all_server_helpers_stopped)(void));
+void free_server_helper_jobs(void);
 
 #endif
-

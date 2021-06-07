@@ -205,7 +205,7 @@ enum retransmit_status retransmit(struct state *st)
 		       retransmit_count_exceeded ? "YES" : "NO");
 	/* accumulated delay (ignores timewarp) */
 	deltatime_buf dt;
-	dbg_retransmit(st, "deltatime %s  exceeds limit? %s",
+	dbg_retransmit(st, "deltatime %s exceeds limit? %s",
 		       str_deltatime(rt->delays, &dt),
 		       deltatime_exceeds_limit ? "YES" : "NO");
 	/* waittime, perhaps went to sleep but can warp */

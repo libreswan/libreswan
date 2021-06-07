@@ -146,9 +146,8 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }
 
-bool orient(struct connection *c)
+bool orient(struct connection *c, struct logger *logger)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	if (oriented(*c)) {
 		dbg("already oriented");
 		return true;
@@ -176,11 +175,11 @@ bool orient(struct connection *c)
 		if (this && that) {
 			/* too many choices */
 			connection_buf cib;
-			log_global(RC_LOG_SERIOUS, whackfd,
-				   "both sides of "PRI_CONNECTION" are our interface %s!",
-				   pri_connection(c, &cib),
-				   ifp->ip_dev->id_rname);
-			terminate_connection(c->name, false, whackfd);
+			llog(RC_LOG_SERIOUS, logger,
+			     "both sides of "PRI_CONNECTION" are our interface %s!",
+			     pri_connection(c, &cib),
+			     ifp->ip_dev->id_rname);
+			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
 			c->interface = NULL; /* withdraw orientation */
 			return false;
 		}
@@ -198,10 +197,10 @@ bool orient(struct connection *c)
 			/* oops, second match */
 			if (c->interface->ip_dev == ifp->ip_dev) {
 				connection_buf cib;
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "both sides of "PRI_CONNECTION" are our interface %s!",
-					   pri_connection(c, &cib),
-					   ifp->ip_dev->id_rname);
+				llog(RC_LOG_SERIOUS, logger,
+				     "both sides of "PRI_CONNECTION" are our interface %s!",
+				     pri_connection(c, &cib),
+				     ifp->ip_dev->id_rname);
 			} else {
 				/*
 				 * XXX: if an interface has two
@@ -211,15 +210,15 @@ bool orient(struct connection *c)
 				 */
 				connection_buf cib;
 				address_buf cb, ifpb;
-				log_global(RC_LOG_SERIOUS, whackfd,
-					   "two interfaces match \"%s\"%s (%s %s, %s %s)",
-					   pri_connection(c, &cib),
-					   c->interface->ip_dev->id_rname,
-					   str_address(&c->interface->ip_dev->id_address, &cb),
-					   ifp->ip_dev->id_rname,
-					   str_address(&ifp->ip_dev->id_address, &ifpb));
+				llog(RC_LOG_SERIOUS, logger,
+				     "two interfaces match \"%s\"%s (%s %s, %s %s)",
+				     pri_connection(c, &cib),
+				     c->interface->ip_dev->id_rname,
+				     str_address(&c->interface->ip_dev->id_address, &cb),
+				     ifp->ip_dev->id_rname,
+				     str_address(&ifp->ip_dev->id_address, &ifpb));
 			}
-			terminate_connection(c->name, false, whackfd);
+			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
 			c->interface = NULL; /* withdraw orientation */
 			return false;
 		}
@@ -254,10 +253,10 @@ bool orient(struct connection *c)
 
 	/* No existing interface worked, should a new one be created? */
 
-	if (orient_new_iface_endpoint(c, whackfd, true)) {
+	if (orient_new_iface_endpoint(c, logger->global_whackfd, true)) {
 		return true;
 	}
-	if (orient_new_iface_endpoint(c, whackfd, false)) {
+	if (orient_new_iface_endpoint(c, logger->global_whackfd, false)) {
 		return true;
 	}
 	return false;

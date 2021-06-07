@@ -37,7 +37,7 @@ EOF
   exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
 
 # <summarydir>
 if test $# -gt 0 ; then
@@ -54,16 +54,18 @@ if test $# -gt 0 ; then
 	echo "could not change-directory to <repodir> ${repodir}" 1>&2
 	exit 1
     }
+else
+    repodir=.
 fi
 
 # <earliest_commit>
 if test $# -gt 0 ; then
     earliest_commit=$(git rev-parse ${1}^{}) ; shift
 else
-    earliest_commit=$(${webdir}/earliest-commit.sh ${summarydir})
+    earliest_commit=$(${bindir}/earliest-commit.sh ${summarydir})
 fi
 
-branch=$(${webdir}/gime-git-branch.sh .)
+branch=$(${bindir}/gime-git-branch.sh .)
 remote=$(git config --get branch.${branch}.remote)
 
 # Find the longest untested run of commits.  Use a bias to prefer
@@ -153,7 +155,7 @@ while read commits ; do
     # subset of the less interesting results (interesting results have
     # a colon).  See README.txt.
 
-    if interesting=$(${webdir}/git-interesting.sh ${commit}) ; then
+    if interesting=$(${bindir}/git-interesting.sh ${repodir} ${commit}) ; then
 	uninteresting=false
     else
 	uninteresting=true
@@ -251,7 +253,7 @@ echo EARLIEST ${earliest_commit} at ${earliest_index} 1>&2
 
 print_selected() {
     echo selecting $1 at $2 1>&2
-    ( git show --no-patch $2 ) 1>&2
+    ( git log $2^..$2 ) 1>&2
     echo $2
     exit 0
 }

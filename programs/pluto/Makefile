@@ -56,19 +56,27 @@ endif
 
 OBJS += unpack.o
 OBJS += impair_message.o
+# exchanges
+OBJS += ikev2_ike_sa_init.o
+OBJS += ikev2_ike_intermediate.o
+OBJS += ikev2_ike_auth.o
+OBJS += ikev2_create_child_sa.o
+OBJS += ikev2_informational.o
+# payloads
 OBJS += ikev2_notify.o
+OBJS += ikev2_cp.o
+OBJS += ikev2_ts.o
 OBJS += ikev2_peer_id.o
+OBJS += ikev2_mobike.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o
 OBJS += ikev2_cookie.o
-OBJS += ikev2_ts.o
 OBJS += ikev2_msgid.o
 OBJS += ikev2_auth.o
 OBJS += ikev2_auth_helper.o
 OBJS += ikev2_delete.o
 OBJS += ikev2_rekey.o
 OBJS += ikev2_liveness.o
-OBJS += ikev2_ike_sa_init.o
 
 OBJS += state_db.o
 OBJS += show.o

@@ -489,7 +489,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
 		}
 
-		/* ignore unknown transform types.  */
+		/* ignore unknown transform types. */
 		if (remote_trans.isat_type == 0) {
 			return -(STF_FAIL + v2N_INVALID_SYNTAX);
 		}
@@ -931,7 +931,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		 * accepted.
 		 */
 		if (expect_accepted) {
-			/* There can be only one accepted proposal.  */
+			/* There can be only one accepted proposal. */
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
 				llog(RC_LOG, logger, "Error: more than one accepted proposal received.");
 				jam_string(remote_jam_buf, "[too-many-accepted-proposals]");
@@ -992,7 +992,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		 * size, in octets, of the SPI of the corresponding
 		 * protocol (8 for IKE, 4 for ESP and AH).
 		 */
-		/* Read any SPI.  */
+		/* Read any SPI. */
 		struct ikev2_spi remote_spi = {
 			.size = (expect_spi ? proto_spi_size(remote_proposal.isap_protoid) : 0),
 		};
@@ -1053,7 +1053,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				/* second or further match */
 				jam_string(remote_jam_buf, "[better-match]");
 			}
-			/* capture the new best proposal  */
+			/* capture the new best proposal */
 			matching_local_propnum = match;
 			/* blat best with a new value */
 			*best_proposal = (struct ikev2_proposal) {
@@ -1267,7 +1267,7 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				return false;
 			}
 		}
-	} else  {
+	} else {
 		switch (impair_key_length_attribute) {
 		case IMPAIR_EMIT_NO:
 			PASSERT_FAIL("%s", "should have been handled");

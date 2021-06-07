@@ -482,7 +482,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 		return NULL;
 	}
 
-	struct db_prop  *prop = db_prop_get(ctx_new);
+	struct db_prop *prop = db_prop_get(ctx_new);
 
 	dbg("%s() will return p_new->protoid=%d, p_new->trans_cnt=%d",
 	    __func__, prop->protoid, prop->trans_cnt);
@@ -789,12 +789,12 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		}
 
 		 if (emp_sp != NULL) {
-			 /*
-			  * Exclude 3des et.al. which do not include
-			  * default key lengths in the proposal.
-			  */
-			 if (algs.enckeylen == 0 &&
-			     !algs.encrypt->keylen_omitted) {
+			/*
+			 * Exclude 3des et.al. which do not include
+			 * default key lengths in the proposal.
+			 */
+			if (algs.enckeylen == 0 &&
+			    !algs.encrypt->keylen_omitted) {
 				const struct encrypt_desc *enc_desc = algs.encrypt;
 				int def_ks = enc_desc->keydeflen;
 				passert(def_ks); /* ike=null not supported */
@@ -950,7 +950,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 			passert(revised_sadb->prop_conjs->prop_cnt == 1);
 
-			/* construct the IPcomp proposal  */
+			/* construct the IPcomp proposal */
 			ipcomp_trans->transid = IPCOMP_DEFLATE;
 			ipcomp_trans->attrs = NULL;
 			ipcomp_trans->attr_cnt = 0;
@@ -2287,7 +2287,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	const struct db_prop_conj *cprop = &revised_sadb->prop_conjs[0];
 
 	passert(cprop->prop_cnt == 1);
-	const struct db_prop  *prop = &cprop->props[0];
+	const struct db_prop *prop = &cprop->props[0];
 
 	const struct db_trans *trans = &prop->trans[0];
 
@@ -2325,7 +2325,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	passert(ta.ta_prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
+	ta.auth = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
 	ta.ta_dh = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */

@@ -318,7 +318,7 @@ void release_dead_interfaces(struct logger *logger)
 
 		/* XXX: something better? */
 		close_any(&c->logger->global_whackfd);
-		c->logger->global_whackfd = dup_any(logger->global_whackfd);
+		c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 		/*
 		 * This connection instance interface is going away.
@@ -336,9 +336,7 @@ void release_dead_interfaces(struct logger *logger)
 		 */
 		release_connection(c, /*relations?*/true);
 		passert(c == *cp);
-		terminate_connection(c->name,
-				     false/*quiet?*/,
-				     logger->global_whackfd);
+		terminate_connections_by_name(c->name, /*quiet?*/false, logger);
 
 		/*
 		 * disorient connection and then put on the unoriented
@@ -477,7 +475,7 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Adjust orientations of connections to reflect newly added interfaces. */
-void check_orientations(void)
+void check_orientations(struct logger *logger)
 {
 	/*
 	 * Try to orient unoriented connections by re-building the
@@ -492,7 +490,7 @@ void check_orientations(void)
 	while (c != NULL) {
 		/* step off */
 		struct connection *nxt = c->hp_next;
-		orient(c);
+		orient(c, logger);
 		/*
 		 * Either put C back on unoriented, or add to a host
 		 * pair.
@@ -538,7 +536,7 @@ void check_orientations(void)
 						c->interface = NULL;
 						c->host_pair = NULL;
 						c->hp_next = NULL;
-						orient(c);
+						orient(c, logger);
 						connect_to_host_pair(c);
 						c = nxt;
 					}

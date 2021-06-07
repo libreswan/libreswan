@@ -85,7 +85,8 @@ void unpack_nonce(chunk_t *n, chunk_t *nonce)
 
 diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
 {
-	size_t left = pbs_left(id_pbs);
+	struct pbs_in in_pbs = *id_pbs;
+	size_t left = pbs_left(&in_pbs);
 
 	*peer = (struct id) {.kind = kind };	/* clears everything */
 
@@ -93,19 +94,12 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 
 	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
-	case ID_IPV6_ADDR:
-	{
 		/* failure mode for initaddr is probably inappropriate address length */
-		const struct ip_info *afi = (kind == ID_IPV4_ADDR ? &ipv4_info :
-					     kind == ID_IPV6_ADDR ? &ipv6_info :
-					     NULL);
-		struct pbs_in in_pbs = *id_pbs;
-		diag_t d = pbs_in_address(&in_pbs, &peer->ip_addr, afi, "peer ID");
-		if (d != NULL) {
-			return d;
-		}
-		break;
-	}
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv4_info, "peer ID");
+
+	case ID_IPV6_ADDR:
+		/* failure mode for initaddr is probably inappropriate address length */
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv6_info, "peer ID");
 
 	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:

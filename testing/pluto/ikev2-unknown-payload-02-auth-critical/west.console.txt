@@ -15,9 +15,9 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #2: message response contained an unknown critical payload type (255??)
-031 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "westnet-eastnet-ipv4-psk-ikev2" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: message response contained an unknown critical payload type (255??)
+031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+000 "westnet-eastnet-ipv4-psk-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo done
 done
@@ -27,10 +27,6 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES

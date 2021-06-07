@@ -44,8 +44,9 @@ $(builddir)/%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(bu
 # file.  Force all output to the build directory.  $(basename
 # $(notdir)) is an approximation of UNIX basename.
 #
-# -DHERE_BASENAME is because it is a pita to create a basename from
+# -DHERE_FILENAME is because it is a pita to create a path from
 #  __FILE__ using a static C expression
+#
 # -MP: add a fake header target for when a header is deleted
 # -MMD: only list user header files
 # -MT: the target (otherwise $(builddir)/$(notdir $@) is used
@@ -56,7 +57,8 @@ ifdef OBJS
 .c.o:
 	$(CC) $(USERLAND_CFLAGS) \
 		$(USERLAND_INCLUDES) \
-		-DHERE_BASENAME=\"$(notdir $<)\" $(CFLAGS) \
+		-DHERE_FILENAME=\"$(path_srcdir)/$(notdir $<)\" \
+		$(CFLAGS) \
 		-MF $(builddir)/$(basename $(notdir $@)).d \
 		-MP -MMD -MT $@ \
 		-o $(builddir)/$(notdir $@) \

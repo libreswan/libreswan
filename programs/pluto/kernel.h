@@ -61,14 +61,6 @@ enum pluto_sadb_operations {
 
 #define IPSEC_PROTO_ANY         255
 
-/* KLIPS has:
- * #define ERO_DELETE	SADB_X_DELFLOW
- * #define ERO_ADD	SADB_X_ADDFLOW
- * #define ERO_REPLACE	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_REPLACEFLOW << ERO_FLAG_SHIFT))
- * #define ERO_ADD_INBOUND	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
- * #define ERO_DEL_INBOUND	(SADB_X_DELFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
- */
-
 struct pfkey_proto_info {
 	int proto;
 	int mode;
@@ -80,7 +72,8 @@ extern const struct pfkey_proto_info null_proto_info[2];
 struct sadb_msg;
 
 /*
- * replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal SADB_SATYPE values
+ * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
+ * SADB_SATYPE values
  *
  * XXX: Seems largely redundant.  Only place that eroute and
  * ip_protocol have different "values" is when netkey is inserting a
@@ -129,7 +122,7 @@ struct kernel_sa {
 	struct kernel_end dst;
 
 	bool inbound;
-	int  xfrm_dir;			/* xfrm has 3, in,out & fwd */
+	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
 	bool add_selector;
 	bool esn;
 	bool decap_dscp;
@@ -141,8 +134,6 @@ struct kernel_sa {
 	enum eroute_type esatype;
 	unsigned replay_window;
 	reqid_t reqid;
-
-	unsigned authalg; /* use INTEG */
 
 	const struct integ_desc *integ;
 	unsigned authkeylen;
@@ -185,12 +176,6 @@ struct raw_iface {
 };
 
 extern char *pluto_listen;	/* from --listen flag */
-
-
-/* KAME has a different name for AES */
-#if !defined(SADB_X_EALG_AESCBC) && defined(SADB_X_EALG_AES)
-#define SADB_X_EALG_AESCBC SADB_X_EALG_AES
-#endif
 
 struct kernel_ops {
 	enum kernel_interface type;
@@ -252,8 +237,7 @@ struct kernel_ops {
 			       const struct ip_protocol *proto,
 			       bool tunnel_mode,
 			       reqid_t reqid,
-			       ipsec_spi_t min,
-			       ipsec_spi_t max,
+			       uintmax_t min, uintmax_t max,
 			       const char *text_said,
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
@@ -353,7 +337,7 @@ struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
 extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
 					      const ip_endpoint *peer_client,
 					      const chunk_t sec_label,
-					      const char *why);
+					      const char *why, struct logger *logger);
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
@@ -444,7 +428,7 @@ void shutdown_kernel(struct logger *logger);
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
-			   const char *why);
+			   const char *why, struct logger *logger);
 
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,
@@ -465,6 +449,13 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const char *opname,
 		       const chunk_t *sec_label,
 		       struct logger *logger);
+
+bool shunt_eroute(const struct connection *c,
+		  const struct spd_route *sr,
+		  enum routing_t rt_kind,
+		  enum pluto_sadb_operations op,
+		  const char *opname,
+		  struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
 extern void set_text_said(char *text_said, const ip_address *dst,

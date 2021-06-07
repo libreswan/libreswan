@@ -195,7 +195,7 @@ void molest_ike_params(uint8_t *user,
 int main(int argc, char **argv)
 {
 	char *filein, *fileout;
-	pcap_t         *in;
+	pcap_t        *in;
 	pcap_dumper_t *out;
 	char errbuf[PCAP_ERRBUF_SIZE];
 

@@ -26,7 +26,7 @@
  * Typically this just involves including <net/pfkeyv2.h>, but on
  * linux it needs to pull in the local hacked up version of the same
  * file.
-
+ *
  * Why?
  *
  * the kernel_alg.[hc] code uses structures found in this header;
@@ -36,7 +36,14 @@
  */
 
 #ifdef linux
-#include "linux-pfkeyv2.h"	/* include/linux/pfkeyv2.h why? */
+#include "rfc2367-pfkeyv2.h"
+/* Compression algorithms */
+#define SADB_X_CALG_NONE		0
+#define SADB_X_CALG_OUI			1
+#define SADB_X_CALG_DEFLATE		2
+#define SADB_X_CALG_LZS			3
+#define SADB_X_CALG_LZJH		4
+#define SADB_X_CALG_MAX			4
 #else
 #include <net/pfkeyv2.h>
 #endif

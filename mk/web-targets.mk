@@ -225,7 +225,7 @@ web-commitsdir: | $(WEB_COMMITSDIR)
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
 	echo $@
-	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
+	$(WEB_SOURCEDIR)/json-commit.sh $(WEB_REPODIR) $* > $@.tmp
 	mv $@.tmp $@
 
 $(WEB_COMMITSDIR):

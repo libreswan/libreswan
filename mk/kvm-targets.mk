@@ -1138,7 +1138,7 @@ $(KVM_POOLDIR)/$(KVM_BSD_ISO):| $(KVM_POOLDIR)
 kvm-uninstall-openbsd: $(foreach domain, $(KVM_BSD_BASE_DOMAIN) $(KVM_OPENBSD_DOMAIN_CLONES), uninstall-kvm-domain-${domain})
 .PHONY: kvm-openbsd
 kvm-openbsd: $(KVM_POOLDIR)/$(KVM_BSD_BASE_DOMAIN).qcow2
-$(KVM_POOLDIR)/$(KVM_BSD_BASE_DOMAIN).qcow2: $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
+$(KVM_POOLDIR)/$(KVM_BSD_BASE_DOMAIN).qcow2: | $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_BSD_ISO)
 	$(MAKE) kvm-uninstall-openbsd
 	$(call destroy-kvm-domain,$(KVM_BSD_BASE_DOMAIN))
 	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" $(KVM_TESTINGDIR)/libvirt/BSD/rc.firsttime > $(KVM_POOLDIR)/rc.firsttime

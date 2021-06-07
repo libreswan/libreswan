@@ -87,44 +87,48 @@ struct payload_summary {
  * official numbers, these are contiguous.
  */
 
-enum v2_pbs {
-	PBS_v2_INVALID = 0,
+enum v2_pd {
+	PD_v2_INVALID = 0,
 
-	PBS_v2N_REKEY_SA,
-	PBS_v2N_NO_PPK_AUTH,
-	PBS_v2N_PPK_IDENTITY,
-	PBS_v2N_SIGNATURE_HASH_ALGORITHMS,
-	PBS_v2N_NULL_AUTH,
-	PBS_v2N_IPCOMP_SUPPORTED,
-	PBS_v2N_IKEV2_FRAGMENTATION_SUPPORTED,
-	PBS_v2N_USE_PPK,
-	PBS_v2N_REDIRECTED_FROM,
-	PBS_v2N_REDIRECT_SUPPORTED,
-	PBS_v2N_NAT_DETECTION_SOURCE_IP,
-	PBS_v2N_NAT_DETECTION_DESTINATION_IP,
-	PBS_v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-	PBS_v2N_USE_TRANSPORT_MODE,
-	PBS_v2N_MOBIKE_SUPPORTED,
-	PBS_v2N_INITIAL_CONTACT,
-	PBS_v2N_REDIRECT,
-	PBS_v2N_INVALID_SYNTAX,
-	PBS_v2N_AUTHENTICATION_FAILED,
-	PBS_v2N_UNSUPPORTED_CRITICAL_PAYLOAD,
-	PBS_v2N_COOKIE,
-	PBS_v2N_COOKIE2,
-	PBS_v2N_INVALID_KE_PAYLOAD,
-	PBS_v2N_INVALID_MAJOR_VERSION,
-	PBS_v2N_TS_UNACCEPTABLE,
-	PBS_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
-	PBS_v2N_UPDATE_SA_ADDRESSES,
+	PD_v2N_REKEY_SA,
+	PD_v2N_NO_PPK_AUTH,
+	PD_v2N_PPK_IDENTITY,
+	PD_v2N_SIGNATURE_HASH_ALGORITHMS,
+	PD_v2N_NULL_AUTH,
+	PD_v2N_IPCOMP_SUPPORTED,
+	PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED,
+	PD_v2N_USE_PPK,
+	PD_v2N_REDIRECTED_FROM,
+	PD_v2N_REDIRECT_SUPPORTED,
+	PD_v2N_NAT_DETECTION_SOURCE_IP,
+	PD_v2N_NAT_DETECTION_DESTINATION_IP,
+	PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+	PD_v2N_USE_TRANSPORT_MODE,
+	PD_v2N_MOBIKE_SUPPORTED,
+	PD_v2N_INITIAL_CONTACT,
+	PD_v2N_REDIRECT,
+	PD_v2N_INVALID_SYNTAX,
+	PD_v2N_AUTHENTICATION_FAILED,
+	PD_v2N_UNSUPPORTED_CRITICAL_PAYLOAD,
+	PD_v2N_COOKIE,
+	PD_v2N_COOKIE2,
+	PD_v2N_INVALID_KE_PAYLOAD,
+	PD_v2N_INVALID_MAJOR_VERSION,
+	PD_v2N_TS_UNACCEPTABLE,
+	PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+	PD_v2N_UPDATE_SA_ADDRESSES,
+	PD_v2N_NO_PROPOSAL_CHOSEN,
+	PD_v2N_SINGLE_PAIR_REQUIRED,
+	PD_v2N_INTERNAL_ADDRESS_FAILURE,
+	PD_v2N_FAILED_CP_REQUIRED,
 
-	PBS_v2_ROOF,
+	PD_v2_ROOF,
 };
 
 #if 0
-enum v1_pbs {
-	PBS_v1_INVALID,
-	PBS_v1_ROOF,
+enum v1_pb {
+	PD_v1_INVALID,
+	PD_v1_ROOF,
 };
 #endif
 
@@ -142,7 +146,7 @@ struct msg_digest {
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
-	struct state *st;			/* current state object */
+	struct state *v1_st;			/* (v1) current state object */
 	struct logger *md_logger;		/* logger for this MD */
 
 	threadtime_t md_inception;		/* when was this started */
@@ -157,12 +161,12 @@ struct msg_digest {
 	bool fake_dne;				/* created as part of fake_md() */
 
 	/*
-	 * Note that .pbs[] is indexed using either enum v1_pbs or
-	 * enum v2_pbs and not exchange type, v2_notification_t, ....
-	 * This is because the former is contiguous, while the latter
-	 * is very very sparse.
+	 * Note that .pd[] is indexed using either enum v1_pd or enum
+	 * v2_pd and not exchange type, v2_notification_t, ....  This
+	 * is because the former is contiguous, while the latter is
+	 * very very sparse.
 	 */
-	const struct pbs_in *pbs[PBS_v2_ROOF];
+	const struct payload_digest *pd[PD_v2_ROOF];
 
 	/*
 	 * The first IKEv2 error notification found in the payload

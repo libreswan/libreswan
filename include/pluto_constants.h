@@ -196,6 +196,10 @@ enum global_timer {
 
 extern const struct enum_names global_timer_names;
 
+/*
+ * State based events and timers.
+ */
+
 enum event_type {
 	EVENT_NULL,			/* non-event */
 
@@ -203,29 +207,29 @@ enum event_type {
 
 	/* events associated with states */
 
-	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
 	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
 
-	/*
-	 * For IKEv2 'replace' is really either a re-key a full
-	 * replace, or expire.  IKEv1 should be the same but isn't.
-	 */
-	EVENT_SA_REKEY,			/* v2 SA rekey event */
-	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
-	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
-
-	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
-	EVENT_v1_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
+	/*
+	 * For IKEv2 'replace' is really either a re-key a full
+	 * replace, or expire.  IKEv1 should be the same but isn't.
+	 */
+	EVENT_SA_DISCARD,		/* v1/v2 discard unfinished state object */
+	EVENT_SA_REKEY,			/* v2 SA rekey event */
+	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
+	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
+
+	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
+
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
-	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
-	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */
+
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -782,7 +786,7 @@ enum ikev1_natt_policy {
 enum four_options {
 	fo_never   = 0,         /* do not propose, do not permit */
 	fo_permit  = 1,         /* do not propose, but permit peer to propose */
-	fo_propose = 2,         /* propose, and permit, but do not insist  */
+	fo_propose = 2,         /* propose, and permit, but do not insist */
 	fo_insist  = 3          /* propose, and only accept if peer agrees */
 };
 
@@ -1001,7 +1005,7 @@ enum sa_policy_bits {
  */
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
-#define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */
+#define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
 #define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
 #define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
 #define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */

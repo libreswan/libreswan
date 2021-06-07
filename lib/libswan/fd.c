@@ -31,7 +31,7 @@ struct fd {
 	refcnt_t refcnt;
 };
 
-struct fd *dup_any_fd(struct fd *fd, where_t where)
+struct fd *fd_dup(struct fd *fd, where_t where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
 	refcnt_addref(fd, where);
@@ -64,7 +64,9 @@ void fd_leak(struct fd *fd, where_t where)
 	dbg("leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
 	    pri_fd(fd), pri_where(where));
 	/* leave the old underlying file descriptor open */
-	fd->fd = dup(fd->fd);
+	if (fd != NULL) {
+		fd->fd = dup(fd->fd);
+	}
 }
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)

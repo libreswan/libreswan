@@ -1,7 +1,7 @@
 #!/bin/sh
 
-pass1="sh modified"
-pass2="test diffs results retest upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status"
+pass1="commit sh modified baseline baseline-passed baseline-failed --baseline --baseline-passed --baseline-failed"
+pass2="add check diffs results recheck upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status check-clean shutdown"
 
 if test $# = 0; then
     cat <<EOF
@@ -40,6 +40,8 @@ fi
 
 ops=
 modified=
+baseline=
+__baseline=$(sed -n -e 's/KVM_BASELINE.*=/--baseline /p' Makefile.inc.local)
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -47,10 +49,40 @@ while test $# -gt 0 ; do
 	* )
 	    # must be a pass1 command
 	    case "$1" in
-		sh ) exec gmake kvmsh-$2 ;;
+		--baseline* )
+		    baseline=$(expr $1 : '--\(.*\)')
+		    shift
+		    __baseline="--baseline $1"
+		    ;;
+		# aliases for pass2 commands
 		diff ) ops="${ops} diffs" ;;
 		result ) ops="${ops} results" ;;
-		modified | --modified ) modified=modified- ;;
+		test ) ops="${ops} check" ;;
+		retest ) ops="${ops} recheck" ;;
+		test-clean ) ops="${ops} check-clean" ;;
+		# git wrappers
+		commit ) shift ; exec git commit "$@" ;;
+		# invoke now
+		sh ) exec gmake kvmsh-$2 ;;
+		# wrappers
+		modified )
+		    modified=$(git status testing/pluto/ \
+				   | awk '/(modified|deleted|renamed):/ { print $NF }' \
+				   | grep '/.*/.*/' \
+				   | cut -d/ -f1-3 \
+				   | sort -u)
+		    if test -z "${modified}" ; then
+			echo "no modified tests" 1>&2
+			exit 1
+		    fi
+		    ;;
+		baseline | baseline-passed | baseline-failed )
+		    if test -z "${__baseline}" ; then
+			echo "no KVM_BASELINE" 1&2
+			exit 1
+		    fi
+		    baseline=$1
+		    ;;
 		* ) # check first trailing argument is a directory
 		    if test ! -d "$1" ; then
 			if test -z "${ops}" ; then
@@ -67,34 +99,75 @@ while test $# -gt 0 ; do
     shift
 done
 
+if test -n "${modified}" ; then
+    if test -z "${ops}" ; then
+	echo "${modified}"
+	exit 0
+    elif test $# -ne 0 ; then
+	echo "both modified and tests specified" 1>&2
+	exit 1
+    fi
+    set ${modified}
+elif test $# -eq 0 ; then
+    set testing/pluto
+fi
+
 if test -z "${ops}" ; then
     echo "nothing to do!" 1>&2
     exit 1
 fi
 
-if test $# -eq 0 ; then
-    set testing/pluto
-fi
+results_command()
+{
+    if test -n "${baseline}" ; then
+	./testing/utils/kvmresults.py ${__baseline} "$@" \
+	    | grep --line-buffered -v -e baseline:untested \
+	    | grep --line-buffered -e ${baseline}
+    else
+	./testing/utils/kvmresults.py ${__baseline} "$@"
+	status=$?
+    fi
+}
+
+diffs_command()
+{
+    if test -n "${baseline}" ; then
+	./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
+	    | grep --line-buffered -v -e baseline:untested \
+	    | grep --line-buffered -e "${baseline}" \
+	    | while read test eol ; do
+	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
+	done
+    else
+	./testing/utils/kvmresults.py --stats none --print diffs "$@"
+	status=$?
+    fi
+}
 
 # second pass
 status=0
 for op in ${ops} ; do
     case ${op} in
+	add )
+	    git add "$@"
+	    ;;
 	kill )
 	    gmake kvm-${op}
 	    ;;
-	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status )
+	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | check-clean | shutdown )
 	    gmake kvm-${op} || exit $?
 	    ;;
-	test | retest )
-	    gmake kvm-${modified}${op} KVM_TESTS="$*" || exit $?
+	check | recheck )
+	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
-	diffs | results )
-	    gmake kvm-${modified}${op} KVM_TESTS="$*"
-	    status=$?
+	diffs )
+	    diffs_command "$@"
+	    ;;
+	results )
+	    results_command "$@"
 	    ;;
 	patch )
-	    gmake kvm-${modified}diffs KVM_TESTS="$*" | patch -p1
+	    diffs_command "$@" | patch -p1
 	    ;;
 	keys )
 	    gmake kvm-keys-clean kvm-keys

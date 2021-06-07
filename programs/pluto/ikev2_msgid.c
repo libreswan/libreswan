@@ -234,131 +234,6 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 			  responder, &wip);
 }
 
-/*
- * XXX: This is to hack around the broken code that switches from the
- * IKE SA to the CHILD SA before sending the reply.  Instead, because
- * the CHILD SA can fail, the IKE SA should be the one processing the
- * message?
- */
-
-void v2_msgid_switch_responder_to_child(struct ike_sa *ike, struct child_sa *child,
-					struct msg_digest *md, where_t where)
-{
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_REQUEST)) {
-		return;
-	}
-	intmax_t md_msgid = md->hdr.isa_msgid;
-	/* out with the old */
-	{
-		const struct v2_msgid_wip ike_wip = ike->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && ike_wip.responder != md_msgid) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.responder should be %jd (md's msgid); was %jd",
-				      md_msgid, ike_wip.responder);
-		}
-		ike->sa.st_v2_msgid_wip.responder = -1;
-		dbg_msgids_update("switching from IKE SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &ike->sa, &ike_wip);
-	}
-	/* in with the new */
-	{
-		const struct v2_msgid_wip child_wip = child->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && child_wip.responder != -1) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.responder should be -1; was %jd",
-				      child_wip.responder);
-		}
-		child->sa.st_v2_msgid_wip.responder = md_msgid;
-		dbg_msgids_update("switching to CHILD SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &child->sa, &child_wip);
-	}
-	/* and don't forget MD.ST */
-	switch_md_st(md, &child->sa, where);
-}
-
-void v2_msgid_switch_responder_from_aborted_child(struct ike_sa *ike, struct child_sa **childp,
-						  struct msg_digest *md, where_t where)
-{
-	struct child_sa *child = *childp;
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_REQUEST)) {
-		return;
-	}
-	intmax_t md_msgid = md->hdr.isa_msgid;
-	/* out with the old */
-	{
-		const struct v2_msgid_wip child_wip = child->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && child_wip.responder != md_msgid) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.responder should be %jd (MD's msgid); was %jd",
-				      md_msgid, child_wip.responder);
-		}
-		child->sa.st_v2_msgid_wip.responder = -1;
-		dbg_msgids_update("switching from CHILD SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &child->sa, &child_wip);
-	}
-	/* in with the new */
-	{
-		const struct v2_msgid_wip ike_wip = ike->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) && ike_wip.responder != -1) {
-			fail_v2_msgid(where, ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.responder should be -1; was %jd",
-				      ike_wip.responder);
-		}
-		ike->sa.st_v2_msgid_wip.responder = md_msgid;
-		dbg_msgids_update("switching to IKE SA responder", role, md_msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &ike->sa, &ike_wip);
-	}
-	/* and don't forget MD.ST */
-	switch_md_st(md, &ike->sa, where);
-	child->sa.st_dont_send_delete = true; /* just to be sure */
-	delete_state(&child->sa);
-	*childp = NULL;
-}
-
-void v2_msgid_switch_initiator(struct ike_sa *ike, struct child_sa *child,
-			       const struct msg_digest *md)
-{
-	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_RESPONSE)) {
-		return;
-	}
-	intmax_t msgid = md->hdr.isa_msgid;
-	/* out with the old */
-	{
-		const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) &&
-		    ike->sa.st_v2_msgid_wip.initiator != msgid) {
-			FAIL_V2_MSGID(ike, &child->sa,
-				      "ike->sa.st_v2_msgid_wip.initiator == %jd(msgid); was %jd",
-				      msgid, ike->sa.st_v2_msgid_wip.initiator);
-		}
-		ike->sa.st_v2_msgid_wip.initiator = -1;
-		dbg_msgids_update("switching from IKE SA initiator", role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &ike->sa, &wip);
-	}
-	/* in with the new */
-	{
-		const struct v2_msgid_wip wip = child->sa.st_v2_msgid_wip;
-		if (DBGP(DBG_BASE) &&
-		    child->sa.st_v2_msgid_wip.initiator != -1) {
-			FAIL_V2_MSGID(ike, &child->sa,
-				      "child->sa.st_v2_msgid_wip.initiator == -1; was %jd",
-				      child->sa.st_v2_msgid_wip.initiator);
-		}
-		child->sa.st_v2_msgid_wip.initiator = msgid;
-		dbg_msgids_update("switching to CHILD SA initiator", role, msgid,
-				  ike, &ike->sa.st_v2_msgid_windows,
-				  &child->sa, &wip);
-	}
-}
-
 void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 			       const struct msg_digest *md)
 {
@@ -480,9 +355,9 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			 * child's retransmits when what is needed is
 			 * to clear the IKE SA's retransmits.
 			 */
-			if (receiver->st_retransmit_event != NULL) {
+			if (ike->sa.st_retransmit_event != NULL) {
 				dbg_v2_msgid(ike, receiver, "clearing EVENT_RETRANSMIT as response received");
-				clear_retransmits(receiver);
+				clear_retransmits(&ike->sa);
 			} else {
 				dbg_v2_msgid(ike, receiver, "XXX: no EVENT_RETRANSMIT to clear; suspect IKE->CHILD switch");
 			}
@@ -552,9 +427,9 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 				     old_sender.initiator);
 		}
 #endif
-		if (sender->st_retransmit_event == NULL) {
+		if (ike->sa.st_retransmit_event == NULL) {
 			dbg_v2_msgid(ike, sender, "scheduling EVENT_RETRANSMIT");
-			start_retransmits(sender);
+			start_retransmits(&ike->sa);
 		} else {
 			dbg_v2_msgid(ike, sender, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
 		}
@@ -609,7 +484,7 @@ bool v2_msgid_request_outstanding(struct ike_sa *ike)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	intmax_t unack = (initiator->sent - initiator->recv);
-	return (unack != 0); /* well >0  */
+	return (unack != 0); /* well >0 */
 }
 
 bool v2_msgid_request_pending(struct ike_sa *ike)
@@ -631,14 +506,14 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL) {
-		if (ix == ISAKMP_v2_INFORMATIONAL  && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
+		if (ix == ISAKMP_v2_INFORMATIONAL && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
 			dbg("%s %d inserting v2D task for #%lu before #%lu CREATE_CHILD_SA",  __func__, __LINE__, st->st_serialno, (*pp)->st_serialno);
 			break;
 		}
 		pp = &(*pp)->next;
 	}
 	/* append */
-	struct v2_msgid_pending new =  {
+	struct v2_msgid_pending new = {
 		.st_serialno = st->st_serialno,
 		.ix = ix,
 		.cb = callback,

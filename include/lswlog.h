@@ -214,6 +214,15 @@ struct logger_object_vec {
 #define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
 };
 
+bool suppress_object_log_false(const void *object);
+bool suppress_object_log_true(const void *object);
+size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
+
+#ifndef FAILSAFE_LOGGER
+extern const struct logger failsafe_logger;
+#define FAILSAFE_LOGGER
+#endif
+
 struct logger {
 	struct fd *global_whackfd;
 	struct fd *object_whackfd;
@@ -223,6 +232,9 @@ struct logger {
 	/* used by timing to nest its logging output */
 	int timing_level;
 };
+
+#define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
+#define pri_logger(LOGGER) (LOGGER), (LOGGER) == NULL ? NULL : (LOGGER)->global_whackfd, (LOGGER) == NULL ? NULL : (LOGGER)->object_whackfd
 
 void llog(lset_t rc_flags,
 	  const struct logger *log,
@@ -238,18 +250,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		for (jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS);	\
 		     BUF != NULL;					\
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
-
-/*
- * Fallback for debug and panic cases where making a logger available
- * is a pain (for instance deep inside code that shouldn't panic).
- *
- * XXX: Currently the error code, when the main thread, writes to
- * whack when available.  Long term it may not (it can't work when on
- * a thread).
- */
-
-void jambuf_to_error_stream(struct jambuf *buf);
-void jambuf_to_debug_stream(struct jambuf *buf);
 
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
@@ -295,14 +295,6 @@ void fatal(enum pluto_exit_code rc, struct logger *logger,
 		fatal(RC, LOGGER, FMT". "PRI_ERRNO,			\
 		      ##__VA_ARGS__, pri_errno(e_));			\
 	}
-
-/*
- * E must have been saved!  Assume it is used as "... "PRI_ERRNO.
- *
- *   _Errno E: <strerror(E)>
- */
-#define PRI_ERRNO "Errno %d: %s"
-#define pri_errno(E) (E), strerror(E)
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log
@@ -413,28 +405,29 @@ void lswlog_pexpect_example(void *p)
 }
 #endif
 
-#define pexpect(ASSERTION)						\
+extern void llog_pexpect(const struct logger *logger, where_t where,
+			 const char *message, ...) PRINTF_LIKE(3);
+
+#define PEXPECT(LOGGER, ASSERTION)					\
 	({								\
-		bool assertion__ = ASSERTION;				\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
-			log_pexpect(HERE, "%s", #ASSERTION);		\
+			where_t here_ = HERE;				\
+			const struct logger *logger_ = LOGGER;		\
+			llog_pexpect(logger_, here_, "%s", #ASSERTION);	\
 		}							\
 		assertion__; /* result */				\
 	})
 
-void log_pexpect(where_t where, const char *message, ...) PRINTF_LIKE(2);
+/*
+ * older: message does not reach whack
+ */
 
-#define llog_pexpect(LOGGER, ASSERTION)					\
-	({								\
-		bool assertion__ = ASSERTION;				\
-		if (!assertion__) {					\
-			llog_pexpect_fail(LOGGER, HERE, "%s", #ASSERTION); \
-		}							\
-		assertion__; /* result */				\
-	})
-
-void llog_pexpect_fail(struct logger *logger, where_t where, const char *message, ...) PRINTF_LIKE(3);
-#define pexpect_fail llog_pexpect_fail /* TBD: rename */
+#define pexpect(ASSERTION)  PEXPECT(&failsafe_logger, ASSERTION)
+#define log_pexpect(WHERE, FMT, ...) llog_pexpect(&failsafe_logger, WHERE, FMT,##__VA_ARGS__)
+#define pexpect_fail llog_pexpect
+#define llog_pexpect_fail llog_pexpect
 
 /* for a switch statement */
 

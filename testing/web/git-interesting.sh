@@ -1,11 +1,12 @@
 #!/bin/sh
 
-usage() {
+
+if test $# -ne 2; then
     cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <gitrev> [ <repodir> ]
+    $0 <repodir> <gitrev>
 
 Where <repodir> defaults to the current directory.  XXX: The parameter
 order needs to be reversed.
@@ -27,21 +28,16 @@ The output is one of:
         the commit is not interesting
 
 EOF
-}
-
-if test $# -lt 1; then
-    usage
     exit 1
 fi
 
+
 set -eu
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
+# switch to repodir
+cd $1 ; shift
 gitrev=$1 ; shift
-if test $# -gt 0 ; then
-    cd $1
-    shift
-fi
 
 # All tags are interesting.
 #
@@ -56,7 +52,7 @@ fi
 
 # All merges (commits with more than one parent) are "interesting".
 
-parents=$(git show --no-patch --format=%P "${gitrev}^{commit}")
+parents=$(${bindir}/gime-git-parents.sh . ${gitrev})
 if test $(echo ${parents} | wc -w) -gt 1 ; then
     echo merge: ${parents}
     exit 0

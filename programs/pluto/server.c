@@ -76,6 +76,7 @@
 #include "state_db.h"
 #include "iface.h"
 #include "server_fork.h"
+#include "pluto_shutdown.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"
@@ -104,7 +105,7 @@ char *pluto_vendorid;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
-static  struct pluto_event *pluto_events_head = NULL;
+static struct pluto_event *pluto_events_head = NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -114,7 +115,7 @@ struct sockaddr_un ctl_addr = {
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
-	.sun_path  = DEFAULT_CTL_SOCKET
+	.sun_path = DEFAULT_CTL_SOCKET
 };
 
 /* Initialize the control socket.
@@ -471,7 +472,7 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 	/* unlink this pluto_event from the list */
 	if (e->ev != NULL) {
 		event_free(e->ev);
-		e->ev  = NULL;
+		e->ev = NULL;
 	}
 
 	dbg_free("pe", e, HERE);
@@ -628,7 +629,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;
-		so_serial_t old_md_st = md != NULL && md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
+		so_serial_t old_md_st = md != NULL && md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
 		enum ike_version ike_version = st->st_ike_version;
 		/* when MD.ST it matches ST */
 		pexpect(old_md_st == SOS_NOBODY || old_md_st == old_st);
@@ -641,10 +642,10 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			/* MD.ST may have been freed! */
 			dbg("resume %s for #%lu suppresed complete_v%d_state_transition()%s",
 			    e->name, e->serialno, ike_version,
-			    (old_md_st != SOS_NOBODY && md->st == NULL ? "; MD.ST disappeared" :
-			     old_md_st != SOS_NOBODY && md->st != st ? "; MD.ST was switched" :
+			    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
+			     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
 			     ""));
-		} else if (old_md_st != SOS_NOBODY && md->st == NULL) {
+		} else if (old_md_st != SOS_NOBODY && md->v1_st == NULL) {
 			/*
 			 * XXX: yes, MD.ST can be set to NULL.
 			 *
@@ -703,13 +704,13 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			case IKEv1:
 				/* no switching MD.ST */
 				if (old_md_st == SOS_NOBODY) {
-					/* (old)md->st == (new)md->st == NULL */
-					pexpect(md == NULL || md->st == NULL);
+					/* (old)md->v1_st == (new)md->v1_st == NULL */
+					pexpect(md == NULL || md->v1_st == NULL);
 				} else {
-					/* md->st didn't change */
+					/* md->v1_st didn't change */
 					pexpect(md != NULL &&
-						md->st != NULL &&
-						md->st->st_serialno == old_md_st);
+						md->v1_st != NULL &&
+						md->v1_st->st_serialno == old_md_st);
 				}
 				pexpect(st != NULL); /* see above */
 				complete_v1_state_transition(st, md, status);
@@ -717,12 +718,12 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 #endif
 			case IKEv2:
 				if (old_md_st == SOS_NOBODY) {
-					pexpect(md == NULL || md->st == NULL);
-				} else if (pexpect(md != NULL && md->st != NULL)) {
-					if (md->st->st_serialno != old_st) {
+					pexpect(md == NULL || md->v1_st == NULL);
+				} else if (pexpect(md != NULL && md->v1_st != NULL)) {
+					if (md->v1_st->st_serialno != old_st) {
 						dbg("XXX: resume %s for #%lu switched MD.ST to #%lu",
-						    e->name, old_st, md->st->st_serialno);
-						st = md->st;
+						    e->name, old_st, md->v1_st->st_serialno);
+						st = md->v1_st;
 					}
 				}
 				complete_v2_state_transition(st, md, status);
@@ -935,12 +936,7 @@ static void huphandler_cb(struct logger *logger)
 
 static void termhandler_cb(struct logger *logger)
 {
-#if 1
-	llog(RC_LOG, logger, "terminated");
-	libreswan_exit(PLUTO_EXIT_OK);
-#else
-	fatal(PLUTO_EXIT_OK, logger, "terminated");
-#endif
+	shutdown_pluto(logger, PLUTO_EXIT_OK);
 }
 
 #ifdef HAVE_SECCOMP

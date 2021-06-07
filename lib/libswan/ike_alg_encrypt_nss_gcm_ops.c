@@ -65,7 +65,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 	param.data = (void*)&gcm_params;
 	param.len = sizeof gcm_params;
 
-	/* Output buffer for transformed data.  */
+	/* Output buffer for transformed data. */
 	size_t text_and_tag_size = text_size + tag_size;
 	uint8_t *out_buf = PR_Malloc(text_and_tag_size);
 	unsigned int out_len = 0;

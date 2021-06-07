@@ -638,7 +638,7 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 		pfreeany(pluto_dnssec_rootfile);
 		set_cfg_string(&pluto_dnssec_rootfile,
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
-	} else  {
+	} else {
 		/* unset the global one config file unset it */
 		pfreeany(pluto_dnssec_rootfile);
 		pluto_dnssec_rootfile = NULL;
@@ -1746,7 +1746,7 @@ int main(int argc, char **argv)
 	init_root_certs();
 	init_secret(logger);
 #ifdef USE_IKEv1
-	init_ikev1();
+	init_ikev1(logger);
 #endif
 	init_ikev2();
 	init_states();

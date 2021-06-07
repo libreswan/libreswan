@@ -21,7 +21,7 @@ EOF
     exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
 
 repodir=$(cd $1 && pwd) ; shift
 
@@ -33,11 +33,9 @@ else
     done
 fi | while read d; do
     dir=$(dirname $d)
-    hash=$(${webdir}/gime-git-rev.sh $dir)
+    rev=$(${bindir}/gime-git-rev.sh ${dir})
     # expand to full hash
-    if HASH=$(cd $repodir && git show --no-patch --format=%H ${hash} --) && test "${HASH}" = "" ; then
-	hash=${hash}
-    fi
+    hash=$(${bindir}/gime-git-hash.sh ${repodir} ${rev})
     # let any existing hash override above
     jq --arg hash "${hash}" \
        '.hash = if .hash? then .hash else $hash end | .directory = (input_filename|split("/")|.[-2])' \

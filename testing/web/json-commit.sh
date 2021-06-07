@@ -5,7 +5,7 @@ if test $# -lt 1 ; then
 
 Usage:
 
-    $0 <gitrev> [ <repodir> ]
+    $0 <repdir> <gitrev>
 
 Dump <gitrev> from <repodir> as raw json using a format similar to:
 
@@ -35,14 +35,12 @@ EOF
     exit 1
 fi
 
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
+# switch to repodir
+cd $1 ; shift
 gitrev=$1 ; shift
-if test $# -gt 0 ; then
-    cd $1
-    shift
-fi
 
-if ! git show --no-patch --format= ${gitrev} -- > /dev/null 2>&1 ; then
+if ! git log --format= ${gitrev}^..${gitrev} -- > /dev/null 2>&1 ; then
     echo "invalid: ${gitrev}" 1>&2
     exit 1
 fi
@@ -75,11 +73,9 @@ commiter_format() {
 (
     # Output the parent commits as a list.
     #
-    # %P puts all the hashes on a single line separated by spaces, the
-    # %for-loop converts that to one hash per line.  Change it to sed
-    # %...?
+    # The parents are all on one line so split it.
 
-    for parent in $(git show --no-patch --format=%P "${gitrev}^{commit}") ; do
+    for parent in $(${bindir}/gime-git-parents.sh . ${gitrev}) ; do
 	echo ${parent} | jq --raw-input '.'
     done | jq -s '{ parent_hashes: . }'
 
@@ -96,7 +92,7 @@ commiter_format() {
     # details" (for really interesting stuff).  Need to convert the
     # last one to proper json:
 
-    interesting=$(${webdir}/git-interesting.sh ${gitrev})
+    interesting=$(${bindir}/git-interesting.sh . ${gitrev})
     case "${interesting}" in
 	*:* )
 	    # convert 'reason: details' -> '"reason"'

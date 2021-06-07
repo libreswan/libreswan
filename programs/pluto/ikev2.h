@@ -20,6 +20,8 @@ struct spd_route;
 struct crypt_mac;
 struct hash_desc;
 struct payload_digest;
+struct ikev2_ipseckey_dns;
+enum payload_security;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
@@ -32,51 +34,14 @@ typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
 					     struct msg_digest *md /* could be NULL */);
 
-/* extern initiator_function ikev2_parent_outI1; */
-extern void ikev2_out_IKE_SA_INIT_I(struct fd *whack_sock,
-				    struct connection *c,
-				    struct state *predecessor,
-				    lset_t policy,
-				    unsigned long try,
-				    const threadtime_t *inception,
-				    chunk_t sec_label);
-
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R;
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
-extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R;
-extern stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest * md);
-
 extern void log_ipsec_sa_established(const char *m, const struct state *st);
 
 extern void complete_v2_state_transition(struct state *st,
 					 struct msg_digest *mdp,
 					 stf_status result);
 
-extern ikev2_state_transition_fn process_encrypted_informational_ikev2;
-
-extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
-extern ikev2_state_transition_fn ikev2_child_ike_inR;
-extern ikev2_state_transition_fn ikev2_child_inR;
-extern ikev2_state_transition_fn ikev2_child_inIoutR;
-
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_failure_notification;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_R_unknown_notification;
-extern ikev2_state_transition_fn ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid;
-extern ikev2_state_transition_fn ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R;
-
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
-
-bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
-extern ikev2_state_transition_fn ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD;
-
-extern void ikev2_initiate_child_sa(struct pending *p);
-
-void ikev2_rekey_ike_start(struct ike_sa *ike);
-
-extern void ikev2_child_outI(struct state *st);
 
 struct ikev2_proposal;
 struct ikev2_proposals;
@@ -175,19 +140,9 @@ diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
 					     shunk_t signature,
 					     const struct hash_desc *hash_algo);
 
-extern void ikev2_derive_child_keys(struct child_sa *child);
-
-stf_status ikev2_child_sa_respond(struct ike_sa *ike,
-				  struct child_sa *child,
-				  struct msg_digest *md,
-				  pb_stream *outpbs,
-				  enum isakmp_xchg_types isa_xchg);
+extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 
 void v2_schedule_replace_event(struct state *st);
-
-bool emit_v2_child_configuration_payload(struct connection *c,
-					 struct child_sa *child,
-					 pb_stream *outpbs);
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 
@@ -251,18 +206,9 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
 			      enum state_kind new_state);
 
-struct ikev2_ipseckey_dns;
-
-bool ikev2_process_child_sa_payload(struct ike_sa *ike, struct child_sa *child,
-				    struct msg_digest *md, bool expect_accepted_proposal);
-
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
 
 extern void init_ikev2(void);
-
-extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
-extern void ikev2_record_deladdr(struct state *st, void *arg_ip);
-extern void ikev2_addr_change(struct state *st);
 
 void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 
@@ -277,5 +223,29 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct state_v2_microcode *transition);
+
+bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
+		     chunk_t *dest, const char *name);
+
+bool v2_accept_ke_for_proposal(struct ike_sa *ike,
+			       struct state *st,
+			       struct msg_digest *md,
+			       const struct dh_desc *accepted_dh,
+			       enum payload_security security);
+bool need_configuration_payload(const struct connection *const pc,
+				const lset_t st_nat_traversal);
+void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred);
+
+struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
+			    const char *id_name, shunk_t id_payload,
+			    const char *key_name, PK11SymKey *key);
+bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
+struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
+				    const char *key_name, PK11SymKey *key);
+
+void IKE_SA_established(const struct ike_sa *ike);
+
+bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
+					   struct ike_sa *ike);
 
 #endif

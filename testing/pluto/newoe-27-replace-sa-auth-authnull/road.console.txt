@@ -135,7 +135,7 @@ road #
  sleep 5
 road #
  ipsec status |grep STATE_
-000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
+000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; REPLACE in XXs; idle;
 road #
  ipsec whack --trafficstatus
 road #
@@ -157,6 +157,6 @@ road #
  # additional 'authenticated' partial state lingers
 road #
  ipsec status | grep STATE_
-000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); EVENT_SA_REPLACE in XXs; idle;
+000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; REPLACE in XXs; idle;
 road #
  

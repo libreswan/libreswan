@@ -52,14 +52,14 @@ static void reread_end_cert(struct end *dst, struct logger *logger)
 	     dst->leftright, cert_nickname(&dst->cert));
 }
 
-void reread_cert(struct fd *whackfd, struct connection *c)
+static void reread_cert(struct connection *c, struct logger *logger)
 {
 	dbg("rereading certificate(s) for connection '%s'", c->name);
 	struct end *dst;
 
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 	dst = &c->spd.this;
 	reread_end_cert(dst, c->logger);
@@ -69,4 +69,14 @@ void reread_cert(struct fd *whackfd, struct connection *c)
 
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
+}
+
+
+/* reread all left/right certificates from NSS DB */
+void reread_cert_connections(struct logger *logger)
+{
+	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
+	for (struct connection *c = connections; c != NULL; c = c->ac_next) {
+		reread_cert(c, logger);
+	}
 }

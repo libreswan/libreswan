@@ -33,9 +33,9 @@
 #include "demux.h"
 #include "pluto_stats.h"
 
-enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
+enum v2_pd v2_notification_to_v2_pd(v2_notification_t n)
 {
-#define C(N) case v2N_##N: return PBS_v2N_##N;
+#define C(N) case v2N_##N: return PD_v2N_##N;
 	switch (n) {
 	C(REKEY_SA);
 	C(NO_PPK_AUTH);
@@ -64,7 +64,11 @@ enum v2_pbs v2_notification_to_v2_pbs(v2_notification_t n)
 	C(TS_UNACCEPTABLE);
 	C(INTERMEDIATE_EXCHANGE_SUPPORTED);
 	C(UPDATE_SA_ADDRESSES);
-	default: return PBS_v2_INVALID;
+	C(NO_PROPOSAL_CHOSEN);
+	C(SINGLE_PAIR_REQUIRED);
+	C(INTERNAL_ADDRESS_FAILURE);
+	C(FAILED_CP_REQUIRED);
+	default: return PD_v2_INVALID;
 	}
 #undef C
 }
@@ -107,18 +111,18 @@ void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *
 		dbg("%s notification %d is unknown", type, n);
 		return;
 	}
-	enum v2_pbs v2_pbs = v2_notification_to_v2_pbs(n);
-	if (v2_pbs == PBS_v2_INVALID) {
+	enum v2_pd v2_pd = v2_notification_to_v2_pd(n);
+	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
 		dbg("%s notification %s is not supported", type, name);
 		return;
 	}
-	if (md->pbs[v2_pbs] != NULL) {
+	if (md->pd[v2_pd] != NULL) {
 		dbg("%s duplicate notification %s ignored", type, name);
 		return;
 	}
 	if (DBGP(DBG_TMI)) {
 		DBG_log("%s notification %s saved", type, name);
 	}
-	md->pbs[v2_pbs] = &notify->pbs;
+	md->pd[v2_pd] = notify;
 }

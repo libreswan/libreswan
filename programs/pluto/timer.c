@@ -65,6 +65,7 @@
 #include "pluto_stats.h"
 #include "iface.h"
 #include "ikev2_liveness.h"
+#include "ikev2_mobike.h"
 
 struct pluto_event **state_event(struct state *st, enum event_type type)
 {
@@ -85,23 +86,19 @@ struct pluto_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v2_LIVENESS:
 		return &st->st_liveness_event;
 
-	case EVENT_v2_RELEASE_WHACK:
-		return &st->st_rel_whack_event;
-
 	case EVENT_v1_SEND_XAUTH:
 		return &st->st_send_xauth_event;
 
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
-	case EVENT_SO_DISCARD:
+	case EVENT_SA_DISCARD:
 	case EVENT_SA_REKEY:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
-	case EVENT_v1_SA_REPLACE_IF_USED:
+	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
-	case EVENT_v2_INITIATE_CHILD:
 	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
@@ -203,18 +200,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		ikev2_addr_change(st);
 		break;
 
-	case EVENT_v2_RELEASE_WHACK:
-	{
-		esb_buf b;
-		dbg("%s releasing whack for #%lu %s (sock="PRI_FD")",
-		    enum_show(&timer_event_names, type, &b),
-		    st->st_serialno,
-		    st->st_state->name,
-		    pri_fd(st->st_logger->object_whackfd));
-		release_pending_whacks(st, "release whack");
-		break;
-	}
-
 	case EVENT_RETRANSMIT:
 		dbg("IKEv%d retransmit event", st->st_ike_version);
 		switch (st->st_ike_version) {
@@ -239,10 +224,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 #endif
 
-	case EVENT_v2_INITIATE_CHILD:
-		ikev2_child_outI(st);
-		break;
-
 	case EVENT_v2_LIVENESS:
 		liveness_check(st);
 		break;
@@ -253,7 +234,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 
 	case EVENT_SA_REPLACE:
-	case EVENT_v1_SA_REPLACE_IF_USED:
+	case EVENT_v1_REPLACE_IF_USED:
 		switch (st->st_ike_version) {
 		case IKEv2:
 			pexpect(type == EVENT_SA_REPLACE);
@@ -261,7 +242,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			break;
 		case IKEv1:
 			pexpect(type == EVENT_SA_REPLACE ||
-				type == EVENT_v1_SA_REPLACE_IF_USED);
+				type == EVENT_v1_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
 			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
@@ -270,7 +251,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				/* not very interesting: no need to replace */
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
-			} else if (type == EVENT_v1_SA_REPLACE_IF_USED &&
+			} else if (type == EVENT_v1_REPLACE_IF_USED &&
 				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
@@ -378,7 +359,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		break;
 	}
 
-	case EVENT_SO_DISCARD:
+	case EVENT_SA_DISCARD:
 		/*
 		 * The state failed to complete within a reasonable
 		 * time, or the state failed but was left to live for

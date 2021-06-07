@@ -16,6 +16,8 @@
  * License for more details.
  */
 
+#include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
+
 #include "jambuf.h"
 #include "ip_address.h"
 #include "lswlog.h"		/* for dbg() */
@@ -48,7 +50,7 @@ uint32_t ntohl_address(const ip_address *a)
 	shunk_t s = address_as_shunk(a);
 	if (address_type(a) == &ipv4_info) {
 		memcpy(&u, s.ptr, s.len);
-	} else  {
+	} else {
 		/* IPv6 take bits 96 - 128 to compute size */
 		s.ptr += (s.len - sizeof(u));
 		memcpy(&u, s.ptr, sizeof(u));

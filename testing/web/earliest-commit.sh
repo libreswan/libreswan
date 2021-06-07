@@ -19,9 +19,9 @@ EOF
 fi
 
 # paths need to be absolute as potentially cd'ing to $repodir
-webdir=$(cd $(dirname $0) && pwd)
+bindir=$(cd $(dirname $0) && pwd)
 summarydir=$(cd $1 && pwd) ; shift
-
+repodir=.
 if test $# -gt 0 ; then
     cd $1
     shift
@@ -35,24 +35,23 @@ fi
 
 hashes=$(ls ${summarydir} \
 	    | xargs --no-run-if-empty \
-		    ${webdir}/gime-git-rev.sh \
+		    ${bindir}/gime-git-rev.sh \
 	    | xargs --no-run-if-empty \
-		    git show --ignore-missing --no-patch --format=%h \
+		    ${bindir}/gime-git-hash.sh ${repodir} \
 	    | xargs --no-run-if-empty \
 		    git merge-base --octopus )
+
 if test -z "${hashes}" ; then
-    hash=$(git show --no-patch --format=%h HEAD)
+    hash=$(${bindir}/gime-git-hash.sh . HEAD)
     echo "No results in ${summarydir} using HEAD ${hash}" 1>&2
-    echo $hash
+    echo ${hash}
     exit 0
 fi
 
-# determine the first of them; need to pretty print the result (git
-# merge-base doesn't handle --format).
+# Determine the first of them; git merge-base prints the raw hash.
 #
-# Assume that ${hashes} isn't so long that more than two iterations of
-# merge-base are needed.  If that turns out to be false then "fixing"
-# merge-base to take stdin would be better.
+# Assume that ${hashes} is not so long that more than two invocation
+# of merge-base are needed (one above, one below).  If that turns out
+# to be false then "fixing" merge-base to take stdin would be better.
 
-git show --no-patch --format=%H \
-    $(git merge-base --octopus ${hashes})
+git merge-base --octopus ${hashes}

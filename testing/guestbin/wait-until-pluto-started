@@ -3,6 +3,10 @@
 # Wait until both whack can talk to pluto and the addconn process has
 # has finished adding connections, i.e., until pluto has started.
 
+# Stop systemctl going all graphical
+LC_CTYPE=C
+export LC_CTYPE
+
 # When pluto starts it does:
 #
 # - creates whack socket
@@ -41,11 +45,11 @@ done
 echo ==== tuc ====
 
 # what took so long?
-if [ $count -eq 0 ]
-then
-   if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
+if test $count -eq 0 ; then
+    echo giving up
+    if echo $SUDO_COMMAND | grep "/bin/nsenter " > /dev/null 2>&1 ; then
 	echo "pluto in namespace failed to start - check logs or output"
-   else
+    else
 	systemctl --full status ipsec.service
-   fi
+    fi
 fi

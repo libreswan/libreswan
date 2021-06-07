@@ -318,6 +318,7 @@ kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
 kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-08-ignore-reserved		good
+kvmplutotest	ikev2-impair-09-omit-first-child	good
 
 kvmplutotest	impair-08-ikev1-key-length-attribute	good
 kvmplutotest	impair-08-ikev2-key-length-attribute	good
@@ -834,7 +835,6 @@ kvmplutotest	psk-pluto-03		good
 kvmplutotest	psk-pluto-04		good
 kvmplutotest	psk-pluto-05		good
 kvmplutotest	psk-pluto-06		good
-kvmplutotest	psk-pluto-07		good
 
 #
 # tests using alternative ESP algorithms
@@ -909,13 +909,14 @@ kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
 # Selinux / secure labeling tests
 kvmplutotest	ikev1-labeled-ipsec-01					wip
+kvmplutotest	ikev1-labeled-ipsec-01-childless			wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-01					good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label				wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-reverse			wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		wip
 
 # compress tests
 kvmplutotest    compress-pluto-01		good

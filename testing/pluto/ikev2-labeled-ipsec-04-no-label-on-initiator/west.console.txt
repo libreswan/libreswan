@@ -28,8 +28,11 @@ west #
 1v2 "labeled" #1: initiating IKEv2 connection
 1v2 "labeled" #1: sent IKE_SA_INIT request
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "labeled" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-000 "labeled" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
+003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "labeled" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
+002 "labeled" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
+002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "labeled" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
@@ -37,8 +40,7 @@ west #
  ipsec whack --shutdown
 west #
  semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Unable to remove module ipsecspd at priority 400. (No such file or directory).
-semodule:  Failed!
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  rm -rf ipsecspd.fc ipsecspd.if tmp
 west #

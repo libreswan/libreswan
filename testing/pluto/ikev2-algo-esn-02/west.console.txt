@@ -26,8 +26,11 @@ west #
 1v2 "replay" #1: initiating IKEv2 connection
 1v2 "replay" #1: sent IKE_SA_INIT request
 1v2 "replay" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "replay" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
-000 "replay" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
+003 "replay" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "replay" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+002 "replay" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
+002 "replay" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "replay" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
@@ -35,10 +38,6 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES

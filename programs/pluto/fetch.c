@@ -85,50 +85,63 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
  */
 static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 {
-	char errorbuffer[CURL_ERROR_SIZE] = "";
+	char errorbuffer[CURL_ERROR_SIZE] = "?";
 	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
-	long timeout = FETCH_CMD_TIMEOUT;
-	CURLcode res;
+	long timeout = curl_timeout > 0 ? curl_timeout : FETCH_CMD_TIMEOUT;
 
 	/* get it with libcurl */
 	CURL *curl = curl_easy_init();
 
-	if (curl != NULL) {
-		if (curl_timeout > 0)
-			timeout = curl_timeout;
+	if (curl == NULL)
+		return "cannot initialize curl";
 
-		dbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
+	dbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
 
-		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * timeout);
-		/* work around for libcurl signal bug */
-		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
-		if (curl_iface != NULL)
-			curl_easy_setopt(curl, CURLOPT_INTERFACE, curl_iface);
+	CURLcode res = CURLE_OK;
 
+#	define CESO(optype, optarg) { \
+		if (res == CURLE_OK) { \
+			res = curl_easy_setopt(curl, optype, optarg); \
+			if (res != CURLE_OK) { \
+				dbg("curl_easy_setopt " #optype " failed %d", res); \
+			} \
+		} \
+	}
+
+	CESO(CURLOPT_URL, url);
+	CESO(CURLOPT_WRITEFUNCTION, write_buffer);
+	CESO(CURLOPT_WRITEDATA, (void *)&response);
+	CESO(CURLOPT_ERRORBUFFER, errorbuffer);
+	CESO(CURLOPT_CONNECTTIMEOUT, timeout);
+	CESO(CURLOPT_TIMEOUT, 2 * timeout);
+	CESO(CURLOPT_NOSIGNAL, 1);	/* work around for libcurl signal bug */
+
+	if (curl_iface != NULL)
+		CESO(CURLOPT_INTERFACE, curl_iface);
+
+#	undef CESO
+
+	if (res == CURLE_OK)
 		res = curl_easy_perform(curl);
 
-		if (res == CURLE_OK) {
-			/* clone from realloc(3)ed memory to pluto-allocated memory */
-			*blob = clone_hunk(response, "curl blob");
-		} else {
-			llog(RC_LOG, logger,
-			     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);
-		}
-		curl_easy_cleanup(curl);
-
-		/* ??? where/how should this be logged? */
-		if (errorbuffer[0] != '\0') {
-			dbg("libcurl(%s) yielded %s", url, errorbuffer);
-		}
-
-		if (response.ptr != NULL)
-			free(response.ptr);	/* allocated via realloc(3) */
+	if (res == CURLE_OK) {
+		/* clone from realloc(3)ed memory to pluto-allocated memory */
+		errorbuffer[0] = '\0';
+		*blob = clone_hunk(response, "curl blob");
+	} else {
+		llog(RC_LOG, logger,
+		     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);
 	}
+	curl_easy_cleanup(curl);
+
+	/* ??? where/how should this be logged? */
+	if (errorbuffer[0] != '\0') {
+		dbg("libcurl(%s) yielded %s", url, errorbuffer);
+	}
+
+	if (response.ptr != NULL)
+		free(response.ptr);	/* allocated via realloc(3) */
+
 	/* ??? should this return errorbuffer instead? */
 	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
 }

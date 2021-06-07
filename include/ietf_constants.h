@@ -1196,7 +1196,7 @@ typedef uint16_t ipsec_auth_t;
 
 enum ikev1_encr_attribute  {
 	OAKLEY_DES_CBC = 1,
-	OAKLEY_IDEA_CBC  = 2,
+	OAKLEY_IDEA_CBC = 2,
 	OAKLEY_BLOWFISH_CBC = 3,
 	OAKLEY_RC5_R16_B64_CBC = 4,
 	OAKLEY_3DES_CBC = 5,
@@ -1316,7 +1316,7 @@ enum ikev2_cp_attribute_type {
 	IKEv2_RESERVED_9 = 9,
 	IKEv2_INTERNAL_IP6_DNS = 10,
 	IKEv2_RESERVED_11 = 11,
-	IKEv2_INTERNAL_IP6_DHCP  =12,
+	IKEv2_INTERNAL_IP6_DHCP = 12,
 	IKEv2_INTERNAL_IP4_SUBNET = 13,
 	IKEv2_SUPPORTED_ATTRIBUTES = 14,
 	IKEv2_INTERNAL_IP6_SUBNET = 15,
@@ -1676,7 +1676,7 @@ enum ike_id_type {
 	ID_IPV4_ADDR = 1,
 	ID_FQDN = 2,
 	ID_USER_FQDN = 3,
-	ID_RFC822_ADDR  = ID_USER_FQDN,	/* alias */
+	ID_RFC822_ADDR = ID_USER_FQDN,	/* alias */
 	ID_IPV4_ADDR_SUBNET = 4,	/* XXX IKEv1 only but we use it */
 	ID_IPV6_ADDR = 5,
 	ID_IPV6_ADDR_SUBNET = 6,	/* XXX IKEv1 only but we use it */

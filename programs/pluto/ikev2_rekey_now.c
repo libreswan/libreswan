@@ -37,7 +37,7 @@ static void rekey_state(struct state *st, bool background, struct logger *logger
 	if (!background) {
 		/* XXX: something better? */
 		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->object_whackfd = dup_any(logger->global_whackfd);
+		st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 	}
 	event_force(EVENT_SA_REKEY, st);
 }
@@ -54,7 +54,7 @@ static int rekey_connection_now(struct connection *c,
 	struct state *st;
 	switch (how->sa_type) {
 	case IKE_SA:
-		st = state_by_serialno(c->newest_isakmp_sa);
+		st = state_by_serialno(c->newest_ike_sa);
 		break;
 	case IPSEC_SA:
 		st = state_by_serialno(c->newest_ipsec_sa);

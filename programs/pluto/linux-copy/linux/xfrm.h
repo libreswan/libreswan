@@ -99,14 +99,14 @@ struct xfrm_replay_state_esn {
 
 struct xfrm_algo {
 	char		alg_name[64];
-	unsigned int	alg_key_len;    /* in bits */
+	unsigned int	alg_key_len;	/* in bits */
 	char		alg_key[0];
 };
 
 struct xfrm_algo_auth {
 	char		alg_name[64];
-	unsigned int	alg_key_len;    /* in bits */
-	unsigned int	alg_trunc_len;  /* in bits */
+	unsigned int	alg_key_len;	/* in bits */
+	unsigned int	alg_trunc_len;	/* in bits */
 	char		alg_key[0];
 };
 
@@ -152,7 +152,7 @@ enum {
 #define XFRM_MODE_BEET 4
 #define XFRM_MODE_MAX 5
 
-/* Netlink configuration messages.  */
+/* Netlink configuration messages. */
 enum {
 	XFRM_MSG_BASE = 0x10,
 
@@ -251,7 +251,7 @@ struct xfrm_encap_tmpl {
 	xfrm_address_t	encap_oa;
 };
 
-/* AEVENT flags  */
+/* AEVENT flags */
 enum xfrm_ae_ftype_t {
 	XFRM_AE_UNSPEC,
 	XFRM_AE_RTHR=1,	/* replay threshold*/
@@ -272,7 +272,7 @@ struct xfrm_userpolicy_type {
 	__u8		reserved2;
 };
 
-/* Netlink message attributes.  */
+/* Netlink message attributes. */
 enum xfrm_attr_type_t {
 	XFRMA_UNSPEC,
 	XFRMA_ALG_AUTH,		/* struct xfrm_algo */
@@ -280,7 +280,7 @@ enum xfrm_attr_type_t {
 	XFRMA_ALG_COMP,		/* struct xfrm_algo */
 	XFRMA_ENCAP,		/* struct xfrm_algo + struct xfrm_encap_tmpl */
 	XFRMA_TMPL,		/* 1 or more struct xfrm_user_tmpl */
-	XFRMA_SA,		/* struct xfrm_usersa_info  */
+	XFRMA_SA,		/* struct xfrm_usersa_info */
 	XFRMA_POLICY,		/*struct xfrm_userpolicy_info */
 	XFRMA_SEC_CTX,		/* struct xfrm_sec_ctx */
 	XFRMA_LTIME_VAL,
@@ -289,11 +289,11 @@ enum xfrm_attr_type_t {
 	XFRMA_ETIMER_THRESH,
 	XFRMA_SRCADDR,		/* xfrm_address_t */
 	XFRMA_COADDR,		/* xfrm_address_t */
-	XFRMA_LASTUSED,		/* unsigned long  */
+	XFRMA_LASTUSED,		/* unsigned long */
 	XFRMA_POLICY_TYPE,	/* struct xfrm_userpolicy_type */
 	XFRMA_MIGRATE,
 	XFRMA_ALG_AEAD,		/* struct xfrm_algo_aead */
-	XFRMA_KMADDRESS,        /* struct xfrm_user_kmaddress */
+	XFRMA_KMADDRESS,	/* struct xfrm_user_kmaddress */
 	XFRMA_ALG_AUTH_TRUNC,	/* struct xfrm_algo_auth */
 	XFRMA_MARK,		/* struct xfrm_mark */
 	XFRMA_TFCPAD,		/* __u32 */
@@ -313,8 +313,8 @@ enum xfrm_attr_type_t {
 };
 
 struct xfrm_mark {
-	__u32           v; /* value */
-	__u32           m; /* mask */
+	__u32		v;	/* value */
+	__u32		m;	/* mask */
 };
 
 enum xfrm_sadattr_type_t {
@@ -462,8 +462,8 @@ struct xfrm_user_report {
 /* Used by MIGRATE to pass addresses IKE should use to perform
  * SA negotiation with the peer */
 struct xfrm_user_kmaddress {
-	xfrm_address_t                  local;
-	xfrm_address_t                  remote;
+	xfrm_address_t			local;
+	xfrm_address_t			remote;
 	__u32				reserved;
 	__u16				family;
 };

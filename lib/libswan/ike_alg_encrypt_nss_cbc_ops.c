@@ -63,7 +63,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 				  alg->common.fqn);
 	}
 
-	/* Output buffer for transformed data.  */
+	/* Output buffer for transformed data. */
 	uint8_t *out_buf = PR_Malloc((PRUint32)in_buf_len);
 	int out_buf_len = 0;
 

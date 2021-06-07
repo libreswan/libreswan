@@ -48,18 +48,17 @@
 #include "ikev2_prf.h"
 #include "kernel.h"
 
-void ikev2_derive_child_keys(struct child_sa *child)
+void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 {
-	struct state *st = &child->sa;
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
-		st->st_esp.present? &st->st_esp :
-		st->st_ah.present? &st->st_ah :
-		NULL;
+		(child->sa.st_esp.present? &child->sa.st_esp :
+		 child->sa.st_ah.present? &child->sa.st_ah :
+		 NULL);
 
 	passert(ipi != NULL);	/* ESP or AH must be present */
-	passert(st->st_esp.present != st->st_ah.present);	/* only one */
+	passert(child->sa.st_esp.present != child->sa.st_ah.present);	/* only one */
 
 	/*
 	 * Integrity seed (key).  AEAD, for instance has NULL (no)
@@ -108,30 +107,30 @@ void ikev2_derive_child_keys(struct child_sa *child)
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
 	PK11SymKey *shared = NULL;
-	if (st->st_pfs_group != NULL) {
+	if (child->sa.st_pfs_group != NULL) {
 		DBGF(DBG_CRYPT, "#%lu %s add g^ir to child key %p",
-		     st->st_serialno, st->st_state->name, st->st_dh_shared_secret);
-		shared = st->st_dh_shared_secret;
+		     child->sa.st_serialno, child->sa.st_state->name, child->sa.st_dh_shared_secret);
+		shared = child->sa.st_dh_shared_secret;
 	}
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
-						   st->st_skey_d_nss,
+	PK11SymKey *keymat = ikev2_child_sa_keymat(child->sa.st_oakley.ta_prf,
+						   ike->sa.st_skey_d_nss,
 						   shared,
-						   st->st_ni,
-						   st->st_nr,
+						   child->sa.st_ni,
+						   child->sa.st_nr,
 						   ipi->keymat_len * 2,
-						   st->st_logger);
+						   child->sa.st_logger);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len,
-						 HERE, st->st_logger);
+						 HERE, child->sa.st_logger);
 	ikeymat = chunk_from_symkey("initiator to responder keys", ikey,
-				    st->st_logger);
+				    child->sa.st_logger);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len,
-						 HERE, st->st_logger);
+						 HERE, child->sa.st_logger);
 	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey,
-				    st->st_logger);
+				    child->sa.st_logger);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);

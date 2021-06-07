@@ -24,8 +24,8 @@ set -euvx
 repodir=$(cd $1 && pwd ) ; shift
 summarydir=$(cd $1 && pwd) ; shift
 
-webdir=$(dirname $0)
-makedir=$(cd ${webdir}/../.. && pwd)
+bindir=$(dirname $0)
+makedir=$(cd ${bindir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
 
 # start with new shiny domains
@@ -49,10 +49,10 @@ if test $# -gt 0 ; then
     # updated.
     earliest_commit=$1; shift
 else
-    earliest_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+    earliest_commit=$(${bindir}/gime-git-hash.sh ${repodir} HEAD)
 fi
 
-json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
+json_status="${bindir}/json-status.sh --json ${summarydir}/status.json"
 status=${json_status}
 
 
@@ -62,7 +62,7 @@ run() (
 
     # fudge up enough of summary.json to fool the top level
     if test ! -r ${resultsdir}/kvm-test.ok ; then
-	${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+	${bindir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
     fi
 
     # So new features can be tested (?) use kvmrunner.py from this
@@ -125,7 +125,7 @@ while true ; do
     # untested.
 
     ${status} "looking for work"
-    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then \
+    if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then \
 	# Seemlingly nothing to do; github gets updated up every 15
 	# minutes so sleep for less than that
 	seconds=$(expr 10 \* 60)
@@ -149,13 +149,13 @@ while true ; do
     # Mimic how web-targets.mki computes RESULTSDIR; switch to
     # directory specific status.
 
-    resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${repodir})
+    resultsdir=${summarydir}/$(${bindir}/gime-git-description.sh ${repodir})
     gitstamp=$(basename ${resultsdir})
     status="${json_status} --directory ${gitstamp}"
 
     # create the resultsdir and point the summary at it.
 
-    start_time=$(${webdir}/now.sh)
+    start_time=$(${bindir}/now.sh)
     ${status} "creating results directory"
     make -C ${makedir} web-resultsdir \
 	 WEB_TIME=${start_time} \
@@ -179,7 +179,7 @@ while true ; do
     for target in ${targets}; do
 	# generate json of the progress
 	touch ${resultsdir}/${target}.log
-	${webdir}/json-make.sh --json ${resultsdir}/make.json --resultsdir ${resultsdir} ${targets}
+	${bindir}/json-make.sh --json ${resultsdir}/make.json --resultsdir ${resultsdir} ${targets}
 	# run the target on hand
 	if ! run ${target} ; then
 	    # force the next run to test HEAD++ using rebuilt and

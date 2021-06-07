@@ -44,12 +44,6 @@
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
-struct logger failsafe_logger = {
-	.where = { .basename = "<global>", .func = "<global>", },
-	.object = NULL,
-	.object_vec = &logger_global_vec,
-};
-
 const struct log_param default_log_param = {
 	.log_with_timestamp = true,	/* but testsuite requires no timestamps */
 };
@@ -68,14 +62,6 @@ char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;
 
 char *pluto_stats_binary = NULL;
-
-/*
- * If valid, wack and log_whack streams write to this.
- *
- * (apparently) If the context provides a whack file descriptor,
- * messages should be copied to it -- see whack_log()
- */
-struct fd *whack_log_fd = NULL;      /* only set during whack_handle() */
 
 /*
  * Initialization.
@@ -227,29 +213,6 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 	/* not whack */
 }
 
-void jambuf_to_error_stream(struct jambuf *buf)
-{
-	log_raw(LOG_ERR, "", buf);
-	if (in_main_thread() && fd_p(whack_log_fd)) {
-		/* don't whack-log from helper threads */
-		jambuf_to_whack(buf, whack_log_fd, RC_LOG_SERIOUS);
-	}
-}
-
-void jambuf_to_debug_stream(struct jambuf *buf)
-{
-	log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
-}
-
-void jambuf_to_default_streams(struct jambuf *buf, enum rc_type rc)
-{
-	log_raw(LOG_WARNING, "", buf);
-	if (in_main_thread() && fd_p(whack_log_fd)) {
-		/* don't whack-log from helper threads */
-		jambuf_to_whack(buf, whack_log_fd, rc);
-	}
-}
-
 void close_log(void)
 {
 	if (log_to_syslog)
@@ -344,8 +307,8 @@ void rate_log(const struct msg_digest *md,
 		rate_log_raw("", md->md_logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
 		rate_log_raw("", md->md_logger, message, ap);
-		log_global(LOG_STREAM, null_fd,
-			   "rate limited log reached limit of %u entries", limit);
+		llog(LOG_STREAM, &failsafe_logger,
+		     "rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
 		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
 	}
@@ -370,15 +333,14 @@ void init_rate_log(void)
 			      RESET_LOG_RATE_LIMIT);
 }
 
-static void log_whacks(enum rc_type rc, const struct fd *global_whackfd,
-		       const struct fd *object_whackfd, struct jambuf *buf)
+static void log_whacks(enum rc_type rc, const struct logger *logger, struct jambuf *buf)
 {
-	if (fd_p(object_whackfd)) {
-		jambuf_to_whack(buf, object_whackfd, rc);
+	if (fd_p(logger->object_whackfd)) {
+		jambuf_to_whack(buf, logger->object_whackfd, rc);
 	}
-	if (fd_p(global_whackfd) &&
-	    !same_fd(object_whackfd, global_whackfd)) {
-		jambuf_to_whack(buf, global_whackfd, rc);
+	if (fd_p(logger->global_whackfd) &&
+	    !same_fd(logger->object_whackfd, logger->global_whackfd)) {
+		jambuf_to_whack(buf, logger->global_whackfd, rc);
 	}
 }
 
@@ -392,17 +354,17 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		break;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
 		break;
 	case WHACK_STREAM:
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case ERROR_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whacks(rc, logger->global_whackfd, logger->object_whackfd, buf);
+		log_whacks(rc, logger, buf);
 		break;
 	case NO_STREAM:
 		/*
@@ -416,27 +378,10 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	}
 }
 
-static bool always_suppress_log(const void *object UNUSED)
-{
-	return true;
-}
-
-static bool never_suppress_log(const void *object UNUSED)
-{
-	return false;
-}
-
-static size_t jam_global_prefix(struct jambuf *unused_buf UNUSED,
-			      const void *unused_object UNUSED)
-{
-	/* jam(buf, "") - nothing to add */
-	return 0;
-}
-
 const struct logger_object_vec logger_global_vec = {
 	.name = "global",
-	.suppress_object_log = never_suppress_log,
-	.jam_object_prefix = jam_global_prefix,
+	.suppress_object_log = suppress_object_log_false,
+	.jam_object_prefix = jam_object_prefix_none,
 	.free_object = false,
 };
 
@@ -474,7 +419,7 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_from_vec = {
 	.name = "from",
-	.suppress_object_log = always_suppress_log,
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_from_prefix,
 	.free_object = false,
 };
@@ -495,7 +440,7 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_message_vec = {
 	.name = "message",
-	.suppress_object_log = always_suppress_log,
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_message_prefix,
 	.free_object = false,
 };
@@ -576,9 +521,16 @@ static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 	return jam_string(buf, string);
 }
 
-const struct logger_object_vec logger_string_vec = {
+static const struct logger_object_vec logger_string_vec = {
 	.name = "string(never-suppress)",
-	.suppress_object_log = never_suppress_log,
+	.suppress_object_log = suppress_object_log_false,
+	.jam_object_prefix = jam_string_prefix,
+	.free_object = true,
+};
+
+static const struct logger_object_vec logger_string_suppress_vec = {
+	.name = "string(always-suppressed)",
+	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_string_prefix,
 	.free_object = true,
 };
@@ -610,20 +562,14 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 */
 	const struct logger_object_vec *object_vec;
 	if (suppress_log(stack)) {
-		static const struct logger_object_vec always_suppress_vec = {
-			.name = "string(always-suppressed)",
-			.suppress_object_log = always_suppress_log,
-			.jam_object_prefix = jam_string_prefix,
-			.free_object = true,
-		};
-		object_vec = &always_suppress_vec;
+		object_vec = &logger_string_suppress_vec;
 	} else {
 		object_vec = &logger_string_vec;
 	}
 	/* construct the clone */
 	struct logger heap = {
-		.global_whackfd = dup_any(stack->global_whackfd),
-		.object_whackfd = dup_any(stack->object_whackfd),
+		.global_whackfd = fd_dup(stack->global_whackfd, where),
+		.object_whackfd = fd_dup(stack->object_whackfd, where),
 		.where = stack->where,
 		.object_vec = object_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
@@ -651,7 +597,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	}
 	/* construct the clone */
 	struct logger logger = {
-		.global_whackfd = dup_any(whackfd),
+		.global_whackfd = fd_dup(whackfd, where),
 		.object_whackfd = null_fd,
 		.where = where,
 		.object_vec = &logger_string_vec,
@@ -666,8 +612,8 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 void free_logger(struct logger **logp, where_t where)
 {
 	dbg_free("logger", *logp, where);
-	close_any(&(*logp)->global_whackfd);
-	close_any(&(*logp)->object_whackfd);
+	close_any_fd(&(*logp)->global_whackfd, where);
+	close_any_fd(&(*logp)->object_whackfd, where);
 	/*
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.
@@ -695,7 +641,7 @@ void log_pending(lset_t rc_flags, const struct pending *p, const char *msg, ...)
 	passert(p != NULL);
 	struct logger logger = {
 		.where = HERE,
-		.global_whackfd = whack_log_fd,
+		.global_whackfd = null_fd,
 		.object_whackfd = p->whack_sock,
 		.object = p->connection,
 		.object_vec = &logger_connection_vec,
@@ -713,15 +659,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 	va_start(ap, msg);
 	if (pexpect((st) != NULL) &&
 	    pexpect(in_main_thread())) {
-		struct logger logger = *(st->st_logger);
-		/*
-		 * XXX: the state logger still needs to pick up the
-		 * global whack FD :-(
-		 */
-		if (whack_log_fd != NULL) {
-			logger.global_whackfd = whack_log_fd;
-		}
-		llog_va_list(rc_flags, &logger, msg, ap);
+		llog_va_list(rc_flags, st->st_logger, msg, ap);
 	} else {
 		/* still get the message out */
 		llog_va_list(rc_flags, &failsafe_logger, msg, ap);

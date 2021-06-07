@@ -78,13 +78,15 @@ extern bool emit_redirect_notification(
  * 	  nonce isn't NULL.
  * @param redirect_ip ip address we need to redirect to
  * @return err_t NULL if everything went right,
- * 		 otherwise (non-NULL)  what went wrong
+ * 		 otherwise (non-NULL) what went wrong
  */
 extern err_t parse_redirect_payload(const struct pbs_in *pbs,
 				    const char *allowed_targets_list,
 				    const chunk_t *nonce,
 				    ip_address *redirect_ip /* result */,
 				    struct logger *logger);
+
+bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
 
 /*
  * Initiate via initiate_connection new IKE_SA_INIT exchange
@@ -98,11 +100,9 @@ extern void initiate_redirect(struct state *st);
  * 	  redirected. If it's NULL, that means redirect ALL active
  * 	  peers on the machine.
  * @param ard_str comma-separated string containing the destinations.
- * @param whackfd whack file descriptor used for whack log
  */
-extern void find_states_and_redirect(const char *conn_name,
-				     char *ard_str,
-				     struct fd *whackfd);
+extern void find_states_and_redirect(const char *conn_name, char *ard_str,
+				     struct logger *logger);
 
 /*
  * Send IKEv2 INFORMATIONAL exchange with REDIRECT payload.

@@ -14,6 +14,7 @@
  */
 
 #include <string.h>
+#include <sys/socket.h>		/* for AF_UNSPEC */
 
 #include "ip_address.h"
 #include "ip_info.h"

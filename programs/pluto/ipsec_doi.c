@@ -82,84 +82,8 @@
 #include "iface.h"
 #include "ikev2_delete.h"	/* for record_v2_delete(); but call is dying */
 #include "orient.h"
-
-void ipsecdoi_initiate(struct fd *whack_sock,
-		       struct connection *c,
-		       lset_t policy,
-		       unsigned long try,
-		       so_serial_t replacing,
-		       const threadtime_t *inception,
-		       chunk_t sec_label)
-{
-	if (sec_label.len != 0)
-		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
-
-	/*
-	 * If there's already an IKEv1 ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
-	 * that is still being negotiated, but only if we are the Initiator
-	 * (thus we can be sure that the IDs are not going to change;
-	 * other issues around intent might matter).
-	 * Note: there is no way to initiate with a Road Warrior.
-	 */
-	struct state *st = find_phase1_state(c,
-#ifdef USE_IKEv1
-					     ISAKMP_SA_ESTABLISHED_STATES |
-					     PHASE1_INITIATOR_STATES |
-#endif
-					     IKEV2_ISAKMP_INITIATOR_STATES);
-
-	switch (c->ike_version) {
-#ifdef USE_IKEv1
-	case IKEv1:
-		if (st == NULL) {
-			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(whack_sock, c, NULL, policy, try, inception, sec_label);
-		} else if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			/* leave our Phase 2 negotiation pending */
-			add_pending(whack_sock, pexpect_ike_sa(st),
-				    c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
-		} else {
-			/*
-			 * ??? we assume that peer_nexthop_sin isn't
-			 * important: we already have it from when we
-			 * negotiated the ISAKMP SA!  It isn't clear
-			 * what to do with the error return.
-			 */
-			quick_outI1(whack_sock, st, c, policy, try,
-				    replacing, sec_label);
-		}
-		break;
-#endif
-	case IKEv2:
-		if (st == NULL) {
-			/* note: new IKE SA pulls sec_label from connection */
-			ikev2_out_IKE_SA_INIT_I(whack_sock, c, NULL, policy, try, inception, empty_chunk);
-		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
-			/* leave CHILD SA negotiation pending */
-			add_pending(whack_sock, pexpect_ike_sa(st),
-				    c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
-		} else {
-			struct pending p = {
-				.whack_sock = whack_sock, /*on-stack*/
-				.ike = pexpect_ike_sa(st),
-				.connection = c,
-				.try = try,
-				.policy = policy,
-				.replacing = replacing,
-				.sec_label = sec_label,
-			};
-			ikev2_initiate_child_sa(&p);
-		}
-		break;
-	default:
-		bad_case(c->ike_version);
-	}
-}
+#include "initiate.h"
+#include "ikev2_ike_sa_init.h"
 
 /* Replace SA with a fresh one that is similar
  *
@@ -190,18 +114,17 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		switch(st->st_ike_version) {
 		case IKEv2:
-		{
-			initiator_function *initiator = ikev2_out_IKE_SA_INIT_I;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			ikev2_out_IKE_SA_INIT_I(c, st, policy, try, &inception, c->spd.this.sec_label,
+						/*background?*/false, st->st_logger);
 			break;
-		}
 #ifdef USE_IKEv1
 		case IKEv1:
-		{
-			initiator_function *initiator = (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
-			initiator(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			if (policy & POLICY_AGGRESSIVE) {
+				aggr_outI1(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			} else {
+				main_outI1(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+			}
 			break;
-		}
 #endif
 		default:
 			dbg("unsupported IKE version '%d', cannot initiate", st->st_ike_version);
@@ -240,8 +163,8 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_logger->object_whackfd, st->st_connection,
-				  policy, try, st->st_serialno, &inception, empty_chunk);
+		ipsecdoi_initiate(st->st_connection, policy, try, st->st_serialno, &inception, empty_chunk,
+				  /*background?*/false, st->st_logger);
 	}
 }
 
@@ -285,7 +208,7 @@ void initialize_new_state(struct state *st,
 	struct connection *c = st->st_connection;
 	pexpect(oriented(*c));
 	c->interface = NULL;
-	(void)orient(c);
+	orient(c, st->st_logger);
 	st->st_interface = c->interface;
 	passert(st->st_interface != NULL);
 	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
@@ -347,7 +270,7 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 		}
 		jam(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
-		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL)  {
+		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL) {
 			jam_string(buf, "-");
 			jam_string(buf, st->st_pfs_group->common.fqn);
 		}

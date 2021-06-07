@@ -66,14 +66,12 @@ static void check_iprange_bits(void)
 		oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
 		if (oops != NULL) {
 			FAIL("ttoaddress_num() failed converting '%s'", t->lo);
-			continue;
 		}
 
 		ip_address hi;
 		oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
 		if (oops != NULL) {
 			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
-			continue;
 		}
 
 		ip_range lo_hi = range_from_raw(HERE, lo.version, lo.bytes, hi.bytes);
@@ -190,7 +188,7 @@ static void check_ttorange__to__str_range(void)
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
-			/* Error occurred, but we didn't expect one  */
+			/* Error occurred, but we didn't expect one */
 			FAIL("ttorange() failed: %s", oops);
 		}
 

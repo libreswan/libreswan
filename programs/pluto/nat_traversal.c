@@ -142,7 +142,7 @@ static struct crypt_mac natd_hash(const struct hash_desc *hasher,
 }
 
 /*
- * Add  NAT-Traversal IKEv2 Notify payload (v2N)
+ * Add NAT-Traversal IKEv2 Notify payload (v2N)
  */
 bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 		       const ike_spi_t *ike_responder_spi)
@@ -405,7 +405,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 				  const struct msg_digest *md)
 {
-	const struct state *st = md->st;
+	const struct state *st = md->v1_st;
 	/*
 	 * XXX: This seems to be a very convoluted way of coming up
 	 * with the RCOOKIE.  It would probably be easier to just pass
@@ -603,7 +603,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->st->st_oakley.ta_prf == NULL) {
+		if (md->v1_st->st_oakley.ta_prf == NULL) {
 			/*
 			 * This connection is doomed - no PRF for NATD hash
 			 * Probably in FIPS trying MD5 ?
@@ -674,7 +674,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		    st->st_serialno, st->st_interface->protocol->name);
 		return;
 	}
-	if (c->newest_isakmp_sa != st->st_serialno) {
+	if (c->newest_ike_sa != st->st_serialno) {
 		dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IKE SA", st->st_serialno);
 		return;
 	}
@@ -924,14 +924,14 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	passert(md->iface != NULL);
 
 	/* must have both */
-	if (md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
-	    md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
+	if (md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
+	    md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
 		return false;
 	}
 	/* table of both */
 	const struct pbs_in *(detection_payloads[]) = {
-		md->pbs[PBS_v2N_NAT_DETECTION_DESTINATION_IP],
-		md->pbs[PBS_v2N_NAT_DETECTION_SOURCE_IP],
+		&md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP]->pbs,
+		&md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP]->pbs,
 	};
 
 	/*

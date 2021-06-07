@@ -41,6 +41,7 @@
 #include "secrets.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "ikev2_ike_auth.h"
 
 struct p_dns_req;
 
@@ -635,7 +636,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	struct msg_digest *md = unsuspend_md(st);
 	stf_status stf;
 
-	passert(md != NULL && (st == md->st));
+	passert(md != NULL && (st == md->v1_st));
 
 	if (err) {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
@@ -644,7 +645,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	}
 
 	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->st, md, stf);
+	complete_v2_state_transition(md->v1_st, md, stf);
 	release_any_md(&md);
 }
 

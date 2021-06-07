@@ -26,14 +26,16 @@ struct ike_sa;
 struct state;
 struct end;
 
-pb_stream open_v2_message(pb_stream *reply,
+pb_stream open_v2_message(struct pbs_out *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
 			  enum isakmp_xchg_types exchange_type);
 
-typedef struct {
+struct v2SK_payload {
+	/* public */
 	struct logger *logger;
 	struct ike_sa *ike;
 	pb_stream pbs; /* within SK */
+	/* private */
 	/* pointers into SK header+contents */
 	chunk_t payload; /* header+iv+cleartext+padding+integrity */
 	/* chunk_t header; */
@@ -41,17 +43,17 @@ typedef struct {
 	chunk_t cleartext;
 	/* chunk_t padding; */
 	chunk_t integrity;
-} v2SK_payload_t;
+};
 
-v2SK_payload_t open_v2SK_payload(struct logger *logger,
-				 pb_stream *container,
-				 struct ike_sa *st);
-bool close_v2SK_payload(v2SK_payload_t *sk);
+struct v2SK_payload open_v2SK_payload(struct logger *logger,
+				      struct pbs_out *container,
+				      struct ike_sa *st);
+bool close_v2SK_payload(struct v2SK_payload *sk);
 
-stf_status encrypt_v2SK_payload(v2SK_payload_t *sk);
+stf_status encrypt_v2SK_payload(struct v2SK_payload *sk);
 
 stf_status record_v2SK_message(struct pbs_out *msg,
-			       v2SK_payload_t *sk,
+			       struct v2SK_payload *sk,
 			       const char *what,
 			       enum message_role message);
 

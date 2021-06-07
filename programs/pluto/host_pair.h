@@ -56,12 +56,10 @@ extern struct host_pair *find_host_pair(const ip_address local, const ip_address
 void delete_oriented_hp(struct connection *c);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);
 
-extern struct connection *connections;
-
 extern void update_host_pairs(struct connection *c);
 
 extern void release_dead_interfaces(struct logger *logger);
-extern void check_orientations(void);
+extern void check_orientations(struct logger *logger);
 
 void init_host_pair(void);
 

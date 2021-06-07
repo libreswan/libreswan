@@ -102,7 +102,7 @@
  * --> HDR;SA
  * Note: this is not called from demux.c
  */
-/* extern initiator_function main_outI1; */	/* type assertion */
+
 void main_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,
@@ -557,7 +557,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
-	struct state *st = md->st = &ike->sa;
+	struct state *st = md->v1_st = &ike->sa;
 
 	passert(!st->st_oakley.doing_xauth);
 
@@ -1250,7 +1250,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			      bool aggrmode)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	stf_status r = STF_OK;
 
 	/*
@@ -1356,8 +1356,8 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
+	pexpect(st == md->v1_st);
+	st = md->v1_st;
 
 	/* handle case where NSS balked at generating DH */
 	if (st->st_dh_shared_secret == NULL)
@@ -1539,7 +1539,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 */
 
 	if (c->remotepeertype == CISCO &&
-	    c->newest_isakmp_sa != SOS_NOBODY &&
+	    c->newest_ike_sa != SOS_NOBODY &&
 	    c->spd.this.xauth_client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -1552,7 +1552,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	IKE_SA_established(pexpect_ike_sa(st));
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
@@ -1594,7 +1594,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 * are not supposed to be performed again during rekey
 	 */
 	if (c->remotepeertype == CISCO &&
-		c->newest_isakmp_sa != SOS_NOBODY &&
+		c->newest_ike_sa != SOS_NOBODY &&
 		c->spd.this.xauth_client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -1607,7 +1607,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	IKE_SA_established(pexpect_ike_sa(st));
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
@@ -1757,7 +1757,7 @@ static void send_notification(struct logger *logger,
 			llog(RC_LOG, logger, "too many (%d) malformed payloads. Deleting state",
 				    sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
-			/* note: no md->st to clear */
+			/* note: no md->v1_st to clear */
 			return;
 		}
 
@@ -2157,7 +2157,7 @@ void send_v1_delete(struct state *st)
 bool accept_delete(struct msg_digest *md,
 		struct payload_digest *p)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 	struct isakmp_delete *d = &(p->payload.delete);
 	size_t sizespi;
 	int i;
@@ -2332,8 +2332,8 @@ bool accept_delete(struct msg_digest *md,
 						  ntohl(spi),
 						  dst->st_serialno);
 					delete_state(dst);
-					if (md->st == dst)
-						md->st = NULL;
+					if (md->v1_st == dst)
+						md->v1_st = NULL;
 				}
 
 				if (rc->newest_ipsec_sa == SOS_NOBODY) {
@@ -2343,7 +2343,7 @@ bool accept_delete(struct msg_digest *md,
 						flush_pending_by_connection(rc);
 						/* why loop? there can be only one IKE SA, just delete_state(st) ? */
 						delete_states_by_connection(rc, /*relations*/false);
-						md->st = NULL;
+						md->v1_st = NULL;
 					}
 				}
 			}
@@ -2356,7 +2356,7 @@ bool accept_delete(struct msg_digest *md,
 /* now it is safe to delete our sponsor */
 void accept_self_delete(struct msg_digest *md)
 {
-	struct state *st = md->st;
+	struct state *st = md->v1_st;
 
 	/* note: this code is cloned from handling ISAKMP non-self_delete */
 	log_state(RC_LOG_SERIOUS, st, "received Delete SA payload: self-deleting ISAKMP State #%lu",
@@ -2366,5 +2366,5 @@ void accept_self_delete(struct msg_digest *md)
 		v1_maybe_natify_initiator_endpoints(st, HERE);
 	}
 	delete_state(st);
-	md->st = st = NULL;
+	md->v1_st = st = NULL;
 }

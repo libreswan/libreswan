@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/queue.h>		/* for TAILQ_xx macros */
 
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
@@ -213,7 +214,7 @@ static void bsdkame_pfkey_async(struct sadb_msg *reply)
 		bsdkame_pfkey_acquire(reply);
 		break;
 
-	/* case SADB_NAT_T UPDATE STUFF  */
+	/* case SADB_NAT_T UPDATE STUFF */
 
 	default:
 		break;
@@ -363,7 +364,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	policy_struct->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy_struct->sadb_x_policy_type = policy;
-	policy_struct->sadb_x_policy_dir = dir;
+	policy_struct->sadb_x_policy_dir  = dir;
 	policy_struct->sadb_x_policy_id   = 0; /* needs to be set, and recorded */
 
 	policylen = sizeof(*policy_struct);

@@ -21,6 +21,4 @@ struct state;
 
 void retransmit_v2_msg(struct state *st);
 
-bool ikev2_schedule_retry(struct state *st);
-
 #endif

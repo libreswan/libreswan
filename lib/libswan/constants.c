@@ -442,8 +442,8 @@ static const char *const exchange_name_ikev2[] = {
 };
 
 static const char *const exchange_name_private_use[] = {
-	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE",	/* 244 - Used by libreswan  */
-	"ISAKMP_XCHG_ECHOREPLY_PRIVATE",	/* 245 - Used by libreswan  */
+	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE",	/* 244 - Used by libreswan */
+	"ISAKMP_XCHG_ECHOREPLY_PRIVATE",	/* 245 - Used by libreswan */
 };
 
 static enum_names exchange_names_private_use = {
@@ -599,9 +599,9 @@ static const char *const ah_transform_name[] = {
 	"AH_RIPEMD",
 	"AH_AES_XCBC_MAC",
 	"AH_RSA(UNUSED)",
-	"AH_AES_128_GMAC",	/* RFC4543 Errata1821  */
-	"AH_AES_192_GMAC",	/* RFC4543 Errata1821  */
-	"AH_AES_256_GMAC",	/* RFC4543 Errata1821  */
+	"AH_AES_128_GMAC",	/* RFC4543 Errata1821 */
+	"AH_AES_192_GMAC",	/* RFC4543 Errata1821 */
+	"AH_AES_256_GMAC",	/* RFC4543 Errata1821 */
 	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };
@@ -1151,7 +1151,7 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* IKEv1 XAUTH-STATUS attribute names  */
+/* IKEv1 XAUTH-STATUS attribute names */
 static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",
@@ -2467,7 +2467,7 @@ int enum_match(enum_names *ed, shunk_t string)
 			if (try(true, 0, 0) ||
 			    try(suffix_len > 0, 0, suffix_len) ||
 			    try(prefix_len > 0, prefix_len, 0) ||
-			    try(suffix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
+			    try(prefix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
 			{
 				return en;
 			}

@@ -151,7 +151,7 @@ struct whack_message {
 
 	bool whack_process_status; /* non-basic */
 
-	bool whack_leave_state; /* dont send delete or  clean kernel state on shutdown */
+	bool whack_leave_state; /* non-basic: dont send delete or  clean kernel state on shutdown */
 	/* name is used in connection and initiate */
 	size_t name_len; /* string 1 */
 	char *name;
@@ -203,9 +203,9 @@ struct whack_message {
 	/* Allow TCP as fallback, only do TCP or only do UDP */
 	enum tcp_options iketcp;
 
-	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
+	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled */
 	bool nat_keepalive;
-	/* Option to tweak sending NATT drafts, rfc or both  */
+	/* Option to tweak sending NATT drafts, rfc or both */
 	enum ikev1_natt_policy ikev1_natt;
 
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */

@@ -64,7 +64,7 @@
 
 struct msgid_list {
 	msgid_t msgid;           /* network order */
-	struct msgid_list     *next;
+	struct msgid_list *next;
 };
 
 bool unique_msgid(const struct state *st, msgid_t msgid)

@@ -143,7 +143,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t tmp = decode_to_chunk(input_name, input);
 	chunk_t expected = decode_to_chunk(output_name, output);
 
-	/* do_crypt modifies the data and IV in place.  */
+	/* do_crypt modifies the data and IV in place. */
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp.ptr, tmp.len,
 					    sym_key, iv.ptr, encrypt,
 					    logger);
@@ -195,7 +195,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 		ok = FALSE;
 	}
 
-	/* Clean up.  */
+	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
 	DBGF(DBG_CRYPT, "test_ctr_vector: %s %s",

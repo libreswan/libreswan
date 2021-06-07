@@ -150,7 +150,8 @@ struct ipsec_trans_attrs {
 
 /* IPsec per protocol state information */
 struct ipsec_proto_info {
-	bool present;                   /* was this transform specified? */
+	const struct ip_protocol *protocol;	/* ESP, AH, COMP, ... */
+	bool present;				/* was this transform negotiated? */
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	ipsec_spi_t our_spi;
 	uint16_t keymat_len;           /* same for both */
@@ -410,6 +411,10 @@ struct state {
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
+	/* for initiator/responder during IKE_AUTH and CREATE_CHILD_SA */
+	struct child_sa *st_v2_larval_initiator_sa;
+	struct child_sa *st_v2_larval_responder_sa;
+
 	const struct state_v2_microcode *st_v2_last_transition;
 	const struct state_v2_microcode *st_v2_transition;
 
@@ -428,7 +433,7 @@ struct state {
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
+	msgid_t st_msgid_lastack;               /* last one peer acknowledged - host order */
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
 	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
@@ -441,8 +446,13 @@ struct state {
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
 	shunk_t st_active_redirect_gw;	/* needed for sending of REDIRECT in informational */
+
+	/*
+	 * IKEv2 intermediate exchange.
+	 */
 	chunk_t st_intermediate_packet_me;	/* calculated from my last Intermediate Exchange packet */
 	chunk_t st_intermediate_packet_peer;	/* calculated from peers last Intermediate Exchange packet */
+	bool st_v2_ike_intermediate_used;	/* both ends agree/use Intermediate Exchange */
 
 	/** end of IKEv2-only things **/
 
@@ -668,10 +678,6 @@ struct state {
 	PK11SymKey *st_sk_pi_no_ppk;
 	PK11SymKey *st_sk_pr_no_ppk;
 
-	/* Intermediate Exchange used */
-	bool st_intermediate_used;	/* both ends agreed to use Intermediate Exchange */
-	bool st_seen_intermediate;	/* does remote peer support Intermediate Exchange? */
-
 	/* connection included in AUTH (v2) */
 	struct traffic_selector st_ts_this;
 	struct traffic_selector st_ts_that;
@@ -692,9 +698,7 @@ struct state {
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
-	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct pluto_event *st_liveness_event;	/* IKEv2 only event */
-	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
 	struct pluto_event *st_addr_change_event;
 	struct pluto_event *st_retransmit_event;
@@ -718,7 +722,6 @@ struct state {
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
-	bool st_redirected_in_auth;		/* were we redirected in IKE_AUTH */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
@@ -762,7 +765,7 @@ struct child_sa *pexpect_child_sa(struct state *st);
 
 /* global variables */
 
-extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
+extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging */
 extern uint16_t pluto_xfrmlifetime;	/* only used to display in status */
 
 extern bool states_use_connection(const struct connection *c);
@@ -850,10 +853,6 @@ void for_each_state(void (*f)(struct state *, void *data), void *data,
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 
-extern void fmt_state(struct state *st, const monotime_t n,
-		      char *state_buf, const size_t state_buf_len,
-		      char *state_buf2, const size_t state_buf_len2);
-
 extern void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void v1_delete_state_by_username(struct state *st, void *name);
@@ -883,15 +882,14 @@ extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 bool shared_phase1_connection(const struct connection *c);
 bool v2_child_connection_probably_shared(struct child_sa *child);
 
-extern void record_deladdr(ip_address *ip, char *a_type);
-extern void record_newaddr(ip_address *ip, char *a_type);
-
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
-extern void IKE_SA_established(const struct ike_sa *ike);
+
+void suppress_delete_notify(const struct ike_sa *ike,
+			    const char *what, so_serial_t so);
 
 void list_state_events(struct show *s, monotime_t now);
 

@@ -185,6 +185,13 @@ struct impairment impairments[] = {
 	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
 	  "include the unknown payload in the encrypted SK payload"),
 
+	V("omit-v2-ike-auth-child", omit_v2_ike_auth_child,
+	  "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
+	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,
+	  "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
+	V("childless-v2-sec-label", childless_v2_sec_label,
+	  "when establishing an IKEv2 IKE SA with security lables, do not estabish a Child SA"),
+
 	A("trigger", GLOBAL_EVENT, 0, "trigger the global event", "EVENT",
 	  .how_enum_names = &global_timer_names),
 
@@ -220,6 +227,7 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			const char *sname = enum_name_short(cr->how_enum_names, e);
 			fprintf(file, "%s", sname);
 		}
+		fprintf(file, "\n");
 	}
 	if (cr->unsigned_help != NULL) {
 		fprintf(file, "%s  %s: %s\n",

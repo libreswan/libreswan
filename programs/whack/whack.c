@@ -886,7 +886,7 @@ static ip_address get_address_any(struct family *family)
 
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
-	.sun_path   = DEFAULT_CTL_SOCKET,
+	.sun_path  = DEFAULT_CTL_SOCKET,
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
@@ -1348,7 +1348,7 @@ int main(int argc, char **argv)
 			msg.whack_delete = TRUE;
 			continue;
 
-		case OPT_DELETEID: /* --deleteid  --name <id> */
+		case OPT_DELETEID: /* --deleteid --name <id> */
 			msg.whack_deleteid = TRUE;
 			continue;
 
@@ -2050,7 +2050,7 @@ int main(int argc, char **argv)
 			msg.esp = optarg;
 			continue;
 
-		case CD_REMOTEPEERTYPE:	/* --remote-peer-type  <cisco> */
+		case CD_REMOTEPEERTYPE:	/* --remote-peer-type <cisco> */
 			if (streq(optarg, "cisco"))
 				msg.remotepeertype = CISCO;
 			else
@@ -2595,7 +2595,7 @@ int main(int argc, char **argv)
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
-		if (LHAS(opts1_seen, OPT_NAME)  && !LELEM(OPT_TRAFFIC_STATUS))
+		if (LHAS(opts1_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
 			diag("no reason for --name");
 	}
 

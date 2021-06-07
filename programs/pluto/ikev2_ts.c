@@ -1040,18 +1040,7 @@ bool v2_process_ts_request(struct child_sa *child,
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-
-	/*
-	 * XXX: md->st here is parent????  Lets find out.
-	 */
-	if (md->st == &child->sa) {
-		dbg("Child SA TS Request has child->sa == md->st; so using child connection");
-	} else if (md->st == &ike_sa(&child->sa, HERE)->sa) {
-		dbg("Child SA TS Request has ike->sa == md->st; so using parent connection");
-	} else {
-		dbg("Child SA TS Request has an unknown md->st; so using unknown connection");
-	}
-	struct connection *c = md->st->st_connection;
+	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selectors tsi = { .nr = 0, };
 	struct traffic_selectors tsr = { .nr = 0, };

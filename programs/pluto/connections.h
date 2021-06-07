@@ -354,7 +354,7 @@ struct connection {
 	struct ephemeral_variables temp_vars;
 
 	so_serial_t		/* state object serial number */
-		newest_isakmp_sa,
+		newest_ike_sa,
 		newest_ipsec_sa;
 
 	lmod_t extra_debugging;
@@ -407,7 +407,7 @@ struct connection {
 	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */
 	uint32_t statsval;	/* track what we have told statsd */
-	uint16_t nflog_group;	/* NFLOG group - 0 means disabled  */
+	uint16_t nflog_group;	/* NFLOG group - 0 means disabled */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 
 	char *redirect_to;        /* RFC 5685 */
@@ -450,10 +450,10 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 	     bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
-extern void add_connection(struct fd *whackfd, const struct whack_message *wm);
+extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_ends_from_this_host_addr(struct end *this, struct end *that);
-extern void restart_connections_by_peer(struct connection *c);
+extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 
 extern void initiate_ondemand(const ip_endpoint *our_client,
@@ -463,8 +463,7 @@ extern void initiate_ondemand(const ip_endpoint *our_client,
 			      const char *why,
 			      struct logger *logger);
 
-extern void terminate_connection(const char *name, bool quiet,
-				 struct fd *whack);
+extern void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection **cp, bool relations);
 extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
@@ -475,8 +474,6 @@ struct connection *add_group_instance(struct connection *group,
 				      uint16_t sport,
 				      uint16_t dport);
 
-extern void remove_group_instance(const struct connection *group,
-				  const char *name);
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,
 				      struct spd_route **srp,
@@ -590,18 +587,15 @@ extern int foreach_connection_by_alias(const char *alias,
 
 extern void unshare_connection_end(struct end *e);
 
-extern void liveness_clear_connection(struct connection *c, const char *v);
-
-extern void liveness_action(struct state *st);
-
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *dst_end,
 					    bool preserve_ca, struct logger *logger);
-extern void reread_cert_connections(struct fd *whackfd);
 
 ip_port end_host_port(const struct end *end, const struct end *other);
+
+extern struct connection *connections;
 
 #endif

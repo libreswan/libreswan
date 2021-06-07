@@ -107,40 +107,81 @@ enum_names sd_action_names = {
 };
 
 /* Timer events */
-static const char *const timer_event_name[] = {
-#define E(EVENT) [EVENT] = #EVENT
 
+static const char *const event_name[] = {
+#define E(EVENT) [EVENT - EVENT_NULL] = #EVENT
 	E(EVENT_NULL),
-
-	E(EVENT_SO_DISCARD),
 	E(EVENT_RETRANSMIT),
-
-	E(EVENT_SA_REKEY),
-	E(EVENT_SA_REPLACE),
-	E(EVENT_SA_EXPIRE),
-
-	E(EVENT_v1_SEND_XAUTH),
-	E(EVENT_v1_SA_REPLACE_IF_USED),
 	E(EVENT_DPD),
 	E(EVENT_DPD_TIMEOUT),
 	E(EVENT_CRYPTO_TIMEOUT),
 	E(EVENT_PAM_TIMEOUT),
-
-	E(EVENT_v2_LIVENESS),
-	E(EVENT_v2_RELEASE_WHACK),
-	E(EVENT_v2_INITIATE_CHILD),
-	E(EVENT_v2_ADDR_CHANGE),
-	E(EVENT_v2_REDIRECT),
-	E(EVENT_RETAIN),
-
 #undef E
 };
 
-enum_names timer_event_names = {
-	EVENT_NULL, EVENT_RETAIN,
-	ARRAY_REF(timer_event_name),
-	NULL, /* prefix */
+static const enum_names event_names = {
+	EVENT_NULL, EVENT_PAM_TIMEOUT,
+	ARRAY_REF(event_name),
+	"EVENT_", /* prefix */
 	NULL
+};
+
+static const char *const event_sa_name[] = {
+#define E(EVENT) [EVENT - EVENT_SA_DISCARD] = #EVENT
+	E(EVENT_SA_DISCARD),
+	E(EVENT_SA_REKEY),
+	E(EVENT_SA_REPLACE),
+	E(EVENT_SA_EXPIRE),
+#undef E
+};
+
+static const enum_names event_sa_names = {
+	EVENT_SA_DISCARD, EVENT_SA_EXPIRE,
+	ARRAY_REF(event_sa_name),
+	"EVENT_SA_", /* prefix */
+	&event_names,
+};
+
+static const char *const event_v1_name[] = {
+#define E(EVENT) [EVENT - EVENT_v1_SEND_XAUTH] = #EVENT
+	E(EVENT_v1_SEND_XAUTH),
+	E(EVENT_v1_REPLACE_IF_USED),
+#undef E
+};
+
+static const enum_names event_v1_names = {
+	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE_IF_USED,
+	ARRAY_REF(event_v1_name),
+	"EVENT_v1_", /* prefix */
+	&event_sa_names
+};
+
+static const char *const event_v2_name[] = {
+#define E(EVENT) [EVENT - EVENT_v2_LIVENESS] = #EVENT
+	E(EVENT_v2_LIVENESS),
+	E(EVENT_v2_ADDR_CHANGE),
+	E(EVENT_v2_REDIRECT),
+#undef E
+};
+
+static const enum_names event_v2_names = {
+	EVENT_v2_LIVENESS, EVENT_v2_REDIRECT,
+	ARRAY_REF(event_v2_name),
+	"EVENT_v2_", /* prefix */
+	&event_v1_names,
+};
+
+static const char *const event_retain_name[] = {
+#define E(EVENT) [EVENT - EVENT_RETAIN] = #EVENT
+	E(EVENT_RETAIN),
+#undef E
+};
+
+const enum_names timer_event_names = {
+	EVENT_RETAIN, EVENT_RETAIN,
+	ARRAY_REF(event_retain_name),
+	"EVENT_", /* prefix */
+	&event_v2_names,
 };
 
 /* NAT methods */

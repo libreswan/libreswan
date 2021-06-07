@@ -21,12 +21,12 @@
 
 const keyid_t empty_keyid;
 
- /*
-  * keyblobtokeyid - generate a printable key ID from an RFC 2537/3110
-  * key blob
-  *
-  * Current algorithm is just to use first nine base64 digits.
-  */
+/*
+ * keyblobtokeyid - generate a printable key ID from an RFC 2537/3110
+ * key blob
+ *
+ * Current algorithm is just to use first nine base64 digits.
+ */
 
 err_t keyblob_to_keyid(const uint8_t *src, size_t srclen, keyid_t *dst)
 {
@@ -40,13 +40,13 @@ err_t keyblob_to_keyid(const uint8_t *src, size_t srclen, keyid_t *dst)
 	}
 }
 
- /*
-  * splitkeytokeyid - generate a printable key ID from
-  * exponent/modulus pair
-  *
-  * Just constructs the beginnings of a key blob and calls
-  * keyblobtoid().
-  */
+/*
+ * splitkeytokeyid - generate a printable key ID from
+ * exponent/modulus pair
+ *
+ * Just constructs the beginnings of a key blob and calls
+ * keyblobtoid().
+ */
 
 err_t splitkey_to_keyid(const uint8_t *e, size_t elen,
 			const uint8_t *m, size_t mlen,

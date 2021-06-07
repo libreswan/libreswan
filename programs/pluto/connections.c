@@ -88,7 +88,6 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
-#include "nss_cert_reread.h"
 #include "security_selinux.h"
 #include "orient.h"
 
@@ -136,17 +135,7 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 
 void release_connection(struct connection *c, bool relations)
 {
-	if (c->kind == CK_INSTANCE) {
-		/* punexpected(...)? */
-		/*
-		 * This does everything we need.
-		 * Note that we will be called recursively by delete_connection,
-		 * but kind will be CK_GOING_AWAY.
-		 */
-		delete_connection(&c, relations);
-		return;
-	}
-
+	pexpect(c->kind != CK_INSTANCE);
 	flush_pending_by_connection(c);
 	delete_states_by_connection(c, relations);
 	unroute_connection(c);
@@ -202,7 +191,7 @@ void delete_connection(struct connection **cp, bool relations)
 			llog(RC_LOG, c->logger,
 			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
 			     str_address_sensitive(&c->spd.that.host_addr, &b),
-			     c->newest_isakmp_sa, c->newest_ipsec_sa);
+			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL) {
@@ -314,7 +303,7 @@ static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct
 {
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd); /* freed by discard_conection() */
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE); /* freed by discard_conection() */
 
 	delete_connection(&c, false);
 	return 1;
@@ -1391,7 +1380,7 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 	} else {
-		switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
 		case LEMPTY:
 			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
 				llog(RC_FATAL, c->logger,
@@ -1976,7 +1965,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->instance_serial = 0;
 	c->interface = NULL;
 	c->spd.routing = RT_UNROUTED;
-	c->newest_isakmp_sa = SOS_NOBODY;
+	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->spd.eroute_owner = SOS_NOBODY;
 	c->temp_vars.num_redirects = 0;
@@ -2058,7 +2047,7 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
-	(void)orient(c);
+	orient(c, c->logger);
 
 	connect_to_host_pair(c);
 	/* non configurable */
@@ -2074,12 +2063,12 @@ static const char *const policy_shunt_names[4] = {
 	"reject",
 };
 
-void add_connection(struct fd *whackfd, const struct whack_message *wm)
+void add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
@@ -2197,7 +2186,7 @@ struct connection *add_group_instance(struct connection *group,
 	if (group->policy & POLICY_GROUTED) {
 		/* XXX: something better? */
 		close_any(&t->logger->global_whackfd);
-		t->logger->global_whackfd = dup_any(group->logger->global_whackfd);
+		t->logger->global_whackfd = fd_dup(group->logger->global_whackfd, HERE);
 		if (!trap_connection(t)) {
 			llog(WHACK_STREAM|RC_ROUTE, group->logger,
 			     "could not route");
@@ -2206,15 +2195,6 @@ struct connection *add_group_instance(struct connection *group,
 		close_any(&t->logger->global_whackfd);
 	}
 	return t;
-}
-
-/* An old target has disappeared for a group: delete instance. */
-void remove_group_instance(const struct connection *group,
-			const char *name)
-{
-	struct logger logger[] = { GLOBAL_LOGGER(whack_log_fd), }; /* placeholder */
-	passert(group->kind == CK_GROUP);
-	delete_connections_by_name(name, false, logger);
 }
 
 /*
@@ -2272,7 +2252,7 @@ struct connection *instantiate(struct connection *c,
 	d->ac_next = connections;
 	connections = d;
 	d->spd.routing = RT_UNROUTED;
-	d->newest_isakmp_sa = SOS_NOBODY;
+	d->newest_ike_sa = SOS_NOBODY;
 	d->newest_ipsec_sa = SOS_NOBODY;
 	d->spd.eroute_owner = SOS_NOBODY;
 
@@ -4211,7 +4191,7 @@ void show_one_connection(struct show *s,
 		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name,
 		    instance,
-		    c->newest_isakmp_sa,
+		    c->newest_ike_sa,
 		    c->newest_ipsec_sa,
 		    pri_co(c->serialno));
 		if (c->serial_from.co/*oops*/ != 0) {
@@ -4340,7 +4320,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	dbg("connection instance %s is not being used, deleting", c->name);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(whackfd);
+	c->logger->global_whackfd = fd_dup(whackfd, HERE);
 	delete_connection(&c, false);
 }
 
@@ -4412,59 +4392,6 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 	return NULL;
 }
 
-void liveness_clear_connection(struct connection *c, const char *v)
-{
-	/*
-	 * For CK_INSTANCE, delete_states_by_connection() will clear
-	 * Note that delete_states_by_connection changes c->kind but we need
-	 * to remember what it was to know if we still need to unroute after delete
-	 */
-	if (c->kind == CK_INSTANCE) {
-		delete_states_by_connection(c, /*relations?*/true);
-	} else {
-		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-		delete_states_by_connection(c, /*relations?*/true);
-		dbg("%s: unrouting connection %s action - clearing",
-		    enum_name(&connection_kind_names, c->kind), v);
-		unroute_connection(c); /* --unroute */
-	}
-}
-
-void liveness_action(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	const char *ikev = enum_name(&ike_version_liveness_names, st->st_ike_version);
-	passert(ikev != NULL);
-
-	switch (c->dpd_action) {
-	case DPD_ACTION_CLEAR:
-		log_state(RC_LOG, st,
-			  "%s action - clearing connection kind %s", ikev,
-			  enum_name(&connection_kind_names, c->kind));
-		liveness_clear_connection(c, ikev);
-		break;
-
-	case DPD_ACTION_RESTART:
-		log_state(RC_LOG, st,
-			  "%s action - restarting all connections that share this peer",
-			  ikev);
-		restart_connections_by_peer(c);
-		break;
-
-	case DPD_ACTION_HOLD:
-		log_state(RC_LOG, st,
-			  "%s action - putting connection into hold", ikev);
-		if (c->kind == CK_INSTANCE) {
-			dbg("%s warning dpdaction=hold on instance futile - will be deleted", ikev);
-		}
-		delete_states_by_connection(c, /*relations?*/true);
-		break;
-
-	default:
-		bad_case(c->dpd_action);
-	}
-}
-
 /*
  * This is to support certificates with SAN using wildcard, eg SAN
  * contains DNS:*.vpnservice.com where our leftid=*.vpnservice.com
@@ -4530,25 +4457,28 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 		return 0;
 	}
 
-	uint32_t pmax =
+	/* XXX: assume unsigned >= 32-bits */
+	passert(sizeof(unsigned) >= sizeof(uint32_t));
+
+	unsigned pmax =
 		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
 			(LIN(POLICY_AUTH_NULL, c->policy)) ?
 				PLUTO_SPD_OPPO_ANON_MAX :
 				PLUTO_SPD_OPPO_MAX :
 			PLUTO_SPD_STATIC_MAX;
 
-	uint32_t portsw = /* max 2 (2 bits) */
+	unsigned portsw = /* max 2 (2 bits) */
 		(c->spd.this.port == 0 ? 0 : 1) +
 		(c->spd.that.port == 0 ? 0 : 1);
 
-	uint32_t protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
+	unsigned protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
 
 
 	/*
 	 * For transport mode or /32 to /32, the client mask bits are
 	 * set based on the host_addr parameters.
 	 */
-	uint32_t srcw, dstw;	/* each max 128 (8 bits) */
+	unsigned srcw, dstw;	/* each max 128 (8 bits) */
 	srcw = c->spd.this.client.maskbits;
 	dstw = c->spd.that.client.maskbits;
 	/* if opportunistic, override the template destination mask with /32 or /128 */
@@ -4557,12 +4487,12 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	}
 
 	/* ensure an instance of a template/OE-group always has preference */
-	uint32_t instw = (c->kind == CK_INSTANCE ? 0u : 1u);
+	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
 
 	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-
-	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32")",
-	    c->name, prio, prio);
+	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    c->name, prio, prio,
+	    pmax, portsw, protow, srcw, dstw, instw);
 	return prio;
 }
 
@@ -4575,8 +4505,8 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 	so_serial_t newest;
 
 	if (IS_IKE_SA(st)) {
-		newest = c->newest_isakmp_sa;
-		dbg("picked newest_isakmp_sa #%lu for #%lu",
+		newest = c->newest_ike_sa;
+		dbg("picked newest_ike_sa #%lu for #%lu",
 		    newest, st->st_serialno);
 	} else {
 		newest = c->newest_ipsec_sa;
@@ -4598,15 +4528,4 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 	return same_id(&c->spd.this.id, &d->spd.this.id) &&
 	       same_id(peer_id == NULL ? &c->spd.that.id : peer_id,
 		       &d->spd.that.id);
-}
-
-/* reread all left/right certificates from NSS DB */
-void reread_cert_connections(struct fd *whackfd)
-{
-	struct connection *c;
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
-		reread_cert(whackfd, c);
-	}
 }

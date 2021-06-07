@@ -74,6 +74,16 @@ struct fg_targets {
 
 static struct fg_targets *targets = NULL;
 
+/*
+ * An old target has disappeared for a group: delete instance.
+ */
+static void remove_group_instance(const struct connection *group,
+				  const char *name, struct logger *logger)
+{
+	passert(group->kind == CK_GROUP);
+	delete_connections_by_name(name, false, logger);
+}
+
 /* subnetcmp compares the two ip_subnet values a and b.
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
@@ -358,7 +368,7 @@ void load_groups(struct logger *logger)
 				/* note: r>=0 || r<= 0: following cases overlap! */
 				if (r <= 0) {
 					remove_group_instance(op->group->connection,
-							      op->name);
+							      op->name, logger);
 					/* free old */
 					*opp = op->next;
 					pfree_target(&op);
@@ -367,7 +377,7 @@ void load_groups(struct logger *logger)
 					struct connection *g = np->group->connection;
 					/* XXX: something better? */
 					close_any(&g->logger->global_whackfd);
-					g->logger->global_whackfd = dup_any(logger->global_whackfd);
+					g->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
 					/* XXX: something better? */
@@ -487,7 +497,7 @@ void delete_group(const struct connection *c)
 				/* remove *PP but advance first */
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
-						      t->name);
+						      t->name, c->logger);
 				pfree_target(&t);
 				/* pp is ready for next iteration */
 			} else {

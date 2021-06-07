@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <sys/socket.h>		/* for AF_INET/AF_INET6 */
 
 #include <libreswan.h>
 #include "constants.h"
@@ -89,13 +90,13 @@ static const struct keyword_enum_values kw_keyexchange_list = VALUES_INITIALIZER
  * Values for Four-State options, used for ppk=
  */
 static const struct keyword_enum_value kw_fourvalued_values[] = {
-	{ "never",     fo_never  },
+	{ "never",     fo_never },
 	{ "permit",    fo_permit },
 	{ "propose",   fo_propose },
 	{ "insist",    fo_insist },
 	{ "yes",       fo_propose },
 	{ "always",    fo_insist },
-	{ "no",        fo_never  }
+	{ "no",        fo_never }
 };
 
 static const struct keyword_enum_values kw_fourvalued_list = VALUES_INITIALIZER(kw_fourvalued_values);
@@ -125,14 +126,14 @@ static const struct keyword_enum_values kw_yndev_list = VALUES_INITIALIZER(kw_yn
 
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct keyword_enum_value kw_yna_values[] = {
-	{ "yes",	yna_yes  },
+	{ "yes",	yna_yes },
 	{ "no",		yna_no },
 	{ "auto",	yna_auto },
 };
 static const struct keyword_enum_values kw_yna_list = VALUES_INITIALIZER(kw_yna_values);
 
 static const struct keyword_enum_value kw_esn_values[] = {
-	{ "yes",	ESN_YES  },
+	{ "yes",	ESN_YES },
 	{ "no",		ESN_NO },
 	{ "either",	ESN_EITHER },
 };

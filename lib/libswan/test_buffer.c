@@ -85,7 +85,7 @@ bool verify_bytes(const char *desc,
 		uint8_t e = ((const uint8_t*)expected)[i];
 		uint8_t a = ((const uint8_t*)actual)[i];
 		if (e != a) {
-			/* Caller should issue the real log message.  */
+			/* Caller should issue the real log message. */
 			DBGF(DBG_CRYPT, "verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
 			     desc, i, e, a);
 			return false;

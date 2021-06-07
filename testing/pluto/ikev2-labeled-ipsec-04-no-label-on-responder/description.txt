@@ -1,0 +1,9 @@
+As ikev2-labeled-ipsec-01 but now the responder is not using labels
+
+The connection should fail:
+
+- initiator sends an IKE_SA with no child
+- responder authenticates, but rejects lack of child
+- initiator drops sa with unexpected payload?
+
+

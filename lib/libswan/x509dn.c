@@ -23,7 +23,7 @@
  * for more details.
  */
 
-#include <stdlib.h>	/* for size_t */
+#include <stddef.h>	/* for size_t */
 
 #include "oid.h"
 #include "x509.h"

@@ -79,6 +79,10 @@
 #include "pending.h"		/* for release_pending_whacks() */
 #include "ikev2_host_pair.h"
 #include "ikev2_ike_sa_init.h"
+#include "ikev2_informational.h"
+#include "ikev2_create_child_sa.h"
+#include "ikev2_ike_intermediate.h"
+#include "ikev2_ike_auth.h"
 
 /*
  * IKEv2 has slightly different states than IKEv1.
@@ -252,7 +256,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor = ikev2_in_IKE_SA_INIT_R_v2N_COOKIE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received IKE_SA_INIT INVALID_KE_PAYLOAD notify response; resending IKE_SA_INIT with new KE payload",
 	  .state      = STATE_PARENT_I1,
@@ -260,10 +264,10 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = NO_MESSAGE,
 	  .message_payloads = { .required = P(N), .notification = v2N_INVALID_KE_PAYLOAD, },
-	  .processor = ikev2_in_IKE_SA_INIT_R_v2N_INVALID_KE_PAYLOAD,
+	  .processor = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received REDIRECT notify response; resending IKE_SA_INIT request to new destination",
 	  .state      = STATE_PARENT_I1,
@@ -290,7 +294,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .send       = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
-	  .processor  = ikev2_in_IKE_SA_INIT_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I,
+	  .processor  = process_v2_IKE_SA_INIT_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -302,7 +306,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SK),
 	  .opt_clear_payloads = LEMPTY,
-	  .processor  = ikev2_in_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_or_IKE_INTERMEDIATE_I,
+	  .processor  = process_v2_IKE_INTERMEDIATE_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_RETRANSMIT, },
@@ -312,53 +316,32 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
-	{ .story      = "Initiator: process INVALID_SYNTAX AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_INVALID_SYNTAX, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
-	{ .story      = "Initiator: process AUTHENTICATION_FAILED AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_AUTHENTICATION_FAILED, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
-	{ .story      = "Initiator: process UNSUPPORTED_CRITICAL_PAYLOAD AUTH notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
-	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
-	  .processor  = ikev2_in_IKE_AUTH_R_failure_notification,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
+
 	/*
-	 * XXX: Danger! This state transition mashes the IKE SA's
-	 * initial state and the CHILD SA's final state.  There should
-	 * instead be two separate state transitions: IKE SA:
-	 * STATE_PARENT_I2 -> STATE_PARENT_I3; CHILD SA: ??? ->
-	 * STATE_V2_ESTABLISHED_CHILD_SA -> ???.  The IKE SA could
-	 * then initiate the CHILD SA's transaction.
+	 * This pair of state transitions should be merged?
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags = SMF2_ESTABLISHED,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(CERT)|P(CP),
-	  .processor  = ikev2_in_IKE_AUTH_R,
+	  .req_enc_payloads = P(IDr) | P(AUTH),
+	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
-	  .timeout_event = EVENT_SA_REPLACE, },
-	{ .story      = "IKE SA: process IKE_AUTH response containing unknown notification",
-	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
+	  .timeout_event = EVENT_SA_REPLACE,
+	},
+
+	{ .story      = "Initiator: processing IKE_AUTH failure response",
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_PARENT_I2,
 	  .message_payloads = { .required = P(SK), },
-	  .encrypted_payloads = { .required = P(N), },
-	  .processor  = ikev2_in_IKE_AUTH_R_unknown_notification,
+	  /* .encrypted_payloads = { .required = P(N), }, */
+	  .processor  = process_v2_IKE_AUTH_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_IKE_AUTH, },
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	},
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
@@ -369,10 +352,10 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_PARENT_R1,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
-	  .processor  = ikev2_in_IKE_SA_INIT_I_out_IKE_SA_INIT_R,
+	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  .timeout_event = EVENT_SO_DISCARD, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -391,7 +374,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
-	  .processor  = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_no_skeyid,
+	  .processor  = process_v2_IKE_AUTH_request_no_skeyseed,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -404,7 +387,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
-	  .processor  = ikev2_in_IKE_INTERMEDIATE_I_out_IKE_INTERMEDIATE_R_no_skeyid,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request_no_skeyseed,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -417,27 +400,25 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
-	  .processor  = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_SA_REPLACE, },
+
 	/*
-	 * XXX: Danger! This state transition mashes the IKE SA's
-	 * initial state and the CHILD SA's final state.  There should
-	 * instead be two separate state transitions: IKE SA:
-	 * STATE_PARENT_R1->STATE_PARENT_R2; CHILD SA:: ??? ->
-	 * STATE_V2_ESTABLISHED_CHILD_SA.  The IKE SA could then
-	 * initiate the CHILD SA's transaction.
+	 * These two transitions should be merged; the no-child
+	 * variant is just so that the code can be hobbled.
 	 */
+
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags = SMF2_ESTABLISHED,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
-	  .processor  = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R,
+	  .req_enc_payloads = P(IDi) | P(AUTH),
+	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -517,7 +498,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
-	  .processor  = ikev2_child_inIoutR,
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -530,7 +511,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = ikev2_child_inIoutR,
+	  .processor  = process_v2_CREATE_CHILD_SA_create_child_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -558,7 +539,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
-	  .processor  = process_encrypted_informational_ikev2,
+	  .processor  = process_v2_INFORMATIONAL_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -568,7 +549,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
-	  .processor  = process_encrypted_informational_ikev2,
+	  .processor  = process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -579,7 +560,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
+	  .processor  = process_v2_INFORMATIONAL_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -589,29 +570,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
+	  .processor  = process_v2_INFORMATIONAL_response,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
+	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
 	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
-	  .state      = STATE_CHILDSA_DEL,
-	  .next_state = STATE_CHILDSA_DEL,
-	  .flags      = 0,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
+	  .processor  = IKE_SA_DEL_process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
@@ -690,10 +660,10 @@ void init_ikev2(void)
 		 * Check that the NOTIFY -> PBS -> MD.pbs[]!=NULL will work.
 		 */
 		if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_notification_to_v2_pbs(t->message_payloads.notification) != PBS_v2_INVALID);
+			pexpect(v2_notification_to_v2_pd(t->message_payloads.notification) != PD_v2_INVALID);
 		}
 		if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_notification_to_v2_pbs(t->encrypted_payloads.notification) != PBS_v2_INVALID);
+			pexpect(v2_notification_to_v2_pd(t->encrypted_payloads.notification) != PD_v2_INVALID);
 		}
 
 		/*
@@ -946,7 +916,7 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 		break;
 	default:
 		pexpect(svm->state == STATE_V2_REKEY_IKE_R0);
-		sa_type = IKE_SA;		
+		sa_type = IKE_SA;
 	}
 
 	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
@@ -954,7 +924,6 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
 						    SA_RESPONDER,
 						    svm->state,
 						    null_fd);
-	binlog_refresh_state(&child->sa);
 
 	connection_buf ibuf;
 	connection_buf cbuf;
@@ -1540,8 +1509,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		 */
 		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
 		if (md->fake_clone) {
-			log_state(RC_LOG, st != NULL ? st : &ike->sa,
-				  "IMPAIR: processing a fake (cloned) message");
+			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
 		if (is_duplicate_response(ike, st, md)) {
 			return;
@@ -1572,7 +1540,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
 		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 	md->message_payloads =
-		ikev2_decode_payloads(st->st_logger, md,
+		ikev2_decode_payloads(ike->sa.st_logger, md,
 				      &md->message_pbs,
 				      md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
@@ -1625,22 +1593,25 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		} else {
 			transition = &state->v2_transitions[3];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
-			pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		}
 		pexpect((transition->flags & SMF2_NO_SKEYSEED) == 0);
 		pexpect(transition->state == STATE_PARENT_R1);
 		break;
 	case STATE_PARENT_I2:
+	{
 		/*
 		 * Receiving IKE_AUTH response: it is buried deep
 		 * down; would adding an extra transition that always
 		 * matches be better?
 		 */
-		pexpect(state->nr_transitions == 6);
-		transition = &state->v2_transitions[4];
+		unsigned transition_nr = 1;
+		pexpect(state->nr_transitions > transition_nr);
+		transition = &state->v2_transitions[transition_nr];
 		pexpect(transition->state == STATE_PARENT_I2);
-		pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
+	}
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2_transitions[state->nr_transitions - 1];
@@ -1864,7 +1835,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-			md->encrypted_payloads = ikev2_decode_payloads(st->st_logger, md, &sk->pbs,
+			md->encrypted_payloads = ikev2_decode_payloads(ike->sa.st_logger, md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 				/*
@@ -2031,7 +2002,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * If a request, should it send an un-encrypted
 		 * v2N_INVALID_SYNTAX?
 		 */
-		log_state(RC_LOG, st, "no useful state microcode entry found for incoming packet");
+		log_state(RC_LOG, &ike->sa, "no useful state microcode entry found for incoming packet");
 		/* "dropping message with no matching microcode" */
 		return;
 	}
@@ -2078,7 +2049,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct state_v2_microcode *svm)
 {
-	md->st = st;
+	md->v1_st = st;
 	md->svm = svm;
 
 	/*
@@ -2114,28 +2085,25 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 */
 	statetime_t start = statetime_start(st);
 	so_serial_t old_st = st->st_serialno;
-	so_serial_t old_md_st = md->st != NULL ? md->st->st_serialno : SOS_NOBODY;
+	so_serial_t old_md_st = md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
 	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 	stf_status e = svm->processor(ike, child, md);
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
 	/*
-	 * Processor may screw around with md->st, for instance
+	 * Processor may screw around with md->v1_st, for instance
 	 * switching it to the CHILD SA, or a newly created state.
 	 * Hence use that version for now.
 	 */
 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 		/* MD.ST may have been freed! */
-		dbg("processor '%s' for #%lu suppresed complete st_v2_transition%s",
-		    svm->story, st->st_serialno,
-		    (old_md_st != SOS_NOBODY && md->st == NULL ? "; MD.ST disappeared" :
-		     old_md_st != SOS_NOBODY && md->st != st ? "; MD.ST was switched" :
-		     ""));
+		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
+		    svm->story, old_st);
 		return;
 	}
 
-	if (md->st == NULL) {
+	if (md->v1_st == NULL) {
 		if (old_md_st != SOS_NOBODY) {
 			/* MD.ST may have been freed! */
 			dbg("XXX: processor '%s' for #%lu deleted state MD.ST",
@@ -2143,11 +2111,11 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 			return;
 		}
 	} else {
-		if (md->st->st_serialno != old_st) {
+		if (md->v1_st->st_serialno != old_st) {
 			/* MD.ST may have been freed! */
 			dbg("XXX: processor '%s' for #%lu switched state to #%lu",
-			    svm->story, old_st, md->st->st_serialno);
-			st = md->st;
+			    svm->story, old_st, md->v1_st->st_serialno);
+			st = md->v1_st;
 		}
 	}
 
@@ -2304,7 +2272,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    from_state == STATE_V2_REKEY_IKE_I1) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
-	} else  {
+	} else {
 		change_state(st, transition->next_state);
 	}
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
@@ -2355,7 +2323,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_I2) {
 		/*
-		 * Hack around md->st being forced to the CHILD_SA
+		 * Hack around md->v1_st being forced to the CHILD_SA
 		 * with an IKE SA state.
 		 */
 		pexpect(IS_CHILD_SA(st));
@@ -2517,7 +2485,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
 			/* with failed child sa, we end up here with an orphan?? */
-			struct ike_sa *ike = ike_sa(st, HERE);
 			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
 			    ike->sa.st_serialno);
 			/* a better call unpend in ikev2_ike_sa_established? */
@@ -2575,7 +2542,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			 */
 			dbg("checking that a retransmit timeout_event was already");
 			delete_event(st); /* relying on retransmit */
-			pexpect(st->st_retransmit_event != NULL);
+			pexpect(ike->sa.st_retransmit_event != NULL);
 			pexpect(transition->send == MESSAGE_REQUEST);
 			break;
 
@@ -2583,7 +2550,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			v2_schedule_replace_event(st);
 			break;
 
-		case EVENT_SO_DISCARD:
+		case EVENT_SA_DISCARD:
 			delete_event(st);
 			event_schedule(kind, MAXIMUM_RESPONDER_WAIT_DELAY, st);
 			break;
@@ -2719,12 +2686,12 @@ void complete_v2_state_transition(struct state *st,
 	 *   should be handled by returning an STF_ZOMBIFY and having
 	 *   this code delete the SA.
 	 */
-	if (md != NULL && md->st != NULL && md->st != st) {
+	if (md != NULL && md->v1_st != NULL && md->v1_st != st) {
 		/* can't happen, must match */
 		pexpect_fail(st->st_logger, HERE,
 			     "MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
-			     IS_CHILD_SA(md->st) ? "CHILD" : "IKE",
-			     md->st->st_serialno,
+			     IS_CHILD_SA(md->v1_st) ? "CHILD" : "IKE",
+			     md->v1_st->st_serialno,
 			     IS_CHILD_SA(st) ? "CHILD" : "IKE",
 			     st->st_serialno);
 		return;
@@ -2844,11 +2811,18 @@ void complete_v2_state_transition(struct state *st,
 		break;
 
 	case STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA:
-		/* initiator processing response */
-		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		/* lie -- the delete _hopefully_ does what is wanted? */
-		log_state(RC_LOG, &ike->sa, "sending IKE SA delete");
+		/*
+		 * XXX: this is a hack so that IKE SA initiator can
+		 * both delete the IKE SA and send an IKE SA delete
+		 * notification because the IKE_AUTH response was
+		 * rejected.
+		 */
+		/*
+		 * Initiator processing response, finish current
+		 * exchange ready for delete request.
+		 */
 		dbg("Message ID: forcing a response received update");
+		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 		v2_msgid_update_recv(ike, NULL, md);
 		/*
 		 * XXX: this call will fire and forget.  It should
@@ -2857,6 +2831,9 @@ void complete_v2_state_transition(struct state *st,
 		 */
 		delete_ike_family(ike, PROBABLY_SEND_DELETE);
 		/* get out of here -- everything is invalid */
+		ike = NULL;
+		st = NULL;
+		md->v1_st = NULL;
 		return;
 
 	case STF_FATAL:
@@ -2880,23 +2857,20 @@ void complete_v2_state_transition(struct state *st,
 				v2_msgid_update_sent(ike, st, md, transition->send);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
-				release_pending_whacks(st, "fatal error");
-				delete_ike_family(ike, DONT_SEND_DELETE);
-				return;
+			} else {
+				dbg("Message ID: exchange zombie as no response?");
 			}
-			dbg("Message ID: exchange zombie as no response?");
 			break;
 		case NO_MESSAGE:
 			break;
 		}
-		release_pending_whacks(st, "fatal error");
-		delete_state(st);
+		delete_ike_family(ike, DONT_SEND_DELETE);
 
 		/* kill all st pointers */
 		st = NULL;
 		ike = NULL;
 		if (md != NULL)
-			md->st = NULL;
+			md->v1_st = NULL;
 		break;
 
 	case STF_FAIL:
@@ -2924,7 +2898,7 @@ void complete_v2_state_transition(struct state *st,
 		st = NULL;
 		ike = NULL;
 		if (md != NULL)
-			md->st = NULL;
+			md->v1_st = NULL;
 		break;
 
 	default: /* STF_FAIL+notification */
@@ -2955,12 +2929,12 @@ void complete_v2_state_transition(struct state *st,
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 				delete_state(st);
 				/* kill all st pointers */
-				st = NULL; ike = NULL; md->st = NULL;
+				st = NULL; ike = NULL; md->v1_st = NULL;
 			} else {
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);
 				delete_event(st);
-				event_schedule(EVENT_SO_DISCARD,
+				event_schedule(EVENT_SA_DISCARD,
 					       MAXIMUM_RESPONDER_WAIT_DELAY,
 					       st);
 			}

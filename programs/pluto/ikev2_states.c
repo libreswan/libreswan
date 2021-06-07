@@ -181,8 +181,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	}
 
 	if (payloads->notification != v2N_NOTHING_WRONG) {
-		enum v2_pbs v2_pbs = v2_notification_to_v2_pbs(payloads->notification);
-		if (md->pbs[v2_pbs] == NULL) {
+		enum v2_pd v2_pd = v2_notification_to_v2_pd(payloads->notification);
+		if (md->pd[v2_pd] == NULL) {
 			errors.bad = true;
 			errors.notification = payloads->notification;
 		}

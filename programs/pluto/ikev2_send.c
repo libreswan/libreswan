@@ -311,7 +311,7 @@ struct response {
 	struct pbs_out body;
 	enum payload_security security;
 	struct logger *logger;
-	v2SK_payload_t sk;
+	struct v2SK_payload sk;
 	struct pbs_out *pbs; /* where to put message (POINTER!) */
 };
 
@@ -611,7 +611,7 @@ stf_status record_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	v2SK_payload_t sk = open_v2SK_payload(sender->st_logger, &message, ike);
+	struct v2SK_payload sk = open_v2SK_payload(sender->st_logger, &message, ike);
 	if (!pbs_ok(&sk.pbs) ||
 	    (emit_payloads != NULL && !emit_payloads(sender, &sk.pbs)) ||
 	    !close_v2SK_payload(&sk)) {
@@ -625,7 +625,6 @@ stf_status record_v2_informational_request(const char *name,
 		return ret;
 	}
 
-	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 	record_v2_message(ike, &packet, name, MESSAGE_REQUEST);
 	return STF_OK;
 }

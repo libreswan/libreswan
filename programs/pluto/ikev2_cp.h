@@ -1,6 +1,6 @@
-/* log wrapper, for libreswan
+/* IKEv2 Configuration Payload, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2021  Andrew cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,23 +11,16 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
-#include <stdio.h>
-#include <stdarg.h>
+#ifndef IKEV2_CP_H
+#define IKEV2_CP_H
 
-#include "lswlog.h"
+#include <stdbool.h>
 
-void log_pexpect(where_t where, const char *message, ...)
-{
-	JAMBUF(buf) {
-		jam_string(buf, "EXPECTATION FAILED: ");
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-		jam(buf, " "PRI_WHERE, pri_where(where));
-		jambuf_to_error_stream(buf); /* XXX: grrr */
-	}
-}
+struct child_sa;
+struct pbs_out;
+
+bool emit_v2_child_configuration_payload(struct child_sa *child, struct pbs_out *outpbs);
+
+#endif

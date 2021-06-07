@@ -98,6 +98,7 @@
 
 #include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
 #include "security_selinux.h"	/* for vet_seclabel() */
+#include "ikev2_mobike.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -818,7 +819,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
-static void  set_migration_attr(const struct kernel_sa *sa,
+static void set_migration_attr(const struct kernel_sa *sa,
 		struct xfrm_user_migrate *m)
 {
 	m->old_saddr = xfrm_from_address(sa->src.address);
@@ -1277,11 +1278,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 * significant 8 bits of port field. Although Libreswan does
 		 * not have any configuration options for
 		 * icmp type/code values, it is possible to specify icmp type
-		 * and code  using protoport option. For example,
+		 * and code using protoport option. For example,
 		 * icmp echo request (type 8/code 0) needs to be encoded as
 		 * 0x0800 in the port field and can be specified
 		 * as left/rightprotoport=icmp/2048. Now with XFRM,
-		 * icmp type and code  need to be passed as source and
+		 * icmp type and code need to be passed as source and
 		 * destination ports, respectively. Therefore, this code
 		 * extracts upper 8 bits and lower 8 bits and puts
 		 * into source and destination ports before passing to XFRM.
@@ -1389,7 +1390,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 * 128 bits for SHA256 and 256 for SHA512. The XFRM
 		 * kernel uses a default of 96, which was the value in
 		 * an earlier draft. The kernel then introduced a new struct
-		 * xfrm_algo_auth to  replace struct xfrm_algo to deal with
+		 * xfrm_algo_auth to replace struct xfrm_algo to deal with
 		 * this.
 		 */
 
@@ -1791,7 +1792,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		attr = RTA_NEXT(attr, remaining);
 	}
 	record_and_initiate_opportunistic(&local, &remote, sec_label,
-					  "%acquire-netlink");
+					  "%acquire-netlink", logger);
 }
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
@@ -1844,7 +1845,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 					    "ERROR IFA_LOCAL invalid %s", ugh);
-			} else  {
+			} else {
 				if (n->nlmsg_type == RTM_DELADDR)
 					record_deladdr(&ip, "IFA_LOCAL");
 				else if (n->nlmsg_type == RTM_NEWADDR)
@@ -1858,7 +1859,7 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 					    "ERROR IFA_ADDRESS invalid %s", ugh);
-			} else  {
+			} else {
 				address_buf ip_str;
 				dbg("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
 				    str_address(&ip, &ip_str));
@@ -1925,7 +1926,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
 		    req.id.dir, req.id.index, rsp.u.pol.index);
 	} else if (upe->pol.curlft.add_time != rsp.u.pol.curlft.add_time) {
-		dbg("netlink_policy_expire: policy was replaced  and you have won the lottery: dir=%d, index=%d",
+		dbg("netlink_policy_expire: policy was replaced and you have won the lottery: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else {
 		switch (upe->pol.dir) {
@@ -1934,6 +1935,61 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 			break;
 		}
 	}
+}
+
+static void netlink_expire(struct nlmsghdr *n, struct logger *logger)
+{
+	struct xfrm_user_expire *expire; /* not aligned */
+
+	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
+	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*expire))) {
+		llog(RC_LOG, logger,
+		     "netlink_acquire got message with length %zu < %zu bytes; ignore message",
+		     (size_t) n->nlmsg_len,
+		     sizeof(*expire));
+		return;
+	}
+
+	/*
+	 * WARNING: netlink only guarantees 32-bit alignment.
+	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
+	 * BUT some fields in struct xfrm_user_acquire are 64-bit and so access
+	 * may be improperly aligned.  This will fail on a few strict
+	 * architectures (it does break C rules).
+	 *
+	 * WARNING: this code's understanding to the XFRM netlink
+	 * messages is from programs/pluto/linux26/xfrm.h.
+	 * There is no guarantee that this matches the kernel's
+	 * understanding.
+	 *
+	 * Many things are defined to be int or unsigned int.
+	 * This isn't safe when the kernel and userland may
+	 * be compiled with different models.
+	 */
+	expire = NLMSG_DATA(n);	/* insufficiently aligned */
+
+	const struct ip_info *afi = aftoinfo(expire->state.family);
+	if (afi == NULL) {
+		llog(RC_LOG, logger,
+		     "kernel: XFRM_MSG_EXPIRE message malformed: family %u unknown",
+		     expire->state.family);
+		return;
+	}
+
+	const ip_protocol *protocol = protocol_by_ipproto(expire->state.id.proto);
+	if (protocol == NULL) {
+		llog(RC_LOG, logger,
+		     "XFRM_MSG_EXPIRE message from kernel malformed: protocol %u unknown",
+		     expire->state.id.proto);
+		return;
+	}
+
+	ip_address daddr = address_from_xfrm(afi, &expire->state.id.daddr);
+
+	address_buf b;
+	dbg("kernel: expire: protocol %s dest %s SPI "PRI_IPSEC_SPI,
+	    protocol->name, str_address(&daddr, &b),
+	    pri_ipsec_spi(expire->state.id.spi));
 }
 
 /* returns FALSE iff EAGAIN */
@@ -1951,29 +2007,29 @@ static bool netlink_get(int fd, struct logger *logger)
 
 		if (errno != EINTR) {
 			log_errno(logger, errno,
-				  "recvfrom() failed in netlink_get: errno(%d): %s",
+				  "kernel: recvfrom() failed in netlink_get: errno(%d): %s",
 				  errno, strerror(errno));
 		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		llog(RC_LOG, logger,
-			    "netlink_get read truncated message: %zd bytes; ignore message",
+			    "kernel: netlink_get read truncated message: %zd bytes; ignore message",
 			    r);
 		return true;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */
-		dbg("netlink_get: ignoring %s message from process %u",
+		dbg("kernel: netlink_get: ignoring %s message from process %u",
 		    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
 		    addr.nl_pid);
 		return TRUE;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		llog(RC_LOG, logger,
-			    "netlink_get read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
-			    r, (size_t) rsp.n.nlmsg_len);
+		     "kernel: netlink_get: read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
+		     r, (size_t) rsp.n.nlmsg_len);
 		return true;
 	}
 
-	dbg("netlink_get: %s message",
+	dbg("kernel: netlink_get: %s message",
 	    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 
 	switch (rsp.n.nlmsg_type) {
@@ -1982,6 +2038,9 @@ static bool netlink_get(int fd, struct logger *logger)
 		break;
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n, logger);
+		break;
+	case XFRM_MSG_EXPIRE:
+		netlink_expire(&rsp.n, logger);
 		break;
 
 	case RTM_NEWADDR:
@@ -2010,8 +2069,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				   const struct ip_protocol *proto,
 				   bool tunnel_mode,
 				   reqid_t reqid,
-				   ipsec_spi_t min,
-				   ipsec_spi_t max,
+				   uintmax_t min, uintmax_t max,
 				   const char *text_said,
 				   struct logger *logger)
 {
@@ -2044,13 +2102,13 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
 		llog(RC_LOG, logger,
-			    "netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
-			    (size_t) rsp.n.nlmsg_len,
-			    sizeof(rsp.u.sa));
+		     "kernel: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
+		     (size_t) rsp.n.nlmsg_len,
+		     sizeof(rsp.u.sa));
 		return 0;
 	}
 
-	dbg("netlink_get_spi: allocated 0x%x for %s",
+	dbg("kernel: netlink_get_spi: allocated 0x%x for %s",
 	    ntohl(rsp.u.sa.id.spi), text_said);
 	return rsp.u.sa.id.spi;
 }
@@ -2542,7 +2600,7 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
-		req.u.p.dir  = XFRM_POLICY_OUT;
+		req.u.p.dir = XFRM_POLICY_OUT;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
@@ -2553,7 +2611,7 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		if (!netlink_policy(&req.n, 1, text, logger))
 			return FALSE;
 
-		req.u.p.dir  = XFRM_POLICY_OUT;
+		req.u.p.dir = XFRM_POLICY_OUT;
 
 		req.u.p.sel.sport = htons(port);
 		req.u.p.sel.sport_mask = 0xffff;
@@ -2798,7 +2856,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.migrate_sa = netlink_migrate_sa,
 	/*
 	 * We should implement netlink_remove_orphaned_holds
-	 * if netlink  specific changes are needed.
+	 * if netlink-specific changes are needed.
 	 */
 	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,

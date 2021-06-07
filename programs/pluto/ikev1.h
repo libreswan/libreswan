@@ -11,7 +11,7 @@ struct ike_proposals;
 
 /* ikev1.c */
 
-extern void init_ikev1(void);
+extern void init_ikev1(struct logger *logger);
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
@@ -36,7 +36,6 @@ extern void process_packet_tail(struct msg_digest *md);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
-/* extern initiator_function main_outI1; */
 extern void main_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
@@ -45,7 +44,6 @@ extern void main_outI1(struct fd *whack_sock,
 		       const threadtime_t *inception,
 		       chunk_t sec_label);
 
-/* extern initiator_function aggr_outI1; */
 extern void aggr_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
@@ -132,6 +130,8 @@ extern ikev1_state_transition_fn quick_inI2;
 #define restore_new_iv(st, tmp)	{ \
 	(st)->st_v1_new_iv = (tmp); \
     }
+
+void ISAKMP_SA_established(const struct ike_sa *ike);
 
 extern pb_stream reply_stream;
 

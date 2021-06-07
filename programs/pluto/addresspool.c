@@ -243,17 +243,10 @@ static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
 	pool->nr_reusable--;
 }
 
-static ip_address lease_address(const struct ip_pool *pool,
-				const struct lease *lease)
+static err_t pool_lease_to_address(const struct ip_pool *pool, const struct lease *lease,
+				   ip_address *address)
 {
-	ip_address address;
-	err_t err = range_offset_to_address(pool->r, lease - pool->leases, &address);
-	if (err != NULL) {
-		/* shouldn't happen!?! */
-		log_pexpect(HERE, "range+offset failed: %s", err);
-		return range_start(pool->r);
-	}
-	return address;
+	return range_offset_to_address(pool->r, lease - pool->leases, address);
 }
 
 static void DBG_pool(bool verbose, const struct ip_pool *pool,
@@ -286,7 +279,11 @@ static void DBG_lease(bool verbose, const struct ip_pool *pool, const struct lea
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
 		jam(buf, " lease ");
-		ip_address addr = lease_address(pool, lease);
+		ip_address addr;
+		err_t err = pool_lease_to_address(pool, lease, &addr);
+		if (err != NULL) {
+			jam(buf, "[EXPECTATION FAILED: %s]", err);
+		}
 		jam_address(buf, &addr);
 		if (co_serial_is_set(lease->assigned_to)) {
 			jam(buf, " "PRI_CO, pri_co(lease->assigned_to));
@@ -641,7 +638,11 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	 * Can't assert that .assigned_to is unset as this connection
 	 * may be in the process of stealing the lease.
 	 */
-	ip_address ia = lease_address(pool, new_lease);
+	ip_address ia;
+	err_t err = pool_lease_to_address(pool, new_lease, &ia);
+	if (err != NULL) {
+		llog_pexpect_fail(st->st_logger, HERE, "%s", err);
+	}
 	c->spd.that.has_lease = true;
 	c->spd.that.has_client = true;
 	c->spd.that.client = selector_from_address(ia);
@@ -846,7 +847,11 @@ void show_addresspool_status(struct show *s)
 		unsigned nr_reusable_names = 0;
 		for (unsigned l = 0; l < pool->nr_leases; l++) {
 			struct lease *lease = &pool->leases[l];
-			ip_address lease_ip = lease_address(pool, lease);
+			ip_address lease_ip;
+			err_t err = pool_lease_to_address(pool, lease, &lease_ip);
+			if (err != NULL) {
+				llog_pexpect_fail(show_logger(s), HERE, "%s", err);
+			}
 			address_buf lease_ipb;
 			const char *lease_str = str_address(&lease_ip, &lease_ipb);
 			struct connection *c = connection_by_serialno(lease->assigned_to);

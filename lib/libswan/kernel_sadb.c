@@ -79,7 +79,7 @@ void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_al
 			if (!combo_ok) {
 				jam_string(buf, ", invalid combo");
 			}
-			jambuf_to_debug_stream(buf);
+			jambuf_to_logger(buf, &failsafe_logger, DEBUG_STREAM);
 		}
 	}
 

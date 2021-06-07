@@ -115,7 +115,7 @@ static void check_str_subnet(struct logger *logger)
 			/* Error was expected, do nothing */
 			continue;
 		} else if (oops != NULL && t->str != NULL) {
-			/* Error occurred, but we didn't expect one  */
+			/* Error occurred, but we didn't expect one */
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 		} else if (oops == NULL && t->str == NULL) {
 			/* If no errors, but we expected one */

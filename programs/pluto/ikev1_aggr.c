@@ -23,7 +23,7 @@
 
 #include <unistd.h>
 
-#include "constants.h"		/* for dup_any()!?! ... */
+#include "constants.h"
 
 #include "defs.h"
 #include "state.h"
@@ -174,7 +174,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	struct state *st = &ike->sa;
-	md->st = st;  /* (caller will reset cur_state) */
+	md->v1_st = st;  /* (caller will reset cur_state) */
 	change_state(st, STATE_AGGR_R1);
 
 	/* warn for especially dangerous Aggressive Mode and PSK */
@@ -196,7 +196,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
@@ -337,7 +337,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	dbg(" I am %ssending a certificate request",
 	    send_cr ? "" : "not ");
 
-	/* done parsing; initialize crypto  */
+	/* done parsing; initialize crypto */
 
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->st_logger);
 
@@ -529,7 +529,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
@@ -587,7 +587,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	passert(st != NULL);
 	passert(md != NULL);
-	passert(md->st == st);
+	passert(md->v1_st == st);
 
 	if (st->st_dh_shared_secret == NULL) {
 		return STF_FAIL + INVALID_KEY_INFORMATION;
@@ -771,7 +771,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_isakmp_sa != SOS_NOBODY && c->spd.this.xauth_client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -784,7 +784,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		}
 	}
 
-	if (c->newest_isakmp_sa != SOS_NOBODY && c->spd.this.xauth_client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = TRUE;
@@ -797,7 +797,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		}
 	}
 
-	c->newest_isakmp_sa = st->st_serialno;
+	c->newest_ike_sa = st->st_serialno;
 
 	/* save last IV from phase 1 so it can be restored later so anything
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
@@ -806,7 +806,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-	IKE_SA_established(pexpect_ike_sa(st));
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
@@ -896,7 +896,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_isakmp_sa != SOS_NOBODY &&
+	if (c->newest_ike_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
@@ -910,7 +910,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	if (c->newest_isakmp_sa != SOS_NOBODY &&
+	if (c->newest_ike_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
@@ -924,7 +924,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	c->newest_isakmp_sa = st->st_serialno;
+	c->newest_ike_sa = st->st_serialno;
 
 	update_iv(st);  /* Finalize our Phase 1 IV */
 
@@ -935,7 +935,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-	IKE_SA_established(pexpect_ike_sa(st));
+	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
 		if (add_xfrmi(c, st->st_logger))
@@ -961,7 +961,7 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
  * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
-/* extern initiator_function aggr_outI1; */	/* type assertion */
+
 void aggr_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,
@@ -1037,7 +1037,7 @@ static stf_status aggr_outI1_continue(struct state *st,
 	 * MD.  This hacks around it.
 	 */
 	struct msg_digest *fake_md = alloc_md(NULL/*iface-port*/, &unset_endpoint, HERE);
-	fake_md->st = st;
+	fake_md->v1_st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->fake_dne = true;
 

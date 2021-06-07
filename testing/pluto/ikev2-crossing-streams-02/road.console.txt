@@ -94,8 +94,8 @@ road #
 006 #2: "static", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 road #
  ipsec status |grep STATE_
-000 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EVENT_SA_REKEY in XXs; newest ISAKMP; idle;
-000 #2: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); EVENT_SA_REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "static":500 STATE_PARENT_R1 (sent IKE_SA_INIT reply); EVENT_SO_DISCARD in XXs; idle;
+000 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "static":500 STATE_PARENT_R1 (sent IKE_SA_INIT reply); DISCARD in XXs; idle;
 road #
  

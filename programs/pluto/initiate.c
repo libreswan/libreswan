@@ -29,26 +29,30 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "ipsec_doi.h"		/* for ipsecdoi_initiate() */
-#include "kernel.h"		/* for replace_bare_shunt()! */
+#include "kernel.h"			/* for replace_bare_shunt()! */
 #include "log.h"
-#include "ikev1_spdb.h"		/* for kernel_alg_makedb() !?! */
+#include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
 #include "host_pair.h"
 #include "state_db.h"
 #include "orient.h"
-
-struct initiate_stuff {
-	bool background;
-	const char *remote_host;
-};
+#include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
+#include "ikev1_quick.h"		/* for quick_outI1() */
+#include "ikev2.h"			/* for ikev2_state_transition_fn; */
+#include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
+#include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
+static bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception);
 
 bool initiate_connection(struct connection *c, const char *remote_host, bool background)
 {
-	threadtime_t inception  = threadtime_start();
+	connection_buf cb;
+	dbg("initiating connection to "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    pri_connection(c, &cb), background ? "background" : "forground",
+	    pri_logger(c->logger));
+	threadtime_t inception = threadtime_start();
 	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
@@ -67,7 +71,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 		struct connection *d = instantiate(c, &remote_ip, NULL);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
-		d->logger->global_whackfd = dup_any(c->logger->global_whackfd);
+		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
 
 		/* XXX: why not write to the log file? */
 		llog(WHACK_STREAM|RC_LOG, d->logger,
@@ -87,8 +91,6 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 	}
 	return ok;
 }
-
-bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception);
 
 bool initiate_connection_2(struct connection *c,
 			   const char *remote_host,
@@ -162,7 +164,7 @@ bool initiate_connection_2(struct connection *c,
 		struct connection *d = instantiate(c, NULL, NULL);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
-		d->logger->global_whackfd = dup_any(c->logger->global_whackfd);
+		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -238,53 +240,140 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(background ? null_fd : c->logger->global_whackfd,
-			  c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label);
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label,
+			  background, c->logger);
 	return true;
 }
+
+void ipsecdoi_initiate(struct connection *c,
+		       lset_t policy,
+		       unsigned long try,
+		       so_serial_t replacing,
+		       const threadtime_t *inception,
+		       chunk_t sec_label,
+		       bool background, struct logger *logger)
+{
+	if (sec_label.len != 0)
+		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+
+	/*
+	 * If there's already an IKEv1 ISAKMP SA established, use that and
+	 * go directly to Quick Mode.  We are even willing to use one
+	 * that is still being negotiated, but only if we are the Initiator
+	 * (thus we can be sure that the IDs are not going to change;
+	 * other issues around intent might matter).
+	 * Note: there is no way to initiate with a Road Warrior.
+	 */
+	struct state *st = find_phase1_state(c,
+#ifdef USE_IKEv1
+					     ISAKMP_SA_ESTABLISHED_STATES |
+					     PHASE1_INITIATOR_STATES |
+#endif
+					     IKEV2_ISAKMP_INITIATOR_STATES);
+
+	switch (c->ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+	{
+		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
+		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
+			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
+		} else if (st == NULL) {
+			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
+		} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			/*
+			 * ??? we assume that peer_nexthop_sin isn't
+			 * important: we already have it from when we
+			 * negotiated the ISAKMP SA!  It isn't clear
+			 * what to do with the error return.
+			 */
+			quick_outI1(whackfd, st, c, policy, try,
+				    replacing, sec_label);
+		} else {
+			/* leave our Phase 2 negotiation pending */
+			add_pending(whackfd, pexpect_ike_sa(st),
+				    c, policy, try,
+				    replacing, sec_label,
+				    false /*part of initiate*/);
+		}
+		break;
+	}
+#endif
+	case IKEv2:
+		if (st == NULL) {
+			/* note: new IKE SA pulls sec_label from connection */
+			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception, empty_chunk,
+						background, logger);
+		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
+			/* leave CHILD SA negotiation pending */
+			add_pending(background ? null_fd : logger->global_whackfd,
+				    pexpect_ike_sa(st),
+				    c, policy, try,
+				    replacing, sec_label,
+				    false /*part of initiate*/);
+		} else {
+			struct pending p = {
+				.whack_sock = logger->global_whackfd, /*on-stack*/
+				.ike = pexpect_ike_sa(st),
+				.connection = c,
+				.try = try,
+				.policy = policy,
+				.replacing = replacing,
+				.sec_label = sec_label,
+			};
+			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+			ikev2_initiate_child_sa(&p);
+		}
+		break;
+	default:
+		bad_case(c->ike_version);
+	}
+}
+
+struct initiate_stuff {
+	bool background;
+	const char *remote_host;
+	bool log_failure;
+};
 
 static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
 {
 	const struct initiate_stuff *is = arg;
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = dup_any(logger->global_whackfd);
+	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
+	if (!result && is->log_failure) {
+		llog(RC_FATAL, c->logger, "failed to initiate connection");
+	}
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
 	return result;
 }
 
 void initiate_connections_by_name(const char *name, const char *remote_host,
-				  struct fd *whackfd, bool background)
+				  bool background, struct logger *logger)
 {
-	struct logger logger[] = { GLOBAL_LOGGER(whackfd), }; /* placeholder */
-
 	passert(name != NULL);
-
 	struct connection *c = conn_by_name(name, /*strict-match?*/false);
 	if (c != NULL) {
-		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
-		c->logger->global_whackfd = dup_any(whackfd);
-		bool ok = initiate_connection(c, remote_host, background);
-		if (!ok) {
-			llog(RC_FATAL, c->logger, "failed to initiate connection");
+		struct initiate_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = true,
+		};
+		initiate_a_connection(c, &is, logger);
+	} else {
+		struct initiate_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = false,
+		};
+		llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
+		int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
+		if (count == 0) {
+			llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
 		}
-		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
-		return;
-	}
-
-	llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
-	struct initiate_stuff is = {
-		.background = background,
-		.remote_host = remote_host,
-	};
-	int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
-
-	if (count == 0) {
-		llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
 	}
 }
 
@@ -305,16 +394,15 @@ static bool same_in_some_sense(const struct connection *a,
 			b->dnshostname, &b->spd.that.host_addr);
 }
 
-void restart_connections_by_peer(struct connection *const c)
+void restart_connections_by_peer(struct connection *const c, struct logger *logger)
 {
-	struct fd *whackfd = whack_log_fd; /* placeholder */
 	/*
 	 * If c is a CK_INSTANCE, it will be removed by terminate_connection.
 	 * Any parts of c we need after that must be copied first.
 	 */
 
 	struct host_pair *hp = c->host_pair;
-	enum connection_kind c_kind  = c->kind;
+	enum connection_kind c_kind = c->kind;
 	struct connection *hp_next = hp->connections->hp_next;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
@@ -331,11 +419,10 @@ void restart_connections_by_peer(struct connection *const c)
 		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
 
 		if (same_host(dnshostname, &host_addr,
-				d->dnshostname, &d->spd.that.host_addr))
-		{
+			      d->dnshostname, &d->spd.that.host_addr)) {
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
-			terminate_connection(d->name, false, whackfd);
+			terminate_connections_by_name(d->name, /*quiet?*/false, logger);
 		}
 		d = next;
 	}
@@ -349,14 +436,14 @@ void restart_connections_by_peer(struct connection *const c)
 	}
 
 	if (c_kind == CK_INSTANCE && hp_next == NULL) {
-		/* in simple cases this is  a dangling hp */
+		/* in simple cases this is a dangling hp */
 		dbg("no connection to restart after termination");
 	} else {
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connections_by_name(d->name, NULL,
-							     null_fd, true/*background*/);
+				initiate_connections_by_name(d->name, /*remote-host*/NULL,
+							     /*background?*/true, logger);
 		}
 	}
 	pfreeany(dnshostname);
@@ -555,7 +642,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
+	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
@@ -601,7 +688,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		llog(RC_LOG, b->logger,
 			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
 			    pri_connection(c, &cib),
-			    c->newest_isakmp_sa, c->newest_ipsec_sa);
+			    c->newest_ike_sa, c->newest_ipsec_sa);
 		return;
 #endif
 	}
@@ -643,8 +730,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			llog(RC_LOG, b->logger, "%s", demandbuf);
 		}
 
-		ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-				  c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label);
+		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
+				  b->background, b->logger);
 		endpoint_buf b1;
 		endpoint_buf b2;
 		dbg("initiate on demand using %s from %s to %s",
@@ -731,13 +818,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,
-			       shunt_protocol->ipproto, SPI_HOLD, addwidemsg);
+			       shunt_protocol->ipproto, SPI_HOLD,
+			       addwidemsg, b->logger);
 	}
 	/*
 	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
 	 * a (possibly broadened) negotiationshunt replacement installed.
 	 */
-	const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+	const char *const delmsg = "delete bare kernel shunt - was replaced with negotiationshunt";
 	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
 			       b->transport_proto,
 			       SPI_HOLD /* kernel dictated */,
@@ -812,9 +900,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 	}
 
-	ipsecdoi_initiate(b->background ? null_fd : b->logger->global_whackfd,
-			  c, c->policy, 1,
-			  SOS_NOBODY, &inception, b->sec_label);
+	ipsecdoi_initiate(c, c->policy, 1,
+			  SOS_NOBODY, &inception, b->sec_label,
+			  b->background, b->logger);
 }
 
 void initiate_ondemand(const ip_endpoint *local_client,
@@ -878,7 +966,7 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
  * The order matters, we try to do the cheapest checks first.
  */
 
-static void connection_check_ddns1(struct connection *c)
+static void connection_check_ddns1(struct connection *c, struct logger *logger)
 {
 	struct connection *d;
 	ip_address new_addr;
@@ -930,8 +1018,8 @@ static void connection_check_ddns1(struct connection *c)
 	}
 
 	/* do not touch what is not broken */
-	if ((c->newest_isakmp_sa != SOS_NOBODY) &&
-	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_isakmp_sa))) {
+	if ((c->newest_ike_sa != SOS_NOBODY) &&
+	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_ike_sa))) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" is established",
 		    pri_connection(c, &cib));
@@ -981,7 +1069,9 @@ static void connection_check_ddns1(struct connection *c)
 		connection_buf cib;
 		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
-		initiate_connections_by_name(c->name, NULL, null_fd, true/*background*/);
+		/* XXX: why not call initiate_connection() directly? */
+		initiate_connections_by_name(c->name, /*remote-host*/NULL,
+					     /*background?*/true, logger);
 	} else {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
@@ -995,13 +1085,13 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP)) {
-			initiate_connections_by_name(d->name, NULL,
-						     null_fd, true/*background*/);
+			initiate_connections_by_name(d->name, /*remote-host*/NULL,
+						     /*background?*/true, logger);
 		}
 	}
 }
 
-void connection_check_ddns(struct logger *unused_logger UNUSED)
+void connection_check_ddns(struct logger *logger)
 {
 	struct connection *c, *cnext;
 	threadtime_t start = threadtime_start();
@@ -1009,9 +1099,9 @@ void connection_check_ddns(struct logger *unused_logger UNUSED)
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
-		connection_check_ddns1(c);
+		connection_check_ddns1(c, logger);
 	}
-	check_orientations();
+	check_orientations(logger);
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
 }
@@ -1077,7 +1167,7 @@ void connection_check_phase2(struct logger *logger)
 			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */
 				if (c->dnshostname != NULL) {
-					restart_connections_by_peer(c);
+					restart_connections_by_peer(c, logger);
 				} else {
 					event_force(EVENT_SA_REPLACE, p1st);
 				}

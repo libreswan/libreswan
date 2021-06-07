@@ -179,7 +179,7 @@ static void confwrite_int(FILE *out,
 }
 
 static void confwrite_str(FILE *out,
-		   char   *side,
+		   char *side,
 		   unsigned int context,
 		   ksf strings,
 		   str_set strings_set)
@@ -256,7 +256,7 @@ static void confwrite_str(FILE *out,
 
 static void confwrite_side(FILE *out,
 		    struct starter_end *end,
-		    char   *side)
+		    char *side)
 {
 	switch (end->addrtype) {
 	case KH_NOTSET:
