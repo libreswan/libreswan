@@ -69,7 +69,7 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	DEBUG_LOG("new");
 }
 
-void refcnt_add(const char *what, const void *pointer, refcnt_t *refcnt, where_t where)
+void refcnt_addref(const char *what, const void *pointer, refcnt_t *refcnt, where_t where)
 {
 	if (pointer == NULL) {
 		dbg("addref %s@NULL "PRI_WHERE"", what, pri_where(where));
@@ -106,8 +106,8 @@ unsigned refcnt_peek(refcnt_t *refcnt)
 	return val;
 }
 
-void refcnt_del(const char *what, void *pointer, struct refcnt *refcnt,
-		const struct where *where)
+void refcnt_delref(const char *what, void *pointer, struct refcnt *refcnt,
+		   const struct where *where)
 {
 	if (pointer == NULL) {
 		dbg("delref %s@NULL "PRI_WHERE"", what, pri_where(where));

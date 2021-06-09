@@ -747,7 +747,7 @@ struct iface_endpoint *create_tcp_interface(struct iface_dev *local_dev, ip_endp
 	ifp->local_endpoint = local_endpoint;
 	ifp->esp_encapsulation_enabled = true;
 	ifp->float_nat_initiator = false;
-	ifp->ip_dev = add_ref(local_dev);
+	ifp->ip_dev = addref(local_dev, HERE);
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->iketcp_remote_endpoint = remote_endpoint;
 	ifp->iketcp_state = IKETCP_ENABLED;
@@ -797,7 +797,7 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	ifp->protocol = &ip_protocol_tcp;
 	ifp->esp_encapsulation_enabled = true;
 	ifp->float_nat_initiator = false;
-	ifp->ip_dev = add_ref(bind_ifp->ip_dev); /*TCP: refcnt */
+	ifp->ip_dev = addref(bind_ifp->ip_dev, HERE); /*TCP: refcnt */
 	ifp->iketcp_remote_endpoint = remote_tcp_endpoint;
 	ifp->local_endpoint = bind_ifp->local_endpoint;
 	ifp->iketcp_state = IKETCP_ACCEPTED;

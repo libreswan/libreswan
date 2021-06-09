@@ -488,10 +488,10 @@ void show_virtual_private(struct show *s)
 
 struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
 {
-	return refcnt_addref(vip, where);
+	return addref(vip, where);
 }
 
 void virtual_ip_delref(struct virtual_ip **vip, where_t where)
 {
-	refcnt_delref(vip, where);
+	delref(vip, where);
 }

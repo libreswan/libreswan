@@ -65,19 +65,13 @@ unsigned refcnt_peek(refcnt_t *refcnt);
  * Note that ref_add(OBJ,HERE) breaks as HERE contains braces.
  */
 
-void refcnt_add(const char *what, const void *pointer, refcnt_t *refcnt, where_t where);
+void refcnt_addref(const char *what, const void *pointer, refcnt_t *refcnt, where_t where);
 
-#define refcnt_addref(OBJ, WHERE)					\
+#define addref(OBJ, WHERE)						\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evalutate once */		\
-		refcnt_add(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, WHERE); \
+		refcnt_addref(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, WHERE); \
 		o_; /* result */					\
-	})
-
-#define add_ref(OBJ)							\
-	({								\
-		where_t here_ = HERE;					\
-		refcnt_addref((OBJ), here_);				\
 	})
 
 /*
@@ -86,12 +80,12 @@ void refcnt_add(const char *what, const void *pointer, refcnt_t *refcnt, where_t
  * Note that ref_delete(OBJ,HERE) breaks as HERE contains braces.
  */
 
-void refcnt_del(const char *what, void *pointer, struct refcnt *refcnt, where_t where);
+void refcnt_delref(const char *what, void *pointer, struct refcnt *refcnt, where_t where);
 
-#define refcnt_delref(OBJ, WHERE)					\
+#define delref(OBJ, WHERE)						\
 	{								\
 		typeof(OBJ) o_ = OBJ;					\
-		refcnt_del(#OBJ, *o_, *o_ == NULL ? NULL : &(*o_)->refcnt, WHERE); \
+		refcnt_delref(#OBJ, *o_, *o_ == NULL ? NULL : &(*o_)->refcnt, WHERE); \
 		*o_ = NULL; /*kill pointer */				\
 	}
 
@@ -102,12 +96,12 @@ void refcnt_del(const char *what, void *pointer, struct refcnt *refcnt, where_t 
  * braces.
  */
 
-#define refcnt_replace(OBJ, NEW, FREE, WHERE)				\
+#define repref(DST, SRC, WHERE)						\
 	{								\
 		/* add new before deleting old */			\
-		ref_add(NEW, WHERE);					\
-		ref_delete((OBJ), FREE, WHERE);				\
-		*(OBJ) = NEW;						\
+		addref(SRC, WHERE);					\
+		delref(DST, WHERE);					\
+		*(DST) = SRC;						\
 	}
 
 /* for code wanting to use refcnt for normal allocs */

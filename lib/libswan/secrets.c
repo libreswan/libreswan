@@ -1532,7 +1532,7 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 
 struct pubkey *pubkey_addref(struct pubkey *pk, where_t where)
 {
-	return refcnt_addref(pk, where);
+	return addref(pk, where);
 }
 
 /*
@@ -1550,7 +1550,7 @@ static void free_public_key(void *obj, where_t where UNUSED)
 
 void pubkey_delref(struct pubkey **pkp, where_t where)
 {
-	refcnt_delref(pkp, where);
+	delref(pkp, where);
 }
 
 /*
