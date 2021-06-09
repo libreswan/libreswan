@@ -36,7 +36,7 @@ struct logger;
 
 void init_selinux(struct logger *logger);
 
-bool se_label_match(shunk_t a, chunk_t b, struct logger *logger);
+bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger);
 
 #endif /* HAVE_LABELED_IPSEC */
 

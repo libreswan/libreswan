@@ -41,6 +41,7 @@
 #include "ikev2.h"			/* for ikev2_state_transition_fn; */
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
+#include "security_selinux.h"		/* for sec_label_within_range() */
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
@@ -629,6 +630,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
+#if 0
 	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.len != 0) {
 		/*
 		 * A bit of a hack until we properly instantiate
@@ -640,6 +642,29 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		add_pending(NULL, ikesa, inst, inst->policy, 1, SOS_NOBODY, b->sec_label, false );
 		unpend(ikesa, NULL); /* cuases initiate */
 		return;
+	}
+#endif
+
+	if (c->kind == CK_TEMPLATE && b->sec_label.len > 0 && c->spd.this.sec_label.len > 0) {
+		whack_log(RC_COMMENT, b->logger->global_whackfd, 
+			"ACQUIRE with label found template (IKE) connection %s", c->name);
+		shunk_t sigh;
+		sigh.len = b->sec_label.len;
+		sigh.ptr = b->sec_label.ptr;
+
+		if (!sec_label_within_range(sigh, c->spd.this.sec_label , b->logger)) {
+			whack_log(RC_COMMENT, b->logger->global_whackfd, 
+				"Received kernel security label does not fall within range of our connection");
+			return;
+		}
+
+		/* create instance and switch to it */
+		c = instantiate(c, &b->remote.host_addr, NULL);
+		/* replace connection template label with ACQUIREd label */
+		free_chunk_content(&c->spd.this.sec_label);
+		c->spd.this.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
+		free_chunk_content(&c->spd.that.sec_label);
+		c->spd.that.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
 	}
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
@@ -661,6 +686,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
+	/* Labeled IPsec and Opportunistic cannot both be used */
 	if (c->kind == CK_INSTANCE && b->sec_label.len == 0) {
 		connection_buf cib;
 		/* there is already an instance being negotiated */

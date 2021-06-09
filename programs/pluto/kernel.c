@@ -933,12 +933,13 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_unnecessary;
 
 	/*
-	 * if this is a Road Warrior template, we cannot route.
-	 * Opportunistic template is OK.
+	 * if this is a template connection, we cannot route.
+	 * Opportunistic template is OK. also labels
 	 */
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
-	    !(c->policy & POLICY_OPPORTUNISTIC)) {
+	    !(c->policy & POLICY_OPPORTUNISTIC) &&
+	    c->spd.this.sec_label.len == 0) {
 		policy_buf pb;
 		llog(RC_ROUTE, logger,
 		     "cannot route template policy of %s",
@@ -1600,7 +1601,6 @@ bool eroute_connection(const struct spd_route *sr,
 }
 
 /* assign a bare hold or pass to a connection */
-
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
 		     int transport_proto, ipsec_spi_t negotiation_shunt,

@@ -129,6 +129,11 @@ void add_revival_if_needed(struct state *st)
 		return;
 	}
 
+	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+		dbg("skipped revival: childless IKE SA");
+		return;
+	}
+
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (state_by_serialno(newer_sa) != NULL) {
 		/*

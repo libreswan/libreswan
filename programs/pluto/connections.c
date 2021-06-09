@@ -1566,7 +1566,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-       /* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
+	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
 	/* ignore symmetrical defaults if we got left/rightauth */
@@ -1997,8 +1997,8 @@ static bool extract_connection(const struct whack_message *wm,
 		c->kind = CK_GROUP;
 		add_group(c);
 	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
-		    !NEVER_NEGOTIATE(c->policy)) ||
-		c->spd.that.has_port_wildcard) {
+		    !NEVER_NEGOTIATE(c->policy)) || c->spd.that.has_port_wildcard ||
+		    c->spd.this.sec_label.len > 0) {
 		dbg("based upon policy, the connection is a template.");
 
 		/*
@@ -2459,7 +2459,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			    endpoint_in_selector(*local_client, sr->this.client) &&
 			    endpoint_in_selector(*remote_client, sr->that.client)
 #ifdef HAVE_LABELED_IPSEC
-			     && se_label_match(sec_label, sr->this.sec_label, logger)
+			     && sec_label_within_range(sec_label, sr->this.sec_label, logger)
 #endif
 			     ) {
 				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
