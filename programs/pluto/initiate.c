@@ -492,17 +492,33 @@ struct find_oppo_bundle {
 	chunk_t sec_label;
 };
 
-static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
+static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 {
-	endpoint_buf ocb_buf;
-	const char *ocb = str_endpoint(&b->local.client, &ocb_buf);
-	endpoint_buf pcb_buf;
-	const char *pcb = str_endpoint(&b->remote.client, &pcb_buf);
+	jam(buf, "initiate on demand by %s from ", b->want);
 
-	enum stream logger_stream = (DBGP(DBG_BASE) ? ALL_STREAMS : WHACK_STREAM);
-	llog(logger_stream | RC_OPPOFAILURE, b->logger,
-		    "cannot opportunistically initiate for %s to %s: %s",
-		    ocb, pcb, ughmsg);
+	jam_address(buf, &b->local.host_addr);
+	jam(buf, ":%d", endpoint_hport(b->local.client));
+
+	jam(buf, " to ");
+
+	jam_address(buf, &b->remote.host_addr);
+	jam(buf, ":%d", endpoint_hport(b->remote.client));
+
+	jam(buf, " proto=%s", b->transport_proto->name);
+
+	if (b->sec_label.len > 0) {
+		jam(buf, " label=");
+		jam_sanitized_hunk(buf, b->sec_label);
+	}
+}
+
+static void cannot_oppo(lset_t rc_flags, struct find_oppo_bundle *b, const char *ughmsg)
+{
+	LLOG_JAMBUF(rc_flags, b->logger, buf) {
+		jam(buf, "cannot ");
+		jam_oppo_bundle(buf, b);
+		jam(buf, ": %s", ughmsg);
+	}
 
 	if (b->held) {
 		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
@@ -524,7 +540,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 			    enum_name_short(&spi_names, b->failure_shunt));
 		} else {
 			llog(RC_LOG, b->logger,
-				    "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+			     "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -561,33 +577,10 @@ static ip_selector shunt_from_traffic_end(const char *what,
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
-	int our_port = endpoint_hport(b->local.client);
-	int peer_port = endpoint_hport(b->remote.client);
-
-	address_buf ourb;
-	const char *our_addr = str_address(&b->local.host_addr, &ourb);
-	address_buf peerb;
-	const char *peer_addr = str_address(&b->remote.host_addr, &peerb);
 
 	if (b->sec_label.len != 0) {
 		dbg("oppo bundle: received security label string: %.*s",
 			(int)b->sec_label.len, b->sec_label.ptr);
-	}
-
-	char demandbuf[256];
-	snprintf(demandbuf, sizeof(demandbuf),
-		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
-		 our_addr, our_port, peer_addr, peer_port,
-		 b->transport_proto->ipproto, b->want);
-
-	/* ??? DBG and real-world code mixed */
-	bool loggedit = false;
-	if (DBGP(DBG_BASE)) {
-		llog(RC_LOG/*ALL_STREAMS*/, b->logger, "%s", demandbuf);
-		loggedit = true;
-	} else if (fd_p(b->logger->global_whackfd)) {
-		whack_log(RC_COMMENT, b->logger->global_whackfd, "%s", demandbuf);
-		loggedit = true;
 	}
 
 	/*
@@ -597,7 +590,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (!endpoint_is_specified(b->local.client) &&
 	    !endpoint_is_specified(b->remote.client)) {
-		cannot_oppo(b, "impossible IP address");
+		cannot_oppo(RC_OPPOFAILURE, b, "impossible IP address");
 		return;
 	}
 
@@ -606,7 +599,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
 		 */
-		cannot_oppo(b, "acquire for our own IP address");
+		cannot_oppo(RC_OPPOFAILURE, b, "acquire for our own IP address");
 		return;
 	}
 
@@ -623,10 +616,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * give up.  The failure policy cannot be gotten from
 		 * a connection; we pick %pass.
 		 */
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
-		}
-		cannot_oppo(b, "no routed template covers this pair");
+		cannot_oppo(RC_OPPOFAILURE, b, "no routed template covers this pair");
 		return;
 	}
 
@@ -671,18 +661,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
-		cannot_oppo(b, "connection to self on another IP?");
+		cannot_oppo(RC_OPPOFAILURE, b, "connection to self on another IP?");
 		return;
 	}
 
 	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
-		}
-		llog(RC_NOPEERIP, b->logger,
-			    "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
-			    our_addr, our_port, peer_addr, peer_port,
-			    b->transport_proto->ipproto);
+		cannot_oppo(RC_NOPEERIP, b, "template connection");
 		return;
 	}
 
@@ -752,18 +736,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			}
 		}
 
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_oppo_bundle(buf, b);
+			/* jam(buf, " using "); */
 		}
 
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
 				  b->background, b->logger);
+
 		endpoint_buf b1;
 		endpoint_buf b2;
-		dbg("initiate on demand using %s from %s to %s",
+		dbg("initiated on demand using %s from %s to %s",
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 		    str_endpoint(&b->local.client, &b1),
 		    str_endpoint(&b->remote.client, &b2));
+
 		return;
 	}
 
@@ -780,6 +767,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * step.  The second chunk initiates the next DNS query (if
 	 * any).
 	 */
+
+	/*
+	 * XXX: this is unconditional; at one point it was conditional
+	 * on DBG() to file; or whack to whack.
+	 */
+	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+		jam_oppo_bundle(buf, b);
+	}
 
 	connection_buf cib;
 	dbg("creating new instance from "PRI_CONNECTION, pri_connection(c, &cib));
