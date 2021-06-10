@@ -27,7 +27,7 @@ west #
  # this should fail AUTH on mismatched CA
 west #
  ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23
-002 initiate on demand from 192.1.2.45:8 to 192.1.2.23:0 proto=1 because: whack
+002 initiate on demand by whack from 192.1.2.45:8 to 192.1.2.23:0 proto=ICMP
 002 can't find expected bare shunt to delete: 192.1.2.45/32:0 -ICMP-> 192.1.2.23/32:0
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
 003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
@@ -41,10 +41,6 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 127.0.0.1/32 dst 192.1.2.45/32
 	dir fwd priority 3129279 ptype main

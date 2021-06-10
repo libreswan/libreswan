@@ -26,7 +26,7 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match "initiate on demand" -- cat /tmp/pluto.log
-initiate on demand from 192.1.3.209:8 to 192.1.2.23:0 proto=1 because: acquire
+initiate on demand by acquire from 192.1.3.209:8 to 192.1.2.23:0 proto=ICMP
 road #
  ip xfrm state
 src 192.1.3.209 dst 192.1.2.23
@@ -98,7 +98,7 @@ road #
  # should show for our failed attempt at OE
 road #
  grep "initiate on demand" /tmp/pluto.log
-initiate on demand from 192.1.3.209:8 to 192.1.2.23:0 proto=1 because: acquire
+initiate on demand by acquire from 192.1.3.209:8 to 192.1.2.23:0 proto=ICMP
 road #
  # save ip log
 road #
