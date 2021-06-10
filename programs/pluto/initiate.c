@@ -482,7 +482,7 @@ struct find_oppo_bundle {
 		ip_address host_addr;
 	} local, remote;
 	/* redundant - prococol involved */
-	int transport_proto;
+	const struct ip_protocol *transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
 	ipsec_spi_t negotiation_shunt;	/* in host order! */
@@ -517,7 +517,7 @@ static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
 				       b->policy_prio,
 				       b->negotiation_shunt,
 				       b->failure_shunt,
-				       b->transport_proto,
+				       b->transport_proto->ipproto,
 				       ughmsg,
 				       b->logger)) {
 			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
@@ -578,7 +578,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	snprintf(demandbuf, sizeof(demandbuf),
 		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
 		 our_addr, our_port, peer_addr, peer_port,
-		 b->transport_proto, b->want);
+		 b->transport_proto->ipproto, b->want);
 
 	/* ??? DBG and real-world code mixed */
 	bool loggedit = false;
@@ -682,7 +682,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		llog(RC_NOPEERIP, b->logger,
 			    "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 			    our_addr, our_port, peer_addr, peer_port,
-			    b->transport_proto);
+			    b->transport_proto->ipproto);
 		return;
 	}
 
@@ -743,7 +743,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * not by whack
 		 */
 		if (b->held) {
-			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
+			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
 					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
@@ -853,7 +853,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 	const char *const delmsg = "delete bare kernel shunt - was replaced with negotiationshunt";
 	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-			       b->transport_proto,
+			       b->transport_proto->ipproto,
 			       SPI_HOLD /* kernel dictated */,
 			       /*skip_xfrm_raw_eroute_delete?*/false,
 			       delmsg, b->logger)) {
@@ -890,7 +890,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 					       b->policy_prio,
 					       b->negotiation_shunt, /* if not from conn, where did this come from? */
 					       b->failure_shunt, /* if not from conn, where did this come from? */
-					       b->transport_proto,
+					       b->transport_proto->ipproto,
 					       "no suitable connection",
 					       b->logger)) {
 				dbg("replaced negotiationshunt with failurehunt=hold because no connection was found");
@@ -916,7 +916,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
-				    b->transport_proto,
+				    b->transport_proto->ipproto,
 				    b->negotiation_shunt,
 				    &b->local.host_addr,
 				    &b->remote.host_addr)) {
@@ -938,9 +938,9 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		       const char *why,
 		       struct logger *logger)
 {
-	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
-	pexpect(transport_proto != 0);
-	pexpect(transport_proto == endpoint_protocol(*remote_client)->ipproto);
+	const struct ip_protocol *transport_proto = endpoint_protocol(*local_client);
+	pexpect(transport_proto != NULL);
+	pexpect(transport_proto == endpoint_protocol(*remote_client));
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
 		.local.client = *local_client,
