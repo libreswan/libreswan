@@ -19,8 +19,9 @@
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void dbg_ref(const char *what, const void *pointer, where_t where,
-		    int old_count, int new_count, const char *why)
+static void dbg_ref(const char *why, const char *what,
+		    const void *pointer, where_t where,
+		    int old_count, int new_count)
 {
 	if (DBGP(DBG_REFCNT)) {
 		DBG_log("%sref %s@%p(%u->%u) "PRI_WHERE"",
@@ -29,8 +30,8 @@ static void dbg_ref(const char *what, const void *pointer, where_t where,
 	}
 }
 
-#define DEBUG_LOG(WHY)					\
-	dbg_ref(what, pointer, where, old, new, WHY)
+#define DEBUG_LOG(WHY)						\
+	dbg_ref(WHY, refcnt->base->what, pointer, where, old, new)
 
 /*
  * So existing code can use the refcnt tracer.
@@ -38,37 +39,43 @@ static void dbg_ref(const char *what, const void *pointer, where_t where,
 
 void dbg_alloc(const char *what, const void *pointer, where_t where)
 {
-	dbg_ref(what, pointer, where, 0, 1, "new");
+	dbg_ref("new", what, pointer, where, 0, 1);
 }
 
 void dbg_free(const char *what, const void *pointer, where_t where)
 {
-	dbg_ref(what, pointer, where, 1, 0, "del");
+	dbg_ref("del", what, pointer, where, 1, 0);
 }
 
 /* -- */
 
-void refcnt_init(const char *what, const void *pointer,
-		 refcnt_t *refcnt, where_t where)
+void refcnt_init(const void *pointer, struct refcnt *refcnt,
+		 const struct refcnt_base *base,
+		 const struct where *where)
 {
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
 		old = refcnt->count;
 		refcnt->count++;
+		refcnt->base = base;
 		new = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old != 0 || new != 1) {
 		log_pexpect(where, "refcnt for %s@%p should have been 0 initialized",
-			    what, pointer);
+			    base->what, pointer);
 	}
 	DEBUG_LOG("new");
 }
 
-void refcnt_add(const char *what, const void *pointer,
-		refcnt_t *refcnt, where_t where)
+void refcnt_add(const char *what, const void *pointer, refcnt_t *refcnt, where_t where)
 {
+	if (pointer == NULL) {
+		dbg("addref %s@NULL "PRI_WHERE"", what, pri_where(where));
+		return;
+	}
+
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
@@ -99,9 +106,14 @@ unsigned refcnt_peek(refcnt_t *refcnt)
 	return val;
 }
 
-bool refcnt_delete(const char *what, const void *pointer,
-		   refcnt_t *refcnt, where_t where)
+void refcnt_del(const char *what, void *pointer, struct refcnt *refcnt,
+		const struct where *where)
 {
+	if (pointer == NULL) {
+		dbg("delref %s@NULL "PRI_WHERE"", what, pri_where(where));
+		return;
+	}
+
 	/* on main thread */
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
@@ -118,5 +130,7 @@ bool refcnt_delete(const char *what, const void *pointer,
 			    what, pointer);
 	}
 	DEBUG_LOG("del");
-	return new == 0;
+	if (new == 0) {
+		refcnt->base->free(pointer, where);
+	}
 }

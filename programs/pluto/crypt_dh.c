@@ -75,6 +75,14 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
+static void free_dh_local_secret(void *obj, where_t where UNUSED)
+{
+	struct dh_local_secret *secret = obj;
+	SECKEY_DestroyPublicKey(secret->pubk);
+	SECKEY_DestroyPrivateKey(secret->privk);
+	pfree(secret);
+}
+
 struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger)
 {
 	SECKEYPrivateKey *privk;
@@ -83,7 +91,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	where_t here = HERE;
-	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, here);
+	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, free_dh_local_secret, here);
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;
@@ -110,20 +118,9 @@ struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, w
 	return refcnt_addref(secret, where);
 }
 
-static void free_dh_local_secret(struct dh_local_secret **secret, where_t where UNUSED)
-{
-	pexpect(*secret != NULL);
-	if (*secret != NULL) {
-		SECKEY_DestroyPublicKey((*secret)->pubk);
-		SECKEY_DestroyPrivateKey((*secret)->privk);
-		pfree(*secret);
-		*secret = NULL;
-	}
-}
-
 void dh_local_secret_delref(struct dh_local_secret **secret, where_t where)
 {
-	refcnt_delref(secret, free_dh_local_secret, where);
+	refcnt_delref(secret, where);
 }
 
 struct task {

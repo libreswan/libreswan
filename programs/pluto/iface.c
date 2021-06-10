@@ -62,10 +62,18 @@ static const struct list_info iface_dev_info = {
 
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev, &iface_dev_info);
 
+static void free_iface_dev(void *obj, where_t where UNUSED)
+{
+	struct iface_dev *ifd = obj;
+	remove_list_entry(&ifd->ifd_entry);
+	pfree(ifd->id_rname);
+	pfree(ifd);
+}
+
 static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 {
 	where_t where = HERE;
-	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, where);
+	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, free_iface_dev, where);
 	ifd->id_rname = clone_str(ifp->name, "real device name");
 	ifd->id_nic_offload = kernel_ops->detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;
@@ -110,18 +118,9 @@ void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 	add_iface_dev(ifp, logger);
 }
 
-static void free_iface_dev(struct iface_dev **ifd,
-			   where_t where UNUSED)
-{
-	remove_list_entry(&(*ifd)->ifd_entry);
-	pfree((*ifd)->id_rname);
-	pfree((*ifd));
-	*ifd = NULL;
-}
-
 void release_iface_dev(struct iface_dev **id)
 {
-	delete_ref(id, free_iface_dev);
+	refcnt_delref(id, HERE);
 }
 
 static void free_dead_ifaces(struct logger *logger)
@@ -234,7 +233,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
 					     "struct iface_endpoint");
 	ifp->fd = fd;
-	ifp->ip_dev = add_ref(ifd);
+	ifp->ip_dev = refcnt_addref(ifd, HERE);
 	ifp->io = io;
 	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
 	ifp->float_nat_initiator = float_nat_initiator;

@@ -911,7 +911,7 @@ static const shunk_t *ts_has_seclabel(chunk_t sec_label,
 
 			passert(vet_seclabel(s->sec_label) == NULL);
 
-			if (!se_label_match(s->sec_label, sec_label, logger)) {
+			if (!sec_label_within_range(s->sec_label, sec_label, logger)) {
 				dbg("ikev2ts: received %s label not within range of our security label", what);
 				DBG_dump_hunk("wanted", sec_label);
 				DBG_dump_hunk("received", s->sec_label);

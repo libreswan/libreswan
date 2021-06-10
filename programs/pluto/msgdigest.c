@@ -20,6 +20,15 @@
 #include "demux.h"      /* needs packet.h */
 #include "iface.h"
 
+static void free_md(void *obj, where_t where)
+{
+	struct msg_digest *md = obj;
+	free_chunk_content(&md->raw_packet);
+	free_logger(&md->md_logger, where);
+	pfreeany(md->packet_pbs.start);
+	pfree(md);
+}
+
 struct msg_digest *alloc_md(const struct iface_endpoint *ifp, const ip_endpoint *sender, where_t where)
 {
 	/* convenient initializer:
@@ -27,7 +36,7 @@ struct msg_digest *alloc_md(const struct iface_endpoint *ifp, const ip_endpoint 
 	 * - .note = NOTHING_WRONG
 	 * - .encrypted = FALSE
 	 */
-	struct msg_digest *md = refcnt_alloc(struct msg_digest, where);
+	struct msg_digest *md = refcnt_alloc(struct msg_digest, free_md, where);
 	md->iface = ifp;
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec, where);
@@ -51,16 +60,7 @@ struct msg_digest *md_addref(struct msg_digest *md, where_t where)
 	return refcnt_addref(md, where);
 }
 
-static void free_mdp(struct msg_digest **mdp, where_t where)
-{
-	free_chunk_content(&(*mdp)->raw_packet);
-	free_logger(&(*mdp)->md_logger, where);
-	pfreeany((*mdp)->packet_pbs.start);
-	pfree(*mdp);
-	*mdp = NULL;
-}
-
 void md_delref(struct msg_digest **mdp, where_t where)
 {
-	refcnt_delref(mdp, free_mdp, where);
+	refcnt_delref(mdp, where);
 }

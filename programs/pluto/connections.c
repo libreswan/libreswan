@@ -1566,7 +1566,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-       /* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
+	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
 	/* ignore symmetrical defaults if we got left/rightauth */
@@ -1997,8 +1997,8 @@ static bool extract_connection(const struct whack_message *wm,
 		c->kind = CK_GROUP;
 		add_group(c);
 	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
-		    !NEVER_NEGOTIATE(c->policy)) ||
-		c->spd.that.has_port_wildcard) {
+		    !NEVER_NEGOTIATE(c->policy)) || c->spd.that.has_port_wildcard ||
+		    c->spd.this.sec_label.len > 0) {
 		dbg("based upon policy, the connection is a template.");
 
 		/*
@@ -2459,7 +2459,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			    endpoint_in_selector(*local_client, sr->this.client) &&
 			    endpoint_in_selector(*remote_client, sr->that.client)
 #ifdef HAVE_LABELED_IPSEC
-			     && se_label_match(sec_label, sr->this.sec_label, logger)
+			     && sec_label_within_range(sec_label, sr->this.sec_label, logger)
 #endif
 			     ) {
 				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
@@ -4445,15 +4445,17 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 /* sa priority and type should really go into kernel_sa */
 uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 {
+	connection_buf cib;
+
 	if (c->sa_priority != 0) {
-		dbg("priority calculation of connection \"%s\" overruled by connection specification of %"PRIu32" (%#"PRIx32")",
-		    c->name, c->sa_priority, c->sa_priority);
+		dbg("priority calculation of connection "PRI_CONNECTION" overruled by connection specification of %"PRIu32" (%#"PRIx32")",
+		    pri_connection(c, &cib), c->sa_priority, c->sa_priority);
 		return c->sa_priority;
 	}
 
 	if (LIN(POLICY_GROUP, c->policy)) {
-		dbg("priority calculation of connection \"%s\" skipped - group template does not install SPDs",
-		    c->name);
+		dbg("priority calculation of connection "PRI_CONNECTION" skipped - group template does not install SPDs",
+		    pri_connection(c, &cib));
 		return 0;
 	}
 
@@ -4490,8 +4492,15 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
 
 	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-	dbg("priority calculation of connection \"%s\" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
-	    c->name, prio, prio,
+
+	if (c->spd.this.sec_label.len > 0) {
+		/* fixup so instance hits first over template */
+		if (c->kind == CK_INSTANCE)
+			prio = prio - 2;
+	}
+
+	dbg("priority calculation of connection "PRI_CONNECTION" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    pri_connection(c, &cib), prio, prio,
 	    pmax, portsw, protow, srcw, dstw, instw);
 	return prio;
 }

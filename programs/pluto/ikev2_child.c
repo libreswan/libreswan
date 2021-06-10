@@ -835,10 +835,10 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 * PAUL: should this use shunt_eroute() instead of API
 		 * violation into raw_eroute()?
 		 */
-		llog_sa(RC_LOG, ike, "IMPAIR: adding bare shunt for security label '"PRI_SHUNK"'",
+		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap shunt for security label '"PRI_SHUNK"'",
 			pri_shunk(c->spd.this.sec_label));
-		shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD,
-			     "add label", ike->sa.st_logger);
+		if (!trap_connection(c))
+			llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap shunt in IKE_AUTH failed?");
 		return CHILD_SKIPPED;
 	}
 
@@ -975,10 +975,10 @@ enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		 * PAUL: should this use shunt_eroute() instead of API
 		 * violation into raw_eroute()?
 		 */
-		llog_sa(RC_LOG, ike, "IMPAIR: adding bare shunt for security label '"PRI_SHUNK"'",
+		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap policy for security label '"PRI_SHUNK"'",
 			pri_shunk(c->spd.this.sec_label));
-		shunt_eroute(c, &c->spd, RT_ROUTED_PROSPECTIVE, ERO_ADD,
-			     "add label", ike->sa.st_logger);
+		if (!trap_connection(c))
+			llog_sa(RC_LOG, ike, "IMPAIR: %%trap policy for security label failed");
 		return CHILD_SKIPPED;
 	}
 

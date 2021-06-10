@@ -23,8 +23,14 @@
 #include "lswcdefs.h"		/* for MUST_USE_RESULT */
 #include "where.h"
 
-typedef struct {
+struct refcnt_base {
+	const char *what;
+	void (*free)(void *object, where_t where);
+};
+
+typedef struct refcnt {
 	volatile unsigned count;
+	const struct refcnt_base *base;
 } refcnt_t;
 
 /*
@@ -33,15 +39,22 @@ typedef struct {
  * Note that ref_init(OBJ,HERE) breaks as HERE contains braces.
  */
 
-void refcnt_init(const char *what, const void *pointer,
-		 refcnt_t *refcnt, where_t where);
+void refcnt_init(const void *pointer, struct refcnt *refcnt,
+		 const struct refcnt_base *base, where_t where);
 
-#define refcnt_alloc(THING, WHERE)				       \
+#define refcnt_overalloc(THING, EXTRA, FREE, WHERE)		       \
 	({							       \
-		THING *t_ = alloc_bytes(sizeof(THING), (WHERE).func);  \
-		refcnt_init(#THING, t_, &t_->refcnt, WHERE);	       \
+		static const struct refcnt_base b_ = {		       \
+			.what = #THING,				       \
+			.free = FREE,				       \
+		};						       \
+		THING *t_ = alloc_bytes(sizeof(THING) + (EXTRA), b_.what); \
+		refcnt_init(t_, &t_->refcnt, &b_, WHERE);	       \
 		t_;						       \
 	})
+
+#define refcnt_alloc(THING, FREE, WHERE)			       \
+	refcnt_overalloc(THING, /*extra*/0, FREE, WHERE)
 
 /* look at refcnt atomically */
 unsigned refcnt_peek(refcnt_t *refcnt);
@@ -52,17 +65,13 @@ unsigned refcnt_peek(refcnt_t *refcnt);
  * Note that ref_add(OBJ,HERE) breaks as HERE contains braces.
  */
 
-void refcnt_add(const char *what, const void *pointer,
-		refcnt_t *refcnt, where_t where);
+void refcnt_add(const char *what, const void *pointer, refcnt_t *refcnt, where_t where);
 
 #define refcnt_addref(OBJ, WHERE)					\
 	({								\
-		if ((OBJ) == NULL) {					\
-			dbg("addref "#OBJ"@NULL "PRI_WHERE"", pri_where(WHERE)); \
-		} else {						\
-			refcnt_add(#OBJ, (OBJ), &(OBJ)->refcnt, WHERE);	\
-		}							\
-		(OBJ); /* result */					\
+		typeof(OBJ) o_ = OBJ; /* evalutate once */		\
+		refcnt_add(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, WHERE); \
+		o_; /* result */					\
 	})
 
 #define add_ref(OBJ)							\
@@ -74,29 +83,16 @@ void refcnt_add(const char *what, const void *pointer,
 /*
  * Delete a reference.
  *
- * Note that ref_delete(OBJ,FREE,HERE) breaks as HERE contains braces.
+ * Note that ref_delete(OBJ,HERE) breaks as HERE contains braces.
  */
 
-bool refcnt_delete(const char *what, const void *pointer,
-		   refcnt_t *refcnt, where_t where) MUST_USE_RESULT;
+void refcnt_del(const char *what, void *pointer, struct refcnt *refcnt, where_t where);
 
-#define refcnt_delref(OBJ, FREE, WHERE)					\
+#define refcnt_delref(OBJ, WHERE)					\
 	{								\
-		if (*(OBJ) == NULL) {					\
-			dbg("delref "#OBJ"@NULL "PRI_WHERE"", pri_where(WHERE)); \
-		} else if (refcnt_delete(#OBJ, *(OBJ), &(*(OBJ))->refcnt, \
-					 WHERE)) {			\
-			FREE((OBJ), WHERE);				\
-			passert(*(OBJ) == NULL);			\
-		} else {						\
-			*(OBJ) = NULL; /* kill pointer */		\
-		}							\
-	}
-
-#define delete_ref(OBJ, FREE)						\
-	{								\
-		where_t here_ = HERE;					\
-		refcnt_delref((OBJ), FREE, here_);			\
+		typeof(OBJ) o_ = OBJ;					\
+		refcnt_del(#OBJ, *o_, *o_ == NULL ? NULL : &(*o_)->refcnt, WHERE); \
+		*o_ = NULL; /*kill pointer */				\
 	}
 
 /*
@@ -112,13 +108,6 @@ bool refcnt_delete(const char *what, const void *pointer,
 		ref_add(NEW, WHERE);					\
 		ref_delete((OBJ), FREE, WHERE);				\
 		*(OBJ) = NEW;						\
-	}
-
-#define replace_ref(OBJ, NEW, FREE)					\
-	{								\
-		where_t here_ = HERE;					\
-		/* add new before deleting old */			\
-		refcnt_replace((OBJ), NEW, FREE, here_);		\
 	}
 
 /* for code wanting to use refcnt for normal allocs */
