@@ -26,6 +26,14 @@
 
 static struct root_certs *root_cert_db;
 
+static void root_certs_free(void *obj, where_t unused_where UNUSED)
+{
+	struct root_certs *root_certs = obj;
+	llog(LOG_STREAM, &failsafe_logger, "destroying root certificate cache");
+	CERT_DestroyCertList(root_certs->trustcl);
+	pfreeany(root_certs);
+}
+
 struct root_certs *root_certs_addref(where_t where)
 {
 	passert(in_main_thread());
@@ -43,7 +51,7 @@ struct root_certs *root_certs_addref(where_t where)
 	 * it will contain an empty list of certificates (but avoid
 	 * possibly expensive attempts to re-load).
 	 */
-	root_cert_db = refcnt_alloc(struct root_certs, where);
+	root_cert_db = refcnt_alloc(struct root_certs, root_certs_free, where);
 
 	/*
 	 * Start with two references: the ROOT_CERT_DB; and the result
@@ -97,17 +105,10 @@ struct root_certs *root_certs_addref(where_t where)
 	return root_certs;
 }
 
-static void root_certs_free(struct root_certs **root_certs, where_t unused_where UNUSED)
-{
-	llog(LOG_STREAM, &failsafe_logger, "destroying root certificate cache");
-	CERT_DestroyCertList((*root_certs)->trustcl);
-	pfreeany(*root_certs);
-}
-
 void root_certs_delref(struct root_certs **root_certs,
 			where_t where)
 {
-	refcnt_delref(root_certs, root_certs_free, where);
+	refcnt_delref(root_certs, where);
 }
 
 bool root_certs_empty(const struct root_certs *root_certs)

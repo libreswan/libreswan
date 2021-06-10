@@ -38,10 +38,9 @@ struct fd *fd_dup(struct fd *fd, const struct where *where)
 	return fd;
 }
 
-static void free_fd(struct fd **fdp, where_t where)
+static void free_fd(void *obj, where_t where)
 {
-	struct fd *fd = *fdp;
-	*fdp = NULL;
+	struct fd *fd = obj;
 	pexpect(fd->magic == FD_MAGIC);
 	if (close(fd->fd) != 0) {
 		dbg("freeref "PRI_FD" close(%d) failed: "PRI_ERRNO" "PRI_WHERE"",
@@ -56,7 +55,7 @@ static void free_fd(struct fd **fdp, where_t where)
 
 void close_any_fd(struct fd **fd, where_t where)
 {
-	refcnt_delref(fd, free_fd, where);
+	refcnt_delref(fd, where);
 }
 
 void fd_leak(struct fd *fd, where_t where)
@@ -102,7 +101,7 @@ struct fd *fd_accept(int socket, const struct where *where, struct logger *logge
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, where);
+	struct fd *fdt = refcnt_alloc(struct fd, free_fd, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
 	dbg("%s: new "PRI_FD" "PRI_WHERE"",

@@ -210,6 +210,13 @@ void init_virtual_ip(const char *private_list,
  * @param string (virtual_private= from ipsec.conf)
  * @return virtual_ip
  */
+
+static void virtual_ip_free(void *obj, where_t where UNUSED)
+{
+	struct virtual_ip *vip = obj;
+	pfree(vip);
+}
+
 struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 {
 
@@ -275,10 +282,9 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 	}
 
 	/* allocate struct + array */
-	struct virtual_ip *v = (struct virtual_ip *)alloc_bytes(
-		sizeof(struct virtual_ip) + (n_net * sizeof(ip_subnet)),
-		"virtual description");
-	refcnt_init("vip", v, &v->refcnt, HERE);
+	struct virtual_ip *v = refcnt_overalloc(struct virtual_ip,
+						/*extra*/(n_net * sizeof(ip_subnet)),
+						virtual_ip_free, HERE);
 
 	v->flags = flags;
 	v->n_net = n_net;
@@ -480,12 +486,6 @@ void show_virtual_private(struct show *s)
 	}
 }
 
-static void virtual_ip_free(struct virtual_ip **vip, where_t where UNUSED)
-{
-	pfree(*vip);
-	*vip = NULL;
-}
-
 struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
 {
 	return refcnt_addref(vip, where);
@@ -493,5 +493,5 @@ struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
 
 void virtual_ip_delref(struct virtual_ip **vip, where_t where)
 {
-	refcnt_delref(vip, virtual_ip_free, where);
+	refcnt_delref(vip, where);
 }
