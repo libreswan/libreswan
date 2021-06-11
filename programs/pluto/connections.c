@@ -1994,18 +1994,18 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (c->policy & POLICY_GROUP) {
+		dbg("connection is group: by policy");
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
-		    !NEVER_NEGOTIATE(c->policy)) || c->spd.that.has_port_wildcard ||
-		    c->spd.this.sec_label.len > 0) {
-		dbg("based upon policy, the connection is a template.");
-
-		/*
-		 * Opportunistic or Road Warrior or wildcard client
-		 * subnet
-		 * or wildcard ID
-		 */
+	} else if (!NEVER_NEGOTIATE(c->policy) && (address_is_unset(&c->spd.that.host_addr) ||
+						   address_is_any(c->spd.that.host_addr))) {
+		dbg("connection is template: no remote address yet policy negotiate");
+		c->kind = CK_TEMPLATE;
+	} else if (c->spd.that.has_port_wildcard) {
+		dbg("connection is template: remote has wildcard port");
+		c->kind = CK_TEMPLATE;
+	} else if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		dbg("connection is template: security label present");
 		c->kind = CK_TEMPLATE;
 	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 		/*
@@ -2013,11 +2013,13 @@ static bool extract_connection(const struct whack_message *wm,
 		 * so we can accept multiple subnets from
 		 * the remote peer.
 		 */
+		dbg("connection is template: there are vnets at play");
 		c->kind = CK_TEMPLATE;
 	} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-		dbg("based upon policy narrowing=yes, the connection is a template.");
+		dbg("connection is template: POLICY_IKEV2_ALLOW_NARROWING");
 		c->kind = CK_TEMPLATE;
 	} else {
+		dbg("connection is permanent: by default");
 		c->kind = CK_PERMANENT;
 	}
 
