@@ -1870,9 +1870,21 @@ static bool extract_connection(const struct whack_message *wm,
 	c->sa_tfcpad = wm->sa_tfcpad;
 	c->send_no_esp_tfc = wm->send_no_esp_tfc;
 
-	c->sa_reqid = wm->sa_reqid;
-	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d",
-	    c->name, c->sa_reqid, wm->sa_reqid);
+	/*
+	 * Since security labels use the same REQID for everything,
+	 * pre-assign it.
+	 */
+	c->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
+		       wm->ike_version != IKEv2 ? /*generated later*/0 :
+		       wm->left.sec_label != NULL ? gen_reqid() :
+		       wm->right.sec_label != NULL ? gen_reqid() :
+		       /*generated later*/0);
+	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
+	    c->name, c->sa_reqid, wm->sa_reqid,
+	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
+	     wm->left.sec_label != NULL ? wm->left.sec_label :
+	     wm->right.sec_label != NULL ? wm->right.sec_label :
+	     "n/a"));
 
 	/*
 	 * Since at this point 'this' and 'that' are disoriented their
