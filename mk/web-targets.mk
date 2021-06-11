@@ -55,18 +55,27 @@ endif
 #
 # Force the creation and/or update of the web pages
 #
-# Since $(WEB_SUMMARYDIR) (aka $(LSW_WEBDIR)) is created (via a
-# dependency) before invoking the sub-$(MAKE), the sub-$(MAKE) will
-# always see a configuration where web pages are enabled.
-#
-# Order matters: the results directory is created first so that so
-# that the web-summarydir will pick up its contents.
 
-web web-page: | $(WEB_SUMMARYDIR)
-	$(MAKE) web-resultsdir web-summarydir
+.PHONY: web web-page
+web web-page:
+	$(MAKE) WEB_ENABLED=true web-summarydir web-resultsdir web-publish
 
-$(WEB_SUMMARYDIR):
-	mkdir $(WEB_SUMMARYDIR)
+ifdef WEB_ENABLED
+
+.PHONY: web-publish
+web-publish: | $(WEB_RESULTSDIR)
+	$(WEB_UTILSDIR)/kvmresults.py \
+		--exit-ok \
+		--quick \
+		--test-kind '' \
+		--test-status '' \
+		--publish-summary $(WEB_RESULTSDIR)/summary.json \
+		--publish-status $(WEB_SUMMARYDIR)/status.json \
+		--publish-results $(WEB_RESULTSDIR) \
+		--publish-hash $(WEB_HASH) \
+		testing/pluto
+
+endif
 
 #
 # Build or update the web pages ready for a new test run
@@ -76,11 +85,11 @@ $(WEB_SUMMARYDIR):
 # directory, do a full update so that all the previous runs are
 # included.
 
-.PHONY: web-test-prep web-test-post web-page web
+.PHONY: web-test-prep web-test-post
 web-test-prep:
 web-test-post:
 ifdef WEB_ENABLED
-web-test-prep: web-results-html web-summarydir web-testsdir
+web-test-prep: web-resultsdir web-summarydir web-testsdir
 web-test-post: web-tests-json
 endif
 
@@ -104,12 +113,56 @@ web-site:
 .PHONY: web-summarydir
 web-summarydir:
 
+ifdef WEB_ENABLED
+
+web-summarydir: $(WEB_SUMMARYDIR)/commits.json
+web-summarydir: $(WEB_SUMMARYDIR)/index.html
+web-summarydir: $(WEB_SUMMARYDIR)/lsw-summary-graph.css
+web-summarydir: $(WEB_SUMMARYDIR)/lsw-table.css
+web-summarydir: $(WEB_SUMMARYDIR)/summaries.json
+web-summarydir: $(WEB_SUMMARYDIR)/summary.css
+web-summarydir: $(WEB_SUMMARYDIR)/tsconfig.json
+web-summarydir: | $(WEB_SUMMARYDIR)/status.json
+
+$(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCEDIR)/summary.html | $(WEB_SUMMARYDIR)
+	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
+
+$(WEB_SUMMARYDIR)/%.css: $(WEB_SOURCEDIR)/%.css
+	cp $< $@
+
+$(WEB_SUMMARYDIR):
+	mkdir $(WEB_SUMMARYDIR)
+
+endif
+
 #
 # Create or update a test run's results page.
 #
 
 .PHONY: web-resultsdir
 web-resultsdir:
+
+ifdef WEB_ENABLED
+
+web-resultsdir: $(WEB_RESULTSDIR)/index.html
+web-resultsdir: $(WEB_RESULTSDIR)/lsw-summary-graph.css
+web-resultsdir: $(WEB_RESULTSDIR)/lsw-table.css
+web-resultsdir: $(WEB_RESULTSDIR)/results.css
+web-resultsdir: $(WEB_RESULTSDIR)/tsconfig.json
+
+web-results-json: $(WEB_RESULTSDIR)/results.json
+web-results-json: $(WEB_RESULTSDIR)/summary.json
+
+$(WEB_RESULTSDIR)/index.html: $(WEB_SOURCEDIR)/results.html | $(WEB_RESULTSDIR)
+	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/index.html
+
+$(WEB_RESULTSDIR)/%.css: $(WEB_SOURCEDIR)/%.css
+	cp $< $@
+
+$(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
+	mkdir $(WEB_RESULTSDIR)
+
+endif
 
 #
 # Create the tests directory
@@ -128,25 +181,6 @@ web-tests-json:
 endif
 
 #
-# Create or update just the summary web page.
-#
-# This is a cheap short-cut that, unlike "web", doesn't update the
-# sub-directory's html.
-#
-
-ifdef WEB_ENABLED
-
-.PHONY: web-summary-html
-web-site web-summarydir: web-summary-html
-web-summary-html: $(WEB_SUMMARYDIR)/index.html
-$(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCES) $(WEB_SUMMARYDIR)/tsconfig.json | $(WEB_SUMMARYDIR)
-	tsc --project $(WEB_SUMMARYDIR)/tsconfig.json
-	cp $(filter-out %.js, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
-	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
-
-endif
-
-#
 # Update the pooled summary (summaries.json) of all the test runs
 #
 # Note that $(WEB_SUMMARYDIR) may be a soft-link.
@@ -156,8 +190,6 @@ endif
 
 ifdef WEB_ENABLED
 
-.PHONY: web-summaries-json
-web-site web-summarydir web-summaries-json: $(WEB_SUMMARYDIR)/summaries.json
 $(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*/summary.json) $(WEB_SOURCEDIR)/json-summaries.sh
 	: -H - follow any $(WEB_SUMMARYDIR) link
 	: -maxdepth 2 - stop before $(WEB_SUMMARYDIR)/*/*/
@@ -176,8 +208,6 @@ endif
 
 ifdef WEB_ENABLED
 
-.PHONY: web-status-json
-web-site web-summarydir web-status-json: $(WEB_SUMMARYDIR)/status.json
 $(WEB_SUMMARYDIR)/status.json:
 	$(WEB_SOURCEDIR)/json-status.sh "initialized" > $@.tmp
 	mv $@.tmp $@
@@ -190,10 +220,6 @@ endif
 # Use the generated $(WEB_HASH).json containing the details of the
 # most recent commit as the target.  That way, any new commits trigger
 # an update.
-
-ifdef WEB_ENABLED
-web-site web-summarydir: $(WEB_SUMMARYDIR)/commits.json
-endif
 
 WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
 
@@ -252,16 +278,6 @@ endif
 
 ifdef WEB_ENABLED
 
-.PHONY: web-resultsdir web-results-html web-results-json
-web-resultsdir: web-results-html web-results-json
-web-results-html: $(WEB_RESULTSDIR)/index.html
-web-results-json: $(WEB_RESULTSDIR)/summary.json
-
-$(WEB_RESULTSDIR)/index.html: $(WEB_SOURCES) $(WEB_RESULTSDIR)/tsconfig.json | $(WEB_RESULTSDIR)
-	tsc --project $(WEB_RESULTSDIR)/tsconfig.json
-	cp $(filter-out %.js, $(WEB_SOURCES)) $(WEB_RESULTSDIR)
-	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/index.html
-
 $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 	$(WEB_UTILSDIR)/kvmresults.py \
 		--exit-ok \
@@ -275,17 +291,19 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 		testing/pluto
 	mv $@.tmp $@
 
-%/tsconfig.json: $(WEB_SOURCEDIR)/tsconfig.json.in mk/web-targets.mk | %
-	sed -e 's;@@DEST_DIR@@;$(realpath $(dir $@));' \
-	    -e 's;@@SOURCE_DIR@@;$(realpath $(WEB_SOURCEDIR));' \
-	    $(WEB_SOURCEDIR)/tsconfig.json.in \
-	    > $@.tmp
-	mv $@.tmp $@
-
-$(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
-	mkdir $(WEB_RESULTSDIR)
-
 endif
+
+#
+# hack to compile json code
+#
+
+%/tsconfig.json: $(WEB_SOURCEDIR)/tsconfig.json.in $(wildcard $(WEB_SOURCEDIR)/*.js $(WEB_SOURCEDIR)/*.tc) | %
+	sed -e 's;@@DEST_DIR@@;$(realpath $(dir $@));' \
+		-e 's;@@SOURCE_DIR@@;$(realpath $(WEB_SOURCEDIR));' \
+		$(WEB_SOURCEDIR)/tsconfig.json.in \
+		> $@.tmp
+	tsc --project $@.tmp
+	mv $@.tmp $@
 
 #
 # update the json in all the results directories; very slow so only
@@ -350,11 +368,6 @@ Internal targets:
     web-site:
 
         update the web site
-
-    web-results-html:
-
-        update the HTML files in all the test run sub-directories
-	under $$(WEB_SUMMARYDIR)
 
     web-results-json:
 
