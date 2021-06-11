@@ -602,20 +602,10 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection to replace #%lu",
 			  predecessor->st_serialno);
-		if (IS_V2_ESTABLISHED(predecessor->st_state)) {
-#if 0
-			/*
-			 * XXX: TYPO (as in ST should be PREDECESSOR)
-			 * or intended be behaviour?  ST is the just
-			 * created IKE SA so ...
-			 */
-			if (IS_CHILD_SA(st))
-				ike->sa.st_ipsec_pred = predecessor->st_serialno;
-			else
-				ike->sa.st_ike_pred = predecessor->st_serialno;
-#else
+		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
+			ike->sa.st_ipsec_pred = predecessor->st_serialno;
+		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ike_pred = predecessor->st_serialno;
-#endif
 		}
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
