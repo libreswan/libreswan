@@ -566,7 +566,14 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		ike->sa.st_interface = ret;
 	}
 
-	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+	if (c->spd.this.sec_label.len > 0 &&
+	    impair.childless_v2_sec_label &&
+	    sec_label.len == 0) {
+		/*
+		 * Establishing a sec-label connection yet there's no
+		 * sec-label.  Assume this is a forced up.  Could just
+		 * look at connection?
+		 */
 		llog_sa(RC_LOG, ike,
 			"IMPAIR: connection has security label '"PRI_SHUNK"'; omitting CHILD SA payloads from the IKE_AUTH request",
 			pri_shunk(c->spd.this.sec_label));
