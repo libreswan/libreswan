@@ -1869,7 +1869,10 @@ static bool extract_connection(const struct whack_message *wm,
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
 	c->send_no_esp_tfc = wm->send_no_esp_tfc;
+
 	c->sa_reqid = wm->sa_reqid;
+	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d",
+	    c->name, c->sa_reqid, wm->sa_reqid);
 
 	/*
 	 * Since at this point 'this' and 'that' are disoriented their
@@ -1974,6 +1977,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 * need one. Does CK_TEMPLATE need one?
 	 */
 	c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+	dbg("%s c->spd.reqid=%d because c->sa_reqid=%d",
+	    c->name, c->spd.reqid, c->sa_reqid);
 
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -2173,8 +2178,9 @@ struct connection *add_group_instance(struct connection *group,
 	t->log_file = NULL;
 	t->log_file_err = FALSE;
 
-	t->spd.reqid = group->sa_reqid == 0 ?
-		gen_reqid() : group->sa_reqid;
+	t->spd.reqid = group->sa_reqid == 0 ? gen_reqid() : group->sa_reqid;
+	dbg("%s t->spd.reqid=%d because group->sa_reqid=%d",
+	    t->name, t->spd.reqid, group->sa_reqid);
 
 	/* add to connections list */
 	t->ac_next = connections;
@@ -2246,6 +2252,8 @@ struct connection *instantiate(struct connection *c,
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+	dbg("%s d->spd.reqid=%d because c->sa_reqid=%d",
+	    d->name, d->spd.reqid, c->sa_reqid);
 
 	/* since both ends updated; presumably already oriented? */
 	set_policy_prio(d);
