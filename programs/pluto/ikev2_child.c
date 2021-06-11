@@ -785,7 +785,7 @@ v2_notification_t ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa 
 	set_newest_ipsec_sa("inR2", &child->sa);
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
-		ikev2_rekey_expire_pred(&child->sa, child->sa.st_ipsec_pred);
+		ikev2_rekey_expire_predecessor(child, child->sa.st_ipsec_pred);
 
 	return v2N_NOTHING_WRONG;
 }

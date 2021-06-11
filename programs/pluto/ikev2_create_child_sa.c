@@ -1393,7 +1393,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct 
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis/* new SPIs */);
 
-	ikev2_rekey_expire_pred(&larval_ike->sa, larval_ike->sa.st_ike_pred);
+	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_ike_pred);
 	return STF_OK;
 }
 

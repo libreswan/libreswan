@@ -395,31 +395,31 @@ struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
 
-void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
+void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred)
 {
 	struct state *rst = state_with_serialno(pred);
-	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
+	if (rst == NULL) {
+		llog_sa(RC_LOG, larval_sa,
+			"rekeyed #%lu; the state is already is gone", pred);
+		return;
+	}
 
-	if (rst != NULL && IS_V2_ESTABLISHED(rst->st_state)) {
+	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
+	if (IS_IKE_SA_ESTABLISHED(rst) || IS_CHILD_SA_ESTABLISHED(rst)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
 		monotime_t now = mononow();
 		const struct pluto_event *ev = rst->st_event;
-
 		if (ev != NULL)
 			lifetime = monotimediff(ev->ev_time, now);
 	}
 
 	deltatime_buf lb;
-	log_state(RC_LOG, st, "rekeyed #%lu %s %s remaining life %ss", pred,
-		  st->st_state->name,
-		  rst == NULL ? "and the state is gone" : "and expire it",
-		  str_deltatime(lifetime, &lb));
+	llog_sa(RC_LOG, larval_sa,
+		"rekeyed #%lu %s and expire it remaining life %ss",
+		pred, larval_sa->sa.st_state->name,
+		str_deltatime(lifetime, &lb));
 
-	/*
-	 * ??? added pexpect to avoid NULL dereference.
-	 * Why do we test this three times?  Should it not be done once and for all?
-	 */
-	if (pexpect(rst != NULL) && deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
+	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}

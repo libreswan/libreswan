@@ -699,13 +699,6 @@ extern struct keywords sa_role_names;
 
 #define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
-/* Only relevant to IKEv2 */
-
-/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
-
-#define IS_V2_ESTABLISHED(ST) (((ST)->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
-			       ((ST)->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
-
 #ifdef USE_IKEv1
 #define IS_IKE_SA_ESTABLISHED(ST) \
 	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\

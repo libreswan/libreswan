@@ -595,27 +595,21 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	enum stream log_stream = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
 
 	if (predecessor != NULL) {
-		/*
-		 * XXX: can PREDECESSOR be a child?  Idle speculation
-		 * would suggest it can: perhaps it's a state that
-		 * hasn't yet emancipated, or the child from a must
-		 * remain up connection.
-		 */
-		dbg("predecessor #%lu: %s SA; %s %s; %s",
-		    predecessor->st_serialno,
-		    IS_CHILD_SA(predecessor) ? "CHILD" : "IKE",
-		    IS_V2_ESTABLISHED(predecessor->st_state) ? "established" : "establishing?",
-		    enum_enum_name(&sa_type_names, predecessor->st_ike_version,
-				   predecessor->st_establishing_sa),
-		    predecessor->st_state->name);
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
-			  "initiating IKEv2 connection to replace #%lu",
-			  predecessor->st_serialno);
+		const char *what;
 		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ipsec_pred = predecessor->st_serialno;
+			what = "established CHILD SA";
 		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ike_pred = predecessor->st_serialno;
+			what = "established IKE SA";
+		} else if (IS_IKE_SA(predecessor)) {
+			what = "establishing IKE SA";
+		} else {
+			what = "establishing CHILD SA";
 		}
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+			  "initiating IKEv2 connection to replace %s #%lu",
+			  what, predecessor->st_serialno);
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
