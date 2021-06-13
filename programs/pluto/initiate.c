@@ -636,17 +636,22 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 #endif
 
 	if (c->kind == CK_TEMPLATE && b->sec_label.len > 0 && c->spd.this.sec_label.len > 0) {
-		whack_log(RC_COMMENT, b->logger->global_whackfd, 
-			"ACQUIRE with label found template (IKE) connection %s", c->name);
+		llog(RC_COMMENT, b->logger,
+		     "ACQUIRE with label found template (IKE) connection %s", c->name);
 		shunk_t sigh;
 		sigh.len = b->sec_label.len;
 		sigh.ptr = b->sec_label.ptr;
 
 		if (!sec_label_within_range(sigh, c->spd.this.sec_label , b->logger)) {
-			whack_log(RC_COMMENT, b->logger->global_whackfd, 
-				"Received kernel security label does not fall within range of our connection");
+			llog(RC_LOG_SERIOUS, b->logger,
+			     "received kernel security label does not fall within range of our connection");
 			return;
 		}
+
+		/*
+		 * XXX: if things barf then this instantiate will leak
+		 * the connection instance.
+		 */
 
 		/* create instance and switch to it */
 		c = instantiate(c, &b->remote.host_addr, NULL);
