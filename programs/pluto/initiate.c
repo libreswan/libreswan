@@ -464,7 +464,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
  *	initiate_opportunistic: initial entrypoint
  *	continue_oppo: where we pickup when ADNS result arrives
  *	initiate_opportunistic_body: main body shared by above routines
- *	cannot_oppo: a helper function to log a diagnostic
+ *	cannot_ondemand: a helper function to log a diagnostic
  * This structure repeats a lot of code when the ADNS result arrives.
  * This seems like a waste, but anything learned the first time through
  * may no longer be true!
@@ -512,7 +512,7 @@ static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 	}
 }
 
-static void cannot_oppo(lset_t rc_flags, struct find_oppo_bundle *b, const char *ughmsg)
+static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const char *ughmsg)
 {
 	LLOG_JAMBUF(rc_flags, b->logger, buf) {
 		jam(buf, "cannot ");
@@ -522,7 +522,7 @@ static void cannot_oppo(lset_t rc_flags, struct find_oppo_bundle *b, const char 
 
 	if (b->held) {
 		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
-		dbg("cannot_oppo() detected packet triggered shunt from bundle");
+		dbg("cannot_ondemand() detected packet triggered shunt from bundle");
 
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass).
@@ -536,11 +536,11 @@ static void cannot_oppo(lset_t rc_flags, struct find_oppo_bundle *b, const char 
 				       b->transport_proto->ipproto,
 				       ughmsg,
 				       b->logger)) {
-			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+			dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
 			    enum_name_short(&spi_names, b->failure_shunt));
 		} else {
 			llog(RC_LOG, b->logger,
-			     "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+			     "cannot_ondemand() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -590,7 +590,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (!endpoint_is_specified(b->local.client) &&
 	    !endpoint_is_specified(b->remote.client)) {
-		cannot_oppo(RC_OPPOFAILURE, b, "impossible IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, "impossible IP address");
 		return;
 	}
 
@@ -599,7 +599,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
 		 */
-		cannot_oppo(RC_OPPOFAILURE, b, "acquire for our own IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, "acquire for our own IP address");
 		return;
 	}
 
@@ -616,7 +616,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * give up.  The failure policy cannot be gotten from
 		 * a connection; we pick %pass.
 		 */
-		cannot_oppo(RC_OPPOFAILURE, b, "no routed template covers this pair");
+		cannot_ondemand(RC_OPPOFAILURE, b, "no routed template covers this pair");
 		return;
 	}
 
@@ -666,12 +666,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
-		cannot_oppo(RC_OPPOFAILURE, b, "connection to self on another IP?");
+		cannot_ondemand(RC_OPPOFAILURE, b, "connection to self on another IP?");
 		return;
 	}
 
 	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
-		cannot_oppo(RC_NOPEERIP, b, "template connection");
+		cannot_ondemand(RC_NOPEERIP, b, "template connection");
 		return;
 	}
 
@@ -867,38 +867,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	c = build_outgoing_opportunistic_connection(&b->local.client,
 						    &b->remote.client);
 	if (c == NULL) {
-		/* We cannot seem to instantiate a suitable connection:
-		 * complain clearly.
-		 */
-
-		/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-		endpoint_buf b1, b2;
-		llog(RC_OPPOFAILURE, b->logger,
-			    "no suitable connection for opportunism between %s and %s",
-			    str_endpoint(&b->local.client, &b1),
-			    str_endpoint(&b->remote.client, &b2));
-
-		/*
-		 * Replace negotiation_shunt with failure_shunt.
-		 * The type of replacement *ought* to be
-		 * specified by policy, but we did not find a connection, so
-		 * default to HOLD.
-		 */
-		if (b->held) {
-			if (replace_bare_shunt(&b->local.host_addr,
-					       &b->remote.host_addr,
-					       b->policy_prio,
-					       b->negotiation_shunt, /* if not from conn, where did this come from? */
-					       b->failure_shunt, /* if not from conn, where did this come from? */
-					       b->transport_proto->ipproto,
-					       "no suitable connection",
-					       b->logger)) {
-				dbg("replaced negotiationshunt with failurehunt=hold because no connection was found");
-			} else {
-				llog(RC_LOG, b->logger,
-					    "failed to replace negotiationshunt with failurehunt=hold");
-			}
-		}
+		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable connection between endpoints");
 		return;
 	}
 
