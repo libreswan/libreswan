@@ -966,7 +966,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 	if (by_acquire) {
 		/*
 		 * XXX: hack to keep code below happy - need to
-		 * figigure out what to do with the shunt functions.
+		 * figure out what to do with the shunt functions.
 		 */
 		ip_selector our_client[] = { selector_from_endpoint(*local_client), };
 		ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
