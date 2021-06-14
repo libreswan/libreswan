@@ -525,6 +525,21 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		dbg("cannot_ondemand() detected packet triggered shunt from bundle");
 
 		/*
+		 * Add the kernel shunt to the pluto bare shunt list.
+		 *
+		 * We need to do this because the %hold shunt was
+		 * installed by kernel and we want to keep track of it
+		 * inside pluto.
+		 *
+		 * XXX: hack to keep code below happy - need to
+		 * figigure out what to do with the shunt functions.
+		 */
+		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+			       SPI_HOLD, b->want, b->logger);
+
+		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass).
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
@@ -682,6 +697,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		/*
+		 * Add the kernel shunt to the pluto bare shunt list.
+		 *
+		 * We need to do this because the %hold shunt was
+		 * installed by kernel and we want to keep track of it
+		 * inside pluto.
+		 *
+		 * XXX: hack to keep code below happy - need to figure
+		 * out what to do with the shunt functions.
+		 */
+		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+			       SPI_HOLD, b->want, b->logger);
+
+		/*
 		 * Otherwise, there is some kind of static conn that
 		 * can handle this connection, so we initiate it.
 		 * Only needed if we this was triggered by a packet,
@@ -788,6 +818,23 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * not by whack
 		 */
 		if (b->held) {
+			/*
+			 * Add the kernel shunt to the pluto bare
+			 * shunt list.
+			 *
+			 * We need to do this because the %hold shunt
+			 * was installed by kernel and we want to keep
+			 * track of it inside pluto.
+			 *
+			 * XXX: hack to keep code below happy - need
+			 * to figigure out what to do with the shunt
+			 * functions.
+			 */
+			ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+			ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+			add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+				       SPI_HOLD, b->want, b->logger);
+
 			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
 					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
@@ -893,6 +940,23 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_eroute()?
 	 */
 
+	if (b->held) {
+		/*
+		 * Add the kernel shunt to the pluto bare shunt list.
+		 *
+		 * We need to do this because the %hold shunt was
+		 * installed by kernel and we want to keep track of it
+		 * inside pluto.
+		 *
+		 * XXX: hack to keep code below happy - need to figure out
+		 * what to do with the shunt functions.
+		 */
+		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+			       SPI_HOLD, b->want, b->logger);
+	}
+
 	if (!raw_eroute(&b->local.host_addr, &local_shunt,
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
@@ -963,24 +1027,6 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		       struct logger *logger)
 {
 	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/
-	if (by_acquire) {
-		/*
-		 * XXX: hack to keep code below happy - need to
-		 * figure out what to do with the shunt functions.
-		 */
-		ip_selector our_client[] = { selector_from_endpoint(*local_client), };
-		ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
-		unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
-		/*
-		 * Add the kernel shunt to the pluto bare shunt list.
-		 *
-		 * We need to do this because the %hold shunt was
-		 * installed by kernel and we want to keep track of it
-		 * inside pluto.
-		 */
-		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
-	}
-
 	const struct ip_protocol *transport_proto = endpoint_protocol(*local_client);
 	pexpect(transport_proto != NULL);
 	pexpect(transport_proto == endpoint_protocol(*remote_client));
