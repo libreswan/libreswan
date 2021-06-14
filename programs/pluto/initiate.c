@@ -874,6 +874,15 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
 	pexpect(shunt_protocol == selector_protocol(remote_shunt));
 
+	/* XXX: re-use c */
+	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
+	c = build_outgoing_opportunistic_connection(&b->local.client,
+						    &b->remote.client);
+	if (c == NULL) {
+		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable connection between endpoints");
+		return;
+	}
+
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
@@ -916,15 +925,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
 	} else {
 		dbg("success taking down narrow bare shunt");
-	}
-
-	/* XXX: re-use c */
-	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
-	c = build_outgoing_opportunistic_connection(&b->local.client,
-						    &b->remote.client);
-	if (c == NULL) {
-		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable connection between endpoints");
-		return;
 	}
 
 	/* If we are to proceed asynchronously, b->background will be true. */
