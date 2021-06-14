@@ -2854,11 +2854,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
-	/*
-	 * We should implement netlink_remove_orphaned_holds
-	 * if netlink-specific changes are needed.
-	 */
-	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 	.v6holes = netlink_v6holes,

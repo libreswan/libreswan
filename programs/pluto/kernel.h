@@ -218,9 +218,6 @@ struct kernel_ops {
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
-	void (*remove_orphaned_holds)(int transportproto,
-				      const ip_selector *ours,
-				      const ip_selector *peers);
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
 		       struct logger *logger);

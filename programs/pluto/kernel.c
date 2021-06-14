@@ -263,12 +263,6 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 			  /*background*/ true,
 			  sec_label,
 			  "acquire", logger);
-
-	if (kernel_ops->remove_orphaned_holds != NULL) {
-		dbg("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt");
-		kernel_ops->remove_orphaned_holds(transport_proto,
-						  our_client, peer_client);
-	}
 }
 
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
