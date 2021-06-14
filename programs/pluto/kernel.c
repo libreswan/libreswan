@@ -245,17 +245,7 @@ void record_and_initiate_opportunistic(const ip_endpoint *local_client,
 	 * We need to do this because the %hold shunt was installed by
 	 * kernel and we want to keep track of it inside pluto.
 	 */
-	/*const*/ struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
-							    transport_proto, why);
-	if (bspp != NULL &&
-	    (*bspp)->said.proto == &ip_protocol_internal &&
-	    (*bspp)->said.spi == htonl(SPI_HOLD)) {
-		llog_bare_shunt(RC_LOG_SERIOUS, logger, *bspp,
-				"existing bare shunt found - refusing to add a duplicate");
-		/* should we continue with initiate_ondemand() ? */
-	} else {
-		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
-	}
+	add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
 
 	/* actually initiate opportunism / ondemand */
 	initiate_ondemand(local_client, remote_client,
