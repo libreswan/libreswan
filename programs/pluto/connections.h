@@ -456,13 +456,6 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 
-extern void initiate_ondemand(const ip_endpoint *our_client,
-			      const ip_endpoint *peer_client,
-			      bool held, bool background,
-			      const chunk_t sec_label,
-			      const char *why,
-			      struct logger *logger);
-
 extern void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection **cp, bool relations);

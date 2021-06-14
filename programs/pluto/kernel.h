@@ -325,16 +325,6 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
-/*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
- * Simple rule: use a string literal.
- */
-struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
-extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
-					      const ip_endpoint *peer_client,
-					      const chunk_t sec_label,
-					      const char *why, struct logger *logger);
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */

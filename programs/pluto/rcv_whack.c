@@ -844,9 +844,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 										 protocol,
 										 m->oppo.remote.port);
 			initiate_ondemand(&local, &remote,
-					  /*held*/false,
+					  /*by_acquire*/false,
 					  /*background*/m->whack_async,
-					  empty_chunk, "whack", logger);
+					  empty_chunk, logger);
 		}
 		dbg_whack(s, "... oppo_initiate");
 	}

@@ -95,7 +95,7 @@
 #include "iface.h"
 #include "ip_selector.h"
 #include "ip_encap.h"
-
+#include "initiate.h"		/* for initiate_ondemand() */
 #include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
 #include "security_selinux.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
@@ -1791,8 +1791,10 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-	record_and_initiate_opportunistic(&local, &remote, sec_label,
-					  "%acquire-netlink", logger);
+	initiate_ondemand(&local, &remote,
+			  /*by_acquire*/true,
+			  /*background?*/true/*no whack so doesn't matter*/,
+			  sec_label, logger);
 }
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,

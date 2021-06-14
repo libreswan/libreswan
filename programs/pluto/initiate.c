@@ -933,11 +933,29 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 void initiate_ondemand(const ip_endpoint *local_client,
 		       const ip_endpoint *remote_client,
-		       bool held, bool background,
+		       bool by_acquire, bool background,
 		       const chunk_t sec_label,
-		       const char *why,
 		       struct logger *logger)
 {
+	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/
+	if (by_acquire) {
+		/*
+		 * XXX: hack to keep code below happy - need to
+		 * figigure out what to do with the shunt functions.
+		 */
+		ip_selector our_client[] = { selector_from_endpoint(*local_client), };
+		ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
+		unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
+		/*
+		 * Add the kernel shunt to the pluto bare shunt list.
+		 *
+		 * We need to do this because the %hold shunt was
+		 * installed by kernel and we want to keep track of it
+		 * inside pluto.
+		 */
+		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
+	}
+
 	const struct ip_protocol *transport_proto = endpoint_protocol(*local_client);
 	pexpect(transport_proto != NULL);
 	pexpect(transport_proto == endpoint_protocol(*remote_client));
@@ -948,7 +966,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		.local.host_addr = endpoint_address(*local_client),
 		.remote.host_addr = endpoint_address(*remote_client),
 		.transport_proto = transport_proto,
-		.held = held,
+		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */

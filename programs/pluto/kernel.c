@@ -211,50 +211,6 @@ void add_bare_shunt(const ip_selector *our_client,
 	}
 }
 
-/*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
- * Simple rule: use a string literal.
- */
-
-void record_and_initiate_opportunistic(const ip_endpoint *local_client,
-				       const ip_endpoint *remote_client,
-				       const chunk_t sec_label,
-				       const char *why, struct logger *logger)
-{
-	/*
-	 * Port's value and interpretation depends on protocol (ICMP,
-	 * TCP, UDP, ...) and ends may not be equal.
-	 */
-	passert(!endpoint_is_unset(local_client));
-	passert(!endpoint_is_unset(remote_client));
-	passert(endpoint_type(local_client) == endpoint_type(remote_client));
-	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
-
-	/*
-	 * XXX: hack to keep code below happy - need to figigure out
-	 * what to do with the shunt functions.
-	 */
-	ip_selector our_client[] = { selector_from_endpoint(*local_client), };
-	ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
-	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
-
-	/*
-	 * Add the kernel shunt to the pluto bare shunt list.
-	 *
-	 * We need to do this because the %hold shunt was installed by
-	 * kernel and we want to keep track of it inside pluto.
-	 */
-	add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
-
-	/* actually initiate opportunism / ondemand */
-	initiate_ondemand(local_client, remote_client,
-			  /*held*/ true,
-			  /*background*/ true,
-			  sec_label,
-			  "acquire", logger);
-}
-
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 {
 	if (proto == &ip_protocol_comp)

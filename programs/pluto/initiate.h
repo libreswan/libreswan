@@ -28,4 +28,10 @@ void ipsecdoi_initiate(struct connection *c,
 		       chunk_t sec_label,
 		       bool background, struct logger *logger);
 
+extern void initiate_ondemand(const ip_endpoint *our_client,
+			      const ip_endpoint *peer_client,
+			      bool by_acquire, bool background,
+			      const chunk_t sec_label,
+			      struct logger *logger);
+
 #endif
