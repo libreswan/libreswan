@@ -635,22 +635,26 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 #endif
 
-	if (c->kind == CK_TEMPLATE && b->sec_label.len > 0 && c->spd.this.sec_label.len > 0) {
-		llog(RC_COMMENT, b->logger,
-		     "ACQUIRE with label found template (IKE) connection %s", c->name);
-		shunk_t sigh;
-		sigh.len = b->sec_label.len;
-		sigh.ptr = b->sec_label.ptr;
+	if (c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0) {
+		dbg("connection has security label");
 
-		if (!sec_label_within_range(sigh, c->spd.this.sec_label , b->logger)) {
-			llog(RC_LOG_SERIOUS, b->logger,
-			     "received kernel security label does not fall within range of our connection");
+		if (b->sec_label.len == 0) {
+			cannot_ondemand(RC_LOG_SERIOUS, b,
+					"kernel acquire missing security label");
+			return;
+		}
+
+		if (!sec_label_within_range(HUNK_AS_SHUNK(b->sec_label),
+					    c->spd.this.sec_label , b->logger)) {
+			cannot_ondemand(RC_LOG_SERIOUS, b,
+					"received kernel security label does not fall within range of our connection");
 			return;
 		}
 
 		/*
-		 * XXX: if things barf then this instantiate will leak
-		 * the connection instance.
+		 * XXX: Danger. C is switched to an instance.  It is
+		 * assumed that ipsecdoi_initiate() always saves the
+		 * pointer.
 		 */
 
 		/* create instance and switch to it */
@@ -660,6 +664,58 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		c->spd.this.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
 		free_chunk_content(&c->spd.that.sec_label);
 		c->spd.that.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
+
+		/*
+		 * We've found a connection that can serve.  Do we
+		 * have to initiate it?  Not if there is currently an
+		 * IPSEC SA.  This may be redundant if a
+		 * non-opportunistic negotiation is already being
+		 * attempted.
+		 *
+		 * If we are to proceed asynchronously, b->whackfd
+		 * will be NULL_WHACKFD.
+		 *
+		 * We have a connection: fill in the negotiation_shunt
+		 * and failure_shunt.
+		 */
+		b->failure_shunt = shunt_policy_spi(c, false);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
+		/*
+		 * Otherwise, there is some kind of static conn that
+		 * can handle this connection, so we initiate it.
+		 * Only needed if we this was triggered by a packet,
+		 * not by whack
+		 */
+		if (b->held) {
+			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
+					    &b->local.host_addr, &b->remote.host_addr)) {
+				dbg("initiate_ondemand_body() installed negotiation_shunt,");
+			} else {
+				llog(RC_LOG, b->logger,
+					    "initiate_ondemand_body() failed to install negotiation_shunt,");
+			}
+		}
+
+		/*
+		 * Annouce this to the world.  Use c->logger instead?
+		 */
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_oppo_bundle(buf, b);
+			/* jam(buf, " using "); */
+		}
+
+		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
+				  b->background, b->logger);
+
+		endpoint_buf b1;
+		endpoint_buf b2;
+		dbg("initiated on demand using security label and %s from %s to %s",
+		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+		    str_endpoint(&b->local.client, &b1),
+		    str_endpoint(&b->remote.client, &b2));
+
+		return;
 	}
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
