@@ -1029,6 +1029,74 @@ static struct best_score score_ends_iprange(enum fit fit,
 	return best_score;
 }
 
+static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
+						    const struct traffic_selectors tsi,
+						    const struct traffic_selectors tsr,
+						    enum fit fit)
+{
+	passert(tsi.nr >= 1);
+	int tsi_port = narrow_port(&t->spd.that, &tsi,
+				   fit, "TSi", 0);
+	if (tsi_port < 0) {
+		dbg("    skipping; TSi port too wide");
+		return NULL;
+	}
+	int tsi_protocol = narrow_protocol(&t->spd.that, &tsi,
+					   fit, "TSi", 0);
+	if (tsi_protocol < 0) {
+		dbg("    skipping; TSi protocol too wide");
+		return NULL;
+	}
+
+	passert(tsr.nr >= 1);
+	int tsr_port = narrow_port(&t->spd.this, &tsr,
+				   fit, "TRi", 0);
+	if (tsr_port < 0) {
+		dbg("    skipping; TSr port too wide");
+		return NULL;
+	}
+	int tsr_protocol = narrow_protocol(&t->spd.this, &tsr,
+					   fit, "TSr", 0);
+	if (tsr_protocol < 0) {
+		dbg("    skipping; TSr protocol too wide");
+		return NULL;
+	}
+
+	bool shared = v2_child_connection_probably_shared(child);
+	struct connection *c;
+	if (shared) {
+		/* instantiate it, filling in peer's ID */
+		c = instantiate(t, &child->sa.st_connection->spd.that.host_addr, NULL);
+	} else {
+		c = child->sa.st_connection;
+	}
+
+	/* "this" == responder; see function name */
+	c->spd.this.port = tsr_port;
+	c->spd.that.port = tsi_port;
+	c->spd.this.protocol = tsr_protocol;
+	c->spd.that.protocol = tsi_protocol;
+	/* hack */
+	dbg("XXX: updating best connection's ports/protocols");
+	update_selector_hport(&c->spd.this.client, tsr_port);
+	update_selector_hport(&c->spd.that.client, tsi_port);
+	update_selector_ipproto(&c->spd.this.client, tsr_protocol);
+	update_selector_ipproto(&c->spd.that.client, tsi_protocol);
+
+	if (shared) {
+		connection_buf from, to;
+		dbg("  switching #%lu from "PRI_CONNECTION" to just-instantiated "PRI_CONNECTION,
+		    child->sa.st_serialno,
+		    pri_connection(child->sa.st_connection, &from),
+		    pri_connection(c, &to));
+	} else {
+		connection_buf cib;
+		dbg("  overwrote #%lu connection "PRI_CONNECTION,
+		    child->sa.st_serialno, pri_connection(c, &cib));
+	}
+	return c;
+}
+
 /*
  * find the best connection and, if it is AUTH exchange, create the
  * child state
@@ -1230,11 +1298,13 @@ bool v2_process_ts_request(struct child_sa *child,
 		 * connection.
 		 */
 		pexpect(c->kind == CK_PERMANENT);
-		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE",
+		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		    enum_name(&connection_kind_names, c->kind), c->name);
-	} else if (best_spd_route == NULL &&
-		   ((c->policy & POLICY_GROUPINSTANCE) ||
-		    c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+		return false;
+	}
+
+	if (best_spd_route == NULL && ((c->policy & POLICY_GROUPINSTANCE) ||
+				       (c->policy & POLICY_IKEV2_ALLOW_NARROWING))) {
 		/*
 		 * Is there something better than the current
 		 * connection?
@@ -1332,66 +1402,16 @@ bool v2_process_ts_request(struct child_sa *child,
 				bad_case(c->policy);
 			}
 
-			passert(tsi.nr >= 1);
-			int tsi_port = narrow_port(&t->spd.that, &tsi,
-						   fit, "TSi", 0);
-			if (tsi_port < 0) {
-				dbg("    skipping; TSi port too wide");
-				continue;
-			}
-			int tsi_protocol = narrow_protocol(&t->spd.that, &tsi,
-							   fit, "TSi", 0);
-			if (tsi_protocol < 0) {
-				dbg("    skipping; TSi protocol too wide");
-				continue;
-			}
-
-			passert(tsr.nr >= 1);
-			int tsr_port = narrow_port(&t->spd.this, &tsr,
-						   fit, "TRi", 0);
-			if (tsr_port < 0) {
-				dbg("    skipping; TSr port too wide");
-				continue;
-			}
-			int tsr_protocol = narrow_protocol(&t->spd.this, &tsr,
-							   fit, "TSr", 0);
-			if (tsr_protocol < 0) {
-				dbg("    skipping; TSr protocol too wide");
-				continue;
-			}
-
 			passert(best_connection == c); /* aka st->st_connection, no leak */
-
-			bool shared = v2_child_connection_probably_shared(child);
-			if (shared) {
-				/* instantiate it, filling in peer's ID */
-				best_connection = instantiate(t, &c->spd.that.host_addr,
-							      NULL);
+			pexpect(best_connection == child->sa.st_connection);
+			struct connection *s = scribble_ts_on_connection(t, child, tsi, tsr, fit);
+			if (s == NULL) {
+				continue;
 			}
 
-			/* "this" == responder; see function name */
-			best_connection->spd.this.port = tsr_port;
-			best_connection->spd.that.port = tsi_port;
-			best_connection->spd.this.protocol = tsr_protocol;
-			best_connection->spd.that.protocol = tsi_protocol;
-			/* hack */
-			dbg("XXX: updating best connection's ports/protocols");
-			update_selector_hport(&best_connection->spd.this.client, tsr_port);
-			update_selector_hport(&best_connection->spd.that.client, tsi_port);
-			update_selector_ipproto(&best_connection->spd.this.client, tsr_protocol);
-			update_selector_ipproto(&best_connection->spd.that.client, tsi_protocol);
+			best_connection = s;
 			/* switch */
 			best_spd_route = &best_connection->spd;
-
-			if (shared) {
-				connection_buf from, to;
-				dbg("switching from "PRI_CONNECTION" to "PRI_CONNECTION,
-				    pri_connection(c, &from), pri_connection(best_connection, &to));
-			} else {
-				connection_buf cib;
-				dbg("  overwrote connection with instance "PRI_CONNECTION,
-				    pri_connection(best_connection, &cib));
-			}
 			break;
 		}
 	}
