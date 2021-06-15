@@ -42,6 +42,7 @@
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
 #include "security_selinux.h"		/* for sec_label_within_range() */
+#include "ip_info.h"
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
@@ -522,41 +523,40 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 	}
 
 	if (b->held) {
-		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
-		dbg("cannot_ondemand() detected packet triggered shunt from bundle");
-
 		/*
-		 * Add the kernel shunt to the pluto bare shunt list.
+		 * This was filled in for us based on packet trigger
+		 * and not whack --oppo trigger.  Hence, there really
+		 * is something in the kernel that needs updating.
 		 *
-		 * We need to do this because the %hold shunt was
-		 * installed by kernel and we want to keep track of it
-		 * inside pluto.
-		 *
-		 * XXX: hack to keep code below happy - need to
-		 * figigure out what to do with the shunt functions.
+		 * Replace negotiationshunt (hold or pass) with
+		 * failureshunt (hold or pass).  If no failure_shunt
+		 * specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
-		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
-		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
-			       SPI_HOLD, b->want, b->logger);
-
-		/*
-		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass).
-		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
-		 */
+		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
+		    enum_name_short(&spi_names, b->failure_shunt));
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
-		if (replace_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-				       b->policy_prio,
-				       b->negotiation_shunt,
-				       b->failure_shunt,
-				       b->transport_proto->ipproto,
-				       ughmsg,
-				       b->logger)) {
-			dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-			    enum_name_short(&spi_names, b->failure_shunt));
-		} else {
-			llog(RC_LOG, b->logger,
-			     "cannot_ondemand() failed to replace negotiationshunt with bare failureshunt");
+		const struct ip_info *afi = address_type(&b->local.host_addr);
+		const ip_address null_host = afi->address.any;
+		/* ports? assumed wide? */
+		ip_selector src = selector_from_address_protocol(b->local.host_addr,
+								 b->transport_proto);
+		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
+								 b->transport_proto);
+		if (!raw_eroute(&null_host, &src, &null_host, &dst,
+				/*from*/htonl(b->negotiation_shunt),
+				/*to*/htonl(b->failure_shunt),
+				&ip_protocol_internal,
+				b->transport_proto->ipproto,
+				ET_INT, null_proto_info,
+				deltatime(SHUNT_PATIENCE),
+				BOTTOM_PRIO, /* we don't know connection for priority yet */
+				NULL, /* sa_marks */
+				0 /* xfrm interface id */,
+				ERO_REPLACE, ughmsg,
+				b->sec_label, b->logger)) {
+			llog(RC_LOG_SERIOUS, b->logger,
+			     "failed to replace negotiationshunt with bare failureshunt");
+			return;
 		}
 	}
 }
