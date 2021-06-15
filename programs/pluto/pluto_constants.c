@@ -35,6 +35,7 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
+#include "kernel.h"
 
 /*
  * To obsolete or convert to runtime options:
@@ -406,7 +407,7 @@ enum_names v2_sa_type_names = {
 	NULL,
 };
 
-static enum_names *sa_type_name[] = {
+static const enum_names *sa_type_name[] = {
 	[IKEv1 - IKEv1] = &v1_sa_type_names,
 	[IKEv2 - IKEv1] = &v2_sa_type_names,
 };
@@ -415,6 +416,28 @@ enum_enum_names sa_type_names = {
 	IKEv1, IKEv2,
 	ARRAY_REF(sa_type_name),
 };
+
+/* enum pluto_sadb_operations_names */
+
+static const char *pluto_sadb_operations_name[] = {
+	[0] = "ERO_INVALID",
+#define S(E) [E] = #E
+	S(ERO_ADD),
+	S(ERO_REPLACE),
+	S(ERO_DELETE),
+	S(ERO_ADD_INBOUND),
+	S(ERO_REPLACE_INBOUND),
+	S(ERO_DEL_INBOUND),
+#undef S
+};
+
+enum_names pluto_sadb_operations_names = {
+	0, ERO_DEL_INBOUND,
+	ARRAY_REF(pluto_sadb_operations_name),
+	.en_prefix = "ERO_",
+};
+
+/* */
 
 static const char *const perspective_name[] = {
 	[NO_PERSPECTIVE] = "NO_PERSPECTIVE",
@@ -479,6 +502,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&v2_sa_type_names,
 	&perspective_names,
 	&sa_policy_bit_names,
+	&pluto_sadb_operations_names,
 };
 
 void init_pluto_constants(void) {

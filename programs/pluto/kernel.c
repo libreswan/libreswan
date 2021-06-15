@@ -1204,7 +1204,6 @@ void show_shunt_status(struct show *s)
  * op is one of the ERO_* operators.
  */
 
-// should be made static again once we fix initiate.c calling this directly!
 bool raw_eroute(const ip_address *this_host,
 		const ip_selector *this_client,
 		const ip_address *that_host,
@@ -1250,15 +1249,45 @@ bool raw_eroute(const ip_address *this_host,
 		bad_case(op);
 	}
 
-	selectors_buf sb;
-	dbg("kernel: raw_eroute: %s eroute %s (%d) => %s using reqid %d proto=%d %s sec_label",
-	    opname,
-	    str_selectors(this_client, that_client, &sb),
-	    transport_proto,
-	    text_said,
-	    proto_info->reqid,
-	    proto_info->proto,
-	    sec_label.len > 0 ? "with" : "without");
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "kernel: policy: raw_eroute() ");
+		jam_enum_short(buf, &pluto_sadb_operations_names, op);
+		jam(buf, " %s ", opname);
+
+		jam_selector(buf, this_client);
+		jam(buf, "-");
+		jam_address(buf, this_host);
+		jam(buf, "=");
+		jam_address(buf, that_host);
+		jam(buf, "-");
+		jam_selector(buf, that_client);
+
+		jam(buf, " %s", text_said);
+		jam(buf, " sa_proto=%s", sa_proto->name);
+		jam(buf, " trans_proto=%s", protocol_by_ipproto(transport_proto)->name);
+		jam(buf, " esatype=%s", protocol_by_ipproto(esatype)->name);
+		jam(buf, " proto_info=reqid=%d,proto=%s", proto_info->reqid,
+		    protocol_by_ipproto(proto_info->proto)->name);
+
+		jam(buf, " lifetime=");
+		jam_deltatime(buf, use_lifetime);
+		jam(buf, "s");
+
+		jam(buf, " priority=%d", sa_priority);
+
+		if (sa_marks != NULL) {
+			const char *dir = "in";
+			FOR_EACH_THING(mark, &sa_marks->in, &sa_marks->out) {
+				jam(buf, " sa_marks.%s=%d,%d,%d", dir, mark->val, mark->mask, mark->unique);
+				dir = "out";
+			}
+		}
+
+		jam(buf, " xfrm_if_id=%d", xfrm_if_id);
+
+		jam(buf, " seclabel=");
+		jam_sanitized_hunk(buf, sec_label);
+	}
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					     that_host, that_client,
@@ -1269,7 +1298,7 @@ bool raw_eroute(const ip_address *this_host,
 					     xfrm_if_id, op, text_said,
 					     sec_label,
 					     logger);
-	dbg("kernel: raw_eroute: result=%s", result ? "success" : "failed");
+	dbg("kernel: policy/raw_eroute: result=%s", result ? "success" : "failed");
 
 	return result;
 }

@@ -59,6 +59,8 @@ enum pluto_sadb_operations {
 	ERO_DEL_INBOUND=6
 };
 
+extern const struct enum_names pluto_sadb_operations_names;
+
 #define IPSEC_PROTO_ANY         255
 
 struct pfkey_proto_info {
