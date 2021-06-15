@@ -1263,7 +1263,7 @@ bool raw_eroute(const ip_address *this_host,
 		jam_selector(buf, that_client);
 
 		jam(buf, " %s", text_said);
-		jam(buf, " sa_proto=%s", sa_proto->name);
+		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
 		jam(buf, " trans_proto=%s", protocol_by_ipproto(transport_proto)->name);
 		jam(buf, " esatype=%s", protocol_by_ipproto(esatype)->name);
 		jam(buf, " proto_info=reqid=%d,proto=%s", proto_info->reqid,
