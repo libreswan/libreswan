@@ -733,6 +733,7 @@ static void unshare_connection(struct connection *c)
 	/* increment references to algo's, if any */
 	proposals_addref(&c->ike_proposals.p);
 	proposals_addref(&c->child_proposals.p);
+	c->v2_ike_proposals = NULL; /* don't share IKE proposals */
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
