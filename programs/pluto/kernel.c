@@ -1327,12 +1327,12 @@ static void clear_narrow_holds(const ip_selector *our_client,
 	}
 }
 
-bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
-			policy_prio_t policy_prio,	/* of replacing shunt*/
-			ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			ipsec_spi_t new_shunt_spi,	/* in host order! */
-			int transport_proto,
-			const char *why, struct logger *logger)
+static bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
+			       policy_prio_t policy_prio,	/* of replacing shunt*/
+			       ipsec_spi_t cur_shunt_spi,	/* in host order! */
+			       ipsec_spi_t new_shunt_spi,	/* in host order! */
+			       int transport_proto,
+			       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
 	passert(afi == address_type(dst_address));

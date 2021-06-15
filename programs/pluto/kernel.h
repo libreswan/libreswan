@@ -338,14 +338,6 @@ extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      bool skip_xfrm_raw_eroute_delete,
 			      const char *why, struct logger *logger);
 
-extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
-			       policy_prio_t policy_prio,
-			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
-			       ipsec_spi_t new_shunt_spi,   /* in host order! */
-			       int transport_proto,
-			       const char *why,
-			       struct logger *logger);
-
 extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
 			int transport_proto,

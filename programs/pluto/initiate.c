@@ -29,7 +29,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel.h"			/* for replace_bare_shunt()! */
+#include "kernel.h"			/* for raw_eroute() */
 #include "log.h"
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
