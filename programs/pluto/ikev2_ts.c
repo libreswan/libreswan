@@ -1032,7 +1032,7 @@ static struct best_score score_ends_iprange(enum fit fit,
 static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
 						    const struct traffic_selectors tsi,
 						    const struct traffic_selectors tsr,
-						    enum fit fit)
+						    enum fit fit, bool definitely_shared)
 {
 	passert(tsi.nr >= 1);
 	int tsi_port = narrow_port(&t->spd.that, &tsi,
@@ -1062,9 +1062,8 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 		return NULL;
 	}
 
-	bool shared = v2_child_connection_probably_shared(child);
 	struct connection *c;
-	if (shared) {
+	if (definitely_shared || v2_child_connection_probably_shared(child)) {
 		/* instantiate it, filling in peer's ID */
 		c = instantiate(t, &child->sa.st_connection->spd.that.host_addr, NULL);
 	} else {
@@ -1083,7 +1082,7 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 	update_selector_ipproto(&c->spd.this.client, tsr_protocol);
 	update_selector_ipproto(&c->spd.that.client, tsi_protocol);
 
-	if (shared) {
+	if (c != child->sa.st_connection) {
 		connection_buf from, to;
 		dbg("  switching #%lu from "PRI_CONNECTION" to just-instantiated "PRI_CONNECTION,
 		    child->sa.st_serialno,
@@ -1404,7 +1403,8 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			passert(best_connection == c); /* aka st->st_connection, no leak */
 			pexpect(best_connection == child->sa.st_connection);
-			struct connection *s = scribble_ts_on_connection(t, child, tsi, tsr, fit);
+			struct connection *s = scribble_ts_on_connection(t, child, tsi, tsr, fit,
+									 /*definitely_shared?*/false);
 			if (s == NULL) {
 				continue;
 			}
@@ -1414,6 +1414,20 @@ bool v2_process_ts_request(struct child_sa *child,
 			best_spd_route = &best_connection->spd;
 			break;
 		}
+	} else if (best_connection == c &&
+		   c->kind == CK_TEMPLATE &&
+		   c->spd.this.sec_label.len > 0) {
+		dbg("  instantiating template security label connection");
+		/* sure looks like a sec-label template */
+		struct connection *s = scribble_ts_on_connection(c, child, tsi, tsr,
+								 END_WIDER_THAN_TS,
+								 /*definitely_shared?*/true);
+		if (!pexpect(s != NULL)) {
+			return false;
+		}
+		best_connection = s;
+		/* switch */
+		best_spd_route = &best_connection->spd;
 	}
 
 	if (best_spd_route == NULL) {
