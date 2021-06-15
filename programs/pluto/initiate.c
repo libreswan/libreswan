@@ -941,23 +941,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_eroute()?
 	 */
 
-	if (b->held) {
-		/*
-		 * Add the kernel shunt to the pluto bare shunt list.
-		 *
-		 * We need to do this because the %hold shunt was
-		 * installed by kernel and we want to keep track of it
-		 * inside pluto.
-		 *
-		 * XXX: hack to keep code below happy - need to figure out
-		 * what to do with the shunt functions.
-		 */
-		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
-		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
-			       SPI_HOLD, b->want, b->logger);
-	}
-
 	if (!raw_eroute(&b->local.host_addr, &local_shunt,
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
@@ -976,20 +959,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		add_bare_shunt(&local_shunt, &remote_shunt,
 			       shunt_protocol->ipproto, SPI_HOLD,
 			       addwidemsg, b->logger);
-	}
-	/*
-	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
-	 * a (possibly broadened) negotiationshunt replacement installed.
-	 */
-	const char *const delmsg = "delete bare kernel shunt - was replaced with negotiationshunt";
-	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-			       b->transport_proto->ipproto,
-			       SPI_HOLD /* kernel dictated */,
-			       /*skip_xfrm_raw_eroute_delete?*/false,
-			       delmsg, b->logger)) {
-		llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
-	} else {
-		dbg("success taking down narrow bare shunt");
 	}
 
 	/* If we are to proceed asynchronously, b->background will be true. */
