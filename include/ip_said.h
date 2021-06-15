@@ -26,6 +26,23 @@
 struct jambuf;
 
 /*
+ * Magic values for use in combination with ip_protocol_internal to
+ * flag shunt types.
+ *
+ * Danger! these are in host order; but SPIs are often in network
+ * order.
+ */
+
+enum policy_spi {
+	SPI_PASS = 256,
+	SPI_DROP = 257,
+	SPI_REJECT = 258,
+	SPI_HOLD = 259,
+	SPI_TRAP = 260,
+	SPI_TRAPSUBNET = 261,
+};
+
+/*
  * to identify an SA, we need
  */
 
@@ -43,19 +60,13 @@ typedef struct {
 
 	/*
 	 * 32-bit SPI, assigned by the destination host; or one of the
-	 * below magic values.
+	 * below magic values above (in network order).
 	 *
 	 * This is in network order (but is manipulated like an int.
 	 *
 	 * XXX: Does this mean it is the SPI that the remote end
 	 * expects to see on its incoming packets?
 	 */
-#               define  SPI_PASS        256     /* magic values... */
-#               define  SPI_DROP        257     /* ...for use... */
-#               define  SPI_REJECT      258     /* ...with SA_INT */
-#               define  SPI_HOLD        259
-#               define  SPI_TRAP        260
-#               define  SPI_TRAPSUBNET  261
 	ipsec_spi_t spi;
 
 	/*
