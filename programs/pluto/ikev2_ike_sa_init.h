@@ -18,7 +18,7 @@ extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 				    lset_t policy,
 				    unsigned long try,
 				    const threadtime_t *inception,
-				    chunk_t sec_label,
+				    shunk_t sec_label,
 				    bool background, struct logger *logger);
 
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;

@@ -109,7 +109,7 @@ void main_outI1(struct fd *whack_sock,
 		lset_t policy,
 		unsigned long try,
 		const threadtime_t *inception,
-		chunk_t sec_label)
+		shunk_t sec_label)
 {
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	struct state *st = &ike->sa;

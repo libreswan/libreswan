@@ -114,10 +114,10 @@ void ikev2_initiate_child_sa(struct pending *p)
 					    STATE_V2_NEW_CHILD_I0),
 					   p->whack_sock);
 		if (p->sec_label.len != 0) {
-			dbg("%s: received security label from acquire via pending: \"%.*s\"", __FUNCTION__,
-					(int)p->sec_label.len, p->sec_label.ptr);
-			dbg("%s: connection security label: \"%.*s\"", __FUNCTION__,
-					(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+			dbg("%s: received security label from acquire via pending: '"PRI_SHUNK"'",
+			    __FUNCTION__, pri_shunk(p->sec_label));
+			dbg("%s: connection security label: '"PRI_SHUNK"'",
+			    __FUNCTION__, pri_shunk(p->sec_label));
 			/*
 			 * Should we have a within_range() check here? In theory, the ACQUIRE came
 			 * from a policy we gave the kernel, so it _should_ be within our range?

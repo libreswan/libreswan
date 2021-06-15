@@ -285,7 +285,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id UNUSED,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said UNUSED,
-			       const chunk_t *policy_label UNUSED,
+			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {
 	ip_sockaddr saddr = sockaddr_from_address(selector_prefix(*this_client));
@@ -912,13 +912,6 @@ static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
 	return FALSE;
 }
 
-static void bsdkame_remove_orphaned_holds(int transport_proto UNUSED,
-					  const ip_selector *ours UNUSED,
-					  const ip_selector *peers UNUSED)
-{
-	passert(FALSE);
-}
-
 static bool bsdkame_except_socket(int socketfd, int family, struct logger *logger)
 {
 	struct sadb_x_policy policy;
@@ -985,7 +978,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
-	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,
 	.process_raw_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,

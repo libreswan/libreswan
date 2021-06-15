@@ -120,7 +120,7 @@ void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 
 void release_iface_dev(struct iface_dev **id)
 {
-	refcnt_delref(id, HERE);
+	delref(id, HERE);
 }
 
 static void free_dead_ifaces(struct logger *logger)
@@ -233,7 +233,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
 					     "struct iface_endpoint");
 	ifp->fd = fd;
-	ifp->ip_dev = refcnt_addref(ifd, HERE);
+	ifp->ip_dev = addref(ifd, HERE);
 	ifp->io = io;
 	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
 	ifp->float_nat_initiator = float_nat_initiator;

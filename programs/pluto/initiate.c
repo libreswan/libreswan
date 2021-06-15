@@ -29,7 +29,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel.h"			/* for replace_bare_shunt()! */
+#include "kernel.h"			/* for raw_eroute() */
 #include "log.h"
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
@@ -42,6 +42,7 @@
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
 #include "security_selinux.h"		/* for sec_label_within_range() */
+#include "ip_info.h"
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
@@ -241,7 +242,8 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label,
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
+			  HUNK_AS_SHUNK(c->spd.this.sec_label),
 			  background, c->logger);
 	return true;
 }
@@ -251,11 +253,11 @@ void ipsecdoi_initiate(struct connection *c,
 		       unsigned long try,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
-		       chunk_t sec_label,
+		       shunk_t sec_label,
 		       bool background, struct logger *logger)
 {
 	if (sec_label.len != 0)
-		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
 
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
@@ -303,8 +305,8 @@ void ipsecdoi_initiate(struct connection *c,
 	case IKEv2:
 		if (st == NULL) {
 			/* note: new IKE SA pulls sec_label from connection */
-			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception, empty_chunk,
-						background, logger);
+			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
+						empty_shunk, background, logger);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
@@ -464,7 +466,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
  *	initiate_opportunistic: initial entrypoint
  *	continue_oppo: where we pickup when ADNS result arrives
  *	initiate_opportunistic_body: main body shared by above routines
- *	cannot_oppo: a helper function to log a diagnostic
+ *	cannot_ondemand: a helper function to log a diagnostic
  * This structure repeats a lot of code when the ADNS result arrives.
  * This seems like a waste, but anything learned the first time through
  * may no longer be true!
@@ -482,49 +484,79 @@ struct find_oppo_bundle {
 		ip_address host_addr;
 	} local, remote;
 	/* redundant - prococol involved */
-	int transport_proto;
+	const struct ip_protocol *transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
 	ipsec_spi_t negotiation_shunt;	/* in host order! */
 	ipsec_spi_t failure_shunt;	/* in host order! */
 	struct logger *logger;	/* has whack attached */
 	bool background;
-	chunk_t sec_label;
+	shunk_t sec_label;
 };
 
-static void cannot_oppo(struct find_oppo_bundle *b, err_t ughmsg)
+static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 {
-	endpoint_buf ocb_buf;
-	const char *ocb = str_endpoint(&b->local.client, &ocb_buf);
-	endpoint_buf pcb_buf;
-	const char *pcb = str_endpoint(&b->remote.client, &pcb_buf);
+	jam(buf, "initiate on demand by %s from ", b->want);
 
-	enum stream logger_stream = (DBGP(DBG_BASE) ? ALL_STREAMS : WHACK_STREAM);
-	llog(logger_stream | RC_OPPOFAILURE, b->logger,
-		    "cannot opportunistically initiate for %s to %s: %s",
-		    ocb, pcb, ughmsg);
+	jam_address(buf, &b->local.host_addr);
+	jam(buf, ":%d", endpoint_hport(b->local.client));
+
+	jam(buf, " to ");
+
+	jam_address(buf, &b->remote.host_addr);
+	jam(buf, ":%d", endpoint_hport(b->remote.client));
+
+	jam(buf, " proto=%s", b->transport_proto->name);
+
+	if (b->sec_label.len > 0) {
+		jam(buf, " label=");
+		jam_sanitized_hunk(buf, b->sec_label);
+	}
+}
+
+static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const char *ughmsg)
+{
+	LLOG_JAMBUF(rc_flags, b->logger, buf) {
+		jam(buf, "cannot ");
+		jam_oppo_bundle(buf, b);
+		jam(buf, ": %s", ughmsg);
+	}
 
 	if (b->held) {
-		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
-		dbg("cannot_oppo() detected packet triggered shunt from bundle");
-
 		/*
-		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass).
-		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
+		 * This was filled in for us based on packet trigger
+		 * and not whack --oppo trigger.  Hence, there really
+		 * is something in the kernel that needs updating.
+		 *
+		 * Replace negotiationshunt (hold or pass) with
+		 * failureshunt (hold or pass).  If no failure_shunt
+		 * specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
+		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
+		    enum_name_short(&spi_names, b->failure_shunt));
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
-		if (replace_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-				       b->policy_prio,
-				       b->negotiation_shunt,
-				       b->failure_shunt,
-				       b->transport_proto,
-				       ughmsg,
-				       b->logger)) {
-			dbg("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
-			    enum_name_short(&spi_names, b->failure_shunt));
-		} else {
-			llog(RC_LOG, b->logger,
-				    "cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+		const struct ip_info *afi = address_type(&b->local.host_addr);
+		const ip_address null_host = afi->address.any;
+		/* ports? assumed wide? */
+		ip_selector src = selector_from_address_protocol(b->local.host_addr,
+								 b->transport_proto);
+		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
+								 b->transport_proto);
+		if (!raw_eroute(&null_host, &src, &null_host, &dst,
+				/*from*/htonl(b->negotiation_shunt),
+				/*to*/htonl(b->failure_shunt),
+				&ip_protocol_internal,
+				b->transport_proto->ipproto,
+				ET_INT, null_proto_info,
+				deltatime(SHUNT_PATIENCE),
+				BOTTOM_PRIO, /* we don't know connection for priority yet */
+				NULL, /* sa_marks */
+				0 /* xfrm interface id */,
+				ERO_REPLACE, ughmsg,
+				b->sec_label, b->logger)) {
+			llog(RC_LOG_SERIOUS, b->logger,
+			     "failed to replace negotiationshunt with bare failureshunt");
+			return;
 		}
 	}
 }
@@ -561,33 +593,10 @@ static ip_selector shunt_from_traffic_end(const char *what,
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
-	int our_port = endpoint_hport(b->local.client);
-	int peer_port = endpoint_hport(b->remote.client);
-
-	address_buf ourb;
-	const char *our_addr = str_address(&b->local.host_addr, &ourb);
-	address_buf peerb;
-	const char *peer_addr = str_address(&b->remote.host_addr, &peerb);
 
 	if (b->sec_label.len != 0) {
-		dbg("oppo bundle: received security label string: %.*s",
-			(int)b->sec_label.len, b->sec_label.ptr);
-	}
-
-	char demandbuf[256];
-	snprintf(demandbuf, sizeof(demandbuf),
-		 "initiate on demand from %s:%d to %s:%d proto=%d because: %s",
-		 our_addr, our_port, peer_addr, peer_port,
-		 b->transport_proto, b->want);
-
-	/* ??? DBG and real-world code mixed */
-	bool loggedit = false;
-	if (DBGP(DBG_BASE)) {
-		llog(RC_LOG/*ALL_STREAMS*/, b->logger, "%s", demandbuf);
-		loggedit = true;
-	} else if (fd_p(b->logger->global_whackfd)) {
-		whack_log(RC_COMMENT, b->logger->global_whackfd, "%s", demandbuf);
-		loggedit = true;
+		dbg("oppo bundle: received security label string: "PRI_SHUNK,
+		    pri_shunk(b->sec_label));
 	}
 
 	/*
@@ -597,7 +606,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (!endpoint_is_specified(b->local.client) &&
 	    !endpoint_is_specified(b->remote.client)) {
-		cannot_oppo(b, "impossible IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, "impossible IP address");
 		return;
 	}
 
@@ -606,7 +615,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
 		 */
-		cannot_oppo(b, "acquire for our own IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, "acquire for our own IP address");
 		return;
 	}
 
@@ -623,10 +632,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * give up.  The failure policy cannot be gotten from
 		 * a connection; we pick %pass.
 		 */
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
-		}
-		cannot_oppo(b, "no routed template covers this pair");
+		cannot_ondemand(RC_OPPOFAILURE, b, "no routed template covers this pair");
 		return;
 	}
 
@@ -645,18 +651,27 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 #endif
 
-	if (c->kind == CK_TEMPLATE && b->sec_label.len > 0 && c->spd.this.sec_label.len > 0) {
-		whack_log(RC_COMMENT, b->logger->global_whackfd, 
-			"ACQUIRE with label found template (IKE) connection %s", c->name);
-		shunk_t sigh;
-		sigh.len = b->sec_label.len;
-		sigh.ptr = b->sec_label.ptr;
+	if (c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0) {
+		dbg("connection has security label");
 
-		if (!sec_label_within_range(sigh, c->spd.this.sec_label , b->logger)) {
-			whack_log(RC_COMMENT, b->logger->global_whackfd, 
-				"Received kernel security label does not fall within range of our connection");
+		if (b->sec_label.len == 0) {
+			cannot_ondemand(RC_LOG_SERIOUS, b,
+					"kernel acquire missing security label");
 			return;
 		}
+
+		if (!sec_label_within_range(HUNK_AS_SHUNK(b->sec_label),
+					    c->spd.this.sec_label , b->logger)) {
+			cannot_ondemand(RC_LOG_SERIOUS, b,
+					"received kernel security label does not fall within range of our connection");
+			return;
+		}
+
+		/*
+		 * XXX: Danger. C is switched to an instance.  It is
+		 * assumed that ipsecdoi_initiate() always saves the
+		 * pointer.
+		 */
 
 		/* create instance and switch to it */
 		c = instantiate(c, &b->remote.host_addr, NULL);
@@ -665,24 +680,85 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		c->spd.this.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
 		free_chunk_content(&c->spd.that.sec_label);
 		c->spd.that.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
+
+		/*
+		 * We've found a connection that can serve.  Do we
+		 * have to initiate it?  Not if there is currently an
+		 * IPSEC SA.  This may be redundant if a
+		 * non-opportunistic negotiation is already being
+		 * attempted.
+		 *
+		 * If we are to proceed asynchronously, b->whackfd
+		 * will be NULL_WHACKFD.
+		 *
+		 * We have a connection: fill in the negotiation_shunt
+		 * and failure_shunt.
+		 */
+		b->failure_shunt = shunt_policy_spi(c, false);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
+		/*
+		 * Add the kernel shunt to the pluto bare shunt list.
+		 *
+		 * We need to do this because the %hold shunt was
+		 * installed by kernel and we want to keep track of it
+		 * inside pluto.
+		 *
+		 * XXX: hack to keep code below happy - need to figure
+		 * out what to do with the shunt functions.
+		 */
+		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+			       SPI_HOLD, b->want, b->logger);
+
+		/*
+		 * Otherwise, there is some kind of static conn that
+		 * can handle this connection, so we initiate it.
+		 * Only needed if we this was triggered by a packet,
+		 * not by whack
+		 */
+		if (b->held) {
+			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
+					    &b->local.host_addr, &b->remote.host_addr)) {
+				dbg("initiate_ondemand_body() installed negotiation_shunt,");
+			} else {
+				llog(RC_LOG, b->logger,
+					    "initiate_ondemand_body() failed to install negotiation_shunt,");
+			}
+		}
+
+		/*
+		 * Annouce this to the world.  Use c->logger instead?
+		 */
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_oppo_bundle(buf, b);
+			/* jam(buf, " using "); */
+		}
+
+		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
+				  b->background, b->logger);
+
+		endpoint_buf b1;
+		endpoint_buf b2;
+		dbg("initiated on demand using security label and %s from %s to %s",
+		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+		    str_endpoint(&b->local.client, &b1),
+		    str_endpoint(&b->remote.client, &b2));
+
+		return;
 	}
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
-		cannot_oppo(b, "connection to self on another IP?");
+		cannot_ondemand(RC_OPPOFAILURE, b, "connection to self on another IP?");
 		return;
 	}
 
 	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
-		}
-		llog(RC_NOPEERIP, b->logger,
-			    "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
-			    our_addr, our_port, peer_addr, peer_port,
-			    b->transport_proto);
+		cannot_ondemand(RC_NOPEERIP, b, "template connection");
 		return;
 	}
 
@@ -743,7 +819,24 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * not by whack
 		 */
 		if (b->held) {
-			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
+			/*
+			 * Add the kernel shunt to the pluto bare
+			 * shunt list.
+			 *
+			 * We need to do this because the %hold shunt
+			 * was installed by kernel and we want to keep
+			 * track of it inside pluto.
+			 *
+			 * XXX: hack to keep code below happy - need
+			 * to figigure out what to do with the shunt
+			 * functions.
+			 */
+			ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
+			ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
+			add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+				       SPI_HOLD, b->want, b->logger);
+
+			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
 					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
@@ -752,18 +845,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			}
 		}
 
-		if (!loggedit) {
-			llog(RC_LOG, b->logger, "%s", demandbuf);
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_oppo_bundle(buf, b);
+			/* jam(buf, " using "); */
 		}
 
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
 				  b->background, b->logger);
+
 		endpoint_buf b1;
 		endpoint_buf b2;
-		dbg("initiate on demand using %s from %s to %s",
+		dbg("initiated on demand using %s from %s to %s",
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 		    str_endpoint(&b->local.client, &b1),
 		    str_endpoint(&b->remote.client, &b2));
+
 		return;
 	}
 
@@ -780,6 +876,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * step.  The second chunk initiates the next DNS query (if
 	 * any).
 	 */
+
+	/*
+	 * XXX: this is unconditional; at one point it was conditional
+	 * on DBG() to file; or whack to whack.
+	 */
+	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+		jam_oppo_bundle(buf, b);
+	}
 
 	connection_buf cib;
 	dbg("creating new instance from "PRI_CONNECTION, pri_connection(c, &cib));
@@ -818,6 +922,15 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
 	pexpect(shunt_protocol == selector_protocol(remote_shunt));
 
+	/* XXX: re-use c */
+	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
+	c = build_outgoing_opportunistic_connection(&b->local.client,
+						    &b->remote.client);
+	if (c == NULL) {
+		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable connection between endpoints");
+		return;
+	}
+
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
@@ -838,7 +951,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 			NULL, 0 /* xfrm-if-id */,
 			ERO_ADD, addwidemsg,
-			&b->sec_label,
+			b->sec_label,
 			b->logger)) {
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	} else {
@@ -846,60 +959,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		add_bare_shunt(&local_shunt, &remote_shunt,
 			       shunt_protocol->ipproto, SPI_HOLD,
 			       addwidemsg, b->logger);
-	}
-	/*
-	 * Now delete the (obsoleted) narrow bare kernel shunt - we have
-	 * a (possibly broadened) negotiationshunt replacement installed.
-	 */
-	const char *const delmsg = "delete bare kernel shunt - was replaced with negotiationshunt";
-	if (!delete_bare_shunt(&b->local.host_addr, &b->remote.host_addr,
-			       b->transport_proto,
-			       SPI_HOLD /* kernel dictated */,
-			       /*skip_xfrm_raw_eroute_delete?*/false,
-			       delmsg, b->logger)) {
-		llog(RC_LOG, b->logger, "Failed to: %s", delmsg);
-	} else {
-		dbg("success taking down narrow bare shunt");
-	}
-
-	/* XXX: re-use c */
-	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
-	c = build_outgoing_opportunistic_connection(&b->local.client,
-						    &b->remote.client);
-	if (c == NULL) {
-		/* We cannot seem to instantiate a suitable connection:
-		 * complain clearly.
-		 */
-
-		/* ??? CLANG 3.5 thinks ac might be NULL (look up) */
-		endpoint_buf b1, b2;
-		llog(RC_OPPOFAILURE, b->logger,
-			    "no suitable connection for opportunism between %s and %s",
-			    str_endpoint(&b->local.client, &b1),
-			    str_endpoint(&b->remote.client, &b2));
-
-		/*
-		 * Replace negotiation_shunt with failure_shunt.
-		 * The type of replacement *ought* to be
-		 * specified by policy, but we did not find a connection, so
-		 * default to HOLD.
-		 */
-		if (b->held) {
-			if (replace_bare_shunt(&b->local.host_addr,
-					       &b->remote.host_addr,
-					       b->policy_prio,
-					       b->negotiation_shunt, /* if not from conn, where did this come from? */
-					       b->failure_shunt, /* if not from conn, where did this come from? */
-					       b->transport_proto,
-					       "no suitable connection",
-					       b->logger)) {
-				dbg("replaced negotiationshunt with failurehunt=hold because no connection was found");
-			} else {
-				llog(RC_LOG, b->logger,
-					    "failed to replace negotiationshunt with failurehunt=hold");
-			}
-		}
-		return;
 	}
 
 	/* If we are to proceed asynchronously, b->background will be true. */
@@ -916,7 +975,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
-				    b->transport_proto,
+				    b->transport_proto->ipproto,
 				    b->negotiation_shunt,
 				    &b->local.host_addr,
 				    &b->remote.host_addr)) {
@@ -933,14 +992,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 void initiate_ondemand(const ip_endpoint *local_client,
 		       const ip_endpoint *remote_client,
-		       bool held, bool background,
-		       const chunk_t sec_label,
-		       const char *why,
+		       bool by_acquire, bool background,
+		       const shunk_t sec_label,
 		       struct logger *logger)
 {
-	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
-	pexpect(transport_proto != 0);
-	pexpect(transport_proto == endpoint_protocol(*remote_client)->ipproto);
+	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/
+	const struct ip_protocol *transport_proto = endpoint_protocol(*local_client);
+	pexpect(transport_proto != NULL);
+	pexpect(transport_proto == endpoint_protocol(*remote_client));
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
 		.local.client = *local_client,
@@ -948,7 +1007,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		.local.host_addr = endpoint_address(*local_client),
 		.remote.host_addr = endpoint_address(*remote_client),
 		.transport_proto = transport_proto,
-		.held = held,
+		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
 		.failure_shunt = SPI_HOLD, /* until we found connection policy */

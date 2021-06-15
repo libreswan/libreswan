@@ -207,7 +207,7 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
-			   const chunk_t *sec_label,
+			   const shunk_t sec_label,
 			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
@@ -218,9 +218,6 @@ struct kernel_ops {
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
-	void (*remove_orphaned_holds)(int transportproto,
-				      const ip_selector *ours,
-				      const ip_selector *peers);
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
 		       struct logger *logger);
@@ -328,16 +325,6 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
-/*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
- * Simple rule: use a string literal.
- */
-struct xfrm_user_sec_ctx_ike; /* forward declaration of tag */
-extern void record_and_initiate_opportunistic(const ip_endpoint *our_client,
-					      const ip_endpoint *peer_client,
-					      const chunk_t sec_label,
-					      const char *why, struct logger *logger);
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
@@ -350,14 +337,6 @@ extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      int transport_proto, ipsec_spi_t shunt_spi,
 			      bool skip_xfrm_raw_eroute_delete,
 			      const char *why, struct logger *logger);
-
-extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
-			       policy_prio_t policy_prio,
-			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
-			       ipsec_spi_t new_shunt_spi,   /* in host order! */
-			       int transport_proto,
-			       const char *why,
-			       struct logger *logger);
 
 extern bool assign_holdpass(const struct connection *c,
 			struct spd_route *sr,
@@ -447,7 +426,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
-		       const chunk_t *sec_label,
+		       const shunk_t sec_label,
 		       struct logger *logger);
 
 bool shunt_eroute(const struct connection *c,

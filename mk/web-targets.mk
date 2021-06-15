@@ -185,53 +185,49 @@ $(WEB_SUMMARYDIR)/status.json:
 endif
 
 #
-# Update the commits.json database
+# Update $(WEB_SUMMARYDIR)/commits.json database
 #
-# Since identifying all commits.json's dependencies is expensive - it
-# depends on parsing WEB_SUMMARYDIR and WEB_REPODIR - it is
-# implemented as a recursive make target - that way the computation is
-# only done when needed.
-#
-# Should the generation script be modified then this will trigger a
-# rebuild of all relevant commits.
-#
-# In theory, all the .json files needing an update can be processed
-# using a single make invocation.  Unfortunately the list can get so
-# long that it exceeds command line length limits, so a slow pipe is
-# used instead.
+# Use the generated $(WEB_HASH).json containing the details of the
+# most recent commit as the target.  That way, any new commits trigger
+# an update.
 
 ifdef WEB_ENABLED
+web-site web-summarydir: $(WEB_SUMMARYDIR)/commits.json
+endif
 
 WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
-FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
 
-.PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
-web-site web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
-$(WEB_SUMMARYDIR)/commits.json: web-commitsdir
+.PHONY: web-commitsdir
+web-commitsdir:
+	rm -rf $(WEB_COMMITSDIR)
+	$(MAKE) WEB_ENABLED=true $(WEB_SUMMARYDIR)/commits.json
+
+$(WEB_SUMMARYDIR)/commits.json: $(WEB_COMMITSDIR)/$(WEB_HASH).json $(wildcard $(WEB_COMMITSDIR)/*.json)
 	: pick up all commits unconditionally and unsorted.
 	find $(WEB_COMMITSDIR) -name '*.json' \
 		| xargs --no-run-if-empty cat \
 		| jq -s 'unique_by(.hash)' > $@.tmp
 	mv $@.tmp $@
 
-.PHONY: web-commitsdir
-web-commitsdir: | $(WEB_COMMITSDIR)
-	: -s suppresses the sub-make message ... is up to date
-	: watch out for the sub-make re-valuating make variables
-	( cd $(WEB_REPODIR) && git rev-list $(FIRST_COMMIT)^.. ) \
-	| awk '{print "$(WEB_COMMITSDIR)/" $$1 ".json"}' \
-	| xargs --no-run-if-empty \
-		$(MAKE) --no-print-directory -s
+FIRST_COMMIT = $(shell set -x ; $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
+$(WEB_COMMITSDIR)/$(WEB_HASH).json: | $(WEB_COMMITSDIR)
+	: order hashes so HEAD is last
+	( cd $(WEB_REPODIR) && git rev-list --reverse $(FIRST_COMMIT)^..$(WEB_HASH) ) \
+	| while read hash ; do \
+		json=$(WEB_COMMITSDIR)/$${hash}.json ; \
+		if test -r $${json} ; then \
+			echo $${hash} ; \
+		else \
+			echo generating $${json} ; \
+			$(WEB_SOURCEDIR)/json-commit.sh \
+				$(WEB_REPODIR) $${hash} \
+				> $${json}.tmp ; \
+			mv $${json}.tmp $${json} ; \
+		fi ; \
+	done
 
-$(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
-	echo $@
-	$(WEB_SOURCEDIR)/json-commit.sh $(WEB_REPODIR) $* > $@.tmp
-	mv $@.tmp $@
-
-$(WEB_COMMITSDIR):
+$(WEB_COMMITSDIR): | $(WEB_SUMMARYDIR)
 	mkdir $(WEB_COMMITSDIR)
-
-endif
 
 #
 # Update the html in all the result directories
@@ -360,10 +356,6 @@ Internal targets:
         update the HTML files in all the test run sub-directories
 	under $$(WEB_SUMMARYDIR)
 
-    web-commits-json:
-
-        update the commits.json file in $$(WEB_SUMMARYDIR)
-
     web-results-json:
 
         update the results.json in all the test run sub-directories
@@ -385,6 +377,11 @@ Web targets:
     web-resultsdir:
 
         build or update $$(WEB_RESULTSDIR)
+
+    web-commitsdir:
+
+        build or update both $$(WEB_COMMITSDIR) and
+	$$(WEB_SUMMARYDIR)/commits.json
 
     web-page:
 

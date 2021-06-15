@@ -733,6 +733,7 @@ static void unshare_connection(struct connection *c)
 	/* increment references to algo's, if any */
 	proposals_addref(&c->ike_proposals.p);
 	proposals_addref(&c->child_proposals.p);
+	c->v2_ike_proposals = NULL; /* don't share IKE proposals */
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
@@ -1869,7 +1870,22 @@ static bool extract_connection(const struct whack_message *wm,
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
 	c->send_no_esp_tfc = wm->send_no_esp_tfc;
-	c->sa_reqid = wm->sa_reqid;
+
+	/*
+	 * Since security labels use the same REQID for everything,
+	 * pre-assign it.
+	 */
+	c->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
+		       wm->ike_version != IKEv2 ? /*generated later*/0 :
+		       wm->left.sec_label != NULL ? gen_reqid() :
+		       wm->right.sec_label != NULL ? gen_reqid() :
+		       /*generated later*/0);
+	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
+	    c->name, c->sa_reqid, wm->sa_reqid,
+	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
+	     wm->left.sec_label != NULL ? wm->left.sec_label :
+	     wm->right.sec_label != NULL ? wm->right.sec_label :
+	     "n/a"));
 
 	/*
 	 * Since at this point 'this' and 'that' are disoriented their
@@ -1974,6 +1990,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 * need one. Does CK_TEMPLATE need one?
 	 */
 	c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+	dbg("%s c->spd.reqid=%d because c->sa_reqid=%d",
+	    c->name, c->spd.reqid, c->sa_reqid);
 
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -1994,18 +2012,18 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (c->policy & POLICY_GROUP) {
+		dbg("connection is group: by policy");
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if (((address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr)) &&
-		    !NEVER_NEGOTIATE(c->policy)) || c->spd.that.has_port_wildcard ||
-		    c->spd.this.sec_label.len > 0) {
-		dbg("based upon policy, the connection is a template.");
-
-		/*
-		 * Opportunistic or Road Warrior or wildcard client
-		 * subnet
-		 * or wildcard ID
-		 */
+	} else if (!NEVER_NEGOTIATE(c->policy) && (address_is_unset(&c->spd.that.host_addr) ||
+						   address_is_any(c->spd.that.host_addr))) {
+		dbg("connection is template: no remote address yet policy negotiate");
+		c->kind = CK_TEMPLATE;
+	} else if (c->spd.that.has_port_wildcard) {
+		dbg("connection is template: remote has wildcard port");
+		c->kind = CK_TEMPLATE;
+	} else if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		dbg("connection is template: security label present");
 		c->kind = CK_TEMPLATE;
 	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 		/*
@@ -2013,11 +2031,13 @@ static bool extract_connection(const struct whack_message *wm,
 		 * so we can accept multiple subnets from
 		 * the remote peer.
 		 */
+		dbg("connection is template: there are vnets at play");
 		c->kind = CK_TEMPLATE;
 	} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-		dbg("based upon policy narrowing=yes, the connection is a template.");
+		dbg("connection is template: POLICY_IKEV2_ALLOW_NARROWING");
 		c->kind = CK_TEMPLATE;
 	} else {
+		dbg("connection is permanent: by default");
 		c->kind = CK_PERMANENT;
 	}
 
@@ -2171,8 +2191,9 @@ struct connection *add_group_instance(struct connection *group,
 	t->log_file = NULL;
 	t->log_file_err = FALSE;
 
-	t->spd.reqid = group->sa_reqid == 0 ?
-		gen_reqid() : group->sa_reqid;
+	t->spd.reqid = group->sa_reqid == 0 ? gen_reqid() : group->sa_reqid;
+	dbg("%s t->spd.reqid=%d because group->sa_reqid=%d",
+	    t->name, t->spd.reqid, group->sa_reqid);
 
 	/* add to connections list */
 	t->ac_next = connections;
@@ -2244,6 +2265,8 @@ struct connection *instantiate(struct connection *c,
 	d->spd.spd_next = NULL;
 
 	d->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+	dbg("%s d->spd.reqid=%d because c->sa_reqid=%d",
+	    d->name, d->spd.reqid, c->sa_reqid);
 
 	/* since both ends updated; presumably already oriented? */
 	set_policy_prio(d);
@@ -2426,7 +2449,7 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
-					       chunk_t csec_label,
+					       shunk_t csec_label,
 					       struct logger *logger UNUSED)
 {
 	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);

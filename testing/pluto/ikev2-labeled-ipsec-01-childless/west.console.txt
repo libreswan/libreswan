@@ -39,7 +39,7 @@ west #
 002 "labeled" #1: omitting CHILD SA payloads
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-002 "labeled" #1: IMPAIR: adding bare shunt for security label 'system_u:object_r:ipsec_spd_t:s0'
+002 "labeled" #1: IMPAIR: adding %trap policy for security label 'system_u:object_r:ipsec_spd_t:s0'
 west #
  # workaround kernel bug displaying a NUL freaking out python
 west #
@@ -99,7 +99,7 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
+006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
  echo done
 done
@@ -119,15 +119,15 @@ src 192.1.2.45 dst 192.1.2.23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
 	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x00000000 reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 4301 dport 4300 dev eth1 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
-	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 1687486 ptype main
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+	dir in priority 1687485 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+	dir out priority 1687485 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
@@ -152,4 +152,3 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 west #
  rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
- 

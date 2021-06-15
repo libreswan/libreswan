@@ -211,66 +211,6 @@ void add_bare_shunt(const ip_selector *our_client,
 	}
 }
 
-/*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
- * Simple rule: use a string literal.
- */
-
-void record_and_initiate_opportunistic(const ip_endpoint *local_client,
-				       const ip_endpoint *remote_client,
-				       const chunk_t sec_label,
-				       const char *why, struct logger *logger)
-{
-	/*
-	 * Port's value and interpretation depends on protocol (ICMP,
-	 * TCP, UDP, ...) and ends may not be equal.
-	 */
-	passert(!endpoint_is_unset(local_client));
-	passert(!endpoint_is_unset(remote_client));
-	passert(endpoint_type(local_client) == endpoint_type(remote_client));
-	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
-
-	/*
-	 * XXX: hack to keep code below happy - need to figigure out
-	 * what to do with the shunt functions.
-	 */
-	ip_selector our_client[] = { selector_from_endpoint(*local_client), };
-	ip_selector peer_client[] = { selector_from_endpoint(*remote_client), };
-	unsigned transport_proto = endpoint_protocol(*local_client)->ipproto;
-
-	/*
-	 * Add the kernel shunt to the pluto bare shunt list.
-	 *
-	 * We need to do this because the %hold shunt was installed by
-	 * kernel and we want to keep track of it inside pluto.
-	 */
-	/*const*/ struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
-							    transport_proto, why);
-	if (bspp != NULL &&
-	    (*bspp)->said.proto == &ip_protocol_internal &&
-	    (*bspp)->said.spi == htonl(SPI_HOLD)) {
-		llog_bare_shunt(RC_LOG_SERIOUS, logger, *bspp,
-				"existing bare shunt found - refusing to add a duplicate");
-		/* should we continue with initiate_ondemand() ? */
-	} else {
-		add_bare_shunt(our_client, peer_client, transport_proto, SPI_HOLD, why, logger);
-	}
-
-	/* actually initiate opportunism / ondemand */
-	initiate_ondemand(local_client, remote_client,
-			  /*held*/ true,
-			  /*background*/ true,
-			  sec_label,
-			  "acquire", logger);
-
-	if (kernel_ops->remove_orphaned_holds != NULL) {
-		dbg("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt");
-		kernel_ops->remove_orphaned_holds(transport_proto,
-						  our_client, peer_client);
-	}
-}
-
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 {
 	if (proto == &ip_protocol_comp)
@@ -1281,7 +1221,7 @@ bool raw_eroute(const ip_address *this_host,
 		const uint32_t xfrm_if_id,
 		enum pluto_sadb_operations op,
 		const char *opname,
-		const chunk_t *sec_label,
+		const shunk_t sec_label,
 		struct logger *logger)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
@@ -1318,7 +1258,7 @@ bool raw_eroute(const ip_address *this_host,
 	    text_said,
 	    proto_info->reqid,
 	    proto_info->proto,
-	    sec_label == NULL ? "with" : "without");
+	    sec_label.len > 0 ? "with" : "without");
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					     that_host, that_client,
@@ -1387,12 +1327,12 @@ static void clear_narrow_holds(const ip_selector *our_client,
 	}
 }
 
-bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
-			policy_prio_t policy_prio,	/* of replacing shunt*/
-			ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			ipsec_spi_t new_shunt_spi,	/* in host order! */
-			int transport_proto,
-			const char *why, struct logger *logger)
+static bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
+			       policy_prio_t policy_prio,	/* of replacing shunt*/
+			       ipsec_spi_t cur_shunt_spi,	/* in host order! */
+			       ipsec_spi_t new_shunt_spi,	/* in host order! */
+			       int transport_proto,
+			       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
 	passert(afi == address_type(dst_address));
@@ -1425,7 +1365,7 @@ bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_add
 			     0, /* we don't know connection for priority yet */
 			     NULL, /* sa_marks */
 			     0 /* xfrm interface id */,
-			     ERO_REPLACE, why, NULL, logger);
+			     ERO_REPLACE, why, null_shunk, logger);
 	if (!ok) {
 		llog(RC_LOG, logger,
 		     "replace kernel shunt %s failed - deleting from pluto shunt table",
@@ -1505,7 +1445,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 				0, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
-				ERO_DELETE, why, NULL, logger);
+				ERO_DELETE, why, null_shunk, logger);
 		if (!ok) {
 			/* did/should kernel log this? */
 			selectors_buf sb;
@@ -1574,7 +1514,7 @@ bool eroute_connection(const struct spd_route *sr,
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
 				    op, buf2,
-				    &sr->this.sec_label,
+				    HUNK_AS_SHUNK(sr->this.sec_label),
 				    logger);
 		if (!t) {
 			llog(RC_LOG, logger,
@@ -1596,7 +1536,7 @@ bool eroute_connection(const struct spd_route *sr,
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
 			  op, buf2,
-			  &sr->this.sec_label,
+			  HUNK_AS_SHUNK(sr->this.sec_label),
 			  logger);
 }
 
@@ -2336,7 +2276,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				xfrm_if_id,
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
-				&c->spd.this.sec_label,
+				HUNK_AS_SHUNK(c->spd.this.sec_label),
 				st->st_logger)) {
 			llog(RC_LOG, st->st_logger,
 				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
@@ -2477,7 +2417,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			0, /* xfrm_if_id. needed to tear down? */
 			ERO_DEL_INBOUND,
 			"delete inbound",
-			&c->spd.this.sec_label,
+			HUNK_AS_SHUNK(c->spd.this.sec_label),
 			st->st_logger)) {
 		llog(RC_LOG, st->st_logger,
 			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
@@ -3013,7 +2953,7 @@ bool route_and_eroute(struct connection *c,
 						0,
 						ERO_REPLACE,
 						"restore",
-						NULL, /* bare shunt are not associated with any connection so no security label */
+						null_shunk, /* bare shunt are not associated with any connection so no security label */
 						logger))
 				{
 					llog(RC_LOG, logger,

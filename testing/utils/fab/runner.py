@@ -432,6 +432,14 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
                                     test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
                                     break
+                                except FileNotFoundError as e:
+                                    # Err .. someone deleted stuff
+                                    # from under us!
+                                    message = "%s while running script %s" % (post.Issues.EOF, script)
+                                    logger.exception("*** %s ***" % message)
+                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    host_timed_out = script.host_name
+                                    break
                                 except BaseException as e:
                                     # if there is an exception, write
                                     # it to the console
