@@ -1200,6 +1200,69 @@ void show_shunt_status(struct show *s)
 	}
 }
 
+/* sa priority and type should really go into kernel_sa */
+uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
+{
+	connection_buf cib;
+
+	if (c->sa_priority != 0) {
+		dbg("priority calculation of connection "PRI_CONNECTION" overruled by connection specification of %"PRIu32" (%#"PRIx32")",
+		    pri_connection(c, &cib), c->sa_priority, c->sa_priority);
+		return c->sa_priority;
+	}
+
+	if (LIN(POLICY_GROUP, c->policy)) {
+		dbg("priority calculation of connection "PRI_CONNECTION" skipped - group template does not install SPDs",
+		    pri_connection(c, &cib));
+		return 0;
+	}
+
+	/* XXX: assume unsigned >= 32-bits */
+	passert(sizeof(unsigned) >= sizeof(uint32_t));
+
+	unsigned pmax =
+		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
+			(LIN(POLICY_AUTH_NULL, c->policy)) ?
+				PLUTO_SPD_OPPO_ANON_MAX :
+				PLUTO_SPD_OPPO_MAX :
+			PLUTO_SPD_STATIC_MAX;
+
+	unsigned portsw = /* max 2 (2 bits) */
+		(c->spd.this.port == 0 ? 0 : 1) +
+		(c->spd.that.port == 0 ? 0 : 1);
+
+	unsigned protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
+
+
+	/*
+	 * For transport mode or /32 to /32, the client mask bits are
+	 * set based on the host_addr parameters.
+	 */
+	unsigned srcw, dstw;	/* each max 128 (8 bits) */
+	srcw = c->spd.this.client.maskbits;
+	dstw = c->spd.that.client.maskbits;
+	/* if opportunistic, override the template destination mask with /32 or /128 */
+	if (oe_shunt) {
+		dstw = (addrtypeof(&c->spd.that.host_addr) == AF_INET) ? 32 : 128;
+	}
+
+	/* ensure an instance of a template/OE-group always has preference */
+	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
+
+	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
+
+	if (c->spd.this.sec_label.len > 0) {
+		/* fixup so instance hits first over template */
+		if (c->kind == CK_INSTANCE)
+			prio = prio - 2;
+	}
+
+	dbg("priority calculation of connection "PRI_CONNECTION" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    pri_connection(c, &cib), prio, prio,
+	    pmax, portsw, protow, srcw, dstw, instw);
+	return prio;
+}
+
 /* Setup an IPsec route entry.
  * op is one of the ERO_* operators.
  */

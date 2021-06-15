@@ -580,8 +580,6 @@ extern int foreach_connection_by_alias(const char *alias,
 
 extern void unshare_connection_end(struct end *e);
 
-extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
-
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *dst_end,

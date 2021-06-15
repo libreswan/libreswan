@@ -409,7 +409,7 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
 			   const char *why, struct logger *logger);
 
-// TEMPORARY
+extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 extern bool raw_eroute(const ip_address *this_host,
 		       const ip_selector *this_client,
 		       const ip_address *that_host,
