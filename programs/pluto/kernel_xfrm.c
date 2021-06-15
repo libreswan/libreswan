@@ -542,13 +542,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	int policy = IPSEC_POLICY_IPSEC;
 
-	if (sadb_op == ERO_DELETE && proto_info[0].reqid == 0 &&
-		(ntohl(new_spi) == SPI_PASS || ntohl(new_spi) == SPI_HOLD) &&
-		strstr("IGNORE_ON_XFRM", text_said) != NULL) {
-			dbg("request to delete an opportunistic bare shunt ignored - XFRM already deleted it when it installed IPsec SA, text_said:%s", text_said);
-			return TRUE;
-	}
-
 	switch (esatype) {
 	case ET_UNSPEC:
 	case ET_AH:
