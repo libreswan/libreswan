@@ -33,7 +33,7 @@ east #
 -> waiting ... initdone
 east #
  ../../guestbin/ipsec-look.sh
-<- connect(192.1.2.45,unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023)
+<- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
    quit
 -> connection closed
 east NOW
@@ -55,22 +55,22 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687486 ptype main
+	dir out priority 1687485 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 1687486 ptype main
+	dir in priority 1687485 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
@@ -90,4 +90,3 @@ libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other 
 east #
  rm -rf ipsecspd.fc ipsecspd.if tmp
 east #
- 
