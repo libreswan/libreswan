@@ -1221,7 +1221,7 @@ bool raw_eroute(const ip_address *this_host,
 		const uint32_t xfrm_if_id,
 		enum pluto_sadb_operations op,
 		const char *opname,
-		const chunk_t *sec_label,
+		const shunk_t sec_label,
 		struct logger *logger)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
@@ -1258,7 +1258,7 @@ bool raw_eroute(const ip_address *this_host,
 	    text_said,
 	    proto_info->reqid,
 	    proto_info->proto,
-	    sec_label == NULL ? "with" : "without");
+	    sec_label.len > 0 ? "with" : "without");
 
 	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					     that_host, that_client,
@@ -1365,7 +1365,7 @@ bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_add
 			     0, /* we don't know connection for priority yet */
 			     NULL, /* sa_marks */
 			     0 /* xfrm interface id */,
-			     ERO_REPLACE, why, NULL, logger);
+			     ERO_REPLACE, why, null_shunk, logger);
 	if (!ok) {
 		llog(RC_LOG, logger,
 		     "replace kernel shunt %s failed - deleting from pluto shunt table",
@@ -1445,7 +1445,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 				0, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
-				ERO_DELETE, why, NULL, logger);
+				ERO_DELETE, why, null_shunk, logger);
 		if (!ok) {
 			/* did/should kernel log this? */
 			selectors_buf sb;
@@ -1514,7 +1514,7 @@ bool eroute_connection(const struct spd_route *sr,
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
 				    op, buf2,
-				    &sr->this.sec_label,
+				    HUNK_AS_SHUNK(sr->this.sec_label),
 				    logger);
 		if (!t) {
 			llog(RC_LOG, logger,
@@ -1536,7 +1536,7 @@ bool eroute_connection(const struct spd_route *sr,
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
 			  op, buf2,
-			  &sr->this.sec_label,
+			  HUNK_AS_SHUNK(sr->this.sec_label),
 			  logger);
 }
 
@@ -2276,7 +2276,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				xfrm_if_id,
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
-				&c->spd.this.sec_label,
+				HUNK_AS_SHUNK(c->spd.this.sec_label),
 				st->st_logger)) {
 			llog(RC_LOG, st->st_logger,
 				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
@@ -2417,7 +2417,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			0, /* xfrm_if_id. needed to tear down? */
 			ERO_DEL_INBOUND,
 			"delete inbound",
-			&c->spd.this.sec_label,
+			HUNK_AS_SHUNK(c->spd.this.sec_label),
 			st->st_logger)) {
 		llog(RC_LOG, st->st_logger,
 			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
@@ -2953,7 +2953,7 @@ bool route_and_eroute(struct connection *c,
 						0,
 						ERO_REPLACE,
 						"restore",
-						NULL, /* bare shunt are not associated with any connection so no security label */
+						null_shunk, /* bare shunt are not associated with any connection so no security label */
 						logger))
 				{
 					llog(RC_LOG, logger,

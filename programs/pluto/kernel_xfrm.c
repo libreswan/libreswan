@@ -528,7 +528,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said,
-			       const chunk_t *sec_label,
+			       const shunk_t sec_label,
 			       struct logger *logger)
 {
 	struct {
@@ -774,23 +774,23 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 #endif
 	}
 
-	if (sec_label != NULL && sec_label->len > 0) {
+	if (sec_label.len > 0) {
 		struct rtattr *attr = (struct rtattr *)
 			((char *)&req + req.n.nlmsg_len);
 		struct xfrm_user_sec_ctx *uctx;
 
-		passert(sec_label->len <= MAX_SECCTX_LEN);
+		passert(sec_label.len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		dbg("passing security label \"%.*s\" to kernel", (int)sec_label->len, sec_label->ptr);
-		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label->len);
+		dbg("passing security label '"PRI_SHUNK"' to kernel", pri_shunk(sec_label));
+		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
 		uctx = RTA_DATA(attr);
 		uctx->exttype = XFRMA_SEC_CTX;
-		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label->len;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label.len;
 		uctx->ctx_doi = XFRM_SC_DOI_LSM;
 		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
-		uctx->ctx_len = sec_label->len;
-		memcpy(uctx + 1, sec_label->ptr, sec_label->len);
+		uctx->ctx_len = sec_label.len;
+		memcpy(uctx + 1, sec_label.ptr, sec_label.len);
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
@@ -1660,10 +1660,7 @@ static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
 	struct xfrm_user_acquire *acquire;
-	chunk_t sec_label = {
-		.ptr = NULL,
-		.len = 0
-	};
+	shunk_t sec_label = NULL_HUNK;
 
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 
@@ -1770,7 +1767,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			sec_label.ptr = (uint8_t *)(xuctx + 1);
 			sec_label.len = len;
 
-			err_t ugh = vet_seclabel(HUNK_AS_SHUNK(sec_label));
+			err_t ugh = vet_seclabel(sec_label);
 
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
@@ -2346,7 +2343,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				&c->sa_marks,
 				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 				op, buf2,
-				&sr->this.sec_label,
+				HUNK_AS_SHUNK(sr->this.sec_label),
 				logger))
 		return false;
 
@@ -2375,7 +2372,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  &c->sa_marks,
 				  0, /* xfrm_if_id needed for shunt? */
 				  op, buf2,
-				  &sr->this.sec_label,
+				  HUNK_AS_SHUNK(sr->this.sec_label),
 				  logger);
 }
 

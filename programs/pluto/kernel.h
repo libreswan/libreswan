@@ -207,7 +207,7 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
-			   const chunk_t *sec_label,
+			   const shunk_t sec_label,
 			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
@@ -434,7 +434,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
-		       const chunk_t *sec_label,
+		       const shunk_t sec_label,
 		       struct logger *logger);
 
 bool shunt_eroute(const struct connection *c,

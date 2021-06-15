@@ -114,15 +114,20 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		switch(st->st_ike_version) {
 		case IKEv2:
-			ikev2_out_IKE_SA_INIT_I(c, st, policy, try, &inception, c->spd.this.sec_label,
+			ikev2_out_IKE_SA_INIT_I(c, st, policy, try, &inception,
+						HUNK_AS_SHUNK(c->spd.this.sec_label),
 						/*background?*/false, st->st_logger);
 			break;
 #ifdef USE_IKEv1
 		case IKEv1:
 			if (policy & POLICY_AGGRESSIVE) {
-				aggr_outI1(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+				aggr_outI1(st->st_logger->object_whackfd, c, st,
+					   policy, try, &inception,
+					   HUNK_AS_SHUNK(c->spd.this.sec_label));
 			} else {
-				main_outI1(st->st_logger->object_whackfd, c, st, policy, try, &inception, c->spd.this.sec_label);
+				main_outI1(st->st_logger->object_whackfd, c, st,
+					   policy, try, &inception,
+					   HUNK_AS_SHUNK(c->spd.this.sec_label));
 			}
 			break;
 #endif
@@ -163,8 +168,8 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_connection, policy, try, st->st_serialno, &inception, empty_chunk,
-				  /*background?*/false, st->st_logger);
+		ipsecdoi_initiate(st->st_connection, policy, try, st->st_serialno, &inception,
+				  null_shunk, /*background?*/false, st->st_logger);
 	}
 }
 

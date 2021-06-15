@@ -285,7 +285,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       const uint32_t xfrm_if_id UNUSED,
 			       enum pluto_sadb_operations sadb_op,
 			       const char *text_said UNUSED,
-			       const chunk_t *policy_label UNUSED,
+			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {
 	ip_sockaddr saddr = sockaddr_from_address(selector_prefix(*this_client));

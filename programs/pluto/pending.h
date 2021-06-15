@@ -44,7 +44,7 @@ struct pending {
 	so_serial_t replacing;
 	monotime_t pend_time;
 	bool part_of_initiate;
-	chunk_t sec_label;
+	shunk_t sec_label;
 	struct pending *next;
 };
 
@@ -54,7 +54,7 @@ void add_pending(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
-		 chunk_t sec_label,
+		 shunk_t sec_label,
 		 bool part_of_initiate);
 
 void unpend(struct ike_sa *ike, struct connection *cc);

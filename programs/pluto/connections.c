@@ -2449,7 +2449,7 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
-					       chunk_t csec_label,
+					       shunk_t csec_label,
 					       struct logger *logger UNUSED)
 {
 	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);

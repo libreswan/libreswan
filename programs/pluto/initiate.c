@@ -241,7 +241,8 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, c->spd.this.sec_label,
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
+			  HUNK_AS_SHUNK(c->spd.this.sec_label),
 			  background, c->logger);
 	return true;
 }
@@ -251,11 +252,11 @@ void ipsecdoi_initiate(struct connection *c,
 		       unsigned long try,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
-		       chunk_t sec_label,
+		       shunk_t sec_label,
 		       bool background, struct logger *logger)
 {
 	if (sec_label.len != 0)
-		dbg("ipsecdoi_initiate() called with sec_label %.*s", (int)sec_label.len, sec_label.ptr);
+		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
 
 	/*
 	 * If there's already an IKEv1 ISAKMP SA established, use that and
@@ -303,8 +304,8 @@ void ipsecdoi_initiate(struct connection *c,
 	case IKEv2:
 		if (st == NULL) {
 			/* note: new IKE SA pulls sec_label from connection */
-			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception, empty_chunk,
-						background, logger);
+			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
+						empty_shunk, background, logger);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
@@ -489,7 +490,7 @@ struct find_oppo_bundle {
 	ipsec_spi_t failure_shunt;	/* in host order! */
 	struct logger *logger;	/* has whack attached */
 	bool background;
-	chunk_t sec_label;
+	shunk_t sec_label;
 };
 
 static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
@@ -594,8 +595,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	threadtime_t inception = threadtime_start();
 
 	if (b->sec_label.len != 0) {
-		dbg("oppo bundle: received security label string: %.*s",
-			(int)b->sec_label.len, b->sec_label.ptr);
+		dbg("oppo bundle: received security label string: "PRI_SHUNK,
+		    pri_shunk(b->sec_label));
 	}
 
 	/*
@@ -967,7 +968,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 			NULL, 0 /* xfrm-if-id */,
 			ERO_ADD, addwidemsg,
-			&b->sec_label,
+			b->sec_label,
 			b->logger)) {
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	} else {
@@ -1023,7 +1024,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 void initiate_ondemand(const ip_endpoint *local_client,
 		       const ip_endpoint *remote_client,
 		       bool by_acquire, bool background,
-		       const chunk_t sec_label,
+		       const shunk_t sec_label,
 		       struct logger *logger)
 {
 	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/

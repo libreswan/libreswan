@@ -505,7 +505,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 			     lset_t policy,
 			     unsigned long try,
 			     const threadtime_t *inception,
-			     chunk_t sec_label,
+			     shunk_t sec_label,
 			     bool background, struct logger *logger)
 {
 	if (drop_new_exchanges()) {
@@ -530,10 +530,10 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	ike->sa.st_try = try;
 
 	if (sec_label.len != 0) {
-		dbg("%s: received security label from acquire: \"%.*s\"", __FUNCTION__,
-				(int)sec_label.len, sec_label.ptr);
-		dbg("%s: connection security label: \"%.*s\"", __FUNCTION__,
-				(int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
+		dbg("%s: received security label from acquire: "PRI_SHUNK"'", __FUNCTION__,
+		    pri_shunk(sec_label));
+		dbg("%s: connection security label: '"PRI_SHUNK"'", __FUNCTION__,
+		    pri_shunk(c->spd.this.sec_label));
 		/*
 		 * Should we have a within_range() check here? In theory, the ACQUIRE came
 		 * from a policy we gave the kernel, so it _should_ be within our range?

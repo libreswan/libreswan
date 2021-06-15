@@ -846,7 +846,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			initiate_ondemand(&local, &remote,
 					  /*by_acquire*/false,
 					  /*background*/m->whack_async,
-					  empty_chunk, logger);
+					  null_shunk, logger);
 		}
 		dbg_whack(s, "... oppo_initiate");
 	}

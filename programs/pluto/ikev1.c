@@ -2910,7 +2910,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			quick_outI1(st->st_logger->object_whackfd, st, st->st_connection,
-				    st->st_connection->policy, 1, SOS_NOBODY, empty_chunk);
+				    st->st_connection->policy, 1, SOS_NOBODY, null_shunk);
 			break;
 		}
 

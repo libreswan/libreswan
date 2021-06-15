@@ -611,7 +611,7 @@ void quick_outI1(struct fd *whack_sock,
 		 lset_t policy,
 		 unsigned long try,
 		 so_serial_t replacing,
-		 chunk_t sec_label)
+		 shunk_t sec_label)
 {
 	struct state *st = ikev1_duplicate_state(c, isakmp_sa, whack_sock);
 	passert(c != NULL);
@@ -624,8 +624,8 @@ void quick_outI1(struct fd *whack_sock,
 		    (int)c->spd.this.sec_label.len, c->spd.this.sec_label.ptr);
 		if (sec_label.len != 0) {
 			st->st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
-			dbg("pending phase 2 with 'instance' security context \"%.*s\"",
-				(int)sec_label.len, sec_label.ptr);
+			dbg("pending phase 2 with 'instance' security context '"PRI_SHUNK"'",
+			    pri_shunk(sec_label));
 		}
 	}
 

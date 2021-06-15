@@ -42,7 +42,7 @@ extern void main_outI1(struct fd *whack_sock,
 		       lset_t policy,
 		       unsigned long try,
 		       const threadtime_t *inception,
-		       chunk_t sec_label);
+		       shunk_t sec_label);
 
 extern void aggr_outI1(struct fd *whack_sock,
 		       struct connection *c,
@@ -50,7 +50,7 @@ extern void aggr_outI1(struct fd *whack_sock,
 		       lset_t policy,
 		       unsigned long try,
 		       const threadtime_t *inception,
-		       chunk_t sec_label);
+		       shunk_t sec_label);
 
 extern void send_v1_delete(struct state *st);
 

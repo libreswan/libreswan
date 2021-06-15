@@ -498,7 +498,7 @@ struct connection *find_v1_client_connection(struct connection *c,
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *our_client,
 					       const ip_endpoint *peer_client,
-					       chunk_t sec_label,
+					       shunk_t sec_label,
 					       struct logger *logger);
 
 /* instantiating routines */
