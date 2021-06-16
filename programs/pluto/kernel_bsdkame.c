@@ -265,8 +265,8 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
  * We are were to install a set of policy, when there is in fact an SA
  * that is already setup.
  *
- * Well, the code is actually shared with shunt_eroute, since for KAME,
- * we set up the policy in an abstracted sense.
+ * Well, the code is actually shared with shunt_policy(), since for
+ * KAME, we set up the policy in an abstracted sense.
  *
  */
 static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
@@ -438,10 +438,10 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-static bool bsdkame_shunt_eroute(const struct connection *c,
+static bool bsdkame_shunt_policy(enum kernel_policy_op op,
+				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
-				 enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -491,7 +491,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 		break;
 
 	default:
-		DBG_log("shunt_eroute called with spi=%08x", spi);
+		dbg("shunt_policy() called with spi=%08x", spi);
 	}
 
 	if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE) {
@@ -523,9 +523,9 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return bsdkame_shunt_eroute(ue, esr,
+			return bsdkame_shunt_policy(ERO_REPLACE,
+						    ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
-						    ERO_REPLACE,
 						    "restoring eclipsed",
 						    logger);
 		}
@@ -966,7 +966,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.process_queue = bsdkame_dequeue,
 	.process_msg = bsdkame_process_msg,
 	.raw_policy = bsdkame_raw_policy,
-	.shunt_eroute = bsdkame_shunt_eroute,
+	.shunt_policy = bsdkame_shunt_policy,
 	.sag_eroute = bsdkame_sag_eroute,
 	.add_sa = bsdkame_add_sa,
 	.grp_sa = NULL,

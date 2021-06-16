@@ -208,10 +208,10 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   const shunk_t sec_label,
 			   struct logger *logger);
-	bool (*shunt_eroute)(const struct connection *c,
+	bool (*shunt_policy)(enum kernel_policy_op op,
+			     const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
-			     enum kernel_policy_op op,
 			     const char *opname,
 			     struct logger *logger);
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
@@ -403,6 +403,9 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
 			   const char *why, struct logger *logger);
 
+/*
+ * should raw-eroute be dumped?
+ */
 extern bool raw_policy(enum kernel_policy_op op,
 		       const ip_address *this_host,
 		       const ip_selector *this_client,
@@ -422,11 +425,11 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       struct logger *logger,
 		       const char *fmt, ...) PRINTF_LIKE(18);
 
-bool shunt_eroute(const struct connection *c,
+bool shunt_policy(enum kernel_policy_op op,
+		  const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,
-		  enum kernel_policy_op op,
-		  const char *opname,
+		  const char *what,
 		  struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;

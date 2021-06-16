@@ -2225,10 +2225,10 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 		deltatime_cmp(idle_time, >=, idle_max);
 }
 
-static bool netlink_shunt_eroute(const struct connection *c,
+static bool netlink_shunt_policy(enum kernel_policy_op op,
+				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
-				 enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -2245,7 +2245,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 
 	if (DBGP(DBG_BASE)) {
 		selector_buf this_buf, that_buf;
-		DBG_log("netlink_shunt_eroute for proto %d, and source %s dest %s",
+		DBG_log("netlink_shunt_policy for proto %d, and source %s dest %s",
 			sr->this.protocol,
 			str_selector(&sr->this.client, &this_buf),
 			str_selector(&sr->that.client, &that_buf));
@@ -2313,9 +2313,8 @@ static bool netlink_shunt_eroute(const struct connection *c,
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return netlink_shunt_eroute(ue, esr,
+			return netlink_shunt_policy(KP_REPLACE, ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
-						    KP_REPLACE,
 						    "restoring eclipsed",
 						    logger);
 		}
@@ -2850,7 +2849,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.get_spi = netlink_get_spi,
 	.exceptsocket = NULL,
 	.process_raw_ifaces = netlink_process_raw_ifaces,
-	.shunt_eroute = netlink_shunt_eroute,
+	.shunt_policy = netlink_shunt_policy,
 	.sag_eroute = netlink_sag_eroute,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,

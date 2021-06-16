@@ -1018,28 +1018,35 @@ bool trap_connection(struct connection *c)
  * is specified in the policy of connection c.
  */
 
-bool shunt_eroute(const struct connection *c,
+bool shunt_policy(enum kernel_policy_op op,
+		  const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,
-		  enum kernel_policy_op op,
-		  const char *opname,
+		  const char *what,
 		  struct logger *logger)
 {
-	selector_buf thisb, thatb;
-	dbg("kernel: shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
-	    c->name, opname, enum_name(&routing_story, rt_kind),
-	    str_selector(&sr->this.client, &thisb),
-	    sr->this.protocol,
-	    str_selector(&sr->that.client, &thatb));
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "kernel: %s() %s %s",
+		    __func__, enum_name_short(&kernel_policy_op_names, op), what);
 
-	if (kernel_ops->shunt_eroute != NULL) {
-		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname, logger);
+		jam(buf, " ");
+		jam_connection(buf, c);
+
+		jam(buf, " for rt_kind '%s' using",
+		    enum_name(&routing_story, rt_kind));
+
+		jam(buf, " ");
+		jam_selector(buf, &sr->this.client);
+		jam(buf, "-%s->", protocol_by_ipproto(sr->this.protocol)->name);
+		jam_selector(buf, &sr->that.client);
+
+		jam(buf, " sec_label=");
+		jam_sanitized_hunk(buf, sr->this.sec_label);
 	}
 
-	llog(RC_COMMENT, logger,
-		    "no shunt_eroute implemented for %s interface",
-		    kernel_ops->kern_name);
-	return true;
+	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind, what, logger);
+	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
+	return ok;
 }
 
 static bool sag_eroute(const struct state *st,
@@ -1101,7 +1108,9 @@ void unroute_connection(struct connection *c)
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_eroute(c, sr, RT_UNROUTED, KP_DELETE, "delete", c->logger);
+			shunt_policy(KP_DELETE, c, sr, RT_UNROUTED,
+				     "unrouting connection",
+				     c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -2704,10 +2713,10 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_eroute(c, sr,
+			eroute_installed = shunt_policy(KP_REPLACE, c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							KP_REPLACE,
-							"replace", logger);
+							"route_and_eroute() replace",
+							logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, KP_REPLACE,
 						"replace");
@@ -2728,9 +2737,10 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_eroute(c, sr,
+			eroute_installed = shunt_policy(KP_ADD, c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							KP_ADD, "add", logger);
+							"route_and_eroute() add",
+							logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, KP_ADD, "add");
 		}
@@ -2918,12 +2928,12 @@ bool route_and_eroute(struct connection *c,
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					if (!shunt_eroute(ero, esr,
+					if (!shunt_policy(KP_REPLACE, ero, esr,
 							  esr->routing,
-							  KP_REPLACE,
-							  "restore", logger)) {
+							  "route_and_eroute() restore",
+							  logger)) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed restore/replace");
+						     "shunt_policy() in route_and_eroute() failed restore/replace");
 					}
 				} else {
 					/*
@@ -2950,18 +2960,19 @@ bool route_and_eroute(struct connection *c,
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!shunt_eroute(c, sr,
-							  sr->routing, KP_DELETE,
-							  "delete", logger)) {
+					if (!shunt_policy(KP_DELETE, c, sr,
+							  sr->routing,
+							  "route_and_eroute() delete",
+							  logger)) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed in !st case");
+						     "shunt_policy() in route_and_eroute() failed in !st case");
 					}
 				} else {
 					if (!sag_eroute(st, sr,
 							KP_DELETE,
 							"delete")) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed in st case for delete");
+							    "sag_eroute() in route_and_eroute() failed in st case for delete");
 					}
 				}
 			}
@@ -3173,11 +3184,12 @@ void delete_ipsec_sa(struct state *st)
 						 */
 						unroute_connection(c);
 					} else {
-						if (!shunt_eroute(c, sr,
-								  sr->routing, KP_REPLACE,
-								  "replace with shunt", st->st_logger)) {
+						if (!shunt_policy(KP_REPLACE, c, sr,
+								  sr->routing,
+								  "delete_ipsec_sa() replace with shunt",
+								  st->st_logger)) {
 							log_state(RC_LOG, st,
-								  "shunt_eroute() failed replace with shunt in delete_ipsec_sa()");
+								  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
 						}
 					}
 				}
@@ -3517,9 +3529,10 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, false);
 				if (c != NULL) {
-					if (!shunt_eroute(c, &c->spd,
-							  RT_ROUTED_PROSPECTIVE, KP_ADD,
-							  "add", logger)) {
+					if (!shunt_policy(KP_ADD, c, &c->spd,
+							  RT_ROUTED_PROSPECTIVE,
+							  "expire_bare_shunts() add",
+							  logger)) {
 						llog(RC_LOG, logger,
 							    "trap shunt install failed ");
 					}
