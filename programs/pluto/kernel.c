@@ -2223,9 +2223,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
 
-		dbg("kernel: %s() calling raw_policy backwards (i.e., inbound)", __func__);
-		/* MCR - should be passed a spd_eroute structure here */
-		/* note: this and that are intentionally reversed */
+		/*
+		 * MCR - should be passed a spd_eroute structure here.
+		 *
+		 * Note: this and that are intentionally reversed
+		 * because the policy is inbound.
+		 *
+		 * XXX: yes, that is redundan - KP_ADD_INBOUND is
+		 * already indicating that the parameters are going to
+		 * need reversing ...
+		 */
 		if (!raw_policy(KP_ADD_INBOUND,
 				&c->spd.that.host_addr,		/* this_host */
 				&c->spd.that.client,	/* this_client */
