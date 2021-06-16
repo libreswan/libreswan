@@ -158,7 +158,6 @@ struct msg_digest {
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
 	bool fake_clone;			/* is this a fake (clone) message */
-	bool fake_dne;				/* created as part of fake_md() */
 
 	/*
 	 * Note that .pd[] is indexed using either enum v1_pd or enum

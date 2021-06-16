@@ -1031,18 +1031,8 @@ static stf_status aggr_outI1_continue(struct state *st,
 	stf_status e = aggr_outI1_continue_tail(st, unused_md,
 						local_secret, nonce); /* may return FAIL */
 
-	/*
-	 * XXX: The right fix is to stop
-	 * complete_v1_state_transition() assuming that there is an
-	 * MD.  This hacks around it.
-	 */
-	struct msg_digest *fake_md = alloc_md(NULL/*iface-port*/, &unset_endpoint, HERE);
-	fake_md->v1_st = st;
-	fake_md->smc = NULL;	/* ??? */
-	fake_md->fake_dne = true;
-
-	complete_v1_state_transition(st, fake_md, e);
-	md_delref(&fake_md, HERE);
+	pexpect(e == STF_IGNORE);	/* ??? what would be better? */
+	complete_v1_state_transition(st, NULL, STF_IGNORE);
 
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }

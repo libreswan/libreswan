@@ -549,9 +549,6 @@ enum message_role v2_msg_role(const struct msg_digest *md)
 	if (!pexpect(hdr_ike_version(&md->hdr) == IKEv2)) {
 		return NO_MESSAGE;
 	}
-	if (md->fake_dne) {
-		return NO_MESSAGE;
-	}
 	/* determine the role */
 	enum message_role role =
 		(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;

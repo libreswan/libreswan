@@ -1761,7 +1761,7 @@ void process_v1_packet(struct msg_digest *md)
 									       &frag->md->sender,
 									       HERE);
 					uint8_t *buffer = alloc_bytes(size,
-								       "IKE fragments buffer");
+								      "IKE fragments buffer");
 					size_t offset = 0;
 
 					/* Reassemble fragments in buffer */
@@ -2477,8 +2477,6 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  */
 void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_status result)
 {
-	passert(md != NULL);
-
 	/* handle oddball/meta results now */
 
 	/*
@@ -2503,11 +2501,14 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * XXX: some initiator code creates a fake MD (there
 		 * isn't a real one); save that as well.
 		 */
+		passert(md != NULL);
 		suspend_any_md(md->v1_st, md);
 		return;
 	case STF_IGNORE:
+		/* note: md might be NULL */
 		return;
 	default:
+		passert(md != NULL);
 		break;
 	}
 
