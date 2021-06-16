@@ -455,6 +455,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				}
 				set_debugging(new_debugging);
 				for (unsigned i = 0; i < m->nr_impairments; i++) {
+					/* ??? what should we do with return value? */
 					process_impair(&m->impairments[i],
 						       whack_impair_action,
 						       m->whack_async/*background*/,

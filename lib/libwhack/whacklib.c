@@ -198,14 +198,14 @@ struct pickler {
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what);
 };
 
-struct pickler pickle_packer = {
+const struct pickler pickle_packer = {
 	.string = pack_string,
 	.shunk = pack_shunk,
 	.chunk = pack_chunk,
 	.raw = pack_raw,
 };
 
-struct pickler pickle_unpacker = {
+const struct pickler pickle_unpacker = {
 	.string = unpack_string,
 	.shunk = unpack_shunk,
 	.chunk = unpack_chunk,
@@ -218,7 +218,7 @@ struct pickler pickle_unpacker = {
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS)
 
 static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
-			     struct pickler *pickle)
+			     const struct pickler *pickle)
 {
 	return (PICKLE_STRING(&end->leftright) &&
 		PICKLE_STRING(&end->id) &&
@@ -235,7 +235,7 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 		true);
 }
 
-static bool pickle_whack_message(struct whackpacker *wp, struct pickler *pickle)
+static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *pickle)
 {
 	return (PICKLE_STRING(&wp->msg->name) && /* first */
 		pickle_whack_end(wp, &wp->msg->left, pickle) &&
