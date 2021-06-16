@@ -2321,31 +2321,36 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	}
 
 	/*
-	 * XXX: the two calls below to netlink_raw_policy() (not
-	 * raw_policy()) seems to be the only place where SA_PROTO
-	 * and ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
-	 * SA_PROTO==&ip_protocol_esp and ESATYPE==ET_INT!?!  Looking
-	 * in the function there's a weird test involving both
-	 * SA_PROTO and ESATYPE.
+	 * XXX: the two calls below to raw_policy() seems to be the
+	 * only place where SA_PROTO and ESATYPE disagree - when
+	 * ENCAPSULATION_MODE_TRANSPORT SA_PROTO==&ip_protocol_esp and
+	 * ESATYPE==ET_INT!?!  Looking in the function there's a weird
+	 * test involving both SA_PROTO and ESATYPE.
+	 *
+	 * XXX: suspect sa_proto should be dropped (when is SPI not
+	 * internal) and instead esatype (encapsulated sa type) should
+	 * receive &ip_protocol ...
+	 *
+	 * Use raw_policy() as it gives a better log result.
 	 */
+
 	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 		&ip_protocol_esp : &ip_protocol_internal;
 
-	dbg("eroute_connection %s", opname);
-	if (!netlink_raw_policy(op,
-				&sr->this.host_addr, &sr->this.client,
-				&sr->that.host_addr, &sr->that.client,
-				htonl(spi), htonl(spi),
-				sa_proto,
-				sr->this.protocol,
-				ET_INT,
-				null_proto_info,
-				deltatime(0),
-				calculate_sa_prio(c, FALSE),
-				&c->sa_marks,
-				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
-				HUNK_AS_SHUNK(sr->this.sec_label),
-				logger))
+	if (!raw_policy(op,
+			&sr->this.host_addr, &sr->this.client,
+			&sr->that.host_addr, &sr->that.client,
+			htonl(spi), htonl(spi),
+			sa_proto,
+			sr->this.protocol,
+			ET_INT,
+			null_proto_info,
+			deltatime(0),
+			calculate_sa_prio(c, FALSE),
+			&c->sa_marks,
+			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
+			HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			"%s() adding outbound shunt for %s", __func__, opname))
 		return false;
 
 	switch (op) {
@@ -2356,25 +2361,26 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 		op = KP_DEL_INBOUND;
 		break;
 	default:
-		return TRUE;
+		return true;
 	}
 
-	/* note the crossed streams since inbound */
-	dbg("eroute_connection %s inbound", opname);
-	return netlink_raw_policy(op,
-				  &sr->that.host_addr, &sr->that.client,
-				  &sr->this.host_addr, &sr->this.client,
-				  htonl(spi), htonl(spi),
-				  sa_proto,
-				  sr->this.protocol,
-				  ET_INT,
-				  null_proto_info,
-				  deltatime(0),
-				  calculate_sa_prio(c, FALSE),
-				  &c->sa_marks,
-				  0, /* xfrm_if_id needed for shunt? */
-				  HUNK_AS_SHUNK(sr->this.sec_label),
-				  logger);
+	/*
+	 * note the crossed streams since inbound
+	 */
+	return raw_policy(op,
+			  &sr->that.host_addr, &sr->that.client,
+			  &sr->this.host_addr, &sr->this.client,
+			  htonl(spi), htonl(spi),
+			  sa_proto,
+			  sr->this.protocol,
+			  ET_INT,
+			  null_proto_info,
+			  deltatime(0),
+			  calculate_sa_prio(c, FALSE),
+			  &c->sa_marks,
+			  0, /* xfrm_if_id needed for shunt? */
+			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			  "%s() adding inbound shunt for %s", __func__, opname);
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
