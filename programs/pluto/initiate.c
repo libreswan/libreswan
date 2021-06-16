@@ -29,7 +29,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel.h"			/* for raw_eroute() */
+#include "kernel.h"			/* for raw_policy() */
 #include "log.h"
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
@@ -542,7 +542,8 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 								 b->transport_proto);
 		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
 								 b->transport_proto);
-		if (!raw_eroute(&null_host, &src, &null_host, &dst,
+		if (!raw_policy(KP_REPLACE,
+				&null_host, &src, &null_host, &dst,
 				/*from*/htonl(b->negotiation_shunt),
 				/*to*/htonl(b->failure_shunt),
 				&ip_protocol_internal,
@@ -552,8 +553,8 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
-				ERO_REPLACE, ughmsg,
-				b->sec_label, b->logger)) {
+				b->sec_label, b->logger,
+				"%s() %s", __func__, ughmsg)) {
 			llog(RC_LOG_SERIOUS, b->logger,
 			     "failed to replace negotiationshunt with bare failureshunt");
 			return;
@@ -938,10 +939,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
-	 * violation into raw_eroute()?
+	 * violation into raw_policy()?
 	 */
 
-	if (!raw_eroute(&b->local.host_addr, &local_shunt,
+	if (!raw_policy(KP_ADD,
+			&b->local.host_addr, &local_shunt,
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
@@ -950,9 +952,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 			NULL, 0 /* xfrm-if-id */,
-			ERO_ADD, addwidemsg,
-			b->sec_label,
-			b->logger)) {
+			b->sec_label, b->logger,
+			"%s() %s", __func__, addwidemsg)) {
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");

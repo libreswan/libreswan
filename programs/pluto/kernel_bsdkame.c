@@ -269,7 +269,8 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
  * we set up the policy in an abstracted sense.
  *
  */
-static bool bsdkame_raw_eroute(const ip_address *this_host,
+static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
+			       const ip_address *this_host,
 			       const ip_selector *this_client,
 			       const ip_address *that_host,
 			       const ip_selector *that_client,
@@ -283,8 +284,6 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       const uint32_t xfrm_if_id UNUSED,
-			       enum pluto_sadb_operations sadb_op,
-			       const char *text_said UNUSED,
 			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {
@@ -310,7 +309,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			dbg("netlink_raw_eroute: SPI_PASS");
+			dbg("netlink_raw_policy: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
@@ -322,7 +321,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("netlink_raw_eroute: SPI_HOLD implemented as no-op");
+			dbg("netlink_raw_policy: SPI_HOLD implemented as no-op");
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
@@ -442,7 +441,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 static bool bsdkame_shunt_eroute(const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
-				 enum pluto_sadb_operations op,
+				 enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -706,7 +705,7 @@ static bool bsdkame_shunt_eroute(const struct connection *c,
  */
 static bool bsdkame_sag_eroute(const struct state *st,
 			       const struct spd_route *sr,
-			       enum pluto_sadb_operations op UNUSED,
+			       enum kernel_policy_op op UNUSED,
 			       const char *opname UNUSED)
 {
 	const struct ip_protocol *proto;
@@ -766,7 +765,8 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 
-	return bsdkame_raw_eroute(&sr->this.host_addr,
+	return bsdkame_raw_policy(op,
+				  &sr->this.host_addr,
 				  &sr->this.client,
 				  &sr->that.host_addr,
 				  &sr->that.client,
@@ -780,9 +780,7 @@ static bool bsdkame_sag_eroute(const struct state *st,
 				  0,		/* sa_priority */
 				  NULL,		/* sa_marks */
 				  0,		/* xfrm_if_id */
-				  op,
-				  NULL,         /* text_said unused */
-				  NULL,		/*unused*/
+				  null_shunk,		/*unused*/
 				  st->st_logger);
 }
 
@@ -967,7 +965,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.pfkey_register = bsdkame_pfkey_register,
 	.process_queue = bsdkame_dequeue,
 	.process_msg = bsdkame_process_msg,
-	.raw_eroute = bsdkame_raw_eroute,
+	.raw_policy = bsdkame_raw_policy,
 	.shunt_eroute = bsdkame_shunt_eroute,
 	.sag_eroute = bsdkame_sag_eroute,
 	.add_sa = bsdkame_add_sa,

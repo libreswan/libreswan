@@ -2509,7 +2509,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 							       &c->spd.that.host_addr,
 							       c->spd.this.protocol,
 							       SPI_PASS /* else its not bare */,
-							       /*skip_xfrm_raw_eroute_delete?*/true,
+							       /*skip_xfrm_policy_delete?*/true,
 							       "installed IPsec SA replaced old bare shunt",
 							       st->st_logger)) {
 						log_state(RC_LOG_SERIOUS, &ike->sa,

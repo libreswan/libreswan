@@ -38,7 +38,7 @@ struct show;
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 
 /*
- * Declare eroute things early enough for uses.
+ * Declare policy things early enough for uses.
  * Some of these things, while they seem like they are KLIPS-only, the
  * definitions are in fact needed by all kernel interfaces at this time.
  *
@@ -48,18 +48,16 @@ extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
  * limited to appropriate source and destination addresses.
  */
 
-#define IPSEC_PROTO_ANY 255
-
-enum pluto_sadb_operations {
-	ERO_ADD=1,
-	ERO_REPLACE=2,
-	ERO_DELETE=3,
-	ERO_ADD_INBOUND=4,
-	ERO_REPLACE_INBOUND=5,
-	ERO_DEL_INBOUND=6
+enum kernel_policy_op {
+	KP_ADD=1,
+	KP_REPLACE=2,
+	KP_DELETE=3,
+	KP_ADD_INBOUND=4,
+	KP_REPLACE_INBOUND=5,
+	KP_DEL_INBOUND=6
 };
 
-extern const struct enum_names pluto_sadb_operations_names;
+extern const struct enum_names kernel_policy_op_names;
 
 #define IPSEC_PROTO_ANY         255
 
@@ -193,7 +191,8 @@ struct kernel_ops {
 	void (*pfkey_register)(void);
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
-	bool (*raw_eroute)(const ip_address *this_host,
+	bool (*raw_policy)(enum kernel_policy_op op,
+			   const ip_address *this_host,
 			   const ip_selector *this_client,
 			   const ip_address *that_host,
 			   const ip_selector *that_client,
@@ -207,18 +206,16 @@ struct kernel_ops {
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
 			   const uint32_t xfrm_if_id,
-			   enum pluto_sadb_operations op,
-			   const char *text_said,
 			   const shunk_t sec_label,
 			   struct logger *logger);
 	bool (*shunt_eroute)(const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
-			     enum pluto_sadb_operations op,
+			     enum kernel_policy_op op,
 			     const char *opname,
 			     struct logger *logger);
 	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
-			   enum pluto_sadb_operations op, const char *opname);
+			   enum kernel_policy_op op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
@@ -337,7 +334,7 @@ extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      int transport_proto, ipsec_spi_t shunt_spi,
-			      bool skip_xfrm_raw_eroute_delete,
+			      bool skip_xfrm_policy_delete,
 			      const char *why, struct logger *logger);
 
 extern bool assign_holdpass(const struct connection *c,
@@ -406,8 +403,8 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
 			   const char *why, struct logger *logger);
 
-// TEMPORARY
-extern bool raw_eroute(const ip_address *this_host,
+extern bool raw_policy(enum kernel_policy_op op,
+		       const ip_address *this_host,
 		       const ip_selector *this_client,
 		       const ip_address *that_host,
 		       const ip_selector *that_client,
@@ -421,15 +418,14 @@ extern bool raw_eroute(const ip_address *this_host,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
-		       enum pluto_sadb_operations op,
-		       const char *opname,
 		       const shunk_t sec_label,
-		       struct logger *logger);
+		       struct logger *logger,
+		       const char *fmt, ...) PRINTF_LIKE(18);
 
 bool shunt_eroute(const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,
-		  enum pluto_sadb_operations op,
+		  enum kernel_policy_op op,
 		  const char *opname,
 		  struct logger *logger);
 

@@ -67,7 +67,7 @@
 #include "ike_alg_dh.h"
 #include "pluto_stats.h"
 #include "pending.h"
-#include "kernel.h"			/* for raw_eroute() hack */
+#include "kernel.h"			/* for raw_policy() hack */
 
 static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 {
@@ -833,7 +833,7 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 	    impair.childless_v2_sec_label) {
 		/*
 		 * PAUL: should this use shunt_eroute() instead of API
-		 * violation into raw_eroute()?
+		 * violation into raw_policy()?
 		 */
 		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap shunt for security label '"PRI_SHUNK"'",
 			pri_shunk(c->spd.this.sec_label));
@@ -973,7 +973,7 @@ enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
 		/*
 		 * PAUL: should this use shunt_eroute() instead of API
-		 * violation into raw_eroute()?
+		 * violation into raw_policy()?
 		 */
 		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap policy for security label '"PRI_SHUNK"'",
 			pri_shunk(c->spd.this.sec_label));

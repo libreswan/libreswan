@@ -488,14 +488,14 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 		return TRUE;
 
 	llog(RC_LOG_SERIOUS, logger,
-		    "ERROR: netlink %s response for flow %s included errno %d: %s",
-		    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		    text_said, error, strerror(error));
+	     "ERROR: netlink %s response for flow %s included errno %d: %s",
+	     sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+	     text_said, error, strerror(error));
 	return FALSE;
 }
 
 /*
- * netlink_raw_eroute
+ * netlink_raw_policy
  *
  * @param this_host ip_address
  * @param this_client ip_subnet
@@ -512,7 +512,8 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param text_said char
  * @return boolean True if successful
  */
-static bool netlink_raw_eroute(const ip_address *this_host,
+static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
+			       const ip_address *this_host,
 			       const ip_selector *this_client,
 			       const ip_address *that_host,
 			       const ip_selector *that_client,
@@ -526,8 +527,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			       uint32_t sa_priority,
 			       const struct sa_marks *sa_marks,
 			       const uint32_t xfrm_if_id,
-			       enum pluto_sadb_operations sadb_op,
-			       const char *text_said,
 			       const shunk_t sec_label,
 			       struct logger *logger)
 {
@@ -542,21 +541,23 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	int policy = IPSEC_POLICY_IPSEC;
 
+	const char *policy_name;
 	switch (esatype) {
 	case ET_UNSPEC:
 	case ET_AH:
 	case ET_ESP:
 	case ET_IPCOMP:
 	case ET_IPIP:
-
+		policy_name = protocol_by_ipproto(esatype)->name;
 		break;
 
 	case ET_INT:
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			dbg("netlink_raw_eroute: SPI_PASS");
+			dbg("netlink_raw_policy: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
+			policy_name = "%pass";
 			break;
 		case SPI_HOLD:
 			/*
@@ -567,18 +568,29 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("netlink_raw_eroute: SPI_HOLD implemented as no-op");
+			dbg("netlink_raw_policy: SPI_HOLD implemented as no-op");
+			policy_name = "%hold";
 			return TRUE; /* yes really */
 		case SPI_DROP:
-		case SPI_REJECT:
-		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%drop";
+			break;
+		case SPI_REJECT:
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
+			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%reject";
+			break;
+		case 0:
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
+			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%discard";
 			break;
 		case SPI_TRAP:
-			if (sadb_op == ERO_ADD_INBOUND ||
-				sadb_op == ERO_DEL_INBOUND)
+			policy_name = "%trap";
+			if (sadb_op == KP_ADD_INBOUND ||
+				sadb_op == KP_DEL_INBOUND)
 				return TRUE;
-
 			break;
 		case SPI_TRAPSUBNET: /* unused in our code */
 		default:
@@ -590,7 +602,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		bad_case(esatype);
 	}
 
-	const int dir = (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
+	const int dir = (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
 
 	/*
@@ -663,7 +675,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	req.u.p.sel.proto = transport_proto;
 	req.u.p.sel.family = family;
 
-	if (sadb_op == ERO_DELETE || sadb_op == ERO_DEL_INBOUND) {
+	if (sadb_op == KP_DELETE || sadb_op == KP_DEL_INBOUND) {
 		req.u.id.dir = dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -694,13 +706,13 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * tunnel A = C configured.
 		 */
 		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		if (sadb_op == ERO_REPLACE)
+		if (sadb_op == KP_REPLACE)
 			req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
 	if (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) {
-		if (sadb_op != ERO_DELETE) {
+		if (sadb_op != KP_DELETE) {
 			struct rtattr *attr;
 
 			struct xfrm_user_tmpl tmpl[4];
@@ -787,10 +799,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	bool enoent_ok = sadb_op == ERO_DEL_INBOUND ||
-		(sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
+	bool enoent_ok = sadb_op == KP_DEL_INBOUND ||
+		(sadb_op == KP_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
-	bool ok = netlink_policy(&req.n, enoent_ok, text_said, logger);
+	bool ok = netlink_policy(&req.n, enoent_ok, policy_name, logger);
 
 	/* ??? deal with any forwarding policy */
 	switch (dir) {
@@ -806,7 +818,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		} else {
 			req.u.p.dir = XFRM_POLICY_FWD;
 		}
-		ok &= netlink_policy(&req.n, enoent_ok, text_said, logger);
+		ok &= netlink_policy(&req.n, enoent_ok, policy_name, logger);
 		break;
 	}
 	return ok;
@@ -1807,7 +1819,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 
 	if (delete_bare_shunt(&src, &dst,
 			      transport_proto, SPI_HOLD /* why spi to use? */,
-			       /*skip_xfrm_raw_eroute_delete?*/false,
+			       /*skip_xfrm_policy_delete?*/false,
 			      "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
@@ -2216,7 +2228,7 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 static bool netlink_shunt_eroute(const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
-				 enum pluto_sadb_operations op,
+				 enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -2245,23 +2257,23 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		 * opname
 		 */
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE:
 			/* replace with nothing == delete */
-			op = ERO_DELETE;
+			op = KP_DELETE;
 			opname = "delete";
 			break;
-		case ERO_ADD:
+		case KP_ADD:
 			/* add nothing == do nothing */
 			return TRUE;
 
-		case ERO_DELETE:
+		case KP_DELETE:
 			/* delete remains delete */
 			break;
 
-		case ERO_ADD_INBOUND:
+		case KP_ADD_INBOUND:
 			break;
 
-		case ERO_DEL_INBOUND:
+		case KP_DEL_INBOUND:
 			break;
 
 		default:
@@ -2276,13 +2288,13 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		 */
 		passert(eclipsable(sr));
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE:
 			/* really an add */
-			op = ERO_ADD;
+			op = KP_ADD;
 			opname = "replace eclipsed";
 			eclipse_count--;
 			break;
-		case ERO_DELETE:
+		case KP_DELETE:
 			/*
 			 * delete unnecessary:
 			 * we don't actually have an eroute
@@ -2290,11 +2302,11 @@ static bool netlink_shunt_eroute(const struct connection *c,
 			eclipse_count--;
 			return TRUE;
 
-		case ERO_ADD:
+		case KP_ADD:
 		default:
 			bad_case(op);
 		}
-	} else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr)) {
+	} else if (eclipse_count > 0 && op == KP_DELETE && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
 		struct connection *ue = eclipsed(c, &esr);
@@ -2303,28 +2315,26 @@ static bool netlink_shunt_eroute(const struct connection *c,
 			esr->routing = RT_ROUTED_PROSPECTIVE;
 			return netlink_shunt_eroute(ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
-						    ERO_REPLACE,
+						    KP_REPLACE,
 						    "restoring eclipsed",
 						    logger);
 		}
 	}
 
-	char buf2[256];
-
-	snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
-
 	/*
-	 * XXX: the two calls below to netlink_raw_eroute() (not
-	 * raw_eroute()) seems to be the only place where SA_PROTO and
-	 * ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
-	 * SA_PROTO==&ip_protocol_esp and ESATYPE==ET_INT!?!  Looking in the
-	 * function there's a weird test involving both SA_PROTO and
-	 * ESATYPE.
+	 * XXX: the two calls below to netlink_raw_policy() (not
+	 * raw_policy()) seems to be the only place where SA_PROTO
+	 * and ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
+	 * SA_PROTO==&ip_protocol_esp and ESATYPE==ET_INT!?!  Looking
+	 * in the function there's a weird test involving both
+	 * SA_PROTO and ESATYPE.
 	 */
 	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 		&ip_protocol_esp : &ip_protocol_internal;
 
-	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
+	dbg("eroute_connection %s", opname);
+	if (!netlink_raw_policy(op,
+				&sr->this.host_addr, &sr->this.client,
 				&sr->that.host_addr, &sr->that.client,
 				htonl(spi), htonl(spi),
 				sa_proto,
@@ -2335,25 +2345,25 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
 				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
-				op, buf2,
 				HUNK_AS_SHUNK(sr->this.sec_label),
 				logger))
 		return false;
 
 	switch (op) {
-	case ERO_ADD:
-		op = ERO_ADD_INBOUND;
+	case KP_ADD:
+		op = KP_ADD_INBOUND;
 		break;
-	case ERO_DELETE:
-		op = ERO_DEL_INBOUND;
+	case KP_DELETE:
+		op = KP_DEL_INBOUND;
 		break;
 	default:
 		return TRUE;
 	}
 
-	snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound", opname);
-
-	return netlink_raw_eroute(&sr->that.host_addr, &sr->that.client,
+	/* note the crossed streams since inbound */
+	dbg("eroute_connection %s inbound", opname);
+	return netlink_raw_policy(op,
+				  &sr->that.host_addr, &sr->that.client,
 				  &sr->this.host_addr, &sr->this.client,
 				  htonl(spi), htonl(spi),
 				  sa_proto,
@@ -2364,7 +2374,6 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  calculate_sa_prio(c, FALSE),
 				  &c->sa_marks,
 				  0, /* xfrm_if_id needed for shunt? */
-				  op, buf2,
 				  HUNK_AS_SHUNK(sr->this.sec_label),
 				  logger);
 }
@@ -2832,7 +2841,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.shutdown = NULL,
 #endif
 	.process_msg = netlink_process_msg,
-	.raw_eroute = netlink_raw_eroute,
+	.raw_policy = netlink_raw_policy,
 	.add_sa = netlink_add_sa,
 	.del_sa = netlink_del_sa,
 	.get_sa = netlink_get_sa,

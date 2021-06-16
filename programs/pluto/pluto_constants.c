@@ -417,24 +417,24 @@ enum_enum_names sa_type_names = {
 	ARRAY_REF(sa_type_name),
 };
 
-/* enum pluto_sadb_operations_names */
+/* enum kernel_policy_op_names */
 
-static const char *pluto_sadb_operations_name[] = {
-	[0] = "ERO_INVALID",
+static const char *kernel_policy_op_name[] = {
+	[0] = "KP_INVALID",
 #define S(E) [E] = #E
-	S(ERO_ADD),
-	S(ERO_REPLACE),
-	S(ERO_DELETE),
-	S(ERO_ADD_INBOUND),
-	S(ERO_REPLACE_INBOUND),
-	S(ERO_DEL_INBOUND),
+	S(KP_ADD),
+	S(KP_REPLACE),
+	S(KP_DELETE),
+	S(KP_ADD_INBOUND),
+	S(KP_REPLACE_INBOUND),
+	S(KP_DEL_INBOUND),
 #undef S
 };
 
-enum_names pluto_sadb_operations_names = {
-	0, ERO_DEL_INBOUND,
-	ARRAY_REF(pluto_sadb_operations_name),
-	.en_prefix = "ERO_",
+enum_names kernel_policy_op_names = {
+	0, KP_DEL_INBOUND,
+	ARRAY_REF(kernel_policy_op_name),
+	.en_prefix = "KP_",
 };
 
 /* */
@@ -502,7 +502,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&v2_sa_type_names,
 	&perspective_names,
 	&sa_policy_bit_names,
-	&pluto_sadb_operations_names,
+	&kernel_policy_op_names,
 };
 
 void init_pluto_constants(void) {
