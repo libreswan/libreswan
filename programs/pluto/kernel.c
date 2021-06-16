@@ -1697,7 +1697,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* Build an inbound or outbound SA */
 
 	struct connection *c = st->st_connection;
-	ipsec_spi_t inner_spi = 0;
 	const struct ip_protocol *proto = NULL;
 	enum eroute_type esatype = ET_UNSPEC;
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
@@ -1763,14 +1762,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-
-		.sec_label =
-			st->st_seen_sec_label.len != 0 ? st->st_seen_sec_label :
-			st->st_acquired_sec_label.len != 0 ? st->st_acquired_sec_label :
-			c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
+		.sec_label = (st->st_seen_sec_label.len > 0 ? st->st_seen_sec_label :
+			      st->st_acquired_sec_label.len > 0 ? st->st_acquired_sec_label :
+			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-	inner_spi = SPI_PASS;
+	ipsec_spi_t inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
 		/* If we are tunnelling, set up IP in IP pseudo SA */
 		proto = &ip_protocol_ipip;
@@ -2164,9 +2161,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is installing inbound eroute? inbound=%d owner=#%lu mode=%d",
+	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu mode=%d",
 	    __func__, inbound, c->spd.eroute_owner, mode);
-	if (inbound && c->spd.eroute_owner == SOS_NOBODY) {
+	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
+	    (c->ike_version != IKEv2 || c->spd.this.sec_label.len == 0)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
 		struct pfkey_proto_info proto_info[4];
 		int i = 0;
