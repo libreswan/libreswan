@@ -1030,32 +1030,34 @@ static struct best_score score_ends_iprange(enum fit fit,
 }
 
 static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
-						    const struct traffic_selectors tsi,
-						    const struct traffic_selectors tsr,
+						    const struct traffic_selectors *tsip,
+						    const struct traffic_selectors *tsrp,
 						    enum fit fit, bool definitely_shared)
 {
-	passert(tsi.nr >= 1);
-	int tsi_port = narrow_port(&t->spd.that, &tsi,
+	passert(tsip->nr >= 1);
+	int tsi_port = narrow_port(&t->spd.that, tsip,
 				   fit, "TSi", 0);
 	if (tsi_port < 0) {
 		dbg("    skipping; TSi port too wide");
 		return NULL;
 	}
-	int tsi_protocol = narrow_protocol(&t->spd.that, &tsi,
+
+	int tsi_protocol = narrow_protocol(&t->spd.that, tsip,
 					   fit, "TSi", 0);
 	if (tsi_protocol < 0) {
 		dbg("    skipping; TSi protocol too wide");
 		return NULL;
 	}
 
-	passert(tsr.nr >= 1);
-	int tsr_port = narrow_port(&t->spd.this, &tsr,
+	passert(tsrp->nr >= 1);
+	int tsr_port = narrow_port(&t->spd.this, tsrp,
 				   fit, "TRi", 0);
 	if (tsr_port < 0) {
 		dbg("    skipping; TSr port too wide");
 		return NULL;
 	}
-	int tsr_protocol = narrow_protocol(&t->spd.this, &tsr,
+
+	int tsr_protocol = narrow_protocol(&t->spd.this, tsrp,
 					   fit, "TSr", 0);
 	if (tsr_protocol < 0) {
 		dbg("    skipping; TSr protocol too wide");
@@ -1403,7 +1405,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			passert(best_connection == c); /* aka st->st_connection, no leak */
 			pexpect(best_connection == child->sa.st_connection);
-			struct connection *s = scribble_ts_on_connection(t, child, tsi, tsr, fit,
+			struct connection *s = scribble_ts_on_connection(t, child, &tsi, &tsr, fit,
 									 /*definitely_shared?*/false);
 			if (s == NULL) {
 				continue;
@@ -1419,7 +1421,7 @@ bool v2_process_ts_request(struct child_sa *child,
 		   c->spd.this.sec_label.len > 0) {
 		dbg("  instantiating template security label connection");
 		/* sure looks like a sec-label template */
-		struct connection *s = scribble_ts_on_connection(c, child, tsi, tsr,
+		struct connection *s = scribble_ts_on_connection(c, child, &tsi, &tsr,
 								 END_WIDER_THAN_TS,
 								 /*definitely_shared?*/true);
 		if (!pexpect(s != NULL)) {
