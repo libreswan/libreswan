@@ -1353,7 +1353,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto, SPI_HOLD,
 					       /*skip_xfrm_policy_delete?*/false,
-					       "removing clashing narrow hold",
+					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
 				llog_bare_shunt(RC_LOG, logger, p, "failed to delete");
@@ -1575,10 +1575,10 @@ bool assign_holdpass(const struct connection *c,
 
 			if (erouted(ro)) {
 				op = KP_REPLACE;
-				reason = "replace %trap with broad %pass or %hold";
+				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
 			} else {
 				op = KP_ADD;
-				reason = "add broad %pass or %hold";
+				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
 			if (eroute_connection(sr,
@@ -1605,7 +1605,7 @@ bool assign_holdpass(const struct connection *c,
 				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 				       /*skip_xfrm_policy_delete?*/false,
 				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-					"delete narrow %hold"),
+					"assign_holdpass() delete narrow %hold"),
 				       c->logger)) {
 			dbg("kernel: assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
@@ -2722,11 +2722,11 @@ bool route_and_eroute(struct connection *c,
 		if (st == NULL) {
 			eroute_installed = shunt_policy(KP_REPLACE, c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							"route_and_eroute() replace",
+							"route_and_eroute() replace shunt",
 							logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, KP_REPLACE,
-						"replace");
+						      "route_and_eroute() replace sag");
 		}
 
 		/* remember to free bspp if we make it out of here alive */
@@ -3551,7 +3551,7 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
 					       /*skip_xfrm_policy_delete?*/(bsp->from_cn != NULL),
-					       "expire_bare_shunt", logger)) {
+					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
 			}
