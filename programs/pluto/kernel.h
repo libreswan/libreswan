@@ -350,7 +350,7 @@ extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			    int transport_proto, ipsec_spi_t failure_shunt,
 			    struct logger *logger);
 
-extern ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective);
+extern enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective);
 
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
@@ -364,11 +364,6 @@ extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
 extern void delete_ipsec_sa(struct state *st);
-extern bool route_and_eroute(struct connection *c,
-			     struct spd_route *sr,
-			     struct state *st,
-			     /* st or c */
-			     struct logger *logger);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);

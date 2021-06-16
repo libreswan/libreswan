@@ -83,6 +83,12 @@
 #include "ip_encap.h"
 #include "show.h"
 
+static bool route_and_eroute(struct connection *c,
+			     struct spd_route *sr,
+			     struct state *st,
+			     /* st or c */
+			     struct logger *logger);
+
 bool can_do_IPcomp = true;  /* can system actually perform IPCOMP? */
 
 static global_timer_cb kernel_scan_shunts;
@@ -1011,6 +1017,7 @@ bool trap_connection(struct connection *c)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
+
 bool shunt_eroute(const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,
@@ -1597,29 +1604,27 @@ bool assign_holdpass(const struct connection *c,
 }
 
 /* compute a (host-order!) SPI to implement the policy in connection c */
-ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
+enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 {
-	/* note: these are in host order :-( */
-	static const ipsec_spi_t shunt_spi[] =
-	{
-		SPI_TRAP,       /* --initiateontraffic */
-		SPI_PASS,       /* --pass */
-		SPI_DROP,       /* --drop */
-		SPI_REJECT,     /* --reject */
-	};
-
-	static const ipsec_spi_t fail_spi[] =
-	{
-		0,              /* --none*/
-		SPI_PASS,       /* --failpass */
-		SPI_DROP,       /* --faildrop */
-		SPI_REJECT,     /* --failreject */
-	};
-
-	return prospective ?
-		shunt_spi[(c->policy & POLICY_SHUNT_MASK) >>
-			POLICY_SHUNT_SHIFT] :
-		fail_spi[(c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT];
+	if (prospective) {
+		/* note: these are in host order :-( */
+		static const ipsec_spi_t shunt_spi[] = {
+			SPI_TRAP,       /* --initiateontraffic */
+			SPI_PASS,       /* --pass */
+			SPI_DROP,       /* --drop */
+			SPI_REJECT,     /* --reject */
+		};
+		return shunt_spi[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT];
+	} else {
+		/* note: these are in host order :-( */
+		static const ipsec_spi_t fail_spi[] = {
+			0,              /* --none*/
+			SPI_PASS,       /* --failpass */
+			SPI_DROP,       /* --faildrop */
+			SPI_REJECT,     /* --failreject */
+		};
+		return fail_spi[(c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT];
+	}
 }
 
 bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
