@@ -50,7 +50,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "vendor.h"
-#include "kernel.h"
 #include "host_pair.h"
 #include "addresspool.h"
 #include "rnd.h"
@@ -826,22 +825,6 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 								struct msg_digest *md,
 								struct pbs_out *sk_pbs)
 {
-	stf_status ret;
-
-	struct connection *c = ike->sa.st_connection;
-	if (c->spd.this.sec_label.len > 0 &&
-	    impair.childless_v2_sec_label) {
-		/*
-		 * PAUL: should this use shunt_eroute() instead of API
-		 * violation into raw_policy()?
-		 */
-		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap shunt for security label '"PRI_SHUNK"'",
-			pri_shunk(c->spd.this.sec_label));
-		if (!trap_connection(c))
-			llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap shunt in IKE_AUTH failed?");
-		return CHILD_SKIPPED;
-	}
-
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
 		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -891,6 +874,7 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return CHILD_FAILED;
 	}
 
+	stf_status ret;
 	ret = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					   ike, child, md,
 					   /*expect-accepted-proposal?*/false);
@@ -969,19 +953,6 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *md)
 {
-	struct connection *c = ike->sa.st_connection;
-	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
-		/*
-		 * PAUL: should this use shunt_eroute() instead of API
-		 * violation into raw_policy()?
-		 */
-		llog_sa(RC_LOG, ike, "IMPAIR: adding %%trap policy for security label '"PRI_SHUNK"'",
-			pri_shunk(c->spd.this.sec_label));
-		if (!trap_connection(c))
-			llog_sa(RC_LOG, ike, "IMPAIR: %%trap policy for security label failed");
-		return CHILD_SKIPPED;
-	}
-
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
