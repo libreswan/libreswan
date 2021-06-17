@@ -1,19 +1,10 @@
 /testing/guestbin/swan-prep
 west #
- # generate in output directory
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
 west #
- rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
+ # generated in OUTPUT by east
 west #
- ln -s ../ipsecspd.te OUTPUT
-west #
- make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
-make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01/OUTPUT'
-west #
- semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
+ ( cd OUTPUT && semodule -i ipsecspd.pp )
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -65,7 +56,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- echo "quit" | runcon -t netutils_t nc  -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+ echo "quit" | runcon -t netutils_t timeout 15 nc  -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
 NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
@@ -87,7 +78,7 @@ Ncat: 5 bytes sent, 0 bytes received ...
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
- # there should be 1 tunnel
+ # there should be 2 tunnels - both inactive in one direction
 west #
  ipsec trafficstatus
 006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=173, id='@east'
@@ -99,7 +90,11 @@ west #
 000 Bare Shunt list:
 000  
 west #
- # one IPsec SA and a %trap policy from the template conn
+ # let larval state expire
+west #
+ sleep 4
+west #
+ # There should be FOUR IPsec SA states (two sets), all with same reqid
 west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
