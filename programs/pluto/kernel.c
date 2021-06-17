@@ -1393,25 +1393,12 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " proto_info={");
 		for (unsigned i = 0; proto_info[i].proto; i++) {
 			const struct pfkey_proto_info *pi = &proto_info[i];
-			if (i > 0) {
-				jam(buf, ",");
-			}
-			jam(buf, "%s/", protocol_by_ipproto(pi->proto)->name);
-			/* XXX: should be enum?!? / name table but is sparse */
-			switch (pi->mode) {
-#define P(E) case ENCAPSULATION_MODE_##E: jam_string(buf, #E); break
-				P(UNSPECIFIED);
-				P(TUNNEL);
-				P(TRANSPORT);
-				P(UDP_TUNNEL_RFC);
-				P(UDP_TRANSPORT_RFC);
-				P(UDP_TUNNEL_DRAFTS);
-				P(UDP_TRANSPORT_DRAFTS);
-#undef P
-			default:
-				jam(buf, "%d", pi->mode);
-			}
-			jam(buf, "/%d", pi->reqid);
+			esb_buf b;
+			jam(buf, "%s%s/%s/%d",
+			    i == 0 ? "" : ",",
+			    protocol_by_ipproto(pi->proto)->name,
+			    enum_show(&enc_mode_names, pi->mode, &b),
+			    pi->reqid);
 		}
 		jam(buf, "}");
 
