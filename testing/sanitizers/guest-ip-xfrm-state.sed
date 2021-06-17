@@ -18,7 +18,7 @@ b end
 
   # fix up keys and other magic numbers; see also ipsec look
   / spi 0x00000000 /! s/ spi 0x[^ ]* / spi 0xSPISPI /g
-  s/ reqid [0-9][0-9]* / reqid REQID /g
+  s/ reqid [1-9][0-9]* / reqid REQID /g
 
   s/\tauth\(.*\) 0x[^ ]* \(.*\)$/\tauth\1 0xHASHKEY \2/g
   s/\tenc \(.*\) 0x.*$/\tenc \1 0xENCKEY/g
