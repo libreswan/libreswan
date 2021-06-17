@@ -72,7 +72,7 @@ XFRM policy:
 src 192.0.1.254/32 dst 0.0.0.0/0
 	dir out priority 2080766 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

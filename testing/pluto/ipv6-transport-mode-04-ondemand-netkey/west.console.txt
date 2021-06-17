@@ -54,7 +54,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	enc cbc(aes) 0xENCKEY
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto esp spi 0x00000000 reqid REQID mode transport
+	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 XFRM policy:
@@ -115,7 +115,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	enc cbc(aes) 0xENCKEY
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto esp spi 0x00000000 reqid REQID mode transport
+	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 XFRM policy:
