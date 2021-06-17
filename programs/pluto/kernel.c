@@ -1258,11 +1258,29 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "-%s-", selector_protocol(*that_client)->name);
 		jam_selector(buf, that_client);
 
+		/*
+		 * Dump the {old,new}_spi.
+		 *
+		 * XXX: this needs to deal with a bug.
+		 *
+		 * At this point the {cur,new}_spi contains either the
+		 * Child SPI in network order, or the enum policy_spi
+		 * converted to network order (at other points in the
+		 * code the SPI is passed in _host_ order, UGH!).
+		 *
+		 * Except some code is forgetting to do the network
+		 * conversion (mumble something about making it hunk
+		 * like to enforce the byte order).
+		 */
 		const char *spin = " ";
 		FOR_EACH_THING(nspi, cur_spi, new_spi) {
 			const char *name = NULL;
 			const char *prefix = "";
-			FOR_EACH_THING(spi, nspi, ntohl(nspi)) {
+			/*
+			 * The NSPI converted back to host order
+			 * should work; but if it doesn't ...
+			 */
+			FOR_EACH_THING(spi, ntohl(nspi), nspi) {
 				switch ((enum policy_spi)spi) {
 #define C(E) case SPI_##E: name = #E; break;
 					C(PASS);
@@ -1290,8 +1308,31 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
 		jam(buf, " transport_proto=%s", protocol_by_ipproto(transport_proto)->name);
 		jam(buf, " esatype=%s", protocol_by_ipproto(esatype)->name);
-		jam(buf, " proto_info=reqid=%d,proto=%s", proto_info->reqid,
-		    protocol_by_ipproto(proto_info->proto)->name);
+
+		jam(buf, " proto_info={");
+		for (unsigned i = 0; proto_info[i].proto; i++) {
+			const struct pfkey_proto_info *pi = &proto_info[i];
+			if (i > 0) {
+				jam(buf, ",");
+			}
+			jam(buf, "%s/", protocol_by_ipproto(pi->proto)->name);
+			/* XXX: should be enum?!? / name table but is sparse */
+			switch (pi->mode) {
+#define P(E) case ENCAPSULATION_MODE_##E: jam_string(buf, #E); break
+				P(UNSPECIFIED);
+				P(TUNNEL);
+				P(TRANSPORT);
+				P(UDP_TUNNEL_RFC);
+				P(UDP_TRANSPORT_RFC);
+				P(UDP_TUNNEL_DRAFTS);
+				P(UDP_TRANSPORT_DRAFTS);
+#undef P
+			default:
+				jam(buf, "%d", pi->mode);
+			}
+			jam(buf, "/%d", pi->reqid);
+		}
+		jam(buf, "}");
 
 		jam(buf, " lifetime=");
 		jam_deltatime(buf, use_lifetime);
