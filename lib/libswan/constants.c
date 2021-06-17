@@ -532,6 +532,7 @@ static const char *const sit_bit_name[] = {
 	P(SIT_IDENTITY_ONLY),
 	P(SIT_SECRECY),
 	P(SIT_INTEGRITY),
+#undef P
 };
 
 const struct enum_names sit_bit_names = {
@@ -1027,7 +1028,7 @@ enum_names *const ipsec_attr_val_descs[] = {
 	&sa_lifetime_names,	/* SA_LIFE_TYPE */
 	NULL,	/* SA_LIFE_DURATION */
 	&oakley_group_names,	/* GROUP_DESCRIPTION */
-	&enc_mode_names,	/* ENCAPSULATION_MODE */
+	&encapsulation_mode_names,
 	&auth_alg_names,	/* AUTH_ALGORITHM */
 	NULL,	/* KEY_LENGTH */
 	NULL,	/* KEY_ROUNDS */
@@ -1055,32 +1056,37 @@ enum_names sa_lifetime_names = {
 };
 
 /* Encapsulation Mode attribute */
-static const char *const enc_rfc_mode_name[] = {
-	"ENCAPSULATION_MODE_TUNNEL",
-	"ENCAPSULATION_MODE_TRANSPORT",
-	"ENCAPSULATION_MODE_UDP_TUNNEL_RFC",
-	"ENCAPSULATION_MODE_UDP_TRANSPORT_RFC",
+
+static const char *const encapsulation_mode_draft_name[] = {
+#define P(N) [N - ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS] = #N
+	P(ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS),
+	P(ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS),
+#undef P
 };
 
-static const char *const enc_draft_mode_name[] = {
-	"ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS",
-	"ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS",
-};
-
-static enum_names enc_rfc_mode_names = {
-	ENCAPSULATION_MODE_TUNNEL,
-	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC,
-	ARRAY_REF(enc_rfc_mode_name),
-	NULL, /* prefix */
-	NULL
-};
-
-enum_names enc_mode_names = {
+enum_names encapsulation_mode_draft_names = {
 	ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS,
 	ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS,
-	ARRAY_REF(enc_draft_mode_name),
-	NULL, /* prefix */
-	&enc_rfc_mode_names
+	ARRAY_REF(encapsulation_mode_draft_name),
+	"ENCAPSULATION_MODE_", /* prefix */
+	NULL,
+};
+
+static const char *const encapsulation_mode_rfc_name[] = {
+#define P(N) [N - ENCAPSULATION_MODE_TUNNEL] = #N
+	P(ENCAPSULATION_MODE_TUNNEL),
+	P(ENCAPSULATION_MODE_TRANSPORT),
+	P(ENCAPSULATION_MODE_UDP_TUNNEL_RFC),
+	P(ENCAPSULATION_MODE_UDP_TRANSPORT_RFC),
+#undef P
+};
+
+enum_names encapsulation_mode_names = {
+	ENCAPSULATION_MODE_TUNNEL,
+	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC,
+	ARRAY_REF(encapsulation_mode_rfc_name),
+	"ENCAPSULATION_MODE_", /* prefix */
+	&encapsulation_mode_draft_names,
 };
 
 /* Auth Algorithm attribute */
@@ -2602,7 +2608,7 @@ static const enum_names *en_checklist[] = {
 	&oakley_attr_names,
 	&ipsec_attr_names,
 	&sa_lifetime_names,
-	&enc_mode_names,
+	&encapsulation_mode_names,
 	&auth_alg_names,
 	&xauth_type_names,
 	&modecfg_attr_names,

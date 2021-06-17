@@ -2941,26 +2941,30 @@ IETF registry enum_names:
          jam_enum 1: ENCAPSULATION_MODE_TUNNEL OK
          search ENCAPSULATION_MODE_TUNNEL: OK
          match ENCAPSULATION_MODE_TUNNEL: OK
-         short_name 1: ENCAPSULATION_MODE_TUNNEL OK
-         jam_enum_short 1: ENCAPSULATION_MODE_TUNNEL OK
+         short_name 1: TUNNEL OK
+         jam_enum_short 1: TUNNEL OK
+         match TUNNEL [short]: OK
     2 -> ENCAPSULATION_MODE_TRANSPORT
          jam_enum 2: ENCAPSULATION_MODE_TRANSPORT OK
          search ENCAPSULATION_MODE_TRANSPORT: OK
          match ENCAPSULATION_MODE_TRANSPORT: OK
-         short_name 2: ENCAPSULATION_MODE_TRANSPORT OK
-         jam_enum_short 2: ENCAPSULATION_MODE_TRANSPORT OK
+         short_name 2: TRANSPORT OK
+         jam_enum_short 2: TRANSPORT OK
+         match TRANSPORT [short]: OK
     3 -> ENCAPSULATION_MODE_UDP_TUNNEL_RFC
          jam_enum 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
          search ENCAPSULATION_MODE_UDP_TUNNEL_RFC: OK
          match ENCAPSULATION_MODE_UDP_TUNNEL_RFC: OK
-         short_name 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
-         jam_enum_short 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
+         short_name 3: UDP_TUNNEL_RFC OK
+         jam_enum_short 3: UDP_TUNNEL_RFC OK
+         match UDP_TUNNEL_RFC [short]: OK
     4 -> ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
          jam_enum 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
          search ENCAPSULATION_MODE_UDP_TRANSPORT_RFC: OK
          match ENCAPSULATION_MODE_UDP_TRANSPORT_RFC: OK
-         short_name 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
-         jam_enum_short 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
+         short_name 4: UDP_TRANSPORT_RFC OK
+         jam_enum_short 4: UDP_TRANSPORT_RFC OK
+         match UDP_TRANSPORT_RFC [short]: OK
 
   auth_alg_names:
     0 -> AUTH_ALGORITHM_NONE

@@ -1393,12 +1393,12 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " proto_info={");
 		for (unsigned i = 0; proto_info[i].proto; i++) {
 			const struct pfkey_proto_info *pi = &proto_info[i];
-			esb_buf b;
-			jam(buf, "%s%s/%s/%d",
-			    i == 0 ? "" : ",",
-			    protocol_by_ipproto(pi->proto)->name,
-			    enum_show(&enc_mode_names, pi->mode, &b),
-			    pi->reqid);
+			if (i > 0) {
+				jam(buf, ",");
+			}
+			jam(buf, "%s/", protocol_by_ipproto(pi->proto)->name);
+			jam_enum_short(buf, &encapsulation_mode_names, pi->mode);
+			jam(buf, "/%d", pi->reqid);
 		}
 		jam(buf, "}");
 
@@ -1409,10 +1409,13 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " priority=%d", sa_priority);
 
 		if (sa_marks != NULL) {
-			const char *dir = "in";
-			FOR_EACH_THING(mark, &sa_marks->in, &sa_marks->out) {
-				jam(buf, " sa_marks.%s=%d,%d,%d", dir, mark->val, mark->mask, mark->unique);
-				dir = "out";
+			jam(buf, " sa_marks=");
+			const char *dir = "o:";
+			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
+				jam(buf, "%s%x/%x%s",
+				    dir, mark->val, mark->mask,
+				    mark->unique ? "/unique" : "");
+				dir = ",i:";
 			}
 		}
 
