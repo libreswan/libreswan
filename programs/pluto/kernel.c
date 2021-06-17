@@ -1425,6 +1425,20 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_sanitized_hunk(buf, sec_label);
 	}
 
+	if (esatype == ET_INT) {
+		switch(ntohl(new_spi)) {
+		case SPI_HOLD:
+			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
+			return true;
+		case SPI_TRAP:
+			if (op == KP_ADD_INBOUND || op == KP_DEL_INBOUND) {
+				dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
+				return true;
+			}
+			break;
+		}
+	}
+
 	bool result = kernel_ops->raw_policy(op,
 					     this_host, this_client,
 					     that_host, that_client,
