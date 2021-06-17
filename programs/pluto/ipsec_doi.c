@@ -147,21 +147,18 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			policy |= POLICY_PFS;
 		if (st->st_ah.present) {
 			policy |= POLICY_AUTHENTICATE;
-			if (st->st_ah.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
 		if (st->st_esp.present &&
 		    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
 			policy |= POLICY_ENCRYPT;
-			if (st->st_esp.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
 		if (st->st_ipcomp.present) {
 			policy |= POLICY_COMPRESS;
-			if (st->st_ipcomp.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
 
