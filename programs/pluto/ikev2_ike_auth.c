@@ -58,7 +58,7 @@
 #include "ike_alg_hash.h"
 #include "ikev2_cp.h"
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *st,
+static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 							  struct msg_digest *md,
 							  bool pam_status);
 
@@ -645,7 +645,7 @@ static void ikev2_pam_continue(struct state *ike_st,
 
 	stf_status stf;
 	if (success) {
-		stf = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(&ike->sa, md, success);
+		stf = process_v2_IKE_AUTH_request_tail(&ike->sa, md, success);
 	} else {
 		/*
 		 * XXX: better would be to record the message and
@@ -692,7 +692,7 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 
 #endif /* AUTH_HAVE_PAM */
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state *st,
+static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 								   struct msg_digest *md);
 
 stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
@@ -718,9 +718,9 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 		lswlog_msg_digest(buf, md);
 	}
 
-	stf_status e = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(&ike->sa, md);
+	stf_status e = process_v2_IKE_AUTH_request_continue_tail(&ike->sa, md);
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail returned ");
+		jam(buf, "process_v2_IKE_AUTH_request_continue_tail returned ");
 		jam_v2_stf_status(buf, e);
 	}
 
@@ -743,10 +743,10 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	return e;
 }
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct state *st,
+static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
 								      struct msg_digest *md);
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state *st,
+static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 								   struct msg_digest *md)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
@@ -754,7 +754,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state 
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_cert_decode(ike, st, md, cert_payloads,
-				   ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode,
+				   process_v2_IKE_AUTH_request_post_cert_decode,
 				   "responder decoding certificates");
 		return STF_SUSPEND;
 	} else {
@@ -762,10 +762,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_continue_tail(struct state 
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
 	}
-	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(st, md);
+	return process_v2_IKE_AUTH_request_post_cert_decode(st, md);
 }
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct state *st,
+static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
 								      struct msg_digest *md)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
@@ -799,10 +799,10 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_post_cert_decode(struct sta
 		}
 	}
 
-	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(md);
+	return process_v2_IKE_AUTH_request_id_tail(md);
 }
 
-stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(md->v1_st);
 	lset_t policy = ike->sa.st_connection->policy;
@@ -996,12 +996,12 @@ stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(struct msg_digest *md)
 	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
 		return ikev2_start_pam_authorize(&ike->sa);
 #endif
-	return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(&ike->sa, md, TRUE);
+	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, TRUE);
 }
 
-static v2_auth_signature_cb ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue; /* type check */
+static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
+static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 							  struct msg_digest *md,
 							  bool pam_status)
 {
@@ -1057,7 +1057,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
-						      ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue)) {
+						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1081,7 +1081,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
-						      ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue)) {
+						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1094,7 +1094,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 		case IKEv2_AUTH_NULL:
 		{
 			struct hash_signature sig = { .len = 0, };
-			return ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(ike, md, &sig);
+			return process_v2_IKE_AUTH_request_auth_signature_continue(ike, md, &sig);
 		}
 		default:
 			log_state(RC_LOG, &ike->sa,
@@ -1105,7 +1105,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail(struct state *ike_st,
 	}
 }
 
-static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(struct ike_sa *ike,
+static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
 									     struct msg_digest *md,
 									     const struct hash_signature *auth_sig)
 {
@@ -1304,7 +1304,7 @@ static stf_status ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_auth_signature_continue(str
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *st, struct msg_digest *md);
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *st, struct msg_digest *md);
 
 stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unused_child UNUSED,
 					struct msg_digest *md)
@@ -1318,18 +1318,18 @@ stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unu
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_cert_decode(ike, &ike->sa, md, cert_payloads,
-				   v2_in_IKE_AUTH_R_post_cert_decode,
+				   process_v2_IKE_AUTH_response_post_cert_decode,
 				   "initiator decoding certificates");
 		return STF_SUSPEND;
 	} else {
 		dbg("no certs to decode");
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
-		return v2_in_IKE_AUTH_R_post_cert_decode(&ike->sa, md);
+		return process_v2_IKE_AUTH_response_post_cert_decode(&ike->sa, md);
 	}
 }
 
-static stf_status v2_in_IKE_AUTH_R_post_cert_decode(struct state *ike_sa, struct msg_digest *md)
+static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ike_sa, struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);

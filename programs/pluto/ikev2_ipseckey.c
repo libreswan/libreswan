@@ -641,7 +641,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	if (err) {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	} else {
-		stf = ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_id_tail(md);
+		stf = process_v2_IKE_AUTH_request_id_tail(md);
 	}
 
 	/* replace (*mdp)->st with st ... */

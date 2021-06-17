@@ -375,7 +375,7 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 }
 
 /*
- * Called by ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail() and
+ * Called by process_v2_IKE_AUTH_request_tail() and
  * ikev2_in_IKE_AUTH_R() Do the actual AUTH payload verification
  *
  * ??? Several verify routines return an stf_status and yet we just
