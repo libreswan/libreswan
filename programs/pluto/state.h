@@ -145,7 +145,7 @@ struct ipsec_trans_attrs {
 	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	uint32_t life_kilobytes;	/* max life of this SA in kilobytes */
-	uint16_t mode;			/* transport or tunnel or ... */
+	enum encapsulation_mode mode;	/* transport or tunnel or ... */
 };
 
 /* IPsec per protocol state information */

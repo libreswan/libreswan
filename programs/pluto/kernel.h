@@ -63,7 +63,7 @@ extern const struct enum_names kernel_policy_op_names;
 
 struct pfkey_proto_info {
 	int proto;
-	int mode;
+	enum encapsulation_mode mode;
 	reqid_t reqid;
 };
 

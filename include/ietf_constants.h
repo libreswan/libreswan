@@ -1117,13 +1117,15 @@ enum ikev1_ipsec_attr {
 
 /* Encapsulation Mode attribute */
 
-#define ENCAPSULATION_MODE_UNSPECIFIED 0 /* not legal -- used internally */
-#define ENCAPSULATION_MODE_TUNNEL 1
-#define ENCAPSULATION_MODE_TRANSPORT 2
-#define ENCAPSULATION_MODE_UDP_TUNNEL_RFC 3
-#define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC 4
-#define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS 61443
-#define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
+enum encapsulation_mode {
+	ENCAPSULATION_MODE_UNSPECIFIED = 0,	/* not legal -- used internally */
+	ENCAPSULATION_MODE_TUNNEL = 1,
+	ENCAPSULATION_MODE_TRANSPORT = 2,
+	ENCAPSULATION_MODE_UDP_TUNNEL_RFC = 3,
+	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC = 4,
+	ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS = 61443,
+	ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS = 61444,
+};
 
 /* Auth Algorithm attribute */
 /* https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20 */
