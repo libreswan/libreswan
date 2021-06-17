@@ -4465,7 +4465,13 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	return wl-1 <= il && strncaseeq(&wp[1], &ip[il-(wl-1)], wl-1);
 }
 
-/* sa priority and type should really go into kernel_sa */
+/*
+ * sa priority and type should really go into kernel_sa
+ *
+ * Danger! While the priority used by the kernel is lowest-wins this
+ * code computes the reverse, only to then subtract that from some
+ * magic constant.
+ */
 uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 {
 	connection_buf cib;
@@ -4484,13 +4490,6 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 
 	/* XXX: assume unsigned >= 32-bits */
 	passert(sizeof(unsigned) >= sizeof(uint32_t));
-
-	unsigned pmax =
-		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
-			(LIN(POLICY_AUTH_NULL, c->policy)) ?
-				PLUTO_SPD_OPPO_ANON_MAX :
-				PLUTO_SPD_OPPO_MAX :
-			PLUTO_SPD_STATIC_MAX;
 
 	unsigned portsw = /* max 2 (2 bits) */
 		(c->spd.this.port == 0 ? 0 : 1) +
@@ -4511,21 +4510,39 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 		dstw = (addrtypeof(&c->spd.that.host_addr) == AF_INET) ? 32 : 128;
 	}
 
-	/* ensure an instance of a template/OE-group always has preference */
-	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
+	/*
+	 * "Ensure an instance of a template/OE-group always has
+	 * preference."
+	 *
+	 * Except, at this point, the polarity is reversed so the
+	 * below gives CK_INSTANCE lower priority.  Get around this
+	 * for sec-labels by making the decrement bigger (except that
+	 * is overflowing into the DSTW bits).
+	 *
+	 * Should fix the math, but that affects all tests.
+	 */
+	unsigned instw = (c->kind == CK_INSTANCE && c->spd.this.sec_label.len > 0 ? 2u :
+			  c->kind == CK_INSTANCE ? 0u :
+			  1u);
 
-	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-
-	if (c->spd.this.sec_label.len > 0) {
-		/* fixup so instance hits first over template */
-		if (c->kind == CK_INSTANCE)
-			prio = prio - 2;
+	unsigned pmax;
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->policy)) {
+			pmax = PLUTO_SPD_OPPO_ANON_MAX;
+		} else {
+			pmax = PLUTO_SPD_OPPO_MAX;
+		}
+	} else {
+		pmax = PLUTO_SPD_STATIC_MAX;
 	}
 
-	dbg("priority calculation of connection "PRI_CONNECTION" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
-	    pri_connection(c, &cib), prio, prio,
-	    pmax, portsw, protow, srcw, dstw, instw);
-	return prio;
+	unsigned prio_hi = (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
+	unsigned prio_lo = pmax - prio_hi;
+
+	dbg("priority calculation of connection "PRI_CONNECTION" is %u-%u=%u (%#x) portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    pri_connection(c, &cib), pmax, prio_hi, prio_lo, prio_lo,
+	    portsw, protow, srcw, dstw, instw);
+	return prio_lo;
 }
 
 /*
