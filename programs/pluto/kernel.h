@@ -214,8 +214,6 @@ struct kernel_ops {
 			     enum routing_t rt_kind,
 			     const char *opname,
 			     struct logger *logger);
-	bool (*sag_eroute)(const struct state *st, const struct spd_route *sr,
-			   enum kernel_policy_op op, const char *opname);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,

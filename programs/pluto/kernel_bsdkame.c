@@ -329,8 +329,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			policy = IPSEC_POLICY_DISCARD;
 			break;
 		case SPI_TRAP:
-			if (sadb_op == ERO_ADD_INBOUND ||
-				sadb_op == ERO_DEL_INBOUND)
+			if (sadb_op == KP_ADD_INBOUND ||
+				sadb_op == KP_DEL_INBOUND)
 				return TRUE;
 
 			break;
@@ -344,7 +344,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		bad_case(esatype);
 	}
 
-	const int dir = ((sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
+	const int dir = ((sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) ?
 			 IPSEC_DIR_INBOUND : IPSEC_DIR_OUTBOUND);
 
 	/*
@@ -453,23 +453,23 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 	case 0:
 		/* we're supposed to end up with no eroute: rejig op and opname */
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE:
 			/* replace with nothing == delete */
-			op = ERO_DELETE;
+			op = KP_DELETE;
 			opname = "delete";
 			break;
-		case ERO_ADD:
+		case KP_ADD:
 			/* add nothing == do nothing */
 			return TRUE;
 
-		case ERO_DELETE:
+		case KP_DELETE:
 			/* delete remains delete */
 			break;
 
-		case ERO_ADD_INBOUND:
+		case KP_ADD_INBOUND:
 			break;
 
-		case ERO_DEL_INBOUND:
+		case KP_DEL_INBOUND:
 			break;
 
 		default:
@@ -500,30 +500,30 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 		 */
 		passert(eclipsable(sr));
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE:
 			/* really an add */
-			op = ERO_ADD;
+			op = KP_ADD;
 			opname = "replace eclipsed";
 			eclipse_count--;
 			break;
 
-		case ERO_DELETE:
+		case KP_DELETE:
 			/* delete unnecessary: we don't actually have an eroute */
 			eclipse_count--;
 			return TRUE;
 
-		case ERO_ADD:
+		case KP_ADD:
 		default:
 			bad_case(op);
 		}
-	} else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr)) {
+	} else if (eclipse_count > 0 && op == KP_DELETE && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
 		const struct connection *ue = eclipsed(c, &esr);
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return bsdkame_shunt_policy(ERO_REPLACE,
+			return bsdkame_shunt_policy(KP_REPLACE,
 						    ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
 						    "restoring eclipsed",
@@ -532,8 +532,8 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 	}
 
 	switch (op) {
-	case ERO_REPLACE:
-	case ERO_ADD:
+	case KP_REPLACE:
+	case KP_ADD:
 	{
 		const ip_selector mine = sr->this.client;
 		const ip_selector peers = sr->that.client;
@@ -628,7 +628,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 		return TRUE;
 	}
 
-	case ERO_DELETE:
+	case KP_DELETE:
 	{
 		/* need to send a delete message */
 		const ip_selector mine = sr->this.client;
@@ -685,103 +685,12 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 
 		break;
 	}
-	case ERO_ADD_INBOUND:
-	case ERO_REPLACE_INBOUND:
-	case ERO_DEL_INBOUND:
+	case KP_ADD_INBOUND:
+	case KP_REPLACE_INBOUND:
+	case KP_DEL_INBOUND:
 		bad_case(op);
 	}
 	return FALSE;
-}
-
-/*
- * install or remove eroute for SA Group
- * must just install the appropriate SPD entries, as the
- * SA has already been negotiated, either due to manual intervention,
- * or because we are the responder.
- *
- * Funny thing about KAME/BSD, we don't actually need to know the state
- * information to install the policy, since they are not strongly linked.
- *
- */
-static bool bsdkame_sag_eroute(const struct state *st,
-			       const struct spd_route *sr,
-			       enum kernel_policy_op op UNUSED,
-			       const char *opname UNUSED)
-{
-	const struct ip_protocol *proto;
-
-	dbg("sag eroute called");
-
-	/*
-	 * figure out the SPI and protocol (in two forms)
-	 * for the innermost transformation.
-	 */
-	struct pfkey_proto_info proto_info[4] = { { .proto = 0, }, };
-	bool tunnel = false;
-	int i = elemsof(proto_info) - 1;
-	proto_info[i].proto = 0; /*sentinel entry*/
-
-	if (st->st_ah.present) {
-		i--;
-		proto = &ip_protocol_ah;
-		proto_info[i].proto = IPPROTO_AH;
-		proto_info[i].mode = st->st_ah.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ah(sr->reqid);
-	}
-
-	if (st->st_esp.present) {
-		i--;
-		proto = &ip_protocol_esp;
-		proto_info[i].proto = IPPROTO_ESP;
-		proto_info[i].mode = st->st_esp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_esp(sr->reqid);
-	}
-
-	if (st->st_ipcomp.present) {
-		i--;
-		proto = &ip_protocol_comp;
-		proto_info[i].proto = ip_protocol_comp.ipproto;
-		proto_info[i].mode =
-			st->st_ipcomp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
-	}
-
-	/* check for no transform at all */
-	passert(st->st_ipcomp.present || st->st_esp.present ||
-			st->st_ah.present);
-
-	if (tunnel) {
-		proto = &ip_protocol_ipip;
-		int j;
-		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
-		for (j = i + 1; proto_info[j].proto; j++)
-			proto_info[j].mode =
-				ENCAPSULATION_MODE_TRANSPORT;
-	}
-
-	return bsdkame_raw_policy(op,
-				  &sr->this.host_addr,
-				  &sr->this.client,
-				  &sr->that.host_addr,
-				  &sr->that.client,
-				  SPI_TRAP,	/* cur_spi */
-				  0,		/* new_spi */
-				  proto,
-				  sr->this.protocol,
-				  0,            /* esatype unused */
-				  proto_info + i,  /* first filled in entry */
-				  deltatime(0),            /* use lifetime unused */
-				  0,		/* sa_priority */
-				  NULL,		/* sa_marks */
-				  0,		/* xfrm_if_id */
-				  null_shunk,		/*unused*/
-				  st->st_logger);
 }
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
@@ -967,7 +876,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.process_msg = bsdkame_process_msg,
 	.raw_policy = bsdkame_raw_policy,
 	.shunt_policy = bsdkame_shunt_policy,
-	.sag_eroute = bsdkame_sag_eroute,
 	.add_sa = bsdkame_add_sa,
 	.grp_sa = NULL,
 	.del_sa = bsdkame_del_sa,

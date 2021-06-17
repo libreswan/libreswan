@@ -1050,15 +1050,96 @@ bool shunt_policy(enum kernel_policy_op op,
 }
 
 static bool sag_eroute(const struct state *st,
-		const struct spd_route *sr,
-		enum kernel_policy_op op,
-		const char *opname)
+		       const struct spd_route *sr,
+		       enum kernel_policy_op op,
+		       const char *opname)
 {
-	pexpect(kernel_ops->sag_eroute != NULL);
-	if (kernel_ops->sag_eroute != NULL)
-		return kernel_ops->sag_eroute(st, sr, op, opname);
+	struct connection *c = st->st_connection;
+	enum eroute_type inner_esatype;
+	ipsec_spi_t inner_spi;
+	struct pfkey_proto_info proto_info[4];
+	int i;
+	bool tunnel;
 
-	return false;
+	/*
+	 * figure out the SPI and protocol (in two forms)
+	 * for the innermost transformation.
+	 */
+	i = elemsof(proto_info) - 1;
+	proto_info[i].proto = 0;
+	tunnel = FALSE;
+
+	const struct ip_protocol *inner_proto = NULL;
+	inner_esatype = ET_UNSPEC;
+	inner_spi = 0;
+
+	if (st->st_ah.present) {
+		inner_spi = st->st_ah.attrs.spi;
+		inner_proto = &ip_protocol_ah;
+		inner_esatype = ET_AH;
+
+		i--;
+		proto_info[i].proto = IPPROTO_AH;
+		proto_info[i].mode = st->st_ah.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_ah(sr->reqid);
+	}
+
+	if (st->st_esp.present) {
+		inner_spi = st->st_esp.attrs.spi;
+		inner_proto = &ip_protocol_esp;
+		inner_esatype = ET_ESP;
+
+		i--;
+		proto_info[i].proto = IPPROTO_ESP;
+		proto_info[i].mode = st->st_esp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_esp(sr->reqid);
+	}
+
+	if (st->st_ipcomp.present) {
+		inner_spi = st->st_ipcomp.attrs.spi;
+		inner_proto = &ip_protocol_comp;
+		inner_esatype = ET_IPCOMP;
+
+		i--;
+		proto_info[i].proto = IPPROTO_COMP;
+		proto_info[i].mode =
+			st->st_ipcomp.attrs.mode;
+		tunnel |= proto_info[i].mode ==
+			ENCAPSULATION_MODE_TUNNEL;
+		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
+	}
+
+	/* check for no transform at all */
+	passert(st->st_ipcomp.present || st->st_esp.present ||
+			st->st_ah.present);
+
+	if (tunnel) {
+		int j;
+
+		inner_spi = st->st_tunnel_out_spi;
+		inner_proto = &ip_protocol_ipip;
+		inner_esatype = ET_IPIP;
+
+		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
+		for (j = i + 1; proto_info[j].proto; j++)
+			proto_info[j].mode =
+				ENCAPSULATION_MODE_TRANSPORT;
+	}
+
+	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
+
+	/* hack */
+	char why[256];
+	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
+
+	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
+				 inner_esatype, proto_info + i,
+				 calculate_sa_prio(c, FALSE), &c->sa_marks,
+				 xfrm_if_id, op, why, st->st_logger);
 }
 
 void migration_up(struct connection *c,  struct state *st)

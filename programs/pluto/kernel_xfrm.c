@@ -2117,98 +2117,6 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	return rsp.u.sa.id.spi;
 }
 
-/*
- * install or remove eroute for SA Group
- *
- * (identical to KLIPS version, but refactoring isn't waranteed yet
- */
-static bool netlink_sag_eroute(const struct state *st, const struct spd_route *sr,
-			unsigned op, const char *opname)
-{
-	struct connection *c = st->st_connection;
-	enum eroute_type inner_esatype;
-	ipsec_spi_t inner_spi;
-	struct pfkey_proto_info proto_info[4];
-	int i;
-	bool tunnel;
-
-	/*
-	 * figure out the SPI and protocol (in two forms)
-	 * for the innermost transformation.
-	 */
-	i = elemsof(proto_info) - 1;
-	proto_info[i].proto = 0;
-	tunnel = FALSE;
-
-	const struct ip_protocol *inner_proto = NULL;
-	inner_esatype = ET_UNSPEC;
-	inner_spi = 0;
-
-	if (st->st_ah.present) {
-		inner_spi = st->st_ah.attrs.spi;
-		inner_proto = &ip_protocol_ah;
-		inner_esatype = ET_AH;
-
-		i--;
-		proto_info[i].proto = IPPROTO_AH;
-		proto_info[i].mode = st->st_ah.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ah(sr->reqid);
-	}
-
-	if (st->st_esp.present) {
-		inner_spi = st->st_esp.attrs.spi;
-		inner_proto = &ip_protocol_esp;
-		inner_esatype = ET_ESP;
-
-		i--;
-		proto_info[i].proto = IPPROTO_ESP;
-		proto_info[i].mode = st->st_esp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_esp(sr->reqid);
-	}
-
-	if (st->st_ipcomp.present) {
-		inner_spi = st->st_ipcomp.attrs.spi;
-		inner_proto = &ip_protocol_comp;
-		inner_esatype = ET_IPCOMP;
-
-		i--;
-		proto_info[i].proto = IPPROTO_COMP;
-		proto_info[i].mode =
-			st->st_ipcomp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
-	}
-
-	/* check for no transform at all */
-	passert(st->st_ipcomp.present || st->st_esp.present ||
-			st->st_ah.present);
-
-	if (tunnel) {
-		int j;
-
-		inner_spi = st->st_tunnel_out_spi;
-		inner_proto = &ip_protocol_ipip;
-		inner_esatype = ET_IPIP;
-
-		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
-		for (j = i + 1; proto_info[j].proto; j++)
-			proto_info[j].mode =
-				ENCAPSULATION_MODE_TRANSPORT;
-	}
-
-	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
-
-	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
-				 inner_esatype, proto_info + i,
-				 calculate_sa_prio(c, FALSE), &c->sa_marks,
-				 xfrm_if_id, op, opname, st->st_logger);
-}
-
 /* Check if there was traffic on given SA during the last idle_max
  * seconds. If TRUE, the SA was idle and DPD exchange should be performed.
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
@@ -2856,7 +2764,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.exceptsocket = NULL,
 	.process_raw_ifaces = netlink_process_raw_ifaces,
 	.shunt_policy = netlink_shunt_policy,
-	.sag_eroute = netlink_sag_eroute,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
