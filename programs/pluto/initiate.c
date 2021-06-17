@@ -548,7 +548,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 				/*to*/htonl(b->failure_shunt),
 				&ip_protocol_internal,
 				b->transport_proto->ipproto,
-				ET_INT, null_proto_info,
+				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
@@ -948,7 +948,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
 			&ip_protocol_internal, shunt_protocol->ipproto,
-			ET_INT, null_proto_info,
+			ET_INT, esp_transport_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 			NULL, 0 /* xfrm-if-id */,

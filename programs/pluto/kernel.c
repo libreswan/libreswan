@@ -103,7 +103,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
 	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
-const struct pfkey_proto_info null_proto_info[2] = {
+const struct pfkey_proto_info esp_transport_proto_info[2] = {
 	{
 		.proto = IPPROTO_ESP,
 		.mode = ENCAPSULATION_MODE_TRANSPORT,
@@ -1411,7 +1411,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 				htonl(cur_shunt_spi), htonl(SPI_PASS),
 				&ip_protocol_internal,
 				transport_proto,
-				ET_INT, null_proto_info,
+				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				0, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
@@ -1585,7 +1585,7 @@ bool assign_holdpass(const struct connection *c,
 					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(negotiation_shunt),
 					      &ip_protocol_internal, ET_INT,
-					      null_proto_info,
+					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
 					      op,
@@ -2381,7 +2381,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			c->spd.this.protocol,
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 			ET_ESP : ET_UNSPEC,
-			null_proto_info,
+			esp_transport_proto_info,
 			deltatime(0),
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
@@ -2917,7 +2917,7 @@ bool route_and_eroute(struct connection *c,
 						&ip_protocol_internal,               /* proto */
 						sr->this.protocol,    /* transport_proto */
 						ET_INT,
-						null_proto_info,
+						esp_transport_proto_info,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, false),
 						NULL,
@@ -3456,7 +3456,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 					     &null_host, &src, &null_host, &dst,
 					     htonl(cur_shunt_spi), htonl(new_shunt_spi),
 					     &ip_protocol_internal, transport_proto,
-					     ET_INT, null_proto_info,
+					     ET_INT,
+					     esp_transport_proto_info,
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */
 					     NULL, /* sa_marks */

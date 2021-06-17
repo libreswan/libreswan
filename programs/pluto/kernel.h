@@ -67,7 +67,7 @@ struct pfkey_proto_info {
 	reqid_t reqid;
 };
 
-extern const struct pfkey_proto_info null_proto_info[2];
+extern const struct pfkey_proto_info esp_transport_proto_info[];
 
 struct sadb_msg;
 
