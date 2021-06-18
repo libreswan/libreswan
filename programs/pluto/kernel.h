@@ -49,12 +49,12 @@ extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
  */
 
 enum kernel_policy_op {
-	KP_ADD_OUTBOUND=1,
-	KP_REPLACE_OUTBOUND=2,
-	KP_DELETE_OUTBOUND=3,
-	KP_ADD_INBOUND=4,
-	KP_REPLACE_INBOUND=5,
-	KP_DELETE_INBOUND=6
+	KP_ADD_OUTBOUND = 1,
+	KP_REPLACE_OUTBOUND = 2,
+	KP_DELETE_OUTBOUND = 3,
+	KP_ADD_INBOUND = 4,
+	KP_REPLACE_INBOUND = 5,
+	KP_DELETE_INBOUND = 6
 };
 
 extern const struct enum_names kernel_policy_op_names;

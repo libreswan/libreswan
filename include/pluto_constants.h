@@ -850,6 +850,15 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
  * Changes to sa_policy_bits must be reflected in #defines below it and
  * in sa_policy_bit_names.
  */
+
+enum shunt_policy {
+	SHUNT_DEFAULT, /* TRAP or NONE */
+	SHUNT_PASS,
+	SHUNT_DROP,
+	SHUNT_REJECT,
+	SHUNT_POLICY_ROOF,
+};
+
 enum sa_policy_bits {
 	/*
 	 * XXX: Do not re-order or re-number the following pair.  Bad
@@ -889,10 +898,10 @@ enum sa_policy_bits {
 #define POLICY_SHUNT_SHIFT	POLICY_SHUNT0_IX
 #define POLICY_SHUNT_MASK	LRANGE(POLICY_SHUNT0_IX, POLICY_SHUNT1_IX)
 
-#define POLICY_SHUNT_TRAP	(0 * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
-#define POLICY_SHUNT_PASS	(1 * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_DROP	(2 * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_REJECT	(3 * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_TRAP	(SHUNT_DEFAULT * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
+#define POLICY_SHUNT_PASS	(SHUNT_PASS * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_DROP	(SHUNT_DROP * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_REJECT	(SHUNT_REJECT * LELEM(POLICY_SHUNT0_IX))
 
 	/* fail attributes: what to do with failed negotiation (2 bits) */
 	POLICY_FAIL0_IX,
@@ -901,10 +910,10 @@ enum sa_policy_bits {
 #define POLICY_FAIL_SHIFT	POLICY_FAIL0_IX
 #define POLICY_FAIL_MASK	LRANGE(POLICY_FAIL0_IX, POLICY_FAIL1_IX)
 
-#define POLICY_FAIL_NONE	(0 * LELEM(POLICY_FAIL0_IX)) /* default */
-#define POLICY_FAIL_PASS	(1 * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_DROP	(2 * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_REJECT	(3 * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_NONE	(SHUNT_DEFAULT * LELEM(POLICY_FAIL0_IX)) /* default */
+#define POLICY_FAIL_PASS	(SHUNT_PASS * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_DROP	(SHUNT_DROP * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_REJECT	(SHUNT_REJECT * LELEM(POLICY_FAIL0_IX))
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
