@@ -256,7 +256,7 @@ void ipsecdoi_initiate(struct connection *c,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger)
 {
-	if (sec_label.len != 0)
+	if (sec_label.len > 0)
 		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
 
 	/*
@@ -595,7 +595,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
 
-	if (b->sec_label.len != 0) {
+	if (b->sec_label.len > 0) {
 		dbg("oppo bundle: received security label string: "PRI_SHUNK,
 		    pri_shunk(b->sec_label));
 	}
@@ -636,21 +636,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		cannot_ondemand(RC_OPPOFAILURE, b, "no routed template covers this pair");
 		return;
 	}
-
-#if 0
-	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.len != 0) {
-		/*
-		 * A bit of a hack until we properly instantiate
-		 * labeled ipsec connections.
-		 */
-		struct connection *templ = connection_by_serialno(c->serial_from);
-		struct ike_sa *ikesa = ike_sa(state_by_serialno(c->newest_ipsec_sa), HERE);
-		struct connection *inst = instantiate(templ, &b->remote.host_addr, NULL);
-		add_pending(NULL, ikesa, inst, inst->policy, 1, SOS_NOBODY, b->sec_label, false );
-		unpend(ikesa, NULL); /* cuases initiate */
-		return;
-	}
-#endif
 
 	if (c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0) {
 		dbg("connection has security label");
@@ -697,37 +682,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 		b->failure_shunt = shunt_policy_spi(c, false);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-
-		/*
-		 * Add the kernel shunt to the pluto bare shunt list.
-		 *
-		 * We need to do this because the %hold shunt was
-		 * installed by kernel and we want to keep track of it
-		 * inside pluto.
-		 *
-		 * XXX: hack to keep code below happy - need to figure
-		 * out what to do with the shunt functions.
-		 */
-		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
-		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
-			       SPI_HOLD, b->want, b->logger);
-
-		/*
-		 * Otherwise, there is some kind of static conn that
-		 * can handle this connection, so we initiate it.
-		 * Only needed if we this was triggered by a packet,
-		 * not by whack
-		 */
-		if (b->held) {
-			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
-					    &b->local.host_addr, &b->remote.host_addr)) {
-				dbg("initiate_ondemand_body() installed negotiation_shunt,");
-			} else {
-				llog(RC_LOG, b->logger,
-					    "initiate_ondemand_body() failed to install negotiation_shunt,");
-			}
-		}
 
 		/*
 		 * Annouce this to the world.  Use c->logger instead?
