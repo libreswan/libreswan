@@ -749,41 +749,41 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		}
 
 		/* mark policy extension */
-		if (sa_marks != NULL && xfrm_if_id == 0) {
-			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
+		if (sa_marks != NULL) {
+			if (xfrm_if_id == 0) {
+				struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			if (sa_mark.val != 0 && sa_mark.mask != 0) {
-				struct xfrm_mark xfrm_mark;
-				struct rtattr* mark_attr;
-				dbg("%s() adding mark %x/%x", __func__, sa_mark.val, sa_mark.mask);
-				xfrm_mark.v = sa_mark.val;
-				xfrm_mark.m = sa_mark.mask;
-				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-				mark_attr->rta_type = XFRMA_MARK;
-				mark_attr->rta_len = sizeof(xfrm_mark);
-				memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
-				mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
-				req.n.nlmsg_len += mark_attr->rta_len;
-			}
-		}
-
+				if (sa_mark.val != 0 && sa_mark.mask != 0) {
+					struct xfrm_mark xfrm_mark;
+					struct rtattr* mark_attr;
+					dbg("%s() adding mark %x/%x", __func__, sa_mark.val, sa_mark.mask);
+					xfrm_mark.v = sa_mark.val;
+					xfrm_mark.m = sa_mark.mask;
+					mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+					mark_attr->rta_type = XFRMA_MARK;
+					mark_attr->rta_len = sizeof(xfrm_mark);
+					memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
+					mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
+					req.n.nlmsg_len += mark_attr->rta_len;
+				}
 #ifdef USE_XFRM_INTERFACE
-		if (xfrm_if_id != 0) {
-			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-			    __func__, xfrm_if_id, req.n.nlmsg_type);
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
-			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
-				/* XFRMA_SET_MARK = XFRMA_IF_ID */
-				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrm_if_id);
 			} else {
-				/* manually configured mark-out=mark/mask */
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK, sa_marks->out.val);
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
+				dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+				    __func__, xfrm_if_id, req.n.nlmsg_type);
+				nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
+				if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
+					/* XFRMA_SET_MARK = XFRMA_IF_ID */
+					nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrm_if_id);
+				} else {
+					/* manually configured mark-out=mark/mask */
+					nl_addattr32(&req.n, sizeof(req.data),
+						     XFRMA_SET_MARK, sa_marks->out.val);
+					nl_addattr32(&req.n, sizeof(req.data),
+						     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
+				}
+#endif
 			}
 		}
-#endif
 	}
 
 	if (sec_label.len > 0) {
