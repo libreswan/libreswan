@@ -1576,6 +1576,58 @@ bool delete_bare_shunt(const ip_address *src_address,
 	return ok;
 }
 
+bool install_se_connection_policy(struct connection *c, bool inbound, struct logger *logger)
+{
+	struct pfkey_proto_info proto_infos[4] = {0};
+	const struct ip_protocol *inner_proto = NULL;
+	enum eroute_type inner_esatype = ET_UNSPEC;
+	enum encapsulation_mode mode = (c->policy & POLICY_TUNNEL ? ENCAPSULATION_MODE_TUNNEL :
+					ENCAPSULATION_MODE_TRANSPORT);
+
+	struct pfkey_proto_info *p = &proto_infos[elemsof(proto_infos) - 1];
+	if (c->policy & POLICY_AUTHENTICATE) {
+		inner_proto = &ip_protocol_ah;
+		inner_esatype = ET_AH;
+		p--;
+		p->reqid = reqid_ah(c->spd.reqid);
+		p->proto = IPPROTO_AH;
+		p->mode = mode;
+	}
+	if (c->policy & POLICY_ENCRYPT) {
+		inner_proto = &ip_protocol_esp;
+		inner_esatype = ET_ESP;
+		p--;
+		p->reqid = reqid_esp(c->spd.reqid);
+		p->proto = IPPROTO_ESP;
+		p->mode = mode;
+	}
+	if (c->policy & POLICY_COMPRESS) {
+		inner_proto = &ip_protocol_comp;
+		inner_esatype = ET_IPCOMP;
+		p--;
+		p->reqid = reqid_ipcomp(c->spd.reqid);
+		p->proto = IPPROTO_COMP;
+		p->mode = mode;
+	}
+	struct end *src = inbound ? &c->spd.that : &c->spd.this;
+	struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+	return raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD,
+			  /*src*/&src->host_addr, &src->client,
+			  /*dst*/&dst->host_addr, &dst->client,
+			  /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+			  /*sa_proto*/inner_proto,
+			  /*transport_proto*/c->spd.this.protocol,
+			  /*esatype*/inner_esatype,
+			  /*proto_info*/p,
+			  /*use_lifetime*/deltatime(0),
+			  /*sa_priority*/calculate_sa_prio(c, /*oe_shunt*/false),
+			  /*sa_marks*/NULL,
+			  /*xfrm_if_id*/0,
+			  /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+			  /*logger*/logger,
+			  "%s() security label policy", __func__);
+}
+
 bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,

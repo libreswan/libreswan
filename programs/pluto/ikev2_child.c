@@ -847,6 +847,11 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return CHILD_SKIPPED;
 	}
 
+	if (impair.childless_v2_sec_label && !has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH security label request omitted CHILD SA payloads");
+		return CHILD_SKIPPED;
+	}
+
 	/* try to process them */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 		/*
