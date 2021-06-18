@@ -539,8 +539,7 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
-	int policy = IPSEC_POLICY_IPSEC;
-
+	int policy;
 	const char *policy_name;
 	switch (esatype) {
 	case ET_UNSPEC:
@@ -549,15 +548,15 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	case ET_IPCOMP:
 	case ET_IPIP:
 		policy_name = protocol_by_ipproto(esatype)->name;
+		policy = IPSEC_POLICY_IPSEC;
 		break;
 
 	case ET_INT:
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			dbg("netlink_raw_policy: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
-			policy_name = "%pass";
+			policy_name = "%pass(none)";
 			break;
 		case SPI_HOLD:
 			/*
@@ -568,29 +567,30 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("netlink_raw_policy: SPI_HOLD implemented as no-op");
-			policy_name = "%hold";
-			return TRUE; /* yes really */
+			dbg("%s() SPI_HOLD implemented as no-op", __func__);
+			return true; /* yes really */
 		case SPI_DROP:
 			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%drop";
+			policy_name = "%drop(discard)";
 			break;
 		case SPI_REJECT:
 			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%reject";
+			policy_name = "%reject(discard)";
 			break;
 		case 0:
 			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%discard";
+			policy_name = "%discard(discard)";
 			break;
 		case SPI_TRAP:
-			policy_name = "%trap";
-			if (sadb_op == KP_ADD_INBOUND ||
-				sadb_op == KP_DEL_INBOUND)
-				return TRUE;
+			if (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) {
+				dbg("%s() inbound SPI_TRAP implemented as no-op", __func__);
+				return true;
+			}
+			policy = IPSEC_POLICY_IPSEC;
+			policy_name = "%trap(ipsec)";
 			break;
 		case SPI_TRAPSUBNET: /* unused in our code */
 		default:
@@ -601,9 +601,9 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	default:
 		bad_case(esatype);
 	}
-
 	const int dir = (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
+	dbg("%s() policy=%s/%d dir=%d", __func__, policy_name, policy, dir);
 
 	/*
 	 * Bug #1004 fix.
@@ -630,13 +630,16 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 			this_client = &local_client;
 		}
 		update_selector_hport(&local_client, local_port);
-		dbg("%s: using host address instead of client subnet", __func__);
+		selector_buf hb;
+		dbg("%s() using host address %s instead of client subnet",
+		    __func__, str_selector(&local_client, &hb));
 	}
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
 	const int family = selector_type(that_client)->af;
+	dbg("%s() using family %d", __func__, family);
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(this_client, req.u.p.sel, s);
@@ -684,7 +687,7 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
-		dbg("IPsec SA SPD priority set to %d", req.u.p.priority);
+		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
@@ -719,7 +722,10 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 			int i;
 
 			zero(&tmpl);
+
 			for (i = 0; proto_info[i].proto; i++) {
+				dbg("%s() adding tmpl reqid=%d proto=%d mode=%d",
+				    __func__, proto_info[i].reqid, proto_info[i].proto, proto_info[i].mode);
 				tmpl[i].reqid = proto_info[i].reqid;
 				tmpl[i].id.proto = proto_info[i].proto;
 				tmpl[i].optional = proto_info[i].proto == IPPROTO_COMP && dir != XFRM_POLICY_OUT;
@@ -743,13 +749,13 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		}
 
 		/* mark policy extension */
-		{
+		if (sa_marks != NULL && xfrm_if_id == 0) {
 			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			if (sa_mark.val != 0 && sa_mark.mask != 0 && xfrm_if_id == 0) {
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
 				struct xfrm_mark xfrm_mark;
 				struct rtattr* mark_attr;
-
+				dbg("%s() adding mark %x/%x", __func__, sa_mark.val, sa_mark.mask);
 				xfrm_mark.v = sa_mark.val;
 				xfrm_mark.m = sa_mark.mask;
 				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
@@ -760,9 +766,10 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 				req.n.nlmsg_len += mark_attr->rta_len;
 			}
 		}
+
 #ifdef USE_XFRM_INTERFACE
 		if (xfrm_if_id != 0) {
-			dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrm_if_id, req.n.nlmsg_type);
 			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
 			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
@@ -787,7 +794,7 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		passert(sec_label.len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		dbg("passing security label '"PRI_SHUNK"' to kernel", pri_shunk(sec_label));
+		dbg("%s() adding security label '"PRI_SHUNK"' to kernel", __func__, pri_shunk(sec_label));
 		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
 		uctx = RTA_DATA(attr);
 		uctx->exttype = XFRMA_SEC_CTX;
@@ -1311,7 +1318,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	}
 
 	req.p.reqid = sa->reqid;
-	dbg("XFRM: adding IPsec SA with reqid %d", sa->reqid);
+	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
