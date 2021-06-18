@@ -988,21 +988,40 @@ bool trap_connection(struct connection *c)
 
 	case route_easy:
 	case route_nearconflict:
-		/*
-		 * RT_ROUTED_TUNNEL is treated specially: we don't override
-		 * because we don't want to lose track of the IPSEC_SAs etc.
-		 * ??? The test treats RT_UNROUTED_KEYED specially too.
-		 */
-		if (c->spd.routing < RT_ROUTED_TUNNEL)
+		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+			/*
+			 * IKEv2 security labels are treated
+			 * specially: this allocates and installs a
+			 * full REQID, the route_and_eroute() call
+			 * does not (and who knows what else it does).
+			 */
+			dbg("kernel: installing SE trap policy");
+			return (install_se_connection_policy(c, /*inbound*/true, c->logger) &&
+				install_se_connection_policy(c, /*inbound*/false, c->logger));
+			return true;
+		} else if (c->spd.routing >= RT_ROUTED_TUNNEL) {
+			/*
+			 * RT_ROUTED_TUNNEL is treated specially: we
+			 * don't override because we don't want to
+			 * lose track of the IPSEC_SAs etc.
+			 *
+			 * ??? The test treats RT_UNROUTED_KEYED
+			 * specially too.
+			 *
+			 * XXX: ah, I was wondering ...
+			 */
+			dbg("kernel: skipping trap policy as >=ROUTED_TUNNEL");
+			return true;
+		} else {
 			return route_and_eroute(c, &c->spd, NULL, c->logger);
-
-		return true;
+		}
 
 	case route_farconflict:
 		return false;
 
 	case route_unnecessary:
 		return true;
+
 	default:
 		bad_case(r);
 	}
