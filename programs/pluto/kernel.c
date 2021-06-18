@@ -998,7 +998,6 @@ bool trap_connection(struct connection *c)
 			dbg("kernel: installing SE trap policy");
 			return (install_se_connection_policy(c, /*inbound*/true, c->logger) &&
 				install_se_connection_policy(c, /*inbound*/false, c->logger));
-			return true;
 		} else if (c->spd.routing >= RT_ROUTED_TUNNEL) {
 			/*
 			 * RT_ROUTED_TUNNEL is treated specially: we
