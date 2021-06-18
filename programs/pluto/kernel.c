@@ -1207,7 +1207,7 @@ void unroute_connection(struct connection *c)
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_policy(KP_DELETE, c, sr, RT_UNROUTED,
+			shunt_policy(KP_DELETE_OUTBOUND, c, sr, RT_UNROUTED,
 				     "unrouting connection",
 				     c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -1449,7 +1449,8 @@ bool raw_policy(enum kernel_policy_op op,
 			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 			return true;
 		case SPI_TRAP:
-			if (op == KP_ADD_INBOUND || op == KP_DEL_INBOUND) {
+			if (op == KP_ADD_INBOUND ||
+			    op == KP_DELETE_INBOUND) {
 				dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
 				return true;
 			}
@@ -1550,7 +1551,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 		    str_selectors(&src, &dst, &sb), why);
 		const ip_address null_host = afi->address.any;
 		/* assume low code logged action */
-		ok = raw_policy(KP_DELETE,
+		ok = raw_policy(KP_DELETE_OUTBOUND,
 				&null_host, &src, &null_host, &dst,
 				htonl(cur_shunt_spi), htonl(SPI_PASS),
 				&ip_protocol_internal,
@@ -1629,7 +1630,7 @@ bool install_se_connection_policy(struct connection *c, bool inbound, struct log
 	}
 	struct end *src = inbound ? &c->spd.that : &c->spd.this;
 	struct end *dst = inbound ? &c->spd.this : &c->spd.that;
-	return raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD,
+	return raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
 			  /*src*/&src->host_addr, &src->client,
 			  /*dst*/&dst->host_addr, &dst->client,
 			  /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
@@ -1770,10 +1771,10 @@ bool assign_holdpass(const struct connection *c,
 			const char *reason;
 
 			if (erouted(ro)) {
-				op = KP_REPLACE;
+				op = KP_REPLACE_OUTBOUND;
 				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
 			} else {
-				op = KP_ADD;
+				op = KP_ADD_OUTBOUND;
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
@@ -2566,7 +2567,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_policy(KP_DEL_INBOUND,
+	    !raw_policy(KP_DELETE_INBOUND,
 			&effective_remote_address,
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
@@ -2914,12 +2915,12 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_REPLACE, c, sr,
+			eroute_installed = shunt_policy(KP_REPLACE_OUTBOUND, c, sr,
 							RT_ROUTED_PROSPECTIVE,
 							"route_and_eroute() replace shunt",
 							logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, KP_REPLACE,
+			eroute_installed = sag_eroute(st, sr, KP_REPLACE_OUTBOUND,
 						      "route_and_eroute() replace sag");
 		}
 
@@ -2938,12 +2939,12 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_ADD, c, sr,
+			eroute_installed = shunt_policy(KP_ADD_OUTBOUND, c, sr,
 							RT_ROUTED_PROSPECTIVE,
 							"route_and_eroute() add",
 							logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, KP_ADD, "add");
+			eroute_installed = sag_eroute(st, sr, KP_ADD_OUTBOUND, "add");
 		}
 	}
 
@@ -3103,7 +3104,7 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 
-				if (!raw_policy(KP_REPLACE,
+				if (!raw_policy(KP_REPLACE_OUTBOUND,
 						&bs->said.dst,        /* should be useless */
 						&bs->our_client,
 						&bs->said.dst,        /* should be useless */
@@ -3129,8 +3130,8 @@ bool route_and_eroute(struct connection *c,
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					if (!shunt_policy(KP_REPLACE, ero, esr,
-							  esr->routing,
+					if (!shunt_policy(KP_REPLACE_OUTBOUND,
+							  ero, esr, esr->routing,
 							  "route_and_eroute() restore",
 							  logger)) {
 						llog(RC_LOG, logger,
@@ -3152,16 +3153,16 @@ bool route_and_eroute(struct connection *c,
 
 					if (ost != NULL) {
 						if (!sag_eroute(ost, esr,
-							KP_REPLACE,
-							"restore"))
+								KP_REPLACE_OUTBOUND,
+								"restore"))
 							llog(RC_LOG, logger,
-								    "sag_eroute() in route_and_eroute() failed restore/replace");
+							     "sag_eroute() in route_and_eroute() failed restore/replace");
 					}
 				}
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!shunt_policy(KP_DELETE, c, sr,
+					if (!shunt_policy(KP_DELETE_OUTBOUND, c, sr,
 							  sr->routing,
 							  "route_and_eroute() delete",
 							  logger)) {
@@ -3170,7 +3171,7 @@ bool route_and_eroute(struct connection *c,
 					}
 				} else {
 					if (!sag_eroute(st, sr,
-							KP_DELETE,
+							KP_DELETE_OUTBOUND,
 							"delete")) {
 						llog(RC_LOG, logger,
 							    "sag_eroute() in route_and_eroute() failed in st case for delete");
@@ -3385,8 +3386,8 @@ void delete_ipsec_sa(struct state *st)
 						 */
 						unroute_connection(c);
 					} else {
-						if (!shunt_policy(KP_REPLACE, c, sr,
-								  sr->routing,
+						if (!shunt_policy(KP_REPLACE_OUTBOUND,
+								  c, sr, sr->routing,
 								  "delete_ipsec_sa() replace with shunt",
 								  st->st_logger)) {
 							log_state(RC_LOG, st,
@@ -3648,7 +3649,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 */
 
 			const ip_address null_host = afi->address.any;
-			bool ok = raw_policy(KP_REPLACE,
+			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
 					     &null_host, &src, &null_host, &dst,
 					     htonl(cur_shunt_spi), htonl(new_shunt_spi),
 					     &ip_protocol_internal, transport_proto,
@@ -3731,7 +3732,7 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, false);
 				if (c != NULL) {
-					if (!shunt_policy(KP_ADD, c, &c->spd,
+					if (!shunt_policy(KP_ADD_OUTBOUND, c, &c->spd,
 							  RT_ROUTED_PROSPECTIVE,
 							  "expire_bare_shunts() add",
 							  logger)) {

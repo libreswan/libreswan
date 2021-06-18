@@ -422,17 +422,17 @@ enum_enum_names sa_type_names = {
 static const char *kernel_policy_op_name[] = {
 	[0] = "KP_INVALID",
 #define S(E) [E] = #E
-	S(KP_ADD),
-	S(KP_REPLACE),
-	S(KP_DELETE),
+	S(KP_ADD_OUTBOUND),
+	S(KP_REPLACE_OUTBOUND),
+	S(KP_DELETE_OUTBOUND),
 	S(KP_ADD_INBOUND),
 	S(KP_REPLACE_INBOUND),
-	S(KP_DEL_INBOUND),
+	S(KP_DELETE_INBOUND),
 #undef S
 };
 
 enum_names kernel_policy_op_names = {
-	0, KP_DEL_INBOUND,
+	0, KP_DELETE_INBOUND,
 	ARRAY_REF(kernel_policy_op_name),
 	.en_prefix = "KP_",
 };

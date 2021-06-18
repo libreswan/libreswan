@@ -585,7 +585,7 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 			policy_name = "%discard(discard)";
 			break;
 		case SPI_TRAP:
-			if (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) {
+			if (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DELETE_INBOUND) {
 				dbg("%s() inbound SPI_TRAP implemented as no-op", __func__);
 				return true;
 			}
@@ -601,7 +601,8 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	default:
 		bad_case(esatype);
 	}
-	const int dir = (sadb_op == KP_ADD_INBOUND || sadb_op == KP_DEL_INBOUND) ?
+	const int dir = (sadb_op == KP_ADD_INBOUND ||
+			 sadb_op == KP_DELETE_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
 	dbg("%s() policy=%s/%d dir=%d", __func__, policy_name, policy, dir);
 
@@ -678,7 +679,8 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	req.u.p.sel.proto = transport_proto;
 	req.u.p.sel.family = family;
 
-	if (sadb_op == KP_DELETE || sadb_op == KP_DEL_INBOUND) {
+	if (sadb_op == KP_DELETE_OUTBOUND ||
+	    sadb_op == KP_DELETE_INBOUND) {
 		req.u.id.dir = dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -709,13 +711,13 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		 * tunnel A = C configured.
 		 */
 		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		if (sadb_op == KP_REPLACE)
+		if (sadb_op == KP_REPLACE_OUTBOUND)
 			req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
 	if (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) {
-		if (sadb_op != KP_DELETE) {
+		if (sadb_op != KP_DELETE_OUTBOUND) {
 			struct rtattr *attr;
 
 			struct xfrm_user_tmpl tmpl[4];
@@ -806,8 +808,8 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	bool enoent_ok = sadb_op == KP_DEL_INBOUND ||
-		(sadb_op == KP_DELETE && ntohl(cur_spi) == SPI_HOLD);
+	bool enoent_ok = (sadb_op == KP_DELETE_INBOUND ||
+			  (sadb_op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
 
 	bool ok = netlink_policy(&req.n, enoent_ok, policy_name, logger);
 
@@ -2172,23 +2174,23 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 		 * opname
 		 */
 		switch (op) {
-		case KP_REPLACE:
+		case KP_REPLACE_OUTBOUND:
 			/* replace with nothing == delete */
-			op = KP_DELETE;
+			op = KP_DELETE_OUTBOUND;
 			opname = "delete";
 			break;
-		case KP_ADD:
+		case KP_ADD_OUTBOUND:
 			/* add nothing == do nothing */
 			return TRUE;
 
-		case KP_DELETE:
+		case KP_DELETE_OUTBOUND:
 			/* delete remains delete */
 			break;
 
 		case KP_ADD_INBOUND:
 			break;
 
-		case KP_DEL_INBOUND:
+		case KP_DELETE_INBOUND:
 			break;
 
 		default:
@@ -2203,13 +2205,13 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 		 */
 		passert(eclipsable(sr));
 		switch (op) {
-		case KP_REPLACE:
+		case KP_REPLACE_OUTBOUND:
 			/* really an add */
-			op = KP_ADD;
+			op = KP_ADD_OUTBOUND;
 			opname = "replace eclipsed";
 			eclipse_count--;
 			break;
-		case KP_DELETE:
+		case KP_DELETE_OUTBOUND:
 			/*
 			 * delete unnecessary:
 			 * we don't actually have an eroute
@@ -2217,18 +2219,18 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			eclipse_count--;
 			return TRUE;
 
-		case KP_ADD:
+		case KP_ADD_OUTBOUND:
 		default:
 			bad_case(op);
 		}
-	} else if (eclipse_count > 0 && op == KP_DELETE && eclipsable(sr)) {
+	} else if (eclipse_count > 0 && op == KP_DELETE_OUTBOUND && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
 		struct connection *ue = eclipsed(c, &esr);
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return netlink_shunt_policy(KP_REPLACE, ue, esr,
+			return netlink_shunt_policy(KP_REPLACE_OUTBOUND, ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
 						    "restoring eclipsed",
 						    logger);
@@ -2269,11 +2271,11 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 		return false;
 
 	switch (op) {
-	case KP_ADD:
+	case KP_ADD_OUTBOUND:
 		op = KP_ADD_INBOUND;
 		break;
-	case KP_DELETE:
-		op = KP_DEL_INBOUND;
+	case KP_DELETE_OUTBOUND:
+		op = KP_DELETE_INBOUND;
 		break;
 	default:
 		return true;
