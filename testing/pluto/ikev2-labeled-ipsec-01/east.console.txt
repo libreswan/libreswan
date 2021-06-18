@@ -2,18 +2,15 @@
 east #
  echo 3 > /proc/sys/net/core/xfrm_acq_expires
 east #
- # generate in OUTPUT directory
+ # build install se module
 east #
- ( cd OUTPUT && rm -f ipsecspd.pp ipsecspd.te )
-east #
- ( cd OUTPUT && ln -s ../ipsecspd.te )
-east #
- ( cd OUTPUT && make -f PATH/share/selinux/devel/Makefile ipsecspd.pp )
+ ../../guestbin/semodule.sh ipsecspd.te
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ipsecspd.pp installed
 east #
- ( cd OUTPUT && semodule -i ipsecspd.pp )
+ # get pluto going
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -22,6 +19,8 @@ east #
 east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
+east #
+ # start the server
 east #
  ipsec getpeercon_server 4300 &
 [x] PID
@@ -32,10 +31,16 @@ east #
 -> listening on TCP port 4300 ... ok
 -> waiting ... initdone
 east #
- ../../guestbin/ipsec-look.sh
+ # There should be FOUR IPsec SA states (two sets), all with same
 <- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
    quit
 -> connection closed
+east #
+ # reqid. And there should be one set of tunnel policies using the
+east #
+ # configured ipsec_spd_t label, plus an outgoing %trap policy
+east #
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -87,7 +92,5 @@ Certificate Nickname                                         Trust Attributes
 east #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-east #
- rm -rf ipsecspd.fc ipsecspd.if tmp
 east #
  
