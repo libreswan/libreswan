@@ -70,7 +70,7 @@ src 192.1.2.23 dst 192.1.2.45
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687485 ptype main
+	dir out priority 1687486 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
