@@ -3283,27 +3283,32 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		sr = sr->spd_next;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
-	for (; sr != NULL; sr = sr->spd_next) {
-		dbg("kernel: sr for #%lu: %s", st->st_serialno,
-		    enum_name(&routing_story, sr->routing));
+	struct connection *c = st->st_connection;
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
+	} else {
+		for (; sr != NULL; sr = sr->spd_next) {
+			dbg("kernel: sr for #%lu: %s", st->st_serialno,
+			    enum_name(&routing_story, sr->routing));
 
-		/*
-		 * if the eroute owner is not us, then make it us.
-		 * See test co-terminal-02, pluto-rekey-01,
-		 * pluto-unit-02/oppo-twice
-		 */
-		pexpect(sr->eroute_owner == SOS_NOBODY ||
-			sr->routing >= RT_ROUTED_TUNNEL);
+			/*
+			 * if the eroute owner is not us, then make it
+			 * us.  See test co-terminal-02,
+			 * pluto-rekey-01, pluto-unit-02/oppo-twice
+			 */
+			pexpect(sr->eroute_owner == SOS_NOBODY ||
+				sr->routing >= RT_ROUTED_TUNNEL);
 
-		if (sr->eroute_owner != st->st_serialno &&
-			sr->routing != RT_UNROUTED_KEYED) {
-			if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
-				delete_ipsec_sa(st);
-				/*
-				 * XXX go and unroute any SRs that were
-				 * successfully routed already.
-				 */
-				return false;
+			if (sr->eroute_owner != st->st_serialno &&
+			    sr->routing != RT_UNROUTED_KEYED) {
+				if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
+					delete_ipsec_sa(st);
+					/*
+					 * XXX go and unroute any SRs that were
+					 * successfully routed already.
+					 */
+					return false;
+				}
 			}
 		}
 	}
