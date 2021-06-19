@@ -113,14 +113,6 @@ static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
-enum {
-	IPSEC_POLICY_DISCARD    = 0,
-	IPSEC_POLICY_NONE       = 1,
-	IPSEC_POLICY_IPSEC      = 2,
-	IPSEC_POLICY_ENTRUST    = 3,
-	IPSEC_POLICY_BYPASS     = 4
-};
-
 static sparse_names xfrm_type_names = {
 	NE(NLMSG_NOOP),
 	NE(NLMSG_ERROR),
@@ -536,10 +528,30 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 			struct xfrm_userpolicy_info p;
 			struct xfrm_userpolicy_id id;
 		} u;
+		/* ??? MAX_NETLINK_DATA_SIZE is defined in our header, not a kernel header */
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
-	int policy;
+	/*
+	 * ???
+	 * This enum was pointlessly copied from /usr/include/linux/ipsec.h
+	 * We don't use that header because it is for Racoon or PFKEY2
+	 * and we are neither.
+	 * Only three of the five values remain.
+	 * The values don't leak from this function (except in dbg output)
+	 * so the numerical values are no longer specified.
+	 * The value of "policy" is only used within this function and
+	 * only in two places; surely this could be simplified further.
+	 * The names should be made more appropriate and concise
+	 * for this very local and specific context.
+	 * Yet another meaning overloaded onto the word "policy".
+	 */
+	enum {
+		IPSEC_POLICY_DISCARD,
+		IPSEC_POLICY_NONE,
+		IPSEC_POLICY_IPSEC,
+	} policy;
+
 	const char *policy_name;
 	switch (esatype) {
 	case ET_UNSPEC:
@@ -547,8 +559,8 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	case ET_ESP:
 	case ET_IPCOMP:
 	case ET_IPIP:
-		policy_name = protocol_by_ipproto(esatype)->name;
 		policy = IPSEC_POLICY_IPSEC;
+		policy_name = protocol_by_ipproto(esatype)->name;
 		break;
 
 	case ET_INT:
@@ -663,17 +675,16 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 	 * ports before passing to XFRM.
 	 */
 	if (transport_proto == IPPROTO_ICMP ||
-		transport_proto == IPPROTO_ICMPV6) {
-		uint16_t icmp_type;
-		uint16_t icmp_code;
-
-		icmp_type = ntohs(req.u.p.sel.sport) >> 8;
-		icmp_code = ntohs(req.u.p.sel.sport) & 0xFF;
+	    transport_proto == IPPROTO_ICMPV6) {
+		uint16_t tc = ntohs(req.u.p.sel.sport);
+		uint16_t icmp_type = tc >> 8;
+		uint16_t icmp_code = tc & 0xFF;
 
 		req.u.p.sel.sport = htons(icmp_type);
 		req.u.p.sel.dport = htons(icmp_code);
 	}
 
+	/* note: byte order doesn't change 0 or ~0 */
 	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
 	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
 	req.u.p.sel.proto = transport_proto;
@@ -691,9 +702,8 @@ static bool netlink_raw_policy(enum kernel_policy_op sadb_op,
 		req.u.p.priority = sa_priority;
 		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
 
-		req.u.p.action = XFRM_POLICY_ALLOW;
-		if (policy == IPSEC_POLICY_DISCARD)
-			req.u.p.action = XFRM_POLICY_BLOCK;
+		req.u.p.action = policy == IPSEC_POLICY_DISCARD ?
+			XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW;
 		/* req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
