@@ -401,7 +401,7 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, ipsec_spi_t shunt_spi,
 			   const char *why, struct logger *logger);
 
-bool install_se_connection_policy(struct connection *c, bool inbound, struct logger *logger);
+bool install_se_connection_policies(struct connection *c, struct logger *logger);
 
 /*
  * should raw-eroute be dumped?

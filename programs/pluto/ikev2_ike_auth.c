@@ -1263,8 +1263,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	ike->sa.st_v2_ike_intermediate_used = false;
 
 	if (c->spd.this.sec_label.len > 0) {
-		if (!install_se_connection_policy(c, /*inbound?*/true, ike->sa.st_logger) ||
-		    !install_se_connection_policy(c, /*inbound?*/false, ike->sa.st_logger)) {
+		if (!install_se_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}
 	}
@@ -1456,8 +1455,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	if (c->spd.this.sec_label.len > 0) {
-		if (!install_se_connection_policy(c, /*inbound?*/true, ike->sa.st_logger) ||
-		    !install_se_connection_policy(c, /*inbound?*/false, ike->sa.st_logger)) {
+		if (!install_se_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}
 	}

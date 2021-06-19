@@ -996,8 +996,7 @@ bool trap_connection(struct connection *c)
 			 * does not (and who knows what else it does).
 			 */
 			dbg("kernel: installing SE trap policy");
-			return (install_se_connection_policy(c, /*inbound*/true, c->logger) &&
-				install_se_connection_policy(c, /*inbound*/false, c->logger));
+			return install_se_connection_policies(c, c->logger);
 		} else if (c->spd.routing >= RT_ROUTED_TUNNEL) {
 			/*
 			 * RT_ROUTED_TUNNEL is treated specially: we
@@ -1595,56 +1594,96 @@ bool delete_bare_shunt(const ip_address *src_address,
 	return ok;
 }
 
-bool install_se_connection_policy(struct connection *c, bool inbound, struct logger *logger)
+bool install_se_connection_policies(struct connection *c, struct logger *logger)
 {
 	struct pfkey_proto_info proto_infos[4] = {0};
 	const struct ip_protocol *inner_proto = NULL;
 	enum eroute_type inner_esatype = ET_UNSPEC;
 	enum encapsulation_mode mode = (c->policy & POLICY_TUNNEL ? ENCAPSULATION_MODE_TUNNEL :
 					ENCAPSULATION_MODE_TRANSPORT);
+	uint32_t priority = calculate_sa_prio(c, /*oe_shunt*/false);
 
-	struct pfkey_proto_info *p = &proto_infos[elemsof(proto_infos) - 1];
+	struct pfkey_proto_info *proto_info = &proto_infos[elemsof(proto_infos) - 1];
 	if (c->policy & POLICY_AUTHENTICATE) {
 		inner_proto = &ip_protocol_ah;
 		inner_esatype = ET_AH;
-		p--;
-		p->reqid = reqid_ah(c->spd.reqid);
-		p->proto = IPPROTO_AH;
-		p->mode = mode;
+		proto_info--;
+		proto_info->reqid = reqid_ah(c->spd.reqid);
+		proto_info->proto = IPPROTO_AH;
+		proto_info->mode = mode;
 	}
 	if (c->policy & POLICY_ENCRYPT) {
 		inner_proto = &ip_protocol_esp;
 		inner_esatype = ET_ESP;
-		p--;
-		p->reqid = reqid_esp(c->spd.reqid);
-		p->proto = IPPROTO_ESP;
-		p->mode = mode;
+		proto_info--;
+		proto_info->reqid = reqid_esp(c->spd.reqid);
+		proto_info->proto = IPPROTO_ESP;
+		proto_info->mode = mode;
 	}
 	if (c->policy & POLICY_COMPRESS) {
 		inner_proto = &ip_protocol_comp;
 		inner_esatype = ET_IPCOMP;
-		p--;
-		p->reqid = reqid_ipcomp(c->spd.reqid);
-		p->proto = IPPROTO_COMP;
-		p->mode = mode;
+		proto_info--;
+		proto_info->reqid = reqid_ipcomp(c->spd.reqid);
+		proto_info->proto = IPPROTO_COMP;
+		proto_info->mode = mode;
 	}
-	struct end *src = inbound ? &c->spd.that : &c->spd.this;
-	struct end *dst = inbound ? &c->spd.this : &c->spd.that;
-	return raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
-			  /*src*/&src->host_addr, &src->client,
-			  /*dst*/&dst->host_addr, &dst->client,
-			  /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-			  /*sa_proto*/inner_proto,
-			  /*transport_proto*/c->spd.this.protocol,
-			  /*esatype*/inner_esatype,
-			  /*proto_info*/p,
-			  /*use_lifetime*/deltatime(0),
-			  /*sa_priority*/calculate_sa_prio(c, /*oe_shunt*/false),
-			  /*sa_marks*/NULL,
-			  /*xfrm_if_id*/0,
-			  /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
-			  /*logger*/logger,
-			  "%s() security label policy", __func__);
+
+	/*
+	 * SE installs both an outgoing and incoming policy.  Normal
+	 * connections do not.
+	 */
+	for (unsigned i = 0; i < 2; i++) {
+		bool inbound = (i == 1);
+		struct end *src = inbound ? &c->spd.that : &c->spd.this;
+		struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
+				/*src*/&src->host_addr, &src->client,
+				/*dst*/&dst->host_addr, &dst->client,
+				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				/*sa_proto*/inner_proto,
+				/*transport_proto*/c->spd.this.protocol,
+				/*esatype*/inner_esatype,
+				/*proto_info*/proto_info,
+				/*use_lifetime*/deltatime(0),
+				/*sa_priority*/priority,
+				/*sa_marks*/NULL,
+				/*xfrm_if_id*/0,
+				/*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				/*logger*/logger,
+				"%s() security label policy", __func__)) {
+			if (inbound) {
+				/*
+				 * Need to pull the just installed
+				 * outbound policy.
+				 *
+				 * XXX: this call highlights why
+				 * having both KP_*_REVERSED and and
+				 * reversed parameters is just so
+				 * lame.  raw_policy can handle this.
+				 */
+				dbg("pulling previously installed outbound policy");
+				pexpect(i > 0);
+				raw_policy(KP_DELETE_OUTBOUND,
+					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
+					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
+					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+					   /*sa_proto*/inner_proto,
+					   /*transport_proto*/c->spd.this.protocol,
+					   /*esatype*/inner_esatype,
+					   /*proto_info*/proto_info,
+					   /*use_lifetime*/deltatime(0),
+					   /*sa_priority*/priority,
+					   /*sa_marks*/NULL,
+					   /*xfrm_if_id*/0,
+					   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+					   /*logger*/logger,
+					   "%s() security label policy", __func__);
+			}
+			return false;
+		}
+	}
+	return true;
 }
 
 bool eroute_connection(const struct spd_route *sr,
