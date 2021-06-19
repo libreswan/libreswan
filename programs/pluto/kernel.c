@@ -1596,6 +1596,33 @@ bool delete_bare_shunt(const ip_address *src_address,
 
 bool install_se_connection_policies(struct connection *c, struct logger *logger)
 {
+	connection_buf cb;
+	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s",
+	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
+	    pri_connection(c, &cb),
+	    enum_name(&routing_story, c->spd.routing));
+
+	if (!pexpect(c->spd.this.sec_label.len > 0)) {
+		return false;
+	}
+
+#if 0
+	/*
+	 * XXX: given a template connection with an installed policy;
+	 * the acquire will instantiate the template and attach that
+	 * to the IKE SA; it should have probably attached the
+	 * template and then later instantiated the child.
+	 */
+	if (!pexpect(c->kind == CK_TEMPLATE)) {
+		return false;
+	}
+#endif
+
+	if (c->spd.routing != RT_UNROUTED) {
+		dbg("kernel: %s() connection already routed", __func__);
+		return true;
+	}
+
 	struct pfkey_proto_info proto_infos[4] = {0};
 	const struct ip_protocol *inner_proto = NULL;
 	enum eroute_type inner_esatype = ET_UNSPEC;
@@ -1683,6 +1710,45 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 			return false;
 		}
 	}
+
+	/* a new route: no deletion required, but preparation is */
+	if (!do_command(c, &c->spd, "prepare", NULL/*ST*/, logger)) {
+		dbg("kernel: %s() prepare command returned an error", __func__);
+	}
+
+	if (!do_command(c, &c->spd, "route", NULL/*ST*/, logger)) {
+		/* Failure!  Unwind our work. */
+		dbg("kernel: %s() route command returned an error", __func__);
+		if (!do_command(c, &c->spd, "down", NULL/*st*/, logger)) {
+			dbg("kernel: down command returned an error");
+		}
+		dbg("kernel: %s() pulling policies", __func__);
+		for (unsigned i = 0; i < 2; i++) {
+			bool inbound = (i > 0);
+			struct end *src = inbound ? &c->spd.that : &c->spd.this;
+			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+			/* ignore result */
+			raw_policy(inbound ? KP_DELETE_INBOUND : KP_DELETE_OUTBOUND,
+				   /*src*/&src->host_addr, &src->client,
+				   /*dst*/&dst->host_addr, &dst->client,
+				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				   /*sa_proto*/inner_proto,
+				   /*transport_proto*/c->spd.this.protocol,
+				   /*esatype*/inner_esatype,
+				   /*proto_info*/proto_info,
+				   /*use_lifetime*/deltatime(0),
+				   /*sa_priority*/priority,
+				   /*sa_marks*/NULL,
+				   /*xfrm_if_id*/0,
+				   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				   /*logger*/logger,
+				   "%s() security label policy", __func__);
+		}
+		return false;
+	}
+
+	/* Success! */
+	c->spd.routing = RT_ROUTED_PROSPECTIVE;
 	return true;
 }
 
