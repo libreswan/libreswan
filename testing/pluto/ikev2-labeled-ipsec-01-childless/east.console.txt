@@ -1,22 +1,19 @@
 /testing/guestbin/swan-prep
 east #
- # generate in output directory
+ # build install se module
 east #
- rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
-east #
- ln -s ../ipsecspd.te OUTPUT
-east #
- make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
-make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01-childless/OUTPUT'
+ ../../guestbin/semodule.sh ipsecspd.te
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01-childless/OUTPUT'
+ipsecspd.pp installed
 east #
- semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
+ # get pluto going
 east #
  ipsec start
 Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
 east #
  ../../guestbin/wait-until-pluto-started
 east #
@@ -24,6 +21,8 @@ east #
 east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
+east #
+ # start the server
 east #
  ipsec getpeercon_server 4300 &
 [x] PID
@@ -34,10 +33,16 @@ east #
 -> listening on TCP port 4300 ... ok
 -> waiting ... initdone
 east #
- ../../guestbin/ipsec-look.sh
+ # There should be FOUR IPsec SA states (two sets), all with same
 <- connect(192.1.2.45,unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023)
    quit
 -> connection closed
+east #
+ # reqid. And there should be one set of tunnel policies using the
+east #
+ # configured ipsec_spd_t label, plus an outgoing %trap policy
+east #
+ ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -55,7 +60,7 @@ src 192.1.2.23 dst 192.1.2.45
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687485 ptype main
+	dir out priority 1687486 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
@@ -77,7 +82,5 @@ Certificate Nickname                                         Trust Attributes
 east #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-east #
- rm -rf ipsecspd.fc ipsecspd.if tmp
 east #
  

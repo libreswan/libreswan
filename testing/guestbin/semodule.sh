@@ -25,4 +25,3 @@ fi
 
 semodule -i OUTPUT/${pp}
 echo ${pp} installed
-

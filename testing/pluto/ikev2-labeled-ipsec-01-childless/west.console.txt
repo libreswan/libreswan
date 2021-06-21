@@ -1,19 +1,10 @@
 /testing/guestbin/swan-prep
 west #
- # generate in output directory
+ # install selinux; generated in OUTPUT by east
 west #
- rm -f OUTPUT/ipsecspd.pp OUTPUT/ipsecspd.te
+ semodule -i OUTPUT/ipsecspd.pp
 west #
- ln -s ../ipsecspd.te OUTPUT
-west #
- make -C OUTPUT/ -f PATH/share/selinux/devel/Makefile ipsecspd.pp
-make: Entering directory '/testing/pluto/ikev2-labeled-ipsec-01-childless/OUTPUT'
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-make: Leaving directory '/testing/pluto/ikev2-labeled-ipsec-01-childless/OUTPUT'
-west #
- semodule -i OUTPUT/ipsecspd.pp > /dev/null 2>/dev/null
+ # start pluto
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -32,6 +23,8 @@ west #
 west #
  echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 west #
+ # should install two labels
+west #
  ipsec auto --up labeled
 002 "labeled" #1: IMPAIR: connection has security label 'system_u:object_r:ipsec_spd_t:s0'; omitting CHILD SA payloads from the IKE_AUTH request
 1v2 "labeled" #1: initiating IKEv2 connection
@@ -40,45 +33,33 @@ west #
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 west #
- # workaround kernel bug displaying a NUL freaking out python
-west #
- ip xfrm state | strings
-west #
- ip xfrm pol
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
-	dir out priority 1687486 ptype main 
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 1687486 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
-	dir in priority 1687486 ptype main 
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 1687486 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ # trigger SA
 west #
  echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
@@ -102,11 +83,29 @@ Ncat: 5 bytes sent, 0 bytes received ...
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
+ # there should be ? tunnels - both inactive in one direction
+west #
  ipsec trafficstatus
 006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
 west #
+ # there should be no bare shunts
+west #
+ ipsec shuntstatus
+000 Bare Shunt list:
+000  
+west #
+ # let larval state expire
+west #
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+west #
  echo done
 done
+west #
+ # There should be FOUR IPsec SA states (two sets), all with same
+west #
+ # reqid. And there should be one set of tunnel policies using the
+west #
+ # configured ipsec_spd_t label, plus an outgoing %trap policy
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -148,7 +147,5 @@ Certificate Nickname                                         Trust Attributes
 west #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-west #
- rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
  

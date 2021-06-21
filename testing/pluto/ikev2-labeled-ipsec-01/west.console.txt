@@ -4,12 +4,7 @@ west #
 west #
  # install selinux; generated in OUTPUT by east
 west #
- semodule -i -v OUTPUT/ipsecspd.pp
-libsemanage.map_file: Unable to open -v
- (No such file or directory).
-libsemanage.semanage_direct_install_file: Unable to read file -v
- (No such file or directory).
-semodule:  Failed on -v!
+ semodule -i OUTPUT/ipsecspd.pp
 west #
  # start pluto
 west #
@@ -158,7 +153,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
  semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Unable to remove module ipsecspd at priority 400. (No such file or directory).
-semodule:  Failed!
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  
