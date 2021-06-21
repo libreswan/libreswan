@@ -119,30 +119,28 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 }
 #endif
 
-static void dbg_sec_label_match(shunk_t a, chunk_t b, const char *match, struct logger *logger)
-{
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "sec_labels '");
-			jam_sanitized_hunk(buf, a);
-			jam(buf, "' vs '");
-			jam_sanitized_hunk(buf, b);
-			jam(buf, "' %s", match);
-		}
-	}
-}
-
 bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger)
 {
-	if (label.ptr == NULL && range.ptr == NULL) {
-		return true;
+	if (label.len == 0 || range.len == 0) {
+		return false;
 	}
-	if (within_range(label.ptr, (char*)range.ptr, logger)) {
-		dbg_sec_label_match(label, range, "matched with within_range()", logger);
-		return true;
+	/*
+	 * NUL must be part of HUNK.  Too weak?
+	 */
+	passert(hunk_strnlen(label) < label.len);
+	passert(hunk_strnlen(range) < range.len);
+	/* use as strings */
+	bool within = within_range(label.ptr, (const char*)range.ptr, logger);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "security label '");
+			jam_sanitized_hunk(buf, label);
+			jam(buf, "' %s within range '", within ? "is" : "is not");
+			jam_sanitized_hunk(buf, range);
+			jam(buf, "'");
+		}
 	}
-	dbg_sec_label_match(label, range, "not within range", logger);
-	return false;
+	return within;
 }
 
 #else
