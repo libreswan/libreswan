@@ -3935,6 +3935,6 @@ void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool 
 			}
 		}
 	} else {
-		log_global(RC_LOG, null_fd, "Received kernel EXPIRE event for IPsec SPI 0x%x, but there is no connection anymore with this SPI.", ntohl(spi));
+		llog(RC_LOG, NULL, "Received kernel EXPIRE event for IPsec SPI 0x%x, but there is no connection anymore with this SPI.", ntohl(spi));
 	}
 }
