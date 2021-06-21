@@ -16,11 +16,18 @@
  */
 
 #include <errno.h>
-#include "security_selinux.h"
+#include "labeled_ipsec.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
-#include "labeled_ipsec.h"	/* for MAX_SECCTX_LEN */
+
+#ifdef HAVE_LABELED_IPSEC
+
+#include <selinux/selinux.h>
+#ifdef HAVE_OLD_SELINUX
+#include <selinux/avc.h>
+#include <selinux/context.h>
+#endif
 
 err_t vet_seclabel(shunk_t sl)
 {
@@ -41,21 +48,19 @@ err_t vet_seclabel(shunk_t sl)
 	return NULL;
 }
 
-#ifdef HAVE_LABELED_IPSEC	/* rest of file! */
-
-void init_selinux(struct logger *logger)
+void init_labeled_ipsec(struct logger *logger)
 {
 	if (!is_selinux_enabled()) {
 		llog(RC_LOG, logger, "selinux support is NOT enabled.");
-	} else {
-#ifdef HAVE_OLD_SELINUX
-		if (avc_init("libreswan", NULL, NULL, NULL, NULL) != 0) {
-			fatal(PLUTO_EXIT_SELINUX_FAIL, logger, "selinux: could not initialize avc");
-		}
-#endif
-		llog(RC_LOG, logger, "SELinux support is enabled in %s mode.",
-			security_getenforce() ? "ENFORCING" : "PERMISSIVE");
+		return;
 	}
+#ifdef HAVE_OLD_SELINUX
+	if (avc_init("libreswan", NULL, NULL, NULL, NULL) != 0) {
+		fatal(PLUTO_EXIT_SELINUX_FAIL, logger, "selinux: could not initialize avc");
+	}
+#endif
+	llog(RC_LOG, logger, "SELinux support is enabled in %s mode.",
+	     security_getenforce() ? "ENFORCING" : "PERMISSIVE");
 }
 
 #ifdef HAVE_OLD_SELINUX
@@ -129,22 +134,31 @@ static void dbg_sec_label_match(shunk_t a, chunk_t b, const char *match, struct 
 
 bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger)
 {
-	if (label.ptr == NULL && range.ptr == NULL)
+	if (label.ptr == NULL && range.ptr == NULL) {
 		return true;
-
-#if 0
-	if (hunk_eq(l, range)) {
-		PEXPECT_LOG
-		dbg_sec_label_match(l, range, "matched with hunk_eq()", logger);
+	}
+	if (within_range(label.ptr, (char*)range.ptr, logger)) {
+		dbg_sec_label_match(label, range, "matched with within_range()", logger);
 		return true;
-	} else
-#endif	       
-		if (within_range(label.ptr, (char*)range.ptr, logger)) {
-			dbg_sec_label_match(label, range, "matched with within_range()", logger);
-			return true;
-		}
+	}
 	dbg_sec_label_match(label, range, "not within range", logger);
 	return false;
 }
 
-#endif /* HAVE_LABELED_IPSEC */
+#else
+
+err_t vet_seclabel(shunk_t sl UNUSED)
+{
+	return "Labeled IPsec not supported";
+}
+
+void init_labeled_ipsec(struct logger *logger UNUSED)
+{
+}
+
+bool sec_label_within_range(shunk_t label UNUSED, chunk_t range UNUSED, struct logger *logger UNUSED)
+{
+	return false;
+}
+
+#endif

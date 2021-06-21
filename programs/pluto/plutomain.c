@@ -81,9 +81,7 @@
 # include <cap-ng.h>	/* from libcap-ng devel */
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-# include "security_selinux.h"
-#endif
+#include "labeled_ipsec.h"		/* for init_labeled_ipsec() */
 
 # include "pluto_sd.h"		/* for pluto_sd_init() */
 
@@ -1771,9 +1769,7 @@ int main(int argc, char **argv)
 #if defined(LIBCURL) || defined(LIBLDAP)
 	start_crl_fetch_helper(logger);
 #endif
-#ifdef HAVE_LABELED_IPSEC
-	init_selinux(logger);
-#endif
+	init_labeled_ipsec(logger);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init(logger);
 #endif

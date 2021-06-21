@@ -131,9 +131,8 @@ OBJS += pam_conv.o
 endif
 USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)
 
-
 # LABELED IPSEC support - requires SElinux
-OBJS += security_selinux.o
+OBJS += labeled_ipsec.o
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_LDFLAGS += -lselinux
 endif

@@ -33,8 +33,7 @@
 #include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
-#include "security_selinux.h"
-#include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
+#include "labeled_ipsec.h"
 #include "ip_range.h"
 #include "iface.h"
 

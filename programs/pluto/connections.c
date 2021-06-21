@@ -88,7 +88,7 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
-#include "security_selinux.h"
+#include "labeled_ipsec.h"		/* for vet_seclabel() */
 #include "orient.h"
 
 struct connection *connections = NULL;

@@ -67,8 +67,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 	return FALSE;
 }
 #else
-#include "security_selinux.h"
-#include "labeled_ipsec.h"
+#include "ikev1_labeled_ipsec.h"
 #include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
 static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 {

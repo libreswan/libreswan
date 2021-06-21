@@ -1631,7 +1631,7 @@ struct_desc ikev2notify_ipcomp_data_desc = {
  *
  * See struct sec_ctx in state.h
  */
-#include "labeled_ipsec.h"	/* for struct sec_ctx */
+#include "ikev1_labeled_ipsec.h"	/* for struct sec_ctx */
 
 static field_desc sec_ctx_fields[] = {
 	{ ft_nat,  8 / BITS_PER_BYTE, "DOI", NULL },

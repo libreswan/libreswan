@@ -41,7 +41,7 @@
 #include "ikev2.h"			/* for ikev2_state_transition_fn; */
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
 #include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
-#include "security_selinux.h"		/* for sec_label_within_range() */
+#include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,

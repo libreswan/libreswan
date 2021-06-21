@@ -96,8 +96,7 @@
 #include "ip_selector.h"
 #include "ip_encap.h"
 #include "initiate.h"		/* for initiate_ondemand() */
-#include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
-#include "security_selinux.h"	/* for vet_seclabel() */
+#include "labeled_ipsec.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
 
 /* required for Linux 2.6.26 kernel and later */

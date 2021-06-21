@@ -1,5 +1,6 @@
-/* Labeled IPsec
- * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
+/* Libreswan Selinux APIs
+ * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2020 Richard Haines <richard_c_haines@btinternet.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,9 +13,15 @@
  * for more details.
  */
 
-#ifndef _LABELED_IPSEC_H
-#define _LABELED_IPSEC_H
+#ifndef LABELED_IPSEC_H
+#define LABELED_IPSEC_H
 
+#include <stdbool.h>
+
+#include "shunk.h"
+#include "chunk.h"
+
+struct logger;
 
 /*
  * Security Label Context representations.
@@ -29,29 +36,10 @@
 
 #define MAX_SECCTX_LEN 4096	/* including '\0'*/
 
-/*
- * sec_ctx: representation in IKE packets, excluding text.
- *
- * See linux26/xfrm.h's struct xfrm_sec_ctx and struct xfrm_user_sec_ctx.
- * For some unexplained reason the fields of those structs are in a different order!
- * We use the order of xfrm_sec_ctx.
- *
- * Must be kept in sync with packet.c's sec_ctx_desc.
- */
+err_t vet_seclabel(shunk_t sl);
 
-struct sec_ctx {
-	uint8_t ctx_doi;
-	uint8_t ctx_alg;	/* LSMs: e.g., selinux == 1 */
-	uint16_t ctx_len;	/* of text label */
-};
+void init_labeled_ipsec(struct logger *logger);
 
-/*
- * xfrm_user_sec_ctx_ike: representation within struct state.
- * Also passed around between Pluto functions.
- */
-struct xfrm_user_sec_ctx_ike {
-	struct sec_ctx ctx;
-	char sec_ctx_value[MAX_SECCTX_LEN];	/* text label, NUL-terminated */
-};
+bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger);
 
 #endif
