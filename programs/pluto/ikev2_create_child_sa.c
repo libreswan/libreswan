@@ -622,7 +622,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
 	}
 
-	v2_emit_ts_payloads(child, outpbs, cc);
+	emit_v2TS_payloads(outpbs, child);
 
 	if (send_use_transport) {
 		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");

@@ -449,7 +449,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child);
 		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
 
-		v2_emit_ts_payloads(child, &sk.pbs, cc);
+		emit_v2TS_payloads(&sk.pbs, child);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");

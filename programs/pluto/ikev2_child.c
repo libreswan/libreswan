@@ -183,32 +183,29 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		child->sa.st_seen_no_tfc = true;
 	}
 
-	{
-		/* verify if transport / tunnel mode is matches */
-		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-			/* we should have received transport mode request - and send one */
-			if (!child->sa.st_seen_use_transport) {
-				log_state(RC_LOG, &child->sa,
-					  "policy dictates Transport Mode, but peer requested Tunnel Mode");
-				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			}
-		} else {
-			if (child->sa.st_seen_use_transport) {
-				/* RFC allows us to ignore their (wrong) request for transport mode */
-				log_state(RC_LOG, &child->sa,
-					  "policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
-			}
+	/* verify if transport / tunnel mode is matches */
+	if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
+		/* we should have received transport mode request - and send one */
+		if (!child->sa.st_seen_use_transport) {
+			log_state(RC_LOG, &child->sa,
+				  "policy dictates Transport Mode, but peer requested Tunnel Mode");
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
-
-		/*
-		 * XXX: see above notes on 'role' - this must be the
-		 * SA_RESPONDER.
-		 */
-		stf_status ret = v2_emit_ts_payloads(child, outpbs, c);
-
-		if (ret != STF_OK)
-			return ret;	/* should we delete_state cst? */
+	} else {
+		if (child->sa.st_seen_use_transport) {
+			/* RFC allows us to ignore their (wrong) request for transport mode */
+			log_state(RC_LOG, &child->sa,
+				  "policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
+		}
 	}
+
+	/*
+	 * XXX: see above notes on 'role' - this must be the
+	 * SA_RESPONDER.
+	 */
+	stf_status ret = emit_v2TS_payloads(outpbs, child);
+	if (ret != STF_OK)
+		return ret;
 
 	if (child->sa.st_seen_use_transport) {
 		if (c->policy & POLICY_TUNNEL) {

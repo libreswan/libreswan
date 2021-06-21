@@ -159,22 +159,21 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct child_
 
 /*
  * A struct end is converted to a struct traffic_selector.
- * This (currently) can contain both an IP range AND a
- * SEC_LABEL, which will get output here as two Traffic
- * Selectors. The label is optional, the IP range is
- * mandatory.
+ *
+ * This (currently) can contain both an IP range AND a SEC_LABEL,
+ * which will get output here as two Traffic Selectors. The label is
+ * optional, the IP range is mandatory.
  */
-static stf_status ikev2_emit_ts(pb_stream *outpbs,
-				const struct_desc *ts_desc,
-				const struct traffic_selector *ts,
-				const struct state *st)
+static stf_status emit_v2TS(struct pbs_out *outpbs,
+			    const struct_desc *ts_desc,
+			    const struct traffic_selector *ts,
+			    const struct child_sa *child)
 {
-	pb_stream ts_pbs;
+	struct pbs_out ts_pbs;
 	bool with_label = ts->sec_label.len != 0;
 
 	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
-		ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE)
-	{
+		ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -250,13 +249,18 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* Output the security label value of the TS_SECLABEL substructure payload.
-		 * If we got ACQUIRE, or received a subset TS_LABEL, use that one - it is subset of connection policy one
+		/*
+		 * Output the security label value of the TS_SECLABEL
+		 * substructure payload.
+		 *
+		 * If we got ACQUIRE, or received a subset TS_LABEL,
+		 * use that one - it is subset of connection policy
+		 * one
 		 */
-		if (st->st_acquired_sec_label.len != 0)
-			out_label = HUNK_AS_SHUNK(st->st_acquired_sec_label);
-		else if (st->st_seen_sec_label.len != 0)
-			out_label = HUNK_AS_SHUNK(st->st_seen_sec_label);
+		if (child->sa.st_acquired_sec_label.len != 0)
+			out_label = HUNK_AS_SHUNK(child->sa.st_acquired_sec_label);
+		else if (child->sa.st_seen_sec_label.len != 0)
+			out_label = HUNK_AS_SHUNK(child->sa.st_seen_sec_label);
 		else
 			out_label = ts->sec_label;
 
@@ -299,9 +303,7 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	return ts_ret;
 }
 
-stf_status v2_emit_ts_payloads(const struct child_sa *child,
-			       pb_stream *outpbs,
-			       const struct connection *c0)
+stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
 	const struct traffic_selector *ts_i, *ts_r;
 	struct traffic_selector ts_i_impaired, ts_r_impaired;
@@ -385,13 +387,13 @@ stf_status v2_emit_ts_payloads(const struct child_sa *child,
 	 *   payload after these
 	 */
 
-	for (const struct spd_route *sr = &c0->spd; sr != NULL;
+	for (const struct spd_route *sr = &child->sa.st_connection->spd; sr != NULL;
 	     sr = sr->spd_next) {
-		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i, &child->sa);
+		stf_status ret = emit_v2TS(outpbs, &ikev2_ts_i_desc, ts_i, child);
 
 		if (ret != STF_OK)
 			return ret;
-		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r, &child->sa);
+		ret = emit_v2TS(outpbs, &ikev2_ts_r_desc, ts_r, child);
 		if (ret != STF_OK)
 			return ret;
 	}
