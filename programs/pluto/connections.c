@@ -2449,10 +2449,8 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
-					       shunk_t csec_label,
-					       struct logger *logger UNUSED)
+					       shunk_t sec_label, struct logger *logger)
 {
-	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);
 	passert(!endpoint_is_unset(local_client));
 	passert(!endpoint_is_unset(remote_client));
 	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
@@ -2475,60 +2473,93 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		if (c->kind == CK_GROUP)
 			continue;
 
+		/*
+		 * For labeled IPsec, always start with the template.
+		 * Who are we to argue if the kernel asks for a new SA
+		 * with, seemingly, a security label that matches an
+		 * existing connection instance.
+		 */
+		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+			connection_buf cb;
+			dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
+			    pri_connection(c, &cb));
+			continue;
+		}
+
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if ( (routed(sr->routing) || c->instance_initiation_ok || sec_label.len != 0) &&
-			    endpoint_in_selector(*local_client, sr->this.client) &&
-			    endpoint_in_selector(*remote_client, sr->that.client)
-#ifdef HAVE_LABELED_IPSEC
-			     && sec_label_within_range(sec_label, sr->this.sec_label, logger)
-#endif
-			     ) {
-				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
-				policy_prio_t prio =
-					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
-					 2 * (sr->this.port == local_port) +
-					 2 * (sr->that.port == remote_port) +
-					 1 * (sr->this.protocol == ipproto));
 
-				if (DBGP(DBG_BASE)) {
-					connection_buf cib_c;
-					selectors_buf sb;
-					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
+			/*
+			 * XXX: is the !sec_label an IKEv1 thing?  An
+			 * IKEv2 sec-labeled connection should have
+			 * been routed by now?
+			 */
+			if (!routed(sr->routing) &&
+			    !c->instance_initiation_ok &&
+			    sr->this.sec_label.len == 0) {
+				continue;
+			}
+
+			/*
+			 * The triggering traffic needs to be within
+			 * the client.
+			 */
+			if (!endpoint_in_selector(*local_client, sr->this.client) ||
+			    !endpoint_in_selector(*remote_client, sr->that.client)) {
+				continue;
+			}
+
+			/*
+			 * When there is one, the label needs to be
+			 * within range.
+			 */
+			if (sec_label.len > 0 && !sec_label_within_range(sec_label, sr->this.sec_label, logger)) {
+				continue;
+			}
+
+			unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
+			policy_prio_t prio =
+				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+				 2 * (sr->this.port == local_port) +
+				 2 * (sr->that.port == remote_port) +
+				 1 * (sr->this.protocol == ipproto));
+
+			if (DBGP(DBG_BASE)) {
+				connection_buf cib_c;
+				selectors_buf sb;
+				DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
+					pri_connection(c, &cib_c),
+					str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+					prio);
+				if (best == NULL) {
+					DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
 						pri_connection(c, &cib_c),
-						str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
-						prio);
-
-					if (best == NULL) {
-						DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(c, &cib_c),
-							prio, c,
-							c->policy_next ?
-								c->policy_next->name :
-								"none");
-					} else {
-						connection_buf cib_best;
-						DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(best, &cib_best),
-							best_prio,
-							best,
-							best->policy_next ?
-								best->policy_next->name :
-								"none",
-							pri_connection(c, &cib_c),
-							prio, c,
-							c->policy_next ?
-								c->policy_next->name :
-								"none");
-					}
+						prio, c,
+						c->policy_next ?
+						c->policy_next->name :
+						"none");
+				} else {
+					connection_buf cib_best;
+					DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
+						pri_connection(best, &cib_best),
+						best_prio,
+						best,
+						best->policy_next ?
+						best->policy_next->name :
+						"none",
+						pri_connection(c, &cib_c),
+						prio, c,
+						c->policy_next ?
+						c->policy_next->name :
+						"none");
 				}
+			}
 
-				if (best == NULL || prio > best_prio) {
-					best = c;
-					best_sr = sr;
-					best_prio = prio;
-				}
+			if (best == NULL || prio > best_prio) {
+				best = c;
+				best_sr = sr;
+				best_prio = prio;
 			}
 		}
 	}
