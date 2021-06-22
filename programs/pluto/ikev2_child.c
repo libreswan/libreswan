@@ -375,7 +375,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			c->spd.this.client = selector_from_address(ip);
-			child->sa.st_ts_this = ikev2_end_to_ts(&c->spd.this, child);
+			child->sa.st_ts_this = traffic_selector_from_end(&c->spd.this);
 			c->spd.this.has_cat = true; /* create iptable entry */
 		}
 	} else {
@@ -664,8 +664,8 @@ v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
 			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
-		child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child);
-		child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child);
+		child->sa.st_ts_this = traffic_selector_from_end(&spd->this);
+		child->sa.st_ts_that = traffic_selector_from_end(&spd->that);
 	} else {
 		if (!v2_process_ts_request(child, md)) {
 			/* already logged? */

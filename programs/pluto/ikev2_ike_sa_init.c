@@ -529,18 +529,6 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
 
-	if (sec_label.len != 0) {
-		dbg("%s: received security label from acquire: "PRI_SHUNK"'", __FUNCTION__,
-		    pri_shunk(sec_label));
-		dbg("%s: connection security label: '"PRI_SHUNK"'", __FUNCTION__,
-		    pri_shunk(c->spd.this.sec_label));
-		/*
-		 * Should we have a within_range() check here? In theory, the ACQUIRE came
-		 * from a policy we gave the kernel, so it _should_ be within our range?
-		 */
-		ike->sa.st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
-	}
-
 	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    ike->sa.st_serialno, c->remote_tcpport);

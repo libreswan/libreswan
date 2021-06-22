@@ -113,18 +113,6 @@ void ikev2_initiate_child_sa(struct pending *p)
 					   (child_being_replaced != NULL ? STATE_V2_REKEY_CHILD_I0 :
 					    STATE_V2_NEW_CHILD_I0),
 					   p->whack_sock);
-		if (p->sec_label.len != 0) {
-			dbg("%s: received security label from acquire via pending: '"PRI_SHUNK"'",
-			    __FUNCTION__, pri_shunk(p->sec_label));
-			dbg("%s: connection security label: '"PRI_SHUNK"'",
-			    __FUNCTION__, pri_shunk(p->sec_label));
-			/*
-			 * Should we have a within_range() check here? In theory, the ACQUIRE came
-			 * from a policy we gave the kernel, so it _should_ be within our range?
-			 */
-			child->sa.st_acquired_sec_label = clone_hunk(p->sec_label, "st_acquired_sec_label");
-		}
-
 	} else {
 		child_being_replaced = NULL; /* obviously the IKE SA */
 		child = new_v2_child_state(c, ike, IKE_SA,
@@ -281,8 +269,8 @@ static stf_status ikev2_child_outI_continue(struct state *larval_child_sa,
 		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gi);
 	}
 
-	dbg("queueing child sa with acquired label %.*s",
-	    (int)larval_child->sa.st_acquired_sec_label.len, larval_child->sa.st_acquired_sec_label.ptr);
+	dbg("queueing child sa with acquired sec_label="PRI_SHUNK,
+	    pri_shunk(larval_child->sa.st_connection->spd.this.sec_label));
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
 	    larval_child->sa.st_serialno, ike->sa.st_serialno);
@@ -532,8 +520,8 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = ikev2_end_to_ts(&spd->this, child);
-	child->sa.st_ts_that = ikev2_end_to_ts(&spd->that, child);
+	child->sa.st_ts_this = traffic_selector_from_end(&spd->this);
+	child->sa.st_ts_that = traffic_selector_from_end(&spd->that);
 	ikev2_print_ts(&child->sa.st_ts_this);
 	ikev2_print_ts(&child->sa.st_ts_that);
 
@@ -618,8 +606,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		child->sa.st_ts_this = ikev2_end_to_ts(&cc->spd.this, child);
-		child->sa.st_ts_that = ikev2_end_to_ts(&cc->spd.that, child);
+		child->sa.st_ts_this = traffic_selector_from_end(&cc->spd.this);
+		child->sa.st_ts_that = traffic_selector_from_end(&cc->spd.that);
 	}
 
 	emit_v2TS_payloads(outpbs, child);

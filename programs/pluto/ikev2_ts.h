@@ -54,8 +54,7 @@ bool v2_process_ts_response(struct child_sa *child,
 bool v2_process_ts_request(struct child_sa *child,
 			   const struct msg_digest *md);
 
-struct traffic_selector ikev2_end_to_ts(const struct end *e,
-					const struct child_sa *child);
+struct traffic_selector traffic_selector_from_end(const struct end *e);
 
 stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 
