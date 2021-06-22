@@ -11,4 +11,5 @@ ipsec trafficstatus
 ipsec shuntstatus
 # let larval state expire
 ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+ipsec status |grep STATE_
 echo done
