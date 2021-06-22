@@ -2073,19 +2073,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-	address_buf sab, dab;
-	selector_buf scb, dcb;
-	dbg("kernel: %s() %s-->[%s=%s=>%s]-->%s %s sec_label="PRI_SHUNK,
-	    __func__,
-	    str_address(&src, &sab),
-	    str_selector(&src_client, &scb),
-	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_selector(&dst_client, &dcb),
-	    str_address(&dst, &dab),
-	    said_boilerplate.inbound ? "inbound" : "outbound",
-	    pri_shunk(said_boilerplate.sec_label))
-
-
 	ipsec_spi_t inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
 		/* If we are tunnelling, set up IP in IP pseudo SA */
@@ -2097,6 +2084,20 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		proto = &ip_protocol_esp;
 		esatype = ET_ESP;
 	}
+
+	address_buf sab, dab;
+	selector_buf scb, dcb;
+	dbg("kernel: %s() %s-%s->[%s=%s=>%s]-%s->%s %s sec_label="PRI_SHUNK,
+	    __func__,
+	    str_selector(&src_client, &scb),
+	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
+	    str_address(&src, &sab),
+	    proto->name,
+	    str_address(&dst, &dab),
+	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
+	    str_selector(&dst_client, &dcb),
+	    said_boilerplate.inbound ? "inbound" : "outbound",
+	    pri_shunk(said_boilerplate.sec_label))
 
 	/* set up IPCOMP SA, if any */
 
