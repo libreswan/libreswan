@@ -264,6 +264,10 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		else
 			out_label = ts->sec_label;
 
+		dbg("%s emitting sec_label="PRI_SHUNK,
+		    child->sa.st_sa_role == SA_INITIATOR ? "initiator" : "responder",
+		    pri_shunk(out_label));
+
 		diag_t d = pbs_out_hunk(&ts_label_pbs, out_label, "output Security label");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
@@ -1456,6 +1460,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	update_state_connection(&child->sa, best_connection);
 
 	if (best_sec_label != NULL) {
+		dbg("initiator's best sec_label="PRI_SHUNK, pri_shunk(*best_sec_label));
 		free_chunk_content(&child->sa.st_seen_sec_label);
 		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
 	}
@@ -1517,6 +1522,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	}
 
 	if (selected_sec_label != NULL) {
+		dbg("responder returned sec_label="PRI_SHUNK, pri_shunk(*selected_sec_label));
 		free_chunk_content(&child->sa.st_seen_sec_label);
 		child->sa.st_seen_sec_label = clone_hunk(*selected_sec_label, "st_seen_sec_label");
 	}
