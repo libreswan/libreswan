@@ -1,13 +1,8 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ # install selinux; generated in OUTPUT by east
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-west #
- rm ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd.pp
 west #
  setsebool domain_can_mmap_files=1
 west #
@@ -124,16 +119,12 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority 1687486 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -152,7 +143,5 @@ west #
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  rm -rf ipsecspd.fc ipsecspd.if tmp
-west #
- if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 west #
  
