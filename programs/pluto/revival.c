@@ -129,7 +129,7 @@ void add_revival_if_needed(struct state *st)
 		return;
 	}
 
-	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
 		dbg("skipped revival: childless IKE SA");
 		return;
 	}

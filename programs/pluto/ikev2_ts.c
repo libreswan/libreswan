@@ -1453,26 +1453,6 @@ bool v2_process_ts_request(struct child_sa *child,
 		best_connection = s;
 		/* switch */
 		best_spd_route = &best_connection->spd;
-	} else if (best_connection == c &&
-		   c->kind == CK_INSTANCE &&
-		   c->spd.this.sec_label.len > 0) {
-		/*
-		 * XXX: hack to get around IKE wrongly having an
-		 * instance connection.
-		 */
-		dbg("  instantiating template security label connection via parent");
-		/* sure looks like a sec-label instance */
-		struct connection *t = connection_by_serialno(c->serial_from);
-		struct connection *s = scribble_ts_on_connection(t, child, &tsi, &tsr,
-								 END_WIDER_THAN_TS,
-								 /*definitely_shared?*/true,
-								 best_sec_label);
-		if (!pexpect(s != NULL)) {
-			return false;
-		}
-		best_connection = s;
-		/* switch */
-		best_spd_route = &best_connection->spd;
 	}
 
 	if (best_spd_route == NULL) {

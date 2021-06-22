@@ -844,9 +844,13 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return CHILD_SKIPPED;
 	}
 
-	if (impair.childless_v2_sec_label && !has_v2_IKE_AUTH_child_sa_payloads(md)) {
-		llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH security label request omitted CHILD SA payloads");
-		return CHILD_SKIPPED;
+	struct connection *ic = ike->sa.st_connection;
+	if (ic->spd.this.sec_label.len > 0) {
+		pexpect(ic->kind == CK_TEMPLATE);
+		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+			llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH security label request omitted CHILD SA payloads");
+			return CHILD_SKIPPED;
+		}
 	}
 
 	/* try to process them */
@@ -867,6 +871,10 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 						    IPSEC_SA, SA_RESPONDER,
 						    STATE_V2_IKE_AUTH_CHILD_R0,
 						    null_fd);
+
+	/*
+	 * Danger! This call can change the child's connection.
+	 */
 
 	v2_notification_t n = assign_v2_responders_child_client(child, md);
 	if (n != v2N_NOTHING_WRONG) {

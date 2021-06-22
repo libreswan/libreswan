@@ -1602,21 +1602,10 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 	    pri_connection(c, &cb),
 	    enum_name(&routing_story, c->spd.routing));
 
-	if (!pexpect(c->spd.this.sec_label.len > 0)) {
+	if (!pexpect(c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) ||
+	    !pexpect(c->kind == CK_TEMPLATE)) {
 		return false;
 	}
-
-#if 0
-	/*
-	 * XXX: given a template connection with an installed policy;
-	 * the acquire will instantiate the template and attach that
-	 * to the IKE SA; it should have probably attached the
-	 * template and then later instantiated the child.
-	 */
-	if (!pexpect(c->kind == CK_TEMPLATE)) {
-		return false;
-	}
-#endif
 
 	if (c->spd.routing != RT_UNROUTED) {
 		dbg("kernel: %s() connection already routed", __func__);
