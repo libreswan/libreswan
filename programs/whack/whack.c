@@ -97,7 +97,8 @@ static void help(void)
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
-		"	[--ikelifetime <seconds>] [--ipseclifetime <seconds>] \\\n"
+		"	[--ikelifetime <seconds>] [--ipseclifetime <seconds>] [--ipsecidletime <seconds>] \\\n"
+		"	[--ipsecmaxbytes <num>] [--ipsecmaxpackets <num>] \\\n"
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
@@ -431,9 +432,11 @@ enum option_enums {
 	CD_CONN_MARK_BOTH,
 	CD_CONN_MARK_IN,
 	CD_CONN_MARK_OUT,
+#if 0
 	CD_VTI_IFACE,
 	CD_VTI_ROUTING,
 	CD_VTI_SHARED,
+#endif
 	CD_IPSEC_IFACE,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
@@ -444,6 +447,9 @@ enum option_enums {
 	CD_RETRANSMIT_I,
 	CD_IKELIFETIME,
 	CD_IPSECLIFETIME,
+	CD_IPSECLIFEBYTES,
+	CD_IPSECLIFEPACKETS,
+	CD_IPSECIDLETIME,
 	CD_RKMARGIN,
 	CD_RKFUZZ,
 	CD_KTRIES,
@@ -759,9 +765,11 @@ static const struct option long_opts[] = {
 	{ "conn-mark", required_argument, NULL, CD_CONN_MARK_BOTH + OO },
 	{ "conn-mark-in", required_argument, NULL, CD_CONN_MARK_IN + OO },
 	{ "conn-mark-out", required_argument, NULL, CD_CONN_MARK_OUT + OO },
+#if 0
 	{ "vti-iface", required_argument, NULL, CD_VTI_IFACE + OO },
 	{ "vti-routing", no_argument, NULL, CD_VTI_ROUTING + OO },
 	{ "vti-shared", no_argument, NULL, CD_VTI_SHARED + OO },
+#endif
 	{ "ipsec-interface", required_argument, NULL, CD_IPSEC_IFACE + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
@@ -769,6 +777,7 @@ static const struct option long_opts[] = {
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
+	{ "ipsecidletime", required_argument, NULL, CD_IPSECIDLETIME + OO + NUMERIC_ARG },
 	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_T + OO + NUMERIC_ARG },
 	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_I + OO + NUMERIC_ARG },
 	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
@@ -1028,6 +1037,7 @@ int main(int argc, char **argv)
 	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
+	/* msg.sa_ipsec_idle_seconds = 0; */
 	msg.sa_ipsec_life_bytes = IPSEC_SA_LIFEBYTES_DEFAULT;
 	msg.sa_ipsec_life_packets = IPSEC_SA_LIFEPACKETS_DEFAULT;
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
@@ -1885,6 +1895,18 @@ int main(int argc, char **argv)
 			msg.sa_ipsec_life_seconds = deltatime(opt_whole);
 			continue;
 
+		case CD_IPSECIDLETIME:	/* --ipsecidletime <seconds> */
+			msg.sa_ipsec_idle_seconds = deltatime(opt_whole);
+			continue;
+
+		case CD_IPSECLIFEBYTES:/* --ipseclifebytes <num> */
+			msg.sa_ipsec_life_bytes = opt_whole;
+			continue;
+
+		case CD_IPSECLIFEPACKETS:/* --ipseclifepackets <num> */
+			msg.sa_ipsec_life_packets = opt_whole;
+			continue;
+
 		case CD_RKMARGIN:	/* --rekeymargin <seconds> */
 			msg.sa_rekey_margin = deltatime(opt_whole);
 			continue;
@@ -2284,6 +2306,7 @@ int main(int argc, char **argv)
 			msg.conn_mark_out = strdup(optarg);
 			continue;
 
+#if 0
 		case CD_VTI_IFACE:      /* --vti-iface */
 			if (optarg != NULL && strlen(optarg) < IFNAMSIZ)
 				msg.vti_iface = strdup(optarg);
@@ -2297,7 +2320,7 @@ int main(int argc, char **argv)
 		case CD_VTI_SHARED:	/* --vti-shared */
 			msg.vti_shared = TRUE;
 			continue;
-
+#endif
 		case CD_IPSEC_IFACE:      /* --ipsec-interface */
 			msg.xfrm_if_id = opt_whole;
 			continue;
