@@ -411,8 +411,12 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		close_any(&child_whackfd);
 		ike->sa.st_v2_larval_initiator_sa = child;
 
-		/* XXX because the early child state ends up with the try counter check, we need to copy it */
-		/* XXX: huh?!? */
+		/*
+		 * XXX because the early child state ends up with the
+		 * try counter check, we need to copy it.
+		 *
+		 * XXX: huh?!?
+		 */
 		child->sa.st_try = ike->sa.st_try;
 
 		if (cc != pc) {

@@ -242,8 +242,15 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
+
+	/*
+	 * FOR IKEv2, when the sec_label template connection is
+	 * initiated, there is no acquire and, hence, no Child SA to
+	 * establish.
+	 */
+
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
-			  HUNK_AS_SHUNK(c->spd.this.sec_label),
+			  (c->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd.this.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
 }
@@ -304,9 +311,8 @@ void ipsecdoi_initiate(struct connection *c,
 #endif
 	case IKEv2:
 		if (st == NULL) {
-			/* note: new IKE SA pulls sec_label from connection */
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
-						empty_shunk, background, logger);
+						sec_label, background, logger);
 		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
@@ -635,8 +641,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0) {
-		dbg("connection has security label");
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind == CK_TEMPLATE) {
+		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
@@ -650,20 +656,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 					"received kernel security label does not fall within range of our connection");
 			return;
 		}
-
-		/*
-		 * XXX: Danger. C is switched to an instance.  It is
-		 * assumed that ipsecdoi_initiate() always saves the
-		 * pointer.
-		 */
-
-		/* create instance and switch to it */
-		c = instantiate(c, &b->remote.host_addr, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&c->spd.this.sec_label);
-		c->spd.this.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
-		free_chunk_content(&c->spd.that.sec_label);
-		c->spd.that.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
 
 		/*
 		 * We've found a connection that can serve.  Do we

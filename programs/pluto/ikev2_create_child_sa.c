@@ -99,6 +99,17 @@ void ikev2_initiate_child_sa(struct pending *p)
 		sa_type = IPSEC_SA;
 	}
 
+	if (c->kind == CK_TEMPLATE && p->sec_label.len > 0) {
+		/* create instance and switch to it */
+		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+		c = instantiate(c, &remote_addr, NULL);
+		/* replace connection template label with ACQUIREd label */
+		free_chunk_content(&c->spd.this.sec_label);
+		c->spd.this.sec_label = clone_hunk(p->sec_label, "ACQUIRED sec_label");
+		free_chunk_content(&c->spd.that.sec_label);
+		c->spd.that.sec_label = clone_hunk(p->sec_label, "ACQUIRED sec_label");
+	}
+
 	struct child_sa *child; /* to be determined */
 	const struct child_sa *child_being_replaced;
 	if (sa_type == IPSEC_SA) {
