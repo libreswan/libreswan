@@ -167,7 +167,8 @@ struct kernel_sa {
 	struct sa_mark mark_set; /* config keyword mark-out */
 	uint64_t sa_lifebytes;
 	uint64_t sa_lifepackets;
-	deltatime_t sa_lifetime; /* number of seconds until SA expires */
+	uint64_t sa_idletimeout; /* number of seconds until soft idle timer hits */
+	uint64_t sa_lifetime; /* number of seconds until SA expires - not used */
 };
 
 struct raw_iface {

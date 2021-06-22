@@ -1332,10 +1332,31 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.reqid = sa->reqid;
 	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
-	req.p.lft.soft_byte_limit = sa->sa_lifebytes * IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE / 100;
-	req.p.lft.hard_byte_limit = sa->sa_lifebytes;
-	req.p.lft.soft_packet_limit = sa->sa_lifepackets * IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE / 100;
-	req.p.lft.hard_packet_limit = sa->sa_lifepackets;
+	req.p.lft.soft_byte_limit = req.p.lft.hard_byte_limit = XFRM_INF;
+	if (sa->sa_lifebytes != 0) {
+		req.p.lft.soft_byte_limit = sa->sa_lifebytes * IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE / 100;
+		req.p.lft.hard_byte_limit = sa->sa_lifebytes;
+	}
+
+	req.p.lft.soft_packet_limit = req.p.lft.hard_packet_limit = XFRM_INF;
+	if (sa->sa_lifepackets != 0) {
+		req.p.lft.soft_packet_limit = sa->sa_lifepackets * IPSEC_SA_LIFE_SOFT_LIMIT_PERCENTAGE / 100;
+		req.p.lft.hard_packet_limit = sa->sa_lifepackets;
+	}
+
+	/* currentlys still tracked by pluto */
+	req.p.lft.soft_add_expires_seconds = XFRM_INF;
+	req.p.lft.hard_add_expires_seconds = XFRM_INF;
+
+	/* idle timeout should never cause hard failure - it's all optional cleanup */
+	req.p.lft.soft_use_expires_seconds = req.p.lft.hard_use_expires_seconds = XFRM_INF;
+	if (sa->sa_idletimeout == 0) {
+		dbg("PAUL: setting idletime to infinite");
+		req.p.lft.soft_use_expires_seconds = XFRM_INF;
+	} else if (sa->sa_idletimeout > 0) {
+		dbg("PAUL: setting idletime to %"PRIu64"", sa->sa_idletimeout);
+		req.p.lft.soft_use_expires_seconds = sa->sa_idletimeout;
+	}
 
 	/* we can ignore userspace, but that wouldn't prevent kernel from deleting and causing ACQUIRE */
 	if (impair.ignore_hard_expire) {

@@ -175,6 +175,7 @@ struct whack_message {
 	lset_t policy;
 	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;
+	deltatime_t sa_ipsec_idle_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;
 	uint64_t sa_ipsec_life_bytes;

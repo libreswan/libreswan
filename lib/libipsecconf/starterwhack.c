@@ -494,6 +494,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
 	msg.sa_ike_life_seconds = deltatime(conn->options[KNCF_IKELIFETIME]);
 	msg.sa_ipsec_life_seconds = deltatime(conn->options[KNCF_SALIFETIME]);
+	msg.sa_ipsec_idle_seconds = deltatime(conn->options[KNCF_IDLE_TIMEOUT]);
 	msg.sa_ipsec_life_bytes = conn->options[KNCF_SALIFEBYTES];
 	msg.sa_ipsec_life_packets = conn->options[KNCF_SALIFEPACKETS];
 	msg.sa_rekey_margin = deltatime(conn->options[KNCF_REKEYMARGIN]);

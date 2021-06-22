@@ -2017,6 +2017,9 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		if (c->sa_ipsec_life_bytes != 0) {
 			jam(buf, ", maxBytes=%" PRIu64 "", c->sa_ipsec_life_bytes);
 		}
+		if (c->sa_ipsec_life_packets != 0) {
+			jam(buf, ", maxPackets=%" PRIu64 "", c->sa_ipsec_life_packets);
+		}
 	}
 
 	if (st->st_xauth_username[0] == '\0') {

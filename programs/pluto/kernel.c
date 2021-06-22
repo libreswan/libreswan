@@ -2066,7 +2066,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.inbound = inbound,
 		.add_selector = add_selector,
 		.transport_proto = c->spd.this.protocol,
-		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.sa_lifetime = deltasecs(c->sa_ipsec_life_seconds),
+		.sa_idletimeout = deltasecs(c->sa_ipsec_idle_seconds),
 		.sa_lifebytes = c->sa_ipsec_life_bytes,
 		.sa_lifepackets = c->sa_ipsec_life_packets,
 		.outif = -1,
@@ -2074,6 +2075,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			      st->st_acquired_sec_label.len > 0 ? st->st_acquired_sec_label :
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
+
+	dbg("PAUL: kernel_sa boilerplate lifetime=%"PRIu64", idletime=%"PRIu64", lifebytes=%"PRIu64", lifepackets=%"PRIu64,
+		said_boilerplate.sa_lifetime, said_boilerplate.sa_idletimeout, said_boilerplate.sa_lifebytes,
+		said_boilerplate.sa_lifepackets);
 
 	ipsec_spi_t inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
@@ -2726,9 +2731,9 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	for (unsigned i = 0; i < nr; i++) {
 		const struct dead_spi *tbd = &dead[i];
 		if (st->st_kernel_sa_expired != SA_STATE_HARD) {
-			dbg("Skipped del_spi() as kernel has already deleted due to hard limit expire event");
-		} else {
 			result &= del_spi(tbd->spi, tbd->protocol, &tbd->src, &tbd->dst, st->st_logger);
+		} else {
+			dbg("Skipped del_spi() as kernel has already deleted due to hard limit expire event");
 		}
 	}
 
@@ -3899,6 +3904,9 @@ void shutdown_kernel(struct logger *logger)
 
 void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool soft)
 {
+	dbg("PAUL: handle_expiring_sa(): received %s expire event from kernel",
+		soft ? "soft" : "hard");
+
 	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst); /* why is spi still in network order? */
 	if (child != NULL) {
 		struct connection *c = child->sa.st_connection;
@@ -3921,7 +3929,7 @@ void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool 
 				rekey ?  "initiating a Child SA rekey" : "but connection has rekey=no so deleting connection");
 
 		if (latest && rekey) {
-			if (prev_state != SA_NOT_EXPIRED) {
+			if (prev_state == SA_NOT_EXPIRED) {
 				event_delete(EVENT_v2_LIVENESS, &child->sa);
 				event_delete(EVENT_DPD, &child->sa);
 				if (soft) {
@@ -3930,11 +3938,11 @@ void handle_expiring_sa(ipsec_spi_t spi, uint8_t protoid, ip_address *dst, bool 
 					event_force(EVENT_SA_EXPIRE, &child->sa);
 				}
 			} else {
-				dbg("Connection %s with serial #%lu was already expiring, no further actions required",
-					c->name, child->sa.st_serialno);
+				dbg("Connection %s with serial #%lu was already expiring %d, no further actions required",
+					c->name, child->sa.st_serialno, prev_state);
 			}
 		}
 	} else {
-		llog(RC_LOG, NULL, "Received kernel EXPIRE event for IPsec SPI 0x%x, but there is no connection anymore with this SPI.", ntohl(spi));
+		dbg("Received kernel EXPIRE event for IPsec SPI 0x%x, but there is no connection anymore with this SPI.", ntohl(spi));
 	}
 }
