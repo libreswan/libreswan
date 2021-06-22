@@ -725,8 +725,10 @@ struct state {
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
-	chunk_t st_seen_sec_label;
-	chunk_t st_acquired_sec_label;
+
+	/* IKEv2 stores sec labels in the connection instance */
+	chunk_t st_v1_seen_sec_label;
+	chunk_t st_v1_acquired_sec_label;
 
 	/* IKEv2 IKE SA only */
 	bool st_ike_sent_v2n_mobike_supported;	/* sent MOBIKE_SUPPORTED notify */
