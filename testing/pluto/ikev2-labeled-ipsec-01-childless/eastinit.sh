@@ -5,7 +5,6 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair childless-v2-sec-label
 ipsec auto --add labeled
 # start the server
 ipsec getpeercon_server 4300 &

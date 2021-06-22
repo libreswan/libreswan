@@ -17,8 +17,6 @@ east #
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair childless-v2-sec-label
-east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
 east #
