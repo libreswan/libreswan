@@ -81,7 +81,7 @@ west #
 west #
  ipsec trafficstatus
 006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=173, id='@east'
-006 #3: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=104, outBytes=0, id='@east'
+006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=104, outBytes=0, id='@east'
 west #
  # there should be no bare shunts
 west #
