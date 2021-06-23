@@ -1,5 +1,0 @@
-As ikev2-labeled-ipsec-01 but now one side is not using labels. This time, the
-responder has no labels.
-
-The connection should fail.
-
