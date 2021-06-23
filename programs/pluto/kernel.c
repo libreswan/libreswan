@@ -1438,7 +1438,7 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam(buf, " xfrm_if_id=%d", xfrm_if_id);
 
-		jam(buf, " seclabel=");
+		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, sec_label);
 	}
 
