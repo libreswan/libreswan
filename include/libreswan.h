@@ -86,7 +86,7 @@ extern err_t ttoul(const char *src, size_t srclen, int format, unsigned long *ds
 extern err_t ttoulb(const char *src, size_t srclen, int format,
 	unsigned long upb, unsigned long *dst);
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
-#define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
+#define ULTOT_BUF	((64+2)/3 + 1)  /* holds 64 bits in octal + NUL */
 
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
