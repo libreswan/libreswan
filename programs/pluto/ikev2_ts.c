@@ -1319,7 +1319,8 @@ bool v2_process_ts_request(struct child_sa *child,
 		 * something that should not be done to a permanent
 		 * connection.
 		 */
-		pexpect(c->kind == CK_PERMANENT);
+		pexpect((c->kind == CK_PERMANENT) ||
+			(c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0));
 		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		    enum_name(&connection_kind_names, c->kind), c->name);
 		return false;
