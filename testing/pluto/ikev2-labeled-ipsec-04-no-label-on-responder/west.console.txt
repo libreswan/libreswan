@@ -1,13 +1,10 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ # install selinux; generated in OUTPUT by east
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+ semodule -i OUTPUT/ipsecspd.pp
 west #
- rm ipsecspd.pp
+ # start pluto
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -37,11 +34,7 @@ west #
  echo done
 done
 west #
- ipsec whack --shutdown
-west #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-west #
- rm -rf ipsecspd.fc ipsecspd.if tmp
 west #
  
