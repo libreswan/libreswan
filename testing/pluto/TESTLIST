@@ -499,7 +499,7 @@ kvmplutotest	ikev2-replay-window			good
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
 kvmplutotest	ikev2-x509-ecdsa-01			good
-kvmplutotest	ikev2-x509-ecdsa-02-mismatc		good
+kvmplutotest	ikev2-x509-ecdsa-02-mismatch		good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
