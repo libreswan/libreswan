@@ -1314,15 +1314,17 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-/* Setup an IPsec route entry.
- * op is one of the KP_* operators.
+/*
+ * Setup an IPsec route entry.
+ *
+ * There's lots of redundency here, see debug log lines below.
  */
 
 bool raw_policy(enum kernel_policy_op op,
-		const ip_address *this_host,
-		const ip_selector *this_client,
-		const ip_address *that_host,
-		const ip_selector *that_client,
+		const ip_address *src_host,
+		const ip_selector *src_client,
+		const ip_address *dst_host,
+		const ip_selector *dst_client,
 		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
 		const struct ip_protocol *sa_proto,
@@ -1338,6 +1340,11 @@ bool raw_policy(enum kernel_policy_op op,
 		const char *fmt, ...)
 {
 	LSWDBGP(DBG_BASE, buf) {
+
+		const ip_protocol *src_client_proto = selector_protocol(*src_client);
+		const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
+		const ip_protocol *esa_proto = protocol_by_ipproto(esatype);
+
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 
@@ -1348,13 +1355,13 @@ bool raw_policy(enum kernel_policy_op op,
 		va_end(ap);
 
 		jam(buf, " ");
-		jam_selector(buf, this_client);
-		jam(buf, "-%s-", selector_protocol(*this_client)->name);
-		jam_address(buf, this_host);
+		jam_selector(buf, src_client);
+		jam(buf, "-%s-", src_client_proto->name);
+		jam_address(buf, src_host);
 		jam(buf, "==");
-		jam_address(buf, that_host);
-		jam(buf, "-%s-", selector_protocol(*that_client)->name);
-		jam_selector(buf, that_client);
+		jam_address(buf, dst_host);
+		jam(buf, "-%s-", dst_client_proto->name);
+		jam_selector(buf, dst_client);
 
 		/*
 		 * Dump the {old,new}_spi.
@@ -1403,21 +1410,54 @@ bool raw_policy(enum kernel_policy_op op,
 			spin = "->";
 		}
 
-		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
+		/*
+		 * TRANSPORT_PROTO is for the client, so presumably it
+		 * matches the client's protoco?
+		 */
 		jam(buf, " transport_proto=%s", protocol_by_ipproto(transport_proto)->name);
-		jam(buf, " esatype=%s", protocol_by_ipproto(esatype)->name);
-
-		jam(buf, " proto_info={");
-		for (unsigned i = 0; proto_info[i].proto; i++) {
-			const struct pfkey_proto_info *pi = &proto_info[i];
-			if (i > 0) {
-				jam(buf, ",");
-			}
-			jam(buf, "%s/", protocol_by_ipproto(pi->proto)->name);
-			jam_enum_short(buf, &encapsulation_mode_names, pi->mode);
-			jam(buf, "/%d", pi->reqid);
+		if (transport_proto != src_client_proto->ipproto) {
+			jam(buf, "!=SRC");
 		}
-		jam(buf, "}");
+		if (transport_proto != dst_client_proto->ipproto) {
+			jam(buf, "!=DST");
+		}
+
+		/*
+		 * SA_PROTO, ESATYPE, and PROTO_INFO all describe the
+		 * encapsulation (PROTO_INFO is the most detailed as
+		 * it can describe both [ESP|AH] and compression).
+		 * How redundant is that?
+		 */
+		jam(buf, " esatype=%s", esa_proto->name);
+
+		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
+		if (sa_proto != NULL && sa_proto != esa_proto) {
+			jam(buf, "!=ESAPROTO");
+		}
+
+		jam(buf, " proto_info=");
+		if (proto_info == NULL) {
+			jam(buf, "<null>");
+		} else {
+			jam(buf, "{");
+			for (unsigned i = 0; proto_info[i].proto; i++) {
+				const struct pfkey_proto_info *pi = &proto_info[i];
+				if (i > 0) {
+					jam(buf, ",");
+				}
+				jam(buf, "%s", protocol_by_ipproto(pi->proto)->name);
+				if (i == 0 && pi->proto != esa_proto->ipproto) {
+					jam(buf, "!=ESATYPE");
+				}
+				if (i != 0 && sa_proto != NULL && sa_proto->ipproto != pi->proto) {
+					jam(buf, "!=SA_PROTO");
+				}
+				jam(buf, "/");
+				jam_enum_short(buf, &encapsulation_mode_names, pi->mode);
+				jam(buf, "/%d", pi->reqid);
+			}
+			jam(buf, "}");
+		}
 
 		jam(buf, " lifetime=");
 		jam_deltatime(buf, use_lifetime);
@@ -1440,6 +1480,7 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, sec_label);
+
 	}
 
 	if (esatype == ET_INT) {
@@ -1458,8 +1499,8 @@ bool raw_policy(enum kernel_policy_op op,
 	}
 
 	bool result = kernel_ops->raw_policy(op,
-					     this_host, this_client,
-					     that_host, that_client,
+					     src_host, src_client,
+					     dst_host, dst_client,
 					     cur_spi, new_spi, sa_proto,
 					     transport_proto,
 					     esatype, proto_info,
@@ -2541,10 +2582,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * need reversing ...
 		 */
 		if (!raw_policy(KP_ADD_INBOUND,
-				&c->spd.that.host_addr,		/* this_host */
-				&c->spd.that.client,	/* this_client */
-				&c->spd.this.host_addr,	/* that_host */
-				&c->spd.this.client,	/* that_client */
+				&c->spd.that.host_addr,	/* src_host */
+				&c->spd.that.client,	/* src_client */
+				&c->spd.this.host_addr,	/* dst_host */
+				&c->spd.this.client,	/* dst_client */
 				inner_spi,		/* current spi - might not be used? */
 				inner_spi,		/* new spi */
 				proto,			/* SA proto */
@@ -2668,7 +2709,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * we are the initiator, have been redirected,
 	 * and yet this routine must use the old address.
 	 *
-	 * We point effective_that_host_address to the appropriate address.
+	 * We point effective_remote_host_address to the appropriate
+	 * address.
 	 */
 
 	ip_address effective_remote_address = c->spd.that.host_addr;
