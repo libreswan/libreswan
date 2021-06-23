@@ -100,7 +100,7 @@ west #
 west #
  # reqid. And there should be one set of tunnel policies using the
 west #
- # configured ipsec_spd_t label, plus an outgoing %trap policy
+ # configured ipsec_spd_t label, and no outgoing %trap policy
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

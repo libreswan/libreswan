@@ -1,5 +1,8 @@
-basic-pluto-01 but now with labeled IPsec using NETKEY. A test on port 4300
-using netcat and getpeercon_server to confirm traffic flow and label.
+IKEv2 labeled IPsec using XFRM, using auto=route (ondemand) to trigger
+an initial IKE SA plus IPsec SA based on the ACQUIREd sec_label.
+
+A test on port 4300 using netcat and getpeercon_server to confirm traffic
+flow and label.
 
 A shutdown is issued to verify no kernel state is left behind
 
@@ -12,3 +15,5 @@ The way labeled IPsec works is that:
   SPD states. It all has the same reqid. The LSM/XFRM code handles
   picking the right one for the right sec_label
 
+Note, the installed policies on the template ALSO function as the %trap
+policy for when the security label does not match an existing SPD state.
