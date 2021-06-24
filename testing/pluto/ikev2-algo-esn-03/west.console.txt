@@ -53,7 +53,7 @@ west #
 	replay-window 0 flag af-unspec esn
 west #
  grep "enabling ESN" /tmp/pluto.log
-| netlink: enabling ESN
-| netlink: enabling ESN
+| xfrm: enabling ESN
+| xfrm: enabling ESN
 west #
  
