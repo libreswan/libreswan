@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
 			exit(3);
 		}
 		if (errl.errors != NULL) {
-			fprintf(stderr, "addconn, in config '%s', ignoring: %s\n",
+			fprintf(stderr, "addconn, in config '%s',  %s\n",
 				configfile, errl.errors);
 			pfree(errl.errors);
 		}
