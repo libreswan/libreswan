@@ -8,8 +8,8 @@ road #
  ip -6 route del default
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
+unexpected status 2
 connect: Network is unreachable
-../../guestbin/ping-once.sh: unexpected status 2
 road #
  # add default via link local
 road #
@@ -40,15 +40,7 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet-ipv6'
 starter: left is KH_DEFAULTROUTE
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet-ipv6'
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn rw-eastnet-ipv6
-starter: left is KH_NOTSET
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
 seeking_src = 0, seeking_gateway = 1, has_dst = 1
@@ -132,15 +124,7 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet-ipv6'
 starter: left is KH_DEFAULTROUTE
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet-ipv6'
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn rw-eastnet-ipv6
-starter: left is KH_NOTSET
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
 seeking_src = 0, seeking_gateway = 1, has_dst = 1
