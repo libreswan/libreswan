@@ -4,7 +4,7 @@ echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 ipsec auto --up labeled
 ../../guestbin/ipsec-look.sh
 # trigger SA
-echo "quit" | nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
+echo "quit" | runcon -t netutils_t timeout 15 nc -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 # there should be 2 tunnels - both inactive in one direction
 ipsec trafficstatus
 # there should be no bare shunts
