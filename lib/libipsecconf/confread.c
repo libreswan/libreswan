@@ -504,7 +504,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_NOTSET:
-		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_NOTSET", leftright);
+		ERR_FOUND("start: %s invalid value - parse error", leftright);
 		break;
 	}
 
