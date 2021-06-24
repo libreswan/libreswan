@@ -21,6 +21,8 @@ extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
 
 void ikev2_initiate_child_sa(struct pending *p);
+
+extern void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike, struct child_sa *child);
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_create_child_request;
 

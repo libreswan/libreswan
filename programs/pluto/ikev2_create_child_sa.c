@@ -53,6 +53,7 @@
 #include "crypt_ke.h"
 #include "unpack.h"
 #include "pending.h"
+#include "ipsec_doi.h"			/* for capture_child_rekey_policy */
 
 static stf_status ikev2_child_out_tail(struct ike_sa *ike,
 				       struct child_sa *child,
@@ -691,6 +692,75 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
 /*
  * Process a CREATE_CHILD_SA rekey request.
  */
+
+void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
+					     struct child_sa *child_being_replaced)
+{
+	struct connection *c = child_being_replaced->sa.st_connection;
+	struct logger *logger = child_being_replaced->sa.st_logger;
+	passert(c != NULL);
+
+	dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+
+	pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
+	struct child_sa *larval_child = new_v2_child_state(c, ike, IPSEC_SA,
+							   SA_INITIATOR,
+							   STATE_V2_REKEY_CHILD_I0,
+							   logger->global_whackfd);
+
+	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
+
+	/*
+	 * Start from policy in (ipsec) state, not connection.  This
+	 * ensures that rekeying doesn't downgrade security.  I admit
+	 * that this doesn't capture everything.
+	 */
+	larval_child->sa.st_policy = capture_child_rekey_policy(&child_being_replaced->sa);
+	larval_child->sa.st_try = 1;
+	larval_child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
+
+	/*
+	 * Use the CREATE_CHILD_SA proposal suite - the
+	 * proposal generated during IKE_AUTH will have been
+	 * stripped of DH.
+	 *
+	 * XXX: If the IKE SA's DH changes, then the child
+	 * proposals will be re-generated.  Should the child
+	 * proposals instead be somehow stored in state and
+	 * dragged around?
+	 *
+	 * XXX: this choice of default_dh is wrong: It should use the
+	 * Child SA's DH (assuming child was established using
+	 * CREATE_CHILD_SA and negotiated DH) or the IKE SA's DH
+	 * (assuming this is the child negotiated using IKE_AUTH), or
+	 * ?
+	 */
+	const struct dh_desc *default_dh =
+		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+	struct ikev2_proposals *child_proposals =
+		get_v2_create_child_proposals(c,
+					      "ESP/AH rekey Child SA initiator emitting proposals",
+					      default_dh, logger);
+	/* see ikev2_child_add_ipsec_payloads */
+	passert(c->v2_create_child_proposals != NULL);
+
+	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, logger);
+
+	policy_buf pb;
+	dbg("#%lu is rekeying Child SA #%lu %s using IKE #%lu pfs=%s",
+	    larval_child->sa.st_serialno,
+	    child_being_replaced->sa.st_serialno,
+	    str_policy(larval_child->sa.st_policy, &pb),
+	    ike->sa.st_serialno,
+	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
+	     larval_child->sa.st_pfs_group->common.fqn));
+
+	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
+			    ikev2_child_outI_continue,
+			    "Child Rekey Initiator KE and nonce ni");
+	/* return STF_SUSPEND */
+}
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct child_sa *larval_child,

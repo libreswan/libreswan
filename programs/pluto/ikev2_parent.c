@@ -571,6 +571,23 @@ void v2_schedule_replace_event(struct state *st)
 void v2_event_sa_rekey(struct state *st)
 {
 	monotime_t now = mononow();
+
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		/*
+		 * An IKE SA must return itself so NULL implies a
+		 * child.
+		 *
+		 * Even it is decided that Child SAs can linger after
+		 * the IKE SA has gone they shouldn't be getting
+		 * rekeys!
+		 */
+		pexpect_fail(st->st_logger, HERE,
+			     "not replacing Child SA #%lu; as IKE SA #%lu has diasppeared",
+			     st->st_serialno, st->st_clonedfrom);
+		return;
+	}
+
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
@@ -584,7 +601,6 @@ void v2_event_sa_rekey(struct state *st)
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st, HERE);
 		event_force(EVENT_SA_EXPIRE, &ike->sa);
 		return;
 	}
@@ -598,15 +614,11 @@ void v2_event_sa_rekey(struct state *st)
 	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
 	if (IS_IKE_SA(st)) {
 		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		initiate_v2_CREATE_CHILD_SA_rekey_ike(pexpect_ike_sa(st));
+		initiate_v2_CREATE_CHILD_SA_rekey_ike(ike);
 	} else {
-		/*
-		 * XXX: Don't be fooled, ipsecdoi_replace() is magic -
-		 * if the old state still exists it morphs things into
-		 * a child re-key.
-		 */
-		ipsecdoi_replace(st, 1);
+		initiate_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
 	}
+
 	/*
 	 * Should the rekey go into the weeds this replace will kick
 	 * in.
