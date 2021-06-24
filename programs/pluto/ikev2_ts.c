@@ -1478,10 +1478,6 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
-	if (best_sec_label != NULL) {
-		dbg("initiator's best sec_label="PRI_SHUNK, pri_shunk(*best_sec_label));
-	}
-
 	child->sa.st_ts_this = traffic_selector_from_end(&best_spd_route->this);
 	child->sa.st_ts_that = traffic_selector_from_end(&best_spd_route->that);
 
@@ -1540,12 +1536,16 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	if (selected_sec_label != NULL) {
 		if (hunk_eq(*selected_sec_label, c->spd.this.sec_label)) {
-			dbg("responder returned same sec_label="PRI_SHUNK,
-			    pri_shunk(*selected_sec_label));
+			connection_buf cb;
+			dbg("responder returned same sec_label="PRI_SHUNK" as "PRI_CONNECTION,
+			    pri_shunk(*selected_sec_label),
+			    pri_connection(c, &cb));
 		} else {
+			connection_buf cb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				"responder narrowed sec_label '"PRI_SHUNK"' down to '"PRI_SHUNK"'",
-				pri_shunk(c->spd.this.sec_label), pri_shunk(*selected_sec_label));
+				"responder narrowed "PRI_CONNECTION" sec_label '"PRI_SHUNK"' down to '"PRI_SHUNK"'; what am I to do",
+				pri_connection(c, &cb), pri_shunk(c->spd.this.sec_label),
+				pri_shunk(*selected_sec_label));
 		}
 	}
 
