@@ -1012,9 +1012,9 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
  * processing a new Rekey IKE SA (RFC 7296 1.3.2) request
  */
 
-static ke_and_nonce_cb ikev2_child_ike_inIoutR_continue;
+static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
 
-stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
+stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				   struct child_sa *larval_ike,
 				   struct msg_digest *md)
 {
@@ -1101,14 +1101,14 @@ stf_status ikev2_child_ike_inIoutR(struct ike_sa *ike,
 	}
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    ikev2_child_ike_inIoutR_continue,
+			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue,
 			    "IKE rekey KE response gir");
 	return STF_SUSPEND;
 }
 
-static dh_shared_secret_cb ikev2_child_ike_inIoutR_continue_continue;	/* type assertion */
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue;	/* type assertion */
 
-static stf_status ikev2_child_ike_inIoutR_continue(struct state *larval_ike_sa,
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue(struct state *larval_ike_sa,
 						   struct msg_digest *md,
 						   struct dh_local_secret *local_secret,
 						   chunk_t *nonce)
@@ -1144,13 +1144,13 @@ static stf_status ikev2_child_ike_inIoutR_continue(struct state *larval_ike_sa,
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&md->sender,
 							    larval_ike->sa.st_logger);
 	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gi/*responder needs initiator KE*/,
-				ikev2_child_ike_inIoutR_continue_continue,
+				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue,
 				HERE);
 
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_child_ike_inIoutR_continue_continue(struct state *larval_ike_sa,
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue(struct state *larval_ike_sa,
 							    struct msg_digest *md)
 {
 	/* 'child' responding to request */
@@ -1190,9 +1190,9 @@ static stf_status ikev2_child_ike_inIoutR_continue_continue(struct state *larval
  * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
  */
 
-static dh_shared_secret_cb ikev2_child_ike_inR_continue;
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_response_continue;
 
-stf_status ikev2_child_ike_inR(struct ike_sa *ike,
+stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 			       struct child_sa *larval_ike,
 			       struct msg_digest *md)
 {
@@ -1227,7 +1227,7 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 						  &larval_ike->sa.st_accepted_ike_proposal,
 						  ike_proposals, larval_ike->sa.st_logger);
 	if (ret != STF_OK) {
-		dbg("failed to accept IKE SA, REKEY, response, in ikev2_child_ike_inR");
+		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
 		return ret; /* initiator; no response */
 	}
 
@@ -1265,12 +1265,12 @@ stf_status ikev2_child_ike_inR(struct ike_sa *ike,
 
 	/* initiate calculation of g^xy for rekey */
 	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gr/*initiator needs responder's KE*/,
-				ikev2_child_ike_inR_continue,
+				process_v2_CREATE_CHILD_SA_rekey_ike_response_continue,
 				HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_child_ike_inR_continue(struct state *larval_ike_sa,
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct state *larval_ike_sa,
 					       struct msg_digest *md)
 {
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */

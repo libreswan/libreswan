@@ -16,14 +16,14 @@
 #ifndef IKEV2_CREATE_CHILD_SA_H
 #define IKEV2_CREATE_CHILD_SA_
 
-void ikev2_initiate_child_sa(struct pending *p);
 void ikev2_rekey_ike_start(struct ike_sa *ike);
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_request;
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
 
+void ikev2_initiate_child_sa(struct pending *p);
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_create_child_request;
 
-extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
-extern ikev2_state_transition_fn ikev2_child_ike_inR;
 extern ikev2_state_transition_fn ikev2_child_inR;
 
 #endif
