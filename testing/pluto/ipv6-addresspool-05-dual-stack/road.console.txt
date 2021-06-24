@@ -30,8 +30,8 @@ road #
  ip -6 route del default
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:1:2::23
+unexpected status 2
 connect: Network is unreachable
-../../guestbin/ping-once.sh: unexpected status 2
 road #
  # add default via link local
 road #
@@ -61,34 +61,10 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet-ipv6'
 starter: left is KH_DEFAULTROUTE
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet-ipv6'
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn rw-eastnet-ipv6
-starter: left is KH_NOTSET
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-starter: right is KH_NOTSET
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 1, has_dst = 1
-dst 2001:db8:1:3:: via  dev eth0 src  table 254
-dst fe80:: via  dev eth0 src  table 254
-dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
-set nexthop: fe80::1000:ff:fe32:64ba
-dst ::1 via  dev lo src  table 255 (ignored)
-dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
-dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
-dst fe80:: via  dev eth0 src  table 255 (ignored)
-dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
-dst ff00:: via  dev eth0 src  table 255 (ignored)
-seeking_src = 1, seeking_gateway = 0, has_peer = 1
-seeking_src = 1, seeking_gateway = 0, has_dst = 1
-dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:1:3::209 table 254
-set addr: 2001:db8:1:3::209
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
+seeking_src = 0, seeking_gateway = 0, has_peer = 0
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
@@ -154,37 +130,10 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet-ipv6'
 starter: left is KH_DEFAULTROUTE
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet-ipv6'
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-Loading conn rw-eastnet-ipv6
-starter: left is KH_NOTSET
-connection's leftaddresspool set to: 2001:db8:0:3:1::/97
-starter: right is KH_NOTSET
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 1, has_dst = 1
-dst 2001:db8:0:3:1:: via  dev lo src  table 254
-dst 2001:db8:1:3:: via  dev eth0 src  table 254
-dst 2000:: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
-dst fe80:: via  dev eth0 src  table 254
-dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
-set nexthop: fe80::1000:ff:fe32:64ba
-dst ::1 via  dev lo src  table 255 (ignored)
-dst 2001:db8:0:3:1:: via  dev lo src  table 255 (ignored)
-dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
-dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
-dst fe80:: via  dev eth0 src  table 255 (ignored)
-dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
-dst ff00:: via  dev eth0 src  table 255 (ignored)
-seeking_src = 1, seeking_gateway = 0, has_peer = 1
-seeking_src = 1, seeking_gateway = 0, has_dst = 1
-dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
-set addr: 2001:db8:0:3:1::
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
+seeking_src = 0, seeking_gateway = 0, has_peer = 0
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
