@@ -598,7 +598,7 @@ void v2_event_sa_rekey(struct state *st)
 	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
 	if (IS_IKE_SA(st)) {
 		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		ikev2_rekey_ike_start(pexpect_ike_sa(st));
+		initiate_v2_CREATE_CHILD_SA_rekey_ike(pexpect_ike_sa(st));
 	} else {
 		/*
 		 * XXX: Don't be fooled, ipsecdoi_replace() is magic -

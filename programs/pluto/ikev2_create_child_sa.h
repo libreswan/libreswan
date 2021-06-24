@@ -16,7 +16,7 @@
 #ifndef IKEV2_CREATE_CHILD_SA_H
 #define IKEV2_CREATE_CHILD_SA_
 
-void ikev2_rekey_ike_start(struct ike_sa *ike);
+extern void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike);
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
 

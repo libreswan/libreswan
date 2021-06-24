@@ -66,19 +66,6 @@ static stf_status ikev2_child_inIoutR(struct ike_sa *ike,
  * Initiate a CREATE_CHILD_SA exchange.
  */
 
-void ikev2_rekey_ike_start(struct ike_sa *ike)
-{
-	struct pending p = {
-		.whack_sock = ike->sa.st_logger->global_whackfd,/*on-stack*/
-		.ike = ike,
-		.connection = ike->sa.st_connection,
-		.policy = LEMPTY,
-		.try = 1,
-		.replacing = ike->sa.st_serialno
-	};
-	ikev2_initiate_child_sa(&p);
-}
-
 static ke_and_nonce_cb ikev2_child_outI_continue;
 
 void ikev2_initiate_child_sa(struct pending *p)
@@ -1009,8 +996,45 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
 }
 
 /*
- * processing a new Rekey IKE SA (RFC 7296 1.3.2) request
+ * Rekey the IKE SA (RFC 7296 1.3.2).
+ *
+ * Note that initiate is a little deceptive.  It is submitting crypto.
+ * The initiate proper only happens later when the exchange is added
+ * to the message queue.
  */
+
+
+void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	ike->sa.st_viable_parent = false;
+
+	; /* to be determined */
+	struct child_sa *larval_ike = new_v2_child_state(c, ike, IKE_SA,
+							 SA_INITIATOR,
+							 STATE_V2_REKEY_IKE_I0,
+							 ike->sa.st_logger->global_whackfd);
+	larval_ike->sa.st_oakley = ike->sa.st_oakley;
+	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
+	larval_ike->sa.st_ike_pred = ike->sa.st_serialno;
+	larval_ike->sa.st_try = 1;
+	larval_ike->sa.st_policy = LEMPTY;
+
+	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
+
+	passert(larval_ike->sa.st_connection != NULL);
+	policy_buf pb;
+	dbg("#%lu submitting crypto to Rekey IKE SA %s to replace IKE# %lu",
+	    larval_ike->sa.st_serialno,
+	    str_policy(larval_ike->sa.st_policy, &pb),
+	    ike->sa.st_serialno);
+
+	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
+			    ikev2_child_outI_continue /*never-null?*/,
+			    "IKE REKEY Initiator KE and nonce ni");
+	/* "return STF_SUSPEND" */
+}
 
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
 
