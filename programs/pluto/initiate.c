@@ -539,7 +539,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		 * specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-		    enum_name_short(&spi_names, b->failure_shunt));
+		    enum_name_short(&policy_spi_names, b->failure_shunt));
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
 		const struct ip_info *afi = address_type(&b->local.host_addr);
 		const ip_address null_host = afi->address.any;
@@ -879,7 +879,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
-	    enum_name_short(&spi_names, b->negotiation_shunt));
+	    enum_name_short(&policy_spi_names, b->negotiation_shunt));
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API

@@ -65,6 +65,9 @@ void jam_said(struct jambuf *buf, const ip_said *sa)
 		case SPI_TRAP:
 			jam_string(buf, "%trap");
 			break;
+		case SPI_IGNORE:
+			jam_string(buf, "%ignore");
+			break;
 		case SPI_TRAPSUBNET:
 			jam_string(buf, "%trapsubnet");
 			break;

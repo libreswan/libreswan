@@ -39,8 +39,12 @@ enum policy_spi {
 	SPI_REJECT = 258,
 	SPI_HOLD = 259,
 	SPI_TRAP = 260,
-	SPI_TRAPSUBNET = 261,
+	SPI_IGNORE = 261,
+	SPI_TRAPSUBNET = 262,
 };
+
+extern const struct enum_names policy_spi_names;
+
 
 /*
  * to identify an SA, we need

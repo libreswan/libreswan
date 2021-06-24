@@ -1380,32 +1380,26 @@ bool raw_policy(enum kernel_policy_op op,
 		const char *spin = " ";
 		FOR_EACH_THING(nspi, cur_spi, new_spi) {
 			const char *name = NULL;
-			const char *prefix = "";
+			bool spi_backwards = false;
 			/*
 			 * The NSPI converted back to host order
 			 * should work; but if it doesn't ...
 			 */
 			FOR_EACH_THING(spi, ntohl(nspi), nspi) {
-				switch ((enum policy_spi)spi) {
-#define C(E) case SPI_##E: name = #E; break;
-					C(PASS);
-					C(DROP);
-					C(REJECT);
-					C(HOLD);
-					C(TRAP);
-					C(TRAPSUBNET);
-#undef C
-				}
+				/* includes %, can return NULL */
+				name = enum_name(&policy_spi_names, spi);
 				if (name != NULL) {
 					break;
 				}
-				prefix = "htonl.";
+				spi_backwards = true;
 			}
-			jam(buf, "%s%%", spin);
+			jam(buf, "%s", spin);
 			if (name == NULL) {
-				jam(buf, "0x%08x", nspi);
+				jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(nspi));
+			} else if (!(!spi_backwards)) {
+				jam(buf, "htonl(%s)", name);
 			} else {
-				jam(buf, "%s%s", prefix, name);
+				jam(buf, "%s", name);
 			}
 			spin = "->";
 		}
@@ -1414,11 +1408,12 @@ bool raw_policy(enum kernel_policy_op op,
 		 * TRANSPORT_PROTO is for the client, so presumably it
 		 * matches the client's protoco?
 		 */
-		jam(buf, " transport_proto=%s", protocol_by_ipproto(transport_proto)->name);
-		if (transport_proto != src_client_proto->ipproto) {
+		const ip_protocol *transport_protocol = protocol_by_ipproto(transport_proto);
+		jam(buf, " transport_proto=%s", transport_protocol->name);
+		if (!(transport_protocol == src_client_proto)) {
 			jam(buf, "!=SRC");
 		}
-		if (transport_proto != dst_client_proto->ipproto) {
+		if (!(transport_protocol == dst_client_proto)) {
 			jam(buf, "!=DST");
 		}
 
@@ -1431,7 +1426,7 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " esatype=%s", esa_proto->name);
 
 		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
-		if (sa_proto != NULL && sa_proto != esa_proto) {
+		if (!(sa_proto == esa_proto)) {
 			jam(buf, "!=ESAPROTO");
 		}
 
@@ -1445,11 +1440,12 @@ bool raw_policy(enum kernel_policy_op op,
 				if (i > 0) {
 					jam(buf, ",");
 				}
-				jam(buf, "%s", protocol_by_ipproto(pi->proto)->name);
-				if (i == 0 && pi->proto != esa_proto->ipproto) {
+				const ip_protocol *pi_proto = protocol_by_ipproto(pi->proto);
+				jam(buf, "%s", pi_proto->name);
+				if (i == 0 && !(esa_proto == pi_proto)) {
 					jam(buf, "!=ESATYPE");
 				}
-				if (i != 0 && sa_proto != NULL && sa_proto->ipproto != pi->proto) {
+				if (i != 0 && !(sa_proto == pi_proto)) {
 					jam(buf, "!=SA_PROTO");
 				}
 				jam(buf, "/");

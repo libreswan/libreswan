@@ -334,6 +334,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 				return TRUE;
 
 			break;
+		case SPI_IGNORE:
 		case SPI_TRAPSUBNET: /* unused in our code */
 		default:
 			bad_case(ntohl(new_spi));

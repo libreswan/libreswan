@@ -2211,18 +2211,21 @@ enum_names ikev2_redirect_gw_names = {
 	NULL
 };
 
-/* magic SPI values (specific to Libreswan: see <libreswan.h>) */
-static const char *const spi_name[] = {
+/* magic SPI values (specific to Libreswan */
+
+static const char *const policy_spi_name[] = {
 	"%pass",
 	"%drop",
 	"%reject",
 	"%hold",
 	"%trap",
+	"%ignore",
 	"%trapsubnet",
 };
-enum_names spi_names = {
+
+enum_names policy_spi_names = {
 	SPI_PASS, SPI_TRAPSUBNET,
-	ARRAY_REF(spi_name),
+	ARRAY_REF(policy_spi_name),
 	"%",	/* prefix */
 	NULL
 };
@@ -2646,6 +2649,7 @@ static const enum_names *en_checklist[] = {
 	&payload_flag_names,
 	&oakley_attr_bit_names,
 	&global_timer_names,
+	&policy_spi_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
