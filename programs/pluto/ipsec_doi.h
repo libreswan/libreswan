@@ -17,9 +17,12 @@
  * for more details.
  */
 
-#include "fd.h"
+#ifndef IPSEC_DOI_H
+#define IPSEC_DOI_H
+
 #include "pluto_timing.h"
 
+struct fd;
 struct payload_digest;
 struct state;
 struct jambuf;
@@ -45,3 +48,7 @@ extern bool has_preloaded_public_key(const struct state *st);
 
 extern void lswlog_child_sa_established(struct jambuf *buf, struct state *st);
 extern void lswlog_ike_sa_established(struct jambuf *buf, struct state *st);
+
+lset_t capture_child_rekey_policy(struct state *st);
+
+#endif
