@@ -20,10 +20,6 @@ east #
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority 2084814 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -38,6 +34,6 @@ east #
  # confirm east is in unrouted state again
 east #
  hostname | grep east > /dev/null && ipsec status |grep "eroute owner"
-000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 east #
  
