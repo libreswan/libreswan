@@ -1754,11 +1754,6 @@ pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name)
 	return pbs;
 }
 
-chunk_t same_pbs_out_as_chunk(pb_stream *pbs)
-{
-	return chunk2(pbs->start, pbs_offset(pbs));
-}
-
 shunk_t same_pbs_out_as_shunk(pb_stream *pbs)
 {
 	return shunk2(pbs->start, pbs_offset(pbs));

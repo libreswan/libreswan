@@ -262,7 +262,6 @@ extern void close_output_pbs(struct pbs_out *pbs);
  * [start..cur) of an output PBS as a chunk.
  */
 
-extern chunk_t same_pbs_out_as_chunk(pb_stream *pbs);
 extern shunk_t same_pbs_out_as_shunk(pb_stream *pbs);
 extern chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name);
 
