@@ -913,11 +913,12 @@ kvmplutotest	ikev1-labeled-ipsec-01					wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-01					good
-kvmplutotest	ikev2-labeled-ipsec-01-childless			wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		wip
+kvmplutotest	ikev2-labeled-ipsec-01-childless			good
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-acquire	good
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
