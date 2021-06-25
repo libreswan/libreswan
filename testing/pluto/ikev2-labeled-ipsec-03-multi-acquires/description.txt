@@ -1,4 +1,4 @@
-basic-pluto-01 but now with labeled IPsec using NETKEY.
+basic-pluto-01 but now with labeled IPsec using XFRM.
 
 This installs a policy label that will be used to match
 other policies. That is, an acquire happens per different
