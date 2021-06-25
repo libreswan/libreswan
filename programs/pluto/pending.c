@@ -51,7 +51,7 @@
 #include "ikev2.h"
 #include "ip_address.h"
 #include "host_pair.h"
-#include "ikev2_create_child_sa.h"		/* for ikev2_initiate_child_sa() */
+#include "ikev2_create_child_sa.h"		/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -264,15 +264,12 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 	}
 
 	for (pp = host_pair_first_pending(ike->sa.st_connection);
-	     (p = *pp) != NULL; )
-	{
+	     (p = *pp) != NULL; ) {
 		if (p->ike == ike) {
 			p->pend_time = mononow();
 			switch (ike->sa.st_ike_version) {
 			case IKEv2:
-				if (cc != p->connection) {
-					ikev2_initiate_child_sa(p);
-				} else {
+				if (cc == p->connection) {
 					/*
 					 * IKEv2 AUTH negotiation
 					 * include child.  nothing to
@@ -280,7 +277,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 * delete it
 					 */
 					what = "delete from";
+					break;
 				}
+				initiate_v2_CREATE_CHILD_SA_create_child(ike,
+									 p->connection,
+									 p->policy, p->try,
+									 p->sec_label,
+									 p->whack_sock);
 				break;
 			case IKEv1:
 #ifdef USE_IKEv1

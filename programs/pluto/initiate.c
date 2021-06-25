@@ -40,7 +40,7 @@
 #include "ikev1_quick.h"		/* for quick_outI1() */
 #include "ikev2.h"			/* for ikev2_state_transition_fn; */
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
-#include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
+#include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 
@@ -321,17 +321,10 @@ void ipsecdoi_initiate(struct connection *c,
 				    replacing, sec_label,
 				    false /*part of initiate*/);
 		} else {
-			struct pending p = {
-				.whack_sock = logger->global_whackfd, /*on-stack*/
-				.ike = pexpect_ike_sa(st),
-				.connection = c,
-				.try = try,
-				.policy = policy,
-				.replacing = replacing,
-				.sec_label = sec_label,
-			};
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			ikev2_initiate_child_sa(&p);
+			initiate_v2_CREATE_CHILD_SA_create_child(pexpect_ike_sa(st),
+								 c, policy, try, sec_label,
+								 logger->global_whackfd);
 		}
 		break;
 	default:

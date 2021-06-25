@@ -16,15 +16,26 @@
 #ifndef IKEV2_CREATE_CHILD_SA_H
 #define IKEV2_CREATE_CHILD_SA_
 
+#include "shunk.h"
+#include "lset.h"
+
+struct ike_sa;
+struct child_sa;
+struct connection;
+
 extern void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike);
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
 
-void ikev2_initiate_child_sa(struct pending *p);
+extern void initiate_v2_CREATE_CHILD_SA_create_child(struct ike_sa *ike,
+						     struct connection *c, /*child*/
+						     lset_t policy, int try,
+						     shunk_t sec_label,
+						     struct fd *whackfd);
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_create_child_request;
 
 extern void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike, struct child_sa *child);
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
-extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_create_child_request;
 
 extern ikev2_state_transition_fn ikev2_child_inR;
 

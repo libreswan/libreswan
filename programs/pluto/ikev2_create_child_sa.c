@@ -63,169 +63,7 @@ static stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 				      struct child_sa *larval_child,
 				      struct msg_digest *md);
 
-/*
- * Initiate a CREATE_CHILD_SA exchange.
- */
-
 static ke_and_nonce_cb ikev2_child_outI_continue;
-
-void ikev2_initiate_child_sa(struct pending *p)
-{
-	struct ike_sa *ike = p->ike;
-	struct connection *c = p->connection;
-	passert(c != NULL);
-
-	enum sa_type sa_type;
-	if (p->replacing == ike->sa.st_serialno) { /* IKE rekey exchange */
-		sa_type = IKE_SA;
-		ike->sa.st_viable_parent = FALSE;
-	} else {
-		if (find_pending_phase2(ike->sa.st_serialno,
-					c, IPSECSA_PENDING_STATES)) {
-			return;
-		}
-		sa_type = IPSEC_SA;
-	}
-
-	if (c->kind == CK_TEMPLATE && p->sec_label.len > 0) {
-		/* create instance and switch to it */
-		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		c = instantiate(c, &remote_addr, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&c->spd.this.sec_label);
-		c->spd.this.sec_label = clone_hunk(p->sec_label, "ACQUIRED sec_label");
-		free_chunk_content(&c->spd.that.sec_label);
-		c->spd.that.sec_label = clone_hunk(p->sec_label, "ACQUIRED sec_label");
-	}
-
-	struct child_sa *child; /* to be determined */
-	const struct child_sa *child_being_replaced;
-	if (sa_type == IPSEC_SA) {
-		child_being_replaced = pexpect_child_sa(state_with_serialno(p->replacing));
-		if (child_being_replaced != NULL &&
-		    !IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa)) {
-			/* can't replace a state that isn't established */
-			child_being_replaced = NULL;
-		}
-		child = new_v2_child_state(c, ike, IPSEC_SA,
-					   SA_INITIATOR,
-					   (child_being_replaced != NULL ? STATE_V2_REKEY_CHILD_I0 :
-					    STATE_V2_NEW_CHILD_I0),
-					   p->whack_sock);
-	} else {
-		child_being_replaced = NULL; /* obviously the IKE SA */
-		child = new_v2_child_state(c, ike, IKE_SA,
-					   SA_INITIATOR,
-					   STATE_V2_REKEY_IKE_I0,
-					   p->whack_sock);
-		child->sa.st_oakley = ike->sa.st_oakley;
-		child->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
-		child->sa.st_ike_pred = ike->sa.st_serialno;
-	}
-
-	/* share the love; XXX: something better? */
-	close_any(&ike->sa.st_logger->object_whackfd);
-	ike->sa.st_logger->object_whackfd = fd_dup(p->whack_sock, HERE);
-	if (child_being_replaced != NULL) {
-		close_any(&child_being_replaced->sa.st_logger->object_whackfd);
-		child_being_replaced->sa.st_logger->object_whackfd = fd_dup(p->whack_sock, HERE);
-	}
-
-	child->sa.st_try = p->try;
-
-	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
-	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
-
-	if (child_being_replaced != NULL) {
-		pexpect(sa_type == IPSEC_SA);
-		pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
-		child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
-		passert(child->sa.st_connection == child_being_replaced->sa.st_connection);
-		if (HAS_IPSEC_POLICY(child_being_replaced->sa.st_policy))
-			child->sa.st_policy = child_being_replaced->sa.st_policy;
-		else
-			p->policy = c->policy; /* where did child_being_replaced->sa.st_policy go? */
-	}
-
-	child->sa.st_policy = p->policy;
-
-	char replacestr[256] = "";
-	if (p->replacing != SOS_NOBODY) {
-		snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
-			 p->replacing);
-	}
-
-	passert(child->sa.st_connection != NULL);
-
-	if (sa_type == IPSEC_SA) {
-
-		/*
-		 * Use the CREATE_CHILD_SA proposal suite - the
-		 * proposal generated during IKE_AUTH will have been
-		 * stripped of DH.
-		 *
-		 * XXX: If the IKE SA's DH changes, then the child
-		 * proposals will be re-generated.  Should the child
-		 * proposals instead be somehow stored in state and
-		 * dragged around?
-		 */
-		const struct dh_desc *default_dh =
-			c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
-		struct ikev2_proposals *child_proposals =
-			get_v2_create_child_proposals(c,
-						      "ESP/AH initiator emitting proposals",
-						      default_dh,
-						      child->sa.st_logger);
-		/* see ikev2_child_add_ipsec_payloads */
-		passert(c->v2_create_child_proposals != NULL);
-
-		child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
-
-		policy_buf pb;
-		dbg("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
-		    child->sa.st_serialno,
-		    child_being_replaced != NULL ? "rekey initiate" : "initiate",
-		    str_policy(p->policy, &pb),
-		    replacestr,
-		    ike->sa.st_serialno,
-		    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
-	} else {
-		policy_buf pb;
-		dbg("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
-		    child->sa.st_serialno,
-		    str_policy(p->policy, &pb),
-		    ike->sa.st_serialno);
-	}
-
-	/*
-	 * XXX: the combination of .st_pfs_group and .st_oakley.ta_dh
-	 * is weird.  Should this instead extract the tentative DH
-	 * from the proposals (providing a default)?
-	 */
-	switch (child->sa.st_state->kind) {
-
-	case STATE_V2_REKEY_CHILD_I0:
-		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
-				    ikev2_child_outI_continue,
-				    "Child Rekey Initiator KE and nonce ni");
-		break; /* return STF_SUSPEND; */
-
-	case STATE_V2_NEW_CHILD_I0:
-		submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
-				    ikev2_child_outI_continue,
-				    "Child Initiator KE? and nonce");
-		break; /* return STF_SUSPEND; */
-
-	case STATE_V2_REKEY_IKE_I0:
-		submit_ke_and_nonce(&child->sa, child->sa.st_oakley.ta_dh,
-				    ikev2_child_outI_continue /*never-null?*/,
-				    "IKE REKEY Initiator KE and nonce ni");
-		break; /* return STF_SUSPEND; */
-
-	default:
-		bad_case(child->sa.st_state->kind);
-	}
-}
 
 static v2_msgid_pending_cb ikev2_child_outI_continue_2;
 
@@ -748,11 +586,11 @@ void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, logger);
 
 	policy_buf pb;
-	dbg("#%lu is rekeying Child SA #%lu %s using IKE #%lu pfs=%s",
+	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s",
 	    larval_child->sa.st_serialno,
 	    child_being_replaced->sa.st_serialno,
-	    str_policy(larval_child->sa.st_policy, &pb),
 	    ike->sa.st_serialno,
+	    str_policy(larval_child->sa.st_policy, &pb),
 	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
 	     larval_child->sa.st_pfs_group->common.fqn));
 
@@ -786,8 +624,110 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 }
 
 /*
- * Process a CREATE_CHILD_SA create child request.
+ * CREATE_CHILD_SA create child request.
  */
+
+static bool find_pending_phase2(const so_serial_t psn,
+				const struct connection *c,
+				lset_t ok_states)
+{
+	struct state *best = NULL;
+	int n = 0;
+
+	passert(psn >= SOS_FIRST);
+
+	dbg("FOR_EACH_STATE_... in %s", __func__);
+	struct state *st = NULL;
+	FOR_EACH_STATE_NEW2OLD(st) {
+		if (LHAS(ok_states, st->st_state->kind) &&
+		    IS_CHILD_SA(st) &&
+		    st->st_clonedfrom == psn &&
+		    /* not instances */
+		    streq(st->st_connection->name, c->name)) {
+			n++;
+			if (best == NULL || best->st_serialno < st->st_serialno)
+				best = st;
+		}
+	}
+
+	if (n > 0) {
+		dbg("connection %s has %d pending IPsec negotiations ike #%lu last child state #%lu",
+		    c->name, n, psn, best->st_serialno);
+	}
+
+	return best != NULL;
+}
+
+void initiate_v2_CREATE_CHILD_SA_create_child(struct ike_sa *ike,
+					      struct connection *c, /* for child */
+					      lset_t policy, int try,
+					      shunk_t sec_label,
+					      struct fd *whackfd)
+{
+
+	if (find_pending_phase2(ike->sa.st_serialno,
+				c, IPSECSA_PENDING_STATES)) {
+		return;
+	}
+
+	if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
+		/* create instance and switch to it */
+		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+		c = instantiate(c, &remote_addr, NULL);
+		/* replace connection template label with ACQUIREd label */
+		free_chunk_content(&c->spd.this.sec_label);
+		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
+		free_chunk_content(&c->spd.that.sec_label);
+		c->spd.that.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
+	}
+
+	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA,
+						    SA_INITIATOR,
+						    STATE_V2_NEW_CHILD_I0,
+						    whackfd);
+
+	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
+	child->sa.st_try = try;
+
+	/* share the love; XXX: something better? */
+	close_any(&ike->sa.st_logger->object_whackfd);
+	ike->sa.st_logger->object_whackfd = fd_dup(whackfd, HERE);
+	child->sa.st_policy = policy;
+
+	/*
+	 * Use the CREATE_CHILD_SA proposal suite - the
+	 * proposal generated during IKE_AUTH will have been
+	 * stripped of DH.
+	 *
+	 * XXX: If the IKE SA's DH changes, then the child
+	 * proposals will be re-generated.  Should the child
+	 * proposals instead be somehow stored in state and
+	 * dragged around?
+	 */
+	const struct dh_desc *default_dh =
+		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+	struct ikev2_proposals *child_proposals =
+		get_v2_create_child_proposals(c,
+					      "ESP/AH initiator emitting proposals",
+					      default_dh,
+					      child->sa.st_logger);
+	/* see ikev2_child_add_ipsec_payloads */
+	passert(c->v2_create_child_proposals != NULL);
+
+	child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
+
+	policy_buf pb;
+	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",
+	    child->sa.st_serialno,
+	    ike->sa.st_serialno,
+	    str_policy(policy, &pb),
+	    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
+
+	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
+			    ikev2_child_outI_continue,
+			    "Child Initiator KE? and nonce");
+}
 
 stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
 							   struct child_sa *larval_child,
@@ -1095,10 +1035,10 @@ void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 
 	passert(larval_ike->sa.st_connection != NULL);
 	policy_buf pb;
-	dbg("#%lu submitting crypto to Rekey IKE SA %s to replace IKE# %lu",
-	    larval_ike->sa.st_serialno,
+	dbg("#%lu submitting crypto needed to rekey IKE SA #%lu policy=%s pfs=%s",
+	    larval_ike->sa.st_serialno, ike->sa.st_serialno,
 	    str_policy(larval_ike->sa.st_policy, &pb),
-	    ike->sa.st_serialno);
+	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
 			    ikev2_child_outI_continue /*never-null?*/,

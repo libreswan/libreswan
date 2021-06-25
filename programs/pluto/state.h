@@ -823,10 +823,6 @@ struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
 struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
 				    msgid_t msgid);
 
-extern bool find_pending_phase2(const so_serial_t psn,
-					const struct connection *c,
-					lset_t ok_states);
-
 extern struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 				     enum sa_role local_ike_role);
 extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi,
