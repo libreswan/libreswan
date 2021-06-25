@@ -2099,7 +2099,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-	ipsec_spi_t inner_spi = SPI_PASS;
 	if (mode == ENCAPSULATION_MODE_TUNNEL) {
 		/* If we are tunnelling, set up IP in IP pseudo SA */
 		proto = &ip_protocol_ipip;
@@ -2582,8 +2581,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				&c->spd.that.client,	/* src_client */
 				&c->spd.this.host_addr,	/* dst_host */
 				&c->spd.this.client,	/* dst_client */
-				inner_spi,		/* current spi - might not be used? */
-				inner_spi,		/* new spi */
+				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
 				proto,			/* SA proto */
 				c->spd.this.protocol,	/* transport_proto */
 				esatype,		/* esatype */
@@ -2722,7 +2720,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
-			SPI_PASS, SPI_PASS,
+			htonl(SPI_IGNORE), htonl(SPI_IGNORE),
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 			&ip_protocol_esp : NULL,
 			c->spd.this.protocol,
