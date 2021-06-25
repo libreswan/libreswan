@@ -29,9 +29,19 @@ static void check_str_said(void)
 		char *out;	/* NULL means error expected */
 		bool fudge;
 	} tests[] = {
+		/* all known prefixes */
+		{ LN, "icmp.1@1.2.3.0", "icmp.1@1.2.3.0", false, },
+		{ LN, "tun.4@1.2.3.0", "tun.4@1.2.3.0", false, },
+		{ LN, "tcp.6@1.2.3.0", "tcp.6@1.2.3.0", false, },
+		{ LN, "udp.17@1.2.3.0", "udp.17@1.2.3.0", false, },
+		{ LN, "esp.50@1.2.3.0", "esp.50@1.2.3.0", false, },
+		{ LN, "ah.51@1.2.3.0", "ah.51@1.2.3.0", false, },
+		{ LN, "int.61@1.2.3.0", "%unk-97", false, },
+		{ LN, "comp.108@1.2.3.0", "comp.108@1.2.3.0", false, },
+		/* number conversion */
+		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", false, },
 		{ LN, "esp257@1.2.3.0", "esp.101@1.2.3.0", false, },
 		{ LN, "ah0x20@1.2.3.4", "ah.20@1.2.3.4", false, },
-		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", false, },
 		{ LN, "comp20@1.2.3.4", "comp.14@1.2.3.4", false, },
 		{ LN, "esp257@::1", "esp:101@::1", false, },
 		{ LN, "esp257@0bc:12de::1", "esp:101@bc:12de::1", false, },

@@ -60,7 +60,7 @@ const struct ip_protocol ip_protocols[] = {
 		.ipproto = IPPROTO_ICMP,
 		.reference = "[RFC792]",
 		/* libreswan */
-		.prefix = "tun",
+		.prefix = "icmp",
 	},
 	[2] = {
 		.description = "Internet Group Management",
