@@ -222,7 +222,7 @@ bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_
 {
 	return send_chunks(where, false, SOS_NOBODY,
 			   md->iface, md->sender,
-			   same_out_pbs_as_chunk(packet), EMPTY_CHUNK,
+			   same_pbs_out_as_chunk(packet), EMPTY_CHUNK,
 			   md->md_logger);
 }
 
@@ -242,7 +242,7 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 
 bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_out *pbs)
 {
-	return send_chunk_using_state(st, where, same_out_pbs_as_chunk(pbs));
+	return send_chunk_using_state(st, where, same_pbs_out_as_chunk(pbs));
 }
 
 /*

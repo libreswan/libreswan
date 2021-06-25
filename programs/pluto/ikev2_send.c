@@ -72,7 +72,7 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 struct v2_outgoing_fragment **frags)
 {
 	pexpect(*frags == NULL);
-	chunk_t frag = same_out_pbs_as_chunk(pbs);
+	chunk_t frag = same_pbs_out_as_chunk(pbs);
 	*frags = alloc_bytes(sizeof(struct v2_outgoing_fragment) + frag.len, what);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);

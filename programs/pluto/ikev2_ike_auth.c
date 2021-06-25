@@ -255,7 +255,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 	/* record first packet for later checking of signature */
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
 		replace_chunk(&ike->sa.st_firstpacket_peer,
-			clone_out_pbs_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
+			      clone_pbs_out_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
 	}
 	/* beginning of data going out */
 
@@ -905,8 +905,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest *md)
 	}
 
 	/* calculate hash of IDi for AUTH below */
-	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash",
-						"IDi", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
+	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
+						same_pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
 	/* process CERTREQ payload */
@@ -1398,8 +1398,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		ike->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", ike->sa.st_sk_pr_no_ppk);
 	}
 
-	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2",
-						"IDr", pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
+	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2", "IDr",
+						same_pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
 						"skey_pr", ike->sa.st_skey_pr_nss);
 
 	/* process AUTH payload */

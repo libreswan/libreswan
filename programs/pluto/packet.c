@@ -1747,30 +1747,36 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
-pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name)
+pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name)
 {
 	pb_stream pbs;
 	init_pbs(&pbs, chunk.ptr, chunk.len, name);
 	return pbs;
 }
 
-chunk_t same_out_pbs_as_chunk(pb_stream *pbs)
+chunk_t same_pbs_out_as_chunk(pb_stream *pbs)
 {
-	chunk_t chunk = {
-		.ptr = pbs->start,
-		.len = pbs_offset(pbs),
-	};
-	return chunk;
+	return chunk2(pbs->start, pbs_offset(pbs));
 }
 
-chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name)
+shunk_t same_pbs_out_as_shunk(pb_stream *pbs)
 {
-	return clone_hunk(same_out_pbs_as_chunk(pbs), name);
+	return shunk2(pbs->start, pbs_offset(pbs));
 }
 
-shunk_t pbs_in_as_shunk(const struct pbs_in *pbs)
+chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name)
+{
+	return clone_hunk(same_pbs_out_as_shunk(pbs), name);
+}
+
+shunk_t same_pbs_in_as_shunk(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->start, pbs_room(pbs));
+}
+
+chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name)
+{
+	return clone_hunk(shunk2(pbs->start, pbs_room(pbs)), name);
 }
 
 shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)

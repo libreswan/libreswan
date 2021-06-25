@@ -641,7 +641,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* save initiator SA for HASH */
 	replace_chunk(&st->st_p1isa,
-		clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()"));
+		      clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in main_inI1_outR1()"));
 
 	return STF_OK;
 }

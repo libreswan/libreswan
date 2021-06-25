@@ -203,7 +203,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
-					   pbs_in_as_shunk(&md->message_pbs))) {
+					   same_pbs_in_as_shunk(&md->message_pbs))) {
 				/*
 				 * It looks a lot like a shiny new IKE
 				 * SA that only just responded to a
@@ -816,7 +816,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
 
 	/* Transmit */
 	record_v2_message(ike, &reply_stream, "IKE_SA_INIT request",
@@ -1003,7 +1003,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	/* record first packet for later checking of signature */
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		clone_out_pbs_as_chunk(&md->message_pbs,
+		      clone_pbs_out_as_chunk(&md->message_pbs,
 			"saved first received packet in inI1outR1_continue_tail"));
 
 	/* make sure HDR is at start of a clean buffer */
@@ -1152,7 +1152,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
 
 	return STF_OK;
 }
@@ -1383,7 +1383,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		}
 	}
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      clone_out_pbs_as_chunk(&md->message_pbs,
+		      clone_pbs_out_as_chunk(&md->message_pbs,
 					     "saved first received packet in inR1outI2"));
 
 	/*
