@@ -13,16 +13,17 @@ require {
 	type ping_t;
 	type unconfined_service_t;
 	type unconfined_t;
+	type netutils_t;
 
 	class association { polmatch sendto setcontext };
 	class capability { net_raw };
 	class chr_file { append getattr ioctl lock read write };
 	class dir { getattr ioctl lock open read search };
-	class file { entrypoint execute getattr ioctl lock map open read };
+	class file { entrypoint execute execute_no_trans getattr ioctl lock map open read };
 	class lnk_file { getattr read };
 	class netif { egress ingress tcp_recv tcp_send udp_recv udp_send };
        	class node { recvfrom tcp_recv tcp_send udp_recv udp_send sendto };
-	class process { noatsecure rlimitinh siginh };
+	class process { noatsecure rlimitinh siginh setpgid };
 	class tcp_socket { create_stream_socket_perms name_connect node_bind recv_msg send_msg };
 	class udp_socket { create_socket_perms recv_msg send_msg };
 }
@@ -59,12 +60,20 @@ corenet_tcp_bind_generic_node(nping_t)
 
 #============= END nping_t ==============
 
+#============= netutils_t ==============
+allow netutils_t bin_t:file { entrypoint execute execute_no_trans };
+allow netutils_t self:process setpgid;
+corecmd_mmap_bin_files(netutils_t)
+corenet_tcp_bind_generic_port(netutils_t)
+
 #============= unconfined_service_t ==============
 # Required when running `pluto` under `rr`.
 allow unconfined_service_t unconfined_t:association setcontext;
+allow unconfined_service_t netutils_t:association setcontext;
 allow unconfined_service_t ping_t:association setcontext;
 allow unconfined_service_t ipsec_t:association setcontext;
 allow unconfined_service_t nping_t:association setcontext;
+allow unconfined_service_t netutils_t:association setcontext;
 
 #============= ipsec_t ==============
 allow ipsec_t ipsec_mgmt_t:process { noatsecure rlimitinh siginh };

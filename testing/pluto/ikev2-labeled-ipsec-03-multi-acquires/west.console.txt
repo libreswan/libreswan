@@ -30,7 +30,7 @@ west #
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 west #
- # expect policy but not state
+ # expect policy but no states
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -39,6 +39,11 @@ XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
@@ -85,7 +90,7 @@ west #
  # wait for it to establish and flow
 west #
  ../../guestbin/wait-for.sh --match 'labeled..1.' ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=273, id='@east'
+006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=273, id='@east'
 west #
  # there should be no shunts
 west #
@@ -102,13 +107,20 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ../../guestbin/wait-for.sh --match 'labeled..2.' ipsec trafficstatus
-006 #3: "labeled"[2], type=ESP, add_time=1234567890, inBytes=148, outBytes=205, id='@east'
+006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, id='@east'
 west #
  # there should be no shunts
 west #
  ipsec shuntstatus
 000 Bare Shunt list:
 000  
+west #
+ ipsec showstates
+000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
 west #
  echo done
 done
@@ -117,40 +129,41 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 1687486 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	dir fwd priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687486 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+	dir in priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 2080702 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
