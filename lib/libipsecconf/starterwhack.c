@@ -287,7 +287,7 @@ static char *connection_name(const struct starter_conn *conn)
 	}
 }
 
-static void set_whack_end(char *lr,
+static bool set_whack_end(char *lr,
 			struct whack_end *w,
 			const struct starter_end *l)
 {
@@ -320,9 +320,8 @@ static void set_whack_end(char *lr,
 		break;
 
 	default:
-		printf("%s: do something with host case: %d\n", lr,
-			l->addrtype);
-		break;
+		printf("Failed to load connection %s= is not set\n", lr);
+		return false;
 	}
 	w->host_addr_name = l->strings[KSCF_IP];
 
@@ -412,6 +411,7 @@ static void set_whack_end(char *lr,
 	if (l->options_set[KNCF_CAT])
 		w->cat = l->options[KNCF_CAT];
 	w->pool_range = l->pool_range;
+	return true;
 }
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
@@ -658,8 +658,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KNCF_XAUTHFAIL];
 
-	set_whack_end("left",  &msg.left, &conn->left);
-	set_whack_end("right", &msg.right, &conn->right);
+	if (!set_whack_end("left",  &msg.left, &conn->left))
+		return -1;
+	if (!set_whack_end("right", &msg.right, &conn->right))
+		return -1;
 
 	msg.esp = conn->esp;
 	conn_log_val(conn, "esp", msg.esp);

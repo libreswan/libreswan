@@ -504,7 +504,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_NOTSET:
-		ERR_FOUND("start: %s invalid value - parse error", leftright);
+		/* cannot error out here, it might be a partial also= conn */
 		break;
 	}
 
