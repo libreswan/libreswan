@@ -85,7 +85,7 @@ bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
 
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
-			       const chunk_t *data);
+			       const shunk_t *data);
 
 typedef bool payload_emitter_fn(struct state *st, pb_stream *pbs);
 

@@ -147,7 +147,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	if (!compute_v2_cookie_from_md(&my_cookie, md, Ni)) {
 		return true; /* reject cookie */
 	}
-	chunk_t local_cookie = chunk2(&my_cookie, sizeof(my_cookie));
+	shunk_t local_cookie = shunk2(&my_cookie, sizeof(my_cookie));
 
 	/* No cookie? demand one */
 	if (me_want_cookie && cookie_digest == NULL) {

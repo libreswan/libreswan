@@ -275,7 +275,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			if (require_ddos_cookies()) {
 				dbg("DDOS so not responding to invalid packet");
 			} else {
-				chunk_t data = chunk2(md->message_payloads.data,
+				shunk_t data = shunk2(md->message_payloads.data,
 						      md->message_payloads.data_size);
 				send_v2N_response_from_md(md, md->message_payloads.n,
 							  &data);

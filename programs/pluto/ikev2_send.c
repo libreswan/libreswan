@@ -72,7 +72,7 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 struct v2_outgoing_fragment **frags)
 {
 	pexpect(*frags == NULL);
-	chunk_t frag = same_pbs_out_as_chunk(pbs);
+	shunk_t frag = same_pbs_out_as_shunk(pbs);
 	*frags = alloc_bytes(sizeof(struct v2_outgoing_fragment) + frag.len, what);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
@@ -508,7 +508,7 @@ void record_v2N_response(struct logger *logger,
  */
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
-			       const chunk_t *ndata)
+			       const shunk_t *ndata)
 {
 	passert(md != NULL); /* always a response */
 
@@ -559,7 +559,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	chunk_t nhunk = ndata == NULL ? empty_chunk : *ndata;
+	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
 		pexpect_fail(md->md_logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
