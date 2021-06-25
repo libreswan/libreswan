@@ -9,3 +9,5 @@ The connection should fail:
   with AUTHENTICATION_FAILED (a little lie)
 
 - initiator abandons  SA
+
+TODO: responder should keep the IKE SA and only return TS_UNACCEPTABLE.
