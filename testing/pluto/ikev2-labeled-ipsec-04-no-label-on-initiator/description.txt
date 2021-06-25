@@ -9,4 +9,4 @@ The connection should fail:
   child because TS (label) doesn't match
 
 - initiator authenticates, but then because its first child wasn't
-  created
+  created, it tears down the IKE SA
