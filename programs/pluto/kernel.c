@@ -1787,7 +1787,7 @@ bool eroute_connection(const struct spd_route *sr,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
-		       unsigned int op,
+		       enum kernel_policy_op op,
 		       const char *opname,
 		       struct logger *logger)
 {
