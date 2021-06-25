@@ -31,7 +31,8 @@ static struct magic {
 	{ "%reject", "int258@0.0.0.0" },
 	{ "%hold", "int259@0.0.0.0" },
 	{ "%trap", "int260@0.0.0.0" },
-	{ "%trapsubnet", "int261@0.0.0.0" },
+	{ "%ignore", "int261@0.0.0.0" },
+	{ "%trapsubnet", "int262@0.0.0.0" },
 	{ NULL, NULL }
 };
 
