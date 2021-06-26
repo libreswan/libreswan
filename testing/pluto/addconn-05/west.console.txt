@@ -13,7 +13,6 @@ Loading default conn
 Loading conn west
 Loading conn west-bogus
 Loading conn east
-addconn, in config '/etc/ipsec.conf',  start: left invalid value - parse error
 loading named conns: west
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
 seeking_src = 0, seeking_gateway = 0, has_peer = 0
@@ -38,7 +37,6 @@ Loading default conn
 Loading conn west
 Loading conn west-bogus
 Loading conn east
-addconn, in config '/etc/ipsec.conf',  start: left invalid value - parse error
 loading named conns: west-bogus
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
 seeking_src = 0, seeking_gateway = 0, has_peer = 0
