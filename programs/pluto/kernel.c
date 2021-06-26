@@ -1137,7 +1137,7 @@ static bool sag_eroute(const struct state *st,
 	if (tunnel) {
 		int j;
 
-		inner_spi = st->st_tunnel_out_spi;
+		inner_spi = (ipsec_spi_t)0;
 		inner_proto = &ip_protocol_ipip;
 		inner_esatype = ET_IPIP;
 

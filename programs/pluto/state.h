@@ -336,8 +336,6 @@ struct state {
 	struct ipsec_proto_info st_esp;
 	struct ipsec_proto_info st_ipcomp;
 
-	ipsec_spi_t st_tunnel_in_spi;		/* KLUDGE */
-	ipsec_spi_t st_tunnel_out_spi;		/* KLUDGE */
 	IPsecSAref_t st_ref;                    /* our kernel name for our incoming SA */
 	IPsecSAref_t st_ref_peer;                 /* our kernel name for our outgoing SA */
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */

@@ -2114,9 +2114,9 @@ static void show_established_child_details(struct show *s, struct state *st)
 		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
+			add_said(&c->spd.that.host_addr, (ipsec_spi_t)0,
 				 &ip_protocol_ipip);
-			add_said(&c->spd.this.host_addr, st->st_tunnel_in_spi,
+			add_said(&c->spd.this.host_addr, (ipsec_spi_t)0,
 				 &ip_protocol_ipip);
 		}
 #endif
