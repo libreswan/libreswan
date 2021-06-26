@@ -59,8 +59,6 @@ enum kernel_policy_op {
 
 extern const struct enum_names kernel_policy_op_names;
 
-#define IPSEC_PROTO_ANY         255
-
 struct pfkey_proto_info {
 	unsigned proto;
 	enum encapsulation_mode mode;
