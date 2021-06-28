@@ -1073,7 +1073,6 @@ static bool sag_eroute(const struct state *st,
 {
 	struct connection *c = st->st_connection;
 	enum eroute_type inner_esatype;
-	ipsec_spi_t inner_spi;
 	struct pfkey_proto_info proto_info[4];
 	int i;
 	bool tunnel;
@@ -1088,10 +1087,8 @@ static bool sag_eroute(const struct state *st,
 
 	const struct ip_protocol *inner_proto = NULL;
 	inner_esatype = ET_UNSPEC;
-	inner_spi = 0;
 
 	if (st->st_ah.present) {
-		inner_spi = st->st_ah.attrs.spi;
 		inner_proto = &ip_protocol_ah;
 		inner_esatype = ET_AH;
 
@@ -1104,7 +1101,6 @@ static bool sag_eroute(const struct state *st,
 	}
 
 	if (st->st_esp.present) {
-		inner_spi = st->st_esp.attrs.spi;
 		inner_proto = &ip_protocol_esp;
 		inner_esatype = ET_ESP;
 
@@ -1117,7 +1113,6 @@ static bool sag_eroute(const struct state *st,
 	}
 
 	if (st->st_ipcomp.present) {
-		inner_spi = st->st_ipcomp.attrs.spi;
 		inner_proto = &ip_protocol_comp;
 		inner_esatype = ET_IPCOMP;
 
@@ -1137,7 +1132,6 @@ static bool sag_eroute(const struct state *st,
 	if (tunnel) {
 		int j;
 
-		inner_spi = (ipsec_spi_t)0;
 		inner_proto = &ip_protocol_ipip;
 		inner_esatype = ET_IPIP;
 
@@ -1153,8 +1147,8 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
-				 inner_esatype, proto_info + i,
+	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
+				 inner_proto, inner_esatype, proto_info + i,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
 				 xfrm_if_id, op, why, st->st_logger);
 }
