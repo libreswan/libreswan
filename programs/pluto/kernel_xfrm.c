@@ -521,7 +521,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype,
-			       const struct pfkey_proto_info *proto_info,
+			       const struct encap_rules *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority,
 			       const struct sa_marks *sa_marks,
@@ -741,20 +741,20 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (proto_info != NULL &&
+	if (encap != NULL &&
 	    /* XXX: see comment above, and {else} below */
 	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) &&
 	    op != KP_DELETE_OUTBOUND) {
 		struct xfrm_user_tmpl tmpl[4] = {0};
 
 		int i;
-		for (i = 0; proto_info[i].proto; i++) {
-			tmpl[i].reqid = proto_info[i].reqid;
-			tmpl[i].id.proto = proto_info[i].proto;
-			tmpl[i].optional = (proto_info[i].proto == IPPROTO_COMP && dir != XFRM_POLICY_OUT);
+		for (i = 0; i <= encap->outer; i++) {
+			tmpl[i].reqid = encap->rule[i].reqid;
+			tmpl[i].id.proto = encap->rule[i].proto;
+			tmpl[i].optional = (encap->rule[i].proto == ENCAP_PROTO_IPCOMP && dir != XFRM_POLICY_OUT);
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 			tmpl[i].family = addrtypeof(dst_host);
-			tmpl[i].mode = (proto_info[i].mode == ENCAPSULATION_MODE_TUNNEL);
+			tmpl[i].mode = encap->tunnel;
 
 			if (tmpl[i].mode) {
 				/* tunnel mode needs addresses */
@@ -782,13 +782,15 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 
-	} else if ( DBGP(DBG_BASE) && proto_info != NULL) {
+	} else if (DBGP(DBG_BASE) && encap != NULL) {
 		/*
 		 * Dump ignored proto_info[].
 		 */
-		for (unsigned i = 0; proto_info[i].proto; i++) {
-			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%d mode=%d because policy=%d op=%d",
-				__func__, proto_info[i].reqid, proto_info[i].proto, proto_info[i].mode,
+		for (unsigned i = 0; encap->rule[i].proto; i++) {
+			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s tunnel=%s because policy=%d op=%d",
+				__func__, encap->rule[i].reqid,
+				protocol_by_ipproto(encap->rule[i].proto)->name,
+				bool_str(encap->tunnel),
 				policy, op);
 		}
 
@@ -914,8 +916,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			break;
 		}
 		if (esatype != ET_INT &&
-		    proto_info != NULL &&
-		    proto_info[0].mode != ENCAPSULATION_MODE_TUNNEL) {
+		    encap != NULL &&
+		    !encap->tunnel) {
 			break;
 		}
 		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);

@@ -279,7 +279,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
-			       const struct pfkey_proto_info *proto_info,
+			       const struct encap_rules *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
@@ -378,9 +378,13 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
 					       local_sa.len + remote_sa.len);
 		dbg("%s() sa_proto is %d %s", __func__, sa_proto->ipproto, sa_proto->name);
-		if (sa_proto->ipproto == ET_IPIP) {
+		/*pexpect(encap != NULL)?*/
+		if (encap != NULL) {
+			ir->sadb_x_ipsecrequest_mode = encap->tunnel ? IPSEC_MODE_TUNNEL : IPSEC_MODE_TRANSPORT;
+			ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
+		} else if (sa_proto->ipproto == ET_IPIP) {
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
-			ir->sadb_x_ipsecrequest_proto = proto_info != NULL ? (unsigned)proto_info->proto : sa_proto->ipproto;
+			ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
 		} else {
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 			ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
@@ -425,7 +429,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
 		     ipsec_strerror(),
 		     str_selector(src_client, &s),
-		     str_selector(that_client, &d),
+		     str_selector(dst_client, &d),
 		     pfkey_seq);
 		return false;
 	}
@@ -463,7 +467,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			/* add nothing == do nothing */
 			return TRUE;
 
-		case KP_DELETED_OUTBOUND:
+		case KP_DELETE_OUTBOUND:
 			/* delete remains delete */
 			break;
 

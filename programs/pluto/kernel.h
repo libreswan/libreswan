@@ -59,15 +59,56 @@ enum kernel_policy_op {
 
 extern const struct enum_names kernel_policy_op_names;
 
-struct pfkey_proto_info {
-	unsigned proto;
-	enum encapsulation_mode mode;
+/*
+ * The protocol used to encapsulate.
+ *
+ * Since ip-xfrm(8) lists esp, ah, comp, route2, hao and setkey(8)
+ * lists ah, esp, ipcomp.
+ *
+ * XXX: The numbers end up being fed into the kernel so need to match
+ * IETF equivalents.
+ *
+ * XXX: eroute_type includes ET_INT and ET_IPIP but in this context
+ * the're not valid.  Hence the separate enum to enforce their
+ * exclusion.  Suspect eroute_type can be chopped.
+ */
+
+enum encap_proto {
+	ENCAP_PROTO_UNSPEC = 0,
+	ENCAP_PROTO_ESP = 50,		/* (50)  encryption/auth */
+	ENCAP_PROTO_AH = 51,		/* (51)  authentication */
+	ENCAP_PROTO_IPCOMP= 108,	/* (108) compression */
+};
+
+/*
+ * Encapsulation rules.
+ *
+ * These determine how a packet matching a policy should be
+ * encapsulated (processed).  The rules are ordered inner-most to
+ * outer-most (there's an implied -1 rule matching the actual packet).
+ *
+ * setkey(8) uses the term "rule" when refering to the tupple
+ * protocol/mode/src-dst/level while ip-xfrm(8) uses TMPL to describe
+ * something far more complex.
+ *
+ * XXX: this may well need to eventually include things like the
+ * addresses; spi; ...?
+ */
+
+struct encap_rule {
+	enum encap_proto proto;
 	reqid_t reqid;
 };
 
-extern const struct pfkey_proto_info esp_transport_proto_info[];
+struct encap_rules {
+	bool tunnel;
+	int outer; /* -1 when no rules; XXX: good idea? */
+	struct encap_rule rule[4]; /* AH+ESP+COMP+0 */
+};
 
-struct sadb_msg;
+#define pfkey_proto_info encap_rule
+extern const struct encap_rules esp_transport_encap_rules;
+#define esp_transport_proto_info &esp_transport_encap_rules /* XXX: TBD */
 
 /*
  * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
@@ -199,7 +240,7 @@ struct kernel_ops {
 			   const struct ip_protocol *sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
-			   const struct pfkey_proto_info *proto_info,
+			   const struct encap_rules *encap,
 			   deltatime_t use_lifetime,
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
@@ -372,7 +413,7 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t new_spi,
 			      const struct ip_protocol *proto,
 			      enum eroute_type esatype,
-			      const struct pfkey_proto_info *proto_info,
+			      const struct encap_rules *encap,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
@@ -414,7 +455,7 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const struct ip_protocol *sa_proto,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
-		       const struct pfkey_proto_info *proto_info,
+		       const struct encap_rules *encap,
 		       deltatime_t use_lifetime,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
