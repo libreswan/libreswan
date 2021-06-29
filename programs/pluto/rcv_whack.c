@@ -806,7 +806,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_initiate) {
-		dbg_whack(s, "start: initiate");
+		dbg_whack(s, "start: initiate name='%s' remote='%s' async=%s",
+			  m->name != NULL ? m->name : "<null>",
+			  m->remote_host != NULL ? m->remote_host : "<null>",
+			  bool_str(m->whack_async));
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
