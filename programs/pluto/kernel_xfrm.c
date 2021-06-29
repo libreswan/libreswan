@@ -754,7 +754,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			tmpl[i].optional = (encap->rule[i].proto == ENCAP_PROTO_IPCOMP && dir != XFRM_POLICY_OUT);
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 			tmpl[i].family = addrtypeof(dst_host);
-			tmpl[i].mode = encap->tunnel;
+			/* only the inner-most rule gets the worm; er tunnel flag */
+			tmpl[i].mode = (i == 0 && encap->tunnel);
 
 			if (tmpl[i].mode) {
 				/* tunnel mode needs addresses */
