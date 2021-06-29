@@ -554,12 +554,11 @@ static void initiate_next(struct state *st, void *context UNUSED)
 			/*
 			 * try to check that the transition still applies ...
 			 */
-#if 0
-			passert(pending.transition->state == st->st_state->kind);
-#endif
-			if (!IS_IKE_SA_ESTABLISHED(&ike->sa) ||
-			    (child != NULL && !IS_CHILD_SA_ESTABLISHED(&child->sa))) {
-				log_state(RC_LOG, st, "dropping transition: %s",
+			if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+				log_state(RC_LOG, st, "dropping transition as IKE SA is not established: %s",
+					  pending.transition->story);
+			} else if (pending.transition->state != st->st_state->kind) {
+				log_state(RC_LOG, st, "dropping transition as it does not match current state: %s",
 					  pending.transition->story);
 			} else {
 				set_v2_transition(st, pending.transition, HERE);

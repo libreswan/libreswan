@@ -26,10 +26,10 @@ stf_status process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
 					struct msg_digest *md,
 					bool expect_accepted_proposal);
 
-stf_status ikev2_child_sa_respond(struct ike_sa *ike,
-				  struct child_sa *child,
-				  struct msg_digest *md,
-				  struct pbs_out *outpbs);
+stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
+					      struct child_sa *child,
+					      struct msg_digest *md,
+					      struct pbs_out *outpbs);
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 

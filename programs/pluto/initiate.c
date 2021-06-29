@@ -322,9 +322,9 @@ void ipsecdoi_initiate(struct connection *c,
 				    false /*part of initiate*/);
 		} else {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			initiate_v2_CREATE_CHILD_SA_create_child(pexpect_ike_sa(st),
-								 c, policy, try, sec_label,
-								 logger->global_whackfd);
+			submit_v2_CREATE_CHILD_SA_new_child(pexpect_ike_sa(st),
+							    c, policy, try, sec_label,
+							    logger->global_whackfd);
 		}
 		break;
 	default:

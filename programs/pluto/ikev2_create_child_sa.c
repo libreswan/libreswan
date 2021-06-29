@@ -55,64 +55,61 @@
 #include "pending.h"
 #include "ipsec_doi.h"			/* for capture_child_rekey_policy */
 
-static stf_status ikev2_child_out_tail(struct ike_sa *ike,
-				       struct child_sa *child,
-				       struct msg_digest *request_md);
+static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA;
+static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
+static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
 
-static stf_status ikev2_child_inIoutR(struct ike_sa *ike,
-				      struct child_sa *larval_child,
-				      struct msg_digest *md);
+static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA_request;
 
-static ke_and_nonce_cb ikev2_child_outI_continue;
-
-static v2_msgid_pending_cb ikev2_child_outI_continue_2;
-
-static stf_status ikev2_child_outI_continue(struct state *larval_child_sa,
-					    struct msg_digest *unused_md,
-					    struct dh_local_secret *local_secret,
-					    chunk_t *nonce)
+static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
+stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
+					      struct msg_digest *unused_md,
+					      struct dh_local_secret *local_secret,
+					      chunk_t *nonce)
 {
 	/* child initiating exchange */
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
+	struct child_sa *larval = pexpect_child_sa(larval_sa);
+	struct ike_sa *ike = ike_sa(&larval->sa, HERE);
 	pexpect(unused_md == NULL);
-	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
+	pexpect(larval->sa.st_sa_role == SA_INITIATOR);
 	dbg("%s() for #%lu %s",
-	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+	     __func__, larval->sa.st_serialno, larval->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
 	 * handles only one state transition.  If there's commonality
 	 * then the per-transition functions can all call common code.
 	 */
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
-		larval_child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0);
+	pexpect(larval->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
+		larval->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
+		larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0);
 
 	/* and a parent? */
 	if (ike == NULL) {
-		pexpect_fail(larval_child->sa.st_logger, HERE,
+		pexpect_fail(larval->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
+			     larval->sa.st_serialno, larval->sa.st_clonedfrom);
 		/* XXX: release child? */
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* IKE SA => DH */
-	pexpect(larval_child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
+	pexpect(larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
 
-	unpack_nonce(&larval_child->sa.st_ni, nonce);
+	unpack_nonce(&larval->sa.st_ni, nonce);
 	if (local_secret != NULL) {
-		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gi);
+		unpack_KE_from_helper(&larval->sa, local_secret, &larval->sa.st_gi);
 	}
 
 	dbg("queueing child sa with acquired sec_label="PRI_SHUNK,
-	    pri_shunk(larval_child->sa.st_connection->spd.this.sec_label));
+	    pri_shunk(larval->sa.st_connection->spd.this.sec_label));
 
 	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
-	    larval_child->sa.st_serialno, ike->sa.st_serialno);
-	v2_msgid_queue_initiator(ike, &larval_child->sa, ISAKMP_v2_CREATE_CHILD_SA,
-				 NULL, ikev2_child_outI_continue_2);
+	    larval->sa.st_serialno, ike->sa.st_serialno);
+
+	pexpect(larval->sa.st_state->nr_transitions == 1);
+	v2_msgid_queue_initiator(ike, &larval->sa, ISAKMP_v2_CREATE_CHILD_SA,
+				 larval->sa.st_state->v2_transitions, NULL);
 
 	return STF_SUSPEND;
 }
@@ -142,15 +139,15 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 
 }
 
-stf_status ikev2_child_outI_continue_2(struct ike_sa *ike, struct state *larval_child_sa,
-				       struct msg_digest *md UNUSED)
+stf_status record_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
+					     struct child_sa *larval,
+					     struct msg_digest *null_md UNUSED)
 {
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	stf_status e = ikev2_start_new_exchange(ike, larval_child);
+	stf_status e = ikev2_start_new_exchange(ike, larval);
 	if (e != STF_OK) {
 		return e;
 	}
-	return ikev2_child_out_tail(ike, larval_child, NULL);
+	return record_v2_CREATE_CHILD_SA(ike, larval, NULL);
 }
 
 static bool ikev2_rekey_child_req(struct child_sa *child,
@@ -366,8 +363,8 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 }
 
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
-static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
-						 pb_stream *outpbs)
+static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
+						    struct pbs_out *outpbs)
 {
 	if (!pexpect(child->sa.st_establishing_sa == IPSEC_SA)) {
 		return STF_INTERNAL_ERROR;
@@ -464,8 +461,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct child_sa *child,
 	return STF_OK;
 }
 
-static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
-					       pb_stream *outpbs)
+static stf_status emit_v2_rekey_ike_payloads(struct child_sa *child,
+					     struct pbs_out *outpbs)
 {
 	struct connection *c = child->sa.st_connection;
 	chunk_t local_nonce;
@@ -531,8 +528,8 @@ static stf_status ikev2_child_add_ike_payloads(struct child_sa *child,
  * Process a CREATE_CHILD_SA rekey request.
  */
 
-void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
-					     struct child_sa *child_being_replaced)
+void submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
+					   struct child_sa *child_being_replaced)
 {
 	struct connection *c = child_being_replaced->sa.st_connection;
 	struct logger *logger = child_being_replaced->sa.st_logger;
@@ -580,7 +577,7 @@ void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 		get_v2_create_child_proposals(c,
 					      "ESP/AH rekey Child SA initiator emitting proposals",
 					      default_dh, logger);
-	/* see ikev2_child_add_ipsec_payloads */
+	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
 	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, logger);
@@ -595,9 +592,16 @@ void initiate_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	     larval_child->sa.st_pfs_group->common.fqn));
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
-			    ikev2_child_outI_continue,
+			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "Child Rekey Initiator KE and nonce ni");
 	/* return STF_SUSPEND */
+}
+
+stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
+							   struct child_sa *larval_child,
+							   struct msg_digest *md)
+{
+	return record_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -620,7 +624,14 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_FAIL;
 	}
 
-	return ikev2_child_inIoutR(ike, larval_child, md);
+	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
+}
+
+stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
+							   struct child_sa *larval_child,
+							   struct msg_digest *md)
+{
+	return process_v2_CREATE_CHILD_SA_child_response(ike, larval_child, md);
 }
 
 /*
@@ -658,11 +669,11 @@ static bool find_pending_phase2(const so_serial_t psn,
 	return best != NULL;
 }
 
-void initiate_v2_CREATE_CHILD_SA_create_child(struct ike_sa *ike,
-					      struct connection *c, /* for child */
-					      lset_t policy, int try,
-					      shunk_t sec_label,
-					      struct fd *whackfd)
+void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
+					 struct connection *c, /* for child */
+					 lset_t policy, int try,
+					 shunk_t sec_label,
+					 struct fd *whackfd)
 {
 
 	if (find_pending_phase2(ike->sa.st_serialno,
@@ -712,7 +723,7 @@ void initiate_v2_CREATE_CHILD_SA_create_child(struct ike_sa *ike,
 					      "ESP/AH initiator emitting proposals",
 					      default_dh,
 					      child->sa.st_logger);
-	/* see ikev2_child_add_ipsec_payloads */
+	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
 	child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
@@ -725,13 +736,20 @@ void initiate_v2_CREATE_CHILD_SA_create_child(struct ike_sa *ike,
 	    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
 
 	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
-			    ikev2_child_outI_continue,
+			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "Child Initiator KE? and nonce");
 }
 
-stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
-							   struct child_sa *larval_child,
-							   struct msg_digest *md)
+stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
+							 struct child_sa *larval_child,
+							 struct msg_digest *md)
+{
+	return record_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
+}
+
+stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
+							struct child_sa *larval_child,
+							struct msg_digest *md)
 {
 	pexpect(larval_child != NULL);
 
@@ -745,18 +763,25 @@ stf_status process_v2_CREATE_CHILD_SA_create_child_request(struct ike_sa *ike,
 		return STF_FAIL;
 	}
 
-	return ikev2_child_inIoutR(ike, larval_child, md);
+	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
+}
+
+stf_status process_v2_CREATE_CHILD_SA_new_child_response(struct ike_sa *ike,
+							 struct child_sa *larval_child,
+							 struct msg_digest *md)
+{
+	return process_v2_CREATE_CHILD_SA_child_response(ike, larval_child, md);
 }
 
 /*
  * processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request
  */
 
-static ke_and_nonce_cb ikev2_child_inIoutR_continue;
+static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_request_continue;
 
-stf_status ikev2_child_inIoutR(struct ike_sa *ike,
-			       struct child_sa *larval_child,
-			       struct msg_digest *md)
+stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
+					      struct child_sa *larval_child,
+					      struct msg_digest *md)
 {
 	pexpect(larval_child != NULL);
 
@@ -814,17 +839,17 @@ stf_status ikev2_child_inIoutR(struct ike_sa *ike,
 	 */
 	submit_ke_and_nonce(&larval_child->sa,
 			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
-			    ikev2_child_inIoutR_continue,
+			    process_v2_CREATE_CHILD_SA_request_continue,
 			    "Child Rekey Responder KE and nonce nr");
 	return STF_SUSPEND;
 }
 
-static dh_shared_secret_cb ikev2_child_inIoutR_continue_continue;
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_request_continue_continue;
 
-static stf_status ikev2_child_inIoutR_continue(struct state *larval_child_sa,
-					       struct msg_digest *md,
-					       struct dh_local_secret *local_secret,
-					       chunk_t *nonce)
+static stf_status process_v2_CREATE_CHILD_SA_request_continue(struct state *larval_child_sa,
+							      struct msg_digest *md,
+							      struct dh_local_secret *local_secret,
+							      chunk_t *nonce)
 {
 
 	/* responder processing request */
@@ -860,16 +885,16 @@ static stf_status ikev2_child_inIoutR_continue(struct state *larval_child_sa,
 		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 		/* initiate calculation of g^xy */
 		submit_dh_shared_secret(&larval_child->sa, larval_child->sa.st_gi,
-					ikev2_child_inIoutR_continue_continue,
+					process_v2_CREATE_CHILD_SA_request_continue_continue,
 					HERE);
 		return STF_SUSPEND;
 	} else {
-		return ikev2_child_out_tail(ike, larval_child, md);
+		return record_v2_CREATE_CHILD_SA(ike, larval_child, md);
 	}
 }
 
-static stf_status ikev2_child_inIoutR_continue_continue(struct state *larval_child_sa,
-							struct msg_digest *md)
+static stf_status process_v2_CREATE_CHILD_SA_request_continue_continue(struct state *larval_child_sa,
+								       struct msg_digest *md)
 {
 	/* 'child' responding to request */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
@@ -903,7 +928,7 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *larval_chi
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
 	}
-	return ikev2_child_out_tail(ike, larval_child, md);
+	return record_v2_CREATE_CHILD_SA(ike, larval_child, md);
 }
 
 /*
@@ -913,10 +938,11 @@ static stf_status ikev2_child_inIoutR_continue_continue(struct state *larval_chi
  *        Selectors and algorithms than the old one."
  */
 
-static dh_shared_secret_cb ikev2_child_inR_continue;
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_child_response_continue;
 
-stf_status ikev2_child_inR(struct ike_sa *ike, struct child_sa *larval_child,
-			   struct msg_digest *md)
+stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
+						     struct child_sa *larval_child,
+						     struct msg_digest *md)
 {
 	pexpect(larval_child != NULL);
 
@@ -962,12 +988,13 @@ stf_status ikev2_child_inR(struct ike_sa *ike, struct child_sa *larval_child,
 		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
 	}
 	chunk_t remote_ke = larval_child->sa.st_gr;
-	submit_dh_shared_secret(&larval_child->sa, remote_ke, ikev2_child_inR_continue, HERE);
+	submit_dh_shared_secret(&larval_child->sa, remote_ke,
+				process_v2_CREATE_CHILD_SA_child_response_continue, HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
-					   struct msg_digest *md)
+static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct state *larval_child_sa,
+								     struct msg_digest *md)
 {
 	/* initiator getting back an answer */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
@@ -1014,7 +1041,7 @@ static stf_status ikev2_child_inR_continue(struct state *larval_child_sa,
  */
 
 
-void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
+void submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	ike->sa.st_viable_parent = false;
@@ -1041,9 +1068,16 @@ void initiate_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    ikev2_child_outI_continue /*never-null?*/,
+			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "IKE REKEY Initiator KE and nonce ni");
 	/* "return STF_SUSPEND" */
+}
+
+stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
+							 struct child_sa *larval_ike,
+							 struct msg_digest *md)
+{
+	return record_v2_CREATE_CHILD_SA_request(ike, larval_ike, md);
 }
 
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
@@ -1217,7 +1251,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis);
 
-	return ikev2_child_out_tail(ike, larval_ike, md);
+	return record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
 }
 
 /*
@@ -1341,8 +1375,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct 
 	return STF_OK;
 }
 
-static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *child,
-				       struct msg_digest *request_md)
+static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa *child,
+					    struct msg_digest *request_md)
 {
 	stf_status ret;
 
@@ -1382,10 +1416,10 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_IKE_R0:
 	case STATE_V2_REKEY_IKE_I0:
-		ret = ikev2_child_add_ike_payloads(child, &sk.pbs);
+		ret = emit_v2_rekey_ike_payloads(child, &sk.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ikev2_child_add_ike_payloads() returned ");
+				jam(buf, "emit_v2_rekey_ike_payloads() returned ");
 				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* abort building the response message */
@@ -1393,10 +1427,10 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		break;
 	case STATE_V2_NEW_CHILD_I0:
 	case STATE_V2_REKEY_CHILD_I0:
-		ret = ikev2_child_add_ipsec_payloads(child, &sk.pbs);
+		ret = emit_v2_child_sa_request_payloads(child, &sk.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ikev2_child_add_ipsec_payloads returned ");
+				jam(buf, "emit_v2_child_sa_request_payloads() returned ");
 				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* abort building the response message */
@@ -1420,10 +1454,10 @@ static stf_status ikev2_child_out_tail(struct ike_sa *ike, struct child_sa *chil
 		} else {
 			return STF_INTERNAL_ERROR;
 		}
-		ret = ikev2_child_sa_respond(ike, child, request_md, &sk.pbs);
+		ret = emit_v2_child_sa_response_payloads(ike, child, request_md, &sk.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "ikev2_child_sa_respond returned ");
+				jam(buf, "emit_v2_child_sa_response_payloads() returned ");
 				jam_v2_stf_status(buf, ret);
 			}
 			return ret; /* abort building the response message */

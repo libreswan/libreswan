@@ -614,9 +614,9 @@ void v2_event_sa_rekey(struct state *st)
 	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
 	if (IS_IKE_SA(st)) {
 		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		initiate_v2_CREATE_CHILD_SA_rekey_ike(ike);
+		submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
 	} else {
-		initiate_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
+		submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
 	}
 
 	/*

@@ -75,10 +75,10 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
-stf_status ikev2_child_sa_respond(struct ike_sa *ike,
-				  struct child_sa *child,
-				  struct msg_digest *md,
-				  struct pbs_out *outpbs)
+stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
+					      struct child_sa *child,
+					      struct msg_digest *md,
+					      struct pbs_out *outpbs)
 {
 	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
@@ -908,9 +908,9 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return CHILD_FATAL;
 	}
 
-	ret = ikev2_child_sa_respond(ike, child, md, sk_pbs);
+	ret = emit_v2_child_sa_response_payloads(ike, child, md, sk_pbs);
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "ikev2_child_sa_respond returned ");
+		jam(buf, "emit_v2_child_sa_response_payloads() returned ");
 		jam_v2_stf_status(buf, ret);
 	}
 	if (ret != STF_OK) {

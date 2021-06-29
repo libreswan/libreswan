@@ -201,37 +201,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 #define req_enc_payloads   encrypted_payloads.required /* required encrypted payloads (allows just one) for received packet */
 #define opt_enc_payloads   encrypted_payloads.optional /* optional encrypted payloads (none or one) for received packet */
 
-	/* no state:   --> CREATE_CHILD IKE Rekey Request
-	 * HDR, SAi, KEi, Ni -->
-	 */
-
-	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
-	  .state      = STATE_V2_REKEY_IKE_I0,
-	  .next_state = STATE_V2_REKEY_IKE_I1,
-	  .send       = MESSAGE_REQUEST,
-	  .processor  = NULL,
-	  .timeout_event = EVENT_RETRANSMIT, },
-
-	/* no state:   --> CREATE IPsec Rekey Request
-	 * HDR, SAi1, N(REKEY_SA), {KEi,} Ni TSi TSr -->
-	 */
-	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
-	  .state      = STATE_V2_REKEY_CHILD_I0,
-	  .next_state = STATE_V2_REKEY_CHILD_I1,
-	  .send       = MESSAGE_REQUEST,
-	  .processor  = NULL,
-	  .timeout_event = EVENT_RETRANSMIT, },
-
-	/* no state:   --> CREATE IPsec Child Request
-	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
-	 */
-	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
-	  .state      = STATE_V2_NEW_CHILD_I0,
-	  .next_state = STATE_V2_NEW_CHILD_I1,
-	  .send       = MESSAGE_REQUEST,
-	  .processor  = NULL,
-	  .timeout_event = EVENT_RETRANSMIT, },
-
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -426,7 +395,9 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
 	 * this is the combined write up (not in RFC). See above for
-	 * individual cases from RFC
+	 * individual cases from RFC.
+	 *
+	 * The order that they rekey here matters.
 	 *
 	 * HDR, SK {SA, Ni, [KEi], [N(REKEY_SA)], [TSi, TSr]} -->
 	 *                <-- HDR, SK {N}
@@ -434,12 +405,25 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 
 	/*
-	 * Create Child SA Exchange to rekey IKE SA
-	 * no state:   --> REKEY_IKE_R
-	 * HDR, SAi1, KEi, Ni -->
-	 *		<-- HDR, SAr1, KEr, Nr
+	 * CREATE_CHILD_SA exchange to rekey IKE SA.
+	 *
+	 * In the responder, note the lack of TS (traffic selectors)
+	 * payload.  Since rekey and create child exchanges contain TS
+	 * they won't match.
 	 */
-	{ .story      = "Respond to CREATE_CHILD_SA IKE Rekey",
+
+	/* no state:   --> CREATE_CHILD IKE Rekey Request
+	 * HDR, SAi, KEi, Ni -->
+	 */
+
+	{ .story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_IKE_I0,
+	  .next_state = STATE_V2_REKEY_IKE_I1,
+	  .send       = MESSAGE_REQUEST,
+	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
+	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_R0,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .send       = MESSAGE_RESPONSE,
@@ -451,7 +435,7 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
 
-	{ .story      = "Process CREATE_CHILD_SA IKE Rekey Response",
+	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .req_clear_payloads = P(SK),
@@ -463,33 +447,22 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
-	 * request --> [N(REKEY_SA),]
-	 * [CP(CFG_REQUEST),]
-	 * [N(IPCOMP_SUPPORTED)+,]
-	 * [N(USE_TRANSPORT_MODE),]
-	 * [N(ESP_TFC_PADDING_NOT_SUPPORTED),]
-	 * [N(NON_FIRST_FRAGMENTS_ALSO),]
-	 * SA, Ni, [KEi,] TSi, TSr,
-	 * [V+][N+]
-	 */
-	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
-	  .state      = STATE_V2_NEW_CHILD_I1,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_ESTABLISHED,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = ikev2_child_inR,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_SA_REPLACE, },
-
-	/*
-	 * XXX: is there any benefit in having this state -- just
-	 * merge this and next?
+	 * CREATE_CHILD_SA exchange to rekey existing child.
+	 *
+	 * In the responder, note the presence of both TS (traffic
+	 * selectors) payload and REKEY_SA notification.  Since a
+	 * create child does not include the REKEY_SA notify it won't
+	 * match.
 	 */
 
-	{ .story      = "Respond to CREATE_CHILD_SA rekey CHILD SA request",
+	{ .story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_CHILD_I0,
+	  .next_state = STATE_V2_REKEY_CHILD_I1,
+	  .send       = MESSAGE_REQUEST,
+	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
+	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_ESTABLISHED,
@@ -503,7 +476,35 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	{ .story      = "Respond to CREATE_CHILD_SA IPsec SA Request",
+	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_CHILD_I1,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_ESTABLISHED,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	/*
+	 * CREATE_CHILD_SA exchange to create a new child.
+	 *
+	 * In the responder note the presence of just TS (traffic
+	 * selectors) payloads.  Earlier rules will have weeded out
+	 * both rekey IKE (no TS payload) and rekey Child (has
+	 * REKEY_SA notify) leaving just create new child.
+	 */
+
+	{ .story      = "initiate create Child SA (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_NEW_CHILD_I0,
+	  .next_state = STATE_V2_NEW_CHILD_I1,
+	  .send       = MESSAGE_REQUEST,
+	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
+	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_ESTABLISHED,
@@ -511,8 +512,20 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_create_child_request,
+	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_NEW_CHILD_I1,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_ESTABLISHED,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_new_child_response,
+	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -1679,19 +1692,36 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	const struct state_v2_microcode *svm;
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		/*
-		 * For CREATE_CHILD_SA exchanges, the from_state is
-		 * ignored.  See further down.
-		 */
-		if (svm->state != from_state->kind && ix != ISAKMP_v2_CREATE_CHILD_SA)
-			continue;
-		if (svm->recv_type != ix)
-			continue;
 
 		/*
-		 * Does the message role match the state transition?
+		 * Does the message match the state transition?
 		 */
+		if (svm->recv_type != ix) {
+			continue;
+		}
 		if (svm->recv_role != v2_msg_role(md)) {
+			continue;
+		}
+
+		/*
+		 * Does the from state match the SA's current state?
+		 *
+		 * XXX: Eventually this part won't be needed as each
+		 * state will have its own list of transitions.  See
+		 * find_v2_state_transition() which is currently only
+		 * used by IKES_SA_INIT.
+		 *
+		 * Unfortunately ...
+		 *
+		 * For CREATE_CHILD_SA, the responder ignores the
+		 * .from_state and instead applies some other magic
+		 * (the .from_state ends up being used when creating
+		 * the Child SA).
+		 */
+		if (ix == ISAKMP_v2_CREATE_CHILD_SA &&
+		    /* matched above */ svm->recv_role == MESSAGE_REQUEST) {
+			dbg("potential CREATE_CHILD_SA responder stumbling through to process_v2_child_ix()");
+		} else if (svm->state != from_state->kind) {
 			continue;
 		}
 

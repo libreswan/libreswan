@@ -279,11 +279,11 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					what = "delete from";
 					break;
 				}
-				initiate_v2_CREATE_CHILD_SA_create_child(ike,
-									 p->connection,
-									 p->policy, p->try,
-									 p->sec_label,
-									 p->whack_sock);
+				submit_v2_CREATE_CHILD_SA_new_child(ike,
+								    p->connection,
+								    p->policy, p->try,
+								    p->sec_label,
+								    p->whack_sock);
 				break;
 			case IKEv1:
 #ifdef USE_IKEv1
