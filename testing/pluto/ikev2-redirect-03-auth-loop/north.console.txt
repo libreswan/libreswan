@@ -19,10 +19,6 @@ north #
 north NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority 2084814 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
