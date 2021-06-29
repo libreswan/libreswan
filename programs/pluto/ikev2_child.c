@@ -853,6 +853,11 @@ enum child_status process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		}
 	}
 
+	if (ike->sa.st_sent_redirect) {
+		dbg("sending REDIRECT in IKE_AUTH, no need for CHILD SA (payloads)");
+		return CHILD_SKIPPED;
+	}
+
 	/* try to process them */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
 		/*
