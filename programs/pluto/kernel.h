@@ -189,14 +189,7 @@ struct kernel_sa {
 	unsigned authkeylen;
 	unsigned char *authkey;
 
-	/*
-	 * This field contains the compression algorithm ID (or 0).
-	 *
-	 * XXX: For the moment, when ESP, it also contains the
-	 * encryption algorithm's IKEv1 ID.  This is a just-in-case
-	 * some code is still relying on that value.
-	 */
-	unsigned compalg;
+	enum ipsec_ipcomp_algo ipcomp_algo;
 
 	const struct encrypt_desc *encrypt;
 	unsigned enckeylen;

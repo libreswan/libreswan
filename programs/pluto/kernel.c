@@ -49,7 +49,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "defs.h"
 #include "rnd.h"
@@ -2086,26 +2085,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_ipcomp.present) {
 		ipsec_spi_t ipcomp_spi =
 			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.spi;
-		unsigned compalg;
-
-		switch (st->st_ipcomp.attrs.transattrs.ta_comp) {
-		case IPCOMP_DEFLATE:
-			compalg = SADB_X_CALG_DEFLATE;
-			break;
-
-		default:
-			log_state(RC_LOG_SERIOUS, st,
-				  "IPCOMP transform %s not implemented",
-				  st->st_ipcomp.attrs.transattrs.ta_encrypt->common.fqn);
-			goto fail;
-		}
-
 		set_text_said(text_ipcomp, &dst, ipcomp_spi, &ip_protocol_comp);
-
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
-		said_next->compalg = compalg;
+
+		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->text_said = text_ipcomp;
@@ -2298,7 +2283,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * lower-level code to be right.
 		 */
 		said_next->encrypt = ta->ta_encrypt;
-		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
 
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;

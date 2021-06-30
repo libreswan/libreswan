@@ -308,7 +308,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("isakmp_transformid_names", &isakmp_transformid_names);
 	test_enums("ah_transformid_names", &ah_transformid_names);
 	test_enums("esp_transformid_names", &esp_transformid_names);
-	test_enums("ipcomp_transformid_names", &ipcomp_transformid_names);
+	test_enums("ipcomp_transformid_names", &ipsec_ipcomp_algo_names);
 	test_enum_range("oakley_attr_names", &oakley_attr_names, 0, 256);
 	test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
 	test_enums("sa_lifetime_names", &sa_lifetime_names);

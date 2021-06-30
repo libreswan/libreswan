@@ -367,7 +367,7 @@ static field_desc isat_fields_ipcomp[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipcomp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipsec_ipcomp_algo_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -1615,7 +1615,7 @@ struct_desc suggested_group_desc = {
  */
 static field_desc ikev2notify_ipcomp_fields[] = {
 	{ ft_nat, 16 / BITS_PER_BYTE, "IPcomp SPI (CPI)", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipcomp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipsec_ipcomp_algo_names },
 	{ ft_end,  0, NULL, NULL }
 };
 

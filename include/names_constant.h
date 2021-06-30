@@ -61,7 +61,7 @@ extern enum_names ikev1_protocol_names;
 extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
-extern enum_names ipcomp_transformid_names;
+extern enum_names ipsec_ipcomp_algo_names;
 extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;

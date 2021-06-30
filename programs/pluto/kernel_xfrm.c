@@ -68,7 +68,6 @@
 # include "libreswan.h"
 # include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
-#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -154,14 +153,6 @@ static sparse_names rtm_type_names = {
 
 #define NLMSG_TAIL(nmsg) \
 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
-
-/* Compress Algs */
-static sparse_names calg_list = {
-	{ SADB_X_CALG_DEFLATE, "deflate" },
-	{ SADB_X_CALG_LZS, "lzs" },
-	{ SADB_X_CALG_LZJH, "lzjh" },
-	{ 0, sparse_end }
-};
 
 /*
  * xfrm2ip - Take an xfrm and convert to an IP address
@@ -1525,26 +1516,34 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 *  Shouldn't all be bundled?
 	 */
 	if (sa->esatype == ET_IPCOMP) {
-		struct xfrm_algo algo;
-		const char *name = sparse_name(calg_list, sa->compalg);
 
-		if (name == NULL) {
+		/* Compress Algs */
+		static const char *calg_list[] = {
+			[IPCOMP_DEFLATE] = "deflate",
+			[IPCOMP_LZS] = "lzs",
+			[IPCOMP_LZJH] = "lzjh",
+		};
+
+		const char *calg_name = (sa->ipcomp_algo >= elemsof(calg_list) ? NULL :
+					 calg_list[sa->ipcomp_algo]);
+		if (calg_name == NULL) {
 			llog(RC_LOG_SERIOUS, logger,
-				    "unknown compression algorithm: %u",
-				    sa->compalg);
-			return FALSE;
+			     "unsupported compression algorithm: %s",
+			     enum_name(&ipsec_ipcomp_algo_names, sa->ipcomp_algo));
+			return false;
 		}
 
-		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+		struct xfrm_algo algo;
+		fill_and_terminate(algo.alg_name, calg_name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
+		/* append */
 		attr->rta_type = XFRMA_ALG_COMP;
 		attr->rta_len = RTA_LENGTH(sizeof(algo));
-
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
 	} else if (sa->esatype == ET_ESP) {
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
