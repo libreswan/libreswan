@@ -33,7 +33,7 @@
 #include "demux.h"
 #include "pluto_stats.h"
 
-enum v2_pd v2_notification_to_v2_pd(v2_notification_t n)
+enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
 #define C(N) case v2N_##N: return PD_v2N_##N;
 	switch (n) {
@@ -111,7 +111,7 @@ void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *
 		dbg("%s notification %d is unknown", type, n);
 		return;
 	}
-	enum v2_pd v2_pd = v2_notification_to_v2_pd(n);
+	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
 		dbg("%s notification %s is not supported", type, name);

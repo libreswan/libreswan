@@ -673,10 +673,10 @@ void init_ikev2(void)
 		 * Check that the NOTIFY -> PBS -> MD.pbs[]!=NULL will work.
 		 */
 		if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_notification_to_v2_pd(t->message_payloads.notification) != PD_v2_INVALID);
+			pexpect(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
 		}
 		if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_notification_to_v2_pd(t->encrypted_payloads.notification) != PD_v2_INVALID);
+			pexpect(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
 		}
 
 		/*
