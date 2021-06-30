@@ -351,11 +351,11 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-bool need_configuration_payload(const struct connection *const pc,
-				const lset_t st_nat_traversal)
+bool need_v2_configuration_payload(const struct connection *const cc,
+				   const lset_t st_nat_traversal)
 {
-	return (pc->spd.this.modecfg_client &&
-		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
+	return (cc->spd.this.modecfg_client &&
+		(!cc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
 }
 
 struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,

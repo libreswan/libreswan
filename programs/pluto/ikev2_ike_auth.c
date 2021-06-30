@@ -427,7 +427,8 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 				  child->sa.st_serialno, pri_connection(cc, &cib));
 		}
 
-		if (need_configuration_payload(pc, ike->sa.hidden_variables.st_nat_traversal)) {
+		if (need_v2_configuration_payload(child->sa.st_connection,
+						  ike->sa.hidden_variables.st_nat_traversal)) {
 			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}

@@ -680,30 +680,6 @@ stf_status ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
 {
 	struct connection *c = child->sa.st_connection;
 
-	/*
-	 * IP parameters on rekey MUST be identical, so CP payloads
-	 * not needed.
-	 */
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1 ||
-	    child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1) {
-		dbg("CP is not required in an IPsec REKEY exchange");
-	} else if (need_configuration_payload(c, ike->sa.hidden_variables.st_nat_traversal)) {
-		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
-			/* not really anything to here... but it would be worth unpending again */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "missing v2CP reply, not attempting to setup child SA");
-			/*
-			 * ??? this isn't really a failure, is it?  If
-			 * none of those payloads appeared, isn't this
-			 * is a legitimate negotiation of a parent?
-			 */
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], child)) {
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-	}
-
 	if (!v2_process_ts_response(child, md)) {
 		/*
 		 * XXX: will this will cause the state machine to
@@ -1076,6 +1052,26 @@ enum child_status process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			enum_name_short(&stf_status_names, res));
 #endif
 		return CHILD_FATAL;
+	}
+
+	/*
+	 * IP parameters on rekey MUST be identical, so CP payloads
+	 * not needed.
+	 */
+	if (need_v2_configuration_payload(child->sa.st_connection,
+					  ike->sa.hidden_variables.st_nat_traversal)) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+			/*
+			 * not really anything to here... but it would
+			 * be worth unpending again.
+			 */
+			log_state(RC_LOG_SERIOUS, &child->sa,
+				  "missing v2CP reply, not attempting to setup child SA");
+			return CHILD_FAILED;
+		}
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], child)) {
+			return CHILD_FAILED;
+		}
 	}
 
 	res = ikev2_process_ts_and_rest(ike, child, md);
