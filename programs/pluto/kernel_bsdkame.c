@@ -704,13 +704,12 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	ip_sockaddr saddr = sockaddr_from_address(*sa->src.address);
 	ip_sockaddr daddr = sockaddr_from_address(*sa->dst.address);
 	char keymat[256];
-	int ret, mode, satype;
+	int ret;
 
-	if (sa->mode == ENCAPSULATION_MODE_TUNNEL)
-		mode = IPSEC_MODE_TUNNEL;
-	else
-		mode = IPSEC_MODE_TRANSPORT;
+	/* only the inner-most SA gets the tunnel flag */
+	int mode = (sa->tunnel && sa->level == 0 ? IPSEC_MODE_TUNNEL : IPSEC_MODE_TRANSPORT);
 
+	int satype;
 	switch (sa->esatype) {
 	case ET_AH:
 		satype = SADB_SATYPE_AH;

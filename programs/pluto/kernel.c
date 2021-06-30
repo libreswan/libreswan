@@ -105,6 +105,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
 
 const struct encap_rules esp_transport_encap_rules = {
 	.outer = 0,
+	.inner_proto = &ip_protocol_esp,
 	.tunnel = false,
 	.rule[0] = {
 		.proto = ENCAP_PROTO_ESP,
@@ -807,32 +808,45 @@ static struct encap_rules encap_rules_from_spd(lset_t policy,
 					       bool tunnel)
 {
 	struct encap_rules encap = {
-		.outer = -1,
 		.tunnel = tunnel,
 	};
 
-	struct encap_rule *rule = encap.rule;
+	/*
+	 * XXX: remember construct this inner-to-outer; which is the
+	 * same as the kernel_sa array.
+	 */
 
-	/* XXX: remember construct this inner-to-outer */
-
+	struct encap_rule *outer = encap.rule - 1;
 	if (policy & POLICY_COMPRESS) {
-		rule->reqid = reqid_ipcomp(spd->reqid);
-		rule->proto = ENCAP_PROTO_IPCOMP;
-		rule++;
+		outer++;
+		outer->reqid = reqid_ipcomp(spd->reqid);
+		outer->proto = ENCAP_PROTO_IPCOMP;
 	}
 	if (policy & POLICY_ENCRYPT) {
-		rule->reqid = reqid_esp(spd->reqid);
-		rule->proto = ENCAP_PROTO_ESP;
-		rule++;
+		outer++;
+		outer->reqid = reqid_esp(spd->reqid);
+		outer->proto = ENCAP_PROTO_ESP;
 	}
 	if (policy & POLICY_AUTHENTICATE) {
-		rule->reqid = reqid_ah(spd->reqid);
-		rule->proto = ENCAP_PROTO_AH;
-		rule++;
+		outer++;
+		outer->reqid = reqid_ah(spd->reqid);
+		outer->proto = ENCAP_PROTO_AH;
 	}
 
-	encap.outer = rule - encap.rule - 1;
+	passert(outer < encap.rule + elemsof(encap.rule));
+	encap.outer = outer - encap.rule; /* could be -1 */
 	passert(encap.outer < (int)elemsof(encap.rule));
+
+	/*
+	 * XXX: Inner here refers to the inner-most rule which, for a
+	 * tunnel, needs the tunnel bit set.  For transport, why it
+	 * uses outer remains a mystery (suspect it just needs to be
+	 * !INT !IPIP).
+	 */
+	if (outer >= encap.rule) {
+		encap.inner_proto = (tunnel ? &ip_protocol_ipip :
+				     protocol_by_ipproto(outer->proto));
+	}
 
 	return encap;
 }
@@ -1143,19 +1157,6 @@ static bool sag_eroute(const struct state *st,
 	/* check for no transform at all */
 	passert(encap.outer >= 0);
 
-	/*
-	 * XXX: pretty clear this should be outer, or perhaps this is
-	 * refering to inner to the packet on the wire?
-	 */
-	const struct encap_rule *outer = &encap.rule[encap.outer];
-	const struct ip_protocol *inner_proto = protocol_by_ipproto(outer->proto);
-	enum eroute_type inner_esatype = (enum eroute_type)outer->proto;
-
-	if (encap.tunnel) {
-		inner_proto = &ip_protocol_ipip;
-		inner_esatype = ET_IPIP;
-	}
-
 	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
 	/* hack */
@@ -1163,7 +1164,7 @@ static bool sag_eroute(const struct state *st,
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
 	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
-				 inner_proto, inner_esatype, &encap,
+				 encap.inner_proto, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
 				 xfrm_if_id, op, why, st->st_logger);
 }
@@ -1444,6 +1445,8 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "<null>");
 		} else {
 			jam(buf, "tunnel=%s", bool_str(encap->tunnel));
+			jam(buf, "inner=%s", (encap->inner_proto == NULL ? "<null>" :
+					      encap->inner_proto->name));
 			for (int i = 0; i <= encap->outer; i++) {
 				jam(buf, ",");
 				const struct encap_rule *rule = &encap->rule[i];
@@ -1662,15 +1665,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	const struct encap_rule *outer = &encap.rule[encap.outer];
 	uint32_t priority = calculate_sa_prio(c, /*oe_shunt*/false);
-
-	/*
-	 * XXX: pretty clear this should be outer, or perhaps this is
-	 * refering to inner to the packet on the wire?
-	 */
-	const struct ip_protocol *inner_proto = protocol_by_ipproto(outer->proto);
-	enum eroute_type inner_esatype = (enum eroute_type)outer->proto;
 
 	/*
 	 * SE installs both an outgoing and incoming policy.  Normal
@@ -1684,9 +1679,9 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				/*src*/&src->host_addr, &src->client,
 				/*dst*/&dst->host_addr, &dst->client,
 				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				/*sa_proto*/inner_proto,
+				/*sa_proto*/encap.inner_proto,
 				/*transport_proto*/c->spd.this.protocol,
-				/*esatype*/inner_esatype,
+				/*esatype*/encap.inner_proto->ipproto,
 				/*encap*/&encap,
 				/*use_lifetime*/deltatime(0),
 				/*sa_priority*/priority,
@@ -1711,9 +1706,9 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
 					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
 					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-					   /*sa_proto*/inner_proto,
+					   /*sa_proto*/encap.inner_proto,
 					   /*transport_proto*/c->spd.this.protocol,
-					   /*esatype*/inner_esatype,
+					   /*esatype*/encap.inner_proto->ipproto,
 					   /*encap*/&encap,
 					   /*use_lifetime*/deltatime(0),
 					   /*sa_priority*/priority,
@@ -1748,9 +1743,9 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				   /*src*/&src->host_addr, &src->client,
 				   /*dst*/&dst->host_addr, &dst->client,
 				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				   /*sa_proto*/inner_proto,
+				   /*sa_proto*/encap.inner_proto,
 				   /*transport_proto*/c->spd.this.protocol,
-				   /*esatype*/inner_esatype,
+				   /*esatype*/encap.inner_proto->ipproto,
 				   /*encap*/&encap,
 				   /*use_lifetime*/deltatime(0),
 				   /*sa_priority*/priority,
@@ -2019,8 +2014,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* Build an inbound or outbound SA */
 
 	struct connection *c = st->st_connection;
-	const struct ip_protocol *proto = NULL;
-	enum eroute_type esatype = ET_UNSPEC;
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
 	bool outgoing_ref_set = false;
 	bool incoming_ref_set = false;
@@ -2051,28 +2044,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	}
 
 	/*
-	 * mode: encapsulation mode called for
-	 * encap_oneshot: copy of "encapsulation" but reset to
-	 *	ENCAPSULATION_MODE_TRANSPORT after use.
+	 * Construct the policy encapsulation rules; it determines
+	 * tunnel mode as a side effect.
 	 */
-	int mode = ENCAPSULATION_MODE_TRANSPORT;
-	bool add_selector;
-
-	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-		mode = ENCAPSULATION_MODE_TUNNEL;
-		add_selector = false; /* Don't add selectors for tunnel mode */
-	} else {
-		/*
-		 * RFC 4301, Section 5.2 Requires traffic selectors to be set
-		 * on transport mode
-		 */
-		add_selector = true;
+	struct encap_rules encap = encap_rules_from_state(st, &c->spd);
+	if (!pexpect(encap.outer >= 0)) {
+		return false;
 	}
-	c->ipsec_mode = mode;
-
-	int encap_oneshot = mode;
 
 	const struct kernel_sa said_boilerplate = {
 		.src.address = &src,
@@ -2080,7 +2058,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.src.client = &src_client,
 		.dst.client = &dst_client,
 		.inbound = inbound,
-		.add_selector = add_selector,
+		.tunnel = encap.tunnel,
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
@@ -2089,17 +2067,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-	if (mode == ENCAPSULATION_MODE_TUNNEL) {
-		/* If we are tunnelling, set up IP in IP pseudo SA */
-		proto = &ip_protocol_ipip;
-		esatype = ET_IPIP;
-	} else {
-		/* For transport mode set ESP */
-		/* ??? why are we sure that this isn't AH? */
-		proto = &ip_protocol_esp;
-		esatype = ET_ESP;
-	}
-
 	address_buf sab, dab;
 	selector_buf scb, dcb;
 	dbg("kernel: %s() %s-%s->[%s=%s=>%s]-%s->%s %s sec_label="PRI_SHUNK,
@@ -2107,7 +2074,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_selector(&src_client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_address(&src, &sab),
-	    proto->name,
+	    encap.inner_proto->name,
 	    str_address(&dst, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_selector(&dst_client, &dcb),
@@ -2139,7 +2106,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
 		said_next->compalg = compalg;
-		said_next->mode = encap_oneshot;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->text_said = text_ipcomp;
 
@@ -2175,8 +2142,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;
 	}
 
 	/* set up ESP SA, if any */
@@ -2341,7 +2306,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
 
-		said_next->mode = encap_oneshot;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_esp(c->spd.reqid);
 
 		said_next->src.encap_port = encap_sport;
@@ -2401,8 +2366,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;
 	}
 
 	/* set up AH SA, if any */
@@ -2433,7 +2396,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->integ = integ;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
-		said_next->mode = encap_oneshot;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->text_said = text_ah;
 		said_next->replay_window = c->sa_replay_window;
@@ -2484,8 +2447,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;	/* incoming_ref_set not subsequently used */
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;	/* encap_oneshot not subsequently used */
 	}
 
 	/*
@@ -2496,23 +2457,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu mode=%d",
-	    __func__, inbound, c->spd.eroute_owner, mode);
+	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu tunnel=%s",
+	    __func__, inbound, c->spd.eroute_owner,
+	    bool_str(encap.tunnel));
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
 	    (c->ike_version != IKEv2 || c->spd.this.sec_label.len == 0)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
-		struct encap_rules encap = encap_rules_from_state(st, &c->spd);
-
-		/*
-		 * ??? why is mode overwritten ONLY if true
-		 * (kernel_ops->inbound_eroute)?
-		 */
-		dbg("kernel: %s() before proto %d", __func__, encap.rule[0].proto);
-		if (mode == ENCAPSULATION_MODE_TUNNEL) {
-			encap.tunnel = true;
-		}
-		dbg("kernel: %s() after proto %d", __func__, encap.rule[0].proto);
-
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
 
@@ -2532,9 +2482,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				&c->spd.this.host_addr,	/* dst_host */
 				&c->spd.this.client,	/* dst_client */
 				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
-				proto,			/* SA proto */
+				encap.inner_proto,	/* SA proto */
 				c->spd.this.protocol,	/* transport_proto */
-				esatype,		/* esatype */
+				encap.inner_proto->ipproto,	/* esatype */
 				&encap,			/* " */
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, false),	/* priority */

@@ -101,6 +101,7 @@ struct encap_rule {
 };
 
 struct encap_rules {
+	const struct ip_protocol *inner_proto;	/*IPIP or ESP|AH */
 	bool tunnel;
 	int outer; /* -1 when no rules; XXX: good idea? */
 	struct encap_rule rule[4]; /* AH+ESP+COMP+0 */
@@ -160,9 +161,19 @@ struct kernel_sa {
 	struct kernel_end src;
 	struct kernel_end dst;
 
+	/*
+	 * Is the stack using tunnel mode; and if it is does this SA
+	 * need the tunnel-mode bit?
+	 *
+	 * In tunnel mode, only the inner-most SA (level==0) should
+	 * have the tunnel-mode bit set.  And in transport mode, all
+	 * SAs get selectors.
+	 */
+	bool tunnel;
+	unsigned level;		/* inner-most is 0 */
+
 	bool inbound;
 	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
-	bool add_selector;
 	bool esn;
 	bool decap_dscp;
 	bool nopmtudisc;
@@ -195,7 +206,6 @@ struct kernel_sa {
 	IPsecSAref_t ref;
 	IPsecSAref_t ref_peer;
 
-	int mode;		/* transport or tunnel */
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *text_said;

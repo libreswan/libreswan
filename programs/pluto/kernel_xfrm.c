@@ -932,24 +932,20 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 }
 
 static void set_migration_attr(const struct kernel_sa *sa,
-		struct xfrm_user_migrate *m)
+			       struct xfrm_user_migrate *m)
 {
 	m->old_saddr = xfrm_from_address(sa->src.address);
 	m->old_daddr = xfrm_from_address(sa->dst.address);
 	m->new_saddr = xfrm_from_address(&sa->src.new_address);
 	m->new_daddr = xfrm_from_address(&sa->dst.new_address);
-
-	if (sa->mode == ENCAPSULATION_MODE_TUNNEL)
-		m->mode = XFRM_MODE_TUNNEL;
-	else
-		m->mode = XFRM_MODE_TRANSPORT;
+	m->mode = (sa->level == 0 && sa->tunnel ? ENCAPSULATION_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
 	m->proto = sa->proto->ipproto;
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_type(sa->src.address)->af;
 }
 
 static bool create_xfrm_migrate_sa(struct state *st, const int dir,
-		struct kernel_sa *ret_sa, char *text_said)
+				   struct kernel_sa *ret_sa, char *text_said)
 {
 	const struct connection *const c = st->st_connection;
 
@@ -977,14 +973,9 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
 		.encap_type = encap_type,
-		/* WWW what about sec_label? */
+		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 	};
-
-	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-		sa.mode = ENCAPSULATION_MODE_TUNNEL;
-	else
-		sa.mode = ENCAPSULATION_MODE_TRANSPORT;
 
 	ip_endpoint new_endpoint;
 	uint16_t old_port;
@@ -1331,10 +1322,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.id.proto = esatype2proto(sa->esatype);
 	req.p.family = addrtypeof(sa->src.address);
 	/*
-	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
-	 * tunnels in linux 2.6.25+
+	 * This requires ipv6 modules. It is required to support 6in4
+	 * and 4in6 tunnels in linux 2.6.25+
+	 *
+	 * Only the innermost SA gets the "tunnel" flag.
 	 */
-	if (sa->mode == ENCAPSULATION_MODE_TUNNEL) {
+	if (sa->level == 0 && sa->tunnel) {
 		dbg("xfrm: enabling tunnel mode");
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
@@ -1344,13 +1337,15 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	}
 
 	/*
-	 * We only add traffic selectors for transport mode. The problem is
-	 * that Tunnel mode ipsec with ipcomp is layered so that ipcomp
-	 * tunnel is protected with transport mode ipsec but in this case we
-	 * shouldn't any more add traffic selectors. Caller function will
-	 * inform us if we need or don't need selectors.
+	 * We only add traffic selectors for transport mode.
+	 *
+	 * The problem is that Tunnel mode ipsec with ipcomp is
+	 * layered so that ipcomp tunnel is protected with transport
+	 * mode ipsec but in this case we shouldn't any more add
+	 * traffic selectors. Caller function will inform us if we
+	 * need or don't need selectors.
 	 */
-	if (sa->add_selector) {
+	if (!sa->tunnel) {
 		ip_selector src = *sa->src.client;
 		ip_selector dst = *sa->dst.client;
 		const ip_protocol *protocol = protocol_by_ipproto(sa->transport_proto);
@@ -1597,8 +1592,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
-			if (sa->tfcpad != 0 &&
-			    sa->mode == ENCAPSULATION_MODE_TUNNEL) {
+			if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
 				dbg("xfrm: setting TFC to %" PRIu32 " (up to PMTU)",
 				    sa->tfcpad);
 
