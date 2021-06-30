@@ -432,7 +432,7 @@ static const char *kernel_policy_op_name[] = {
 };
 
 enum_names kernel_policy_op_names = {
-	0, KP_DELETE_INBOUND,
+	0, elemsof(kernel_policy_op_name)-1,
 	ARRAY_REF(kernel_policy_op_name),
 	.en_prefix = "KP_",
 };
