@@ -77,6 +77,7 @@
 #include "state.h"
 #include "connections.h"
 #include "kernel.h"
+#include "kernel_ops.h"
 #include "server.h"
 #include "nat_traversal.h"
 #include "state.h"

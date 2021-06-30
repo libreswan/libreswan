@@ -445,28 +445,6 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 
 bool install_se_connection_policies(struct connection *c, struct logger *logger);
 
-/*
- * should raw-eroute be dumped?
- */
-extern bool raw_policy(enum kernel_policy_op op,
-		       const ip_address *this_host,
-		       const ip_selector *this_client,
-		       const ip_address *that_host,
-		       const ip_selector *that_client,
-		       ipsec_spi_t cur_spi,
-		       ipsec_spi_t new_spi,
-		       const struct ip_protocol *sa_proto,
-		       unsigned int transport_proto,
-		       enum eroute_type esatype,
-		       const struct encap_rules *encap,
-		       deltatime_t use_lifetime,
-		       uint32_t sa_priority,
-		       const struct sa_marks *sa_marks,
-		       const uint32_t xfrm_if_id,
-		       const shunk_t sec_label,
-		       struct logger *logger,
-		       const char *fmt, ...) PRINTF_LIKE(18);
-
 bool shunt_policy(enum kernel_policy_op op,
 		  const struct connection *c,
 		  const struct spd_route *sr,

@@ -222,6 +222,7 @@ OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
 OBJS += kernel.o
+OBJS += kernel_ops.o
 OBJS += rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += crypt_ke.o crypt_dh.o
