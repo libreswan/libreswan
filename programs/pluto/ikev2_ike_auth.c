@@ -1274,20 +1274,20 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 		}
 	}
 
-	switch (process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs)) {
-	case CHILD_SKIPPED:
-	case CHILD_CREATED:
-	case CHILD_FAILED:
-		/*
-		 * Since things have been authenticated, it is up to
-		 * the other end to delete the SA.  CHILD_FAILED
-		 * implies that a child failure notification was added
-		 * to the payload.
-		 */
-		break;
-	case CHILD_FATAL:
-		/* bad */
+	/*
+	 * Try to build a child.
+	 *
+	 * The result can be fatal, or just deletes the child.
+	 */
+
+	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
+	if (v2_notification_fatal(cn)) {
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    cn, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
+	} else if (cn != v2N_NOTHING_WRONG) {
+		emit_v2N(cn, &sk.pbs);
 	}
 
 	if (!close_v2SK_payload(&sk)) {
@@ -1469,18 +1469,28 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	/*
 	 * Figure out of the child is both expected and viable.
+	 *
+	 * See 2.21.2.  Error Handling in IKE_AUTH
 	 */
 
-	switch (process_v2_IKE_AUTH_response_child_sa_payloads(ike, md)) {
-	case CHILD_FATAL:
+	v2_notification_t n = process_v2_IKE_AUTH_response_child_sa_payloads(ike, md);
+	if (v2_notification_fatal(n)) {
 		/* already logged */
+		/*
+		 * XXX: should be sending the fatal notification using
+		 * a new exchange.
+		 */
 		return STF_FATAL;
-	case CHILD_CREATED:
-	case CHILD_SKIPPED:
-		break;
-	case CHILD_FAILED:
+	} else if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA; /* should just delete child? */;
+		/*
+		 * XXX: should be sending the child failure
+		 * notification using an additional exchange and then
+		 * leaving the IKE SA up.
+		 *
+		 * Instead just wipe out the IKE family :-(
+		 */
+		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
 	}
 
 	return STF_OK;

@@ -3020,3 +3020,16 @@ void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 			  reinitiate_ike_sa_init, resume);
 }
 
+bool v2_notification_fatal(v2_notification_t n)
+{
+	return (n == v2N_INVALID_SYNTAX ||
+		n == v2N_AUTHENTICATION_FAILED ||
+		n == v2N_UNSUPPORTED_CRITICAL_PAYLOAD);
+}
+
+stf_status stf_status_from_v2_notification(v2_notification_t n)
+{
+	return (n == v2N_NOTHING_WRONG ? STF_OK :
+		v2_notification_fatal(n) ? STF_FATAL :
+		STF_FAIL);
+}

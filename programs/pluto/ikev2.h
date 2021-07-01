@@ -248,4 +248,12 @@ void IKE_SA_established(const struct ike_sa *ike);
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 					   struct ike_sa *ike);
 
+
+/*
+ * See 2.21. Error Handling.  In particular the IKE_AUTH discussion.
+ */
+
+bool v2_notification_fatal(v2_notification_t n);
+stf_status stf_status_from_v2_notification(v2_notification_t n);
+
 #endif

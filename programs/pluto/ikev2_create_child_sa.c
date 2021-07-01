@@ -968,7 +968,16 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 
 	/* XXX: only for rekey child? */
 	if (larval_child->sa.st_pfs_group == NULL) {
-		return ikev2_process_ts_and_rest(ike, larval_child, md);
+		v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
+		if (v2_notification_fatal(n)) {
+			/* should send this as a notifcation */
+			return STF_FATAL;
+		} else if (n != v2N_NOTHING_WRONG) {
+			/* should send a delete child notification */
+			return STF_FAIL;
+		} else {
+			return STF_OK;
+		}
 	}
 
 	/*
@@ -1026,10 +1035,21 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct stat
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		return STF_FAIL + v2N_INVALID_SYNTAX;
+		return STF_FAIL;
 	}
 
-	return ikev2_process_ts_and_rest(ike, larval_child, md);
+	v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
+	if (v2_notification_fatal(n)) {
+		/* should send error to other end */
+		return STF_FATAL;
+	} else if (n != v2N_NOTHING_WRONG) {
+		/* should notify other end of rejection */
+		return STF_FAIL;
+	} else {
+		return STF_OK;
+	}
+
+	return STF_OK;
 }
 
 /*
