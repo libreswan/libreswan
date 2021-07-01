@@ -1338,38 +1338,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * need or don't need selectors.
 	 */
 	if (!sa->tunnel) {
-		ip_selector src = *sa->src.client;
-		ip_selector dst = *sa->dst.client;
-		const ip_protocol *protocol = protocol_by_ipproto(sa->transport_proto);
-
-		/*
-		 * With XFRM/NETKEY and transport mode with nat-traversal we
-		 * need to change outbound IPsec SA to point to external ip of
-		 * the peer. Here we substitute real client ip with NATD ip.
-		 *
-		 * XXX: unset_protoport is technically wrong - the
-		 * protocol is sa->transport_proto(?) and .  Code
-		 * further down will fix up the .sport / .dport in the
-		 * xfrm structure.
-		 *
-		 * XXX: is .src.address / .dst.address an address or
-		 * endpoint in disguise?
-		 */
-		if (sa->inbound) {
-			/* inbound; fix this end */
-			ip_port port = selector_port(*sa->src.client);
-			src = selector_from_address_protocol_port(*sa->src.address,
-								  protocol, port);
-		} else {
-			/* outbound; fix other end */
-			ip_port port = selector_port(*sa->dst.client);
-			dst = selector_from_address_protocol_port(*sa->dst.address,
-								  protocol, port);
-		}
-
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-		SELECTOR_TO_XFRM(&src, req.p.sel, s);
-		SELECTOR_TO_XFRM(&dst, req.p.sel, d);
+		SELECTOR_TO_XFRM(sa->src.client, req.p.sel, s);
+		SELECTOR_TO_XFRM(sa->dst.client, req.p.sel, d);
 
 		/*
 		 * Munge .[sd]port?
@@ -1403,7 +1374,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = selector_type(&src)->af;
+		req.p.sel.family = selector_type(sa->src.client)->af;
 	}
 
 	req.p.reqid = sa->reqid;

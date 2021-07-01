@@ -1888,6 +1888,33 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_selector(&dst_client, &dcb),
 	    pri_shunk(said_boilerplate.sec_label));
 
+	/*
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change outbound IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 */
+	if (!encap.tunnel) {
+		ip_selector old, new;
+		const char *what;
+		const ip_protocol *protocol = protocol_by_ipproto(c->spd.this.protocol);
+		if (inbound) {
+			what = "src";
+			old = src_client;
+			new = src_client = selector_from_address_protocol_port(src, protocol,
+									       selector_port(src_client));
+		} else {
+			what = "dst";
+			old = dst_client;
+			new = dst_client = selector_from_address_protocol_port(dst, protocol,
+									       selector_port(dst_client));
+		}
+		selector_buf os, ns;
+		dbg("%s() replacing %s selector %s with %s",
+		    __func__, what,
+		    str_selector(&old, &os),
+		    str_selector(&new, &ns));
+	}
+
 	/* set up IPCOMP SA, if any */
 
 	if (st->st_ipcomp.present) {
@@ -2269,10 +2296,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * need reversing ...
 		 */
 		if (!raw_policy(KP_ADD_INBOUND,
-				&c->spd.that.host_addr,	/* src_host */
-				&c->spd.that.client,	/* src_client */
-				&c->spd.this.host_addr,	/* dst_host */
-				&c->spd.this.client,	/* dst_client */
+				&src,			/* src_host */
+				&src_client,		/* src_client */
+				&dst,			/* dst_host */
+				&dst_client,		/* dst_client */
 				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
 				encap.inner_proto,	/* SA proto */
 				c->spd.this.protocol,	/* transport_proto */
