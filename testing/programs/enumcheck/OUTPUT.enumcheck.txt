@@ -1482,13 +1482,13 @@ IETF registry enum_names:
          short_name 1: OUI OK
          jam_enum_short 1: OUI OK
          match OUI [short]: OK
-    2 -> IPCOMP_DEFLAT
-         jam_enum 2: IPCOMP_DEFLAT OK
-         search IPCOMP_DEFLAT: OK
-         match IPCOMP_DEFLAT: OK
-         short_name 2: DEFLAT OK
-         jam_enum_short 2: DEFLAT OK
-         match DEFLAT [short]: OK
+    2 -> IPCOMP_DEFLATE
+         jam_enum 2: IPCOMP_DEFLATE OK
+         search IPCOMP_DEFLATE: OK
+         match IPCOMP_DEFLATE: OK
+         short_name 2: DEFLATE OK
+         jam_enum_short 2: DEFLATE OK
+         match DEFLATE [short]: OK
     3 -> IPCOMP_LZS
          jam_enum 3: IPCOMP_LZS OK
          search IPCOMP_LZS: OK
