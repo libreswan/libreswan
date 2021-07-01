@@ -447,40 +447,10 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 	/* will use this when initiating in a callback */
 	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
 
-	/*
-	 * As we are redirected in AUTH, and there's a larval CHILD
-	 * SA, we must delete one XFRM state entry manually (to the
-	 * old gateway), because teardown_half_ipsec_sa() in kernel.c,
-	 * that is called eventually following the above
-	 * EVENT_SA_EXPIRE, does not delete it. It does not delete it
-	 * (via del_spi) because st->st_esp.present was not set to
-	 * TRUE. (see the method teardown_half_ipsec_sa for more
-	 * details)
-	 *
-	 * note: the IPsec SA is not truly and fully established when
-	 * we are doing redirect in IKE_AUTH, and because of that
-	 * we may delete XFRM state entry without any worries.
-	 *
-	 * Do this before initiate_redirect() has had a chance to move
-	 * around all the temp_vars.
-	 */
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
-	if (child != NULL) {
-		if (del_spi(child->sa.st_esp.our_spi, &ip_protocol_esp,
-			    &child->sa.st_connection->spd.that.host_addr,
-			    &child->sa.st_connection->spd.this.host_addr,
-			    child->sa.st_logger)) {
-			dbg("redirect: successfully deleted lingering SPI entry");
-		} else {
-			dbg("redirect: failed to delete lingering SPI entry");
-		}
-	}
-
-	/* so redirect code knows to delete half SPI */
-	event_force(EVENT_v2_REDIRECT, &ike->sa); /* see initiate_redirect() */
+	/* EVENT_v2_REDIRECT will eventually trigger initiate_redirect() */
+	event_force(EVENT_v2_REDIRECT, &ike->sa);
 	*redirect_status = STF_SUSPEND;
 	return true;
-
 }
 
 void initiate_redirect(struct state *ike_sa)
