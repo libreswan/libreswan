@@ -406,14 +406,11 @@ void ikev2_addr_change(struct state *st)
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
 	 */
-	switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
-	case 0:	/* success */
-		/* cannot happen */
-		/* ??? original code treated this as failure */
-		/* bad_case(0); */
-		log_state(RC_LOG, st, "unexpected SUCCESS from first resolve_defaultroute_one");
-		/* FALL THROUGH */
-	case -1:	/* failure */
+	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
+					 st->st_logger)) {
+
+	case RESOLVE_FAILURE:
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
@@ -422,15 +419,23 @@ void ikev2_addr_change(struct state *st)
 		break;
 	}
 
-	case 1: /* please call again: more to do */
-		switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
-		case 1: /* please call again: more to do */
-			/* cannot happen */
-			/* ??? original code treated this as failure */
-			/* bad_case(1); */
-			log_state(RC_LOG, st, "unexpected TRY AGAIN from second resolve_defaultroute_one");
-			/* FALL THROUGH */
-		case -1:	/* failure */
+	case RESOLVE_SUCCESS:
+	{
+		/* cannot happen */
+		/* ??? original code treated this as failure */
+		/* bad_case(0); */
+		address_buf b;
+		log_state(RC_LOG, st,
+			  "no local gateway to reach %s (unexpected SUCCESS from first resolve_defaultroute_one())",
+			  str_address(&that.addr, &b));
+		break;
+	}
+
+	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
+						 st->st_logger)) {
+
+		case RESOLVE_FAILURE:
 		{
 			address_buf g, b;
 			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s",
@@ -439,11 +444,23 @@ void ikev2_addr_change(struct state *st)
 			break;
 		}
 
-		case 0:	/* success */
+		case RESOLVE_SUCCESS:
 		{
 			const struct iface_endpoint *iface = ikev2_src_iface(st, &this);
 			if (iface != NULL)
 				initiate_mobike_probe(st, &this, iface);
+			break;
+		}
+
+		case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		{
+			/* cannot happen */
+			/* ??? original code treated this as failure */
+			/* bad_case(1); */
+			address_buf g, b;
+			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s (unexpected TRY AGAIN from second resolve_defaultroute_one())",
+				  str_address_sensitive(&that.addr, &b),
+				  str_address(&this.nexthop, &g));
 			break;
 		}
 

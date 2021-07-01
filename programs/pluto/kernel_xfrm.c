@@ -939,7 +939,10 @@ static void set_migration_attr(const struct kernel_sa *sa,
 
 /*
  * size of buffer needed for "story"
+ *
+ * RFC 1886 old IPv6 reverse-lookup format is the bulkiest
  */
+#define ADDRTOT_BUF     sizeof(address_reversed_buf)
 #define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 
 static bool create_xfrm_migrate_sa(struct state *st,
