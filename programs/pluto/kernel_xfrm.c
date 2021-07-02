@@ -514,7 +514,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype,
-			       const struct encap_rules *encap,
+			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority,
 			       const struct sa_marks *sa_marks,
@@ -748,7 +748,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 			tmpl[i].family = addrtypeof(dst_host);
 			/* only the inner-most rule gets the worm; er tunnel flag */
-			tmpl[i].mode = (i == 0 && encap->tunnel);
+			tmpl[i].mode = (i == 0 && encap->mode == ENCAP_MODE_TUNNEL);
 
 			if (tmpl[i].mode) {
 				/* tunnel mode needs addresses */
@@ -781,10 +781,10 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		 * Dump ignored proto_info[].
 		 */
 		for (unsigned i = 0; encap->rule[i].proto; i++) {
-			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s tunnel=%s because policy=%d op=%d",
+			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because policy=%d op=%d",
 				__func__, encap->rule[i].reqid,
 				protocol_by_ipproto(encap->rule[i].proto)->name,
-				bool_str(encap->tunnel),
+				encap_mode_name(encap->mode),
 				policy, op);
 		}
 
@@ -910,8 +910,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			break;
 		}
 		if (esatype != ET_INT &&
-		    encap != NULL &&
-		    !encap->tunnel) {
+		    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
 			break;
 		}
 		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);

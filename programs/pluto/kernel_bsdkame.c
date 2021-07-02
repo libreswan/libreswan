@@ -279,7 +279,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
-			       const struct encap_rules *encap,
+			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
@@ -380,7 +380,9 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		dbg("%s() sa_proto is %d %s", __func__, sa_proto->ipproto, sa_proto->name);
 		/*pexpect(encap != NULL)?*/
 		if (encap != NULL) {
-			ir->sadb_x_ipsecrequest_mode = encap->tunnel ? IPSEC_MODE_TUNNEL : IPSEC_MODE_TRANSPORT;
+			ir->sadb_x_ipsecrequest_mode = (encap->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
+							encap->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
+							0);
 			ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
 		} else if (sa_proto->ipproto == ET_IPIP) {
 			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;

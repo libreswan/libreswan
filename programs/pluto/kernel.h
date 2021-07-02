@@ -93,9 +93,29 @@ enum encap_proto {
 };
 
 /*
- * Encapsulation rules.
+ * Encapsulation mode.
  *
- * These determine how a packet matching a policy should be
+ * Contrary to the RFCs and ENCAPSULATION_MODE_*, the kernel only has
+ * to handle two modes.  Hence an ENUM that only defines those values.
+ */
+
+enum encap_mode {
+	ENCAP_MODE_TRANSPORT,
+	ENCAP_MODE_TUNNEL,
+};
+
+#define encap_mode_name(E)						\
+	({								\
+		enum encap_mode e_ = E;					\
+		(e_ == ENCAP_MODE_TUNNEL ? "tunnel" :			\
+		 e_ == ENCAP_MODE_TRANSPORT ? "transport" :		\
+		 "unknown");						\
+	})
+
+/*
+ * Encapsulation.
+ *
+ * This determine how a packet matching a policy should be
  * encapsulated (processed).  The rules are ordered inner-most to
  * outer-most (there's an implied -1 rule matching the actual packet).
  *
@@ -112,16 +132,15 @@ struct encap_rule {
 	reqid_t reqid;
 };
 
-struct encap_rules {
+struct kernel_encap {
 	const struct ip_protocol *inner_proto;	/*IPIP or ESP|AH */
-	bool tunnel;
+	enum encap_mode mode;
 	int outer; /* -1 when no rules; XXX: good idea? */
 	struct encap_rule rule[4]; /* AH+ESP+COMP+0 */
 };
 
-#define pfkey_proto_info encap_rule
-extern const struct encap_rules esp_transport_encap_rules;
-#define esp_transport_proto_info &esp_transport_encap_rules /* XXX: TBD */
+extern const struct kernel_encap esp_transport_kernel_encap;
+#define esp_transport_proto_info &esp_transport_kernel_encap /* XXX: TBD */
 
 /*
  * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
@@ -255,7 +274,7 @@ struct kernel_ops {
 			   const struct ip_protocol *sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
-			   const struct encap_rules *encap,
+			   const struct kernel_encap *encap,
 			   deltatime_t use_lifetime,
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
@@ -428,7 +447,7 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t new_spi,
 			      const struct ip_protocol *proto,
 			      enum eroute_type esatype,
-			      const struct encap_rules *encap,
+			      const struct kernel_encap *encap,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,

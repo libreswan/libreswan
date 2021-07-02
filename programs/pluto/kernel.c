@@ -103,10 +103,10 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
 	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
-const struct encap_rules esp_transport_encap_rules = {
+const struct kernel_encap esp_transport_kernel_encap = {
 	.outer = 0,
 	.inner_proto = &ip_protocol_esp,
-	.tunnel = false,
+	.mode = ENCAP_MODE_TRANSPORT,
 	.rule[0] = {
 		.proto = ENCAP_PROTO_ESP,
 		.reqid = 0
@@ -813,12 +813,12 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
  * the wire.  A -1 entry of the packet to be encapsulated is implied.
  */
 
-static struct encap_rules encap_rules_from_spd(lset_t policy,
-					       const struct spd_route *spd,
-					       bool tunnel)
+static struct kernel_encap kernel_encap_from_spd(lset_t policy,
+						 const struct spd_route *spd,
+						 enum encap_mode mode)
 {
-	struct encap_rules encap = {
-		.tunnel = tunnel,
+	struct kernel_encap encap = {
+		.mode = mode,
 	};
 
 	/*
@@ -854,14 +854,16 @@ static struct encap_rules encap_rules_from_spd(lset_t policy,
 	 * !INT !IPIP).
 	 */
 	if (outer >= encap.rule) {
-		encap.inner_proto = (tunnel ? &ip_protocol_ipip :
-				     protocol_by_ipproto(outer->proto));
+		encap.inner_proto = (mode == ENCAP_MODE_TUNNEL ? &ip_protocol_ipip :
+				     mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(outer->proto) :
+				     NULL);
+		pexpect(encap.inner_proto != NULL);
 	}
 
 	return encap;
 }
 
-static struct encap_rules encap_rules_from_state(const struct state *st,
+static struct kernel_encap kernel_encap_from_state(const struct state *st,
 						 const struct spd_route *spd)
 {
 	bool tunnel = false;
@@ -881,7 +883,8 @@ static struct encap_rules encap_rules_from_state(const struct state *st,
 		tunnel |= (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
-	struct encap_rules encap = encap_rules_from_spd(policy, spd, tunnel);
+	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
+	struct kernel_encap encap = kernel_encap_from_spd(policy, spd, mode);
 	return encap;
 }
 
@@ -1163,7 +1166,7 @@ static bool sag_eroute(const struct state *st,
 	 * outer transformation.
 	 */
 
-	const struct encap_rules encap = encap_rules_from_state(st, sr);
+	const struct kernel_encap encap = kernel_encap_from_state(st, sr);
 	/* check for no transform at all */
 	passert(encap.outer >= 0);
 
@@ -1466,9 +1469,8 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 		return true;
 	}
 
-	const struct encap_rules encap = encap_rules_from_spd(c->policy,
-							      &c->spd,
-							      c->policy & POLICY_TUNNEL);
+	enum encap_mode mode = (c->policy & POLICY_TUNNEL) ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT;
+	const struct kernel_encap encap = kernel_encap_from_spd(c->policy, &c->spd, mode);
 	if (encap.outer < 0) {
 		/* XXX: log? */
 		return false;
@@ -1577,7 +1579,7 @@ bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t new_spi,
 		       const struct ip_protocol *sa_proto,
 		       enum eroute_type esatype,
-		       const struct encap_rules *encap,
+		       const struct kernel_encap *encap,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
@@ -1857,7 +1859,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Construct the policy encapsulation rules; it determines
 	 * tunnel mode as a side effect.
 	 */
-	struct encap_rules encap = encap_rules_from_state(st, &c->spd);
+	struct kernel_encap encap = kernel_encap_from_state(st, &c->spd);
 	if (!pexpect(encap.outer >= 0)) {
 		return false;
 	}
@@ -1868,7 +1870,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.src.client = &src_client,
 		.dst.client = &dst_client,
 		.inbound = inbound,
-		.tunnel = encap.tunnel,
+		.tunnel = (encap.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
@@ -1896,7 +1898,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * change outbound IPsec SA to point to external ip of the
 	 * peer.  Here we substitute real client ip with NATD ip.
 	 */
-	if (!encap.tunnel) {
+	if (encap.mode == ENCAP_MODE_TRANSPORT) {
 		ip_selector old, new;
 		const char *what;
 		const ip_protocol *protocol = protocol_by_ipproto(c->spd.this.protocol);
@@ -2276,9 +2278,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu tunnel=%s",
+	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
 	    __func__, inbound, c->spd.eroute_owner,
-	    bool_str(encap.tunnel));
+	    encap_mode_name(encap.mode));
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
 	    (c->ike_version != IKEv2 || c->spd.this.sec_label.len == 0)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);

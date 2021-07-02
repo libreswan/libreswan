@@ -35,7 +35,7 @@ bool raw_policy(enum kernel_policy_op op,
 		const struct ip_protocol *sa_proto,
 		unsigned int transport_proto,
 		enum eroute_type esatype,
-		const struct encap_rules *encap,
+		const struct kernel_encap *encap,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
@@ -139,9 +139,9 @@ bool raw_policy(enum kernel_policy_op op,
 		if (encap == NULL) {
 			jam(buf, "<null>");
 		} else {
-			jam(buf, "tunnel=%s", bool_str(encap->tunnel));
-			jam(buf, "inner=%s", (encap->inner_proto == NULL ? "<null>" :
-					      encap->inner_proto->name));
+			jam(buf, "%s,inner=%s",
+			    encap_mode_name(encap->mode),
+			    (encap->inner_proto == NULL ? "<null>" : encap->inner_proto->name));
 			for (int i = 0; i <= encap->outer; i++) {
 				jam(buf, ",");
 				const struct encap_rule *rule = &encap->rule[i];
