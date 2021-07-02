@@ -113,6 +113,23 @@ enum encap_mode {
 	})
 
 /*
+ * Direction of packet flow.
+ */
+
+enum encap_direction {
+	ENCAP_DIRECTION_OUTBOUND,
+	ENCAP_DIRECTION_INBOUND,
+};
+
+#define encap_direction_name(E)					\
+	({							\
+		enum encap_flow e_ = E;				\
+		(e_ == ENCAP_DIRECTION_INBOUND ? "inbound" :	\
+		 e_ == ENCAP_DIRECTION_OUTBOUND ? "outbound" :	\
+		 "unknown");					\
+	})
+
+/*
  * Encapsulation.
  *
  * This determine how a packet matching a policy should be
@@ -141,6 +158,25 @@ struct kernel_encap {
 
 extern const struct kernel_encap esp_transport_kernel_encap;
 #define esp_transport_proto_info &esp_transport_kernel_encap /* XXX: TBD */
+
+/*
+ * How a packet flows through the kernel.
+ *
+ * In transport mode the kernel code expects both the CLIENT and
+ * HOST_ADDR to be for public interfaces, however for L2TP they are
+ * not (the client found in the spd might be for an address behind the
+ * nat).
+ *
+ * XXX: host_addr should be an endpoint?  By this point everything has
+ * been resolved?
+ */
+
+struct kernel_route {
+	struct route_end {
+		ip_selector client;
+		ip_address host_addr;
+	} src, dst;
+};
 
 /*
  * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal

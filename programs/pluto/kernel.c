@@ -864,7 +864,7 @@ static struct kernel_encap kernel_encap_from_spd(lset_t policy,
 }
 
 static struct kernel_encap kernel_encap_from_state(const struct state *st,
-						 const struct spd_route *spd)
+						   const struct spd_route *spd)
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
@@ -886,6 +886,59 @@ static struct kernel_encap kernel_encap_from_state(const struct state *st,
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_encap encap = kernel_encap_from_spd(policy, spd, mode);
 	return encap;
+}
+
+static struct kernel_route kernel_route_from_spd(struct spd_route *spd,
+						 enum encap_mode mode,
+						 enum encap_direction flow)
+{
+	/*
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change the remote IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 */
+	ip_selector remote_client;
+	switch (mode) {
+	case ENCAP_MODE_TUNNEL:
+		remote_client = spd->that.client;
+		break;
+	case ENCAP_MODE_TRANSPORT:
+		remote_client = selector_from_address_protocol_port(spd->that.host_addr,
+								    protocol_by_ipproto(spd->that.protocol),
+								    selector_port(spd->that.client));
+		break;
+	default:
+		bad_case(mode);
+	}
+	selector_buf os, ns;
+	dbg("%s() changing remote selector %s to %s",
+	    __func__,
+	    str_selector(&spd->that.client, &os),
+	    str_selector(&remote_client, &ns));
+
+	struct kernel_route route = {0};
+	struct route_end *local;
+	struct route_end *remote;
+
+	switch (flow) {
+	case ENCAP_DIRECTION_INBOUND:
+		remote = &route.src;
+		local = &route.dst;
+		break;
+	case ENCAP_DIRECTION_OUTBOUND:
+		local = &route.src;
+		remote = &route.dst;
+		break;
+	default:
+		bad_case(flow);
+	}
+
+	local->client = spd->this.client;
+	remote->client = remote_client;
+	local->host_addr = spd->this.host_addr;
+	remote->host_addr = spd->that.host_addr;
+
+	return route;
 }
 
 /*
@@ -1841,20 +1894,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_buf text_esp;
 	said_buf text_ah;
 
-	ip_address src, dst;
-	ip_selector src_client, dst_client;
-	if (inbound) {
-		src = c->spd.that.host_addr;
-		src_client = c->spd.that.client;
-		dst = c->spd.this.host_addr;
-		dst_client = c->spd.this.client;
-	} else {
-		src = c->spd.this.host_addr,
-		src_client = c->spd.this.client;
-		dst = c->spd.that.host_addr;
-		dst_client = c->spd.that.client;
-	}
-
 	/*
 	 * Construct the policy encapsulation rules; it determines
 	 * tunnel mode as a side effect.
@@ -1864,11 +1903,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		return false;
 	}
 
+	struct kernel_route route = kernel_route_from_spd(&c->spd, encap.mode,
+							  inbound ? ENCAP_DIRECTION_INBOUND : ENCAP_DIRECTION_OUTBOUND);
+
 	const struct kernel_sa said_boilerplate = {
-		.src.address = &src,
-		.dst.address = &dst,
-		.src.client = &src_client,
-		.dst.client = &dst_client,
+		.src.address = &route.src.host_addr,
+		.dst.address = &route.dst.host_addr,
+		.src.client = &route.src.client,
+		.dst.client = &route.dst.client,
 		.inbound = inbound,
 		.tunnel = (encap.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.protocol,
@@ -1884,41 +1926,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK,
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
-	    str_selector(&src_client, &scb),
+	    str_selector(said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_address(&src, &sab),
+	    str_address(said_boilerplate.src.address, &sab),
 	    encap.inner_proto->name,
-	    str_address(&dst, &dab),
+	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_selector(&dst_client, &dcb),
+	    str_selector(said_boilerplate.dst.client, &dcb),
 	    pri_shunk(said_boilerplate.sec_label));
-
-	/*
-	 * With pfkey and transport mode with nat-traversal we need to
-	 * change outbound IPsec SA to point to external ip of the
-	 * peer.  Here we substitute real client ip with NATD ip.
-	 */
-	if (encap.mode == ENCAP_MODE_TRANSPORT) {
-		ip_selector old, new;
-		const char *what;
-		const ip_protocol *protocol = protocol_by_ipproto(c->spd.this.protocol);
-		if (inbound) {
-			what = "src";
-			old = src_client;
-			new = src_client = selector_from_address_protocol_port(src, protocol,
-									       selector_port(src_client));
-		} else {
-			what = "dst";
-			old = dst_client;
-			new = dst_client = selector_from_address_protocol_port(dst, protocol,
-									       selector_port(dst_client));
-		}
-		selector_buf os, ns;
-		dbg("%s() replacing %s selector %s with %s",
-		    __func__, what,
-		    str_selector(&old, &os),
-		    str_selector(&new, &ns));
-	}
 
 	/* set up IPCOMP SA, if any */
 
@@ -1932,8 +1947,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
-		said_next->story = said_str(dst, &ip_protocol_comp, ipcomp_spi, &text_ipcomp);
-
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_comp,
+					    ipcomp_spi, &text_ipcomp);
 
 		if (inbound) {
 			/*
@@ -2135,7 +2150,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
-		said_next->story = said_str(dst, &ip_protocol_esp, esp_spi, &text_esp);
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_esp,
+					    esp_spi, &text_esp);
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump("ESP enckey:",  said_next->enckey,
@@ -2218,7 +2234,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = ah_dst_keymat;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
-		said_next->story = said_str(dst, &ip_protocol_ah, ah_spi, &text_ah);
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_ah,
+					    ah_spi, &text_ah);
 
 		said_next->replay_window = c->sa_replay_window;
 		dbg("kernel: setting IPsec SA replay-window to %d", c->sa_replay_window);
@@ -2298,10 +2315,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * need reversing ...
 		 */
 		if (!raw_policy(KP_ADD_INBOUND,
-				&src,			/* src_host */
-				&src_client,		/* src_client */
-				&dst,			/* dst_host */
-				&dst_client,		/* dst_client */
+				&route.src.host_addr,	/* src_host */
+				&route.src.client,	/* src_client */
+				&route.dst.host_addr,	/* dst_host */
+				&route.dst.client,	/* dst_client */
 				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
 				encap.inner_proto,	/* SA proto */
 				c->spd.this.protocol,	/* transport_proto */
@@ -2359,10 +2376,9 @@ fail:
 	/* undo the done SPIs */
 	while (said_next-- != said) {
 		if (said_next->proto != 0) {
-			(void) del_spi(said_next->spi,
-				       said_next->proto,
-				       &src, said_next->dst.address,
-				       st->st_logger);
+			del_spi(said_next->spi, said_next->proto,
+				said_next->src.address, said_next->dst.address,
+				st->st_logger);
 		}
 	}
 	return false;
