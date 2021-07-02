@@ -228,6 +228,15 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 	PASSERT_FAIL("bad protocol %s", proto->name);
 }
 
+static const char *said_str(char text_said[SATOT_BUF], const ip_address *dst,
+			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
+{
+	ip_said said = said3(dst, spi, sa_proto);
+	struct jambuf jam = array_as_jambuf(text_said, SATOT_BUF);
+	jam_said(&jam, &said);
+	return text_said;
+}
+
 /* Generate Unique SPI numbers.
  *
  * The specs say that the number must not be less than IPSEC_DOI_SPI_MIN.
@@ -260,12 +269,12 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 	ipsec_spi_t network_spi;
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, proto);
 		network_spi = kernel_ops->get_spi(&sr->that.host_addr,
 						  &sr->this.host_addr, proto, tunnel,
 						  get_proto_reqid(sr->reqid, proto),
 						  IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
-						  text_said, logger);
+						  said_str(text_said, &sr->this.host_addr, 0, proto),
+						  logger);
 	} else {
 		static ipsec_spi_t host_spi; /* host order, so not returned directly! */
 		do {
@@ -275,10 +284,10 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 	}
 
 	char text_said[SATOT_BUF];
-	set_text_said(text_said, &sr->this.host_addr, network_spi, proto);
 	address_buf rb;
 	dbg("kernel: allocated incoming spi %s -> %s%s",
-	    str_address(&sr->that.host_addr, &rb), text_said,
+	    str_address(&sr->that.host_addr, &rb),
+	    said_str(text_said, &sr->this.host_addr, network_spi, proto),
 	    tunnel ? " in tunnel-mode" : "");
 	return network_spi;
 }
@@ -296,14 +305,14 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
 {
 	if (kernel_ops->get_spi != NULL) {
 		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, &ip_protocol_comp);
 		return kernel_ops->get_spi(&sr->that.host_addr,
 					   &sr->this.host_addr, &ip_protocol_comp,
 					   tunnel,
 					   get_proto_reqid(sr->reqid, &ip_protocol_comp),
 					   IPCOMP_FIRST_NEGOTIATED,
 					   IPCOMP_LAST_NEGOTIATED,
-					   text_said, logger);
+					   said_str(text_said, &sr->this.host_addr, 0, &ip_protocol_comp),
+					   logger);
 	} else {
 		static cpi_t first_busy_cpi = 0;
 		static cpi_t latest_cpi = 0;
@@ -1235,14 +1244,6 @@ void unroute_connection(struct connection *c)
 
 #include "kernel_alg.h"
 
-void set_text_said(char *text_said, const ip_address *dst,
-			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
-{
-	ip_said said = said3(dst, spi, sa_proto);
-	struct jambuf jam = array_as_jambuf(text_said, SATOT_BUF);
-	jam_said(&jam, &said);
-}
-
 /* find an entry in the bare_shunt table.
  * Trick: return a pointer to the pointer to the entry;
  * this allows the entry to be deleted.
@@ -1772,7 +1773,7 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	     struct logger *logger)
 {
 	char text_said[SATOT_BUF];
-	set_text_said(text_said, dst, spi, proto);
+	(void)said_str(text_said, dst, spi, proto);
 
 	address_buf b;
 	dbg("kernel: deleting spi %s -> %s",
@@ -1783,7 +1784,7 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 		.proto = proto,
 		.src.address = src,
 		.dst.address = dst,
-		.text_said = text_said,
+		.story = text_said,
 	};
 
 	passert(kernel_ops->del_sa != NULL);
@@ -1920,7 +1921,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_ipcomp.present) {
 		ipsec_spi_t ipcomp_spi =
 			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.spi;
-		set_text_said(text_ipcomp, &dst, ipcomp_spi, &ip_protocol_comp);
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
@@ -1928,7 +1928,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
-		said_next->text_said = text_ipcomp;
+		said_next->story = said_str(text_ipcomp, &dst, ipcomp_spi, &ip_protocol_comp);
+
 
 		if (inbound) {
 			/*
@@ -2056,8 +2057,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
-		set_text_said(text_esp, &dst, esp_spi, &ip_protocol_esp);
-
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->esatype = ET_ESP;
@@ -2132,7 +2131,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
-		said_next->text_said = text_esp;
+		said_next->story = said_str(text_esp, &dst, esp_spi, &ip_protocol_esp);
+
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump("ESP enckey:",  said_next->enckey,
@@ -2207,8 +2207,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_ah.keymat_len == keymat_size);
 
-		set_text_said(text_ah, &dst, ah_spi, &ip_protocol_ah);
-
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
@@ -2217,7 +2215,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = ah_dst_keymat;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
-		said_next->text_said = text_ah;
+		said_next->story = said_str(text_ah, &dst, ah_spi, &ip_protocol_ah);
+
 		said_next->replay_window = c->sa_replay_window;
 		dbg("kernel: setting IPsec SA replay-window to %d", c->sa_replay_window);
 
@@ -2332,8 +2331,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		for (s = said; s < said_next - 1; s++) {
 			dbg("kernel: grouping %s (ref=%u) and %s (ref=%u)",
-			    s[0].text_said, s[0].ref,
-			    s[1].text_said, s[1].ref);
+			    s[0].story, s[0].ref,
+			    s[1].story, s[1].ref);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
 				log_state(RC_LOG, st, "grp_sa failed");
 				goto fail;
@@ -3345,14 +3344,12 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	char text_said[SATOT_BUF];
 
-	set_text_said(text_said, dst, spi, proto);
-
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
 		.src.address = src,
 		.dst.address = dst,
-		.text_said = text_said,
+		.story = said_str(text_said, dst, spi, proto),
 	};
 
 	dbg("kernel: get_sa_info %s", text_said);

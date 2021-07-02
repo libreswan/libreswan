@@ -201,7 +201,7 @@ struct kernel_sa {
 
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
-	const char *text_said;
+	const char *story;
 	chunk_t sec_label;
 
 	const char *nic_offload_dev;
@@ -274,7 +274,7 @@ struct kernel_ops {
 			       bool tunnel_mode,
 			       reqid_t reqid,
 			       uintmax_t min, uintmax_t max,
-			       const char *text_said,
+			       const char *story,	/* often SAID string */
 			       struct logger *logger);
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
 	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
@@ -453,7 +453,6 @@ bool shunt_policy(enum kernel_policy_op op,
 		  struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
-extern void set_text_said(char *text_said, const ip_address *dst,
-			  ipsec_spi_t spi, const struct ip_protocol *sa_proto);
+
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

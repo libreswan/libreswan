@@ -94,8 +94,11 @@ ip_said said3(const ip_address *address, ipsec_spi_t spi/*network-byte-order*/,
  * Formatting
  */
 
+/* room for textual represenation of an SAID */
+#define SATOT_BUF       (5 + ULTOT_BUF + 1 + sizeof(address_buf))
+
 typedef struct {
-	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
+	char buf[SATOT_BUF];
 } said_buf;
 
 void jam_said(struct jambuf *buf, const ip_said *said);
@@ -113,7 +116,5 @@ ip_address said_address(const ip_said *said);
  */
 
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
-#define SATOT_BUF       sizeof(said_buf)
-#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 
 #endif

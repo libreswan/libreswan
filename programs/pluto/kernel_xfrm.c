@@ -332,13 +332,13 @@ static void init_netlink(struct logger *logger)
  * @param rbuf - Return Buffer - contains data returned from the send.
  * @param description - String - user friendly description of what is
  *                      being attempted.  Used for diagnostics
- * @param text_said - String
+ * @param story - String
  * @return bool True if the message was successfully sent.
  */
 
 static bool send_netlink_msg(struct nlmsghdr *hdr,
 			     unsigned expected_resp_type, struct nlm_resp *rbuf,
-			     const char *description, const char *text_said,
+			     const char *description, const char *story,
 			     int *recv_errno,
 			     struct logger *logger)
 {
@@ -362,7 +362,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		log_errno(logger, errno,
 			  "netlink write() of %s message for %s %s failed",
 			  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			  description, text_said);
+			  description, story);
 		return false;
 	}
 
@@ -370,7 +370,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		llog(RC_LOG_SERIOUS, logger,
 		     "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
 		     sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		     description, text_said, r, len);
+		     description, story, r, len);
 		return false;
 	}
 
@@ -387,7 +387,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 				  "netlink recvfrom() of response to our %s message for %s %s failed",
 				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
-				  description, text_said);
+				  description, story);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
@@ -412,7 +412,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			    description, text_said,
+			    description, story,
 			    len, (size_t) rsp.n.nlmsg_len);
 		return FALSE;
 	}
@@ -421,7 +421,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		if (rsp.u.e.error != 0) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "ERROR: netlink response for %s %s included errno %d: %s",
-				    description, text_said, -rsp.u.e.error,
+				    description, story, -rsp.u.e.error,
 				    strerror(-rsp.u.e.error));
 			return FALSE;
 		}
@@ -432,7 +432,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		 * This really happens for netlink_add_sa().
 		 */
 		dbg("netlink response for %s %s included non-error error",
-		    description, text_said);
+		    description, story);
 		/* ignore */
 	}
 	if (rbuf == NULL) {
@@ -442,7 +442,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			    description, text_said,
+			    description, story,
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
 	}
@@ -455,19 +455,20 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
  *
  * @param hdr - Data to check
  * @param enoent_ok - Boolean - OK or not OK.
- * @param text_said - String
+ * @param story - String
  * @return boolean
  */
 static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
-			   const char *text_said, struct logger *logger)
+			   const char *story, struct logger *logger)
 {
 	struct nlm_resp rsp;
 
 	int recv_errno;
 	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp,
-			      "policy", text_said,
-			      &recv_errno, logger))
+			      "policy", story,
+			      &recv_errno, logger)) {
 		return false;
+	}
 
 	/*
 	 * Kind of surprising: we get here by success which implies an
@@ -481,7 +482,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	log_errno(logger, error,
 		  "ERROR: netlink %s response for flow %s",
 		  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		  text_said);
+		  story);
 	return false;
 }
 
@@ -500,7 +501,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
- * @param text_said char
+ * @param story char *
  * @return boolean True if successful
  */
 static bool netlink_raw_policy(enum kernel_policy_op op,
@@ -936,8 +937,15 @@ static void set_migration_attr(const struct kernel_sa *sa,
 	m->old_family = m->new_family = address_type(sa->src.address)->af;
 }
 
-static bool create_xfrm_migrate_sa(struct state *st, const int dir,
-				   struct kernel_sa *ret_sa, char *text_said)
+/*
+ * size of buffer needed for "story"
+ */
+#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
+
+static bool create_xfrm_migrate_sa(struct state *st,
+				   const int dir,	/* netkey SA direction XFRM_POLICY_* */
+				   struct kernel_sa *ret_sa,
+				   char story_buf[SAMIGTOT_BUF])
 {
 	const struct connection *const c = st->st_connection;
 
@@ -960,6 +968,8 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		return FALSE;
 	}
 
+	struct jambuf story_jb = array_as_jambuf(story_buf, SAMIGTOT_BUF);
+
 	struct kernel_sa sa = {
 		.xfrm_dir = dir,
 		.proto = proto,
@@ -967,102 +977,88 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		.encap_type = encap_type,
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
+		.story = story_buf,	/* content will evolve */
+		/* WWW what about sec_label? */
 	};
 
 	ip_endpoint new_endpoint;
 	uint16_t old_port;
-	uint16_t encap_sport = 0;
-	uint16_t encap_dport = 0;
-	const ip_address *src, *dst;
-	const ip_selector *src_client, *dst_client;
+	uint16_t encap_sport;
+	uint16_t encap_dport;
+
+	/* note: XFRM_POLICY_FWD is inbound too */
+	bool inbound = dir != XFRM_POLICY_OUT;
+
+	const struct end *src_end, *dst_end;
+
+	if (inbound) {
+		src_end = &c->spd.that;
+		dst_end = &c->spd.this;
+		sa.spi = proto_info->our_spi;
+	} else {
+		src_end = &c->spd.this;
+		dst_end = &c->spd.that;
+		sa.spi = proto_info->attrs.spi;
+	}
+	const ip_address *src = &src_end->host_addr;
+	const ip_address *dst = &dst_end->host_addr;
+
+	sa.src.new_address = *src;	/* may be overridden */
+	sa.dst.new_address = *dst;	/* may be overridden */
 
 	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
-		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
-		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		jam_string(&story_jb, "initiator migrate kernel SA ");
 		old_port = endpoint_hport(st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
-		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
-			src = &c->spd.that.host_addr;
-			dst = &c->spd.this.host_addr;
-			src_client = &c->spd.that.client;
-			dst_client = &c->spd.this.client;
-			sa.src.new_address = *src;
-			sa.dst.new_address = endpoint_address(st->st_mobike_local_endpoint);
-			sa.spi = proto_info->our_spi;
-			set_text_said(n, dst, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_mobike_local_endpoint);
-			}
+		if (inbound) {
+			sa.dst.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(st->st_remote_endpoint);
+			encap_dport = endpoint_hport(new_endpoint);
 		} else {
-			src = &c->spd.this.host_addr;
-			dst = &c->spd.that.host_addr;
-			src_client = &c->spd.this.client;
-			dst_client = &c->spd.that.client;
-			sa.src.new_address = endpoint_address(st->st_mobike_local_endpoint);
-			sa.dst.new_address = *dst;
-			sa.spi = proto_info->attrs.spi;
-			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_mobike_local_endpoint);
-				encap_dport = endpoint_hport(st->st_remote_endpoint);
-			}
+			sa.src.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(new_endpoint);
+			encap_dport = endpoint_hport(st->st_remote_endpoint);
 		}
 	} else {
-		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
-		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		jam_string(&story_jb, "responder migrate kernel SA ");
 		old_port = endpoint_hport(st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
-		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
-			src = &c->spd.that.host_addr;
-			dst = &c->spd.this.host_addr;
-			src_client = &c->spd.that.client;
-			dst_client = &c->spd.this.client;
-			sa.src.new_address = endpoint_address(st->st_mobike_remote_endpoint);
-			sa.dst.new_address = c->spd.this.host_addr;
-			sa.spi = proto_info->our_spi;
-			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_mobike_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
-			}
+		if (inbound) {
+			sa.src.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(new_endpoint);
+			encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 		} else {
-			src = &c->spd.this.host_addr;
-			dst = &c->spd.that.host_addr;
-			src_client = &c->spd.this.client;
-			dst_client = &c->spd.that.client;
-			sa.src.new_address = c->spd.this.host_addr;
-			sa.dst.new_address = endpoint_address(st->st_mobike_remote_endpoint);
-			sa.spi = proto_info->attrs.spi;
-			set_text_said(n, dst, sa.spi, proto);
-
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(st->st_mobike_remote_endpoint);
-			}
+			sa.dst.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+			encap_dport = endpoint_hport(new_endpoint);
 		}
+	}
+
+	if (encap_type == NULL) {
+		encap_sport = 0;
+		encap_dport = 0;
 	}
 
 	sa.src.address = src;
 	sa.dst.address = dst;
-	sa.text_said = text_said;
-	sa.src.client = src_client;
-	sa.dst.client = dst_client;
+	sa.src.client = &src_end->client;
+	sa.dst.client = &dst_end->client;
 	sa.src.encap_port = encap_sport;
 	sa.dst.encap_port = encap_dport;
 
-	char reqid_buf[ULTOT_BUF + 32];
-	endpoint_buf ra;
-	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s reqid=%u %s",
-			old_port,
-		 str_endpoint(&new_endpoint, &ra),
-			sa.reqid,
-			enum_name(&netkey_sa_dir_names, dir));
-	add_str(text_said, SAMIGTOT_BUF, text_said, reqid_buf);
+	ip_said said = said3(dst, sa.spi, proto);
+	jam_said(&story_jb, &said);
 
-	dbg("%s", text_said);
+	endpoint_buf ra;
+	jam(&story_jb, ":%u to %s reqid=%u %s",
+		 old_port,
+		 str_endpoint(&new_endpoint, &ra),
+		 sa.reqid,
+		 enum_name(&netkey_sa_dir_names, dir));
+
+	dbg("%s", story_buf);
 
 	*ret_sa = sa;
 	return TRUE;
@@ -1133,32 +1129,24 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 	 */
 	int recv_errno;
 	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
-				  "mobike", sa->text_said,
+				  "mobike", sa->story,
 				  &recv_errno, logger);
-	if (!r)
-		return FALSE;
-
-	if (rsp.u.e.error < 0) {
-		/* error is already logged */
-		return FALSE;
-	}
-
-	return TRUE;
+	return r && rsp.u.e.error >= 0;
 }
 
 static bool netlink_migrate_sa(struct state *st)
 {
 	struct kernel_sa sa;
-	char mig_said[SAMIGTOT_BUF];
+	char story_buf[SAMIGTOT_BUF];	/* must live as long as sa */
 
 	return
-		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, story_buf) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, story_buf) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, story_buf) &&
 		migrate_xfrm_sa(&sa, st->st_logger);
 }
 
@@ -1657,7 +1645,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 	int recv_errno;
 	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-			       "Add SA", sa->text_said,
+			       "Add SA", sa->story,
 			       &recv_errno, logger);
 	if (!ret && recv_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
@@ -1698,7 +1686,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 
 	int recv_errno;
 	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-				"Del SA", sa->text_said,
+				"Del SA", sa->story,
 				&recv_errno, logger);
 }
 
@@ -2154,7 +2142,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				   bool tunnel_mode,
 				   reqid_t reqid,
 				   uintmax_t min, uintmax_t max,
-				   const char *text_said,
+				   const char *story,
 				   struct logger *logger)
 {
 	struct {
@@ -2181,7 +2169,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	int recv_errno;
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SPI", text_said,
+			      "Get SPI", story,
 			      &recv_errno, logger)) {
 		return 0;
 	}
@@ -2195,7 +2183,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	}
 
 	dbg("kernel: netlink_get_spi: allocated 0x%x for %s",
-	    ntohl(rsp.u.sa.id.spi), text_said);
+	    ntohl(rsp.u.sa.id.spi), story);
 	return rsp.u.sa.id.spi;
 }
 
@@ -2536,9 +2524,10 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	int recv_errno;
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SA", sa->text_said,
-			      &recv_errno, logger))
+			      "Get SA", sa->story,
+			      &recv_errno, logger)) {
 		return FALSE;
+	}
 
 	*bytes = rsp.u.info.curlft.bytes;
 	*add_time = rsp.u.info.curlft.add_time;
