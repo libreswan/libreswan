@@ -478,17 +478,6 @@ extern bool del_spi(ipsec_spi_t spi,
 		    const ip_address *dest,
 		    struct logger *logger);
 
-extern bool eroute_connection(const struct spd_route *sr,
-			      ipsec_spi_t cur_spi,
-			      ipsec_spi_t new_spi,
-			      const struct ip_protocol *proto,
-			      enum eroute_type esatype,
-			      const struct kernel_encap *encap,
-			      uint32_t sa_priority,
-			      const struct sa_marks *sa_marks,
-			      const uint32_t xfrm_if_id,
-			      unsigned int op, const char *opname,
-			      struct logger *logger);
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
 {

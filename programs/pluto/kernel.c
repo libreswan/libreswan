@@ -89,6 +89,19 @@ static bool route_and_eroute(struct connection *c,
 			     /* st or c */
 			     struct logger *logger);
 
+extern bool eroute_connection(const struct spd_route *sr,
+			      ipsec_spi_t cur_spi,
+			      ipsec_spi_t new_spi,
+			      const struct kernel_route *route,
+			      const struct ip_protocol *sa_proto,
+			      enum eroute_type esatype,
+			      const struct kernel_encap *encap,
+			      uint32_t sa_priority,
+			      const struct sa_marks *sa_marks,
+			      const uint32_t xfrm_if_id,
+			      unsigned int op, const char *opname,
+			      struct logger *logger);
+
 bool can_do_IPcomp = true;  /* can system actually perform IPCOMP? */
 
 static global_timer_cb kernel_scan_shunts;
@@ -888,7 +901,7 @@ static struct kernel_encap kernel_encap_from_state(const struct state *st,
 	return encap;
 }
 
-static struct kernel_route kernel_route_from_spd(struct spd_route *spd,
+static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 						 enum encap_mode mode,
 						 enum encap_direction flow)
 {
@@ -1225,12 +1238,16 @@ static bool sag_eroute(const struct state *st,
 
 	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
+	pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+	struct kernel_route route = kernel_route_from_spd(sr, encap.mode,
+							  ENCAP_DIRECTION_OUTBOUND);
+
 	/* hack */
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
 	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
-				 encap.inner_proto, encap.inner_proto->ipproto, &encap,
+				 &route, encap.inner_proto, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
 				 xfrm_if_id, op, why, st->st_logger);
 }
@@ -1630,6 +1647,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
+		       const struct kernel_route *route,
 		       const struct ip_protocol *sa_proto,
 		       enum eroute_type esatype,
 		       const struct kernel_encap *encap,
@@ -1640,16 +1658,11 @@ bool eroute_connection(const struct spd_route *sr,
 		       const char *opname,
 		       struct logger *logger)
 {
-	ip_address peer = sr->that.host_addr;
-
-	if (sa_proto == &ip_protocol_internal)
-		peer = address_type(&peer)->address.any;
-
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host_addr);
 		bool t = raw_policy(op,
-				    &sr->this.host_addr, &client,
-				    &peer, &sr->that.client,
+				    &route->src.host_addr, &client,
+				    &route->dst.host_addr, &route->dst.client,
 				    cur_spi,
 				    new_spi,
 				    sa_proto,
@@ -1670,8 +1683,8 @@ bool eroute_connection(const struct spd_route *sr,
 	}
 
 	return raw_policy(op,
-			  &sr->this.host_addr, &sr->this.client,
-			  &peer, &sr->that.client,
+			  &route->src.host_addr, &route->src.client,
+			  &route->dst.host_addr, &route->dst.client,
 			  cur_spi,
 			  new_spi,
 			  sa_proto,
@@ -1758,9 +1771,23 @@ bool assign_holdpass(const struct connection *c,
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
+			pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+			struct kernel_route route = kernel_route_from_spd(sr,
+									  ENCAP_MODE_TRANSPORT,
+									  ENCAP_DIRECTION_OUTBOUND);
+			/*
+			 * XXX: why?
+			 *
+			 * Because only this end is interesting?
+			 * Because it is a shunt and the other end
+			 * doesn't matter?
+			 */
+			route.dst.host_addr = address_type(&route.dst.host_addr)->address.any;
+
 			if (eroute_connection(sr,
 					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(negotiation_shunt),
+					      &route,
 					      &ip_protocol_internal, ET_INT,
 					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
