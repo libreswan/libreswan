@@ -940,15 +940,18 @@ static void set_migration_attr(const struct kernel_sa *sa,
 /*
  * size of buffer needed for "story"
  *
- * RFC 1886 old IPv6 reverse-lookup format is the bulkiest
+ * RFC 1886 old IPv6 reverse-lookup format is the bulkiest.
+ *
+ * Since the bufs have 2 char padding, this slightly overallocates.
  */
-#define ADDRTOT_BUF     sizeof(address_reversed_buf)
-#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
+typedef struct {
+	char buf[16 + sizeof(said_buf) + sizeof(address_reversed_buf)];
+} story_buf;
 
 static bool create_xfrm_migrate_sa(struct state *st,
 				   const int dir,	/* netkey SA direction XFRM_POLICY_* */
 				   struct kernel_sa *ret_sa,
-				   char story_buf[SAMIGTOT_BUF])
+				   story_buf *story /* must live as long as sa */)
 {
 	const struct connection *const c = st->st_connection;
 
@@ -971,7 +974,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		return FALSE;
 	}
 
-	struct jambuf story_jb = array_as_jambuf(story_buf, SAMIGTOT_BUF);
+	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
 
 	struct kernel_sa sa = {
 		.xfrm_dir = dir,
@@ -980,7 +983,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.encap_type = encap_type,
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
-		.story = story_buf,	/* content will evolve */
+		.story = story->buf,	/* content will evolve */
 		/* WWW what about sec_label? */
 	};
 
@@ -1061,7 +1064,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		 sa.reqid,
 		 enum_name(&netkey_sa_dir_names, dir));
 
-	dbg("%s", story_buf);
+	dbg("%s", story->buf);
 
 	*ret_sa = sa;
 	return TRUE;
@@ -1140,16 +1143,16 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 static bool netlink_migrate_sa(struct state *st)
 {
 	struct kernel_sa sa;
-	char story_buf[SAMIGTOT_BUF];	/* must live as long as sa */
+	story_buf story;	/* must live as long as sa */
 
 	return
-		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, story_buf) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, story_buf) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, story_buf) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger);
 }
 

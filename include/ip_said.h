@@ -134,11 +134,8 @@ ip_said said_from_address_protocol_spi(const ip_address address,
  * Formatting
  */
 
-/* room for textual represenation of an SAID */
-#define SATOT_BUF       (5 + ULTOT_BUF + 1 + sizeof(address_buf))
-
 typedef struct {
-	char buf[SATOT_BUF];
+	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
 } said_buf;
 
 void jam_said(struct jambuf *buf, const ip_said *said);
