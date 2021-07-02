@@ -20,11 +20,12 @@
 
 #include "lswlog.h"	/* for bad_case() */
 
-ip_said said3(const ip_address *address, ipsec_spi_t spi,
-	      const struct ip_protocol *proto)
+ip_said said_from_address_protocol_spi(const ip_address address,
+				       const struct ip_protocol *proto,
+				       ipsec_spi_t spi)
 {
 	ip_said said = {
-		.dst = *address,
+		.dst = address,
 		.spi = spi,
 		.proto = proto,
 	};

@@ -2017,11 +2017,15 @@ void send_v1_delete(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, &ip_protocol_ah);
+			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+							     &ip_protocol_ah,
+							     st->st_ah.our_spi);
 			ns++;
 		}
 		if (st->st_esp.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_esp.our_spi, &ip_protocol_esp);
+			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+							     &ip_protocol_esp,
+							     st->st_esp.our_spi);
 			ns++;
 		}
 

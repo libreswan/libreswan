@@ -1051,7 +1051,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	sa.src.encap_port = encap_sport;
 	sa.dst.encap_port = encap_dport;
 
-	ip_said said = said3(dst, sa.spi, proto);
+	ip_said said = said_from_address_protocol_spi(*dst, proto, sa.spi);
 	jam_said(&story_jb, &said);
 
 	endpoint_buf ra;

@@ -51,6 +51,33 @@ extern const struct enum_names policy_spi_names;
  */
 
 typedef struct {
+#if 0
+	bool is_set;
+	/*
+	 * Index into the struct ip_info array; must be stream
+	 * friendly.
+	 */
+	enum ip_version version; /* 0, 4, 6 */
+	/*
+	 * We need something that makes static IPv4 initializers possible
+	 * (struct in_addr requires htonl() which is run-time only).
+	 */
+	struct ip_bytes bytes;
+	/*
+	 * Protocol 0 is interpreted as a wild card so isn't allowed.
+	 */
+	unsigned ipproto;
+	/*
+	 * 32-bit SPI, assigned by the destination host; or one of the
+	 * below magic values above (in network order).
+	 *
+	 * This is in network order (but is manipulated like an int.
+	 *
+	 * XXX: Does this mean it is the SPI that the remote end
+	 * expects to see on its incoming packets?
+	 */
+	ipsec_spi_t spi;
+#else
 	/*
 	 * destination host; no port
 	 *
@@ -80,15 +107,28 @@ typedef struct {
 	 * address.
 	 */
 	const struct ip_protocol *proto;
-
+#endif
 } ip_said;
 
 /*
  * Constructors
+ *
+ * Technically it should be constructed from an endpoint;
+ * unfortunately code still passes around address+protocol+[port].
  */
 
-ip_said said3(const ip_address *address, ipsec_spi_t spi/*network-byte-order*/,
-	      const struct ip_protocol *proto);
+ip_said said_from_raw(where_t where, enum ip_version version,
+		      const struct ip_bytes bytes,
+		      const struct ip_protocol *protocol,
+		      ip_port port,
+		      ipsec_spi_t spi);
+
+ip_said said_from_endpoint_spi(const ip_endpoint endpoint,
+			       const ipsec_spi_t spi/*network-byte-ordered*/);
+
+ip_said said_from_address_protocol_spi(const ip_address address,
+				       const struct ip_protocol *proto,
+				       ipsec_spi_t spi/*network-byte-order*/);
 
 /*
  * Formatting

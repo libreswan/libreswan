@@ -2083,41 +2083,51 @@ static void show_established_child_details(struct show *s, struct state *st)
 						   st->st_outbound_time)));
 		}
 
-#define add_said(ADST, ASPI, APROTO)				\
-		{						\
-			ip_said s = said3(ADST, ASPI, APROTO);	\
-			jam(buf, " ");				\
-			jam_said(buf, &s);			\
+#define add_said(ADDRESS, PROTOCOL, SPI)				\
+		{							\
+			ip_said s = said_from_address_protocol_spi(ADDRESS, \
+								   PROTOCOL, \
+								   SPI); \
+			jam(buf, " ");					\
+			jam_said(buf, &s);				\
 		}
 
 		/* SAIDs */
 
 		if (st->st_ah.present) {
-			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
-				 &ip_protocol_ah);
-			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
-				 &ip_protocol_ah);
+			add_said(c->spd.that.host_addr,
+				 &ip_protocol_ah,
+				 st->st_ah.attrs.spi);
+			add_said(c->spd.this.host_addr,
+				 &ip_protocol_ah,
+				 st->st_ah.our_spi);
 		}
 		if (st->st_esp.present) {
-			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
-				 &ip_protocol_esp);
-			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
-				 &ip_protocol_esp);
+			add_said(c->spd.that.host_addr,
+				 &ip_protocol_esp,
+				 st->st_esp.attrs.spi);
+			add_said(c->spd.this.host_addr,
+				 &ip_protocol_esp,
+				 st->st_esp.our_spi);
 		}
 		if (st->st_ipcomp.present) {
-			add_said(&c->spd.that.host_addr,
-				 st->st_ipcomp.attrs.spi, &ip_protocol_comp);
-			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
-				 &ip_protocol_comp);
+			add_said(c->spd.that.host_addr,
+				 &ip_protocol_comp,
+				 st->st_ipcomp.attrs.spi);
+			add_said(c->spd.this.host_addr,
+				 &ip_protocol_comp,
+				 st->st_ipcomp.our_spi);
 		}
 #if defined(XFRM_SUPPORT)
 		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-			add_said(&c->spd.that.host_addr, (ipsec_spi_t)0,
-				 &ip_protocol_ipip);
-			add_said(&c->spd.this.host_addr, (ipsec_spi_t)0,
-				 &ip_protocol_ipip);
+			add_said(c->spd.that.host_addr,
+				 &ip_protocol_ipip,
+				 (ipsec_spi_t)0);
+			add_said(c->spd.this.host_addr,
+				 &ip_protocol_ipip,
+				 (ipsec_spi_t)0);
 		}
 #endif
 #       undef add_said

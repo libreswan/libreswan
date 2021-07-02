@@ -198,8 +198,9 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&selector_type(our_client)->address.any,
-			 htonl(shunt_spi), &ip_protocol_internal);
+	bs->said = said_from_address_protocol_spi(selector_type(our_client)->address.any,
+						  &ip_protocol_internal,
+						  htonl(shunt_spi));
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -231,7 +232,7 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 static const char *said_str(char text_said[SATOT_BUF], const ip_address *dst,
 			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
 {
-	ip_said said = said3(dst, spi, sa_proto);
+	ip_said said = said_from_address_protocol_spi(*dst, sa_proto, spi);
 	struct jambuf jam = array_as_jambuf(text_said, SATOT_BUF);
 	jam_said(&jam, &said);
 	return text_said;
@@ -3464,8 +3465,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
-		bs->said = said3(&selector_type(&sr->this.client)->address.any,
-				 htonl(negotiation_shunt), &ip_protocol_internal);
+		bs->said = said_from_address_protocol_spi(selector_type(&sr->this.client)->address.any,
+							  &ip_protocol_internal,
+							  htonl(negotiation_shunt));
 
 		bs->count = 0;
 		bs->last_activity = mononow();
@@ -3568,7 +3570,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 				struct bare_shunt *bs = *bs_pp;
 				bs->why = why;
 				bs->policy_prio = policy_prio;
-				bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
+				bs->said = said_from_address_protocol_spi(null_host,
+									  &ip_protocol_internal,
+									  htonl(new_shunt_spi));
 				bs->count = 0;
 				bs->last_activity = mononow();
 				dbg_bare_shunt("replace", bs);
