@@ -21,7 +21,7 @@
 #include "deltatime.h"
 #include "lswlog.h"
 
-static const deltatime_t deltatime_zero;
+const deltatime_t deltatime_zero;
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code

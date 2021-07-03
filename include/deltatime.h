@@ -50,6 +50,8 @@ struct jambuf;
 
 typedef struct { struct timeval dt; } deltatime_t;
 
+extern const deltatime_t deltatime_zero;
+
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), } }
 
 deltatime_t deltatime(time_t secs);
