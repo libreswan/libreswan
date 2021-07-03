@@ -32,7 +32,6 @@ bool raw_policy(enum kernel_policy_op op,
 		const ip_selector *dst_client,
 		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
-		const struct ip_protocol *sa_proto,
 		unsigned int transport_proto,
 		enum eroute_type esatype,
 		const struct kernel_encap *encap,
@@ -130,11 +129,6 @@ bool raw_policy(enum kernel_policy_op op,
 		 */
 		jam(buf, " esatype=%s", esa_proto->name);
 
-		jam(buf, " sa_proto=%s", sa_proto == NULL ? "<unset>" : sa_proto->name);
-		if (!(sa_proto == esa_proto)) {
-			jam(buf, "!=ESAPROTO");
-		}
-
 		jam(buf, " encap=");
 		if (encap == NULL) {
 			jam(buf, "<null>");
@@ -149,9 +143,6 @@ bool raw_policy(enum kernel_policy_op op,
 				jam(buf, "%s", rule_proto->name);
 				if (i == 0 && !(esa_proto == rule_proto)) {
 					jam(buf, "!=ESATYPE");
-				}
-				if (i != 0 && !(sa_proto == rule_proto)) {
-					jam(buf, "!=SA_PROTO");
 				}
 				jam(buf, "/%d", rule->reqid);
 			}
@@ -200,7 +191,7 @@ bool raw_policy(enum kernel_policy_op op,
 	bool result = kernel_ops->raw_policy(op,
 					     src_host, src_client,
 					     dst_host, dst_client,
-					     cur_spi, new_spi, sa_proto,
+					     cur_spi, new_spi,
 					     transport_proto,
 					     esatype, encap,
 					     use_lifetime, sa_priority, sa_marks,

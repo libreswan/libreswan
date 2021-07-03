@@ -276,7 +276,6 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t cur_spi UNUSED,
 			       ipsec_spi_t new_spi,
-			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct kernel_encap *encap,
@@ -352,7 +351,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	 * XXX: Hack: don't install an inbound spdb entry when tunnel
 	 * mode?
 	 */
-	if (dir == IPSEC_DIR_INBOUND && sa_proto != &ip_protocol_ipip) {
+	if (dir == IPSEC_DIR_INBOUND && ET != ET_IPIP) {
 		dbg("%s() ignoring inbound non-tunnel %s eroute entry", __func__,
 			sa_proto->name);
 		return true;

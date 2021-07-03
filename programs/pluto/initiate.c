@@ -545,7 +545,6 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 				&null_host, &src, &null_host, &dst,
 				/*from*/htonl(b->negotiation_shunt),
 				/*to*/htonl(b->failure_shunt),
-				&ip_protocol_internal,
 				b->transport_proto->ipproto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
@@ -884,7 +883,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
-			&ip_protocol_internal, shunt_protocol->ipproto,
+			shunt_protocol->ipproto,
 			ET_INT, esp_transport_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),

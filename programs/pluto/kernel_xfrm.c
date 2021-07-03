@@ -511,7 +511,6 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t cur_spi,	/* current SPI */
 			       ipsec_spi_t new_spi,	/* new SPI */
-			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype,
 			       const struct kernel_encap *encap,
@@ -618,36 +617,6 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			 op == KP_DELETE_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
 	dbg("%s() policy=%s/%d dir=%d", __func__, policy_name, policy, dir);
-
-	/*
-	 * Bug #1004 fix.
-	 * There really isn't "client" with XFRM and transport mode
-	 * so eroute must be done to natted, visible ip. If we don't hide
-	 * internal IP, communication doesn't work.
-	 */
-	ip_selector local_client;
-
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == &ip_protocol_esp) {
-		/*
-		 * Variable "that" should be remote, but here it's not.
-		 * We must check "dir" to find out remote address.
-		 */
-		int local_port;
-
-		if (dir == XFRM_POLICY_OUT) {
-			local_port = selector_hport(*dst_client);
-			local_client = selector_from_address(*dst_host);
-			dst_client = &local_client;
-		} else {
-			local_port = selector_hport(*src_client);
-			local_client = selector_from_address(*src_host);
-			src_client = &local_client;
-		}
-		update_selector_hport(&local_client, local_port);
-		selector_buf hb;
-		dbg("%s() using host address %s instead of client subnet",
-		    __func__, str_selector(&local_client, &hb));
-	}
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -2317,14 +2286,10 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-		&ip_protocol_esp : &ip_protocol_internal;
-
 	if (!raw_policy(op,
 			&sr->this.host_addr, &sr->this.client,
 			&sr->that.host_addr, &sr->that.client,
 			htonl(spi), htonl(spi),
-			sa_proto,
 			sr->this.protocol,
 			ET_INT,
 			esp_transport_proto_info,
@@ -2354,7 +2319,6 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  &sr->that.host_addr, &sr->that.client,
 			  &sr->this.host_addr, &sr->this.client,
 			  htonl(spi), htonl(spi),
-			  sa_proto,
 			  sr->this.protocol,
 			  ET_INT,
 			  esp_transport_proto_info,

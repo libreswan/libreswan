@@ -93,7 +93,6 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
 			      const struct kernel_route *route,
-			      const struct ip_protocol *sa_proto,
 			      enum eroute_type esatype,
 			      const struct kernel_encap *encap,
 			      uint32_t sa_priority,
@@ -909,6 +908,12 @@ static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 	 * With pfkey and transport mode with nat-traversal we need to
 	 * change the remote IPsec SA to point to external ip of the
 	 * peer.  Here we substitute real client ip with NATD ip.
+	 *
+	 * Bug #1004 fix.
+	 *
+	 * There really isn't "client" with XFRM and transport mode so
+	 * eroute must be done to natted, visible ip. If we don't hide
+	 * internal IP, communication doesn't work.
 	 */
 	ip_selector remote_client;
 	switch (mode) {
@@ -1247,7 +1252,7 @@ static bool sag_eroute(const struct state *st,
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
 	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
-				 &route, encap.inner_proto, encap.inner_proto->ipproto, &encap,
+				 &route, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
 				 xfrm_if_id, op, why, st->st_logger);
 }
@@ -1480,7 +1485,6 @@ bool delete_bare_shunt(const ip_address *src_address,
 		ok = raw_policy(KP_DELETE_OUTBOUND,
 				&null_host, &src, &null_host, &dst,
 				htonl(cur_shunt_spi), htonl(SPI_PASS),
-				&ip_protocol_internal,
 				transport_proto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
@@ -1560,7 +1564,6 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				/*src*/&src->host_addr, &src->client,
 				/*dst*/&dst->host_addr, &dst->client,
 				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				/*sa_proto*/encap.inner_proto,
 				/*transport_proto*/c->spd.this.protocol,
 				/*esatype*/encap.inner_proto->ipproto,
 				/*encap*/&encap,
@@ -1587,7 +1590,6 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
 					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
 					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-					   /*sa_proto*/encap.inner_proto,
 					   /*transport_proto*/c->spd.this.protocol,
 					   /*esatype*/encap.inner_proto->ipproto,
 					   /*encap*/&encap,
@@ -1624,7 +1626,6 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				   /*src*/&src->host_addr, &src->client,
 				   /*dst*/&dst->host_addr, &dst->client,
 				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				   /*sa_proto*/encap.inner_proto,
 				   /*transport_proto*/c->spd.this.protocol,
 				   /*esatype*/encap.inner_proto->ipproto,
 				   /*encap*/&encap,
@@ -1648,7 +1649,6 @@ bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
 		       const struct kernel_route *route,
-		       const struct ip_protocol *sa_proto,
 		       enum eroute_type esatype,
 		       const struct kernel_encap *encap,
 		       uint32_t sa_priority,
@@ -1665,7 +1665,6 @@ bool eroute_connection(const struct spd_route *sr,
 				    &route->dst.host_addr, &route->dst.client,
 				    cur_spi,
 				    new_spi,
-				    sa_proto,
 				    sr->this.protocol,
 				    esatype,
 				    encap,
@@ -1687,7 +1686,6 @@ bool eroute_connection(const struct spd_route *sr,
 			  &route->dst.host_addr, &route->dst.client,
 			  cur_spi,
 			  new_spi,
-			  sa_proto,
 			  sr->this.protocol,
 			  esatype,
 			  encap,
@@ -1787,8 +1785,7 @@ bool assign_holdpass(const struct connection *c,
 			if (eroute_connection(sr,
 					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(negotiation_shunt),
-					      &route,
-					      &ip_protocol_internal, ET_INT,
+					      &route, ET_INT,
 					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
@@ -2347,7 +2344,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				&route.dst.host_addr,	/* dst_host */
 				&route.dst.client,	/* dst_client */
 				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
-				encap.inner_proto,	/* SA proto */
 				c->spd.this.protocol,	/* transport_proto */
 				encap.inner_proto->ipproto,	/* esatype */
 				&encap,			/* " */
@@ -2485,8 +2481,6 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
 			htonl(SPI_IGNORE), htonl(SPI_IGNORE),
-			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-			&ip_protocol_esp : NULL,
 			c->spd.this.protocol,
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 			ET_ESP : ET_UNSPEC,
@@ -3023,7 +3017,6 @@ bool route_and_eroute(struct connection *c,
 						&bs->peer_client,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
-						&ip_protocol_internal,               /* proto */
 						sr->this.protocol,    /* transport_proto */
 						ET_INT,
 						esp_transport_proto_info,
@@ -3567,8 +3560,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
 					     &null_host, &src, &null_host, &dst,
 					     htonl(cur_shunt_spi), htonl(new_shunt_spi),
-					     &ip_protocol_internal, transport_proto,
-					     ET_INT,
+					     transport_proto, ET_INT,
 					     esp_transport_proto_info,
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */

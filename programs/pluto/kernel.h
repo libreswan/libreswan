@@ -307,7 +307,6 @@ struct kernel_ops {
 			   const ip_selector *that_client,
 			   ipsec_spi_t cur_spi,
 			   ipsec_spi_t new_spi,
-			   const struct ip_protocol *sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct kernel_encap *encap,
