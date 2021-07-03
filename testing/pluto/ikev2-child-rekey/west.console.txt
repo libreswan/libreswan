@@ -45,6 +45,7 @@ west #
  # rekey CHILD SA
 west #
  ipsec whack --rekey-ipsec --name west
+002 "west" #3: initiating rekey to replace Child SA #2
 1v2 "west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -79,6 +80,7 @@ west #
  # rekey CHILD SA
 west #
  ipsec whack --rekey-ipsec --name west
+002 "west" #4: initiating rekey to replace Child SA #3
 1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "west" #4: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
