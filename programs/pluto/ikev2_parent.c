@@ -588,7 +588,7 @@ void v2_event_sa_rekey(struct state *st)
 		return;
 	}
 
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
@@ -605,19 +605,23 @@ void v2_event_sa_rekey(struct state *st)
 		return;
 	}
 
-	if (monobefore(st->st_replace_by, now)) {
-		dbg("#%lu has no time to re-key, will replace",
-		    st->st_serialno);
+	deltatime_t replace_in = monotimediff(st->st_replace_by, now);
+	if (deltatime_cmp(replace_in, <, deltatime_zero)) {
+		dbg("%s SA #%lu has no time to re-key, will replace", satype, st->st_serialno);
 		event_force(EVENT_SA_REPLACE, st);
 	}
 
-	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
+	struct child_sa *larval_sa;
 	if (IS_IKE_SA(st)) {
-		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
 	} else {
-		submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
 	}
+
+	llog_sa(RC_LOG, larval_sa,
+		"initiating rekey to replace %s SA #%lu",
+		satype, st->st_serialno);
+
 
 	/*
 	 * Should the rekey go into the weeds this replace will kick
@@ -628,9 +632,9 @@ void v2_event_sa_rekey(struct state *st)
 	 * For a CHILD SA perhaps - there is a mystery around what
 	 * happens to the new child if the old one disappears.
 	 */
-	dbg("scheduling drop-dead replace event for #%lu", st->st_serialno);
+	dbg("scheduling drop-dead replace event for %s SA #%lu", satype, st->st_serialno);
 	event_delete(EVENT_v2_LIVENESS, st);
-	event_schedule(EVENT_SA_REPLACE, monotimediff(st->st_replace_by, now), st);
+	event_schedule(EVENT_SA_REPLACE, replace_in, st);
 }
 
 void v2_event_sa_replace(struct state *st)

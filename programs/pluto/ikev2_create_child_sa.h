@@ -23,7 +23,7 @@ struct ike_sa;
 struct child_sa;
 struct connection;
 
-extern void submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike);
+extern struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike);
 extern ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_rekey_ike_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
@@ -37,7 +37,8 @@ extern ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_new_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_new_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_new_child_response;
 
-extern void submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike, struct child_sa *child);
+extern struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
+							      struct child_sa *child);
 extern ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_response;

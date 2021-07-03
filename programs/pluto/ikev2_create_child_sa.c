@@ -528,8 +528,8 @@ static stf_status emit_v2_rekey_ike_payloads(struct child_sa *child,
  * Process a CREATE_CHILD_SA rekey request.
  */
 
-void submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
-					   struct child_sa *child_being_replaced)
+struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
+						       struct child_sa *child_being_replaced)
 {
 	struct connection *c = child_being_replaced->sa.st_connection;
 	struct logger *logger = child_being_replaced->sa.st_logger;
@@ -595,6 +595,7 @@ void submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "Child Rekey Initiator KE and nonce ni");
 	/* return STF_SUSPEND */
+	return larval_child;
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -1061,7 +1062,7 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct stat
  */
 
 
-void submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
+struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	ike->sa.st_viable_parent = false;
@@ -1091,6 +1092,7 @@ void submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "IKE REKEY Initiator KE and nonce ni");
 	/* "return STF_SUSPEND" */
+	return larval_ike;
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
