@@ -59,7 +59,7 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 	monotime_buf mb;
 	jam(buf, " ike.%s.last_contact=%s", what,
 	    str_monotime(old->last_contact, &mb));
-	if (new != NULL && !monotime_eq(old->last_contact, new->last_contact)) {
+	if (new != NULL && monotime_cmp(old->last_contact, !=, new->last_contact)) {
 		jam(buf, "->%s", str_monotime(new->last_contact, &mb));
 	}
 }

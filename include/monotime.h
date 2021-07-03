@@ -49,6 +49,7 @@
 typedef struct { struct timeval mt; } monotime_t;
 
 monotime_t monotime(intmax_t seconds);
+monotime_t monotime_ms(intmax_t milliseconds);
 
 #define MONOTIME_EPOCH { { 0, 0 } }
 
@@ -59,7 +60,11 @@ bool is_monotime_epoch(monotime_t t);
 monotime_t mononow(void);
 monotime_t monotime_add(monotime_t t, deltatime_t d);
 monotime_t monotime_sub(monotime_t t, deltatime_t d);
-bool monotime_eq(monotime_t a, monotime_t b);
+
+/* sign(a - b); see timercmp() for hacks origin */
+int monotime_sub_sign(monotime_t a, monotime_t b);
+#define monotime_cmp(A, OP, B) (monotime_sub_sign(A, B) OP 0)
+
 bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
 intmax_t monosecs(monotime_t m);

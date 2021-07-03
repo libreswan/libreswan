@@ -50,7 +50,8 @@ typedef struct { struct timeval rt; } realtime_t;
 
 extern const realtime_t realtime_epoch;
 
-realtime_t realtime(time_t time);
+realtime_t realtime(time_t seconds);
+realtime_t realtime_ms(intmax_t milliseconds);
 
 /*
  * Formatting.
@@ -69,7 +70,11 @@ size_t jam_realtime(struct jambuf *buf, realtime_t r, bool utc);
 
 realtime_t realtimesum(realtime_t t, deltatime_t d);
 bool is_realtime_epoch(realtime_t t);
-bool realbefore(realtime_t a, realtime_t b);
+
+/* sign(a - b); see timercmp() for hacks origin */
+int realtime_sub_sign(realtime_t a, realtime_t b);
+#define realtime_cmp(A, OP, B) (realtime_sub_sign(A, B) OP 0)
+
 deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);
 

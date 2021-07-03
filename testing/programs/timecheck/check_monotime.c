@@ -57,37 +57,6 @@ static void check_mmd_op(const struct test_mmd_op *tests,
 
 /* bool(monotime,deltatime) - bmm */
 
-struct test_bmm_op {
-	intmax_t l, r;
-	bool o;
-};
-
-#define CHECK_BMM_OP(OP)						\
-	check_bmm_op(test_monotime_##OP,				\
-		     elemsof(test_monotime_##OP),			\
-		     monotime_##OP, #OP)
-
-static void check_bmm_op(const struct test_bmm_op *tests,
-			 size_t nr_tests,
-			 bool (*op)(monotime_t, monotime_t),
-			 const char *op_name)
-{
-	for (unsigned i = 0; i < nr_tests; i++) {
-		const struct test_bmm_op *t = &tests[i];
-		monotime_t l = monotime(t->l);
-		monotime_t r = monotime(t->r);
-		bool o = op(l, r);
-		FILE *out = (o == t->o) ? stdout : stderr;
-		fprintf(out, "monotime_%s(%jd, %jd)) == %s",
-			op_name, t->l, t->r, bool_str(t->o));
-		if (out == stderr) {
-			fprintf(out, "; FAIL: returned %s", bool_str(o));
-			fails++;
-		}
-		fprintf(out, "\n");
-	}
-}
-
 void check_monotime(void)
 {
 	char what[1000];
@@ -117,12 +86,7 @@ void check_monotime(void)
 		}
 	}
 
-	static const struct test_bmm_op test_monotime_eq[] = {
-		{ 1, 1, true, },
-		{ 2, 1, false, },
-		{ 1, 2, false, },
-	};
-	CHECK_BMM_OP(eq);
+	CHECK_TIME_CMP(mono);
 
 	static const struct test_mmd_op test_monotime_add[] = {
 		{  1000,  100, 1100 },
