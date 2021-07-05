@@ -2894,11 +2894,15 @@ void complete_v2_state_transition(struct state *st,
 		case NO_MESSAGE:
 			break;
 		}
-		delete_ike_family(ike, DONT_SEND_DELETE);
+
+		/* if this was a child fail, don't destroy the IKE SA */
+		if (IS_IKE_SA(st)) {
+			delete_ike_family(ike, DONT_SEND_DELETE);
+			ike = NULL;
+		}
 
 		/* kill all st pointers */
 		st = NULL;
-		ike = NULL;
 		if (md != NULL)
 			md->v1_st = NULL;
 		break;
@@ -2921,7 +2925,7 @@ void complete_v2_state_transition(struct state *st,
 		case NO_MESSAGE:
 			break;
 		}
-		release_pending_whacks(st, "fatal error");
+		release_pending_whacks(st, "fatal error"); /* fatal != STF_FATAL  :) */
 		delete_state(st);
 
 		/* kill all st pointers */
