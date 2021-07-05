@@ -872,7 +872,7 @@ void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 
 static void delete_state_tail(struct state *st);
 
-void delete_other_state(struct state *st, struct state *other_state)
+static void delete_other_state(struct state *st, struct state *other_state)
 {
 	delete_state_log(other_state, st);
 	delete_state_tail(other_state);
