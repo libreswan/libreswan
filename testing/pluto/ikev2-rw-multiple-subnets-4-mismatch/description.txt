@@ -1,0 +1,4 @@
+IKEv2 RW with subnets. on east road's id is hardcoded.
+
+One endpoint has more subnets defined than the other. The
+set of mutually agreed subnets should still establish
