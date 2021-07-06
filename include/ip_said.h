@@ -18,7 +18,7 @@
 #ifndef IP_SAID_H
 #define IP_SAID_H
 
-#include "err.h"
+#include "diag.h"
 #include "ip_endpoint.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
 #include "ip_protocol.h"
@@ -51,7 +51,6 @@ extern const struct enum_names policy_spi_names;
  */
 
 typedef struct {
-#if 0
 	bool is_set;
 	/*
 	 * Index into the struct ip_info array; must be stream
@@ -62,7 +61,7 @@ typedef struct {
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).
 	 */
-	struct ip_bytes bytes;
+	struct ip_bytes dst;
 	/*
 	 * Protocol 0 is interpreted as a wild card so isn't allowed.
 	 */
@@ -77,38 +76,16 @@ typedef struct {
 	 * expects to see on its incoming packets?
 	 */
 	ipsec_spi_t spi;
-#else
+#if 0
 	/*
-	 * destination host; no port
-	 *
-	 * Per rfc2367, 2.3.3 Address Extension: The zeroing of ports
-	 * (e.g. sin_port and sin6_port) MUST be done for all messages
-	 * except for originating SADB_ACQUIRE messages, which SHOULD
-	 * fill them in with ports from the relevant TCP or UDP
-	 * session which generates the ACQUIRE message.
+	 * The "port" which might actually be some sort of ICMP
+	 * encoding.  Determined by ipproto.
 	 */
-	ip_address dst;
-
-	/*
-	 * 32-bit SPI, assigned by the destination host; or one of the
-	 * below magic values above (in network order).
-	 *
-	 * This is in network order (but is manipulated like an int.
-	 *
-	 * XXX: Does this mean it is the SPI that the remote end
-	 * expects to see on its incoming packets?
-	 */
-	ipsec_spi_t spi;
-
-	/*
-	 * protocol
-	 *
-	 * Don't confuse this with the IP version of the above
-	 * address.
-	 */
-	const struct ip_protocol *proto;
+	int hport;
 #endif
 } ip_said;
+
+extern const ip_said unset_said;
 
 /*
  * Constructors
@@ -120,7 +97,7 @@ typedef struct {
 ip_said said_from_raw(where_t where, enum ip_version version,
 		      const struct ip_bytes bytes,
 		      const struct ip_protocol *protocol,
-		      ip_port port,
+		      /*ip_port port,*/
 		      ipsec_spi_t spi);
 
 ip_said said_from_endpoint_spi(const ip_endpoint endpoint,
@@ -138,20 +115,22 @@ typedef struct {
 	char buf[5 + ULTOT_BUF + 1 + sizeof(address_buf)];
 } said_buf;
 
-void jam_said(struct jambuf *buf, const ip_said *said);
+size_t jam_said(struct jambuf *buf, const ip_said *said);
 const char *str_said(const ip_said *said, said_buf *buf);
 
 /*
  * Details.
  */
 
+bool said_is_unset(const ip_said *said);
 const struct ip_info *said_type(const ip_said *said);
-ip_address said_address(const ip_said *said);
+ip_address said_address(const ip_said said);
+const struct ip_protocol *said_protocol(const ip_said said);
 
 /*
- * old stype
+ * Parsing
  */
 
-extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
+extern diag_t ttosaid(shunk_t src, ip_said *dst);
 
 #endif

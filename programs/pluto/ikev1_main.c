@@ -2087,10 +2087,11 @@ void send_v1_delete(struct state *st)
 		while (ns != said) {
 			pb_stream del_pbs;
 			ns--;
+			const struct ip_protocol *proto = said_protocol(*ns);
 			struct isakmp_delete isad = {
 				.isad_doi = ISAKMP_DOI_IPSEC,
 				.isad_spisize = sizeof(ipsec_spi_t),
-				.isad_protoid = ns->proto->ikev1_protocol_id,
+				.isad_protoid = proto->ikev1_protocol_id,
 				.isad_nospi = 1,
 			};
 

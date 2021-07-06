@@ -48,7 +48,9 @@ OBJS += constants.o \
 	sameaddr.o \
 	secrets.o \
 	subnettypeof.o ttodata.o \
-	ttosa.o ttosubnet.o ttoul.o \
+	ttosaid.o \
+	ttosubnet.o \
+	ttoul.o \
 	secitem_chunk.o \
 	base64_pubkey.o \
 	lswnss.o \

@@ -3010,10 +3010,11 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 
+				ip_address dst = said_address(bs->said);
 				if (!raw_policy(KP_REPLACE_OUTBOUND,
-						&bs->said.dst,        /* should be useless */
+						&dst,        /* should be useless */
 						&bs->our_client,
-						&bs->said.dst,        /* should be useless */
+						&dst,        /* should be useless */
 						&bs->peer_client,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */

@@ -92,12 +92,14 @@ static void check_str_said(void)
 
 		/* convert it *to* internal format */
 		ip_said sa;
-		err_t err = ttosa(t->in, strlen(t->in), &sa);
-		if (err != NULL) {
+		diag_t d = ttosaid(shunk1(t->in), &sa);
+		if (d != NULL) {
 			if (t->out != NULL) {
-				FAIL("ttosa(%s) unexpectedly failed: %s", t->in, err);
+				FAIL("ttosaid(%s) unexpectedly failed: %s", t->in, str_diag(d));
+				pfree_diag(&d);
 			} else {
 				/* all is good */
+				pfree_diag(&d);
 				continue;
 			}
 		} else if (t->out == NULL) {
@@ -105,7 +107,7 @@ static void check_str_said(void)
 		}
 
 		if (t->fudge) {
-			sa.proto = NULL;
+			sa.ipproto = 0;
 		}
 
 		/* now convert it back */
