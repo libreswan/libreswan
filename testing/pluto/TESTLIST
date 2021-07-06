@@ -866,7 +866,7 @@ kvmplutotest	ikev1-rw-multiple-subnets		wip
 kvmplutotest	ikev2-rw-multiple-subnets		wip
 kvmplutotest	ikev2-rw-multiple-subnets-2		wip
 kvmplutotest	ikev2-rw-multiple-subnets-3		wip
-kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		wip
+kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
 kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst		wip
 
