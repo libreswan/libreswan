@@ -16,6 +16,7 @@
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1539,3 +1540,30 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 
 	return STF_OK;
 }
+
+stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
+                                                struct child_sa *child,
+                                                struct msg_digest *md UNUSED)
+{
+	passert(ike != NULL);
+	passert(child != NULL);
+        pstat_sa_failed(&child->sa, REASON_TRAFFIC_SELECTORS_FAILED);
+
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		v2_notification_t n = ntfy->payload.v2n.isan_type;
+		/* same scope */
+		esb_buf esb;
+		const char *name = enum_show_short(&ikev2_notify_names, n, &esb);
+
+		if (n < v2N_ERROR_PSTATS_ROOF) {
+			pstat(ikev2_recv_notifies_e, n);
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				"CREATE_CHILD_SA failed with error notification %s",
+				name);
+			// re-add child to pending queue with exponential back-off
+			break;
+		}
+	}
+	return STF_FAIL;
+}
+

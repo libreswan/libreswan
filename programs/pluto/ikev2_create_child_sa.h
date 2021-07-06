@@ -42,5 +42,6 @@ extern struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike
 extern ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_child_response;
+extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_failure_response;
 
 #endif

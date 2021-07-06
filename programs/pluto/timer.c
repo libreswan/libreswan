@@ -317,6 +317,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		case IKEv2:
 			if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
+				dbg("IKEv2 SA expired, delete whole family");
 				delete_ike_family(pexpect_ike_sa(st),
 						  PROBABLY_SEND_DELETE);
 				/* note: no md->st to clear */

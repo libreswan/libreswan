@@ -1481,16 +1481,16 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * a new exchange.
 		 */
 		return STF_FATAL;
-	} else if (n != v2N_NOTHING_WRONG) {
-		/* already logged */
+	}
+
+	if (n != v2N_NOTHING_WRONG) {
 		/*
-		 * XXX: should be sending the child failure
-		 * notification using an additional exchange and then
-		 * leaving the IKE SA up.
-		 *
-		 * Instead just wipe out the IKE family :-(
+		 * It is not fatal, so we are keeping the IKE SA, but it
+		 * seems the Child SA had some issue. So we return STF_OK so
+		 * that the IKE SA is not torn down, and the failed child
+		 * state might have to ensure it is doing something to retry.
 		 */
-		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
+		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but Child SA error occured");
 	}
 
 	return STF_OK;

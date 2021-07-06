@@ -4,6 +4,7 @@
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2019 Andrew Cagney
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -144,6 +145,7 @@ static const char *pstats_sa_reasons[DELETE_REASON_ROOF] = {
 	[REASON_TOO_MANY_RETRANSMITS] = "too-many-retransmits",
 	[REASON_SUPERSEDED_BY_NEW_SA] = "superseeded-by-new-sa",
 	[REASON_AUTH_FAILED] = "auth-failed",
+	[REASON_TRAFFIC_SELECTORS_FAILED] = "ts-unacceptable",
 	[REASON_CRYPTO_FAILED] = "crypto-failed",
 };
 

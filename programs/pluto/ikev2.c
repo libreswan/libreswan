@@ -15,6 +15,7 @@
  * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -528,6 +529,16 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Process CREATE_CHILD_SA failure response",
+	  .state      = STATE_V2_NEW_CHILD_I1,
+	  .next_state = STATE_V2_NEW_CHILD_I1,
+	  .message_payloads = { .required = P(SK), },
+	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
 
 	/* Informational Exchange */
 
@@ -2912,7 +2923,7 @@ void complete_v2_state_transition(struct state *st,
 			  transition->story);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
-			dbg("Message ID: forcing a response received update making space for delete");
+			v2_msgid_schedule_next_initiator(ike);
 			v2_msgid_update_recv(ike, st, md);
 			break;
 		case MESSAGE_REQUEST:

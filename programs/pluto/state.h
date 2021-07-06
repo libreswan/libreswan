@@ -17,6 +17,7 @@
  * Copyright (C) 2015-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -247,6 +248,7 @@ enum delete_reason {
 	REASON_SUPERSEDED_BY_NEW_SA,
 	REASON_CRYPTO_FAILED,
 	REASON_AUTH_FAILED,
+	REASON_TRAFFIC_SELECTORS_FAILED,
 	REASON_COMPLETED,
 #define DELETE_REASON_ROOF (REASON_COMPLETED + 1)
 };

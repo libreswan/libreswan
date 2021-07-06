@@ -19,6 +19,7 @@
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1063,7 +1064,7 @@ void delete_state_tail(struct state *st)
 		 * ikev2_delete_out doesn't really accomplish this.
 		 */
 		send_delete(st);
-	} else if (IS_CHILD_SA(st)) {
+	} else if (IS_CHILD_SA_ESTABLISHED(st) || IS_IPSEC_SA_ESTABLISHED(st)) {
 		change_state(st, STATE_CHILDSA_DEL);
 	}
 
@@ -1178,7 +1179,8 @@ void delete_state_tail(struct state *st)
 	 *   second state using the connection
 	 */
 	connection_delete_unused_instance(&st->st_connection, st,
-					  st->st_logger->global_whackfd);
+				  st->st_logger->global_whackfd);
+
 	pexpect(st->st_connection == NULL);
 	st->st_interface = NULL;
 
@@ -2770,6 +2772,7 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
 	 */
+	dbg("delete_ike_family() called");
 	state_by_ike_spis(ike->sa.st_ike_version,
 			  &ike->sa.st_serialno,
 			  NULL /*ignore v1 msgid */,
