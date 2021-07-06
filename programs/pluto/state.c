@@ -715,26 +715,50 @@ static bool should_send_delete(const struct state *st)
 	 * PW: But this is valid for IKEv1, where it would need to start a
 	 * new IKE SA to send the delete notification ???
 	 */
-	if (!IS_IPSEC_SA_ESTABLISHED(st) &&
-	    !IS_IKE_SA_ESTABLISHED(st)) {
-		dbg("%s: no, not established", __func__);
-		return false;
-	}
-
-	if ((st->st_ike_version == IKEv2) &&
-	    IS_CHILD_SA(st) &&
-	    state_with_serialno(st->st_clonedfrom) == NULL) {
-		/*
-		 * ??? in v2, there must be a parent
-		 *
-		 * XXX: except when delete_state(ike), instead of
-		 * delete_ike_family(ike), is called ...
-		 *
-		 * Without an IKE SA sending the notify isn't
-		 * possible.
-		 */
-		dbg("%s: no, lost parent; suspect IKE SA was deleted without deleting children", __func__);
-		return false;
+	switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		if (!IS_ISAKMP_SA_ESTABLISHED(st) &&
+		    !IS_IPSEC_SA_ESTABLISHED(st)) {
+			dbg("%s: no, IKEv1 SA in state %s is not established",
+			    __func__, st->st_state->name);
+			return false;
+		}
+		break;
+#endif
+	case IKEv2:
+		if (!IS_IKE_SA_ESTABLISHED(st) &&
+		    !IS_CHILD_SA_ESTABLISHED(st)) {
+			dbg("%s: no, IKEv2 SA in state %s is not established",
+			    __func__, st->st_state->name);
+			return false;
+		}
+		if (IS_CHILD_SA(st) && state_with_serialno(st->st_clonedfrom) == NULL) {
+			/*
+			 * Without an IKE SA sending the notify isn't
+			 * possible.
+			 *
+			 * ??? in v2, there must be a parent
+			 *
+			 * XXX:
+			 *
+			 * Except when delete_state(ike), instead of
+			 * delete_ike_family(ike), is called ...
+			 *
+			 * There's also the idea of having Child SAs
+			 * linger while the IKE SA is trying to
+			 * re-establish.  Or should that code only use
+			 * information in the connection?
+			 *
+			 * Anyway, play it safe.
+			 */
+			dbg("%s: no, IKEv2 SA in state %s has no parent; suspect IKE SA was deleted without deleting children",
+			    __func__, st->st_state->name);
+			return false;
+		}
+		break;
+	default:
+		bad_case(st->st_ike_version);
 	}
 
 	dbg("%s: yes", __func__);
