@@ -266,25 +266,23 @@ void ipsecdoi_initiate(struct connection *c,
 	if (sec_label.len > 0)
 		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
 
-	/*
-	 * If there's already an IKEv1 ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
-	 * that is still being negotiated, but only if we are the Initiator
-	 * (thus we can be sure that the IDs are not going to change;
-	 * other issues around intent might matter).
-	 * Note: there is no way to initiate with a Road Warrior.
-	 */
-	struct state *st = find_phase1_state(c,
-#ifdef USE_IKEv1
-					     ISAKMP_SA_ESTABLISHED_STATES |
-					     PHASE1_INITIATOR_STATES |
-#endif
-					     IKEV2_ISAKMP_INITIATOR_STATES);
-
 	switch (c->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
 	{
+		/*
+		 * If there's already an IKEv1 ISAKMP SA established,
+		 * use that and go directly to Quick Mode.  We are
+		 * even willing to use one that is still being
+		 * negotiated, but only if we are the Initiator (thus
+		 * we can be sure that the IDs are not going to
+		 * change; other issues around intent might matter).
+		 * Note: there is no way to initiate with a Road
+		 * Warrior.
+		 */
+		struct state *st = find_phase1_state(c,
+						     ISAKMP_SA_ESTABLISHED_STATES |
+						     PHASE1_INITIATOR_STATES);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
 			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
@@ -310,6 +308,19 @@ void ipsecdoi_initiate(struct connection *c,
 	}
 #endif
 	case IKEv2:
+	{
+		/*
+		 * If there's already an IKEv2 IKE SA established, use
+		 * that and go directly to Quick Mode.  We are even
+		 * willing to use one that is still being negotiated,
+		 * but only if we are the Initiator (thus we can be
+		 * sure that the IDs are not going to change; other
+		 * issues around intent might matter).  Note: there is
+		 * no way to initiate with a Road Warrior.
+		 */
+		struct state *st = find_phase1_state(c,
+						     LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
+						     IKEV2_ISAKMP_INITIATOR_STATES);
 		if (st == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
 						sec_label, background, logger);
@@ -327,6 +338,7 @@ void ipsecdoi_initiate(struct connection *c,
 							    logger->global_whackfd);
 		}
 		break;
+	}
 	default:
 		bad_case(c->ike_version);
 	}
