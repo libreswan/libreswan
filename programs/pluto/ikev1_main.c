@@ -1868,7 +1868,7 @@ static void send_notification(struct logger *logger,
 
 		save_iv(encst, old_iv);
 
-		if (!IS_ISAKMP_SA_ESTABLISHED(encst->st_state)) {
+		if (!IS_ISAKMP_SA_ESTABLISHED(encst)) {
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
@@ -1896,7 +1896,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
-			(!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state))) {
+			(!IS_ISAKMP_SA_ESTABLISHED(p1st))) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "no Phase1 state for Quick mode notification");
 			return;
@@ -2030,7 +2030,7 @@ void send_v1_delete(struct state *st)
 		}
 
 		passert(ns != said); /* there must be some SAs to delete */
-	} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
 		/* or ISAKMP SA's... */
 		p1st = st;
 		isakmp_sa = TRUE;
@@ -2176,7 +2176,7 @@ bool accept_delete(struct msg_digest *md,
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
-	if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: ISAKMP SA not established");

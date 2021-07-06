@@ -1338,7 +1338,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* on first pass, ignore established ISAKMP SA's */
 			if (pass == 0 &&
-			    IS_ISAKMP_SA_ESTABLISHED(this->st_state))
+			    IS_ISAKMP_SA_ESTABLISHED(this))
 				continue;
 
 			/* call comparison function */

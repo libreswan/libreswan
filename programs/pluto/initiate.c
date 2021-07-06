@@ -290,7 +290,7 @@ void ipsecdoi_initiate(struct connection *c,
 			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
 		} else if (st == NULL) {
 			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
-		} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we

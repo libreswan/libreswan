@@ -265,8 +265,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* If there is no IKE state, there can be no DPD */
-	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));	/* ??? passert? */
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
+	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st));	/* ??? passert? */
+	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
 		dbg("DPD: no phase1 state, so no DPD");
 		return;
 	}
@@ -433,7 +433,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	monotime_t nw = mononow();
 	uint32_t seqno;
 
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
+	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: received R_U_THERE for unestablished ISKAMP SA");
 		return STF_IGNORE;
@@ -536,7 +536,7 @@ stf_status dpd_inR(struct state *p1st,
 {
 	uint32_t seqno;
 
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
+	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
 		return STF_FAIL;

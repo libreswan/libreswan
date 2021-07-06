@@ -980,7 +980,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * We take the peer's new IP address from the last 4 octets.
 			 * Is anything else possible?  Expected?  Documented?
 			 */
-			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st)) {
 				llog(RC_LOG, md->md_logger,
 				     "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
@@ -1482,7 +1482,7 @@ void process_v1_packet(struct msg_digest *md)
 #endif
 
 
-			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
@@ -1560,7 +1560,7 @@ void process_v1_packet(struct msg_digest *md)
 			    this->modecfg_server ? " modecfgserver" : "",
 			    this->modecfg_client ? " modecfgclient" : "");
 
-			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
 				    st->st_state->name);
 				/* XXX Could send notification back */
@@ -2804,7 +2804,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				pstat_sa_established(st);
 				log_details = lswlog_child_sa_established;
 				w = RC_SUCCESS; /* log our success */
-			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
 				log_details = lswlog_ike_sa_established;
 				w = RC_SUCCESS; /* log our success */
@@ -2830,7 +2830,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * SA.
 		 * Why do we need a DPD event on an IKE SA???
 		 */
-		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		if (IS_ISAKMP_SA_ESTABLISHED(st)) {
 			if (dpd_init(st) != STF_OK) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "DPD initialization failed - continuing without DPD");
@@ -2840,7 +2840,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* Special case for XAUTH server */
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
-			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			    IS_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("XAUTH: Sending XAUTH Login/Password Request");
 				event_schedule(EVENT_v1_SEND_XAUTH,
 					       deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS),
@@ -2874,7 +2874,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		     "modecfg-client" : "not-client"));
 
 		if (st->st_connection->spd.this.modecfg_client &&
-		    IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
+		    IS_ISAKMP_SA_ESTABLISHED(st) &&
 		    (st->quirks.modecfg_pull_mode ||
 		     st->st_connection->policy & POLICY_MODECFG_PULL) &&
 		    !st->hidden_variables.st_modecfg_started) {
@@ -2887,7 +2887,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* Should we set the peer's IP address regardless? */
 		if (st->st_connection->spd.this.modecfg_server &&
-		    IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
+		    IS_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
 			change_state(st, STATE_MODE_CFG_R1);
@@ -2917,7 +2917,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* wait for modecfg_set */
 		if (st->st_connection->spd.this.modecfg_client &&
-		    IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
+		    IS_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
 			dbg("waiting for modecfg set from server");
 			break;
@@ -2944,7 +2944,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			unpend(pexpect_ike_sa(st), NULL);
 		}
 
-		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
+		if (IS_ISAKMP_SA_ESTABLISHED(st) ||
 		    IS_IPSEC_SA_ESTABLISHED(st))
 			release_any_whack(st, HERE, "IKEv1 transitions finished");
 

@@ -54,7 +54,7 @@ static bool mobike_check_established(struct state *st)
 	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
 		    st->st_ike_seen_v2n_mobike_supported &&
 		    st->st_ike_sent_v2n_mobike_supported &&
-		    IS_ISAKMP_SA_ESTABLISHED(st->st_state));
+		    IS_IKE_SA_ESTABLISHED(st));
 
 	return ret;
 }

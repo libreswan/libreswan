@@ -677,7 +677,7 @@ extern struct keywords sa_role_names;
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
 #endif
 
-#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->st_state->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
 				LELEM(STATE_V2_NEW_CHILD_I0) |		\
@@ -701,7 +701,7 @@ extern struct keywords sa_role_names;
 
 #ifdef USE_IKEv1
 #define IS_IKE_SA_ESTABLISHED(ST) \
-	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
+	( IS_ISAKMP_SA_ESTABLISHED((ST)) ||	\
 		(IS_PARENT_SA_ESTABLISHED(ST) && \
 		 ((ST)->st_clonedfrom == SOS_NOBODY)))
 #else
