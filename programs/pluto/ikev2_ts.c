@@ -10,6 +10,7 @@
  * Copyright (C) 2014-2015, 2018 Andrew cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1226,15 +1227,17 @@ bool v2_process_ts_request(struct child_sa *child,
 			 */
 			int wildcards;	/* value ignored */
 			int pathlen;	/* value ignored */
-			if (!(same_id(&c->spd.this.id,
-				      &d->spd.this.id) &&
-			      match_id(&c->spd.that.id,
-				       &d->spd.that.id, &wildcards) &&
-			      trusted_ca_nss(c->spd.that.ca,
-					 d->spd.that.ca, &pathlen))) {
-				dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
-				    d->name, c->name);
-				continue;
+
+			/* conns created as aliases from the same source have identical ID/CA */
+			if (!(c->connalias != NULL && streq(c->connalias, d->connalias))) {
+				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
+					match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+					trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+				{
+					dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
+						d->name, c->name);
+					continue;
+				}
 			}
 
 			const struct spd_route *sr;
