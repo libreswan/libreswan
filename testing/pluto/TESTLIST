@@ -868,7 +868,7 @@ kvmplutotest	ikev2-rw-multiple-subnets-2		wip
 kvmplutotest	ikev2-rw-multiple-subnets-3		wip
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
-kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst		wip
+kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good
