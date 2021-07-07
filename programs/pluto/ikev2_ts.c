@@ -891,85 +891,76 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 /*
- * Danger! score_ends_seclabel() returns three types of value:
+ * Return true for sec_label expected and good XOR not expected and
+ * not present.
  *
- * NULL: no sec_label was found and none was expected
- * &null_shunk: someting is wrong; skip
- * chunk: something was found
- *
- * Auxilliary function ts_has() returns similar results but NULL is excluded.
+ * Return false when required sec_label is missing or bad; or
+ * sec_label encountered when it wasn't expected.
  */
 
-#ifdef HAVE_LABELED_IPSEC
-static const shunk_t *ts_has_seclabel(chunk_t sec_label,
-			const struct traffic_selectors *ts,
-			const char *what,
-			struct logger *logger)
+static bool check_tss_sec_label(const struct traffic_selectors *tss,
+				chunk_t connection_sec_label,
+				shunk_t *selected_sec_label,
+				struct logger *logger)
 {
-	if (ts->contains_sec_label) {
-		for (unsigned i = 0; i < ts->nr; i++) {
-			const struct traffic_selector *s = &ts->ts[i];
-			if (s->ts_type != IKEv2_TS_SECLABEL) {
-				continue;
-			}
+	passert(tss->contains_sec_label);
 
-			passert(vet_seclabel(s->sec_label) == NULL);
-
-			if (!sec_label_within_range(s->sec_label, sec_label, logger)) {
-				dbg("ikev2ts: received %s label not within range of our security label", what);
-				DBG_dump_hunk("wanted", sec_label);
-				DBG_dump_hunk("received", s->sec_label);
-				continue;
-			}
-
-			dbg("ikev2ts: received %s label within range of our security label", what);
-
-			/* XXX we return the first match.  Should we return the best? */
-			return &s->sec_label;	/* first match */
+	*selected_sec_label = null_shunk;
+	for (unsigned i = 0; i < tss->nr; i++) {
+		const struct traffic_selector *ts = &tss->ts[i];
+		if (ts->ts_type != IKEv2_TS_SECLABEL) {
+			continue;
 		}
+
+		passert(vet_seclabel(ts->sec_label) == NULL);
+
+		if (!sec_label_within_range(ts->sec_label, connection_sec_label, logger)) {
+			dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
+			    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
+			continue;
+		}
+
+		dbg("ikev2ts: received %s label within range of our security label",
+		    tss->name);
+
+		/* XXX we return the first match.  Should we return the best? */
+		*selected_sec_label = ts->sec_label;	/* first match */
+		return true;
 	}
-	return &null_shunk;	/* unfound: error */
+
+	return false;
 }
-#endif
 
-static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
-					  const struct connection *d,
-					  const struct traffic_selector_payloads *tsp,
-					  struct logger *logger
-#ifndef HAVE_LABELED_IPSEC
-								UNUSED
-#endif
-)
+static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
+				chunk_t connection_sec_label,
+				shunk_t *selected_sec_label,
+				struct logger *logger)
 {
-	/* sec_labels are symmetric, pick from one end */
-	chunk_t sec_label = d->spd.this.sec_label;
-
-	if (sec_label.len == 0) {
+	if (connection_sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
 		if (tsp->i.contains_sec_label || tsp->r.contains_sec_label) {
 			dbg("error: received sec_label but this end is *not* configured to use sec_label");
-			return &null_shunk;
+			return false;
 		}
 		/* No sec_label was found and none was expected */
-		return NULL;	/* success: no label, as expected */
+		return true;	/* success: no label, as expected */
 	}
 
 	/* This endpoint is configured to use labeled IPsec. */
-
-#ifdef HAVE_LABELED_IPSEC
-	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
+	passert(vet_seclabel(HUNK_AS_SHUNK(connection_sec_label)) == NULL);
 
 	if (!tsp->i.contains_sec_label || !tsp->r.contains_sec_label) {
 		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
-		return &null_shunk;
+		return false;
 	}
 
-	if (ts_has_seclabel(sec_label, &tsp->i, "initiator", logger) != &null_shunk)
-		return ts_has_seclabel(sec_label, &tsp->r, "responder", logger);
-#endif
+	if (!check_tss_sec_label(&tsp->i, connection_sec_label, selected_sec_label, logger) ||
+	    !check_tss_sec_label(&tsp->r, connection_sec_label, selected_sec_label, logger)) {
+		return false;
+	}
 
-	/* security label required but no matching one found */
-	return &null_shunk;	/* error */
+	/* security label required and matched */
+	return true;
 }
 
 static struct best_score score_ends_iprange(enum fit fit,
@@ -1034,8 +1025,7 @@ static struct best_score score_ends_iprange(enum fit fit,
 static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
 						    const struct traffic_selector_payloads *tsp,
 						    enum fit fit, bool definitely_shared,
-						    /* could be NULL */
-						    const shunk_t *best_sec_label)
+						    const shunk_t best_sec_label)
 {
 	passert(tsp->i.nr >= 1);
 	int tsi_port = narrow_port(&t->spd.that, &tsp->i, fit, 0);
@@ -1085,12 +1075,12 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 
 	free_chunk_content(&c->spd.this.sec_label);
 	free_chunk_content(&c->spd.that.sec_label);
-	if (best_sec_label != NULL) {
+	if (best_sec_label.len > 0) {
 		connection_buf tb;
 		dbg("responder storing sec_label="PRI_SHUNK" in "PRI_CONNECTION,
-		    pri_shunk(*best_sec_label), pri_connection(c, &tb));
-		c->spd.this.sec_label = clone_hunk(*best_sec_label, "this_sec_label");
-		c->spd.that.sec_label = clone_hunk(*best_sec_label, "that_sec_label");
+		    pri_shunk(best_sec_label), pri_connection(c, &tb));
+		c->spd.this.sec_label = clone_hunk(best_sec_label, "this_sec_label");
+		c->spd.that.sec_label = clone_hunk(best_sec_label, "that_sec_label");
 	}
 
 	if (c != child->sa.st_connection) {
@@ -1129,7 +1119,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct best_score best_score = NO_SCORE;
 	const struct spd_route *best_spd_route = NULL;
 	struct connection *best_connection = c;
-	const shunk_t *best_sec_label = NULL;
+	shunk_t best_sec_label = null_shunk;
 
 	/* find best spd in c */
 
@@ -1144,10 +1134,9 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-		/* Returns NULL(ok), &null_shun(error), memory(ok). */
-		shunk_t const *const selected_sec_label =
-			score_ends_seclabel(&ends, c, &tsp, child->sa.st_logger);
-		if (selected_sec_label == &null_shunk) {
+		shunk_t selected_sec_label = null_shunk;
+		if (!score_tsp_sec_label(&tsp, c->spd.this.sec_label,
+					 &selected_sec_label, child->sa.st_logger)) {
 			/*
 			 * Either:
 			 *  - Security label required, but not found.
@@ -1259,9 +1248,9 @@ bool v2_process_ts_request(struct child_sa *child,
 					: END_EQUALS_TS;
 
 				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
-				shunk_t const *const selected_sec_label =
-					score_ends_seclabel(&ends, d, &tsp, child->sa.st_logger);
-				if (selected_sec_label == &null_shunk) {
+				shunk_t selected_sec_label = null_shunk;
+				if (!score_tsp_sec_label(&tsp, d->spd.this.sec_label,
+							 &selected_sec_label, child->sa.st_logger)) {
 					/*
 					 * Either:
 					 *  - Security label required, but not found.
@@ -1520,9 +1509,9 @@ bool v2_process_ts_response(struct child_sa *child,
 		: END_EQUALS_TS;
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
-	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&e, c, &tsp, child->sa.st_logger);
-	if (selected_sec_label == &null_shunk) {
+	shunk_t selected_sec_label = null_shunk;
+	if (!score_tsp_sec_label(&tsp, c->spd.this.sec_label,
+				 &selected_sec_label, child->sa.st_logger)) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.
@@ -1540,18 +1529,18 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	if (selected_sec_label != NULL) {
-		if (hunk_eq(*selected_sec_label, c->spd.this.sec_label)) {
+	if (selected_sec_label.len > 0) {
+		if (hunk_eq(selected_sec_label, c->spd.this.sec_label)) {
 			connection_buf cb;
 			dbg("responder returned same sec_label="PRI_SHUNK" as "PRI_CONNECTION,
-			    pri_shunk(*selected_sec_label),
+			    pri_shunk(selected_sec_label),
 			    pri_connection(c, &cb));
 		} else {
 			connection_buf cb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"responder narrowed "PRI_CONNECTION" sec_label '"PRI_SHUNK"' down to '"PRI_SHUNK"'; what am I to do",
 				pri_connection(c, &cb), pri_shunk(c->spd.this.sec_label),
-				pri_shunk(*selected_sec_label));
+				pri_shunk(selected_sec_label));
 		}
 	}
 
@@ -1609,9 +1598,11 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 	enum fit fitness = END_NARROWER_THAN_TS;
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
-	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&ends, c, &their_tsp, child->sa.st_logger);
-	if (selected_sec_label == &null_shunk) {
+	shunk_t selected_sec_label = null_shunk;
+	if (!score_tsp_sec_label(&their_tsp,
+				 c->spd.this.sec_label,
+				 &selected_sec_label,
+				 child->sa.st_logger)) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.
@@ -1619,7 +1610,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		 *  - Security label *not* required, but found.
 		 */
 		log_state(RC_LOG_SERIOUS, &child->sa,
-			"rekey: received Traffic Selectors mismatch configured selectors for Security Label");
+			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
 		return false;
 	}
 
