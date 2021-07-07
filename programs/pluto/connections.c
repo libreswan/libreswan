@@ -4343,7 +4343,8 @@ void connection_delete_unused_instance(struct connection **cp,
 	}
 
 	if (LIN(POLICY_UP, c->policy) &&
-	    old_state != NULL && IS_IKE_SA_ESTABLISHED(old_state)) {
+	    old_state != NULL && (IS_IKE_SA_ESTABLISHED(old_state) ||
+				  IS_ISAKMP_SA_ESTABLISHED(old_state))) {
 		/*
 		 * If this connection instance was previously for an
 		 * established sa planning to revive, don't delete.

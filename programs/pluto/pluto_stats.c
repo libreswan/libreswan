@@ -189,7 +189,9 @@ void pstat_sa_deleted(struct state *st)
 	 * XXX: the above should make this completely redundant.
 	 */
 	if (IS_IKE_SA(st)) {
-		bool fail = !IS_IKE_SA_ESTABLISHED(st) && st->st_state->kind != STATE_IKESA_DEL;
+		bool fail = (!IS_IKE_SA_ESTABLISHED(st) &&
+			     !IS_ISAKMP_SA_ESTABLISHED(st) &&
+			     st->st_state->kind != STATE_IKESA_DEL);
 		if (fail) {
 			if (st->st_ike_version == IKEv2)
 				pstats_ikev2_fail++;

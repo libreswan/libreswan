@@ -2521,7 +2521,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	pexpect(!state_is_busy(st));
 
 	if (result > STF_OK) {
-		linux_audit_conn(md->v1_st, IS_IKE_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
+		linux_audit_conn(md->v1_st, IS_ISAKMP_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
 	}
 
 	switch (result) {

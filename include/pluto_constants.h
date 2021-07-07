@@ -671,13 +671,14 @@ extern struct keywords sa_role_names;
 				       LELEM(STATE_MODE_CFG_R2) | \
 				       LELEM(STATE_MODE_CFG_I1) | \
 				       LELEM(STATE_XAUTH_I0) | \
-				       LELEM(STATE_XAUTH_I1) | \
-				       LELEM(STATE_V2_ESTABLISHED_IKE_SA))
-#else
-#define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
-#endif
+				       LELEM(STATE_XAUTH_I1))
 
-#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->st_state->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+#define IS_ISAKMP_SA_ESTABLISHED(ST)					\
+	((LELEM((ST)->st_state->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+
+#define IS_ISAKMP_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY)
+
+#endif
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
 				LELEM(STATE_V2_NEW_CHILD_I0) |		\
@@ -699,28 +700,17 @@ extern struct keywords sa_role_names;
 
 #define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
-#ifdef USE_IKEv1
-#define IS_IKE_SA_ESTABLISHED(ST)				    \
-	(IS_ISAKMP_SA_ESTABLISHED((ST)) ||			    \
-	 (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) &&  \
-	  !IS_CHILD_SA(ST) &&					    \
-	  ((ST)->st_clonedfrom == SOS_NOBODY)))
-#else
-#define IS_IKE_SA_ESTABLISHED(ST)					\
-	(((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) &&	\
-	 !IS_CHILD_SA(ST) &&						\
-	 ((ST)->st_clonedfrom == SOS_NOBODY))
-#endif
-
 /*
  * ??? Issue here is that our child SA appears as a
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 
-#define IS_CHILD_SA_ESTABLISHED(ST)				  \
-	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA && \
-	 IS_CHILD_SA(ST))
+#define IS_CHILD_SA_ESTABLISHED(ST)				\
+	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA)
+
+#define IS_IKE_SA_ESTABLISHED(ST)				\
+	((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA)
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)

@@ -2473,9 +2473,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	     *
 	     * Once keymat is present, only encrypted messessages with
 	     * valid integrity can successfully complete a transaction
-	     * with STF_OK.  True?
+	     * with STF_OK.  True?  True.
 	     *
-	     * IS_IKE_SA_ESTABLISHED() better?
+	     * IS_IKE_SA_ESTABLISHED() better?  False.  IKE_AUTH
+	     * messages meet the above requirements.
 	     */
 	    ike->sa.hidden_variables.st_skeyid_calculated &&
 	    md->encrypted_payloads.parsed &&

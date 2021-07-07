@@ -931,8 +931,8 @@ void delete_state_tail(struct state *st)
 	 * IKEv1 IKE failures do not go through a transition, so we catch
 	 * these in delete_state()
 	 */
-	if (IS_IKE_SA(st) && st->st_ike_version == IKEv1 &&
-		!IS_IKE_SA_ESTABLISHED(st)) {
+	if (st->st_ike_version == IKEv1 &&
+	    IS_ISAKMP_SA(st) && !IS_ISAKMP_SA_ESTABLISHED(st)) {
 		linux_audit_conn(st, LAK_PARENT_FAIL);
 	}
 
@@ -940,7 +940,9 @@ void delete_state_tail(struct state *st)
 	 * only log parent state deletes, we log children in
 	 * ipsec_delete_sa()
 	 */
-	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state->kind == STATE_IKESA_DEL)
+	if (IS_IKE_SA_ESTABLISHED(st) ||
+	    IS_ISAKMP_SA_ESTABLISHED(st) ||
+	    st->st_state->kind == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
@@ -1364,8 +1366,10 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* on first pass, ignore established ISAKMP SA's */
 			if (pass == 0 &&
-			    IS_ISAKMP_SA_ESTABLISHED(this))
+			    (IS_ISAKMP_SA_ESTABLISHED(this) ||
+			     IS_IKE_SA_ESTABLISHED(this))) {
 				continue;
+			}
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
