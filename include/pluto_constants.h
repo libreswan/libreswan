@@ -700,14 +700,16 @@ extern struct keywords sa_role_names;
 #define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
 #ifdef USE_IKEv1
-#define IS_IKE_SA_ESTABLISHED(ST) \
-	( IS_ISAKMP_SA_ESTABLISHED((ST)) ||	\
-		(IS_PARENT_SA_ESTABLISHED(ST) && \
-		 ((ST)->st_clonedfrom == SOS_NOBODY)))
+#define IS_IKE_SA_ESTABLISHED(ST)				    \
+	(IS_ISAKMP_SA_ESTABLISHED((ST)) ||			    \
+	 (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) &&  \
+	  !IS_CHILD_SA(ST) &&					    \
+	  ((ST)->st_clonedfrom == SOS_NOBODY)))
 #else
-#define IS_IKE_SA_ESTABLISHED(ST) \
-		(IS_PARENT_SA_ESTABLISHED(ST) && \
-		 ((ST)->st_clonedfrom == SOS_NOBODY))
+#define IS_IKE_SA_ESTABLISHED(ST)					\
+	(((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) &&	\
+	 !IS_CHILD_SA(ST) &&						\
+	 ((ST)->st_clonedfrom == SOS_NOBODY))
 #endif
 
 /*
@@ -715,12 +717,10 @@ extern struct keywords sa_role_names;
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
+
 #define IS_CHILD_SA_ESTABLISHED(ST)				  \
 	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA && \
 	 IS_CHILD_SA(ST))
-
-#define IS_PARENT_SA_ESTABLISHED(ST) (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
-				      !IS_CHILD_SA(ST))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)

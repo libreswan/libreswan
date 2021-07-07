@@ -140,11 +140,10 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
-		if (IS_PARENT_SA_ESTABLISHED(st))
-			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
-
 		switch(st->st_ike_version) {
 		case IKEv2:
+			if (IS_IKE_SA_ESTABLISHED(st))
+				log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 			ikev2_out_IKE_SA_INIT_I(c, st, policy, try, &inception,
 						HUNK_AS_SHUNK(c->spd.this.sec_label),
 						/*background?*/false, st->st_logger);

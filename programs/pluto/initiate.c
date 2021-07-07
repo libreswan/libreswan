@@ -324,7 +324,7 @@ void ipsecdoi_initiate(struct connection *c,
 		if (st == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
 						sec_label, background, logger);
-		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
+		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
 				    pexpect_ike_sa(st),

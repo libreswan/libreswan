@@ -597,7 +597,7 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 	passert(ike != NULL);
 	passert(ike->sa.st_ike_version == IKEv2);
 
-	if (!IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 		dbg("can't expire unused IKE SA #%lu; not established - strange",
 		    ike->sa.st_serialno);
 		return; /* only deal with established parent SA */

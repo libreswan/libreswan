@@ -556,7 +556,7 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (IS_PARENT_SA_ESTABLISHED(st) && (conn_name == NULL || streq(conn_name, st->st_connection->name)))
+		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL || streq(conn_name, st->st_connection->name)))
 		{
 			shunk_t active_dest = get_redirect_dest(&active_dests);
 			st->st_active_redirect_gw = active_dest;

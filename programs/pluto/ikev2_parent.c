@@ -439,7 +439,7 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_
 
 static bool expire_ike_because_child_not_used(struct state *st)
 {
-	if (!(IS_PARENT_SA_ESTABLISHED(st) ||
+	if (!(IS_IKE_SA_ESTABLISHED(st) ||
 	      IS_CHILD_SA_ESTABLISHED(st))) {
 		/* for instance, too many retransmits trigger replace */
 		return false;
