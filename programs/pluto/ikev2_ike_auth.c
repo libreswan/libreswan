@@ -1474,23 +1474,42 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 */
 
 	v2_notification_t n = process_v2_IKE_AUTH_response_child_sa_payloads(ike, md);
+
 	if (v2_notification_fatal(n)) {
 		/* already logged */
 		/*
-		 * XXX: should be sending the fatal notification using
-		 * a new exchange.
+		 * XXX: there was something "really bad" about the
+		 * child.  Should be sending the fatal notification in
+		 * a new exchange (see RFC); returning STF_FATAL just
+		 * causes the IKE SA to silently self-destruct.
 		 */
 		return STF_FATAL;
 	}
 
-	if (n != v2N_NOTHING_WRONG) {
+	if(n != v2N_NOTHING_WRONG) {
+		/* already logged */
 		/*
-		 * It is not fatal, so we are keeping the IKE SA, but it
-		 * seems the Child SA had some issue. So we return STF_OK so
-		 * that the IKE SA is not torn down, and the failed child
-		 * state might have to ensure it is doing something to retry.
+		 * This end (the initiator) did not like something
+		 * about the Child SA.
+		 *
+		 * (If the responder sends back an error notification
+		 * to reject the Child SA, then the above call will
+		 * clean up the mess and return v2N_NOTHING_WRONG -
+		 * problem solved).
+		 *
+		 * Should be queueing up a high priority delete
+		 * exchange for the Child SA (there's no way to send
+		 * the error back?); instead just let the child
+		 * linger.
 		 */
 		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but Child SA error occured");
+		/* CLEARLY A HACK */
+		passert(ike->sa.st_v2_larval_initiator_sa != NULL);
+		struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
+		unpend(ike, larval_child->sa.st_connection);
+		struct logger *l = larval_child->sa.st_logger;
+		close_any_fd(&l->global_whackfd, HERE);
+		close_any_fd(&l->object_whackfd, HERE);
 	}
 
 	return STF_OK;

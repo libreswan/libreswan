@@ -954,6 +954,9 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family (and trigger no further
 		 * exchange).
+		 *
+		 * XXX: initiator; need to initiate a fatal error
+		 * notification exchange.
 		 */
 		return STF_FATAL;
 	}
@@ -964,18 +967,28 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	if (ps != STF_OK) {
 		/*
 		 * Kill the child, but not the IKE SA.
+		 *
+		 * XXX: initiator; need to initiate a delete exchange.
 		 */
 		return STF_FAIL;
 	}
 
-	/* XXX: only for rekey child? */
+	/*
+	 * XXX: only for rekey child?
+	 */
 	if (larval_child->sa.st_pfs_group == NULL) {
 		v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
 		if (v2_notification_fatal(n)) {
-			/* should send this as a notifcation */
+			/*
+			 * XXX: initiator; need to initiate a fatal
+			 * error notification exchange.
+			 */
 			return STF_FATAL;
 		} else if (n != v2N_NOTHING_WRONG) {
-			/* should send a delete child notification */
+			/*
+			 * XXX: initiator; need to initiate a delete
+			 * exchange.
+			 */
 			return STF_FAIL;
 		} else {
 			return STF_OK;
@@ -993,10 +1006,9 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
 		/*
-		 * XXX: Initiator so this notification result is going
-		 * no where.  What should happen?
+		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
-		return STF_FAIL + v2N_INVALID_SYNTAX; /* XXX: STF_FATAL? */
+		return STF_FAIL; /* XXX: STF_FATAL? */
 	}
 	chunk_t remote_ke = larval_child->sa.st_gr;
 	submit_dh_shared_secret(&larval_child->sa, remote_ke,
@@ -1034,18 +1046,22 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct stat
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		/*
-		 * XXX: this is the initiator so returning a
-		 * notification is kind of useless.
+		 * XXX: initiator; need to initiate a delete exchange.
 		 */
 		return STF_FAIL;
 	}
 
 	v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
 	if (v2_notification_fatal(n)) {
-		/* should send error to other end */
+		/*
+		 * XXX: initiator; need to initiate a fatal error
+		 * notification exchange.
+		 */
 		return STF_FATAL;
 	} else if (n != v2N_NOTHING_WRONG) {
-		/* should notify other end of rejection */
+		/*
+		 * XXX: initiator; need to intiate a delete exchange.
+		 */
 		return STF_FAIL;
 	} else {
 		return STF_OK;
