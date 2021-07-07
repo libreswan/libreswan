@@ -962,7 +962,10 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
 	if (child == NULL) {
-		/* Don't expect CHILD SA payloads. */
+		/*
+		 * Did the responder send Child SA payloads this end
+		 * didn't ask for?
+		 */
 		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
@@ -993,11 +996,30 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			 */
 			esb_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				"IKE_AUTH response contained the error notification %s",
+				"IKE_AUTH response contained the Child SA error notification %s",
 				enum_show_short(&ikev2_notify_names, n, &esb));
-			return n;
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"IKE SA established but Child SA error occured");
+			connection_buf cb;
+			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
+			    ike->sa.st_serialno, child->sa.st_serialno,
+			    pri_connection(child->sa.st_connection, &cb));
+			unpend(ike, child->sa.st_connection);
+			delete_state(&child->sa);
+			ike->sa.st_v2_larval_initiator_sa = child = NULL;
+			/* handled */
+			return v2N_NOTHING_WRONG;
 		}
 	}
+
+	/*
+	 * XXX: remote approved the Child SA; now check that what was
+	 * approved is acceptable to this local end.  If it isn't
+	 * return a notification.
+	 *
+	 * Code should be initiating a new exchange that contains the
+	 * notification; later.
+	 */
 
 	/* Expect CHILD SA payloads. */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -1006,8 +1028,8 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		return v2N_TS_UNACCEPTABLE;
 	}
 
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() */
-	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL; /* Technically, this should be only on the child state */
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() (?!?) */
+	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 
 	/* AUTH is ok, we can trust the notify payloads */
 	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
