@@ -2,9 +2,27 @@
 See also https://libreswan.org/
 
 v4.5 (unreleased)
+* IKEv1: multiple subnets could lead to crossed wires [Paul]
+* IKEv2: don't tear down IKE SA on TS_UNACCEPTABLE [Paul]
+* IKEv2: unpend/delete Child SA when rejected by IKE_AUTH response [Andrew]
+* IKEv2: mobike: resolve_defaultroute_one() updates [Andrew]
+* IKEv2: mobike: preten sending duplicate mobike response [Andrew]
+* IKEv2: Support for Childless IKE SA [Andrew]
+* IKEv2: redirect: make peer redirecting in IKE_AUTH childless [Vukasin]
+* IKEv2: Labeled IPsec --up causes Childless IKE SA [Andrew/Paul]
+* IKEv2: Labeled IPsec uses one set of SPD policies (like IKEv1) [Andrew/Paul]
+* pluto: mismatched subnets= could take down all conns [Paul]
+* pluto: Don't delete existing IKE SA of connection instance [Paul]
+* pluto: fail better on parse errors in subnet= clause [Paul]
 * libswan: use getaddrinfo(3) instead of gethostbyname2(3) [Hugh]
+* libipsecconf: fail to load conn if no right= or left= set [Paul]
 * X509: directly append new CRL requests to the fetch queue [Andrew]
+* whack: implement --impair trigger:<global-event> [Andrew]
 * ipsec.service: remove reload which did not work as expected [Tuomo]
+* building: fix NetBSD build [Andrew]
+* building: fix arm / aarch64 build [kekePower@github]
+* packaging: handle properly rpm sysctl config [Tuomo]
+* packaging: rhel7: fix wrong python2 shebang[Tuomo]
 
 v4.4 (April 22, 2021)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]
