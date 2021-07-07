@@ -42,11 +42,27 @@
  * While the RFC seems to suggest that the traffic selectors come in
  * pairs, strongswan, at least, doesn't.
  */
+
 struct traffic_selectors {
+	const char *name;
 	bool contains_sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector ts[16];
+};
+
+struct traffic_selector_payloads {
+	struct traffic_selectors i;
+	struct traffic_selectors r;
+};
+
+static const struct traffic_selector_payloads empty_traffic_selectors = {
+	.i = {
+		.name = "TSi",
+	},
+	.r = {
+		.name = "TSr",
+	},
 };
 
 struct ends {
@@ -396,20 +412,22 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 /* return success */
 static bool v2_parse_ts(struct payload_digest *const ts_pd,
 			struct traffic_selectors *tss,
-			const char *which, struct logger *logger)
+			struct logger *logger)
 {
 	dbg("%s: parsing %u traffic selectors",
-	    which, ts_pd->payload.v2ts.isat_num);
+	    tss->name, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
-		llog(RC_LOG, logger, "%s payload contains no entries when at least one is expected",
-			      which);
+		llog(RC_LOG, logger,
+		     "%s payload contains no entries when at least one is expected",
+		     tss->name);
 		return false;
 	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
-		llog(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
-			which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
+		llog(RC_LOG, logger,
+		     "%s contains %d entries which exceeds hardwired max of %zu",
+		     tss->name, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
@@ -446,8 +464,8 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (ts->startport > ts->endport) {
 				llog(RC_LOG, logger,
-					    "%s traffic selector %d has an invalid port range - ignored",
-					    which, tss->nr);
+				     "%s traffic selector %d has an invalid port range - ignored",
+				     tss->name, tss->nr);
 				continue;
 			}
 
@@ -539,20 +557,19 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		tss->nr++;
 	}
 
-	dbg("%s: parsed %d traffic selectors", which, tss->nr);
+	dbg("%s: parsed %d traffic selectors", tss->name, tss->nr);
 	return true;
 }
 
 static bool v2_parse_tss(const struct msg_digest *md,
-			 struct traffic_selectors *tsi,
-			 struct traffic_selectors *tsr,
+			 struct traffic_selector_payloads *tsp,
 			 struct logger *logger)
 {
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], tsi, "TSi", logger)) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], &tsp->i, logger)) {
 		return false;
 	}
 
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], tsr, "TSr", logger)) {
+	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], &tsp->r, logger)) {
 		return false;
 	}
 
@@ -568,8 +585,7 @@ static bool v2_parse_tss(const struct msg_digest *md,
 
 static int narrow_protocol(const struct end *end,
 			   const struct traffic_selectors *tss,
-			   enum fit fit,
-			   const char *which, unsigned index)
+			   enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	int protocol = -1;
@@ -598,19 +614,18 @@ static int narrow_protocol(const struct end *end,
 	dbg(MATCH_PREFIX "narrow protocol end=%s%d %s %s[%u]=%s%d: %d",
 	    end->protocol == 0 ? "*" : "", end->protocol,
 	    fit_string(fit),
-	    which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
+	    tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
 	    protocol);
 	return protocol;
 }
 
 static int score_narrow_protocol(const struct end *end,
 				 const struct traffic_selectors *tss,
-				 enum fit fit,
-				 const char *which, unsigned index)
+				 enum fit fit, unsigned index)
 {
 	int f;	/* strength of match */
 
-	int protocol = narrow_protocol(end, tss, fit, which, index);
+	int protocol = narrow_protocol(end, tss, fit, index);
 	if (protocol == 0) {
 		f = 255;	/* ??? odd value */
 	} else if (protocol > 0) {
@@ -623,7 +638,7 @@ static int score_narrow_protocol(const struct end *end,
 		jam(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
 			fit_string(fit),
-			which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
+			tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
 		if (f > 0) {
 			jam(buf, "YES fitness %d", f);
 		} else {
@@ -644,8 +659,7 @@ static int score_narrow_protocol(const struct end *end,
 
 static int narrow_port(const struct end *end,
 		       const struct traffic_selectors *tss,
-		       enum fit fit,
-		       const char *which, unsigned index)
+		       enum fit fit, unsigned index)
 {
 	passert(index < tss->nr);
 	const struct traffic_selector *ts = &tss->ts[index];
@@ -683,7 +697,7 @@ static int narrow_port(const struct end *end,
 	dbg(MATCH_PREFIX "narrow port end=%u..%u %s %s[%u]=%u..%u: %d",
 	    end_low, end_high,
 	    fit_string(fit),
-	    which, index, ts->startport, ts->endport,
+	    tss->name, index, ts->startport, ts->endport,
 	    port);
 	return port;
 }
@@ -695,12 +709,11 @@ static int narrow_port(const struct end *end,
 
 static int score_narrow_port(const struct end *end,
 			     const struct traffic_selectors *tss,
-			     enum fit fit,
-			     const char *which, unsigned index)
+			     enum fit fit, unsigned index)
 {
 	int f;	/* strength of match */
 
-	int port = narrow_port(end, tss, fit, which, index);
+	int port = narrow_port(end, tss, fit, index);
 	if (port > 0) {
 		f = 1;
 	} else if (port == 0) {
@@ -710,10 +723,10 @@ static int score_narrow_port(const struct end *end,
 	}
 	if (f > 0) {
 		dbg(MATCH_PREFIX "  %s[%u] port match: YES fitness %d",
-		    which, index, f);
+		    tss->name, index, f);
 	} else {
 		dbg(MATCH_PREFIX "  %s[%u] port match: NO",
-		    which, index);
+		    tss->name, index);
 	}
 	return f;
 }
@@ -732,8 +745,7 @@ static int score_narrow_port(const struct end *end,
 
 static int score_address_range(const struct end *end,
 			       const struct traffic_selectors *tss,
-			       enum fit fit,
-			       const char *which, unsigned index)
+			       enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	/*
@@ -788,7 +800,7 @@ static int score_address_range(const struct end *end,
 	LSWDBGP(DBG_BASE, buf) {
 	    jam(buf, MATCH_PREFIX "match address end->client=");
 	    jam_selector(buf, &end->client);
-	    jam(buf, " %s %s[%u]net=", fit_string(fit), which, index);
+	    jam(buf, " %s %s[%u]net=", fit_string(fit), tss->name, index);
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
 	    if (f > 0) {
@@ -809,13 +821,12 @@ struct score {
 
 static struct score score_end(const struct end *end,
 			      const struct traffic_selectors *tss,
-			      enum fit fit,
-			      const char *what, unsigned index)
+			      enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "    %s[%u] ", what, index);
+		jam(buf, "    %s[%u] ", tss->name, index);
 		if (ts->sec_label.len == 0) {
 			range_buf ts_net;
 			jam(buf, ".net=%s .iporotoid=%d .{start,end}port=%d..%d",
@@ -839,15 +850,15 @@ static struct score score_end(const struct end *end,
 	switch(ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		score.address = score_address_range(end, tss, fit, what, index);
+		score.address = score_address_range(end, tss, fit, index);
 		if (score.address <= 0) {
 			return score;
 		}
-		score.port = score_narrow_port(end, tss, fit, what, index);
+		score.port = score_narrow_port(end, tss, fit, index);
 		if (score.port <= 0) {
 			return score;
 		}
-		score.protocol = score_narrow_protocol(end, tss, fit, what, index);
+		score.protocol = score_narrow_protocol(end, tss, fit, index);
 		if (score.protocol <= 0) {
 			return score;
 		}
@@ -923,8 +934,7 @@ static const shunk_t *ts_has_seclabel(chunk_t sec_label,
 
 static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
 					  const struct connection *d,
-					  const struct traffic_selectors *tsi,
-					  const struct traffic_selectors *tsr,
+					  const struct traffic_selector_payloads *tsp,
 					  struct logger *logger
 #ifndef HAVE_LABELED_IPSEC
 								UNUSED
@@ -936,7 +946,7 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 
 	if (sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
-		if (tsi->contains_sec_label || tsr->contains_sec_label) {
+		if (tsp->i.contains_sec_label || tsp->r.contains_sec_label) {
 			dbg("error: received sec_label but this end is *not* configured to use sec_label");
 			return &null_shunk;
 		}
@@ -949,13 +959,13 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 #ifdef HAVE_LABELED_IPSEC
 	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
 
-	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
+	if (!tsp->i.contains_sec_label || !tsp->r.contains_sec_label) {
 		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
 		return &null_shunk;
 	}
 
-	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
-		return ts_has_seclabel(sec_label, tsr, "responder", logger);
+	if (ts_has_seclabel(sec_label, &tsp->i, "initiator", logger) != &null_shunk)
+		return ts_has_seclabel(sec_label, &tsp->r, "responder", logger);
 #endif
 
 	/* security label required but no matching one found */
@@ -963,10 +973,9 @@ static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UN
 }
 
 static struct best_score score_ends_iprange(enum fit fit,
-				    const struct connection *d,
-				    const struct ends *ends,
-				    const struct traffic_selectors *tsi,
-				    const struct traffic_selectors *tsr)
+					    const struct connection *d,
+					    const struct ends *ends,
+					    const struct traffic_selector_payloads *tsp)
 {
 	if (DBGP(DBG_BASE)) {
 		selector_buf ei3;
@@ -982,19 +991,19 @@ static struct best_score score_ends_iprange(enum fit fit,
 	struct best_score best_score = NO_SCORE;
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
-	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_n];
+	for (unsigned tsi_n = 0; tsi_n < tsp->i.nr; tsi_n++) {
+		const struct traffic_selector *tni = &tsp->i.ts[tsi_n];
 
 		/* choice hardwired for IPrange and sec_label */
-		struct score score_i = score_end(ends->i, tsi, fit, "TSi", tsi_n);
+		struct score score_i = score_end(ends->i, &tsp->i, fit, tsi_n);
 		if (!score_i.ok) {
 			continue;
 		}
 
-		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_n];
+		for (unsigned tsr_n = 0; tsr_n < tsp->r.nr; tsr_n++) {
+			const struct traffic_selector *tnr = &tsp->r.ts[tsr_n];
 
-			struct score score_r = score_end(ends->r, tsr, fit, "TSr", tsr_n);
+			struct score score_r = score_end(ends->r, &tsp->r, fit, tsr_n);
 			if (!score_r.ok) {
 				continue;
 			}
@@ -1023,37 +1032,32 @@ static struct best_score score_ends_iprange(enum fit fit,
 }
 
 static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
-						    const struct traffic_selectors *tsip,
-						    const struct traffic_selectors *tsrp,
+						    const struct traffic_selector_payloads *tsp,
 						    enum fit fit, bool definitely_shared,
 						    /* could be NULL */
 						    const shunk_t *best_sec_label)
 {
-	passert(tsip->nr >= 1);
-	int tsi_port = narrow_port(&t->spd.that, tsip,
-				   fit, "TSi", 0);
+	passert(tsp->i.nr >= 1);
+	int tsi_port = narrow_port(&t->spd.that, &tsp->i, fit, 0);
 	if (tsi_port < 0) {
 		dbg("    skipping; TSi port too wide");
 		return NULL;
 	}
 
-	int tsi_protocol = narrow_protocol(&t->spd.that, tsip,
-					   fit, "TSi", 0);
+	int tsi_protocol = narrow_protocol(&t->spd.that, &tsp->r, fit, 0);
 	if (tsi_protocol < 0) {
 		dbg("    skipping; TSi protocol too wide");
 		return NULL;
 	}
 
-	passert(tsrp->nr >= 1);
-	int tsr_port = narrow_port(&t->spd.this, tsrp,
-				   fit, "TRi", 0);
+	passert(tsp->r.nr >= 1);
+	int tsr_port = narrow_port(&t->spd.this, &tsp->r, fit, 0);
 	if (tsr_port < 0) {
 		dbg("    skipping; TSr port too wide");
 		return NULL;
 	}
 
-	int tsr_protocol = narrow_protocol(&t->spd.this, tsrp,
-					   fit, "TSr", 0);
+	int tsr_protocol = narrow_protocol(&t->spd.this, &tsp->r, fit, 0);
 	if (tsr_protocol < 0) {
 		dbg("    skipping; TSr protocol too wide");
 		return NULL;
@@ -1116,9 +1120,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 	struct connection *c = child->sa.st_connection;
 
-	struct traffic_selectors tsi = { .nr = 0, };
-	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
+	struct traffic_selector_payloads tsp = empty_traffic_selectors;
+	if (!v2_parse_tss(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1143,7 +1146,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 		/* Returns NULL(ok), &null_shun(error), memory(ok). */
 		shunk_t const *const selected_sec_label =
-			score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger);
+			score_ends_seclabel(&ends, c, &tsp, child->sa.st_logger);
 		if (selected_sec_label == &null_shunk) {
 			/*
 			 * Either:
@@ -1158,14 +1161,14 @@ bool v2_process_ts_request(struct child_sa *child,
 			(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
 			? END_NARROWER_THAN_TS
 			: END_EQUALS_TS;
-		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsi, &tsr);
+		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsp);
 		if (!score.ok) {
 			continue;
 		}
 
 		if (score_gt(&score, &best_score)) {
 			dbg("    found better spd route for TSi[%td],TSr[%td]",
-			    score.tsi - tsi.ts, score.tsr - tsr.ts);
+			    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
 			best_score = score;
 			best_spd_route = sra;
 			best_sec_label = selected_sec_label;
@@ -1257,7 +1260,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 				shunk_t const *const selected_sec_label =
-					score_ends_seclabel(&ends, d, &tsi, &tsr, child->sa.st_logger);
+					score_ends_seclabel(&ends, d, &tsp, child->sa.st_logger);
 				if (selected_sec_label == &null_shunk) {
 					/*
 					 * Either:
@@ -1269,14 +1272,14 @@ bool v2_process_ts_request(struct child_sa *child,
 				}
 
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
-								     &ends, &tsi, &tsr);
+									     &ends, &tsp);
 				if (!score.ok) {
 					continue;
 				}
 				if (score_gt(&score, &best_score)) {
 					dbg("    protocol fitness found better match d %s, TSi[%td],TSr[%td]",
 					    d->name,
-					    score.tsi - tsi.ts, score.tsr - tsr.ts);
+					    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
 					best_connection = d;
 					best_score = score;
 					best_spd_route = sr;
@@ -1431,7 +1434,7 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			passert(best_connection == c); /* aka st->st_connection, no leak */
 			pexpect(best_connection == child->sa.st_connection);
-			struct connection *s = scribble_ts_on_connection(t, child, &tsi, &tsr, fit,
+			struct connection *s = scribble_ts_on_connection(t, child, &tsp, fit,
 									 /*definitely_shared?*/false,
 									 best_sec_label);
 			if (s == NULL) {
@@ -1448,7 +1451,7 @@ bool v2_process_ts_request(struct child_sa *child,
 		   c->spd.this.sec_label.len > 0) {
 		dbg("  instantiating template security label connection");
 		/* sure looks like a sec-label template */
-		struct connection *s = scribble_ts_on_connection(c, child, &tsi, &tsr,
+		struct connection *s = scribble_ts_on_connection(c, child, &tsp,
 								 END_WIDER_THAN_TS,
 								 /*definitely_shared?*/true,
 								 best_sec_label);
@@ -1500,9 +1503,8 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	struct connection *c = child->sa.st_connection;
 
-	struct traffic_selectors tsi = { .nr = 0, };
-	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
+	struct traffic_selector_payloads tsp = empty_traffic_selectors;
+	if (!v2_parse_tss(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1519,7 +1521,7 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger);
+		score_ends_seclabel(&e, c, &tsp, child->sa.st_logger);
 	if (selected_sec_label == &null_shunk) {
 		/*
 		 * Either:
@@ -1530,7 +1532,7 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
+	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsp);
 
 	if (!best.ok) {
 		dbg("reject responder TSi/TSr Traffic Selector");
@@ -1591,10 +1593,9 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		return false;
 
 	const struct connection *c = child->sa.st_connection;
-	struct traffic_selectors their_tsis = { .nr = 0, };
-	struct traffic_selectors their_tsrs = { .nr = 0, };
+	struct traffic_selector_payloads their_tsp = empty_traffic_selectors;
 
-	if (!v2_parse_tss(md, &their_tsis, &their_tsrs, child->sa.st_logger)) {
+	if (!v2_parse_tss(md, &their_tsp, child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "received malformed TSi/TSr payload(s)");
 		return false;
@@ -1609,7 +1610,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs, child->sa.st_logger);
+		score_ends_seclabel(&ends, c, &their_tsp, child->sa.st_logger);
 	if (selected_sec_label == &null_shunk) {
 		/*
 		 * Either:
@@ -1622,8 +1623,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		return false;
 	}
 
-	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsis,
-			&their_tsrs);
+	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsp);
 
 	if (!score.ok) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
