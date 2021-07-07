@@ -3233,7 +3233,8 @@ struct connection *refine_host_connection(const struct state *st,
 		FOR_EACH_HOST_PAIR_CONNECTION(c->interface->ip_dev->id_address, remote, d) {
 
 			int wildcards;
-			bool matching_peer_id = match_id(peer_id,
+			bool matching_peer_id = (c->connalias != NULL && streq(c->connalias, d->connalias)) ||
+						match_id(peer_id,
 							&d->spd.that.id,
 							&wildcards);
 
@@ -3579,11 +3580,13 @@ static struct connection *fc_try(const struct connection *c,
 
 		int wildcards, pathlen;
 
-		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
-		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
-		{
-			continue;
+		if (!(c->connalias != NULL && streq(c->connalias, d->connalias))) {
+			if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
+				match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+			{
+				continue;
+			}
 		}
 
 		/* compare protocol and ports */
