@@ -22,7 +22,7 @@ v4.5 (unreleased)
 * building: fix NetBSD build [Andrew]
 * building: fix arm / aarch64 build [kekePower@github]
 * packaging: handle properly rpm sysctl config [Tuomo]
-* packaging: rhel7: fix wrong python2 shebang[Tuomo]
+* packaging: rhel7: fix python2 shebang [Tuomo]
 
 v4.4 (April 22, 2021)
 * IKEv2: Fixes for TCP encap in Transport Mode and host-to-host [Paul/Sabrina]
