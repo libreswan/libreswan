@@ -708,6 +708,10 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	ike->sa.st_logger->object_whackfd = fd_dup(whackfd, HERE);
 	child->sa.st_policy = policy;
 
+	llog_sa(RC_LOG, child,
+		"initiating Child SA using IKE SA #%lu", ike->sa.st_serialno);
+
+
 	/*
 	 * Use the CREATE_CHILD_SA proposal suite - the
 	 * proposal generated during IKE_AUTH will have been
