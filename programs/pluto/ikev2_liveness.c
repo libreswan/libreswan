@@ -196,12 +196,11 @@ void liveness_check(struct state *st)
 	}
 
 	endpoint_buf remote_buf;
-	struct state *handler = &ike->sa;
 	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
 	    child->sa.st_serialno,
 	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-	    handler->st_serialno);
-	initiate_v2_liveness(child->sa.st_logger, ike);
+	    ike->sa.st_serialno);
+	submit_v2_liveness_exchange(ike, child->sa.st_serialno);
 
 	/* in case above screws up? */
 	schedule_liveness(child, deltatime(0), "backup for liveness probe");
@@ -221,14 +220,15 @@ static const struct state_v2_microcode v2_liveness_probe = {
 	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
 };
 
-void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike)
+void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
 	const struct state_v2_microcode *transition = &v2_liveness_probe;
 	if (ike->sa.st_state->kind != transition->state) {
-		llog(RC_LOG, logger,
-			    "liveness: #%lu unexpectedly in state %s; should be %s",
-			    ike->sa.st_serialno, ike->sa.st_state->short_name,
-			    finite_states[transition->state]->short_name);
+		llog_sa(RC_LOG, ike,
+			"liveness: IKE SA in state %s but should be %s; liveness for #%lu ignored",
+			ike->sa.st_state->short_name,
+			finite_states[transition->state]->short_name,
+			who_for);
 		return;
 	}
 

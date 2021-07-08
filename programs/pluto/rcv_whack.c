@@ -67,7 +67,6 @@
 #include "ikev2_redirect.h"
 #include "ikev2_delete.h"
 #include "ikev2_liveness.h"
-#include "ikev2_rekey.h"
 #include "server.h" /* for pluto_seccomp */
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -95,6 +94,7 @@
 #include "send.h"			/* for impair: send_keepalive() */
 #include "pluto_shutdown.h"		/* for shutdown_pluto() */
 #include "orient.h"
+#include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
 static struct state *find_impaired_state(unsigned biased_what,
 					 struct logger *logger)
@@ -165,9 +165,9 @@ static void whack_impair_action(enum impair_action impairment_action,
 			/* already logged */
 			return;
 		}
-		struct logger loggers = merge_loggers(&ike->sa, background, logger);
-		llog(RC_COMMENT, &loggers, "initiating liveness");
-		initiate_v2_liveness(&loggers, ike);
+		merge_loggers(&ike->sa, background, logger);
+		llog_sa(RC_COMMENT, ike, "initiating liveness for #%lu", st->st_serialno);
+		submit_v2_liveness_exchange(ike, st->st_serialno);
 		break;
 	}
 	case CALL_INITIATE_v2_DELETE:
@@ -179,7 +179,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		}
 		/* will log */
 		merge_loggers(st, background, logger);
-		initiate_v2_delete(ike_sa(st, HERE), st);
+		submit_v2_delete_exchange(ike_sa(st, HERE), st);
 		break;
 	}
 	case CALL_INITIATE_v2_REKEY:
@@ -190,8 +190,24 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
+		struct ike_sa *ike = ike_sa(st, HERE);
+		if (ike == NULL) {
+			/* already logged */
+			return;
+		}
 		merge_loggers(st, background, logger);
-		initiate_v2_rekey(ike_sa(st, HERE), st);
+		struct child_sa *larval_sa;
+		const char *satype;
+		if (IS_IKE_SA(st)) {
+			larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
+			satype = "IKE";
+		} else {
+			larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
+			satype = "Child";
+		}
+		llog_sa(RC_LOG, larval_sa,
+			"initiating rekey to replace %s SA #%lu",
+			satype, st->st_serialno);
 		break;
 	}
 	case CALL_SEND_KEEPALIVE:

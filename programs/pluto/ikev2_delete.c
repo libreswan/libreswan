@@ -152,7 +152,7 @@ static const struct state_v2_microcode *transitions[SA_TYPE_ROOF] = {
 	[IPSEC_SA] = &v2_delete_child,
 };
 
-void initiate_v2_delete(struct ike_sa *ike, struct state *st)
+void submit_v2_delete_exchange(struct ike_sa *ike, struct state *st)
 {
 	const struct state_v2_microcode *transition = transitions[st->st_establishing_sa];
 	if (st->st_state->kind != transition->state) {
