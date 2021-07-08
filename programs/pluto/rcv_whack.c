@@ -178,8 +178,14 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		/* will log */
+		struct ike_sa *ike = ike_sa(st, HERE);
+		if (ike == NULL) {
+			/* already logged */
+			return;
+		}
+		struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 		merge_loggers(st, background, logger);
-		submit_v2_delete_exchange(ike_sa(st, HERE), st);
+		submit_v2_delete_exchange(ike, child);
 		break;
 	}
 	case CALL_INITIATE_v2_REKEY:

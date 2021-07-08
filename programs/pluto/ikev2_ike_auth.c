@@ -58,6 +58,7 @@
 #include "ike_alg_hash.h"
 #include "ikev2_cp.h"
 #include "kernel.h"			/* for raw_policy() */
+#include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 							  struct msg_digest *md,
@@ -1492,24 +1493,37 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * This end (the initiator) did not like something
 		 * about the Child SA.
 		 *
-		 * (If the responder sends back an error notification
-		 * to reject the Child SA, then the above call will
-		 * clean up the mess and return v2N_NOTHING_WRONG -
-		 * problem solved).
-		 *
-		 * Should be queueing up a high priority delete
-		 * exchange for the Child SA (there's no way to send
-		 * the error back?); instead just let the child
-		 * linger.
+		 * (If the responder sent back an error notification
+		 * to reject the Child SA, then the above call would
+		 * have cleaned up the mess and return
+		 * v2N_NOTHING_WRONG.  After all, problem solved.
 		 */
 		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
-		/* CLEARLY A HACK */
-		passert(ike->sa.st_v2_larval_initiator_sa != NULL);
 		struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
+		ike->sa.st_v2_larval_initiator_sa = NULL;
+		passert(larval_child != NULL);
+		/*
+		 * Needed to un-plug the pending queue.  Without this
+		 * the next pending exchange is never started.
+		 *
+		 * While not obvious from the name - unpend() - the
+		 * code is doing two things: removing LARVAL_CHILD's
+		 * pending connection; and submitting a request to
+		 * initiate the next pending connection, if any.
+		 *
+		 * The key thing here is that unpend() delays creating
+		 * the next child until after the previous child is
+		 * done.  Avoiding a race for which child goes next.
+		 *
+		 * For IKEv2, should merge the pending queue into the
+		 * Message ID queue.  Have a queue of exchanges, and a
+		 * queue of things to do when there are no exchanges.
+		 */
 		unpend(ike, larval_child->sa.st_connection);
-		struct logger *l = larval_child->sa.st_logger;
-		close_any_fd(&l->global_whackfd, HERE);
-		close_any_fd(&l->object_whackfd, HERE);
+		/*
+		 * Quickly delete this larval SA.
+		 */
+		submit_v2_delete_exchange(ike, larval_child);
 	}
 
 	return STF_OK;

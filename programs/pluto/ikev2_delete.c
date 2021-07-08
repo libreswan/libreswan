@@ -109,8 +109,10 @@ static stf_status send_v2_delete_ike_request(struct ike_sa *ike,
 {
 	pexpect(md == NULL);
 	if (!record_v2_delete(ike, &ike->sa)) {
+		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
+	llog_sa(RC_LOG, ike, "intiating delete");
 	return STF_OK;
 }
 
@@ -119,9 +121,13 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
 					       struct msg_digest *md)
 {
 	pexpect(md == NULL);
+	pexpect(child != NULL);
+
 	if (!record_v2_delete(ike, &child->sa)) {
+		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
+	llog_sa(RC_LOG, child, "initiating delete");
 	return STF_OK;
 }
 
@@ -140,29 +146,18 @@ static const struct state_v2_microcode v2_delete_ike = {
 
 static const struct state_v2_microcode v2_delete_child = {
 	.story = "delete CHILD SA",
-	.state = STATE_V2_ESTABLISHED_CHILD_SA,
-	.next_state = STATE_CHILDSA_DEL,
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_delete_child_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode *transitions[SA_TYPE_ROOF] = {
-	[IKE_SA] = &v2_delete_ike,
-	[IPSEC_SA] = &v2_delete_child,
-};
-
-void submit_v2_delete_exchange(struct ike_sa *ike, struct state *st)
+void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
-	const struct state_v2_microcode *transition = transitions[st->st_establishing_sa];
-	if (st->st_state->kind != transition->state) {
-		log_state(RC_LOG, st, "in state %s but need state %s to initiate delete",
-			  st->st_state->short_name,
-			  finite_states[transition->state]->short_name);
-		return;
-	}
-	v2_msgid_queue_initiator(ike, IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL,
-				 st, ISAKMP_v2_INFORMATIONAL,
+	const struct state_v2_microcode *transition =
+		(child != NULL ? &v2_delete_child : &v2_delete_ike);
+	v2_msgid_queue_initiator(ike, child, NULL, ISAKMP_v2_INFORMATIONAL,
 				 transition, NULL);
 }
 
