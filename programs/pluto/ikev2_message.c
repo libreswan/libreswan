@@ -100,7 +100,7 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 
 struct pbs_out open_v2_message(struct pbs_out *message,
 			       struct ike_sa *ike, struct msg_digest *md,
-			       enum isakmp_xchg_types exchange_type)
+			       enum isakmp_xchg_type exchange_type)
 {
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);

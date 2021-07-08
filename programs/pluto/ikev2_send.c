@@ -92,7 +92,7 @@ void record_v2_message(struct ike_sa *ike,
  * Send a payload.
  */
 
-bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
+bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 		    struct pbs_out *outs)
 {
 	diag_t d;
@@ -406,7 +406,7 @@ static bool emit_v2N_spi_response(struct response *response,
 {
 	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 
-	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	enum isakmp_xchg_type exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 
 	/*
@@ -515,7 +515,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 	passert(notify_name != NULL); /* must be known */
 
-	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	enum isakmp_xchg_type exchange_type = md->hdr.isa_xchg;
 	const char *exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 	if (exchange_name == NULL) {
 		/* when responding to crud, name may not be known */

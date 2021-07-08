@@ -219,7 +219,7 @@ void process_packet(struct msg_digest **mdp)
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
-		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+		    enum_name(&isakmp_xchg_type_names, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will release_any_md(mdp) */
@@ -236,7 +236,7 @@ void process_packet(struct msg_digest **mdp)
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
-		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+		    enum_name(&isakmp_xchg_type_names, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg);
 		ikev2_process_packet(md);
 		break;

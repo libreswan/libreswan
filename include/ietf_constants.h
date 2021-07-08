@@ -769,7 +769,7 @@ enum next_payload_types_ikev2 {
  * defines "DHless RSA Encryption" as 6.
  */
 
-enum isakmp_xchg_types {
+enum isakmp_xchg_type {
 	ISAKMP_XCHG_NONE = 0,
 	ISAKMP_XCHG_BASE = 1,
 	ISAKMP_XCHG_IDPROT = 2, /* ID Protection */

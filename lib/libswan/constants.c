@@ -486,7 +486,7 @@ static enum_names exchange_names_doi_and_v2 = {
 	&ikev2_exchange_names
 };
 
-enum_names exchange_names_ikev1orv2 = {
+enum_names isakmp_xchg_type_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	ARRAY_REF(exchange_name_ikev1),
@@ -2600,7 +2600,7 @@ static const enum_names *en_checklist[] = {
 	&payload_names_ikev1orv2,
 	&ikev2_last_proposal_desc,
 	&ikev1_exchange_names,
-	&exchange_names_ikev1orv2,
+	&isakmp_xchg_type_names,
 	&ikev1_protocol_names,
 	&isakmp_transformid_names,
 	&ah_transformid_names,

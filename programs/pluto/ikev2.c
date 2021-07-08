@@ -1385,7 +1385,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * 1) exchange type received?
 	 * 2) is it initiator or not?
 	 */
-	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
 	/*
 	 * If the IKE SA initiator sent the message then this end is
@@ -1687,7 +1687,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
-	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
 	/*
 	 * XXX: Unlike find_v2_state_transition(), the below scans

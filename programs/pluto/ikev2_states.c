@@ -289,7 +289,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 
 	LLOG_JAMBUF(RC_LOG_SERIOUS | log_stream, logger, buf) {
-		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+		const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 		jam(buf, " message");

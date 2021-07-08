@@ -303,7 +303,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("payload_names_ikev1orv2", &payload_names_ikev1orv2);
 	test_enums("ikev1_exchange_names", &ikev1_exchange_names);
 	test_enums("ikev2_exchange_names", &ikev2_exchange_names);
-	test_enums("exchange_names_ikev1orv2", &exchange_names_ikev1orv2);
+	test_enums("isakmp_xchg_type_names", &isakmp_xchg_type_names);
 	test_enums("ikev1_protocol_names", &ikev1_protocol_names);
 	test_enums("isakmp_transformid_names", &isakmp_transformid_names);
 	test_enums("ah_transformid_names", &ah_transformid_names);

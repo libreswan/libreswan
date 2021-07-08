@@ -81,7 +81,7 @@ stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
 					      struct pbs_out *outpbs)
 {
 	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
-	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
+	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
 	struct connection *c = child->sa.st_connection;
 
 	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -491,7 +491,7 @@ stf_status process_v2_childs_sa_payload(const char *what,
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
+	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
 	struct ipsec_proto_info *proto_info =
 		ikev2_child_sa_proto_info(child, c->policy);
 	stf_status ret;

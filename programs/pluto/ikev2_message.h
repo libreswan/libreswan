@@ -28,7 +28,7 @@ struct end;
 
 pb_stream open_v2_message(struct pbs_out *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
-			  enum isakmp_xchg_types exchange_type);
+			  enum isakmp_xchg_type exchange_type);
 
 struct v2SK_payload {
 	/* public */

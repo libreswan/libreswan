@@ -122,7 +122,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
  * message id up front, but only when one was available?
  */
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
-			      enum isakmp_xchg_types ix,
+			      enum isakmp_xchg_type ix,
 			      const struct state_v2_microcode *transition,
 			      v2_msgid_pending_cb *callback);
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);

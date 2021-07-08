@@ -463,7 +463,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 struct v2_msgid_pending {
 	so_serial_t st_serialno;
-	const enum isakmp_xchg_types ix;
+	const enum isakmp_xchg_type ix;
 	v2_msgid_pending_cb *cb;
 	const struct state_v2_microcode *transition;
 	struct v2_msgid_pending *next;
@@ -494,7 +494,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 }
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
-			      enum isakmp_xchg_types ix,
+			      enum isakmp_xchg_type ix,
 			      const struct state_v2_microcode *transition,
 			      v2_msgid_pending_cb *callback)
 {

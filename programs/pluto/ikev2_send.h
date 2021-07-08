@@ -113,7 +113,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
  * for the sub-payload).
  */
 
-bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
+bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 		    struct pbs_out *outs);
 
 /* emit a v2 Notification payload, with optional SA and optional sub-payload */

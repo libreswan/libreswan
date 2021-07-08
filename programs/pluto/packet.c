@@ -81,7 +81,7 @@ static field_desc isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
 	{ ft_mnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
-	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &exchange_names_ikev1orv2 },
+	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &isakmp_xchg_type_names },
 	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &isakmp_flag_names },
 	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
 	{ ft_len, 32 / BITS_PER_BYTE, "length", NULL },
