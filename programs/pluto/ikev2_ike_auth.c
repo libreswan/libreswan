@@ -1502,7 +1502,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * the error back?); instead just let the child
 		 * linger.
 		 */
-		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but Child SA error occured");
+		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
 		/* CLEARLY A HACK */
 		passert(ike->sa.st_v2_larval_initiator_sa != NULL);
 		struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
