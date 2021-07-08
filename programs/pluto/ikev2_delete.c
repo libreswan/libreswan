@@ -161,7 +161,8 @@ void submit_v2_delete_exchange(struct ike_sa *ike, struct state *st)
 			  finite_states[transition->state]->short_name);
 		return;
 	}
-	v2_msgid_queue_initiator(ike, st, ISAKMP_v2_INFORMATIONAL,
+	v2_msgid_queue_initiator(ike, IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL,
+				 st, ISAKMP_v2_INFORMATIONAL,
 				 transition, NULL);
 }
 

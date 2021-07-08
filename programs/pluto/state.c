@@ -885,7 +885,8 @@ void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
 		intmax_t unack = (initiator->sent - initiator->recv);
 		if (unack >= ike->sa.st_connection->ike_window) {
 			dbg_v2_msgid(ike, st, "next initiator (send delete) blocked by outstanding response (unack %jd). add delete to Q", unack);
-			v2_msgid_queue_initiator(ike, st, ISAKMP_v2_INFORMATIONAL,
+			v2_msgid_queue_initiator(ike, pexpect_child_sa(st), st,
+						 ISAKMP_v2_INFORMATIONAL,
 						 NULL, ikev2_send_delete_continue);
 			return;
 		}
