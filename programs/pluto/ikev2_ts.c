@@ -1229,7 +1229,7 @@ bool v2_process_ts_request(struct child_sa *child,
 			int pathlen;	/* value ignored */
 
 			/* conns created as aliases from the same source have identical ID/CA */
-			if (!(c->connalias != NULL && streq(c->connalias, d->connalias))) {
+			if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
 				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 					match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
 					trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
