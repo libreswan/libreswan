@@ -904,7 +904,7 @@ IETF registry enum_names:
          short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
 
-  exchange_names_ikev1orv2:
+  isakmp_xchg_type_names:
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
          search ISAKMP_XCHG_NONE: OK
