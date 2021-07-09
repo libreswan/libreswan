@@ -127,7 +127,9 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
 		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
-	llog_sa(RC_LOG, child, "initiating delete");
+	llog_sa(RC_LOG, child,
+		"initiating delete of Child SA using IKE SA #%lu",
+		ike->sa.st_serialno);
 	return STF_OK;
 }
 
