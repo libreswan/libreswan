@@ -822,56 +822,30 @@ static void send_delete(struct state *st)
 	}
 }
 
-static void delete_state_log(struct state *st, struct state *cur_state)
-{
-	struct connection *const c = st->st_connection;
-	bool del_notify = !impair.send_no_delete && should_send_delete(st);
-
-	if (cur_state != NULL && cur_state == st) {
-		/*
-		* Don't log state and connection if it is the same as
-		* the message prefix.
-		*/
-		deltatime_buf dtb;
-		log_state(RC_LOG, st, "deleting state (%s) aged %ss and %ssending notification",
-			  st->st_state->name,
-			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			  del_notify ? "" : "NOT ");
-	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		deltatime_buf dtb;
-		log_state(RC_LOG, cur_state, "deleting other state #%lu (%s) aged %ss and %ssending notification",
-			  st->st_serialno, st->st_state->name,
-			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			  del_notify ? "" : "NOT ");
-	} else {
-		deltatime_buf dtb;
-		connection_buf cib;
-		log_state(RC_LOG, cur_state,
-			  "deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-			  st->st_serialno, st->st_state->name,
-			  pri_connection(c, &cib),
-			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			  del_notify ? "" : "NOT ");
-	}
-
-	dbg("%s state #%lu: %s(%s) => delete",
-	    IS_IKE_SA(st) ? "parent" : "child", st->st_serialno,
-	    st->st_state->short_name,
-	    enum_name(&state_category_names, st->st_state->category));
-}
-
 static void delete_state_tail(struct state *st);
-
-static void delete_other_state(struct state *st, struct state *other_state)
-{
-	delete_state_log(other_state, st);
-	delete_state_tail(other_state);
-}
 
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	delete_state_log(st, st);
+	lset_t rc_flags;
+	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
+		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	} else {
+		/*
+		 * Don't log state and connection if it is the same as
+		 * the message prefix.
+		 */
+		rc_flags = RC_LOG;
+	}
+	if (rc_flags != LEMPTY) {
+		bool del_notify = !impair.send_no_delete && should_send_delete(st);
+		deltatime_buf dtb;
+		log_state(rc_flags, st, "deleting state (%s) aged %ss and %ssending notification",
+			  st->st_state->name,
+			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+			  del_notify ? "" : "NOT ");
+	}
+
 	delete_state_tail(st);
 }
 
@@ -2712,24 +2686,48 @@ void v2_migrate_children(struct ike_sa *from, struct child_sa *to)
 static bool delete_ike_family_child(struct state *st, void *unused_context UNUSED)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
+	passert(&ike->sa != st); /* only children */
+	passert(ike != NULL);
+
 	/*
 	 * Transfer the IKE SA's whack-fd to the child so that the
 	 * child can also log its demise; better abstraction?
 	 */
-	if (ike != NULL &&
-	    &ike->sa != st &&
-	    fd_p(ike->sa.st_logger->global_whackfd)) {
+	if (fd_p(ike->sa.st_logger->global_whackfd)) {
 		close_any(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = fd_dup(ike->sa.st_logger->global_whackfd, HERE);
 	}
 	switch (st->st_ike_version) {
+
 	case IKEv1:
+	{
+		struct connection *const c = st->st_connection;
+		bool del_notify = !impair.send_no_delete && should_send_delete(st);
+		if (ike->sa.st_connection == st->st_connection) {
+			deltatime_buf dtb;
+			llog_sa(RC_LOG, ike, "deleting other state #%lu (%s) aged %ss and %ssending notification",
+				st->st_serialno, st->st_state->name,
+				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+				del_notify ? "" : "NOT ");
+		} else {
+			deltatime_buf dtb;
+			connection_buf cib;
+			llog_sa(RC_LOG, ike,
+				"deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+				st->st_serialno, st->st_state->name,
+				pri_connection(c, &cib),
+				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
+				del_notify ? "" : "NOT ");
+		}
 		break;
+	}
+
 	case IKEv2:
 		st->st_dont_send_delete = true;
 		break;
 	}
-	delete_other_state(&ike->sa, st/*other*/);
+
+	delete_state_tail(st);
 	return false; /* keep going */
 }
 
