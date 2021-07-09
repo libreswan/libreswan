@@ -135,50 +135,41 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	 * just created event was being deleted).
 	 */
 	struct state *st;
-	enum event_type type;
+	enum event_type event_type;
 	const char *event_name;
+	deltatime_t event_delay;
+
 	{
 		struct pluto_event *ev = arg;
-		dbg("%s: processing event@%p", __func__, ev);
 		passert(ev != NULL);
-		type = ev->ev_type;
-		event_name = enum_name_short(&timer_event_names, type);
+		event_type = ev->ev_type;
+		event_name = enum_name_short(&timer_event_names, event_type);
+		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
+		passert(event_name != NULL);
 
-		esb_buf b;
-		dbg("handling event %s for %s state #%lu",
-		    enum_show(&timer_event_names, type, &b),
-		    (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
-		    st->st_serialno);
-
-#if 0
-		/*
-		 * XXX: this line, which is a merger of the above two
-		 * lines, leaks into the expected test output causing
-		 * failures.
-		 */
 		dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
 		    __func__, event_name, ev,
 		    IS_IKE_SA(st) ? "IKE" : "CHILD",
 		    st->st_serialno, st->st_state->short_name);
-#endif
 
-		struct pluto_event **evp = state_event(st, type);
+		struct pluto_event **evp = state_event(st, event_type);
 		if (evp == NULL) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu has no .st_event field for %s",
-				     st->st_serialno, enum_name(&timer_event_names, type));
+				     st->st_serialno, event_name);
 			return;
 		}
+
 		if (*evp != ev) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu .st_event is %p but should be %s-pe@%p",
-				     st->st_serialno, *evp,
-				     enum_name(&timer_event_names, (*evp)->ev_type),
-				     ev);
+				     st->st_serialno, *evp, event_name, ev);
 			return;
 		}
+
+		/* everything useful has been extracted */
 		delete_pluto_event(evp);
 		arg = ev = *evp = NULL; /* all gone */
 	}
@@ -194,7 +185,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	 * We'll eventually either schedule a new event, or delete the
 	 * state.
 	 */
-	switch (type) {
+	switch (event_type) {
 
 	case EVENT_v2_ADDR_CHANGE:
 		dbg("#%lu IKEv2 local address change", st->st_serialno);
@@ -238,12 +229,12 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	case EVENT_v1_REPLACE_IF_USED:
 		switch (st->st_ike_version) {
 		case IKEv2:
-			pexpect(type == EVENT_SA_REPLACE);
+			pexpect(event_type == EVENT_SA_REPLACE);
 			v2_event_sa_replace(st);
 			break;
 		case IKEv1:
-			pexpect(type == EVENT_SA_REPLACE ||
-				type == EVENT_v1_REPLACE_IF_USED);
+			pexpect(event_type == EVENT_SA_REPLACE ||
+				event_type == EVENT_v1_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
 			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
@@ -252,7 +243,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				/* not very interesting: no need to replace */
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
-			} else if (type == EVENT_v1_REPLACE_IF_USED &&
+			} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
 				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
@@ -365,15 +356,16 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		/*
 		 * The state failed to complete within a reasonable
 		 * time, or the state failed but was left to live for
-		 * a while so re-transmits could work.  Either way,
-		 * time to delete it.
+		 * a while so re-transmits could work, or the state is
+		 * being garbage collected.  Either way, time to
+		 * delete it.
 		 */
-		passert(st != NULL);
-		deltatime_t timeout = (st->st_ike_version == IKEv2 ? MAXIMUM_RESPONDER_WAIT_DELAY :
-				       st->st_connection->r_timeout);
-		deltatime_buf dtb;
-		log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
-			      str_deltatime(timeout, &dtb));
+		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
+			/* Don't bother logging 0 delay */
+			deltatime_buf dtb;
+			log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
+				  str_deltatime(event_delay, &dtb));
+		}
 		/*
 		 * If no other reason has been given then this is a
 		 * timeout.
@@ -428,7 +420,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 
 
 	default:
-		bad_case(type);
+		bad_case(event_type);
 	}
 
 	statetime_stop(&start, "%s() %s", __func__, event_name);
