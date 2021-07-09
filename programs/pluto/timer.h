@@ -31,9 +31,11 @@ struct show;
 struct pluto_event {
 	enum event_type ev_type;        /* Event type if time based */
 	const char *ev_name;		/* Name or enum_name(ev_type) */
-	struct state   *ev_state;       /* Pointer to relevant state (if any) */
+	struct state *ev_state;     	/* Pointer to relevant state (if any) */
 	struct event *ev;               /* libevent data structure */
-	monotime_t ev_time;
+	monotime_t ev_epoch;		/* it was scheduled ... */
+	deltatime_t ev_delay;		/* ... with the delay ... */
+	monotime_t ev_time;		/* ... so should happen after ...*/
 	struct pluto_event *next;
 };
 

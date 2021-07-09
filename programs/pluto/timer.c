@@ -496,6 +496,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 			     enum_name(&timer_event_names, type));
 		return;
 	}
+
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
 		pexpect_fail(st->st_logger, HERE,
@@ -510,7 +511,9 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	ev->ev_type = type;
 	ev->ev_name = en;
 	ev->ev_state = st;
-	ev->ev_time = monotime_add(mononow(), delay);
+	ev->ev_epoch = mononow();
+	ev->ev_delay = delay;
+	ev->ev_time = monotime_add(ev->ev_epoch, delay);
 	*evp = ev;
 
 	deltatime_buf buf;
