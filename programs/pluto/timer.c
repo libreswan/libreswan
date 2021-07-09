@@ -384,6 +384,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 * to resurect things and/or send messages.  What's
 		 * needed is a lower-level discard_state() that just
 		 * does its job.
+		 *
+		 * XXX: for IKEv2, it looks like delete_state() will
+		 * stop spontaneously sending messages (and hopefully
+		 * spontaneously deleting IKE families).
 		 */
 		delete_state(st);
 		break;
