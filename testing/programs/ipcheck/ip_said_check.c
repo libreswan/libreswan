@@ -95,8 +95,7 @@ static void check_str_said(void)
 		diag_t d = ttosaid(shunk1(t->in), &sa);
 		if (d != NULL) {
 			if (t->out != NULL) {
-				FAIL("ttosaid(%s) unexpectedly failed: %s", t->in, str_diag(d));
-				pfree_diag(&d);
+				DIAG_FAIL(&d, "ttosaid(%s) unexpectedly failed: ", t->in);
 			} else {
 				/* all is good */
 				pfree_diag(&d);
