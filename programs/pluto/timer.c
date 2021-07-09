@@ -66,6 +66,7 @@
 #include "iface.h"
 #include "ikev2_liveness.h"
 #include "ikev2_mobike.h"
+#include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
 struct pluto_event **state_event(struct state *st, enum event_type type)
 {
@@ -303,53 +304,52 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
 			   !IS_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
-			dbg("un-established partial CHILD SA timeout (%s)",
-			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
+			dbg("un-established partial Child SA timeout (SA expired)");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			log_state(RC_LOG, st, "%s %s (%s)", satype,
-				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-				      (c->policy & POLICY_DONT_REKEY) ?
-				      "--dontrekey" : "LATEST!");
+			log_state(RC_LOG, st, "%s SA_ expired (%s)", satype,
+				  (c->policy & POLICY_DONT_REKEY) ? "--dontrekey" : "LATEST!");
 		}
 
 		/* Delete this state object.  It must be in the hash table. */
 		switch (st->st_ike_version) {
 		case IKEv2:
-			if (IS_IKE_SA(st)) {
+		{
+			struct ike_sa *ike = ike_sa(st, HERE);
+			if (ike == NULL) {
+				/*
+				 * XXX: SNAFU with IKE SA replacing
+				 * itself (but not deleting its
+				 * children?)  simultaneous to a CHILD
+				 * SA failing to establish and
+				 * attempting to delete / replace
+				 * itself?
+				 *
+				 * Because these things are
+				 * not serialized it is hard
+				 * to say.
+				 */
+				log_state(RC_LOG_SERIOUS, st, "Child SA lost its IKE SA #%lu",
+					  st->st_clonedfrom);
+				delete_state(st);
+				st = NULL;
+			} else if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
 				dbg("IKEv2 SA expired, delete whole family");
-				delete_ike_family(pexpect_ike_sa(st),
-						  PROBABLY_SEND_DELETE);
+				passert(&ike->sa == st);
+				delete_ike_family(ike, PROBABLY_SEND_DELETE);
 				/* note: no md->st to clear */
+				st = NULL;
+			} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+				/* note: no md->st to clear */
+				submit_v2_delete_exchange(ike, pexpect_child_sa(st));
+				st = NULL;
 			} else {
-				struct ike_sa *ike = ike_sa(st, HERE);
-				if (ike == NULL) {
-					/*
-					 * XXX: SNAFU with IKE SA
-					 * replacing itself (but not
-					 * deleting its children?)
-					 * simultaneous to a CHILD SA
-					 * failing to establish and
-					 * attempting to delete /
-					 * replace itself?
-					 *
-					 * Because these things are
-					 * not serialized it is hard
-					 * to say.
-					 */
-					log_state(RC_LOG_SERIOUS, st, "CHILD SA #%lu lost its IKE SA",
-					       st->st_serialno);
-					delete_state(st);
-					st = NULL;
-				} else {
-					/* note: no md->st to clear */
-					passert(st != &ike->sa);
-					ikev2_schedule_next_child_delete(st, ike);
-					st = NULL;
-				}
+				delete_state(st);
+				st = NULL;
 			}
 			break;
+		}
 		case IKEv1:
 			delete_state(st);
 			/* note: no md->st to clear */

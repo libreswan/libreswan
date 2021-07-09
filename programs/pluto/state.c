@@ -860,42 +860,6 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	    enum_name(&state_category_names, st->st_state->category));
 }
 
-static v2_msgid_pending_cb ikev2_send_delete_continue;
-
-static stf_status ikev2_send_delete_continue(struct ike_sa *ike UNUSED,
-		struct state *st,
-		struct msg_digest *md UNUSED)
-{
-	if (should_send_delete(st)) {
-		send_delete(st);
-		st->st_dont_send_delete = true;
-		dbg("%s Marked IPSEC state #%lu to suppress sending delete notify", __func__, st->st_serialno);
-	}
-
-	delete_state(st);
-	return STF_OK;
-}
-
-void ikev2_schedule_next_child_delete(struct state *st, struct ike_sa *ike)
-{
-	if (st->st_ike_version == IKEv2 &&
-	    should_send_delete(st)) {
-		/* pre delete check for slot to send delete message */
-		struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-		intmax_t unack = (initiator->sent - initiator->recv);
-		if (unack >= ike->sa.st_connection->ike_window) {
-			dbg_v2_msgid(ike, st, "next initiator (send delete) blocked by outstanding response (unack %jd). add delete to Q", unack);
-			v2_msgid_queue_initiator(ike, pexpect_child_sa(st), st,
-						 ISAKMP_v2_INFORMATIONAL,
-						 NULL, ikev2_send_delete_continue);
-			return;
-		}
-	}
-	delete_state(st);
-	st = NULL;
-	v2_expire_unused_ike_sa(ike);
-}
-
 static void delete_state_tail(struct state *st);
 
 static void delete_other_state(struct state *st, struct state *other_state)
