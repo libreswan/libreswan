@@ -466,7 +466,6 @@ struct v2_msgid_pending {
 	so_serial_t owner;
 	so_serial_t who_for;
 	const enum isakmp_xchg_type ix;
-	v2_msgid_pending_cb *cb;
 	const struct v2_state_transition *transition;
 	struct v2_msgid_pending *next;
 };
@@ -497,8 +496,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      struct state *owner, enum isakmp_xchg_type ix,
-			      const struct v2_state_transition *transition,
-			      v2_msgid_pending_cb *callback)
+			      const struct v2_state_transition *transition)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno :
@@ -527,7 +525,6 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 		.who_for = who_for,
 		.owner = (owner != NULL ? owner->st_serialno : SOS_NOBODY),
 		.ix = ix,
-		.cb = callback,
 		.transition = transition,
 		.next = (*pp),
 	};
@@ -585,33 +582,19 @@ static void initiate_next(struct state *ike_sa, void *context UNUSED)
 
 		dbg_v2_msgid(ike, owner, "resuming SA using IKE SA (unack %jd)", unack);
 
-		if (pending.transition != NULL) {
-			/*
-			 * try to check that the transition still applies ...
-			 */
-			if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-				log_state(RC_LOG, owner, "dropping transition as IKE SA is not established: %s",
-					  pending.transition->story);
-			} else if (pending.transition->state != owner->st_state->kind) {
-				log_state(RC_LOG, owner, "dropping transition as it does not match current state: %s",
-					  pending.transition->story);
-			} else {
-				set_v2_transition(owner, pending.transition, HERE);
-				stf_status status = pending.transition->processor(ike, child, NULL);
-				complete_v2_state_transition(owner, NULL/*initiate so no md*/, status);
-			}
-		} else if (IS_CHILD_SA_ESTABLISHED(owner)) {
-			/*
-			 * this is a continuation of delete message.
-			 * shortcut complete_v2_state_transition()
-			 * to call complete_v2_state_transition, need more work
-			 */
-			pending.cb(ike, owner, NULL);
-			v2_msgid_schedule_next_initiator(ike);
+		/*
+		 * try to check that the transition still applies ...
+		 */
+		if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+			log_state(RC_LOG, owner, "dropping transition as IKE SA is not established: %s",
+				  pending.transition->story);
+		} else if (pending.transition->state != owner->st_state->kind) {
+			log_state(RC_LOG, owner, "dropping transition as it does not match current state: %s",
+				  pending.transition->story);
 		} else {
-			struct msg_digest *md = unsuspend_md(owner);
-			complete_v2_state_transition(owner, md, pending.cb(ike, owner, md));
-			release_any_md(&md);
+			set_v2_transition(owner, pending.transition, HERE);
+			stf_status status = pending.transition->processor(ike, child, NULL);
+			complete_v2_state_transition(owner, NULL/*initiate so no md*/, status);
 		}
 	}
 }

@@ -41,10 +41,6 @@ enum message_role;
  * that struct contains everything.
  */
 
-typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
-				       struct state *st,
-				       struct msg_digest *md);
-
 struct v2_msgid_window {
 	monotime_t last_contact;  /* received a message */
 	intmax_t sent;
@@ -123,9 +119,10 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
  */
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
-			      struct state *owner, enum isakmp_xchg_type ix,
-			      const struct v2_state_transition *transition,
-			      v2_msgid_pending_cb *callback);
+			      struct state *owner, /*XXX: used by CREATE_CHILD_SA*/
+			      enum isakmp_xchg_type ix,
+			      const struct v2_state_transition *transition);
+
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);
