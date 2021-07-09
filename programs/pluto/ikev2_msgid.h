@@ -24,7 +24,7 @@
 struct state;
 struct ike_sa;
 struct msg_digest;
-struct state_v2_microcode;
+struct v2_state_transition;
 enum message_role;
 
 /*
@@ -124,7 +124,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      struct state *owner, enum isakmp_xchg_type ix,
-			      const struct state_v2_microcode *transition,
+			      const struct v2_state_transition *transition,
 			      v2_msgid_pending_cb *callback);
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 

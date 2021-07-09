@@ -135,7 +135,7 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct state_v2_microcode v2_delete_ike = {
+static const struct v2_state_transition v2_delete_ike = {
 	.story = "delete IKE SA",
 	.state = STATE_V2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_IKESA_DEL,
@@ -144,7 +144,7 @@ static const struct state_v2_microcode v2_delete_ike = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode v2_delete_child = {
+static const struct v2_state_transition v2_delete_child = {
 	.story = "delete CHILD SA",
 	.state = STATE_V2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -155,7 +155,7 @@ static const struct state_v2_microcode v2_delete_child = {
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
-	const struct state_v2_microcode *transition =
+	const struct v2_state_transition *transition =
 		(child != NULL ? &v2_delete_child : &v2_delete_ike);
 	v2_msgid_queue_initiator(ike, child, NULL, ISAKMP_v2_INFORMATIONAL,
 				 transition, NULL);

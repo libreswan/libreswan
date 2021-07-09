@@ -490,7 +490,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 }
 
 struct ike_sa *new_v2_ike_state(struct connection *c,
-				const struct state_v2_microcode *transition,
+				const struct v2_state_transition *transition,
 				enum sa_role sa_role,
 				const ike_spi_t ike_initiator_spi,
 				const ike_spi_t ike_responder_spi,
@@ -1629,7 +1629,7 @@ struct child_sa *new_v2_child_state(struct connection *c,
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
 	change_state(&child->sa, kind);
-	const struct state_v2_microcode *transition = child->sa.st_state->v2_transitions;
+	const struct v2_state_transition *transition = child->sa.st_state->v2_transitions;
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
 	return child;
@@ -3052,7 +3052,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 }
 #endif
 
-void set_v2_transition(struct state *st, const struct state_v2_microcode *transition,
+void set_v2_transition(struct state *st, const struct v2_state_transition *transition,
 		       where_t where)
 {
 	LSWDBGP(DBG_BASE, buf) {

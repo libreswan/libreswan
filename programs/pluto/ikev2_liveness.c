@@ -32,7 +32,7 @@
 #include "pluto_stats.h"
 #include "timer.h"
 #include "server.h"
-#include "ikev2.h"			/* for struct state_v2_microcode */
+#include "ikev2.h"			/* for struct v2_state_transition */
 #include "ikev2_liveness.h"
 #include "state_db.h"			/* for state_by_serialno() */
 #include "ikev2_states.h"
@@ -210,7 +210,7 @@ void liveness_check(struct state *st)
  * XXX: where to put this?
  */
 
-static const struct state_v2_microcode v2_liveness_probe = {
+static const struct v2_state_transition v2_liveness_probe = {
 	.story = "liveness probe",
 	.state = STATE_V2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -222,7 +222,7 @@ static const struct state_v2_microcode v2_liveness_probe = {
 
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
-	const struct state_v2_microcode *transition = &v2_liveness_probe;
+	const struct v2_state_transition *transition = &v2_liveness_probe;
 	if (ike->sa.st_state->kind != transition->state) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be %s; liveness for #%lu ignored",

@@ -467,7 +467,7 @@ struct v2_msgid_pending {
 	so_serial_t who_for;
 	const enum isakmp_xchg_type ix;
 	v2_msgid_pending_cb *cb;
-	const struct state_v2_microcode *transition;
+	const struct v2_state_transition *transition;
 	struct v2_msgid_pending *next;
 };
 
@@ -497,7 +497,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      struct state *owner, enum isakmp_xchg_type ix,
-			      const struct state_v2_microcode *transition,
+			      const struct v2_state_transition *transition,
 			      v2_msgid_pending_cb *callback)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;

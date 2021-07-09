@@ -163,7 +163,7 @@ struct ikev2_expected_payloads {
 	v2_notification_t notification;
 };
 
-struct state_v2_microcode {
+struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const enum state_kind state;
 	const enum state_kind next_state;
@@ -203,7 +203,7 @@ void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposa
 				ike_spi_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct state_v2_microcode *svm,
+			      const struct v2_state_transition *svm,
 			      enum state_kind new_state);
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
@@ -222,7 +222,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
-		 const struct state_v2_microcode *transition);
+		 const struct v2_state_transition *transition);
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name);

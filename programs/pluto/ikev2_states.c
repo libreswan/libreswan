@@ -191,7 +191,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
+const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
 							  const struct finite_state *state,
 							  struct msg_digest *md)
 {
@@ -199,7 +199,7 @@ const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
-		const struct state_v2_microcode *transition = &state->v2_transitions[i];
+		const struct v2_state_transition *transition = &state->v2_transitions[i];
 		dbg("  trying %s", transition->story);
 		/* message type? */
 		if (transition->recv_type != md->hdr.isa_xchg) {
@@ -337,7 +337,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 }
 
-void jam_v2_transition(struct jambuf *buf, const struct state_v2_microcode *transition)
+void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition)
 {
 	if (transition == NULL) {
 		jam(buf, "NULL");

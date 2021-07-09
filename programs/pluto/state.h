@@ -59,7 +59,7 @@
 #include "crypt_mac.h"
 #include "show.h"
 
-struct state_v2_microcode;
+struct v2_state_transition;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
@@ -284,7 +284,7 @@ struct finite_state {
 	lset_t flags;
 	enum state_category category;
 	const struct state_v1_microcode *v1_transitions;
-	const struct state_v2_microcode *v2_transitions;
+	const struct v2_state_transition *v2_transitions;
 	size_t nr_transitions;
 };
 
@@ -415,8 +415,8 @@ struct state {
 	struct child_sa *st_v2_larval_initiator_sa;
 	struct child_sa *st_v2_larval_responder_sa;
 
-	const struct state_v2_microcode *st_v2_last_transition;
-	const struct state_v2_microcode *st_v2_transition;
+	const struct v2_state_transition *st_v2_last_transition;
+	const struct v2_state_transition *st_v2_transition;
 
 	/* collected received fragments */
 	struct v2_ike_rfrags *st_v2_rfrags;
@@ -779,7 +779,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
 struct state *ikev1_duplicate_state(struct connection *c, struct state *st, struct fd *whackfd);
 
 struct ike_sa *new_v2_ike_state(struct connection *c,
-				const struct state_v2_microcode *transition,
+				const struct v2_state_transition *transition,
 				enum sa_role sa_role,
 				const ike_spi_t ike_initiator_spi,
 				const ike_spi_t ike_responder_spi,
@@ -794,10 +794,10 @@ struct child_sa *new_v2_child_state(struct connection *c,
 				    struct fd *whackfd);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
-void set_v2_transition(struct state *st, const struct state_v2_microcode *transition, where_t where);
+void set_v2_transition(struct state *st, const struct v2_state_transition *transition, where_t where);
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where);
 void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition);
-void jam_v2_transition(struct jambuf *buf, const struct state_v2_microcode *transition);
+void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
 
 extern void init_states(void);
 extern void rehash_state(struct state *st,

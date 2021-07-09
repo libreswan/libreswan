@@ -63,9 +63,9 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 						  const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *payloads);
 
-const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
-							  const struct finite_state *state,
-							  struct msg_digest *md);
+const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
+							   const struct finite_state *state,
+							   struct msg_digest *md);
 
 void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors);

@@ -189,7 +189,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct state_v2_microcode *svm,
+			      const struct v2_state_transition *svm,
 			      enum state_kind new_state)
 {
 	struct connection *c = ike->sa.st_connection;

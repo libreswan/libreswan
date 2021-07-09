@@ -326,7 +326,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * transition?
 		 */
 		const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
-		const struct state_v2_microcode *transition =
+		const struct v2_state_transition *transition =
 			find_v2_state_transition(md->md_logger, start_state, md);
 		if (transition == NULL) {
 			/* already logged */
@@ -465,7 +465,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		/* transition? */
-		const struct state_v2_microcode *transition =
+		const struct v2_state_transition *transition =
 			find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md);
 		if (transition == NULL) {
 			/* already logged */
@@ -517,7 +517,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 
 	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
-	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
+	const struct v2_state_transition *transition = &fs->v2_transitions[0];
 	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
 					      ike_initiator_spi(), zero_ike_spi,
 					      policy, try, logger->global_whackfd);

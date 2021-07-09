@@ -195,7 +195,7 @@
  * it seems to work.
  */
 
-static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
+static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 #define req_clear_payloads message_payloads.required   /* required unencrypted payloads (allows just one) for received packet */
 #define opt_clear_payloads message_payloads.optional   /* optional unencrypted payloads (none or one) for received packet */
@@ -648,7 +648,7 @@ void init_ikev2(void)
 	 * Iterate over the state transitions filling in missing bits
 	 * and checking for consistency.
 	 */
-	for (struct state_v2_microcode *t = v2_state_microcode_table;
+	for (struct v2_state_transition *t = v2_state_transition_table;
 	     t->state < STATE_IKEv2_ROOF; t++) {
 
 		passert(t->state >= STATE_IKEv2_FLOOR);
@@ -927,7 +927,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 }
 
 static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
-					    const struct state_v2_microcode *svm)
+					    const struct v2_state_transition *svm)
 {
 	/*
 	 * XXX: Still a mess.  Should call processor with the IKE SA.
@@ -1597,7 +1597,7 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 static void hack_error_transition(struct state *st, struct msg_digest *md)
 {
 	passert(md != NULL);
-	const struct state_v2_microcode *transition;
+	const struct v2_state_transition *transition;
 	const struct finite_state *state = st->st_state;
 	switch (state->kind) {
 	case STATE_PARENT_R1:
@@ -1641,7 +1641,7 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		if (/*pexpect*/(state->nr_transitions > 0)) {
 			transition = &state->v2_transitions[state->nr_transitions - 1];
 		} else {
-			static const struct state_v2_microcode undefined_transition = {
+			static const struct v2_state_transition undefined_transition = {
 				.story = "suspect message",
 				.state = STATE_UNDEFINED,
 				.next_state = STATE_UNDEFINED,
@@ -1701,8 +1701,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * lookup.
 	 */
 
-	const struct state_v2_microcode *svm;
-	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
+	const struct v2_state_transition *svm;
+	for (svm = v2_state_transition_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 
 		/*
@@ -2089,7 +2089,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
-		 const struct state_v2_microcode *svm)
+		 const struct v2_state_transition *svm)
 {
 	md->v1_st = st;
 	md->svm = svm;
@@ -2265,7 +2265,7 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 }
 
 static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
-				   const struct state_v2_microcode *transition)
+				   const struct v2_state_transition *transition)
 {
 	/* initialize the the new IKE SA. reset and message ID */
 	to->sa.st_clonedfrom = SOS_NOBODY;
@@ -2284,7 +2284,7 @@ static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 }
 
 static void success_v2_state_transition(struct state *st, struct msg_digest *md,
-					const struct state_v2_microcode *transition)
+					const struct v2_state_transition *transition)
 {
 	/*
 	 * XXX: the transition's from state can lie - it may be
@@ -2762,15 +2762,15 @@ void complete_v2_state_transition(struct state *st,
 	 * squeeze both the IKE and CHILD transitions into MD.ST.
 	 */
 #if 0
-	const struct state_v2_microcode *transition = st->st_v2_transition;
+	const struct v2_state_transition *transition = st->st_v2_transition;
 	if (!pexpect(transition != NULL) && md != NULL) {
 		transition = md->svm;
 	}
 #else
-	const struct state_v2_microcode *transition = (md != NULL && md->svm != NULL ? md->svm :
+	const struct v2_state_transition *transition = (md != NULL && md->svm != NULL ? md->svm :
 						       st->st_v2_transition);
 #endif
-	static const struct state_v2_microcode undefined_transition = {
+	static const struct v2_state_transition undefined_transition = {
 		.story = "suspect message",
 		.state = STATE_UNDEFINED,
 		.next_state = STATE_UNDEFINED,
