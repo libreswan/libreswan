@@ -351,9 +351,10 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	 * XXX: Hack: don't install an inbound spdb entry when tunnel
 	 * mode?
 	 */
-	if (dir == IPSEC_DIR_INBOUND && ET != ET_IPIP) {
-		dbg("%s() ignoring inbound non-tunnel %s eroute entry", __func__,
-			sa_proto->name);
+	if (dir == IPSEC_DIR_INBOUND &&
+	    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
+		dbg("%s() ignoring inbound non-tunnel %d eroute entry",
+		    __func__, esatype);
 		return true;
 	}
 
@@ -368,7 +369,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 
 	policylen = sizeof(*policy_struct);
 
-	if (policy == IPSEC_POLICY_IPSEC) {
+	if (policy == IPSEC_POLICY_IPSEC && encap != NULL) {
 		ip_sockaddr local_sa = sockaddr_from_address(*src_host);
 		ip_sockaddr remote_sa = sockaddr_from_address(*dst_host);
 
@@ -376,20 +377,11 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 
 		ir->sadb_x_ipsecrequest_len = (sizeof(struct sadb_x_ipsecrequest) +
 					       local_sa.len + remote_sa.len);
-		dbg("%s() sa_proto is %d %s", __func__, sa_proto->ipproto, sa_proto->name);
 		/*pexpect(encap != NULL)?*/
-		if (encap != NULL) {
-			ir->sadb_x_ipsecrequest_mode = (encap->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
-							encap->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
-							0);
-			ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
-		} else if (sa_proto->ipproto == ET_IPIP) {
-			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
-			ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
-		} else {
-			ir->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
-			ir->sadb_x_ipsecrequest_proto = sa_proto->ipproto;
-		}
+		ir->sadb_x_ipsecrequest_mode = (encap->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
+						encap->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
+						0);
+		ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
 		dbg("%s() sadb mode %d proto %d",
 		    __func__, ir->sadb_x_ipsecrequest_mode, ir->sadb_x_ipsecrequest_proto);
 		ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
