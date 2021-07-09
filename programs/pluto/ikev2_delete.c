@@ -136,7 +136,7 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
 	 */
 	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
 	llog_sa(RC_LOG, child,
-		"initiating delete of %s Child SA using IKE SA #%lu",
+		"deleting %s Child SA using IKE SA #%lu",
 		established ? "established" : "larval",
 		ike->sa.st_serialno);
 	if (!established) {
