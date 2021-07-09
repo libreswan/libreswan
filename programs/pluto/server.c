@@ -105,7 +105,7 @@ char *pluto_vendorid;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
-static struct pluto_event *pluto_events_head = NULL;
+static struct state_event *pluto_events_head = NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -464,10 +464,10 @@ static void list_signal_handlers(struct show *s)
  * Pluto events.
  */
 
-static struct pluto_event *free_event_entry(struct pluto_event **evp)
+static struct state_event *free_event_entry(struct state_event **evp)
 {
-	struct pluto_event *e = *evp;
-	struct pluto_event *next = e->next;
+	struct state_event *e = *evp;
+	struct state_event *next = e->next;
 
 	/* unlink this pluto_event from the list */
 	if (e->ev != NULL) {
@@ -493,7 +493,7 @@ void free_server(void)
 		return;
 	}
 
-	struct pluto_event **head = &pluto_events_head;
+	struct state_event **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
 	free_global_timers();
@@ -523,21 +523,21 @@ void free_server(void)
 #endif
 }
 
-void link_pluto_event_list(struct pluto_event *e) {
+void link_pluto_event_list(struct state_event *e) {
 	e->next = pluto_events_head;
 	pluto_events_head = e;
 }
 
 /* delete pluto event (if any); leave *evp == NULL */
-void delete_pluto_event(struct pluto_event **evp)
+void delete_pluto_event(struct state_event **evp)
 {
 	if (*evp != NULL) {
 		if ((*evp)->ev_state != NULL) {
 			pexpect((*evp)->next == NULL);
 			free_event_entry(evp);
 		} else {
-			for (struct pluto_event **pp = &pluto_events_head; ; ) {
-				struct pluto_event *p = *pp;
+			for (struct state_event **pp = &pluto_events_head; ; ) {
+				struct state_event *p = *pp;
 
 				passert(p != NULL);
 
@@ -855,16 +855,16 @@ void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
 }
 
 /*
- * XXX: Some of the callers save the struct pluto_event reference but
+ * XXX: Some of the callers save the struct state_event reference but
  * some do not.
  */
-struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
+struct state_event *add_fd_read_event_handler(evutil_socket_t fd,
 					      event_callback_fn cb, void *arg,
 					      const char *name)
 {
 	passert(in_main_thread());
 	pexpect(fd >= 0);
-	struct pluto_event *e = alloc_thing(struct pluto_event, name);
+	struct state_event *e = alloc_thing(struct state_event, name);
 	dbg_alloc("pe", e, HERE);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
@@ -889,7 +889,7 @@ void list_timers(struct show *s, monotime_t now)
 	list_global_timers(s, now);
 	list_signal_handlers(s);
 
-	for (struct pluto_event *ev = pluto_events_head;
+	for (struct state_event *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		pexpect(ev->ev_state == NULL);
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -1129,7 +1129,7 @@ void stop_server(server_stopped_cb cb)
 	event_base_loopbreak(pluto_eb);
 }
 
-bool ev_before(struct pluto_event *pev, deltatime_t delay)
+bool ev_before(struct state_event *pev, deltatime_t delay)
 {
 	struct timeval timeout;
 	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {

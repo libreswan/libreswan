@@ -684,7 +684,7 @@ struct state {
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct pluto_event *st_event;		/* timer event for this state object */
+	struct state_event *st_event;		/* timer event for this state object */
 
 	/* state list entry */
 	struct list_entry st_serialno_list_entry;
@@ -698,10 +698,10 @@ struct state {
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
-	struct pluto_event *st_liveness_event;	/* IKEv2 only event */
-	struct pluto_event *st_send_xauth_event;
-	struct pluto_event *st_addr_change_event;
-	struct pluto_event *st_retransmit_event;
+	struct state_event *st_liveness_event;	/* IKEv2 only event */
+	struct state_event *st_send_xauth_event;
+	struct state_event *st_addr_change_event;
+	struct state_event *st_retransmit_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -709,7 +709,7 @@ struct state {
 	uint32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
 	uint32_t st_dpd_peerseqno;             /* global variables */
 	uint32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct pluto_event *st_dpd_event;	/* backpointer for IKEv1 DPD events */
+	struct state_event *st_dpd_event;	/* backpointer for IKEv1 DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */

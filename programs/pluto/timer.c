@@ -68,7 +68,7 @@
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
-struct pluto_event **state_event(struct state *st, enum event_type type)
+struct state_event **state_event(struct state *st, enum event_type type)
 {
 	/*
 	 * Return a pointer to the event in the state object.
@@ -140,7 +140,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	deltatime_t event_delay;
 
 	{
-		struct pluto_event *ev = arg;
+		struct state_event *ev = arg;
 		passert(ev != NULL);
 		event_type = ev->ev_type;
 		event_name = enum_name_short(&timer_event_names, event_type);
@@ -154,7 +154,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		    IS_IKE_SA(st) ? "IKE" : "CHILD",
 		    st->st_serialno, st->st_state->short_name);
 
-		struct pluto_event **evp = state_event(st, event_type);
+		struct state_event **evp = state_event(st, event_type);
 		if (evp == NULL) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu has no .st_event field for %s",
@@ -447,7 +447,7 @@ void delete_event(struct state *st)
 {
 	struct liveness {
 		const char *name;
-		struct pluto_event **event;
+		struct state_event **event;
 	} events[] = {
 		{ "st_event", &st->st_event, },
 	};
@@ -480,7 +480,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	const char *en = enum_name(&timer_event_names, type);
 
-	struct pluto_event **evp = state_event(st, type);
+	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_*event field for %s",
@@ -498,7 +498,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		delete_pluto_event(evp);
 	}
 
-	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
+	struct state_event *ev = alloc_thing(struct state_event, en);
 	dbg("%s: newref %s-pe@%p", __func__, en, ev);
 	ev->ev_type = type;
 	ev->ev_name = en;
@@ -521,7 +521,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
  */
 void event_delete(enum event_type type, struct state *st)
 {
-	struct pluto_event **evp = state_event(st, type);
+	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_event field for %s",
@@ -548,7 +548,7 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 			     enum event_type event)
 {
 	/* sanity checks */
-	struct pluto_event **evp = state_event(st, event);
+	struct state_event **evp = state_event(st, event);
 	if (evp == NULL) {
 		llog(RC_COMMENT, logger, "%s is not a valid event",
 		     enum_name(&timer_event_names, event));

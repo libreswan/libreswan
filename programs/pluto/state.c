@@ -1835,7 +1835,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 		return TRUE;
 
 	monotime_t now = mononow();
-	const struct pluto_event *ev = ike->sa.st_event;
+	const struct state_event *ev = ike->sa.st_event;
 	deltatime_t lifetime = monotimediff(ev->ev_time, now);
 
 	if (deltatime_cmp(lifetime, >, PARENT_MIN_LIFE_DELAY) &&
@@ -2966,7 +2966,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 }
 
 static void list_state_event(struct show *s, struct state *st,
-			     struct pluto_event *pe, monotime_t now)
+			     struct state_event *pe, monotime_t now)
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);

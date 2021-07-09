@@ -28,7 +28,7 @@ struct fd;
 struct logger;
 struct show;
 
-struct pluto_event {
+struct state_event {
 	enum event_type ev_type;        /* Event type if time based */
 	const char *ev_name;		/* Name or enum_name(ev_type) */
 	struct state *ev_state;     	/* Pointer to relevant state (if any) */
@@ -36,13 +36,13 @@ struct pluto_event {
 	monotime_t ev_epoch;		/* it was scheduled ... */
 	deltatime_t ev_delay;		/* ... with the delay ... */
 	monotime_t ev_time;		/* ... so should happen after ...*/
-	struct pluto_event *next;
+	struct state_event *next;
 };
 
 extern void event_schedule(enum event_type type, deltatime_t delay,
 			   struct state *st);
 void event_delete(enum event_type type, struct state *st);
-struct pluto_event **state_event(struct state *st, enum event_type type);
+struct state_event **state_event(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);

@@ -408,7 +408,7 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_
 	if (IS_IKE_SA_ESTABLISHED(rst) || IS_CHILD_SA_ESTABLISHED(rst)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
 		monotime_t now = mononow();
-		const struct pluto_event *ev = rst->st_event;
+		const struct state_event *ev = rst->st_event;
 		if (ev != NULL)
 			lifetime = monotimediff(ev->ev_time, now);
 	}
