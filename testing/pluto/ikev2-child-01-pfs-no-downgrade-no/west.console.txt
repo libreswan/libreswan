@@ -67,6 +67,7 @@ west #
  # pfs=no downgrade=no - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-00
+002 "westnet-eastnet-ikev2-00" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2-00" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-00" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2-00" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -77,6 +78,7 @@ west #
  # pfs=no downgrade=yes - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-01
+002 "westnet-eastnet-ikev2-01" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2-01" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-01" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-ikev2-01" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -93,6 +95,7 @@ west #
  # pfs=yes downgrade=yes - connect
 west #
  ipsec auto --up westnet-eastnet-ikev2-11
+002 "westnet-eastnet-ikev2-11" #5: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2-11" #5: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2-11" #5: negotiated connection [192.0.111.0-192.0.111.255:0-65535 0] -> [192.0.211.0-192.0.211.255:0-65535 0]
 004 "westnet-eastnet-ikev2-11" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}

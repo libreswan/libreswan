@@ -30,6 +30,7 @@ road #
  # not matched by peer, should fail
 road #
  ipsec auto --up road/0x2
+002 "road/0x2" #3: initiating Child SA using IKE SA #1
 1v2 "road/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x1" #1: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 200 "road/0x2" #3: state transition 'Process CREATE_CHILD_SA failure response' failed
@@ -37,6 +38,7 @@ road #
  # matched by peer
 road #
  ipsec auto --up road/0x3
+002 "road/0x3" #4: initiating Child SA using IKE SA #1
 1v2 "road/0x3" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "road/0x3" #4: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0]
 004 "road/0x3" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
@@ -44,6 +46,7 @@ road #
  # not matched by peer, should fail
 road #
  ipsec auto --up road/0x4
+002 "road/0x4" #5: initiating Child SA using IKE SA #1
 1v2 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
 003 "road/0x1" #1: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 200 "road/0x4" #5: state transition 'Process CREATE_CHILD_SA failure response' failed

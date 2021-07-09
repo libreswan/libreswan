@@ -28,6 +28,7 @@ west #
 done
 west #
  ipsec auto --up two
+002 "two" #4: initiating Child SA using IKE SA #1
 1v2 "two" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "two" #4: negotiated connection [192.0.11.0-192.0.11.255:0-65535 6] -> [192.0.22.0-192.0.22.255:88-88 6]
 004 "two" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP2048 NATOA=none NATD=none DPD=passive}

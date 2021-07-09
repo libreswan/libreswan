@@ -26,11 +26,13 @@ west #
 004 "rekey" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up rekey1
+002 "rekey1" #3: initiating Child SA using IKE SA #1
 1v2 "rekey1" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "rekey1" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "rekey1" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up rekey2
+002 "rekey2" #4: initiating Child SA using IKE SA #1
 1v2 "rekey2" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "rekey2" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "rekey2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
@@ -61,7 +63,8 @@ west #
 002 "rekey1" #6: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "rekey1" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "rekey1" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "rekey1" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+002 "rekey1" #3: initiating delete of established Child SA using IKE SA #5
+002 "rekey1" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "rekey1" #3: ESP traffic information: in=0B out=0B
 west #
  ipsec whack --rekey-ipsec --name rekey
@@ -70,7 +73,8 @@ west #
 002 "rekey" #7: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "rekey" #7: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "rekey" #7: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "rekey" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+002 "rekey" #2: initiating delete of established Child SA using IKE SA #5
+002 "rekey" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "rekey" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec whack --rekey-ipsec --name rekey2
@@ -79,7 +83,8 @@ west #
 002 "rekey2" #8: rekeyed #4 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "rekey2" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "rekey2" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "rekey2" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+002 "rekey2" #4: initiating delete of established Child SA using IKE SA #5
+002 "rekey2" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "rekey2" #4: ESP traffic information: in=0B out=0B
 west #
  echo done
