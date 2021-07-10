@@ -22,7 +22,6 @@ west #
 004 "conf" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "conf": terminating SAs using this connection
-002 "conf" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "conf" #2: ESP traffic information: in=84B out=84B
 002 "conf" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "conf": terminating SAs using this connection

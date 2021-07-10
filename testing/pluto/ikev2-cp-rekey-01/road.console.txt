@@ -41,7 +41,6 @@ road #
 002 "eastnet-any"[1] 192.1.2.23 #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "eastnet-any"[1] 192.1.2.23 #3: negotiated connection [100.64.13.2-100.64.13.2:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "eastnet-any"[1] 192.1.2.23 #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "eastnet-any"[1] 192.1.2.23 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 road #
  # not using: ipsec auto --up eastnet-any

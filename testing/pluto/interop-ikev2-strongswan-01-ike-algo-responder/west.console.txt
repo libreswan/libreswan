@@ -38,7 +38,6 @@ west #
 004 "ike=chacha20poly1305-sha2-dh19" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
-002 "ike=chacha20poly1305-sha2-dh19" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ike=chacha20poly1305-sha2-dh19" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
