@@ -152,6 +152,7 @@
 #include "ikev1_xauth.h"
 #include "retransmit.h"
 #include "nat_traversal.h"
+#include "ikev1_nat.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "host_pair.h"

@@ -74,6 +74,7 @@
 
 #include "vendor.h"
 #include "nat_traversal.h"
+#include "ikev1_nat.h"
 #include "virtual_ip.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"

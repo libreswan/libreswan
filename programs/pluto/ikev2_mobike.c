@@ -35,7 +35,7 @@
 #include "log.h"
 #include "demux.h"
 #include "connections.h"
-#include "nat_traversal.h"
+#include "ikev2_nat.h"
 #include "ikev2_send.h"
 #include "iface.h"
 #include "kernel.h"

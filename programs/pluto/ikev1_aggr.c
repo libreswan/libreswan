@@ -38,6 +38,7 @@
 #include "ikev1.h"
 #include "vendor.h"
 #include "nat_traversal.h"
+#include "ikev1_nat.h"
 #include "pluto_x509.h"
 #include "fd.h"
 #include "host_pair.h"

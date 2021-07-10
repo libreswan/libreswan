@@ -44,6 +44,7 @@
 #include "connections.h"
 #include "crypt_ke.h"
 #include "nat_traversal.h"
+#include "ikev2_nat.h"
 #include "unpack.h"
 #include "ikev2_message.h"
 #include "crypt_dh.h"
