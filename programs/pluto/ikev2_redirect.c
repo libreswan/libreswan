@@ -545,6 +545,30 @@ void initiate_redirect(struct state *ike_sa)
 				     logger);
 }
 
+/* helper function for send_v2_informational_request() */
+
+static bool add_redirect_payload(struct state *st, struct pbs_out *pbs)
+{
+	return emit_redirect_notification(HUNK_AS_SHUNK(st->st_active_redirect_gw), pbs);
+}
+
+static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
+					       struct child_sa *child UNUSED,
+					       struct msg_digest *null_md UNUSED)
+{
+	return record_v2_informational_request("active REDIRECT informational request",
+					       ike, &ike->sa, add_redirect_payload);
+}
+
+static const struct v2_state_transition v2_redirect_ike_transition = {
+	.story = "redirect IKE SA",
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	.send = MESSAGE_REQUEST,
+	.processor = send_v2_redirect_ike_request,
+	.timeout_event =  EVENT_RETAIN,
+};
+
 void find_states_and_redirect(const char *conn_name, char *ard_str,
 			      struct logger *logger)
 {
@@ -556,14 +580,17 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL || streq(conn_name, st->st_connection->name)))
-		{
+		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL ||
+						  streq(conn_name, st->st_connection->name))) {
+			struct ike_sa *ike = pexpect_ike_sa(st);
 			shunk_t active_dest = get_redirect_dest(&active_dests);
-			st->st_active_redirect_gw = active_dest;
-			dbg("successfully found a state (#%lu) with connection name \"%s\"",
-				st->st_serialno, conn_name);
+			free_chunk_content(&ike->sa.st_active_redirect_gw);
+			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
+			dbg("successfully found an IKE state (#%lu) with connection name \"%s\"",
+			    ike->sa.st_serialno, conn_name);
 			cnt++;
-			send_active_redirect_in_informational(st);
+			v2_msgid_queue_initiator(ike, NULL, NULL, ISAKMP_v2_INFORMATIONAL,
+						 &v2_redirect_ike_transition);
 		}
 	}
 
@@ -583,36 +610,6 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 		}
 	}
 	free_redirect_dests(&active_dests);
-}
-
-/* helper function for send_v2_informational_request() */
-static payload_emitter_fn add_redirect_payload;
-static bool add_redirect_payload(struct state *st, pb_stream *pbs)
-{
-	return emit_redirect_notification(st->st_active_redirect_gw, pbs);
-}
-
-void send_active_redirect_in_informational(struct state *st)
-{
-	struct ike_sa *ike = ike_sa(st, HERE);
-	stf_status e = record_v2_informational_request("active REDIRECT informational request",
-						       ike, st, add_redirect_payload);
-	if (e == STF_OK) {
-		send_recorded_v2_message(ike, "active REDIRECT informational request",
-					 MESSAGE_REQUEST);
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code
-		 * should instead let success_v2_state_transition()
-		 * deal with things.
-		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s hacking around record'n'send bypassing send queue",
-		     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
-	}
-
-	endpoint_buf b;
-	dbg("redirection %ssent to peer %s", e == STF_OK ? "" : "not ",
-	    str_endpoint(&st->st_remote_endpoint, &b));
 }
 
 stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,

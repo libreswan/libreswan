@@ -1216,6 +1216,7 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_v1_acquired_sec_label);
 
 	free_chunk_content(&st->st_no_ppk_auth);
+	free_chunk_content(&st->st_active_redirect_gw);
 
 	free_logger(&st->st_logger, HERE);
 	messup(st);
