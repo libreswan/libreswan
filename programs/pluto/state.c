@@ -1006,6 +1006,12 @@ void delete_state_tail(struct state *st)
 		 */
 		send_delete(st);
 	} else if (IS_CHILD_SA_ESTABLISHED(st) || IS_IPSEC_SA_ESTABLISHED(st)) {
+		/*
+		 * XXX: state is being deleted so why bother?  Makes
+		 * code that follows more complicated.
+		 *
+		 * Perhaps because some recursion is going on?
+		 */
 		change_state(st, STATE_CHILDSA_DEL);
 	}
 
@@ -1036,10 +1042,24 @@ void delete_state_tail(struct state *st)
 	/*
 	 * tell kernel to delete any IPSEC SA
 	 */
-	if (IS_IPSEC_SA_ESTABLISHED(st) ||
-		IS_CHILD_SA_ESTABLISHED(st) ||
-		st->st_state->kind == STATE_CHILDSA_DEL) {
+	switch (st->st_ike_version) {
+	case IKEv1:
+		if (IS_IPSEC_SA_ESTABLISHED(st) ||
+		    /* XXX: see problem above */
+		    st->st_state->kind == STATE_CHILDSA_DEL) {
 			delete_ipsec_sa(st);
+		}
+		break;
+	case IKEv2:
+		if (IS_CHILD_SA_ESTABLISHED(st) ||
+		    /* XXX: see problem above */
+		    st->st_state->kind == STATE_CHILDSA_DEL ||
+		    /* XXX: initator; regardless of state */
+		    (st->st_sa_role == SA_INITIATOR &&
+		     st->st_establishing_sa == IPSEC_SA)) {
+			delete_ipsec_sa(st);
+		}
+		break;
 	}
 
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
