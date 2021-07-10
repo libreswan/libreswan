@@ -27,7 +27,6 @@ west #
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 003 "labeled" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-002 "labeled" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "labeled" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
