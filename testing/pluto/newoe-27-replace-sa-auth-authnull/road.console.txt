@@ -117,7 +117,6 @@ road #
 road #
  ipsec auto --delete authenticated
 002 "authenticated": terminating SAs using this connection
-002 "authenticated" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "authenticated" #2: ESP traffic information: in=84B out=84B
 002 "authenticated" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 road #
