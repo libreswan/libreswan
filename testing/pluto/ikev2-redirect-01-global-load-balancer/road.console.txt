@@ -50,7 +50,6 @@ road #
 road #
  ipsec auto --delete road-east
 002 "road-east": terminating SAs using this connection
-002 "road-east" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "road-east" #3: ESP traffic information: in=84B out=84B
 002 "road-east" #3: down-client output: restoring resolvconf
 002 "road-east" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification

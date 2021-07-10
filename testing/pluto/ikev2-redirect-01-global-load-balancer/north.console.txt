@@ -96,7 +96,6 @@ north #
 north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection
-002 "north-east" #7: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "north-east" #7: ESP traffic information: in=84B out=84B
 002 "north-east" #7: down-client output: restoring resolvconf
 002 "north-east" #6: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
