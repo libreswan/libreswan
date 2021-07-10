@@ -298,7 +298,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			dbg("un-established partial Child SA timeout (SA expired)");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			log_state(RC_LOG, st, "%s SA_ expired (%s)", satype,
+			log_state(RC_LOG, st, "%s SA expired (%s)", satype,
 				  (c->policy & POLICY_DONT_REKEY) ? "--dontrekey" : "LATEST!");
 		}
 
