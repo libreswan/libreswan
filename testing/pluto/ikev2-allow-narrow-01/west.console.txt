@@ -56,7 +56,6 @@ west #
 003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 003 "westnet-eastnet-ikev2" #2: IKE_AUTH response contained the Child SA error notification TS_UNACCEPTABLE
 003 "westnet-eastnet-ikev2" #1: IKE SA established but responder rejected Child SA request
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 west #
  echo done
 done

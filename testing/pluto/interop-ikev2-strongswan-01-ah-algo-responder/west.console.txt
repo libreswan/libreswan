@@ -48,7 +48,6 @@ west #
 004 "ah=sha1" #4: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ah=sha1": terminating SAs using this connection
-002 "ah=sha1" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ah=sha1" #4: AH traffic information: in=84B out=84B
 002 "ah=sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ah=sha1": terminating SAs using this connection

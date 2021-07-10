@@ -49,7 +49,6 @@ west #
 004 "ikev2-esp=aes-sha1-modp4096" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP4096 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.100.254 192.0.200.254 is alive
 002 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
-002 "ikev2-esp=aes-sha1-modp4096" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-esp=aes-sha1-modp4096" #3: ESP traffic information: in=84B out=84B
 002 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
 west #

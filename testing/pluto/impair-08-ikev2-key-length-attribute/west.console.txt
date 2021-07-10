@@ -82,7 +82,6 @@ west #
 004 "aes128" #9: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
-002 "aes128" #9: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "aes128" #9: ESP traffic information: in=84B out=84B
 002 "aes128" #8: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "aes128": terminating SAs using this connection
@@ -104,7 +103,6 @@ west #
 004 "aes128" #11: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
-002 "aes128" #11: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "aes128" #11: ESP traffic information: in=84B out=84B
 002 "aes128" #10: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "aes128": terminating SAs using this connection
@@ -200,7 +198,6 @@ west #
 004 "3des" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
-002 "3des" #22: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "3des" #22: ESP traffic information: in=84B out=84B
 002 "3des" #21: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "3des": terminating SAs using this connection
@@ -224,7 +221,6 @@ west #
 004 "3des" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
-002 "3des" #24: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "3des" #24: ESP traffic information: in=84B out=84B
 002 "3des" #23: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "3des": terminating SAs using this connection
