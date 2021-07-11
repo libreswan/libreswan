@@ -641,10 +641,21 @@ void v2_event_sa_replace(struct state *st)
 {
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
+	/*
+	 * Is ST obsolete?
+	 *
+	 * When ST and connection serial numbers match, or whn
+	 * connection has no serial number SOS_NOBODY is returned.
+	 */
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
 		/*
-		 * For some reason the rekey, above, hasn't completed.
+		 * This state is somehow newer then the established
+		 * state as identified by the connection.
+		 *
+		 * Presumably it is a failed rekey (see above?) that
+		 * didn't complete.
+		 *
 		 * For an IKE SA blow away the entire family
 		 * (including the in-progress rekey).  For a CHILD SA
 		 * this will delete the old SA but leave the rekey

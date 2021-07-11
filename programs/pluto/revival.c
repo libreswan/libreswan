@@ -40,6 +40,7 @@
 #include "revival.h"
 #include "state_db.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "ipsec_doi.h"
 
 /*
  * Revival mechanism: keep track of connections
@@ -109,6 +110,23 @@ void add_revival_if_needed(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
+	if (exiting_pluto) {
+		dbg("skilling revival: pluto is going down");
+		return;
+	}
+
+	if (IS_CHILD_SA_ESTABLISHED(st) &&
+	    c->newest_ipsec_sa == st->st_serialno &&
+	    (c->policy & POLICY_UP)) {
+		struct ike_sa *ike = ike_sa(st, HERE);
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: replace CHILD SA #%lu now",
+			  st->st_serialno);
+		st->st_replace_margin = deltatime(0);
+		ipsecdoi_replace(st, 1);
+		return;
+	}
+
 	if (!IS_IKE_SA(st)) {
 		dbg("skipping revival: not an IKE SA");
 		return;
@@ -121,11 +139,6 @@ void add_revival_if_needed(struct state *st)
 
 	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
 		dbg("skipping revival: POLICY_DONT_REKEY enabled");
-		return;
-	}
-
-	if (exiting_pluto) {
-		dbg("skilling revival: pluto is going down");
 		return;
 	}
 

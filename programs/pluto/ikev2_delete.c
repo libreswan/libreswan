@@ -186,31 +186,6 @@ void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 				 transition);
 }
 
-static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
-{
-	/* the CHILD's connection; not IKE's */
-	struct connection *c = child->sa.st_connection;
-
-	if (c->newest_ipsec_sa == child->sa.st_serialno &&
-	    (c->policy & POLICY_UP)) {
-		/*
-		 * CHILD SA for a permanent connection that we have
-		 * initiated.  Replace it now.  Useful if the other
-		 * peer is rebooting.
-		 */
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: replace CHILD SA #%lu now",
-			  child->sa.st_serialno);
-		child->sa.st_replace_margin = deltatime(0);
-		event_force(EVENT_SA_REPLACE, &child->sa);
-	} else {
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: delete CHILD SA #%lu now",
-			  child->sa.st_serialno);
-		delete_state(&child->sa);
-	}
-}
-
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
 			  struct v2SK_payload *sk)
 {
@@ -365,7 +340,8 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 							  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
 							  ntohl(spi));
 					}
-					delete_or_replace_child(ike, child);
+					delete_state(&child->sa);
+					child = NULL;
 				}
 			} /* for each spi */
 
@@ -485,7 +461,8 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-					delete_or_replace_child(ike, dst);
+					delete_state(&dst->sa);
+					dst = NULL;
 				}
 			} /* for each spi */
 			break;
