@@ -902,7 +902,8 @@ void delete_state_tail(struct state *st)
 		}
 	}
 
-	if (IS_IPSEC_SA_ESTABLISHED(st)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st) ||
+	    IS_CHILD_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
 		if (!get_sa_info(st, FALSE, NULL)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
@@ -1005,14 +1006,6 @@ void delete_state_tail(struct state *st)
 		 * ikev2_delete_out doesn't really accomplish this.
 		 */
 		send_delete(st);
-	} else if (IS_CHILD_SA_ESTABLISHED(st) || IS_IPSEC_SA_ESTABLISHED(st)) {
-		/*
-		 * XXX: state is being deleted so why bother?  Makes
-		 * code that follows more complicated.
-		 *
-		 * Perhaps because some recursion is going on?
-		 */
-		change_state(st, STATE_CHILDSA_DEL);
 	}
 
 	delete_event(st); /* delete any pending timer event */
@@ -1044,16 +1037,12 @@ void delete_state_tail(struct state *st)
 	 */
 	switch (st->st_ike_version) {
 	case IKEv1:
-		if (IS_IPSEC_SA_ESTABLISHED(st) ||
-		    /* XXX: see problem above */
-		    st->st_state->kind == STATE_CHILDSA_DEL) {
+		if (IS_IPSEC_SA_ESTABLISHED(st)) {
 			delete_ipsec_sa(st);
 		}
 		break;
 	case IKEv2:
 		if (IS_CHILD_SA_ESTABLISHED(st) ||
-		    /* XXX: see problem above */
-		    st->st_state->kind == STATE_CHILDSA_DEL ||
 		    /* XXX: initator; regardless of state */
 		    (st->st_sa_role == SA_INITIATOR &&
 		     st->st_establishing_sa == IPSEC_SA)) {
