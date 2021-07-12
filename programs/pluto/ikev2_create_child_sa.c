@@ -641,35 +641,39 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
  * CREATE_CHILD_SA create child request.
  */
 
-static bool find_pending_phase2(const so_serial_t psn,
-				const struct connection *c,
-				lset_t ok_states)
+static bool is_already_pending_child(struct ike_sa *ike, const struct connection *c)
 {
-	struct state *best = NULL;
-	int n = 0;
+	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
+				       LELEM(STATE_V2_NEW_CHILD_I0) |
+				       LELEM(STATE_V2_NEW_CHILD_R0) |
+				       /* due to a quirk in initiator duplication next one is also needed */
+				       /* XXX: still true? */
+				       LELEM(STATE_PARENT_I2));
 
-	passert(psn >= SOS_FIRST);
+	struct state_query query = {
+		.where = HERE,
+		.ike_version = IKEv2,
+		.ike_spis = &ike->sa.st_ike_spis,
+		/* only children */
+		.ike = ike,
+	};
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		if (LHAS(ok_states, st->st_state->kind) &&
-		    IS_CHILD_SA(st) &&
-		    st->st_clonedfrom == psn &&
-		    /* not instances */
-		    streq(st->st_connection->name, c->name)) {
-			n++;
-			if (best == NULL || best->st_serialno < st->st_serialno)
-				best = st;
+	for (struct state *st = next_state(NULL, &query);
+	     st != NULL; st = next_state(st, &query)) {
+		/* larval child state? */
+		if (!LHAS(pending_states, st->st_state->kind)) {
+			continue;
 		}
+		/* not an instance, but a connection? */
+		if (!streq(st->st_connection->name, c->name)) {
+			continue;
+		}
+		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",
+		     st->st_serialno, ike->sa.st_serialno);
+		return true;
 	}
 
-	if (n > 0) {
-		dbg("connection %s has %d pending IPsec negotiations ike #%lu last child state #%lu",
-		    c->name, n, psn, best->st_serialno);
-	}
-
-	return best != NULL;
+	return false;
 }
 
 void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
@@ -678,9 +682,7 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 shunk_t sec_label,
 					 struct fd *whackfd)
 {
-
-	if (find_pending_phase2(ike->sa.st_serialno,
-				c, IPSECSA_PENDING_STATES)) {
+	if (is_already_pending_child(ike, c)) {
 		return;
 	}
 
@@ -1082,7 +1084,6 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct stat
  * The initiate proper only happens later when the exchange is added
  * to the message queue.
  */
-
 
 struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 {

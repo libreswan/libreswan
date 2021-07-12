@@ -680,12 +680,6 @@ extern struct keywords sa_role_names;
 
 #endif
 
-#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
-				LELEM(STATE_V2_NEW_CHILD_I0) |		\
-				LELEM(STATE_V2_NEW_CHILD_R0) |		\
-				/* due to a quirk in initiator duplication next one is also needed */ \
-				LELEM(STATE_PARENT_I2))
-
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1
 #define IS_IPSEC_SA_ESTABLISHED(ST) (IS_CHILD_SA(ST) &&			\
