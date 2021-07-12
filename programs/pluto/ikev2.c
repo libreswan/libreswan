@@ -971,16 +971,6 @@ static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
  * record'n'send bugs).
  */
 
-struct wip_filter {
-	msgid_t msgid;
-};
-
-static bool v2_sa_by_initiator_wip_p(struct state *st, void *context)
-{
-	const struct wip_filter *filter = context;
-	return st->st_v2_msgid_wip.initiator == filter->msgid;
-}
-
 static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid_t msgid)
 {
 	/*
@@ -988,30 +978,26 @@ static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid
 	 * mean reference counting?  Should this also check that MSGID
 	 * is within the IKE SA's window?
 	 */
-	struct wip_filter filter = {
-		.msgid = msgid,
-	};
 	struct state *st;
-	if (v2_sa_by_initiator_wip_p(&ike->sa, &filter)) {
+	if (ike->sa.st_v2_msgid_wip.initiator == msgid) {
+		/* short-cut */
 		st = &ike->sa;
 	} else {
-		st = state_by_ike_spis(IKEv2,
-				       NULL/*ignore clonedfrom*/,
-				       NULL/*ignore v1 msgid*/,
-				       NULL/*ignore role*/,
-				       &ike->sa.st_ike_spis,
-				       v2_sa_by_initiator_wip_p, &filter, __func__);
+		struct state_query query = {
+			.where = HERE,
+			.ike_version = IKEv2,
+			.ike_spis = &ike->sa.st_ike_spis,
+		};
+		for (st = next_state(NULL, &query); st != NULL; st = next_state(st, &query)) {
+			if (st->st_v2_msgid_wip.initiator == msgid) {
+				break;
+			}
+		}
 	}
 	pexpect(st == NULL ||
 		st->st_clonedfrom == SOS_NOBODY ||
 		st->st_clonedfrom == ike->sa.st_serialno);
 	return st;
-}
-
-static bool v2_sa_by_responder_wip_p(struct state *st, void *context)
-{
-	const struct wip_filter *filter = context;
-	return st->st_v2_msgid_wip.responder == filter->msgid;
 }
 
 static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid_t msgid)
@@ -1021,19 +1007,21 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
 	 * mean reference counting?  Should this also check that MSGID
 	 * is within the IKE SA's window?
 	 */
-	struct wip_filter filter = {
-		.msgid = msgid,
-	};
 	struct state *st;
-	if (v2_sa_by_responder_wip_p(&ike->sa, &filter)) {
+	if (ike->sa.st_v2_msgid_wip.responder == msgid) {
+		/* short-cut */
 		st = &ike->sa;
 	} else {
-		st = state_by_ike_spis(IKEv2,
-				       NULL/*ignore clonedfrom*/,
-				       NULL/*ignore v1 msgid*/,
-				       NULL/*ignore role*/,
-				       &ike->sa.st_ike_spis,
-				       v2_sa_by_responder_wip_p, &filter, __func__);
+		struct state_query query = {
+			.where = HERE,
+			.ike_version = IKEv2,
+			.ike_spis = &ike->sa.st_ike_spis,
+		};
+		for (st = next_state(NULL, &query); st != NULL; st = next_state(st, &query)) {
+			if (st->st_v2_msgid_wip.responder == msgid) {
+				break;
+			}
+		}
 	}
 	pexpect(st == NULL ||
 		st->st_clonedfrom == SOS_NOBODY ||
