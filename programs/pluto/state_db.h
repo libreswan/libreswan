@@ -72,6 +72,7 @@ struct state *state_by_connection(struct connection *c,
 				  state_by_predicate *predicate /*optional*/,
 				  void *predicate_context,
 				  const char *reason);
+
 void rehash_state_connection(struct state *st);
 
 struct state *state_by_reqid(reqid_t reqid,
@@ -79,5 +80,33 @@ struct state *state_by_reqid(reqid_t reqid,
 			     void *predicate_context,
 			     const char *reason);
 void rehash_state_reqid(struct state *st);
+
+/*
+ * For querying and iterating over the state DB.
+ *
+ * - calling with NULL ST returns first match
+ * - re-calling with non-NULL ST returns next match
+ *
+ * Also:
+ *
+ * - option parameters are only matched when non-NULL
+ * - ST can be deleted between two calls
+ * - certain queries, such as using IKE_SPIs, are faster
+ */
+
+struct state_query {
+	/* required */
+	where_t where;
+	enum ike_version ike_version;
+	/* optional; non-NULL implies must match */
+	const ike_spis_t *ike_spis;
+	const struct ike_sa *ike;
+	/* internal */
+	struct {
+		struct list_entry *next;
+	} internal;
+};
+
+struct state *next_state(struct state *st, struct state_query *query);
 
 #endif
