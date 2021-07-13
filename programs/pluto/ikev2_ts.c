@@ -896,9 +896,41 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
  *
  * Return false when required sec_label is missing or bad; or
  * sec_label encountered when it wasn't expected.
+ *
+ * The code calls sec_label_within_range() to check that the "source
+ * context has the access permission for the specified class on the
+ * "target context" (see selinux_check_access()):
+ *
+ * - for the initiator searching for a matching template connection to
+ *   instantiate, the "source context" is the sec_label from acquire,
+ *   and the "target context" is the sec_label in the template
+ *   connection.
+ *
+ * - for the responder searching for a template connection to match
+ *   the on-wire TS, the "source context" is the sec_label included in
+ *   the traffic selector, and the "target context" is (again) the
+ *   sec_label in the template connection.
+ *
+ * However, when the initiator gets back the responder's accepted TS
+ * containing a sec_label, the initiator only checks it is identical
+ * to what was sent out in the initiator's TS:
+ *
+ * - the RFC makes vague references to narrowing; but what that means
+ *   for sec_labels isn't clear
+ *
+ * - one interpretation, that the responder's "source context" has
+ *   "access permission" for the initiator's "source context" seems to
+ *   always fail when enforcing is enabled (suspect
+ *   selinux_check_access() requires a "ptarget context").
  */
 
-static bool check_tss_sec_label(const struct traffic_selectors *tss,
+enum sec_label_compare {
+	TS_WITHIN_CONNECTION_SEC_LABEL = 1,
+	TS_EQUALS_CONNECTION_SEC_LABEL,
+};
+
+static bool check_tss_sec_label(enum sec_label_compare compare,
+				const struct traffic_selectors *tss,
 				chunk_t connection_sec_label,
 				shunk_t *selected_sec_label,
 				struct logger *logger)
@@ -914,10 +946,21 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 
 		passert(vet_seclabel(ts->sec_label) == NULL);
 
-		if (!sec_label_within_range(ts->sec_label, connection_sec_label, logger)) {
-			dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
-			    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
-			continue;
+		switch (compare) {
+		case TS_WITHIN_CONNECTION_SEC_LABEL:
+			if (!sec_label_within_range(ts->sec_label, connection_sec_label, logger)) {
+				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
+				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
+				continue;
+			}
+			break;
+		case TS_EQUALS_CONNECTION_SEC_LABEL:
+			if (!hunk_eq(ts->sec_label, connection_sec_label)) {
+				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not equal to connection sec_label="PRI_SHUNK,
+				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
+				continue;
+			}
+			break;
 		}
 
 		dbg("ikev2ts: received %s label within range of our security label",
@@ -931,7 +974,8 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 	return false;
 }
 
-static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
+static bool score_tsp_sec_label(enum sec_label_compare compare,
+				const struct traffic_selector_payloads *tsp,
 				chunk_t connection_sec_label,
 				shunk_t *selected_sec_label,
 				struct logger *logger)
@@ -954,8 +998,8 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
 		return false;
 	}
 
-	if (!check_tss_sec_label(&tsp->i, connection_sec_label, selected_sec_label, logger) ||
-	    !check_tss_sec_label(&tsp->r, connection_sec_label, selected_sec_label, logger)) {
+	if (!check_tss_sec_label(compare, &tsp->i, connection_sec_label, selected_sec_label, logger) ||
+	    !check_tss_sec_label(compare, &tsp->r, connection_sec_label, selected_sec_label, logger)) {
 		return false;
 	}
 
@@ -1135,8 +1179,10 @@ bool v2_process_ts_request(struct child_sa *child,
 		};
 
 		shunk_t selected_sec_label = null_shunk;
-		if (!score_tsp_sec_label(&tsp, c->spd.this.sec_label,
-					 &selected_sec_label, child->sa.st_logger)) {
+		if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
+					 &tsp, c->spd.this.sec_label,
+					 &selected_sec_label,
+					 child->sa.st_logger)) {
 			/*
 			 * Either:
 			 *  - Security label required, but not found.
@@ -1249,7 +1295,8 @@ bool v2_process_ts_request(struct child_sa *child,
 
 				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 				shunk_t selected_sec_label = null_shunk;
-				if (!score_tsp_sec_label(&tsp, d->spd.this.sec_label,
+				if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
+							 &tsp, d->spd.this.sec_label,
 							 &selected_sec_label, child->sa.st_logger)) {
 					/*
 					 * Either:
@@ -1510,7 +1557,8 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
-	if (!score_tsp_sec_label(&tsp, c->spd.this.sec_label,
+	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
+				 &tsp, c->spd.this.sec_label,
 				 &selected_sec_label, child->sa.st_logger)) {
 		/*
 		 * Either:
@@ -1599,8 +1647,8 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
-	if (!score_tsp_sec_label(&their_tsp,
-				 c->spd.this.sec_label,
+	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
+				 &their_tsp, c->spd.this.sec_label,
 				 &selected_sec_label,
 				 child->sa.st_logger)) {
 		/*
