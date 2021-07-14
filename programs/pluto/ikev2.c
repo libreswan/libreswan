@@ -447,6 +447,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
+	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_IKE_I1,
+	  .next_state = STATE_CHILDSA_DEL, /* never reached */
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .message_payloads = { .required = P(SK), },
+	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
+
 	/*
 	 * CREATE_CHILD_SA exchange to rekey existing child.
 	 *
@@ -489,6 +500,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
+	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_CHILD_I1,
+	  .next_state = STATE_CHILDSA_DEL, /* never reached */
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .message_payloads = { .required = P(SK), },
+	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
+
 	/*
 	 * CREATE_CHILD_SA exchange to create a new child.
 	 *
@@ -530,9 +552,9 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	{ .story      = "Process CREATE_CHILD_SA failure response",
+	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
-	  .next_state = STATE_V2_NEW_CHILD_I1,
+	  .next_state = STATE_CHILDSA_DEL, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
