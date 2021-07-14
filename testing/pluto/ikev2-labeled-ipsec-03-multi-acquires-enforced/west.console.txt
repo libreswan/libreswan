@@ -1,15 +1,12 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ # install selinux; generated in OUTPUT by east
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-west #
- rm ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd.pp
 west #
  setenforce 1
+west #
+ # start pluto
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -31,60 +28,44 @@ west #
  ipsec auto --up labeled
 1v2 "labeled" #1: initiating IKEv2 connection
 1v2 "labeled" #1: sent IKE_SA_INIT request
+002 "labeled" #1: omitting CHILD SA payloads
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-002 "labeled" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:4300-4300 6]
-004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
- ip xfrm state
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+ # expect policy but no states
 west #
- ip xfrm pol
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
-	dir out priority 1687486 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
-	dir in priority 1687486 ptype main 
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir fwd priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 2080702 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ # trigger an acquire; both ends initiate Child SA
 west #
  echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
@@ -108,67 +89,61 @@ Ncat: 5 bytes sent, 0 bytes received ...
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
- ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
+ ../../guestbin/wait-for.sh --match 'labeled..2.' ipsec trafficstatus
+006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, id='@east'
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # no shunts; two transports; two x two states
 west #
- # let another on-demand label establish
+ ipsec shuntstatus
+000 Bare Shunt list:
+000  
 west #
- sleep 3
-west #
- # we are expecting three tunnels now (main one with 0 byte counters)
-west #
- ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
-west #
- echo done
-done
+ ipsec showstates
+000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context system_u:object_r:ipsec_spd_t:s0 
+	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 1687486 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+	dir fwd priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687486 ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+	dir in priority 2080702 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 2080702 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -181,6 +156,12 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- rm -rf tmp ipsecspd.fc ipsecspd.if
+ # let another on-demand label establish
 west #
- 
+ ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ../../guestbin/wait-for.sh --match 'labeled..4.' ipsec trafficstatus

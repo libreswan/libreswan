@@ -63,7 +63,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- # trigger an acquire
+ # trigger an acquire; both ends initiate Child SA
 west #
  echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
 Ncat: Version 7.80 ( https://nmap.org/ncat )
@@ -87,29 +87,10 @@ Ncat: 5 bytes sent, 0 bytes received ...
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
- # wait for it to establish and flow
-west #
- ../../guestbin/wait-for.sh --match 'labeled..1.' ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=273, id='@east'
-west #
- # there should be no shunts
-west #
- ipsec shuntstatus
-000 Bare Shunt list:
-000  
-west #
- # let another on-demand label establish
-west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
  ../../guestbin/wait-for.sh --match 'labeled..2.' ipsec trafficstatus
 006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, id='@east'
 west #
- # there should be no shunts
+ # no shunts; two transports; two x two states
 west #
  ipsec shuntstatus
 000 Bare Shunt list:
@@ -121,9 +102,6 @@ west #
 000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
 000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
-west #
- echo done
-done
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -176,7 +154,12 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
+ # let another on-demand label establish
 west #
- 
+ ping -n -q -c 4 -I 192.1.2.45 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.1.2.45 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ../../guestbin/wait-for.sh --match 'labeled..4.' ipsec trafficstatus
