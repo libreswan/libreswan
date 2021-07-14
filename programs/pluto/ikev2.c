@@ -3043,10 +3043,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 {
 	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
 				       LELEM(STATE_V2_NEW_CHILD_I0) |
-				       LELEM(STATE_V2_NEW_CHILD_R0) |
-				       /* due to a quirk in initiator duplication next one is also needed */
-				       /* XXX: still true? */
-				       LELEM(STATE_PARENT_I2));
+				       LELEM(STATE_V2_NEW_CHILD_R0));
 
 	struct state_query query = {
 		.where = HERE,
