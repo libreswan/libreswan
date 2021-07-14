@@ -1221,11 +1221,22 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 			return STF_INTERNAL_ERROR;
 	}
 
+	/*
+	 * A redirect does not tear down the IKE SA; instead that is
+	 * left to the initiator:
+	 *
+	 * https://datatracker.ietf.org/doc/html/rfc5685#section-6
+	 * 6.  Redirect during IKE_AUTH Exchange
+	 *
+	 * When the client receives the IKE_AUTH response with the
+	 * REDIRECT payload, it SHOULD delete the IKEv2 security
+	 * association with the gateway by sending an INFORMATIONAL
+	 * message with a DELETE payload.
+	 */
 	if (send_redirect) {
 		if (!emit_redirect_notification(shunk1(c->redirect_to), &sk.pbs))
 			return STF_INTERNAL_ERROR;
-
-		ike->sa.st_sent_redirect = TRUE;	/* mark that we have sent REDIRECT in IKE_AUTH */
+		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 
 	if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && ike->sa.st_seen_use_transport) {
@@ -1278,17 +1289,21 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	/*
 	 * Try to build a child.
 	 *
-	 * The result can be fatal, or just deletes the child.
+	 * The result can be fatal, or just doesn't create the child.
 	 */
 
-	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
-	if (v2_notification_fatal(cn)) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    cn, NULL/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	} else if (cn != v2N_NOTHING_WRONG) {
-		emit_v2N(cn, &sk.pbs);
+	if (send_redirect) {
+		dbg("skipping child; redirect response");
+	} else {
+		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
+		if (v2_notification_fatal(cn)) {
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    cn, NULL/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		} else if (cn != v2N_NOTHING_WRONG) {
+			emit_v2N(cn, &sk.pbs);
+		}
 	}
 
 	if (!close_v2SK_payload(&sk)) {

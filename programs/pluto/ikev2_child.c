@@ -816,34 +816,26 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return v2N_NOTHING_WRONG;
 	}
 
-	struct connection *ic = ike->sa.st_connection;
-	if (ic->spd.this.sec_label.len > 0) {
-		pexpect(ic->kind == CK_TEMPLATE);
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-			llog_sa(RC_LOG, ike, "IMPAIR: as expected, IKE_AUTH security label request omitted CHILD SA payloads");
-			return v2N_NOTHING_WRONG;
-		}
-	}
-
-	if (ike->sa.st_sent_redirect) {
-		dbg("sending REDIRECT in IKE_AUTH, no need for CHILD SA (payloads)");
-		return v2N_NOTHING_WRONG;
-	}
-
 	/* try to process them */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		struct connection *ic = ike->sa.st_connection;
+		if (ic->spd.this.sec_label.len > 0) {
+			pexpect(ic->kind == CK_TEMPLATE);
+			llog_sa(RC_LOG, ike,
+				"connection has a security label; allowing childless IKE SA");
+			return v2N_NOTHING_WRONG;
+		}
 		/*
-		 * XXX: not right, need way to determine that policy
-		 * allows this.
+		 * XXX: not right, need way to determine if policy
+		 * allows childless IKE SAs with this connection (or
+		 * just always enable them).
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		llog_sa(RC_LOG, ike, "No CHILD SA proposals received.");
-		return v2N_INVALID_SYNTAX; /* fatal */
+		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; rejecting request");
+		/* caller will send notification, if needed */
+		return v2N_AUTHENTICATION_FAILED; /* fatal */
 	}
 
-	/* must have enough to build an CHILD_SA */
+	/* above confirmed there's enough to build a Child SA */
 	struct child_sa *child = new_v2_child_state(ike->sa.st_connection, ike,
 						    IPSEC_SA, SA_RESPONDER,
 						    STATE_V2_IKE_AUTH_CHILD_R0,
@@ -1055,18 +1047,8 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 					   md, /*expect-accepted-proposal?*/true);
 	if (res > STF_FAIL) {
 		v2_notification_t n = res - STF_FAIL;
-#if 0
-		llog_sa(RC_LOG_SERIOUS, child,
-			"CHILD SA failed: %s",
-			enum_name_short(&ikev2_notify_names, n));
-#endif
 		return n;
 	} else if (res != STF_OK) {
-#if 0
-		llog_sa(RC_LOG_SERIOUS, child,
-			"CHILD SA encountered fatal error: %s",
-			enum_name_short(&stf_status_names, res));
-#endif
 		return v2N_INVALID_SYNTAX; /* fatal */
 	}
 
