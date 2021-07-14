@@ -13,8 +13,8 @@ ipsec showstates
 ../../guestbin/ipsec-look.sh
 
 # let another on-demand label establish
-ping -n -q -c 4 -I 192.1.2.45 192.0.2.254
-../../guestbin/wait-for.sh --match 'labeled..4.' ipsec trafficstatus
+echo "quit" | runcon -u system_u -r system_r -t sshd_t nc -w 50 -vvv 192.1.2.23 22 2>&1 | sed "s/received in .*$/received .../"
+../../guestbin/wait-for.sh --match 'labeled..3.' ipsec trafficstatus
 # there should be no shunts
 ipsec shuntstatus
 ipsec showstates
