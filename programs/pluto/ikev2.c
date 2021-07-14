@@ -3038,3 +3038,38 @@ stf_status stf_status_from_v2_notification(v2_notification_t n)
 		v2_notification_fatal(n) ? STF_FATAL :
 		STF_FAIL);
 }
+
+bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
+{
+	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
+				       LELEM(STATE_V2_NEW_CHILD_I0) |
+				       LELEM(STATE_V2_NEW_CHILD_R0) |
+				       /* due to a quirk in initiator duplication next one is also needed */
+				       /* XXX: still true? */
+				       LELEM(STATE_PARENT_I2));
+
+	struct state_query query = {
+		.where = HERE,
+		.ike_version = IKEv2,
+		.ike_spis = &ike->sa.st_ike_spis,
+		/* only children */
+		.ike = ike,
+	};
+
+	for (struct state *st = next_state(NULL, &query);
+	     st != NULL; st = next_state(st, &query)) {
+		/* larval child state? */
+		if (!LHAS(pending_states, st->st_state->kind)) {
+			continue;
+		}
+		/* not an instance, but a connection? */
+		if (!streq(st->st_connection->name, c->name)) {
+			continue;
+		}
+		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",
+		     st->st_serialno, ike->sa.st_serialno);
+		return true;
+	}
+
+	return false;
+}

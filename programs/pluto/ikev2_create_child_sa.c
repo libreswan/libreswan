@@ -641,51 +641,12 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
  * CREATE_CHILD_SA create child request.
  */
 
-static bool is_already_pending_child(struct ike_sa *ike, const struct connection *c)
-{
-	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
-				       LELEM(STATE_V2_NEW_CHILD_I0) |
-				       LELEM(STATE_V2_NEW_CHILD_R0) |
-				       /* due to a quirk in initiator duplication next one is also needed */
-				       /* XXX: still true? */
-				       LELEM(STATE_PARENT_I2));
-
-	struct state_query query = {
-		.where = HERE,
-		.ike_version = IKEv2,
-		.ike_spis = &ike->sa.st_ike_spis,
-		/* only children */
-		.ike = ike,
-	};
-
-	for (struct state *st = next_state(NULL, &query);
-	     st != NULL; st = next_state(st, &query)) {
-		/* larval child state? */
-		if (!LHAS(pending_states, st->st_state->kind)) {
-			continue;
-		}
-		/* not an instance, but a connection? */
-		if (!streq(st->st_connection->name, c->name)) {
-			continue;
-		}
-		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",
-		     st->st_serialno, ike->sa.st_serialno);
-		return true;
-	}
-
-	return false;
-}
-
 void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 struct connection *c, /* for child */
 					 lset_t policy, int try,
 					 shunk_t sec_label,
 					 struct fd *whackfd)
 {
-	if (is_already_pending_child(ike, c)) {
-		return;
-	}
-
 	if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
 		/* create instance and switch to it */
 		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);

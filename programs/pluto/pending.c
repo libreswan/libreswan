@@ -250,11 +250,9 @@ static void delete_pending(struct pending **pp)
  *     In IKEv2 it called when AUTH is complete, child is established.
  *     Established child get removed not unpend.
  */
+
 void unpend(struct ike_sa *ike, struct connection *cc)
 {
-	struct pending **pp, *p;
-	char *what ="unqueuing";
-
 	if (cc == NULL) {
 		dbg("unpending state #%lu", ike->sa.st_serialno);
 	} else {
@@ -263,10 +261,11 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 		    ike->sa.st_serialno, pri_connection(cc, &cib));
 	}
 
-	for (pp = host_pair_first_pending(ike->sa.st_connection);
+	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
 	     (p = *pp) != NULL; ) {
 		if (p->ike == ike) {
 			p->pend_time = mononow();
+			char *what ="unqueuing";
 			switch (ike->sa.st_ike_version) {
 			case IKEv2:
 				if (cc == p->connection) {
@@ -277,13 +276,13 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 * delete it
 					 */
 					what = "delete from";
-					break;
+				} else if (!already_has_larval_v2_child(ike, p->connection)) {
+					submit_v2_CREATE_CHILD_SA_new_child(ike,
+									    p->connection,
+									    p->policy, p->try,
+									    p->sec_label,
+									    p->whack_sock);
 				}
-				submit_v2_CREATE_CHILD_SA_new_child(ike,
-								    p->connection,
-								    p->policy, p->try,
-								    p->sec_label,
-								    p->whack_sock);
 				break;
 			case IKEv1:
 #ifdef USE_IKEv1

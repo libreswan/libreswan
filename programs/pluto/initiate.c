@@ -318,23 +318,22 @@ void ipsecdoi_initiate(struct connection *c,
 		 * issues around intent might matter).  Note: there is
 		 * no way to initiate with a Road Warrior.
 		 */
-		struct state *st = find_phase1_state(c,
-						     LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
-						     IKEV2_ISAKMP_INITIATOR_STATES);
-		if (st == NULL) {
+		struct ike_sa *ike =
+			pexpect_ike_sa(find_phase1_state(c,
+							 LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
+							 IKEV2_ISAKMP_INITIATOR_STATES));
+		if (ike == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
 						sec_label, background, logger);
-		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
+		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
-				    pexpect_ike_sa(st),
-				    c, policy, try,
+				    ike, c, policy, try,
 				    replacing, sec_label,
 				    false /*part of initiate*/);
-		} else {
+		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			submit_v2_CREATE_CHILD_SA_new_child(pexpect_ike_sa(st),
-							    c, policy, try, sec_label,
+			submit_v2_CREATE_CHILD_SA_new_child(ike, c, policy, try, sec_label,
 							    logger->global_whackfd);
 		}
 		break;
