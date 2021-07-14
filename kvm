@@ -124,7 +124,7 @@ results_command()
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py ${__baseline} "$@"
+	./testing/utils/kvmresults.py "$@"
 	status=$?
     fi
 }
