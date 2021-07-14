@@ -632,7 +632,6 @@ extern struct keywords sa_role_names;
 				  LELEM(STATE_XAUTH_I1) | \
 				  LELEM(STATE_MODE_CFG_I1))
 
-
 #define IS_PHASE1_INIT(ST) ((LELEM((ST)->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
 
 #define IS_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
@@ -653,13 +652,7 @@ extern struct keywords sa_role_names;
 #define IS_ISAKMP_AUTHENTICATED(ST) (STATE_MAIN_R3 <= ((ST)->kind) && \
 				     STATE_AGGR_R0 != ((ST)->kind) && \
 				     STATE_AGGR_I1 != ((ST)->kind))
-#endif
 
-#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
-				       LELEM(STATE_PARENT_I1) |	\
-				       LELEM(STATE_PARENT_I2))
-
-#ifdef USE_IKEv1
 #define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
 				       LELEM(STATE_MAIN_I4) | \
 				       LELEM(STATE_AGGR_I2) | \
@@ -679,6 +672,10 @@ extern struct keywords sa_role_names;
 #define IS_ISAKMP_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY)
 
 #endif
+
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
+				       LELEM(STATE_PARENT_I1) |	\
+				       LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1
