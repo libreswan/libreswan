@@ -42,7 +42,9 @@ road #
 1v2 "road-east-ikev2" #1: sent IKE_SA_INIT request
 1v2 "road-east-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-east-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-000 "road-east-ikev2" #1: scheduling retry attempt 1 of an unlimited number, but releasing whack
+036 "road-east-ikev2" #1: encountered fatal error in state STATE_PARENT_I2
+002 "road-east-ikev2" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "road-east-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 road #
  # there should be two public keys. including road
 road #
@@ -62,6 +64,8 @@ road #
 000  
 000 List of Public Keys:
 000  
+000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
+000        ID_IPV4_ADDR '192.1.2.23'
 000 TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_FQDN '@north.testing.libreswan.org'
 road #
