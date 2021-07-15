@@ -55,8 +55,9 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "westnet-eastnet-ikev2" #1: authentication failed: peer attempted NULL authentication but we want rsasig
-036 "westnet-eastnet-ikev2" #2: encountered fatal error in state STATE_PARENT_I2
+003 "westnet-eastnet-ikev2" #1: authentication failed: peer attempted NULL authentication but we want rsasig
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_I2) and sending notification
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done
@@ -71,6 +72,23 @@ OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #3: authenticated using authby=null and peer ID_NULL 'ID_NULL'
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
+OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
+OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
+OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
+OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
+OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
@@ -83,10 +101,6 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES
