@@ -719,7 +719,7 @@ static bool should_send_delete(const struct state *st)
 	switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
-		if (!IS_ISAKMP_SA_ESTABLISHED(st) &&
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !IS_IPSEC_SA_ESTABLISHED(st)) {
 			dbg("%s: no, IKEv1 SA in state %s is not established",
 			    __func__, st->st_state->name);
@@ -870,8 +870,7 @@ void delete_state_tail(struct state *st)
 	 * IKEv1 IKE failures do not go through a transition, so we catch
 	 * these in delete_state()
 	 */
-	if (st->st_ike_version == IKEv1 &&
-	    IS_ISAKMP_SA(st) && !IS_ISAKMP_SA_ESTABLISHED(st)) {
+	if (IS_V1_ISAKMP_SA(st) && !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		linux_audit_conn(st, LAK_PARENT_FAIL);
 	}
 
@@ -880,7 +879,7 @@ void delete_state_tail(struct state *st)
 	 * ipsec_delete_sa()
 	 */
 	if (IS_IKE_SA_ESTABLISHED(st) ||
-	    IS_ISAKMP_SA_ESTABLISHED(st) ||
+	    IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
 	    st->st_state->kind == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
@@ -1315,7 +1314,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* on first pass, ignore established ISAKMP SA's */
 			if (pass == 0 &&
-			    (IS_ISAKMP_SA_ESTABLISHED(this) ||
+			    (IS_V1_ISAKMP_SA_ESTABLISHED(this) ||
 			     IS_IKE_SA_ESTABLISHED(this))) {
 				continue;
 			}

@@ -72,7 +72,7 @@ bool unique_msgid(const struct state *st, msgid_t msgid)
 	struct msgid_list *p;
 
 	passert(msgid != v1_MAINMODE_MSGID);
-	passert(IS_ISAKMP_ENCRYPTED(st->st_state->kind));
+	passert(IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind));
 
 	for (p = st->st_used_msgids; p != NULL; p = p->next)
 		if (p->msgid == msgid)
@@ -85,7 +85,7 @@ void reserve_msgid(struct state *st, msgid_t msgid)
 {
 	struct msgid_list *p;
 
-	passert(IS_PHASE1(st->st_state->kind) || IS_PHASE15(st->st_state->kind));
+	passert(IS_V1_PHASE1(st->st_state->kind) || IS_V1_PHASE15(st->st_state->kind));
 	p = alloc_thing(struct msgid_list, "msgid");
 	p->msgid = msgid;
 	p->next = st->st_used_msgids;
@@ -97,7 +97,7 @@ msgid_t generate_msgid(const struct state *st)
 	int timeout = 100; /* only try so hard for unique msgid */
 	msgid_t msgid;
 
-	passert(IS_ISAKMP_ENCRYPTED(st->st_state->kind));
+	passert(IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind));
 
 	for (;; ) {
 		get_rnd_bytes((void *) &msgid, sizeof(msgid));

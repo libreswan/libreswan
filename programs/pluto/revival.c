@@ -186,7 +186,7 @@ void add_revival_if_needed(struct state *st)
 	    c->name, pri_co(c->serialno), delay);
 	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
-	if ((IS_IKE_SA_ESTABLISHED(st) || IS_ISAKMP_SA_ESTABLISHED(st)) &&
+	if ((IS_IKE_SA_ESTABLISHED(st) || IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
 	    c->kind == CK_INSTANCE &&
 	    LIN(POLICY_UP, c->policy)) {
 		/*

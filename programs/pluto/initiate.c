@@ -281,14 +281,14 @@ void ipsecdoi_initiate(struct connection *c,
 		 * Warrior.
 		 */
 		struct state *st = find_phase1_state(c,
-						     ISAKMP_SA_ESTABLISHED_STATES |
-						     PHASE1_INITIATOR_STATES);
+						     V1_ISAKMP_SA_ESTABLISHED_STATES |
+						     V1_PHASE1_INITIATOR_STATES);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
 			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
 		} else if (st == NULL) {
 			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
-		} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
@@ -1054,7 +1054,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	struct state *newest_ike_sa = state_with_serialno(c->newest_ike_sa);
 	if (newest_ike_sa != NULL &&
 	    (IS_IKE_SA_ESTABLISHED(newest_ike_sa) ||
-	     IS_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {
+	     IS_V1_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" is established",
 		    pri_connection(c, &cib));
@@ -1188,8 +1188,8 @@ void connection_check_phase2(struct logger *logger)
 #ifdef USE_IKEv1
 			case IKEv1:
 				p1st = find_phase1_state(c,
-							 (ISAKMP_SA_ESTABLISHED_STATES |
-							  PHASE1_INITIATOR_STATES));
+							 (V1_ISAKMP_SA_ESTABLISHED_STATES |
+							  V1_PHASE1_INITIATOR_STATES));
 				break;
 #endif
 			case IKEv2:

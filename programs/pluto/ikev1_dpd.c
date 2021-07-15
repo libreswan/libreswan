@@ -265,8 +265,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* If there is no IKE state, there can be no DPD */
-	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st));	/* ??? passert? */
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
+	pexpect(IS_V1_ISAKMP_SA_ESTABLISHED(p1st));	/* ??? passert? */
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(p1st)) {
 		dbg("DPD: no phase1 state, so no DPD");
 		return;
 	}
@@ -390,7 +390,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	deltatime_t timeout = p2st->st_connection->dpd_timeout;
 
 	st = find_phase1_state(p2st->st_connection,
-		ISAKMP_SA_ESTABLISHED_STATES);
+		V1_ISAKMP_SA_ESTABLISHED_STATES);
 
 	if (st == NULL) {
 		log_state(RC_LOG_SERIOUS, p2st,
@@ -412,7 +412,7 @@ void dpd_event(struct state *st)
 	passert(st != NULL);
 
 
-	if (IS_PHASE1(st->st_state->kind) || IS_PHASE15(st->st_state->kind))
+	if (IS_V1_PHASE1(st->st_state->kind) || IS_V1_PHASE15(st->st_state->kind))
 		p1_dpd_outI1(st);
 	else
 		p2_dpd_outI1(st);
@@ -433,7 +433,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	monotime_t nw = mononow();
 	uint32_t seqno;
 
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(p1st)) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: received R_U_THERE for unestablished ISKAMP SA");
 		return STF_IGNORE;
@@ -536,7 +536,7 @@ stf_status dpd_inR(struct state *p1st,
 {
 	uint32_t seqno;
 
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st)) {
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(p1st)) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
 		return STF_FAIL;

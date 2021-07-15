@@ -981,7 +981,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			 * We take the peer's new IP address from the last 4 octets.
 			 * Is anything else possible?  Expected?  Documented?
 			 */
-			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st)) {
+			if (st == NULL || !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				llog(RC_LOG, md->md_logger,
 				     "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
 			} else if (pbs_left(n_pbs) < 4) {
@@ -1380,7 +1380,7 @@ void process_v1_packet(struct msg_digest *md)
 				return;
 			}
 
-			if (!IS_ISAKMP_ENCRYPTED(st->st_state->kind)) {
+			if (!IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind)) {
 				if (!quiet) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "encrypted Informational Exchange message is invalid because no key is known");
@@ -1415,7 +1415,7 @@ void process_v1_packet(struct msg_digest *md)
 			from_state = STATE_INFO_PROTECTED;
 		} else {
 			if (st != NULL &&
-			    IS_ISAKMP_AUTHENTICATED(st->st_state)) {
+			    IS_V1_ISAKMP_AUTHENTICATED(st->st_state)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "Informational Exchange message must be encrypted");
 				/* XXX Could send notification back */
@@ -1483,7 +1483,7 @@ void process_v1_packet(struct msg_digest *md)
 #endif
 
 
-			if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
+			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
@@ -1561,7 +1561,7 @@ void process_v1_packet(struct msg_digest *md)
 			    this->modecfg_server ? " modecfgserver" : "",
 			    this->modecfg_client ? " modecfgclient" : "");
 
-			if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
+			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
 				    st->st_state->name);
 				/* XXX Could send notification back */
@@ -1598,7 +1598,7 @@ void process_v1_packet(struct msg_digest *md)
 				dbg(" set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
 				    st->st_state->name);
 			} else if (this->xauth_client &&
-				   IS_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_XAUTH_I0;
 				dbg(" set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
 				    st->st_state->name);
@@ -1612,12 +1612,12 @@ void process_v1_packet(struct msg_digest *md)
 				dbg(" set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
 				    st->st_state->name);
 			} else if (this->modecfg_server &&
-				   IS_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R0;
 				dbg(" set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
 				    st->st_state->name);
 			} else if (this->modecfg_client &&
-				   IS_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R1;
 				dbg(" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
 				    st->st_state->name);
@@ -1634,7 +1634,7 @@ void process_v1_packet(struct msg_digest *md)
 			}
 		} else {
 			if (st->st_connection->spd.this.xauth_server &&
-			    IS_PHASE1(st->st_state->kind)) {
+			    IS_V1_PHASE1(st->st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
 				dbg("We were in phase 1, with no state, so we went to XAUTH_R0");
 				change_state(st, STATE_XAUTH_R0);
@@ -2058,8 +2058,8 @@ void process_packet_tail(struct msg_digest *md)
 				switch (np) {
 				case ISAKMP_NEXT_ID:
 					/* ??? two kinds of ID payloads */
-					sd = (IS_PHASE1(from_state) ||
-					      IS_PHASE15(from_state)) ?
+					sd = (IS_V1_PHASE1(from_state) ||
+					      IS_V1_PHASE15(from_state)) ?
 						&isakmp_identification_desc :
 						&isakmp_ipsec_identification_desc;
 					break;
@@ -2253,7 +2253,7 @@ void process_packet_tail(struct msg_digest *md)
 
 	/* more sanity checking: enforce most ordering constraints */
 
-	if (IS_PHASE1(from_state) || IS_PHASE15(from_state)) {
+	if (IS_V1_PHASE1(from_state) || IS_V1_PHASE15(from_state)) {
 		/* rfc2409: The Internet Key Exchange (IKE), 5 Exchanges:
 		 * "The SA payload MUST precede all other payloads in a phase 1 exchange."
 		 */
@@ -2266,7 +2266,7 @@ void process_packet_tail(struct msg_digest *md)
 			}
 			return;
 		}
-	} else if (IS_QUICK(from_state)) {
+	} else if (IS_V1_QUICK(from_state)) {
 		/* rfc2409: The Internet Key Exchange (IKE), 5.5 Phase 2 - Quick Mode
 		 *
 		 * "In Quick Mode, a HASH payload MUST immediately follow the ISAKMP
@@ -2522,7 +2522,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	pexpect(!state_is_busy(st));
 
 	if (result > STF_OK) {
-		linux_audit_conn(md->v1_st, IS_ISAKMP_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
+		linux_audit_conn(md->v1_st, IS_V1_ISAKMP_SA_ESTABLISHED(md->v1_st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
 	}
 
 	switch (result) {
@@ -2697,8 +2697,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
-				if (IS_PHASE1(st->st_state->kind) ||
-				    IS_PHASE15(st->st_state->kind)) {
+				if (IS_V1_PHASE1(st->st_state->kind) ||
+				    IS_V1_PHASE15(st->st_state->kind)) {
 					/* Note: we will defer to the "negotiated" (dictated)
 					 * lifetime if we are POLICY_DONT_REKEY.
 					 * This allows the other side to dictate
@@ -2805,7 +2805,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				pstat_sa_established(st);
 				log_details = lswlog_child_sa_established;
 				w = RC_SUCCESS; /* log our success */
-			} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+			} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
 				log_details = lswlog_ike_sa_established;
 				w = RC_SUCCESS; /* log our success */
@@ -2831,7 +2831,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * SA.
 		 * Why do we need a DPD event on an IKE SA???
 		 */
-		if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+		if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			if (dpd_init(st) != STF_OK) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "DPD initialization failed - continuing without DPD");
@@ -2841,7 +2841,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* Special case for XAUTH server */
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
-			    IS_ISAKMP_SA_ESTABLISHED(st)) {
+			    IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("XAUTH: Sending XAUTH Login/Password Request");
 				event_schedule(EVENT_v1_SEND_XAUTH,
 					       deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS),
@@ -2854,7 +2854,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * for XAUTH client, we are also done, because we need to
 		 * stay in this state, and let the server query us
 		 */
-		if (!IS_QUICK(st->st_state->kind) &&
+		if (!IS_V1_QUICK(st->st_state->kind) &&
 		    st->st_connection->spd.this.xauth_client &&
 		    !st->hidden_variables.st_xauth_client_done) {
 			dbg("XAUTH client is not yet authenticated");
@@ -2875,7 +2875,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		     "modecfg-client" : "not-client"));
 
 		if (st->st_connection->spd.this.modecfg_client &&
-		    IS_ISAKMP_SA_ESTABLISHED(st) &&
+		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    (st->quirks.modecfg_pull_mode ||
 		     st->st_connection->policy & POLICY_MODECFG_PULL) &&
 		    !st->hidden_variables.st_modecfg_started) {
@@ -2888,7 +2888,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* Should we set the peer's IP address regardless? */
 		if (st->st_connection->spd.this.modecfg_server &&
-		    IS_ISAKMP_SA_ESTABLISHED(st) &&
+		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
 			change_state(st, STATE_MODE_CFG_R1);
@@ -2907,7 +2907,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * we need to initiate Quick mode
 		 */
 		if (!(smc->flags & SMF_INITIATOR) &&
-		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
+		    IS_V1_MODE_CFG_ESTABLISHED(st->st_state) &&
 		    (st->st_seen_nortel_vid)) {
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
@@ -2918,7 +2918,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* wait for modecfg_set */
 		if (st->st_connection->spd.this.modecfg_client &&
-		    IS_ISAKMP_SA_ESTABLISHED(st) &&
+		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
 			dbg("waiting for modecfg set from server");
 			break;
@@ -2945,11 +2945,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			unpend(pexpect_ike_sa(st), NULL);
 		}
 
-		if (IS_ISAKMP_SA_ESTABLISHED(st) ||
+		if (IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
 		    IS_IPSEC_SA_ESTABLISHED(st))
 			release_any_whack(st, HERE, "IKEv1 transitions finished");
 
-		if (IS_QUICK(st->st_state->kind))
+		if (IS_V1_QUICK(st->st_state->kind))
 			break;
 
 		break;
@@ -3034,7 +3034,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
 #endif
-		if (IS_QUICK(st->st_state->kind)) {
+		if (IS_V1_QUICK(st->st_state->kind)) {
 			delete_state(st);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;

@@ -1789,7 +1789,7 @@ static void send_notification(struct logger *logger,
 		break;
 	}
 
-	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state->kind))
+	if (encst != NULL && !IS_V1_ISAKMP_ENCRYPTED(encst->st_state->kind))
 		encst = NULL;
 
 	{
@@ -1869,7 +1869,7 @@ static void send_notification(struct logger *logger,
 
 		save_iv(encst, old_iv);
 
-		if (!IS_ISAKMP_SA_ESTABLISHED(encst)) {
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(encst)) {
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
@@ -1893,11 +1893,10 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 	if (from_state == STATE_UNDEFINED)
 		from_state = st->st_state->kind;
 
-	if (IS_QUICK(from_state)) {
-		p1st = find_phase1_state(st->st_connection,
-					ISAKMP_SA_ESTABLISHED_STATES);
+	if (IS_V1_QUICK(from_state)) {
+		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
-			(!IS_ISAKMP_SA_ESTABLISHED(p1st))) {
+			(!IS_V1_ISAKMP_SA_ESTABLISHED(p1st))) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "no Phase1 state for Quick mode notification");
 			return;
@@ -1905,7 +1904,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 		send_notification(st->st_logger, st, type, p1st, generate_msgid(p1st),
 				  st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				  PROTO_ISAKMP);
-	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
+	} else if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st->st_logger, st, type, st, generate_msgid(st),
 				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				PROTO_ISAKMP);
@@ -2010,8 +2009,7 @@ void send_v1_delete(struct state *st)
 	/* If there are IPsec SA's related to this state struct... */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* Find their phase1 state object */
-		p1st = find_phase1_state(st->st_connection,
-					ISAKMP_SA_ESTABLISHED_STATES);
+		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
 			dbg("no Phase 1 state for Delete");
 			return;
@@ -2031,7 +2029,7 @@ void send_v1_delete(struct state *st)
 		}
 
 		passert(ns != said); /* there must be some SAs to delete */
-	} else if (IS_ISAKMP_SA_ESTABLISHED(st)) {
+	} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		/* or ISAKMP SA's... */
 		p1st = st;
 		isakmp_sa = TRUE;
@@ -2177,7 +2175,7 @@ bool accept_delete(struct msg_digest *md,
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
-	if (!IS_ISAKMP_SA_ESTABLISHED(st)) {
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: ISAKMP SA not established");

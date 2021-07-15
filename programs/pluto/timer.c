@@ -293,7 +293,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			dbg("%s SA expired (superseded by #%lu)",
 			    satype, newer_sa);
 		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
-			   !IS_ISAKMP_SA_ESTABLISHED(st)) {
+			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
 			dbg("un-established partial Child SA timeout (SA expired)");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
