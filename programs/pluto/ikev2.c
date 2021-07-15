@@ -2843,9 +2843,9 @@ void complete_v2_state_transition(struct state *st,
 		release_pending_whacks(st, "internal error");
 		break;
 
-	case STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA:
+	case STF_V2_DELETE_IKE_AUTH_INITIATOR:
 		/*
-		 * XXX: this is a hack so that IKE SA initiator can
+		 * XXX: this is a hack so that IKE_AUTH initiator can
 		 * both delete the IKE SA and send an IKE SA delete
 		 * notification because the IKE_AUTH response was
 		 * rejected.
@@ -2854,10 +2854,14 @@ void complete_v2_state_transition(struct state *st,
 		 * Initiator processing response, finish current
 		 * exchange ready for delete request.
 		 */
-		dbg("Message ID: forcing a response received update");
+		dbg("Message ID: forcing a response received update (deleting IKE_AUTH initiator)");
+		pexpect(st->st_state->kind == STATE_PARENT_I2);
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		v2_msgid_update_recv(ike, NULL, md);
+		v2_msgid_update_recv(ike, &ike->sa, md);
 		/*
+		 * All done, now delete the IKE family sending out a
+		 * last gasp delete.
+		 *
 		 * XXX: this call will fire and forget.  It should
 		 * call v2_msgid_queue_initiator() with high priority
 		 * so this is performed as a separate transition?

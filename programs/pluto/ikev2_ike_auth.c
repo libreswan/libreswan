@@ -1364,9 +1364,13 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		/* already logged above! */
-		release_pending_whacks(&ike->sa, "authentication failed");
-		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
+		/*
+		 * We cannot send a response as we are processing
+		 * IKE_AUTH reply the RFC states we should pretend
+		 * IKE_AUTH was okay, and then send an INFORMATIONAL
+		 * DELETE IKE SA but we have not implemented that yet.
+		 */
+		return STF_V2_DELETE_IKE_AUTH_INITIATOR;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -1423,14 +1427,14 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 			       ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-		dbg("R2 Auth Payload failed");
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
 		 * IKE_AUTH reply the RFC states we should pretend
 		 * IKE_AUTH was okay, and then send an INFORMATIONAL
 		 * DELETE IKE SA but we have not implemented that yet.
 		 */
-		return STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA;
+		return STF_V2_DELETE_IKE_AUTH_INITIATOR;
 	}
 
 	/*
