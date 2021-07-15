@@ -37,7 +37,7 @@ road #
 002 "road/0x3" #4: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0]
 004 "road/0x3" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 1v2 "road/0x4" #5: sent CREATE_CHILD_SA request for new IPsec SA
-200 "road/0x4" #5: state transition 'Process CREATE_CHILD_SA failure response' failed
+200 "road/0x4" #5: state transition 'process create Child SA failure response (CREATE_CHILD_SA)' failed
 road #
  # sleep 3
 road #
