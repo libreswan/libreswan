@@ -921,6 +921,7 @@ kvmplutotest	ikev2-labeled-ipsec-01					good
 kvmplutotest	ikev2-labeled-ipsec-01-childless			good
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey		wip
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		good
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		good
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-acquire	good
