@@ -43,17 +43,6 @@ enum smf2_flags {
 	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
 
 	/*
-	 * If this state transition is successful then the SA is
-	 * encrypted and authenticated.
-	 *
-	 * XXX: The flag currently works for CHILD SAs but not IKE SAs
-	 * (but it should).  This is because IKE SAs currently bypass
-	 * the complete state transition code when establishing.  See
-	 * also danger note below.
-	 */
-	SMF2_ESTABLISHED = LELEM(9),
-
-	/*
 	 * Should whack be released?
 	 */
 	SMF2_RELEASE_WHACK = LELEM(10),

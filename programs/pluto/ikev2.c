@@ -293,7 +293,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_ESTABLISHED|SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
@@ -383,7 +383,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags = SMF2_ESTABLISHED,
+	  .flags      = LEMPTY,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH),
@@ -477,7 +477,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_ESTABLISHED | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -491,7 +491,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_ESTABLISHED | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
@@ -530,7 +530,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_R0,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_ESTABLISHED | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -543,7 +543,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_ESTABLISHED | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
@@ -2321,6 +2321,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	v2_msgid_update_sent(ike, st, md, transition->send);
 	v2_msgid_schedule_next_initiator(ike);
 
+	bool established_before = (IS_IKE_SA_ESTABLISHED(st) ||
+				   IS_CHILD_SA_ESTABLISHED(st));
+
 	if (from_state == STATE_V2_REKEY_IKE_R0 ||
 	    from_state == STATE_V2_REKEY_IKE_I1) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
@@ -2331,25 +2334,23 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
 	passert(st->st_state->kind <  STATE_IKEv2_ROOF);
 
-	if (transition->flags & SMF2_ESTABLISHED) {
+	bool established_after = (IS_IKE_SA_ESTABLISHED(st) ||
+				  IS_CHILD_SA_ESTABLISHED(st));
+
+	bool just_established = (!established_before && established_after);
+	if (just_established) {
 		/*
-		 * Count successful transition into an established state.
-		 *
-		 * Because IKE SAs and CHILD SAs share some state transitions
-		 * this only works for CHILD SAs.  IKE SAs are accounted for
-		 * separately.
+		 * Count successful transition into an established
+		 * state.
 		 */
 		pstat_sa_established(st);
 	}
 
 	/*
-	 * Tell whack and logs our progress - unless OE or a state
-	 * transition we're not telling anyone about, then be quiet.
+	 * Tell whack and logs our progress.
 	 *
-	 * XXX: This code uses the new state, and not the state
-	 * transition to determine if things established :-(
-	 *
-	 * This should be a bit in the transition!
+	 * If it's OE or a state transition we're not telling anyone
+	 * about, then be quiet.
 	 */
 
 	dbg("announcing the state transition");
@@ -2363,24 +2364,20 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		log_details = NULL;
 		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (IS_CHILD_SA_ESTABLISHED(st)) {
+	} else if (IS_CHILD_SA(st) && just_established) {
 		log_ipsec_sa_established("negotiated connection", st);
 		log_details = lswlog_child_sa_established;
 		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
-	} else if (transition->state == STATE_PARENT_I1 &&
-		transition->next_state == STATE_PARENT_I2) {
+	} else if (IS_IKE_SA(st) && just_established) {
+		/* ike_sa_established() called elsewhere */
 		log_details = lswlog_ike_sa_established;
 		log_st = &ike->sa;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (st->st_state->kind == STATE_PARENT_I2) {
-		/*
-		 * Hack around md->v1_st being forced to the CHILD_SA
-		 * with an IKE SA state.
-		 */
-		pexpect(IS_CHILD_SA(st));
-		pexpect(st != &ike->sa);
+		/* log our success and trigger detach */
+		w = RC_SUCCESS;
+	} else if (transition->state == STATE_PARENT_I1 &&
+		   transition->next_state == STATE_PARENT_I2) {
 		log_details = lswlog_ike_sa_established;
 		log_st = &ike->sa;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
@@ -2388,24 +2385,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		log_details = lswlog_ike_sa_established;
 		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (transition->state == STATE_V2_REKEY_IKE_R0 &&
-		   transition->next_state == STATE_V2_ESTABLISHED_IKE_SA) {
-		pexpect(st->st_sa_role == SA_RESPONDER);
-		pexpect(IS_IKE_SA(st));
-		pexpect(st != &ike->sa);
-		log_details = lswlog_ike_sa_established;
-		log_st = st;
-		/* log our success and trigger detach */
-		w = RC_SUCCESS;
-	} else if (transition->state == STATE_V2_REKEY_IKE_I1 &&
-		   transition->next_state == STATE_V2_ESTABLISHED_IKE_SA) {
-		pexpect(st->st_sa_role == SA_INITIATOR);
-		pexpect(IS_IKE_SA(st));
-		pexpect(st != &ike->sa);
-		log_details = lswlog_ike_sa_established;
-		log_st = st;
-		/* log our success and trigger detach */
-		w = RC_SUCCESS;
 	} else {
 		log_details = NULL;
 		log_st = st;
@@ -2533,7 +2512,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		bad_case(transition->send);;
 	}
 
-	if (w == RC_SUCCESS) {
+	if (just_established) {
 		release_any_whack(st, HERE, "IKEv2 transitions finished");
 
 		/* XXX should call unpend again on parent SA */
