@@ -87,27 +87,27 @@ static const char *fit_string(enum fit fit)
 	}
 }
 
-void ikev2_print_ts(const struct traffic_selector *ts)
+void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 {
 	if (DBGP(DBG_BASE)) {
-		DBG_log("printing contents struct traffic_selector");
+		va_list ap;
+		va_start(ap, prefix);
+		DBG_va_list(prefix, ap);
+		va_end(ap);
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
-		if (ts->sec_label.len != 0) {
-			DBG_dump_hunk("security label:", ts->sec_label);
-		} else {
-			DBG_log("  security label: unset");
-		}
+		DBG_log("  sec_label: "PRI_SHUNK, pri_shunk(ts->sec_label));
 	}
 }
 
 static void traffic_selector_to_end(const struct traffic_selector *ts,
-				    struct end *end, struct traffic_selector *child_sa_ts)
+				    struct end *end, struct traffic_selector *child_sa_ts,
+				    const char *story)
 {
-	ikev2_print_ts(ts);
+	dbg_v2_ts(ts, "%s() %s", __func__, story);
 	ip_subnet subnet;
 	happy(range_to_subnet(ts->net, &subnet));
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
@@ -126,7 +126,7 @@ static void traffic_selector_to_end(const struct traffic_selector *ts,
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector traffic_selector_from_end(const struct end *e)
+struct traffic_selector traffic_selector_from_end(const struct end *e, const char *what)
 {
 	struct traffic_selector ts = {
 		/*
@@ -161,6 +161,7 @@ struct traffic_selector traffic_selector_from_end(const struct end *e)
 		ts.endport = e->port;
 	}
 
+	dbg_v2_ts(&ts, "%s TS", what);
 	return ts;
 }
 
@@ -410,9 +411,9 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 }
 
 /* return success */
-static bool v2_parse_ts(struct payload_digest *const ts_pd,
-			struct traffic_selectors *tss,
-			struct logger *logger)
+static bool v2_parse_tss(struct payload_digest *const ts_pd,
+			 struct traffic_selectors *tss,
+			 struct logger *logger)
 {
 	dbg("%s: parsing %u traffic selectors",
 	    tss->name, ts_pd->payload.v2ts.isat_num);
@@ -526,14 +527,8 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 					ts_h.isath_ipprotoid);
 			}
 
-			/*
-			 * XXX: this and the IKEv1 equivalent have a
-			 * lot in common.
-			 */
 			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
-
 			err_t ugh = vet_seclabel(sec_label);
-
 			if (ugh != NULL) {
 				llog(RC_LOG, logger, "Traffic Selector %s", ugh);
 				/* ??? should we just ignore?  If so, use continue */
@@ -561,15 +556,15 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 	return true;
 }
 
-static bool v2_parse_tss(const struct msg_digest *md,
+static bool v2_parse_tsp(const struct msg_digest *md,
 			 struct traffic_selector_payloads *tsp,
 			 struct logger *logger)
 {
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], &tsp->i, logger)) {
+	if (!v2_parse_tss(md->chain[ISAKMP_NEXT_v2TSi], &tsp->i, logger)) {
 		return false;
 	}
 
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], &tsp->r, logger)) {
+	if (!v2_parse_tss(md->chain[ISAKMP_NEXT_v2TSr], &tsp->r, logger)) {
 		return false;
 	}
 
@@ -1155,7 +1150,7 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selector_payloads tsp = empty_traffic_selectors;
-	if (!v2_parse_tss(md, &tsp, child->sa.st_logger)) {
+	if (!v2_parse_tsp(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1521,11 +1516,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
-	child->sa.st_ts_this = traffic_selector_from_end(&best_spd_route->this);
-	child->sa.st_ts_that = traffic_selector_from_end(&best_spd_route->that);
-
-	ikev2_print_ts(&child->sa.st_ts_this);
-	ikev2_print_ts(&child->sa.st_ts_that);
+	child->sa.st_ts_this = traffic_selector_from_end(&best_spd_route->this, "best this");
+	child->sa.st_ts_that = traffic_selector_from_end(&best_spd_route->that, "best that");
 
 	return true;
 }
@@ -1540,7 +1532,7 @@ bool v2_process_ts_response(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selector_payloads tsp = empty_traffic_selectors;
-	if (!v2_parse_tss(md, &tsp, child->sa.st_logger)) {
+	if (!v2_parse_tsp(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1593,11 +1585,10 @@ bool v2_process_ts_response(struct child_sa *child,
 	}
 
 	/* XXX: check conversions */
-	dbg("initiator saving acceptable TSi response in this");
-	traffic_selector_to_end(best.tsi, &c->spd.this, &child->sa.st_ts_this);
-
-	dbg("initiator saving acceptable TSr response in that");
-	traffic_selector_to_end(best.tsr, &c->spd.that, &child->sa.st_ts_that);
+	traffic_selector_to_end(best.tsi, &c->spd.this, &child->sa.st_ts_this,
+				"initiator scribbling acceptable TSi response on this");
+	traffic_selector_to_end(best.tsr, &c->spd.that, &child->sa.st_ts_that,
+				"initiator scribbling acceptable TSr response on that");
 
 	return true;
 }
@@ -1632,7 +1623,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 	const struct connection *c = child->sa.st_connection;
 	struct traffic_selector_payloads their_tsp = empty_traffic_selectors;
 
-	if (!v2_parse_tss(md, &their_tsp, child->sa.st_logger)) {
+	if (!v2_parse_tsp(md, &their_tsp, child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "received malformed TSi/TSr payload(s)");
 		return false;

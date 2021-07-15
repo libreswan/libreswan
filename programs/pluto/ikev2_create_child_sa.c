@@ -63,6 +63,7 @@ static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
 static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA_request;
 
 static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
+
 stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 					      struct msg_digest *unused_md,
 					      struct dh_local_secret *local_secret,
@@ -212,8 +213,8 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 	    pri_connection(rst->st_connection, &cib),
 	    rst->st_serialno, ntohl(*rekey_spi));
 
-	ikev2_print_ts(&child->sa.st_ts_this);
-	ikev2_print_ts(&child->sa.st_ts_that);
+	dbg_v2_ts(&child->sa.st_ts_this, "TS that:");
+	dbg_v2_ts(&child->sa.st_ts_that, "TS this:");
 
 	return true;
 }
@@ -322,8 +323,8 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	    child->sa.st_serialno,
 	    pri_connection(replaced_child->sa.st_connection, &cb),
 	    replaced_child->sa.st_serialno);
-	ikev2_print_ts(&replaced_child->sa.st_ts_this);
-	ikev2_print_ts(&replaced_child->sa.st_ts_that);
+	dbg_v2_ts(&replaced_child->sa.st_ts_this, "replaced this TS");
+	dbg_v2_ts(&replaced_child->sa.st_ts_that, "replaced that TS");
 	update_state_connection(&child->sa, replaced_child->sa.st_connection);
 
 	return true;
@@ -356,10 +357,8 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = traffic_selector_from_end(&spd->this);
-	child->sa.st_ts_that = traffic_selector_from_end(&spd->that);
-	ikev2_print_ts(&child->sa.st_ts_this);
-	ikev2_print_ts(&child->sa.st_ts_that);
+	child->sa.st_ts_this = traffic_selector_from_end(&spd->this, "child this");
+	child->sa.st_ts_that = traffic_selector_from_end(&spd->that, "child that");
 
 	return true;
 }
@@ -442,8 +441,8 @@ static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
 
 	if (rekey_spi == 0) {
 		/* not rekey */
-		child->sa.st_ts_this = traffic_selector_from_end(&cc->spd.this);
-		child->sa.st_ts_that = traffic_selector_from_end(&cc->spd.that);
+		child->sa.st_ts_this = traffic_selector_from_end(&cc->spd.this, "child this");
+		child->sa.st_ts_that = traffic_selector_from_end(&cc->spd.that, "child that");
 	}
 
 	emit_v2TS_payloads(outpbs, child);
@@ -585,13 +584,14 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, logger);
 
 	policy_buf pb;
-	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s",
+	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s sec_label="PRI_SHUNK,
 	    larval_child->sa.st_serialno,
 	    child_being_replaced->sa.st_serialno,
 	    ike->sa.st_serialno,
 	    str_policy(larval_child->sa.st_policy, &pb),
 	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
-	     larval_child->sa.st_pfs_group->common.fqn));
+	     larval_child->sa.st_pfs_group->common.fqn),
+	    pri_shunk(c->spd.this.sec_label));
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_initiator,
@@ -653,8 +653,8 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 		c = instantiate(c, &remote_addr, NULL);
 		/* replace connection template label with ACQUIREd label */
 		free_chunk_content(&c->spd.this.sec_label);
-		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
 		free_chunk_content(&c->spd.that.sec_label);
+		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
 		c->spd.that.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
 	}
 

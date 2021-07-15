@@ -339,6 +339,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
+void DBG_va_list(const char *message, va_list ap) PRINTF_LIKE_VA(1);
 void DBG_dump(const char *label, const void *p, size_t len);
 #define DBG_dump_hunk(LABEL, HUNK)				\
 	{							\
