@@ -50,6 +50,7 @@ west #
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "west" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "west" #2: deleting established Child SA using IKE SA #1
 005 "west" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 2
@@ -84,6 +85,7 @@ west #
 002 "west" #4: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "west" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "west" #3: deleting established Child SA using IKE SA #1
 005 "west" #3: ESP traffic information: in=168B out=168B
 west #
  sleep 2
