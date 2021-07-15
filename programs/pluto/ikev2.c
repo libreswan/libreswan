@@ -84,6 +84,7 @@
 #include "ikev2_create_child_sa.h"
 #include "ikev2_ike_intermediate.h"
 #include "ikev2_ike_auth.h"
+#include "ikev2_delete.h"		/* for record_v2_delete() */
 
 /*
  * IKEv2 has slightly different states than IKEv1.
@@ -2866,7 +2867,7 @@ void complete_v2_state_transition(struct state *st,
 		 * call v2_msgid_queue_initiator() with high priority
 		 * so this is performed as a separate transition?
 		 */
-		delete_ike_family(ike, PROBABLY_SEND_DELETE);
+		delete_ike_family(ike, DO_SEND_DELETE);
 		/* get out of here -- everything is invalid */
 		ike = NULL;
 		st = NULL;

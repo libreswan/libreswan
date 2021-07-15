@@ -326,7 +326,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					child->sa.st_dont_send_delete = true;
+					child->sa.st_send_delete = DONT_SEND_DELETE;
 					passert(ike->sa.st_serialno == child->sa.st_clonedfrom);
 					struct ipsec_proto_info *pr =
 						(v2del->isad_protoid == PROTO_IPSEC_AH
@@ -457,7 +457,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					dst->sa.st_dont_send_delete = true;
+					dst->sa.st_send_delete = DONT_SEND_DELETE;
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);

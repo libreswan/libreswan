@@ -707,9 +707,15 @@ static void flush_incomplete_children(struct ike_sa *ike)
 
 static bool should_send_delete(const struct state *st)
 {
-	if (st->st_dont_send_delete) {
-		dbg("%s: no, just because", __func__);
+	switch (st->st_send_delete) {
+	case DO_SEND_DELETE:
+		dbg("%s: #%lu? YES, because", __func__, st->st_serialno);
+		return true;
+	case DONT_SEND_DELETE:
+		dbg("%s: #%lu? NO, because", __func__, st->st_serialno);
 		return false;
+	default:
+		break;
 	}
 
 	/*
@@ -721,8 +727,8 @@ static bool should_send_delete(const struct state *st)
 	case IKEv1:
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !IS_IPSEC_SA_ESTABLISHED(st)) {
-			dbg("%s: no, IKEv1 SA in state %s is not established",
-			    __func__, st->st_state->name);
+			dbg("%s: #%lu? no, IKEv1 SA in state %s is not established",
+			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
 		break;
@@ -730,8 +736,8 @@ static bool should_send_delete(const struct state *st)
 	case IKEv2:
 		if (!IS_IKE_SA_ESTABLISHED(st) &&
 		    !IS_CHILD_SA_ESTABLISHED(st)) {
-			dbg("%s: no, IKEv2 SA in state %s is not established",
-			    __func__, st->st_state->name);
+			dbg("%s: #%lu? no, IKEv2 SA in state %s is not established",
+			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
 		if (IS_CHILD_SA(st) && state_with_serialno(st->st_clonedfrom) == NULL) {
@@ -753,8 +759,8 @@ static bool should_send_delete(const struct state *st)
 			 *
 			 * Anyway, play it safe.
 			 */
-			dbg("%s: no, IKEv2 SA in state %s has no parent; suspect IKE SA was deleted without deleting children",
-			    __func__, st->st_state->name);
+			dbg("%s: #%lu? no, IKEv2 SA in state %s has no parent; suspect IKE SA was deleted without deleting children",
+			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
 		break;
@@ -814,7 +820,7 @@ static void send_delete(struct state *st)
 		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
 		    ike->sa.st_serialno, st->st_serialno, __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
-		st->st_dont_send_delete = true;
+		st->st_send_delete = DONT_SEND_DELETE;
 		break;
 	}
 	default:
@@ -2732,7 +2738,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	}
 
 	case IKEv2:
-		st->st_dont_send_delete = true;
+		st->st_send_delete = DONT_SEND_DELETE;
 		break;
 	}
 
@@ -2757,14 +2763,8 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
 			  delete_ike_family_child, NULL,
 			  __func__);
 	/* delete self */
-	switch (send_delete) {
-	case DONT_SEND_DELETE:
-		ike->sa.st_dont_send_delete = true;
-		break;
-	case PROBABLY_SEND_DELETE:
-		/* let delete_state()'s vodo make the decision */
-		break;
-	}
+	pexpect(ike->sa.st_send_delete == PROBABLY_SEND_DELETE);
+	ike->sa.st_send_delete = send_delete;
 	delete_state(&ike->sa);
 }
 
@@ -2967,7 +2967,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 		return;
 	}
 
-	st->st_dont_send_delete = true;
+	st->st_send_delete = DONT_SEND_DELETE;
 	dbg("marked %s state #%lu to suppress sending delete notify",
 	    what, st->st_serialno);
 }

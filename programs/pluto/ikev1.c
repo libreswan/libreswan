@@ -3394,7 +3394,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 
 				dbg("deleting replaced IKE state for %s",
 				    old_p1->st_connection->name);
-				old_p1->st_dont_send_delete = true;
+				old_p1->st_send_delete = DONT_SEND_DELETE;
 				event_force(EVENT_SA_EXPIRE, old_p1);
 			}
 
@@ -3405,7 +3405,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
 					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
 					    c->newest_ipsec_sa, c->name);
-					old_p2->st_dont_send_delete = true;
+					old_p2->st_send_delete = DONT_SEND_DELETE;
 					event_force(EVENT_SA_EXPIRE, old_p2);
 				}
 			}

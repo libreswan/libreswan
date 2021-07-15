@@ -133,6 +133,18 @@ struct trans_attrs {
 	const struct dh_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };
 
+/*
+ * While a state is being deleted, should a last-gasp delete be sent?
+ *
+ * For instance, when tearing down a connection.
+ */
+
+enum send_delete {
+	PROBABLY_SEND_DELETE,
+	DONT_SEND_DELETE,
+	DO_SEND_DELETE,
+};
+
 /* IPsec (Phase 2 / Quick Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * by a Transaction Payload.  There may be one for AH, one
@@ -327,7 +339,7 @@ struct state {
 	/*const*/ enum sa_type st_establishing_sa;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
-	bool st_dont_send_delete;		/* suppress sending DELETE - eg replaced conn */
+	enum send_delete st_send_delete;	/* suppress or force sending DELETE */
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
@@ -803,7 +815,6 @@ extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers
 extern void delete_state(struct state *st);
 extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void rekey_p2states_by_connection(struct connection *c);
-enum send_delete { PROBABLY_SEND_DELETE, DONT_SEND_DELETE, };
 extern void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete);
 
 extern struct state
