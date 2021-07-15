@@ -452,9 +452,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			return STF_INTERNAL_ERROR;
 		}
 
-		child->sa.st_ts_this = traffic_selector_from_end(&cc->spd.this, "child this");
-		child->sa.st_ts_that = traffic_selector_from_end(&cc->spd.that, "child that");
-
 		emit_v2TS_payloads(&sk.pbs, child);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {

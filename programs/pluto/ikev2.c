@@ -2259,19 +2259,20 @@ void ikev2_log_parentSA(const struct state *st)
 void log_ipsec_sa_established(const char *m, const struct state *st)
 {
 	/* log Child SA Traffic Selector details for admin's pleasure */
-	const struct traffic_selector *a = &st->st_ts_this;
-	const struct traffic_selector *b = &st->st_ts_that;
+	struct connection *c = st->st_connection;
+	const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
+	const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
 	range_buf ba, bb;
 	log_state(RC_LOG, st, "%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
 		  m,
-		  str_range(&a->net, &ba),
-		  a->startport,
-		  a->endport,
-		  a->ipprotoid,
-		  str_range(&b->net, &bb),
-		  b->startport,
-		  b->endport,
-		  b->ipprotoid);
+		  str_range(&a.net, &ba),
+		  a.startport,
+		  a.endport,
+		  a.ipprotoid,
+		  str_range(&b.net, &bb),
+		  b.startport,
+		  b.endport,
+		  b.ipprotoid);
 }
 
 static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,

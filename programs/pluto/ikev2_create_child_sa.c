@@ -204,17 +204,11 @@ static bool ikev2_rekey_child_req(struct child_sa *child,
 		return false;
 	}
 
-	child->sa.st_ts_this = rst->st_ts_this;
-	child->sa.st_ts_that = rst->st_ts_that;
-
 	connection_buf cib;
 	dbg("#%lu initiate rekey request for "PRI_CONNECTION" #%lu SPI 0x%x TSi TSr",
 	    child->sa.st_serialno,
 	    pri_connection(rst->st_connection, &cib),
 	    rst->st_serialno, ntohl(*rekey_spi));
-
-	dbg_v2_ts(&child->sa.st_ts_this, "TS that:");
-	dbg_v2_ts(&child->sa.st_ts_that, "TS this:");
 
 	return true;
 }
@@ -323,8 +317,6 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	    child->sa.st_serialno,
 	    pri_connection(replaced_child->sa.st_connection, &cb),
 	    replaced_child->sa.st_serialno);
-	dbg_v2_ts(&replaced_child->sa.st_ts_this, "replaced this TS");
-	dbg_v2_ts(&replaced_child->sa.st_ts_that, "replaced that TS");
 	update_state_connection(&child->sa, replaced_child->sa.st_connection);
 
 	return true;
@@ -355,10 +347,6 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    child->sa.st_serialno,
 	    pri_connection(rchild->sa.st_connection, &cib),
 	    rchild->sa.st_serialno);
-
-	struct spd_route *spd = &rchild->sa.st_connection->spd;
-	child->sa.st_ts_this = traffic_selector_from_end(&spd->this, "child this");
-	child->sa.st_ts_that = traffic_selector_from_end(&spd->that, "child that");
 
 	return true;
 }
@@ -437,12 +425,6 @@ static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
 				   rekey_protoid, &rekey_spi,
 				   outpbs, NULL))
 			return STF_INTERNAL_ERROR;
-	}
-
-	if (rekey_spi == 0) {
-		/* not rekey */
-		child->sa.st_ts_this = traffic_selector_from_end(&cc->spd.this, "child this");
-		child->sa.st_ts_that = traffic_selector_from_end(&cc->spd.that, "child that");
 	}
 
 	emit_v2TS_payloads(outpbs, child);

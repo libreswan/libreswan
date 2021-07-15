@@ -103,8 +103,7 @@ void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 	}
 }
 
-static void traffic_selector_to_end(const struct traffic_selector *ts,
-				    struct end *end, struct traffic_selector *child_sa_ts,
+static void traffic_selector_to_end(const struct traffic_selector *ts, struct end *end,
 				    const char *story)
 {
 	dbg_v2_ts(ts, "%s() %s", __func__, story);
@@ -118,8 +117,6 @@ static void traffic_selector_to_end(const struct traffic_selector *ts,
 	end->port = ts->startport;
 	end->protocol = ts->ipprotoid;
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
-	/* also save in state */
-	*child_sa_ts = *ts;
 }
 
 /* rewrite me with address_as_{chunk,shunk}()? */
@@ -285,9 +282,9 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 	return STF_OK;
 }
 
-static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector *ts)
+static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector ts)
 {
-	struct traffic_selector ts_ret = *ts;
+	struct traffic_selector ts_ret = ts;
 
 	ts_ret.net.end = ts_ret.net.start;
 	ts_ret.net.is_subnet = true;
@@ -296,9 +293,9 @@ static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector
 }
 
 
-static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector *ts)
+static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector ts)
 {
-	struct traffic_selector ts_ret = *ts;
+	struct traffic_selector ts_ret = ts;
 
 	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
 		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
@@ -307,105 +304,76 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 
 	ts_ret.net.is_subnet = true;
 
-	ts_ret.sec_label = ts->sec_label;
+	ts_ret.sec_label = ts.sec_label;
 
 	return ts_ret;
 }
 
 stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
-	const struct traffic_selector *ts_i, *ts_r;
-	struct traffic_selector ts_i_impaired, ts_r_impaired;
-
+	stf_status ret;
+	struct traffic_selector ts_i, ts_r;
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		ts_i = &child->sa.st_ts_this;
-		ts_r = &child->sa.st_ts_that;
+		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd.this, "this TSi");
+		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd.that, "that TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-				impair.rekey_initiate_supernet) {
-			ts_i_impaired =  impair_ts_to_supernet(ts_i);
-			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+		    impair.rekey_initiate_supernet) {
+			ts_i = ts_r = impair_ts_to_supernet(ts_i);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 
 		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-				impair.rekey_initiate_subnet) {
-			ts_i_impaired =  impair_ts_to_subnet(ts_i);
-			ts_r_impaired =  impair_ts_to_subnet(ts_r);
-			ts_i = &ts_i_impaired;
-			ts_r = &ts_r_impaired;
+			   impair.rekey_initiate_subnet) {
+			ts_i = impair_ts_to_subnet(ts_i);
+			ts_r = impair_ts_to_subnet(ts_r);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 
 		}
 
 		break;
 	case SA_RESPONDER:
-		ts_i = &child->sa.st_ts_that;
-		ts_r = &child->sa.st_ts_this;
+		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd.that, "that TSi");
+		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd.this, "this TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-				impair.rekey_respond_subnet) {
-			ts_i_impaired =  impair_ts_to_subnet(ts_i);
-			ts_r_impaired =  impair_ts_to_subnet(ts_r);
-
-			ts_i = &ts_i_impaired;
-			ts_r = &ts_r_impaired;
+		    impair.rekey_respond_subnet) {
+			ts_i = impair_ts_to_subnet(ts_i);
+			ts_r = impair_ts_to_subnet(ts_r);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 		}
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 				impair.rekey_respond_supernet) {
-			ts_i_impaired =  impair_ts_to_supernet(ts_i);
-			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+			ts_i = ts_r = impair_ts_to_supernet(ts_i);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 		}
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);
 	}
 
-	/*
-	 * XXX: this looks wrong
-	 *
-	 * - instead of emitting two traffic selector payloads (TSi
-	 *   TSr) each containing all the corresponding traffic
-	 *   selectors, it is emitting a sequence of traffic selector
-	 *   payloads each containing just one traffic selector
-	 *
-	 * - should multiple initiator (responder) traffic selector
-	 *   payloads be emitted then they will all contain the same
-	 *   value - the loop control variable SR is never referenced
-	 *
-	 * - should multiple traffic selector payload be emitted then
-	 *   the next payload type for all but the last v2TSr payload
-	 *   will be wrong - it is always set to the type of the
-	 *   payload after these
-	 */
+	ret = emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i);
+	if (ret != STF_OK)
+		return ret;
 
-	for (const struct spd_route *sr = &child->sa.st_connection->spd; sr != NULL;
-	     sr = sr->spd_next) {
-		stf_status ret = emit_v2TS(outpbs, &ikev2_ts_i_desc, ts_i);
-
-		if (ret != STF_OK)
-			return ret;
-		ret = emit_v2TS(outpbs, &ikev2_ts_r_desc, ts_r);
-		if (ret != STF_OK)
-			return ret;
-	}
+	ret = emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r);
+	if (ret != STF_OK)
+		return ret;
 
 	return STF_OK;
 }
@@ -1516,9 +1484,6 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
-	child->sa.st_ts_this = traffic_selector_from_end(&best_spd_route->this, "best this");
-	child->sa.st_ts_that = traffic_selector_from_end(&best_spd_route->that, "best that");
-
 	return true;
 }
 
@@ -1569,26 +1534,10 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	if (selected_sec_label.len > 0) {
-		if (hunk_eq(selected_sec_label, c->spd.this.sec_label)) {
-			connection_buf cb;
-			dbg("responder returned same sec_label="PRI_SHUNK" as "PRI_CONNECTION,
-			    pri_shunk(selected_sec_label),
-			    pri_connection(c, &cb));
-		} else {
-			connection_buf cb;
-			llog_sa(RC_LOG_SERIOUS, child,
-				"responder narrowed "PRI_CONNECTION" sec_label '"PRI_SHUNK"' down to '"PRI_SHUNK"'; what am I to do",
-				pri_connection(c, &cb), pri_shunk(c->spd.this.sec_label),
-				pri_shunk(selected_sec_label));
-		}
-	}
-
-	/* XXX: check conversions */
-	traffic_selector_to_end(best.tsi, &c->spd.this, &child->sa.st_ts_this,
-				"initiator scribbling acceptable TSi response on this");
-	traffic_selector_to_end(best.tsr, &c->spd.that, &child->sa.st_ts_that,
-				"initiator scribbling acceptable TSr response on that");
+	traffic_selector_to_end(best.tsi, &c->spd.this,
+				"scribble accepted TSi response on initiator's this");
+	traffic_selector_to_end(best.tsr, &c->spd.that,
+				"scribble accepted TSr response on initiator's that");
 
 	return true;
 }

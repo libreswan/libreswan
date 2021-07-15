@@ -677,11 +677,6 @@ struct state {
 	PK11SymKey *st_sk_d_no_ppk;
 	PK11SymKey *st_sk_pi_no_ppk;
 	PK11SymKey *st_sk_pr_no_ppk;
-
-	/* connection included in AUTH (v2) */
-	struct traffic_selector st_ts_this;
-	struct traffic_selector st_ts_that;
-
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
 	struct state_event *st_event;		/* timer event for this state object */
