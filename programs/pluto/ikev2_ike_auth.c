@@ -975,7 +975,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest *md)
 			}
 			dbg("NULL_AUTH verified");
 		} else {
-			dbg("verifying AUTH payload");
+			dbg("responder verifying AUTH payload");
 			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						      ike->sa.st_connection->spd.that.authby);
@@ -1418,7 +1418,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	/* process AUTH payload */
 
-	dbg("verifying AUTH payload");
+	dbg("initiator verifying AUTH payload");
 	d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 			       ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
