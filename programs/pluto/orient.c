@@ -98,11 +98,12 @@ static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, 
 	/*
 	 * assume UDP for now
 	 *
-	 * A custom IKEPORT should not float away to port 4500.  For
-	 * now leave ADD_IKE_ENCAPSULATION_PREFIX clear so it can talk
-	 * to port 500.  Perhaps it doesn't belong in iface?
+	 * A custom IKEPORT should not float away to port 4500.
+	 * Assume a custom port always has the prefix (like 4500 and
+	 * not 500).  Perhaps it doesn't belong in iface?
 	 *
-	 * XXX: should this log globally or against the connection?
+	 * XXX: should this log globally, or against the connection,
+	 * or against the state?
 	 */
 	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
 	struct iface_endpoint *ifp = bind_iface_endpoint(dev, &udp_iface_io,
