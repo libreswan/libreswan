@@ -20,7 +20,7 @@ extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_skeyseed;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
-extern stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest * md);
+
 stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *ike_st,
 										struct msg_digest *md);
 

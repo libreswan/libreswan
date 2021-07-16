@@ -714,7 +714,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 }
 
 static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
-								      struct msg_digest *md);
+							       struct msg_digest *md);
 
 static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 								   struct msg_digest *md)
@@ -734,6 +734,12 @@ static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 	}
 	return process_v2_IKE_AUTH_request_post_cert_decode(st, md);
 }
+
+static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
+								struct msg_digest *md,
+								bool err);
+
+static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
 static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike_sa,
 							       struct msg_digest *md)
@@ -759,20 +765,37 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 
 	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
-		stf_status ret = idi_ipseckey_fetch(ike);
-		if (ret != STF_OK) {
-			llog_sa(RC_LOG_SERIOUS, ike,
-				"DNS: IPSECKEY not found or usable");
-			return ret;
+		dns_status ret = responder_fetch_idi_ipseckey(ike, process_v2_IKE_AUTH_request_ipseckey_continue);
+		switch (ret) {
+		case DNS_SUSPEND:
+			return STF_SUSPEND;
+		case DNS_FATAL:
+			llog_sa(RC_LOG_SERIOUS, ike, "DNS: IPSECKEY not found or usable");
+			return STF_FATAL;
+		case DNS_OK:
+			break;
 		}
 	}
 
-	return process_v2_IKE_AUTH_request_id_tail(md);
+	return process_v2_IKE_AUTH_request_id_tail(ike, md);
 }
 
-stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
+							 struct msg_digest *md,
+							 bool err)
 {
-	struct ike_sa *ike = pexpect_ike_sa(md->v1_st);
+	if (err) {
+		/* already logged?! */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+	return process_v2_IKE_AUTH_request_id_tail(ike, md);
+}
+
+stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
+{
 	lset_t policy = ike->sa.st_connection->policy;
 	bool found_ppk = FALSE;
 	chunk_t null_auth = EMPTY_CHUNK;

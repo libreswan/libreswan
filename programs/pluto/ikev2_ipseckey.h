@@ -8,8 +8,14 @@
 
 #define IS_LIBUNBOUND LSW_LIBUNBOUND_ENABLED
 
-struct p_dns_req;
+typedef enum {
+	DNS_OK = STF_OK,
+	DNS_FATAL = STF_FATAL,
+	DNS_SUSPEND = STF_SUSPEND,
+} dns_status;
 
-extern stf_status idi_ipseckey_fetch(struct ike_sa *ike);
-extern void free_ipseckey_dns(struct p_dns_req *pp);
-extern stf_status idr_ipseckey_fetch(struct ike_sa *ike);
+dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
+					stf_status (*callback)(struct ike_sa *ike,
+							       struct msg_digest *md,
+							       bool err));
+bool initiator_fetch_idr_ipseckey(struct ike_sa *ike);

@@ -627,8 +627,14 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
-		stf_status ret = idr_ipseckey_fetch(ike);
-		if (ret != STF_OK) {
+		/*
+		 * This runs in the background?  How is it ever
+		 * synced?
+		 */
+		if (!initiator_fetch_idr_ipseckey(ike)) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"fetching IDr IPsec key using DNS failed");
+			delete_state(&ike->sa);
 			return;
 		}
 	}
