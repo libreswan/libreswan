@@ -108,7 +108,7 @@ $(error ERROR: Deprecated USE_NETKEY variable is set, use USE_XFRM instead)
 endif
 
 ifdef USE_KLIPS
-$(error ERROR: Deprecated USE_KLIPS variable is set, use USE_XFRM instead)
+$(error ERROR: Deprecated USE_KLIPS variable is set, migrate to use USE_XFRM instead)
 endif
 
 ifdef INC_MANDIR
