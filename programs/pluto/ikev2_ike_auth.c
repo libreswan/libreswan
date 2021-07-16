@@ -735,25 +735,22 @@ static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 	return process_v2_IKE_AUTH_request_post_cert_decode(st, md);
 }
 
-static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
-								      struct msg_digest *md)
+static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike_sa,
+							       struct msg_digest *md)
 {
-	struct ike_sa *ike = ike_sa(st, HERE);
-	ikev2_log_parentSA(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	ikev2_log_parentSA(&ike->sa);
 
 	/* going to switch to child st. before that update parent */
 	if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
 		update_ike_endpoints(ike, md);
 
-	nat_traversal_change_port_lookup(md, st); /* shouldn't this be ike? */
+	nat_traversal_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
 
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-		event_force(EVENT_SA_EXPIRE, st);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		/* already logged above! */
-		release_pending_whacks(st, "Authentication failed");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -764,7 +761,8 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
 		stf_status ret = idi_ipseckey_fetch(ike);
 		if (ret != STF_OK) {
-			log_state(RC_LOG_SERIOUS, st, "DNS: IPSECKEY not found or usable");
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"DNS: IPSECKEY not found or usable");
 			return ret;
 		}
 	}
