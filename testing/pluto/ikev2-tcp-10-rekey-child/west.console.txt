@@ -108,6 +108,7 @@ west #
 002 "westnet-eastnet-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "westnet-eastnet-ikev2" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #3: IPsec SA established tunnel mode {ESPinTCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "westnet-eastnet-ikev2" #2: deleting established Child SA using IKE SA #1
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  # rekey of IPsec SA means traffic counters should be 0

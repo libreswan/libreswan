@@ -15,7 +15,7 @@ initdone
 east #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH responder matching remote ESP/AH proposals failed, responder SA processing returned STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
-"westnet-eastnet-ipv4-psk-ikev2" #2: responding to IKE_AUTH message (ID 1) from 192.1.2.45:500 with encrypted notification NO_PROPOSAL_CHOSEN
+| process_v2_childs_sa_payload returned STF_FAIL+v2N_NO_PROPOSAL_CHOSEN
 |    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
 east #
  ipsec whack --shutdown

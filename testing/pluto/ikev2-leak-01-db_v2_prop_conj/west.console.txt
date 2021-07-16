@@ -18,16 +18,16 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
-000 "westnet-eastnet-ipv4-psk-ikev2" #1: scheduling retry attempt 1 of an unlimited number, but releasing whack
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the Child SA error notification NO_PROPOSAL_CHOSEN
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE SA established but responder rejected Child SA request
 west #
  echo done
 done
 west #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 |    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
-| error notification v2N_NO_PROPOSAL_CHOSEN is not supported
-"westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response contained the Child SA error notification NO_PROPOSAL_CHOSEN
 west #
  ipsec whack --shutdown
 west #
