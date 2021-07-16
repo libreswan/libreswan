@@ -77,6 +77,57 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 #
+# Error out on deprecated since 4.0 config variables.
+#
+ifdef BINDIR
+$(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
+endif
+
+ifdef PUBDIR
+$(error ERROR: Deprecated PUBDIR variable is set, use SBINDIR instead)
+endif
+
+ifdef EFENCE
+$(error ERROR: Deprecated EFENCE variable is set, use USE_EFENCE instead)
+endif
+
+ifdef INC_USRLOCAL
+$(error ERROR: Deprecated INC_USRLOCAL variable is set, use PREFIX instead)
+endif
+
+ifdef MANTREE
+$(error ERROR: Deprecated MANTREE variable is set, use FINALMANDIR instead)
+endif
+
+ifdef USE_XAUTHPAM
+$(error ERROR: Deprecated USE_XAUTHPAM variable is set, use USE_AUTHPAM instead)
+endif
+
+ifdef USE_NETKEY
+$(error ERROR: Deprecated USE_NETKEY variable is set, use USE_XFRM instead)
+endif
+
+ifdef USE_KLIPS
+$(error ERROR: Deprecated USE_KLIPS variable is set, use USE_XFRM instead)
+endif
+
+ifdef INC_MANDIR
+$(error ERROR: Deprecated INC_MANDIR variable is set, use FINALMANDIR instead)
+endif
+
+ifdef INC_DOCDIR
+$(error ERROR: Deprecated INC_DOCDIR variable is set, use FINALDOCDIR instead)
+endif
+
+ifdef INC_RCDIRS
+$(error ERROR: Deprecated variable INC_RCDIRS is set, use INITDDIRS instead
+endif
+
+ifdef INC_RCDEFAULT
+$(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INITDDIR_DEFAULT instead)
+endif
+
+#
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
 #
@@ -126,46 +177,19 @@ DESTDIR ?=
 # "PREFIX" part of tree, used in building other pathnames.
 PREFIX ?= /usr/local
 
-# Compatibility with old INC_USRLOCAL which was changed to PREFIX.
-# We will overwrite PREFIX with INC_USRLOCAL until libreswan 4.2
-ifdef INC_USRLOCAL
-PREFIX = $(INC_USRLOCAL)
-$(warning Warning: Overriding PREFIX with deprecated variable INC_USRLOCAL)
-endif
-
 # LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
 # the "ipsec" command will look for them when it is run.
 FINALLIBEXECDIR ?= $(PREFIX)/libexec/ipsec
 LIBEXECDIR ?= $(DESTDIR)$(FINALLIBEXECDIR)
 
-ifdef BINDIR
-$(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
-endif
-
 # SBINDIR is where the user interface command goes.
 FINALSBINDIR ?= $(PREFIX)/sbin
 SBINDIR ?= $(DESTDIR)$(FINALSBINDIR)
 
-# Error out if somebody try to use deprecated PUBDIR.
-ifdef PUBDIR
-$(error ERROR: deprecated variable PUBDIR is set, use SBINDIR instead)
-endif
-
 # where the appropriate manpage tree is located
 FINALMANDIR ?= $(PREFIX)/share/man
-ifdef INC_MANDIR
-FINALMANDIR = $(PREFIX}/$(INC_MANDIR)
-$(warning Warning: Overriding FINALMANDIR with deprecated INC_MANDIR variable)
-endif
 # the full pathname
 MANDIR ?= $(DESTDIR)$(FINALMANDIR)
-
-# Compatibility with old MANTREE which was changed to MANDIR.
-# We will overwrite MANDIR with MANTREE until libreswan 4.2
-ifdef MANTREE
-MANDIR = $(MANTREE)
-$(warning Warning: Overriding MANDIR with deprecated variable MANTREE)
-endif
 
 # where configuration files go
 FINALSYSCONFDIR ?= /etc
@@ -190,12 +214,6 @@ CONFDDIR ?= $(DESTDIR)$(FINALCONFDDIR)
 # where dynamic PPKs go, for now
 FINALPPKDIR ?= $(FINALCONFDDIR)
 PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
-
-# We will overwrite FINALDOCDIR with INC_DOCDIR until libreswan 4.2
-ifdef INC_DOCDIR
-FINALDOCDIR = $(PREFIX}/$(INC_DOCDIR)/libreswan
-$(warning Warning: Overriding FINALDOCDIR with deprecated INC_DOCDIR variable)
-endif
 
 # Documentation directory
 FINALDOCDIR ?= $(PREFIX)/share/doc/libreswan
@@ -231,17 +249,6 @@ DOCKER_PLUTONOFORK ?= --nofork
 # INITDDIRS directories has been pre-created under DESTDIR.
 INITDDIRS ?= /etc/rc.d/init.d /etc/init.d
 INITDDIR_DEFAULT ?= /etc/init.d
-
-# We will overwrite INITDDIRS with INC_RCDIRS until libreswan 4.2
-ifdef INC_RCDIRS
-INITDDIRS = $(INC_RCDIRS)
-$(warning Warning: Overriding INITDDIRS with deprecated variable INC_RCDIRS)
-endif
-# We will overwrite INITDDIR_DEFAULT with INC_RCDEFAULT until libreswan 4.2
-ifdef INC_RCDEFAULT
-INITDDIR_DEFAULT = $(INC_RCDEFAULT)
-$(warning Warning: Overriding INITDDIR_DEFAULT with deprecated variable INC_RCDEFAULT)
-endif
 
 # INITDDIR is where boot/shutdown scripts go; FINALINITDDIR is where they think
 # will finally be (so utils/Makefile can create a symlink in LIBEXECDIR to
@@ -538,10 +545,6 @@ USERLAND_CFLAGS += -DUSE_EFENCE
 USERLAND_LDFLAGS += -lefence
 endif
 
-ifdef EFENCE
-$(error ERROR: EFENCE is replaced by USE_EFENCE)
-endif
-
 #
 # Configuration options.
 #
@@ -709,13 +712,6 @@ endif
 USE_PRF_AES_XCBC ?= true
 ifeq ($(USE_PRF_AES_XCBC),true)
 USERLAND_CFLAGS += -DUSE_PRF_AES_XCBC
-endif
-
-ifeq ($(USE_NETKEY),true)
-$(error ERROR: Deprecated USE_NETKEY variable set, use USE_XFRM instead)
-endif
-ifeq ($(USE_KLIPS),true)
-$(error ERROR: Deprecated USE_KLIPS variable set, please migrate to USE_XFRM instead)
 endif
 
 # Use the NSS Key Derivation Function (KDF) instead of using the NSS
