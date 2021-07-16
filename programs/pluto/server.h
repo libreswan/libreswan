@@ -143,4 +143,6 @@ void schedule_callback(const char *name, so_serial_t serialno,
 void call_global_event_inline(enum global_timer type,
 			      struct logger *logger);
 
-#endif /* _SERVER_H */
+void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
+
+#endif /* SERVER_H */

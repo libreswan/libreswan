@@ -35,7 +35,9 @@
 
 #include "constants.h"
 #include "defs.h"
-#include "pam_auth.h"		/* for pamauth_cancel() */
+#ifdef USE_PAM_AUTH
+#include "pam_auth.h"		/* for pam_auth_cancel() */
+#endif
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "state_db.h"
@@ -979,9 +981,9 @@ void delete_state_tail(struct state *st)
 		}
 	}
 
-#ifdef AUTH_HAVE_PAM
-	if (st->st_pamauth != NULL) {
-		pamauth_abort(st);
+#ifdef USE_PAM_AUTH
+	if (st->st_pam_auth != NULL) {
+		pam_auth_abort(st);
 	}
 #endif
 

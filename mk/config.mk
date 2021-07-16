@@ -629,17 +629,10 @@ endif
 # Link with -lrt (only for glibc versions before 2.17)
 RT_LDFLAGS ?= -lrt
 
-# Compatibility with old USE_XAUTHPAM which was changed to USE_AUTHPAM.
-# We will overwrite USE_AUTHPAM with USE_XAUTHPAM until libreswan 4.4
-ifdef USE_XAUTHPAM
-USE_AUTHPAM = $(USE_XAUTHPAM)
-$(warning Warning: Overriding USE_AUTHPAM with deprecated variable USE_XAUTHPAM)
-endif
-
 # include PAM support for IKEv1 XAUTH and IKE2 pam-authorize when available on the platform
 USE_AUTHPAM ?= true
 ifeq ($(USE_AUTHPAM),true)
-USERLAND_CFLAGS += -DAUTH_HAVE_PAM
+USERLAND_CFLAGS += -DUSE_PAM_AUTH
 AUTHPAM_LDFLAGS ?= -lpam
 endif
 

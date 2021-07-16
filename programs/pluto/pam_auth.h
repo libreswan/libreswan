@@ -1,6 +1,6 @@
 /* XAUTH PAM handling
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017, 2021 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,29 +13,32 @@
  * for more details.
  */
 
-#include "constants.h"
+#ifndef PAM_AUTH_H
+#define PAM_AUTH_H
+
+#ifndef USE_PAM_AUTH
+#error USE_PAM_AUTH
+#endif
+
+#include <stdbool.h>
 
 struct state;
 struct msg_digest;
 
-/* ??? needlessly used even if !AUTH_HAVE_PAM */
-
-typedef void pamauth_callback_t(struct state *st,
-			      struct msg_digest *md,
-			      const char *,
-			      bool success);
-
-#ifdef AUTH_HAVE_PAM
+typedef stf_status pam_auth_callback_fn(struct state *st,
+					struct msg_digest *md,
+					const char *,
+					bool success);
 
 /*
  * XXX: Should XAUTH handle timeouts internally?
  */
-void pamauth_abort(struct state *st);
+void pam_auth_abort(struct state *st);
 
-void auth_fork_pam_process(struct state *st,
-			    const char *name,
-			    const char *password,
-			    const char *atype,
-			    pamauth_callback_t *callback);
+bool pam_auth_fork_request(struct state *st,
+			   const char *name,
+			   const char *password,
+			   const char *atype,
+			   pam_auth_callback_fn *callback);
 
 #endif

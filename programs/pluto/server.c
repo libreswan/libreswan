@@ -599,6 +599,22 @@ struct resume_event {
 	struct event *event;
 };
 
+void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status)
+{
+	switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		complete_v1_state_transition(st, md, status);
+		break;
+#endif
+	case IKEv2:
+		complete_v2_state_transition(st, md, status);
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
+}
+
 static void resume_handler(evutil_socket_t fd UNUSED,
 			   short events UNUSED, void *arg)
 {
@@ -713,7 +729,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 						md->v1_st->st_serialno == old_md_st);
 				}
 				pexpect(st != NULL); /* see above */
-				complete_v1_state_transition(st, md, status);
 				break;
 #endif
 			case IKEv2:
@@ -726,11 +741,11 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 						st = md->v1_st;
 					}
 				}
-				complete_v2_state_transition(st, md, status);
 				break;
 			default:
 				bad_case(ike_version);
 			}
+			complete_state_transition(st, md, status);
 		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
@@ -951,12 +966,13 @@ static void syshandler_cb(struct logger *logger)
 
 static server_fork_cb addconn_exited; /* type assertion */
 
-static void addconn_exited(struct state *null_st UNUSED,
-			   struct msg_digest *null_mdp UNUSED,
-			   int status, void *context UNUSED,
-			   struct logger *logger UNUSED)
+static stf_status addconn_exited(struct state *null_st UNUSED,
+				 struct msg_digest *null_mdp UNUSED,
+				 int status, void *context UNUSED,
+				 struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
+	return STF_OK;
 }
 
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED

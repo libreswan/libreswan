@@ -36,16 +36,18 @@
 
 /* information for tracking pamauth PAM work in flight */
 
-struct pamauth {
+struct pam_auth {
 	so_serial_t serialno;
 	struct pam_thread_arg ptarg;
 	monotime_t start_time;
-	pamauth_callback_t *callback;
+	pam_auth_callback_fn *callback;
 	pid_t child;
 };
 
-static void pfree_pamauth(struct pamauth *x)
+static void pam_auth_free(struct pam_auth **p)
 {
+	struct pam_auth *x = *p;
+	*p = NULL;
 	pfree(x->ptarg.name);
 	pfree(x->ptarg.password);
 	pfree(x->ptarg.c_name);
@@ -59,33 +61,39 @@ static void pfree_pamauth(struct pamauth *x)
  * the pamauth request has already been deleted.  Need to pass in
  * st_callback, but only when it needs to notify an abort.
  */
-void pamauth_abort(struct state *st)
+void pam_auth_abort(struct state *st)
 {
-	struct pamauth *pamauth = st->st_pamauth;
+	struct pam_auth *pamauth = st->st_pam_auth;
 
 	if (pamauth == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "PAM: #%lu: main-process: no process to abort (already aborted?)",
 			     st->st_serialno);
-	} else {
-		st->st_pamauth = NULL; /* aborted */
-		pstats_pamauth_aborted++;
-		passert(pamauth->serialno == st->st_serialno);
-		log_state(RC_LOG, st, "PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
-			      st->st_serialno, pamauth->ptarg.name);
-		/*
-		 * Don't hold back.
-		 *
-		 * XXX: need to fix child so that more friendly
-		 * SIGTERM is handled - currently the forked process
-		 * has it blocked by libvent.
-		 */
-		kill(pamauth->child, SIGKILL);
-		/*
-		 * pamauth is deleted by pamauth_pam_callback() _after_
-		 * the process exits and the callback has been called.
-		 */
+		return;
 	}
+
+	/*
+	 * Free ST of any responsibility for releasing .st_pam_auth
+	 * (the fork handler will do that later).
+	 */
+	st->st_pam_auth = NULL; /* aborted */
+
+	pstats_pamauth_aborted++;
+	passert(pamauth->serialno == st->st_serialno);
+	log_state(RC_LOG, st, "PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
+		  st->st_serialno, pamauth->ptarg.name);
+	/*
+	 * Don't hold back.
+	 *
+	 * XXX: need to fix child so that more friendly
+	 * SIGTERM is handled - currently the forked process
+	 * has it blocked by libvent.
+	 */
+	kill(pamauth->child, SIGKILL);
+	/*
+	 * pamauth is deleted by pamauth_pam_callback() _after_
+	 * the process exits and the callback has been called.
+	 */
 }
 
 /*
@@ -97,12 +105,12 @@ void pamauth_abort(struct state *st)
 
 static server_fork_cb pam_callback; /* type assertion */
 
-static void pam_callback(struct state *st,
-			 struct msg_digest *md,
-			 int status, void *arg,
-			 struct logger *logger)
+static stf_status pam_callback(struct state *st,
+			       struct msg_digest *md,
+			       int status, void *arg,
+			       struct logger *logger)
 {
-	struct pamauth *pamauth = arg;
+	struct pam_auth *pamauth = arg;
 
 	pstats_pamauth_stopped++;
 
@@ -114,25 +122,25 @@ static void pam_callback(struct state *st,
 	    success ? "SUCCESS" : "FAILURE",
 	    str_deltatime(monotimediff(mononow(), pamauth->start_time), &db),
 	    (st == NULL ? " (state deleted)" :
-	     st->st_pamauth == NULL ? " (aborted)" :
-	     ""));
+	     st->st_pam_auth == NULL ? " (aborted)" : ""));
 
 	/*
-	 * Try to find the corresponding state.
-	 *
-	 * Since this is running on the main thread, it and
-	 * Xauth_abort() can't get into a race.
+	 * If there is still a state, notify it.  Since this is
+	 * running on the main thread, it and pam_auth_cancel() can't
+	 * get into a race.
 	 */
+	stf_status ret = STF_OK;
 	if (st != NULL) {
-		st->st_pamauth = NULL; /* all done */
+		st->st_pam_auth = NULL; /* all done */
 		llog(RC_LOG, logger,
-			    "PAM: #%lu: completed for user '%s' with status %s",
-			    pamauth->serialno, pamauth->ptarg.name,
-			    success ? "SUCCESS" : "FAILURE");
-		pamauth->callback(st, md, pamauth->ptarg.name, success);
+		     "PAM: #%lu: completed for user '%s' with status %s",
+		     pamauth->serialno, pamauth->ptarg.name,
+		     success ? "SUCCESS" : "FAILURE");
+		ret = pamauth->callback(st, md, pamauth->ptarg.name, success);
 	}
 
-	pfree_pamauth(pamauth);
+	pam_auth_free(&pamauth);
+	return ret;
 }
 
 /*
@@ -140,7 +148,7 @@ static void pam_callback(struct state *st,
  */
 static int pam_child(void *arg, struct logger *logger)
 {
-	struct pamauth *pamauth = arg;
+	struct pam_auth *pamauth = arg;
 
 	dbg("PAM: #%lu: PAM-process authenticating user '%s'",
 	    pamauth->serialno,
@@ -152,17 +160,17 @@ static int pam_child(void *arg, struct logger *logger)
 	return success ? 0 : 1;
 }
 
-void auth_fork_pam_process(struct state *st,
-			     const char *name,
-			     const char *password,
-			     const char *atype,
-			     pamauth_callback_t *callback)
+bool pam_auth_fork_request(struct state *st,
+			   const char *name,
+			   const char *password,
+			   const char *atype,
+			   pam_auth_callback_fn *callback)
 {
 	so_serial_t serialno = st->st_serialno;
 
 	/* now start the pamauth child process */
 
-	struct pamauth *pamauth = alloc_thing(struct pamauth, "pamauth arg");
+	struct pam_auth *pamauth = alloc_thing(struct pam_auth, "pamauth arg");
 
 	pamauth->callback = callback;
 	pamauth->serialno = serialno;
@@ -187,10 +195,11 @@ void auth_fork_pam_process(struct state *st,
 	if (pamauth->child < 0) {
 		log_state(RC_LOG, st, "PAM: #%lu: creation of PAM-process for user '%s' failed",
 			      pamauth->serialno, pamauth->ptarg.name);
-		pfree_pamauth(pamauth);
-		return;
+		pam_auth_free(&pamauth);
+		return false;
 	}
 
-	st->st_pamauth = pamauth;
+	st->st_pam_auth = pamauth;
 	pstats_pamauth_started++;
+	return true;
 }

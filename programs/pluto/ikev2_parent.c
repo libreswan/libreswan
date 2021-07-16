@@ -67,7 +67,6 @@
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"
 #include "ikev2_redirect.h"
-#include "pam_auth.h"
 #include "crypt_dh.h"
 #include "crypt_prf.h"
 #include "ietf_constants.h"

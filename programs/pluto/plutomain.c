@@ -223,7 +223,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_LINUX_AUDIT
 	" LINUX_AUDIT"
 #endif
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	" AUTH_PAM"
 #endif
 #ifdef HAVE_NM
@@ -1712,7 +1712,7 @@ int main(int argc, char **argv)
 
 	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	llog(RC_LOG, logger, "XAUTH PAM support [enabled]");
 #else
 	llog(RC_LOG, logger, "XAUTH PAM support [disabled]");

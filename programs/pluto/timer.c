@@ -55,7 +55,9 @@
 #include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
+#ifdef USE_PAM_AUTH
 #include "pam_auth.h"
+#endif
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
@@ -397,10 +399,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		dpd_timeout(st);
 		break;
 
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	case EVENT_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
-		pamauth_abort(st);
+		pam_auth_abort(st);
 		/*
 		 * Things get cleaned up when the PAM process exits.
 		 *

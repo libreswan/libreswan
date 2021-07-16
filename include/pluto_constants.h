@@ -321,8 +321,8 @@ typedef enum {
 	 * that directly directly call complete*() (or other scary
 	 * stuff) can signal the common code that the normal sequence
 	 * of: call state transition function; call complete() should
-	 * be bypassed.  For instance, the IKEv1 crypto continuation
-	 * functions.
+	 * be bypassed.  For instance, the IKEv1 crypto and PAM
+	 * continuation functions.
 	 */
 	STF_SKIP_COMPLETE_STATE_TRANSITION,
 	/*                         TRANSITION  DELETE   RESPOND  LOG */

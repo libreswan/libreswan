@@ -40,7 +40,9 @@
 #include "connections.h"
 #include "secrets.h"
 #include "ikev2_message.h"
+#ifdef USE_PAM_AUTH
 #include "pam_auth.h"
+#endif
 #include "pluto_x509.h"
 #include "ikev2_ike_auth.h"
 #include "pending.h"
@@ -631,14 +633,14 @@ static stf_status process_v2_IKE_AUTH_request_no_skeyseed_continue(struct state 
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 
-static pamauth_callback_t ikev2_pam_continue;	/* type assertion */
+static pam_auth_callback_fn ikev2_pam_continue;	/* type assertion */
 
-static void ikev2_pam_continue(struct state *ike_st,
-			       struct msg_digest *md,
-			       const char *name UNUSED,
-			       bool success)
+static stf_status ikev2_pam_continue(struct state *ike_st,
+				     struct msg_digest *md,
+				     const char *name UNUSED,
+				     bool success)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
@@ -647,54 +649,18 @@ static void ikev2_pam_continue(struct state *ike_st,
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
-	stf_status stf;
-	if (success) {
-		stf = process_v2_IKE_AUTH_request_tail(&ike->sa, md, success);
-	} else {
-		/*
-		 * XXX: better would be to record the message and
-		 * return STF_ZOMBIFY.
-		 *
-		 * That way compute_v2_state_transition() could send
-		 * the recorded message and then transition the state
-		 * to ZOMBIE (aka *_DEL*).  There it can linger while
-		 * dealing with any duplicate IKE_AUTH requests.
-		 */
+	if (!success) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-		stf = STF_FATAL; /* STF_ZOMBIFY */
+		return STF_FATAL; /* STF_ZOMBIFY */
 	}
 
-	/* replace (*mdp)->st with st ... */
-	complete_v2_state_transition(md->v1_st, md, stf);
+	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, success);
 }
 
-/*
- * In the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully.
- * Now invoke the PAM helper to authorize connection (based on name only, not password)
- * When pam helper is done state will be woken up and continue.
- *
- * This routine "suspends" MD/ST; once PAM finishes it will be
- * unsuspended.
- */
-
-static stf_status ikev2_start_pam_authorize(struct state *st)
-{
-	id_buf thatidb;
-	const char *thatid = str_id(&st->st_connection->spd.that.id, &thatidb);
-	log_state(RC_LOG, st,
-		  "IKEv2: [XAUTH]PAM method requested to authorize '%s'",
-		  thatid);
-	auth_fork_pam_process(st,
-			       thatid, "password",
-			       "IKEv2",
-			       ikev2_pam_continue);
-	return STF_SUSPEND;
-}
-
-#endif /* AUTH_HAVE_PAM */
+#endif /* USE_PAM_AUTH */
 
 static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
 								   struct msg_digest *md);
@@ -996,10 +962,27 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct msg_digest *md)
 
 	free_chunk_content(&null_auth);
 
-#ifdef AUTH_HAVE_PAM
-	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
-		return ikev2_start_pam_authorize(&ike->sa);
+#ifdef USE_PAM_AUTH
+	/*
+	 * The AUTH payload is verified succsfully.  Now invoke the
+	 * PAM helper to authorize connection (based on name only, not
+	 * password) When pam helper is done state will be woken up
+	 * and continue.
+	 */
+	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE) {
+		id_buf thatidb;
+		const char *thatid = str_id(&ike->sa.st_connection->spd.that.id, &thatidb);
+		llog_sa(RC_LOG, ike,
+			"IKEv2: [XAUTH]PAM method requested to authorize '%s'",
+			thatid);
+		if (!pam_auth_fork_request(&ike->sa, thatid, "password",
+					   "IKEv2", ikev2_pam_continue)) {
+			return STF_FATAL;
+		}
+		return STF_SUSPEND;
+	}
 #endif
+
 	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, TRUE);
 }
 
