@@ -2357,38 +2357,31 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	dbg("announcing the state transition");
 	enum rc_type w;
 	void (*log_details)(struct jambuf *buf, struct state *st);
-	struct state *log_st;
 	if (transition->state == transition->next_state) {
 		/*
 		 * HACK for seemingly going around in circles
 		 */
 		log_details = NULL;
-		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (IS_CHILD_SA(st) && just_established) {
 		log_ipsec_sa_established("negotiated connection", st);
 		log_details = lswlog_child_sa_established;
-		log_st = st;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else if (IS_IKE_SA(st) && just_established) {
 		/* ike_sa_established() called elsewhere */
 		log_details = lswlog_ike_sa_established;
-		log_st = &ike->sa;
 		/* log our success and trigger detach */
 		w = RC_SUCCESS;
 	} else if (transition->state == STATE_PARENT_I1 &&
 		   transition->next_state == STATE_PARENT_I2) {
 		log_details = lswlog_ike_sa_established;
-		log_st = &ike->sa;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_R1) {
 		log_details = lswlog_ike_sa_established;
-		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else {
 		log_details = NULL;
-		log_st = st;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	}
 
@@ -2402,7 +2395,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			}
 		}
 	} else {
-		LLOG_JAMBUF(w, log_st->st_logger, buf) {
+		LLOG_JAMBUF(w, st->st_logger, buf) {
 			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (log_details != NULL) {
