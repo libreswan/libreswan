@@ -726,7 +726,6 @@ struct state {
 	bool st_v1_seen_fragments;              /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
-	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
