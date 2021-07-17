@@ -2102,7 +2102,6 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct v2_state_transition *svm)
 {
-	md->v1_st = st;
 	md->svm = svm;
 
 	/*
@@ -2136,43 +2135,24 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 * that to the IKE SA and then let it do all the create child
 	 * magic.
 	 */
-	statetime_t start = statetime_start(st);
 	so_serial_t old_st = st->st_serialno;
-	so_serial_t old_md_st = md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
-	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
-	stf_status e = svm->processor(ike, child, md);
-	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 
-	/*
-	 * Processor may screw around with md->v1_st, for instance
-	 * switching it to the CHILD SA, or a newly created state.
-	 * Hence use that version for now.
-	 */
+	statetime_t start = statetime_start(st);
+	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
+	/* danger: st may not be valid */
+	stf_status e = svm->processor(ike, child, md);
 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
-		/* MD.ST may have been freed! */
+		/*
+		 * Danger! Processor did something dodgy like free ST!
+		 */
 		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
 		    svm->story, old_st);
-		return;
-	}
-
-	if (md->v1_st == NULL) {
-		if (old_md_st != SOS_NOBODY) {
-			/* MD.ST may have been freed! */
-			dbg("XXX: processor '%s' for #%lu deleted state MD.ST",
-			    svm->story, old_st);
-			return;
-		}
 	} else {
-		if (md->v1_st->st_serialno != old_st) {
-			/* MD.ST may have been freed! */
-			dbg("XXX: processor '%s' for #%lu switched state to #%lu",
-			    svm->story, old_st, md->v1_st->st_serialno);
-			st = md->v1_st;
-		}
+		complete_v2_state_transition(st, md, e);
 	}
 
-	complete_v2_state_transition(st, md, e);
+	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
 	/* our caller with release_any_md(mdp) */
 }
 
@@ -2696,35 +2676,6 @@ void complete_v2_state_transition(struct state *st,
 	}
 
 	/*
-	 * XXX: If MD and MD.ST are non-NULL, expect MD.ST to point to
-	 * ST.
-	 *
-	 * An exchange initiator doesn't have an MD:
-	 *
-	 * - store the state transition; but that information really
-	 *   belongs in ST
-	 *
-	 * - store the CHILD SA when created midway through a state
-	*   transition (see IKE_AUTH); but that should be either a
-	*   nested or separate transition
-	 *
-	 * - signal that the SA was deleted mid-transition by clearing
-	 *   MD.ST (so presumably it was previously set); but that
-	 *   should be handled by returning an STF_ZOMBIFY and having
-	 *   this code delete the SA.
-	 */
-	if (md != NULL && md->v1_st != NULL && md->v1_st != st) {
-		/* can't happen, must match */
-		pexpect_fail(st->st_logger, HERE,
-			     "MD.ST contains the unknown %s SA #%lu; expecting the %s SA #%lu",
-			     IS_CHILD_SA(md->v1_st) ? "CHILD" : "IKE",
-			     md->v1_st->st_serialno,
-			     IS_CHILD_SA(st) ? "CHILD" : "IKE",
-			     st->st_serialno);
-		return;
-	}
-
-	/*
 	 * Try to get the transition that is being completed ...
 	 *
 	 * For the moment this comes from the (presumably non-NULL)
@@ -2864,7 +2815,6 @@ void complete_v2_state_transition(struct state *st,
 		/* get out of here -- everything is invalid */
 		ike = NULL;
 		st = NULL;
-		md->v1_st = NULL;
 		return;
 
 	case STF_FATAL:
@@ -2904,8 +2854,6 @@ void complete_v2_state_transition(struct state *st,
 
 		/* kill all st pointers */
 		st = NULL;
-		if (md != NULL)
-			md->v1_st = NULL;
 		break;
 
 	case STF_FAIL:
@@ -2932,8 +2880,6 @@ void complete_v2_state_transition(struct state *st,
 		/* kill all st pointers */
 		st = NULL;
 		ike = NULL;
-		if (md != NULL)
-			md->v1_st = NULL;
 		break;
 
 	default: /* STF_FAIL+notification */
@@ -2964,7 +2910,7 @@ void complete_v2_state_transition(struct state *st,
 			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
 				delete_state(st);
 				/* kill all st pointers */
-				st = NULL; ike = NULL; md->v1_st = NULL;
+				st = NULL; ike = NULL;
 			} else {
 				dbg("forcing #%lu to a discard event",
 				    st->st_serialno);

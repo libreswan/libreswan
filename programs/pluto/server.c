@@ -652,7 +652,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 
 		/* run the callback */
 		stf_status status = e->callback(st, md, e->context);
-		/* this may trash MD.ST */
+		/* this may trash ST and/or MD.ST */
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
@@ -661,58 +661,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
 			     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
 			     ""));
-		} else if (old_md_st != SOS_NOBODY && md->v1_st == NULL) {
-			/*
-			 * XXX: yes, MD.ST can be set to NULL.
-			 *
-			 * What happens is code deletes ST part way
-			 * through a state transition and then tries
-			 * to signal this by setting MD.ST to NULL
-			 * (presumably it was previously set to ST).
-			 *
-			 * Of course all the intervening code still
-			 * has references to the now-defunct state in
-			 * local ST et.al. variables.  What could
-			 * possibly go wrong .....
-			 *
-			 * The relevant code should instead return
-			 * STF_deleteme (STF_ZOMBIFY?)  so that the
-			 * delete can be performed by the state
-			 * transition function.
-			 *
-			 * XXX/SML: There is no need to abort here in
-			 * all cases where st is null, so moved this
-			 * precondition to where it's needed.  Some
-			 * previous logic appears to have been tooled
-			 * to handle null state, and state might be
-			 * null legitimately in certain failure cases
-			 * (STF_FAIL + xxx).
-			 *
-			 * One condition for null state is when a new
-			 * connection request packet arrives and there
-			 * is no suitable matching configuration.  For
-			 * example, ikev2_parent_inI1outR1() will
-			 * return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
-			 * no state in this case.  While other
-			 * failures may be better caught before this
-			 * function is called, we should be graceful
-			 * here.  And for this particular case, and
-			 * similar failure cases, we want
-			 * SEND_NOTIFICATION (below) to let the peer
-			 * know why we've rejected the request.
-			 *
-			 * Another case of null state is return from
-			 * ikev2_parent_inR1BoutI1B which returns
-			 * STF_IGNORE.
-			 *
-			 * Another case occurs when we finish an
-			 * Informational Exchange message that causes
-			 * us to delete the IKE state.  In fact, that
-			 * can be an STF_OK and yet have no remaining
-			 * state object at this point.
-			 */
-			pexpect(ike_version == IKEv2);
-			dbg("XXX: resume %s for #%lu deleted MD.ST", e->name, old_st);
 		} else {
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
@@ -732,15 +680,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 				break;
 #endif
 			case IKEv2:
-				if (old_md_st == SOS_NOBODY) {
-					pexpect(md == NULL || md->v1_st == NULL);
-				} else if (pexpect(md != NULL && md->v1_st != NULL)) {
-					if (md->v1_st->st_serialno != old_st) {
-						dbg("XXX: resume %s for #%lu switched MD.ST to #%lu",
-						    e->name, old_st, md->v1_st->st_serialno);
-						st = md->v1_st;
-					}
-				}
 				break;
 			default:
 				bad_case(ike_version);
