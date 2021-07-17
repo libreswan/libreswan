@@ -983,7 +983,7 @@ void delete_state_tail(struct state *st)
 
 #ifdef USE_PAM_AUTH
 	if (st->st_pam_auth != NULL) {
-		pam_auth_abort(st);
+		pam_auth_abort(st, "deleting state");
 	}
 #endif
 

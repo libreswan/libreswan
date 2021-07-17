@@ -402,7 +402,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 #ifdef USE_PAM_AUTH
 	case EVENT_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
-		pam_auth_abort(st);
+		pam_auth_abort(st, "timeout");
 		/*
 		 * Things get cleaned up when the PAM process exits.
 		 *

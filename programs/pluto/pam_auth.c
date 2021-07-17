@@ -42,6 +42,7 @@ struct pam_auth {
 	monotime_t start_time;
 	pam_auth_callback_fn *callback;
 	pid_t child;
+	const char *aborted;
 };
 
 static void pam_auth_free(struct pam_auth **p)
@@ -61,39 +62,40 @@ static void pam_auth_free(struct pam_auth **p)
  * the pamauth request has already been deleted.  Need to pass in
  * st_callback, but only when it needs to notify an abort.
  */
-void pam_auth_abort(struct state *st)
+void pam_auth_abort(struct state *st, const char *story)
 {
 	struct pam_auth *pamauth = st->st_pam_auth;
 
 	if (pamauth == NULL) {
 		pexpect_fail(st->st_logger, HERE,
-			     "PAM: #%lu: main-process: no process to abort (already aborted?)",
-			     st->st_serialno);
+			     "PAM: %s while authenticating yet no PAM process to abort",
+			     story);
 		return;
 	}
 
+	pstats_pamauth_aborted++;
+	passert(pamauth->serialno == st->st_serialno);
+	pamauth->aborted = story;
+	dbg("PAM: #%lu: %s while authenticating '%s'; aborting PAM",
+	    pamauth->serialno, story, pamauth->ptarg.name);
+
 	/*
+	 * Don't hold back.
+	 *
+	 * XXX: need to fix child so that more friendly SIGTERM is
+	 * handled - currently the forked process has it blocked by
+	 * libevent.
+	 */
+	kill(pamauth->child, SIGKILL);
+	/*
+	 * PAMAUTH is deleted by pam_auth_callback() _after_ the
+	 * process exits and the callback has been called.
+	 *
 	 * Free ST of any responsibility for releasing .st_pam_auth
 	 * (the fork handler will do that later).
 	 */
 	st->st_pam_auth = NULL; /* aborted */
 
-	pstats_pamauth_aborted++;
-	passert(pamauth->serialno == st->st_serialno);
-	log_state(RC_LOG, st, "PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
-		  st->st_serialno, pamauth->ptarg.name);
-	/*
-	 * Don't hold back.
-	 *
-	 * XXX: need to fix child so that more friendly
-	 * SIGTERM is handled - currently the forked process
-	 * has it blocked by libvent.
-	 */
-	kill(pamauth->child, SIGKILL);
-	/*
-	 * pamauth is deleted by pamauth_pam_callback() _after_
-	 * the process exits and the callback has been called.
-	 */
 }
 
 /*
@@ -114,28 +116,33 @@ static stf_status pam_callback(struct state *st,
 
 	pstats_pamauth_stopped++;
 
-	bool success = WIFEXITED(status) && WEXITSTATUS(status) == 0;
-	deltatime_buf db;
-	dbg("PAM: #%lu: main-process cleaning up PAM-process for user '%s' result %s time elapsed %s seconds%s",
-	    pamauth->serialno,
-	    pamauth->ptarg.name,
-	    success ? "SUCCESS" : "FAILURE",
-	    str_deltatime(monotimediff(mononow(), pamauth->start_time), &db),
-	    (st == NULL ? " (state deleted)" :
-	     st->st_pam_auth == NULL ? " (aborted)" : ""));
+	bool success = (pamauth->aborted == NULL &&
+			WIFEXITED(status) &&
+			WEXITSTATUS(status) == 0);
+
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
+		jam(buf, "PAM: authentication of user '%s' ", pamauth->ptarg.name);
+		if (success) {
+			jam(buf, "SUCCEEDED");
+		} else if (pamauth->aborted == NULL) {
+			jam(buf, "FAILED");
+		} else {
+			jam(buf, "ABORTED (%s)", pamauth->aborted);
+		}
+		jam(buf, " after ");
+		jam_deltatime(buf, monotimediff(mononow(), pamauth->start_time));
+		jam(buf, " seconds");
+	}
 
 	/*
 	 * If there is still a state, notify it.  Since this is
-	 * running on the main thread, it and pam_auth_cancel() can't
+	 * running on the main thread, it and pam_auth_abort() can't
 	 * get into a race.
 	 */
+
 	stf_status ret = STF_OK;
 	if (st != NULL) {
 		st->st_pam_auth = NULL; /* all done */
-		llog(RC_LOG, logger,
-		     "PAM: #%lu: completed for user '%s' with status %s",
-		     pamauth->serialno, pamauth->ptarg.name,
-		     success ? "SUCCESS" : "FAILURE");
 		ret = pamauth->callback(st, md, pamauth->ptarg.name, success);
 	}
 
@@ -193,8 +200,9 @@ bool pam_auth_fork_request(struct state *st,
 				     pam_child, pam_callback, pamauth,
 				     st->st_logger);
 	if (pamauth->child < 0) {
-		log_state(RC_LOG, st, "PAM: #%lu: creation of PAM-process for user '%s' failed",
-			      pamauth->serialno, pamauth->ptarg.name);
+		log_state(RC_LOG, st,
+			  "PAM: creation of PAM authentication process for user '%s' failed",
+			  pamauth->ptarg.name);
 		pam_auth_free(&pamauth);
 		return false;
 	}
