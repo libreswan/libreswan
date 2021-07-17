@@ -30,3 +30,6 @@ s/ aged [0-9]*\.[0-9]*s / /
 
 s/^1[0-4][0-9] /1v1 /
 s/^1[5-9][0-9] /1v2 /
+
+# pam timeouts
+/PAM: / s, after \([0-9]*\).[0-9]* seconds, after \1.NNN seconds,
