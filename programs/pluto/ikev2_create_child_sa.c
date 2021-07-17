@@ -1071,8 +1071,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
-				   struct child_sa *larval_ike,
-				   struct msg_digest *md)
+							struct child_sa *larval_ike,
+							struct msg_digest *md)
 {
 	pexpect(larval_ike != NULL); /* not yet emancipated */
 	pexpect(ike != NULL);
@@ -1121,16 +1121,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_accepted_ike_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &larval_ike->sa,
-			  "IKE responder accepted an unsupported algorithm");
-		/*
-		 * XXX; where is 'st' freed?  Should the code instead
-		 * tunnel back md.st==st and return STF_FATAL which
-		 * will delete the child state?  Or perhaps there a
-		 * lurking SO_DISPOSE to clean it up?
-		 */
-		switch_md_st(md, &ike->sa, HERE);
-		return STF_IGNORE;
+		llog_sa(RC_LOG_SERIOUS, larval_ike,
+			"IKE responder accepted an unsupported algorithm");
+		return STF_FATAL;
 	}
 
 	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, md,
@@ -1249,8 +1242,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_response_continue;
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
-			       struct child_sa *larval_ike,
-			       struct msg_digest *md)
+							 struct child_sa *larval_ike,
+							 struct msg_digest *md)
 {
 	pexpect(larval_ike != NULL);
 	struct state *st = &larval_ike->sa;
@@ -1293,12 +1286,12 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_accepted_ike_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &larval_ike->sa, "IKE responder accepted an unsupported algorithm");
+		llog_sa(RC_LOG_SERIOUS, larval_ike,
+			"IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&larval_ike->sa.st_accepted_ike_proposal);
 		passert(larval_ike->sa.st_accepted_ike_proposal == NULL);
-		switch_md_st(md, &ike->sa, HERE);
-		return STF_FAIL;
+		return STF_FATAL;
 	}
 
 	 /* KE in */
