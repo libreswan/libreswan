@@ -453,6 +453,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 			break;
 		default:
 			ldns_buffer_free(output);
+			output = NULL;
 			continue;
 		}
 
