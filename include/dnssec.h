@@ -35,7 +35,7 @@ extern struct ub_ctx *get_unbound_ctx(void);
 enum lswub_resolve_event_secure_kind {
 	UB_EVENT_INSECURE	= 0,
 	UB_EVENT_BOGUS		= 1,
-	UB_EVNET_SECURE		= 2,
+	UB_EVENT_SECURE		= 2,
 };
 
 #endif

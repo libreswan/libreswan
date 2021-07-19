@@ -311,7 +311,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 				 ttl, ttl_used);
 		}
 
-		enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
+		enum dns_auth_level al = dnsr->secure == UB_EVENT_SECURE ?
 			DNSSEC_SECURE : DNSSEC_INSECURE;
 
 		if (keyid->kind == ID_FQDN) {
@@ -518,7 +518,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 		}
 		return "unbound returned INSECURE response - ignored";
 
-	case UB_EVNET_SECURE:
+	case UB_EVENT_SECURE:
 		return parse_rr(dnsr, ldnspkt);
 	}
 }
@@ -587,7 +587,7 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
 
 		DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
-			k == UB_EVNET_SECURE ? "SECURE"
+			k == UB_EVENT_SECURE ? "SECURE"
 			: k == UB_EVENT_INSECURE ? "INSECURE"
 			: k == UB_EVENT_BOGUS ? "BOGUS"
 			: "invalid lswub_resolve_event_secure_kind",
