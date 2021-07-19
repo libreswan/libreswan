@@ -878,9 +878,11 @@ void delete_state_tail(struct state *st)
 	 * IKEv1 IKE failures do not go through a transition, so we catch
 	 * these in delete_state()
 	 */
+#ifdef USE_IKEv1
 	if (IS_V1_ISAKMP_SA(st) && !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		linux_audit_conn(st, LAK_PARENT_FAIL);
 	}
+#endif
 
 	/*
 	 * only log parent state deletes, we log children in

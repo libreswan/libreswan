@@ -673,6 +673,9 @@ extern struct keywords sa_role_names;
 
 #define IS_V1_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
+#else /* no IKEV1 */
+/* saves a bunch of ugly ifdefs elsewhere */
+#define IS_V1_ISAKMP_SA_ESTABLISHED(ST) false
 #endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\

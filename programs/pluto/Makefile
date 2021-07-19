@@ -212,7 +212,7 @@ OBJS += ikev2_ipseckey.o
 endif
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
-OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o
+OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o ikev1_nat.o
 OBJS += crypt_dh_v1.o
 endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
@@ -230,7 +230,6 @@ OBJS += rnd.o
 OBJS += ikev1_spdb.o
 OBJS += vendor.o
 OBJS += nat_traversal.o
-OBJS += ikev1_nat.o
 OBJS += ikev2_nat.o
 OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
