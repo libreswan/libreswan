@@ -51,7 +51,7 @@
 #include "ikev2.h"
 #include "ip_address.h"
 #include "host_pair.h"
-#include "ikev2_create_child_sa.h"		/* for ikev2_initiate_child_sa() */
+#include "ikev2_create_child_sa.h"		/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -250,11 +250,9 @@ static void delete_pending(struct pending **pp)
  *     In IKEv2 it called when AUTH is complete, child is established.
  *     Established child get removed not unpend.
  */
+
 void unpend(struct ike_sa *ike, struct connection *cc)
 {
-	struct pending **pp, *p;
-	char *what ="unqueuing";
-
 	if (cc == NULL) {
 		dbg("unpending state #%lu", ike->sa.st_serialno);
 	} else {
@@ -263,16 +261,14 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 		    ike->sa.st_serialno, pri_connection(cc, &cib));
 	}
 
-	for (pp = host_pair_first_pending(ike->sa.st_connection);
-	     (p = *pp) != NULL; )
-	{
+	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
+	     (p = *pp) != NULL; ) {
 		if (p->ike == ike) {
 			p->pend_time = mononow();
+			char *what ="unqueuing";
 			switch (ike->sa.st_ike_version) {
 			case IKEv2:
-				if (cc != p->connection) {
-					ikev2_initiate_child_sa(p);
-				} else {
+				if (cc == p->connection) {
 					/*
 					 * IKEv2 AUTH negotiation
 					 * include child.  nothing to
@@ -280,6 +276,12 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 * delete it
 					 */
 					what = "delete from";
+				} else if (!already_has_larval_v2_child(ike, p->connection)) {
+					submit_v2_CREATE_CHILD_SA_new_child(ike,
+									    p->connection,
+									    p->policy, p->try,
+									    p->sec_label,
+									    p->whack_sock);
 				}
 				break;
 			case IKEv1:

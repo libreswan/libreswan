@@ -50,14 +50,16 @@ west #
  # The whack should release the socket on receiving NO_PROPOSAL_CHOSEN
 west #
  ipsec auto --up westnet-eastnet-ikev2b
+002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-003 "westnet-eastnet-ikev2b" #3: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
-036 "westnet-eastnet-ikev2b" #3: encountered fatal error in state STATE_V2_NEW_CHILD_I1
+003 "westnet-eastnet-ikev2a" #1: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+200 "westnet-eastnet-ikev2b" #3: state transition 'process create Child SA failure response (CREATE_CHILD_SA)' failed
 west #
  ipsec auto --up westnet-eastnet-ikev2c
+002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
-003 "westnet-eastnet-ikev2c" #4: dropping unexpected CREATE_CHILD_SA message containing TS_UNACCEPTABLE notification; message payloads: SK; encrypted payloads: N; missing payloads: SA,Ni,TSi,TSr
-036 "westnet-eastnet-ikev2c" #4: encountered fatal error in state STATE_V2_NEW_CHILD_I1
+003 "westnet-eastnet-ikev2a" #1: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+200 "westnet-eastnet-ikev2c" #4: state transition 'process create Child SA failure response (CREATE_CHILD_SA)' failed
 west #
  #
 west #
@@ -67,7 +69,6 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2a
 002 "westnet-eastnet-ikev2a": terminating SAs using this connection
-002 "westnet-eastnet-ikev2a" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2a" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #

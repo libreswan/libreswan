@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep
 west #
- checkmodule -M -m -o ipsec-test-module.mod ipsec-test-module.te
+ # install selinux; generated in OUTPUT by east
 west #
- semodule_package -o ipsec-test-module.pp -m ipsec-test-module.mod
+ semodule -i OUTPUT/ipsecspd.pp
 west #
- semodule -i ipsec-test-module.pp > /dev/null 2>/dev/null
+ setsebool domain_can_mmap_files=1
 west #
- rm -f ipsec-test-module.mod ipsec-test-module.pp
+ setsebool nis_enabled=1
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -39,9 +39,7 @@ west #
  echo done
 done
 west #
- ipsec whack --shutdown
-west #
- semodule -r ipsec-test-module
-libsemanage.semanage_direct_remove_key: Removing last ipsec-test-module module (no other ipsec-test-module module exists at another priority).
+ semodule -r ipsecspd
+libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  

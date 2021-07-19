@@ -81,7 +81,7 @@ static field_desc isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
 	{ ft_mnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
-	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &exchange_names_ikev1orv2 },
+	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &isakmp_xchg_type_names },
 	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &isakmp_flag_names },
 	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
 	{ ft_len, 32 / BITS_PER_BYTE, "length", NULL },
@@ -367,7 +367,7 @@ static field_desc isat_fields_ipcomp[] = {
 	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipcomp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipsec_ipcomp_algo_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
@@ -1615,7 +1615,7 @@ struct_desc suggested_group_desc = {
  */
 static field_desc ikev2notify_ipcomp_fields[] = {
 	{ ft_nat, 16 / BITS_PER_BYTE, "IPcomp SPI (CPI)", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipcomp_transformid_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipsec_ipcomp_algo_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1631,7 +1631,7 @@ struct_desc ikev2notify_ipcomp_data_desc = {
  *
  * See struct sec_ctx in state.h
  */
-#include "labeled_ipsec.h"	/* for struct sec_ctx */
+#include "ikev1_labeled_ipsec.h"	/* for struct sec_ctx */
 
 static field_desc sec_ctx_fields[] = {
 	{ ft_nat,  8 / BITS_PER_BYTE, "DOI", NULL },
@@ -1747,30 +1747,31 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
-pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name)
+pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name)
 {
 	pb_stream pbs;
 	init_pbs(&pbs, chunk.ptr, chunk.len, name);
 	return pbs;
 }
 
-chunk_t same_out_pbs_as_chunk(pb_stream *pbs)
+shunk_t same_pbs_out_as_shunk(pb_stream *pbs)
 {
-	chunk_t chunk = {
-		.ptr = pbs->start,
-		.len = pbs_offset(pbs),
-	};
-	return chunk;
+	return shunk2(pbs->start, pbs_offset(pbs));
 }
 
-chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name)
+chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name)
 {
-	return clone_hunk(same_out_pbs_as_chunk(pbs), name);
+	return clone_hunk(same_pbs_out_as_shunk(pbs), name);
 }
 
-shunk_t pbs_in_as_shunk(const struct pbs_in *pbs)
+shunk_t same_pbs_in_as_shunk(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->start, pbs_room(pbs));
+}
+
+chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name)
+{
+	return clone_hunk(shunk2(pbs->start, pbs_room(pbs)), name);
 }
 
 shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)

@@ -32,7 +32,7 @@ extern enum_names ipsec_attr_names;
 extern enum_names *const ipsec_attr_val_descs[];
 extern const unsigned int ipsec_attr_val_descs_roof;
 extern enum_names sa_lifetime_names;
-extern enum_names enc_mode_names;
+extern enum_names encapsulation_mode_names;
 extern enum_names auth_alg_names;
 extern enum_names oakley_lifetime_names;
 
@@ -55,13 +55,13 @@ extern enum_names xauth_type_names;
 extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
 extern enum_names ikev2_exchange_names;
-extern enum_names exchange_names_ikev1orv2;
+extern enum_names isakmp_xchg_type_names;
 extern enum_enum_names exchange_type_names;
 extern enum_names ikev1_protocol_names;
 extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
-extern enum_names ipcomp_transformid_names;
+extern enum_names ipsec_ipcomp_algo_names;
 extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
@@ -108,8 +108,6 @@ extern enum_names natt_method_names;
 
 extern enum_names pkk_names;
 extern enum_names ikev2_ppk_id_type_names;
-
-extern enum_names spi_names;
 
 /* natt traversal types */
 extern const char *const natt_type_bitnames[];

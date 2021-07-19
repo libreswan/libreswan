@@ -15,7 +15,12 @@
  * Porting to 2.x by Sean Mathews
  */
 
-#ifdef AUTH_HAVE_PAM
+#ifndef PAM_CONV_H
+#define PAM_CONV_H
+
+#ifndef USE_PAM_AUTH
+#error USE_PAM_AUTH
+#endif
 
 #include "ip_address.h"
 
@@ -31,4 +36,4 @@ struct pam_thread_arg {
 
 extern bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger);
 
-#endif /* AUTH_HAVE_PAM */
+#endif

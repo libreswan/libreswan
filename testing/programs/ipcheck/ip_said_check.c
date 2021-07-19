@@ -29,9 +29,19 @@ static void check_str_said(void)
 		char *out;	/* NULL means error expected */
 		bool fudge;
 	} tests[] = {
+		/* all known prefixes */
+		{ LN, "icmp.1@1.2.3.0", "icmp.1@1.2.3.0", false, },
+		{ LN, "tun.4@1.2.3.0", "tun.4@1.2.3.0", false, },
+		{ LN, "tcp.6@1.2.3.0", "tcp.6@1.2.3.0", false, },
+		{ LN, "udp.17@1.2.3.0", "udp.17@1.2.3.0", false, },
+		{ LN, "esp.50@1.2.3.0", "esp.50@1.2.3.0", false, },
+		{ LN, "ah.51@1.2.3.0", "ah.51@1.2.3.0", false, },
+		{ LN, "int.61@1.2.3.0", "%unk-97", false, },
+		{ LN, "comp.108@1.2.3.0", "comp.108@1.2.3.0", false, },
+		/* number conversion */
+		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", false, },
 		{ LN, "esp257@1.2.3.0", "esp.101@1.2.3.0", false, },
 		{ LN, "ah0x20@1.2.3.4", "ah.20@1.2.3.4", false, },
-		{ LN, "tun20@1.2.3.4", "tun.14@1.2.3.4", false, },
 		{ LN, "comp20@1.2.3.4", "comp.14@1.2.3.4", false, },
 		{ LN, "esp257@::1", "esp:101@::1", false, },
 		{ LN, "esp257@0bc:12de::1", "esp:101@bc:12de::1", false, },
@@ -58,20 +68,16 @@ static void check_str_said(void)
 		{ LN, "esp77@1.0x0g.3.4", NULL, false, },
 		{ LN, PASSTHROUGHNAME, PASSTHROUGH4NAME, false, },
 		{ LN, PASSTHROUGH6NAME, PASSTHROUGH6NAME, false, },
-		{ LN, "%pass", "%pass", false, },
-		{ LN, "int256@0.0.0.0", "%pass", false, },
-		{ LN, "%drop", "%drop", false, },
-		{ LN, "int257@0.0.0.0", "%drop", false, },
-		{ LN, "%reject", "%reject", false, },
-		{ LN, "int258@0.0.0.0", "%reject", false, },
-		{ LN, "%hold", "%hold", false, },
-		{ LN, "int259@0.0.0.0", "%hold", false, },
-		{ LN, "%trap", "%trap", false, },
-		{ LN, "int260@0.0.0.0", "%trap", false, },
-		{ LN, "%trapsubnet", "%trapsubnet", false, },
-		{ LN, "int261@0.0.0.0", "%trapsubnet", false, },
+
+		{ LN, "%pass",   "%pass", false, },   { LN, "int256@0.0.0.0", "%pass", false, },
+		{ LN, "%drop",   "%drop", false, },   { LN, "int257@0.0.0.0", "%drop", false, },
+		{ LN, "%reject", "%reject", false, }, { LN, "int258@0.0.0.0", "%reject", false, },
+		{ LN, "%hold",   "%hold", false, },   { LN, "int259@0.0.0.0", "%hold", false, },
+		{ LN, "%trap",   "%trap", false, },   { LN, "int260@0.0.0.0", "%trap", false, },
+		{ LN, "%ignore", "%ignore", false, }, { LN, "int261@0.0.0.0", "%ignore", false, },
+		{ LN, "%trapsubnet", "%trapsubnet", false, }, { LN, "int262@0.0.0.0", "%trapsubnet", false, },
 		/* was "int.106@0.0.0.0" */
-		{ LN, "int262@0.0.0.0", "%unk-262", false, },
+		{ LN, "int263@0.0.0.0", "%unk-263", false, },
 		{ LN, "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
 		{ LN, "unk77.9@1.2.3.4", NULL, false, },
 
@@ -86,12 +92,13 @@ static void check_str_said(void)
 
 		/* convert it *to* internal format */
 		ip_said sa;
-		err_t err = ttosa(t->in, strlen(t->in), &sa);
-		if (err != NULL) {
+		diag_t d = ttosaid(shunk1(t->in), &sa);
+		if (d != NULL) {
 			if (t->out != NULL) {
-				FAIL("ttosa(%s) unexpectedly failed: %s", t->in, err);
+				DIAG_FAIL(&d, "ttosaid(%s) unexpectedly failed: ", t->in);
 			} else {
 				/* all is good */
+				pfree_diag(&d);
 				continue;
 			}
 		} else if (t->out == NULL) {
@@ -99,7 +106,7 @@ static void check_str_said(void)
 		}
 
 		if (t->fudge) {
-			sa.proto = NULL;
+			sa.ipproto = 0;
 		}
 
 		/* now convert it back */

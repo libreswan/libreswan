@@ -23,6 +23,9 @@
 #include "state.h"
 #include "ike_spi.h"
 
+struct hash_desc;
+
+
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
  */
@@ -76,42 +79,10 @@ void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger);
 extern bool nat_traversal_enabled;
 
 /**
- * NAT-D
- */
-extern bool ikev1_nat_traversal_add_natd(pb_stream *outs,
-					 const struct msg_digest *md);
-extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
-
-/**
- * NAT-OA
- */
-struct hidden_variables;	/* forward */
-
-void nat_traversal_natoa_lookup(struct msg_digest *md,
-				struct hidden_variables *hv,
-				struct logger *logger);
-bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st);
-
-/*
- * move initiator endpoints (src, dst) to NAT ports.
- */
-bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
-void v1_maybe_natify_initiator_endpoints(struct state *st,
-					 where_t where);
-
-/**
  * NAT-keep_alive
  */
 void nat_traversal_new_ka_event(void);
 void nat_traversal_ka_event(struct logger *logger);
-
-extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
-
-/**
- * Vendor ID
- */
-bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c);
-void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 
@@ -121,14 +92,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
-
-bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
-		       const ike_spi_t *ike_resonder_spi);
-
-bool ikev2_out_natd(const ip_endpoint *local_endpoint,
-		    const ip_endpoint *remote_endpoint,
-		    const ike_spis_t *ike_spis,
-		    pb_stream *outs);
 
 /**
  * Encapsulation mode macro (see demux.c)
@@ -153,6 +116,15 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    : ENCAPSULATION_MODE_TRANSPORT \
 		  ) \
 		)
+
+void natd_lookup_common(struct state *st,
+			const ip_endpoint sender,
+			bool found_me, bool found_peer);
+
+struct crypt_mac natd_hash(const struct hash_desc *hasher,
+			   const ike_spis_t *spis,
+			   const ip_endpoint endpoint,
+			   struct logger *logger);
 
 #endif /* _NAT_TRAVERSAL_H_ */
 

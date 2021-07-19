@@ -39,7 +39,7 @@ extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 
 #define PASSERT(LOGGER, ASSERTION)					\
-	{								\
+	({								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
@@ -47,7 +47,8 @@ extern void llog_passert(const struct logger *logger, where_t where,
 			const struct logger *logger_ = LOGGER;		\
 			llog_passert(logger_, here, "%s", #ASSERTION);	\
 		}							\
-	}
+		true;							\
+	})
 
 /*
  * older: message does not reach whack

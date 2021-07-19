@@ -223,15 +223,12 @@ extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 		     const char *name);
 
 /*
- * Map an input PBS onto CHUNK.
+ * Map a byte buffer to/from an input PBS and a CHUNK (it should take
+ * a hunk and treat it readonly).
  */
-extern pb_stream same_chunk_as_in_pbs(chunk_t chunk, const char *name);
-
-/*
- * Map/Clone the entire contents [start..pbs_room()) of an input PBS
- * as a chunk.
- */
-extern shunk_t pbs_in_as_shunk(const struct pbs_in *pbs);
+extern pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name);
+extern shunk_t same_pbs_in_as_shunk(const struct pbs_in *pbs);
+extern chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name);
 
 /*
  * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
@@ -265,8 +262,8 @@ extern void close_output_pbs(struct pbs_out *pbs);
  * [start..cur) of an output PBS as a chunk.
  */
 
-extern chunk_t same_out_pbs_as_chunk(pb_stream *pbs);
-extern chunk_t clone_out_pbs_as_chunk(pb_stream *pbs, const char *name);
+extern shunk_t same_pbs_out_as_shunk(pb_stream *pbs);
+extern chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name);
 
 diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		      const void *struct_ptr, size_t struct_size,

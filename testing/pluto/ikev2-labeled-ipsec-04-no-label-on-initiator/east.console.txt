@@ -1,13 +1,14 @@
 /testing/guestbin/swan-prep
 east #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+ # build install se module
+east #
+ ../../guestbin/semodule.sh ipsecspd.te
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ipsecspd.pp installed
 east #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-east #
- rm ipsecspd.pp
+ # get pluto going
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -20,11 +21,10 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec whack --shutdown
-east #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 east #
- rm -rf ipsecspd.fc ipsecspd.if tmp
+ hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
+"labeled" #2: No IKEv2 connection found with compatible Traffic Selectors
 east #
  

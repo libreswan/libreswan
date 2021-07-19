@@ -30,11 +30,12 @@ east #
 initdone
 east #
  hostname | grep east > /dev/null && ipsec whack --rekey-ipsec --name road-eastnet-nonat
+002 "road-eastnet-nonat"[1] 192.1.3.209 #3: initiating rekey to replace Child SA #2
 1v2 "road-eastnet-nonat"[1] 192.1.3.209 #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "road-eastnet-nonat"[1] 192.1.3.209 #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "road-eastnet-nonat"[1] 192.1.3.209 #3: negotiated connection [192.0.2.0-192.0.2.255:0-65535 0] -> [192.0.2.219-192.0.2.219:0-65535 0]
 004 "road-eastnet-nonat"[1] 192.1.3.209 #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "road-eastnet-nonat"[1] 192.1.3.209 #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
+002 "road-eastnet-nonat"[1] 192.1.3.209 #2: deleting established Child SA using IKE SA #1
 005 "road-eastnet-nonat"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B
 east #
  

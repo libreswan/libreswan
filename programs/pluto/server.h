@@ -82,13 +82,13 @@ void fire_timer_photon_torpedo(struct event **evp,
 void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
 			   event_callback_fn cb, void *arg);
 
-extern struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
+extern struct state_event *add_fd_read_event_handler(evutil_socket_t fd,
 						     event_callback_fn cb, void *arg,
 						     const char *name);
-extern void delete_pluto_event(struct pluto_event **evp);
+extern void delete_pluto_event(struct state_event **evp);
 
-extern void link_pluto_event_list(struct pluto_event *e);
-bool ev_before(struct pluto_event *pev, deltatime_t delay);
+extern void link_pluto_event_list(struct state_event *e);
+bool ev_before(struct state_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger);
 
@@ -143,4 +143,6 @@ void schedule_callback(const char *name, so_serial_t serialno,
 void call_global_event_inline(enum global_timer type,
 			      struct logger *logger);
 
-#endif /* _SERVER_H */
+void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
+
+#endif /* SERVER_H */

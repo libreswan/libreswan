@@ -10,6 +10,7 @@
  * Copyright (C) 2014-2015, 2018 Andrew cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,8 +34,7 @@
 #include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
-#include "security_selinux.h"
-#include "labeled_ipsec.h"		/* for MAX_SECCTX_LEN */
+#include "labeled_ipsec.h"
 #include "ip_range.h"
 #include "iface.h"
 
@@ -42,11 +42,27 @@
  * While the RFC seems to suggest that the traffic selectors come in
  * pairs, strongswan, at least, doesn't.
  */
+
 struct traffic_selectors {
+	const char *name;
 	bool contains_sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector ts[16];
+};
+
+struct traffic_selector_payloads {
+	struct traffic_selectors i;
+	struct traffic_selectors r;
+};
+
+static const struct traffic_selector_payloads empty_traffic_selectors = {
+	.i = {
+		.name = "TSi",
+	},
+	.r = {
+		.name = "TSr",
+	},
 };
 
 struct ends {
@@ -71,27 +87,26 @@ static const char *fit_string(enum fit fit)
 	}
 }
 
-void ikev2_print_ts(const struct traffic_selector *ts)
+void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 {
 	if (DBGP(DBG_BASE)) {
-		DBG_log("printing contents struct traffic_selector");
+		va_list ap;
+		va_start(ap, prefix);
+		DBG_va_list(prefix, ap);
+		va_end(ap);
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
-		if (ts->sec_label.len != 0) {
-			DBG_dump_hunk("security label:", ts->sec_label);
-		} else {
-			DBG_log("  security label: unset");
-		}
+		DBG_log("  sec_label: "PRI_SHUNK, pri_shunk(ts->sec_label));
 	}
 }
 
-static void ts_to_end(const struct traffic_selector *ts, struct end *end,
-		      struct traffic_selector *st_ts)
+static void traffic_selector_to_end(const struct traffic_selector *ts, struct end *end,
+				    const char *story)
 {
-	ikev2_print_ts(ts);
+	dbg_v2_ts(ts, "%s() %s", __func__, story);
 	ip_subnet subnet;
 	happy(range_to_subnet(ts->net, &subnet));
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
@@ -102,39 +117,38 @@ static void ts_to_end(const struct traffic_selector *ts, struct end *end,
 	end->port = ts->startport;
 	end->protocol = ts->ipprotoid;
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
-	/* also save in state */
-	*st_ts = *ts;
 }
 
 /* rewrite me with address_as_{chunk,shunk}()? */
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct child_sa *child)
+struct traffic_selector traffic_selector_from_end(const struct end *e, const char *what)
 {
-	struct traffic_selector ts;
-
-	zero(&ts);	/* OK: no pointer fields */
-
-	switch (selector_type(&e->client)->af) {
-	case AF_INET:
-		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-		break;
-	case AF_INET6:
-		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-		break;
-	}
-
-	/* subnet => range */
-	ts.net = selector_range(e->client);
-	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
-
-	ts.ipprotoid = e->protocol;
+	struct traffic_selector ts = {
+		/*
+		 * Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595)
+		 * not yet supported.
+		 */
+		.ts_type = selector_type(&e->client)->ikev2_ts_addr_range_type,
+		/* subnet => range */
+		.net = selector_range(e->client),
+		.ipprotoid = e->protocol,
+		/*
+		 * Use the 'instance/narrowed' label from the ACQUIRE
+		 * and stored in the connection instance's sends, if
+		 * present.
+		 */
+		.sec_label = HUNK_AS_SHUNK(e->sec_label),
+	};
 
 	/*
-	 * if port is %any or 0 we mean all ports (or all iccmp/icmpv6)
-	 * See RFC-5996 Section 3.13.1 handling for ICMP(1) and ICMPv6(58)
-	 *   we only support providing Type, not Code, eg protoport=1/1
+	 * if port is %any or 0 we mean all ports (or all
+	 * iccmp/icmpv6).
+	 *
+	 * See RFC-5996 Section 3.13.1 handling for ICMP(1) and
+	 * ICMPv6(58) we only support providing Type, not Code, eg
+	 * protoport=1/1
 	 */
 	if (e->port == 0 || e->has_port_wildcard) {
 		ts.startport = 0;
@@ -144,38 +158,26 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e, const struct child_
 		ts.endport = e->port;
 	}
 
-	/*
-	 * Use the 'instance/narrowed' label from the ACQUIRE, if
-	 * present.
-	 *
-	 * Points into either the END, or
-	 * .st_{seen,acquired}_sec_label.
-	 */
-	chunk_t sec_label = (child->sa.st_seen_sec_label.len != 0 ? child->sa.st_seen_sec_label :
-			     child->sa.st_acquired_sec_label.len != 0 ? child->sa.st_acquired_sec_label :
-			     e->sec_label);
-	ts.sec_label = HUNK_AS_SHUNK(sec_label);
+	dbg_v2_ts(&ts, "%s TS", what);
 	return ts;
 }
 
 /*
  * A struct end is converted to a struct traffic_selector.
- * This (currently) can contain both an IP range AND a
- * SEC_LABEL, which will get output here as two Traffic
- * Selectors. The label is optional, the IP range is
- * mandatory.
+ *
+ * This (currently) can contain both an IP range AND a SEC_LABEL,
+ * which will get output here as two Traffic Selectors. The label is
+ * optional, the IP range is mandatory.
  */
-static stf_status ikev2_emit_ts(pb_stream *outpbs,
-				const struct_desc *ts_desc,
-				const struct traffic_selector *ts,
-				const struct state *st)
+static stf_status emit_v2TS(struct pbs_out *outpbs,
+			    const struct_desc *ts_desc,
+			    const struct traffic_selector *ts)
 {
-	pb_stream ts_pbs;
-	bool with_label = ts->sec_label.len != 0;
+	struct pbs_out ts_pbs;
+	bool with_label = (ts->sec_label.len > 0);
 
 	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
-		ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE)
-	{
+	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -183,10 +185,13 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		struct ikev2_ts its = {
 			.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 			/*
-			 * If there is a security label in the Traffic Selector,
-			 * then we must send a TS_SECLABEL substructure as part of the
-			 * Traffic Selector (TS) Payload.
-			 * That means the TS Payload contains two TS substructures:
+			 * If there is a security label in the Traffic
+			 * Selector, then we must send a TS_SECLABEL
+			 * substructure as part of the Traffic
+			 * Selector (TS) Payload.
+			 *
+			 * That means the TS Payload contains two TS
+			 * substructures:
 			 *  - One for the address/port range
 			 *  - One for the TS_SECLABEL
 			 */
@@ -238,34 +243,38 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 		close_output_pbs(&ts_range_pbs);
 	}
 
+	/*
+	 * Emit the security label, if known.
+	 */
 	if (with_label) {
-		pb_stream ts_label_pbs;
-		shunk_t out_label;
 
 		struct ikev2_ts_header ts_header = {
 			.isath_type = IKEv2_TS_SECLABEL,
 			.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
 		};
 		/* Output the header of the TS_SECLABEL substructure payload. */
+		struct pbs_out ts_label_pbs;
 		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_label_pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* Output the security label value of the TS_SECLABEL substructure payload.
-		 * If we got ACQUIRE, or received a subset TS_LABEL, use that one - it is subset of connection policy one
+		/*
+		 * Output the security label value of the TS_SECLABEL
+		 * substructure payload.
+		 *
+		 * If we got ACQUIRE, or received a subset TS_LABEL,
+		 * use that one - it is subset of connection policy
+		 * one
 		 */
-		if (st->st_acquired_sec_label.len != 0)
-			out_label = HUNK_AS_SHUNK(st->st_acquired_sec_label);
-		else if (st->st_seen_sec_label.len != 0)
-			out_label = HUNK_AS_SHUNK(st->st_seen_sec_label);
-		else
-			out_label = ts->sec_label;
 
-		diag_t d = pbs_out_hunk(&ts_label_pbs, out_label, "output Security label");
+		dbg("emitting sec_label="PRI_SHUNK, pri_shunk(ts->sec_label));
+
+		diag_t d = pbs_out_hunk(&ts_label_pbs, ts->sec_label, "output Security label");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
+
 		close_output_pbs(&ts_label_pbs);
 	}
 
@@ -273,9 +282,9 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	return STF_OK;
 }
 
-static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector *ts)
+static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector ts)
 {
-	struct traffic_selector ts_ret = *ts;
+	struct traffic_selector ts_ret = ts;
 
 	ts_ret.net.end = ts_ret.net.start;
 	ts_ret.net.is_subnet = true;
@@ -284,9 +293,9 @@ static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector
 }
 
 
-static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector *ts)
+static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector ts)
 {
-	struct traffic_selector ts_ret = *ts;
+	struct traffic_selector ts_ret = ts;
 
 	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
 		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
@@ -295,128 +304,99 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 
 	ts_ret.net.is_subnet = true;
 
-	ts_ret.sec_label = ts->sec_label;
+	ts_ret.sec_label = ts.sec_label;
 
 	return ts_ret;
 }
 
-stf_status v2_emit_ts_payloads(const struct child_sa *child,
-			       pb_stream *outpbs,
-			       const struct connection *c0)
+stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
-	const struct traffic_selector *ts_i, *ts_r;
-	struct traffic_selector ts_i_impaired, ts_r_impaired;
-
+	stf_status ret;
+	struct traffic_selector ts_i, ts_r;
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		ts_i = &child->sa.st_ts_this;
-		ts_r = &child->sa.st_ts_that;
+		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd.this, "this TSi");
+		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd.that, "that TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-				impair.rekey_initiate_supernet) {
-			ts_i_impaired =  impair_ts_to_supernet(ts_i);
-			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+		    impair.rekey_initiate_supernet) {
+			ts_i = ts_r = impair_ts_to_supernet(ts_i);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 
 		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-				impair.rekey_initiate_subnet) {
-			ts_i_impaired =  impair_ts_to_subnet(ts_i);
-			ts_r_impaired =  impair_ts_to_subnet(ts_r);
-			ts_i = &ts_i_impaired;
-			ts_r = &ts_r_impaired;
+			   impair.rekey_initiate_subnet) {
+			ts_i = impair_ts_to_subnet(ts_i);
+			ts_r = impair_ts_to_subnet(ts_r);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 
 		}
 
 		break;
 	case SA_RESPONDER:
-		ts_i = &child->sa.st_ts_that;
-		ts_r = &child->sa.st_ts_this;
+		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd.that, "that TSi");
+		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd.this, "this TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-				impair.rekey_respond_subnet) {
-			ts_i_impaired =  impair_ts_to_subnet(ts_i);
-			ts_r_impaired =  impair_ts_to_subnet(ts_r);
-
-			ts_i = &ts_i_impaired;
-			ts_r = &ts_r_impaired;
+		    impair.rekey_respond_subnet) {
+			ts_i = impair_ts_to_subnet(ts_i);
+			ts_r = impair_ts_to_subnet(ts_r);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 		}
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 				impair.rekey_respond_supernet) {
-			ts_i_impaired =  impair_ts_to_supernet(ts_i);
-			ts_i = ts_r =  &ts_i_impaired; /* supernet TSi = TSr = 0/0 */
+			ts_i = ts_r = impair_ts_to_supernet(ts_i);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i->net, &tsi_buf),
-					str_range(&ts_r->net, &tsr_buf));
+					str_range(&ts_i.net, &tsi_buf),
+					str_range(&ts_r.net, &tsr_buf));
 		}
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);
 	}
 
-	/*
-	 * XXX: this looks wrong
-	 *
-	 * - instead of emitting two traffic selector payloads (TSi
-	 *   TSr) each containing all the corresponding traffic
-	 *   selectors, it is emitting a sequence of traffic selector
-	 *   payloads each containing just one traffic selector
-	 *
-	 * - should multiple initiator (responder) traffic selector
-	 *   payloads be emitted then they will all contain the same
-	 *   value - the loop control variable SR is never referenced
-	 *
-	 * - should multiple traffic selector payload be emitted then
-	 *   the next payload type for all but the last v2TSr payload
-	 *   will be wrong - it is always set to the type of the
-	 *   payload after these
-	 */
+	ret = emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i);
+	if (ret != STF_OK)
+		return ret;
 
-	for (const struct spd_route *sr = &c0->spd; sr != NULL;
-	     sr = sr->spd_next) {
-		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i, &child->sa);
-
-		if (ret != STF_OK)
-			return ret;
-		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r, &child->sa);
-		if (ret != STF_OK)
-			return ret;
-	}
+	ret = emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r);
+	if (ret != STF_OK)
+		return ret;
 
 	return STF_OK;
 }
 
 /* return success */
-static bool v2_parse_ts(struct payload_digest *const ts_pd,
-			struct traffic_selectors *tss,
-			const char *which, struct logger *logger)
+static bool v2_parse_tss(struct payload_digest *const ts_pd,
+			 struct traffic_selectors *tss,
+			 struct logger *logger)
 {
 	dbg("%s: parsing %u traffic selectors",
-	    which, ts_pd->payload.v2ts.isat_num);
+	    tss->name, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
-		llog(RC_LOG, logger, "%s payload contains no entries when at least one is expected",
-			      which);
+		llog(RC_LOG, logger,
+		     "%s payload contains no entries when at least one is expected",
+		     tss->name);
 		return false;
 	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
-		llog(RC_LOG, logger, "%s contains %d entries which exceeds hardwired max of %zu",
-			which, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
+		llog(RC_LOG, logger,
+		     "%s contains %d entries which exceeds hardwired max of %zu",
+		     tss->name, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
@@ -453,8 +433,8 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (ts->startport > ts->endport) {
 				llog(RC_LOG, logger,
-					    "%s traffic selector %d has an invalid port range - ignored",
-					    which, tss->nr);
+				     "%s traffic selector %d has an invalid port range - ignored",
+				     tss->name, tss->nr);
 				continue;
 			}
 
@@ -515,14 +495,8 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 					ts_h.isath_ipprotoid);
 			}
 
-			/*
-			 * XXX: this and the IKEv1 equivalent have a
-			 * lot in common.
-			 */
 			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
-
 			err_t ugh = vet_seclabel(sec_label);
-
 			if (ugh != NULL) {
 				llog(RC_LOG, logger, "Traffic Selector %s", ugh);
 				/* ??? should we just ignore?  If so, use continue */
@@ -546,20 +520,19 @@ static bool v2_parse_ts(struct payload_digest *const ts_pd,
 		tss->nr++;
 	}
 
-	dbg("%s: parsed %d traffic selectors", which, tss->nr);
+	dbg("%s: parsed %d traffic selectors", tss->name, tss->nr);
 	return true;
 }
 
-static bool v2_parse_tss(const struct msg_digest *md,
-			 struct traffic_selectors *tsi,
-			 struct traffic_selectors *tsr,
+static bool v2_parse_tsp(const struct msg_digest *md,
+			 struct traffic_selector_payloads *tsp,
 			 struct logger *logger)
 {
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi], tsi, "TSi", logger)) {
+	if (!v2_parse_tss(md->chain[ISAKMP_NEXT_v2TSi], &tsp->i, logger)) {
 		return false;
 	}
 
-	if (!v2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr], tsr, "TSr", logger)) {
+	if (!v2_parse_tss(md->chain[ISAKMP_NEXT_v2TSr], &tsp->r, logger)) {
 		return false;
 	}
 
@@ -575,8 +548,7 @@ static bool v2_parse_tss(const struct msg_digest *md,
 
 static int narrow_protocol(const struct end *end,
 			   const struct traffic_selectors *tss,
-			   enum fit fit,
-			   const char *which, unsigned index)
+			   enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	int protocol = -1;
@@ -605,19 +577,18 @@ static int narrow_protocol(const struct end *end,
 	dbg(MATCH_PREFIX "narrow protocol end=%s%d %s %s[%u]=%s%d: %d",
 	    end->protocol == 0 ? "*" : "", end->protocol,
 	    fit_string(fit),
-	    which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
+	    tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
 	    protocol);
 	return protocol;
 }
 
 static int score_narrow_protocol(const struct end *end,
 				 const struct traffic_selectors *tss,
-				 enum fit fit,
-				 const char *which, unsigned index)
+				 enum fit fit, unsigned index)
 {
 	int f;	/* strength of match */
 
-	int protocol = narrow_protocol(end, tss, fit, which, index);
+	int protocol = narrow_protocol(end, tss, fit, index);
 	if (protocol == 0) {
 		f = 255;	/* ??? odd value */
 	} else if (protocol > 0) {
@@ -630,7 +601,7 @@ static int score_narrow_protocol(const struct end *end,
 		jam(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
 			end->protocol == 0 ? "*" : "", end->protocol,
 			fit_string(fit),
-			which, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
+			tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
 		if (f > 0) {
 			jam(buf, "YES fitness %d", f);
 		} else {
@@ -651,8 +622,7 @@ static int score_narrow_protocol(const struct end *end,
 
 static int narrow_port(const struct end *end,
 		       const struct traffic_selectors *tss,
-		       enum fit fit,
-		       const char *which, unsigned index)
+		       enum fit fit, unsigned index)
 {
 	passert(index < tss->nr);
 	const struct traffic_selector *ts = &tss->ts[index];
@@ -690,7 +660,7 @@ static int narrow_port(const struct end *end,
 	dbg(MATCH_PREFIX "narrow port end=%u..%u %s %s[%u]=%u..%u: %d",
 	    end_low, end_high,
 	    fit_string(fit),
-	    which, index, ts->startport, ts->endport,
+	    tss->name, index, ts->startport, ts->endport,
 	    port);
 	return port;
 }
@@ -702,12 +672,11 @@ static int narrow_port(const struct end *end,
 
 static int score_narrow_port(const struct end *end,
 			     const struct traffic_selectors *tss,
-			     enum fit fit,
-			     const char *which, unsigned index)
+			     enum fit fit, unsigned index)
 {
 	int f;	/* strength of match */
 
-	int port = narrow_port(end, tss, fit, which, index);
+	int port = narrow_port(end, tss, fit, index);
 	if (port > 0) {
 		f = 1;
 	} else if (port == 0) {
@@ -717,10 +686,10 @@ static int score_narrow_port(const struct end *end,
 	}
 	if (f > 0) {
 		dbg(MATCH_PREFIX "  %s[%u] port match: YES fitness %d",
-		    which, index, f);
+		    tss->name, index, f);
 	} else {
 		dbg(MATCH_PREFIX "  %s[%u] port match: NO",
-		    which, index);
+		    tss->name, index);
 	}
 	return f;
 }
@@ -739,8 +708,7 @@ static int score_narrow_port(const struct end *end,
 
 static int score_address_range(const struct end *end,
 			       const struct traffic_selectors *tss,
-			       enum fit fit,
-			       const char *which, unsigned index)
+			       enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	/*
@@ -795,7 +763,7 @@ static int score_address_range(const struct end *end,
 	LSWDBGP(DBG_BASE, buf) {
 	    jam(buf, MATCH_PREFIX "match address end->client=");
 	    jam_selector(buf, &end->client);
-	    jam(buf, " %s %s[%u]net=", fit_string(fit), which, index);
+	    jam(buf, " %s %s[%u]net=", fit_string(fit), tss->name, index);
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
 	    if (f > 0) {
@@ -816,13 +784,12 @@ struct score {
 
 static struct score score_end(const struct end *end,
 			      const struct traffic_selectors *tss,
-			      enum fit fit,
-			      const char *what, unsigned index)
+			      enum fit fit, unsigned index)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "    %s[%u] ", what, index);
+		jam(buf, "    %s[%u] ", tss->name, index);
 		if (ts->sec_label.len == 0) {
 			range_buf ts_net;
 			jam(buf, ".net=%s .iporotoid=%d .{start,end}port=%d..%d",
@@ -846,15 +813,15 @@ static struct score score_end(const struct end *end,
 	switch(ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		score.address = score_address_range(end, tss, fit, what, index);
+		score.address = score_address_range(end, tss, fit, index);
 		if (score.address <= 0) {
 			return score;
 		}
-		score.port = score_narrow_port(end, tss, fit, what, index);
+		score.port = score_narrow_port(end, tss, fit, index);
 		if (score.port <= 0) {
 			return score;
 		}
-		score.protocol = score_narrow_protocol(end, tss, fit, what, index);
+		score.protocol = score_narrow_protocol(end, tss, fit, index);
 		if (score.protocol <= 0) {
 			return score;
 		}
@@ -887,93 +854,126 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 /*
- * Danger! score_ends_seclabel() returns three types of value:
+ * Return true for sec_label expected and good XOR not expected and
+ * not present.
  *
- * NULL: no sec_label was found and none was expected
- * &null_shunk: someting is wrong; skip
- * chunk: something was found
+ * Return false when required sec_label is missing or bad; or
+ * sec_label encountered when it wasn't expected.
  *
- * Auxilliary function ts_has() returns similar results but NULL is excluded.
+ * The code calls sec_label_within_range() to check that the "source
+ * context has the access permission for the specified class on the
+ * "target context" (see selinux_check_access()):
+ *
+ * - for the initiator searching for a matching template connection to
+ *   instantiate, the "source context" is the sec_label from acquire,
+ *   and the "target context" is the sec_label in the template
+ *   connection.
+ *
+ * - for the responder searching for a template connection to match
+ *   the on-wire TS, the "source context" is the sec_label included in
+ *   the traffic selector, and the "target context" is (again) the
+ *   sec_label in the template connection.
+ *
+ * However, when the initiator gets back the responder's accepted TS
+ * containing a sec_label, the initiator only checks it is identical
+ * to what was sent out in the initiator's TS:
+ *
+ * - the RFC makes vague references to narrowing; but what that means
+ *   for sec_labels isn't clear
+ *
+ * - one interpretation, that the responder's "source context" has
+ *   "access permission" for the initiator's "source context" seems to
+ *   always fail when enforcing is enabled (suspect
+ *   selinux_check_access() requires a "ptarget context").
  */
 
-#ifdef HAVE_LABELED_IPSEC
-static const shunk_t *ts_has_seclabel(chunk_t sec_label,
-			const struct traffic_selectors *ts,
-			const char *what,
-			struct logger *logger)
+enum sec_label_compare {
+	TS_WITHIN_CONNECTION_SEC_LABEL = 1,
+	TS_EQUALS_CONNECTION_SEC_LABEL,
+};
+
+static bool check_tss_sec_label(enum sec_label_compare compare,
+				const struct traffic_selectors *tss,
+				chunk_t connection_sec_label,
+				shunk_t *selected_sec_label,
+				struct logger *logger)
 {
-	if (ts->contains_sec_label) {
-		for (unsigned i = 0; i < ts->nr; i++) {
-			const struct traffic_selector *s = &ts->ts[i];
-			if (s->ts_type != IKEv2_TS_SECLABEL) {
-				continue;
-			}
+	passert(tss->contains_sec_label);
 
-			passert(vet_seclabel(s->sec_label) == NULL);
-
-			if (!sec_label_within_range(s->sec_label, sec_label, logger)) {
-				dbg("ikev2ts: received %s label not within range of our security label", what);
-				DBG_dump_hunk("wanted", sec_label);
-				DBG_dump_hunk("received", s->sec_label);
-				continue;
-			}
-
-			dbg("ikev2ts: received %s label within range of our security label", what);
-
-			/* XXX we return the first match.  Should we return the best? */
-			return &s->sec_label;	/* first match */
+	*selected_sec_label = null_shunk;
+	for (unsigned i = 0; i < tss->nr; i++) {
+		const struct traffic_selector *ts = &tss->ts[i];
+		if (ts->ts_type != IKEv2_TS_SECLABEL) {
+			continue;
 		}
+
+		passert(vet_seclabel(ts->sec_label) == NULL);
+
+		switch (compare) {
+		case TS_WITHIN_CONNECTION_SEC_LABEL:
+			if (!sec_label_within_range(ts->sec_label, connection_sec_label, logger)) {
+				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
+				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
+				continue;
+			}
+			break;
+		case TS_EQUALS_CONNECTION_SEC_LABEL:
+			if (!hunk_eq(ts->sec_label, connection_sec_label)) {
+				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not equal to connection sec_label="PRI_SHUNK,
+				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
+				continue;
+			}
+			break;
+		}
+
+		dbg("ikev2ts: received %s label within range of our security label",
+		    tss->name);
+
+		/* XXX we return the first match.  Should we return the best? */
+		*selected_sec_label = ts->sec_label;	/* first match */
+		return true;
 	}
-	return &null_shunk;	/* unfound: error */
+
+	return false;
 }
-#endif
 
-static const shunk_t *score_ends_seclabel(const struct ends *ends /*POSSIBLY*/UNUSED,
-					  const struct connection *d,
-					  const struct traffic_selectors *tsi,
-					  const struct traffic_selectors *tsr,
-					  struct logger *logger
-#ifndef HAVE_LABELED_IPSEC
-								UNUSED
-#endif
-)
+static bool score_tsp_sec_label(enum sec_label_compare compare,
+				const struct traffic_selector_payloads *tsp,
+				chunk_t connection_sec_label,
+				shunk_t *selected_sec_label,
+				struct logger *logger)
 {
-	/* sec_labels are symmetric, pick from one end */
-	chunk_t sec_label = d->spd.this.sec_label;
-
-	if (sec_label.len == 0) {
+	if (connection_sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
-		if (tsi->contains_sec_label || tsr->contains_sec_label) {
+		if (tsp->i.contains_sec_label || tsp->r.contains_sec_label) {
 			dbg("error: received sec_label but this end is *not* configured to use sec_label");
-			return &null_shunk;
+			return false;
 		}
 		/* No sec_label was found and none was expected */
-		return NULL;	/* success: no label, as expected */
+		return true;	/* success: no label, as expected */
 	}
 
 	/* This endpoint is configured to use labeled IPsec. */
+	passert(vet_seclabel(HUNK_AS_SHUNK(connection_sec_label)) == NULL);
 
-#ifdef HAVE_LABELED_IPSEC
-	passert(vet_seclabel(HUNK_AS_SHUNK(sec_label)) == NULL);
-
-	if (!tsi->contains_sec_label || !tsr->contains_sec_label) {
+	if (!tsp->i.contains_sec_label || !tsp->r.contains_sec_label) {
 		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
-		return &null_shunk;
+		return false;
 	}
 
-	if (ts_has_seclabel(sec_label, tsi, "initiator", logger) != &null_shunk)
-		return ts_has_seclabel(sec_label, tsr, "responder", logger);
-#endif
+	if (!check_tss_sec_label(compare, &tsp->i, connection_sec_label, selected_sec_label, logger) ||
+	    !check_tss_sec_label(compare, &tsp->r, connection_sec_label, selected_sec_label, logger)) {
+		return false;
+	}
 
-	/* security label required but no matching one found */
-	return &null_shunk;	/* error */
+	/* security label required and matched */
+	return true;
 }
 
 static struct best_score score_ends_iprange(enum fit fit,
-				    const struct connection *d,
-				    const struct ends *ends,
-				    const struct traffic_selectors *tsi,
-				    const struct traffic_selectors *tsr)
+					    const struct connection *d,
+					    const struct ends *ends,
+					    const struct traffic_selector_payloads *tsp)
 {
 	if (DBGP(DBG_BASE)) {
 		selector_buf ei3;
@@ -989,19 +989,19 @@ static struct best_score score_ends_iprange(enum fit fit,
 	struct best_score best_score = NO_SCORE;
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
-	for (unsigned tsi_n = 0; tsi_n < tsi->nr; tsi_n++) {
-		const struct traffic_selector *tni = &tsi->ts[tsi_n];
+	for (unsigned tsi_n = 0; tsi_n < tsp->i.nr; tsi_n++) {
+		const struct traffic_selector *tni = &tsp->i.ts[tsi_n];
 
 		/* choice hardwired for IPrange and sec_label */
-		struct score score_i = score_end(ends->i, tsi, fit, "TSi", tsi_n);
+		struct score score_i = score_end(ends->i, &tsp->i, fit, tsi_n);
 		if (!score_i.ok) {
 			continue;
 		}
 
-		for (unsigned tsr_n = 0; tsr_n < tsr->nr; tsr_n++) {
-			const struct traffic_selector *tnr = &tsr->ts[tsr_n];
+		for (unsigned tsr_n = 0; tsr_n < tsp->r.nr; tsr_n++) {
+			const struct traffic_selector *tnr = &tsp->r.ts[tsr_n];
 
-			struct score score_r = score_end(ends->r, tsr, fit, "TSr", tsr_n);
+			struct score score_r = score_end(ends->r, &tsp->r, fit, tsr_n);
 			if (!score_r.ok) {
 				continue;
 			}
@@ -1030,33 +1030,31 @@ static struct best_score score_ends_iprange(enum fit fit,
 }
 
 static struct connection *scribble_ts_on_connection(struct connection *t, struct child_sa *child,
-						    const struct traffic_selectors tsi,
-						    const struct traffic_selectors tsr,
-						    enum fit fit, bool definitely_shared)
+						    const struct traffic_selector_payloads *tsp,
+						    enum fit fit, bool definitely_shared,
+						    const shunk_t best_sec_label)
 {
-	passert(tsi.nr >= 1);
-	int tsi_port = narrow_port(&t->spd.that, &tsi,
-				   fit, "TSi", 0);
+	passert(tsp->i.nr >= 1);
+	int tsi_port = narrow_port(&t->spd.that, &tsp->i, fit, 0);
 	if (tsi_port < 0) {
 		dbg("    skipping; TSi port too wide");
 		return NULL;
 	}
-	int tsi_protocol = narrow_protocol(&t->spd.that, &tsi,
-					   fit, "TSi", 0);
+
+	int tsi_protocol = narrow_protocol(&t->spd.that, &tsp->r, fit, 0);
 	if (tsi_protocol < 0) {
 		dbg("    skipping; TSi protocol too wide");
 		return NULL;
 	}
 
-	passert(tsr.nr >= 1);
-	int tsr_port = narrow_port(&t->spd.this, &tsr,
-				   fit, "TRi", 0);
+	passert(tsp->r.nr >= 1);
+	int tsr_port = narrow_port(&t->spd.this, &tsp->r, fit, 0);
 	if (tsr_port < 0) {
 		dbg("    skipping; TSr port too wide");
 		return NULL;
 	}
-	int tsr_protocol = narrow_protocol(&t->spd.this, &tsr,
-					   fit, "TSr", 0);
+
+	int tsr_protocol = narrow_protocol(&t->spd.this, &tsp->r, fit, 0);
 	if (tsr_protocol < 0) {
 		dbg("    skipping; TSr protocol too wide");
 		return NULL;
@@ -1081,6 +1079,16 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 	update_selector_hport(&c->spd.that.client, tsi_port);
 	update_selector_ipproto(&c->spd.this.client, tsr_protocol);
 	update_selector_ipproto(&c->spd.that.client, tsi_protocol);
+
+	free_chunk_content(&c->spd.this.sec_label);
+	free_chunk_content(&c->spd.that.sec_label);
+	if (best_sec_label.len > 0) {
+		connection_buf tb;
+		dbg("responder storing sec_label="PRI_SHUNK" in "PRI_CONNECTION,
+		    pri_shunk(best_sec_label), pri_connection(c, &tb));
+		c->spd.this.sec_label = clone_hunk(best_sec_label, "this_sec_label");
+		c->spd.that.sec_label = clone_hunk(best_sec_label, "that_sec_label");
+	}
 
 	if (c != child->sa.st_connection) {
 		connection_buf from, to;
@@ -1109,9 +1117,8 @@ bool v2_process_ts_request(struct child_sa *child,
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 	struct connection *c = child->sa.st_connection;
 
-	struct traffic_selectors tsi = { .nr = 0, };
-	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
+	struct traffic_selector_payloads tsp = empty_traffic_selectors;
+	if (!v2_parse_tsp(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1119,11 +1126,13 @@ bool v2_process_ts_request(struct child_sa *child,
 	struct best_score best_score = NO_SCORE;
 	const struct spd_route *best_spd_route = NULL;
 	struct connection *best_connection = c;
-	const shunk_t *best_sec_label = NULL;
+	shunk_t best_sec_label = null_shunk;
 
 	/* find best spd in c */
 
-	dbg("looking for best SPD in current connection");
+	connection_buf ccb;
+	dbg("responder looking for best SPD in current connection "PRI_CONNECTION,
+	    pri_connection(c, &ccb));
 	for (const struct spd_route *sra = &c->spd; sra != NULL; sra = sra->spd_next) {
 
 		/* responder */
@@ -1132,10 +1141,11 @@ bool v2_process_ts_request(struct child_sa *child,
 			.r = &sra->this,
 		};
 
-		/* Returns NULL(ok), &empty_chunk(error), memory(ok). */
-		shunk_t const *const selected_sec_label =
-			score_ends_seclabel(&ends, c, &tsi, &tsr, child->sa.st_logger);
-		if (selected_sec_label == &null_shunk) {
+		shunk_t selected_sec_label = null_shunk;
+		if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
+					 &tsp, c->spd.this.sec_label,
+					 &selected_sec_label,
+					 child->sa.st_logger)) {
 			/*
 			 * Either:
 			 *  - Security label required, but not found.
@@ -1149,14 +1159,14 @@ bool v2_process_ts_request(struct child_sa *child,
 			(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
 			? END_NARROWER_THAN_TS
 			: END_EQUALS_TS;
-		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsi, &tsr);
+		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsp);
 		if (!score.ok) {
 			continue;
 		}
 
 		if (score_gt(&score, &best_score)) {
 			dbg("    found better spd route for TSi[%td],TSr[%td]",
-			    score.tsi - tsi.ts, score.tsr - tsr.ts);
+			    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
 			best_score = score;
 			best_spd_route = sra;
 			best_sec_label = selected_sec_label;
@@ -1187,6 +1197,21 @@ bool v2_process_ts_request(struct child_sa *child,
 			if (d->policy & POLICY_GROUP) {
 				continue;
 			}
+
+			/*
+			 * For labeled IPsec, always start with the
+			 * template.  Who are we to argue if the
+			 * kernel asks for a new SA with, seemingly, a
+			 * security label that matches an existing
+			 * connection instance.
+			 */
+			if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+				connection_buf cb;
+				dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
+				    pri_connection(c, &cb));
+				continue;
+			}
+
 			dbg("  investigating connection \"%s\" as a better match", d->name);
 
 			/*
@@ -1203,15 +1228,17 @@ bool v2_process_ts_request(struct child_sa *child,
 			 */
 			int wildcards;	/* value ignored */
 			int pathlen;	/* value ignored */
-			if (!(same_id(&c->spd.this.id,
-				      &d->spd.this.id) &&
-			      match_id(&c->spd.that.id,
-				       &d->spd.that.id, &wildcards) &&
-			      trusted_ca_nss(c->spd.that.ca,
-					 d->spd.that.ca, &pathlen))) {
-				dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
-				    d->name, c->name);
-				continue;
+
+			/* conns created as aliases from the same source have identical ID/CA */
+			if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
+				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
+					match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+					trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+				{
+					dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
+						d->name, c->name);
+					continue;
+				}
 			}
 
 			const struct spd_route *sr;
@@ -1229,10 +1256,11 @@ bool v2_process_ts_request(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-				shunk_t const *const selected_sec_label =
-					score_ends_seclabel(&ends, d, &tsi, &tsr, child->sa.st_logger);
-				if (selected_sec_label == &null_shunk) {
+				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
+				shunk_t selected_sec_label = null_shunk;
+				if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
+							 &tsp, d->spd.this.sec_label,
+							 &selected_sec_label, child->sa.st_logger)) {
 					/*
 					 * Either:
 					 *  - Security label required, but not found.
@@ -1243,14 +1271,14 @@ bool v2_process_ts_request(struct child_sa *child,
 				}
 
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
-								     &ends, &tsi, &tsr);
+									     &ends, &tsp);
 				if (!score.ok) {
 					continue;
 				}
 				if (score_gt(&score, &best_score)) {
 					dbg("    protocol fitness found better match d %s, TSi[%td],TSr[%td]",
 					    d->name,
-					    score.tsi - tsi.ts, score.tsr - tsr.ts);
+					    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
 					best_connection = d;
 					best_score = score;
 					best_spd_route = sr;
@@ -1296,9 +1324,11 @@ bool v2_process_ts_request(struct child_sa *child,
 		 * something that should not be done to a permanent
 		 * connection.
 		 */
-		pexpect(c->kind == CK_PERMANENT);
+		pexpect((c->kind == CK_PERMANENT) ||
+			(c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0));
 		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		    enum_name(&connection_kind_names, c->kind), c->name);
+		llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}
 
@@ -1403,8 +1433,9 @@ bool v2_process_ts_request(struct child_sa *child,
 
 			passert(best_connection == c); /* aka st->st_connection, no leak */
 			pexpect(best_connection == child->sa.st_connection);
-			struct connection *s = scribble_ts_on_connection(t, child, tsi, tsr, fit,
-									 /*definitely_shared?*/false);
+			struct connection *s = scribble_ts_on_connection(t, child, &tsp, fit,
+									 /*definitely_shared?*/false,
+									 best_sec_label);
 			if (s == NULL) {
 				continue;
 			}
@@ -1419,9 +1450,10 @@ bool v2_process_ts_request(struct child_sa *child,
 		   c->spd.this.sec_label.len > 0) {
 		dbg("  instantiating template security label connection");
 		/* sure looks like a sec-label template */
-		struct connection *s = scribble_ts_on_connection(c, child, tsi, tsr,
+		struct connection *s = scribble_ts_on_connection(c, child, &tsp,
 								 END_WIDER_THAN_TS,
-								 /*definitely_shared?*/true);
+								 /*definitely_shared?*/true,
+								 best_sec_label);
 		if (!pexpect(s != NULL)) {
 			return false;
 		}
@@ -1452,17 +1484,6 @@ bool v2_process_ts_request(struct child_sa *child,
 	 */
 	update_state_connection(&child->sa, best_connection);
 
-	if (best_sec_label != NULL) {
-		free_chunk_content(&child->sa.st_seen_sec_label);
-		child->sa.st_seen_sec_label = clone_hunk(*best_sec_label, "st_seen_sec_label");
-	}
-
-	child->sa.st_ts_this = ikev2_end_to_ts(&best_spd_route->this, child);
-	child->sa.st_ts_that = ikev2_end_to_ts(&best_spd_route->that, child);
-
-	ikev2_print_ts(&child->sa.st_ts_this);
-	ikev2_print_ts(&child->sa.st_ts_that);
-
 	return true;
 }
 
@@ -1475,9 +1496,8 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	struct connection *c = child->sa.st_connection;
 
-	struct traffic_selectors tsi = { .nr = 0, };
-	struct traffic_selectors tsr = { .nr = 0, };
-	if (!v2_parse_tss(md, &tsi, &tsr, child->sa.st_logger)) {
+	struct traffic_selector_payloads tsp = empty_traffic_selectors;
+	if (!v2_parse_tsp(md, &tsp, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -1492,10 +1512,11 @@ bool v2_process_ts_response(struct child_sa *child,
 		? END_WIDER_THAN_TS
 		: END_EQUALS_TS;
 
-	/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&e, c, &tsi, &tsr, child->sa.st_logger);
-	if (selected_sec_label == &null_shunk) {
+	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
+	shunk_t selected_sec_label = null_shunk;
+	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
+				 &tsp, c->spd.this.sec_label,
+				 &selected_sec_label, child->sa.st_logger)) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.
@@ -1505,7 +1526,7 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsi, &tsr);
+	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsp);
 
 	if (!best.ok) {
 		dbg("reject responder TSi/TSr Traffic Selector");
@@ -1513,17 +1534,10 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	if (selected_sec_label != NULL) {
-		free_chunk_content(&child->sa.st_seen_sec_label);
-		child->sa.st_seen_sec_label = clone_hunk(*selected_sec_label, "st_seen_sec_label");
-	}
-
-	/* XXX: check conversions */
-	dbg("initiator saving acceptable TSi response in this");
-	ts_to_end(best.tsi, &c->spd.this, &child->sa.st_ts_this);
-
-	dbg("initiator saving acceptable TSr response in that");
-	ts_to_end(best.tsr, &c->spd.that, &child->sa.st_ts_that);
+	traffic_selector_to_end(best.tsi, &c->spd.this,
+				"scribble accepted TSi response on initiator's this");
+	traffic_selector_to_end(best.tsr, &c->spd.that,
+				"scribble accepted TSr response on initiator's that");
 
 	return true;
 }
@@ -1556,10 +1570,9 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		return false;
 
 	const struct connection *c = child->sa.st_connection;
-	struct traffic_selectors their_tsis = { .nr = 0, };
-	struct traffic_selectors their_tsrs = { .nr = 0, };
+	struct traffic_selector_payloads their_tsp = empty_traffic_selectors;
 
-	if (!v2_parse_tss(md, &their_tsis, &their_tsrs, child->sa.st_logger)) {
+	if (!v2_parse_tsp(md, &their_tsp, child->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &child->sa,
 			  "received malformed TSi/TSr payload(s)");
 		return false;
@@ -1572,10 +1585,12 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	enum fit fitness = END_NARROWER_THAN_TS;
 
-	/* Returns NULL(ok), &empty_chunk(skip), memory(ok). */
-	shunk_t const *const selected_sec_label =
-		score_ends_seclabel(&ends, c, &their_tsis, &their_tsrs, child->sa.st_logger);
-	if (selected_sec_label == &null_shunk) {
+	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
+	shunk_t selected_sec_label = null_shunk;
+	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
+				 &their_tsp, c->spd.this.sec_label,
+				 &selected_sec_label,
+				 child->sa.st_logger)) {
 		/*
 		 * Either:
 		 *  - Security label required, but not found.
@@ -1583,12 +1598,11 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		 *  - Security label *not* required, but found.
 		 */
 		log_state(RC_LOG_SERIOUS, &child->sa,
-			"rekey: received Traffic Selectors mismatch configured selectors for Security Label");
+			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
 		return false;
 	}
 
-	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsis,
-			&their_tsrs);
+	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsp);
 
 	if (!score.ok) {
 		log_state(RC_LOG_SERIOUS, &child->sa,

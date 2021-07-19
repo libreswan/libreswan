@@ -81,6 +81,7 @@
 #include "crypt_prf.h"
 #include "vendor.h"
 #include "nat_traversal.h"
+#include "ikev1_nat.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "crypt_ke.h"
@@ -641,7 +642,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* save initiator SA for HASH */
 	replace_chunk(&st->st_p1isa,
-		clone_hunk(pbs_in_as_shunk(&sa_pd->pbs), "sa in main_inI1_outR1()"));
+		      clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in main_inI1_outR1()"));
 
 	return STF_OK;
 }
@@ -1788,7 +1789,7 @@ static void send_notification(struct logger *logger,
 		break;
 	}
 
-	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state->kind))
+	if (encst != NULL && !IS_V1_ISAKMP_ENCRYPTED(encst->st_state->kind))
 		encst = NULL;
 
 	{
@@ -1868,7 +1869,7 @@ static void send_notification(struct logger *logger,
 
 		save_iv(encst, old_iv);
 
-		if (!IS_ISAKMP_SA_ESTABLISHED(encst->st_state)) {
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(encst)) {
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
@@ -1892,11 +1893,10 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 	if (from_state == STATE_UNDEFINED)
 		from_state = st->st_state->kind;
 
-	if (IS_QUICK(from_state)) {
-		p1st = find_phase1_state(st->st_connection,
-					ISAKMP_SA_ESTABLISHED_STATES);
+	if (IS_V1_QUICK(from_state)) {
+		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if ((p1st == NULL) ||
-			(!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state))) {
+			(!IS_V1_ISAKMP_SA_ESTABLISHED(p1st))) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "no Phase1 state for Quick mode notification");
 			return;
@@ -1904,7 +1904,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 		send_notification(st->st_logger, st, type, p1st, generate_msgid(p1st),
 				  st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				  PROTO_ISAKMP);
-	} else if (IS_ISAKMP_ENCRYPTED(from_state)) {
+	} else if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
 		send_notification(st->st_logger, st, type, st, generate_msgid(st),
 				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
 				PROTO_ISAKMP);
@@ -2009,24 +2009,27 @@ void send_v1_delete(struct state *st)
 	/* If there are IPsec SA's related to this state struct... */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* Find their phase1 state object */
-		p1st = find_phase1_state(st->st_connection,
-					ISAKMP_SA_ESTABLISHED_STATES);
+		p1st = find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
 			dbg("no Phase 1 state for Delete");
 			return;
 		}
 
 		if (st->st_ah.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_ah.our_spi, &ip_protocol_ah);
+			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+							     &ip_protocol_ah,
+							     st->st_ah.our_spi);
 			ns++;
 		}
 		if (st->st_esp.present) {
-			*ns = said3(&st->st_connection->spd.this.host_addr, st->st_esp.our_spi, &ip_protocol_esp);
+			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+							     &ip_protocol_esp,
+							     st->st_esp.our_spi);
 			ns++;
 		}
 
 		passert(ns != said); /* there must be some SAs to delete */
-	} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		/* or ISAKMP SA's... */
 		p1st = st;
 		isakmp_sa = TRUE;
@@ -2083,10 +2086,11 @@ void send_v1_delete(struct state *st)
 		while (ns != said) {
 			pb_stream del_pbs;
 			ns--;
+			const struct ip_protocol *proto = said_protocol(*ns);
 			struct isakmp_delete isad = {
 				.isad_doi = ISAKMP_DOI_IPSEC,
 				.isad_spisize = sizeof(ipsec_spi_t),
-				.isad_protoid = ns->proto->ikev1_protocol_id,
+				.isad_protoid = proto->ikev1_protocol_id,
 				.isad_nospi = 1,
 			};
 
@@ -2171,7 +2175,7 @@ bool accept_delete(struct msg_digest *md,
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
-	if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: ISAKMP SA not established");

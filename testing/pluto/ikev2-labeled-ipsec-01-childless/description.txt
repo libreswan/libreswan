@@ -1,11 +1,28 @@
-basic-pluto-01 but now with labeled IPsec using NETKEY. A test on port 4300
-using netcat and getpeercon_server to confirm traffic flow and label.
+IKEv2 labeled IPsec using XFRM, using auto=start (--up) to trigger
+a childless IKE SA (since we have no ACQUIREd label to negotiate
+a new SPD state) with installed policy that causes AQUIRES to
+negotiate IPsec SA's later on.
+
+A test on port 4300 using netcat and getpeercon_server to confirm traffic
+flow and label.
 
 (requires private getpeercon package, we'll include it as source in /testing soon)
 
 A shutdown is issued to verify no kernel state is left behind
 
+The way labeled IPsec works is that:
+- There is ONE set of SPD policies with the configured sec_label
+- There are TWO sets of SPD states with the ACQUIREd sec_label,
+  each tunnel is only used in one direction. These have the same
+  reqid as the policy set.
+- For subsequent tunnels, NO new SPD policies are added, only new
+  SPD states. It all has the same reqid. The LSM/XFRM code handles
+  picking the right one for the right sec_label
+
 This needs updating to must use netutils_t type for both ncat server
 and client (via runcon -t), I did not find a better context type than
 this. Also you need to switch nis_enabled and domain_can_mmap_file
 selinux boolean on to make it work.
+
+Note, the installed policies on the template ALSO function as the %trap
+policy for when the security label does not match an existing SPD state.

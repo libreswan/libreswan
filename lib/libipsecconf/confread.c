@@ -504,7 +504,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_NOTSET:
-		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_NOTSET", leftright);
+		/* cannot error out here, it might be a partial also= conn */
 		break;
 	}
 

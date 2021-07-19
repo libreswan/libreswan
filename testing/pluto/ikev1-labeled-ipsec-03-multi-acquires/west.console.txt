@@ -1,13 +1,8 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ # install selinux; generated in OUTPUT by east
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-west #
- rm ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd.pp
 west #
  setsebool domain_can_mmap_files=1
 west #
@@ -193,9 +188,5 @@ Certificate Nickname                                         Trust Attributes
 west #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-west #
- rm -rf ipsecspd.fc ipsecspd.if tmp
-west #
- if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
 west #
  

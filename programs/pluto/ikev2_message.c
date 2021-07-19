@@ -100,7 +100,7 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 
 struct pbs_out open_v2_message(struct pbs_out *message,
 			       struct ike_sa *ike, struct msg_digest *md,
-			       enum isakmp_xchg_types exchange_type)
+			       enum isakmp_xchg_type exchange_type)
 {
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
@@ -1038,7 +1038,7 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 	 * chains).
 	 */
 	struct payload_digest sk = {
-		.pbs = same_chunk_as_in_pbs(md->raw_packet, "decrypted SFK payloads"),
+		.pbs = same_chunk_as_pbs_in(md->raw_packet, "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
@@ -1086,7 +1086,7 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 		chunk_t plain;
 		ok = ikev2_verify_and_decrypt_sk_payload(ike, md, c, &plain,
 							 e_pbs->cur - md->packet_pbs.start);
-		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_in_pbs(plain, "decrypted SK payload");
+		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_pbs_in(plain, "decrypted SK payload");
 	}
 
 	dbg("#%lu ikev2 %s decrypt %s",
@@ -1292,7 +1292,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	 */
 	enum next_payload_types_ikev2 skf_np;
 	{
-		struct pbs_in pbs = same_chunk_as_in_pbs(sk->payload, "sk");
+		struct pbs_in pbs = same_chunk_as_pbs_in(sk->payload, "sk");
 		struct ikev2_generic e;
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);

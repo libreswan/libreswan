@@ -49,7 +49,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "defs.h"
 #include "rnd.h"
@@ -58,6 +57,7 @@
 #include "state.h"
 #include "timer.h"
 #include "kernel.h"
+#include "kernel_ops.h"
 #include "kernel_xfrm.h"
 #include "packet.h"
 #include "x509.h"
@@ -83,6 +83,24 @@
 #include "ip_encap.h"
 #include "show.h"
 
+static bool route_and_eroute(struct connection *c,
+			     struct spd_route *sr,
+			     struct state *st,
+			     /* st or c */
+			     struct logger *logger);
+
+extern bool eroute_connection(const struct spd_route *sr,
+			      ipsec_spi_t cur_spi,
+			      ipsec_spi_t new_spi,
+			      const struct kernel_route *route,
+			      enum eroute_type esatype,
+			      const struct kernel_encap *encap,
+			      uint32_t sa_priority,
+			      const struct sa_marks *sa_marks,
+			      const uint32_t xfrm_if_id,
+			      unsigned int op, const char *opname,
+			      struct logger *logger);
+
 bool can_do_IPcomp = true;  /* can system actually perform IPCOMP? */
 
 static global_timer_cb kernel_scan_shunts;
@@ -97,17 +115,14 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
 	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
-const struct pfkey_proto_info null_proto_info[2] = {
-	{
-		.proto = IPPROTO_ESP,
-		.mode = ENCAPSULATION_MODE_TRANSPORT,
+const struct kernel_encap esp_transport_kernel_encap = {
+	.outer = 0,
+	.inner_proto = &ip_protocol_esp,
+	.mode = ENCAP_MODE_TRANSPORT,
+	.rule[0] = {
+		.proto = ENCAP_PROTO_ESP,
 		.reqid = 0
 	},
-	{
-		.proto = 0,
-		.mode = 0,
-		.reqid = 0
-	}
 };
 
 struct bare_shunt {
@@ -195,8 +210,9 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 
-	bs->said = said3(&selector_type(our_client)->address.any,
-			 htonl(shunt_spi), &ip_protocol_internal);
+	bs->said = said_from_address_protocol_spi(selector_type(our_client)->address.any,
+						  &ip_protocol_internal,
+						  htonl(shunt_spi));
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -223,6 +239,15 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 		return reqid_ah(base);
 
 	PASSERT_FAIL("bad protocol %s", proto->name);
+}
+
+static const char *said_str(const ip_address dst,
+			    const struct ip_protocol *sa_proto,
+			    ipsec_spi_t spi,
+			    said_buf *buf)
+{
+	ip_said said = said_from_address_protocol_spi(dst, sa_proto, spi);
+	return str_said(&said, buf);
 }
 
 /* Generate Unique SPI numbers.
@@ -256,13 +281,13 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 
 	ipsec_spi_t network_spi;
 	if (kernel_ops->get_spi != NULL) {
-		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, proto);
+		said_buf sb;
 		network_spi = kernel_ops->get_spi(&sr->that.host_addr,
 						  &sr->this.host_addr, proto, tunnel,
 						  get_proto_reqid(sr->reqid, proto),
 						  IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
-						  text_said, logger);
+						  said_str(sr->this.host_addr, proto, 0, &sb),
+						  logger);
 	} else {
 		static ipsec_spi_t host_spi; /* host order, so not returned directly! */
 		do {
@@ -271,11 +296,11 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 		} while (host_spi < IPSEC_DOI_SPI_OUR_MIN || network_spi == avoid);
 	}
 
-	char text_said[SATOT_BUF];
-	set_text_said(text_said, &sr->this.host_addr, network_spi, proto);
+	said_buf sb;
 	address_buf rb;
 	dbg("kernel: allocated incoming spi %s -> %s%s",
-	    str_address(&sr->that.host_addr, &rb), text_said,
+	    str_address(&sr->that.host_addr, &rb),
+	    said_str(sr->this.host_addr, proto, network_spi, &sb),
 	    tunnel ? " in tunnel-mode" : "");
 	return network_spi;
 }
@@ -292,15 +317,15 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
 		       struct logger *logger)
 {
 	if (kernel_ops->get_spi != NULL) {
-		char text_said[SATOT_BUF];
-		set_text_said(text_said, &sr->this.host_addr, 0, &ip_protocol_comp);
+		said_buf sb;
 		return kernel_ops->get_spi(&sr->that.host_addr,
 					   &sr->this.host_addr, &ip_protocol_comp,
 					   tunnel,
 					   get_proto_reqid(sr->reqid, &ip_protocol_comp),
 					   IPCOMP_FIRST_NEGOTIATED,
 					   IPCOMP_LAST_NEGOTIATED,
-					   text_said, logger);
+					   said_str(sr->this.host_addr, &ip_protocol_comp, 0, &sb),
+					   logger);
 	} else {
 		static cpi_t first_busy_cpi = 0;
 		static cpi_t latest_cpi = 0;
@@ -795,6 +820,146 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
 }
 
 /*
+ * Build an array of encapsulation rules/tmpl.  Order things
+ * inner-most to outer-most so the last entry is what will go across
+ * the wire.  A -1 entry of the packet to be encapsulated is implied.
+ */
+
+static struct kernel_encap kernel_encap_from_spd(lset_t policy,
+						 const struct spd_route *spd,
+						 enum encap_mode mode)
+{
+	struct kernel_encap encap = {
+		.mode = mode,
+	};
+
+	/*
+	 * XXX: remember construct this inner-to-outer; which is the
+	 * same as the kernel_sa array.
+	 */
+
+	struct encap_rule *outer = encap.rule - 1;
+	if (policy & POLICY_COMPRESS) {
+		outer++;
+		outer->reqid = reqid_ipcomp(spd->reqid);
+		outer->proto = ENCAP_PROTO_IPCOMP;
+	}
+	if (policy & POLICY_ENCRYPT) {
+		outer++;
+		outer->reqid = reqid_esp(spd->reqid);
+		outer->proto = ENCAP_PROTO_ESP;
+	}
+	if (policy & POLICY_AUTHENTICATE) {
+		outer++;
+		outer->reqid = reqid_ah(spd->reqid);
+		outer->proto = ENCAP_PROTO_AH;
+	}
+
+	passert(outer < encap.rule + elemsof(encap.rule));
+	encap.outer = outer - encap.rule; /* could be -1 */
+	passert(encap.outer < (int)elemsof(encap.rule));
+
+	/*
+	 * XXX: Inner here refers to the inner-most rule which, for a
+	 * tunnel, needs the tunnel bit set.  For transport, why it
+	 * uses outer remains a mystery (suspect it just needs to be
+	 * !INT !IPIP).
+	 */
+	if (outer >= encap.rule) {
+		encap.inner_proto = (mode == ENCAP_MODE_TUNNEL ? &ip_protocol_ipip :
+				     mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(outer->proto) :
+				     NULL);
+		pexpect(encap.inner_proto != NULL);
+	}
+
+	return encap;
+}
+
+static struct kernel_encap kernel_encap_from_state(const struct state *st,
+						   const struct spd_route *spd)
+{
+	bool tunnel = false;
+	lset_t policy = LEMPTY;
+	if (st->st_ipcomp.present) {
+		policy |= POLICY_COMPRESS;
+		tunnel |= (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+	}
+
+	if (st->st_esp.present) {
+		policy |= POLICY_ENCRYPT;
+		tunnel |= (st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+	}
+
+	if (st->st_ah.present) {
+		policy |= POLICY_AUTHENTICATE;
+		tunnel |= (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+	}
+
+	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
+	struct kernel_encap encap = kernel_encap_from_spd(policy, spd, mode);
+	return encap;
+}
+
+static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
+						 enum encap_mode mode,
+						 enum encap_direction flow)
+{
+	/*
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change the remote IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 *
+	 * Bug #1004 fix.
+	 *
+	 * There really isn't "client" with XFRM and transport mode so
+	 * eroute must be done to natted, visible ip. If we don't hide
+	 * internal IP, communication doesn't work.
+	 */
+	ip_selector remote_client;
+	switch (mode) {
+	case ENCAP_MODE_TUNNEL:
+		remote_client = spd->that.client;
+		break;
+	case ENCAP_MODE_TRANSPORT:
+		remote_client = selector_from_address_protocol_port(spd->that.host_addr,
+								    protocol_by_ipproto(spd->that.protocol),
+								    selector_port(spd->that.client));
+		break;
+	default:
+		bad_case(mode);
+	}
+	selector_buf os, ns;
+	dbg("%s() changing remote selector %s to %s",
+	    __func__,
+	    str_selector(&spd->that.client, &os),
+	    str_selector(&remote_client, &ns));
+
+	struct kernel_route route = {0};
+	struct route_end *local;
+	struct route_end *remote;
+
+	switch (flow) {
+	case ENCAP_DIRECTION_INBOUND:
+		remote = &route.src;
+		local = &route.dst;
+		break;
+	case ENCAP_DIRECTION_OUTBOUND:
+		local = &route.src;
+		remote = &route.dst;
+		break;
+	default:
+		bad_case(flow);
+	}
+
+	local->client = spd->this.client;
+	remote->client = remote_client;
+	local->host_addr = spd->this.host_addr;
+	remote->host_addr = spd->that.host_addr;
+
+	return route;
+}
+
+/*
  * handle co-terminal attempt of the "near" kind
  *
  * Note: it mutates both inside and outside
@@ -982,21 +1147,38 @@ bool trap_connection(struct connection *c)
 
 	case route_easy:
 	case route_nearconflict:
-		/*
-		 * RT_ROUTED_TUNNEL is treated specially: we don't override
-		 * because we don't want to lose track of the IPSEC_SAs etc.
-		 * ??? The test treats RT_UNROUTED_KEYED specially too.
-		 */
-		if (c->spd.routing < RT_ROUTED_TUNNEL)
+		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+			/*
+			 * IKEv2 security labels are treated
+			 * specially: this allocates and installs a
+			 * full REQID, the route_and_eroute() call
+			 * does not (and who knows what else it does).
+			 */
+			dbg("kernel: installing SE trap policy");
+			return install_se_connection_policies(c, c->logger);
+		} else if (c->spd.routing >= RT_ROUTED_TUNNEL) {
+			/*
+			 * RT_ROUTED_TUNNEL is treated specially: we
+			 * don't override because we don't want to
+			 * lose track of the IPSEC_SAs etc.
+			 *
+			 * ??? The test treats RT_UNROUTED_KEYED
+			 * specially too.
+			 *
+			 * XXX: ah, I was wondering ...
+			 */
+			dbg("kernel: skipping trap policy as >=ROUTED_TUNNEL");
+			return true;
+		} else {
 			return route_and_eroute(c, &c->spd, NULL, c->logger);
-
-		return true;
+		}
 
 	case route_farconflict:
 		return false;
 
 	case route_unnecessary:
 		return true;
+
 	default:
 		bad_case(r);
 	}
@@ -1011,40 +1193,68 @@ bool trap_connection(struct connection *c)
  * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
  * is specified in the policy of connection c.
  */
-bool shunt_eroute(const struct connection *c,
+
+bool shunt_policy(enum kernel_policy_op op,
+		  const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,
-		  enum pluto_sadb_operations op,
-		  const char *opname,
+		  const char *what,
 		  struct logger *logger)
 {
-	selector_buf thisb, thatb;
-	dbg("kernel: shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %s --%d->- %s",
-	    c->name, opname, enum_name(&routing_story, rt_kind),
-	    str_selector(&sr->this.client, &thisb),
-	    sr->this.protocol,
-	    str_selector(&sr->that.client, &thatb));
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "kernel: %s() %s %s",
+		    __func__, enum_name_short(&kernel_policy_op_names, op), what);
 
-	if (kernel_ops->shunt_eroute != NULL) {
-		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname, logger);
+		jam(buf, " ");
+		jam_connection(buf, c);
+
+		jam(buf, " for rt_kind '%s' using",
+		    enum_name(&routing_story, rt_kind));
+
+		jam(buf, " ");
+		jam_selector(buf, &sr->this.client);
+		jam(buf, "-%s->", protocol_by_ipproto(sr->this.protocol)->name);
+		jam_selector(buf, &sr->that.client);
+
+		jam(buf, " sec_label=");
+		jam_sanitized_hunk(buf, sr->this.sec_label);
 	}
 
-	llog(RC_COMMENT, logger,
-		    "no shunt_eroute implemented for %s interface",
-		    kernel_ops->kern_name);
-	return true;
+	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind, what, logger);
+	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
+	return ok;
 }
 
 static bool sag_eroute(const struct state *st,
-		const struct spd_route *sr,
-		enum pluto_sadb_operations op,
-		const char *opname)
+		       const struct spd_route *sr,
+		       enum kernel_policy_op op,
+		       const char *opname)
 {
-	pexpect(kernel_ops->sag_eroute != NULL);
-	if (kernel_ops->sag_eroute != NULL)
-		return kernel_ops->sag_eroute(st, sr, op, opname);
+	struct connection *c = st->st_connection;
 
-	return false;
+	/*
+	 * Figure out the SPI and protocol (in two forms) for the
+	 * outer transformation.
+	 */
+
+	const struct kernel_encap encap = kernel_encap_from_state(st, sr);
+	/* check for no transform at all */
+	passert(encap.outer >= 0);
+
+	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
+
+	pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+	struct kernel_route route = kernel_route_from_spd(sr, encap.mode,
+							  ENCAP_DIRECTION_OUTBOUND);
+
+	/* hack */
+	char why[256];
+	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
+
+	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
+				 &route, encap.inner_proto->ipproto, &encap,
+				 calculate_sa_prio(c, FALSE), &c->sa_marks,
+				 xfrm_if_id, op, why, st->st_logger);
 }
 
 void migration_up(struct connection *c,  struct state *st)
@@ -1094,7 +1304,9 @@ void unroute_connection(struct connection *c)
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete", c->logger);
+			shunt_policy(KP_DELETE_OUTBOUND, c, sr, RT_UNROUTED,
+				     "unrouting connection",
+				     c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1110,14 +1322,6 @@ void unroute_connection(struct connection *c)
 }
 
 #include "kernel_alg.h"
-
-void set_text_said(char *text_said, const ip_address *dst,
-			ipsec_spi_t spi, const struct ip_protocol *sa_proto)
-{
-	ip_said said = said3(dst, spi, sa_proto);
-	struct jambuf jam = array_as_jambuf(text_said, SATOT_BUF);
-	jam_said(&jam, &said);
-}
 
 /* find an entry in the bare_shunt table.
  * Trick: return a pointer to the pointer to the entry;
@@ -1200,80 +1404,6 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-/* Setup an IPsec route entry.
- * op is one of the ERO_* operators.
- */
-
-// should be made static again once we fix initiate.c calling this directly!
-bool raw_eroute(const ip_address *this_host,
-		const ip_selector *this_client,
-		const ip_address *that_host,
-		const ip_selector *that_client,
-		ipsec_spi_t cur_spi,
-		ipsec_spi_t new_spi,
-		const struct ip_protocol *sa_proto,
-		unsigned int transport_proto,
-		enum eroute_type esatype,
-		const struct pfkey_proto_info *proto_info,
-		deltatime_t use_lifetime,
-		uint32_t sa_priority,
-		const struct sa_marks *sa_marks,
-		const uint32_t xfrm_if_id,
-		enum pluto_sadb_operations op,
-		const char *opname,
-		const shunk_t sec_label,
-		struct logger *logger)
-{
-	char text_said[SATOT_BUF + SATOT_BUF];
-
-	switch (op) {
-	case ERO_ADD:
-	case ERO_ADD_INBOUND:
-		set_text_said(text_said, that_host, new_spi, sa_proto);
-		break;
-	case ERO_DELETE:
-	case ERO_DEL_INBOUND:
-		set_text_said(text_said, that_host, cur_spi, sa_proto);
-		break;
-	case ERO_REPLACE:
-	case ERO_REPLACE_INBOUND:
-	{
-		size_t w;
-
-		set_text_said(text_said, that_host, cur_spi, sa_proto);
-		w = strlen(text_said);
-		text_said[w] = '>';
-		set_text_said(text_said + w + 1, that_host, new_spi, sa_proto);
-		break;
-	}
-	default:
-		bad_case(op);
-	}
-
-	selectors_buf sb;
-	dbg("kernel: raw_eroute: %s eroute %s (%d) => %s using reqid %d proto=%d %s sec_label",
-	    opname,
-	    str_selectors(this_client, that_client, &sb),
-	    transport_proto,
-	    text_said,
-	    proto_info->reqid,
-	    proto_info->proto,
-	    sec_label.len > 0 ? "with" : "without");
-
-	bool result = kernel_ops->raw_eroute(this_host, this_client,
-					     that_host, that_client,
-					     cur_spi, new_spi, sa_proto,
-					     transport_proto,
-					     esatype, proto_info,
-					     use_lifetime, sa_priority, sa_marks,
-					     xfrm_if_id, op, text_said,
-					     sec_label,
-					     logger);
-	dbg("kernel: raw_eroute: result=%s", result ? "success" : "failed");
-
-	return result;
-}
-
 /*
  * Clear any bare shunt holds that overlap with the network we have
  * just routed.  We only consider "narrow" holds: ones for a single
@@ -1298,8 +1428,8 @@ static void clear_narrow_holds(const ip_selector *our_client,
 			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto, SPI_HOLD,
-					       /*skip_xfrm_raw_eroute_delete?*/false,
-					       "removing clashing narrow hold",
+					       /*skip_xfrm_policy_delete?*/false,
+					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
 				llog_bare_shunt(RC_LOG, logger, p, "failed to delete");
@@ -1327,94 +1457,10 @@ static void clear_narrow_holds(const ip_selector *our_client,
 	}
 }
 
-static bool replace_bare_shunt(const ip_address *src_address, const ip_address *dst_address,
-			       policy_prio_t policy_prio,	/* of replacing shunt*/
-			       ipsec_spi_t cur_shunt_spi,	/* in host order! */
-			       ipsec_spi_t new_shunt_spi,	/* in host order! */
-			       int transport_proto,
-			       const char *why, struct logger *logger)
-{
-	const struct ip_info *afi = address_type(src_address);
-	passert(afi == address_type(dst_address));
-	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
-	/* ports? assumed wide? */
-	ip_selector src = selector_from_address_protocol(*src_address, protocol);
-	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
-
-	selectors_buf sb;
-	dbg("kernel: replace bare shunt %s for %s",
-	    str_selectors(&src, &dst, &sb), why);
-
-	/*
-	 * ??? this comment might be obsolete.
-	 *
-	 * If the transport protocol is not the wildcard (0), then we
-	 * need to look for a host<->host shunt, and replace that with
-	 * the shunt spi, and then we add a %HOLD for what was there
-	 * before.
-	 *
-	 * This is at odds with !repl, which should delete things.
-	 */
-
-	const ip_address null_host = afi->address.any;
-	bool ok = raw_eroute(&null_host, &src, &null_host, &dst,
-			     htonl(cur_shunt_spi), htonl(new_shunt_spi),
-			     &ip_protocol_internal, transport_proto,
-			     ET_INT, null_proto_info,
-			     deltatime(SHUNT_PATIENCE),
-			     0, /* we don't know connection for priority yet */
-			     NULL, /* sa_marks */
-			     0 /* xfrm interface id */,
-			     ERO_REPLACE, why, null_shunk, logger);
-	if (!ok) {
-		llog(RC_LOG, logger,
-		     "replace kernel shunt %s failed - deleting from pluto shunt table",
-		     str_selectors_sensitive(&src, &dst, &sb));
-	}
-
-	/*
-	 * We can have proto mismatching acquires with xfrm - this is
-	 * a bad workaround.
-	 *
-	 * ??? what is the nature of those mismatching acquires?
-	 *
-	 * XXX: for instance, when whack initiates an OE connection.
-	 * There is no kernel-acquire shunt to remove.
-	 */
-	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
-	/* passert(bs_pp != NULL); */
-	if (bs_pp == NULL) {
-		selectors_buf sb;
-		llog(RC_LOG, logger,
-		     "can't find expected bare shunt to %s: %s",
-		     ok ? "replace" : "delete",
-		     str_selectors_sensitive(&src, &dst, &sb));
-		return ok;
-	}
-
-	if (ok) {
-		/*
-		 * change over to new bare eroute ours, peers,
-		 * transport_proto are the same.
-		 */
-		struct bare_shunt *bs = *bs_pp;
-		bs->why = why;
-		bs->policy_prio = policy_prio;
-		bs->said = said3(&null_host, htonl(new_shunt_spi), &ip_protocol_internal);
-		bs->count = 0;
-		bs->last_activity = mononow();
-		dbg_bare_shunt("replace", bs);
-	} else {
-		free_bare_shunt(bs_pp);
-	}
-
-	return ok;
-}
-
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       int transport_proto, ipsec_spi_t cur_shunt_spi,
-		       bool skip_xfrm_raw_eroute_delete,
+		       bool skip_xfrm_policy_delete,
 		       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
@@ -1425,7 +1471,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	bool ok;
-	if (kernel_ops->type == USE_XFRM && skip_xfrm_raw_eroute_delete) {
+	if (kernel_ops->type == USE_XFRM && skip_xfrm_policy_delete) {
 		selectors_buf sb;
 		llog(RC_LOG, logger, "deleting bare shunt %s from pluto shunt table",
 		     str_selectors_sensitive(&src, &dst, &sb));
@@ -1436,16 +1482,17 @@ bool delete_bare_shunt(const ip_address *src_address,
 		    str_selectors(&src, &dst, &sb), why);
 		const ip_address null_host = afi->address.any;
 		/* assume low code logged action */
-		ok = raw_eroute(&null_host, &src, &null_host, &dst,
+		ok = raw_policy(KP_DELETE_OUTBOUND,
+				&null_host, &src, &null_host, &dst,
 				htonl(cur_shunt_spi), htonl(SPI_PASS),
-				&ip_protocol_internal,
 				transport_proto,
-				ET_INT, null_proto_info,
+				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				0, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
-				ERO_DELETE, why, null_shunk, logger);
+				null_shunk, logger,
+				"%s() %s", __func__, why);
 		if (!ok) {
 			/* did/should kernel log this? */
 			selectors_buf sb;
@@ -1478,66 +1525,175 @@ bool delete_bare_shunt(const ip_address *src_address,
 	return ok;
 }
 
+bool install_se_connection_policies(struct connection *c, struct logger *logger)
+{
+	connection_buf cb;
+	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s",
+	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
+	    pri_connection(c, &cb),
+	    enum_name(&routing_story, c->spd.routing));
+
+	if (!pexpect(c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) ||
+	    !pexpect(c->kind == CK_TEMPLATE)) {
+		return false;
+	}
+
+	if (c->spd.routing != RT_UNROUTED) {
+		dbg("kernel: %s() connection already routed", __func__);
+		return true;
+	}
+
+	enum encap_mode mode = (c->policy & POLICY_TUNNEL) ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT;
+	const struct kernel_encap encap = kernel_encap_from_spd(c->policy, &c->spd, mode);
+	if (encap.outer < 0) {
+		/* XXX: log? */
+		return false;
+	}
+
+	uint32_t priority = calculate_sa_prio(c, /*oe_shunt*/false);
+
+	/*
+	 * SE installs both an outgoing and incoming policy.  Normal
+	 * connections do not.
+	 */
+	for (unsigned i = 0; i < 2; i++) {
+		bool inbound = (i == 1);
+		struct end *src = inbound ? &c->spd.that : &c->spd.this;
+		struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
+				/*src*/&src->host_addr, &src->client,
+				/*dst*/&dst->host_addr, &dst->client,
+				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				/*transport_proto*/c->spd.this.protocol,
+				/*esatype*/encap.inner_proto->ipproto,
+				/*encap*/&encap,
+				/*use_lifetime*/deltatime(0),
+				/*sa_priority*/priority,
+				/*sa_marks*/NULL,
+				/*xfrm_if_id*/0,
+				/*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				/*logger*/logger,
+				"%s() security label policy", __func__)) {
+			if (inbound) {
+				/*
+				 * Need to pull the just installed
+				 * outbound policy.
+				 *
+				 * XXX: this call highlights why
+				 * having both KP_*_REVERSED and and
+				 * reversed parameters is just so
+				 * lame.  raw_policy can handle this.
+				 */
+				dbg("pulling previously installed outbound policy");
+				pexpect(i > 0);
+				raw_policy(KP_DELETE_OUTBOUND,
+					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
+					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
+					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+					   /*transport_proto*/c->spd.this.protocol,
+					   /*esatype*/encap.inner_proto->ipproto,
+					   /*encap*/&encap,
+					   /*use_lifetime*/deltatime(0),
+					   /*sa_priority*/priority,
+					   /*sa_marks*/NULL,
+					   /*xfrm_if_id*/0,
+					   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+					   /*logger*/logger,
+					   "%s() security label policy", __func__);
+			}
+			return false;
+		}
+	}
+
+	/* a new route: no deletion required, but preparation is */
+	if (!do_command(c, &c->spd, "prepare", NULL/*ST*/, logger)) {
+		dbg("kernel: %s() prepare command returned an error", __func__);
+	}
+
+	if (!do_command(c, &c->spd, "route", NULL/*ST*/, logger)) {
+		/* Failure!  Unwind our work. */
+		dbg("kernel: %s() route command returned an error", __func__);
+		if (!do_command(c, &c->spd, "down", NULL/*st*/, logger)) {
+			dbg("kernel: down command returned an error");
+		}
+		dbg("kernel: %s() pulling policies", __func__);
+		for (unsigned i = 0; i < 2; i++) {
+			bool inbound = (i > 0);
+			struct end *src = inbound ? &c->spd.that : &c->spd.this;
+			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+			/* ignore result */
+			raw_policy(inbound ? KP_DELETE_INBOUND : KP_DELETE_OUTBOUND,
+				   /*src*/&src->host_addr, &src->client,
+				   /*dst*/&dst->host_addr, &dst->client,
+				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				   /*transport_proto*/c->spd.this.protocol,
+				   /*esatype*/encap.inner_proto->ipproto,
+				   /*encap*/&encap,
+				   /*use_lifetime*/deltatime(0),
+				   /*sa_priority*/priority,
+				   /*sa_marks*/NULL,
+				   /*xfrm_if_id*/0,
+				   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				   /*logger*/logger,
+				   "%s() security label policy", __func__);
+		}
+		return false;
+	}
+
+	/* Success! */
+	c->spd.routing = RT_ROUTED_PROSPECTIVE;
+	return true;
+}
+
 bool eroute_connection(const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
-		       const struct ip_protocol *sa_proto,
+		       const struct kernel_route *route,
 		       enum eroute_type esatype,
-		       const struct pfkey_proto_info *proto_info,
+		       const struct kernel_encap *encap,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
-		       unsigned int op,
+		       enum kernel_policy_op op,
 		       const char *opname,
 		       struct logger *logger)
 {
-	ip_address peer = sr->that.host_addr;
-	char buf2[256];
-
-	snprintf(buf2, sizeof(buf2),
-		"eroute_connection %s", opname);
-
-	if (sa_proto == &ip_protocol_internal)
-		peer = address_type(&peer)->address.any;
-
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host_addr);
-		bool t = raw_eroute(&sr->this.host_addr, &client,
-				    &peer, &sr->that.client,
+		bool t = raw_policy(op,
+				    &route->src.host_addr, &client,
+				    &route->dst.host_addr, &route->dst.client,
 				    cur_spi,
 				    new_spi,
-				    sa_proto,
 				    sr->this.protocol,
 				    esatype,
-				    proto_info,
+				    encap,
 				    deltatime(0),
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
-				    op, buf2,
-				    HUNK_AS_SHUNK(sr->this.sec_label),
-				    logger);
+				    HUNK_AS_SHUNK(sr->this.sec_label), logger,
+				    "CAT: %s() %s", __func__, opname);
 		if (!t) {
 			llog(RC_LOG, logger,
-				    "CAT: failed to eroute additional Client Address Translation policy");
+			     "CAT: failed to eroute additional Client Address Translation policy");
 		}
 
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_eroute(&sr->this.host_addr, &sr->this.client,
-			  &peer, &sr->that.client,
+	return raw_policy(op,
+			  &route->src.host_addr, &route->src.client,
+			  &route->dst.host_addr, &route->dst.client,
 			  cur_spi,
 			  new_spi,
-			  sa_proto,
 			  sr->this.protocol,
 			  esatype,
-			  proto_info,
+			  encap,
 			  deltatime(0),
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
-			  op, buf2,
-			  HUNK_AS_SHUNK(sr->this.sec_label),
-			  logger);
+			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			  "%s() %s", __func__, opname);
 }
 
 /* assign a bare hold or pass to a connection */
@@ -1606,18 +1762,31 @@ bool assign_holdpass(const struct connection *c,
 			const char *reason;
 
 			if (erouted(ro)) {
-				op = ERO_REPLACE;
-				reason = "replace %trap with broad %pass or %hold";
+				op = KP_REPLACE_OUTBOUND;
+				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
 			} else {
-				op = ERO_ADD;
-				reason = "add broad %pass or %hold";
+				op = KP_ADD_OUTBOUND;
+				reason = "assign_holdpass() add broad %pass or %hold";
 			}
+
+			pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+			struct kernel_route route = kernel_route_from_spd(sr,
+									  ENCAP_MODE_TRANSPORT,
+									  ENCAP_DIRECTION_OUTBOUND);
+			/*
+			 * XXX: why?
+			 *
+			 * Because only this end is interesting?
+			 * Because it is a shunt and the other end
+			 * doesn't matter?
+			 */
+			route.dst.host_addr = address_type(&route.dst.host_addr)->address.any;
 
 			if (eroute_connection(sr,
 					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(negotiation_shunt),
-					      &ip_protocol_internal, ET_INT,
-					      null_proto_info,
+					      &route, ET_INT,
+					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
 					      op,
@@ -1635,9 +1804,9 @@ bool assign_holdpass(const struct connection *c,
 		if (!delete_bare_shunt(src, dst,
 				       transport_proto,
 				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
-				       /*skip_xfrm_raw_eroute_delete?*/false,
+				       /*skip_xfrm_policy_delete?*/false,
 				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-					"delete narrow %hold"),
+					"assign_holdpass() delete narrow %hold"),
 				       c->logger)) {
 			dbg("kernel: assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
@@ -1652,37 +1821,39 @@ bool assign_holdpass(const struct connection *c,
 }
 
 /* compute a (host-order!) SPI to implement the policy in connection c */
-ipsec_spi_t shunt_policy_spi(const struct connection *c, bool prospective)
+enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 {
-	/* note: these are in host order :-( */
-	static const ipsec_spi_t shunt_spi[] =
-	{
-		SPI_TRAP,       /* --initiateontraffic */
-		SPI_PASS,       /* --pass */
-		SPI_DROP,       /* --drop */
-		SPI_REJECT,     /* --reject */
-	};
-
-	static const ipsec_spi_t fail_spi[] =
-	{
-		0,              /* --none*/
-		SPI_PASS,       /* --failpass */
-		SPI_DROP,       /* --faildrop */
-		SPI_REJECT,     /* --failreject */
-	};
-
-	return prospective ?
-		shunt_spi[(c->policy & POLICY_SHUNT_MASK) >>
-			POLICY_SHUNT_SHIFT] :
-		fail_spi[(c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT];
+	if (prospective) {
+		/* note: these are in host order :-( */
+		static const ipsec_spi_t shunt_spi[SHUNT_POLICY_ROOF] = {
+			[SHUNT_DEFAULT] = SPI_TRAP,      /* --initiateontraffic */
+			[SHUNT_PASS] = SPI_PASS,         /* --pass */
+			[SHUNT_DROP] = SPI_DROP,         /* --drop */
+			[SHUNT_REJECT] = SPI_REJECT,     /* --reject */
+		};
+		enum shunt_policy sp = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
+		passert(sp < elemsof(shunt_spi));
+		return shunt_spi[sp];
+	} else {
+		/* note: these are in host order :-( */
+		static const ipsec_spi_t fail_spi[SHUNT_POLICY_ROOF] = {
+			[SHUNT_DEFAULT] = 0,             /* --none*/
+			[SHUNT_PASS] = SPI_PASS,         /* --failpass */
+			[SHUNT_DROP] = SPI_DROP,         /* --faildrop */
+			[SHUNT_REJECT] = SPI_REJECT,     /* --failreject */
+		};
+		enum shunt_policy sp = (c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
+		passert(sp < elemsof(fail_spi));
+		return fail_spi[sp];
+	}
 }
 
 bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	     const ip_address *src, const ip_address *dst,
 	     struct logger *logger)
 {
-	char text_said[SATOT_BUF];
-	set_text_said(text_said, dst, spi, proto);
+	said_buf sb;
+	const char *text_said = said_str(*dst, proto, spi, &sb);
 
 	address_buf b;
 	dbg("kernel: deleting spi %s -> %s",
@@ -1693,7 +1864,7 @@ bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 		.proto = proto,
 		.src.address = src,
 		.dst.address = dst,
-		.text_said = text_said,
+		.story = text_said,
 	};
 
 	passert(kernel_ops->del_sa != NULL);
@@ -1731,9 +1902,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* Build an inbound or outbound SA */
 
 	struct connection *c = st->st_connection;
-	ipsec_spi_t inner_spi = 0;
-	const struct ip_protocol *proto = NULL;
-	enum eroute_type esatype = ET_UNSPEC;
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
 	bool outgoing_ref_set = false;
 	bool incoming_ref_set = false;
@@ -1745,105 +1913,66 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	struct kernel_sa said[EM_MAXRELSPIS];
 	struct kernel_sa *said_next = said;
 
-	char text_ipcomp[SATOT_BUF];
-	char text_esp[SATOT_BUF];
-	char text_ah[SATOT_BUF];
-
-	ip_address src, dst;
-	ip_selector src_client, dst_client;
-	if (inbound) {
-		src = c->spd.that.host_addr;
-		src_client = c->spd.that.client;
-		dst = c->spd.this.host_addr;
-		dst_client = c->spd.this.client;
-	} else {
-		src = c->spd.this.host_addr,
-		src_client = c->spd.this.client;
-		dst = c->spd.that.host_addr;
-		dst_client = c->spd.that.client;
-	}
+	/* same scope as said[] */
+	said_buf text_ipcomp;
+	said_buf text_esp;
+	said_buf text_ah;
 
 	/*
-	 * mode: encapsulation mode called for
-	 * encap_oneshot: copy of "encapsulation" but reset to
-	 *	ENCAPSULATION_MODE_TRANSPORT after use.
+	 * Construct the policy encapsulation rules; it determines
+	 * tunnel mode as a side effect.
 	 */
-	int mode = ENCAPSULATION_MODE_TRANSPORT;
-	bool add_selector;
-
-	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-	    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-		mode = ENCAPSULATION_MODE_TUNNEL;
-		add_selector = false; /* Don't add selectors for tunnel mode */
-	} else {
-		/*
-		 * RFC 4301, Section 5.2 Requires traffic selectors to be set
-		 * on transport mode
-		 */
-		add_selector = true;
+	struct kernel_encap encap = kernel_encap_from_state(st, &c->spd);
+	if (!pexpect(encap.outer >= 0)) {
+		return false;
 	}
-	c->ipsec_mode = mode;
 
-	int encap_oneshot = mode;
+	struct kernel_route route = kernel_route_from_spd(&c->spd, encap.mode,
+							  inbound ? ENCAP_DIRECTION_INBOUND : ENCAP_DIRECTION_OUTBOUND);
 
 	const struct kernel_sa said_boilerplate = {
-		.src.address = &src,
-		.dst.address = &dst,
-		.src.client = &src_client,
-		.dst.client = &dst_client,
+		.src.address = &route.src.host_addr,
+		.dst.address = &route.dst.host_addr,
+		.src.client = &route.src.client,
+		.dst.client = &route.dst.client,
 		.inbound = inbound,
-		.add_selector = add_selector,
+		.tunnel = (encap.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.protocol,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
-
-		.sec_label =
-			st->st_seen_sec_label.len != 0 ? st->st_seen_sec_label :
-			st->st_acquired_sec_label.len != 0 ? st->st_acquired_sec_label :
-			c->spd.this.sec_label /* assume connection outlive their kernel_sa's */
+		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
+			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
+			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-	inner_spi = SPI_PASS;
-	if (mode == ENCAPSULATION_MODE_TUNNEL) {
-		/* If we are tunnelling, set up IP in IP pseudo SA */
-		proto = &ip_protocol_ipip;
-		esatype = ET_IPIP;
-	} else {
-		/* For transport mode set ESP */
-		/* ??? why are we sure that this isn't AH? */
-		proto = &ip_protocol_esp;
-		esatype = ET_ESP;
-	}
+	address_buf sab, dab;
+	selector_buf scb, dcb;
+	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK,
+	    __func__,
+	    said_boilerplate.inbound ? "inbound" : "outbound",
+	    str_selector(said_boilerplate.src.client, &scb),
+	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
+	    str_address(said_boilerplate.src.address, &sab),
+	    encap.inner_proto->name,
+	    str_address(said_boilerplate.dst.address, &dab),
+	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
+	    str_selector(said_boilerplate.dst.client, &dcb),
+	    pri_shunk(said_boilerplate.sec_label));
 
 	/* set up IPCOMP SA, if any */
 
 	if (st->st_ipcomp.present) {
 		ipsec_spi_t ipcomp_spi =
 			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.spi;
-		unsigned compalg;
-
-		switch (st->st_ipcomp.attrs.transattrs.ta_comp) {
-		case IPCOMP_DEFLATE:
-			compalg = SADB_X_CALG_DEFLATE;
-			break;
-
-		default:
-			log_state(RC_LOG_SERIOUS, st,
-				  "IPCOMP transform %s not implemented",
-				  st->st_ipcomp.attrs.transattrs.ta_encrypt->common.fqn);
-			goto fail;
-		}
-
-		set_text_said(text_ipcomp, &dst, ipcomp_spi, &ip_protocol_comp);
-
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
-		said_next->compalg = compalg;
-		said_next->mode = encap_oneshot;
+
+		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
-		said_next->text_said = text_ipcomp;
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_comp,
+					    ipcomp_spi, &text_ipcomp);
 
 		if (inbound) {
 			/*
@@ -1857,7 +1986,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set  = true;
 		}
 
-		if (!kernel_ops->add_sa(said_next, replace, st->st_logger)) {
+		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
 			log_state(RC_LOG, st, "add_sa ipcomp failed");
 			goto fail;
 		}
@@ -1877,8 +2006,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;
 	}
 
 	/* set up ESP SA, if any */
@@ -1973,8 +2100,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
-		set_text_said(text_esp, &dst, esp_spi, &ip_protocol_esp);
-
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->esatype = ET_ESP;
@@ -2035,7 +2160,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * lower-level code to be right.
 		 */
 		said_next->encrypt = ta->ta_encrypt;
-		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
 
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
@@ -2043,14 +2167,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
 
-		said_next->mode = encap_oneshot;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_esp(c->spd.reqid);
 
 		said_next->src.encap_port = encap_sport;
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
-		said_next->text_said = text_esp;
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_esp,
+					    esp_spi, &text_esp);
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump("ESP enckey:",  said_next->enckey,
@@ -2072,13 +2197,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
-		bool ret = kernel_ops->add_sa(said_next, replace, st->st_logger);
+		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
 		if (!ret && nic_offload_fallback &&
 			said_next->nic_offload_dev != NULL) {
 			/* Fallback to non-nic-offload crypto */
 			said_next->nic_offload_dev = NULL;
-			ret = kernel_ops->add_sa(said_next, replace, st->st_logger);
+			ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 		}
 
 		/* scrub keys from memory */
@@ -2103,8 +2228,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;
 	}
 
 	/* set up AH SA, if any */
@@ -2127,17 +2250,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		passert(st->st_ah.keymat_len == keymat_size);
 
-		set_text_said(text_ah, &dst, ah_spi, &ip_protocol_ah);
-
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
 		said_next->integ = integ;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
-		said_next->mode = encap_oneshot;
+		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
-		said_next->text_said = text_ah;
+		said_next->story = said_str(route.dst.host_addr, &ip_protocol_ah,
+					    ah_spi, &text_ah);
+
 		said_next->replay_window = c->sa_replay_window;
 		dbg("kernel: setting IPsec SA replay-window to %d", c->sa_replay_window);
 
@@ -2163,7 +2286,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set = true;	/* outgoing_ref_set not subsequently used */
 		}
 
-		if (!kernel_ops->add_sa(said_next, replace, st->st_logger)) {
+		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
 			/* scrub key from memory */
 			memset(said_next->authkey, 0, said_next->authkeylen);
 			goto fail;
@@ -2186,8 +2309,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			incoming_ref_set = true;	/* incoming_ref_set not subsequently used */
 		}
 		said_next++;
-
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;	/* encap_oneshot not subsequently used */
 	}
 
 	/*
@@ -2198,88 +2319,42 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is installing inbound eroute? inbound=%d owner=#%lu mode=%d",
-	    __func__, inbound, c->spd.eroute_owner, mode);
-	if (inbound && c->spd.eroute_owner == SOS_NOBODY) {
+	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
+	    __func__, inbound, c->spd.eroute_owner,
+	    encap_mode_name(encap.mode));
+	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
+	    (c->ike_version != IKEv2 || c->spd.this.sec_label.len == 0)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
-		struct pfkey_proto_info proto_info[4];
-		int i = 0;
-
-		/*
-		 * ??? why does this code care about
-		 * st->st_*.attrs.mode?
-		 * We have gone do some trouble to compute
-		 * "mode".  And later code uses
-		 * "mode".
-		 */
-		if (st->st_ipcomp.present) {
-			proto_info[i].proto = ip_protocol_comp.ipproto;
-			proto_info[i].mode =
-				st->st_ipcomp.attrs.mode;
-			proto_info[i].reqid = reqid_ipcomp(c->spd.reqid);
-			i++;
-		}
-
-		if (st->st_esp.present) {
-			proto_info[i].proto = IPPROTO_ESP;
-			proto_info[i].mode =
-				st->st_esp.attrs.mode;
-			proto_info[i].reqid = reqid_esp(c->spd.reqid);
-			i++;
-		}
-
-		if (st->st_ah.present) {
-			proto_info[i].proto = IPPROTO_AH;
-			proto_info[i].mode =
-				st->st_ah.attrs.mode;
-			proto_info[i].reqid = reqid_ah(c->spd.reqid);
-			i++;
-		}
-
-		/* ??? setting .proto to 0, an invalid value.  See /usr/include/linux/in.h. */
-		proto_info[i].proto = 0;
-
-		dbg("kernel: %s() before proto %d", __func__, proto_info[0].proto);
-
-		/*
-		 * ??? why is mode overwritten ONLY if true
-		 * (kernel_ops->inbound_eroute)?
-		 */
-		if (mode == ENCAPSULATION_MODE_TUNNEL) {
-			proto_info[0].mode =
-				ENCAPSULATION_MODE_TUNNEL;
-			for (i = 1; proto_info[i].proto != 0; i++)
-				proto_info[i].mode =
-					ENCAPSULATION_MODE_TRANSPORT;
-		}
-		dbg("kernel: %s() after proto %d", __func__, proto_info[0].proto);
-
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
 
-		dbg("kernel: %s() calling raw_eroute backwards (i.e., inbound)", __func__);
-		/* MCR - should be passed a spd_eroute structure here */
-		/* note: this and that are intentionally reversed */
-		if (!raw_eroute(&c->spd.that.host_addr,		/* this_host */
-				&c->spd.that.client,	/* this_client */
-				&c->spd.this.host_addr,	/* that_host */
-				&c->spd.this.client,	/* that_client */
-				inner_spi,		/* current spi - might not be used? */
-				inner_spi,		/* new spi */
-				proto,			/* SA proto */
+		/*
+		 * MCR - should be passed a spd_eroute structure here.
+		 *
+		 * Note: this and that are intentionally reversed
+		 * because the policy is inbound.
+		 *
+		 * XXX: yes, that is redundan - KP_ADD_INBOUND is
+		 * already indicating that the parameters are going to
+		 * need reversing ...
+		 */
+		if (!raw_policy(KP_ADD_INBOUND,
+				&route.src.host_addr,	/* src_host */
+				&route.src.client,	/* src_client */
+				&route.dst.host_addr,	/* dst_host */
+				&route.dst.client,	/* dst_client */
+				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
 				c->spd.this.protocol,	/* transport_proto */
-				esatype,		/* esatype */
-				proto_info,		/* " */
+				encap.inner_proto->ipproto,	/* esatype */
+				&encap,			/* " */
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, false),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
 				xfrm_if_id,
-				ERO_ADD_INBOUND,	/* op */
-				"add inbound",		/* opname */
-				HUNK_AS_SHUNK(c->spd.this.sec_label),
-				st->st_logger)) {
+				HUNK_AS_SHUNK(c->spd.this.sec_label), st->st_logger,
+				"%s() add inbound Child SA", __func__)) {
 			llog(RC_LOG, st->st_logger,
-				    "raw_eroute() in setup_half_ipsec_sa() failed to add inbound");
+			     "raw_policy() in setup_half_ipsec_sa() failed to add inbound");
 		}
 	}
 
@@ -2299,8 +2374,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		for (s = said; s < said_next - 1; s++) {
 			dbg("kernel: grouping %s (ref=%u) and %s (ref=%u)",
-			    s[0].text_said, s[0].ref,
-			    s[1].text_said, s[1].ref);
+			    s[0].story, s[0].ref,
+			    s[1].story, s[1].ref);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
 				log_state(RC_LOG, st, "grp_sa failed");
 				goto fail;
@@ -2324,10 +2399,9 @@ fail:
 	/* undo the done SPIs */
 	while (said_next-- != said) {
 		if (said_next->proto != 0) {
-			(void) del_spi(said_next->spi,
-				       said_next->proto,
-				       &src, said_next->dst.address,
-				       st->st_logger);
+			del_spi(said_next->spi, said_next->proto,
+				said_next->src.address, said_next->dst.address,
+				st->st_logger);
 		}
 	}
 	return false;
@@ -2389,7 +2463,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	 * we are the initiator, have been redirected,
 	 * and yet this routine must use the old address.
 	 *
-	 * We point effective_that_host_address to the appropriate address.
+	 * We point effective_remote_host_address to the appropriate
+	 * address.
 	 */
 
 	ip_address effective_remote_address = c->spd.that.host_addr;
@@ -2400,27 +2475,24 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_eroute(&effective_remote_address,
+	    !raw_policy(KP_DELETE_INBOUND,
+			&effective_remote_address,
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
-			SPI_PASS, SPI_PASS,
-			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-				&ip_protocol_esp : NULL,
+			htonl(SPI_IGNORE), htonl(SPI_IGNORE),
 			c->spd.this.protocol,
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-				ET_ESP : ET_UNSPEC,
-			null_proto_info,
+			ET_ESP : ET_UNSPEC,
+			esp_transport_proto_info,
 			deltatime(0),
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
 			0, /* xfrm_if_id. needed to tear down? */
-			ERO_DEL_INBOUND,
-			"delete inbound",
-			HUNK_AS_SHUNK(c->spd.this.sec_label),
-			st->st_logger)) {
+			HUNK_AS_SHUNK(c->spd.this.sec_label), st->st_logger,
+			"%s() teardown inbound Child SA", __func__)) {
 		llog(RC_LOG, st->st_logger,
-			    "raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
+		     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
 	}
 
 	/* collect each proto SA that needs deleting */
@@ -2749,13 +2821,13 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_eroute(c, sr,
+			eroute_installed = shunt_policy(KP_REPLACE_OUTBOUND, c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							ERO_REPLACE,
-							"replace", logger);
+							"route_and_eroute() replace shunt",
+							logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, ERO_REPLACE,
-						"replace");
+			eroute_installed = sag_eroute(st, sr, KP_REPLACE_OUTBOUND,
+						      "route_and_eroute() replace sag");
 		}
 
 		/* remember to free bspp if we make it out of here alive */
@@ -2773,11 +2845,12 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_eroute(c, sr,
+			eroute_installed = shunt_policy(KP_ADD_OUTBOUND, c, sr,
 							RT_ROUTED_PROSPECTIVE,
-							ERO_ADD, "add", logger);
+							"route_and_eroute() add",
+							logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, ERO_ADD, "add");
+			eroute_installed = sag_eroute(st, sr, KP_ADD_OUTBOUND, "add");
 		}
 	}
 
@@ -2937,39 +3010,38 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 
-				if (!raw_eroute(&bs->said.dst,        /* should be useless */
+				ip_address dst = said_address(bs->said);
+				if (!raw_policy(KP_REPLACE_OUTBOUND,
+						&dst,        /* should be useless */
 						&bs->our_client,
-						&bs->said.dst,        /* should be useless */
+						&dst,        /* should be useless */
 						&bs->peer_client,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
-						&ip_protocol_internal,               /* proto */
 						sr->this.protocol,    /* transport_proto */
 						ET_INT,
-						null_proto_info,
+						esp_transport_proto_info,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, false),
 						NULL,
 						0,
-						ERO_REPLACE,
-						"restore",
-						null_shunk, /* bare shunt are not associated with any connection so no security label */
-						logger))
-				{
+						/* bare shunt are not associated with any connection so no security label */
+						null_shunk, logger,
+						"%s() restore", __func__)) {
 					llog(RC_LOG, logger,
-						    "raw_eroute() in route_and_eroute() failed to restore/replace SA");
+					     "raw_policy() in route_and_eroute() failed to restore/replace SA");
 				}
 			} else if (ero != NULL) {
 				passert(esr != NULL);
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					if (!shunt_eroute(ero, esr,
-							  esr->routing,
-							  ERO_REPLACE,
-							  "restore", logger)) {
+					if (!shunt_policy(KP_REPLACE_OUTBOUND,
+							  ero, esr, esr->routing,
+							  "route_and_eroute() restore",
+							  logger)) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed restore/replace");
+						     "shunt_policy() in route_and_eroute() failed restore/replace");
 					}
 				} else {
 					/*
@@ -2987,27 +3059,28 @@ bool route_and_eroute(struct connection *c,
 
 					if (ost != NULL) {
 						if (!sag_eroute(ost, esr,
-							ERO_REPLACE,
-							"restore"))
+								KP_REPLACE_OUTBOUND,
+								"restore"))
 							llog(RC_LOG, logger,
-								    "sag_eroute() in route_and_eroute() failed restore/replace");
+							     "sag_eroute() in route_and_eroute() failed restore/replace");
 					}
 				}
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!shunt_eroute(c, sr,
-							  sr->routing, ERO_DELETE,
-							  "delete", logger)) {
+					if (!shunt_policy(KP_DELETE_OUTBOUND, c, sr,
+							  sr->routing,
+							  "route_and_eroute() delete",
+							  logger)) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed in !st case");
+						     "shunt_policy() in route_and_eroute() failed in !st case");
 					}
 				} else {
 					if (!sag_eroute(st, sr,
-							ERO_DELETE,
+							KP_DELETE_OUTBOUND,
 							"delete")) {
 						llog(RC_LOG, logger,
-							    "shunt_eroute() in route_and_eroute() failed in st case for delete");
+							    "sag_eroute() in route_and_eroute() failed in st case for delete");
 					}
 				}
 			}
@@ -3073,27 +3146,32 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		sr = sr->spd_next;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
-	for (; sr != NULL; sr = sr->spd_next) {
-		dbg("kernel: sr for #%lu: %s", st->st_serialno,
-		    enum_name(&routing_story, sr->routing));
+	struct connection *c = st->st_connection;
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
+	} else {
+		for (; sr != NULL; sr = sr->spd_next) {
+			dbg("kernel: sr for #%lu: %s", st->st_serialno,
+			    enum_name(&routing_story, sr->routing));
 
-		/*
-		 * if the eroute owner is not us, then make it us.
-		 * See test co-terminal-02, pluto-rekey-01,
-		 * pluto-unit-02/oppo-twice
-		 */
-		pexpect(sr->eroute_owner == SOS_NOBODY ||
-			sr->routing >= RT_ROUTED_TUNNEL);
+			/*
+			 * if the eroute owner is not us, then make it
+			 * us.  See test co-terminal-02,
+			 * pluto-rekey-01, pluto-unit-02/oppo-twice
+			 */
+			pexpect(sr->eroute_owner == SOS_NOBODY ||
+				sr->routing >= RT_ROUTED_TUNNEL);
 
-		if (sr->eroute_owner != st->st_serialno &&
-			sr->routing != RT_UNROUTED_KEYED) {
-			if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
-				delete_ipsec_sa(st);
-				/*
-				 * XXX go and unroute any SRs that were
-				 * successfully routed already.
-				 */
-				return false;
+			if (sr->eroute_owner != st->st_serialno &&
+			    sr->routing != RT_UNROUTED_KEYED) {
+				if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
+					delete_ipsec_sa(st);
+					/*
+					 * XXX go and unroute any SRs that were
+					 * successfully routed already.
+					 */
+					return false;
+				}
 			}
 		}
 	}
@@ -3219,11 +3297,12 @@ void delete_ipsec_sa(struct state *st)
 						 */
 						unroute_connection(c);
 					} else {
-						if (!shunt_eroute(c, sr,
-								  sr->routing, ERO_REPLACE,
-								  "replace with shunt", st->st_logger)) {
+						if (!shunt_policy(KP_REPLACE_OUTBOUND,
+								  c, sr, sr->routing,
+								  "delete_ipsec_sa() replace with shunt",
+								  st->st_logger)) {
 							log_state(RC_LOG, st,
-								  "shunt_eroute() failed replace with shunt in delete_ipsec_sa()");
+								  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
 						}
 					}
 				}
@@ -3303,19 +3382,16 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		spi = p2->attrs.spi;
 	}
 
-	char text_said[SATOT_BUF];
-
-	set_text_said(text_said, dst, spi, proto);
-
+	said_buf sb;
 	struct kernel_sa sa = {
 		.spi = spi,
 		.proto = proto,
 		.src.address = src,
 		.dst.address = dst,
-		.text_said = text_said,
+		.story = said_str(*dst, proto, spi, &sb),
 	};
 
-	dbg("kernel: get_sa_info %s", text_said);
+	dbg("kernel: get_sa_info %s", sa.story);
 
 	uint64_t bytes;
 	uint64_t add_time;
@@ -3411,8 +3487,14 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		}
 	}
 
-	/* create the bare shunt and update kernel policy if needed */
+	/*
+	 * create the bare shunt and update kernel policy if needed.
+	 */
 	{
+		/*
+		 * XXX: merge this add bare shunt code with that
+		 * following the raw_policy() call!?!
+		 */
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
 
 		bs->why = "oe-failing";
@@ -3421,8 +3503,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
-		bs->said = said3(&selector_type(&sr->this.client)->address.any,
-				 htonl(negotiation_shunt), &ip_protocol_internal);
+		bs->said = said_from_address_protocol_spi(selector_type(&sr->this.client)->address.any,
+							  &ip_protocol_internal,
+							  htonl(negotiation_shunt));
 
 		bs->count = 0;
 		bs->last_activity = mononow();
@@ -3437,12 +3520,103 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		/* update kernel policy if needed */
 		/* This really causes the name to remain "oe-failing", we should be able to update only only the name of the shunt */
 		if (negotiation_shunt != failure_shunt ) {
+
 			dbg("kernel: replacing negotiation_shunt with failure_shunt");
-			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
-						negotiation_shunt, failure_shunt, bs->transport_proto,
-						"oe-failed", logger)) {
+
+			/* fudge up parameter list */
+			const ip_address *src_address = &sr->this.host_addr;
+			const ip_address *dst_address = &sr->that.host_addr;
+			policy_prio_t policy_prio = bs->policy_prio;	/* of replacing shunt*/
+			ipsec_spi_t cur_shunt_spi = negotiation_shunt;	/* in host order! */
+			ipsec_spi_t new_shunt_spi = failure_shunt;	/* in host order! */
+			int transport_proto = bs->transport_proto;
+			const char *why = "oe-failed";
+
+			/* fudge up replace_bare_shunt() */
+			const struct ip_info *afi = address_type(src_address);
+			passert(afi == address_type(dst_address));
+			const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
+			/* ports? assumed wide? */
+			ip_selector src = selector_from_address_protocol(*src_address, protocol);
+			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
+
+			selectors_buf sb;
+			dbg("kernel: replace bare shunt %s for %s",
+			    str_selectors(&src, &dst, &sb), why);
+
+			/*
+			 * ??? this comment might be obsolete.
+			 *
+			 * If the transport protocol is not the
+			 * wildcard (0), then we need to look for a
+			 * host<->host shunt, and replace that with
+			 * the shunt spi, and then we add a %HOLD for
+			 * what was there before.
+			 *
+			 * This is at odds with !repl, which should
+			 * delete things.
+			 */
+
+			const ip_address null_host = afi->address.any;
+			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
+					     &null_host, &src, &null_host, &dst,
+					     htonl(cur_shunt_spi), htonl(new_shunt_spi),
+					     transport_proto, ET_INT,
+					     esp_transport_proto_info,
+					     deltatime(SHUNT_PATIENCE),
+					     0, /* we don't know connection for priority yet */
+					     NULL, /* sa_marks */
+					     0 /* xfrm interface id */,
+					     null_shunk, logger,
+					     "%s() %s", __func__, why);
+			if (!ok) {
+				llog(RC_LOG, logger,
+				     "replace kernel shunt %s failed - deleting from pluto shunt table",
+				     str_selectors_sensitive(&src, &dst, &sb));
+			}
+
+			/*
+			 * We can have proto mismatching acquires with
+			 * xfrm - this is a bad workaround.
+			 *
+			 * ??? what is the nature of those mismatching
+			 * acquires?
+			 *
+			 * XXX: for instance, when whack initiates an
+			 * OE connection.  There is no kernel-acquire
+			 * shunt to remove.
+			 *
+			 * XXX: see above, this code is looking for
+			 * and fiddling with the shunt only just added
+			 * above?
+			 */
+			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
+			/* passert(bs_pp != NULL); */
+			if (bs_pp == NULL) {
+				selectors_buf sb;
+				llog(RC_LOG, logger,
+				     "can't find expected bare shunt to %s: %s",
+				     ok ? "replace" : "delete",
+				     str_selectors_sensitive(&src, &dst, &sb));
+			} else if (ok) {
+				/*
+				 * change over to new bare eroute
+				 * ours, peers, transport_proto are
+				 * the same.
+				 */
+				struct bare_shunt *bs = *bs_pp;
+				bs->why = why;
+				bs->policy_prio = policy_prio;
+				bs->said = said_from_address_protocol_spi(null_host,
+									  &ip_protocol_internal,
+									  htonl(new_shunt_spi));
+				bs->count = 0;
+				bs->last_activity = mononow();
+				dbg_bare_shunt("replace", bs);
+			} else {
 				llog(RC_LOG, logger,
 					    "assign_holdpass() failed to update shunt policy");
+				free_bare_shunt(bs_pp);
 			}
 		} else {
 			dbg("kernel: No need to replace negotiation_shunt with failure_shunt - they are the same");
@@ -3468,9 +3642,10 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (bsp->from_cn != NULL) {
 				c = conn_by_name(bsp->from_cn, false);
 				if (c != NULL) {
-					if (!shunt_eroute(c, &c->spd,
-							  RT_ROUTED_PROSPECTIVE, ERO_ADD,
-							  "add", logger)) {
+					if (!shunt_policy(KP_ADD_OUTBOUND, c, &c->spd,
+							  RT_ROUTED_PROSPECTIVE,
+							  "expire_bare_shunts() add",
+							  logger)) {
 						llog(RC_LOG, logger,
 							    "trap shunt install failed ");
 					}
@@ -3481,8 +3656,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
-					       /*skip_xfrm_raw_eroute_delete?*/(bsp->from_cn != NULL),
-					       "expire_bare_shunt", logger)) {
+					       /*skip_xfrm_policy_delete?*/(bsp->from_cn != NULL),
+					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
 			}

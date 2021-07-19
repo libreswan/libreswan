@@ -64,7 +64,9 @@
 #include "server.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
+#ifdef USE_PAM_AUTH
 #include "pam_auth.h"
+#endif
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"
@@ -1071,11 +1073,13 @@ static bool do_file_authentication(struct state *st, const char *name,
  * method to verify the user/password
  */
 
-static pamauth_callback_t ikev1_xauth_callback;	/* type assertion */
+#ifdef USE_PAM_AUTH
+static pam_auth_callback_fn ikev1_xauth_callback;	/* type assertion */
+#endif
 
-static void ikev1_xauth_callback(struct state *st,
-				 struct msg_digest *md UNUSED,
-				 const char *name, bool results)
+static stf_status ikev1_xauth_callback(struct state *st,
+				       struct msg_digest *md UNUSED,
+				       const char *name, bool results)
 {
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
@@ -1112,6 +1116,7 @@ static void ikev1_xauth_callback(struct state *st,
 		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 /*
@@ -1169,8 +1174,8 @@ static void xauth_launch_authent(struct state *st,
 	/*
 	 * XAUTH somehow already in progress?
 	 */
-#ifdef AUTH_HAVE_PAM
-	if (st->st_pamauth != NULL)
+#ifdef USE_PAM_AUTH
+	if (st->st_pam_auth != NULL)
 		return;
 #endif
 
@@ -1187,15 +1192,13 @@ static void xauth_launch_authent(struct state *st,
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 
 	switch (st->st_connection->xauthby) {
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	case XAUTHBY_PAM:
 		log_state(RC_LOG, st,
 			  "XAUTH: PAM authentication method requested to authenticate user '%s'",
 			  arg_name);
-		auth_fork_pam_process(st,
-				       arg_name, arg_password,
-				       "XAUTH",
-				       ikev1_xauth_callback);
+		pam_auth_fork_request(st, arg_name, arg_password,
+				      "XAUTH", ikev1_xauth_callback);
 		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif

@@ -769,7 +769,7 @@ enum next_payload_types_ikev2 {
  * defines "DHless RSA Encryption" as 6.
  */
 
-enum isakmp_xchg_types {
+enum isakmp_xchg_type {
 	ISAKMP_XCHG_NONE = 0,
 	ISAKMP_XCHG_BASE = 1,
 	ISAKMP_XCHG_IDPROT = 2, /* ID Protection */
@@ -1117,13 +1117,15 @@ enum ikev1_ipsec_attr {
 
 /* Encapsulation Mode attribute */
 
-#define ENCAPSULATION_MODE_UNSPECIFIED 0 /* not legal -- used internally */
-#define ENCAPSULATION_MODE_TUNNEL 1
-#define ENCAPSULATION_MODE_TRANSPORT 2
-#define ENCAPSULATION_MODE_UDP_TUNNEL_RFC 3
-#define ENCAPSULATION_MODE_UDP_TRANSPORT_RFC 4
-#define ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS 61443
-#define ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS 61444
+enum encapsulation_mode {
+	ENCAPSULATION_MODE_UNSPECIFIED = 0,	/* not legal -- used internally */
+	ENCAPSULATION_MODE_TUNNEL = 1,
+	ENCAPSULATION_MODE_TRANSPORT = 2,
+	ENCAPSULATION_MODE_UDP_TUNNEL_RFC = 3,
+	ENCAPSULATION_MODE_UDP_TRANSPORT_RFC = 4,
+	ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS = 61443,
+	ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS = 61444,
+};
 
 /* Auth Algorithm attribute */
 /* https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xml#isakmp-registry-20 */
@@ -1830,7 +1832,7 @@ enum ipsec_cipher_algo {
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-17
  */
 
-enum ipsec_comp_algo {
+enum ipsec_ipcomp_algo {
 	IPCOMP_NONE=0,
 	IPCOMP_OUI=1, /* unspecified */
 	IPCOMP_DEFLATE=2,

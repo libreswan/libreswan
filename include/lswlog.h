@@ -157,25 +157,33 @@ struct jambuf;
 /*
  * By default messages are broadcast (to both log files and whack),
  * mix-in one of these options to limit this.
+ *
+ * This means that a simple RC_* code will go to both whack and and
+ * the log files.
  */
 
 enum stream {
-	/*
-	 * This means that a simple RC_* code will go to both whack
-	 * and and the log files.
-	 */
 	/* Mask the whack RC; max value is 64435+200 */
 	RC_MASK      = 0x0fffff,
 	STREAM_MASK  = 0xf00000,
-	/*                         syslog()           Prefixes    */
-	/*                         Severity  Whack  Object  Debug */
-	ALL_STREAMS  = 0x000000, /* WARNING   yes    yes          */
-	LOG_STREAM   = 0x100000, /* WARNING   no     yes          */
-	DEBUG_STREAM = 0x200000, /*  DEBUG    no     <*>     "| " */
-	WHACK_STREAM = 0x300000, /*   N/A     yes    yes          */
-	ERROR_STREAM = 0x400000, /*   ERR     no     yes          */
+	NO_PREFIX   = 0x1000000,
+	/*                         syslog()                       */
+	/*                         Severity  Whack  Tools  Prefix */
+	ALL_STREAMS  = 0x000000, /* WARNING   yes    err?   <o>   */
+	LOG_STREAM   = 0x100000, /* WARNING   no     err?   <o>   */
+	DEBUG_STREAM = 0x200000, /*  DEBUG    no     err   |<o>   */
+	WHACK_STREAM = 0x300000, /*   N/A     yes    err    <o>   */
+	ERROR_STREAM = 0x400000, /*   ERR     no     err    <o>   */
 	NO_STREAM    = 0xf00000, /*   N/A     N/A                 */
-	/* <1> when enabled */
+	/*
+	 * <o>: add prefix when object is available
+	 *
+	 * |<o>: add both "| " and prefex when object is available and
+         * feature is enabled
+	 *
+	 * err?: write to stderr when enabled (tests log_to_stderr,
+	 * typically via -v).
+	 */
 #define ERROR_FLAGS (ERROR_STREAM|RC_LOG_SERIOUS)
 };
 
@@ -201,8 +209,9 @@ struct logger_object_vec {
 #define jam_logger_prefix(BUF, LOGGER) (LOGGER)->object_vec->jam_object_prefix(BUF, (LOGGER)->object)
 #define jam_logger_prefix_rc(BUF, LOGGER, RC_FLAGS)			\
 	({								\
-		if (((RC_FLAGS) & STREAM_MASK) != DEBUG_STREAM ||	\
-		    DBGP(DBG_ADD_PREFIX)) {				\
+		if (((RC_FLAGS) & NO_PREFIX) == LEMPTY &&		\
+		    (((RC_FLAGS) & STREAM_MASK) != DEBUG_STREAM ||	\
+		     DBGP(DBG_ADD_PREFIX))) {				\
 			jam_logger_prefix(BUF, LOGGER);			\
 		}							\
 	})
@@ -330,6 +339,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
+void DBG_va_list(const char *message, va_list ap) PRINTF_LIKE_VA(1);
 void DBG_dump(const char *label, const void *p, size_t len);
 #define DBG_dump_hunk(LABEL, HUNK)				\
 	{							\

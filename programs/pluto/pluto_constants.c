@@ -35,6 +35,7 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
+#include "kernel.h"
 
 /*
  * To obsolete or convert to runtime options:
@@ -227,7 +228,7 @@ static const char *const stf_status_strings[] = {
 	A(STF_SUSPEND),
 	A(STF_OK),
 	A(STF_INTERNAL_ERROR),
-	A(STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA),
+	A(STF_V2_DELETE_IKE_AUTH_INITIATOR),
 	A(STF_FATAL),
 	A(STF_FAIL),
 #undef A
@@ -406,7 +407,7 @@ enum_names v2_sa_type_names = {
 	NULL,
 };
 
-static enum_names *sa_type_name[] = {
+static const enum_names *sa_type_name[] = {
 	[IKEv1 - IKEv1] = &v1_sa_type_names,
 	[IKEv2 - IKEv1] = &v2_sa_type_names,
 };
@@ -415,6 +416,28 @@ enum_enum_names sa_type_names = {
 	IKEv1, IKEv2,
 	ARRAY_REF(sa_type_name),
 };
+
+/* enum kernel_policy_op_names */
+
+static const char *kernel_policy_op_name[] = {
+	[0] = "KP_INVALID",
+#define S(E) [E] = #E
+	S(KP_ADD_OUTBOUND),
+	S(KP_REPLACE_OUTBOUND),
+	S(KP_DELETE_OUTBOUND),
+	S(KP_ADD_INBOUND),
+	S(KP_REPLACE_INBOUND),
+	S(KP_DELETE_INBOUND),
+#undef S
+};
+
+enum_names kernel_policy_op_names = {
+	0, elemsof(kernel_policy_op_name)-1,
+	ARRAY_REF(kernel_policy_op_name),
+	.en_prefix = "KP_",
+};
+
+/* */
 
 static const char *const perspective_name[] = {
 	[NO_PERSPECTIVE] = "NO_PERSPECTIVE",
@@ -479,6 +502,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&v2_sa_type_names,
 	&perspective_names,
 	&sa_policy_bit_names,
+	&kernel_policy_op_names,
 };
 
 void init_pluto_constants(void) {

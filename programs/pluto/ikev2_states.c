@@ -181,7 +181,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	}
 
 	if (payloads->notification != v2N_NOTHING_WRONG) {
-		enum v2_pd v2_pd = v2_notification_to_v2_pd(payloads->notification);
+		enum v2_pd v2_pd = v2_pd_from_notification(payloads->notification);
 		if (md->pd[v2_pd] == NULL) {
 			errors.bad = true;
 			errors.notification = payloads->notification;
@@ -191,7 +191,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
+const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
 							  const struct finite_state *state,
 							  struct msg_digest *md)
 {
@@ -199,7 +199,7 @@ const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
-		const struct state_v2_microcode *transition = &state->v2_transitions[i];
+		const struct v2_state_transition *transition = &state->v2_transitions[i];
 		dbg("  trying %s", transition->story);
 		/* message type? */
 		if (transition->recv_type != md->hdr.isa_xchg) {
@@ -289,7 +289,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 
 	LLOG_JAMBUF(RC_LOG_SERIOUS | log_stream, logger, buf) {
-		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+		const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 		jam(buf, " message");
@@ -337,7 +337,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 }
 
-void jam_v2_transition(struct jambuf *buf, const struct state_v2_microcode *transition)
+void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition)
 {
 	if (transition == NULL) {
 		jam(buf, "NULL");

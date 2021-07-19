@@ -1,13 +1,10 @@
 /testing/guestbin/swan-prep
 west #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
+ # install selinux; generated in OUTPUT by east
 west #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
+ semodule -i OUTPUT/ipsecspd.pp
 west #
- rm ipsecspd.pp
+ # start pluto
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -29,19 +26,15 @@ west #
 1v2 "labeled" #1: sent IKE_SA_INIT request
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-003 "labeled" #2: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-002 "labeled" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
-002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "labeled" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+003 "labeled" #2: IKE_AUTH response contained the Child SA error notification TS_UNACCEPTABLE
+003 "labeled" #1: IKE SA established but responder rejected Child SA request
 west #
  echo done
 done
 west #
- ipsec whack --shutdown
-west #
  semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
- rm -rf ipsecspd.fc ipsecspd.if tmp
+ hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
 west #
  

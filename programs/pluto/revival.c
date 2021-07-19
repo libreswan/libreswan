@@ -40,6 +40,7 @@
 #include "revival.h"
 #include "state_db.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
+#include "ipsec_doi.h"
 
 /*
  * Revival mechanism: keep track of connections
@@ -109,6 +110,23 @@ void add_revival_if_needed(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
+	if (exiting_pluto) {
+		dbg("skilling revival: pluto is going down");
+		return;
+	}
+
+	if (IS_CHILD_SA_ESTABLISHED(st) &&
+	    c->newest_ipsec_sa == st->st_serialno &&
+	    (c->policy & POLICY_UP)) {
+		struct ike_sa *ike = ike_sa(st, HERE);
+		log_state(RC_LOG_SERIOUS, &ike->sa,
+			  "received Delete SA payload: replace CHILD SA #%lu now",
+			  st->st_serialno);
+		st->st_replace_margin = deltatime(0);
+		ipsecdoi_replace(st, 1);
+		return;
+	}
+
 	if (!IS_IKE_SA(st)) {
 		dbg("skipping revival: not an IKE SA");
 		return;
@@ -124,12 +142,7 @@ void add_revival_if_needed(struct state *st)
 		return;
 	}
 
-	if (exiting_pluto) {
-		dbg("skilling revival: pluto is going down");
-		return;
-	}
-
-	if (c->spd.this.sec_label.len > 0 && impair.childless_v2_sec_label) {
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
 		dbg("skipped revival: childless IKE SA");
 		return;
 	}
@@ -173,7 +186,7 @@ void add_revival_if_needed(struct state *st)
 	    c->name, pri_co(c->serialno), delay);
 	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
-	if (IS_IKE_SA_ESTABLISHED(st) &&
+	if ((IS_IKE_SA_ESTABLISHED(st) || IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
 	    c->kind == CK_INSTANCE &&
 	    LIN(POLICY_UP, c->policy)) {
 		/*

@@ -109,8 +109,10 @@ static stf_status send_v2_delete_ike_request(struct ike_sa *ike,
 {
 	pexpect(md == NULL);
 	if (!record_v2_delete(ike, &ike->sa)) {
+		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
+	llog_sa(RC_LOG, ike, "intiating delete");
 	return STF_OK;
 }
 
@@ -119,8 +121,36 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
 					       struct msg_digest *md)
 {
 	pexpect(md == NULL);
+	pexpect(child != NULL);
+
 	if (!record_v2_delete(ike, &child->sa)) {
+		/* already logged */
 		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * XXX: just assume an SA that isn't established is larval.
+	 *
+	 * Would be nice to have something indicating larval,
+	 * established, zombie.
+	 */
+	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
+	llog_sa(RC_LOG, child,
+		"deleting %s Child SA using IKE SA #%lu",
+		established ? "established" : "larval",
+		ike->sa.st_serialno);
+	if (!established) {
+		/*
+		 * Normally the responder would include it's outgoing
+		 * SA's SPI, and this end would use that to find /
+		 * delete the child.  Here, however, the SA isn't
+		 * established so we've no clue as to what the
+		 * responder will send back.  If anything.
+		 *
+		 * Hence signal the Child SA that it should delete
+		 * itself.
+		 */
+		event_force(EVENT_SA_DISCARD, &child->sa);
 	}
 	return STF_OK;
 }
@@ -129,7 +159,7 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct state_v2_microcode v2_delete_ike = {
+static const struct v2_state_transition v2_delete_ike = {
 	.story = "delete IKE SA",
 	.state = STATE_V2_ESTABLISHED_IKE_SA,
 	.next_state = STATE_IKESA_DEL,
@@ -138,75 +168,22 @@ static const struct state_v2_microcode v2_delete_ike = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode v2_delete_child = {
+static const struct v2_state_transition v2_delete_child = {
 	.story = "delete CHILD SA",
-	.state = STATE_V2_ESTABLISHED_CHILD_SA,
-	.next_state = STATE_CHILDSA_DEL,
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_delete_child_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct state_v2_microcode *transitions[SA_TYPE_ROOF] = {
-	[IKE_SA] = &v2_delete_ike,
-	[IPSEC_SA] = &v2_delete_child,
-};
-
-void initiate_v2_delete(struct ike_sa *ike, struct state *st)
+void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
-	const struct state_v2_microcode *transition = transitions[st->st_establishing_sa];
-	if (st->st_state->kind != transition->state) {
-		log_state(RC_LOG, st, "in state %s but need state %s to initiate delete",
-			  st->st_state->short_name,
-			  finite_states[transition->state]->short_name);
-		return;
-	}
-	v2_msgid_queue_initiator(ike, st, ISAKMP_v2_INFORMATIONAL,
-				 transition, NULL);
-}
-
-static void delete_or_replace_child(struct ike_sa *ike, struct child_sa *child)
-{
-	/* the CHILD's connection; not IKE's */
-	struct connection *c = child->sa.st_connection;
-
-	if (child->sa.st_event == NULL) {
-		/*
-		 * ??? should this be an assert/expect?
-		 */
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: delete CHILD SA #%lu. st_event == NULL",
-			  child->sa.st_serialno);
-		delete_state(&child->sa);
-	} else if (child->sa.st_event->ev_type == EVENT_SA_EXPIRE) {
-		/*
-		 * this state was going to EXPIRE: hurry it along
-		 *
-		 * ??? why is this treated specially?  Can we not
-		 * delete_state()?
-		 */
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: expire CHILD SA #%lu now",
-			  child->sa.st_serialno);
-		event_force(EVENT_SA_EXPIRE, &child->sa);
-	} else if (c->newest_ipsec_sa == child->sa.st_serialno &&
-		   (c->policy & POLICY_UP)) {
-		/*
-		 * CHILD SA for a permanent connection that we have
-		 * initiated.  Replace it now.  Useful if the other
-		 * peer is rebooting.
-		 */
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: replace CHILD SA #%lu now",
-			  child->sa.st_serialno);
-		child->sa.st_replace_margin = deltatime(0);
-		event_force(EVENT_SA_REPLACE, &child->sa);
-	} else {
-		log_state(RC_LOG_SERIOUS, &ike->sa,
-			  "received Delete SA payload: delete CHILD SA #%lu now",
-			  child->sa.st_serialno);
-		delete_state(&child->sa);
-	}
+	const struct v2_state_transition *transition =
+		(child != NULL ? &v2_delete_child : &v2_delete_ike);
+	v2_msgid_queue_initiator(ike, child, NULL,
+				 ISAKMP_v2_INFORMATIONAL,
+				 transition);
 }
 
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
@@ -349,7 +326,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					child->sa.st_dont_send_delete = true;
+					child->sa.st_send_delete = DONT_SEND_DELETE;
 					passert(ike->sa.st_serialno == child->sa.st_clonedfrom);
 					struct ipsec_proto_info *pr =
 						(v2del->isad_protoid == PROTO_IPSEC_AH
@@ -363,7 +340,8 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 							  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
 							  ntohl(spi));
 					}
-					delete_or_replace_child(ike, child);
+					delete_state(&child->sa);
+					child = NULL;
 				}
 			} /* for each spi */
 
@@ -479,11 +457,12 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					dst->sa.st_dont_send_delete = true;
+					dst->sa.st_send_delete = DONT_SEND_DELETE;
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-					delete_or_replace_child(ike, dst);
+					delete_state(&dst->sa);
+					dst = NULL;
 				}
 			} /* for each spi */
 			break;

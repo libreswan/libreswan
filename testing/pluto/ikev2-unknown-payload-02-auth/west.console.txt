@@ -28,7 +28,6 @@ west #
 004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
@@ -51,7 +50,6 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting other state #4 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #

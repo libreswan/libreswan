@@ -36,7 +36,6 @@ west #
 004 "ikev2-ike=aes128-sha1-dh19" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh19" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-ike=aes128-sha1-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh19" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
@@ -51,7 +50,6 @@ west #
 004 "ikev2-ike=aes128-sha1-dh20" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh20" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-ike=aes128-sha1-dh20" #4: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh20" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
@@ -66,7 +64,6 @@ west #
 004 "ikev2-ike=aes128-sha1-dh21" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection
-002 "ikev2-ike=aes128-sha1-dh21" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-ike=aes128-sha1-dh21" #6: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh21" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection

@@ -35,7 +35,7 @@
 #include "log.h"
 #include "demux.h"
 #include "connections.h"
-#include "nat_traversal.h"
+#include "ikev2_nat.h"
 #include "ikev2_send.h"
 #include "iface.h"
 #include "kernel.h"
@@ -45,7 +45,8 @@
 
 #include "ikev2_mobike.h"
 
-static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md, pb_stream *pbs);
+static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
+					 struct pbs_out *pbs, struct ike_sa *ike);
 
 /* can an established state initiate or respond to mobike probe */
 static bool mobike_check_established(struct state *st)
@@ -54,7 +55,7 @@ static bool mobike_check_established(struct state *st)
 	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
 		    st->st_ike_seen_v2n_mobike_supported &&
 		    st->st_ike_sent_v2n_mobike_supported &&
-		    IS_ISAKMP_SA_ESTABLISHED(st->st_state));
+		    IS_IKE_SA_ESTABLISHED(st));
 
 	return ret;
 }
@@ -66,58 +67,45 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		return true;
 	}
 
+#if 0
+	if (DBGP(DBG_BASE) && md->pd[PD_v2N_NO_NATS_ALLOWED] != NULL) {
+		DBG_log("NO_NATS_ALLOWED payload ignored (not yet supported)");
+	}
+#endif
+
+#if 0
+	if (DBGP(DBG_BASE) && md->pd[PD_v2N_ADDITIONAL_IP4_ADDRESS] != NULL) {
+		DBG_log("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
+	}
+#endif
+
+#if 0
+	if (DBGP(DBG_BASE) && md->pd[PD_v2N_ADDITIONAL_IP6_ADDRESS] != NULL) {
+		DBG_log("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
+	}
+#endif
+
+#if 0
+	if (DBGP(DBG_BASE) && md->pd[PD_v2N_NO_ADDITIONAL_ADDRESSES] != NULL) {
+		DBG_log("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
+	}
+#endif
+
+	bool ntfy_update_sa = (md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL);
+
+	bool ntfy_natd = (md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] != NULL ||
+			  md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] != NULL);
+
 	shunk_t cookie2 = null_shunk;
-	bool ntfy_update_sa = false;
-	bool ntfy_natd = false;
-
-	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-
-		case v2N_UPDATE_SA_ADDRESSES:
-			ntfy_update_sa = TRUE;
-			dbg("Need to process v2N_UPDATE_SA_ADDRESSES");
-			break;
-
-		case v2N_NO_NATS_ALLOWED:
-			ike->sa.st_seen_nonats = TRUE;
-			break;
-
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			ntfy_natd = TRUE;
-			dbg("TODO: Need to process NAT DETECTION payload if we are initiator");
-			break;
-
-		case v2N_NO_ADDITIONAL_ADDRESSES:
-			dbg("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
-			break;
-
-		case v2N_COOKIE2:
-			/* copy cookie */
-			if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
-				dbg("MOBIKE COOKIE2 notify payload too big - ignored");
-			} else {
-				cookie2 = pbs_in_left_as_shunk(&ntfy->pbs);
-				if (DBGP(DBG_BASE)) {
-					DBG_dump_hunk("MOBIKE COOKIE2 received:", cookie2);
-				}
+	if (md->pd[PD_v2N_COOKIE2] != NULL) {
+		shunk_t tmp = pbs_in_left_as_shunk(&md->pd[PD_v2N_COOKIE2]->pbs);
+		if (tmp.len > IKEv2_MAX_COOKIE_SIZE) {
+			dbg("MOBIKE COOKIE2 notify payload too big - ignored");
+		} else {
+			cookie2 = tmp;
+			if (DBGP(DBG_BASE)) {
+				DBG_dump_hunk("MOBIKE COOKIE2 received:", cookie2);
 			}
-			break;
-
-		case v2N_ADDITIONAL_IP4_ADDRESS:
-			dbg("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
-			/* not supported yet */
-			break;
-
-		case v2N_ADDITIONAL_IP6_ADDRESS:
-			dbg("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
-			/* not supported yet */
-			break;
-
-		default:
-			dbg("Received unexpected %s notify - ignored",
-			    enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-			break;
 		}
 	}
 
@@ -150,7 +138,8 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 	if (ntfy_natd) {
-		return add_mobike_response_payloads(cookie2, md, &sk->pbs);
+		return add_mobike_response_payloads(cookie2, md,
+						    &sk->pbs, ike);
 	}
 
 	return true;
@@ -213,16 +202,15 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 	}
 }
 
-bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md, struct pbs_out *pbs)
+bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
+				  struct pbs_out *pbs, struct ike_sa *ike)
 {
 	dbg("adding NATD%s payloads to MOBIKE response",
 	    cookie2.len != 0 ? " and cookie2" : "");
-
-	struct state *st = md->v1_st;
 	/* assumptions from ikev2_out_nat_v2n() and caller */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
-	pexpect(!ike_spi_is_zero(&st->st_ike_spis.responder));
-	return (ikev2_out_nat_v2n(pbs, st, &st->st_ike_spis.responder) &&
+	pexpect(!ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	return (ikev2_out_nat_v2n(pbs, &ike->sa, &ike->sa.st_ike_spis.responder) &&
 		(cookie2.len == 0 || emit_v2N_hunk(v2N_COOKIE2, cookie2, pbs)));
 }
 
@@ -406,14 +394,11 @@ void ikev2_addr_change(struct state *st)
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
 	 */
-	switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
-	case 0:	/* success */
-		/* cannot happen */
-		/* ??? original code treated this as failure */
-		/* bad_case(0); */
-		log_state(RC_LOG, st, "unexpected SUCCESS from first resolve_defaultroute_one");
-		/* FALL THROUGH */
-	case -1:	/* failure */
+	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
+					 st->st_logger)) {
+
+	case RESOLVE_FAILURE:
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
@@ -422,15 +407,23 @@ void ikev2_addr_change(struct state *st)
 		break;
 	}
 
-	case 1: /* please call again: more to do */
-		switch (resolve_defaultroute_one(&this, &that, true, st->st_logger)) {
-		case 1: /* please call again: more to do */
-			/* cannot happen */
-			/* ??? original code treated this as failure */
-			/* bad_case(1); */
-			log_state(RC_LOG, st, "unexpected TRY AGAIN from second resolve_defaultroute_one");
-			/* FALL THROUGH */
-		case -1:	/* failure */
+	case RESOLVE_SUCCESS:
+	{
+		/* cannot happen */
+		/* ??? original code treated this as failure */
+		/* bad_case(0); */
+		address_buf b;
+		log_state(RC_LOG, st,
+			  "no local gateway to reach %s (unexpected SUCCESS from first resolve_defaultroute_one())",
+			  str_address(&that.addr, &b));
+		break;
+	}
+
+	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
+						 st->st_logger)) {
+
+		case RESOLVE_FAILURE:
 		{
 			address_buf g, b;
 			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s",
@@ -439,11 +432,23 @@ void ikev2_addr_change(struct state *st)
 			break;
 		}
 
-		case 0:	/* success */
+		case RESOLVE_SUCCESS:
 		{
 			const struct iface_endpoint *iface = ikev2_src_iface(st, &this);
 			if (iface != NULL)
 				initiate_mobike_probe(st, &this, iface);
+			break;
+		}
+
+		case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		{
+			/* cannot happen */
+			/* ??? original code treated this as failure */
+			/* bad_case(1); */
+			address_buf g, b;
+			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s (unexpected TRY AGAIN from second resolve_defaultroute_one())",
+				  str_address_sensitive(&that.addr, &b),
+				  str_address(&this.nexthop, &g));
 			break;
 		}
 

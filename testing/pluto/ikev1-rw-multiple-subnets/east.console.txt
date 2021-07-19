@@ -12,11 +12,10 @@ east #
 initdone
 east #
  ipsec trafficstatus
-006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 006 #3: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+006 #2: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  ../../guestbin/xfrmcheck.sh
-ERROR: XfrmInNoPols 1
 east #
  ../../guestbin/ipsec-look.sh
 east NOW
@@ -50,11 +49,23 @@ src 192.0.2.0/24 dst 192.0.3.0/24
 	dir out priority 2084815 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
+src 192.0.20.0/24 dst 192.0.3.0/24
+	dir out priority 2084815 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
 src 192.0.3.0/24 dst 192.0.2.0/24
 	dir fwd priority 2084815 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.3.0/24 dst 192.0.2.0/24
+	dir in priority 2084815 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.20.0/24
+	dir fwd priority 2084815 ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.20.0/24
 	dir in priority 2084815 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel

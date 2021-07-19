@@ -321,8 +321,8 @@ typedef enum {
 	 * that directly directly call complete*() (or other scary
 	 * stuff) can signal the common code that the normal sequence
 	 * of: call state transition function; call complete() should
-	 * be bypassed.  For instance, the IKEv1 crypto continuation
-	 * functions.
+	 * be bypassed.  For instance, the IKEv1 crypto and PAM
+	 * continuation functions.
 	 */
 	STF_SKIP_COMPLETE_STATE_TRANSITION,
 	/*                         TRANSITION  DELETE   RESPOND  LOG */
@@ -330,7 +330,7 @@ typedef enum {
 	STF_SUSPEND,            /*   suspend     no       no     tbd? */
 	STF_OK,                 /*    yes        no     message? tbd? */
 	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
-	STF_V2_DELETE_EXCHANGE_INITIATOR_IKE_SA,
+	STF_V2_DELETE_IKE_AUTH_INITIATOR,
 				/*   forced    maybe     maybe  'success' */
 	STF_FATAL,		/*     no      always    never   fail */
 	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
@@ -622,68 +622,62 @@ enum sa_role {
 extern struct keywords sa_role_names;
 
 #ifdef USE_IKEv1
-#define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
-				  LELEM(STATE_MAIN_I2) | \
-				  LELEM(STATE_MAIN_I3) | \
-				  LELEM(STATE_MAIN_I4) | \
-				  LELEM(STATE_AGGR_I1) | \
-				  LELEM(STATE_AGGR_I2) | \
-				  LELEM(STATE_XAUTH_I0) | \
-				  LELEM(STATE_XAUTH_I1) | \
-				  LELEM(STATE_MODE_CFG_I1))
+#define V1_PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
+				     LELEM(STATE_MAIN_I2) | \
+				     LELEM(STATE_MAIN_I3) | \
+				     LELEM(STATE_MAIN_I4) | \
+				     LELEM(STATE_AGGR_I1) | \
+				     LELEM(STATE_AGGR_I2) | \
+				     LELEM(STATE_XAUTH_I0) |	\
+				     LELEM(STATE_XAUTH_I1) |	\
+				     LELEM(STATE_MODE_CFG_I1))
 
+#define IS_V1_PHASE1_INIT(ST) ((LELEM((ST)->kind) & V1_PHASE1_INITIATOR_STATES) != LEMPTY)
 
-#define IS_PHASE1_INIT(ST) ((LELEM((ST)->kind) & PHASE1_INITIATOR_STATES) != LEMPTY)
+#define IS_V1_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
 
-#define IS_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
+#define IS_V1_PHASE15(ST) (STATE_XAUTH_R0 <= (ST) && (ST) <= STATE_XAUTH_I1)
 
-#define IS_PHASE15(ST) (STATE_XAUTH_R0 <= (ST) && (ST) <= STATE_XAUTH_I1)
+#define IS_V1_QUICK(ST) (STATE_QUICK_R0 <= (ST) && (ST) <= STATE_QUICK_R2)
 
-#define IS_QUICK(ST) (STATE_QUICK_R0 <= (ST) && (ST) <= STATE_QUICK_R2)
+#define V1_ISAKMP_ENCRYPTED_STATES  (LRANGE(STATE_MAIN_R2, STATE_MAIN_I4) | \
+				     LRANGE(STATE_AGGR_R1, STATE_AGGR_R2) | \
+				     LRANGE(STATE_QUICK_R0, STATE_QUICK_R2) | \
+				     LELEM(STATE_INFO_PROTECTED) |	\
+				     LRANGE(STATE_XAUTH_R0, STATE_XAUTH_I1))
 
-#define ISAKMP_ENCRYPTED_STATES  (LRANGE(STATE_MAIN_R2, STATE_MAIN_I4) | \
-				  LRANGE(STATE_AGGR_R1, STATE_AGGR_R2) | \
-				  LRANGE(STATE_QUICK_R0, STATE_QUICK_R2) | \
-				  LELEM(STATE_INFO_PROTECTED) | \
-				  LRANGE(STATE_XAUTH_R0, STATE_XAUTH_I1))
-
-#define IS_ISAKMP_ENCRYPTED(ST) ((LELEM(ST) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
+#define IS_V1_ISAKMP_ENCRYPTED(ST) ((LELEM(ST) & V1_ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(ST) (STATE_MAIN_R3 <= ((ST)->kind) && \
-				     STATE_AGGR_R0 != ((ST)->kind) && \
-				     STATE_AGGR_I1 != ((ST)->kind))
+#define IS_V1_ISAKMP_AUTHENTICATED(ST) (STATE_MAIN_R3 <= ((ST)->kind) && \
+					STATE_AGGR_R0 != ((ST)->kind) && \
+					STATE_AGGR_I1 != ((ST)->kind))
+
+#define V1_ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
+					  LELEM(STATE_MAIN_I4) | \
+					  LELEM(STATE_AGGR_I2) | \
+					  LELEM(STATE_AGGR_R2) | \
+					  LELEM(STATE_XAUTH_R0) |	\
+					  LELEM(STATE_XAUTH_R1) |	\
+					  LELEM(STATE_MODE_CFG_R0) |	\
+					  LELEM(STATE_MODE_CFG_R1) |	\
+					  LELEM(STATE_MODE_CFG_R2) |	\
+					  LELEM(STATE_MODE_CFG_I1) |	\
+					  LELEM(STATE_XAUTH_I0) |	\
+					  LELEM(STATE_XAUTH_I1))
+
+#define IS_V1_ISAKMP_SA_ESTABLISHED(ST)					\
+	((LELEM((ST)->st_state->kind) & V1_ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+
+#define IS_V1_ISAKMP_SA(ST) ((ST)->st_ike_version == IKEv1 && (ST)->st_clonedfrom == SOS_NOBODY)
+
+#define IS_V1_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
+
 #endif
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
 				       LELEM(STATE_PARENT_I1) |	\
 				       LELEM(STATE_PARENT_I2))
-
-#ifdef USE_IKEv1
-#define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_MAIN_R3) | \
-				       LELEM(STATE_MAIN_I4) | \
-				       LELEM(STATE_AGGR_I2) | \
-				       LELEM(STATE_AGGR_R2) | \
-				       LELEM(STATE_XAUTH_R0) | \
-				       LELEM(STATE_XAUTH_R1) | \
-				       LELEM(STATE_MODE_CFG_R0) | \
-				       LELEM(STATE_MODE_CFG_R1) | \
-				       LELEM(STATE_MODE_CFG_R2) | \
-				       LELEM(STATE_MODE_CFG_I1) | \
-				       LELEM(STATE_XAUTH_I0) | \
-				       LELEM(STATE_XAUTH_I1) | \
-				       LELEM(STATE_V2_ESTABLISHED_IKE_SA))
-#else
-#define ISAKMP_SA_ESTABLISHED_STATES  (LELEM(STATE_V2_ESTABLISHED_IKE_SA))
-#endif
-
-#define IS_ISAKMP_SA_ESTABLISHED(ST) ((LELEM((ST)->kind) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
-
-#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_NEW_CHILD_I1) |		\
-				LELEM(STATE_V2_NEW_CHILD_I0) |		\
-				LELEM(STATE_V2_NEW_CHILD_R0) |		\
-				/* due to a quirk in initiator duplication next one is also needed */ \
-				LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1
@@ -697,37 +691,17 @@ extern struct keywords sa_role_names;
 				     ((ST)->st_state->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
 #endif
 
-#define IS_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
-
-/* Only relevant to IKEv2 */
-
-/* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
-
-#define IS_V2_ESTABLISHED(ST) (((ST)->kind) == STATE_V2_ESTABLISHED_IKE_SA || \
-			       ((ST)->kind) == STATE_V2_ESTABLISHED_CHILD_SA)
-
-#ifdef USE_IKEv1
-#define IS_IKE_SA_ESTABLISHED(ST) \
-	( IS_ISAKMP_SA_ESTABLISHED((ST)->st_state) ||	\
-		(IS_PARENT_SA_ESTABLISHED(ST) && \
-		 ((ST)->st_clonedfrom == SOS_NOBODY)))
-#else
-#define IS_IKE_SA_ESTABLISHED(ST) \
-		(IS_PARENT_SA_ESTABLISHED(ST) && \
-		 ((ST)->st_clonedfrom == SOS_NOBODY))
-#endif
-
 /*
  * ??? Issue here is that our child SA appears as a
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
-#define IS_CHILD_SA_ESTABLISHED(ST)				  \
-	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA && \
-	 IS_CHILD_SA(ST))
 
-#define IS_PARENT_SA_ESTABLISHED(ST) (((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) && \
-				      !IS_CHILD_SA(ST))
+#define IS_CHILD_SA_ESTABLISHED(ST)				\
+	((ST)->st_state->kind == STATE_V2_ESTABLISHED_CHILD_SA)
+
+#define IS_IKE_SA_ESTABLISHED(ST)				\
+	((ST)->st_state->kind == STATE_V2_ESTABLISHED_IKE_SA)
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
@@ -850,6 +824,15 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
  * Changes to sa_policy_bits must be reflected in #defines below it and
  * in sa_policy_bit_names.
  */
+
+enum shunt_policy {
+	SHUNT_DEFAULT, /* TRAP or NONE */
+	SHUNT_PASS,
+	SHUNT_DROP,
+	SHUNT_REJECT,
+	SHUNT_POLICY_ROOF,
+};
+
 enum sa_policy_bits {
 	/*
 	 * XXX: Do not re-order or re-number the following pair.  Bad
@@ -889,10 +872,10 @@ enum sa_policy_bits {
 #define POLICY_SHUNT_SHIFT	POLICY_SHUNT0_IX
 #define POLICY_SHUNT_MASK	LRANGE(POLICY_SHUNT0_IX, POLICY_SHUNT1_IX)
 
-#define POLICY_SHUNT_TRAP	(0 * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
-#define POLICY_SHUNT_PASS	(1 * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_DROP	(2 * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_REJECT	(3 * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_TRAP	(SHUNT_DEFAULT * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
+#define POLICY_SHUNT_PASS	(SHUNT_PASS * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_DROP	(SHUNT_DROP * LELEM(POLICY_SHUNT0_IX))
+#define POLICY_SHUNT_REJECT	(SHUNT_REJECT * LELEM(POLICY_SHUNT0_IX))
 
 	/* fail attributes: what to do with failed negotiation (2 bits) */
 	POLICY_FAIL0_IX,
@@ -901,10 +884,10 @@ enum sa_policy_bits {
 #define POLICY_FAIL_SHIFT	POLICY_FAIL0_IX
 #define POLICY_FAIL_MASK	LRANGE(POLICY_FAIL0_IX, POLICY_FAIL1_IX)
 
-#define POLICY_FAIL_NONE	(0 * LELEM(POLICY_FAIL0_IX)) /* default */
-#define POLICY_FAIL_PASS	(1 * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_DROP	(2 * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_REJECT	(3 * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_NONE	(SHUNT_DEFAULT * LELEM(POLICY_FAIL0_IX)) /* default */
+#define POLICY_FAIL_PASS	(SHUNT_PASS * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_DROP	(SHUNT_DROP * LELEM(POLICY_FAIL0_IX))
+#define POLICY_FAIL_REJECT	(SHUNT_REJECT * LELEM(POLICY_FAIL0_IX))
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.

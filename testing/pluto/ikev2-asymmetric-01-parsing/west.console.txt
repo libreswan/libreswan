@@ -27,7 +27,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test-default": added IKEv2 connection
 west #
@@ -35,7 +35,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test-v1-secret": added IKEv1 connection
 west #
@@ -43,7 +43,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test-v1-rsasig": added IKEv1 connection
 west #
@@ -51,7 +51,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "test-passthrough": failed to add connection: shunt connection cannot have authentication method other then authby=never
 west #
@@ -59,7 +59,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test1": added IKEv2 connection
 west #
@@ -67,7 +67,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test2": added IKEv2 connection
 west #
@@ -75,7 +75,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test3": added IKEv2 connection
 west #
@@ -83,7 +83,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test5": added IKEv2 connection
 west #
@@ -91,7 +91,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test6": added IKEv2 connection
 west #
@@ -99,7 +99,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test7": added IKEv2 connection
 west #
@@ -107,7 +107,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test8": added IKEv2 connection
 west #
@@ -115,7 +115,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test9": added IKEv2 connection
 west #
@@ -136,7 +136,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest0": failed to add connection: cannot mix PSK and NULL authentication (leftauth=secret and rightauth=null)
 west #
@@ -144,7 +144,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest1": failed to add connection: leftauth= and rightauth= require ikev2
 west #
@@ -152,7 +152,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest3": failed to add connection: leftauth= and rightauth= require ikev2
 west #
@@ -160,7 +160,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 conn failtest4 did not load properly
 west #
@@ -168,7 +168,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest5": failed to add connection: leftauth= and rightauth= must both be set or both be unset
 west #
@@ -176,7 +176,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest6": failed to add connection: leftauth= and rightauth= must both be set or both be unset
 west #
@@ -184,7 +184,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest7": failed to add connection: leftauth= and rightauth= must both be set or both be unset
 west #
@@ -192,7 +192,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest8": failed to add connection: shunt connection cannot have authentication method other then authby=never
 west #
@@ -200,7 +200,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 036 "failtest9": failed to add connection: shunt connection cannot have authentication method other then authby=never
 west #
@@ -208,7 +208,7 @@ west #
 while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
 while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 conn failtest10 did not load properly
 west #

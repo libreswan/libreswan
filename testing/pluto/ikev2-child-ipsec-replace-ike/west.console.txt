@@ -46,6 +46,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec auto --up westnet-eastnet-ikev2b
+002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-ikev2b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -57,6 +58,7 @@ PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec auto --up westnet-eastnet-ikev2c
+002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-ikev2c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
@@ -77,14 +79,12 @@ west #
  ping -n -q -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
 --- 192.0.200.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-006 #6: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
-006 #10: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-006 #11: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #12: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #6: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #7: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 west #
  echo done
 done

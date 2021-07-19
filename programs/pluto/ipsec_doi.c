@@ -85,6 +85,37 @@
 #include "initiate.h"
 #include "ikev2_ike_sa_init.h"
 
+/*
+ * Start from policy in (ipsec) state, not connection.  This ensures
+ * that rekeying doesn't downgrade security.  I admit that this
+ * doesn't capture everything.
+ */
+lset_t capture_child_rekey_policy(struct state *st)
+{
+	lset_t policy = st->st_policy;
+
+	if (st->st_pfs_group != NULL)
+		policy |= POLICY_PFS;
+	if (st->st_ah.present) {
+		policy |= POLICY_AUTHENTICATE;
+		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
+			policy |= POLICY_TUNNEL;
+	}
+	if (st->st_esp.present &&
+	    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
+		policy |= POLICY_ENCRYPT;
+		if (st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
+			policy |= POLICY_TUNNEL;
+	}
+	if (st->st_ipcomp.present) {
+		policy |= POLICY_COMPRESS;
+		if (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
+			policy |= POLICY_TUNNEL;
+	}
+
+	return policy;
+}
+
 /* Replace SA with a fresh one that is similar
  *
  * Shares some logic with ipsecdoi_initiate, but not the same!
@@ -109,11 +140,10 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
 
-		if (IS_PARENT_SA_ESTABLISHED(st))
-			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
-
 		switch(st->st_ike_version) {
 		case IKEv2:
+			if (IS_IKE_SA_ESTABLISHED(st))
+				log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 			ikev2_out_IKE_SA_INIT_I(c, st, policy, try, &inception,
 						HUNK_AS_SHUNK(c->spd.this.sec_label),
 						/*background?*/false, st->st_logger);
@@ -135,35 +165,14 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			dbg("unsupported IKE version '%d', cannot initiate", st->st_ike_version);
 		}
 	} else {
+
 		/*
 		 * Start from policy in (ipsec) state, not connection.
 		 * This ensures that rekeying doesn't downgrade
 		 * security.  I admit that this doesn't capture
 		 * everything.
 		 */
-		lset_t policy = st->st_policy;
-
-		if (st->st_pfs_group != NULL)
-			policy |= POLICY_PFS;
-		if (st->st_ah.present) {
-			policy |= POLICY_AUTHENTICATE;
-			if (st->st_ah.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
-				policy |= POLICY_TUNNEL;
-		}
-		if (st->st_esp.present &&
-		    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
-			policy |= POLICY_ENCRYPT;
-			if (st->st_esp.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
-				policy |= POLICY_TUNNEL;
-		}
-		if (st->st_ipcomp.present) {
-			policy |= POLICY_COMPRESS;
-			if (st->st_ipcomp.attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
-				policy |= POLICY_TUNNEL;
-		}
+		lset_t policy = capture_child_rekey_policy(st);
 
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));

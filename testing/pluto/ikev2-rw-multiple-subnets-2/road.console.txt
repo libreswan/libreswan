@@ -15,12 +15,14 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.20.254
 down UNEXPECTED
 road #
+ sleep 3 ; # I know, I know but east won't show 2nd one otherwise :P
+road #
  echo done
 done
 road #
  ipsec trafficstatus
-006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
  ../../guestbin/xfrmcheck.sh
 road #

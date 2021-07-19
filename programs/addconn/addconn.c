@@ -69,10 +69,17 @@ static char *environlize(const char *str)
 static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger *logger)
 {
 #ifdef XFRM_SUPPORT
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger) == 1)
-		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0, logger);
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger) == 1)
-		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0, logger);
+	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
+	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose_rc_flags,
+				     logger) == RESOLVE_PLEASE_CALL_AGAIN) {
+		resolve_defaultroute_one(&conn->left, &conn->right,
+					 verbose_rc_flags, logger);
+	}
+	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose_rc_flags,
+				     logger) == RESOLVE_PLEASE_CALL_AGAIN) {
+		resolve_defaultroute_one(&conn->right, &conn->left,
+					 verbose_rc_flags, logger);
+	}
 #else /* !defined(XFRM_SUPPORT) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
@@ -380,7 +387,7 @@ int main(int argc, char *argv[])
 			exit(3);
 		}
 		if (errl.errors != NULL) {
-			fprintf(stderr, "addconn, in config '%s', ignoring: %s\n",
+			fprintf(stderr, "addconn, in config '%s', %s\n",
 				configfile, errl.errors);
 			pfree(errl.errors);
 		}
@@ -433,7 +440,7 @@ int main(int argc, char *argv[])
 				conn->desired_state == STARTUP_START)
 			{
 				if (verbose > 0)
-					printf(" %s", conn->name);
+					printf(" %s\n", conn->name);
 				resolve_defaultroute(conn, logger);
 				starter_whack_add_conn(cfg, conn, logger);
 			}
@@ -485,7 +492,7 @@ int main(int argc, char *argv[])
 			const char *p3 = "";
 
 			if (verbose > 0)
-				printf(" %s", connname);
+				printf(" %s\n", connname);
 
 			/* find first name match, if any */
 			for (conn = cfg->conns.tqh_first;

@@ -1,9 +1,12 @@
-As ikev2-labeled-ipsec-01 but initiator is not using lables
+As ikev2-labeled-ipsec-01/childless but initiator is not using lables
 
 The connection should fail:
 
-- initiator sends IKE_AUTH that contains a child
-- responder authenticates and ignores child (?)
-- initiator authenticates, but aborts as no child
+- because initiator has no label it tries to bring
+  up an IKE SA with both IKE and Child
 
+- responder authenticates (returns its own proof); but then rejects
+  child because TS (label) doesn't match
 
+- initiator authenticates, but then because its first child wasn't
+  created, it tears down the IKE SA

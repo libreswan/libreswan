@@ -23,6 +23,21 @@
 
 #include "timecheck.h"
 
+const struct time_cmp time_cmp[] = {
+	/* Miliseconds */
+	{ 1, 1, .eq = true, .le = true, .ge = true, },
+	{ 1, 2, .ne = true, .le = true, .lt = true, },
+	{ 2, 1, .ne = true, .ge = true, .gt = true, },
+	/* Seconds */
+	{ 1000, 1000, .eq = true, .le = true, .ge = true, },
+	{ 1000, 2000, .ne = true, .le = true, .lt = true, },
+	{ 2000, 1000, .ne = true, .ge = true, .gt = true, },
+	/* mixed */
+	{ 200, 1000, .ne = true, .le = true, .lt = true, },
+	{ 1000, 200, .ne = true, .ge = true, .gt = true, },
+	{ .sentinel = true, },
+};
+
 int fails = 0;
 
 int main(int argc UNUSED, char *argv[])

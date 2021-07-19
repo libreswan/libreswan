@@ -21,17 +21,18 @@
 #include "deltatime.h"
 #include "lswlog.h"
 
-static const deltatime_t deltatime_zero;
+const deltatime_t deltatime_zero;
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code
  * convers everything into +ve timevals.
  */
 
-static deltatime_t negate_deltatime(deltatime_t d)
+static struct timeval negate_timeval(struct timeval tv)
 {
-	deltatime_t res;
-	timersub(&deltatime_zero.dt, &d.dt, &res.dt);
+	struct timeval zero = {0};
+	struct timeval res;
+	timersub(&zero, &tv, &res);
 	return res;
 }
 
@@ -40,7 +41,7 @@ deltatime_t deltatime(time_t secs)
 	return (deltatime_t) DELTATIME_INIT(secs);
 }
 
-deltatime_t deltatime_ms(intmax_t ms)
+struct timeval timeval_ms(intmax_t ms)
 {
 	/*
 	 * C99 defines '%' thus:
@@ -50,16 +51,19 @@ deltatime_t deltatime_ms(intmax_t ms)
 	 * + a%b shall equal a.
 	 */
 	intmax_t ams = imaxabs(ms);
-	deltatime_t res = {
-		.dt = {
-			.tv_sec = ams / 1000,
-			.tv_usec = ams % 1000 * 1000,
-		},
+	struct timeval tv = {
+		.tv_sec = ams / 1000,
+		.tv_usec = ams % 1000 * 1000,
 	};
 	if (ms < 0) {
-		res = negate_deltatime(res);
+		tv = negate_timeval(tv);
 	}
-	return res;
+	return tv;
+}
+
+deltatime_t deltatime_ms(intmax_t milliseconds)
+{
+	return (deltatime_t) { .dt = timeval_ms(milliseconds), };
 }
 
 deltatime_t deltatime_timevals_diff(struct timeval a, struct timeval b)
@@ -69,16 +73,23 @@ deltatime_t deltatime_timevals_diff(struct timeval a, struct timeval b)
 	return res;
 }
 
-int deltatime_cmp_sign(deltatime_t a, deltatime_t b)
+int timeval_sub_sign(struct timeval l, struct timeval r)
 {
 	/* sign(l - r) */
-	if (timercmp(&a.dt, &b.dt, <)) {
+	if (timercmp(&l, &r, <)) {
 		return -1;
-	} else if (timercmp(&a.dt, &b.dt, >)) {
-		return 1;
-	} else {
-		return 0;
 	}
+
+	if (timercmp(&l, &r, >)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+int deltatime_sub_sign(deltatime_t l, deltatime_t r)
+{
+	return timeval_sub_sign(l.dt, r.dt);
 }
 
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
@@ -161,7 +172,7 @@ size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 	size_t s = 0;
 	if (d.dt.tv_sec < 0) {
 		s += jam(buf, "-");
-		d = negate_deltatime(d);
+		d.dt = negate_timeval(d.dt);
 	}
 	s += jam(buf, "%jd", (intmax_t)d.dt.tv_sec);
 	if (d.dt.tv_usec != 0) {

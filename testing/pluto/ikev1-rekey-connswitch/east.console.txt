@@ -69,7 +69,7 @@ src 192.0.2.234/32 dst 192.0.1.254/32
 src 192.0.2.244/32 dst 192.0.1.254/32
 	dir out priority 2080702 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 0 mode transport
 src 192.0.2.254/32 dst 192.0.1.254/32
 	dir out priority 2080702 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45

@@ -75,6 +75,11 @@ struct ip_info {
 	ip_port (*port_from_sockaddr)(const ip_sockaddr sa);
 
 	/*
+	 * IKEv2 Traffic Selector Stuff.
+	 */
+	enum ikev2_ts_type ikev2_ts_addr_range_type;
+
+	/*
 	 * ID stuff.
 	 */
 	enum ike_id_type id_ip_addr;

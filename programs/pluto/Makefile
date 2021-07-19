@@ -75,7 +75,6 @@ OBJS += ikev2_msgid.o
 OBJS += ikev2_auth.o
 OBJS += ikev2_auth_helper.o
 OBJS += ikev2_delete.o
-OBJS += ikev2_rekey.o
 OBJS += ikev2_liveness.o
 
 OBJS += state_db.o
@@ -131,9 +130,8 @@ OBJS += pam_conv.o
 endif
 USERLAND_LDFLAGS += $(AUTHPAM_LDFLAGS)
 
-
 # LABELED IPSEC support - requires SElinux
-OBJS += security_selinux.o
+OBJS += labeled_ipsec.o
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_LDFLAGS += -lselinux
 endif
@@ -223,13 +221,17 @@ OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
 OBJS += kernel.o
+OBJS += kernel_ops.o
 OBJS += rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += crypt_ke.o crypt_dh.o
 OBJS += crypt_dh_v2.o
 OBJS += rnd.o
 OBJS += ikev1_spdb.o
-OBJS += vendor.o nat_traversal.o
+OBJS += vendor.o
+OBJS += nat_traversal.o
+OBJS += ikev1_nat.o
+OBJS += ikev2_nat.o
 OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
 OBJS += pem.o nss_cert_verify.o

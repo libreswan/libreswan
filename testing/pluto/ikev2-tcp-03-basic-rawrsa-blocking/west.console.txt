@@ -48,7 +48,6 @@ west #
 004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESPinTCP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: switching off NONBLOCK before write
 002 "westnet-eastnet-ikev2" #1: IKETCP ENABLED: IMPAIR: socket XX: restoring flags 04002 after write

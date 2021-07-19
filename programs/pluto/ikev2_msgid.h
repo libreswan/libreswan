@@ -24,7 +24,7 @@
 struct state;
 struct ike_sa;
 struct msg_digest;
-struct state_v2_microcode;
+struct v2_state_transition;
 enum message_role;
 
 /*
@@ -40,10 +40,6 @@ enum message_role;
  * probably only used by the initiator code, store it in the window so
  * that struct contains everything.
  */
-
-typedef stf_status v2_msgid_pending_cb(struct ike_sa *ike,
-				       struct state *st,
-				       struct msg_digest *md);
 
 struct v2_msgid_window {
 	monotime_t last_contact;  /* received a message */
@@ -121,10 +117,12 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
  * it be simpler if there was a gate keeper that assigned request
  * message id up front, but only when one was available?
  */
-void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
-			      enum isakmp_xchg_types ix,
-			      const struct state_v2_microcode *transition,
-			      v2_msgid_pending_cb *callback);
+
+void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
+			      struct state *owner, /*XXX: used by CREATE_CHILD_SA*/
+			      enum isakmp_xchg_type ix,
+			      const struct v2_state_transition *transition);
+
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);

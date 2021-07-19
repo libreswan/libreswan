@@ -410,7 +410,7 @@ static bool try_all_keys(const char *cert_origin,
 		 * loop will be deleted.
 		 */
 		if (!is_realtime_epoch(key->until_time) &&
-		    realbefore(key->until_time, s->now)) {
+		    realtime_cmp(key->until_time, <, s->now)) {
 			id_buf printkid;
 			realtime_buf buf;
 			dbg("  skipping '%s' which expired on %s",
@@ -502,7 +502,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	for (struct pubkey_list **pp = &pluto_pubkeys; *pp != NULL; ) {
 		struct pubkey *key = (*pp)->key;
 		if (!is_realtime_epoch(key->until_time) &&
-		    realbefore(key->until_time, s.now)) {
+		    realtime_cmp(key->until_time, <, s.now)) {
 			id_buf printkid;
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "cached %s public key '%s' has expired and has been deleted",

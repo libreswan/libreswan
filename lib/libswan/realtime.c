@@ -31,6 +31,11 @@ realtime_t realtime(time_t time)
 	return (realtime_t) { { time, 0, }, };
 }
 
+realtime_t realtime_ms(intmax_t milliseconds)
+{
+	return (realtime_t) { .rt = timeval_ms(milliseconds), };
+}
+
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
 	realtime_t s;
@@ -43,9 +48,10 @@ bool is_realtime_epoch(realtime_t t)
 	return !timerisset(&t.rt);
 }
 
-bool realbefore(realtime_t a, realtime_t b)
+int realtime_sub_sign(realtime_t l, realtime_t r)
 {
-	return timercmp(&a.rt, &b.rt, <);
+	/* sign(l - r) */
+	return timeval_sub_sign(l.rt, r.rt);
 }
 
 deltatime_t realtimediff(realtime_t a, realtime_t b)

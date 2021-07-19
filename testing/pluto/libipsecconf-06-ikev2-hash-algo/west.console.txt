@@ -90,7 +90,7 @@ ikev1 connection must use authby= of rsasig, secret or never
 while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: authby=ecdsa cannot use sha1, only sha2
+addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 conn ecdsa-sha1-should-fail did not load properly
@@ -102,7 +102,7 @@ ikev1 connection must use authby= of rsasig, secret or never
 while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: authby=ecdsa cannot use sha1, only sha2
+addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 conn ikev1-rsa2-should-fail did not load properly
@@ -114,7 +114,7 @@ ikev1 connection must use authby= of rsasig, secret or never
 while loading 'ikev1-ecdsa-should-fail': authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
-addconn, in config '/etc/ipsec.conf', ignoring: authby=ecdsa cannot use sha1, only sha2
+addconn, in config '/etc/ipsec.conf', authby=ecdsa cannot use sha1, only sha2
 ikev1 connection must use authby= of rsasig, secret or never
 ikev1 connection must use authby= of rsasig, secret or never
 conn ikev1-ecdsa-should-fail did not load properly

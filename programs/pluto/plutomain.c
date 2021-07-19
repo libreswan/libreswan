@@ -81,9 +81,7 @@
 # include <cap-ng.h>	/* from libcap-ng devel */
 #endif
 
-#ifdef HAVE_LABELED_IPSEC
-# include "security_selinux.h"
-#endif
+#include "labeled_ipsec.h"		/* for init_labeled_ipsec() */
 
 # include "pluto_sd.h"		/* for pluto_sd_init() */
 
@@ -134,9 +132,13 @@ static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
 static int ocsp_cache_min_age = OCSP_DEFAULT_CACHE_MIN_AGE;
 static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 
+static char *pluto_lock_filename = NULL;
+static bool pluto_lock_created = false;
+
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
+	pfree(pluto_lock_filename);
 	pfree(coredir);
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
@@ -221,7 +223,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_LINUX_AUDIT
 	" LINUX_AUDIT"
 #endif
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	" AUTH_PAM"
 #endif
 #ifdef HAVE_NM
@@ -238,11 +240,6 @@ static const char compile_time_interop_options[] = ""
 #endif
 ;
 
-static char pluto_lock[sizeof(ctl_addr.sun_path)] =
-	DEFAULT_RUNDIR "/pluto.pid";
-
-static bool pluto_lock_created = FALSE;
-
 /* create lockfile, or die in the attempt */
 static int create_lock(struct logger *logger)
 {
@@ -255,7 +252,7 @@ static int create_lock(struct logger *logger)
 
 	unsigned attempt;
 	for (attempt = 0; attempt < 2; attempt++) {
-		int fd = open(pluto_lock, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
+		int fd = open(pluto_lock_filename, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
 			      S_IRUSR | S_IRGRP | S_IROTH);
 		if (fd >= 0) {
 			pluto_lock_created = true;
@@ -263,19 +260,20 @@ static int create_lock(struct logger *logger)
 		}
 		if (errno != EEXIST) {
 			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "unable to create lock file \"%s\"", pluto_lock);
+				    "unable to create lock file \"%s\"", pluto_lock_filename);
 		}
 		if (fork_desired) {
 			fatal(PLUTO_EXIT_LOCK_FAIL, logger,
-			      "lock file \"%s\" already exists", pluto_lock);
+			      "lock file \"%s\" already exists", pluto_lock_filename);
 		}
 		/*
 		 * if we did not fork, then we don't really need the pid to
 		 * control, so wipe it
 		 */
-		if (unlink(pluto_lock) == -1) {
+		if (unlink(pluto_lock_filename) == -1) {
 			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "lock file \"%s\" already exists and could not be removed", pluto_lock);
+				    "lock file \"%s\" already exists and could not be removed",
+				    pluto_lock_filename);
 		}
 		/*
 		 * lock file removed, try creating it
@@ -283,7 +281,7 @@ static int create_lock(struct logger *logger)
 		 */
 	}
 	fatal(PLUTO_EXIT_LOCK_FAIL, logger, "lock file \"%s\" could not be created after %u attempts",
-	      pluto_lock, attempt);
+	      pluto_lock_filename, attempt);
 }
 
 /*
@@ -310,7 +308,7 @@ void delete_lock(void)
 {
 	if (pluto_lock_created) {
 		delete_ctl_socket();
-		unlink(pluto_lock);	/* is noting failure useful? */
+		unlink(pluto_lock_filename);	/* is noting failure useful? */
 	}
 }
 
@@ -714,6 +712,7 @@ int main(int argc, char **argv)
 #ifdef USE_DNSSEC
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
+	pluto_lock_filename = clone_str(DEFAULT_RUNDIR "/pluto.pid", "lock file");
 
 	deltatime_t keep_alive = DELTATIME_INIT(0);
 
@@ -1098,10 +1097,8 @@ int main(int argc, char **argv)
 				fatal_opt(longindex, logger, "--rundir argument is invalid for sun_path socket");
 			}
 
-			if (snprintf(pluto_lock, sizeof(pluto_lock),
-				     "%s/pluto.pid", optarg) == -1) {
-				fatal_opt(longindex, logger, "--rundir ctl_addr.sun_path is invalid for sun_path socket");
-			}
+			pfree(pluto_lock_filename);
+			pluto_lock_filename = alloc_printf("%s/pluto.pid", optarg);
 			pfreeany(rundir);
 			rundir = clone_str(optarg, "rundir");
 			continue;
@@ -1715,7 +1712,7 @@ int main(int argc, char **argv)
 
 	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	llog(RC_LOG, logger, "XAUTH PAM support [enabled]");
 #else
 	llog(RC_LOG, logger, "XAUTH PAM support [disabled]");
@@ -1771,9 +1768,7 @@ int main(int argc, char **argv)
 #if defined(LIBCURL) || defined(LIBLDAP)
 	start_crl_fetch_helper(logger);
 #endif
-#ifdef HAVE_LABELED_IPSEC
-	init_selinux(logger);
-#endif
+	init_labeled_ipsec(logger);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init(logger);
 #endif

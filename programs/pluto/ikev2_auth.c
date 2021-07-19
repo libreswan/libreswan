@@ -375,7 +375,7 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 }
 
 /*
- * Called by ikev2_in_IKE_AUTH_I_out_IKE_AUTH_R_tail() and
+ * Called by process_v2_IKE_AUTH_request_tail() and
  * ikev2_in_IKE_AUTH_R() Do the actual AUTH payload verification
  *
  * ??? Several verify routines return an stf_status and yet we just
@@ -437,10 +437,8 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 	{
 		if (!(that_authby == AUTHBY_NULL ||
 		      (that_authby == AUTHBY_RSASIG && LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy)))) {
-			log_state(RC_LOG, &ike->sa,
-				  "authentication failed: peer attempted NULL authentication but we want %s",
-				  enum_name(&keyword_authby_names, that_authby));
-			return false;
+			return diag("authentication failed: peer attempted NULL authentication but we want %s",
+				    enum_name(&keyword_authby_names, that_authby));
 		}
 
 		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs);

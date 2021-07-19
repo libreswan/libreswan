@@ -105,7 +105,7 @@ char *pluto_vendorid;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
-static struct pluto_event *pluto_events_head = NULL;
+static struct state_event *pluto_events_head = NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -464,10 +464,10 @@ static void list_signal_handlers(struct show *s)
  * Pluto events.
  */
 
-static struct pluto_event *free_event_entry(struct pluto_event **evp)
+static struct state_event *free_event_entry(struct state_event **evp)
 {
-	struct pluto_event *e = *evp;
-	struct pluto_event *next = e->next;
+	struct state_event *e = *evp;
+	struct state_event *next = e->next;
 
 	/* unlink this pluto_event from the list */
 	if (e->ev != NULL) {
@@ -493,7 +493,7 @@ void free_server(void)
 		return;
 	}
 
-	struct pluto_event **head = &pluto_events_head;
+	struct state_event **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
 	free_global_timers();
@@ -523,21 +523,21 @@ void free_server(void)
 #endif
 }
 
-void link_pluto_event_list(struct pluto_event *e) {
+void link_pluto_event_list(struct state_event *e) {
 	e->next = pluto_events_head;
 	pluto_events_head = e;
 }
 
 /* delete pluto event (if any); leave *evp == NULL */
-void delete_pluto_event(struct pluto_event **evp)
+void delete_pluto_event(struct state_event **evp)
 {
 	if (*evp != NULL) {
 		if ((*evp)->ev_state != NULL) {
 			pexpect((*evp)->next == NULL);
 			free_event_entry(evp);
 		} else {
-			for (struct pluto_event **pp = &pluto_events_head; ; ) {
-				struct pluto_event *p = *pp;
+			for (struct state_event **pp = &pluto_events_head; ; ) {
+				struct state_event *p = *pp;
 
 				passert(p != NULL);
 
@@ -599,6 +599,22 @@ struct resume_event {
 	struct event *event;
 };
 
+void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status)
+{
+	switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		complete_v1_state_transition(st, md, status);
+		break;
+#endif
+	case IKEv2:
+		complete_v2_state_transition(st, md, status);
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
+}
+
 static void resume_handler(evutil_socket_t fd UNUSED,
 			   short events UNUSED, void *arg)
 {
@@ -636,7 +652,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 
 		/* run the callback */
 		stf_status status = e->callback(st, md, e->context);
-		/* this may trash MD.ST */
+		/* this may trash ST and/or MD.ST */
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
@@ -645,58 +661,6 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
 			     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
 			     ""));
-		} else if (old_md_st != SOS_NOBODY && md->v1_st == NULL) {
-			/*
-			 * XXX: yes, MD.ST can be set to NULL.
-			 *
-			 * What happens is code deletes ST part way
-			 * through a state transition and then tries
-			 * to signal this by setting MD.ST to NULL
-			 * (presumably it was previously set to ST).
-			 *
-			 * Of course all the intervening code still
-			 * has references to the now-defunct state in
-			 * local ST et.al. variables.  What could
-			 * possibly go wrong .....
-			 *
-			 * The relevant code should instead return
-			 * STF_deleteme (STF_ZOMBIFY?)  so that the
-			 * delete can be performed by the state
-			 * transition function.
-			 *
-			 * XXX/SML: There is no need to abort here in
-			 * all cases where st is null, so moved this
-			 * precondition to where it's needed.  Some
-			 * previous logic appears to have been tooled
-			 * to handle null state, and state might be
-			 * null legitimately in certain failure cases
-			 * (STF_FAIL + xxx).
-			 *
-			 * One condition for null state is when a new
-			 * connection request packet arrives and there
-			 * is no suitable matching configuration.  For
-			 * example, ikev2_parent_inI1outR1() will
-			 * return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
-			 * no state in this case.  While other
-			 * failures may be better caught before this
-			 * function is called, we should be graceful
-			 * here.  And for this particular case, and
-			 * similar failure cases, we want
-			 * SEND_NOTIFICATION (below) to let the peer
-			 * know why we've rejected the request.
-			 *
-			 * Another case of null state is return from
-			 * ikev2_parent_inR1BoutI1B which returns
-			 * STF_IGNORE.
-			 *
-			 * Another case occurs when we finish an
-			 * Informational Exchange message that causes
-			 * us to delete the IKE state.  In fact, that
-			 * can be an STF_OK and yet have no remaining
-			 * state object at this point.
-			 */
-			pexpect(ike_version == IKEv2);
-			dbg("XXX: resume %s for #%lu deleted MD.ST", e->name, old_st);
 		} else {
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
@@ -713,24 +677,14 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 						md->v1_st->st_serialno == old_md_st);
 				}
 				pexpect(st != NULL); /* see above */
-				complete_v1_state_transition(st, md, status);
 				break;
 #endif
 			case IKEv2:
-				if (old_md_st == SOS_NOBODY) {
-					pexpect(md == NULL || md->v1_st == NULL);
-				} else if (pexpect(md != NULL && md->v1_st != NULL)) {
-					if (md->v1_st->st_serialno != old_st) {
-						dbg("XXX: resume %s for #%lu switched MD.ST to #%lu",
-						    e->name, old_st, md->v1_st->st_serialno);
-						st = md->v1_st;
-					}
-				}
-				complete_v2_state_transition(st, md, status);
 				break;
 			default:
 				bad_case(ike_version);
 			}
+			complete_state_transition(st, md, status);
 		}
 		release_any_md(&md);
 		statetime_stop(&start, "resume %s", e->name);
@@ -855,16 +809,16 @@ void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
 }
 
 /*
- * XXX: Some of the callers save the struct pluto_event reference but
+ * XXX: Some of the callers save the struct state_event reference but
  * some do not.
  */
-struct pluto_event *add_fd_read_event_handler(evutil_socket_t fd,
+struct state_event *add_fd_read_event_handler(evutil_socket_t fd,
 					      event_callback_fn cb, void *arg,
 					      const char *name)
 {
 	passert(in_main_thread());
 	pexpect(fd >= 0);
-	struct pluto_event *e = alloc_thing(struct pluto_event, name);
+	struct state_event *e = alloc_thing(struct state_event, name);
 	dbg_alloc("pe", e, HERE);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
@@ -889,7 +843,7 @@ void list_timers(struct show *s, monotime_t now)
 	list_global_timers(s, now);
 	list_signal_handlers(s);
 
-	for (struct pluto_event *ev = pluto_events_head;
+	for (struct state_event *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		pexpect(ev->ev_state == NULL);
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -951,12 +905,13 @@ static void syshandler_cb(struct logger *logger)
 
 static server_fork_cb addconn_exited; /* type assertion */
 
-static void addconn_exited(struct state *null_st UNUSED,
-			   struct msg_digest *null_mdp UNUSED,
-			   int status, void *context UNUSED,
-			   struct logger *logger UNUSED)
+static stf_status addconn_exited(struct state *null_st UNUSED,
+				 struct msg_digest *null_mdp UNUSED,
+				 int status, void *context UNUSED,
+				 struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
+	return STF_OK;
 }
 
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
@@ -1129,7 +1084,7 @@ void stop_server(server_stopped_cb cb)
 	event_base_loopbreak(pluto_eb);
 }
 
-bool ev_before(struct pluto_event *pev, deltatime_t delay)
+bool ev_before(struct state_event *pev, deltatime_t delay)
 {
 	struct timeval timeout;
 	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {

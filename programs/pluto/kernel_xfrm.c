@@ -68,7 +68,6 @@
 # include "libreswan.h"
 # include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
-#include "lsw-pfkeyv2.h"	/* for SADB_X_CALG_DEFLATE et.al., grrr */
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -78,6 +77,7 @@
 #include "state.h"
 #include "connections.h"
 #include "kernel.h"
+#include "kernel_ops.h"
 #include "server.h"
 #include "nat_traversal.h"
 #include "state.h"
@@ -96,8 +96,7 @@
 #include "ip_selector.h"
 #include "ip_encap.h"
 #include "initiate.h"		/* for initiate_ondemand() */
-#include "labeled_ipsec.h" /* TEMP for MAX_SECCTX_LEN */
-#include "security_selinux.h"	/* for vet_seclabel() */
+#include "labeled_ipsec.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
 
 /* required for Linux 2.6.26 kernel and later */
@@ -112,14 +111,6 @@ static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
-
-enum {
-	IPSEC_POLICY_DISCARD    = 0,
-	IPSEC_POLICY_NONE       = 1,
-	IPSEC_POLICY_IPSEC      = 2,
-	IPSEC_POLICY_ENTRUST    = 3,
-	IPSEC_POLICY_BYPASS     = 4
-};
 
 static sparse_names xfrm_type_names = {
 	NE(NLMSG_NOOP),
@@ -163,14 +154,6 @@ static sparse_names rtm_type_names = {
 
 #define NLMSG_TAIL(nmsg) \
 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
-
-/* Compress Algs */
-static sparse_names calg_list = {
-	{ SADB_X_CALG_DEFLATE, "deflate" },
-	{ SADB_X_CALG_LZS, "lzs" },
-	{ SADB_X_CALG_LZJH, "lzjh" },
-	{ 0, sparse_end }
-};
 
 /*
  * xfrm2ip - Take an xfrm and convert to an IP address
@@ -349,42 +332,46 @@ static void init_netlink(struct logger *logger)
  * @param rbuf - Return Buffer - contains data returned from the send.
  * @param description - String - user friendly description of what is
  *                      being attempted.  Used for diagnostics
- * @param text_said - String
+ * @param story - String
  * @return bool True if the message was successfully sent.
  */
-static int netlink_errno;	/* side-channel result of send_netlink_msg */
 
 static bool send_netlink_msg(struct nlmsghdr *hdr,
 			     unsigned expected_resp_type, struct nlm_resp *rbuf,
-			     const char *description, const char *text_said,
+			     const char *description, const char *story,
+			     int *recv_errno,
 			     struct logger *logger)
 {
+	dbg("xfrm: %s() sending %d", __func__, hdr->nlmsg_type);
+
 	struct nlm_resp rsp;
 	size_t len;
 	ssize_t r;
 	struct sockaddr_nl addr;
 	static uint32_t seq = 0;	/* STATIC */
 
-	netlink_errno = 0;
+	*recv_errno = 0;
 
 	hdr->nlmsg_seq = ++seq;
 	len = hdr->nlmsg_len;
 	do {
 		r = write(nl_send_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
+
 	if (r < 0) {
 		log_errno(logger, errno,
 			  "netlink write() of %s message for %s %s failed",
-			  sparse_val_show(xfrm_type_names,
-					  hdr->nlmsg_type),
-			  description, text_said);
-		return FALSE;
-	} else if ((size_t)r != len) {
+			  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+			  description, story);
+		return false;
+	}
+
+	if ((size_t)r != len) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			    description, text_said, r, len);
-		return FALSE;
+		     "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
+		     sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+		     description, story, r, len);
+		return false;
 	}
 
 	for (;;) {
@@ -395,12 +382,12 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		if (r < 0) {
 			if (errno == EINTR)
 				continue;
-			netlink_errno = errno;
+			*recv_errno = errno;
 			log_errno(logger, errno,
 				  "netlink recvfrom() of response to our %s message for %s %s failed",
 				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
-				  description, text_said);
+				  description, story);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
@@ -408,12 +395,12 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			continue;
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
-			dbg("netlink: ignoring %s message from process %u",
+			dbg("xfrm: ignoring %s message from process %u",
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
 			    addr.nl_pid);
 			continue;
 		} else if (rsp.n.nlmsg_seq != seq) {
-			dbg("netlink: ignoring out of sequence (%u/%u) message %s",
+			dbg("xfrm: ignoring out of sequence (%u/%u) message %s",
 			    rsp.n.nlmsg_seq, seq,
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 			continue;
@@ -425,7 +412,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			    description, text_said,
+			    description, story,
 			    len, (size_t) rsp.n.nlmsg_len);
 		return FALSE;
 	}
@@ -434,7 +421,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		if (rsp.u.e.error != 0) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "ERROR: netlink response for %s %s included errno %d: %s",
-				    description, text_said, -rsp.u.e.error,
+				    description, story, -rsp.u.e.error,
 				    strerror(-rsp.u.e.error));
 			return FALSE;
 		}
@@ -445,7 +432,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		 * This really happens for netlink_add_sa().
 		 */
 		dbg("netlink response for %s %s included non-error error",
-		    description, text_said);
+		    description, story);
 		/* ignore */
 	}
 	if (rbuf == NULL) {
@@ -455,7 +442,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		llog(RC_LOG_SERIOUS, logger,
 			    "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-			    description, text_said,
+			    description, story,
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
 		return FALSE;
 	}
@@ -468,39 +455,45 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
  *
  * @param hdr - Data to check
  * @param enoent_ok - Boolean - OK or not OK.
- * @param text_said - String
+ * @param story - String
  * @return boolean
  */
 static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
-			   const char *text_said, struct logger *logger)
+			   const char *story, struct logger *logger)
 {
 	struct nlm_resp rsp;
 
+	int recv_errno;
 	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp,
-			      "policy", text_said, logger))
-		return FALSE;
+			      "policy", story,
+			      &recv_errno, logger)) {
+		return false;
+	}
 
-	/* kind of surprising: we get here by success which implies an error structure! */
+	/*
+	 * Kind of surprising: we get here by success which implies an
+	 * error structure!
+	 */
 
 	int error = -rsp.u.e.error;
-
 	if (error == 0 || (error == ENOENT && enoent_ok))
-		return TRUE;
+		return true;
 
-	llog(RC_LOG_SERIOUS, logger,
-		    "ERROR: netlink %s response for flow %s included errno %d: %s",
-		    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		    text_said, error, strerror(error));
-	return FALSE;
+	log_errno(logger, error,
+		  "ERROR: netlink %s response for flow %s",
+		  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+		  story);
+	return false;
 }
 
 /*
- * netlink_raw_eroute
+ * netlink_raw_policy
  *
- * @param this_host ip_address
- * @param this_client ip_subnet
- * @param that_host ip_address
- * @param that_client ip_subnet
+ * @param kernel_policy_op op (operation - ie: KP_DELETE)
+ * @param src_host ip_address
+ * @param src_client ip_subnet
+ * @param dst_host ip_address
+ * @param dst_client ip_subnet
  * @param spi
  * @param sa_proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
  * @param transport_proto unsigned int Contains protocol
@@ -508,26 +501,23 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
- * @param pluto_sadb_opterations sadb_op (operation - ie: ERO_DELETE)
- * @param text_said char
+ * @param story char *
  * @return boolean True if successful
  */
-static bool netlink_raw_eroute(const ip_address *this_host,
-			       const ip_selector *this_client,
-			       const ip_address *that_host,
-			       const ip_selector *that_client,
+static bool netlink_raw_policy(enum kernel_policy_op op,
+			       const ip_address *src_host,
+			       const ip_selector *src_client,
+			       const ip_address *dst_host,
+			       const ip_selector *dst_client,
 			       ipsec_spi_t cur_spi,	/* current SPI */
 			       ipsec_spi_t new_spi,	/* new SPI */
-			       const struct ip_protocol *sa_proto,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype,
-			       const struct pfkey_proto_info *proto_info,
+			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority,
 			       const struct sa_marks *sa_marks,
 			       const uint32_t xfrm_if_id,
-			       enum pluto_sadb_operations sadb_op,
-			       const char *text_said,
 			       const shunk_t sec_label,
 			       struct logger *logger)
 {
@@ -537,33 +527,47 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			struct xfrm_userpolicy_info p;
 			struct xfrm_userpolicy_id id;
 		} u;
+		/* ??? MAX_NETLINK_DATA_SIZE is defined in our header, not a kernel header */
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
-	int policy = IPSEC_POLICY_IPSEC;
+	/*
+	 * ???
+	 * This enum was pointlessly copied from /usr/include/linux/ipsec.h
+	 * We don't use that header because it is for Racoon or PFKEY2
+	 * and we are neither.
+	 * Only three of the five values remain.
+	 * The values don't leak from this function (except in dbg output)
+	 * so the numerical values are no longer specified.
+	 * The value of "policy" is only used within this function and
+	 * only in two places; surely this could be simplified further.
+	 * The names should be made more appropriate and concise
+	 * for this very local and specific context.
+	 * Yet another meaning overloaded onto the word "policy".
+	 */
+	enum {
+		IPSEC_POLICY_DISCARD,
+		IPSEC_POLICY_NONE,
+		IPSEC_POLICY_IPSEC,
+	} policy;
 
-	if (sadb_op == ERO_DELETE && proto_info[0].reqid == 0 &&
-		(ntohl(new_spi) == SPI_PASS || ntohl(new_spi) == SPI_HOLD) &&
-		strstr("IGNORE_ON_XFRM", text_said) != NULL) {
-			dbg("request to delete an opportunistic bare shunt ignored - XFRM already deleted it when it installed IPsec SA, text_said:%s", text_said);
-			return TRUE;
-	}
-
+	const char *policy_name;
 	switch (esatype) {
 	case ET_UNSPEC:
 	case ET_AH:
 	case ET_ESP:
 	case ET_IPCOMP:
 	case ET_IPIP:
-
+		policy = IPSEC_POLICY_IPSEC;
+		policy_name = protocol_by_ipproto(esatype)->name;
 		break;
 
 	case ET_INT:
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			dbg("netlink_raw_eroute: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
+			policy_name = "%pass(none)";
 			break;
 		case SPI_HOLD:
 			/*
@@ -574,19 +578,32 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("netlink_raw_eroute: SPI_HOLD implemented as no-op");
-			return TRUE; /* yes really */
+			dbg("%s() SPI_HOLD implemented as no-op", __func__);
+			return true; /* yes really */
 		case SPI_DROP:
-		case SPI_REJECT:
-		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%drop(discard)";
+			break;
+		case SPI_REJECT:
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
+			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%reject(discard)";
+			break;
+		case 0:
+			/* used with type=passthrough - can it not use SPI_PASS ?? */
+			policy = IPSEC_POLICY_DISCARD;
+			policy_name = "%discard(discard)";
 			break;
 		case SPI_TRAP:
-			if (sadb_op == ERO_ADD_INBOUND ||
-				sadb_op == ERO_DEL_INBOUND)
-				return TRUE;
-
+			if (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) {
+				dbg("%s() inbound SPI_TRAP implemented as no-op", __func__);
+				return true;
+			}
+			policy = IPSEC_POLICY_IPSEC;
+			policy_name = "%trap(ipsec)";
 			break;
+		case SPI_IGNORE:
 		case SPI_TRAPSUBNET: /* unused in our code */
 		default:
 			bad_case(ntohl(new_spi));
@@ -596,46 +613,21 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	default:
 		bad_case(esatype);
 	}
-
-	const int dir = (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
+	const int dir = (op == KP_ADD_INBOUND ||
+			 op == KP_DELETE_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
-
-	/*
-	 * Bug #1004 fix.
-	 * There really isn't "client" with XFRM and transport mode
-	 * so eroute must be done to natted, visible ip. If we don't hide
-	 * internal IP, communication doesn't work.
-	 */
-	ip_selector local_client;
-
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == &ip_protocol_esp) {
-		/*
-		 * Variable "that" should be remote, but here it's not.
-		 * We must check "dir" to find out remote address.
-		 */
-		int local_port;
-
-		if (dir == XFRM_POLICY_OUT) {
-			local_port = selector_hport(*that_client);
-			local_client = selector_from_address(*that_host);
-			that_client = &local_client;
-		} else {
-			local_port = selector_hport(*this_client);
-			local_client = selector_from_address(*this_host);
-			this_client = &local_client;
-		}
-		update_selector_hport(&local_client, local_port);
-		dbg("%s: using host address instead of client subnet", __func__);
-	}
+	dbg("%s() policy=%s/%d dir=%d", __func__, policy_name, policy, dir);
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = selector_type(that_client)->af;
+	const struct ip_info *dst_client_afi  = selector_type(dst_client);
+	const int family = dst_client_afi->af;
+	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-	SELECTOR_TO_XFRM(this_client, req.u.p.sel, s);
-	SELECTOR_TO_XFRM(that_client, req.u.p.sel, d);
+	SELECTOR_TO_XFRM(src_client, req.u.p.sel, s);
+	SELECTOR_TO_XFRM(dst_client, req.u.p.sel, d);
 
 	/*
 	 * Munge .[sd]port?
@@ -654,23 +646,23 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * ports before passing to XFRM.
 	 */
 	if (transport_proto == IPPROTO_ICMP ||
-		transport_proto == IPPROTO_ICMPV6) {
-		uint16_t icmp_type;
-		uint16_t icmp_code;
-
-		icmp_type = ntohs(req.u.p.sel.sport) >> 8;
-		icmp_code = ntohs(req.u.p.sel.sport) & 0xFF;
+	    transport_proto == IPPROTO_ICMPV6) {
+		uint16_t tc = ntohs(req.u.p.sel.sport);
+		uint16_t icmp_type = tc >> 8;
+		uint16_t icmp_code = tc & 0xFF;
 
 		req.u.p.sel.sport = htons(icmp_type);
 		req.u.p.sel.dport = htons(icmp_code);
 	}
 
+	/* note: byte order doesn't change 0 or ~0 */
 	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
 	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
 	req.u.p.sel.proto = transport_proto;
 	req.u.p.sel.family = family;
 
-	if (sadb_op == ERO_DELETE || sadb_op == ERO_DEL_INBOUND) {
+	if (op == KP_DELETE_OUTBOUND ||
+	    op == KP_DELETE_INBOUND) {
 		req.u.id.dir = dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -679,11 +671,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
-		dbg("IPsec SA SPD priority set to %d", req.u.p.priority);
+		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
 
-		req.u.p.action = XFRM_POLICY_ALLOW;
-		if (policy == IPSEC_POLICY_DISCARD)
-			req.u.p.action = XFRM_POLICY_BLOCK;
+		req.u.p.action = policy == IPSEC_POLICY_DISCARD ?
+			XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW;
 		/* req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
@@ -701,63 +692,101 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * tunnel A = C configured.
 		 */
 		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		if (sadb_op == ERO_REPLACE)
-			req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
-	if (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) {
-		if (sadb_op != ERO_DELETE) {
-			struct rtattr *attr;
+	/*
+	 * Add the encapsulation protocol found in proto_info[] that
+	 * will carry the packets (which the kernel seems to call
+	 * user_templ).
+	 *
+	 * XXX: why not just test proto_info - let caller decide if it
+	 * is needed.  Lets find out.
+	 */
+	if (encap != NULL &&
+	    /* XXX: see comment above, and {else} below */
+	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) &&
+	    op != KP_DELETE_OUTBOUND) {
+		struct xfrm_user_tmpl tmpl[4] = {0};
 
-			struct xfrm_user_tmpl tmpl[4];
-			int i;
+		int i;
+		for (i = 0; i <= encap->outer; i++) {
+			tmpl[i].reqid = encap->rule[i].reqid;
+			tmpl[i].id.proto = encap->rule[i].proto;
+			tmpl[i].optional = (encap->rule[i].proto == ENCAP_PROTO_IPCOMP && dir != XFRM_POLICY_OUT);
+			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
+			tmpl[i].family = addrtypeof(dst_host);
+			/* only the inner-most rule gets the worm; er tunnel flag */
+			tmpl[i].mode = (i == 0 && encap->mode == ENCAP_MODE_TUNNEL);
 
-			zero(&tmpl);
-			for (i = 0; proto_info[i].proto; i++) {
-				tmpl[i].reqid = proto_info[i].reqid;
-				tmpl[i].id.proto = proto_info[i].proto;
-				tmpl[i].optional = proto_info[i].proto == IPPROTO_COMP && dir != XFRM_POLICY_OUT;
-				tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-				tmpl[i].family = addrtypeof(that_host);
-				tmpl[i].mode = proto_info[i].mode == ENCAPSULATION_MODE_TUNNEL;
-
-				if (!tmpl[i].mode)
-					continue;
-
-				tmpl[i].saddr = xfrm_from_address(this_host);
-				tmpl[i].id.daddr = xfrm_from_address(that_host);
+			if (tmpl[i].mode) {
+				/* tunnel mode needs addresses */
+				tmpl[i].saddr = xfrm_from_address(src_host);
+				tmpl[i].id.daddr = xfrm_from_address(dst_host);
 			}
 
-			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-			attr->rta_type = XFRMA_TMPL;
-			attr->rta_len = i * sizeof(tmpl[0]);
-			memcpy(RTA_DATA(attr), tmpl, attr->rta_len);
-			attr->rta_len = RTA_LENGTH(attr->rta_len);
-			req.n.nlmsg_len += attr->rta_len;
+			address_buf sb, db;
+			dbg("%s() adding xfrm_user_tmpl reqid=%d id.proto=%d optional=%d family=%d mode=%d saddr=%s id.daddr=%s",
+			    __func__,
+			    tmpl[i].reqid,
+			    tmpl[i].id.proto,
+			    tmpl[i].optional,
+			    tmpl[i].family,
+			    tmpl[i].mode,
+			    str_address(tmpl[i].mode ? src_host : &unset_address, &sb),
+			    str_address(tmpl[i].mode ? dst_host : &unset_address, &db));
 		}
 
-		/* mark policy extension */
-		{
+		/* append  */
+		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		attr->rta_type = XFRMA_TMPL;
+		attr->rta_len = i * sizeof(tmpl[0]);
+		memcpy(RTA_DATA(attr), tmpl, attr->rta_len);
+		attr->rta_len = RTA_LENGTH(attr->rta_len);
+		req.n.nlmsg_len += attr->rta_len;
+
+	} else if (DBGP(DBG_BASE) && encap != NULL) {
+		/*
+		 * Dump ignored proto_info[].
+		 */
+		for (unsigned i = 0; encap->rule[i].proto; i++) {
+			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because policy=%d op=%d",
+				__func__, encap->rule[i].reqid,
+				protocol_by_ipproto(encap->rule[i].proto)->name,
+				encap_mode_name(encap->mode),
+				policy, op);
+		}
+
+	}
+
+	/*
+	 * Add mark policy extension if present.
+	 *
+	 * XXX: again, can't the caller decide this?
+	 */
+	if (sa_marks != NULL &&
+	    /* XXX: see comment above and {else} below */
+	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD)) {
+		if (xfrm_if_id == 0) {
 			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
-			if (sa_mark.val != 0 && sa_mark.mask != 0 && xfrm_if_id == 0) {
-				struct xfrm_mark xfrm_mark;
-				struct rtattr* mark_attr;
-
-				xfrm_mark.v = sa_mark.val;
-				xfrm_mark.m = sa_mark.mask;
-				mark_attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-				mark_attr->rta_type = XFRMA_MARK;
-				mark_attr->rta_len = sizeof(xfrm_mark);
-				memcpy(RTA_DATA(mark_attr), &xfrm_mark, mark_attr->rta_len);
-				mark_attr->rta_len = RTA_LENGTH(mark_attr->rta_len);
-				req.n.nlmsg_len += mark_attr->rta_len;
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+				struct xfrm_mark xfrm_mark = {
+					.v = sa_mark.val,
+					.m = sa_mark.mask,
+				};
+				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
+				/* append */
+				struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+				attr->rta_type = XFRMA_MARK;
+				attr->rta_len = sizeof(xfrm_mark);
+				memcpy(RTA_DATA(attr), &xfrm_mark, attr->rta_len);
+				attr->rta_len = RTA_LENGTH(attr->rta_len);
+				req.n.nlmsg_len += attr->rta_len;
 			}
-		}
 #ifdef USE_XFRM_INTERFACE
-		if (xfrm_if_id != 0) {
-			dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+		} else {
+			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrm_if_id, req.n.nlmsg_type);
 			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
 			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
@@ -770,8 +799,13 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				nl_addattr32(&req.n, sizeof(req.data),
 					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
 			}
-		}
 #endif
+		}
+	} else if (DBGP(DBG_BASE) && sa_marks != NULL) {
+		DBG_log("%s() ignoring xfrm_mark in %x/%x out %x/%x because policy=%d op=%d", __func__,
+			sa_marks->in.val, sa_marks->in.mask,
+			sa_marks->out.val, sa_marks->out.mask,
+			policy, op);
 	}
 
 	if (sec_label.len > 0) {
@@ -782,7 +816,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		passert(sec_label.len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		dbg("passing security label '"PRI_SHUNK"' to kernel", pri_shunk(sec_label));
+		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
 		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
 		uctx = RTA_DATA(attr);
 		uctx->exttype = XFRMA_SEC_CTX;
@@ -794,50 +828,98 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	bool enoent_ok = sadb_op == ERO_DEL_INBOUND ||
-		(sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
+	bool enoent_ok = (op == KP_DELETE_INBOUND ||
+			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
 
-	bool ok = netlink_policy(&req.n, enoent_ok, text_said, logger);
+	bool ok = netlink_policy(&req.n, enoent_ok, policy_name, logger);
 
-	/* ??? deal with any forwarding policy */
-	switch (dir) {
-	case XFRM_POLICY_IN:
-		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY) {
-			/* ??? we will call netlink_policy even if !ok. */
-			req.u.id.dir = XFRM_POLICY_FWD;
-		} else if (!ok) {
+	/*
+	 * ??? deal with any forwarding policy.
+	 *
+	 * For tunnel mode the inbound SA needs a add/delete a forward
+	 * policy; from where, to where?  Why?
+	 *
+	 * XXX: and yes, the code below doesn't exactly do just that.
+	 */
+	switch (op) {
+	case KP_DELETE_INBOUND:
+#if 0
+		/*
+		 * XXX: does sec_label need a forward?  Lets assume
+		 * not.
+		 */
+		if (sec_label.len > 0) {
 			break;
-		} else if (proto_info[0].mode != ENCAPSULATION_MODE_TUNNEL &&
-			   esatype != ET_INT) {
-			break;
-		} else {
-			req.u.p.dir = XFRM_POLICY_FWD;
 		}
-		ok &= netlink_policy(&req.n, enoent_ok, text_said, logger);
+#endif
+		/*
+		 * ??? we will call netlink_policy even if !ok.
+		 *
+		 * XXX: It's also called when transport mode!
+		 *
+		 * Presumably this is trying to also delete earlier
+		 * SNAFUs.
+		 */
+		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
+		    __func__);
+		req.u.id.dir = XFRM_POLICY_FWD;
+		ok &= netlink_policy(&req.n, enoent_ok, policy_name, logger);
 		break;
+	case KP_ADD_INBOUND:
+#if 0
+		/*
+		 * XXX: does sec_label need a forward?  Lets assume
+		 * not.
+		 */
+		if (sec_label.len > 0) {
+			break;
+		}
+#endif
+		if (!ok) {
+			break;
+		}
+		if (esatype != ET_INT &&
+		    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
+			break;
+		}
+		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
+		req.u.p.dir = XFRM_POLICY_FWD;
+		ok &= netlink_policy(&req.n, enoent_ok, policy_name, logger);
+		break;
+	default:
+		break; /*no-op*/
 	}
 	return ok;
 }
 
 static void set_migration_attr(const struct kernel_sa *sa,
-		struct xfrm_user_migrate *m)
+			       struct xfrm_user_migrate *m)
 {
 	m->old_saddr = xfrm_from_address(sa->src.address);
 	m->old_daddr = xfrm_from_address(sa->dst.address);
 	m->new_saddr = xfrm_from_address(&sa->src.new_address);
 	m->new_daddr = xfrm_from_address(&sa->dst.new_address);
-
-	if (sa->mode == ENCAPSULATION_MODE_TUNNEL)
-		m->mode = XFRM_MODE_TUNNEL;
-	else
-		m->mode = XFRM_MODE_TRANSPORT;
+	m->mode = (sa->level == 0 && sa->tunnel ? ENCAPSULATION_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
 	m->proto = sa->proto->ipproto;
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_type(sa->src.address)->af;
 }
 
-static bool create_xfrm_migrate_sa(struct state *st, const int dir,
-		struct kernel_sa *ret_sa, char *text_said)
+/*
+ * size of buffer needed for "story"
+ *
+ * RFC 1886 old IPv6 reverse-lookup format is the bulkiest.
+ *
+ * Since the bufs have 2 char padding, this slightly overallocates.
+ */
+typedef struct {
+	char buf[16 + sizeof(said_buf) + sizeof(address_reversed_buf)];
+} story_buf;
+
+static bool create_xfrm_migrate_sa(struct state *st,
+				   const int dir,	/* netkey SA direction XFRM_POLICY_* */
+				   struct kernel_sa *ret_sa,
+				   story_buf *story /* must live as long as sa */)
 {
 	const struct connection *const c = st->st_connection;
 
@@ -860,114 +942,97 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		return FALSE;
 	}
 
+	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
+
 	struct kernel_sa sa = {
 		.xfrm_dir = dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
 		.encap_type = encap_type,
+		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
+		.story = story->buf,	/* content will evolve */
 		/* WWW what about sec_label? */
 	};
 
-	if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-		sa.mode = ENCAPSULATION_MODE_TUNNEL;
-	else
-		sa.mode = ENCAPSULATION_MODE_TRANSPORT;
-
 	ip_endpoint new_endpoint;
 	uint16_t old_port;
-	uint16_t encap_sport = 0;
-	uint16_t encap_dport = 0;
-	const ip_address *src, *dst;
-	const ip_selector *src_client, *dst_client;
+	uint16_t encap_sport;
+	uint16_t encap_dport;
+
+	/* note: XFRM_POLICY_FWD is inbound too */
+	bool inbound = dir != XFRM_POLICY_OUT;
+
+	const struct end *src_end, *dst_end;
+
+	if (inbound) {
+		src_end = &c->spd.that;
+		dst_end = &c->spd.this;
+		sa.spi = proto_info->our_spi;
+	} else {
+		src_end = &c->spd.this;
+		dst_end = &c->spd.that;
+		sa.spi = proto_info->attrs.spi;
+	}
+	const ip_address *src = &src_end->host_addr;
+	const ip_address *dst = &dst_end->host_addr;
+
+	sa.src.new_address = *src;	/* may be overridden */
+	sa.dst.new_address = *dst;	/* may be overridden */
 
 	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
-		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
-		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		jam_string(&story_jb, "initiator migrate kernel SA ");
 		old_port = endpoint_hport(st->st_interface->local_endpoint);
 		new_endpoint = st->st_mobike_local_endpoint;
 
-		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
-			src = &c->spd.that.host_addr;
-			dst = &c->spd.this.host_addr;
-			src_client = &c->spd.that.client;
-			dst_client = &c->spd.this.client;
-			sa.src.new_address = *src;
-			sa.dst.new_address = endpoint_address(st->st_mobike_local_endpoint);
-			sa.spi = proto_info->our_spi;
-			set_text_said(n, dst, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_mobike_local_endpoint);
-			}
+		if (inbound) {
+			sa.dst.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(st->st_remote_endpoint);
+			encap_dport = endpoint_hport(new_endpoint);
 		} else {
-			src = &c->spd.this.host_addr;
-			dst = &c->spd.that.host_addr;
-			src_client = &c->spd.this.client;
-			dst_client = &c->spd.that.client;
-			sa.src.new_address = endpoint_address(st->st_mobike_local_endpoint);
-			sa.dst.new_address = *dst;
-			sa.spi = proto_info->attrs.spi;
-			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_mobike_local_endpoint);
-				encap_dport = endpoint_hport(st->st_remote_endpoint);
-			}
+			sa.src.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(new_endpoint);
+			encap_dport = endpoint_hport(st->st_remote_endpoint);
 		}
 	} else {
-		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
-		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		jam_string(&story_jb, "responder migrate kernel SA ");
 		old_port = endpoint_hport(st->st_remote_endpoint);
 		new_endpoint = st->st_mobike_remote_endpoint;
 
-		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
-			src = &c->spd.that.host_addr;
-			dst = &c->spd.this.host_addr;
-			src_client = &c->spd.that.client;
-			dst_client = &c->spd.this.client;
-			sa.src.new_address = endpoint_address(st->st_mobike_remote_endpoint);
-			sa.dst.new_address = c->spd.this.host_addr;
-			sa.spi = proto_info->our_spi;
-			set_text_said(n, src, sa.spi, proto);
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_mobike_remote_endpoint);
-				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
-			}
+		if (inbound) {
+			sa.src.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(new_endpoint);
+			encap_dport = endpoint_hport(st->st_interface->local_endpoint);
 		} else {
-			src = &c->spd.this.host_addr;
-			dst = &c->spd.that.host_addr;
-			src_client = &c->spd.this.client;
-			dst_client = &c->spd.that.client;
-			sa.src.new_address = c->spd.this.host_addr;
-			sa.dst.new_address = endpoint_address(st->st_mobike_remote_endpoint);
-			sa.spi = proto_info->attrs.spi;
-			set_text_said(n, dst, sa.spi, proto);
-
-			if (encap_type != NULL) {
-				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
-				encap_dport = endpoint_hport(st->st_mobike_remote_endpoint);
-			}
+			sa.dst.new_address = endpoint_address(new_endpoint);
+			encap_sport = endpoint_hport(st->st_interface->local_endpoint);
+			encap_dport = endpoint_hport(new_endpoint);
 		}
+	}
+
+	if (encap_type == NULL) {
+		encap_sport = 0;
+		encap_dport = 0;
 	}
 
 	sa.src.address = src;
 	sa.dst.address = dst;
-	sa.text_said = text_said;
-	sa.src.client = src_client;
-	sa.dst.client = dst_client;
+	sa.src.client = &src_end->client;
+	sa.dst.client = &dst_end->client;
 	sa.src.encap_port = encap_sport;
 	sa.dst.encap_port = encap_dport;
 
-	char reqid_buf[ULTOT_BUF + 32];
-	endpoint_buf ra;
-	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s reqid=%u %s",
-			old_port,
-		 str_endpoint(&new_endpoint, &ra),
-			sa.reqid,
-			enum_name(&netkey_sa_dir_names, dir));
-	add_str(text_said, SAMIGTOT_BUF, text_said, reqid_buf);
+	ip_said said = said_from_address_protocol_spi(*dst, proto, sa.spi);
+	jam_said(&story_jb, &said);
 
-	dbg("%s", text_said);
+	endpoint_buf ra;
+	jam(&story_jb, ":%u to %s reqid=%u %s",
+		 old_port,
+		 str_endpoint(&new_endpoint, &ra),
+		 sa.reqid,
+		 enum_name(&netkey_sa_dir_names, dir));
+
+	dbg("%s", story->buf);
 
 	*ret_sa = sa;
 	return TRUE;
@@ -1036,32 +1101,26 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 	 * but that is wrong: the type of req.n only covers the header.
 	 * Maybe there is a way to write this that doesn't mislead Coverity.
 	 */
+	int recv_errno;
 	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
-				  "mobike", sa->text_said, logger);
-	if (!r)
-		return FALSE;
-
-	if (rsp.u.e.error < 0) {
-		/* error is already logged */
-		return FALSE;
-	}
-
-	return TRUE;
+				  "mobike", sa->story,
+				  &recv_errno, logger);
+	return r && rsp.u.e.error >= 0;
 }
 
 static bool netlink_migrate_sa(struct state *st)
 {
 	struct kernel_sa sa;
-	char mig_said[SAMIGTOT_BUF];
+	story_buf story;	/* must live as long as sa */
 
 	return
-		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said) &&
+		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, &story) &&
 		migrate_xfrm_sa(&sa, st->st_logger);
 }
 
@@ -1217,58 +1276,33 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.id.proto = esatype2proto(sa->esatype);
 	req.p.family = addrtypeof(sa->src.address);
 	/*
-	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
-	 * tunnels in linux 2.6.25+
+	 * This requires ipv6 modules. It is required to support 6in4
+	 * and 4in6 tunnels in linux 2.6.25+
+	 *
+	 * Only the innermost SA gets the "tunnel" flag.
 	 */
-	if (sa->mode == ENCAPSULATION_MODE_TUNNEL) {
-		dbg("netlink: enabling tunnel mode");
+	if (sa->level == 0 && sa->tunnel) {
+		dbg("xfrm: enabling tunnel mode");
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
 	} else {
-		dbg("netlink: enabling transport mode");
+		dbg("xfrm: enabling transport mode");
 		req.p.mode = XFRM_MODE_TRANSPORT;
 	}
 
 	/*
-	 * We only add traffic selectors for transport mode. The problem is
-	 * that Tunnel mode ipsec with ipcomp is layered so that ipcomp
-	 * tunnel is protected with transport mode ipsec but in this case we
-	 * shouldn't any more add traffic selectors. Caller function will
-	 * inform us if we need or don't need selectors.
+	 * We only add traffic selectors for transport mode.
+	 *
+	 * The problem is that Tunnel mode ipsec with ipcomp is
+	 * layered so that ipcomp tunnel is protected with transport
+	 * mode ipsec but in this case we shouldn't any more add
+	 * traffic selectors. Caller function will inform us if we
+	 * need or don't need selectors.
 	 */
-	if (sa->add_selector) {
-		ip_selector src = *sa->src.client;
-		ip_selector dst = *sa->dst.client;
-		const ip_protocol *protocol = protocol_by_ipproto(sa->transport_proto);
-
-		/*
-		 * With XFRM/NETKEY and transport mode with nat-traversal we
-		 * need to change outbound IPsec SA to point to external ip of
-		 * the peer. Here we substitute real client ip with NATD ip.
-		 *
-		 * XXX: unset_protoport is technically wrong - the
-		 * protocol is sa->transport_proto(?) and .  Code
-		 * further down will fix up the .sport / .dport in the
-		 * xfrm structure.
-		 *
-		 * XXX: is .src.address / .dst.address an address or
-		 * endpoint in disguise?
-		 */
-		if (sa->inbound) {
-			/* inbound; fix this end */
-			ip_port port = selector_port(*sa->src.client);
-			src = selector_from_address_protocol_port(*sa->src.address,
-								  protocol, port);
-		} else {
-			/* outbound; fix other end */
-			ip_port port = selector_port(*sa->dst.client);
-			dst = selector_from_address_protocol_port(*sa->dst.address,
-								  protocol, port);
-		}
-
+	if (!sa->tunnel) {
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-		SELECTOR_TO_XFRM(&src, req.p.sel, s);
-		SELECTOR_TO_XFRM(&dst, req.p.sel, d);
+		SELECTOR_TO_XFRM(sa->src.client, req.p.sel, s);
+		SELECTOR_TO_XFRM(sa->dst.client, req.p.sel, d);
 
 		/*
 		 * Munge .[sd]port?
@@ -1302,11 +1336,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = selector_type(&src)->af;
+		req.p.sel.family = selector_type(sa->src.client)->af;
 	}
 
 	req.p.reqid = sa->reqid;
-	dbg("XFRM: adding IPsec SA with reqid %d", sa->reqid);
+	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
@@ -1333,28 +1367,28 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
 	if (sa->esatype == ET_AH && addrtypeof(sa->src.address) == AF_INET) {
-		dbg("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
+		dbg("xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
 
 	if (sa->esatype != ET_IPCOMP) {
 		if (sa->esn) {
-			dbg("netlink: enabling ESN");
+			dbg("xfrm: enabling ESN");
 			req.p.flags |= XFRM_STATE_ESN;
 		}
 		if (sa->decap_dscp) {
-			dbg("netlink: enabling Decap DSCP");
+			dbg("xfrm: enabling Decap DSCP");
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
 		if (sa->nopmtudisc) {
-			dbg("netlink: disabling Path MTU Discovery");
+			dbg("xfrm: disabling Path MTU Discovery");
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
 			req.p.replay_window = sa->replay_window;
-			dbg("netlink: setting IPsec SA replay-window to %d using old-style req",
+			dbg("xfrm: setting IPsec SA replay-window to %d using old-style req",
 			    req.p.replay_window);
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
@@ -1365,7 +1399,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 				.replay_window = sa->replay_window,
 				.bmp_len = bmp_size / sizeof(uint32_t),
 			};
-			dbg("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
+			dbg("xfrm: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
 			    xre.replay_window);
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
@@ -1416,26 +1450,34 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 *  Shouldn't all be bundled?
 	 */
 	if (sa->esatype == ET_IPCOMP) {
-		struct xfrm_algo algo;
-		const char *name = sparse_name(calg_list, sa->compalg);
 
-		if (name == NULL) {
+		/* Compress Algs */
+		static const char *calg_list[] = {
+			[IPCOMP_DEFLATE] = "deflate",
+			[IPCOMP_LZS] = "lzs",
+			[IPCOMP_LZJH] = "lzjh",
+		};
+
+		const char *calg_name = (sa->ipcomp_algo >= elemsof(calg_list) ? NULL :
+					 calg_list[sa->ipcomp_algo]);
+		if (calg_name == NULL) {
 			llog(RC_LOG_SERIOUS, logger,
-				    "unknown compression algorithm: %u",
-				    sa->compalg);
-			return FALSE;
+			     "unsupported compression algorithm: %s",
+			     enum_name(&ipsec_ipcomp_algo_names, sa->ipcomp_algo));
+			return false;
 		}
 
-		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+		struct xfrm_algo algo;
+		fill_and_terminate(algo.alg_name, calg_name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
+		/* append */
 		attr->rta_type = XFRMA_ALG_COMP;
 		attr->rta_len = RTA_LENGTH(sizeof(algo));
-
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
 	} else if (sa->esatype == ET_ESP) {
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
@@ -1483,9 +1525,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
-			if (sa->tfcpad != 0 &&
-			    sa->mode == ENCAPSULATION_MODE_TUNNEL) {
-				dbg("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
+			if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
+				dbg("xfrm: setting TFC to %" PRIu32 " (up to PMTU)",
 				    sa->tfcpad);
 
 				attr->rta_type = XFRMA_TFCPAD;
@@ -1520,7 +1561,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 #ifdef USE_XFRM_INTERFACE
 	if (sa->xfrm_if_id != 0) {
-		dbg("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+		dbg("%s xfrm: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 		    __func__, sa->xfrm_if_id, req.n.nlmsg_type);
 		nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, sa->xfrm_if_id);
 		if (sa->mark_set.val != 0 || sa->mark_set.mask != 0) {
@@ -1549,9 +1590,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-		dbg("netlink: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev);
+		dbg("xfrm: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev);
 	} else {
-		dbg("netlink: esp-hw-offload not set for IPsec SA");
+		dbg("xfrm: esp-hw-offload not set for IPsec SA");
 	}
 
 	if (sa->sec_label.len != 0) {
@@ -1576,9 +1617,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
+	int recv_errno;
 	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-			       "Add SA", sa->text_said, logger);
-	if (!ret && netlink_errno == ESRCH &&
+			       "Add SA", sa->story,
+			       &recv_errno, logger);
+	if (!ret && recv_errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
@@ -1615,8 +1658,10 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 
 	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
 
+	int recv_errno;
 	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-				"Del SA", sa->text_said, logger);
+				"Del SA", sa->story,
+				&recv_errno, logger);
 }
 
 /*
@@ -1814,7 +1859,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 
 	if (delete_bare_shunt(&src, &dst,
 			      transport_proto, SPI_HOLD /* why spi to use? */,
-			       /*skip_xfrm_raw_eroute_delete?*/false,
+			       /*skip_xfrm_policy_delete?*/false,
 			      "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
@@ -1912,8 +1957,10 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
+	int recv_errno;
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
-			      "Get policy", "?", logger)) {
+			      "Get policy", "?",
+			      &recv_errno, logger)) {
 		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
@@ -2069,7 +2116,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 				   bool tunnel_mode,
 				   reqid_t reqid,
 				   uintmax_t min, uintmax_t max,
-				   const char *text_said,
+				   const char *story,
 				   struct logger *logger)
 {
 	struct {
@@ -2094,8 +2141,10 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.min = min;
 	req.spi.max = max;
 
+	int recv_errno;
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SPI", text_said, logger)) {
+			      "Get SPI", story,
+			      &recv_errno, logger)) {
 		return 0;
 	}
 
@@ -2108,100 +2157,8 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	}
 
 	dbg("kernel: netlink_get_spi: allocated 0x%x for %s",
-	    ntohl(rsp.u.sa.id.spi), text_said);
+	    ntohl(rsp.u.sa.id.spi), story);
 	return rsp.u.sa.id.spi;
-}
-
-/*
- * install or remove eroute for SA Group
- *
- * (identical to KLIPS version, but refactoring isn't waranteed yet
- */
-static bool netlink_sag_eroute(const struct state *st, const struct spd_route *sr,
-			unsigned op, const char *opname)
-{
-	struct connection *c = st->st_connection;
-	enum eroute_type inner_esatype;
-	ipsec_spi_t inner_spi;
-	struct pfkey_proto_info proto_info[4];
-	int i;
-	bool tunnel;
-
-	/*
-	 * figure out the SPI and protocol (in two forms)
-	 * for the innermost transformation.
-	 */
-	i = elemsof(proto_info) - 1;
-	proto_info[i].proto = 0;
-	tunnel = FALSE;
-
-	const struct ip_protocol *inner_proto = NULL;
-	inner_esatype = ET_UNSPEC;
-	inner_spi = 0;
-
-	if (st->st_ah.present) {
-		inner_spi = st->st_ah.attrs.spi;
-		inner_proto = &ip_protocol_ah;
-		inner_esatype = ET_AH;
-
-		i--;
-		proto_info[i].proto = IPPROTO_AH;
-		proto_info[i].mode = st->st_ah.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ah(sr->reqid);
-	}
-
-	if (st->st_esp.present) {
-		inner_spi = st->st_esp.attrs.spi;
-		inner_proto = &ip_protocol_esp;
-		inner_esatype = ET_ESP;
-
-		i--;
-		proto_info[i].proto = IPPROTO_ESP;
-		proto_info[i].mode = st->st_esp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_esp(sr->reqid);
-	}
-
-	if (st->st_ipcomp.present) {
-		inner_spi = st->st_ipcomp.attrs.spi;
-		inner_proto = &ip_protocol_comp;
-		inner_esatype = ET_IPCOMP;
-
-		i--;
-		proto_info[i].proto = IPPROTO_COMP;
-		proto_info[i].mode =
-			st->st_ipcomp.attrs.mode;
-		tunnel |= proto_info[i].mode ==
-			ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
-	}
-
-	/* check for no transform at all */
-	passert(st->st_ipcomp.present || st->st_esp.present ||
-			st->st_ah.present);
-
-	if (tunnel) {
-		int j;
-
-		inner_spi = st->st_tunnel_out_spi;
-		inner_proto = &ip_protocol_ipip;
-		inner_esatype = ET_IPIP;
-
-		proto_info[i].mode = ENCAPSULATION_MODE_TUNNEL;
-		for (j = i + 1; proto_info[j].proto; j++)
-			proto_info[j].mode =
-				ENCAPSULATION_MODE_TRANSPORT;
-	}
-
-	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
-
-	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
-				 inner_esatype, proto_info + i,
-				 calculate_sa_prio(c, FALSE), &c->sa_marks,
-				 xfrm_if_id, op, opname, st->st_logger);
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -2220,10 +2177,10 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 		deltatime_cmp(idle_time, >=, idle_max);
 }
 
-static bool netlink_shunt_eroute(const struct connection *c,
+static bool netlink_shunt_policy(enum kernel_policy_op op,
+				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
-				 enum pluto_sadb_operations op,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -2240,7 +2197,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 
 	if (DBGP(DBG_BASE)) {
 		selector_buf this_buf, that_buf;
-		DBG_log("netlink_shunt_eroute for proto %d, and source %s dest %s",
+		DBG_log("netlink_shunt_policy for proto %d, and source %s dest %s",
 			sr->this.protocol,
 			str_selector(&sr->this.client, &this_buf),
 			str_selector(&sr->that.client, &that_buf));
@@ -2252,23 +2209,23 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		 * opname
 		 */
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE_OUTBOUND:
 			/* replace with nothing == delete */
-			op = ERO_DELETE;
+			op = KP_DELETE_OUTBOUND;
 			opname = "delete";
 			break;
-		case ERO_ADD:
+		case KP_ADD_OUTBOUND:
 			/* add nothing == do nothing */
 			return TRUE;
 
-		case ERO_DELETE:
+		case KP_DELETE_OUTBOUND:
 			/* delete remains delete */
 			break;
 
-		case ERO_ADD_INBOUND:
+		case KP_ADD_INBOUND:
 			break;
 
-		case ERO_DEL_INBOUND:
+		case KP_DELETE_INBOUND:
 			break;
 
 		default:
@@ -2283,13 +2240,13 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		 */
 		passert(eclipsable(sr));
 		switch (op) {
-		case ERO_REPLACE:
+		case KP_REPLACE_OUTBOUND:
 			/* really an add */
-			op = ERO_ADD;
+			op = KP_ADD_OUTBOUND;
 			opname = "replace eclipsed";
 			eclipse_count--;
 			break;
-		case ERO_DELETE:
+		case KP_DELETE_OUTBOUND:
 			/*
 			 * delete unnecessary:
 			 * we don't actually have an eroute
@@ -2297,83 +2254,80 @@ static bool netlink_shunt_eroute(const struct connection *c,
 			eclipse_count--;
 			return TRUE;
 
-		case ERO_ADD:
+		case KP_ADD_OUTBOUND:
 		default:
 			bad_case(op);
 		}
-	} else if (eclipse_count > 0 && op == ERO_DELETE && eclipsable(sr)) {
+	} else if (eclipse_count > 0 && op == KP_DELETE_OUTBOUND && eclipsable(sr)) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr;
 		struct connection *ue = eclipsed(c, &esr);
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return netlink_shunt_eroute(ue, esr,
+			return netlink_shunt_policy(KP_REPLACE_OUTBOUND, ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
-						    ERO_REPLACE,
 						    "restoring eclipsed",
 						    logger);
 		}
 	}
 
-	char buf2[256];
-
-	snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
-
 	/*
-	 * XXX: the two calls below to netlink_raw_eroute() (not
-	 * raw_eroute()) seems to be the only place where SA_PROTO and
-	 * ESATYPE disagree - when ENCAPSULATION_MODE_TRANSPORT
-	 * SA_PROTO==&ip_protocol_esp and ESATYPE==ET_INT!?!  Looking in the
-	 * function there's a weird test involving both SA_PROTO and
-	 * ESATYPE.
+	 * XXX: the two calls below to raw_policy() seems to be the
+	 * only place where SA_PROTO and ESATYPE disagree - when
+	 * ENCAPSULATION_MODE_TRANSPORT SA_PROTO==&ip_protocol_esp and
+	 * ESATYPE==ET_INT!?!  Looking in the function there's a weird
+	 * test involving both SA_PROTO and ESATYPE.
+	 *
+	 * XXX: suspect sa_proto should be dropped (when is SPI not
+	 * internal) and instead esatype (encapsulated sa type) should
+	 * receive &ip_protocol ...
+	 *
+	 * Use raw_policy() as it gives a better log result.
 	 */
-	const struct ip_protocol *sa_proto = c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
-		&ip_protocol_esp : &ip_protocol_internal;
 
-	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
-				&sr->that.host_addr, &sr->that.client,
-				htonl(spi), htonl(spi),
-				sa_proto,
-				sr->this.protocol,
-				ET_INT,
-				null_proto_info,
-				deltatime(0),
-				calculate_sa_prio(c, FALSE),
-				&c->sa_marks,
-				(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
-				op, buf2,
-				HUNK_AS_SHUNK(sr->this.sec_label),
-				logger))
+	if (!raw_policy(op,
+			&sr->this.host_addr, &sr->this.client,
+			&sr->that.host_addr, &sr->that.client,
+			htonl(spi), htonl(spi),
+			sr->this.protocol,
+			ET_INT,
+			esp_transport_proto_info,
+			deltatime(0),
+			calculate_sa_prio(c, FALSE),
+			&c->sa_marks,
+			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
+			HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			"%s() adding outbound shunt for %s", __func__, opname))
 		return false;
 
 	switch (op) {
-	case ERO_ADD:
-		op = ERO_ADD_INBOUND;
+	case KP_ADD_OUTBOUND:
+		op = KP_ADD_INBOUND;
 		break;
-	case ERO_DELETE:
-		op = ERO_DEL_INBOUND;
+	case KP_DELETE_OUTBOUND:
+		op = KP_DELETE_INBOUND;
 		break;
 	default:
-		return TRUE;
+		return true;
 	}
 
-	snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound", opname);
-
-	return netlink_raw_eroute(&sr->that.host_addr, &sr->that.client,
-				  &sr->this.host_addr, &sr->this.client,
-				  htonl(spi), htonl(spi),
-				  sa_proto,
-				  sr->this.protocol,
-				  ET_INT,
-				  null_proto_info,
-				  deltatime(0),
-				  calculate_sa_prio(c, FALSE),
-				  &c->sa_marks,
-				  0, /* xfrm_if_id needed for shunt? */
-				  op, buf2,
-				  HUNK_AS_SHUNK(sr->this.sec_label),
-				  logger);
+	/*
+	 * note the crossed streams since inbound
+	 */
+	return raw_policy(op,
+			  &sr->that.host_addr, &sr->that.client,
+			  &sr->this.host_addr, &sr->this.client,
+			  htonl(spi), htonl(spi),
+			  sr->this.protocol,
+			  ET_INT,
+			  esp_transport_proto_info,
+			  deltatime(0),
+			  calculate_sa_prio(c, FALSE),
+			  &c->sa_marks,
+			  0, /* xfrm_if_id needed for shunt? */
+			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			  "%s() adding inbound shunt for %s", __func__, opname);
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
@@ -2537,9 +2491,12 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
+	int recv_errno;
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SA", sa->text_said, logger))
+			      "Get SA", sa->story,
+			      &recv_errno, logger)) {
 		return FALSE;
+	}
 
 	*bytes = rsp.u.info.curlft.bytes;
 	*add_time = rsp.u.info.curlft.add_time;
@@ -2839,7 +2796,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.shutdown = NULL,
 #endif
 	.process_msg = netlink_process_msg,
-	.raw_eroute = netlink_raw_eroute,
+	.raw_policy = netlink_raw_policy,
 	.add_sa = netlink_add_sa,
 	.del_sa = netlink_del_sa,
 	.get_sa = netlink_get_sa,
@@ -2848,8 +2805,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.get_spi = netlink_get_spi,
 	.exceptsocket = NULL,
 	.process_raw_ifaces = netlink_process_raw_ifaces,
-	.shunt_eroute = netlink_shunt_eroute,
-	.sag_eroute = netlink_sag_eroute,
+	.shunt_policy = netlink_shunt_policy,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,

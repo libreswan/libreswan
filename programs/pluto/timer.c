@@ -55,7 +55,9 @@
 #include "ikev2_redirect.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
+#ifdef USE_PAM_AUTH
 #include "pam_auth.h"
+#endif
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
@@ -66,8 +68,9 @@
 #include "iface.h"
 #include "ikev2_liveness.h"
 #include "ikev2_mobike.h"
+#include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
-struct pluto_event **state_event(struct state *st, enum event_type type)
+struct state_event **state_event(struct state *st, enum event_type type)
 {
 	/*
 	 * Return a pointer to the event in the state object.
@@ -134,50 +137,41 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	 * just created event was being deleted).
 	 */
 	struct state *st;
-	enum event_type type;
+	enum event_type event_type;
 	const char *event_name;
+	deltatime_t event_delay;
+
 	{
-		struct pluto_event *ev = arg;
-		dbg("%s: processing event@%p", __func__, ev);
+		struct state_event *ev = arg;
 		passert(ev != NULL);
-		type = ev->ev_type;
-		event_name = enum_name_short(&timer_event_names, type);
+		event_type = ev->ev_type;
+		event_name = enum_name_short(&timer_event_names, event_type);
+		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
+		passert(event_name != NULL);
 
-		esb_buf b;
-		dbg("handling event %s for %s state #%lu",
-		    enum_show(&timer_event_names, type, &b),
-		    (st->st_clonedfrom == SOS_NOBODY) ? "parent" : "child",
-		    st->st_serialno);
-
-#if 0
-		/*
-		 * XXX: this line, which is a merger of the above two
-		 * lines, leaks into the expected test output causing
-		 * failures.
-		 */
 		dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
 		    __func__, event_name, ev,
 		    IS_IKE_SA(st) ? "IKE" : "CHILD",
 		    st->st_serialno, st->st_state->short_name);
-#endif
 
-		struct pluto_event **evp = state_event(st, type);
+		struct state_event **evp = state_event(st, event_type);
 		if (evp == NULL) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu has no .st_event field for %s",
-				     st->st_serialno, enum_name(&timer_event_names, type));
+				     st->st_serialno, event_name);
 			return;
 		}
+
 		if (*evp != ev) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu .st_event is %p but should be %s-pe@%p",
-				     st->st_serialno, *evp,
-				     enum_name(&timer_event_names, (*evp)->ev_type),
-				     ev);
+				     st->st_serialno, *evp, event_name, ev);
 			return;
 		}
+
+		/* everything useful has been extracted */
 		delete_pluto_event(evp);
 		arg = ev = *evp = NULL; /* all gone */
 	}
@@ -193,7 +187,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	 * We'll eventually either schedule a new event, or delete the
 	 * state.
 	 */
-	switch (type) {
+	switch (event_type) {
 
 	case EVENT_v2_ADDR_CHANGE:
 		dbg("#%lu IKEv2 local address change", st->st_serialno);
@@ -237,12 +231,12 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	case EVENT_v1_REPLACE_IF_USED:
 		switch (st->st_ike_version) {
 		case IKEv2:
-			pexpect(type == EVENT_SA_REPLACE);
+			pexpect(event_type == EVENT_SA_REPLACE);
 			v2_event_sa_replace(st);
 			break;
 		case IKEv1:
-			pexpect(type == EVENT_SA_REPLACE ||
-				type == EVENT_v1_REPLACE_IF_USED);
+			pexpect(event_type == EVENT_SA_REPLACE ||
+				event_type == EVENT_v1_REPLACE_IF_USED);
 			struct connection *c = st->st_connection;
 			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
@@ -251,7 +245,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 				/* not very interesting: no need to replace */
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
-			} else if (type == EVENT_v1_REPLACE_IF_USED &&
+			} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
 				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
@@ -300,54 +294,55 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			/* not very interesting: already superseded */
 			dbg("%s SA expired (superseded by #%lu)",
 			    satype, newer_sa);
-		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
+		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
+			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
-			dbg("un-established partial CHILD SA timeout (%s)",
-			    type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout");
+			dbg("un-established partial Child SA timeout (SA expired)");
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
-			log_state(RC_LOG, st, "%s %s (%s)", satype,
-				      type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-				      (c->policy & POLICY_DONT_REKEY) ?
-				      "--dontrekey" : "LATEST!");
+			log_state(RC_LOG, st, "%s SA expired (%s)", satype,
+				  (c->policy & POLICY_DONT_REKEY) ? "--dontrekey" : "LATEST!");
 		}
 
 		/* Delete this state object.  It must be in the hash table. */
 		switch (st->st_ike_version) {
 		case IKEv2:
-			if (IS_IKE_SA(st)) {
+		{
+			struct ike_sa *ike = ike_sa(st, HERE);
+			if (ike == NULL) {
+				/*
+				 * XXX: SNAFU with IKE SA replacing
+				 * itself (but not deleting its
+				 * children?)  simultaneous to a CHILD
+				 * SA failing to establish and
+				 * attempting to delete / replace
+				 * itself?
+				 *
+				 * Because these things are
+				 * not serialized it is hard
+				 * to say.
+				 */
+				log_state(RC_LOG_SERIOUS, st, "Child SA lost its IKE SA #%lu",
+					  st->st_clonedfrom);
+				delete_state(st);
+				st = NULL;
+			} else if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
-				delete_ike_family(pexpect_ike_sa(st),
-						  PROBABLY_SEND_DELETE);
+				dbg("IKEv2 SA expired, delete whole family");
+				passert(&ike->sa == st);
+				delete_ike_family(ike, PROBABLY_SEND_DELETE);
 				/* note: no md->st to clear */
+				st = NULL;
+			} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+				/* note: no md->st to clear */
+				submit_v2_delete_exchange(ike, pexpect_child_sa(st));
+				st = NULL;
 			} else {
-				struct ike_sa *ike = ike_sa(st, HERE);
-				if (ike == NULL) {
-					/*
-					 * XXX: SNAFU with IKE SA
-					 * replacing itself (but not
-					 * deleting its children?)
-					 * simultaneous to a CHILD SA
-					 * failing to establish and
-					 * attempting to delete /
-					 * replace itself?
-					 *
-					 * Because these things are
-					 * not serialized it is hard
-					 * to say.
-					 */
-					log_state(RC_LOG_SERIOUS, st, "CHILD SA #%lu lost its IKE SA",
-					       st->st_serialno);
-					delete_state(st);
-					st = NULL;
-				} else {
-					/* note: no md->st to clear */
-					passert(st != &ike->sa);
-					ikev2_schedule_next_child_delete(st, ike);
-					st = NULL;
-				}
+				delete_state(st);
+				st = NULL;
 			}
 			break;
+		}
 		case IKEv1:
 			delete_state(st);
 			/* note: no md->st to clear */
@@ -363,15 +358,16 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		/*
 		 * The state failed to complete within a reasonable
 		 * time, or the state failed but was left to live for
-		 * a while so re-transmits could work.  Either way,
-		 * time to delete it.
+		 * a while so re-transmits could work, or the state is
+		 * being garbage collected.  Either way, time to
+		 * delete it.
 		 */
-		passert(st != NULL);
-		deltatime_t timeout = (st->st_ike_version == IKEv2 ? MAXIMUM_RESPONDER_WAIT_DELAY :
-				       st->st_connection->r_timeout);
-		deltatime_buf dtb;
-		log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
-			      str_deltatime(timeout, &dtb));
+		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
+			/* Don't bother logging 0 delay */
+			deltatime_buf dtb;
+			log_state(RC_LOG, st, "deleting incomplete state after %s seconds",
+				  str_deltatime(event_delay, &dtb));
+		}
 		/*
 		 * If no other reason has been given then this is a
 		 * timeout.
@@ -382,6 +378,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		 * to resurect things and/or send messages.  What's
 		 * needed is a lower-level discard_state() that just
 		 * does its job.
+		 *
+		 * XXX: for IKEv2, it looks like delete_state() will
+		 * stop spontaneously sending messages (and hopefully
+		 * spontaneously deleting IKE families).
 		 */
 		delete_state(st);
 		break;
@@ -399,10 +399,10 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		dpd_timeout(st);
 		break;
 
-#ifdef AUTH_HAVE_PAM
+#ifdef USE_PAM_AUTH
 	case EVENT_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
-		pamauth_abort(st);
+		pam_auth_abort(st, "timeout");
 		/*
 		 * Things get cleaned up when the PAM process exits.
 		 *
@@ -422,7 +422,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 
 
 	default:
-		bad_case(type);
+		bad_case(event_type);
 	}
 
 	statetime_stop(&start, "%s() %s", __func__, event_name);
@@ -449,7 +449,7 @@ void delete_event(struct state *st)
 {
 	struct liveness {
 		const char *name;
-		struct pluto_event **event;
+		struct state_event **event;
 	} events[] = {
 		{ "st_event", &st->st_event, },
 	};
@@ -482,7 +482,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	const char *en = enum_name(&timer_event_names, type);
 
-	struct pluto_event **evp = state_event(st, type);
+	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_*event field for %s",
@@ -490,6 +490,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 			     enum_name(&timer_event_names, type));
 		return;
 	}
+
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
 		pexpect_fail(st->st_logger, HERE,
@@ -499,12 +500,14 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		delete_pluto_event(evp);
 	}
 
-	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
+	struct state_event *ev = alloc_thing(struct state_event, en);
 	dbg("%s: newref %s-pe@%p", __func__, en, ev);
 	ev->ev_type = type;
 	ev->ev_name = en;
 	ev->ev_state = st;
-	ev->ev_time = monotime_add(mononow(), delay);
+	ev->ev_epoch = mononow();
+	ev->ev_delay = delay;
+	ev->ev_time = monotime_add(ev->ev_epoch, delay);
 	*evp = ev;
 
 	deltatime_buf buf;
@@ -520,7 +523,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
  */
 void event_delete(enum event_type type, struct state *st)
 {
-	struct pluto_event **evp = state_event(st, type);
+	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_event field for %s",
@@ -547,7 +550,7 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 			     enum event_type event)
 {
 	/* sanity checks */
-	struct pluto_event **evp = state_event(st, event);
+	struct state_event **evp = state_event(st, event);
 	if (evp == NULL) {
 		llog(RC_COMMENT, logger, "%s is not a valid event",
 		     enum_name(&timer_event_names, event));

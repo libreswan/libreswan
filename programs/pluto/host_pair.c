@@ -9,6 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -322,10 +323,13 @@ void release_dead_interfaces(struct logger *logger)
 
 		/*
 		 * This connection instance interface is going away.
+		 * Note: this used to pass relations as true, to cleanup
+		 * everything but that did not take into account a site to
+		 * site conn on right=%any also being an instance.
 		 */
 		passert(c == *cp);
 		if (c->kind == CK_INSTANCE) {
-			delete_connection(&c, /*relations?*/true);
+			delete_connection(&c, /*relations?*/false);
 			pexpect(c == NULL);
 			continue;
 		}

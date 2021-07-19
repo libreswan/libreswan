@@ -165,9 +165,6 @@ uint32_t ntohl_address(const ip_address *address);
  * Old style.
  */
 
-/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-#define ADDRTOT_BUF     sizeof(address_reversed_buf)
-
 /* misc. conversions and related */
 extern int addrtypeof(const ip_address *src);
 extern int masktocount(const ip_address *src);

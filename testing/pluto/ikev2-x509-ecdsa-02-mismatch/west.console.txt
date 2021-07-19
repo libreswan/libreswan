@@ -1,0 +1,60 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ PATH/bin/pk12util -i /testing/x509/strongswan/strongWest.p12 -d sql:/var/lib/ipsec/nss -w /testing/x509/nss-pw
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ # Tuomo: why doesn't ipsec checknss --settrust work here?
+west #
+ certutil -M -d sql:/var/lib/ipsec/nss -n "strongSwan CA - strongSwan" -t CT,,
+west #
+ #ipsec start
+west #
+ ipsec _stackmanager start
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ # expected to fail
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-eastnet-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "westnet-eastnet-ikev2" #1: encountered fatal error in state STATE_PARENT_I2
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+west #
+ echo done
+done
+west #
+ ipsec whack --shutdown
+west #
+ 

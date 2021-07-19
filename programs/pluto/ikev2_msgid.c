@@ -59,7 +59,7 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 	monotime_buf mb;
 	jam(buf, " ike.%s.last_contact=%s", what,
 	    str_monotime(old->last_contact, &mb));
-	if (new != NULL && !monotime_eq(old->last_contact, new->last_contact)) {
+	if (new != NULL && monotime_cmp(old->last_contact, !=, new->last_contact)) {
 		jam(buf, "->%s", str_monotime(new->last_contact, &mb));
 	}
 }
@@ -462,10 +462,11 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 }
 
 struct v2_msgid_pending {
-	so_serial_t st_serialno;
-	const enum isakmp_xchg_types ix;
-	v2_msgid_pending_cb *cb;
-	const struct state_v2_microcode *transition;
+	so_serial_t child;
+	so_serial_t owner;
+	so_serial_t who_for;
+	const enum isakmp_xchg_type ix;
+	const struct v2_state_transition *transition;
 	struct v2_msgid_pending *next;
 };
 
@@ -493,30 +494,37 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 	return initiator->pending != NULL;
 }
 
-void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
-			      enum isakmp_xchg_types ix,
-			      const struct state_v2_microcode *transition,
-			      v2_msgid_pending_cb *callback)
+void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
+			      struct state *owner, enum isakmp_xchg_type ix,
+			      const struct v2_state_transition *transition)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	so_serial_t who_for = (child != NULL ? child->sa.st_serialno :
+			       ike->sa.st_serialno);
 	/*
-	 * v2_CREATE_CHILD_SA append to last the task.
-	 * v2_INFORMATIONAL v2D append to the last v2D task.
+	 * Find the insertion point; small list?
+	 *
+	 * The queue has a simple priority order: informational
+	 * exchanges (presumably either a delete or error
+	 * notification) are put at the front before anything else
+	 * (namely CREATE_CHILD_SA).
 	 */
-	/* find the end; small list? */
 	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL) {
 		if (ix == ISAKMP_v2_INFORMATIONAL && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
-			dbg("%s %d inserting v2D task for #%lu before #%lu CREATE_CHILD_SA",  __func__, __LINE__, st->st_serialno, (*pp)->st_serialno);
+			dbg("inserting informational exchange for #%lu before #%lu's %s exchange",
+			    who_for, (*pp)->owner,
+			    enum_name(&isakmp_xchg_type_names, (*pp)->ix));
 			break;
 		}
 		pp = &(*pp)->next;
 	}
 	/* append */
 	struct v2_msgid_pending new = {
-		.st_serialno = st->st_serialno,
+		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
+		.who_for = who_for,
+		.owner = (owner != NULL ? owner->st_serialno : SOS_NOBODY),
 		.ix = ix,
-		.cb = callback,
 		.transition = transition,
 		.next = (*pp),
 	};
@@ -524,9 +532,9 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct state *st,
 	v2_msgid_schedule_next_initiator(ike);
 }
 
-static void initiate_next(struct state *st, void *context UNUSED)
+static void initiate_next(struct state *ike_sa, void *context UNUSED)
 {
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
 		dbg("IKE SA with pending initiates disappeared");
 		return;
@@ -535,49 +543,58 @@ static void initiate_next(struct state *st, void *context UNUSED)
 	for (intmax_t unack = (initiator->sent - initiator->recv);
 	     unack < ike->sa.st_connection->ike_window && initiator->pending != NULL;
 	     unack++) {
-		/* make a copy of head, and drop from list */
+		/*
+		 * Make a copy of head, removing it from list.
+		 */
 		struct v2_msgid_pending pending = *initiator->pending;
 		pfree(initiator->pending);
 		initiator->pending = pending.next;
-		/* find that state */
-		struct state *st = state_with_serialno(pending.st_serialno);
-		if (st == NULL) {
+
+		/*
+		 * Determine the state that owns the transition (and
+		 * will be passed to complete_v2_state_transition()).
+		 *
+		 * It should always be the IKE SA; but ...
+		 */
+
+		struct child_sa *child = child_sa_by_serialno(pending.child);
+		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike, NULL,
-				     "can't resume CHILD SA #%lu exchange as child disappeared (unack %jd)",
-				     pending.st_serialno, unack);
+				     "cannot initiate %s exchange for #%lu as Child SA disappeared (unack %jd)",
+				     enum_name(&isakmp_xchg_type_names, pending.ix),
+				     pending.child, unack);
 			continue;
 		}
-		dbg_v2_msgid(ike, st, "resuming SA using IKE SA (unack %jd)", unack);
-		struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 
-		if (pending.transition != NULL) {
-			/*
-			 * try to check that the transition still applies ...
-			 */
-#if 0
-			passert(pending.transition->state == st->st_state->kind);
-#endif
-			if (!IS_IKE_SA_ESTABLISHED(&ike->sa) ||
-			    (child != NULL && !IS_CHILD_SA_ESTABLISHED(&child->sa))) {
-				log_state(RC_LOG, st, "dropping transition: %s",
-					  pending.transition->story);
-			} else {
-				set_v2_transition(st, pending.transition, HERE);
-				stf_status status = pending.transition->processor(ike, child, NULL);
-				complete_v2_state_transition(st, NULL/*initiate so no md*/, status);
+		struct state *owner;
+		if (pending.owner != SOS_NOBODY) {
+			owner = state_by_serialno(pending.owner);
+			if (owner == NULL) {
+				dbg_v2_msgid(ike, NULL,
+					     "cannot initiate %s exchange for #%lu as state disappeared (unack %jd)",
+					     enum_name(&isakmp_xchg_type_names, pending.ix),
+					     pending.owner, unack);
+				continue;
 			}
-		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
-			/*
-			 * this is a continuation of delete message.
-			 * shortcut complete_v2_state_transition()
-			 * to call complete_v2_state_transition, need more work
-			 */
-			pending.cb(ike, st, NULL);
-			v2_msgid_schedule_next_initiator(ike);
 		} else {
-			struct msg_digest *md = unsuspend_md(st);
-			complete_v2_state_transition(st, md, pending.cb(ike, st, md));
-			release_any_md(&md);
+			owner = &ike->sa;
+		}
+
+		dbg_v2_msgid(ike, owner, "resuming SA using IKE SA (unack %jd)", unack);
+
+		/*
+		 * try to check that the transition still applies ...
+		 */
+		if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+			log_state(RC_LOG, owner, "dropping transition as IKE SA is not established: %s",
+				  pending.transition->story);
+		} else if (pending.transition->state != owner->st_state->kind) {
+			log_state(RC_LOG, owner, "dropping transition as it does not match current state: %s",
+				  pending.transition->story);
+		} else {
+			set_v2_transition(owner, pending.transition, HERE);
+			stf_status status = pending.transition->processor(ike, child, NULL);
+			complete_v2_state_transition(owner, NULL/*initiate so no md*/, status);
 		}
 	}
 }
@@ -592,13 +609,12 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 	if (initiator->pending != NULL) {
 		intmax_t unack = (initiator->sent - initiator->recv);
 		/* if this returns NULL, that's ok; will log "LOST" */
-		struct state *wip_sa = state_by_serialno(initiator->pending->st_serialno);
+		struct state *who_for = state_by_serialno(initiator->pending->who_for);
 		if (unack < ike->sa.st_connection->ike_window) {
-			dbg_v2_msgid(ike, wip_sa, "wakeing IKE SA for next initiator (unack %jd)", unack);
-			schedule_callback(__func__, ike->sa.st_serialno,
-					  initiate_next, NULL);
+			dbg_v2_msgid(ike, who_for, "wakeing IKE SA for next initiator (unack %jd)", unack);
+			schedule_callback(__func__, ike->sa.st_serialno, initiate_next, NULL);
 		} else {
-			dbg_v2_msgid(ike, wip_sa, "next initiator blocked by outstanding response (unack %jd)", unack);
+			dbg_v2_msgid(ike, who_for, "next initiator blocked by outstanding response (unack %jd)", unack);
 		}
 	} else {
 		dbg_v2_msgid(ike, &ike->sa, "no pending message initiators to schedule");

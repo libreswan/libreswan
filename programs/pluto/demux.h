@@ -144,7 +144,7 @@ struct msg_digest {
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
-	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
+	const struct v2_state_transition *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *v1_st;			/* (v1) current state object */
 	struct logger *md_logger;		/* logger for this MD */
@@ -158,7 +158,6 @@ struct msg_digest {
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
 	bool fake_clone;			/* is this a fake (clone) message */
-	bool fake_dne;				/* created as part of fake_md() */
 
 	/*
 	 * Note that .pd[] is indexed using either enum v1_pd or enum

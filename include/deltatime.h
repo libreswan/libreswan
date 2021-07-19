@@ -50,17 +50,19 @@ struct jambuf;
 
 typedef struct { struct timeval dt; } deltatime_t;
 
+extern const deltatime_t deltatime_zero;
+
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), } }
 
 deltatime_t deltatime(time_t secs);
-deltatime_t deltatime_ms(intmax_t ms);
+deltatime_t deltatime_ms(intmax_t milliseconds);
 
 /* for monotime(a-b) and realtime(a-b) */
 deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 
 /* sign(a - b); see timercmp() for hacks origin */
-int deltatime_cmp_sign(deltatime_t a, deltatime_t b);
-#define deltatime_cmp(A, OP, B) (deltatime_cmp_sign(A, B) OP 0)
+int deltatime_sub_sign(deltatime_t a, deltatime_t b);
+#define deltatime_cmp(A, OP, B) (deltatime_sub_sign(A, B) OP 0)
 
 /* max(a, b) */
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
@@ -94,5 +96,11 @@ typedef struct {
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
+
+/* primitives used to implement times. */
+
+struct timeval timeval_ms(intmax_t milliseconds);
+/* for *time_cmp(): sign(l-r) */
+int timeval_sub_sign(struct timeval l, struct timeval r);
 
 #endif

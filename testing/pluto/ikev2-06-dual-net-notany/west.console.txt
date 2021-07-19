@@ -25,6 +25,7 @@ west #
 004 "westnet-eastnet-ipv4-psk-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2-b
+002 "westnet-eastnet-ipv4-psk-ikev2-b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ipv4-psk-ikev2-b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-ipv4-psk-ikev2-b" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.3.0-192.0.3.255:0-65535 0]
 004 "westnet-eastnet-ipv4-psk-ikev2-b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}

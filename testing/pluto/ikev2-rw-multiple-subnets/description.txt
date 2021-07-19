@@ -1,1 +1,11 @@
-IKEv2 RW with subnets.
+IKEv2 RW with subnets, using auto=start
+
+On libreswan 4.4 and earlier, this failed with:
+
+|    match_id a=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+|             b=%fromcert
+|    results  fail
+|     connection "east/0x2" does not match IDs or CA of current connection "east/0x1"
+
+Clearly, this is wrong, as both connections are instantiated and are identical in IKE SA params.
+In libreswan 4.5, the code verifies that both are derived as aliases from the same base conn.

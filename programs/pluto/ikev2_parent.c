@@ -67,7 +67,6 @@
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"
 #include "ikev2_redirect.h"
-#include "pam_auth.h"
 #include "crypt_dh.h"
 #include "crypt_prf.h"
 #include "ietf_constants.h"
@@ -189,7 +188,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 }
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct state_v2_microcode *svm,
+			      const struct v2_state_transition *svm,
 			      enum state_kind new_state)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -351,11 +350,11 @@ bool emit_v2KE(chunk_t *g, const struct dh_desc *group,
 	return TRUE;
 }
 
-bool need_configuration_payload(const struct connection *const pc,
-				const lset_t st_nat_traversal)
+bool need_v2_configuration_payload(const struct connection *const cc,
+				   const lset_t st_nat_traversal)
 {
-	return (pc->spd.this.modecfg_client &&
-		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
+	return (cc->spd.this.modecfg_client &&
+		(!cc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
 }
 
 struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,
@@ -395,31 +394,31 @@ struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
 
-void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
+void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred)
 {
 	struct state *rst = state_with_serialno(pred);
-	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
+	if (rst == NULL) {
+		llog_sa(RC_LOG, larval_sa,
+			"rekeyed #%lu; the state is already is gone", pred);
+		return;
+	}
 
-	if (rst != NULL && IS_V2_ESTABLISHED(rst->st_state)) {
+	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
+	if (IS_IKE_SA_ESTABLISHED(rst) || IS_CHILD_SA_ESTABLISHED(rst)) {
 		/* on initiator, delete st_ipsec_pred. The responder should not */
 		monotime_t now = mononow();
-		const struct pluto_event *ev = rst->st_event;
-
+		const struct state_event *ev = rst->st_event;
 		if (ev != NULL)
 			lifetime = monotimediff(ev->ev_time, now);
 	}
 
 	deltatime_buf lb;
-	log_state(RC_LOG, st, "rekeyed #%lu %s %s remaining life %ss", pred,
-		  st->st_state->name,
-		  rst == NULL ? "and the state is gone" : "and expire it",
-		  str_deltatime(lifetime, &lb));
+	llog_sa(RC_LOG, larval_sa,
+		"rekeyed #%lu %s and expire it remaining life %ss",
+		pred, larval_sa->sa.st_state->name,
+		str_deltatime(lifetime, &lb));
 
-	/*
-	 * ??? added pexpect to avoid NULL dereference.
-	 * Why do we test this three times?  Should it not be done once and for all?
-	 */
-	if (pexpect(rst != NULL) && deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
+	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		delete_event(rst);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
 	}
@@ -439,7 +438,7 @@ void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 
 static bool expire_ike_because_child_not_used(struct state *st)
 {
-	if (!(IS_PARENT_SA_ESTABLISHED(st) ||
+	if (!(IS_IKE_SA_ESTABLISHED(st) ||
 	      IS_CHILD_SA_ESTABLISHED(st))) {
 		/* for instance, too many retransmits trigger replace */
 		return false;
@@ -571,7 +570,24 @@ void v2_schedule_replace_event(struct state *st)
 void v2_event_sa_rekey(struct state *st)
 {
 	monotime_t now = mononow();
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		/*
+		 * An IKE SA must return itself so NULL implies a
+		 * child.
+		 *
+		 * Even it is decided that Child SAs can linger after
+		 * the IKE SA has gone they shouldn't be getting
+		 * rekeys!
+		 */
+		pexpect_fail(st->st_logger, HERE,
+			     "not replacing Child SA #%lu; as IKE SA #%lu has diasppeared",
+			     st->st_serialno, st->st_clonedfrom);
+		return;
+	}
+
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
@@ -584,29 +600,28 @@ void v2_event_sa_rekey(struct state *st)
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st, HERE);
 		event_force(EVENT_SA_EXPIRE, &ike->sa);
 		return;
 	}
 
-	if (monobefore(st->st_replace_by, now)) {
-		dbg("#%lu has no time to re-key, will replace",
-		    st->st_serialno);
+	deltatime_t replace_in = monotimediff(st->st_replace_by, now);
+	if (deltatime_cmp(replace_in, <, deltatime_zero)) {
+		dbg("%s SA #%lu has no time to re-key, will replace", satype, st->st_serialno);
 		event_force(EVENT_SA_REPLACE, st);
 	}
 
-	dbg("rekeying stale %s SA with logger "PRI_LOGGER, satype, pri_logger(st->st_logger));
+	struct child_sa *larval_sa;
 	if (IS_IKE_SA(st)) {
-		log_state(RC_LOG, st, "initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
-		ikev2_rekey_ike_start(pexpect_ike_sa(st));
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
 	} else {
-		/*
-		 * XXX: Don't be fooled, ipsecdoi_replace() is magic -
-		 * if the old state still exists it morphs things into
-		 * a child re-key.
-		 */
-		ipsecdoi_replace(st, 1);
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
 	}
+
+	llog_sa(RC_LOG, larval_sa,
+		"initiating rekey to replace %s SA #%lu",
+		satype, st->st_serialno);
+
+
 	/*
 	 * Should the rekey go into the weeds this replace will kick
 	 * in.
@@ -616,19 +631,30 @@ void v2_event_sa_rekey(struct state *st)
 	 * For a CHILD SA perhaps - there is a mystery around what
 	 * happens to the new child if the old one disappears.
 	 */
-	dbg("scheduling drop-dead replace event for #%lu", st->st_serialno);
+	dbg("scheduling drop-dead replace event for %s SA #%lu", satype, st->st_serialno);
 	event_delete(EVENT_v2_LIVENESS, st);
-	event_schedule(EVENT_SA_REPLACE, monotimediff(st->st_replace_by, now), st);
+	event_schedule(EVENT_SA_REPLACE, replace_in, st);
 }
 
 void v2_event_sa_replace(struct state *st)
 {
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 
+	/*
+	 * Is ST obsolete?
+	 *
+	 * When ST and connection serial numbers match, or whn
+	 * connection has no serial number SOS_NOBODY is returned.
+	 */
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
 	if (newer_sa != SOS_NOBODY) {
 		/*
-		 * For some reason the rekey, above, hasn't completed.
+		 * This state is somehow newer then the established
+		 * state as identified by the connection.
+		 *
+		 * Presumably it is a failed rekey (see above?) that
+		 * didn't complete.
+		 *
 		 * For an IKE SA blow away the entire family
 		 * (including the in-progress rekey).  For a CHILD SA
 		 * this will delete the old SA but leave the rekey
@@ -761,7 +787,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 
 				dbg("deleting replaced IKE state for %s",
 				    old_p1->st_connection->name);
-				old_p1->st_dont_send_delete = true;
+				old_p1->st_send_delete = DONT_SEND_DELETE;
 				event_force(EVENT_SA_EXPIRE, old_p1);
 			}
 
@@ -772,7 +798,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
 					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
 					    c->newest_ipsec_sa, c->name);
-					old_p2->st_dont_send_delete = true;
+					old_p2->st_send_delete = DONT_SEND_DELETE;
 					event_force(EVENT_SA_EXPIRE, old_p2);
 				}
 			}

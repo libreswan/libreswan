@@ -499,6 +499,7 @@ kvmplutotest	ikev2-replay-window			good
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
 kvmplutotest	ikev2-x509-ecdsa-01			good
+kvmplutotest	ikev2-x509-ecdsa-02-mismatch		good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
@@ -861,10 +862,15 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
-kvmplutotest	ikev1-rw-multiple-subnets wip
-kvmplutotest	ikev2-rw-multiple-subnets wip
-kvmplutotest	ikev2-rw-multiple-subnets-2 wip
-kvmplutotest	ikev2-rw-multiple-subnets-3 wip
+kvmplutotest	ikev1-rw-multiple-subnets			good
+kvmplutotest	ikev1-rw-multiple-subnets-split			wip
+kvmplutotest	ikev2-rw-multiple-subnets			good
+kvmplutotest	ikev2-rw-multiple-subnets-split			wip
+kvmplutotest	ikev2-rw-multiple-subnets-2			good
+kvmplutotest	ikev2-rw-multiple-subnets-3			good
+kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
+kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
+kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good
@@ -912,11 +918,13 @@ kvmplutotest	ikev1-labeled-ipsec-01					wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
 kvmplutotest	ikev2-labeled-ipsec-01					good
-kvmplutotest	ikev2-labeled-ipsec-01-childless			wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		wip
+kvmplutotest	ikev2-labeled-ipsec-01-childless			good
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey		wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-acquire	good
 
 # compress tests
 kvmplutotest    compress-pluto-01		good

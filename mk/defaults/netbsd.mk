@@ -13,7 +13,7 @@ USERLAND_INCLUDES += -I$(PKG_BASE)/include
 
 USERLAND_LDFLAGS += -L$(PKG_BASE)/lib -Wl,-rpath,$(PKG_BASE)/lib
 
-NSS_CFLAGS = -I$(PKG_BASE)/include/nspr -I$(PKG_BASE)/include/nss/nss
+NSS_CFLAGS = -I$(PKG_BASE)/include/nspr -I$(PKG_BASE)/include/nss
 NSS_LDFLAGS = -L$(PKG_BASE)/lib/nss -Wl,-rpath,$(PKG_BASE)/lib/nss -lnss3 -lfreebl3 -lssl3
 NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 

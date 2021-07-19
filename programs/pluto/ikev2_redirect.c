@@ -128,7 +128,7 @@ static shunk_t get_redirect_dest(struct redirect_dests *rl)
  * payload from the given string or ip.
  */
 
-static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwit,
+static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwit,
 						       shunk_t id,
 						       const shunk_t *nonce, /* optional */
 						       uint8_t *buf, size_t sizeof_buf,
@@ -136,8 +136,8 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 {
 	if (id.len > 0xFF) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "redirect destination longer than 255 octets; ignoring");
-		return empty_chunk;
+		     "redirect destination longer than 255 octets; ignoring");
+		return empty_shunk;
 	}
 
 	struct ikev2_redirect_part gwi = {
@@ -153,23 +153,23 @@ static chunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 					       buf, sizeof_buf,
 					       logger);
 	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
-		return empty_chunk;
+		return empty_shunk;
 	}
 	diag_t d = pbs_out_hunk(&gwid_pbs, id, "redirect ID");
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
-		return empty_chunk;
+		return empty_shunk;
 	}
 	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
 	{
 		close_output_pbs(&gwid_pbs);
-		return same_out_pbs_as_chunk(&gwid_pbs);
+		return same_pbs_out_as_shunk(&gwid_pbs);
 	}
 
-	return empty_chunk;
+	return empty_shunk;
 }
 
-static chunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
+static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 						   const shunk_t *nonce, /* optional */
 						   uint8_t *buf, size_t sizeof_buf,
 						   struct logger *logger)
@@ -192,7 +192,7 @@ static chunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 }
 
 /* function caller should ensure dest is non-empty string */
-static chunk_t build_redirect_notification_data_str(const shunk_t dest,
+static shunk_t build_redirect_notification_data_str(const shunk_t dest,
 						    const shunk_t *nonce, /* optional */
 						    uint8_t *buf, size_t sizeof_buf,
 						    struct logger *logger)
@@ -258,7 +258,7 @@ bool redirect_global(struct msg_digest *md)
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	chunk_t data = build_redirect_notification_data_str(dest, &Ni,
+	shunk_t data = build_redirect_notification_data_str(dest, &Ni,
 							    buf, sizeof(buf),
 							    logger);
 
@@ -279,23 +279,21 @@ bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 	passert(dest_str.ptr != NULL);
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	chunk_t data = build_redirect_notification_data_str(dest_str, NULL,
+	shunk_t data = build_redirect_notification_data_str(dest_str, NULL,
 							    buf, sizeof(buf),
 							    outs->outs_logger);
 
-	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECT, data.ptr, data.len, outs);
+	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECT, data, outs);
 }
 
 bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	chunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
+	shunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
 							   buf, sizeof(buf),
 							   outs->outs_logger);
 
-	return data.len != 0 &&
-		emit_v2N_bytes(v2N_REDIRECTED_FROM, data.ptr, data.len, outs);
+	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECTED_FROM, data, outs);
 }
 
 /*
@@ -547,6 +545,30 @@ void initiate_redirect(struct state *ike_sa)
 				     logger);
 }
 
+/* helper function for send_v2_informational_request() */
+
+static bool add_redirect_payload(struct state *st, struct pbs_out *pbs)
+{
+	return emit_redirect_notification(HUNK_AS_SHUNK(st->st_active_redirect_gw), pbs);
+}
+
+static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
+					       struct child_sa *child UNUSED,
+					       struct msg_digest *null_md UNUSED)
+{
+	return record_v2_informational_request("active REDIRECT informational request",
+					       ike, &ike->sa, add_redirect_payload);
+}
+
+static const struct v2_state_transition v2_redirect_ike_transition = {
+	.story = "redirect IKE SA",
+	.state = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	.send = MESSAGE_REQUEST,
+	.processor = send_v2_redirect_ike_request,
+	.timeout_event =  EVENT_RETAIN,
+};
+
 void find_states_and_redirect(const char *conn_name, char *ard_str,
 			      struct logger *logger)
 {
@@ -558,14 +580,17 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
-		if (IS_PARENT_SA_ESTABLISHED(st) && (conn_name == NULL || streq(conn_name, st->st_connection->name)))
-		{
+		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL ||
+						  streq(conn_name, st->st_connection->name))) {
+			struct ike_sa *ike = pexpect_ike_sa(st);
 			shunk_t active_dest = get_redirect_dest(&active_dests);
-			st->st_active_redirect_gw = active_dest;
-			dbg("successfully found a state (#%lu) with connection name \"%s\"",
-				st->st_serialno, conn_name);
+			free_chunk_content(&ike->sa.st_active_redirect_gw);
+			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
+			dbg("successfully found an IKE state (#%lu) with connection name \"%s\"",
+			    ike->sa.st_serialno, conn_name);
 			cnt++;
-			send_active_redirect_in_informational(st);
+			v2_msgid_queue_initiator(ike, NULL, NULL, ISAKMP_v2_INFORMATIONAL,
+						 &v2_redirect_ike_transition);
 		}
 	}
 
@@ -585,36 +610,6 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 		}
 	}
 	free_redirect_dests(&active_dests);
-}
-
-/* helper function for send_v2_informational_request() */
-static payload_emitter_fn add_redirect_payload;
-static bool add_redirect_payload(struct state *st, pb_stream *pbs)
-{
-	return emit_redirect_notification(st->st_active_redirect_gw, pbs);
-}
-
-void send_active_redirect_in_informational(struct state *st)
-{
-	struct ike_sa *ike = ike_sa(st, HERE);
-	stf_status e = record_v2_informational_request("active REDIRECT informational request",
-						       ike, st, add_redirect_payload);
-	if (e == STF_OK) {
-		send_recorded_v2_message(ike, "active REDIRECT informational request",
-					 MESSAGE_REQUEST);
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code
-		 * should instead let success_v2_state_transition()
-		 * deal with things.
-		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s hacking around record'n'send bypassing send queue",
-		     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
-	}
-
-	endpoint_buf b;
-	dbg("redirection %ssent to peer %s", e == STF_OK ? "" : "not ",
-	    str_endpoint(&st->st_remote_endpoint, &b));
 }
 
 stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,

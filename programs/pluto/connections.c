@@ -88,7 +88,7 @@
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
-#include "security_selinux.h"
+#include "labeled_ipsec.h"		/* for vet_seclabel() */
 #include "orient.h"
 
 struct connection *connections = NULL;
@@ -1011,7 +1011,10 @@ static int extract_end(struct connection *c,
 	 */
 	dst->has_client = src->has_client;
 	if (src->has_client) {
-		pexpect(!subnet_is_unset(&src->client));
+		if (subnet_is_unset(&src->client)) {
+			llog(RC_BADID, logger, "subnet error - failing to load connection");
+			return -1;
+		}
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
 	}
@@ -2449,10 +2452,8 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_endpoint *local_client,
 					       const ip_endpoint *remote_client,
-					       shunk_t csec_label,
-					       struct logger *logger UNUSED)
+					       shunk_t sec_label, struct logger *logger)
 {
-	shunk_t sec_label = HUNK_AS_SHUNK(csec_label);
 	passert(!endpoint_is_unset(local_client));
 	passert(!endpoint_is_unset(remote_client));
 	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
@@ -2475,60 +2476,93 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		if (c->kind == CK_GROUP)
 			continue;
 
+		/*
+		 * For labeled IPsec, always start with the template.
+		 * Who are we to argue if the kernel asks for a new SA
+		 * with, seemingly, a security label that matches an
+		 * existing connection instance.
+		 */
+		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+			connection_buf cb;
+			dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
+			    pri_connection(c, &cb));
+			continue;
+		}
+
 		struct spd_route *sr;
 
 		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
-			if ( (routed(sr->routing) || c->instance_initiation_ok || sec_label.len != 0) &&
-			    endpoint_in_selector(*local_client, sr->this.client) &&
-			    endpoint_in_selector(*remote_client, sr->that.client)
-#ifdef HAVE_LABELED_IPSEC
-			     && sec_label_within_range(sec_label, sr->this.sec_label, logger)
-#endif
-			     ) {
-				unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
-				policy_prio_t prio =
-					(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
-					 2 * (sr->this.port == local_port) +
-					 2 * (sr->that.port == remote_port) +
-					 1 * (sr->this.protocol == ipproto));
 
-				if (DBGP(DBG_BASE)) {
-					connection_buf cib_c;
-					selectors_buf sb;
-					DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
+			/*
+			 * XXX: is the !sec_label an IKEv1 thing?  An
+			 * IKEv2 sec-labeled connection should have
+			 * been routed by now?
+			 */
+			if (!routed(sr->routing) &&
+			    !c->instance_initiation_ok &&
+			    sr->this.sec_label.len == 0) {
+				continue;
+			}
+
+			/*
+			 * The triggering traffic needs to be within
+			 * the client.
+			 */
+			if (!endpoint_in_selector(*local_client, sr->this.client) ||
+			    !endpoint_in_selector(*remote_client, sr->that.client)) {
+				continue;
+			}
+
+			/*
+			 * When there is one, the label needs to be
+			 * within range.
+			 */
+			if (sec_label.len > 0 && !sec_label_within_range(sec_label, sr->this.sec_label, logger)) {
+				continue;
+			}
+
+			unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
+			policy_prio_t prio =
+				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+				 2 * (sr->this.port == local_port) +
+				 2 * (sr->that.port == remote_port) +
+				 1 * (sr->this.protocol == ipproto));
+
+			if (DBGP(DBG_BASE)) {
+				connection_buf cib_c;
+				selectors_buf sb;
+				DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
+					pri_connection(c, &cib_c),
+					str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+					prio);
+				if (best == NULL) {
+					DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
 						pri_connection(c, &cib_c),
-						str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
-						prio);
-
-					if (best == NULL) {
-						DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(c, &cib_c),
-							prio, c,
-							c->policy_next ?
-								c->policy_next->name :
-								"none");
-					} else {
-						connection_buf cib_best;
-						DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-							pri_connection(best, &cib_best),
-							best_prio,
-							best,
-							best->policy_next ?
-								best->policy_next->name :
-								"none",
-							pri_connection(c, &cib_c),
-							prio, c,
-							c->policy_next ?
-								c->policy_next->name :
-								"none");
-					}
+						prio, c,
+						c->policy_next ?
+						c->policy_next->name :
+						"none");
+				} else {
+					connection_buf cib_best;
+					DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
+						pri_connection(best, &cib_best),
+						best_prio,
+						best,
+						best->policy_next ?
+						best->policy_next->name :
+						"none",
+						pri_connection(c, &cib_c),
+						prio, c,
+						c->policy_next ?
+						c->policy_next->name :
+						"none");
 				}
+			}
 
-				if (best == NULL || prio > best_prio) {
-					best = c;
-					best_sr = sr;
-					best_prio = prio;
-				}
+			if (best == NULL || prio > best_prio) {
+				best = c;
+				best_sr = sr;
+				best_prio = prio;
 			}
 		}
 	}
@@ -3199,7 +3233,9 @@ struct connection *refine_host_connection(const struct state *st,
 		FOR_EACH_HOST_PAIR_CONNECTION(c->interface->ip_dev->id_address, remote, d) {
 
 			int wildcards;
-			bool matching_peer_id = match_id(peer_id,
+			bool matching_peer_id = (c->connalias != NULL && d->connalias != NULL && 
+						streq(c->connalias, d->connalias)) ||
+						match_id(peer_id,
 							&d->spd.that.id,
 							&wildcards);
 
@@ -3545,11 +3581,13 @@ static struct connection *fc_try(const struct connection *c,
 
 		int wildcards, pathlen;
 
-		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
-		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
-		{
-			continue;
+		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
+			if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
+				match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+			{
+				continue;
+			}
 		}
 
 		/* compare protocol and ports */
@@ -4306,7 +4344,8 @@ void connection_delete_unused_instance(struct connection **cp,
 	}
 
 	if (LIN(POLICY_UP, c->policy) &&
-	    old_state != NULL && IS_IKE_SA_ESTABLISHED(old_state)) {
+	    old_state != NULL && (IS_IKE_SA_ESTABLISHED(old_state) ||
+				  IS_V1_ISAKMP_SA_ESTABLISHED(old_state))) {
 		/*
 		 * If this connection instance was previously for an
 		 * established sa planning to revive, don't delete.
@@ -4465,7 +4504,13 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	return wl-1 <= il && strncaseeq(&wp[1], &ip[il-(wl-1)], wl-1);
 }
 
-/* sa priority and type should really go into kernel_sa */
+/*
+ * sa priority and type should really go into kernel_sa
+ *
+ * Danger! While the priority used by the kernel is lowest-wins this
+ * code computes the reverse, only to then subtract that from some
+ * magic constant.
+ */
 uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 {
 	connection_buf cib;
@@ -4484,13 +4529,6 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 
 	/* XXX: assume unsigned >= 32-bits */
 	passert(sizeof(unsigned) >= sizeof(uint32_t));
-
-	unsigned pmax =
-		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
-			(LIN(POLICY_AUTH_NULL, c->policy)) ?
-				PLUTO_SPD_OPPO_ANON_MAX :
-				PLUTO_SPD_OPPO_MAX :
-			PLUTO_SPD_STATIC_MAX;
 
 	unsigned portsw = /* max 2 (2 bits) */
 		(c->spd.this.port == 0 ? 0 : 1) +
@@ -4511,21 +4549,39 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 		dstw = (addrtypeof(&c->spd.that.host_addr) == AF_INET) ? 32 : 128;
 	}
 
-	/* ensure an instance of a template/OE-group always has preference */
-	unsigned instw = (c->kind == CK_INSTANCE ? 0u : 1u);
+	/*
+	 * "Ensure an instance of a template/OE-group always has
+	 * preference."
+	 *
+	 * Except, at this point, the polarity is reversed so the
+	 * below gives CK_INSTANCE lower priority.  Get around this
+	 * for sec-labels by making the decrement bigger (except that
+	 * is overflowing into the DSTW bits).
+	 *
+	 * Should fix the math, but that affects all tests.
+	 */
+	unsigned instw = (c->kind == CK_INSTANCE && c->spd.this.sec_label.len > 0 ? 2u :
+			  c->kind == CK_INSTANCE ? 0u :
+			  1u);
 
-	uint32_t prio = pmax - (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-
-	if (c->spd.this.sec_label.len > 0) {
-		/* fixup so instance hits first over template */
-		if (c->kind == CK_INSTANCE)
-			prio = prio - 2;
+	unsigned pmax;
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->policy)) {
+			pmax = PLUTO_SPD_OPPO_ANON_MAX;
+		} else {
+			pmax = PLUTO_SPD_OPPO_MAX;
+		}
+	} else {
+		pmax = PLUTO_SPD_STATIC_MAX;
 	}
 
-	dbg("priority calculation of connection "PRI_CONNECTION" is %"PRIu32" (%#"PRIx32") pmax=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
-	    pri_connection(c, &cib), prio, prio,
-	    pmax, portsw, protow, srcw, dstw, instw);
-	return prio;
+	unsigned prio_hi = (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
+	unsigned prio_lo = pmax - prio_hi;
+
+	dbg("priority calculation of connection "PRI_CONNECTION" is %u-%u=%u (%#x) portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    pri_connection(c, &cib), pmax, prio_hi, prio_lo, prio_lo,
+	    portsw, protow, srcw, dstw, instw);
+	return prio_lo;
 }
 
 /*

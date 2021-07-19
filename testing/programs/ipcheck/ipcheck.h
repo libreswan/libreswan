@@ -78,13 +78,27 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 
 #define LN __LINE__
 
-#define FAIL(...)							\
+#define FAIL_(...)							\
 	{								\
 		fflush(stdout);	/* keep in sync */			\
 		fails++;						\
 		PREFIX(stderr);						\
 		fprintf(stderr, "FAILED: ");				\
 		fprintf(stderr, __VA_ARGS__);				\
+	}
+
+#define FAIL(...)				\
+	{					\
+		FAIL_(__VA_ARGS__);		\
+		fprintf(stderr,	"\n");		\
+		continue;			\
+	}
+
+#define DIAG_FAIL(DIAG, ...)						\
+	{								\
+		FAIL(__VA_ARGS__);					\
+		fprintf(stderr, "%s", str_diag(*(DIAG)));		\
+		pfree_diag(DIAG);					\
 		fprintf(stderr,	"\n");					\
 		continue;						\
 	}

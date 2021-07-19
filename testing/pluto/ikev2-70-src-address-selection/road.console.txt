@@ -26,13 +26,7 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet'
 starter: left is KH_DEFAULTROUTE
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet'
-connection's leftaddresspool set to: 192.0.3.1-192.0.3.200
-Loading conn rw-eastnet
-starter: left is KH_NOTSET
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
 seeking_src = 0, seeking_gateway = 1, has_dst = 1
@@ -107,13 +101,7 @@ opening file: /etc/ipsec.conf
 debugging mode enabled
 end of file /etc/ipsec.conf
 Loading conn road
-	while loading conn 'road' also including 'rw-eastnet'
 starter: left is KH_DEFAULTROUTE
-Loading conn east
-	while loading conn 'east' also including 'rw-eastnet'
-connection's leftaddresspool set to: 192.0.3.1-192.0.3.200
-Loading conn rw-eastnet
-starter: left is KH_NOTSET
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
 seeking_src = 0, seeking_gateway = 1, has_dst = 1

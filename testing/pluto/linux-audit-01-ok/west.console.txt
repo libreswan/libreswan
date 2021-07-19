@@ -70,7 +70,6 @@ west #
 west #
  ipsec auto --delete ikev2
 002 "ikev2": terminating SAs using this connection
-002 "ikev2" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2" #6: ESP traffic information: in=0B out=0B
 002 "ikev2" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #

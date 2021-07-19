@@ -904,7 +904,7 @@ IETF registry enum_names:
          short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
          jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
 
-  exchange_names_ikev1orv2:
+  isakmp_xchg_type_names:
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
          search ISAKMP_XCHG_NONE: OK
@@ -1468,30 +1468,41 @@ IETF registry enum_names:
          match ID255 [short+trunc]: OK
 
   ipcomp_transformid_names:
+    0 -> IPCOMP_NONE
+         jam_enum 0: IPCOMP_NONE OK
+         search IPCOMP_NONE: OK
+         match IPCOMP_NONE: OK
+         short_name 0: NONE OK
+         jam_enum_short 0: NONE OK
+         match NONE [short]: OK
     1 -> IPCOMP_OUI
          jam_enum 1: IPCOMP_OUI OK
          search IPCOMP_OUI: OK
          match IPCOMP_OUI: OK
-         short_name 1: IPCOMP_OUI OK
-         jam_enum_short 1: IPCOMP_OUI OK
-    2 -> IPCOMP_DEFLAT
-         jam_enum 2: IPCOMP_DEFLAT OK
-         search IPCOMP_DEFLAT: OK
-         match IPCOMP_DEFLAT: OK
-         short_name 2: IPCOMP_DEFLAT OK
-         jam_enum_short 2: IPCOMP_DEFLAT OK
+         short_name 1: OUI OK
+         jam_enum_short 1: OUI OK
+         match OUI [short]: OK
+    2 -> IPCOMP_DEFLATE
+         jam_enum 2: IPCOMP_DEFLATE OK
+         search IPCOMP_DEFLATE: OK
+         match IPCOMP_DEFLATE: OK
+         short_name 2: DEFLATE OK
+         jam_enum_short 2: DEFLATE OK
+         match DEFLATE [short]: OK
     3 -> IPCOMP_LZS
          jam_enum 3: IPCOMP_LZS OK
          search IPCOMP_LZS: OK
          match IPCOMP_LZS: OK
-         short_name 3: IPCOMP_LZS OK
-         jam_enum_short 3: IPCOMP_LZS OK
+         short_name 3: LZS OK
+         jam_enum_short 3: LZS OK
+         match LZS [short]: OK
     4 -> IPCOMP_LZJH
          jam_enum 4: IPCOMP_LZJH OK
          search IPCOMP_LZJH: OK
          match IPCOMP_LZJH: OK
-         short_name 4: IPCOMP_LZJH OK
-         jam_enum_short 4: IPCOMP_LZJH OK
+         short_name 4: LZJH OK
+         jam_enum_short 4: LZJH OK
+         match LZJH [short]: OK
 
   oakley_attr_names:
     6 -> OAKLEY_GROUP_PRIME (variable length)
@@ -2941,26 +2952,30 @@ IETF registry enum_names:
          jam_enum 1: ENCAPSULATION_MODE_TUNNEL OK
          search ENCAPSULATION_MODE_TUNNEL: OK
          match ENCAPSULATION_MODE_TUNNEL: OK
-         short_name 1: ENCAPSULATION_MODE_TUNNEL OK
-         jam_enum_short 1: ENCAPSULATION_MODE_TUNNEL OK
+         short_name 1: TUNNEL OK
+         jam_enum_short 1: TUNNEL OK
+         match TUNNEL [short]: OK
     2 -> ENCAPSULATION_MODE_TRANSPORT
          jam_enum 2: ENCAPSULATION_MODE_TRANSPORT OK
          search ENCAPSULATION_MODE_TRANSPORT: OK
          match ENCAPSULATION_MODE_TRANSPORT: OK
-         short_name 2: ENCAPSULATION_MODE_TRANSPORT OK
-         jam_enum_short 2: ENCAPSULATION_MODE_TRANSPORT OK
+         short_name 2: TRANSPORT OK
+         jam_enum_short 2: TRANSPORT OK
+         match TRANSPORT [short]: OK
     3 -> ENCAPSULATION_MODE_UDP_TUNNEL_RFC
          jam_enum 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
          search ENCAPSULATION_MODE_UDP_TUNNEL_RFC: OK
          match ENCAPSULATION_MODE_UDP_TUNNEL_RFC: OK
-         short_name 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
-         jam_enum_short 3: ENCAPSULATION_MODE_UDP_TUNNEL_RFC OK
+         short_name 3: UDP_TUNNEL_RFC OK
+         jam_enum_short 3: UDP_TUNNEL_RFC OK
+         match UDP_TUNNEL_RFC [short]: OK
     4 -> ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
          jam_enum 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
          search ENCAPSULATION_MODE_UDP_TRANSPORT_RFC: OK
          match ENCAPSULATION_MODE_UDP_TRANSPORT_RFC: OK
-         short_name 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
-         jam_enum_short 4: ENCAPSULATION_MODE_UDP_TRANSPORT_RFC OK
+         short_name 4: UDP_TRANSPORT_RFC OK
+         jam_enum_short 4: UDP_TRANSPORT_RFC OK
+         match UDP_TRANSPORT_RFC [short]: OK
 
   auth_alg_names:
     0 -> AUTH_ALGORITHM_NONE

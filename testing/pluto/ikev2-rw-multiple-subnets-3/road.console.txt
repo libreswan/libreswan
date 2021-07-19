@@ -9,11 +9,13 @@ road #
  echo "initdone"
 initdone
 road #
- ../../guestbin/ping-once.sh --up 192.0.2.254
-up
+ ../../guestbin/ping-once.sh --forget 192.0.2.254
+fired and forgotten
 road #
- ../../guestbin/ping-once.sh --up 192.0.20.254
-down UNEXPECTED
+ ../../guestbin/ping-once.sh --forget 192.0.20.254
+fired and forgotten
+road #
+ sleep 3 ; # I know, I know but east won't show 2nd one otherwise :P
 road #
  echo done
 done

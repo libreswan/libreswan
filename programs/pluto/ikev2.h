@@ -163,11 +163,11 @@ struct ikev2_expected_payloads {
 	v2_notification_t notification;
 };
 
-struct state_v2_microcode {
+struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const enum state_kind state;
 	const enum state_kind next_state;
-	const enum isakmp_xchg_types recv_type;
+	const enum isakmp_xchg_type recv_type;
 	enum message_role recv_role;
 	const lset_t flags;
 
@@ -203,7 +203,7 @@ void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposa
 				ike_spi_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct state_v2_microcode *svm,
+			      const struct v2_state_transition *svm,
 			      enum state_kind new_state);
 
 extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
@@ -222,7 +222,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
-		 const struct state_v2_microcode *transition);
+		 const struct v2_state_transition *transition);
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name);
@@ -232,9 +232,9 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct msg_digest *md,
 			       const struct dh_desc *accepted_dh,
 			       enum payload_security security);
-bool need_configuration_payload(const struct connection *const pc,
-				const lset_t st_nat_traversal);
-void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred);
+bool need_v2_configuration_payload(const struct connection *const pc,
+				   const lset_t st_nat_traversal);
+void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
 
 struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 			    const char *id_name, shunk_t id_payload,
@@ -247,5 +247,15 @@ void IKE_SA_established(const struct ike_sa *ike);
 
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 					   struct ike_sa *ike);
+
+
+/*
+ * See 2.21. Error Handling.  In particular the IKE_AUTH discussion.
+ */
+
+bool v2_notification_fatal(v2_notification_t n);
+stf_status stf_status_from_v2_notification(v2_notification_t n);
+
+bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
 #endif

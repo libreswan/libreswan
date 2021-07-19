@@ -76,8 +76,9 @@ conn block
 
 # VPN connection
 conn west-east
+	left=192.1.2.45
+	right=192.1.2.23
 	also=west-east-base-id-nss
-	also=west-east-base-ipv4
 	#auto=start
 
 conn west-eastnet

@@ -43,18 +43,17 @@ west #
 west #
  ../../guestbin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp4096 -I 192.0.100.254 192.0.200.254
 002 "ikev2-esp=aes-sha1-modp4096": added IKEv2 connection
+002 "ikev2-esp=aes-sha1-modp4096" #3: initiating Child SA using IKE SA #1
 1v2 "ikev2-esp=aes-sha1-modp4096" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "ikev2-esp=aes-sha1-modp4096" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "ikev2-esp=aes-sha1-modp4096" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP4096 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.100.254 192.0.200.254 is alive
 002 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
-002 "ikev2-esp=aes-sha1-modp4096" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-esp=aes-sha1-modp4096" #3: ESP traffic information: in=84B out=84B
 002 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
 west #
  ipsec auto --delete ikev2-base
 002 "ikev2-base": terminating SAs using this connection
-002 "ikev2-base" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ikev2-base" #2: ESP traffic information: in=84B out=84B
 002 "ikev2-base" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #

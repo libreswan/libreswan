@@ -92,7 +92,9 @@ enum eroute_type {
 };
 #endif
 
-const struct ip_protocol *protocol_by_prefix(const char *prefix);
+/* match then eat the start of prefix */
+const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix);
+
 const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
 const struct ip_protocol *protocol_by_shunk(shunk_t protocol);
 

@@ -73,11 +73,11 @@ west #
  # this rekey, 1 #3, should succeed
 west #
  ipsec whack --rekey-ipsec --name west
+002 "west" #3: initiating rekey to replace Child SA #2
 1v2 "west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "west" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "west" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
-002 "west" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #2: ESP traffic information: in=168B out=168B
 west #
  sleep 15
@@ -85,12 +85,12 @@ west #
  # this rekey, 2 #4, should fail creating an unacknowledged message and dead lock
 west #
  ipsec whack --rekey-ipsec --name west
+002 "west" #4: initiating rekey to replace Child SA #3
 1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 031 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 002 "west" #1: liveness action - putting connection into hold
 002 "west" #4: deleting state (STATE_V2_REKEY_CHILD_I1) and NOT sending notification
 003 "west" #4: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
-002 "west" #3: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west" #3: ESP traffic information: in=0B out=0B
 002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "west" #1: IMPAIR: skipping revival of connection that is supposed to remain up

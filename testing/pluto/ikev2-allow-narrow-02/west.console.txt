@@ -39,10 +39,9 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 003 "westnet-eastnet-ikev2" #2: CHILD SA failed: TS_UNACCEPTABLE
-002 "westnet-eastnet-ikev2" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
+003 "westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
+002 "westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
 003 "westnet-eastnet-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.23 included errno 3: No such process
-002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done
 done

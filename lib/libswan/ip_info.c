@@ -163,6 +163,9 @@ const struct ip_info ipv4_info = {
 	.address_from_sockaddr = address_from_ipv4_sockaddr,
 	.port_from_sockaddr = port_from_ipv4_sockaddr,
 
+	/* IKEv2 Traffic Selector */
+	.ikev2_ts_addr_range_type = IKEv2_TS_IPV4_ADDR_RANGE,
+
 	/* id */
 	.id_ip_addr = ID_IPV4_ADDR,
 	.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
@@ -207,6 +210,9 @@ const struct ip_info ipv6_info = {
 	.sockaddr_size = sizeof(struct sockaddr_in6),
 	.address_from_sockaddr = address_from_ipv6_sockaddr,
 	.port_from_sockaddr = port_from_ipv6_sockaddr,
+
+	/* IKEv2 Traffic Selector */
+	.ikev2_ts_addr_range_type = IKEv2_TS_IPV6_ADDR_RANGE,
 
 	/* id */
 	.id_ip_addr = ID_IPV6_ADDR,

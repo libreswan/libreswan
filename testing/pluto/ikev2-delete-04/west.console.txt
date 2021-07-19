@@ -52,7 +52,6 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 2
-002 "west-east-delete1" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "west-east-delete1" #2: ESP traffic information: in=84B out=84B
 west #
  echo "sleeping a bit.. 2"
@@ -75,7 +74,7 @@ XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 2084814 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

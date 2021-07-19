@@ -125,9 +125,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 
 		if (authby != AUTHBY_NULL) {
-			r = refine_host_connection(
-				md->v1_st, &peer_id, tarzan_id, FALSE /*initiator*/,
-				LEMPTY /* auth_policy */, authby, &fromcert);
+			r = refine_host_connection(&ike->sa, &peer_id, tarzan_id,
+						   false/*initiator*/,
+						   LEMPTY /* auth_policy */,
+						   authby, &fromcert);
 		}
 
 		if (r == NULL) {
@@ -177,7 +178,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 						   NULL, &peer_id);
 			}
 
-			update_state_connection(md->v1_st, r);
+			update_state_connection(&ike->sa, r);
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
 			return responder_match_initiator_id_counted(ike, peer_id, tarzan_id, md, depth + 1);

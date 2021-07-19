@@ -49,6 +49,7 @@ west #
 up
 west #
  ipsec auto --up westnet-eastnet-b
+002 "westnet-eastnet-b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
 004 "westnet-eastnet-b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
@@ -57,6 +58,7 @@ west #
 up
 west #
  ipsec auto --up westnet-eastnet-c
+002 "westnet-eastnet-c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 002 "westnet-eastnet-c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
 004 "westnet-eastnet-c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
@@ -135,6 +137,7 @@ west #
  # there should be only one IKE_INIT exchange
 west #
  grep "STATE_PARENT_I1 to " /tmp/pluto.log
+| ikev2_calculate_psk_sighash() called from STATE_PARENT_I1 to create PSK with authby=secret
 | transitioning from state STATE_PARENT_I1 to state STATE_PARENT_I2
 west #
  grep "PARENT_R1 with status STF_OK" /tmp/pluto.log

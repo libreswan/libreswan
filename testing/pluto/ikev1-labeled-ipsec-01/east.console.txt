@@ -1,13 +1,12 @@
 /testing/guestbin/swan-prep
 east #
- make -f PATH/share/selinux/devel/Makefile ipsecspd.pp 2> /dev/null
+ # build install se module
+east #
+ ../../guestbin/semodule.sh ipsecspd.te
 Compiling targeted ipsecspd module
 Creating targeted ipsecspd.pp policy package
 rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-east #
- semodule -i ipsecspd.pp > /dev/null 2>/dev/null
-east #
- rm ipsecspd.pp
+ipsecspd.pp installed
 east #
  setsebool domain_can_mmap_files=1
 east #
@@ -93,13 +92,5 @@ east #
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 east #
  rm -rf ipsecspd.fc ipsecspd.if tmp
-east #
- if [ -f /sbin/ausearch ]; then ausearch -ts recent -m AVC | audit2allow ; fi
-#============= netutils_t ==============
-allow netutils_t bin_t:file entrypoint;
-allow netutils_t shell_exec_t:file execute;
-allow netutils_t usr_t:file { execute execute_no_trans };
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
 east #
  

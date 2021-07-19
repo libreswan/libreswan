@@ -44,6 +44,7 @@
 #include "connections.h"
 #include "crypt_ke.h"
 #include "nat_traversal.h"
+#include "ikev2_nat.h"
 #include "unpack.h"
 #include "ikev2_message.h"
 #include "crypt_dh.h"
@@ -203,7 +204,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
-					   pbs_in_as_shunk(&md->message_pbs))) {
+					   same_pbs_in_as_shunk(&md->message_pbs))) {
 				/*
 				 * It looks a lot like a shiny new IKE
 				 * SA that only just responded to a
@@ -275,7 +276,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			if (require_ddos_cookies()) {
 				dbg("DDOS so not responding to invalid packet");
 			} else {
-				chunk_t data = chunk2(md->message_payloads.data,
+				shunk_t data = shunk2(md->message_payloads.data,
 						      md->message_payloads.data_size);
 				send_v2N_response_from_md(md, md->message_payloads.n,
 							  &data);
@@ -326,7 +327,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * transition?
 		 */
 		const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
-		const struct state_v2_microcode *transition =
+		const struct v2_state_transition *transition =
 			find_v2_state_transition(md->md_logger, start_state, md);
 		if (transition == NULL) {
 			/* already logged */
@@ -465,7 +466,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		/* transition? */
-		const struct state_v2_microcode *transition =
+		const struct v2_state_transition *transition =
 			find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md);
 		if (transition == NULL) {
 			/* already logged */
@@ -517,7 +518,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 
 	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
-	const struct state_v2_microcode *transition = &fs->v2_transitions[0];
+	const struct v2_state_transition *transition = &fs->v2_transitions[0];
 	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
 					      ike_initiator_spi(), zero_ike_spi,
 					      policy, try, logger->global_whackfd);
@@ -528,18 +529,6 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	passert(ike->sa.st_state->kind == STATE_PARENT_I0);
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
-
-	if (sec_label.len != 0) {
-		dbg("%s: received security label from acquire: "PRI_SHUNK"'", __FUNCTION__,
-		    pri_shunk(sec_label));
-		dbg("%s: connection security label: '"PRI_SHUNK"'", __FUNCTION__,
-		    pri_shunk(c->spd.this.sec_label));
-		/*
-		 * Should we have a within_range() check here? In theory, the ACQUIRE came
-		 * from a policy we gave the kernel, so it _should_ be within our range?
-		 */
-		ike->sa.st_acquired_sec_label = clone_hunk(sec_label, "st_acquired_sec_label");
-	}
 
 	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
@@ -566,17 +555,31 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		ike->sa.st_interface = ret;
 	}
 
-	if (c->spd.this.sec_label.len > 0 &&
-	    impair.childless_v2_sec_label &&
-	    sec_label.len == 0) {
+	if (c->spd.this.sec_label.len > 0 && sec_label.len == 0) {
 		/*
 		 * Establishing a sec-label connection yet there's no
-		 * sec-label.  Assume this is a forced up.  Could just
-		 * look at connection?
+		 * sec-label.  Assume this is a forced up.
 		 */
-		llog_sa(RC_LOG, ike,
-			"IMPAIR: connection has security label '"PRI_SHUNK"'; omitting CHILD SA payloads from the IKE_AUTH request",
-			pri_shunk(c->spd.this.sec_label));
+		pexpect(c->kind == CK_TEMPLATE);
+		dbg("template connection sec_label="PRI_SHUNK" but initiate does not; skipping child",
+		    pri_shunk(c->spd.this.sec_label));
+	} else if (HAS_IPSEC_POLICY(policy) &&
+		   c->spd.this.sec_label.len > 0 && sec_label.len > 0 &&
+		   c->kind == CK_TEMPLATE) {
+		/* Toss the acquire onto the pending queue */
+		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
+		struct connection *d = instantiate(c, &remote_address, NULL);
+		/* replace connection template label with ACQUIREd label */
+		free_chunk_content(&d->spd.this.sec_label);
+		free_chunk_content(&d->spd.that.sec_label);
+		d->spd.this.sec_label = clone_hunk(sec_label, "IKE_SA_INIT sec_label");
+		d->spd.that.sec_label = clone_hunk(sec_label, "IKE_SA_INIT sec_label");
+		add_pending(background ? null_fd : ike->sa.st_logger->global_whackfd, ike, d, policy, 1,
+			    /*predecessor*/SOS_NOBODY,
+			    sec_label, true /*part of initiate*/);
+		connection_buf db;
+		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
+		    pri_connection(d, &db), pri_shunk(sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
@@ -593,27 +596,21 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	enum stream log_stream = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
 
 	if (predecessor != NULL) {
-		/*
-		 * XXX: can PREDECESSOR be a child?  Idle speculation
-		 * would suggest it can: perhaps it's a state that
-		 * hasn't yet emancipated, or the child from a must
-		 * remain up connection.
-		 */
-		dbg("predecessor #%lu: %s SA; %s %s; %s",
-		    predecessor->st_serialno,
-		    IS_CHILD_SA(predecessor) ? "CHILD" : "IKE",
-		    IS_V2_ESTABLISHED(predecessor->st_state) ? "established" : "establishing?",
-		    enum_enum_name(&sa_type_names, predecessor->st_ike_version,
-				   predecessor->st_establishing_sa),
-		    predecessor->st_state->name);
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
-			  "initiating IKEv2 connection to replace #%lu",
-			  predecessor->st_serialno);
+		const char *what;
 		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ipsec_pred = predecessor->st_serialno;
+			what = "established CHILD SA";
 		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ike_pred = predecessor->st_serialno;
+			what = "established IKE SA";
+		} else if (IS_IKE_SA(predecessor)) {
+			what = "establishing IKE SA";
+		} else {
+			what = "establishing CHILD SA";
 		}
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+			  "initiating IKEv2 connection to replace %s #%lu",
+			  what, predecessor->st_serialno);
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
@@ -630,8 +627,14 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
-		stf_status ret = idr_ipseckey_fetch(ike);
-		if (ret != STF_OK) {
+		/*
+		 * This runs in the background?  How is it ever
+		 * synced?
+		 */
+		if (!initiator_fetch_idr_ipseckey(ike)) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"fetching IDr IPsec key using DNS failed");
+			delete_state(&ike->sa);
 			return;
 		}
 	}
@@ -814,7 +817,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
 
 	/* Transmit */
 	record_v2_message(ike, &reply_stream, "IKE_SA_INIT request",
@@ -1001,7 +1004,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	/* record first packet for later checking of signature */
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		clone_out_pbs_as_chunk(&md->message_pbs,
+		      clone_pbs_out_as_chunk(&md->message_pbs,
 			"saved first received packet in inI1outR1_continue_tail"));
 
 	/* make sure HDR is at start of a clean buffer */
@@ -1150,7 +1153,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		clone_out_pbs_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
 
 	return STF_OK;
 }
@@ -1381,7 +1384,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		}
 	}
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      clone_out_pbs_as_chunk(&md->message_pbs,
+		      clone_pbs_out_as_chunk(&md->message_pbs,
 					     "saved first received packet in inR1outI2"));
 
 	/*

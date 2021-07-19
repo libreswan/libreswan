@@ -17,9 +17,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "lswcdefs.h"		/* for elemsof() */
 #include "realtime.h"
 #include "timecheck.h"
+#include "lswcdefs.h"		/* for elemsof() */
+#include "constants.h"		/* for bool_str() */
 
 void check_realtime(void)
 {
@@ -49,4 +50,6 @@ void check_realtime(void)
 			printf("%s\n", what);
 		}
 	}
+
+	CHECK_TIME_CMP(real, /*UTC?*/false);
 }

@@ -356,6 +356,7 @@ static bool crl_update_check(CERTCertDBHandle *handle,
  * Does a temporary import of the DER certificate an appends it to the
  * CERTS array.
  */
+
 static void add_decoded_cert(CERTCertDBHandle *handle,
 			     struct certs **certs,
 			     SECItem der_cert,
@@ -404,8 +405,9 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 
 	/*
 	 * Currently only a check for RSA is needed, as the only ECDSA
-	 * key size not allowed in FIPS mode (p192 curve), is not implemented
-	 * by NSS.
+	 * key size not allowed in FIPS mode (p192 curve), is not
+	 * implemented by NSS.
+	 *
 	 * See also RSA_secret_sane() and ECDSA_secret_sane()
 	 */
 	if (libreswan_fipsmode()) {
@@ -414,9 +416,10 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		if (pk->keyType == rsaKey &&
 			((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			llog(RC_LOG, logger,
-				    "FIPS: Rejecting peer cert with key size %d under %d",
-				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
-				    FIPS_MIN_RSA_KEY_SIZE);
+			     "FIPS: rejecting peer cert with key size %d under %d: %s",
+			     pk->u.rsa.modulus.len * BITS_PER_BYTE,
+			     FIPS_MIN_RSA_KEY_SIZE,
+			     cert->subjectName);
 			SECKEY_DestroyPublicKey(pk);
 			CERT_DestroyCertificate(cert);
 			return;

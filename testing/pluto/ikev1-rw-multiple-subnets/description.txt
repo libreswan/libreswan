@@ -1,1 +1,7 @@
-IKEv1 RW with subnets.
+IKEv1 RW with subnets=
+
+On libreswan 4.4 and older this could result in the second subnet being
+confused with the first one, and getting the wrong crypto keys installed.
+This showed up as two conns on road and one conn on east, and kernel
+errors in XfrmInTmplMismatch.
+

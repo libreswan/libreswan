@@ -46,7 +46,6 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 003 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSA with SHA2_512 and 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting other state #2 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_PARENT_I2) and NOT sending notification
 002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #

@@ -18,69 +18,103 @@
 #include "ip_said.h"
 #include "ip_info.h"
 
-#include "lswlog.h"	/* for bad_case() */
+#include "jambuf.h"
 
-ip_said said3(const ip_address *address, ipsec_spi_t spi,
-	      const struct ip_protocol *proto)
+const ip_said unset_said;
+
+ip_said said_from_raw(where_t where UNUSED, enum ip_version version,
+		      const struct ip_bytes dst,
+		      const struct ip_protocol *protocol,
+		      ipsec_spi_t spi)
 {
 	ip_said said = {
-		.dst = *address,
+		.is_set = true,
+		.version = version,
+		.dst = dst,
+		.ipproto = protocol->ipproto,
 		.spi = spi,
-		.proto = proto,
 	};
 	return said;
+
 }
 
+ip_said said_from_address_protocol_spi(const ip_address address,
+				       const struct ip_protocol *protocol,
+				       ipsec_spi_t spi)
+{
+	return said_from_raw(HERE, address.version, address.bytes,
+			     protocol, spi);
+}
+
+bool said_is_unset(const ip_said *said)
+{
+	if (said == NULL) {
+		return true;
+	}
+	return !said->is_set;
+}
 
 /*
  * convert SA to text "ah507@1.2.3.4"
  */
 
-void jam_said(struct jambuf *buf, const ip_said *sa)
+size_t jam_said(struct jambuf *buf, const ip_said *said)
 {
-	const struct ip_protocol *proto = sa->proto;
-	const char *pre = (proto == NULL ? "unk" : proto->prefix);
-
-	if (strcmp(pre, PASSTHROUGHTYPE) == 0 &&
-	    sa->spi == PASSTHROUGHSPI &&
-	    (address_is_unset(&sa->dst) /*short-circuit*/||
-	     address_is_any(sa->dst))) {
-		jam_string(buf, (said_type(sa) == &ipv4_info ?
-				 PASSTHROUGH4NAME :
-				 PASSTHROUGH6NAME));
-	} else if (sa->proto == &ip_protocol_internal) {
-		switch (ntohl(sa->spi)) {
-		case SPI_PASS:
-			jam_string(buf, "%pass");
-			break;
-		case SPI_DROP:
-			jam_string(buf, "%drop");
-			break;
-		case SPI_REJECT:
-			jam_string(buf, "%reject");
-			break;
-		case SPI_HOLD:
-			jam_string(buf, "%hold");
-			break;
-		case SPI_TRAP:
-			jam_string(buf, "%trap");
-			break;
-		case SPI_TRAPSUBNET:
-			jam_string(buf, "%trapsubnet");
-			break;
-		default:
-			jam(buf, "%s-%d", "%unk", ntohl(sa->spi));
-			break;
-		}
-	} else {
-		/* general case needed */
-		jam_string(buf, pre);
-		/* .SPI */
-		jam_char(buf, (said_type(sa) == &ipv4_info ? '.' : ':'));
-		jam(buf, "%x", ntohl(sa->spi));;
-		jam_char(buf, '@');
-		jam_address(buf, &sa->dst);
+	if (!said->is_set) {
+		return jam_string(buf, "<unset-said>");
 	}
+
+	if (said->ipproto == ip_protocol_internal.ipproto) {
+		switch (ntohl(said->spi)) {
+		case SPI_PASS:
+			return jam_string(buf, "%pass");
+		case SPI_DROP:
+			return jam_string(buf, "%drop");
+		case SPI_REJECT:
+			return jam_string(buf, "%reject");
+		case SPI_HOLD:
+			return jam_string(buf, "%hold");
+		case SPI_TRAP:
+			return jam_string(buf, "%trap");
+		case SPI_IGNORE:
+			return jam_string(buf, "%ignore");
+		case SPI_TRAPSUBNET:
+			return jam_string(buf, "%trapsubnet");
+		default:
+#if 0
+			return jam(buf, "%s-"PRI_IPSEC_SPI, "%unk", pri_ipsec_spi(said->spi));
+#else
+			return jam(buf, "%s-%d", "%unk", ntohl(said->spi));
+#endif
+		}
+	}
+
+	const struct ip_info *afi = said_type(said);
+	if (afi == NULL) {
+		return jam(buf, "<said-has-no-type");
+	}
+
+	const ip_protocol *proto = protocol_by_ipproto(said->ipproto);
+
+	if (proto == &ip_protocol_ipip/*TUN*/ &&
+	    said->spi == PASSTHROUGHSPI &&
+	    /* any zero */ thingeq(said->dst, unset_bytes)) {
+		return jam_string(buf, (afi == &ipv4_info ? PASSTHROUGH4NAME :
+					afi == &ipv6_info ? PASSTHROUGH6NAME :
+					"<unknown-said-version>"));;
+	}
+
+	/* general case needed */
+	size_t s = 0;
+	s += jam_string(buf, proto->prefix != NULL ? proto->prefix : proto->name);
+	/* .SPI */
+	s += jam_char(buf, (afi == &ipv4_info ? '.' :
+			    afi == &ipv6_info ? ':' :
+			    '?'));
+	s += jam(buf, "%x", ntohl(said->spi));;
+	s += jam_char(buf, '@');
+	s += afi->jam_address(buf, afi, &said->dst);
+	return s;
 }
 
 const char *str_said(const ip_said *said, said_buf *buf)
@@ -95,10 +129,27 @@ const struct ip_info *said_type(const ip_said *said)
 	if (said == NULL) {
 		return NULL;
 	}
-	return ip_version_info(said->dst.version);
+
+	/* may return NULL */
+	return ip_version_info(said->version);
 }
 
-ip_address said_address(const ip_said *said)
+ip_address said_address(const ip_said said)
 {
-	return said->dst;
+	const struct ip_info *afi = said_type(&said);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return unset_address; /* empty_address? */
+	}
+
+	return address_from_raw(HERE, said.version, said.dst);
+}
+
+const struct ip_protocol *said_protocol(const ip_said said)
+{
+	if (said_is_unset(&said)) {
+		return NULL;
+	}
+
+	return protocol_by_ipproto(said.ipproto);
 }

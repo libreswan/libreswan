@@ -1,0 +1,7 @@
+IKEv2 RW with subnets. on east road's id is hardcoded.
+
+One endpoint has more subnets defined than the other. The
+set of mutually agreed subnets should still establish.
+
+note it is a little odd that east has a CK_PERMANENT and
+a CK_INSTANCE from the same CK_TEMPLATE (due to right=%any)

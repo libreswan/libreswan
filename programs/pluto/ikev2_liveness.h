@@ -21,6 +21,6 @@ struct ike_sa;
 struct child_sa;
 
 void liveness_check(struct state *st);
-void initiate_v2_liveness(struct logger *logger, struct ike_sa *ike);
+void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t);
 
 #endif

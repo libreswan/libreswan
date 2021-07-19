@@ -165,7 +165,6 @@ west #
 000  
 west #
  ipsec whack --deletestate 1
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting other state #2 (STATE_V2_ESTABLISHED_CHILD_SA) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
@@ -295,7 +294,7 @@ XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 2084814 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid REQID mode transport
+		proto esp reqid 0 mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

@@ -67,8 +67,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 	return FALSE;
 }
 #else
-#include "security_selinux.h"
-#include "labeled_ipsec.h"
+#include "ikev1_labeled_ipsec.h"
 #include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
 static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 {
@@ -120,10 +119,10 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	replace_chunk(&st->st_seen_sec_label, clone_hunk(sec_label, "st_seen_sec_label"));
+	replace_chunk(&st->st_v1_seen_sec_label, clone_hunk(sec_label, "st_seen_sec_label"));
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("connection security context IPsec Security Label verification succeeded with:",
-			      st->st_seen_sec_label);
+			      st->st_v1_seen_sec_label);
 	}
 	return true;
 }
@@ -1265,11 +1264,11 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (c->spd.this.sec_label.len != 0) {
 						chunk_t out_label = c->spd.this.sec_label;
 
-						if (st->st_acquired_sec_label.len != 0) {
-							out_label = st->st_acquired_sec_label;
+						if (st->st_v1_acquired_sec_label.len != 0) {
+							out_label = st->st_v1_acquired_sec_label;
 						} else {
-							if (st->st_seen_sec_label.len !=0)
-								out_label = st->st_seen_sec_label;
+							if (st->st_v1_seen_sec_label.len !=0)
+								out_label = st->st_v1_seen_sec_label;
 						}
 
 						pb_stream val_pbs;
@@ -3207,8 +3206,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			ah_attrs.spi = ah_spi;
 			inner_proto = &ip_protocol_ah;
-			if (ah_attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (ah_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		}
 
@@ -3245,21 +3243,19 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * the test should be pushed into
 				 * ikev1_verify_esp().
 				 */
-				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
-					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
-					    !ah_seen) {
-						LSWDBGP(DBG_BASE, buf) {
-							jam_string(buf, "ESP from ");
-							jam_address(buf, &c->spd.that.host_addr);
-							jam_string(buf, " must either have AUTH or be combined with AH");
-						}
-						continue; /* try another */
+				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none &&
+				    !encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
+				    !ah_seen) {
+					LSWDBGP(DBG_BASE, buf) {
+						jam_string(buf, "ESP from ");
+						jam_address(buf, &c->spd.that.host_addr);
+						jam_string(buf, " must either have AUTH or be combined with AH");
 					}
+					continue; /* try another */
 				}
 
 				if (ah_seen &&
-				    ah_attrs.mode !=
-				      esp_attrs.mode) {
+				    ah_attrs.mode != esp_attrs.mode) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "Skipped bogus proposal where AH and ESP transforms disagree about mode");
 					continue; /* try another */
@@ -3272,8 +3268,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			esp_attrs.spi = esp_spi;
 			inner_proto = &ip_protocol_esp;
-			if (esp_attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (esp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
@@ -3359,13 +3354,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 
 				if (ah_seen &&
-				    ah_attrs.mode !=
-				      ipcomp_attrs.mode) {
+				    ah_attrs.mode != ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
 					dbg("AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				} else if (esp_seen &&
-					   esp_attrs.mode !=
-					     ipcomp_attrs.mode) {
+					   esp_attrs.mode != ipcomp_attrs.mode) {
 					/* ??? This should be an error, but is it? */
 					dbg("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
@@ -3374,10 +3367,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == ipcomp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
+
 			ipcomp_attrs.spi = ipcomp_cpi;
 			inner_proto = &ip_protocol_comp;
-			if (ipcomp_attrs.mode ==
-			    ENCAPSULATION_MODE_TUNNEL)
+			if (ipcomp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		}
 
@@ -3400,7 +3393,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
 					      &c->spd,
-					      tunnel_mode &&
+						tunnel_mode &&
 					      inner_proto == &ip_protocol_ah,
 					      st->st_logger);
 			}
@@ -3416,7 +3409,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &esp_trans_pbs,
 					      &c->spd,
 					      tunnel_mode &&
-					      inner_proto == &ip_protocol_esp,
+						inner_proto == &ip_protocol_esp,
 					      st->st_logger);
 			}
 
@@ -3431,7 +3424,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &c->spd,
 					      tunnel_mode &&
-					      inner_proto == &ip_protocol_comp,
+						inner_proto == &ip_protocol_comp,
 					      st->st_logger);
 			}
 

@@ -1,9 +1,13 @@
-As ikev2-labeled-ipsec-01 but now the responder is not using labels
+As ikev2-labeled-ipsec-01/childless but now the responder is not using labels
 
 The connection should fail:
 
-- initiator sends an IKE_SA with no child
-- responder authenticates, but rejects lack of child
-- initiator drops sa with unexpected payload?
+- because the initiator has a label and no acquire, it sends an IKE_SA
+  but no child
 
+- responder authenticates, but seeing no child, rejects the connection
+  with AUTHENTICATION_FAILED (a little lie)
 
+- initiator abandons  SA
+
+TODO: responder should keep the IKE SA and only return TS_UNACCEPTABLE.

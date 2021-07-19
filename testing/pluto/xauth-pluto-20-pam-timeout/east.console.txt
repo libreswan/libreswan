@@ -57,8 +57,9 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- grep "handling event EVENT_PAM_TIMEOUT" /tmp/pluto.log
-| handling event EVENT_PAM_TIMEOUT for parent state #1
+ grep "^[^|].*PAM: " /tmp/pluto.log
+"xauth-road-eastnet"[1] 192.1.3.209 #1: PAM: authentication of user 'gooduser90' ABORTED (timeout) after 60.NNN seconds
+"xauth-road-eastnet"[2] 192.1.3.209 #3: PAM: authentication of user 'gooduser' SUCCEEDED after 0.NNN seconds
 east #
  if [ -f /etc/pam.d/pluto.stock ]; then mv /etc/pam.d/pluto.stock /etc/pam.d/pluto ; fi
 east #

@@ -8,7 +8,7 @@
 # this script exit with a non-zero status then all the output is
 # exposed.
 
-set -ex
+set -e
 ok=true
 
 

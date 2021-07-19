@@ -303,12 +303,12 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("payload_names_ikev1orv2", &payload_names_ikev1orv2);
 	test_enums("ikev1_exchange_names", &ikev1_exchange_names);
 	test_enums("ikev2_exchange_names", &ikev2_exchange_names);
-	test_enums("exchange_names_ikev1orv2", &exchange_names_ikev1orv2);
+	test_enums("isakmp_xchg_type_names", &isakmp_xchg_type_names);
 	test_enums("ikev1_protocol_names", &ikev1_protocol_names);
 	test_enums("isakmp_transformid_names", &isakmp_transformid_names);
 	test_enums("ah_transformid_names", &ah_transformid_names);
 	test_enums("esp_transformid_names", &esp_transformid_names);
-	test_enums("ipcomp_transformid_names", &ipcomp_transformid_names);
+	test_enums("ipcomp_transformid_names", &ipsec_ipcomp_algo_names);
 	test_enum_range("oakley_attr_names", &oakley_attr_names, 0, 256);
 	test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
 	test_enums("sa_lifetime_names", &sa_lifetime_names);
@@ -323,7 +323,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ikev2_cp_type_names", &ikev2_cp_type_names);
 	test_enums("ikev2_cp_attribute_type_names", &ikev2_cp_attribute_type_names);
 	test_enums("pkk_names", &pkk_names);
-	test_enum_range("enc_mode_names", &enc_mode_names, 0, 256);
+	test_enum_range("enc_mode_names", &encapsulation_mode_names, 0, 256);
 	test_enums("auth_alg_names", &auth_alg_names);
 	test_enums("xauth_type_names", &xauth_type_names);
 	test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);

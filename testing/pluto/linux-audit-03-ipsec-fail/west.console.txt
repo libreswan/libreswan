@@ -68,7 +68,6 @@ west #
 1v2 "ikev2-ipsec-fail" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-ipsec-fail" #5: authenticated using RSA with SHA2_512 and preloaded certificate '@east-v2'
 003 "ikev2-ipsec-fail" #6: IKE_AUTH response contained the error notification TS_UNACCEPTABLE
-002 "ikev2-ipsec-fail" #5: deleting other state #6 (STATE_V2_IKE_AUTH_CHILD_I0) and NOT sending notification
 002 "ikev2-ipsec-fail" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ikev2-ipsec-fail" #5: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #

@@ -35,7 +35,6 @@ west #
 004 "ike,esp=aes_gcm" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #2: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
@@ -58,7 +57,6 @@ west #
 004 "ike,esp=aes_gcm" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #4: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
@@ -81,7 +79,6 @@ west #
 004 "ike,esp=aes_gcm" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #6: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
@@ -102,7 +99,6 @@ west #
 004 "ike,esp=aes_gcm" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #8: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #8: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
@@ -123,7 +119,6 @@ west #
 004 "ike,esp=aes_gcm" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #10: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #10: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection
@@ -144,7 +139,6 @@ west #
 004 "ike,esp=aes_gcm" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #12: deleting state (STATE_V2_ESTABLISHED_CHILD_SA) and sending notification
 005 "ike,esp=aes_gcm" #12: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 002 "ike,esp=aes_gcm": terminating SAs using this connection

@@ -41,7 +41,7 @@ fi
 ops=
 modified=
 baseline=
-__baseline=$(sed -n -e 's/KVM_BASELINE.*=/--baseline /p' Makefile.inc.local)
+__baseline=$(sed -n -e 's/^KVM_BASELINE.*=/--baseline /p' Makefile.inc.local)
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -124,7 +124,7 @@ results_command()
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py ${__baseline} "$@"
+	./testing/utils/kvmresults.py "$@"
 	status=$?
     fi
 }

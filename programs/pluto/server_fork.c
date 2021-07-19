@@ -41,6 +41,7 @@
 #include "demux.h"		/* for release_any_md() */
 #include "pluto_timing.h"
 #include "show.h"
+#include "connections.h"
 
 #define PID_MAGIC 0x000f000cUL
 
@@ -254,12 +255,20 @@ void server_fork_sigchld_handler(struct logger *logger)
 						pid_entry->name);
 				}
 				statetime_t start = statetime_start(st);
-				pid_entry->callback(st, md, status,
-						    pid_entry->context,
-						    pid_entry->logger);
+				enum ike_version ike_version = st->st_ike_version;
+				stf_status ret = pid_entry->callback(st, md, status,
+								     pid_entry->context,
+								     pid_entry->logger);
+				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+					/* MD.ST may have been freed! */
+					dbg("resume %s for #%lu skipped complete_v%d_state_transition()",
+					    pid_entry->name, pid_entry->serialno, ike_version);
+				} else {
+					complete_state_transition(st, md, ret);
+				}
+				release_any_md(&md);
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
-				release_any_md(&md);
 			}
 			/* clean it up */
 			del_hash_table_entry(&pids_hash_table, pid_entry);

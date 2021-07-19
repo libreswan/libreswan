@@ -29,7 +29,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel.h"			/* for raw_eroute() */
+#include "kernel_ops.h"			/* for raw_policy() */
 #include "log.h"
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
@@ -40,8 +40,8 @@
 #include "ikev1_quick.h"		/* for quick_outI1() */
 #include "ikev2.h"			/* for ikev2_state_transition_fn; */
 #include "ikev2_ike_sa_init.h"		/* for ikev2_out_IKE_SA_INIT_I() */
-#include "ikev2_create_child_sa.h"	/* for ikev2_initiate_child_sa() */
-#include "security_selinux.h"		/* for sec_label_within_range() */
+#include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
+#include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
@@ -242,8 +242,15 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 
 	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
 	c->policy |= POLICY_UP;
+
+	/*
+	 * FOR IKEv2, when the sec_label template connection is
+	 * initiated, there is no acquire and, hence, no Child SA to
+	 * establish.
+	 */
+
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
-			  HUNK_AS_SHUNK(c->spd.this.sec_label),
+			  (c->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd.this.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
 }
@@ -256,34 +263,32 @@ void ipsecdoi_initiate(struct connection *c,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger)
 {
-	if (sec_label.len != 0)
+	if (sec_label.len > 0)
 		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
-
-	/*
-	 * If there's already an IKEv1 ISAKMP SA established, use that and
-	 * go directly to Quick Mode.  We are even willing to use one
-	 * that is still being negotiated, but only if we are the Initiator
-	 * (thus we can be sure that the IDs are not going to change;
-	 * other issues around intent might matter).
-	 * Note: there is no way to initiate with a Road Warrior.
-	 */
-	struct state *st = find_phase1_state(c,
-#ifdef USE_IKEv1
-					     ISAKMP_SA_ESTABLISHED_STATES |
-					     PHASE1_INITIATOR_STATES |
-#endif
-					     IKEV2_ISAKMP_INITIATOR_STATES);
 
 	switch (c->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
 	{
+		/*
+		 * If there's already an IKEv1 ISAKMP SA established,
+		 * use that and go directly to Quick Mode.  We are
+		 * even willing to use one that is still being
+		 * negotiated, but only if we are the Initiator (thus
+		 * we can be sure that the IDs are not going to
+		 * change; other issues around intent might matter).
+		 * Note: there is no way to initiate with a Road
+		 * Warrior.
+		 */
+		struct state *st = find_phase1_state(c,
+						     V1_ISAKMP_SA_ESTABLISHED_STATES |
+						     V1_PHASE1_INITIATOR_STATES);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
 			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
 		} else if (st == NULL) {
 			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
-		} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
 			 * important: we already have it from when we
@@ -303,31 +308,36 @@ void ipsecdoi_initiate(struct connection *c,
 	}
 #endif
 	case IKEv2:
-		if (st == NULL) {
-			/* note: new IKE SA pulls sec_label from connection */
+	{
+		/*
+		 * If there's already an IKEv2 IKE SA established, use
+		 * that and go directly to Quick Mode.  We are even
+		 * willing to use one that is still being negotiated,
+		 * but only if we are the Initiator (thus we can be
+		 * sure that the IDs are not going to change; other
+		 * issues around intent might matter).  Note: there is
+		 * no way to initiate with a Road Warrior.
+		 */
+		struct ike_sa *ike =
+			pexpect_ike_sa(find_phase1_state(c,
+							 LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
+							 IKEV2_ISAKMP_INITIATOR_STATES));
+		if (ike == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
-						empty_shunk, background, logger);
-		} else if (!IS_PARENT_SA_ESTABLISHED(st)) {
+						sec_label, background, logger);
+		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
 			add_pending(background ? null_fd : logger->global_whackfd,
-				    pexpect_ike_sa(st),
-				    c, policy, try,
+				    ike, c, policy, try,
 				    replacing, sec_label,
 				    false /*part of initiate*/);
-		} else {
-			struct pending p = {
-				.whack_sock = logger->global_whackfd, /*on-stack*/
-				.ike = pexpect_ike_sa(st),
-				.connection = c,
-				.try = try,
-				.policy = policy,
-				.replacing = replacing,
-				.sec_label = sec_label,
-			};
+		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			ikev2_initiate_child_sa(&p);
+			submit_v2_CREATE_CHILD_SA_new_child(ike, c, policy, try, sec_label,
+							    logger->global_whackfd);
 		}
 		break;
+	}
 	default:
 		bad_case(c->ike_version);
 	}
@@ -533,7 +543,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		 * specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-		    enum_name_short(&spi_names, b->failure_shunt));
+		    enum_name_short(&policy_spi_names, b->failure_shunt));
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
 		const struct ip_info *afi = address_type(&b->local.host_addr);
 		const ip_address null_host = afi->address.any;
@@ -542,18 +552,18 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 								 b->transport_proto);
 		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
 								 b->transport_proto);
-		if (!raw_eroute(&null_host, &src, &null_host, &dst,
+		if (!raw_policy(KP_REPLACE_OUTBOUND,
+				&null_host, &src, &null_host, &dst,
 				/*from*/htonl(b->negotiation_shunt),
 				/*to*/htonl(b->failure_shunt),
-				&ip_protocol_internal,
 				b->transport_proto->ipproto,
-				ET_INT, null_proto_info,
+				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
-				ERO_REPLACE, ughmsg,
-				b->sec_label, b->logger)) {
+				b->sec_label, b->logger,
+				"%s() %s", __func__, ughmsg)) {
 			llog(RC_LOG_SERIOUS, b->logger,
 			     "failed to replace negotiationshunt with bare failureshunt");
 			return;
@@ -594,7 +604,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
 
-	if (b->sec_label.len != 0) {
+	if (b->sec_label.len > 0) {
 		dbg("oppo bundle: received security label string: "PRI_SHUNK,
 		    pri_shunk(b->sec_label));
 	}
@@ -619,12 +629,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	struct spd_route *sr;
+	struct spd_route *sr = NULL;
 	struct connection *c = find_connection_for_clients(&sr,
-							   &b->local.client,
-							   &b->remote.client,
-							   b->sec_label,
-							   b->logger);
+							   /*ip_traffic*/&b->local.client, &b->remote.client,
+							   b->sec_label, b->logger);
 	if (c == NULL) {
 		/*
 		 * No connection explicitly handles the clients and
@@ -636,23 +644,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-#if 0
-	if (c->ike_version == IKEv2 && c->kind == CK_INSTANCE && b->sec_label.len != 0) {
-		/*
-		 * A bit of a hack until we properly instantiate
-		 * labeled ipsec connections.
-		 */
-		struct connection *templ = connection_by_serialno(c->serial_from);
-		struct ike_sa *ikesa = ike_sa(state_by_serialno(c->newest_ipsec_sa), HERE);
-		struct connection *inst = instantiate(templ, &b->remote.host_addr, NULL);
-		add_pending(NULL, ikesa, inst, inst->policy, 1, SOS_NOBODY, b->sec_label, false );
-		unpend(ikesa, NULL); /* cuases initiate */
-		return;
-	}
-#endif
-
-	if (c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0) {
-		dbg("connection has security label");
+	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind == CK_TEMPLATE) {
+		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
@@ -666,20 +659,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 					"received kernel security label does not fall within range of our connection");
 			return;
 		}
-
-		/*
-		 * XXX: Danger. C is switched to an instance.  It is
-		 * assumed that ipsecdoi_initiate() always saves the
-		 * pointer.
-		 */
-
-		/* create instance and switch to it */
-		c = instantiate(c, &b->remote.host_addr, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&c->spd.this.sec_label);
-		c->spd.this.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
-		free_chunk_content(&c->spd.that.sec_label);
-		c->spd.that.sec_label = clone_hunk(b->sec_label, "ACQUIRED sec_label");
 
 		/*
 		 * We've found a connection that can serve.  Do we
@@ -696,37 +675,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 		b->failure_shunt = shunt_policy_spi(c, false);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-
-		/*
-		 * Add the kernel shunt to the pluto bare shunt list.
-		 *
-		 * We need to do this because the %hold shunt was
-		 * installed by kernel and we want to keep track of it
-		 * inside pluto.
-		 *
-		 * XXX: hack to keep code below happy - need to figure
-		 * out what to do with the shunt functions.
-		 */
-		ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
-		ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-		add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
-			       SPI_HOLD, b->want, b->logger);
-
-		/*
-		 * Otherwise, there is some kind of static conn that
-		 * can handle this connection, so we initiate it.
-		 * Only needed if we this was triggered by a packet,
-		 * not by whack
-		 */
-		if (b->held) {
-			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
-					    &b->local.host_addr, &b->remote.host_addr)) {
-				dbg("initiate_ondemand_body() installed negotiation_shunt,");
-			} else {
-				llog(RC_LOG, b->logger,
-					    "initiate_ondemand_body() failed to install negotiation_shunt,");
-			}
-		}
 
 		/*
 		 * Annouce this to the world.  Use c->logger instead?
@@ -934,25 +882,25 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
-	    enum_name_short(&spi_names, b->negotiation_shunt));
+	    enum_name_short(&policy_spi_names, b->negotiation_shunt));
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
-	 * violation into raw_eroute()?
+	 * violation into raw_policy()?
 	 */
 
-	if (!raw_eroute(&b->local.host_addr, &local_shunt,
+	if (!raw_policy(KP_ADD_OUTBOUND,
+			&b->local.host_addr, &local_shunt,
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
 			htonl(b->negotiation_shunt),
-			&ip_protocol_internal, shunt_protocol->ipproto,
-			ET_INT, null_proto_info,
+			shunt_protocol->ipproto,
+			ET_INT, esp_transport_proto_info,
 			deltatime(SHUNT_PATIENCE),
 			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 			NULL, 0 /* xfrm-if-id */,
-			ERO_ADD, addwidemsg,
-			b->sec_label,
-			b->logger)) {
+			b->sec_label, b->logger,
+			"%s() %s", __func__, addwidemsg)) {
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
@@ -1103,8 +1051,10 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* do not touch what is not broken */
-	if ((c->newest_ike_sa != SOS_NOBODY) &&
-	    IS_IKE_SA_ESTABLISHED(state_with_serialno(c->newest_ike_sa))) {
+	struct state *newest_ike_sa = state_with_serialno(c->newest_ike_sa);
+	if (newest_ike_sa != NULL &&
+	    (IS_IKE_SA_ESTABLISHED(newest_ike_sa) ||
+	     IS_V1_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" is established",
 		    pri_connection(c, &cib));
@@ -1238,8 +1188,8 @@ void connection_check_phase2(struct logger *logger)
 #ifdef USE_IKEv1
 			case IKEv1:
 				p1st = find_phase1_state(c,
-							 (ISAKMP_SA_ESTABLISHED_STATES |
-							  PHASE1_INITIATOR_STATES));
+							 (V1_ISAKMP_SA_ESTABLISHED_STATES |
+							  V1_PHASE1_INITIATOR_STATES));
 				break;
 #endif
 			case IKEv2:

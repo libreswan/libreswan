@@ -13,6 +13,7 @@ require {
 	type ping_t;
 	type unconfined_service_t;
 	type unconfined_t;
+     	type netutils_t;
 
 	class association { polmatch sendto setcontext };
 	class capability { net_raw };
@@ -59,12 +60,18 @@ corenet_tcp_bind_generic_node(nping_t)
 
 #============= END nping_t ==============
 
+#============= netutils_t ==============
+corecmd_bin_entry_type(netutils_t)
+corecmd_check_exec_shell(netutils_t)
+files_exec_usr_files(netutils_t)
+
 #============= unconfined_service_t ==============
 # Required when running `pluto` under `rr`.
 allow unconfined_service_t unconfined_t:association setcontext;
 allow unconfined_service_t ping_t:association setcontext;
 allow unconfined_service_t ipsec_t:association setcontext;
 allow unconfined_service_t nping_t:association setcontext;
+allow unconfined_service_t netutils_t:association setcontext;
 
 #============= ipsec_t ==============
 allow ipsec_t ipsec_mgmt_t:process { noatsecure rlimitinh siginh };

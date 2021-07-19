@@ -35,7 +35,6 @@ ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 # 12 is the exit code of pluto for shutting down "leaving state"
 ExecStopPost=/bin/bash -c 'if test "$EXIT_STATUS" != "12"; then /sbin/ip xfrm policy flush; /sbin/ip xfrm state flush; fi'
 ExecStopPost=@FINALSBINDIR@/ipsec --stopnflog
-ExecReload=@FINALLIBEXECDIR@/whack --listen
 
 [Install]
 WantedBy=multi-user.target

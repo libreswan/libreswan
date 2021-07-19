@@ -43,17 +43,6 @@ enum smf2_flags {
 	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
 
 	/*
-	 * If this state transition is successful then the SA is
-	 * encrypted and authenticated.
-	 *
-	 * XXX: The flag currently works for CHILD SAs but not IKE SAs
-	 * (but it should).  This is because IKE SAs currently bypass
-	 * the complete state transition code when establishing.  See
-	 * also danger note below.
-	 */
-	SMF2_ESTABLISHED = LELEM(9),
-
-	/*
 	 * Should whack be released?
 	 */
 	SMF2_RELEASE_WHACK = LELEM(10),
@@ -63,9 +52,9 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 						  const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *payloads);
 
-const struct state_v2_microcode *find_v2_state_transition(struct logger *logger,
-							  const struct finite_state *state,
-							  struct msg_digest *md);
+const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
+							   const struct finite_state *state,
+							   struct msg_digest *md);
 
 void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors);

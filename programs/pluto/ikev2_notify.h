@@ -26,6 +26,6 @@ struct payload_digest;
 void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 			const struct payload_digest *notify);
 
-enum v2_pd v2_notification_to_v2_pd(v2_notification_t);
+enum v2_pd v2_pd_from_notification(v2_notification_t);
 
 #endif

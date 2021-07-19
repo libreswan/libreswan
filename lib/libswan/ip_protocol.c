@@ -60,7 +60,7 @@ const struct ip_protocol ip_protocols[] = {
 		.ipproto = IPPROTO_ICMP,
 		.reference = "[RFC792]",
 		/* libreswan */
-		.prefix = "tun",
+		.prefix = "icmp",
 	},
 	[2] = {
 		.description = "Internet Group Management",
@@ -439,7 +439,7 @@ const struct ip_protocol ip_protocols[] = {
 	},
 	[61] = {
 		.description = "any host internal protocol",
-		.name = "",
+		.name = "61",
 		.ipproto = INTERNAL_IPPROTO,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 		/* libreswan */
@@ -453,7 +453,7 @@ const struct ip_protocol ip_protocols[] = {
 	},
 	[63] = {
 		.description = "any local network",
-		.name = "",
+		.name = "63",
 		.ipproto = 63,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 	},
@@ -483,7 +483,7 @@ const struct ip_protocol ip_protocols[] = {
 	},
 	[68] = {
 		.description = "any distributed file system",
-		.name = "",
+		.name = "68",
 		.ipproto = 68,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 	},
@@ -684,7 +684,7 @@ const struct ip_protocol ip_protocols[] = {
 	},
 	[99] = {
 		.description = "any private encryption scheme",
-		.name = "",
+		.name = "99",
 		.ipproto = 99,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 	},
@@ -776,7 +776,7 @@ const struct ip_protocol ip_protocols[] = {
 	},
 	[114] = {
 		.description = "any 0-hop protocol",
-		.name = "",
+		.name = "114",
 		.ipproto = 114,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 	},
@@ -835,13 +835,13 @@ const struct ip_protocol ip_protocols[] = {
 		.reference = "[Michael_Welzl]",
 	},
 	[124] = {
-		.description = "",
+		.description = "124",
 		.name = "ISIS over IPv4",
 		.ipproto = 124,
 		.reference = "[Tony_Przygienda]",
 	},
 	[125] = {
-		.description = "",
+		.description = "125",
 		.name = "FIRE",
 		.ipproto = 125,
 		.reference = "[Criag_Partridge]",
@@ -859,13 +859,13 @@ const struct ip_protocol ip_protocols[] = {
 		.reference = "[Robert_Sautter]",
 	},
 	[128] = {
-		.description = "",
+		.description = "128",
 		.name = "SSCOPMCE",
 		.ipproto = 128,
 		.reference = "[Kurt_Waber]",
 	},
 	[129] = {
-		.description = "",
+		.description = "129",
 		.name = "IPLT",
 		.ipproto = 129,
 		.reference = "[[Hollbach]]",
@@ -895,26 +895,26 @@ const struct ip_protocol ip_protocols[] = {
 		.reference = "[Murali_Rajagopal][RFC6172]",
 	},
 	[134] = {
-		.description = "",
+		.description = "134",
 		.name = "RSVP-E2E-IGNORE",
 		.ipproto = 134,
 		.reference = "[RFC3175]",
 	},
 	[135] = {
-		.description = "",
+		.description = "135",
 		.name = "Mobility Header",
 		.ipproto = 135,
 		.ipv6_extension_header = true,
 		.reference = "[RFC6275]",
 	},
 	[136] = {
-		.description = "",
+		.description = "136",
 		.name = "UDPLite",
 		.ipproto = 136,
 		.reference = "[RFC3828]",
 	},
 	[137] = {
-		.description = "",
+		.description = "137",
 		.name = "MPLS-in-IP",
 		.ipproto = 137,
 		.reference = "[RFC4023]",
@@ -1070,33 +1070,32 @@ const struct ip_protocol ip_protocols[] = {
 
 	[253] = {
 		.description = "Use for experimentation and testing",
-		.name = "",
+		.name = "253",
 		.ipproto = 253,
 		.ipv6_extension_header = true,
 		.reference = "[RFC3692]",
 	},
 	[254] = {
 		.description = "Use for experimentation and testing",
-		.name = "",
+		.name = "254",
 		.ipproto = 254,
 		.ipv6_extension_header = true,
 		.reference = "[RFC3692]",
 	},
 	[255] = {
-		.description = "",
+		.description = "255",
 		.name = "Reserved",
 		.ipproto = 255,
 		.reference = "[Internet_Assigned_Numbers_Authority]",
 	},
 };
 
-const struct ip_protocol *protocol_by_prefix(const char *prefix)
+const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix)
 {
 	for (unsigned ipproto = 0; ipproto < elemsof(ip_protocols); ipproto++) {
 		const struct ip_protocol *p = &ip_protocols[ipproto];
 		passert(p->ipproto == ipproto);
-		if (p->prefix != NULL &&
-		    strncaseeq(prefix, p->prefix, strlen(p->prefix))) {
+		if (shunk_strcaseeat(prefix, p->prefix)) {
 			return p;
 		}
 	}

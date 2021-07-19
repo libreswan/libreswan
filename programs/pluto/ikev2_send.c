@@ -72,7 +72,7 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 struct v2_outgoing_fragment **frags)
 {
 	pexpect(*frags == NULL);
-	chunk_t frag = same_out_pbs_as_chunk(pbs);
+	shunk_t frag = same_pbs_out_as_shunk(pbs);
 	*frags = alloc_bytes(sizeof(struct v2_outgoing_fragment) + frag.len, what);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
@@ -92,7 +92,7 @@ void record_v2_message(struct ike_sa *ike,
  * Send a payload.
  */
 
-bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_types exchange_type,
+bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 		    struct pbs_out *outs)
 {
 	diag_t d;
@@ -406,7 +406,7 @@ static bool emit_v2N_spi_response(struct response *response,
 {
 	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 
-	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	enum isakmp_xchg_type exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 
 	/*
@@ -508,14 +508,14 @@ void record_v2N_response(struct logger *logger,
  */
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
-			       const chunk_t *ndata)
+			       const shunk_t *ndata)
 {
 	passert(md != NULL); /* always a response */
 
 	const char *const notify_name = enum_name_short(&ikev2_notify_names, ntype);
 	passert(notify_name != NULL); /* must be known */
 
-	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	enum isakmp_xchg_type exchange_type = md->hdr.isa_xchg;
 	const char *exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
 	if (exchange_name == NULL) {
 		/* when responding to crud, name may not be known */
@@ -559,7 +559,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	chunk_t nhunk = ndata == NULL ? empty_chunk : *ndata;
+	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
 		pexpect_fail(md->md_logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
