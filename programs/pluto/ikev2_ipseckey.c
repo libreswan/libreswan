@@ -401,6 +401,9 @@ static struct p_dns_req *ipseckey_qry_st_init(struct ike_sa *ike, dnsr_cb_fn dns
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */
 	struct p_dns_req *p = qry_st_init(ike, LDNS_RR_TYPE_IPSECKEY, "IPSECKEY", dnsr_cb, callback);
+	if (p == NULL) {
+		return NULL;
+	}
 	p->pubkeys_cb = add_dns_pubkeys_to_pluto;
 	return p;
 }
@@ -480,12 +483,12 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 			dnsr_a = qry_st_init(ike, LDNS_RR_TYPE_A, "A",
 					     idi_a_fetch_continue,
 					     callback);
-			dnsr_a->validate_address_cb = validate_address;
-
 			if (dnsr_a == NULL) {
 				free_ipseckey_dns(dnsr_idi);
 				return DNS_FATAL;
 			}
+			dnsr_a->validate_address_cb = validate_address;
+
 			ret_a = dns_qry_start(dnsr_a);
 		}
 	}
