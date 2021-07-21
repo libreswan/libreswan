@@ -102,46 +102,6 @@ struct fld {
 	ssize_t offset;
 };
 
-static const struct fld RSA_private_field[] = {
-	{
-		.name = "Modulus",
-		.offset = offsetof(struct RSA_private_key, pub.n),
-	},
-	{
-		.name = "PublicExponent",
-		.offset = offsetof(struct RSA_private_key, pub.e),
-	},
-
-	{
-		.name = "PrivateExponent",
-		.offset = -1,
-	},
-	{
-		.name = "Prime1",
-		.offset = -1,
-	},
-	{
-		.name = "Prime2",
-		.offset = -1,
-	},
-	{
-		.name = "Exponent1",
-		.offset = -1,
-	},
-	{
-		.name = "Exponent2",
-		.offset = -1,
-	},
-	{
-		.name = "Coefficient",
-		.offset = -1,
-	},
-	{
-		.name = "CKAIDNSS",
-		.offset = -1,
-	},
-};
-
 static void process_secrets_file(struct file_lex_position *flp,
 				 struct secret **psecrets, const char *file_pat);
 
@@ -1022,149 +982,6 @@ static SECKEYPrivateKey *copy_private_key(SECKEYPrivateKey *private_key)
 	return unpacked_key;
 }
 
-/*
- * Parse fields of RSA private key.
- *
- * A braced list of keyword and value pairs.
- * At the moment, each field is required, in order.
- * The fields come from BIND 8.2's representation
- *
- * Danger! When an error is returned, the contents of *PKS are a mess
- * - the caller gets to free this up (which is still easier than try
- * to do it here).
- */
-static err_t process_rsa_secret(struct file_lex_position *flp,
-				struct private_key_stuff *pks)
-{
-	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
-	passert(tokeq("{"));
-	while (1) {
-		if (!shift(flp)) {
-			return "premature end of RSA key";
-		}
-		if (tokeq("}")) {
-			break;
-		}
-
-		const struct fld *p = NULL;
-		const struct fld *f;
-		for (f = RSA_private_field;
-		     f < RSA_private_field + elemsof(RSA_private_field);
-		     f++) {
-			if (tokeqword(f->name)) {
-				p = f;
-				break;
-			}
-		}
-		if (p == NULL) {
-			return builddiag("RSA keyword '%s' not recognised", flp->tok);
-		}
-		if (!shift(flp)) {
-			return "premature end of RSA key";
-		}
-
-		/* skip optional ':' */
-		if (tokeq(":") && !shift(flp)) {
-			return "premature end of RSA key";
-		}
-
-		/* Binary Value of key field */
-		unsigned char bv[RSA_MAX_ENCODING_BYTES];
-		size_t bvlen;
-		char diag_space[TTODATAV_BUF];
-		err_t ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0,
-				     (char *)bv, sizeof(bv),
-				     &bvlen,
-				     diag_space, sizeof(diag_space),
-				     TTODATAV_SPACECOUNTS);
-		if (ugh != NULL) {
-			/* in RSA key, ttodata didn't like */
-			return builddiag("RSA data malformed (%s): %s",
-					 ugh, flp->tok);
-		}
-		passert(sizeof(bv) >= bvlen);
-
-		/* dispose of the data */
-		if (p->offset >= 0) {
-			dbg("saving %s", p->name);
-			if (DBGP(DBG_CRYPT)) {
-				DBG_dump(p->name, bv, bvlen);
-			}
-			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
-			*n = clone_bytes_as_chunk(bv, bvlen, p->name);
-			if (DBGP(DBG_CRYPT)) {
-				DBG_dump_hunk(p->name, *n);
-			}
-		} else {
-			dbg("ignoring %s", p->name);
-		}
-	}
-	passert(tokeq("}"));
-	if (shift(flp)) {
-		return "malformed end of RSA private key -- unexpected token after '}'";
-	}
-
-	/*
-	 * Check that all required fields are present.
-	 */
-	const struct fld *p;
-	for (p = RSA_private_field;
-	     p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
-		if (p->offset >= 0) {
-			chunk_t *n = (chunk_t*) ((char *)rsak + p->offset);
-			if (n->len == 0) {
-				return builddiag("field '%s' either missing or empty", p->name);
-			}
-		}
-	}
-
-	pks->size = rsak->pub.n.len;
-	pks->keyid = empty_keyid;	/* in case of failure */
-	if (rsak->pub.e.len > 0 || rsak->pub.n.len >0) {
-		err_t e = splitkey_to_keyid(rsak->pub.e.ptr, rsak->pub.e.len,
-					    rsak->pub.n.ptr, rsak->pub.n.len,
-					    &pks->keyid);
-		if (e != NULL) {
-			return e;
-		}
-	}
-
-	/* Finally, the CKAID */
-	err_t err = form_ckaid_rsa(rsak->pub.n, &pks->ckaid);
-	if (err) {
-		/* let caller recover from mess */
-		return err;
-	}
-
-	/* now try to find the private key in NSS */
-
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
-	if (!pexpect(slot != NULL)) {
-		return "NSS: has no internal slot ....";
-	}
-
-	SECItem nss_ckaid = same_ckaid_as_secitem(&pks->ckaid);
-	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &nss_ckaid,
-							    lsw_nss_get_password_context(flp->logger));
-	if (private_key == NULL) {
-		dbg("NSS: can't find the private key using the NSS CKAID");
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&pks->ckaid,
-								   flp->logger);
-		if (cert == NULL) {
-			return "can't find the private key matching the NSS CKAID";
-		}
-		private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(flp->logger));
-		CERT_DestroyCertificate(cert);
-		if (private_key == NULL) {
-			return "can't find the private key (the certificate found using NSS CKAID has no matching private key)";
-		}
-	}
-	pks->private_key = copy_private_key(private_key);
-	SECKEY_DestroyPrivateKey(private_key);
-
-	return pks->pubkey_type->secret_sane(pks);
-}
-
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
@@ -1227,39 +1044,12 @@ static void process_secret(struct file_lex_position *flp,
 		s->pks.kind = PKK_XAUTH;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_xauth_secret(flp, &s->pks.u.preshared_secret);
-	} else if (tokeqword("rsa")) {
-		/*
-		 * RSA key: the fun begins.
-		 * A braced list of keyword and value pairs.
-		 */
-		s->pks.kind = PKK_RSA;
-		s->pks.pubkey_type = &pubkey_type_rsa;
-		if (!shift(flp)) {
-			ugh = "ERROR: bad RSA key syntax";
-		} else if (tokeq("{")) {
-			/* raw RSA key in NSS */
-			ugh = process_rsa_secret(flp, &s->pks);
-		} else {
-			/* RSA key in certificate in NSS */
-			ugh = "WARNING: The :RSA secrets entries for X.509 certificates are no longer needed";
-		}
-		if (ugh == NULL) {
-			llog(RC_LOG, flp->logger,
-				    "loaded private key for keyid: %s:%s",
-				    enum_name(&pkk_names, s->pks.kind),
-				    str_keyid(s->pks.keyid));
-		} else {
-			dbg("cleaning up mess left in raw rsa key");
-			s->pks.pubkey_type->free_secret_content(&s->pks);
-		}
 	} else if (tokeqword("ppks")) {
 		s->pks.kind = PKK_PPK;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
 			process_ppk_static_secret(flp, &s->pks.ppk, &s->pks.ppk_id);
-	} else if (tokeqword("pin")) {
-		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
-		ugh = builddiag("ERROR: unrecognized key format: %s", flp->tok);
+		ugh = builddiag("WARNING: ignored unrecognized keyword: %s", flp->tok);
 	}
 
 	if (ugh != NULL) {
