@@ -53,8 +53,8 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     for f
     do
 	if [ -s ${LOGS}/${f} -a \
-	    -f ${LOGS}/${f} -a \
-	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null ]
+	    -f ${LOGS}/${f} ] && \
+	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
@@ -66,8 +66,8 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     for f
     do
 	if [ -s ${LOGS}/${f} -a \
-	    -f ${LOGS}/${f} -a \
-	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null ]
+	    -f ${LOGS}/${f} ] && \
+	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null
 	then
 	    # aha, this one has it
 	    findlog_file=${LOGS}/${f}
@@ -80,8 +80,8 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     for f in $(ls -t ${LOGS} | grep -E -v 'lastlog|tmp|^mail|\.(gz|Z)$')
 	do
 	if [ -f ${LOGS}/${f} -a \
-	    ! -d ${LOGS}/${f} -a \
-	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null ]
+	    ! -d ${LOGS}/${f} ] && \
+	    grep -E -q "${s}" ${LOGS}/${f} 2>/dev/null
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
@@ -93,8 +93,8 @@ findlog() {	# findlog string fallbackstring possiblefile ...
     for f in $(ls -t ${LOGS} | grep -E -v 'lastlog|tmp|^mail|\.(gz|Z)$')
     do
 	if [ -s ${LOGS}/${f} -a \
-	    -f ${LOGS}/${f} -a \
-	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null ]
+	    -f ${LOGS}/${f} ] && \
+	    grep -E -q "${t}" ${LOGS}/${f} 2>/dev/null
 	then
 	    # found it
 	    findlog_file=${LOGS}/${f}
