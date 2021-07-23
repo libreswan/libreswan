@@ -24,6 +24,7 @@
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2019 Antony Antony <antony@phenome.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2815,7 +2816,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
-	.overlap_supported = false,
 	.sha2_truncbug_support = true,
 	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,

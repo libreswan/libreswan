@@ -684,7 +684,6 @@ static const struct option long_opts[] = {
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
 	PS("compress", COMPRESS),
-	PS("overlapip", OVERLAPIP),
 	PS("tunnel", TUNNEL),
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
@@ -1818,8 +1817,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:
 		/* --aggrmode */
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
-		/* --overlapip */
-		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
 
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:

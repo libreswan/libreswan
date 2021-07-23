@@ -18,6 +18,7 @@
  * Copyright (C) 2015-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -3531,85 +3532,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 }
 
 /*
- * With virtual addressing, we must not allow someone to use an already
- * used (by another id) addr/net.
- */
-static bool is_virtual_net_used(struct connection *c,
-				const ip_selector *peer_net,
-				const struct id *peer_id)
-{
-	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *d = cq.c;
-		switch (d->kind) {
-		case CK_PERMANENT:
-		case CK_TEMPLATE:
-		case CK_INSTANCE:
-			if ((selector_range_in_selector_range(*peer_net, d->spd.that.client) ||
-			     selector_range_in_selector_range(d->spd.that.client, *peer_net)) &&
-			    !same_id(&d->spd.that.id, peer_id))
-			{
-				id_buf idb;
-				connection_buf cbuf;
-				subnet_buf client;
-				llog(RC_LOG, c->logger,
-				     "Virtual IP %s overlaps with connection "PRI_CONNECTION" (kind=%s) '%s'",
-				     str_selector_subnet(peer_net, &client),
-				     pri_connection(d, &cbuf),
-				     enum_name(&connection_kind_names, d->kind),
-				     str_id(&d->spd.that.id, &idb));
-
-				if (!kernel_ops->overlap_supported) {
-					llog(RC_LOG, c->logger,
-					     "Kernel method '%s' does not support overlapping IP ranges",
-					     kernel_ops->kern_name);
-					return true;
-				}
-
-				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
-					llog(RC_LOG, c->logger,
-					     "overlap is okay by mutual consent");
-
-					/*
-					 * Look for another overlap to report
-					 * on.
-					 */
-					break;
-				}
-
-				/* We're not allowed to overlap.  Carefully report. */
-
-				const struct connection *x =
-					LIN(POLICY_OVERLAPIP, c->policy) ? d :
-					LIN(POLICY_OVERLAPIP, d->policy) ? c :
-					NULL;
-
-				if (x == NULL) {
-					llog(RC_LOG, c->logger,
-					     "overlap is forbidden (neither agrees to overlap)");
-				} else {
-					llog(RC_LOG, c->logger,
-					     "overlap is forbidden ("PRI_CONNECTION" does not agree to overlap)",
-					     pri_connection(x, &cbuf));
-				}
-
-				/* ??? why is this a separate log line? */
-				llog(RC_LOG, c->logger,
-				     "Your ID is '%s'", str_id(peer_id, &idb));
-
-				return true; /* already used by another one */
-			}
-			break;
-
-		case CK_GOING_AWAY:
-		default:
-			break;
-		}
-	}
-	return false; /* you can safely use it */
-}
-
-/*
  * find_client_connection: given a connection suitable for ISAKMP
  * (i.e. the hosts match), find a one suitable for IPSEC
  * (i.e. with matching clients).
@@ -3739,10 +3661,7 @@ static struct connection *fc_try(const struct connection *c,
 								       selector_subnet(*remote_client),
 								       sr->that.host_addr);
 
-				if (is_virtual_sr(sr) &&
-				    (virtualwhy != NULL ||
-				     is_virtual_net_used(d, remote_client,
-							 &sr->that.id))) {
+				if (is_virtual_sr(sr) && virtualwhy != NULL){
 					dbg("   virtual net not allowed");
 					continue;
 				}
