@@ -1,0 +1,4 @@
+IKEv2 labeled IPsec using XFRM, this time with right=%any on east.
+This requires instantiation for IP address, followed by instantiation
+because of security label.
+
