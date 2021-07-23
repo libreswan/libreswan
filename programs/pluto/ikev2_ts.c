@@ -1087,7 +1087,14 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 		dbg("responder storing sec_label="PRI_SHUNK" in "PRI_CONNECTION,
 		    pri_shunk(best_sec_label), pri_connection(c, &tb));
 		c->spd.this.sec_label = clone_hunk(best_sec_label, "this_sec_label");
+		c->spd.this.has_config_policy_label = false;
 		c->spd.that.sec_label = clone_hunk(best_sec_label, "that_sec_label");
+		c->spd.that.has_config_policy_label = false;
+		/*
+		 * Since the connection now has a security label received from
+		 * the peer, it cannot be a template connection.
+		 */
+		c->kind = CK_INSTANCE;
 	}
 
 	if (c != child->sa.st_connection) {

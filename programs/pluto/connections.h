@@ -188,6 +188,11 @@ struct end {
 	const struct config_end *config;
 
 	chunk_t sec_label;
+	/*
+	 * True if `sec_label` value is from a connection configuration's
+	 * `policy-label` in ipsec.conf.
+	 */
+	bool has_config_policy_label;
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_id_wildcards;

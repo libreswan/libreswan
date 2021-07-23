@@ -812,6 +812,12 @@ static int extract_end(struct connection *c,
 		if (ugh != NULL) {
 			llog(RC_LOG, logger, "bad %s; ignored", ugh);
 			dst->sec_label = empty_chunk;
+		} else {
+			/*
+			 * `dst->sec_label` is the `policy-label` from
+			 * ipsec.conf.
+			 */
+			dst->has_config_policy_label = true;
 		}
 	}
 
@@ -2251,7 +2257,34 @@ struct connection *instantiate(struct connection *c,
 	}
 	unshare_connection(d);
 
-	d->kind = CK_INSTANCE;
+	if ((c->spd.that.host_type == KH_ANY) /* Wildcard peer IP */ &&
+		(c->spd.this.sec_label.len > 0) /* Security label */ &&
+		c->spd.this.has_config_policy_label /* Label from `policy-label` */) {
+		passert(c->kind == CK_TEMPLATE);
+		/*
+		 * In this case, `c` is a template connection due to _both_:
+		 *  - a peer wildcard IP address (`%any`)
+		 *    and
+		 *  - a security label from the user-specified connection configuration's `policy-label`.
+		 *
+		 * At this point, we are instantiating a connection with an
+		 * actual address but still don' t have the actual security
+		 * label used for network transmission, i.e. this function
+		 * doesn't have access to a label retrieved via Netlink
+		 * `ACQUIRE` or received from the peer. Therefore, the newly
+		 * instantiated connection remains a template since its current
+		 * security label value is the label from `policy-label`.
+		 *
+		 * The caller of this function is expected to update `d->kind`
+		 * to `CK_INSTANCE` if `d` ends up getting a label used for
+		 * network transmission.
+		 *
+		 * And so, let a template beget another template.
+		 */
+		d->kind = CK_TEMPLATE;
+	} else {
+		d->kind = CK_INSTANCE;
+	}
 
 	passert(oriented(*d));
 	if (peer_addr != NULL) {

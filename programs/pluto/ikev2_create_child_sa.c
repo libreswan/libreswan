@@ -637,7 +637,15 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 		free_chunk_content(&c->spd.this.sec_label);
 		free_chunk_content(&c->spd.that.sec_label);
 		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
+		c->spd.this.has_config_policy_label = false;
 		c->spd.that.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
+		c->spd.that.has_config_policy_label = false;
+		/*
+		 * Since the newly instantiated connection has a security label
+		 * due to a Netlink `ACQUIRE` message from the kernel, it is
+		 * not a template connection.
+		 */
+		c->kind = CK_INSTANCE;
 	}
 
 	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA,
