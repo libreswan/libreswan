@@ -22,7 +22,7 @@
 
 static struct hash_table state_hash_tables[];
 
-static void jam_state(struct jambuf *buf, const void *data)
+static void jam_state_serialno(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
 		jam(buf, "#0");
@@ -64,7 +64,7 @@ static bool state_plausable(struct state *st,
 
 static const struct list_info state_serialno_list_info = {
 	.name = "serialno list",
-	.jam = jam_state,
+	.jam = jam_state_serialno,
 };
 
 struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
@@ -430,7 +430,7 @@ static struct hash_table state_hash_tables[] = {
 	[STATE_SERIALNO_HASH_TABLE] = {
 		.info = {
 			.name = "st_serialno table",
-			.jam = jam_state,
+			.jam = jam_state_serialno,
 		},
 		.hasher = state_serialno_hasher,
 		.entry = state_serialno_entry,
@@ -440,7 +440,7 @@ static struct hash_table state_hash_tables[] = {
 	[STATE_CONNECTION_HASH_TABLE] = {
 		.info = {
 			.name = "st_connection table",
-			.jam = jam_state,
+			.jam = jam_state_serialno,
 		},
 		.hasher = state_connection_hasher,
 		.entry = state_connection_entry,
@@ -450,7 +450,7 @@ static struct hash_table state_hash_tables[] = {
 	[STATE_REQID_HASH_TABLE] = {
 		.info = {
 			.name = "st_reqid table",
-			.jam = jam_state,
+			.jam = jam_state_serialno,
 		},
 		.hasher = state_reqid_hasher,
 		.entry = state_reqid_entry,

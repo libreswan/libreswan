@@ -102,12 +102,13 @@ void add_pending(struct fd *whack_sock,
 	enum stream only = part_of_initiate ? (DBGP(DBG_BASE) ? DEBUG_STREAM : NO_STREAM) : ALL_STREAMS;
 	if (only != NO_STREAM) {
 		address_buf b;
-		connection_buf cibb;
-		struct connection *cb = ike->sa.st_connection;
+		state_buf sab;
 		log_pending(only | RC_COMMENT, p,
-			    "queuing pending IPsec SA negotiating with %s IKE SA #%lu "PRI_CONNECTION"",
+			    "queuing pending IPsec SA negotiating with %s %s "PRI_STATE"",
 			    ipstr(&c->spd.that.host_addr, &b),
-			    ike->sa.st_serialno, pri_connection(cb, &cibb));
+			    /* "IKE SA" or "ISAKMP SA" */
+			    enum_enum_name(&sa_type_names, p->connection->ike_version, IKE_SA),
+			    pri_state(&ike->sa, &sab));
 	}
 	host_pair_enqueue_pending(c, p);
 }
@@ -184,10 +185,8 @@ void release_pending_whacks(struct state *st, err_t story)
 				log_pending(WHACK_STREAM|RC_COMMENT, p,
 					    "%s for IKE SA, but releasing whack for pending %s",
 					    story,
-					    /* IPsec SA or CHILD SA */
-					    enum_enum_name(&sa_type_names,
-							   p->connection->ike_version,
-							   IPSEC_SA));
+					    /* "IPsec SA" or "CHILD SA" */
+					    enum_enum_name(&sa_type_names, p->connection->ike_version, IPSEC_SA));
 			}
 			close_any(&p->whack_sock);/*on-heap*/
 		}

@@ -474,6 +474,21 @@ const struct logger_object_vec logger_connection_vec = {
 	.free_object = false,
 };
 
+size_t jam_state(struct jambuf *buf, const struct state *st)
+{
+	size_t s = 0;
+	/*
+	 * XXX: When delete state() triggers a delete
+	 * connection, this can be NULL.
+	 */
+	if (st->st_connection != NULL) {
+		s += jam_connection(buf, st->st_connection);
+	}
+	/* state number */
+	s += jam(buf, " "PRI_SO, pri_so(st->st_serialno));
+	return s;
+}
+
 static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
@@ -483,15 +498,7 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
 	} else {
 		const struct state *st = object;
-		/*
-		 * XXX: When delete state() triggers a delete
-		 * connection, this can be NULL.
-		 */
-		if (st->st_connection != NULL) {
-			s += jam_connection(buf, st->st_connection);
-		}
-		/* state number */
-		s += jam(buf, " #%lu", st->st_serialno);
+		s += jam_state(buf, st);
 		/* state name */
 		if (DBGP(DBG_ADD_PREFIX)) {
 			s += jam(buf, " ");
