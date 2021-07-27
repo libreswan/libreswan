@@ -115,31 +115,6 @@ stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
-					   struct child_sa *child)
-{
-	switch (child->sa.st_establishing_sa) { /* where we're going */
-	case IKE_SA:
-		return STF_OK;
-	case IPSEC_SA: /* CHILD_SA */
-		if (!ike->sa.st_viable_parent) {
-			child->sa.st_policy = child->sa.st_connection->policy; /* for pick_initiator */
-
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
-				  child->sa.st_state->name);
-			delete_event(&child->sa);
-			event_schedule(EVENT_SA_REPLACE, REPLACE_ORPHAN_DELAY, &child->sa);
-			/* ??? surely this isn't yet a failure or a success */
-			return STF_FAIL;
-		}
-		return STF_OK;
-	default:
-		bad_case(child->sa.st_establishing_sa);
-	}
-
-}
-
 static bool ikev2_rekey_child_req(struct child_sa *child,
 				  enum ikev2_sec_proto_id *rekey_protoid,
 				  ipsec_spi_t *rekey_spi)
@@ -571,15 +546,48 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							   struct child_sa *larval_child,
-							   struct msg_digest *md)
+							   struct msg_digest *null_md UNUSED)
 {
-	stf_status e;
-	e = ikev2_start_new_exchange(ike, larval_child);
-	if (e != STF_OK) {
-		return e;
+	if (!ike->sa.st_viable_parent) {
+		/*
+		 * This return will delete the larval child.
+		 *
+		 * XXX: Several things might happen next:
+		 *
+		 * - during the delete the revival code will schedule
+                 *   a replace for the connection
+		 *
+		 *   I suspect not as the revival code is, mostly, all
+                 *   about IKE SAs.
+		 *
+		 * - the old Child SA rekey timer expires trigging a
+		 *   replace
+		 *
+		 *   Certainly plausable; assuming nothing else
+		 *   happens earlier.
+		 *
+		 * - the IKE SA is deleted causing the old child to
+		 *   also be replaced
+		 *
+		 *   Most likely?
+		 *
+		 * What most likely didn't help was scheduling a
+		 * replace event for the larval child; only to then
+		 * delete that child.  Presumably one of the above
+		 * saved the day.  That code was removed.
+		 *
+		 * XXX: "trying replace" is a policy thing so probably
+		 * not always valid.
+		 */
+		llog_sa(RC_LOG_SERIOUS, larval_child,
+			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
+			ike->sa.st_serialno, larval_child->sa.st_ipsec_pred);
+		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
+		return STF_FAIL;
 	}
 
-	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+	stf_status e;
+	e = record_v2_CREATE_CHILD_SA(ike, larval_child, /*initiator*/NULL);
 	if (e != STF_OK) {
 		return e;
 	}
@@ -702,12 +710,34 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							 struct child_sa *larval_child,
 							 struct msg_digest *md)
 {
-	stf_status e;
-	e = ikev2_start_new_exchange(ike, larval_child);
-	if (e != STF_OK) {
-		return e;
+	if (!ike->sa.st_viable_parent) {
+		/*
+		 * This return will delete the larval child.
+		 *
+		 * XXX: Several things might happen next:
+		 *
+		 * - during the delete the revival code will schedule
+                 *   a replace for the connection
+		 *
+		 *   I suspect not as the revival code is, mostly, all
+                 *   about IKE SAs.
+		 *
+		 * What most likely didn't help was scheduling a
+		 * replace event for the larval child; only to then
+		 * delete that child.  Presumably one of the above
+		 * saved the day.  That code was removed.
+		 *
+		 * XXX: "trying replace" is a policy thing so probably
+		 * not always valid.
+		 */
+		llog_sa(RC_LOG_SERIOUS, larval_child,
+			"IKE SA #%lu no longer viable for initiating a Child SA",
+			ike->sa.st_serialno);
+		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
+		return STF_FAIL;
 	}
 
+	stf_status e;
 	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
 	if (e != STF_OK) {
 		return e;
@@ -1099,11 +1129,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							 struct msg_digest *md)
 {
 	stf_status e;
-
-	e = ikev2_start_new_exchange(ike, larval_ike);
-	if (e != STF_OK) {
-		return e;
-	}
 
 	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
 	if (e != STF_OK) {
