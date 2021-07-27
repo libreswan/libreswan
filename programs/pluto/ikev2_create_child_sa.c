@@ -584,11 +584,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return e;
 	}
 
-	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
-	}
-
 	return STF_OK;
 }
 
@@ -716,11 +711,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
 	if (e != STF_OK) {
 		return e;
-	}
-
-	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
 	}
 
 	return STF_OK;
@@ -874,10 +864,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue(struct state *larv
 		return e;
 	}
 
-	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
-	}
+	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
 
 	return STF_OK;
 }
@@ -924,10 +911,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_continue(struct st
 		return e;
 	}
 
-	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
-	}
+	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
 
 	return STF_OK;
 }
@@ -1126,11 +1110,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		return e;
 	}
 
-	if (larval_ike->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_ike->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_ike->sa);
-	}
-
 	return STF_OK;
 }
 
@@ -1302,11 +1281,6 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
 	if (e != STF_OK) {
 		return e;
-	}
-
-	if (larval_ike->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    larval_ike->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &larval_ike->sa);
 	}
 
 	return STF_OK;
