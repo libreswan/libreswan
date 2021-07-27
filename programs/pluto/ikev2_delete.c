@@ -35,19 +35,14 @@
 
 bool record_v2_delete(struct ike_sa *ike, struct state *st)
 {
-	/* make sure HDR is at start of a clean buffer */
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct pbs_out packet = open_pbs_out("informational exchange delete request",
-					     buf, sizeof(buf), st->st_logger);
-	struct pbs_out rbody = open_v2_message(&packet, ike,
-					       NULL /* request */,
-					       ISAKMP_v2_INFORMATIONAL);
-	if (!pbs_ok(&packet)) {
-		return false;
-	}
 
-	struct v2SK_payload sk = open_v2SK_payload(st->st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	struct v2_payload request;
+	if (!open_v2_payload("informational exchange delete request",
+			     ike, st->st_logger,
+			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
+			     buf, sizeof(buf), &request,
+			     ENCRYPTED_PAYLOAD)) {
 		return false;
 	}
 
@@ -70,7 +65,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 
 		/* Emit delete payload header out */
 		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
-				&sk.pbs, &del_pbs))
+				request.pbs, &del_pbs))
 			return false;
 
 		/* Emit values of spi to be sent to the peer */
@@ -86,20 +81,10 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 		close_output_pbs(&del_pbs);
 	}
 
-	if (!close_v2SK_payload(&sk)) {
-		return false;;
-	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&packet);
-
-	stf_status ret = encrypt_v2SK_payload(&sk);
-	if (ret != STF_OK) {
-		log_state(RC_LOG, st,"error encrypting notify message");
+	if (!close_and_record_v2_payload(&request)) {
 		return false;
 	}
 
-	record_v2_message(ike, &packet, "packet for ikev2 delete informational",
-			  MESSAGE_REQUEST);
 	return true;
 }
 
@@ -187,7 +172,7 @@ void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 }
 
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
-			  struct v2SK_payload *sk)
+			  struct pbs_out *pbs)
 {
 	/*
 	 * Pass 1 over Delete Payloads:
@@ -356,7 +341,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 			struct pbs_out del_pbs;	/* output stream */
 			if (!out_struct(&v2del_tmp,
 					&ikev2_delete_desc,
-					&sk->pbs,
+					pbs,
 					&del_pbs))
 				return false;
 			diag_t d = pbs_out_raw(&del_pbs,
@@ -364,7 +349,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 					       j * sizeof(spi_buf[0]),
 					       "local SPIs");
 			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				return false;
 			}
 

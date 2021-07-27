@@ -1429,26 +1429,26 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 
 	ikev2_log_parentSA(&child->sa);
 
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   child->sa.st_logger);
+	/*
+	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
+	 * ??? Should we support fragmenting?  Maybe one day.
+	 *
+	 * XXX: not so; keying material can get large.
+	 */
 
-	/* HDR out Start assembling respone message */
-
-	pb_stream rbody = open_v2_message(&reply_stream, ike, request_md,
-					  ISAKMP_v2_CREATE_CHILD_SA);
-
-	/* insert an Encryption payload header */
-
-	struct v2SK_payload sk = open_v2SK_payload(child->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	struct v2_payload payload;
+	if (!open_v2_payload("CREATE_CHILD_SA message",
+			     ike, child->sa.st_logger,
+			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
+			     reply_buffer, sizeof(reply_buffer), &payload,
+			     ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	switch (child->sa.st_state->kind) {
 	case STATE_V2_REKEY_IKE_R0:
 	case STATE_V2_REKEY_IKE_I0:
-		ret = emit_v2_rekey_ike_payloads(child, &sk.pbs);
+		ret = emit_v2_rekey_ike_payloads(child, payload.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "emit_v2_rekey_ike_payloads() returned ");
@@ -1459,7 +1459,7 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 		break;
 	case STATE_V2_NEW_CHILD_I0:
 	case STATE_V2_REKEY_CHILD_I0:
-		ret = emit_v2_child_sa_request_payloads(child, &sk.pbs);
+		ret = emit_v2_child_sa_request_payloads(child, payload.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "emit_v2_child_sa_request_payloads() returned ");
@@ -1486,7 +1486,7 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 		} else {
 			return STF_INTERNAL_ERROR;
 		}
-		ret = emit_v2_child_sa_response_payloads(ike, child, request_md, &sk.pbs);
+		ret = emit_v2_child_sa_response_payloads(ike, child, request_md, payload.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "emit_v2_child_sa_response_payloads() returned ");
@@ -1523,24 +1523,9 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 		bad_case(child->sa.st_state->kind);
 	}
 
-	/* const unsigned int len = pbs_offset(&sk.pbs); */
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_payload(&payload)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	ret = encrypt_v2SK_payload(&sk);
-	if (ret != STF_OK)
-		return ret;
-
-	/*
-	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
-	 * ??? Should we support fragmenting?  Maybe one day.
-	 */
-	record_v2_message(ike, &reply_stream,
-			  "packet from ikev2_child_out_cont",
-			  request_md != NULL ? MESSAGE_RESPONSE : MESSAGE_REQUEST);
 
 	return STF_OK;
 }

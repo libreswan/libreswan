@@ -298,105 +298,9 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  *
  * For a CREATE_CHILD_SA, things have presumably screwed up so badly
  * that the larval child state is about to be deleted.
- *
- * XXX: suspect calls to this function should be replaced by something
- * like record_v2N_spi_response_from_state() - so that the response is
- * always saved in the state and re-transmits can be handled
- * correctly.
  */
 
-struct response {
-	/* CONTAINS POINTERS; pass by ref */
-	struct pbs_out message;
-	struct pbs_out body;
-	enum payload_security security;
-	struct logger *logger;
-	struct v2SK_payload sk;
-	struct pbs_out *pbs; /* where to put message (POINTER!) */
-};
-
-static bool open_response(struct response *response,
-			  struct logger *logger,
-			  uint8_t *buf, size_t sizeof_buf,
-			  struct ike_sa *ike,
-			  struct msg_digest *md,
-			  enum payload_security security)
-{
-	*response = (struct response) {
-		.message = open_pbs_out("message response", buf, sizeof_buf, logger),
-		.logger = logger,
-		.security = security,
-	};
-
-	/*
-	 * Never send a response to a response.
-	 */
-	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
-		/* always responding */
-		return false;
-	}
-
-	response->body = open_v2_message(&response->message, ike,
-					 md /* response */,
-					 md->hdr.isa_xchg/* same exchange type */);
-	if (!pbs_ok(&response->body)) {
-		llog(RC_LOG, response->logger,
-			    "error initializing hdr for encrypted notification");
-		return false;
-	}
-
-	switch (security) {
-	case ENCRYPTED_PAYLOAD:
-		/* never encrypt an IKE_SA_INIT exchange */
-		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
-			pexpect_fail(response->logger, HERE,
-				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
-			return false;
-		}
-		/* check things are at least protected */
-		if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
-			return false;
-		}
-		response->sk = open_v2SK_payload(logger, &response->body, ike);
-		if (!pbs_ok(&response->sk.pbs)) {
-			return false;
-		}
-		response->pbs = &response->sk.pbs;
-		break;
-	case UNENCRYPTED_PAYLOAD:
-		/* unsecured payload when secured allowed? */
-		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
-		response->pbs = &response->body;
-		break;
-	}
-	return true;
-}
-
-static bool close_response(struct response *response)
-{
-	switch (response->security) {
-	case ENCRYPTED_PAYLOAD:
-		if (!close_v2SK_payload(&response->sk)) {
-			return false;
-		}
-		close_output_pbs(&response->body);
-		close_output_pbs(&response->message);
-		stf_status ret = encrypt_v2SK_payload(&response->sk);
-		if (ret != STF_OK) {
-			llog(RC_LOG, response->logger,
-				    "error encrypting response");
-			return false;
-		}
-		break;
-	case UNENCRYPTED_PAYLOAD:
-		close_output_pbs(&response->body);
-		close_output_pbs(&response->message);
-		break;
-	}
-	return true;
-}
-
-static bool emit_v2N_spi_response(struct response *response,
+static bool emit_v2N_spi_response(struct v2_payload *response,
 				  struct ike_sa *ike,
 				  struct msg_digest *md,
 				  enum ikev2_sec_proto_id protoid,
@@ -415,11 +319,11 @@ static bool emit_v2N_spi_response(struct response *response,
 	 */
 	endpoint_buf b;
 	llog(RC_NOTIFICATION+ntype, response->logger,
-		    "responding to %s message (ID %u) from %s with %s notification %s",
-		    exchange_name, md->hdr.isa_msgid,
-		    str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
-		    response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
-		    notify_name);
+	     "responding to %s message (ID %u) from %s with %s notification %s",
+	     exchange_name, md->hdr.isa_msgid,
+	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
+	     response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
+	     notify_name);
 
 	/* actual data */
 
@@ -473,20 +377,30 @@ void record_v2N_spi_response(struct logger *logger,
 			     enum payload_security security)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct response response;
-	if (!open_response(&response, logger, buf, sizeof(buf),
-			   ike, md, security)) {
+	struct v2_payload response;
+
+	/*
+	 * Never send a response to a response.
+	 */
+	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+		/* always responding */
 		return;
 	}
+
+	if (!open_v2_payload("v2N response", ike, logger,
+			     md/*response*/, md->hdr.isa_xchg/*same exchange type*/,
+			     buf, sizeof(buf), &response, security)) {
+		return;
+	}
+
 	if (!emit_v2N_spi_response(&response, ike, md,
 				   protoid, spi, ntype, ndata)) {
 		return;
 	}
-	if (!close_response(&response)) {
+
+	if (!close_and_record_v2_payload(&response)) {
 		return;
 	}
-	record_v2_message(ike, &response.message, "v2N response",
-			  MESSAGE_RESPONSE);
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
@@ -594,38 +508,26 @@ stf_status record_v2_informational_request(const char *name,
 					   payload_emitter_fn *emit_payloads)
 {
 	/*
-	 * Buffer in which to marshal our informational message.  We
-	 * don't use reply_buffer/reply_stream because it might be in
-	 * use.
+	 * Buffer in which to marshal our informational message.
 	 */
 	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
-	struct pbs_out packet = open_pbs_out(name, buffer, sizeof(buffer), sender->st_logger);
-	if (!pbs_ok(&packet)) {
+
+	struct v2_payload request;
+	if (!open_v2_payload(name, ike, sender->st_logger,
+			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
+			     buffer, sizeof(buffer), &request,
+			     ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	pb_stream message = open_v2_message(&packet, ike,
-					    NULL /* request */,
-					    ISAKMP_v2_INFORMATIONAL);
-	if (!pbs_ok(&message)) {
+	if (emit_payloads != NULL && !emit_payloads(sender, &request.sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct v2SK_payload sk = open_v2SK_payload(sender->st_logger, &message, ike);
-	if (!pbs_ok(&sk.pbs) ||
-	    (emit_payloads != NULL && !emit_payloads(sender, &sk.pbs)) ||
-	    !close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_payload(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&message);
-	close_output_pbs(&packet);
 
-	stf_status ret = encrypt_v2SK_payload(&sk);
-	if (ret != STF_OK) {
-		return ret;
-	}
-
-	record_v2_message(ike, &packet, name, MESSAGE_REQUEST);
 	return STF_OK;
 }
 

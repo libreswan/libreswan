@@ -50,7 +50,7 @@
  */
 
 static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
-				 struct v2SK_payload *sk)
+				 struct pbs_out *pbs)
 {
 	/*
 	 * This happens when we are original initiator, and we
@@ -74,7 +74,7 @@ static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
 		return true;
 	}
 
-	if (!process_v2N_mobike_requests(ike, md, sk)) {
+	if (!process_v2N_mobike_requests(ike, md, pbs)) {
 		return false;
 	}
 
@@ -138,36 +138,26 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("information exchange reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
+	struct v2_payload response;
+	if (!open_v2_payload("information exchange reply packet",
+			     ike, ike->sa.st_logger,
+			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
+			     reply_buffer, sizeof(reply_buffer), &response,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* HDR out */
 
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_INFORMATIONAL);
-	if (!pbs_ok(&rbody)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* insert an Encryption payload header */
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		if (!process_v2N_requests(ike, md, &sk)) {
+		if (!process_v2N_requests(ike, md, response.pbs)) {
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 	}
 
 	bool del_ike = false;
 	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
-		if (!process_v2D_requests(&del_ike, ike, md, &sk)) {
+		if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 	}
@@ -191,19 +181,10 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * Close up the packet and send it.
 	 */
 
-	/* const size_t len = pbs_offset(&sk.pbs); */
-	if (!close_v2SK_payload(&sk)) {
+	/* ??? should we support fragmenting?  Maybe one day. */
+	if (!close_and_record_v2_payload(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	stf_status ret = encrypt_v2SK_payload(&sk);
-	if (ret != STF_OK)
-		return ret;
-
-	/* ??? should we support fragmenting?  Maybe one day. */
-	record_v2_message(ike, &reply_stream, "v2 INFORMATIONAL response", MESSAGE_RESPONSE);
 
 	/*
 	 * ... now we can delete the IKE SA if we want to.

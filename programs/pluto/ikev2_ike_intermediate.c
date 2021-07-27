@@ -73,41 +73,21 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_c
 
 	/* beginning of data going out */
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
-	/* HDR out */
-
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       NULL /* request */,
-					       ISAKMP_v2_IKE_INTERMEDIATE);
-	if (!pbs_ok(&rbody)) {
+	struct v2_payload request;
+	if (!open_v2_payload("intermediate exchange request",
+			     ike, ike->sa.st_logger,
+			     NULL/*request*/, ISAKMP_v2_IKE_INTERMEDIATE,
+			     reply_buffer, sizeof(reply_buffer), &request,
+			     ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* insert an Encryption payload header (SK) */
+	/* message is empty! */
 
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	if (!close_and_record_v2_payload(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!close_v2SK_payload(&sk)) {
-		return STF_INTERNAL_ERROR;
-	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	stf_status ret = encrypt_v2SK_payload(&sk);
-
-	if (ret != STF_OK) {
-		return ret;
-	}
-
-	record_v2_message(ike, &reply_stream, "reply packet for intermediate exchange",
-				  MESSAGE_REQUEST);
 	return STF_OK;
 }
 
@@ -180,42 +160,21 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	/* beginning of data going out */
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
-	/* HDR out */
-
-	pb_stream rbody = open_v2_message(&reply_stream, ike,
-					  md /* response */,
-					  ISAKMP_v2_IKE_INTERMEDIATE);
-	if (!pbs_ok(&rbody)) {
+	struct v2_payload response;
+	if (!open_v2_payload("intermediate exchange response",
+			     ike, ike->sa.st_logger,
+			     md/*response*/, ISAKMP_v2_IKE_INTERMEDIATE,
+			     reply_buffer, sizeof(reply_buffer), &response,
+			     ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* insert an Encryption payload header (SK) */
+	/* empty message */
 
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	if (!close_and_record_v2_payload(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!close_v2SK_payload(&sk)) {
-		return STF_INTERNAL_ERROR;
-	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	stf_status ret = encrypt_v2SK_payload(&sk);
-
-	if (ret != STF_OK) {
-		return ret;
-	}
-
-	record_v2_message(ike, &reply_stream,
-			  "reply packet for intermediate exchange",
-			  MESSAGE_RESPONSE);
 	return STF_OK;
 }
 

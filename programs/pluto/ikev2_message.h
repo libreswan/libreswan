@@ -34,7 +34,7 @@ struct v2SK_payload {
 	/* public */
 	struct logger *logger;
 	struct ike_sa *ike;
-	pb_stream pbs; /* within SK */
+	struct pbs_out pbs; /* within SK */
 	/* private */
 	/* pointers into SK header+contents */
 	chunk_t payload; /* header+iv+cleartext+padding+integrity */
@@ -65,5 +65,34 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
 
 struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
 				    const char *what, struct logger *logger);
+
+/*
+ * Make sending small messages easy.
+ */
+
+enum payload_security {
+	ENCRYPTED_PAYLOAD = 1,
+	UNENCRYPTED_PAYLOAD,
+};
+
+struct v2_payload {
+	/* CONTAINS POINTERS to SELF; pass by ref */
+	struct logger *logger;
+	struct pbs_out *pbs; /* where to put message (POINTER!) */
+	enum payload_security security;
+	struct ike_sa *ike;
+	struct pbs_out message;
+	struct pbs_out body;
+	enum message_role role;
+	const char *story;
+	struct v2SK_payload sk; /* optional */
+};
+
+bool open_v2_payload(const char *story,
+		     struct ike_sa *ike, struct logger *logger,
+		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
+		     uint8_t *buffer, size_t sizeof_buffer, struct v2_payload *payload,
+		     enum payload_security security);
+bool close_and_record_v2_payload(struct v2_payload *payload);
 
 #endif

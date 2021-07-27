@@ -1332,10 +1332,6 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 /*
  * Record the message ready for sending.  If needed, first fragment
  * it.
- *
- * ST is where to save the outgoing message.  XXX: Currently it is
- * always the parent.  But that breaks when trying to juggle multiple
- * children trying to exchange messages.
  */
 
 stf_status record_v2SK_message(struct pbs_out *msg,
@@ -1389,4 +1385,83 @@ struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
 		id_header.isai_res3 = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
 	}
 	return id_header;
+}
+
+bool open_v2_payload(const char *story,
+		     struct ike_sa *ike, struct logger *logger,
+		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
+		     uint8_t *buf, size_t sizeof_buf, struct v2_payload *payload,
+		     enum payload_security security)
+{
+	*payload = (struct v2_payload) {
+		.story = story,
+		.ike = ike,
+		.logger = logger,
+		.security = security,
+		.role = (request_md != NULL ? MESSAGE_RESPONSE : MESSAGE_REQUEST),
+	};
+
+	payload->message = open_pbs_out(story, buf, sizeof_buf, logger);
+
+	payload->body = open_v2_message(&payload->message, ike, request_md, exchange_type);
+	if (!pbs_ok(&payload->body)) {
+		llog(RC_LOG, payload->logger,
+		     "error initializing hdr for encrypted notification");
+		return false;
+	}
+
+	switch (security) {
+	case ENCRYPTED_PAYLOAD:
+		/* never encrypt an IKE_SA_INIT exchange */
+		if (exchange_type == ISAKMP_v2_IKE_SA_INIT) {
+			pexpect_fail(payload->logger, HERE,
+				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
+			return false;
+		}
+		/* check things are at least protected */
+		if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
+			return false;
+		}
+		payload->sk = open_v2SK_payload(logger, &payload->body, ike);
+		if (!pbs_ok(&payload->sk.pbs)) {
+			return false;
+		}
+		payload->pbs = &payload->sk.pbs;
+		break;
+	case UNENCRYPTED_PAYLOAD:
+		/* unsecured payload when secured allowed? */
+		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
+		payload->pbs = &payload->body;
+		break;
+	}
+
+	return true;
+}
+
+bool close_and_record_v2_payload(struct v2_payload *payload)
+{
+	switch (payload->security) {
+	case ENCRYPTED_PAYLOAD:
+		if (!close_v2SK_payload(&payload->sk)) {
+			return false;
+		}
+		close_output_pbs(&payload->body);
+		close_output_pbs(&payload->message);
+		stf_status ret = encrypt_v2SK_payload(&payload->sk);
+		if (ret != STF_OK) {
+			llog(RC_LOG, payload->logger,
+			     "error encrypting response");
+			return false;
+		}
+		break;
+	case UNENCRYPTED_PAYLOAD:
+		close_output_pbs(&payload->body);
+		close_output_pbs(&payload->message);
+		break;
+	}
+
+	record_v2_message(payload->ike, &payload->message,
+			  payload->story, payload->role);
+
+	return true;
 }

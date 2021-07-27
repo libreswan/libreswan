@@ -61,7 +61,7 @@ static bool mobike_check_established(struct state *st)
 }
 
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
-				 struct v2SK_payload *sk)
+				 struct pbs_out *pbs)
 {
 	if (!mobike_check_established(&ike->sa)) {
 		return true;
@@ -138,8 +138,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 	if (ntfy_natd) {
-		return add_mobike_response_payloads(cookie2, md,
-						    &sk->pbs, ike);
+		return add_mobike_response_payloads(cookie2, md, pbs, ike);
 	}
 
 	return true;

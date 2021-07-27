@@ -25,6 +25,7 @@ struct msg_digest;
 struct dh_desc;
 struct ike_sa;
 struct child_sa;
+enum payload_security;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
@@ -58,11 +59,6 @@ struct v2_outgoing_fragment {
  * Should the payload be encrypted/protected (don't confuse this with
  * authenticated)?
  */
-
-enum payload_security {
-	ENCRYPTED_PAYLOAD = 1,
-	UNENCRYPTED_PAYLOAD,
-};
 
 void record_v2N_response(struct logger *logger,
 			 struct ike_sa *ike,
