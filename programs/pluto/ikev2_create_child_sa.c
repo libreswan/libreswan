@@ -324,8 +324,7 @@ static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
 	bool send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
 
 	/* ??? this code won't support AH + ESP */
-	struct ipsec_proto_info *proto_info
-		= ikev2_child_sa_proto_info(child, cc->policy);
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
 	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 

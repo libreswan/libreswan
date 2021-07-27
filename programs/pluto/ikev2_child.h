@@ -54,4 +54,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 								struct msg_digest *md,
 								struct pbs_out *sk_pbs);
 
+struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child);
+
 #endif

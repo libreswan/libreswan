@@ -107,8 +107,6 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
 				   struct trans_attrs *ta_out, struct logger *logger);
 
-struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child, lset_t policy);
-
 ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy,
 			       struct logger *logger);
 

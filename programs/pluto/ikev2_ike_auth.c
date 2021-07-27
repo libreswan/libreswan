@@ -438,7 +438,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		}
 
 		/* code does not support AH+ESP, which not recommended as per RFC 8247 */
-		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child, cc->policy);
+		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
 		const chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
 

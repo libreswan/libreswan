@@ -98,8 +98,7 @@ stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
 	/* start of SA out */
 	{
 		/* ??? this code won't support AH + ESP */
-		struct ipsec_proto_info *proto_info
-			= ikev2_child_sa_proto_info(child, c->policy);
+		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
 							 child->sa.st_logger);
 		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
@@ -491,8 +490,7 @@ stf_status process_v2_childs_sa_payload(const char *what,
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
-	struct ipsec_proto_info *proto_info =
-		ikev2_child_sa_proto_info(child, c->policy);
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	stf_status ret;
 
 	struct ikev2_proposals *child_proposals;
@@ -1088,4 +1086,17 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	close_any(&child->sa.st_logger->global_whackfd);
 
 	return v2N_NOTHING_WRONG;
+}
+
+struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child)
+{
+	lset_t policy = child->sa.st_connection->policy;
+	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	case POLICY_ENCRYPT:
+		return &child->sa.st_esp;
+	case POLICY_AUTHENTICATE:
+		return &child->sa.st_ah;
+	default:
+		bad_case(policy);
+	}
 }
