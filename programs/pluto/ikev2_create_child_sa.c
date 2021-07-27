@@ -993,12 +993,13 @@ static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_child_response_continue;
 
 stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 						     struct child_sa *larval_child,
-						     struct msg_digest *md)
+						     struct msg_digest *response_md)
 {
 	pexpect(larval_child != NULL);
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_child->sa.st_logger, md, &larval_child->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(larval_child->sa.st_logger, response_md,
+			     &larval_child->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family (and trigger no further
@@ -1011,7 +1012,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	}
 
 	stf_status ps = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
-						     ike, larval_child, md,
+						     ike, larval_child, response_md,
 						     /*expect-accepted-proposal?*/true);
 	if (ps != STF_OK) {
 		/*
@@ -1026,7 +1027,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 * XXX: only for rekey child?
 	 */
 	if (larval_child->sa.st_pfs_group == NULL) {
-		v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
+		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
 		if (v2_notification_fatal(n)) {
 			/*
 			 * XXX: initiator; need to initiate a fatal
@@ -1053,7 +1054,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 */
 	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
 	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
+		       response_md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
 		/*
 		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
@@ -1066,12 +1067,12 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 }
 
 static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct state *larval_child_sa,
-								     struct msg_digest *md)
+								     struct msg_digest *response_md)
 {
 	/* initiator getting back an answer */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -1100,7 +1101,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue(struct stat
 		return STF_FAIL;
 	}
 
-	v2_notification_t n = ikev2_process_ts_and_rest(ike, larval_child, md);
+	v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
+								 response_md);
 	if (v2_notification_fatal(n)) {
 		/*
 		 * XXX: initiator; need to initiate a fatal error
@@ -1531,7 +1533,7 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 		} else {
 			return STF_INTERNAL_ERROR;
 		}
-		ret = emit_v2_child_sa_response_payloads(ike, child, request_md, payload.pbs);
+		ret = emit_v2_child_response_payloads(ike, child, request_md, payload.pbs);
 		if (ret != STF_OK) {
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "emit_v2_child_sa_response_payloads() returned ");

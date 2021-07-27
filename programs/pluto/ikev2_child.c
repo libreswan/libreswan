@@ -75,16 +75,16 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
-stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
-					      struct child_sa *child,
-					      struct msg_digest *md,
-					      struct pbs_out *outpbs)
+stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
+					   struct child_sa *child,
+					   struct msg_digest *request_md,
+					   struct pbs_out *outpbs)
 {
 	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
-	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
+	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *c = child->sa.st_connection;
 
-	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		if (c->spd.that.has_lease) {
 			if (!emit_v2_child_configuration_payload(child, outpbs)) {
 				return STF_INTERNAL_ERROR;
@@ -126,19 +126,19 @@ stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
 		 * XXX: shouldn't this be conditional on the local end
 		 * having computed KE and not what the remote sent?
 		 */
-		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			if (!emit_v2KE(&child->sa.st_gr, child->sa.st_oakley.ta_dh, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	}
 
-	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
+	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		dbg("received USE_TRANSPORT_MODE");
 		child->sa.st_seen_use_transport = TRUE;
 	}
 
-	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
-		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
+	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+		struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
@@ -177,7 +177,7 @@ stf_status emit_v2_child_sa_response_payloads(struct ike_sa *ike,
 		dbg("policy suggested compression, but peer did not offer support");
 	}
 
-	if (md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
+	if (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
 		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
 		child->sa.st_seen_no_tfc = true;
 	}
@@ -669,8 +669,8 @@ v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
 	return v2N_NOTHING_WRONG;
 }
 
-v2_notification_t ikev2_process_ts_and_rest(struct ike_sa *ike, struct child_sa *child,
-					    struct msg_digest *md)
+v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct child_sa *child,
+						     struct msg_digest *md)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -864,7 +864,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return n;
 	}
 
-	ret = emit_v2_child_sa_response_payloads(ike, child, md, sk_pbs);
+	ret = emit_v2_child_response_payloads(ike, child, md, sk_pbs);
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "emit_v2_child_sa_response_payloads() returned ");
 		jam_v2_stf_status(buf, ret);
@@ -921,11 +921,11 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 }
 
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
-								 struct msg_digest *md)
+								 struct msg_digest *response_md)
 {
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
-		if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		if (!has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
 			llog_pexpect(ike->sa.st_logger, HERE,
 				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -937,7 +937,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	if (impair.omit_v2_ike_auth_child) {
 		/* Try to ignore missing CHILD SA payloads. */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		if (has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
 			llog_pexpect(ike->sa.st_logger, HERE,
 				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -952,7 +952,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		 * Did the responder send Child SA payloads this end
 		 * didn't ask for?
 		 */
-		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
+		if (has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
 			return v2N_INVALID_SYNTAX; /* fatal */
@@ -972,9 +972,9 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	FOR_EACH_THING(pd, PD_v2N_NO_PROPOSAL_CHOSEN, PD_v2N_TS_UNACCEPTABLE,
 		       PD_v2N_SINGLE_PAIR_REQUIRED, PD_v2N_INTERNAL_ADDRESS_FAILURE,
 		       PD_v2N_FAILED_CP_REQUIRED) {
-		if (md->pd[pd] != NULL) {
+		if (response_md->pd[pd] != NULL) {
 			/* convert PD to N */
-			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
+			v2_notification_t n = response_md->pd[pd]->payload.v2n.isan_type;
 			/*
 			 * Log something the testsuite expects for
 			 * now.  It provides an anchor when looking at
@@ -1008,17 +1008,17 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 */
 
 	/* Expect CHILD SA payloads. */
-	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
+	if (!has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
 		return v2N_TS_UNACCEPTABLE;
 	}
 
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() (?!?) */
-	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	child->sa.st_seen_no_tfc = response_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
 
 	/* AUTH is ok, we can trust the notify payloads */
-	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
+	if (response_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		/* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
 			log_state(RC_LOG_SERIOUS, &child->sa,
@@ -1038,7 +1038,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	res = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
 					   ike, child,
-					   md, /*expect-accepted-proposal?*/true);
+					   response_md, /*expect-accepted-proposal?*/true);
 	if (res > STF_FAIL) {
 		v2_notification_t n = res - STF_FAIL;
 		return n;
@@ -1052,7 +1052,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 */
 	if (need_v2_configuration_payload(child->sa.st_connection,
 					  ike->sa.hidden_variables.st_nat_traversal)) {
-		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+		if (response_md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/*
 			 * not really anything to here... but it would
 			 * be worth unpending again.
@@ -1061,12 +1061,12 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 				  "missing v2CP reply, not attempting to setup child SA");
 			return v2N_TS_UNACCEPTABLE;
 		}
-		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], child)) {
+		if (!ikev2_parse_cp_r_body(response_md->chain[ISAKMP_NEXT_v2CP], child)) {
 			return v2N_TS_UNACCEPTABLE;
 		}
 	}
 
-	v2_notification_t n = ikev2_process_ts_and_rest(ike, child, md);
+	v2_notification_t n = process_v2_child_response_payloads(ike, child, response_md);
 	if (n != v2N_NOTHING_WRONG) {
 		if (v2_notification_fatal(n)) {
 			llog_sa(RC_LOG_SERIOUS, child,
