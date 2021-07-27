@@ -60,8 +60,6 @@ static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
 
-static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA_request;
-
 static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
 
 stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
@@ -140,17 +138,6 @@ static stf_status ikev2_start_new_exchange(struct ike_sa *ike,
 		bad_case(child->sa.st_establishing_sa);
 	}
 
-}
-
-stf_status record_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
-					     struct child_sa *larval,
-					     struct msg_digest *null_md UNUSED)
-{
-	stf_status e = ikev2_start_new_exchange(ike, larval);
-	if (e != STF_OK) {
-		return e;
-	}
-	return record_v2_CREATE_CHILD_SA(ike, larval, NULL);
 }
 
 static bool ikev2_rekey_child_req(struct child_sa *child,
@@ -586,7 +573,23 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							   struct child_sa *larval_child,
 							   struct msg_digest *md)
 {
-	return record_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
+	stf_status e;
+	e = ikev2_start_new_exchange(ike, larval_child);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
+	}
+
+	return STF_OK;
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -704,7 +707,23 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							 struct child_sa *larval_child,
 							 struct msg_digest *md)
 {
-	return record_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
+	stf_status e;
+	e = ikev2_start_new_exchange(ike, larval_child);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
+	}
+
+	return STF_OK;
 }
 
 stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
@@ -811,7 +830,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue(struct state *larv
 							      struct dh_local_secret *local_secret,
 							      chunk_t *nonce)
 {
-
+	stf_status e;
 	/* responder processing request */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
@@ -848,14 +867,25 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue(struct state *larv
 					process_v2_CREATE_CHILD_SA_request_continue_continue,
 					HERE);
 		return STF_SUSPEND;
-	} else {
-		return record_v2_CREATE_CHILD_SA(ike, larval_child, md);
 	}
+
+	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
+	}
+
+	return STF_OK;
 }
 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_continue(struct state *larval_child_sa,
 								       struct msg_digest *md)
 {
+	stf_status e;
 	/* 'child' responding to request */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
@@ -888,7 +918,18 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_continue(struct st
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
 	}
-	return record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+
+	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
+	}
+
+	return STF_OK;
 }
 
 /*
@@ -1073,7 +1114,24 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
 							 struct msg_digest *md)
 {
-	return record_v2_CREATE_CHILD_SA_request(ike, larval_ike, md);
+	stf_status e;
+
+	e = ikev2_start_new_exchange(ike, larval_ike);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_ike->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_ike->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_ike->sa);
+	}
+
+	return STF_OK;
 }
 
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
@@ -1210,6 +1268,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue(struct s
 static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue(struct state *larval_ike_sa,
 							    struct msg_digest *md)
 {
+	stf_status e;
 	/* 'child' responding to request */
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
@@ -1240,7 +1299,17 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis);
 
-	return record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
+	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
+	if (e != STF_OK) {
+		return e;
+	}
+
+	if (larval_ike->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	    larval_ike->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
+		log_ipsec_sa_established("negotiated new IPsec SA", &larval_ike->sa);
+	}
+
+	return STF_OK;
 }
 
 /*
@@ -1498,11 +1567,6 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 	record_v2_message(ike, &reply_stream,
 			  "packet from ikev2_child_out_cont",
 			  request_md != NULL ? MESSAGE_RESPONSE : MESSAGE_REQUEST);
-
-	if (child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-	    child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0) {
-		log_ipsec_sa_established("negotiated new IPsec SA", &child->sa);
-	}
 
 	return STF_OK;
 }
