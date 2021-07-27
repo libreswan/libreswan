@@ -397,7 +397,7 @@ enum_names v1_sa_type_names = {
 
 static const char *const v2_sa_type_name[] = {
 	[IKE_SA] = "IKE SA",
-	[IPSEC_SA] = "CHILD SA"
+	[IPSEC_SA] = "Child SA"
 };
 
 enum_names v2_sa_type_names = {
