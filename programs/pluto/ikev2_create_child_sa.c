@@ -60,6 +60,10 @@ static ikev2_state_transition_fn record_v2_CREATE_CHILD_SA;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
 
+static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1;
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2;
+static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1;
+
 static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
 
 stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
@@ -405,67 +409,100 @@ static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
 	return STF_OK;
 }
 
-static stf_status emit_v2_rekey_ike_payloads(struct child_sa *child,
-					     struct pbs_out *outpbs)
+static bool record_v2_rekey_ike_message(struct ike_sa *ike,
+					struct child_sa *larval_ike,
+					struct msg_digest *request_md)
 {
-	struct connection *c = child->sa.st_connection;
-	chunk_t local_nonce;
-	chunk_t *local_g;
+	passert(ike != NULL);
+	pexpect((request_md != NULL) == (larval_ike->sa.st_sa_role == SA_RESPONDER));
+	pexpect((request_md == NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
+	pexpect((request_md != NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0));
 
-	switch (child->sa.st_state->kind) {
-	case STATE_V2_REKEY_IKE_R0:
+	struct connection *c = larval_ike->sa.st_connection;
+
+	struct v2_payload payload;
+	if (!open_v2_payload("CREATE_CHILD_SA rekey ike",
+			     ike, larval_ike->sa.st_logger,
+			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
+			     reply_buffer, sizeof(reply_buffer), &payload,
+			     ENCRYPTED_PAYLOAD)) {
+		return false;
+	}
+
+	/*
+	 * Send all proposals; or agreed proposal.
+	 *
+	 * XXX: bug: initiator should only send send previously
+	 * negotiated proposal (changing it isn't desirable).
+	 */
+
+	switch (larval_ike->sa.st_sa_role) {
+	case SA_INITIATOR:
 	{
-		local_g = &child->sa.st_gr;
-		local_nonce = child->sa.st_nr;
-		chunk_t local_spi = THING_AS_CHUNK(child->sa.st_ike_rekey_spis.responder);
+		chunk_t local_spi = THING_AS_CHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
+		struct ikev2_proposals *ike_proposals =
+			get_v2_ike_proposals(c, "IKE SA initiating rekey",
+					     larval_ike->sa.st_logger);
 
-		/* send selected v2 IKE SA */
-		if (!ikev2_emit_sa_proposal(outpbs, child->sa.st_accepted_ike_proposal,
-					    &local_spi)) {
-			dbg("problem emitting accepted ike proposal in CREATE_CHILD_SA");
-			return STF_INTERNAL_ERROR;
+		/* send v2 IKE SAs*/
+		if (!ikev2_emit_sa_proposals(payload.pbs, ike_proposals, &local_spi)) {
+			llog_sa(RC_LOG, larval_ike, "outsa fail");
+			return false;
 		}
 		break;
 	}
-	case STATE_V2_REKEY_IKE_I0:
+	case SA_RESPONDER:
 	{
-		local_g = &child->sa.st_gi;
-		local_nonce = child->sa.st_ni;
-		chunk_t local_spi = THING_AS_CHUNK(child->sa.st_ike_rekey_spis.initiator);
-
-		struct ikev2_proposals *ike_proposals =
-			get_v2_ike_proposals(c, "IKE SA initiating rekey",
-					     child->sa.st_logger);
-
-		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(outpbs, ike_proposals,
-					     &local_spi)) {
-			log_state(RC_LOG, &child->sa, "outsa fail");
-			dbg("problem emitting connection ike proposals in CREATE_CHILD_SA");
-			return STF_INTERNAL_ERROR;
+		chunk_t local_spi = THING_AS_CHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
+		/* send selected v2 IKE SA */
+		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_accepted_ike_proposal, &local_spi)) {
+			llog_sa(RC_LOG, larval_ike, "outsa fail");
+			return false;
 		}
 		break;
 	}
 	default:
-		bad_case(child->sa.st_state->kind);
+		bad_case(larval_ike->sa.st_sa_role);
 	}
 
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
+			.isag_critical = build_ikev2_critical(false, larval_ike->sa.st_logger),
 		};
-		pb_stream nr_pbs;
-		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
-		    !out_hunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
-			return STF_INTERNAL_ERROR;
+		struct pbs_out nr_pbs;
+		diag_t d;
+		d = pbs_out_struct(payload.pbs, &ikev2_nonce_desc, &in, sizeof(in), &nr_pbs);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_ike->sa.st_logger, &d, "%s", "");
+			return false;
+		}
+
+		chunk_t local_nonce = ((larval_ike->sa.st_sa_role == SA_INITIATOR) ? larval_ike->sa.st_ni :
+				       (larval_ike->sa.st_sa_role == SA_RESPONDER) ? larval_ike->sa.st_nr :
+				       empty_chunk);
+		d = pbs_out_hunk(&nr_pbs, local_nonce, "IKEv2 nonce");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_ike->sa.st_logger, &d, "%s", "");
+			return false;
+		}
+
 		close_output_pbs(&nr_pbs);
 	}
 
-	if (!emit_v2KE(local_g, child->sa.st_oakley.ta_dh, outpbs))
-		return STF_INTERNAL_ERROR;
 
-	return STF_OK;
+	chunk_t local_g = ((larval_ike->sa.st_sa_role == SA_INITIATOR) ? larval_ike->sa.st_gi :
+			   (larval_ike->sa.st_sa_role == SA_RESPONDER) ? larval_ike->sa.st_gr :
+			   empty_chunk);
+	if (!emit_v2KE(&local_g, larval_ike->sa.st_oakley.ta_dh, payload.pbs)) {
+		return false;
+	}
+
+	if (!close_and_record_v2_payload(&payload)) {
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -1125,23 +1162,18 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
-							 struct msg_digest *md)
+							 struct msg_digest *null_md)
 {
-	stf_status e;
-
-	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
-	if (e != STF_OK) {
-		return e;
+	if (!record_v2_rekey_ike_message(ike, larval_ike, null_md)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	return STF_OK;
 }
 
-static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue;
-
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							struct child_sa *larval_ike,
-							struct msg_digest *md)
+							struct msg_digest *request_md)
 {
 	pexpect(larval_ike != NULL); /* not yet emancipated */
 	pexpect(ike != NULL);
@@ -1151,12 +1183,12 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_ike->sa.st_logger, md, &larval_ike->sa.st_ni, "Ni")) {
+	if (!accept_v2_nonce(larval_ike->sa.st_logger, request_md, &larval_ike->sa.st_ni, "Ni")) {
 		/*
 		 * Presumably not our fault.  A syntax error response
 		 * implicitly kills the entire family.
 		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* we're doomed */
@@ -1166,7 +1198,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA responding to rekey", ike->sa.st_logger);
 
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
@@ -1178,7 +1210,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	if (ret != STF_OK) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		pexpect(ret > STF_FAIL);
-		record_v2N_response(larval_ike->sa.st_logger, ike, md, ret - STF_FAIL, NULL,
+		record_v2N_response(larval_ike->sa.st_logger, ike, request_md, ret - STF_FAIL, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FAIL;
 	}
@@ -1195,7 +1227,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, md,
+	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, request_md,
 				       larval_ike->sa.st_oakley.ta_dh,
 				       ENCRYPTED_PAYLOAD)) {
 		/* passert(reply-recorded) */
@@ -1211,30 +1243,28 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	pexpect(larval_ike->sa.st_oakley.ta_dh != NULL);
 	pexpect(larval_ike->sa.st_pfs_group == NULL);
 	if (!unpack_KE(&larval_ike->sa.st_gi, "Gi", larval_ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		       request_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
+		record_v2N_response(ike->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
 	}
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue,
+			    process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1,
 			    "IKE rekey KE response gir");
 	return STF_SUSPEND;
 }
 
-static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue;	/* type assertion */
-
-static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue(struct state *larval_ike_sa,
-						   struct msg_digest *md,
-						   struct dh_local_secret *local_secret,
-						   chunk_t *nonce)
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct state *larval_ike_sa,
+									  struct msg_digest *request_md,
+									  struct dh_local_secret *local_secret,
+									  chunk_t *nonce)
 {
 	/* responder processing request */
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
@@ -1250,7 +1280,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue(struct s
 	}
 
 	pexpect(local_secret != NULL);
-	pexpect(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+	pexpect(request_md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	unpack_nonce(&larval_ike->sa.st_nr, nonce);
 	unpack_KE_from_helper(&larval_ike->sa, local_secret, &larval_ike->sa.st_gr);
 
@@ -1259,23 +1289,22 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue(struct s
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
 	ikev2_copy_cookie_from_sa(larval_ike->sa.st_accepted_ike_proposal,
 				  &larval_ike->sa.st_ike_rekey_spis.initiator);
-	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&md->sender,
-							    larval_ike->sa.st_logger);
+	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
+								       larval_ike->sa.st_logger);
 	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gi/*responder needs initiator KE*/,
-				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue,
+				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2,
 				HERE);
 
 	return STF_SUSPEND;
 }
 
-static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue(struct state *larval_ike_sa,
-							    struct msg_digest *md)
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct state *larval_ike_sa,
+									  struct msg_digest *request_md)
 {
-	stf_status e;
 	/* 'child' responding to request */
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
-	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
@@ -1291,7 +1320,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 	}
 
 	if (larval_ike->sa.st_dh_shared_secret == NULL) {
-		record_v2N_response(ike->sa.st_logger, ike, md,
+		record_v2N_response(ike->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
@@ -1302,9 +1331,11 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis);
 
-	e = record_v2_CREATE_CHILD_SA(ike, larval_ike, md);
-	if (e != STF_OK) {
-		return e;
+	/* dump new keys */
+	ikev2_log_parentSA(&larval_ike->sa);
+
+	if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	return STF_OK;
@@ -1314,11 +1345,9 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_continue
  * initiator received Rekey IKE SA (RFC 7296 1.3.3) response
  */
 
-static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_response_continue;
-
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
-							 struct msg_digest *md)
+							 struct msg_digest *response_md)
 {
 	pexpect(larval_ike != NULL);
 	struct state *st = &larval_ike->sa;
@@ -1327,7 +1356,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	struct connection *c = st->st_connection;
 
 	/* Ni in */
-	if (!accept_v2_nonce(larval_ike->sa.st_logger, md, &larval_ike->sa.st_nr, "Nr")) {
+	if (!accept_v2_nonce(larval_ike->sa.st_logger, response_md, &larval_ike->sa.st_nr, "Nr")) {
 		/*
 		 * Presumably not our fault.  Syntax errors in a
 		 * response kill the family and trigger no further
@@ -1341,7 +1370,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		get_v2_ike_proposals(c, "IKE SA accept response to rekey",
 				     larval_ike->sa.st_logger);
 
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
@@ -1371,7 +1400,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 
 	 /* KE in */
 	if (!unpack_KE(&larval_ike->sa.st_gr, "Gr", larval_ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
+		       response_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.st_logger)) {
 		/*
 		 * XXX: Initiator so returning this notification will
 		 * go no where.  Need to check RFC for what to do
@@ -1389,17 +1418,17 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 
 	/* initiate calculation of g^xy for rekey */
 	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gr/*initiator needs responder's KE*/,
-				process_v2_CREATE_CHILD_SA_rekey_ike_response_continue,
+				process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1,
 				HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct state *larval_ike_sa,
-					       struct msg_digest *md)
+static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struct state *larval_ike_sa,
+									   struct msg_digest *response_md)
 {
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa); /* not yet emancipated */
 	struct ike_sa *ike = ike_sa(&larval_ike->sa, HERE);
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
 	dbg("%s() for #%lu %s",
@@ -1419,7 +1448,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct 
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
 		 */
-		return STF_FAIL + v2N_INVALID_SYNTAX;
+		return STF_FAIL;
 	}
 
 	calc_v2_keymat(&larval_ike->sa,
@@ -1427,7 +1456,12 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue(struct 
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis/* new SPIs */);
 
+	/* dump new keys */
+	ikev2_log_parentSA(&larval_ike->sa);
+
+	pexpect(larval_ike->sa.st_ike_pred == ike->sa.st_serialno); /*wow!*/
 	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_ike_pred);
+
 	return STF_OK;
 }
 
@@ -1439,12 +1473,10 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 	passert(ike != NULL);
 	pexpect((request_md != NULL) == (child->sa.st_sa_role == SA_RESPONDER));
 	/* 3 initiator initiating states */
-	pexpect((request_md == NULL) == (child->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ||
-					 child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
+	pexpect((request_md == NULL) == (child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
 					 child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0));
 	/* 3 responder replying states */
-	pexpect((request_md != NULL) == (child->sa.st_state->kind == STATE_V2_REKEY_IKE_R0 ||
-					 child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+	pexpect((request_md != NULL) == (child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
 					 child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0));
 	/* 3 initiator receiving; can't happen here */
 	pexpect(child->sa.st_state->kind != STATE_V2_REKEY_IKE_I1 &&
@@ -1470,17 +1502,6 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 	}
 
 	switch (child->sa.st_state->kind) {
-	case STATE_V2_REKEY_IKE_R0:
-	case STATE_V2_REKEY_IKE_I0:
-		ret = emit_v2_rekey_ike_payloads(child, payload.pbs);
-		if (ret != STF_OK) {
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "emit_v2_rekey_ike_payloads() returned ");
-				jam_v2_stf_status(buf, ret);
-			}
-			return ret; /* abort building the response message */
-		}
-		break;
 	case STATE_V2_NEW_CHILD_I0:
 	case STATE_V2_REKEY_CHILD_I0:
 		ret = emit_v2_child_sa_request_payloads(child, payload.pbs);
@@ -1539,10 +1560,6 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 				    &child->sa);
 
 		break;
-	case STATE_V2_REKEY_IKE_I1:
-	case STATE_V2_NEW_CHILD_I1:
-	case STATE_V2_REKEY_CHILD_I1:
-		return STF_INTERNAL_ERROR;
 	default:
 		bad_case(child->sa.st_state->kind);
 	}
