@@ -104,11 +104,13 @@ void add_pending(struct fd *whack_sock,
 		address_buf b;
 		state_buf sab;
 		log_pending(only | RC_COMMENT, p,
-			    "queuing pending IPsec SA negotiating with %s %s "PRI_STATE"",
-			    ipstr(&c->spd.that.host_addr, &b),
+			    "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
+			    /* "Child SA" or "IPsec SA" */
+			    enum_enum_name(&sa_type_names, p->connection->ike_version, IPSEC_SA),
 			    /* "IKE SA" or "ISAKMP SA" */
 			    enum_enum_name(&sa_type_names, p->connection->ike_version, IKE_SA),
-			    pri_state(&ike->sa, &sab));
+			    pri_state(&ike->sa, &sab),
+			    ipstr(&c->spd.that.host_addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
 }
