@@ -384,6 +384,13 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (LIN(POLICY_MOBIKE, ike->sa.st_connection->policy)) {
+		ike->sa.st_ike_sent_v2n_mobike_supported = true;
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	/*
 	 * Now that the AUTH payload is done(?), create and emit the
 	 * child using the first pending connection (or the IKE SA's
@@ -477,13 +484,6 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 
 		if (cc->send_no_esp_tfc) {
 			if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs)) {
-				return STF_INTERNAL_ERROR;
-			}
-		}
-
-		if (LIN(POLICY_MOBIKE, cc->policy)) {
-			ike->sa.st_ike_sent_v2n_mobike_supported = true;
-			if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
