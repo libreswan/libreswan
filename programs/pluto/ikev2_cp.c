@@ -113,7 +113,7 @@ static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
  * CHILD is asking for configuration; hence log against child.
  */
 
-bool emit_v2_child_configuration_payload(struct child_sa *child, struct pbs_out *outpbs)
+bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pbs_out *outpbs)
 {
 	struct connection *c = child->sa.st_connection;
 	pb_stream cp_pbs;
