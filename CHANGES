@@ -21,6 +21,7 @@ v4.5 (unreleased)
 * ipsec.service: remove reload which did not work as expected [Tuomo]
 * building: fix NetBSD build [Andrew]
 * building: fix arm / aarch64 build [kekePower@github]
+* building: Remove support for RHEL6 USE_OLD_SELINUX [Paul]
 * packaging: handle properly rpm sysctl config [Tuomo]
 * packaging: rhel7: fix python2 shebang [Tuomo]
 
