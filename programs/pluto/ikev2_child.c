@@ -213,6 +213,13 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 	return true;
 }
 
+v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
+						    struct child_sa *larval_child UNUSED,
+						    struct msg_digest *request_md UNUSED)
+{
+	return v2N_NOTHING_WRONG;
+}
+
 stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 					   struct child_sa *child,
 					   struct msg_digest *request_md,
@@ -1002,6 +1009,13 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 		v2_notification_t n = ret - STF_FAIL;
+		return n;
+	}
+
+	n = process_v2_child_request_payloads(ike, child, md);
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
+		delete_state(&child->sa);
 		return n;
 	}
 

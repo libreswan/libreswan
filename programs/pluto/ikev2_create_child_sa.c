@@ -935,6 +935,14 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		return STF_SUSPEND;
 	}
 
+	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, md);
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
+		record_v2N_response(larval_child->sa.st_logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+	}
+
 	if (!record_v2_child_response(ike, larval_child, md)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -978,6 +986,14 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
+	}
+
+	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, md);
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
+		record_v2N_response(larval_child->sa.st_logger, ike, md,
+				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
 	if (!record_v2_child_response(ike, larval_child, md)) {
