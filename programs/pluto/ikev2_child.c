@@ -126,8 +126,8 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 	return true;
 }
 
-bool emit_v2_child_request_payloads(struct child_sa *larval_child,
-				    struct ikev2_proposals *child_proposals,
+bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
+				    const struct ikev2_proposals *child_proposals,
 				    ipsec_spi_t our_spi,
 				    struct pbs_out *pbs)
 {
@@ -178,7 +178,7 @@ bool emit_v2_child_request_payloads(struct child_sa *larval_child,
 	/* KEi - only for CREATE_CHILD_SA; and then only sometimes. */
 
 	if (larval_child->sa.st_pfs_group != NULL &&
-	    !emit_v2KE(&larval_child->sa.st_gi, larval_child->sa.st_pfs_group, pbs)) {
+	    !emit_v2KE(larval_child->sa.st_gi, larval_child->sa.st_pfs_group, pbs)) {
 		return false;
 	}
 
@@ -265,7 +265,7 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		 * having computed KE and not what the remote sent?
 		 */
 		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			if (!emit_v2KE(&child->sa.st_gr, child->sa.st_oakley.ta_dh, outpbs))
+			if (!emit_v2KE(child->sa.st_gr, child->sa.st_oakley.ta_dh, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	}

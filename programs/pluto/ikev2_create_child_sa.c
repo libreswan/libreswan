@@ -342,7 +342,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	chunk_t local_g = ((larval_ike->sa.st_sa_role == SA_INITIATOR) ? larval_ike->sa.st_gi :
 			   (larval_ike->sa.st_sa_role == SA_RESPONDER) ? larval_ike->sa.st_gr :
 			   empty_chunk);
-	if (!emit_v2KE(&local_g, larval_ike->sa.st_oakley.ta_dh, payload.pbs)) {
+	if (!emit_v2KE(local_g, larval_ike->sa.st_oakley.ta_dh, payload.pbs)) {
 		return false;
 	}
 

@@ -204,7 +204,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct v2_state_transition *svm,
 			      enum state_kind new_state);
 
-extern bool emit_v2KE(chunk_t *g, const struct dh_desc *group, pb_stream *outs);
+extern bool emit_v2KE(chunk_t g, const struct dh_desc *group, pb_stream *outs);
 
 extern void init_ikev2(void);
 
