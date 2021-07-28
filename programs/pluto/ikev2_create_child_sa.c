@@ -476,6 +476,11 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if ((cc->policy & POLICY_COMPRESS) &&
+	    !compute_v2_ipcomp_cpi(larval_child)) {
+		return false;
+	}
+
 	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
 	if (prev == NULL) {
 		/*
@@ -514,7 +519,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	 * initiator would expect in inbound ESP or AH packets.
 	 */
 	{
-
 		enum ikev2_sec_proto_id rekey_protoid;
 		ipsec_spi_t rekey_spi;
 		if (prev->sa.st_esp.present) {
@@ -700,6 +704,11 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 			ike->sa.st_serialno);
 		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
 		return STF_FAIL;
+	}
+
+	if ((cc->policy & POLICY_COMPRESS) &&
+	    !compute_v2_ipcomp_cpi(larval_child)) {
+		return false;
 	}
 
 	struct v2_payload request;

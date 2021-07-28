@@ -60,4 +60,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child);
 
+bool compute_v2_ipcomp_cpi(struct child_sa *child);
+
 #endif

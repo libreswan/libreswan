@@ -75,6 +75,57 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
+bool compute_v2_ipcomp_cpi(struct child_sa *child)
+{
+	const struct connection *c = child->sa.st_connection;
+	if (child->sa.st_ipcomp.our_spi == 0) {
+		/* CPI is stored in network low order end of an ipsec_spi_t */
+		ipsec_spi_t n_ipcomp_cpi = get_my_cpi(&c->spd,
+						      LIN(POLICY_TUNNEL, c->policy),
+						      child->sa.st_logger);
+		ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
+		dbg("calculated compression CPI=%d", h_ipcomp_cpi);
+		if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
+			/* get_my_cpi() failed */
+			llog_sa(RC_LOG_SERIOUS, child,
+				"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
+			return false;
+		}
+		child->sa.st_ipcomp.our_spi = n_ipcomp_cpi;
+	}
+	return true;
+}
+
+static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_out *s)
+{
+	dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+
+	ipsec_spi_t h_cpi = (uint16_t)ntohl(child->sa.st_ipcomp.our_spi);
+	if (!pexpect(h_cpi != 0)) {
+		return false;
+	}
+
+	struct ikev2_notify_ipcomp_data id = {
+		.ikev2_cpi = h_cpi, /* packet code expects host byte order */
+		.ikev2_notify_ipcomp_trans = IPCOMP_DEFLATE,
+	};
+
+	struct pbs_out d_pbs;
+	if (!emit_v2Npl(v2N_IPCOMP_SUPPORTED, s, &d_pbs)) {
+		return false;
+	}
+
+	diag_t d;
+	d = pbs_out_struct(&d_pbs, &ikev2notify_ipcomp_data_desc, &id, sizeof(id), NULL);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d, "%s", "");
+		return false;
+	}
+
+	close_output_pbs(&d_pbs);
+	return true;
+}
+
 bool emit_v2_child_request_payloads(struct child_sa *larval_child,
 				    struct ikev2_proposals *child_proposals,
 				    struct pbs_out *pbs)
@@ -333,6 +384,9 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 
 	if (child->sa.st_ipcomp.present) {
 		/* logic above decided to enable IPCOMP */
+		if (!compute_v2_ipcomp_cpi(child)) {
+			return STF_INTERNAL_ERROR;
+		}
 		if (!emit_v2N_ipcomp_supported(child, outpbs))
 			return STF_INTERNAL_ERROR;
 	}

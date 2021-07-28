@@ -445,6 +445,13 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			}
 		}
 
+		/* compute IPCOMP PI when needed */
+
+		if ((cc->policy & POLICY_COMPRESS) &&
+		    !compute_v2_ipcomp_cpi(child)) {
+			return false;
+		}
+
 		/*
 		 * A CHILD_SA established during an AUTH exchange does
 		 * not propose DH - the IKE SA's SKEYSEED is always
