@@ -148,8 +148,8 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 
 	/* SA - security association */
 
-	chunk_t local_spi = THING_AS_CHUNK(our_spi);
-	if (!ikev2_emit_sa_proposals(pbs, child_proposals, &local_spi)) {
+	shunk_t local_spi = THING_AS_SHUNK(our_spi);
+	if (!ikev2_emit_sa_proposals(pbs, child_proposals, local_spi)) {
 		return false;
 	}
 
@@ -239,10 +239,10 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
 							 child->sa.st_logger);
-		chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
+		shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    child->sa.st_accepted_esp_or_ah_proposal,
-					    &local_spi)) {
+					    local_spi)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}

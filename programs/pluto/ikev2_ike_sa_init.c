@@ -728,7 +728,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	struct ikev2_proposals *ike_proposals =
 		get_v2_ike_proposals(c, "IKE SA initiator emitting local proposals", ike->sa.st_logger);
 	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
-				     (chunk_t*)NULL /* IKE - no CHILD SPI */)) {
+				     null_shunk /* IKE - no CHILD SPI */)) {
 		return false;
 	}
 
@@ -1036,7 +1036,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(ike->sa.st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_accepted_ike_proposal, NULL)) {
+		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_accepted_ike_proposal,
+					    null_shunk/*IKE has no SPI*/)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}

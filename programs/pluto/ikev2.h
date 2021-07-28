@@ -78,11 +78,11 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 
 bool ikev2_emit_sa_proposal(struct pbs_out *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi);
+			    shunk_t local_spi);
 
 bool ikev2_emit_sa_proposals(struct pbs_out *outs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi);
+			     const shunk_t local_spi);
 
 const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
 					       struct logger *logger);

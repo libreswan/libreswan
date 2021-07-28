@@ -262,13 +262,13 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	switch (larval_ike->sa.st_sa_role) {
 	case SA_INITIATOR:
 	{
-		chunk_t local_spi = THING_AS_CHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
+		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
 		struct ikev2_proposals *ike_proposals =
 			get_v2_ike_proposals(c, "IKE SA initiating rekey",
 					     larval_ike->sa.st_logger);
 
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(payload.pbs, ike_proposals, &local_spi)) {
+		if (!ikev2_emit_sa_proposals(payload.pbs, ike_proposals, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -276,9 +276,9 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	}
 	case SA_RESPONDER:
 	{
-		chunk_t local_spi = THING_AS_CHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
+		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
 		/* send selected v2 IKE SA */
-		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_accepted_ike_proposal, &local_spi)) {
+		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_accepted_ike_proposal, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
