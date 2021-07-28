@@ -59,7 +59,15 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 								struct msg_digest *md,
 								struct pbs_out *sk_pbs);
 
-struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child);
+#define ikev2_child_sa_proto_info(SA)					\
+	({								\
+		typeof(SA) sa_ = (SA); /* evaluate once */		\
+		lset_t p_ = (sa_->sa.st_connection->policy &		\
+			     (POLICY_ENCRYPT | POLICY_AUTHENTICATE));	\
+		(p_ == POLICY_ENCRYPT ? &sa_->sa.st_esp :		\
+		 p_ == POLICY_AUTHENTICATE ? &sa_->sa.st_ah :		\
+		 NULL);							\
+	})
 
 bool compute_v2_ipcomp_cpi(struct child_sa *child);
 

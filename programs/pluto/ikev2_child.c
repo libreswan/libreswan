@@ -1228,16 +1228,3 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 
 	return v2N_NOTHING_WRONG;
 }
-
-struct ipsec_proto_info *ikev2_child_sa_proto_info(struct child_sa *child)
-{
-	lset_t policy = child->sa.st_connection->policy;
-	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	case POLICY_ENCRYPT:
-		return &child->sa.st_esp;
-	case POLICY_AUTHENTICATE:
-		return &child->sa.st_ah;
-	default:
-		bad_case(policy);
-	}
-}
