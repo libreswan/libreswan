@@ -119,66 +119,6 @@ stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	return STF_SUSPEND;
 }
 
-static bool ikev2_rekey_child_req(struct child_sa *child,
-				  enum ikev2_sec_proto_id *rekey_protoid,
-				  ipsec_spi_t *rekey_spi)
-{
-	if (!pexpect(child->sa.st_establishing_sa == IPSEC_SA) ||
-	    !pexpect(child->sa.st_ipsec_pred != SOS_NOBODY) ||
-	    !pexpect(child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0)) {
-		return false;
-	}
-
-	struct state *rst = state_with_serialno(child->sa.st_ipsec_pred);
-	if (rst ==  NULL) {
-		/*
-		 * XXX: For instance:
-		 *
-		 * - the old child initiated this replacement
-		 *
-		 * - this child wondered off to perform DH
-		 *
-		 * - the old child expires itself (or it gets sent a
-		 *   delete)
-		 *
-		 * - this child finds it has no older sibling
-		 *
-		 * The older child should have discarded this state.
-		 */
-		log_state(LOG_STREAM/*not-whack*/, &child->sa,
-			  "CHILD SA to rekey #%lu vanished abort this exchange",
-			  child->sa.st_ipsec_pred);
-		return false;
-	}
-
-	/*
-	 * 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
-	 * Exchange: The SA being rekeyed is identified by the SPI
-	 * field in the Notify payload; this is the SPI the exchange
-	 * initiator would expect in inbound ESP or AH packets.
-	 */
-	if (rst->st_esp.present) {
-		*rekey_spi = rst->st_esp.our_spi;
-		*rekey_protoid = PROTO_IPSEC_ESP;
-	} else if (rst->st_ah.present) {
-		*rekey_spi = rst->st_ah.our_spi;
-		*rekey_protoid = PROTO_IPSEC_AH;
-	} else {
-		pexpect_fail(child->sa.st_logger, HERE,
-			     "CHILD SA to rekey #%lu is not ESP/AH",
-			     child->sa.st_ipsec_pred);
-		return false;
-	}
-
-	connection_buf cib;
-	dbg("#%lu initiate rekey request for "PRI_CONNECTION" #%lu SPI 0x%x TSi TSr",
-	    child->sa.st_serialno,
-	    pri_connection(rst->st_connection, &cib),
-	    rst->st_serialno, ntohl(*rekey_spi));
-
-	return true;
-}
-
 static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 				   struct msg_digest *md)
 {
@@ -315,98 +255,6 @@ static bool ikev2_rekey_child_copy_ts(struct child_sa *child)
 	    rchild->sa.st_serialno);
 
 	return true;
-}
-
-/* once done use the same function in ikev2_parent_inR1outI2_tail too */
-static stf_status emit_v2_child_sa_request_payloads(struct child_sa *child,
-						    struct pbs_out *outpbs)
-{
-	if (!pexpect(child->sa.st_establishing_sa == IPSEC_SA)) {
-		return STF_INTERNAL_ERROR;
-	}
-	struct connection *cc = child->sa.st_connection;
-	bool send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
-
-	/* ??? this code won't support AH + ESP */
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
-	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
-
-	/*
-	 * HACK: Use the CREATE_CHILD_SA proposal suite hopefully
-	 * generated during the CHILD SA's initiation.
-	 *
-	 * XXX: this code should be either using get_v2...() (hard to
-	 * figure out what DEFAULT_DH is) or saving the proposal in
-	 * the state.
-	 */
-	passert(cc->v2_create_child_proposals != NULL);
-	if (!ikev2_emit_sa_proposals(outpbs, cc->v2_create_child_proposals, &local_spi))
-		return STF_INTERNAL_ERROR;
-
-	/*
-	 * If rekeying, get the old SPI and protocol.
-	 */
-	ipsec_spi_t rekey_spi = 0;
-	enum ikev2_sec_proto_id rekey_protoid = PROTO_v2_RESERVED;
-	if (child->sa.st_ipsec_pred != SOS_NOBODY) {
-		if (!ikev2_rekey_child_req(child, &rekey_protoid, &rekey_spi)) {
-			/*
-			 * XXX: For instance:
-			 *
-			 * - the old child initiated this replacement
-			 *
-			 * - this child wondered off to perform DH
-			 *
-			 * - the old child expires itself (or it gets
-			 *   sent a delete)
-			 *
-			 * - this child finds it has no older sibling
-			 *
-			 * The older child should have discarded this
-			 * state.
-			 */
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	struct ikev2_generic in = {
-		.isag_critical = build_ikev2_critical(false, child->sa.st_logger),
-	};
-	pb_stream pb_nr;
-	if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-	    !out_hunk(child->sa.st_ni, &pb_nr, "IKEv2 nonce"))
-		return STF_INTERNAL_ERROR;
-	close_output_pbs(&pb_nr);
-
-	if (child->sa.st_pfs_group != NULL) {
-		if (!emit_v2KE(&child->sa.st_gi, child->sa.st_pfs_group, outpbs)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	if (rekey_spi != 0) {
-		if (!emit_v2Nsa_pl(v2N_REKEY_SA,
-				   rekey_protoid, &rekey_spi,
-				   outpbs, NULL))
-			return STF_INTERNAL_ERROR;
-	}
-
-	emit_v2TS_payloads(outpbs, child);
-
-	if (send_use_transport) {
-		dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
-		if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
-			return STF_INTERNAL_ERROR;
-	} else {
-		dbg("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE");
-	}
-
-	if (cc->send_no_esp_tfc) {
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
-			return STF_INTERNAL_ERROR;
-	}
-	return STF_OK;
 }
 
 static bool record_v2_rekey_ike_message(struct ike_sa *ike,
@@ -584,6 +432,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							   struct child_sa *larval_child,
 							   struct msg_digest *null_md UNUSED)
 {
+	struct connection *cc = larval_child->sa.st_connection;
+
 	if (!ike->sa.st_viable_parent) {
 		/*
 		 * This return will delete the larval child.
@@ -618,14 +468,91 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_ipsec_pred);
-		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
+		larval_child->sa.st_policy = cc->policy; /* for pick_initiator */
 		return STF_FAIL;
 	}
 
-	stf_status e;
-	e = record_v2_CREATE_CHILD_SA(ike, larval_child, /*initiator*/NULL);
-	if (e != STF_OK) {
-		return e;
+	if (!pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
+	if (prev == NULL) {
+		/*
+		 * XXX: For instance:
+		 *
+		 * - the old child initiated this replacement
+		 *
+		 * - this child wondered off to perform DH
+		 *
+		 * - the old child expires itself (or it gets sent a
+		 *   delete)
+		 *
+		 * - this child finds it has no older sibling
+		 *
+		 * The older child should have discarded this state.
+		 */
+		llog_sa(LOG_STREAM/*not-whack*/, larval_child,
+			"Child SA to rekey #%lu vanished abort this exchange",
+			larval_child->sa.st_ipsec_pred);
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct v2_payload request;
+	if (!open_v2_payload("rekey Child SA request",
+			     ike, larval_child->sa.st_logger,
+			     /*initiator*/NULL, ISAKMP_v2_CREATE_CHILD_SA,
+			     reply_buffer, sizeof(reply_buffer), &request,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
+	 * Exchange: The SA being rekeyed is identified by the SPI
+	 * field in the Notify payload; this is the SPI the exchange
+	 * initiator would expect in inbound ESP or AH packets.
+	 */
+	{
+
+		enum ikev2_sec_proto_id rekey_protoid;
+		ipsec_spi_t rekey_spi;
+		if (prev->sa.st_esp.present) {
+			rekey_spi = prev->sa.st_esp.our_spi;
+			rekey_protoid = PROTO_IPSEC_ESP;
+		} else if (prev->sa.st_ah.present) {
+			rekey_spi = prev->sa.st_ah.our_spi;
+			rekey_protoid = PROTO_IPSEC_AH;
+		} else {
+			pexpect_fail(larval_child->sa.st_logger, HERE,
+				     "previous Child SA #%lu being rekeyed is not ESP/AH",
+				     larval_child->sa.st_ipsec_pred);
+			return STF_INTERNAL_ERROR;
+		}
+
+		pexpect(rekey_spi != 0);
+		if (!emit_v2Nsa_pl(v2N_REKEY_SA, rekey_protoid, &rekey_spi, request.pbs, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/*
+	 * HACK: Use the CREATE_CHILD_SA proposal suite
+	 * hopefully generated during the CHILD SA's
+	 * initiation.
+	 *
+	 * XXX: this code should be either using get_v2...()
+	 * (hard to figure out what DEFAULT_DH is) or saving
+	 * the proposal in the state.
+	 */
+	pexpect(cc->v2_create_child_proposals != NULL);
+
+	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals, request.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!close_and_record_v2_payload(&request)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	return STF_OK;
@@ -744,8 +671,10 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							 struct child_sa *larval_child,
-							 struct msg_digest *md)
+							 struct msg_digest *null_md UNUSED)
 {
+	struct connection *cc = larval_child->sa.st_connection;
+
 	if (!ike->sa.st_viable_parent) {
 		/*
 		 * This return will delete the larval child.
@@ -773,10 +702,32 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_FAIL;
 	}
 
-	stf_status e;
-	e = record_v2_CREATE_CHILD_SA(ike, larval_child, md);
-	if (e != STF_OK) {
-		return e;
+	struct v2_payload request;
+	if (!open_v2_payload("new Child SA request",
+			     ike, larval_child->sa.st_logger,
+			     /*initiator*/NULL, ISAKMP_v2_CREATE_CHILD_SA,
+			     reply_buffer, sizeof(reply_buffer), &request,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * HACK: Use the CREATE_CHILD_SA proposal suite
+	 * hopefully generated during the CHILD SA's
+	 * initiation.
+	 *
+	 * XXX: this code should be either using get_v2...()
+	 * (hard to figure out what DEFAULT_DH is) or saving
+	 * the proposal in the state.
+	 */
+	pexpect(cc->v2_create_child_proposals != NULL);
+
+	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals, request.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!close_and_record_v2_payload(&request)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	return STF_OK;
@@ -1504,17 +1455,6 @@ static stf_status record_v2_CREATE_CHILD_SA(struct ike_sa *ike, struct child_sa 
 	}
 
 	switch (child->sa.st_state->kind) {
-	case STATE_V2_NEW_CHILD_I0:
-	case STATE_V2_REKEY_CHILD_I0:
-		ret = emit_v2_child_sa_request_payloads(child, payload.pbs);
-		if (ret != STF_OK) {
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "emit_v2_child_sa_request_payloads() returned ");
-				jam_v2_stf_status(buf, ret);
-			}
-			return ret; /* abort building the response message */
-		}
-		break;
 	case STATE_V2_NEW_CHILD_R0:
 	case STATE_V2_REKEY_CHILD_R0:
 		/*

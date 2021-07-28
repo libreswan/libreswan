@@ -75,6 +75,98 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
+bool emit_v2_child_request_payloads(struct child_sa *larval_child,
+				    struct ikev2_proposals *child_proposals,
+				    struct pbs_out *pbs)
+{
+	if (!pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
+		     larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
+		     larval_child->sa.st_state->kind == STATE_V2_IKE_AUTH_CHILD_I0)) {
+		return false;
+	}
+
+	if (!pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA)) {
+		return false;
+	}
+
+	/* hack */
+	bool ike_auth_exchange = (larval_child->sa.st_state->kind == STATE_V2_IKE_AUTH_CHILD_I0);
+
+	struct connection *cc = larval_child->sa.st_connection;
+
+	/*
+	 * Generate and save!!! a new SPI.
+	 */
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
+	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
+
+	/* SA - security association */
+
+	if (!ikev2_emit_sa_proposals(pbs, child_proposals, &local_spi)) {
+		return false;
+	}
+
+	/* Ni - only for CREATE_CHILD_SA */
+
+	if (!ike_auth_exchange) {
+		struct ikev2_generic in = {
+			.isag_critical = build_ikev2_critical(false, larval_child->sa.st_logger),
+		};
+		diag_t d;
+		struct pbs_out pb_nr;
+		d = pbs_out_struct(pbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+			return false;
+		}
+
+		d = pbs_out_hunk(&pb_nr, larval_child->sa.st_ni, "IKEv2 nonce");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+			return false;
+		}
+		close_output_pbs(&pb_nr);
+	}
+
+	/* KEi - only for CREATE_CHILD_SA; and then only sometimes. */
+
+	if (larval_child->sa.st_pfs_group != NULL &&
+	    !emit_v2KE(&larval_child->sa.st_gi, larval_child->sa.st_pfs_group, pbs)) {
+		return false;
+	}
+
+	/* TS[ir] - traffic selectors */
+
+	if (emit_v2TS_payloads(pbs, larval_child) != STF_OK) {
+		return false;
+	}
+
+	/* IPCOMP based on policy */
+
+	if ((cc->policy & POLICY_COMPRESS) &&
+	    !emit_v2N_ipcomp_supported(larval_child, pbs)) {
+		return false;
+	}
+
+	/* Transport based on policy */
+
+	bool send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
+	dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? %s",
+	    bool_str(send_use_transport));
+	if (send_use_transport &&
+	    !emit_v2N(v2N_USE_TRANSPORT_MODE, pbs)) {
+		return false;
+	}
+
+	if (cc->send_no_esp_tfc &&
+	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
+		return false;
+	}
+
+	return true;
+}
+
 stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 					   struct child_sa *child,
 					   struct msg_digest *request_md,
