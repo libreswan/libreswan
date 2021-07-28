@@ -481,6 +481,12 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return false;
 	}
 
+	/*
+	 * Generate and save!!! a new SPI.
+	 */
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
+
 	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
 	if (prev == NULL) {
 		/*
@@ -551,7 +557,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	 */
 	pexpect(cc->v2_create_child_proposals != NULL);
 
-	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals, request.pbs)) {
+	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals,
+					    proto_info->our_spi, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -711,6 +718,12 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return false;
 	}
 
+	/*
+	 * Generate and save!!! a new SPI.
+	 */
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
+
 	struct v2_payload request;
 	if (!open_v2_payload("new Child SA request",
 			     ike, larval_child->sa.st_logger,
@@ -731,7 +744,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	 */
 	pexpect(cc->v2_create_child_proposals != NULL);
 
-	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals, request.pbs)) {
+	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals,
+					    proto_info->our_spi, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 

@@ -128,6 +128,7 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 
 bool emit_v2_child_request_payloads(struct child_sa *larval_child,
 				    struct ikev2_proposals *child_proposals,
+				    ipsec_spi_t our_spi,
 				    struct pbs_out *pbs)
 {
 	if (!pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
@@ -145,15 +146,9 @@ bool emit_v2_child_request_payloads(struct child_sa *larval_child,
 
 	struct connection *cc = larval_child->sa.st_connection;
 
-	/*
-	 * Generate and save!!! a new SPI.
-	 */
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
-	chunk_t local_spi = THING_AS_CHUNK(proto_info->our_spi);
-
 	/* SA - security association */
 
+	chunk_t local_spi = THING_AS_CHUNK(our_spi);
 	if (!ikev2_emit_sa_proposals(pbs, child_proposals, &local_spi)) {
 		return false;
 	}
