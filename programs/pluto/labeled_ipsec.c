@@ -110,11 +110,28 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
 		/* note: selinux_check_access(3) does not specify that errno is set */
-		llog(RC_LOG, logger, "selinux within_range: sl (%s) - range (%s) error: %s",
+		llog(RC_LOG, logger, "selinux polmatch within_range: sl (%s) - range (%s) error: %s",
 		     sl, range, strerror(errno));
 		return false;
 	}
+
+	char *domain;
+	if(getcon(&domain) != 0) {
+		llog(RC_LOG, logger, "getcon() error: %s", strerror(errno));
+		return false;
+	}
+	dbg("our SElinux context is '%s'", domain);
+
+	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
+	if (rtn != 0) {
+		/* note: selinux_check_access(3) does not specify that errno is set */
+		llog(RC_LOG, logger, "selinux setcontext within_range: domain (%s) - sl (%s) error: %s",
+			domain, sl, strerror(errno));
+		return false;
+	}
+
 	dbg("selinux within_range: Permission granted sl (%s) - range (%s)", sl, range);
+	freecon(domain);
 	return true;
 }
 #endif
