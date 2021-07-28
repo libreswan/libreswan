@@ -467,8 +467,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
 							child->sa.st_logger);
 
-		if (!emit_v2_child_request_payloads(child, child_proposals,
-						    proto_info->our_spi, &sk.pbs)) {
+		if (!emit_v2_child_request_payloads(child, child_proposals, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 

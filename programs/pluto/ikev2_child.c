@@ -128,7 +128,6 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 
 bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
-				    ipsec_spi_t our_spi,
 				    struct pbs_out *pbs)
 {
 	if (!pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
@@ -148,7 +147,8 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 
 	/* SA - security association */
 
-	shunk_t local_spi = THING_AS_SHUNK(our_spi);
+	const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
 	if (!ikev2_emit_sa_proposals(pbs, child_proposals, local_spi)) {
 		return false;
 	}

@@ -532,8 +532,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	 */
 	pexpect(cc->v2_create_child_proposals != NULL);
 
-	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals,
-					    proto_info->our_spi, request.pbs)) {
+	if (!emit_v2_child_request_payloads(larval_child,
+					    cc->v2_create_child_proposals,
+					    request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -719,8 +720,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	 */
 	pexpect(cc->v2_create_child_proposals != NULL);
 
-	if (!emit_v2_child_request_payloads(larval_child, cc->v2_create_child_proposals,
-					    proto_info->our_spi, request.pbs)) {
+	if (!emit_v2_child_request_payloads(larval_child,
+					    cc->v2_create_child_proposals,
+					    request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
