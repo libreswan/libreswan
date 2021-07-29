@@ -278,16 +278,17 @@ void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
 /*
  * XXX: The message format is:
- *   ERROR: <log-prefix><message...>
+ *   ERROR: <log-prefix><message...>[. Errno: <errno>: <strerr>"]
  * and not:
- *   <log-prefix>ERROR: <message...>
+ *   <log-prefix>ERROR: <message...>...
  */
-void log_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
+
+void llog_errno(lset_t rc_flags, struct logger *logger, int error,
+		const char *message, ...) PRINTF_LIKE(4);
 #define log_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
 		int e_ = ERRNO; /* save value across va args */		\
-		log_error(LOGGER, FMT". "PRI_ERRNO,			\
-			  ##__VA_ARGS__, pri_errno(e_));		\
+		llog_errno(ERROR_FLAGS, LOGGER, e_, FMT, ##__VA_ARGS__); \
 	}
 
 /*

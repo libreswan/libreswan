@@ -56,10 +56,6 @@ void init_labeled_ipsec(struct logger *logger)
 
 static bool within_range(const char *sl, const char *range, struct logger *logger)
 {
-	/* For use with `strerror_r()`. */
-	const size_t error_buf_len = 1024; /* arbitrary choice */
-	char error_buf[error_buf_len];
-
 	/*
 	 * Check access permission for sl (connection policy label from SAD)
 	 * and range (connection flow label from SPD but initially the
@@ -68,8 +64,9 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
 	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux polmatch within_range: sl (%s) - range (%s) error: %s",
-		     sl, range, strerror_r(errno, error_buf, error_buf_len));
+		llog_errno(RC_LOG, logger, errno,
+			   "selinux polmatch within_range: sl (%s) - range (%s)",
+			   sl, range);
 		return false;
 	}
 	dbg("selinux within_range: Permission granted (polmatch) sl (%s) - range (%s)", sl, range);
@@ -78,7 +75,7 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	errno = 0;	/* getcon(3) is not documented to set errno */
 	if(getcon(&domain) != 0) {
 		/* note: getcon(3) does not specify that errno is set */
-		llog(RC_LOG, logger, "getcon() error: %s", strerror_r(errno, error_buf, error_buf_len));
+		llog_errno(RC_LOG, logger, errno, "getcon()");
 		return false;
 	}
 	dbg("our SElinux context is '%s'", domain);
@@ -89,8 +86,8 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
 	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
 	if (rtn != 0) {
-		llog(RC_LOG, logger, "selinux setcontext within_range: domain (%s) - sl (%s) error: %s",
-			domain, sl, strerror_r(errno, error_buf, error_buf_len));
+		llog_errno(RC_LOG, logger, errno, "selinux setcontext within_range: domain (%s) - sl (%s)",
+			   domain, sl);
 		freecon(domain);
 		return false;
 	}

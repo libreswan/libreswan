@@ -19,7 +19,7 @@
 
 #include "lswlog.h"
 
-void log_error(struct logger *logger, const char *fmt, ...)
+void llog_errno(lset_t rc_flags, struct logger *logger, int error, const char *fmt, ...)
 {
 	JAMBUF(buf) {
 		/* XXX: notice how <prefix> is in the middle */
@@ -30,6 +30,8 @@ void log_error(struct logger *logger, const char *fmt, ...)
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		jambuf_to_logger(buf, logger, ERROR_FLAGS);
+		/* XXX: not thread safe */
+		jam(buf, PRI_ERRNO, pri_errno(error));
+		jambuf_to_logger(buf, logger, rc_flags);
 	}
 }
