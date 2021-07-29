@@ -265,7 +265,52 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
 	}
 
 	if (!compute_v2_child_spi(larval_child)) {
-		return v2N_INVALID_SYNTAX;/* fatal */
+		return v2N_INVALID_SYNTAX;/* something fatal */
+	}
+
+	bool expecting_compression = (cc->policy & POLICY_COMPRESS);
+	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
+		if (!expecting_compression) {
+			dbg("Ignored IPCOMP request as connection has compress=no");
+			larval_child->sa.st_ipcomp.present = false;
+		} else {
+			dbg("received v2N_IPCOMP_SUPPORTED");
+
+			struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
+			struct ikev2_notify_ipcomp_data n_ipcomp;
+			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
+						 &n_ipcomp, sizeof(n_ipcomp), NULL);
+			if (d != NULL) {
+				llog_diag(RC_LOG, larval_child->sa.st_logger, &d, "%s", "");
+				return v2N_NO_PROPOSAL_CHOSEN;
+			}
+
+			if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
+				llog_sa(RC_LOG_SERIOUS, larval_child,
+					"unsupported IPCOMP compression algorithm %d",
+					n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
+				return v2N_NO_PROPOSAL_CHOSEN;
+			}
+
+			if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
+				llog_sa(RC_LOG_SERIOUS, larval_child,
+					"illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
+				return v2N_NO_PROPOSAL_CHOSEN;
+			}
+
+			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
+			//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
+			larval_child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+			larval_child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+			larval_child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
+			larval_child->sa.st_ipcomp.present = true;
+			/* logic above decided to enable IPCOMP */
+			if (!compute_v2_child_ipcomp_cpi(larval_child)) {
+				return v2N_INVALID_SYNTAX; /* something fatal */
+			}
+		}
+	} else if (expecting_compression) {
+		dbg("policy suggested compression, but peer did not offer support");
 	}
 
 	return v2N_NOTHING_WRONG;
@@ -326,46 +371,6 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		}
 	}
 
-	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
-		struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
-		size_t len = pbs_left(&pbs);
-		struct ikev2_notify_ipcomp_data n_ipcomp;
-
-		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
-
-		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
-					 &n_ipcomp, sizeof(n_ipcomp), NULL);
-		if (d != NULL) {
-			llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
-			return STF_FATAL;
-		}
-
-		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "Unsupported IPCOMP compression method %d",
-				  n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
-			return STF_FATAL;
-		}
-		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
-			return STF_FATAL;
-		}
-		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
-			dbg("Ignored IPCOMP request as connection has compress=no");
-			child->sa.st_ipcomp.present = false;
-		} else {
-			dbg("Received compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
-			//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
-			child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-			child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
-			child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
-			child->sa.st_ipcomp.present = true;
-		}
-	} else if (c->policy & POLICY_COMPRESS) {
-		dbg("policy suggested compression, but peer did not offer support");
-	}
-
 	if (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
 		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
 		child->sa.st_seen_no_tfc = true;
@@ -390,13 +395,9 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (child->sa.st_ipcomp.present) {
-		/* logic above decided to enable IPCOMP */
-		if (!compute_v2_child_ipcomp_cpi(child)) {
-			return STF_INTERNAL_ERROR;
-		}
-		if (!emit_v2N_ipcomp_supported(child, outpbs))
-			return STF_INTERNAL_ERROR;
+	if (child->sa.st_ipcomp.present &&
+	    !emit_v2N_ipcomp_supported(child, outpbs)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	ikev2_derive_child_keys(ike, child);
