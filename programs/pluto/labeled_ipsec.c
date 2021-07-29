@@ -65,7 +65,7 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	 * and range (connection flow label from SPD but initially the
 	 * conn policy-label= entry of the ipsec.conf(5) configuration file).
 	 */
-	errno = 0;	/* selinux_check_access(3) is not documented to st errno */
+	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
 	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
 		llog(RC_LOG, logger, "selinux polmatch within_range: sl (%s) - range (%s) error: %s",
@@ -86,7 +86,7 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	/*
 	 * Check if `pluto`'s SELinux domain can `setcontext` against the child/IPsec SA label.
 	 */
-	errno = 0;	/* selinux_check_access(3) is not documented to st errno */
+	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
 	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
 	if (rtn != 0) {
 		llog(RC_LOG, logger, "selinux setcontext within_range: domain (%s) - sl (%s) error: %s",
