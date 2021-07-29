@@ -859,37 +859,18 @@ static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
 		return false;
 	}
 
-	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&child->sa, true)) {
-		return STF_FATAL;
-	}
-
-	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old
-	 * connection we should do this after installing
-	 * ipsec_sa, but that will give us a "eroute in use"
-	 * error.
-	 */
-	ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
-
-	/* mark the connection as now having an IPsec SA associated with it. */
-	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names,
-				      request_md->hdr.isa_xchg),
-			    &child->sa);
-
 	return true;
 }
 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *larval_child_sa,
-								struct msg_digest *md,
+								struct msg_digest *request_md,
 								struct dh_local_secret *local_secret,
 								chunk_t *nonce)
 {
 	/* responder processing request */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
-	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -924,15 +905,39 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		return STF_SUSPEND;
 	}
 
-	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, md);
+	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, md,
+		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
-	if (!record_v2_child_response(ike, larval_child, md)) {
+	/* install inbound and outbound SPI info */
+	if (!install_ipsec_sa(&larval_child->sa, true)) {
+		/* already logged */
+		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
+				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
+	}
+
+	/*
+	 * Check to see if we need to release an old instance
+	 * Note that this will call delete on the old
+	 * connection we should do this after installing
+	 * ipsec_sa, but that will give us a "eroute in use"
+	 * error.
+	 *
+	 * XXX: useless?
+	 */
+	ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
+
+	/* mark the connection as now having an IPsec SA associated with it. */
+	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
+			    &larval_child->sa);
+
+	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -942,12 +947,12 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 }
 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *larval_child_sa,
-								struct msg_digest *md)
+								struct msg_digest *request_md)
 {
 	/* 'child' responding to request */
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
 	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
-	passert(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
@@ -971,21 +976,46 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		log_state(RC_LOG, &larval_child->sa, "DH failed");
-		record_v2N_response(larval_child->sa.st_logger, ike, md,
+		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL; /* kill family */
 	}
 
-	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, md);
+	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, md,
+		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
-	if (!record_v2_child_response(ike, larval_child, md)) {
+
+	/* install inbound and outbound SPI info */
+	if (!install_ipsec_sa(&larval_child->sa, true)) {
+		/* already logged */
+		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
+				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FAIL;
+	}
+
+	/*
+	 * Check to see if we need to release an old instance
+	 * Note that this will call delete on the old
+	 * connection we should do this after installing
+	 * ipsec_sa, but that will give us a "eroute in use"
+	 * error.
+	 *
+	 * XXX: useless?
+	 */
+	ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
+
+	/* mark the connection as now having an IPsec SA associated with it. */
+	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
+			    &larval_child->sa);
+
+	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
 
