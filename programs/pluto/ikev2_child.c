@@ -225,7 +225,7 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 	return true;
 }
 
-v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
+v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 						    struct child_sa *larval_child,
 						    struct msg_digest *request_md)
 {
@@ -318,6 +318,9 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
 		larval_child->sa.st_seen_no_tfc = true;
 	}
 
+	ikev2_derive_child_keys(ike, larval_child);
+	ikev2_log_parentSA(&larval_child->sa);
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -405,7 +408,6 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	ikev2_derive_child_keys(ike, child);
 	return STF_OK;
 }
 

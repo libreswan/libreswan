@@ -837,8 +837,6 @@ static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
 	pexpect(child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
 		child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
-	ikev2_log_parentSA(&child->sa);
-
 	/*
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * ??? Should we support fragmenting?  Maybe one day.
