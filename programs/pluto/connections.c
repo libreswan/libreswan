@@ -744,48 +744,14 @@ static void unshare_connection(struct connection *c)
 }
 
 static int extract_end(struct connection *c,
+		       struct end *dst,
+		       struct config_end *config_end,
 		       const struct whack_end *src,
-		       enum left_right end_index,
+		       struct end *other_end,
 		       struct logger *logger/*connection "..."*/)
 {
-	/*
-	 * Since at this point 'this' and 'that' are disoriented their
-	 * names are pretty much meaningless.  Hence the strange
-	 * combination if 'this' and 'left' and 'that' and 'right.
-	 *
-	 * XXX: This is all too confusing - wouldn't it be simpler if
-	 * there was a '.left' and '.right' (or even .end[2] - this
-	 * code seems to be crying out for a for loop) and then having
-	 * orient() set up .local and .remote pointers or indexes
-	 * accordingly?
-	 */
-
-	struct config_end *config = &c->config[end_index];
-	config->end_index = end_index;
-	struct end *dst;
-	struct end *other_end;
-	const char *leftright;
-	switch (end_index) {
-	case LEFT_END:
-		/* start with: LEFT == LOCAL == THIS */
-		leftright = "left";
-		dst = &c->spd.this;
-		other_end = &c->spd.that;
-		c->local = config;
-		break;
-	case RIGHT_END:
-		/* start with: RIGHT == REMOTE == THAT */
-		leftright = "right";
-		dst = &c->spd.that;
-		other_end = &c->spd.this;
-		c->remote = config;
-		break;
-	default:
-		bad_case(end_index);
-	}
-	dst->config = config;
-	config->leftright = leftright;
-
+	passert(dst->config == config_end);
+	const char *leftright = dst->config->leftright;
 	bool same_ca = 0;
 
 	/*
@@ -1006,8 +972,8 @@ static int extract_end(struct connection *c,
 	dst->authby = src->authby;
 
 	/* save some defaults */
-	config->client.subnet = src->client;
-	config->client.protoport = src->protoport;
+	config_end->client.subnet = src->client;
+	config_end->client.protoport = src->protoport;
 
 	/*
 	 * .has_client means that .client contains a hardwired value,
@@ -1032,12 +998,12 @@ static int extract_end(struct connection *c,
 	dst->updown = clone_str(src->updown, "updown");
 	dst->sendcert =  src->sendcert;
 
-	config->host.ikeport = src->host_ikeport;
+	config_end->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		llog(RC_BADID, logger,
 			    "%sikeport=%u must be between 1..65535, ignored",
 			    leftright, src->host_ikeport);
-		config->host.ikeport = 0;
+		config_end->host.ikeport = 0;
 	}
 
 	/*
@@ -1898,9 +1864,15 @@ static bool extract_connection(const struct whack_message *wm,
 	     "n/a"));
 
 	/*
-	 * Since at this point 'this' and 'that' are disoriented their
-	 * names are pretty much meaningless.  Hence the strange
-	 * combination if 'this' and 'left' and 'that' and 'right.
+	 * At this point THIS and THAT are disoriented so
+	 * distinguishing one as local and the other as remote is
+	 * pretty much meaningless.
+	 *
+	 * Somewhat arbitrarially (as in this is the way it's always
+	 * been) start with:
+	 *
+	 *    LEFT == LOCAL / THIS
+	 *    RIGHT == REMOTE / THAT
 	 *
 	 * XXX: This is all too confusing - wouldn't it be simpler if
 	 * there was a '.left' and '.right' (or even .end[2] - this
@@ -1908,11 +1880,29 @@ static bool extract_connection(const struct whack_message *wm,
 	 * orient() set up .local and .remote pointers or indexes
 	 * accordingly?
 	 */
-	int same_leftca = extract_end(c, &wm->left, LEFT_END, c->logger);
+
+	for (enum left_right end_index = 0; end_index < elemsof(c->config.end); end_index++) {
+		struct config_end *config_end = &c->config.end[end_index];
+		config_end->end_index = end_index;
+		config_end->leftright = (end_index == LEFT_END ? "left" :
+					 end_index == RIGHT_END ? "right" :
+					 NULL);
+		passert(config_end->leftright != NULL);
+	}
+
+	struct end *left = &c->spd.this;
+	struct end *right = &c->spd.that;
+	left->config = c->local = &c->config.end[LEFT_END];
+	right->config = c->remote = &c->config.end[RIGHT_END];
+
+	int same_leftca = extract_end(c, left, &c->config.end[LEFT_END], &wm->left,
+				      /*other_end*/right, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
-	int same_rightca = extract_end(c, &wm->right, RIGHT_END, c->logger);
+
+	int same_rightca = extract_end(c, right, &c->config.end[RIGHT_END], &wm->right,
+				       /*other_end*/left, c->logger);
 	if (same_rightca < 0) {
 		return false;
 	}

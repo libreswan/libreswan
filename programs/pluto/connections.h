@@ -81,6 +81,29 @@ enum connection_hash_tables {
 
 struct connection *connection_by_serialno(co_serial_t serialno);
 
+/*
+ * An extract of the original configuration information for
+ * the connection's end sent over by whack.
+ */
+
+enum left_right { LEFT_END, RIGHT_END, };
+
+struct config_end {
+	const char *leftright;
+	enum left_right end_index;
+	struct {
+		ip_subnet subnet;
+		ip_protoport protoport;
+	} client;
+	struct {
+		unsigned ikeport;
+	} host;
+};
+
+struct config {
+	struct config_end end[2];
+};
+
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
  * - IPsec connections, between clients (for secure IP communication)
@@ -451,22 +474,14 @@ struct connection {
 	 * An extract of the original configuration information for
 	 * the connection's end sent over by whack.
 	 */
-	struct config_end {
-		const char *leftright;
-		enum left_right { LEFT_END, RIGHT_END, } end_index;
-		struct {
-			ip_subnet subnet;
-			ip_protoport protoport;
-		} client;
-		struct {
-			unsigned ikeport;
-		} host;
-	} config[2];
+	struct config config;
+
 	/*
-	 * Danger: for a connection instance, these point into the
-	 * parent connection.
+	 * Pointers to the connectin's config.  For a connection
+	 * instance, these point into connection template.
 	 */
-	const struct config_end *local, *remote;
+	const struct config_end *local;
+	const struct config_end *remote;
 };
 
 extern bool same_peer_ids(const struct connection *c,
