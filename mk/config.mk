@@ -412,12 +412,6 @@ FIPSPRODUCTCHECK ?= /etc/system-fips
 # Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC ?= false
 
-ifeq ($(USE_LABELED_IPSEC),true)
-# Use when having an old version of libselinux  < 2.1.9 that uses avc_*
-# This is required for RHEL6 / CentOS6
-USE_OLD_SELINUX ?= false
-endif
-
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP ?= false
 
@@ -592,9 +586,6 @@ endif
 
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
-ifeq ($(USE_OLD_SELINUX),true)
-USERLAND_CFLAGS += -DHAVE_OLD_SELINUX
-endif
 endif
 
 ifeq ($(USE_SECCOMP),true)

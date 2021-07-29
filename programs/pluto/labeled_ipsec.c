@@ -24,10 +24,6 @@
 #ifdef HAVE_LABELED_IPSEC
 
 #include <selinux/selinux.h>
-#ifdef HAVE_OLD_SELINUX
-#include <selinux/avc.h>
-#include <selinux/context.h>
-#endif
 
 err_t vet_seclabel(shunk_t sl)
 {
@@ -54,52 +50,10 @@ void init_labeled_ipsec(struct logger *logger)
 		llog(RC_LOG, logger, "selinux support is NOT enabled.");
 		return;
 	}
-#ifdef HAVE_OLD_SELINUX
-	if (avc_init("libreswan", NULL, NULL, NULL, NULL) != 0) {
-		fatal(PLUTO_EXIT_SELINUX_FAIL, logger, "selinux: could not initialize avc");
-	}
-#endif
 	llog(RC_LOG, logger, "SELinux support is enabled in %s mode.",
 	     security_getenforce() ? "ENFORCING" : "PERMISSIVE");
 }
 
-#ifdef HAVE_OLD_SELINUX
-static bool within_range(security_context_t sl, security_context_t range, struct logger *logger)
-{
-	int rtn;
-
-	/* Get the sids for the sl and range contexts */
-
-	security_id_t slsid;
-	rtn = avc_context_to_sid(sl, &slsid);
-	if (rtn != 0) {
-		/* ??? log message should report errno */
-		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for sl context (%s)", sl);
-		return false;
-	}
-	security_id_t rangesid;
-	rtn = avc_context_to_sid(range, &rangesid);
-	if (rtn != 0) {
-		/* ??? log message should report errno */
-		llog(RC_LOG, logger, "selinux within_range: Unable to retrieve sid for range context (%s)", range);
-		return false;
-	}
-
-	/* Straight up test between sl and range */
-
-	security_class_t tclass = string_to_security_class("association");
-	access_vector_t av = string_to_av_perm(tclass, "polmatch");
-	struct av_decision avd;
-	rtn = avc_has_perm(slsid, rangesid, tclass, av, NULL, &avd);
-	if (rtn != 0) {
-		/* ??? log message should report errno */
-		llog(RC_LOG, logger, "selinux within_range: The sl (%s) is not within range of (%s)", sl, range);
-		return false;
-	}
-	dbg("selinux within_range: The sl (%s) is within range of (%s)", sl, range);
-	return true;
-}
-#else
 static bool within_range(const char *sl, const char *range, struct logger *logger)
 {
 	/*
@@ -134,7 +88,6 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	freecon(domain);
 	return true;
 }
-#endif
 
 bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger)
 {
