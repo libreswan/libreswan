@@ -189,7 +189,6 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 struct host_pair;	/* opaque type */
 
 struct end {
-	const char *leftright; /* redundant .config->end_name */
 	struct id id;
 
 	enum keyword_host host_type;
@@ -453,7 +452,7 @@ struct connection {
 	 * the connection's end sent over by whack.
 	 */
 	struct config_end {
-		const char *end_name;
+		const char *leftright;
 		enum left_right { LEFT_END, RIGHT_END, } end_index;
 		struct {
 			ip_subnet subnet;

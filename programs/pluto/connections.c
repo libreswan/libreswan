@@ -369,17 +369,17 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	const struct ip_info *afi = address_type(&this->host_addr);
 	if (afi == NULL) {
 		dbg("%s.host_addr's address family is unknown; skipping default_end()",
-		    this->leftright);
+		    this->config->leftright);
 		return;
 	}
 
 	if (address_is_any(this->host_addr)) {
 		dbg("%s.host_addr's is %%any; skipping default_end()",
-		    this->leftright);
+		    this->config->leftright);
 		return;
 	}
 
-	dbg("updating connection from %s.host_addr", this->leftright);
+	dbg("updating connection from %s.host_addr", this->config->leftright);
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
 	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
@@ -394,7 +394,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		that->host_nexthop = this->host_addr;
 		address_buf ab;
 		dbg("%s host_nexthop %s",
-		    that->leftright, str_address(&that->host_nexthop, &ab));
+		    that->config->leftright, str_address(&that->host_nexthop, &ab));
 	}
 
 	/*
@@ -403,7 +403,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
 	unsigned host_port = hport(end_host_port(this, that));
-	dbg("%s() %s.host_port: %u->%u", __func__, this->leftright,
+	dbg("%s() %s.host_port: %u->%u", __func__, this->config->leftright,
 	    this->host_port, host_port);
 	this->host_port = host_port;
 
@@ -784,8 +784,7 @@ static int extract_end(struct connection *c,
 		bad_case(end_index);
 	}
 	dst->config = config;
-	dst->leftright = leftright;
-	config->end_name = leftright;
+	config->leftright = leftright;
 
 	bool same_ca = 0;
 
@@ -863,20 +862,20 @@ static int extract_end(struct connection *c,
 		if (src->ckaid != NULL) {
 			llog(RC_LOG, logger,
 				    "warning: ignoring %s ckaid '%s' and using %s certificate '%s'",
-				    dst->leftright, src->cert,
-				    dst->leftright, src->cert);
+				    leftright, src->cert,
+				    leftright, src->cert);
 		}
 		if (src->rsasigkey != NULL) {
 			llog(RC_LOG, logger,
 				    "warning: ignoring %s rsasigkey '%s' and using %s certificate '%s'",
-				    dst->leftright, src->cert,
-				    dst->leftright, src->cert);
+				    leftright, src->cert,
+				    leftright, src->cert);
 		}
 		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			llog(RC_FATAL, logger,
 				    "failed to add connection: %s certificate '%s' not found in the NSS database",
-				    dst->leftright, src->cert);
+				    leftright, src->cert);
 			return -1; /* fatal */
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
@@ -891,7 +890,7 @@ static int extract_end(struct connection *c,
 		if (src->ckaid != NULL) {
 			llog(RC_LOG, logger,
 				    "warning: ignoring %s ckaid '%s' and using %s rsasigkey",
-				    dst->leftright, src->ckaid, dst->leftright);
+				    leftright, src->ckaid, leftright);
 		}
 		/*
 		 * XXX: hack: whack will load the rsasigkey in a
@@ -916,12 +915,12 @@ static int extract_end(struct connection *c,
 		if (err != NULL) {
 			llog(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",
-				    dst->leftright, err);
+				    leftright, err);
 			return -1;
 		}
 		ckaid_buf ckb;
 		dbg("saving %s CKAID %s extracted from raw %s public key",
-		    dst->leftright, str_ckaid(&ckaid, &ckb), type->name);
+		    leftright, str_ckaid(&ckaid, &ckb), type->name);
 		dst->ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
 		type->free_pubkey_content(&pkc);
 		/* try to pre-load the private key */
@@ -930,12 +929,12 @@ static int extract_end(struct connection *c,
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",
-			    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
+			    leftright, str_ckaid(dst->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				    "loaded private key matching %s CKAID %s",
-				    dst->leftright, str_ckaid(dst->ckaid, &ckb));
+				    leftright, str_ckaid(dst->ckaid, &ckb));
 		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
@@ -945,7 +944,7 @@ static int extract_end(struct connection *c,
 			/* XXX: don't trust whack */
 			llog(RC_FATAL, logger,
 				    "failed to add connection: %s CKAID '%s' invalid: %s",
-				    dst->leftright, src->ckaid, err);
+				    leftright, src->ckaid, err);
 			return -1; /* fatal */
 		}
 		/*
@@ -969,19 +968,19 @@ static int extract_end(struct connection *c,
 			}
 		} else {
 			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
-			    dst->leftright, src->ckaid);
+			    leftright, src->ckaid);
 			/* try to pre-load the private key */
 			bool load_needed;
 			err_t err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
 			if (err != NULL) {
 				ckaid_buf ckb;
 				dbg("no private key matching %s CKAID %s: %s",
-				    dst->leftright, str_ckaid(dst->ckaid, &ckb), err);
+				    leftright, str_ckaid(dst->ckaid, &ckb), err);
 			} else {
 				ckaid_buf ckb;
 				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 					    "loaded private key matching %s CKAID %s",
-					    dst->leftright, str_ckaid(dst->ckaid, &ckb));
+					    leftright, str_ckaid(dst->ckaid, &ckb));
 			}
 		}
 	}
@@ -1192,6 +1191,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	passert(cert != NULL);
 	dst_end->cert.nss_cert = NULL;
 	const char *nickname = cert->nickname;
+	const char *leftright = dst_end->config->leftright;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -1207,7 +1207,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			SECKEY_DestroyPublicKey(pk);
 			return diag("FIPS: rejecting %s certificate '%s' with key size %d which is under %d",
-				    dst_end->leftright, nickname,
+				    leftright, nickname,
 				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
 		}
@@ -1222,14 +1222,14 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
 			secCertTimeValid) {
 		return diag("%s certificate '%s' is expired or not yet valid",
-			    dst_end->leftright, nickname);
+			    leftright, nickname);
 	}
 
-	dbg("loading %s certificate \'%s\' pubkey", dst_end->leftright, nickname);
+	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
 	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
-			    dst_end->leftright, nickname);
+			    leftright, nickname);
 	}
 
 	dst_end->cert.nss_cert = cert;
@@ -1240,7 +1240,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 *
 	 */
 	if (preserve_ca || dst_end->ca.ptr != NULL) {
-		dbg("preserving existing %s ca", dst_end->leftright);
+		dbg("preserving existing %s ca", leftright);
 	} else {
 		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
@@ -1261,11 +1261,11 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	err_t ugh = preload_private_key_by_cert(&dst_end->cert, &load_needed, logger);
 	if (ugh != NULL) {
 		dbg("no private key matching %s certificate %s: %s",
-		    dst_end->leftright, nickname, ugh);
+		    leftright, nickname, ugh);
 	} else if (load_needed) {
 		llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
-			    "loaded private key matching %s certificate '%s'",
-			    dst_end->leftright, nickname);
+		     "loaded private key matching %s certificate '%s'",
+		     leftright, nickname);
 	}
 	return NULL;
 }

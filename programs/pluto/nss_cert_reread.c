@@ -11,7 +11,7 @@
 static void reread_end_cert(struct end *dst, struct logger *logger)
 {
 	if (dst->cert.nss_cert == NULL) {
-		dbg("no cert exists for %s; nothing to do", dst->leftright);
+		dbg("no cert exists for %s; nothing to do", dst->config->leftright);
 		return;
 	}
 
@@ -26,7 +26,7 @@ static void reread_end_cert(struct end *dst, struct logger *logger)
 	if (new_cert == NULL) {
 		llog(RC_LOG, logger,
 		     "%s certificate '%s' not found in the NSS database",
-		     dst->leftright, nickname);
+		     dst->config->leftright, nickname);
 		return;
 	}
 
@@ -49,7 +49,7 @@ static void reread_end_cert(struct end *dst, struct logger *logger)
 
 	llog(RC_COMMENT, logger,
 	     "certificate %scert=%s has been reloaded",
-	     dst->leftright, cert_nickname(&dst->cert));
+	     dst->config->leftright, cert_nickname(&dst->cert));
 }
 
 static void reread_cert(struct connection *c, struct logger *logger)

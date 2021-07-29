@@ -747,7 +747,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			 */
 			llog(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
 				    "reloaded private key matching %s certificate '%s'",
-				    c->spd.this.leftright, nickname);
+				    c->spd.this.config->leftright, nickname);
 		}
 
 		/*
@@ -792,7 +792,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
-				    c->spd.this.leftright, str_ckaid(c->spd.this.ckaid, &ckb));
+				    c->spd.this.config->leftright, str_ckaid(c->spd.this.ckaid, &ckb));
 		}
 
 

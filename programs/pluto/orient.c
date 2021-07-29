@@ -158,11 +158,11 @@ bool orient(struct connection *c, struct logger *logger)
 	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
 	address_buf ab;
 	dbg("  %s(THIS) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.this.leftright, str_address(&c->spd.this.host_addr, &ab),
+	    c->spd.this.config->leftright, str_address(&c->spd.this.host_addr, &ab),
 	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)),
 	    c->local->host.ikeport, bool_str(c->spd.this.host_encap));
 	dbg("  %s(THAT) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.that.leftright, str_address(&c->spd.that.host_addr, &ab),
+	    c->spd.that.config->leftright, str_address(&c->spd.that.host_addr, &ab),
 	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
 	    c->remote->host.ikeport, bool_str(c->spd.that.host_encap));
 	set_policy_prio(c); /* for updates */
@@ -189,7 +189,7 @@ bool orient(struct connection *c, struct logger *logger)
 			endpoint_buf eb;
 			dbg("  interface endpoint %s does not match %s(THIS) or %s(THAT)",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.leftright, c->spd.that.leftright);
+			    c->spd.this.config->leftright, c->spd.that.config->leftright);
 			continue;
 		}
 		pexpect(this != that); /* only one */
@@ -230,14 +230,14 @@ bool orient(struct connection *c, struct logger *logger)
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THIS); orienting",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.leftright);
+			    c->spd.this.config->leftright);
 			swap = false;
 		}
 		if (that) {
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.that.leftright);
+			    c->spd.that.config->leftright);
 			swap = true;
 		}
 		c->interface = ifp;
@@ -246,7 +246,7 @@ bool orient(struct connection *c, struct logger *logger)
 	if (oriented(*c)) {
 		if (swap) {
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
-			    c->spd.that.leftright);
+			    c->spd.that.config->leftright);
 			swap_ends(c);
 		}
 		return true;
