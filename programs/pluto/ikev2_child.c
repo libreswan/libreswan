@@ -103,7 +103,7 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 	proto_info->our_spi = get_ipsec_spi(0 /* avoid this # */,
 					    proto_info->protocol,
 					    &cc->spd,
-					    true /* tunnel; yes always */,
+					    LIN(POLICY_TUNNEL, cc->policy),
 					    larval_child->sa.st_logger);
 	return proto_info->our_spi != 0;
 }
