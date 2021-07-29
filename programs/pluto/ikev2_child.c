@@ -1043,12 +1043,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return n;
 	}
 
-	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
-		/* already logged */
-		delete_state(&child->sa);
-		return v2N_INVALID_SYNTAX; /* something fatal */
-	}
-
 	/*
 	 * Check to see if we need to release an old instance
 	 * Note that this will call delete on the old
@@ -1071,12 +1065,18 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 	if (!install_ipsec_sa(&child->sa, true)) {
 		/* already logged? */
 		delete_state(&child->sa);
-		return v2N_INVALID_SYNTAX; /* fatal */
+		return v2N_TS_UNACCEPTABLE; /* oops */
 	}
 
 	/* mark the connection as now having an IPsec SA associated with it. */
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 			    &child->sa);
+
+	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
+		/* already logged */
+		delete_state(&child->sa);
+		return v2N_INVALID_SYNTAX; /* something fatal */
+	}
 
 	/*
 	 * XXX: fudge a state transition.
