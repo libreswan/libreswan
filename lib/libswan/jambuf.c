@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <errno.h>		/* for ERANGE */
 
 #include "jambuf.h"
 #include "lswalloc.h"
@@ -68,7 +69,7 @@ struct jambuf array_as_jambuf(char *array, size_t sizeof_array)
 		.roof = sizeof_array - 1,
 		.dots = "...",
 	};
-	buf.array[buf.roof-1] = buf.array[buf.total] = '\0';
+	buf.array[buf.roof-1] = buf.array[buf.total/*0*/] = '\0';
 	buf.array[buf.roof-0] = JAMBUF_CANARY;
 	assert_jambuf(&buf);
 	jambuf_debugf("\t->{.array=%p,.total=%zu,.roof=%zu,.dots='%s'}\n",
@@ -81,9 +82,16 @@ struct jambuf array_as_jambuf(char *array, size_t sizeof_array)
  */
 
 struct dest {
-	/* next character position (always points at '\0') */
+	/*
+	 * Position in the buffer to store the next string (always
+	 * points at the trailing '\n' charater of the string so far).
+	 */
 	char *cursor;
-	/* free space */
+	/*
+	 * Free space, or zero when the stream has been truncated.
+	 *
+	 * Up to SIZE-1 + the trailing '\0' can be written.
+	 */
 	size_t size;
 };
 
@@ -178,9 +186,12 @@ size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap)
 	struct dest d = dest(buf);
 
 	/*
-	 * N (the return value) is the number of characters, not
+	 * The return value (N) is the number of characters, not
 	 * including the trailing NUL, that should have been written
 	 * to the buffer.
+	 *
+	 * The buffer will contain up to d.size-1 characters plus a
+	 * trailing NUL.
 	 */
 	int sn = vsnprintf(d.cursor, d.size, format, ap);
 	if (sn < 0) {
@@ -233,6 +244,34 @@ size_t jam_string(struct jambuf *buf, const char *string)
 		string = "(null)";
 	}
 	return jam_raw_bytes(buf, string, strlen(string));
+}
+
+size_t jam_errno(struct jambuf *buf, int error)
+{
+	assert_jambuf(buf);
+	struct dest d = dest(buf);
+	if (d.size == 0) {
+		/* should be strlen(strerror()) */
+		return 1;
+	}
+	/*
+	 * strerror_r() will store upto d.size-1 characters plus a
+	 * trailing NUL.
+	 */
+	int e = strerror_r(error, d.cursor, d.size);
+	int n = strlen(d.cursor);
+	buf->total += n;
+	if (e == ERANGE) {
+		/*
+		 * Need to force overflow as strerror_r() only stores
+		 * up to d.size-1 characters (excluding '\0') which
+		 * leaves buf->total==buf->roof-1.
+		 */
+		buf->total = buf->roof;
+		truncate_buf(buf);
+	}
+	assert_jambuf(buf);
+	return n;
 }
 
 size_t jam_jambuf(struct jambuf *buf, struct jambuf *jambuf)

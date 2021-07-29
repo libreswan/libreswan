@@ -19,7 +19,11 @@
 
 #include "lswlog.h"
 
+<<<<<<< HEAD:lib/libswan/llog_errno.c
 void llog_errno(lset_t rc_flags, struct logger *logger, int error, const char *fmt, ...)
+=======
+void llog_error(lset_t rc_flags, struct logger *logger, int error, const char *fmt, ...)
+>>>>>>> 6c9d2a4dbb (jambuf: add jam_errno()):lib/libswan/llog_error.c
 {
 	JAMBUF(buf) {
 		/* XXX: notice how <prefix> is in the middle */
@@ -30,10 +34,14 @@ void llog_errno(lset_t rc_flags, struct logger *logger, int error, const char *f
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
+<<<<<<< HEAD:lib/libswan/llog_errno.c
+		/* XXX: not thread safe */
+		jam(buf, PRI_ERRNO, pri_errno(error));
+=======
 		if (error != 0) {
-			jam(buf, ". Errno: %d: ", error);
 			jam_errno(buf, error);
 		}
+>>>>>>> 6c9d2a4dbb (jambuf: add jam_errno()):lib/libswan/llog_error.c
 		jambuf_to_logger(buf, logger, rc_flags);
 	}
 }
