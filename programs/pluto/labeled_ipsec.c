@@ -102,6 +102,10 @@ static bool within_range(security_context_t sl, security_context_t range, struct
 #else
 static bool within_range(const char *sl, const char *range, struct logger *logger)
 {
+	/* For use with `strerror_r()`. */
+	const size_t error_buf_len = 1024;
+	char error_buf[error_buf_len];
+
 	/*
 	 * Check access permission for sl (connection policy label from SAD)
 	 * and range (connection flow label from SPD but initially the
@@ -111,26 +115,32 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	if (rtn != 0) {
 		/* note: selinux_check_access(3) does not specify that errno is set */
 		llog(RC_LOG, logger, "selinux polmatch within_range: sl (%s) - range (%s) error: %s",
-		     sl, range, strerror(errno));
+		     sl, range, strerror_r(errno, error_buf, error_buf_len));
 		return false;
 	}
+	dbg("selinux within_range: Permission granted (polmatch) sl (%s) - range (%s)", sl, range);
 
 	char *domain;
 	if(getcon(&domain) != 0) {
-		llog(RC_LOG, logger, "getcon() error: %s", strerror(errno));
+		/* note: getcon(3) does not specify that errno is set */
+		llog(RC_LOG, logger, "getcon() error: %s", strerror_r(errno, error_buf, error_buf_len));
 		return false;
 	}
 	dbg("our SElinux context is '%s'", domain);
 
+	/*
+	 * Check if `pluto`'s SELinux domain can `setcontext` against the child/IPsec SA label.
+	 */
 	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
 	if (rtn != 0) {
 		/* note: selinux_check_access(3) does not specify that errno is set */
 		llog(RC_LOG, logger, "selinux setcontext within_range: domain (%s) - sl (%s) error: %s",
-			domain, sl, strerror(errno));
+			domain, sl, strerror_r(errno, error_buf, error_buf_len));
+		freecon(domain);
 		return false;
 	}
+	dbg("selinux within_range: Permission granted (setcontext) domain (%s) - sl (%s)", domain, sl);
 
-	dbg("selinux within_range: Permission granted sl (%s) - range (%s)", sl, range);
 	freecon(domain);
 	return true;
 }
