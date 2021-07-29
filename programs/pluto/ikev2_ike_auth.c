@@ -448,15 +448,14 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 		/* compute IPCOMP PI when needed */
 
 		if ((cc->policy & POLICY_COMPRESS) &&
-		    !compute_v2_ipcomp_cpi(child)) {
-			return false;
+		    !compute_v2_child_ipcomp_cpi(child)) {
+			return STF_INTERNAL_ERROR;
 		}
 
-		/*
-		 * Generate and save!!! a new SPI.
-		 */
-		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
-		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, child->sa.st_logger);
+		/* Generate and save!!! a new SPI. */
+		if (!compute_v2_child_spi(child)) {
+			return STF_INTERNAL_ERROR;
+		}
 
 		/*
 		 * A CHILD_SA established during an AUTH exchange does

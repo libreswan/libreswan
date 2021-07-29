@@ -75,7 +75,7 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
-bool compute_v2_ipcomp_cpi(struct child_sa *child)
+bool compute_v2_child_ipcomp_cpi(struct child_sa *child)
 {
 	const struct connection *c = child->sa.st_connection;
 	if (child->sa.st_ipcomp.our_spi == 0) {
@@ -94,6 +94,18 @@ bool compute_v2_ipcomp_cpi(struct child_sa *child)
 		child->sa.st_ipcomp.our_spi = n_ipcomp_cpi;
 	}
 	return true;
+}
+
+bool compute_v2_child_spi(struct child_sa *larval_child)
+{
+	struct connection *cc = larval_child->sa.st_connection;
+	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	proto_info->our_spi = get_ipsec_spi(0 /* avoid this # */,
+					    proto_info->protocol,
+					    &cc->spd,
+					    true /* tunnel; yes always */,
+					    larval_child->sa.st_logger);
+	return proto_info->our_spi != 0;
 }
 
 static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_out *s)
@@ -252,6 +264,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
+	if (!compute_v2_child_spi(larval_child)) {
+		return v2N_INVALID_SYNTAX;/* fatal */
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -279,8 +295,6 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 	{
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
-		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy,
-							 child->sa.st_logger);
 		shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    child->sa.st_accepted_esp_or_ah_proposal,
@@ -378,7 +392,7 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 
 	if (child->sa.st_ipcomp.present) {
 		/* logic above decided to enable IPCOMP */
-		if (!compute_v2_ipcomp_cpi(child)) {
+		if (!compute_v2_child_ipcomp_cpi(child)) {
 			return STF_INTERNAL_ERROR;
 		}
 		if (!emit_v2N_ipcomp_supported(child, outpbs))

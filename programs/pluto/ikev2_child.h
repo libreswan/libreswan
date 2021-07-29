@@ -71,6 +71,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 NULL);							\
 	})
 
-bool compute_v2_ipcomp_cpi(struct child_sa *child);
+bool compute_v2_child_spi(struct child_sa *larval_child);
+bool compute_v2_child_ipcomp_cpi(struct child_sa *child);
 
 #endif

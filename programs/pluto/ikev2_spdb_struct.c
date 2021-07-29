@@ -2235,26 +2235,6 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 				      logger);
 }
 
-ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy,
-			       struct logger *logger)
-{
-	const struct ip_protocol *ipprotoid;
-	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	case POLICY_ENCRYPT:
-		ipprotoid = &ip_protocol_esp;
-		break;
-	case POLICY_AUTHENTICATE:
-		ipprotoid = &ip_protocol_ah;
-		break;
-	default:
-		bad_case(policy);
-	}
-	return get_ipsec_spi(0 /* avoid this # */,
-			     ipprotoid, spd_route,
-			     true /* tunnel */,
-			     logger);
-}
-
 /*
  * Return the first valid DH proposal that is supported.
  */

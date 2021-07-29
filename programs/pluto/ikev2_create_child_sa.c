@@ -452,15 +452,14 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	}
 
 	if ((cc->policy & POLICY_COMPRESS) &&
-	    !compute_v2_ipcomp_cpi(larval_child)) {
+	    !compute_v2_child_ipcomp_cpi(larval_child)) {
 		return false;
 	}
 
-	/*
-	 * Generate and save!!! a new SPI.
-	 */
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
+	/* Generate and save!!! a new SPI. */
+	if (!compute_v2_child_spi(larval_child)) {
+		return false;
+	}
 
 	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
 	if (prev == NULL) {
@@ -690,15 +689,14 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	}
 
 	if ((cc->policy & POLICY_COMPRESS) &&
-	    !compute_v2_ipcomp_cpi(larval_child)) {
-		return false;
+	    !compute_v2_child_ipcomp_cpi(larval_child)) {
+		return STF_INTERNAL_ERROR;
 	}
 
-	/*
-	 * Generate and save!!! a new SPI.
-	 */
-	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
-	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy, larval_child->sa.st_logger);
+	/* Generate and save!!! a new SPI. */
+	if (!compute_v2_child_spi(larval_child)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	struct v2_payload request;
 	if (!open_v2_payload("new Child SA request",
