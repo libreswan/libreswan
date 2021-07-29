@@ -214,9 +214,44 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 }
 
 v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
-						    struct child_sa *larval_child UNUSED,
-						    struct msg_digest *request_md UNUSED)
+						    struct child_sa *larval_child,
+						    struct msg_digest *request_md)
 {
+	struct connection *cc = larval_child->sa.st_connection;
+
+	pexpect(larval_child->sa.st_accepted_esp_or_ah_proposal != NULL);
+
+	/*
+	 * Verify if transport / tunnel mode matches; update the
+	 * proposal as needed.
+	 */
+
+	bool expecting_transport_mode = ((cc->policy & POLICY_TUNNEL) == LEMPTY);
+	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
+		if (!expecting_transport_mode) {
+			/*
+			 * RFC allows us to ignore their (wrong)
+			 * request for transport mode
+			 */
+			llog_sa(RC_LOG, larval_child,
+				"policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
+		} else {
+			dbg("local policy is transport mode and received USE_TRANSPORT_MODE");
+			larval_child->sa.st_seen_and_use_transport_mode = true;
+			if (larval_child->sa.st_esp.present) {
+				larval_child->sa.st_esp.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+			}
+			if (larval_child->sa.st_ah.present) {
+				larval_child->sa.st_ah.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+			}
+		}
+	} else if (expecting_transport_mode) {
+		/* we should have received transport mode request */
+		llog_sa(RC_LOG_SERIOUS, larval_child,
+			"policy dictates Transport Mode, but peer requested Tunnel Mode");
+		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -277,11 +312,6 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		}
 	}
 
-	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
-		dbg("received USE_TRANSPORT_MODE");
-		child->sa.st_seen_use_transport = TRUE;
-	}
-
 	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
@@ -327,22 +357,6 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		child->sa.st_seen_no_tfc = true;
 	}
 
-	/* verify if transport / tunnel mode is matches */
-	if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-		/* we should have received transport mode request - and send one */
-		if (!child->sa.st_seen_use_transport) {
-			log_state(RC_LOG, &child->sa,
-				  "policy dictates Transport Mode, but peer requested Tunnel Mode");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-	} else {
-		if (child->sa.st_seen_use_transport) {
-			/* RFC allows us to ignore their (wrong) request for transport mode */
-			log_state(RC_LOG, &child->sa,
-				  "policy dictates Tunnel Mode, ignoring peer's request for Transport Mode");
-		}
-	}
-
 	/*
 	 * XXX: see above notes on 'role' - this must be the
 	 * SA_RESPONDER.
@@ -351,31 +365,9 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 	if (ret != STF_OK)
 		return ret;
 
-	if (child->sa.st_seen_use_transport) {
-		if (c->policy & POLICY_TUNNEL) {
-			log_state(RC_LOG, &child->sa,
-				  "Local policy is tunnel mode - ignoring request for transport mode");
-		} else {
-			dbg("Local policy is transport mode and received USE_TRANSPORT_MODE");
-			if (child->sa.st_esp.present) {
-				child->sa.st_esp.attrs.mode =
-					ENCAPSULATION_MODE_TRANSPORT;
-			}
-			if (child->sa.st_ah.present) {
-				child->sa.st_ah.attrs.mode =
-					ENCAPSULATION_MODE_TRANSPORT;
-			}
-			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs))
-				return STF_INTERNAL_ERROR;
-		}
-	} else {
-		/* the peer wants tunnel mode */
-		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "Local policy is transport mode, but peer did not request that");
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
+	if (child->sa.st_seen_and_use_transport_mode &&
+	    !emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	if (c->send_no_esp_tfc) {
