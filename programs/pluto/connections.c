@@ -54,6 +54,7 @@
 
 #include "defs.h"
 #include "connections.h" /* needs id.h */
+#include "connection_db.h"
 #include "pending.h"
 #include "foodgroups.h"
 #include "packet.h"

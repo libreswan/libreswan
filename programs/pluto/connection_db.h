@@ -17,20 +17,7 @@
 #define CONNECTION_DB_H
 
 #include "where.h"
-
-struct connection;
-
-typedef struct { unsigned long co; } co_serial_t;
-
-#define PRI_CO "$%lu"
-#define pri_co(CO) ((CO).co)
-
-extern const co_serial_t unset_co_serial;
-
-#define co_serial_is_unset(CO) ((CO).co == 0)
-#define co_serial_is_set !co_serial_is_unset
-/* as in co_serial_cmp(L,>=,R); unset never matches */
-#define co_serial_cmp(L, OP, R) ((L).co != 0 && (R).co != 0 && (L).co OP (R).co)
+#include "connections.h"
 
 void init_connection_db(void);
 
@@ -38,16 +25,5 @@ struct connection *alloc_connection(const char *name, where_t where);
 struct connection *clone_connection(const char *name, struct connection *template, where_t where);
 /* void rehash_connection_in_db(struct connection *c); */
 void remove_connection_from_db(struct connection *c);
-
-struct connection *connection_by_serialno(co_serial_t serialno);
-
-/*
- * All the hash tables states are stored in.
- */
-enum connection_hash_tables {
-	CONNECTION_SERIALNO_HASH_TABLE,
-	/* add tables here */
-	CONNECTION_HASH_TABLES_ROOF,
-};
 
 #endif

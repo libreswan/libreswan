@@ -40,7 +40,6 @@
 
 #include "defs.h"
 #include "proposals.h"
-#include "connection_db.h"		/* for co_serial_t */
 #include "hash_table.h"
 #include "diag.h"
 #include "ckaid.h"
@@ -53,6 +52,34 @@
 #include "reqid.h"
 #include "state.h"
 #include "whack.h"
+
+/*
+ * Per-connection unique ID.
+ */
+
+typedef struct { unsigned long co; } co_serial_t;
+
+#define PRI_CO "$%lu"
+#define pri_co(CO) ((CO).co)
+
+extern const co_serial_t unset_co_serial;
+
+#define co_serial_is_unset(CO) ((CO).co == 0)
+#define co_serial_is_set !co_serial_is_unset
+/* as in co_serial_cmp(L,>=,R); unset never matches */
+#define co_serial_cmp(L, OP, R) ((L).co != 0 && (R).co != 0 && (L).co OP (R).co)
+
+/*
+ * Fast access to a connection.
+ */
+
+enum connection_hash_tables {
+	CONNECTION_SERIALNO_HASH_TABLE,
+	/* add tables here */
+	CONNECTION_HASH_TABLES_ROOF,
+};
+
+struct connection *connection_by_serialno(co_serial_t serialno);
 
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
