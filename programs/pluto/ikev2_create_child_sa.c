@@ -829,8 +829,6 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
 				     struct msg_digest *request_md)
 {
-	stf_status ret;
-
 	passert(ike != NULL);
 	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST);
 	pexpect(child->sa.st_sa_role == SA_RESPONDER);
@@ -853,13 +851,8 @@ static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
 		return false;
 	}
 
-	ret = emit_v2_child_response_payloads(ike, child, request_md, payload.pbs);
-	if (ret != STF_OK) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "emit_v2_child_sa_response_payloads() returned ");
-			jam_v2_stf_status(buf, ret);
-		}
-		return ret; /* abort building the response message */
+	if (!emit_v2_child_response_payloads(ike, child, request_md, payload.pbs)) {
+		return false;
 	}
 
 	if (!close_and_record_v2_payload(&payload)) {

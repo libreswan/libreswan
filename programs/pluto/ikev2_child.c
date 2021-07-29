@@ -324,36 +324,36 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	return v2N_NOTHING_WRONG;
 }
 
-stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
-					   struct child_sa *child,
-					   struct msg_digest *request_md,
-					   struct pbs_out *outpbs)
+bool emit_v2_child_response_payloads(struct ike_sa *ike,
+				     const struct child_sa *larval_child,
+				     const struct msg_digest *request_md,
+				     struct pbs_out *outpbs)
 {
-	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
+	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
 	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
-	struct connection *cc = child->sa.st_connection;
+	struct connection *cc = larval_child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		if (cc->spd.that.has_lease) {
-			if (!emit_v2_child_configuration_payload(child, outpbs)) {
-				return STF_INTERNAL_ERROR;
+			if (!emit_v2_child_configuration_payload(larval_child, outpbs)) {
+				return false;
 			}
 		} else {
 			dbg("#%lu %s ignoring unexpected v2CP payload",
-			    child->sa.st_serialno, child->sa.st_state->name);
+			    larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 		}
 	}
 
 	/* start of SA out */
 	{
 		/* ??? this code won't support AH + ESP */
-		struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
+		const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 		shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
-					    child->sa.st_accepted_esp_or_ah_proposal,
+					    larval_child->sa.st_accepted_esp_or_ah_proposal,
 					    local_spi)) {
 			dbg("problem emitting accepted proposal");
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 	}
 
@@ -363,9 +363,19 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 		pb_stream pb_nr;
-		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !out_hunk(child->sa.st_nr, &pb_nr, "IKEv2 nonce"))
-			return STF_INTERNAL_ERROR;
+		diag_t d;
+
+		d = pbs_out_struct(outpbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+			return false;
+		}
+
+		d = pbs_out_hunk(&pb_nr, larval_child->sa.st_nr, "IKEv2 nonce");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+			return false;
+		}
 
 		close_output_pbs(&pb_nr);
 
@@ -373,42 +383,42 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		 * XXX: shouldn't this be conditional on the local end
 		 * having computed KE and not what the remote sent?
 		 */
-		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			if (!emit_v2KE(child->sa.st_gr, child->sa.st_oakley.ta_dh, outpbs))
-				return STF_INTERNAL_ERROR;
+		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL &&
+		    !emit_v2KE(larval_child->sa.st_gr, larval_child->sa.st_oakley.ta_dh, outpbs)) {
+			return false;
 		}
 	}
 
 	if (cc->send_no_esp_tfc &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
-		return STF_INTERNAL_ERROR;
+		return false;
 	}
 
 	/*
 	 * XXX: see above notes on 'role' - this must be the
 	 * SA_RESPONDER.
 	 */
-	stf_status ret = emit_v2TS_payloads(outpbs, child);
-	if (ret != STF_OK)
-		return ret;
+	stf_status ret = emit_v2TS_payloads(outpbs, larval_child);
+	if (ret != STF_OK) {
+		return false;
+	}
 
-	if (child->sa.st_seen_and_use_transport_mode &&
+	if (larval_child->sa.st_seen_and_use_transport_mode &&
 	    !emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
-		return STF_INTERNAL_ERROR;
+		return false;
 	}
 
-	if (cc->send_no_esp_tfc) {
-		dbg("Sending ESP_TFC_PADDING_NOT_SUPPORTED");
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
-			return STF_INTERNAL_ERROR;
+	if (cc->send_no_esp_tfc &&
+	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
+			return false;
 	}
 
-	if (child->sa.st_ipcomp.present &&
-	    !emit_v2N_ipcomp_supported(child, outpbs)) {
-		return STF_INTERNAL_ERROR;
+	if (larval_child->sa.st_ipcomp.present &&
+	    !emit_v2N_ipcomp_supported(larval_child, outpbs)) {
+		return false;
 	}
 
-	return STF_OK;
+	return true;
 }
 
 static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
@@ -1033,19 +1043,10 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return n;
 	}
 
-	ret = emit_v2_child_response_payloads(ike, child, md, sk_pbs);
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "emit_v2_child_sa_response_payloads() returned ");
-		jam_v2_stf_status(buf, ret);
-	}
-	if (ret != STF_OK) {
+	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
 		/* already logged */
 		delete_state(&child->sa);
-		if (ret <= STF_FAIL) {
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-		v2_notification_t n = ret - STF_FAIL;
-		return n;
+		return v2N_INVALID_SYNTAX; /* something fatal */
 	}
 
 	/*
