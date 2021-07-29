@@ -35,6 +35,16 @@ stf_status process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
 					struct msg_digest *md,
 					bool expect_accepted_proposal);
 
+/*
+ * Work the initiator and responder Child SAs through to being
+ * established.
+ *
+ * XXX: some, but not all the code lies here - there's still random
+ * snipets scattered across IKE_AUTH and CREATE_CHILD_SA, sigh.
+ */
+
+bool prep_v2_child_for_request(struct child_sa *larval_child);
+
 bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
 				    struct pbs_out *outpbs);
@@ -70,8 +80,5 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 p_ == POLICY_AUTHENTICATE ? &sa_->sa.st_ah :		\
 		 NULL);							\
 	})
-
-bool compute_v2_child_spi(struct child_sa *larval_child);
-bool compute_v2_child_ipcomp_cpi(struct child_sa *child);
 
 #endif

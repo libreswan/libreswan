@@ -75,31 +75,31 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 		md->chain[ISAKMP_NEXT_v2TSr] != NULL);
 }
 
-bool compute_v2_child_ipcomp_cpi(struct child_sa *child)
+static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 {
-	const struct connection *c = child->sa.st_connection;
-	if (child->sa.st_ipcomp.our_spi == 0) {
-		/* CPI is stored in network low order end of an ipsec_spi_t */
-		ipsec_spi_t n_ipcomp_cpi = get_my_cpi(&c->spd,
-						      LIN(POLICY_TUNNEL, c->policy),
-						      child->sa.st_logger);
-		ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
-		dbg("calculated compression CPI=%d", h_ipcomp_cpi);
-		if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
-			/* get_my_cpi() failed */
-			llog_sa(RC_LOG_SERIOUS, child,
-				"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
-			return false;
-		}
-		child->sa.st_ipcomp.our_spi = n_ipcomp_cpi;
+	const struct connection *cc = larval_child->sa.st_connection;
+	pexpect(larval_child->sa.st_ipcomp.our_spi == 0);
+	/* CPI is stored in network low order end of an ipsec_spi_t */
+	ipsec_spi_t n_ipcomp_cpi = get_my_cpi(&cc->spd,
+					      LIN(POLICY_TUNNEL, cc->policy),
+					      larval_child->sa.st_logger);
+	ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
+	dbg("calculated compression CPI=%d", h_ipcomp_cpi);
+	if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
+		/* get_my_cpi() failed */
+		llog_sa(RC_LOG_SERIOUS, larval_child,
+			"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
+		return false;
 	}
+	larval_child->sa.st_ipcomp.our_spi = n_ipcomp_cpi;
 	return true;
 }
 
-bool compute_v2_child_spi(struct child_sa *larval_child)
+static bool compute_v2_child_spi(struct child_sa *larval_child)
 {
 	struct connection *cc = larval_child->sa.st_connection;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
+	pexpect(proto_info->our_spi == 0);
 	proto_info->our_spi = get_ipsec_spi(0 /* avoid this # */,
 					    proto_info->protocol,
 					    &cc->spd,
@@ -135,6 +135,22 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 	}
 
 	close_output_pbs(&d_pbs);
+	return true;
+}
+
+bool prep_v2_child_for_request(struct child_sa *larval_child)
+{
+	struct connection *cc = larval_child->sa.st_connection;
+	if ((cc->policy & POLICY_COMPRESS) &&
+	    !compute_v2_child_ipcomp_cpi(larval_child)) {
+		return false;
+	}
+
+	/* Generate and save!!! a new SPI. */
+	if (!compute_v2_child_spi(larval_child)) {
+		return false;
+	}
+
 	return true;
 }
 

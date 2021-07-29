@@ -451,16 +451,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if ((cc->policy & POLICY_COMPRESS) &&
-	    !compute_v2_child_ipcomp_cpi(larval_child)) {
-		return false;
-	}
-
-	/* Generate and save!!! a new SPI. */
-	if (!compute_v2_child_spi(larval_child)) {
-		return false;
-	}
-
 	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
 	if (prev == NULL) {
 		/*
@@ -481,6 +471,10 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			"Child SA to rekey #%lu vanished abort this exchange",
 			larval_child->sa.st_ipsec_pred);
 		return STF_INTERNAL_ERROR;
+	}
+
+	if (!prep_v2_child_for_request(larval_child)) {
+		return false;
 	}
 
 	struct v2_payload request;
@@ -688,13 +682,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_FAIL;
 	}
 
-	if ((cc->policy & POLICY_COMPRESS) &&
-	    !compute_v2_child_ipcomp_cpi(larval_child)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* Generate and save!!! a new SPI. */
-	if (!compute_v2_child_spi(larval_child)) {
+	if (!prep_v2_child_for_request(larval_child)) {
 		return STF_INTERNAL_ERROR;
 	}
 
