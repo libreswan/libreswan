@@ -2,14 +2,6 @@ USE_XFRM = true
 
 USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 
-# Not all environments set this? happened on a arm_tools cross compile
-USERLAND_CFLAGS += -Dlinux
-
-# Expose pipe2() which is always available on BSD, what else?
-USERLAND_CFLAGS += -D_GNU_SOURCE
-
-PORTDEFINE=-DSCANDIR_HAS_CONST
-
 # Detect linux variants and releases.
 
 # So that the sub-shell is invoked only once, ":=" is used.  This in
