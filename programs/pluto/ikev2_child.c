@@ -313,6 +313,11 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike UNUSED,
 		dbg("policy suggested compression, but peer did not offer support");
 	}
 
+	if (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
+		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
+		larval_child->sa.st_seen_no_tfc = true;
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -323,10 +328,10 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 {
 	pexpect(child->sa.st_establishing_sa == IPSEC_SA); /* never grow up */
 	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
-	struct connection *c = child->sa.st_connection;
+	struct connection *cc = child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		if (c->spd.that.has_lease) {
+		if (cc->spd.that.has_lease) {
 			if (!emit_v2_child_configuration_payload(child, outpbs)) {
 				return STF_INTERNAL_ERROR;
 			}
@@ -371,9 +376,9 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		}
 	}
 
-	if (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
-		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
-		child->sa.st_seen_no_tfc = true;
+	if (cc->send_no_esp_tfc &&
+	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	/*
@@ -389,7 +394,7 @@ stf_status emit_v2_child_response_payloads(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (c->send_no_esp_tfc) {
+	if (cc->send_no_esp_tfc) {
 		dbg("Sending ESP_TFC_PADDING_NOT_SUPPORTED");
 		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
 			return STF_INTERNAL_ERROR;

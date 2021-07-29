@@ -1222,11 +1222,6 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 
-	if (c->send_no_esp_tfc) {
-		if (!emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &sk.pbs))
-			return STF_INTERNAL_ERROR;
-	}
-
 	/* send out the IDr payload */
 	{
 		pb_stream r_id_pbs;
