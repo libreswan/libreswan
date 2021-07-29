@@ -281,7 +281,7 @@ statement_kw:
 				"malformed percentage %s=%s",
 				kw.keydef->keyname, str);
 			yyerror(buf);
-		} else if (*endptr != '%' || endptr[1] != '\0') {
+		} else if (!streq(endptr, "%")) {
 			snprintf(buf, sizeof(buf),
 				"bad percentage multiplier \"%s\" on %s",
 				endptr, str);
