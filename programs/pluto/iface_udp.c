@@ -290,8 +290,8 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 		if (packet->len >= 0) {
 			/* technically it worked, but returned value was useless */
 			llog(RC_LOG, packet->logger,
-				    "recvfrom on %s returned malformed source sockaddr: %s",
-				    ifp->ip_dev->id_rname, from_ugh);
+			     "recvfrom on %s returned malformed source sockaddr: %s",
+			     ifp->ip_dev->id_rname, from_ugh);
 		} else if (from.len == sizeof(from) &&
 			   all_zero((const void *)&from, sizeof(from)) &&
 			   packet_errno == ECONNREFUSED) {
@@ -302,14 +302,13 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 			 * which one.
 			 */
 			llog(RC_LOG, packet->logger,
-				    "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
-				    ifp->ip_dev->id_rname);
+			     "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
+			     ifp->ip_dev->id_rname);
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			llog(RC_LOG, packet->logger,
-				    "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s "PRI_ERRNO,
-				    ifp->ip_dev->id_rname, from_ugh,
-				    pri_errno(packet_errno));
+			llog_errno(RC_LOG, packet->logger, packet_errno,
+				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s; ",
+				    ifp->ip_dev->id_rname, from_ugh);
 		}
 		return IFACE_READ_IGNORE;
 	}
@@ -327,8 +326,8 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 	logger = &from_logger;
 
 	if (packet->len < 0) {
-		llog(RC_LOG, logger, "recvfrom on %s failed "PRI_ERRNO,
-			    ifp->ip_dev->id_rname, pri_errno(packet_errno));
+		llog_errno(RC_LOG, logger, packet_errno,
+			   "recvfrom on %s failed: ", ifp->ip_dev->id_rname);
 		return IFACE_READ_IGNORE;
 	}
 

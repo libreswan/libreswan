@@ -158,7 +158,8 @@ static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum r
 	if (s < 0) {
 		/* probably the other end hit cntrl-c */
 		JAMBUF(buf) {
-			jam(buf, "whack error: "PRI_ERRNO, pri_errno(-(int)s));
+			jam(buf, "whack error: ");
+			jam_errno(buf, (-(int)s));
 			/* not whack */
 			log_raw(LOG_WARNING, "", buf);
 		}
@@ -190,8 +191,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 
 	ssize_t n = fd_read(st->st_logger->object_whackfd, ansbuf, ansbuf_len);
 	if (n < 0) {
-		log_state(RC_LOG_SERIOUS, st, "read(whackfd) failed: "PRI_ERRNO,
-			  pri_errno(-(int)n));
+		llog_errno(RC_LOG_SERIOUS, st->st_logger, (-(int)n), "read(whackfd) failed: ");
 		return false;
 	}
 

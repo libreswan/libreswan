@@ -43,8 +43,11 @@ static void free_fd(void *obj, where_t where)
 	struct fd *fd = obj;
 	pexpect(fd->magic == FD_MAGIC);
 	if (close(fd->fd) != 0) {
-		dbg("freeref "PRI_FD" close(%d) failed: "PRI_ERRNO" "PRI_WHERE"",
-		    pri_fd(fd), fd->fd, pri_errno(errno), pri_where(where));
+		if (DBGP(DBG_BASE)) {
+			llog_errno(DEBUG_STREAM, &failsafe_logger, errno,
+				   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
+				   pri_fd(fd), pri_where(where));
+		}
 	} else {
 		dbg("freeref "PRI_FD" "PRI_WHERE"",
 		    pri_fd(fd), pri_where(where));
