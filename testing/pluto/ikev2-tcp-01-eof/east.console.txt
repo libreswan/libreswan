@@ -36,21 +36,21 @@ Certificate Nickname                                         Trust Attributes
 east #
  grep '^connection from' /tmp/pluto.log
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: reading 'IKETCP' prefix returned 0 bytes but expecting 6
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: reading 'IKETCP' prefix returned 0 bytes but expecting 6; closing socket
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: reading 'IKETCP' prefix returned 1 bytes but expecting 6
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: reading 'IKETCP' prefix returned 1 bytes but expecting 6; closing socket
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: closing socket XX: prefix did not match 'IKETCP'
+connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: prefix did not match 'IKETCP'; closing socket
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte first packet indicates EOF
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte first packet indicates EOF
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: read failed Errno 22: Invalid argument
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: reading first packet failed: Invalid argument (errno 22)
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte first packet indicates EOF
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: closing socket XX: 0 byte read indicates EOF
+connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte first packet indicates EOF
 east #
  ipsec stop
 Redirecting to: [initsystem]
