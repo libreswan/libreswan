@@ -246,7 +246,4 @@ extern int (*jambuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
 /* <strerror(ERROR)> (errno ERROR) */
 size_t jam_errno(struct jambuf *buf, int error);
 
-#define PRI_ERRNO "Errno %d: %s"
-#define pri_errno(E) (E), strerror(E)
-
 #endif
