@@ -40,6 +40,18 @@ diag_t diag(const char *fmt, ...)
 	return d;
 }
 
+diag_t diag_errno(int error, const char *fmt, ...)
+{
+	char output[LOG_WIDTH];
+	struct jambuf buf = ARRAY_AS_JAMBUF(output);
+	va_list ap;
+	va_start(ap, fmt);
+	jam_va_list(&buf, fmt, ap);
+	va_end(ap);
+	jam_errno(&buf, error);
+	return (diag_t)clone_str(output, "diag-errno");
+}
+
 diag_t diag_diag(diag_t *d, const char *fmt, ...)
 {
 	va_list fmt_ap;

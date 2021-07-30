@@ -129,11 +129,11 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		return diag("could not create control socket "PRI_ERRNO, pri_errno(errno));
+		return diag_errno(errno, "could not create control socket: ");
 	}
 
 	if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		return diag("could not fcntl FD+CLOEXEC control socket "PRI_ERRNO, pri_errno(errno));
+		return diag_errno(errno, "could not fcntl FD+CLOEXEC control socket: ");
 	}
 
 	/* to keep control socket secure, use umask */
@@ -146,7 +146,7 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
 		 strlen(ctl_addr.sun_path)) < 0) {
-		return diag("could not bind control socket "PRI_ERRNO, pri_errno(errno));
+		return diag_errno(errno, "could not bind control socket: ");
 	}
 	umask(ou);
 
@@ -169,7 +169,7 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 	 * Rumour has it that this is the max on BSD systems.
 	 */
 	if (listen(ctl_fd, 5) < 0) {
-		return diag("could not listen on control socket "PRI_ERRNO, pri_errno(errno));
+		return diag_errno(errno, "could not listen on control socket: ");
 	}
 
 	return NULL;
