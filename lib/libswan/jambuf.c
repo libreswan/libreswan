@@ -254,6 +254,7 @@ size_t jam_errno(struct jambuf *buf, int error)
 		/* should be strlen(strerror()) */
 		return 1;
 	}
+
 	/*
 	 * strerror_r() will store upto d.size-1 characters plus a
 	 * trailing NUL.
@@ -269,6 +270,9 @@ size_t jam_errno(struct jambuf *buf, int error)
 		 */
 		buf->total = buf->roof;
 		truncate_buf(buf);
+	} else if (e != EINVAL) {
+		/* assume unknown E already includes number */
+		n += jam(buf, " (errno %d)", error);
 	}
 	assert_jambuf(buf);
 	return n;

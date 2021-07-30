@@ -19,15 +19,21 @@
 
 #include "lswlog.h"
 
-void llog_errno(lset_t rc_flags, struct logger *logger, int error, const char *fmt, ...)
+void log_error(struct logger *logger, int error, const char *fmt, ...)
 {
 	char output[LOG_WIDTH];
 	struct jambuf buf = ARRAY_AS_JAMBUF(output);
+
+	/* XXX: notice how <prefix> is in the middle */
+	/* ERROR: <prefix><message> */
+	jam(&buf, "ERROR: ");
 	jam_logger_prefix(&buf, logger);
 	va_list ap;
 	va_start(ap, fmt);
 	jam_va_list(&buf, fmt, ap);
 	va_end(ap);
-	jam_errno(&buf, error);
-	jambuf_to_logger(&buf, logger, rc_flags);
+	if (error != 0) {
+		jam_errno(&buf, error);
+	}
+	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
 }
