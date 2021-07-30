@@ -65,7 +65,7 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
 	if (rtn != 0) {
 		llog_errno(RC_LOG, logger, errno,
-			   "selinux polmatch within_range: sl (%s) - range (%s): ",
+			   "selinux polmatch within_range: sl (%s) - range (%s)"/*: */,
 			   sl, range);
 		return false;
 	}
@@ -75,7 +75,8 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	errno = 0;	/* getcon(3) is not documented to set errno */
 	if(getcon(&domain) != 0) {
 		/* note: getcon(3) does not specify that errno is set */
-		llog_errno(RC_LOG, logger, errno, "getcon(): ");
+		llog_errno(RC_LOG, logger, errno,
+			   "getcon()"/*: */);
 		return false;
 	}
 	dbg("our SElinux context is '%s'", domain);
@@ -86,7 +87,8 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
 	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
 	if (rtn != 0) {
-		llog_errno(RC_LOG, logger, errno, "selinux setcontext within_range: domain (%s) - sl (%s): ",
+		llog_errno(RC_LOG, logger, errno,
+			   "selinux setcontext within_range: domain (%s) - sl (%s)"/*: */,
 			   domain, sl);
 		freecon(domain);
 		return false;

@@ -307,7 +307,7 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
 			llog_errno(RC_LOG, packet->logger, packet_errno,
-				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s; ",
+				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s"/*: */,
 				    ifp->ip_dev->id_rname, from_ugh);
 		}
 		return IFACE_READ_IGNORE;
@@ -327,7 +327,7 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 
 	if (packet->len < 0) {
 		llog_errno(RC_LOG, logger, packet_errno,
-			   "recvfrom on %s failed: ", ifp->ip_dev->id_rname);
+			   "recvfrom on %s failed"/*: */, ifp->ip_dev->id_rname);
 		return IFACE_READ_IGNORE;
 	}
 
