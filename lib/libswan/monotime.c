@@ -21,7 +21,7 @@
 
 #include "constants.h"	/* for memeq() which is clearly not a constant */
 #include "jambuf.h" 
-#include "passert.h"
+#include "lswlog.h"		/* for fatal_errno() */
 
 #include "monotime.h"
 
@@ -62,9 +62,8 @@ monotime_t mononow(void)
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
-		int err = errno;
-		PASSERT_FAIL("clock_gettime(%d,...) in mononow() failed. "PRI_ERRNO,
-			     monotime_clockid(), pri_errno(err));
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, &failsafe_logger, errno,
+			    "clock_gettime(%d,...) in mononow() failed: ", monotime_clockid());
 	}
 	/* OK */
 	return (monotime_t) {

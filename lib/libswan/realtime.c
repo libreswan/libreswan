@@ -21,6 +21,7 @@
 #include "constants.h"	/* for memeq() which is clearly not a constant */
 #include "passert.h"
 #include "jambuf.h"
+#include "lswlog.h"		/* for fatal_errno() */
 
 #include "realtime.h"
 
@@ -75,9 +76,8 @@ realtime_t realnow(void)
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
-		int err = errno;
-		PASSERT_FAIL("clock_gettime(%d,...) call in realnow() failed. "PRI_ERRNO,
-			     realtime_clockid(), pri_errno(err));
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, &failsafe_logger, errno,
+			    "clock_gettime(%d,...) call in realnow() failed: ", realtime_clockid());
 	}
 	realtime_t t = {
 		.rt = {

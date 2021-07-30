@@ -302,14 +302,10 @@ void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
  * and not:
  *   <log-prefix>FATAL ERROR: <message...>
  */
-void fatal(enum pluto_exit_code rc, struct logger *logger,
+void fatal(enum pluto_exit_code rc, const struct logger *logger,
 	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
-#define fatal_errno(RC, LOGGER, ERRNO, FMT, ...)			\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		fatal(RC, LOGGER, FMT". "PRI_ERRNO,			\
-		      ##__VA_ARGS__, pri_errno(e_));			\
-	}
+void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
+		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log

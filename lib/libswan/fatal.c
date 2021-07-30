@@ -19,21 +19,40 @@
 
 #include "lswlog.h"
 
-void fatal(enum pluto_exit_code rc, struct logger *logger, const char *fmt, ...)
+static void jam_fatal(struct jambuf *buf, const struct logger *logger, const char *fmt, va_list ap)
 {
-	JAMBUF(buf) {
-		/* XXX: The message format is:
-		 *   FATAL ERROR: <log-prefix><message...>
-		 * and not:
-		 *   <log-prefix>FATAL ERROR: <message...>
-		 */
-		jam(buf, "FATAL ERROR: ");
-		jam_logger_prefix(buf, logger);
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jambuf_to_logger(buf, logger, ERROR_FLAGS);
-	}
+	/* XXX: The message format is:
+	 *   FATAL ERROR: <log-prefix><message...>
+	 * and not:
+	 *   <log-prefix>FATAL ERROR: <message...>
+	 */
+	jam(buf, "FATAL ERROR: ");
+	jam_logger_prefix(buf, logger);
+	jam_va_list(buf, fmt, ap);
+}
+
+void fatal(enum pluto_exit_code rc, const struct logger *logger, const char *fmt, ...)
+{
+	char output[LOG_WIDTH];
+	struct jambuf buf = ARRAY_AS_JAMBUF(output);
+	va_list ap;
+	va_start(ap, fmt);
+	jam_fatal(&buf, logger, fmt, ap);
+	va_end(ap);
+	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
+	libreswan_exit(rc);
+}
+
+void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
+		 int error, const char *fmt, ...)
+{
+	char output[LOG_WIDTH];
+	struct jambuf buf = ARRAY_AS_JAMBUF(output);
+	va_list ap;
+	va_start(ap, fmt);
+	jam_fatal(&buf, logger, fmt, ap);
+	va_end(ap);
+	jam_errno(&buf, error);
+	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
 	libreswan_exit(rc);
 }
