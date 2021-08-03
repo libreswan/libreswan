@@ -64,18 +64,15 @@ BuildRequires: xmlto
 %if 0%{with_efence}
 BuildRequires: ElectricFence
 %endif
+Requires: coreutils
 Requires: iproute >= 2.6.8
 Requires: nss >= %{nss_version}
 Requires: nss-softokn
 Requires: nss-tools
-Requires: unbound-libs >= %{unbound_version}
 Requires: procps-ng
-Requires: logrotate
-Requires(post): bash
-Requires(post): coreutils
-Requires(post): systemd
-Requires(preun): systemd
-Requires(postun): systemd
+Requires: unbound-libs >= %{unbound_version}
+Suggests: logrotate
+%{?systemd_requires}
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
