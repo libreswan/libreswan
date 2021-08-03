@@ -304,20 +304,3 @@ function lsw_commits_html(commits) {
     html += "</tbody></table>"
     return html
 }
-
-// Return the errors as a blob of HTML.
-
-function lsw_errors_html(errors) {
-    let html = ""
-    if (errors) {
-	html += "<div class=\"errors\">"
-	for (const error of Object.keys(errors).sort()) {
-	    // only real errors are UPPER CASE?
-	    if (error == error.toUpperCase()) {
-		html += error + ": " + errors[error] + "<br>"
-	    }
-	}
-	html += "</div>"
-    }
-    return html
-}
