@@ -95,7 +95,4 @@ east #
 000 #2: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 east #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-east #
  

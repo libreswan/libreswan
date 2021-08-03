@@ -366,45 +366,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-west #
- >>>>>>>>>> post-mortem >>>>>>>>>>../../guestbin/post-mortem.sh
-shut down pluto
-   PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
-      1     741     741     741 ?             -1 Ssl      0   0:00 PATH/libexec/ipsec/pluto --leak-detective --config /etc/ipsec.conf --nofork
-Redirecting to: [initsystem]
-check for core files
-no core files found
-check for leaks
-check reference counts
-checking for selinux audit records
-type=AVC msg=audit(1626315389.034:166): avc:  denied  { entrypoint } for  pid=881 comm="runcon" path="PATH/bin/ncat" dev="vda1" ino=5845708 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:bin_t:s0 tclass=file permissive=1
-type=AVC msg=audit(1626315389.050:167): avc:  denied  { name_connect } for  pid=881 comm="nc" dest=22 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:ssh_port_t:s0 tclass=tcp_socket permissive=1
-type=AVC msg=audit(1626315389.169:168): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.234:194): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.247:198): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.258:202): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315389.034:166): avc:  denied  { entrypoint } for  pid=881 comm="runcon" path="PATH/bin/ncat" dev="vda1" ino=5845708 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:bin_t:s0 tclass=file permissive=1
-type=AVC msg=audit(1626315389.050:167): avc:  denied  { name_connect } for  pid=881 comm="nc" dest=22 scontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tcontext=system_u:object_r:ssh_port_t:s0 tclass=tcp_socket permissive=1
-type=AVC msg=audit(1626315389.169:168): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.234:194): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.247:198): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.258:202): avc:  denied  { setcontext } for  pid=741 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 tclass=association permissive=1
-selinux audit records found
-require {
-	type netutils_t;
-	type unconfined_t;
-	type sshd_t;
-	type unconfined_service_t;
-	class association setcontext;
-}
-#============= sshd_t ==============
-corecmd_bin_entry_type(sshd_t)
-corenet_tcp_connect_ssh_port(sshd_t)
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
-allow unconfined_service_t sshd_t:association setcontext;
-allow unconfined_service_t unconfined_t:association setcontext;
-west #
  

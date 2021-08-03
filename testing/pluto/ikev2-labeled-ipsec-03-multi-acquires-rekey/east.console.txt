@@ -93,38 +93,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-east #
- >>>>>>>>>> post-mortem >>>>>>>>>>../../guestbin/post-mortem.sh
-shut down pluto
-   PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
-      1     768     768     768 ?             -1 Ssl      0   0:00 PATH/libexec/ipsec/pluto --leak-detective --config /etc/ipsec.conf --nofork
-Redirecting to: [initsystem]
-check for core files
-no core files found
-check for leaks
-check reference counts
-checking for selinux audit records
-type=AVC msg=audit(1626315389.116:166): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.207:194): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.216:198): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.225:202): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315389.116:166): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.207:194): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=system_u:system_r:sshd_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.216:198): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tclass=association permissive=1
-type=AVC msg=audit(1626315425.225:202): avc:  denied  { setcontext } for  pid=768 comm="pluto" scontext=system_u:system_r:unconfined_service_t:s0 tcontext=unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 tclass=association permissive=1
-selinux audit records found
-require {
-	type unconfined_service_t;
-	type netutils_t;
-	type unconfined_t;
-	type sshd_t;
-	class association setcontext;
-}
-#============= unconfined_service_t ==============
-allow unconfined_service_t netutils_t:association setcontext;
-allow unconfined_service_t sshd_t:association setcontext;
-allow unconfined_service_t unconfined_t:association setcontext;
-east #
  

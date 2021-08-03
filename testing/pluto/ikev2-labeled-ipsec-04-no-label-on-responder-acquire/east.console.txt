@@ -21,9 +21,6 @@ east #
  echo "initdone"
 initdone
 east #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
-east #
  # confirm east rejects the Traffic Selectors with security labels in it
 east #
  hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log

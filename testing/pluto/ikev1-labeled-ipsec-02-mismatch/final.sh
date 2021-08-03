@@ -1,1 +1,0 @@
-semodule -r ipsecspd

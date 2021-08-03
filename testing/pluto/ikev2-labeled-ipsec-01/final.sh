@@ -4,4 +4,3 @@
 ../../guestbin/ipsec-look.sh
 # The IKE SA should be associated with the template connection
 ipsec status |grep STATE_
-semodule -r ipsecspd
