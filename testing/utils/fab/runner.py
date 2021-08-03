@@ -460,7 +460,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
                                     test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)
                                     logger.info("running %s on %s", script, host_name)
                                     try:
-                                        status = test_domain.console.run(script)
+                                        status = test_domain.console.run(script, timeout=TEST_TIMEOUT)
                                         if status:
                                             logger.error("%s failed on %s with status %s", script, host_name, status)
                                         else:
