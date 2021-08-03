@@ -82,6 +82,8 @@ Requires: iproute
 Requires: nss >= %{nss_version}
 Requires: nss-softokn
 Requires: nss-tools
+Requires: sysvinit-tools
+Requires: logrotate
 Requires(post): bash
 Requires(post): coreutils
 Requires(post): systemd

@@ -76,6 +76,8 @@ Requires: nss >= %{nss_version}
 Requires: nss-softokn
 Requires: nss-tools
 Requires: unbound-libs >= %{unbound_version}
+Requires: procps-ng
+Requires: logrotate
 Requires(post): bash
 Requires(post): coreutils
 Requires(post): systemd
