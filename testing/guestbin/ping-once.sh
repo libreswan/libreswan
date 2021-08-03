@@ -5,22 +5,62 @@
 if test $# -lt 2; then
     cat <<EOF
 Usage:
-
-    $0 --up|--down|--forget|--error [-I <interface>] <destination>" 1>&2
-
+    $0 --up|--down|--fire-and-forget|--error [-I <interface>] <destination>" 1>&2
 Send one ping packet.  Options:
-
-  --up      expect the remote end to be up (wait a long while)
-  --down    expect the remote end to be down (wait a short while)
-  --forget  do not wait around (ok 1 seconds)
-            XXX: is this useful or should --down|--up be used
-  --error   expect a strange error code
+  --up			expect the remote end to be up (wait a long while)
+  --down		expect the remote end to be down (wait a short while)
+  --fire-and-forget	do not wait for reply (actually waits 1 seconds)
+  --error		expect a strange error code
 EOF
     exit 1
 fi
 
-op=$1 ; shift
+op=
+runcon=
 
+while test $# -gt 0 && expr "$1" : "--" > /dev/null; do
+    case "$1" in
+	--up)
+	    op=up
+	    wait=5  # a long time
+	    ;;
+	--down)
+	    op=down
+	    wait=1  # a short time
+	    ;;
+	--fire-and-forget|--forget)
+	    # XXX: 0 doesn't seem to do anything?
+	    op=forget
+	    wait=1
+	    ;;
+	--error)
+	    op=error
+	    wait=1
+	    ;;
+	--runcon)
+	    shift
+	    runcon=$1
+	    ;;
+	--*)
+	    echo "Unrecognized option: ${op}" 1>&2
+	    exit 1
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+    shift
+done
+
+if test -z "${op}" ; then
+    echo "Missing --<operation>" 1>&2
+    exit 1
+fi
+
+# Record the ping command that will run (the secret sauce used to
+# invoke ping is subject to change, it is hidden from the test
+# results).
+#
 # Ping options:
 #
 # -q              be quiet
@@ -32,31 +72,10 @@ op=$1 ; shift
 # To prevent more than one packet going out, the ping <interval> must
 # be greater than the <deadline>.
 
-case "${op}" in
-    --up)
-	wait=5
-	;;
-    --down)
-	wait=1
-	;;
-    --forget)
-	# XXX: 0 doesn't seem to do anything?
-	wait=1
-	;;
-    --error)
-	wait=1
-	;;
-    *)
-	echo "Unrecognized option: ${op}" 1>&2
-	exit 1
-	;;
-esac
-
-# Record the ping command that will run (the secret sauce used to
-# invoke ping is subject to change, it is hidden from the test
-# results).
-
 ping="ping -q -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} "$@""
+if test -n "${runcon}" ; then
+    ping="runcon ${runcon} ${ping}"
+fi
 echo ==== cut ====
 echo "${ping}"
 echo ==== tuc ====
@@ -79,10 +98,10 @@ echo ==== cut ====
 echo "${output}"
 echo ==== tuc ====
 
-case "${result}${op}" in
-    up--up | down--down )       echo ${result} ;                         exit 0 ;;
-    down--up | up--down )       echo ${result} UNEXPECTED ;              exit 1 ;;
-    up--forget | down--forget ) echo fired and forgotten ;               exit 0 ;;
-    error--error )              echo "${output}" | sed -e 's/ping: //' ; exit 0 ;;
+case "${result}-${op}" in
+    up-up | down-down )       echo ${result} ;                         exit 0 ;;
+    down-up | up-down )       echo ${result} UNEXPECTED ;              exit 1 ;;
+    up-forget | down-forget ) echo fired and forgotten ;               exit 0 ;;
+    error-error )             echo "${output}" | sed -e 's/ping: //' ; exit 0 ;;
     * ) echo unexpected status ${status} ; echo ${output} ;              exit 1 ;;
 esac
