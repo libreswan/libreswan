@@ -35,6 +35,18 @@ fi
 
 
 echo
+echo unload any selinux modules
+echo
+
+# it's assumed that the name starts with ipsecspd
+
+semodule -l | grep ^ipsecspd | while read module ; do
+    semodule -r ${module}
+done
+
+
+
+echo
 echo check for core files
 echo
 
