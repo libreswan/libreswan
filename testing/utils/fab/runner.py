@@ -19,6 +19,7 @@ import threading
 import queue
 import re
 import subprocess
+import argparse
 from datetime import datetime
 from concurrent import futures
 
@@ -47,7 +48,7 @@ def add_arguments(parser):
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--tcpdump", action="store_true",
                        help="enable experimental TCPDUMP support")
-    group.add_argument("--run-post-mortem", default=None, action="store_true",
+    group.add_argument("--run-post-mortem", default=None, action=argparse.BooleanOptionalAction,
                        help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
 
     # Default to BACKUP under the current directory.  Name is
