@@ -4,11 +4,11 @@ east #
 east #
  # build install se module
 east #
- ../../guestbin/semodule.sh ipsecspd.te
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-ipsecspd.pp installed
+ ../../guestbin/semodule.sh ipsecspd-full-perm.te
+Compiling targeted ipsecspd-full-perm module
+Creating targeted ipsecspd-full-perm.pp policy package
+rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
+ipsecspd-full-perm.pp installed
 east #
  # get pluto going
 east #
@@ -20,21 +20,10 @@ east #
  ipsec auto --add labeled
 002 "labeled": added IKEv2 connection
 east #
- # start the server
-east #
- ipsec getpeercon_server 4300 &
-[x] PID
-east #
  echo "initdone"
--> running as unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
--> creating socket ... ok
--> listening on TCP port 4300 ... ok
--> waiting ... initdone
+initdone
 east #
  # There should be FOUR IPsec SA states (two sets), all with same
-<- connect(192.1.2.45,unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023)
-   quit
--> connection closed
 east #
  # reqid. And there should be one set of tunnel policies using the
 east #
@@ -47,35 +36,23 @@ src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
-	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300
+src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 1687486 ptype main
+	dir out priority 2080702 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+src 192.1.2.45/32 dst 192.1.2.23/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 1687486 ptype main
+	dir in priority 2080702 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
@@ -95,6 +72,5 @@ east #
  ipsec status |grep STATE_
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
 000 #2: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
-000 #3: "labeled"[2] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 east #
  
