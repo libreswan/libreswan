@@ -1,0 +1,87 @@
+/testing/guestbin/swan-prep
+west #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+west #
+ # build install se module (west only)
+west #
+ ../../guestbin/semodule.sh ipsecspd-full-perm.te
+Compiling targeted ipsecspd-full-perm module
+Creating targeted ipsecspd-full-perm.pp policy package
+rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
+ipsecspd-full-perm.pp installed
+west #
+ # start pluto
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ # IKE will be triggered by acquire; expect two labels
+west #
+ ipsec auto --route labeled
+west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ # trigger acquire using the predefined ping_t context; won't work
+west #
+ ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match '^[^|].*TS_UNACCEPTABLE' -- cat /tmp/pluto.log
+"labeled"[1] 192.1.2.23 #2: IKE_AUTH response contained the Child SA error notification TS_UNACCEPTABLE
+west #
+ # there should be 0 tunnels - child rejected
+west #
+ ipsec trafficstatus
+west #
+ # there should be no bare shunts
+west #
+ ipsec shuntstatus
+000 Bare Shunt list:
+000  
+west #
+ # let larval state expire
+west #
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ip xfrm state
+west #
+ echo done
+done
+west #
+ # confirm east rejects the Traffic Selectors with security labels in it
+west #
+ hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
+west #
+ 

@@ -1,0 +1,11 @@
+like ikev2-labeled-ipsec-01-ike-childless but the responder has no security label
+
+The connection should fail:
+
+- because the initiator has a label and no acquire, it sends an IKE_SA
+  but no child
+
+- responder authenticates, creating a childless IKE SAA
+
+- initiator triggers acquire; CREATE_CHILD_SA rejected by responder as
+  it contains sec_label

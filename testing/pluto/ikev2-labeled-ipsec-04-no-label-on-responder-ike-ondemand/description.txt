@@ -1,4 +1,4 @@
-As ikev2-labeled-ipsec-01/childless but now the responder is not using labels
+As ikev2-labeled-ipsec-01-ike-ondemand but now the responder is not using labels
 
 The connection should fail:
 

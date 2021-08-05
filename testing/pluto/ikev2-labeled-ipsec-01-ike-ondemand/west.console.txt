@@ -19,11 +19,7 @@ west #
  echo "initdone"
 initdone
 west #
- # for port re-use in tests with protoport selectors
-west #
- echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
-west #
- # route; should be two policies
+ # IKE will be triggered by acquire; expect two labels
 west #
  ipsec auto --route labeled
 west #
@@ -53,7 +49,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- # trigger traffic using the predefined ping_t context
+ # trigger acquire using the predefined ping_t context
 west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten

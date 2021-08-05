@@ -19,11 +19,7 @@ west #
  echo "initdone"
 initdone
 west #
- # for port re-use in tests with protoport selectors
-west #
- echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
-west #
- # should install two labels
+ # should establish IKE SA and install two labels
 west #
  ipsec auto --up labeled
 1v2 "labeled" #1: initiating IKEv2 connection
