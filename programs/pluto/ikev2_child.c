@@ -1156,10 +1156,8 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			 */
 			esb_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				"IKE_AUTH response contained the Child SA error notification %s",
+				"IKE_AUTH response rejected Child SA with %s",
 				enum_show_short(&ikev2_notify_names, n, &esb));
-			llog_sa(RC_LOG_SERIOUS, ike,
-				"IKE SA established but responder rejected Child SA request");
 			connection_buf cb;
 			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
 			    ike->sa.st_serialno, child->sa.st_serialno,
