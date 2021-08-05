@@ -135,6 +135,7 @@ KVM_UPGRADE_PACKAGES ?= \
     mtr \
     nc \
     net-tools \
+    nmap \
     nsd \
     nspr \
     nspr-devel \
