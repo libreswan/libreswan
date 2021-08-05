@@ -33,19 +33,6 @@ if test -r /tmp/pluto.log ; then
     ipsec stop
 fi
 
-
-echo
-echo unload any selinux modules
-echo
-
-# it's assumed that the name starts with ipsecspd
-
-semodule -l | grep ^ipsecspd | while read module ; do
-    semodule -r ${module}
-done
-
-
-
 echo
 echo check for core files
 echo
@@ -111,6 +98,20 @@ if test -f /sbin/ausearch ; then
 	ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${rules}
     fi
 fi
+
+
+
+echo
+echo unload any selinux modules
+echo
+
+# it's assumed that the name starts with ipsecspd
+
+semodule -l | grep ^ipsecspd | while read module ; do
+    echo Unloading ${module}
+    semodule -r ${module}
+done
+
 
 
 # tell kvmrunner
