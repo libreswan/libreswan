@@ -13,7 +13,7 @@ grep: /tmp/pluto.log: No such file or directory
 nic #
  # you should see both RSA and NULL
 nic #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e '; authenticated using ' /tmp/pluto.log
 grep: /tmp/pluto.log: No such file or directory
 nic #
  

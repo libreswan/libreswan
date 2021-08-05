@@ -30,7 +30,7 @@ west #
 1v2 "ike,esp=aes_gcm" #1: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #1: sent IKE_SA_INIT request
 1v2 "ike,esp=aes_gcm" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #1: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -52,7 +52,7 @@ west #
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 1v2 "ike,esp=aes_gcm" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #3: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #3: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -74,7 +74,7 @@ west #
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 1v2 "ike,esp=aes_gcm" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #5: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #5: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -94,7 +94,7 @@ west #
 1v2 "ike,esp=aes_gcm" #7: initiating IKEv2 connection
 1v2 "ike,esp=aes_gcm" #7: sent IKE_SA_INIT request
 1v2 "ike,esp=aes_gcm" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #7: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #7: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -114,7 +114,7 @@ west #
 002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
 1v2 "ike,esp=aes_gcm" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #9: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #9: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -134,7 +134,7 @@ west #
 002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
 1v2 "ike,esp=aes_gcm" #11: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
-003 "ike,esp=aes_gcm" #11: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ike,esp=aes_gcm" #11: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ike,esp=aes_gcm" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ike,esp=aes_gcm" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive

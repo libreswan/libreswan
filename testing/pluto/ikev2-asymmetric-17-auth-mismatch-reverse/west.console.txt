@@ -60,7 +60,7 @@ west #
  echo done
 done
 west #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e '; authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)

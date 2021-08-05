@@ -62,7 +62,7 @@ west #
  echo done
 done
 west #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e '; authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
@@ -70,7 +70,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: IKE SA established; authenticated using authby=null and peer ID_NULL 'ID_NULL'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
@@ -79,7 +79,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #3: authenticated using authby=null and peer ID_NULL 'ID_NULL'
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #3: IKE SA established; authenticated using authby=null and peer ID_NULL 'ID_NULL'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02

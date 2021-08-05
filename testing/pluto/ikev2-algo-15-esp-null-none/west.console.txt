@@ -46,7 +46,7 @@ west #
 002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 1v2 "esp=null-none" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "esp=null-none" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "esp=null-none" #1: IKE SA established; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "esp=null-none" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=null-none" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -66,7 +66,7 @@ west #
 002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 1v2 "esp=null-none" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "esp=null-none" #3: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "esp=null-none" #3: IKE SA established; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "esp=null-none" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "esp=null-none" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive

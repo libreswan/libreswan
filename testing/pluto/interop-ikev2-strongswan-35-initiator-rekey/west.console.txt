@@ -36,7 +36,7 @@ west #
 1v2 "westnet-eastnet" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet" #1: authenticated using authby=secret and peer ID_FQDN '@east'
+003 "westnet-eastnet" #1: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "westnet-eastnet" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 west #
@@ -54,6 +54,7 @@ west #
 002 "westnet-eastnet" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 002 "westnet-eastnet" #3: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 NATOA=none NATD=none DPD=passive}
+002 "westnet-eastnet" #2: deleting established Child SA using IKE SA #1
 005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 15
