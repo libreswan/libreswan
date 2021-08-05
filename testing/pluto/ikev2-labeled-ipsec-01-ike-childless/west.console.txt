@@ -23,9 +23,14 @@ west #
 west #
  echo 1 >/proc/sys/net/ipv4/tcp_tw_reuse
 west #
- # route; should be two policies
+ # should install two labels
 west #
- ipsec auto --route labeled
+ ipsec auto --up labeled
+1v2 "labeled" #1: initiating IKEv2 connection
+1v2 "labeled" #1: sent IKE_SA_INIT request
+002 "labeled" #1: omitting CHILD SA payloads
+1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -64,7 +69,7 @@ west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --up     -I 192.1.2.45 192.1.2.23
 up
 west #
- # there should be 2 tunnels - both inactive in one direction
+ # there should be 1 tunnel in each direction
 west #
  ipsec trafficstatus
 006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, id='@east'
