@@ -1000,21 +1000,9 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 
 	/* try to process them */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-		struct connection *ic = ike->sa.st_connection;
-		if (ic->spd.this.sec_label.len > 0) {
-			pexpect(ic->kind == CK_TEMPLATE);
-			llog_sa(RC_LOG, ike,
-				"connection has a security label; allowing childless IKE SA");
-			return v2N_NOTHING_WRONG;
-		}
-		/*
-		 * XXX: not right, need way to determine if policy
-		 * allows childless IKE SAs with this connection (or
-		 * just always enable them).
-		 */
-		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; rejecting request");
+		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; creating childless SA");
 		/* caller will send notification, if needed */
-		return v2N_AUTHENTICATION_FAILED; /* fatal */
+		return v2N_NOTHING_WRONG;
 	}
 
 	/* above confirmed there's enough to build a Child SA */
