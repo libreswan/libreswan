@@ -31,7 +31,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: sent IKE_SA_INIT request
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
-003 "ikev2-ike=aes128-sha1-dh19" #1: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh19" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ikev2-ike=aes128-sha1-dh19" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh19" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -45,7 +45,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: sent IKE_SA_INIT request
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
-003 "ikev2-ike=aes128-sha1-dh20" #3: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh20" #3: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ikev2-ike=aes128-sha1-dh20" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh20" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -59,7 +59,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: sent IKE_SA_INIT request
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
-003 "ikev2-ike=aes128-sha1-dh21" #5: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh21" #5: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 002 "ikev2-ike=aes128-sha1-dh21" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh21" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive

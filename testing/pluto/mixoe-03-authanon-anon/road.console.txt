@@ -61,6 +61,6 @@ road #
  # Authentication should be AUTH_NULL
 road #
  hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: IKE SA established; authenticated using authby=null and peer ID_IPV4_ADDR '192.1.2.23'
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: established IKE SA; authenticated using authby=null and peer ID_IPV4_ADDR '192.1.2.23'
 road #
  

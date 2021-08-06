@@ -42,7 +42,7 @@ west #
 1v2 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: IKE SA established; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "westnet-eastnet-ikev2"[1] 192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.1.0-192.0.1.255:1234-1234 17] -> [192.0.2.0-192.0.2.255:1234-1234 17]
 004 "westnet-eastnet-ikev2"[1] 192.1.2.23 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #

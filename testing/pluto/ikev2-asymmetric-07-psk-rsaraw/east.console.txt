@@ -37,10 +37,10 @@ initdone
 east #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e '; authenticated using ' OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: IKE SA established; authenticated using authby=secret and peer ID_FQDN '@west'
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@west'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_SHARED (0x2)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: IKE SA established; authenticated using RSA with SHA1 and preloaded certificate '@east'
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: established IKE SA; authenticated using RSA with SHA1 and preloaded certificate '@east'
 east #
  
