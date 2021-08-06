@@ -299,7 +299,7 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 	id_buf idb;
 	esb_buf kb;
 	llog_sa(RC_LOG_SERIOUS, ike,
-		"IKE SA established; authenticated using authby=%s and peer %s '%s'",
+		"established IKE SA; authenticated using authby=%s and peer %s '%s'",
 		enum_name(&keyword_authby_names, authby),
 		enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
 		str_id(&ike->sa.st_connection->spd.that.id, &idb));

@@ -544,7 +544,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	pexpect(s.tried_cnt > 0);
 	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
 		if (ike->sa.st_ike_version == IKEv2) {
-			jam(buf, "IKE SA established; ");
+			jam(buf, "established IKE SA; ");
 		}
 		jam(buf, "authenticated using %s with %s and %s certificate ",
 		    type->name, hash_algo->common.fqn,
