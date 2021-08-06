@@ -1,7 +1,6 @@
 # for commands marked with '# sanitize-retransmits' remove any retransmit lines
 
-s/ # sanitize-retransmits//
-t match
+/# sanitize-retransmits/ b match
 b end
 
 :match
