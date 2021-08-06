@@ -98,9 +98,9 @@ west #
 west #
  ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
 west #
  ../../guestbin/ipsec-look.sh
@@ -194,11 +194,11 @@ west #
 west #
  ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
-000 #4: "labeled"[3] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #4: "labeled"[3] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #4: "labeled"[3] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=429B ESPmax=0B 
 west #
  ../../guestbin/ipsec-look.sh
@@ -277,8 +277,7 @@ west #
 002 "labeled"[1] 192.1.2.23 #6: initiating rekey to replace Child SA #2
 1v2 "labeled"[1] 192.1.2.23 #6: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "labeled"[1] 192.1.2.23 #6: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
-002 "labeled"[1] 192.1.2.23 #6: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "labeled"[1] 192.1.2.23 #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "labeled"[1] 192.1.2.23 #6: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 002 "labeled"[1] 192.1.2.23 #2: deleting established Child SA using IKE SA #5
 005 "labeled"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=273B
 west #
@@ -287,8 +286,7 @@ west #
 002 "labeled"[2] 192.1.2.23 #7: initiating rekey to replace Child SA #3
 1v2 "labeled"[2] 192.1.2.23 #7: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "labeled"[2] 192.1.2.23 #7: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
-002 "labeled"[2] 192.1.2.23 #7: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "labeled"[2] 192.1.2.23 #7: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "labeled"[2] 192.1.2.23 #7: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 002 "labeled"[2] 192.1.2.23 #3: deleting established Child SA using IKE SA #5
 005 "labeled"[2] 192.1.2.23 #3: ESP traffic information: in=164B out=0B
 west #
@@ -297,8 +295,7 @@ west #
 002 "labeled"[3] 192.1.2.23 #8: initiating rekey to replace Child SA #4
 1v2 "labeled"[3] 192.1.2.23 #8: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "labeled"[3] 192.1.2.23 #8: rekeyed #4 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
-002 "labeled"[3] 192.1.2.23 #8: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "labeled"[3] 192.1.2.23 #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "labeled"[3] 192.1.2.23 #8: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 002 "labeled"[3] 192.1.2.23 #4: deleting established Child SA using IKE SA #5
 005 "labeled"[3] 192.1.2.23 #4: ESP traffic information: in=377B out=429B
 west #

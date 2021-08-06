@@ -65,6 +65,6 @@ Certificate Nickname                                         Trust Attributes
 east #
  # should not show any hits
 east #
- grep -v '^|' /tmp/pluto.log | grep "negotiated connection"
+ grep -v '^|' /tmp/pluto.log | grep "^[^|].*: established Child SA"
 east #
  

@@ -30,7 +30,7 @@ east #
  echo "initdone"
 initdone
 east #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e '; authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)

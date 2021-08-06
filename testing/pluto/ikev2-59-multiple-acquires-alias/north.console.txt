@@ -32,11 +32,9 @@ north #
 002 "north-eastnets/0x2" #1: switching CHILD #2 to pending connection "north-eastnets/0x1"
 1v2 "north-eastnets/0x2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 003 "north-eastnets/0x2" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-002 "north-eastnets/0x1" #2: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "north-eastnets/0x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
+004 "north-eastnets/0x1" #2: established Child SA; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 1v2 "north-eastnets/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA
-002 "north-eastnets/0x2" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.22.0-192.0.22.255:0-65535 0]
-004 "north-eastnets/0x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP3072 NATOA=none NATD=none DPD=passive}
+004 "north-eastnets/0x2" #3: established Child SA; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.22.0-192.0.22.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256-MODP3072 NATOA=none NATD=none DPD=passive}
 north #
  ipsec auto --status | grep north-eastnets
 000 "north-eastnets/0x1": 192.0.3.0/24===192.1.3.33<192.1.3.33>[@north]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
@@ -80,10 +78,10 @@ north #
 000 "north-eastnets/0x2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "north-eastnets/0x2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256-MODP3072
 000 "north-eastnets/0x2":   ESP algorithm newest: AES_CBC_128-HMAC_SHA2_512_256; pfsgroup=MODP3072
-000 #2: "north-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "north-eastnets/0x1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "north-eastnets/0x1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=336B ESPout=336B ESPmax=0B 
 000 #1: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #3: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "north-eastnets/0x2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #3: "north-eastnets/0x2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
 north #
  ping -n -q -c 2 -I 192.0.3.254 192.0.2.254

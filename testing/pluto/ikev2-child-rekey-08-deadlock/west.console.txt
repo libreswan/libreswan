@@ -29,26 +29,22 @@ west #
 1v2 "west-east/4x0" #1: sent IKE_SA_INIT request
 1v2 "west-east/4x0" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west-east/4x0" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "west-east/1x0" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/1x0" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east/1x0" #2: established Child SA; IPsec tunnel [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 1v2 "west-east/2x0" #3: sent IPsec Child req wait response
-002 "west-east/2x0" #3: negotiated connection [192.0.1.253-192.0.1.253:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/2x0" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east/2x0" #3: established Child SA; IPsec tunnel [192.0.1.253-192.0.1.253:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 1v2 "west-east/3x0" #4: sent IPsec Child req wait response
-002 "west-east/3x0" #4: negotiated connection [192.0.1.252-192.0.1.252:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/3x0" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east/3x0" #4: established Child SA; IPsec tunnel [192.0.1.252-192.0.1.252:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 1v2 "west-east/4x0" #5: sent IPsec Child req wait response
-002 "west-east/4x0" #5: negotiated connection [192.0.1.251-192.0.1.251:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
-004 "west-east/4x0" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "west-east/4x0" #5: established Child SA; IPsec tunnel [192.0.1.251-192.0.1.251:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  # state #1(STATE_V2_ESTABLISHED_IKE_SA), #2, #3, #4, and #5
 west #
  ipsec status | grep STATE_
-000 #2: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #3: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #5: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #5: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  ipsec whack --rekey-ipsec --name west-east/1x0
 west #
@@ -65,11 +61,11 @@ west #
  # anything other state is a sign of regression
 west #
  ipsec status | grep STATE_
-000 #6: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #7: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #8: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #6: "west-east/1x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #7: "west-east/2x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #8: "west-east/3x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #1: "west-east/4x0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #9: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #9: "west-east/4x0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  # this is complex grep line susceptible to changes to log lines.
 west #

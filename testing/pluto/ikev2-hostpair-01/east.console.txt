@@ -52,7 +52,7 @@ east #
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=0B 
 east #
  # should show no hits

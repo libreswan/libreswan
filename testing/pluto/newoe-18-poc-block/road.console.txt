@@ -106,6 +106,6 @@ Certificate Nickname                                         Trust Attributes
 road #
  # should not show any hits
 road #
- grep "negotiated connection" /tmp/pluto.log
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
 road #
  

@@ -6,7 +6,7 @@ nic #
 nic #
  # A tunnel should have established
 nic #
- hostname | grep east > /dev/null && grep "negotiated connection" /tmp/pluto.log
+ hostname | grep east > /dev/null && grep "^[^|].*: established Child SA" /tmp/pluto.log
 nic #
  # you should see both RSA and NULL
 nic #

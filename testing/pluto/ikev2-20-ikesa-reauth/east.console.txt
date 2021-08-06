@@ -17,6 +17,6 @@ east #
 east #
  ipsec status | grep "STATE_"
 000 #3: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #4: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #4: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
 east #
  

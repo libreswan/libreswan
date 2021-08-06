@@ -20,8 +20,7 @@ west #
 1v2 "aes128" #1: sent IKE_SA_INIT request
 1v2 "aes128" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "aes128" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "aes128" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 005 "aes128" #2: ESP traffic information: in=84B out=84B
@@ -76,8 +75,7 @@ west #
 1v2 "aes128" #7: sent IKE_SA_INIT request
 1v2 "aes128" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #7: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "aes128" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "aes128" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "aes128" #8: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 005 "aes128" #8: ESP traffic information: in=84B out=84B
@@ -97,8 +95,7 @@ west #
 002 "aes128" #9: IMPAIR: duplicating key-length attribute
 1v2 "aes128" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #9: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "aes128" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "aes128" #10: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 005 "aes128" #10: ESP traffic information: in=84B out=84B
@@ -190,8 +187,7 @@ west #
 1v2 "3des" #19: sent IKE_SA_INIT request
 1v2 "3des" #19: sent IKE_AUTH request {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #19: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "3des" #20: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "3des" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "3des" #20: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
 005 "3des" #20: ESP traffic information: in=84B out=84B
@@ -213,8 +209,7 @@ west #
 1v2 "3des" #21: sent IKE_SA_INIT request
 1v2 "3des" #21: sent IKE_AUTH request {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #21: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-002 "3des" #22: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "3des" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "3des" #22: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
 005 "3des" #22: ESP traffic information: in=84B out=84B

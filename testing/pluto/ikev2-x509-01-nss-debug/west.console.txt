@@ -60,8 +60,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #1: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -82,8 +81,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #3: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #4: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
@@ -95,8 +93,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #5: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #6: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
@@ -108,8 +105,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #7: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #8: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
@@ -121,8 +117,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #9: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #10: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
@@ -134,8 +129,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_SA_INIT request
 1v2 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #11: established IKE SA; authenticated using RSA with SHA2_512
-002 "ikev2-westnet-eastnet-x509-cr" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "ikev2-westnet-eastnet-x509-cr" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2-westnet-eastnet-x509-cr" #12: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down ikev2-westnet-eastnet-x509-cr
 002 "ikev2-westnet-eastnet-x509-cr": terminating SAs using this connection
