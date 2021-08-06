@@ -929,8 +929,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		return STF_INTERNAL_ERROR;
 	}
 
-	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
-
 	return STF_OK;
 }
 
@@ -1006,8 +1004,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
 
 	return STF_OK;
 }

@@ -248,12 +248,10 @@ void initialize_new_state(struct state *st,
 	binlog_refresh_state(st);
 }
 
-void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
+void jam_child_sa_details(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	const char *ini = " {";
-
-	jam_string(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
+	const char *ini = "{";
 
 	if (st->st_esp.present) {
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
@@ -313,6 +311,7 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 	}
 
 	jam_string(buf, ini);
+	ini = " ";
 	jam_string(buf, "NATOA=");
 	/* XXX: can lswlog_ip() be used? */
 	ipstr_buf ipb;
@@ -344,13 +343,13 @@ void lswlog_child_sa_established(struct jambuf *buf, struct state *st)
 	jam_string(buf, "}");
 }
 
-void lswlog_ike_sa_established(struct jambuf *buf, struct state *st)
+void jam_parent_sa_details(struct jambuf *buf, struct state *st)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
 
-	jam_string(buf, " {auth=");
+	jam_string(buf, "{auth=");
 	if (st->st_ike_version == IKEv2) {
 		jam(buf, "IKEv2");
 	} else {

@@ -2453,6 +2453,19 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 	}
 }
 
+static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
+{
+	struct connection *const c = st->st_connection;
+	jam_string(buf, c->policy & POLICY_TUNNEL ? "tunnel mode" : "transport mode");
+	jam(buf, " ");
+	jam_child_sa_details(buf, st);
+}
+
+static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
+{
+	jam_parent_sa_details(buf, st);
+}
+
 /* complete job started by the state-specific state transition function
  *
  * This routine will not release_any_md(mdp).  It is expected that its
@@ -2799,18 +2812,18 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* tell whack and log of progress */
 		{
 			enum rc_type w;
-			void (*log_details)(struct jambuf *buf, struct state *st);
+			void (*jam_details)(struct jambuf *buf, struct state *st);
 
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
-				log_details = lswlog_child_sa_established;
+				jam_details = jam_v1_ipsec_details;
 				w = RC_SUCCESS; /* log our success */
 			} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
-				log_details = lswlog_ike_sa_established;
+				jam_details = jam_v1_isakmp_details;
 				w = RC_SUCCESS; /* log our success */
 			} else {
-				log_details = NULL;
+				jam_details = NULL;
 				w = RC_NEW_V1_STATE + st->st_state->kind;
 			}
 
@@ -2820,8 +2833,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			LLOG_JAMBUF(w, st->st_logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
-				if (log_details != NULL) {
-					log_details(buf, st);
+				if (jam_details != NULL) {
+					jam(buf, " ");
+					jam_details(buf, st);
 				}
 			}
 		}

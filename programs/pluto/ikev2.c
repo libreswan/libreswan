@@ -85,6 +85,7 @@
 #include "ikev2_ike_intermediate.h"
 #include "ikev2_ike_auth.h"
 #include "ikev2_delete.h"		/* for record_v2_delete() */
+#include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 
 /*
  * IKEv2 has slightly different states than IKEv1.
@@ -2237,25 +2238,6 @@ void ikev2_log_parentSA(const struct state *st)
 	}
 }
 
-void log_ipsec_sa_established(const char *m, const struct state *st)
-{
-	/* log Child SA Traffic Selector details for admin's pleasure */
-	struct connection *c = st->st_connection;
-	const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
-	const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
-	range_buf ba, bb;
-	log_state(RC_LOG, st, "%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
-		  m,
-		  str_range(&a.net, &ba),
-		  a.startport,
-		  a.endport,
-		  a.ipprotoid,
-		  str_range(&b.net, &bb),
-		  b.startport,
-		  b.endport,
-		  b.ipprotoid);
-}
-
 static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 				   const struct v2_state_transition *transition)
 {
@@ -2273,6 +2255,11 @@ static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 	/* child is now a parent */
 	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa),
 				 transition, transition->next_state);
+}
+
+static void jam_v2_ike_details(struct jambuf *buf, struct state *st)
+{
+	jam_parent_sa_details(buf, st);
 }
 
 static void success_v2_state_transition(struct state *st, struct msg_digest *md,
@@ -2336,50 +2323,53 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 	dbg("announcing the state transition");
 	enum rc_type w;
-	void (*log_details)(struct jambuf *buf, struct state *st);
+	void (*jam_details)(struct jambuf *buf, struct state *st);
+	bool suppress_log = ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
+			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
+	const char *sep = " ";
 	if (transition->state == transition->next_state) {
 		/*
 		 * HACK for seemingly going around in circles
 		 */
-		log_details = NULL;
+		jam_details = NULL;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (IS_CHILD_SA(st) && just_established) {
-		log_ipsec_sa_established("negotiated connection", st);
-		log_details = lswlog_child_sa_established;
-		/* log our success and trigger detach */
-		w = RC_SUCCESS;
+		jam_details = jam_v2_child_details;
+		suppress_log = false;
+		sep = "; ";
+		w = RC_SUCCESS; /* also triggers detach */
 	} else if (IS_IKE_SA(st) && just_established) {
 		/* ike_sa_established() called elsewhere */
-		log_details = lswlog_ike_sa_established;
-		/* log our success and trigger detach */
-		w = RC_SUCCESS;
+		jam_details = jam_v2_ike_details;
+		w = RC_SUCCESS; /* also triggers detach */
 	} else if (transition->state == STATE_PARENT_I1 &&
 		   transition->next_state == STATE_PARENT_I2) {
-		log_details = lswlog_ike_sa_established;
+		jam_details = jam_v2_ike_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_PARENT_R1) {
-		log_details = lswlog_ike_sa_established;
+		jam_details = jam_v2_ike_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else {
-		log_details = NULL;
+		jam_details = NULL;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	}
 
-	if ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
-	    (c != NULL && (c->policy & POLICY_OPPORTUNISTIC))) {
+        if (suppress_log) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
-			if (log_details != NULL) {
-				log_details(buf, st);
+			if (jam_details != NULL) {
+				jam_string(buf, sep);
+				jam_details(buf, st);
 			}
 		}
 	} else {
 		LLOG_JAMBUF(w, st->st_logger, buf) {
 			jam(buf, "%s", st->st_state->story);
 			/* document SA details for admin's pleasure */
-			if (log_details != NULL) {
-				log_details(buf, st);
+			if (jam_details != NULL) {
+				jam_string(buf, sep);
+				jam_details(buf, st);
 			}
 		}
 	}

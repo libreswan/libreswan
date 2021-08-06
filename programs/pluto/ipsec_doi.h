@@ -46,8 +46,8 @@ extern stf_status send_isakmp_notification(struct state *st,
 
 extern bool has_preloaded_public_key(const struct state *st);
 
-extern void lswlog_child_sa_established(struct jambuf *buf, struct state *st);
-extern void lswlog_ike_sa_established(struct jambuf *buf, struct state *st);
+extern void jam_child_sa_details(struct jambuf *buf, struct state *st);
+extern void jam_parent_sa_details(struct jambuf *buf, struct state *st);
 
 lset_t capture_child_rekey_policy(struct state *st);
 
