@@ -327,7 +327,7 @@ struct ephemeral_variables {
 
 struct connection {
 	co_serial_t serialno;
-	co_serial_t serial_from;
+	co_serial_t serial_from; /* "0" when connection root */
 	char *name;
 	struct logger *logger;
 	enum ike_version ike_version;
@@ -472,14 +472,20 @@ struct connection {
 
 	/*
 	 * An extract of the original configuration information for
-	 * the connection's end sent over by whack.
+	 * the connection's end sent over by whack.  This pointer is
+	 * only valid in the root connection created from a whack
+	 * message.
 	 */
-	struct config config;
+	struct config *root_config;
 
 	/*
-	 * Pointers to the connectin's config.  For a connection
-	 * instance, these point into connection template.
+	 * Pointers to the connection's original configuration values
+	 * as specified by whack.
+	 *
+	 * For a connection instance, these point into connection the
+	 * template.
 	 */
+	const struct config *config;
 	const struct config_end *local;
 	const struct config_end *remote;
 };

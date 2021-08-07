@@ -278,6 +278,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	remove_connection_from_db(c);
 
+	pfreeany(c->root_config);
 	pfree(c);
 	free_logger(&connection_logger, HERE);
 }
@@ -699,11 +700,13 @@ void unshare_connection_end(struct end *e)
  * XXX: unshare_connection() and the shallow clone should be merged
  * into a routine that allocates a new connection and then explicitly
  * copy over the data.  Cloning pointers and then trying to fix them
- * up after the event, a guaranteed way to create use-after-free
+ * up after the event is a guaranteed way to create use-after-free
  * problems.
  */
 static void unshare_connection(struct connection *c)
 {
+	c->root_config = NULL;
+
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
@@ -1881,8 +1884,9 @@ static bool extract_connection(const struct whack_message *wm,
 	 * accordingly?
 	 */
 
-	for (enum left_right end_index = 0; end_index < elemsof(c->config.end); end_index++) {
-		struct config_end *config_end = &c->config.end[end_index];
+	struct config *config = c->root_config = alloc_thing(struct config, "root config");
+	for (enum left_right end_index = 0; end_index < elemsof(config->end); end_index++) {
+		struct config_end *config_end = &config->end[end_index];
 		config_end->end_index = end_index;
 		config_end->leftright = (end_index == LEFT_END ? "left" :
 					 end_index == RIGHT_END ? "right" :
@@ -1892,16 +1896,16 @@ static bool extract_connection(const struct whack_message *wm,
 
 	struct end *left = &c->spd.this;
 	struct end *right = &c->spd.that;
-	left->config = c->local = &c->config.end[LEFT_END];
-	right->config = c->remote = &c->config.end[RIGHT_END];
+	left->config = c->local = &config->end[LEFT_END];
+	right->config = c->remote = &config->end[RIGHT_END];
 
-	int same_leftca = extract_end(c, left, &c->config.end[LEFT_END], &wm->left,
+	int same_leftca = extract_end(c, left, &config->end[LEFT_END], &wm->left,
 				      /*other_end*/right, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
 
-	int same_rightca = extract_end(c, right, &c->config.end[RIGHT_END], &wm->right,
+	int same_rightca = extract_end(c, right, &config->end[RIGHT_END], &wm->right,
 				       /*other_end*/left, c->logger);
 	if (same_rightca < 0) {
 		return false;
