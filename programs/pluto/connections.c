@@ -2121,9 +2121,9 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 /*
  * Derive a template connection from a group connection and target.
- * Similar to instantiate().  Happens at whack --listen.
- * Returns name of new connection.  NULL on failure (duplicated name).
- * Caller is responsible for pfreeing name.
+ * Similar to instantiate().  Happens at whack --listen.  Returns name
+ * of new connection.  NULL on failure (duplicated name).  Caller is
+ * responsible for pfreeing name.
  */
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
@@ -2231,7 +2231,8 @@ struct connection *add_group_instance(struct connection *group,
  */
 struct connection *instantiate(struct connection *c,
 			       const ip_address *peer_addr,
-			       const struct id *peer_id)
+			       const struct id *peer_id,
+			       shunk_t sec_label)
 {
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.spd_next == NULL);
@@ -2324,6 +2325,23 @@ struct connection *instantiate(struct connection *c,
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
 
+	if (sec_label.len > 0) {
+		/*
+		 * Replace connection template sec_label with label
+		 * from either acquire or child payload.
+		 *
+		 * XXX: Note: only replace when SEC_LABEL is valid.
+		 * When SEC_LABEL isn't valid the instance D inherits
+		 * the template's SEC_LABEL (suspect IKEv1 depends on
+		 * this).
+		 */
+		FOR_EACH_THING(end, &d->spd.this, &d->spd.that) {
+			free_chunk_content(&end->sec_label);
+			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
+			end->has_config_policy_label = false;
+		}
+	}
+
 	return d;
 }
 
@@ -2332,7 +2350,7 @@ struct connection *rw_instantiate(struct connection *c,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = instantiate(c, peer_addr, peer_id);
+	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
@@ -2625,7 +2643,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	    c->name, enum_name(&routing_story, c->spd.routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	struct connection *d = instantiate(c, remote_address, remote_id);
+	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
 
 	passert(d->spd.spd_next == NULL);
 

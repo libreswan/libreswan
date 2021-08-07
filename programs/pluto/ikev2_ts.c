@@ -1063,7 +1063,8 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 	struct connection *c;
 	if (definitely_shared || v2_child_connection_probably_shared(child)) {
 		/* instantiate it, filling in peer's ID */
-		c = instantiate(t, &child->sa.st_connection->spd.that.host_addr, NULL);
+		c = instantiate(t, &child->sa.st_connection->spd.that.host_addr,
+				NULL, null_shunk);
 	} else {
 		c = child->sa.st_connection;
 	}

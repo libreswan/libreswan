@@ -70,7 +70,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 			return 0;
 		}
 
-		struct connection *d = instantiate(c, &remote_ip, NULL);
+		struct connection *d = instantiate(c, &remote_ip, NULL, null_shunk);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
@@ -163,7 +163,7 @@ bool initiate_connection_2(struct connection *c,
 	if (c->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) &&
 	    c->kind == CK_TEMPLATE) {
-		struct connection *d = instantiate(c, NULL, NULL);
+		struct connection *d = instantiate(c, NULL, NULL, null_shunk);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);

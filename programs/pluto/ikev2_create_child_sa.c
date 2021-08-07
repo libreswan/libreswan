@@ -581,18 +581,11 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
 		/* create instance and switch to it */
 		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		c = instantiate(c, &remote_addr, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&c->spd.this.sec_label);
-		free_chunk_content(&c->spd.that.sec_label);
-		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
-		c->spd.this.has_config_policy_label = false;
-		c->spd.that.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
-		c->spd.that.has_config_policy_label = false;
+		c = instantiate(c, &remote_addr, NULL, sec_label);
 		/*
-		 * Since the newly instantiated connection has a security label
-		 * due to a Netlink `ACQUIRE` message from the kernel, it is
-		 * not a template connection.
+		 * Since the newly instantiated connection has a
+		 * security label due to an `ACQUIRE` message from the
+		 * kernel, it is not a template connection.
 		 */
 		c->kind = CK_INSTANCE;
 	}

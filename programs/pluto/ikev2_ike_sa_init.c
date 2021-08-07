@@ -568,14 +568,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		   c->kind == CK_TEMPLATE) {
 		/* Toss the acquire onto the pending queue */
 		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
-		struct connection *d = instantiate(c, &remote_address, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&d->spd.this.sec_label);
-		free_chunk_content(&d->spd.that.sec_label);
-		d->spd.this.sec_label = clone_hunk(sec_label, "IKE_SA_INIT sec_label");
-		d->spd.this.has_config_policy_label = false;
-		d->spd.that.sec_label = clone_hunk(sec_label, "IKE_SA_INIT sec_label");
-		d->spd.that.has_config_policy_label = false;
+		struct connection *d = instantiate(c, &remote_address, NULL, sec_label);
 		/*
 		 * Since the newly instantiated connection has a security label
 		 * due to a Netlink `ACQUIRE` message from the kernel, it is
