@@ -72,6 +72,17 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 					     struct logger *logger);
 struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why,
 							struct logger *logger);
+/**
+ * clone_v2_ike_auth_child_proposals: Clone the specified connection's
+ * `v2_ike_auth_child_proposals` and its nested structs.
+ *
+ * @param	c	Clone source's connection.
+ * @param	why	Reason for cloning.
+ *
+ * @return	Cloned deep copy of `c->v2_ike_auth_child_proposals`.
+ */
+struct ikev2_proposals *clone_v2_ike_auth_child_proposals(struct connection *c,
+							  const char *why);
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
 						      const struct dh_desc *default_dh,
 						      struct logger *logger);

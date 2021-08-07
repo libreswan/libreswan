@@ -2200,6 +2200,24 @@ struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, co
 				      why, &unset_group, logger);
 }
 
+
+struct ikev2_proposals *clone_v2_ike_auth_child_proposals(struct connection *c,
+							  const char *why) {
+	if (c->v2_ike_auth_child_proposals == NULL) {
+		return NULL;
+	}
+
+	struct ikev2_proposals *v2_ike_auth_child_proposals =
+		clone_thing(*c->v2_ike_auth_child_proposals, why);
+	v2_ike_auth_child_proposals->proposal =
+		alloc_things(struct ikev2_proposal, c->v2_ike_auth_child_proposals->roof, "proposal");
+	/* Clone the proposal array: */
+	for (int i = 1; i < c->v2_ike_auth_child_proposals->roof; ++i) {
+		v2_ike_auth_child_proposals->proposal[i] = c->v2_ike_auth_child_proposals->proposal[i];
+	}
+	return v2_ike_auth_child_proposals;
+}
+
 /*
  * If needed, generate the proposals for a CHILD SA being created (or
  * re-keyed) during a CREATE_CHILD_SA exchange.

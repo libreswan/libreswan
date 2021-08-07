@@ -736,6 +736,10 @@ static void unshare_connection(struct connection *c)
 	proposals_addref(&c->child_proposals.p);
 	c->v2_ike_proposals = NULL; /* don't share IKE proposals */
 
+	/* Clone `v2_ike_auth_child_proposals`. */
+	c->v2_ike_auth_child_proposals =
+		clone_v2_ike_auth_child_proposals(c, "unshare v2_ike_auth_child_proposals");
+
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
