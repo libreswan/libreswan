@@ -274,8 +274,7 @@ static const struct hash_desc *negotiated_hash_map[] = {
 	&ike_alg_hash_sha2_512,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_256,
-	/* RFC 8420 IDENTITY algo not supported yet */
-	/* { POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+	&ike_alg_hash_identity,
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
