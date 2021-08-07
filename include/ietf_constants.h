@@ -2107,7 +2107,9 @@ enum digital_signature_blob {
 	/* DIGITAL_SIGNATURE_DSA_BLOB,		.. A.2. */
 	DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,	/* A.3. */
 	DIGITAL_SIGNATURE_ECDSA_BLOB,		/* A.4. */
-#define DIGITAL_SIGNATURE_BLOB_ROOF (DIGITAL_SIGNATURE_ECDSA_BLOB+1)
+	DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED25519_BLOB,
+	DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB,
+#define DIGITAL_SIGNATURE_BLOB_ROOF (DIGITAL_SIGNATURE_EDDSA_IDENTITY_ED448_BLOB+1)
 };
 
 /*
@@ -2188,7 +2190,6 @@ enum digital_signature_blob {
 
 #define ASN1_RSASSA_PSS_SHA2_SIZE 67
 /* length of ASN.1 Algorithm Identifier(variable length) is 1 byte */
-#define ASN1_LEN_ALGO_IDENTIFIER 1
 
 /* A.4.1. RSASSA-PSS with Empty Parameters */
 
@@ -2229,6 +2230,18 @@ enum digital_signature_blob {
 		0x0D, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, \
 		0x03, 0x04, 0x02, 0x03, 0x05, 0x00, 0xA2, 0x03,	\
 		0x02, 0x01, 0x40
+
+/*
+ * RFC8410 EDDSA, also 8420.  Is a separate table needed?
+ */
+
+#define ASN1_EDDSA_IDENTITY_SIZE 7
+
+#define ASN1_EDDSA_IDENTITY_ED25519_BLOB		\
+	0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70
+#define ASN1_EDDSA_IDENTITY_ED448_BLOB			\
+	0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x71
+
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).
