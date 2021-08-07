@@ -1841,11 +1841,11 @@ enum gw_identity_type {
  */
 
 enum ipseckey_algorithm_type {
-	IPSECKEY_ALGORITHM_DSA = 1,
-	IPSECKEY_ALGORITHM_RSA = 2,
-	IPSECKEY_ALGORITHM_ECDSA = 3,
-	/* E*D*DSA? */
-	IPSECKEY_ALGORITHM_X_PUBKEY = 4, /* Subject Public Key Info - guess */
+	IPSECKEY_ALGORITHM_DSA = 1,		/* RFC 4025 */
+	IPSECKEY_ALGORITHM_RSA = 2,		/* RFC 4025 */
+	IPSECKEY_ALGORITHM_ECDSA = 3,		/* RFC 8005 (see IANA Considerations) */
+	IPSECKEY_ALGORITHM_EDDSA = 4,		/* RFC 9373 */
+	IPSECKEY_ALGORITHM_X_PUBKEY = 5,	/* Subject Public Key Info - guess */
 };
 
 extern const struct enum_names ipseckey_algorithm_type_names;
