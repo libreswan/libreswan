@@ -257,6 +257,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 	case AUTH_NULL:
 		return IKEv2_AUTH_NULL;
 
+	case AUTH_EDDSA: /* TBD */
 	case AUTH_NEVER:
 	case AUTH_UNSET:
 		break;

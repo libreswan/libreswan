@@ -110,6 +110,7 @@ struct authby authby_from_auth(enum auth auth)
 	switch (auth) {
 		AUTH(RSASIG);
 		AUTH(ECDSA);
+		AUTH(EDDSA);
 		AUTH(PSK);
 		AUTH(NULL);
 		AUTH(NEVER);
