@@ -278,7 +278,12 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	remove_connection_from_db(c);
 
-	pfreeany(c->root_config);
+	if (c->root_config != NULL) {
+		passert(co_serial_is_unset(c->serial_from));
+		free_chunk_content(&c->root_config->sec_label);
+		pfree(c->root_config);
+	}
+
 	pfree(c);
 	free_logger(&connection_logger, HERE);
 }
@@ -772,22 +777,6 @@ static int extract_end(struct connection *c,
 		 * and for @string ID's all chars are valid without processing.
 		 */
 		atoid(src->id, &dst->id);
-	}
-
-	if (src->sec_label != NULL) {
-		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
-		dbg("received sec_label '%s' from whack", src->sec_label);
-		err_t ugh = vet_seclabel(HUNK_AS_SHUNK(dst->sec_label));
-		if (ugh != NULL) {
-			llog(RC_LOG, logger, "bad %s; ignored", ugh);
-			dst->sec_label = empty_chunk;
-		} else {
-			/*
-			 * `dst->sec_label` is the `policy-label` from
-			 * ipsec.conf.
-			 */
-			dst->has_config_policy_label = true;
-		}
 	}
 
 	/* decode CA distinguished name, if any */
@@ -1312,6 +1301,8 @@ static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
 	diag_t d;
+
+	struct config *config = c->root_config = alloc_thing(struct config, "root config");
 
 	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
@@ -1856,15 +1847,40 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	c->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
 		       wm->ike_version != IKEv2 ? /*generated later*/0 :
-		       wm->left.sec_label != NULL ? gen_reqid() :
-		       wm->right.sec_label != NULL ? gen_reqid() :
+		       wm->sec_label != NULL ? gen_reqid() :
 		       /*generated later*/0);
 	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
 	    c->name, c->sa_reqid, wm->sa_reqid,
 	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
-	     wm->left.sec_label != NULL ? wm->left.sec_label :
-	     wm->right.sec_label != NULL ? wm->right.sec_label :
+	     wm->sec_label != NULL ? wm->sec_label :
 	     "n/a"));
+
+	/*
+	 * Set both end's sec_label to the same value.
+	 */
+
+	if (wm->sec_label != NULL) {
+		dbg("received sec_label '%s' from whack", wm->sec_label);
+		/* include NUL! */
+		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
+		err_t ugh = vet_seclabel(sec_label);
+		if (ugh != NULL) {
+			llog(RC_LOG_SERIOUS, c->logger, "failed to add connection: %s: policy-label=%s",
+			     ugh, wm->sec_label);
+			return false;
+		}
+		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
+		/* redundant */
+		FOR_EACH_THING(end, &c->spd.this, &c->spd.that) {
+			end->sec_label = clone_hunk(sec_label, "struct end sec_label");
+			/*
+			 * `dst->sec_label` is the `policy-label` from
+			 * ipsec.conf.
+			 */
+			end->has_config_policy_label = true;
+		}
+	}
+
 
 	/*
 	 * At this point THIS and THAT are disoriented so
@@ -1884,7 +1900,6 @@ static bool extract_connection(const struct whack_message *wm,
 	 * accordingly?
 	 */
 
-	struct config *config = c->root_config = alloc_thing(struct config, "root config");
 	for (enum left_right end_index = 0; end_index < elemsof(config->end); end_index++) {
 		struct config_end *config_end = &config->end[end_index];
 		config_end->end_index = end_index;

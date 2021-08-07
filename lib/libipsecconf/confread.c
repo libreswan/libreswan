@@ -608,14 +608,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	/* Note label is conn option copied to both end's option */
-	if (conn_st->strings_set[KSCF_SA_SEC_LABEL]) {
-		char *value = conn_st->strings[KSCF_SA_SEC_LABEL];
-
-		pfreeany(end->sec_label);
-		end->sec_label = clone_str(value, "end->sec_label");
-	}
-
 	if (end->options_set[KSCF_RSASIGKEY]) {
 		end->rsasigkey_type = end->options[KSCF_RSASIGKEY];
 
@@ -1589,7 +1581,6 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(sec_label);
 	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
@@ -1767,7 +1758,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(sec_label);
 	STR_FIELD_END(rsasigkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);

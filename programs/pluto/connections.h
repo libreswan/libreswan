@@ -101,6 +101,7 @@ struct config_end {
 };
 
 struct config {
+	chunk_t sec_label;
 	struct config_end end[2];
 };
 

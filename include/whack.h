@@ -76,7 +76,6 @@ struct whack_end {
 	char *leftright;	/* either "left" or "right" */
 
 	char *id;		/* id string (if any) -- decoded by pluto */
-	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
 	char *ca;		/* distinguished name string (if any) -- parsed by pluto */
 	char *groups;		/* access control groups (if any) -- parsed by pluto */
 
@@ -243,7 +242,7 @@ struct whack_message {
 	reqid_t sa_reqid;
 	int nflog_group;
 
-	char *sec_label;
+	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
 
 	/*  note that each end contains string 2/5.id, string 3/6 cert,
 	 *  and string 4/7 updown

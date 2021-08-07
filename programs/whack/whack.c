@@ -2080,8 +2080,7 @@ int main(int argc, char **argv)
 
 		case CD_SEC_LABEL:	/* --sec-label */
 			/* we only support symmetric labels but put it in struct end */
-			msg.right.sec_label = optarg;
-			msg.left.sec_label = optarg;
+			msg.sec_label = optarg;
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
