@@ -99,8 +99,8 @@ static int print_secrets(struct secret *secret,
 	case PKK_XAUTH:
 		kind = "XAUTH";
 		break;
-	case PKK_ECDSA:
-		kind = "ECDSA";
+	case PKK_EC:
+		kind = "EC";
 		break;
 	default:
 		return 1;

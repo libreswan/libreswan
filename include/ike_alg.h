@@ -489,6 +489,7 @@ struct hash_desc {
 	 */
 	shunk_t hash_asn1_blob_rsa;
 	shunk_t hash_asn1_blob_ecdsa;
+	shunk_t hash_asn1_blob_eddsa;
 
 	const struct hash_ops *hash_ops;
 };

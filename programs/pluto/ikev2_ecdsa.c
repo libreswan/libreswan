@@ -73,7 +73,7 @@ bool authsig_using_ECDSA_ikev2_pubkey(const struct crypt_mac *hash, shunk_t sign
 	 */
 
 	/* allocate the pubkey */
-	const struct ECDSA_public_key *k = &kr->u.ecdsa;
+	const struct EC_public_key *k = &kr->u.ecPub;
 	SECKEYPublicKey *publicKey = (SECKEYPublicKey *)
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (publicKey == NULL) {

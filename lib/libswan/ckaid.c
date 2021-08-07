@@ -113,7 +113,7 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 	return NULL;
 }
 
-err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
+err_t form_ckaid_ecKey(chunk_t pub_value, ckaid_t *ckaid)
 {
 	/*
 	 * Compute the CKAID directly using the public value. - keep old
@@ -125,7 +125,7 @@ err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
 		return "unable to compute 'CKAID' from public value";
 	}
 	if (DBGP(DBG_BASE)) {
-		DBG_dump("computed ecdsa CKAID",
+		DBG_dump("computed ecKey CKAID",
 			 nss_ckaid->data, nss_ckaid->len);
 	}
 	*ckaid = ckaid_from_secitem(nss_ckaid);

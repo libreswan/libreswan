@@ -1658,6 +1658,7 @@ enum pubkey_alg {
 	PUBKEY_ALG_DSA = 1,
 	PUBKEY_ALG_RSA = 2,
 	PUBKEY_ALG_ECDSA = 3,
+	PUBKEY_ALG_EDDSA = 4,
 };
 
 /*
@@ -1950,6 +1951,13 @@ enum ikev2_hash_algorithm {
 #define LEN_ECDSA_SHA1_BLOB ASN1_SHA1_ECDSA_SIZE
 
 #define LEN_ECDSA_SHA2_BLOB ASN1_SHA2_ECDSA_SIZE
+
+#define ASN1_IDENTITY_EDDSA_SIZE 7
+
+#define EDDSA_IDENTITY_BLOB \
+	0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70
+
+#define LEN_EDDSA_IDENTITY_BLOB ASN1_IDENTITY_EDDSA_SIZE
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

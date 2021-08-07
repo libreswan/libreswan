@@ -54,7 +54,7 @@ const char *str_ckaid(const ckaid_t *ckaid, ckaid_buf *buf);
 size_t jam_ckaid(struct jambuf *buf, const ckaid_t *ckaid);
 
 err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
-err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid);
+err_t form_ckaid_ecKey(chunk_t pub_value, ckaid_t *ckaid);
 bool ckaid_eq_nss(const ckaid_t *l, const SECItem *r);
 
 ckaid_t ckaid_from_secitem(const SECItem *const nss_ckaid);

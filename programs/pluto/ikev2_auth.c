@@ -213,7 +213,11 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
 		hash_algo = &ike_alg_hash_sha2_256;
 		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_256");
-	} else {
+	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_IDENTITY) {
+    		hash_algo = &ike_alg_hash_identity;
+    		dbg("emit hash algo NEGOTIATE_AUTH_HASH_IDENTITY");
+	}
+	 else {
 		hash_algo = NULL;
 		dbg("DigSig: no compatible DigSig hash algo");
 	}
@@ -471,7 +475,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
-			/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+			{ NEGOTIATE_AUTH_HASH_IDENTITY, &ike_alg_hash_identity },
 		};
 
 		const struct hash_alts *hap;

@@ -25,6 +25,8 @@ extern const struct hash_desc ike_alg_hash_sha2_384;
 extern const struct hash_desc ike_alg_hash_sha2_512;
 #endif
 
+extern const struct hash_desc ike_alg_hash_identity;
+
 #ifdef USE_MD5
 extern const struct hash_desc ike_alg_hash_md5;
 #endif

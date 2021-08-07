@@ -848,6 +848,7 @@ enum sa_policy_bits {
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
 	POLICY_ECDSA_IX = 2,
+	POLICY_EDDSA_IX = 3,
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
@@ -934,6 +935,7 @@ enum sa_policy_bits {
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
 #define POLICY_ECDSA   LELEM(POLICY_ECDSA_IX)
+#define POLICY_EDDSA   LELEM(POLICY_EDDSA_IX)
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -1000,6 +1002,7 @@ enum sighash_policy_bits {
 	POL_SIGHASH_SHA2_256_IX,
 	POL_SIGHASH_SHA2_384_IX,
 	POL_SIGHASH_SHA2_512_IX,
+	POL_SIGHASH_IDENTITY_IX,
 };
 
 extern const struct enum_names sighash_policy_bit_names;
@@ -1007,6 +1010,7 @@ extern const struct enum_names sighash_policy_bit_names;
 #define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
 #define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
 #define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
+#define POL_SIGHASH_IDENTITY LELEM(POL_SIGHASH_IDENTITY_IX)
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG
@@ -1059,7 +1063,7 @@ enum PrivateKeyKind {
 	PKK_RSA,
 	PKK_XAUTH,
 	PKK_PPK,
-	PKK_ECDSA, /* should not be needed */
+	PKK_EC, /* should not be needed */
 	PKK_NULL,
 	PKK_INVALID,
 };

@@ -53,6 +53,7 @@ OBJS += send.o
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_send.o
 endif
+USERLAND_LDFLAGS += $(NSS_UTIL_LDFLAGS)
 
 OBJS += unpack.o
 OBJS += impair_message.o

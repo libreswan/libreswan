@@ -42,6 +42,12 @@
 #include <cert.h>
 #include <cryptohi.h>
 #include <keyhi.h>
+#include <secport.h>
+#include <prinit.h>
+#include <prmem.h>
+#include <keythi.h>
+#include <seccomon.h>
+#include <secerr.h>
 
 #include "lswglob.h"
 #include "sysdep.h"
@@ -78,6 +84,39 @@
  * @param ... strings
  * @return err_t
  */
+
+ ECPointEncoding pk11_ECGetPubkeyEncoding(const SECKEYPublicKey *pubKey);
+ ECPointEncoding
+  pk11_ECGetPubkeyEncoding(const SECKEYPublicKey *pubKey)
+  {
+      SECItem oid;
+      SECStatus rv;
+      PORTCheapArenaPool tmpArena;
+      ECPointEncoding encoding = ECPoint_Undefined;
+
+      PORT_InitCheapArena(&tmpArena, DER_DEFAULT_CHUNKSIZE);
+
+      /* decode the OID tag */
+      rv = SEC_QuickDERDecodeItem(&tmpArena.arena, &oid,
+                                  SEC_ASN1_GET(SEC_ObjectIDTemplate),
+                                  &pubKey->u.ec.DEREncodedParams);
+      if (rv == SECSuccess) {
+          SECOidTag tag = SECOID_FindOIDTag(&oid);
+          switch (tag) {
+              case SEC_OID_CURVE25519:
+                  encoding = ECPoint_XOnly;
+                  break;
+              case SEC_OID_SECG_EC_SECP256R1:
+              case SEC_OID_SECG_EC_SECP384R1:
+              case SEC_OID_SECG_EC_SECP521R1:
+              default:
+                  /* unknown curve, default to uncompressed */
+                  encoding = ECPoint_Uncompressed;
+          }
+      }
+      PORT_DestroyCheapArena(&tmpArena);
+      return encoding;
+  }
 
 static err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 static err_t builddiag(const char *fmt, ...)
@@ -307,17 +346,17 @@ const struct pubkey_type pubkey_type_rsa = {
 	.sign_hash = RSA_sign_hash,
 };
 
-static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u,
+static err_t EC_unpack_pubkey_content(union pubkey_content *u,
 					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 					 chunk_t pubkey)
 {
-	return unpack_ECDSA_public_key(&u->ecdsa, keyid, ckaid, size, &pubkey);
+	return unpack_EC_public_key(&u->ecPub, keyid, ckaid, size, &pubkey);
 }
 
-static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
+static void EC_free_public_content(struct EC_public_key *ecKey)
 {
-	free_chunk_content(&ecdsa->pub);
-	free_chunk_content(&ecdsa->ecParams);
+	free_chunk_content(&ecKey->pub);
+	free_chunk_content(&ecKey->ecParams);
 	/* ckaid is an embedded struct (no pointer) */
 	/*
 	 * ??? what about ecdsa->pub.{version,ckaid}?
@@ -327,18 +366,18 @@ static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 	 */
 }
 
-static void ECDSA_free_pubkey_content(union pubkey_content *u)
+static void EC_free_pubkey_content(union pubkey_content *u)
 {
-	ECDSA_free_public_content(&u->ecdsa);
+	EC_free_public_content(&u->ecPub);
 }
 
-static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
+static void EC_extract_public_key(struct EC_public_key *pub,
 				     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 				     SECKEYPublicKey *pubkey_nss,
 				     SECItem *ckaid_nss)
 {
-	pub->pub = clone_secitem_as_chunk(pubkey_nss->u.ec.publicValue, "ECDSA pub");
-	pub->ecParams = clone_secitem_as_chunk(pubkey_nss->u.ec.DEREncodedParams, "ECDSA ecParams");
+	pub->pub = clone_secitem_as_chunk(pubkey_nss->u.ec.publicValue, "EC pub");
+	pub->ecParams = clone_secitem_as_chunk(pubkey_nss->u.ec.DEREncodedParams, "EC ecParams");
 	*size = pubkey_nss->u.ec.publicValue.len;
 	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid */
@@ -354,29 +393,29 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 	}
 }
 
-static void ECDSA_extract_pubkey_content(union pubkey_content *pkc,
+static void EC_extract_pubkey_content(union pubkey_content *pkc,
 					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 					 SECKEYPublicKey *pubkey_nss,
 					 SECItem *ckaid_nss)
 {
-	ECDSA_extract_public_key(&pkc->ecdsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
+	EC_extract_public_key(&pkc->ecPub, keyid, ckaid, size, pubkey_nss, ckaid_nss);
 }
 
-static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
+static void EC_extract_private_key_pubkey_content(struct private_key_stuff *pks,
 						     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 						     SECKEYPublicKey *pubkey_nss,
 						     SECItem *ckaid_nss)
 {
-	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	ECDSA_extract_public_key(&ecdsak->pub, keyid, ckaid, size,
+	struct EC_private_key *ecKey = &pks->u.EC_private_key;
+	EC_extract_public_key(&ecKey->pub, keyid, ckaid, size,
 				 pubkey_nss, ckaid_nss);
 }
 
-static void ECDSA_free_secret_content(struct private_key_stuff *pks)
+static void EC_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
-	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	ECDSA_free_public_content(&ecdsak->pub);
+	struct EC_private_key *ecKey = &pks->u.EC_private_key;
+	EC_free_public_content(&ecKey->pub);
 }
 
 /*
@@ -384,13 +423,13 @@ static void ECDSA_free_secret_content(struct private_key_stuff *pks)
  * implement this, so there is no ECDSA curve that libreswan needs to
  * disallow for security reasons
  */
-static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
+static err_t EC_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 {
-	dbg("ECDSA is assumed to be sane");
+	dbg("EC Algorithms are assumed to be sane");
 	return NULL;
 }
 
-static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
+static struct hash_signature EC_sign_hash(const struct private_key_stuff *pks,
 					     const uint8_t *hash_val, size_t hash_len,
 					     const struct hash_desc *hash_algo_unused UNUSED,
 					     struct logger *logger)
@@ -454,21 +493,36 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
-	.private_key_kind = PKK_ECDSA,
-	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
-	.free_pubkey_content = ECDSA_free_pubkey_content,
-	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
-	.free_secret_content = ECDSA_free_secret_content,
-	.secret_sane = ECDSA_secret_sane,
-	.sign_hash = ECDSA_sign_hash,
-	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+	.private_key_kind = PKK_EC,
+	.unpack_pubkey_content = EC_unpack_pubkey_content,
+	.free_pubkey_content = EC_free_pubkey_content,
+	.extract_private_key_pubkey_content = EC_extract_private_key_pubkey_content,
+	.free_secret_content = EC_free_secret_content,
+	.secret_sane = EC_secret_sane,
+	.sign_hash = EC_sign_hash,
+	.extract_pubkey_content = EC_extract_pubkey_content,
 };
+
+const struct pubkey_type pubkey_type_eddsa = {
+	.alg = PUBKEY_ALG_EDDSA,
+	.name = "EDDSA",
+	.private_key_kind = PKK_EC,
+	.unpack_pubkey_content = EC_unpack_pubkey_content,
+	.free_pubkey_content = EC_free_pubkey_content,
+	.extract_private_key_pubkey_content = EC_extract_private_key_pubkey_content,
+	.free_secret_content = EC_free_secret_content,
+	.secret_sane = EC_secret_sane,
+	.sign_hash = EC_sign_hash,
+	.extract_pubkey_content = EC_extract_pubkey_content,
+};
+
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
 {
 	static const struct pubkey_type *pubkey_types[] = {
 		[PUBKEY_ALG_RSA] = &pubkey_type_rsa,
 		[PUBKEY_ALG_ECDSA] = &pubkey_type_ecdsa,
+		[PUBKEY_ALG_EDDSA] = &pubkey_type_eddsa,
 	};
 	passert(alg < elemsof(pubkey_types));
 	const struct pubkey_type *type = pubkey_types[alg];
@@ -487,6 +541,7 @@ const keyid_t *pubkey_keyid(const struct pubkey *pk)
 	switch (pk->type->alg) {
 	case PUBKEY_ALG_RSA:
 	case PUBKEY_ALG_ECDSA:
+	case PUBKEY_ALG_EDDSA:
 		return &pk->keyid;
 	default:
 		bad_case(pk->type->alg);
@@ -514,6 +569,7 @@ const keyid_t *secret_keyid(const struct secret *secret)
 		switch (secret->pks.pubkey_type->alg) {
 		case PUBKEY_ALG_RSA:
 		case PUBKEY_ALG_ECDSA:
+		case PUBKEY_ALG_EDDSA:
 			return &secret->pks.keyid;
 		default:
 			bad_case(secret->pks.pubkey_type->alg);
@@ -528,6 +584,7 @@ unsigned pubkey_size(const struct pubkey *pk)
 	switch (pk->type->alg) {
 	case PUBKEY_ALG_RSA:
 	case PUBKEY_ALG_ECDSA:
+	case PUBKEY_ALG_EDDSA:
 		return pk->size;
 	default:
 		bad_case(pk->type->alg);
@@ -714,7 +771,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 							&s->pks.u.RSA_private_key.pub,
 							&best->pks.u.RSA_private_key.pub);
 						break;
-					case PKK_ECDSA:
+					case PKK_EC:
 						/* there are no ECDSA kind of secrets */
 						/* ??? this seems not to be the case */
 						break;
@@ -1294,7 +1351,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
 			case PKK_RSA:
-			case PKK_ECDSA:
+			case PKK_EC:
 				/* Note: pub is all there is */
 				s->pks.pubkey_type->free_secret_content(&s->pks);
 				break;
@@ -1493,7 +1550,13 @@ static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
-		return &pubkey_type_ecdsa;
+	    SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key);
+	    if(pubk == NULL)
+	        return NULL;
+	    if (pk11_ECGetPubkeyEncoding(pubk) == ECPoint_XOnly)
+	        return &pubkey_type_eddsa;
+	    else
+	        return &pubkey_type_ecdsa;
 	default:
 		return NULL;
 	}
@@ -1506,7 +1569,10 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
-		return &pubkey_type_ecdsa;
+	    if (pk11_ECGetPubkeyEncoding(pubk) == ECPoint_XOnly)
+            return &pubkey_type_eddsa;
+        else
+            return &pubkey_type_ecdsa;
 	default:
 		return NULL;
 	}
