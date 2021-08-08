@@ -100,20 +100,20 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (c->spd.this.sec_label.len == 0) {
+	if (c->config->sec_label.len == 0) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "received IPsec Security Label on connection not configured with labeled ipsec");
 		return false;
 	}
 
-	if (!sec_label_within_range(sec_label, c->spd.this.sec_label, st->st_logger)) {
+	if (!sec_label_within_range(sec_label, c->config->sec_label, st->st_logger)) {
 		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 			jam(buf, "received IPsec Security Label '");
 			jam_sanitized_bytes(buf, sec_label.ptr,
 					    sec_label.len-1/*drop'\0'*/);
 			jam(buf, "' not within range of our configured security label '");
-			jam_sanitized_bytes(buf, c->spd.this.sec_label.ptr,
-					    c->spd.this.sec_label.len-1/*drop'\0'*/);
+			jam_sanitized_bytes(buf, c->config->sec_label.ptr,
+					    c->config->sec_label.len-1/*drop'\0'*/);
 			jam(buf, "'");
 		}
 		return false;
@@ -1261,8 +1261,8 @@ bool ikev1_out_sa(pb_stream *outs,
 						goto fail;
 
 #ifdef HAVE_LABELED_IPSEC
-					if (c->spd.this.sec_label.len != 0) {
-						chunk_t out_label = c->spd.this.sec_label;
+					if (c->config->sec_label.len != 0) {
+						chunk_t out_label = c->config->sec_label;
 
 						if (st->st_v1_acquired_sec_label.len != 0) {
 							out_label = st->st_v1_acquired_sec_label;
