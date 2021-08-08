@@ -102,6 +102,7 @@ enum keyword_authby {
 	AUTHBY_PSK,
 	AUTHBY_RSASIG,
 	AUTHBY_ECDSA,
+	AUTHBY_EDDSA,
 	AUTHBY_NULL,
 };
 

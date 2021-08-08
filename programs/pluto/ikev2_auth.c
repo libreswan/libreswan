@@ -109,6 +109,22 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		}
 	}
 
+    if(streq(hasher->common.fqn, "IDENTITY_HASH")){
+	    int size_hash = firstpacket.len + (*nonce).len;
+	    if (ike->sa.st_v2_ike_intermediate_used) {
+	        size_hash += (ia1.len + ia2.len);
+	    }
+	    struct crypt_mac calc_hash;
+	    calc_hash.len = 0;
+	    crypt_mac_load(&calc_hash, firstpacket);
+	    crypt_mac_load(&calc_hash, *nonce);
+	    if (ike->sa.st_v2_ike_intermediate_used) {
+	        crypt_mac_load(&calc_hash, ia1);
+	        crypt_mac_load(&calc_hash, ia2);
+	    }
+	    return calc_hash;
+	}
+
 	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
 						 ike->sa.st_logger);
 	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
@@ -137,6 +153,8 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 		 */
 		if ((c->policy & POLICY_ECDSA) && (c->sighash_policy != LEMPTY)) {
 			authby = AUTHBY_ECDSA;
+		} else if ((c->policy & POLICY_EDDSA) && (c->sighash_policy != LEMPTY)) {
+			authby = AUTHBY_EDDSA;
 		} else if (c->policy & POLICY_RSASIG) {
 			authby = AUTHBY_RSASIG;
 		} else if (c->policy & POLICY_PSK) {
@@ -185,6 +203,7 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 		break;
 	}
 	case AUTHBY_ECDSA:
+	case AUTHBY_EDDSA:
 		auth_method = IKEv2_AUTH_DIGSIG;
 		break;
 	case AUTHBY_PSK:
@@ -232,6 +251,8 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 		return hash_algo->hash_asn1_blob_rsa;
 	case AUTHBY_ECDSA:
 		return hash_algo->hash_asn1_blob_ecdsa;
+	case AUTHBY_EDDSA:
+		return hash_algo->hash_asn1_blob_eddsa;
 	default:
 		return null_shunk;
 	}
@@ -366,8 +387,8 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
 	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
 
 	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
-		PMAX(ASN1_SHA1_ECDSA_SIZE,
-			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE))];
+		PMAX(ASN1_IDENTITY_EDDSA_SIZE, PMAX(ASN1_SHA1_ECDSA_SIZE,
+			PMAX(ASN1_SHA2_RSA_PSS_SIZE, ASN1_SHA2_ECDSA_SIZE)))];
 	dbg("looking for ASN.1 blob for method %s for hash_algo %s",
 	    enum_name(&keyword_authby_names, authby), hash_algo->common.fqn);
 	return
@@ -457,7 +478,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG) {
+		if (that_authby != AUTHBY_EDDSA && (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG)) {
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    enum_name(&keyword_authby_names, that_authby));
 		}
@@ -485,9 +506,9 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				if (DBGP(DBG_BASE)) {
 					size_t dl = min(pbs_left(signature_pbs),
 							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
-								  PMAX(ASN1_SHA1_ECDSA_SIZE,
+								  PMAX(ASN1_IDENTITY_EDDSA_SIZE, PMAX(ASN1_SHA1_ECDSA_SIZE,
 								       PMAX(ASN1_SHA2_RSA_PSS_SIZE,
-									    ASN1_SHA2_ECDSA_SIZE))));
+									    ASN1_SHA2_ECDSA_SIZE)))));
 					DBG_dump("offered blob", signature_pbs->cur, dl);
 				}
 				return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
@@ -511,6 +532,10 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			break;
 
 		case AUTHBY_ECDSA:
+			d = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in, signature, hap->algo);
+			break;
+
+		case AUTHBY_EDDSA:
 			d = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in, signature, hap->algo);
 			break;
 

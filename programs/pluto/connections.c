@@ -1492,6 +1492,7 @@ static bool extract_connection(const struct whack_message *wm,
 					break;
 				case AUTHBY_RSASIG:
 				case AUTHBY_ECDSA:
+				case AUTHBY_EDDSA:
 					/* will be fixed later below */
 					break;
 				default:
@@ -1545,16 +1546,18 @@ static bool extract_connection(const struct whack_message *wm,
 	c->policy = wm->policy;
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->ike_version == IKEv1)
-		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
+		c->policy = (c->policy & ~(POLICY_EDDSA | (POLICY_ECDSA | POLICY_RSASIG_v1_5)));
 	/* ignore symmetrical defaults if we got left/rightauth */
 	if (wm->left.authby != wm->right.authby)
 		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
 	/* remove default pubkey policy if left/rightauth is specified */
 	if (wm->left.authby == wm->right.authby) {
 		if (wm->left.authby == AUTHBY_RSASIG)
-			c->policy = (c->policy & ~(POLICY_ECDSA));
+			c->policy = (c->policy & ~(POLICY_EDDSA | POLICY_ECDSA));
 		if (wm->left.authby == AUTHBY_ECDSA)
-			c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
+			c->policy = (c->policy & ~(POLICY_EDDSA | (POLICY_RSASIG | POLICY_RSASIG_v1_5)));
+		if (wm->left.authby == AUTHBY_EDDSA)
+			c->policy = (c->policy & ~(POLICY_ECDSA | (POLICY_RSASIG | POLICY_RSASIG_v1_5)));
 	}
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
 	if (c->ike_version == IKEv2)
@@ -1618,6 +1621,10 @@ static bool extract_connection(const struct whack_message *wm,
 		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_ECDSA) ||
 		    (wm->left.authby == AUTHBY_ECDSA && wm->right.authby == AUTHBY_NULL)) {
 			c->policy |= POLICY_ECDSA;
+		}
+		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_EDDSA) ||
+		    (wm->left.authby == AUTHBY_EDDSA && wm->right.authby == AUTHBY_NULL)) {
+			c->policy |= POLICY_EDDSA;
 		}
 
 		/* IKE cipher suites */
@@ -1927,6 +1934,8 @@ static bool extract_connection(const struct whack_message *wm,
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_RSASIG;
 		else if (c->policy & POLICY_ECDSA)
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_ECDSA;
+		else if (c->policy & POLICY_EDDSA)
+			c->spd.this.authby = c->spd.that.authby = AUTHBY_EDDSA;
 		else if (c->policy & POLICY_PSK)
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
@@ -1941,6 +1950,9 @@ static bool extract_connection(const struct whack_message *wm,
 			break;
 		case AUTHBY_ECDSA:
 			c->policy |= POLICY_ECDSA;
+			break;
+		case AUTHBY_EDDSA:
+			c->policy |= POLICY_EDDSA;
 			break;
 		case AUTHBY_PSK:
 			c->policy |= POLICY_PSK;
@@ -3230,6 +3242,22 @@ struct connection *refine_host_connection(const struct state *st,
 			}
 			break;
 		}
+		case AUTHBY_EDDSA:
+		{
+			/*
+			 * At this point, we've committed to our
+			 * private key: we used it in our previous
+			 * message.  Paul: only true for IKEv1
+			 */
+			const struct pubkey_type *type = &pubkey_type_eddsa;
+			if (get_connection_private_key(c, type) == NULL) {
+				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
+				 /* cannot determine my private key, so not switching */
+				return c;
+			}
+			break;
+		}
+
 #endif
 		default:
 			/* don't die on bad_case(auth); */

@@ -63,6 +63,8 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 
 struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
 
+void crypt_mac_load(struct crypt_mac *container, chunk_t packet);
+
 
 
 /*

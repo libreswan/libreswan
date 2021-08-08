@@ -296,8 +296,8 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
     # Create OCSP
     if ocspuri and '-ocspOmit' not in cnstr:
-            add_ext(cert, 'authorityInfoAccess', False,
-                  'OCSP;URI:http://nic.testing.libreswan.org:2560')
+        add_ext(cert, 'authorityInfoAccess', False,
+                'OCSP;URI:http://nic.testing.libreswan.org:2560')
 
     # Create CRL DP
     if '-crlOmit' not in cnstr:
@@ -376,11 +376,11 @@ def gen_gmtime_dates():
     gmtfmt = "%b %d %H:%M:%S %Y GMT"
 
     ok_stamp = ssl.cert_time_to_seconds(
-            time.strftime(gmtfmt, time.gmtime())) - (60*60*24)
+        time.strftime(gmtfmt, time.gmtime())) - (60*60*24)
     two_days_ago_stamp = ok_stamp - (60*60*48)
     two_days_ago_end_stamp = two_days_ago_stamp + (60*60*24)
-        # Make future certs only +300 days, so we have a time overlap
-        # between currently valid certs (1 year) and these futuristic certs
+    # Make future certs only +300 days, so we have a time overlap
+    # between currently valid certs (1 year) and these futuristic certs
     future_stamp = ok_stamp + (60*60*24*365*1)
     future_end_stamp = future_stamp + (60*60*24*365*2)
 
@@ -484,7 +484,7 @@ def create_mainca_end_certs(mainca_end_certs):
             org = "Libreswan"
 
         if name == 'unwisechar':
-            common_name = 'unwisechar ~!@#$%^&*()-'\
+            common_name = 'unwisechar ~!@#$%^&*()-' \
                           '_=+;:/?<>.testing.libreswan.org'
         elif name == 'spaceincn':
             common_name = 'space invaders.testing.libreswan.org'
@@ -582,10 +582,10 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                 top_caname = cname
                 print(" - creating %s"% endrev_name)
                 ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
-                                              signpair[0], signpair[1], serial,
-                                              emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                              START=dates['OK_NOW'],
-                                              END=dates['FUTURE'])
+                                                signpair[0], signpair[1], serial,
+                                                emailAddress="%s@testing.libreswan.org"%endcert_name,
+                                                START=dates['OK_NOW'],
+                                                END=dates['FUTURE'])
 
                 writeout_cert_and_key("certs/", endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
@@ -687,7 +687,7 @@ def create_crlsets():
                               type=crypto.FILETYPE_ASN1,
                               days=15, digest='sha256'.encode('utf-8')))
 
-     #create_leading_zero_crl()
+    #create_leading_zero_crl()
 
 
 def create_ec_certs():
@@ -728,10 +728,10 @@ def create_ec_certs():
         #create end certs
         if name == 'west':
             pexpect.run('openssl ecparam -out keys/' + name +
-                    '-ec.key -name secp256r1 -genkey -noout')
+                        '-ec.key -name secp256r1 -genkey -noout')
         else:
             pexpect.run('openssl ecparam -out keys/' + name +
-                    '-ec.key -name secp384r1 -genkey -noout')
+                        '-ec.key -name secp384r1 -genkey -noout')
         child = pexpect.spawn('openssl req -extensions ec-addon -config openssl.cnf -x509 '
                               '-new -key keys/curveca.key '
                               '-out certs/' + name +
@@ -811,17 +811,17 @@ def create_mainec_certs():
             alg = "secp384r1"
         run('openssl ecparam '
             '-name '+alg+' '
-            '-genkey '
-            '-noout '
-            '-out keys/'+name+'-mainec.key ')
+                         '-genkey '
+                         '-noout '
+                         '-out keys/'+name+'-mainec.key ')
         run('openssl req -extensions ec-addon '
             '-config '+os.getcwd()+'/openssl.cnf '
-            '-x509 '
-            '-new '
-            '-key keys/'+name+'-mainec.key '
-            '-out certs/'+name+'-mainec.crt '
-            '-days 365 '
-            '-set_serial '+str(serial),
+                                   '-x509 '
+                                   '-new '
+                                   '-key keys/'+name+'-mainec.key '
+                                                     '-out certs/'+name+'-mainec.crt '
+                                                                        '-days 365 '
+                                                                        '-set_serial '+str(serial),
             # must match create_mainca_end_certs()
             events = {
                 'Country Name': 'CA\r',
@@ -837,21 +837,161 @@ def create_mainec_certs():
         #package p12
         run('openssl pkcs12 -export '
             '-inkey keys/'+name+'-mainec.key '
-            '-in certs/'+name+'-mainec.crt '
-            '-name '+name+'-mainec '
-            '-certfile cacerts/mainec.crt '
-            '-caname "mainec" '
-            '-out pkcs12/mainec/'+name+'-mainec.p12 '
-            '-passin pass:foobar -passout pass:foobar')
+                                '-in certs/'+name+'-mainec.crt '
+                                                  '-name '+name+'-mainec '
+                                                                '-certfile cacerts/mainec.crt '
+                                                                '-caname "mainec" '
+                                                                '-out pkcs12/mainec/'+name+'-mainec.p12 '
+                                                                                           '-passin pass:foobar -passout pass:foobar')
+
+def create_ED25519_certs():
+    """ The OpenSSL module doesn't appear to have
+    support for curves so we do it with pexpect
+    """
+    # skip for non-base for now
+    if dirbase != '':
+        return
+
+    print("creating ED25519 certs")
+    #create CA
+
+    run('openssl genpkey -algorithm ed25519'
+        ' -outform PEM -out keys/ED25519CA.key')
+    run('openssl req -x509 -new '
+        '-key keys/ED25519CA.key '
+        '-out cacerts/ED25519CA.crt '
+        '-days 3650 -set_serial 1',
+        # must match create_root_ca(<<mainca>>)
+        events = {
+            'Country Name': 'CA\r',
+            'State': 'Ontario\r',
+            'Locality': 'Toronto\r',
+            'Organization': 'Libreswan\r',
+            'Organizational': 'Test Department\r',
+            'Common': 'Libreswan test CA for mainca\r',
+            'Email': 'testing@libreswan.org\r',
+        })
+    serial = 2
+    for name in ['east', 'west', 'north', 'road']:
+        print("- creating %s-ED25519"% name)
+        #create end certs
+        pexpect.run('openssl genpkey -algorithm ed25519'
+                    '-outform PEM -out keys/' + name +'-ed25519.key')
+
+        child = pexpect.spawn('openssl req -config openssl.cnf -x509 '
+                              '-new -key keys/ED25519CA.key '
+                              '-out certs/' + name +
+                              '-ed25519.crt -days 365 -set_serial ' +
+                              str(serial))
+        child.expect('Country Name')
+        child.sendline('CA')
+        child.expect('State')
+        child.sendline('Ontario')
+        child.expect('Locality')
+        child.sendline('Toronto')
+        child.expect('Organization')
+        child.sendline('Libreswan')
+        child.expect('Organizational')
+        child.sendline('Test Department')
+        child.expect('Common')
+        child.sendline(name + '-ec.testing.libreswan.org')
+        child.expect('Email')
+        child.sendline('testing@libreswan.org')
+        child.expect(pexpect.EOF)
+        serial += 1
+        #package p12
+        pexpect.run('openssl pkcs12 -export '
+                    '-inkey keys/%s-ed25519.key '
+                    '-in certs/%s-ed25519.crt -name %s-ed25519 '
+                    '-certfile cacerts/ED25519CA.crt '
+                    '-caname "ed25519ca" '
+                    '-out pkcs12/curveca/%s-ed25519.p12 '
+                    '-passin pass:foobar -passout pass:foobar'
+                    % (name, name, name, name))
+
+
+def create_mainED25519_certs():
+    """ The OpenSSL module doesn't appear to have
+    support for curves so we do it with pexpect
+    """
+
+    print("creating main ED25519 root cert")
+
+    #create CA
+    run('openssl genpkey '
+        '-algorithm ed25519 '
+        '-outform PEM '
+        '-out keys/mainED25519.key')
+    run('openssl req -x509 -new '
+        '-key keys/mainED25519.key '
+        '-out cacerts/mainED25519.crt '
+        '-days 3650 -set_serial 1',
+        # must match create_root_ca(<<mainca>>)
+        events = {
+            'Country Name': 'CA\r',
+            'State': 'Ontario\r',
+            'Locality': 'Toronto\r',
+            'Organization': 'Libreswan\r',
+            'Organizational': 'Test Department\r',
+            'Common': 'Libreswan test CA for mainca\r',
+            'Email': 'testing@libreswan.org\r',
+        })
+    run('openssl pkcs12 -export '
+        '-inkey keys/mainED25519.key '
+        '-in cacerts/mainED25519.crt '
+        '-name mainED25519 '
+        '-certfile cacerts/mainED25519.crt '
+        '-caname "mainED25519" '
+        '-out pkcs12/mainec/mainED25519.p12 '
+        '-passin pass:foobar -passout pass:foobar')
+
+    print("creating main ED25519 end certs")
+
+    serial = 2
+    for name in ['east', 'west', 'north', 'road']:
+        print("- creating %s-mainED25519"% name)
+        run('openssl genpkey '
+            '-algorithm ed25519 '
+            '-outform PEM '
+            '-out keys/'+name+'-mainED25519.key ')
+        run('openssl req '
+            '-config '+os.getcwd()+'/openssl.cnf '
+                                   '-x509 '
+                                   '-new '
+                                   '-key keys/'+name+'-mainED25519.key '
+                                                     '-out certs/'+name+'-mainED25519.crt '
+                                                                        '-days 365 '
+                                                                        '-set_serial '+str(serial),
+            # must match create_mainca_end_certs()
+            events = {
+                'Country Name': 'CA\r',
+                'State': 'Ontario\r',
+                'Locality': 'Toronto\r',
+                'Organization': 'Libreswan\r',
+                'Organizational': 'Test Department\r',
+                'Common': name + '.testing.libreswan.org\r',
+                'Email': 'user-'+name+'@testing.libreswan.org\r',
+            })
+
+        serial += 1
+        #package p12
+        run('openssl pkcs12 -export '
+            '-inkey keys/'+name+'-mainED25519.key '
+                                '-in certs/'+name+'-mainED25519.crt '
+                                                  '-name '+name+'-mainED25519 '
+                                                                '-certfile cacerts/mainED25519.crt '
+                                                                '-caname "mainED25519" '
+                                                                '-out pkcs12/mainec/'+name+'-mainED25519.p12 '
+                                                                                           '-passin pass:foobar -passout pass:foobar')
 
 def create_self_signed():
     """ Create self-signed certs - uses openssl >= 1.1.1 syntax
     """
     for name in ['east', 'west', 'north', 'road']:
         cmd = 'openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes -keyout ' \
-            +name+'-selfsigned.key -out '+name+'-selfsigned.cert -subj /CN=' \
-            +name+'-selfsigned.testing.libreswan.org -addext subjectAltName=DNS:' \
-            +name+'.testing.libreswan.org'
+              +name+'-selfsigned.key -out '+name+'-selfsigned.cert -subj /CN=' \
+              +name+'-selfsigned.testing.libreswan.org -addext subjectAltName=DNS:' \
+              +name+'.testing.libreswan.org'
         run(cmd)
         cmd = 'openssl pkcs12 -export -out '+name+'-selfsigned.p12 -inkey '+name+'-selfsigned.key -in ' \
               +name+'-selfsigned.cert -certfile '+name+'-selfsigned.cert -passout=file:../nss-pw'
@@ -908,6 +1048,7 @@ def run_dist_certs():
     create_chained_certs(chain_ca_roots, 10, 'too_long_')
     create_crlsets()
     create_ec_certs()
+    create_ED25519_certs()
 
 def create_nss_pw():
     print("creating nss-pw")
@@ -936,6 +1077,7 @@ def main():
     run_dist_certs()
     # only fake
     create_mainec_certs()
+    create_mainED25519_certs()
     dirbase = ""
 
     create_nss_pw()

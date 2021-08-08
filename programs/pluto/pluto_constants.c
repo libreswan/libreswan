@@ -328,6 +328,7 @@ static const char *const keyword_authby_name[] = {
 	"secret",
 	"rsasig",
 	"ecdsa",
+	"eddsa",
 	"null",
 };
 
