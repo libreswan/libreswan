@@ -1302,7 +1302,9 @@ static bool extract_connection(const struct whack_message *wm,
 {
 	diag_t d;
 
-	struct config *config = c->root_config = alloc_thing(struct config, "root config");
+	struct config *config = alloc_thing(struct config, "root config");
+	c->root_config = config; /* writeable; root only */
+	c->config = config; /* read only; shared */
 
 	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
