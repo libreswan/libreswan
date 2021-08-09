@@ -789,20 +789,17 @@ static struct score score_end(const struct end *end,
 	const struct traffic_selector *ts = &tss->ts[index];
 
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "    %s[%u] ", tss->name, index);
-		if (ts->sec_label.len == 0) {
+		jam(buf, "    %s[%u]", tss->name, index);
+		if (ts->sec_label.len > 0) {
+			jam(buf, " sec_label=");
+			jam_sanitized_hunk(buf, ts->sec_label);
+		} else {
 			range_buf ts_net;
-			jam(buf, ".net=%s .iporotoid=%d .{start,end}port=%d..%d",
+			jam(buf, " net=%s iporotoid=%d {start,end}port=%d..%d",
 			    str_range(&ts->net, &ts_net),
 			    ts->ipprotoid,
 			    ts->startport,
 			    ts->endport);
-		} else if (ts->sec_label.len != 0) {
-			/* XXX: assumes sec label is printable */
-			jam(buf, "security_label:");
-			jam_sanitized_hunk(buf, ts->sec_label);
-		} else {
-			jam(buf, "unknown Traffic Selector Type");
 		}
 	}
 
@@ -887,14 +884,8 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
  *   selinux_check_access() requires a "ptarget context").
  */
 
-enum sec_label_compare {
-	TS_WITHIN_CONNECTION_SEC_LABEL = 1,
-	TS_EQUALS_CONNECTION_SEC_LABEL,
-};
-
-static bool check_tss_sec_label(enum sec_label_compare compare,
-				const struct traffic_selectors *tss,
-				chunk_t connection_sec_label,
+static bool check_tss_sec_label(const struct traffic_selectors *tss,
+				chunk_t config_sec_label,
 				shunk_t *selected_sec_label,
 				struct logger *logger)
 {
@@ -909,21 +900,10 @@ static bool check_tss_sec_label(enum sec_label_compare compare,
 
 		passert(vet_seclabel(ts->sec_label) == NULL);
 
-		switch (compare) {
-		case TS_WITHIN_CONNECTION_SEC_LABEL:
-			if (!sec_label_within_range(ts->sec_label, connection_sec_label, logger)) {
-				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
-				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
-				continue;
-			}
-			break;
-		case TS_EQUALS_CONNECTION_SEC_LABEL:
-			if (!hunk_eq(ts->sec_label, connection_sec_label)) {
-				dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not equal to connection sec_label="PRI_SHUNK,
-				    tss->name, pri_shunk(ts->sec_label), pri_shunk(connection_sec_label));
-				continue;
-			}
-			break;
+		if (!sec_label_within_range(ts->sec_label, config_sec_label, logger)) {
+			dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
+			    tss->name, pri_shunk(ts->sec_label), pri_shunk(config_sec_label));
+			continue;
 		}
 
 		dbg("ikev2ts: received %s label within range of our security label",
@@ -937,13 +917,12 @@ static bool check_tss_sec_label(enum sec_label_compare compare,
 	return false;
 }
 
-static bool score_tsp_sec_label(enum sec_label_compare compare,
-				const struct traffic_selector_payloads *tsp,
-				chunk_t connection_sec_label,
+static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
+				chunk_t config_sec_label,
 				shunk_t *selected_sec_label,
 				struct logger *logger)
 {
-	if (connection_sec_label.len == 0) {
+	if (config_sec_label.len == 0) {
 		/* This endpoint is not configured to use labeled IPsec. */
 		if (tsp->i.contains_sec_label || tsp->r.contains_sec_label) {
 			dbg("error: received sec_label but this end is *not* configured to use sec_label");
@@ -954,15 +933,15 @@ static bool score_tsp_sec_label(enum sec_label_compare compare,
 	}
 
 	/* This endpoint is configured to use labeled IPsec. */
-	passert(vet_seclabel(HUNK_AS_SHUNK(connection_sec_label)) == NULL);
+	passert(vet_seclabel(HUNK_AS_SHUNK(config_sec_label)) == NULL);
 
 	if (!tsp->i.contains_sec_label || !tsp->r.contains_sec_label) {
 		dbg("error: connection requires sec_label but not received TSi/TSr with sec_label");
 		return false;
 	}
 
-	if (!check_tss_sec_label(compare, &tsp->i, connection_sec_label, selected_sec_label, logger) ||
-	    !check_tss_sec_label(compare, &tsp->r, connection_sec_label, selected_sec_label, logger)) {
+	if (!check_tss_sec_label(&tsp->i, config_sec_label, selected_sec_label, logger) ||
+	    !check_tss_sec_label(&tsp->r, config_sec_label, selected_sec_label, logger)) {
 		return false;
 	}
 
@@ -1147,8 +1126,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		};
 
 		shunk_t selected_sec_label = null_shunk;
-		if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
-					 &tsp, c->spd.this.sec_label,
+		if (!score_tsp_sec_label(&tsp, c->config->sec_label,
 					 &selected_sec_label,
 					 child->sa.st_logger)) {
 			/*
@@ -1175,6 +1153,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			best_score = score;
 			best_spd_route = sra;
 			best_sec_label = selected_sec_label;
+			/* better SPD still within current connection */
 			passert(best_connection == c);
 		}
 	}
@@ -1210,7 +1189,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * security label that matches an existing
 			 * connection instance.
 			 */
-			if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+			if (c->ike_version == IKEv2 &&
+			    c->config->sec_label.len > 0 &&
+			    c->kind != CK_TEMPLATE) {
 				connection_buf cb;
 				dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
 				    pri_connection(c, &cb));
@@ -1263,8 +1244,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 				shunk_t selected_sec_label = null_shunk;
-				if (!score_tsp_sec_label(TS_WITHIN_CONNECTION_SEC_LABEL,
-							 &tsp, d->spd.this.sec_label,
+				if (!score_tsp_sec_label(&tsp, d->config->sec_label,
 							 &selected_sec_label, child->sa.st_logger)) {
 					/*
 					 * Either:
@@ -1320,17 +1300,19 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * 'instantiate' when the current connection is
 		 * permanent.
 		 *
+		 * XXX: but c->kind could be CK_TEMPLATE?
+		 *
 		 * XXX: Is this missing an opportunity?  Could there
 		 * be a better connection to instantiate when the
 		 * current one is permanent?
 		 *
 		 * XXX: 'instantiate', not really?  The code below
-		 * blats the current instance with new values -
-		 * something that should not be done to a permanent
-		 * connection.
+		 * sometimes blats the current instance with new
+		 * values - something that should not be done to a
+		 * permanent connection.
 		 */
 		pexpect((c->kind == CK_PERMANENT) ||
-			(c->kind == CK_TEMPLATE && c->spd.this.sec_label.len > 0));
+			(c->kind == CK_TEMPLATE && c->config->sec_label.len > 0));
 		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		    enum_name(&connection_kind_names, c->kind), c->name);
 		llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
@@ -1345,7 +1327,11 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 *
 		 * Rather than overwrite the current INSTANCE; would
 		 * it be better to instantiate a new instance, and
-		 * then replace it?  Would also address the above.
+		 * then replace it?
+		 *
+		 * Would also address the above.
+		 *
+		 * If the connection seems to be shared, this happens.
 		 */
 		pexpect(c->kind == CK_INSTANCE);
 		/* since an SPD_ROUTE wasn't found */
@@ -1376,7 +1362,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * this valid?
 			 */
 			switch (c->policy & (POLICY_GROUPINSTANCE |
-					     POLICY_IKEV2_ALLOW_NARROWING)) {
+					      POLICY_IKEV2_ALLOW_NARROWING)) {
 			case POLICY_GROUPINSTANCE:
 			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
 				/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
@@ -1519,8 +1505,7 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
-	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
-				 &tsp, c->spd.this.sec_label,
+	if (!score_tsp_sec_label(&tsp, c->config->sec_label,
 				 &selected_sec_label, child->sa.st_logger)) {
 		/*
 		 * Either:
@@ -1592,8 +1577,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
-	if (!score_tsp_sec_label(TS_EQUALS_CONNECTION_SEC_LABEL,
-				 &their_tsp, c->spd.this.sec_label,
+	if (!score_tsp_sec_label(&their_tsp, c->config->sec_label,
 				 &selected_sec_label,
 				 child->sa.st_logger)) {
 		/*
