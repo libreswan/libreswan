@@ -2043,8 +2043,9 @@ static bool extract_connection(const struct whack_message *wm,
 	} else if (c->spd.that.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
-	} else if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
-		dbg("connection is template: security label present");
+	} else if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
+		dbg("connection is template: has security label: "PRI_SHUNK,
+		    pri_shunk(c->config->sec_label));
 		c->kind = CK_TEMPLATE;
 	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 		/*
@@ -2507,8 +2508,8 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
  * Note: result may still need to be instantiated.
  * The winner has the highest policy priority.
  *
- * If there are several with that priority, we give preference to
- * the first one that is an instance.
+ * If there are several with that priority, we give preference to the
+ * first one that is an instance.
  *
  * See also build_outgoing_opportunistic_connection.
  */
@@ -2532,23 +2533,42 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	dbg("find_connection: looking for policy for connection: %s",
 	    str_endpoints(local_client, remote_client, &eb));
 
-	struct connection *c;
-
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (struct connection *c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
 			continue;
 
 		/*
-		 * For labeled IPsec, always start with the template.
-		 * Who are we to argue if the kernel asks for a new SA
-		 * with, seemingly, a security label that matches an
-		 * existing connection instance.
+		 * For both IKEv1 and IKEv2 labeled IPsec, don't try
+		 * to mix 'n' match acquire sec_label with
+		 * non-sec_label connection.
 		 */
-		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
+			continue;
+		}
+
+		/*
+		 * For IKEv2 labeled IPsec, always start with the
+		 * template.  Who are we to argue if the kernel asks
+		 * for a new SA with, seemingly, a security label that
+		 * matches an existing connection instance.
+		 */
+		if (c->ike_version == IKEv2 &&
+		    c->config->sec_label.len > 0 &&
+		    c->kind != CK_TEMPLATE) {
+			pexpect(c->kind == CK_INSTANCE);
 			connection_buf cb;
 			dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
 			    pri_connection(c, &cb));
+			continue;
+		}
+
+		/*
+		 * When there is a sec_label, it needs to be within
+		 * the configuration's range.
+		 */
+		if (sec_label.len > 0 /*implies c->config->sec_label*/ &&
+		    !sec_label_within_range(sec_label, c->config->sec_label, logger)) {
 			continue;
 		}
 
@@ -2563,7 +2583,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			 */
 			if (!routed(sr->routing) &&
 			    !c->instance_initiation_ok &&
-			    sr->this.sec_label.len == 0) {
+			    c->config->sec_label.len == 0) {
 				continue;
 			}
 
@@ -2573,14 +2593,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			 */
 			if (!endpoint_in_selector(*local_client, sr->this.client) ||
 			    !endpoint_in_selector(*remote_client, sr->that.client)) {
-				continue;
-			}
-
-			/*
-			 * When there is one, the label needs to be
-			 * within range.
-			 */
-			if (sec_label.len > 0 && !sec_label_within_range(sec_label, sr->this.sec_label, logger)) {
 				continue;
 			}
 
