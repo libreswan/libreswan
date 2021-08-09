@@ -1016,12 +1016,13 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 static enum routability could_route(struct connection *c, struct logger *logger)
 {
 	esb_buf b;
-	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u",
+	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
 	    c->name,
 	    enum_show(&connection_kind_names, c->kind, &b),
 	    bool_str(c->spd.that.has_client),
 	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	    c->spd.this.host_port);
+	    c->spd.this.host_port,
+	    pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
@@ -1038,13 +1039,14 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_unnecessary;
 
 	/*
-	 * if this is a template connection, we cannot route.
-	 * Opportunistic template is OK. also labels
+	 * If this is a template connection, we cannot route.
+	 * However, opportunistic and sec_label templates can be
+	 * routed (as in install the policy).
 	 */
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
 	    !(c->policy & POLICY_OPPORTUNISTIC) &&
-	    c->spd.this.sec_label.len == 0) {
+	    c->config->sec_label.len == 0) {
 		policy_buf pb;
 		llog(RC_ROUTE, logger,
 		     "cannot route template policy of %s",
@@ -1118,7 +1120,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		 * other than c, conflicts with c?
 		 */
 
-		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->spd.this.sec_label.len == 0) {
+		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->config->sec_label.len == 0) {
 			/*
 			 * another connection is already using the eroute,
 			 * TODO: XFRM apparently can do this though
@@ -1147,7 +1149,7 @@ bool trap_connection(struct connection *c)
 
 	case route_easy:
 	case route_nearconflict:
-		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
 			/*
 			 * IKEv2 security labels are treated
 			 * specially: this allocates and installs a
@@ -1216,7 +1218,7 @@ bool shunt_policy(enum kernel_policy_op op,
 		jam(buf, "-%s->", protocol_by_ipproto(sr->this.protocol)->name);
 		jam_selector(buf, &sr->that.client);
 
-		jam(buf, " sec_label=");
+		jam(buf, " this.sec_label=");
 		jam_sanitized_hunk(buf, sr->this.sec_label);
 	}
 
@@ -1528,12 +1530,14 @@ bool delete_bare_shunt(const ip_address *src_address,
 bool install_se_connection_policies(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
-	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s",
+	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
 	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
 	    pri_connection(c, &cb),
-	    enum_name(&routing_story, c->spd.routing));
+	    enum_name(&routing_story, c->spd.routing),
+	    pri_shunk(c->config->sec_label));
 
-	if (!pexpect(c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) ||
+	if (!pexpect(c->ike_version == IKEv2) ||
+	    !pexpect(c->config->sec_label.len > 0) ||
 	    !pexpect(c->kind == CK_TEMPLATE)) {
 		return false;
 	}
@@ -1571,7 +1575,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				/*sa_priority*/priority,
 				/*sa_marks*/NULL,
 				/*xfrm_if_id*/0,
-				/*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
 			if (inbound) {
@@ -1597,7 +1601,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 					   /*sa_priority*/priority,
 					   /*sa_marks*/NULL,
 					   /*xfrm_if_id*/0,
-					   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+					   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 					   /*logger*/logger,
 					   "%s() security label policy", __func__);
 			}
@@ -1633,7 +1637,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				   /*sa_priority*/priority,
 				   /*sa_marks*/NULL,
 				   /*xfrm_if_id*/0,
-				   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				   /*logger*/logger,
 				   "%s() security label policy", __func__);
 		}
@@ -1947,7 +1951,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
-	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK,
+	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s this.sec_label="PRI_SHUNK,
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
 	    str_selector(said_boilerplate.src.client, &scb),
