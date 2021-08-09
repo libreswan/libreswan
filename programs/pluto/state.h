@@ -881,7 +881,6 @@ extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
 bool shared_phase1_connection(const struct connection *c);
-bool v2_child_connection_probably_shared(struct child_sa *child);
 
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
