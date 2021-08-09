@@ -4117,13 +4117,25 @@ static void show_one_sr(struct show *s,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	/* we only support symmetric labels, but store it in struct end - pick one */
-	if (sr->this.sec_label.len == 0)
+	/*
+	 * Show the first valid sec_label.
+	 *
+	 * We only support symmetric labels, but store it in struct
+	 * end - pick one.
+	 *
+	 * XXX: IKEv1 stores the negotiated sec_label in the state.
+	 */
+	if (sr->this.sec_label.len > 0) {
+		/* negotiated (IKEv2) */
+		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
+			     c->name, instance, pri_shunk(sr->this.sec_label));
+	} else if (c->config->sec_label.len > 0) {
+		/* configured */
+		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
+			     c->name, instance, pri_shunk(c->config->sec_label));
+	} else {
 		show_comment(s, "\"%s\"%s:   sec_label:unset;", c->name, instance);
-	else
-		show_comment(s, "\"%s\"%s:   sec_label:%.*s;",
-			c->name, instance,
-			(int)sr->this.sec_label.len, sr->this.sec_label.ptr);
+	}
 }
 
 void show_one_connection(struct show *s,
