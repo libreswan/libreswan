@@ -1113,13 +1113,10 @@ static struct connection *scribble_ts_on_connection(struct connection *t, struct
 }
 
 /*
- * find the best connection and, if it is AUTH exchange, create the
- * child state
- *
- * XXX: creating child as a side effect is pretty messed up.
+ * Find the best connection, possibly updating child.
  */
-bool v2_process_ts_request(struct child_sa *child,
-			   const struct msg_digest *md)
+bool v2_process_request_ts_payloads(struct child_sa *child,
+				    const struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);

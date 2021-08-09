@@ -859,7 +859,7 @@ v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
 	} else {
-		if (!v2_process_ts_request(child, md)) {
+		if (!v2_process_request_ts_payloads(child, md)) {
 			/* already logged? */
 			return v2N_TS_UNACCEPTABLE;
 		}
