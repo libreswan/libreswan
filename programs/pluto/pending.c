@@ -139,6 +139,25 @@ void add_v2_pending(struct fd *whackfd,
 		    bool part_of_initiate)
 {
 	passert(ike->sa.st_ike_version == IKEv2);
+	if (c->config->sec_label.len > 0 || sec_label.len > 0) {
+		/*
+		 * Convert the template connection into a connection
+		 * instance that contains the sec_label, and toss that
+		 * onto the pending queue.
+		 */
+		if (!pexpect(c->kind == CK_TEMPLATE) ||
+		    !pexpect(c->config->sec_label.len > 0) ||
+		    !pexpect(sec_label.len > 0)) {
+			return;
+		}
+		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
+		struct connection *d = instantiate(c, &remote_address, /*peer_id*/NULL, sec_label);
+		d->kind = CK_INSTANCE;
+		connection_buf db;
+		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
+		    pri_connection(d, &db), pri_shunk(sec_label));
+		c = d;
+	}
 	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
 }
 
@@ -305,31 +324,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 */
 					what = "delete from";
 				} else if (!already_has_larval_v2_child(ike, p->connection)) {
-					struct connection *cc;
-					if (p->connection->kind == CK_TEMPLATE &&
-					    p->sec_label.len > 0) {
-						/*
-						 * Create instance and
-						 * switch to it.
-						 *
-						 * Since the newly
-						 * instantiated
-						 * connection has a
-						 * security label due
-						 * to an `ACQUIRE`
-						 * message from the
-						 * kernel, it is not a
-						 * template
-						 * connection.
-						 */
-						ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-						cc = instantiate(p->connection, &remote_addr, NULL,
-								 p->sec_label);
-						cc->kind = CK_INSTANCE;
-					} else {
-						cc = p->connection;
-					}
-					submit_v2_CREATE_CHILD_SA_new_child(ike, cc,
+					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
 									    p->policy, p->try,
 									    p->whack_sock);
 				}

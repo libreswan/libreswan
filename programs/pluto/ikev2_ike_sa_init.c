@@ -563,24 +563,6 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		pexpect(c->kind == CK_TEMPLATE);
 		dbg("template connection sec_label="PRI_SHUNK" but initiate does not; skipping child",
 		    pri_shunk(c->config->sec_label));
-	} else if (HAS_IPSEC_POLICY(policy) &&
-		   c->config->sec_label.len > 0 && sec_label.len > 0 &&
-		   c->kind == CK_TEMPLATE) {
-		/* Toss the acquire onto the pending queue */
-		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
-		struct connection *d = instantiate(c, &remote_address, NULL, sec_label);
-		/*
-		 * Since the newly instantiated connection has a security label
-		 * due to a Netlink `ACQUIRE` message from the kernel, it is
-		 * not a template connection.
-		 */
-		d->kind = CK_INSTANCE;
-		add_v2_pending(background ? null_fd : ike->sa.st_logger->global_whackfd, ike, d, policy, 1,
-			       /*predecessor*/SOS_NOBODY,
-			       sec_label, true /*part of initiate*/);
-		connection_buf db;
-		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
-		    pri_connection(d, &db), pri_shunk(sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
