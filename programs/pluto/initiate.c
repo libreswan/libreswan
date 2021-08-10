@@ -644,7 +644,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind == CK_TEMPLATE) {
+	if (c->ike_version == IKEv2 &&
+	    c->config->sec_label.len > 0 &&
+	    c->kind == CK_TEMPLATE) {
 		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {
@@ -654,7 +656,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 
 		if (!sec_label_within_range(HUNK_AS_SHUNK(b->sec_label),
-					    c->spd.this.sec_label , b->logger)) {
+					    c->config->sec_label, b->logger)) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
 					"received kernel security label does not fall within range of our connection");
 			return;
