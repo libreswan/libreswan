@@ -333,7 +333,24 @@ void ipsecdoi_initiate(struct connection *c,
 				    false /*part of initiate*/);
 		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			submit_v2_CREATE_CHILD_SA_new_child(ike, c, policy, try, sec_label,
+			struct connection *cc;
+			if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
+				/*
+				 * create instance and switch to it.
+				 *
+				 * Since the newly instantiated
+				 * connection has a security label due
+				 * to an `ACQUIRE` message from the
+				 * kernel, it is not a template
+				 * connection.
+				 */
+				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+				cc = instantiate(c, &remote_addr, NULL, sec_label);
+				cc->kind = CK_INSTANCE;
+			} else {
+				cc = c;
+			}
+			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy, try,
 							    logger->global_whackfd);
 		}
 		break;

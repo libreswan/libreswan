@@ -575,21 +575,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
 void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 struct connection *c, /* for child */
 					 lset_t policy, int try,
-					 shunk_t sec_label,
 					 struct fd *whackfd)
 {
-	if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
-		/* create instance and switch to it */
-		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		c = instantiate(c, &remote_addr, NULL, sec_label);
-		/*
-		 * Since the newly instantiated connection has a
-		 * security label due to an `ACQUIRE` message from the
-		 * kernel, it is not a template connection.
-		 */
-		c->kind = CK_INSTANCE;
-	}
-
 	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_NEW_CHILD_I0,

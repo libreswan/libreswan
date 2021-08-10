@@ -278,10 +278,32 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 */
 					what = "delete from";
 				} else if (!already_has_larval_v2_child(ike, p->connection)) {
-					submit_v2_CREATE_CHILD_SA_new_child(ike,
-									    p->connection,
+					struct connection *cc;
+					if (p->connection->kind == CK_TEMPLATE &&
+					    p->sec_label.len > 0) {
+						/*
+						 * Create instance and
+						 * switch to it.
+						 *
+						 * Since the newly
+						 * instantiated
+						 * connection has a
+						 * security label due
+						 * to an `ACQUIRE`
+						 * message from the
+						 * kernel, it is not a
+						 * template
+						 * connection.
+						 */
+						ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+						cc = instantiate(p->connection, &remote_addr, NULL,
+								 p->sec_label);
+						cc->kind = CK_INSTANCE;
+					} else {
+						cc = p->connection;
+					}
+					submit_v2_CREATE_CHILD_SA_new_child(ike, cc,
 									    p->policy, p->try,
-									    p->sec_label,
 									    p->whack_sock);
 				}
 				break;
