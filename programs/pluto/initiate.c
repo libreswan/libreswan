@@ -299,10 +299,10 @@ void ipsecdoi_initiate(struct connection *c,
 				    replacing, sec_label);
 		} else {
 			/* leave our Phase 2 negotiation pending */
-			add_pending(whackfd, pexpect_ike_sa(st),
-				    c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
+			add_v1_pending(whackfd, pexpect_ike_sa(st),
+				       c, policy, try,
+				       replacing, sec_label,
+				       false /*part of initiate*/);
 		}
 		break;
 	}
@@ -327,10 +327,10 @@ void ipsecdoi_initiate(struct connection *c,
 						sec_label, background, logger);
 		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
-			add_pending(background ? null_fd : logger->global_whackfd,
-				    ike, c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
+			add_v2_pending(background ? null_fd : logger->global_whackfd,
+				       ike, c, policy, try,
+				       replacing, sec_label,
+				       false /*part of initiate*/);
 		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;

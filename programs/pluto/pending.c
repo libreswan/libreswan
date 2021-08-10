@@ -57,14 +57,15 @@
  * queue an IPsec SA negotiation pending completion of a
  * suitable phase 1 (IKE SA)
  */
-void add_pending(struct fd *whack_sock,
-		 struct ike_sa *ike,
-		 struct connection *c,
-		 lset_t policy,
-		 unsigned long try,
-		 so_serial_t replacing,
-		 const shunk_t sec_label,
-		 bool part_of_initiate)
+
+static void add_pending(struct fd *whack_sock,
+			struct ike_sa *ike,
+			struct connection *c,
+			lset_t policy,
+			unsigned long try,
+			so_serial_t replacing,
+			const shunk_t sec_label,
+			bool part_of_initiate)
 {
 	/* look for duplicate pending IPsec SA's, skip add operation */
 	struct pending **pp = host_pair_first_pending(c);
@@ -113,6 +114,32 @@ void add_pending(struct fd *whack_sock,
 			    ipstr(&c->spd.that.host_addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
+}
+
+void add_v1_pending(struct fd *whackfd,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    const shunk_t sec_label,
+		    bool part_of_initiate)
+{
+	passert(ike->sa.st_ike_version == IKEv1);
+	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
+}
+
+void add_v2_pending(struct fd *whackfd,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    const shunk_t sec_label,
+		    bool part_of_initiate)
+{
+	passert(ike->sa.st_ike_version == IKEv2);
+	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
 }
 
 /*

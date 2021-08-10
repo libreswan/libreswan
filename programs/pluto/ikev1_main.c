@@ -122,10 +122,10 @@ void main_outI1(struct fd *whack_sock,
 	change_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {
-		add_pending(whack_sock, ike, c, policy, 1,
-			    predecessor == NULL ?
-			    SOS_NOBODY : predecessor->st_serialno,
-			    sec_label, true /* part of initiate */);
+		add_v1_pending(whack_sock, ike, c, policy, 1,
+			       predecessor == NULL ?
+			       SOS_NOBODY : predecessor->st_serialno,
+			       sec_label, true /* part of initiate */);
 	}
 
 	if (predecessor == NULL) {

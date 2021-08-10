@@ -996,9 +996,9 @@ void aggr_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
-		add_pending(whack_sock, ike, c, policy, 1,
-			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    sec_label, true /*part of initiate*/);
+		add_v1_pending(whack_sock, ike, c, policy, 1,
+			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+			       sec_label, true /*part of initiate*/);
 
 	if (predecessor == NULL) {
 		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");

@@ -575,18 +575,18 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		 * not a template connection.
 		 */
 		d->kind = CK_INSTANCE;
-		add_pending(background ? null_fd : ike->sa.st_logger->global_whackfd, ike, d, policy, 1,
-			    /*predecessor*/SOS_NOBODY,
-			    sec_label, true /*part of initiate*/);
+		add_v2_pending(background ? null_fd : ike->sa.st_logger->global_whackfd, ike, d, policy, 1,
+			       /*predecessor*/SOS_NOBODY,
+			       sec_label, true /*part of initiate*/);
 		connection_buf db;
 		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
 		    pri_connection(d, &db), pri_shunk(sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
-		add_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
-			    predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
-			    sec_label, true /*part of initiate*/);
+		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
+			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
+			       sec_label, true /*part of initiate*/);
 	}
 
 	/*
