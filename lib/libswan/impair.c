@@ -174,7 +174,7 @@ struct impairment impairments[] = {
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
 	A("drop-incoming", IMPAIR_DROP_INCOMING, 0, "drop the N'th incoming message", "message number"),
-	A("drop-outgoing", IMPAIR_DROP_INCOMING, 0, "drop the N'th outgoing message", "message number"),
+	A("drop-outgoing", IMPAIR_DROP_OUTGOING, 0, "drop the N'th outgoing message", "message number"),
 
 	V("add-unknown-v2-payload-to", add_unknown_v2_payload_to,
 	  "impair the (unencrypted) part of the exchange",
