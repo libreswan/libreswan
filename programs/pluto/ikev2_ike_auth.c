@@ -1102,7 +1102,6 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * ikev2_ike_sa_established().
 	 */
 	c->newest_ike_sa = ike->sa.st_serialno;
-	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);

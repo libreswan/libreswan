@@ -135,7 +135,7 @@ diag_t v2_authsig_and_log_using_ECDSA_pubkey(struct ike_sa *ike,
 
 extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 
-void v2_schedule_replace_event(struct state *st);
+void schedule_v2_replace_event(struct state *st);
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 

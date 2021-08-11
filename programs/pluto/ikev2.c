@@ -2550,7 +2550,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			break;
 
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-			v2_schedule_replace_event(st);
+			schedule_v2_replace_event(st);
 			break;
 
 		case EVENT_SA_DISCARD:

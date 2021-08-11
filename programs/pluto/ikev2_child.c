@@ -814,7 +814,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 		jam_v2_child_details(buf, &child->sa);
 	}
 
-	v2_schedule_replace_event(&child->sa);
+	schedule_v2_replace_event(&child->sa);
 
 	/*
 	 * start liveness checks if set, making sure we only schedule

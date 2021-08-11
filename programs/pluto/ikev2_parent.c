@@ -213,7 +213,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 */
 	change_state(&ike->sa, new_state);
 	c->newest_ike_sa = ike->sa.st_serialno;
-	v2_schedule_replace_event(&ike->sa);
 	ike->sa.st_viable_parent = TRUE;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);
@@ -490,7 +489,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	return false;
 }
 
-void v2_schedule_replace_event(struct state *st)
+void schedule_v2_replace_event(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
