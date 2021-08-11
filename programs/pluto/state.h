@@ -602,7 +602,6 @@ struct state {
 	 * scratch.
 	 */
 	deltatime_t st_replace_margin;
-	monotime_t st_replace_by;
 
 	unsigned long st_outbound_count;	/* traffic through eroute */
 	monotime_t st_outbound_time;	/* time of last change to
@@ -716,6 +715,7 @@ struct state {
 	monotime_t st_v2_last_liveness;			/* Time of last v2 informational (0 means never?) */
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
+	struct state_event *st_v2_rekey_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

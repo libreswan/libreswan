@@ -994,9 +994,10 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_intermediate_packet_peer);
 
 	event_delete(EVENT_DPD, st);
-	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
+	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v2_ADDR_CHANGE, st);
+	event_delete(EVENT_v2_REKEY, st);
 
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
@@ -1955,16 +1956,32 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		jam(buf, " %s (%s)", st->st_state->name, st->st_state->story);
 
 		/*
-		 * Hunt and peck for an event?  Should it show the first?
+		 * Hunt and peck for events (needs fixing).
 		 *
-		 * Should this sort the events?
+		 * XXX: use two loops as a hack to avoid short term
+		 * output churn.  This entire function needs an
+		 * update, start listing all events then.
+		 *
+		 * Should sort the events in time order.
+		 *
 		 */
-		FOR_EACH_THING(liveness, st->st_retransmit_event, st->st_event) {
+		FOR_EACH_THING(liveness, st->st_retransmit_event, NULL) {
+			/* show all */
 			if (liveness != NULL) {
 				jam(buf, "; ");
 				jam_enum_short(buf, &event_type_names, liveness->ev_type);
 				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
 				jam(buf, " in %jds", delta);
+			}
+		}
+		FOR_EACH_THING(liveness, st->st_v2_rekey_event, st->st_event) {
+			/* show first */
+			if (liveness != NULL) {
+				jam(buf, "; ");
+				jam_enum_short(buf, &event_type_names, liveness->ev_type);
+				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
+				jam(buf, " in %jds", delta);
+				break;
 			}
 		}
 

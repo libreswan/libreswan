@@ -495,35 +495,29 @@ void schedule_v2_replace_event(struct state *st)
 	/* unwrapped deltatime_t in seconds */
 	intmax_t delay = deltasecs(IS_IKE_SA(st) ? c->sa_ike_life_seconds
 				   : c->sa_ipsec_life_seconds);
-	st->st_replace_by = monotime_add(mononow(), deltatime(delay));
-
-	/*
-	 * Important policy lies buried here.  For example, we favour
-	 * the initiator over the responder by making the initiator
-	 * start rekeying sooner.  Also, fuzz is only added to the
-	 * initiator's margin.
-	 */
 
 	enum event_type kind;
 	const char *story;
-	intmax_t marg;
 	if ((c->policy & POLICY_OPPORTUNISTIC) &&
 	    st->st_connection->spd.that.has_lease) {
-		marg = 0;
 		kind = EVENT_SA_EXPIRE;
 		story = "always expire opportunistic SA with lease";
 	} else if (c->policy & POLICY_DONT_REKEY) {
-		marg = 0;
 		kind = EVENT_SA_EXPIRE;
 		story = "policy doesn't allow re-key";
 	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {
-		marg = 0;
 		kind = EVENT_SA_REPLACE;
 		story = "IKE SA with policy re-authenticate";
 	} else {
-		/* unwrapped deltatime_t in seconds */
-		marg = deltasecs(c->sa_rekey_margin);
-
+		/*
+		 * Important policy lies buried here.  For example, we
+		 * favour the initiator over the responder by making
+		 * the initiator start rekeying sooner.  Also, fuzz is
+		 * only added to the initiator's margin.
+		 *
+		 * Unwrapped deltatime_t is in seconds.
+		 */
+		intmax_t marg = deltasecs(c->sa_rekey_margin);
 		switch (st->st_sa_role) {
 		case SA_INITIATOR:
 			marg += marg *
@@ -537,29 +531,28 @@ void schedule_v2_replace_event(struct state *st)
 			bad_case(st->st_sa_role);
 		}
 
-		if (delay > marg) {
-			delay -= marg;
-			kind = EVENT_v2_REKEY;
+		intmax_t rekey_delay = delay - marg;
+
+		if (rekey_delay > 0) {
+			dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
+			    st->st_serialno, rekey_delay, delay);
+			event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
 			story = "attempting re-key";
 		} else {
-			marg = 0;
-			kind = EVENT_SA_REPLACE;
 			story = "margin to small for re-key";
 		}
+
+		kind = EVENT_SA_REPLACE;
 	}
 
-	st->st_replace_margin = deltatime(marg);
-	if (marg > 0) {
-		passert(kind == EVENT_v2_REKEY);
-		dbg("#%lu will start re-keying in %jd seconds with margin of %jd seconds (%s)",
-		    st->st_serialno, delay, marg, story);
-	} else {
-		passert(kind == EVENT_SA_REPLACE || kind == EVENT_SA_EXPIRE);
-		dbg("#%lu will %s in %jd seconds (%s)",
-		    st->st_serialno,
-		    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
-		    delay, story);
-	}
+	/*
+	 * This is the drop-dead event.
+	 */
+	passert(kind == EVENT_SA_REPLACE || kind == EVENT_SA_EXPIRE);
+	dbg("#%lu will %s in %jd seconds (%s)",
+	    st->st_serialno,
+	    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
+	    delay, story);
 
 	delete_event(st);
 	event_schedule(kind, deltatime(delay), st);
@@ -567,8 +560,6 @@ void schedule_v2_replace_event(struct state *st)
 
 void v2_event_sa_rekey(struct state *st)
 {
-	monotime_t now = mononow();
-
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/*
@@ -602,12 +593,6 @@ void v2_event_sa_rekey(struct state *st)
 		return;
 	}
 
-	deltatime_t replace_in = monotimediff(st->st_replace_by, now);
-	if (deltatime_cmp(replace_in, <, deltatime_zero)) {
-		dbg("%s SA #%lu has no time to re-key, will replace", satype, st->st_serialno);
-		event_force(EVENT_SA_REPLACE, st);
-	}
-
 	struct child_sa *larval_sa;
 	if (IS_IKE_SA(st)) {
 		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
@@ -618,20 +603,6 @@ void v2_event_sa_rekey(struct state *st)
 	llog_sa(RC_LOG, larval_sa,
 		"initiating rekey to replace %s SA #%lu",
 		satype, st->st_serialno);
-
-
-	/*
-	 * Should the rekey go into the weeds this replace will kick
-	 * in.
-	 *
-	 * XXX: should the next event be SA_EXPIRE instead of
-	 * SA_REPLACE?  For an IKE SA it breaks ikev2-32-nat-rw-rekey.
-	 * For a CHILD SA perhaps - there is a mystery around what
-	 * happens to the new child if the old one disappears.
-	 */
-	dbg("scheduling drop-dead replace event for %s SA #%lu", satype, st->st_serialno);
-	event_delete(EVENT_v2_LIVENESS, st);
-	event_schedule(EVENT_SA_REPLACE, replace_in, st);
 }
 
 void v2_event_sa_replace(struct state *st)

@@ -89,6 +89,10 @@ struct state_event **state_event(struct state *st, enum event_type type)
 		return &st->st_v2_addr_change_event;
 		break;
 
+	case EVENT_v2_REKEY:
+		return &st->st_v2_rekey_event;
+		break;
+
 	case EVENT_DPD:
 	case EVENT_DPD_TIMEOUT:
 		return &st->st_dpd_event;
@@ -102,7 +106,6 @@ struct state_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
-	case EVENT_v2_REKEY:
 	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
