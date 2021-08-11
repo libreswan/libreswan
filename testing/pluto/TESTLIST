@@ -863,7 +863,7 @@ kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 kvmplutotest	ikev1-rw-multiple-subnets			good
-kvmplutotest	ikev1-rw-multiple-subnets-split			wip
+kvmplutotest	ikev1-rw-multiple-subnets-split			good
 kvmplutotest	ikev2-rw-multiple-subnets			good
 kvmplutotest	ikev2-rw-multiple-subnets-split			wip
 kvmplutotest	ikev2-rw-multiple-subnets-2			good
