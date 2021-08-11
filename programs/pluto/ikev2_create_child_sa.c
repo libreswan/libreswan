@@ -1472,8 +1472,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 }
 
 stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
-                                                struct child_sa *child,
-                                                struct msg_digest *md UNUSED)
+						       struct child_sa *child,
+						       struct msg_digest *md UNUSED)
 {
 	passert(ike != NULL);
 	passert(child != NULL);
@@ -1487,13 +1487,12 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				"CREATE_CHILD_SA failed with error notification %s",
 				name);
-			// re-add child to pending queue with exponential back-off
+			dbg("re-add child to pending queue with exponential back-off?");
 			break;
 		}
 	}
 	return STF_FAIL;
 }
-
