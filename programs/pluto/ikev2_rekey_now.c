@@ -39,7 +39,7 @@ static void rekey_state(struct state *st, bool background, struct logger *logger
 		close_any(&st->st_logger->object_whackfd);
 		st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 	}
-	event_force(EVENT_SA_REKEY, st);
+	event_force(EVENT_v2_REKEY, st);
 }
 
 static int rekey_connection_now(struct connection *c,

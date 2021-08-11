@@ -130,7 +130,6 @@ static const enum_names event_names = {
 static const char *const event_sa_name[] = {
 #define E(EVENT) [EVENT - EVENT_SA_DISCARD] = #EVENT
 	E(EVENT_SA_DISCARD),
-	E(EVENT_SA_REKEY),
 	E(EVENT_SA_REPLACE),
 	E(EVENT_SA_EXPIRE),
 #undef E
@@ -158,7 +157,8 @@ static const enum_names event_v1_names = {
 };
 
 static const char *const event_v2_name[] = {
-#define E(EVENT) [EVENT - EVENT_v2_LIVENESS] = #EVENT
+#define E(EVENT) [EVENT - EVENT_v2_REKEY] = #EVENT
+	E(EVENT_v2_REKEY),
 	E(EVENT_v2_LIVENESS),
 	E(EVENT_v2_ADDR_CHANGE),
 	E(EVENT_v2_REDIRECT),
@@ -166,7 +166,7 @@ static const char *const event_v2_name[] = {
 };
 
 static const enum_names event_v2_names = {
-	EVENT_v2_LIVENESS, EVENT_v2_REDIRECT,
+	EVENT_v2_REKEY, EVENT_v2_REDIRECT,
 	ARRAY_REF(event_v2_name),
 	"EVENT_v2_", /* prefix */
 	&event_v1_names,
