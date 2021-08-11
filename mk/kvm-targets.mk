@@ -40,7 +40,8 @@ KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
-KVM_LOCALDIR ?= $(KVM_POOLDIR)
+#KVM_LOCALDIR ?= $(KVM_POOLDIR)
+KVM_LOCALDIR ?= /tmp/pool
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
 KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')

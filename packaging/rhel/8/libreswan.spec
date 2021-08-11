@@ -27,7 +27,7 @@
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
-    USE_NSS_KDF=true \\\
+    USE_NSS_KDF=false \\\
     USE_SECCOMP=true \\\
     USE_AUTHPAM=true \\\
 %{nil}

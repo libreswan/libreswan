@@ -136,6 +136,7 @@ git-rpm:
 	sed  -e "s/^Version:.*/Version: $(MAIN_RPM_VERSION)/g" \
 	     -e "s/^#global prever.*/%global prever $(MAIN_RPM_PREVER)/" \
 	     -e "s/^Release:.*/Release: 0.$(MAIN_RPM_PREVER)/" \
+	     -e "s/%{version}%{?prever}/$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)/g" \
 		$(MAIN_RPM_SPECFILE) > ~/rpmbuild/SPECS/libreswan.spec
 	mkdir -p ~/rpmbuild/SOURCES
 	git archive --format=tar --prefix=libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)/ \

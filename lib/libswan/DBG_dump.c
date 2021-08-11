@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "lswlog.h"
+#include "lswalloc.h"
 
 /*
  * dump raw bytes; when LABEL is non-NULL prefix the dump with a log
@@ -33,6 +34,7 @@
 
 void DBG_dump(const char *label, const void *p, size_t len)
 {
+	size_t const init_len = len;
 	if (label != NULL) {
 		DBG_log("%s", label);
 	}
@@ -64,4 +66,24 @@ void DBG_dump(const char *label, const void *p, size_t len)
 		passert(sp <= str + elemsof(str));
 		DBG_log("%-*s   %s", (int)sizeof(hex)-1, hex, str);
 	} while (len != 0);
+
+	if (label == NULL) {
+		return;
+	}
+
+	const char *ch = p;
+	for (size_t i = 0; i < init_len; i++) {
+		if (*ch == '\0') {
+			break;
+		}
+		if ((*ch < ' ') || (*ch > '~')) {
+			return;
+		}
+		++ch;
+	}
+
+	char* buf = alloc_bytes(init_len + 1, "dump buf");
+	snprintf(buf, init_len + 1, "%s", (const char*)p);
+	DBG_log("%s = %s\n", label, buf);
+	pfree(buf);
 }
