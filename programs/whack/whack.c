@@ -193,7 +193,7 @@ static void help(void)
 		"	--ddos-auto)\n"
 		"\n"
 		"list: whack [--utc] [--checkpubkeys] [--listpubkeys] [--listcerts] \\\n"
-		"	[--listcacerts] [--listcrls] [--listpsks] [--listall]\n"
+		"	[--listcacerts] [--listcrls] [--listpsks] [--listevents] [--listall]\n"
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
