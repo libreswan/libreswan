@@ -123,6 +123,8 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      enum isakmp_xchg_type ix,
 			      const struct v2_state_transition *transition);
 
+void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to);
+
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);

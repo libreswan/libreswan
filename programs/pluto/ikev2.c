@@ -2253,6 +2253,9 @@ static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 	/* TO has correct IKE_SPI so can migrate */
 	v2_migrate_children(from, to);
 
+	dbg("moving over any pending requests");
+	v2_msgid_migrate_queue(from, to);
+
 	/* child is now a parent */
 	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa),
 				 transition, transition->next_state);
@@ -2288,7 +2291,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	dbg("Message ID: updating counters for #%lu", st->st_serialno);
 	v2_msgid_update_recv(ike, st, md);
 	v2_msgid_update_sent(ike, st, md, transition->send);
-	v2_msgid_schedule_next_initiator(ike);
 
 	bool established_before = (IS_IKE_SA_ESTABLISHED(st) ||
 				   IS_CHILD_SA_ESTABLISHED(st));
@@ -2297,8 +2299,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	    from_state == STATE_V2_REKEY_IKE_I1) {
 		ikev2_child_emancipate(ike, pexpect_child_sa(st),
 				       transition);
+		/* Emancipated ST answers to no one - it's an IKE SA */
+		v2_msgid_schedule_next_initiator(pexpect_ike_sa(st));
 	} else {
 		change_state(st, transition->next_state);
+		v2_msgid_schedule_next_initiator(ike);
 	}
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
 	passert(st->st_state->kind <  STATE_IKEv2_ROOF);

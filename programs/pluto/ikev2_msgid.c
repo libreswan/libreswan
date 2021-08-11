@@ -532,6 +532,13 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	v2_msgid_schedule_next_initiator(ike);
 }
 
+void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to)
+{
+	pexpect(to->sa.st_v2_msgid_windows.initiator.pending == NULL);
+	to->sa.st_v2_msgid_windows.initiator.pending = from->sa.st_v2_msgid_windows.initiator.pending;
+	from->sa.st_v2_msgid_windows.initiator.pending = NULL;
+}
+
 static void initiate_next(struct state *ike_sa, void *context UNUSED)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);

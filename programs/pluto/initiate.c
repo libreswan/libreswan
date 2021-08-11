@@ -311,17 +311,25 @@ void ipsecdoi_initiate(struct connection *c,
 	{
 		/*
 		 * If there's already an IKEv2 IKE SA established, use
-		 * that and go directly to Quick Mode.  We are even
-		 * willing to use one that is still being negotiated,
-		 * but only if we are the Initiator (thus we can be
-		 * sure that the IDs are not going to change; other
-		 * issues around intent might matter).  Note: there is
-		 * no way to initiate with a Road Warrior.
+		 * that and go directly to a CHILD exchange.
+		 *
+		 * We are even willing to use one that is still being
+		 * established, but only if we are the Initiator (thus
+		 * we can be sure that the IDs are not going to
+		 * change; other issues around intent might matter).
+		 * Note: there is no way to initiate with a Road
+		 * Warrior.
 		 */
 		struct ike_sa *ike =
 			pexpect_ike_sa(find_phase1_state(c,
 							 LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
 							 IKEV2_ISAKMP_INITIATOR_STATES));
+		if (ike != NULL) {
+			dbg("found #%lu in state %s established=%s viable=%s",
+			    ike->sa.st_serialno, ike->sa.st_state->name,
+			    bool_str(IS_IKE_SA_ESTABLISHED(&ike->sa)),
+			    bool_str(ike->sa.st_viable_parent));
+		}
 		if (ike == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
 						sec_label, background, logger);
