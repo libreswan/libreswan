@@ -2857,8 +2857,8 @@ void complete_v2_state_transition(struct state *st,
 			  transition->story);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
-			v2_msgid_schedule_next_initiator(ike);
 			v2_msgid_update_recv(ike, st, md);
+			v2_msgid_schedule_next_initiator(ike);
 			break;
 		case MESSAGE_REQUEST:
 			dbg("Message ID: responding with recorded error");
