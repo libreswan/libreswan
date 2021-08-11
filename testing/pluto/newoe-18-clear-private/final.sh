@@ -1,3 +1,3 @@
 ../../guestbin/ipsec-look.sh
 # should not show any hits
-grep "negotiated connection" /tmp/pluto.log
+grep "^[^|].*: established Child SA" /tmp/pluto.log

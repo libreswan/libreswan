@@ -57,14 +57,15 @@
  * queue an IPsec SA negotiation pending completion of a
  * suitable phase 1 (IKE SA)
  */
-void add_pending(struct fd *whack_sock,
-		 struct ike_sa *ike,
-		 struct connection *c,
-		 lset_t policy,
-		 unsigned long try,
-		 so_serial_t replacing,
-		 const shunk_t sec_label,
-		 bool part_of_initiate)
+
+static void add_pending(struct fd *whack_sock,
+			struct ike_sa *ike,
+			struct connection *c,
+			lset_t policy,
+			unsigned long try,
+			so_serial_t replacing,
+			const shunk_t sec_label,
+			bool part_of_initiate)
 {
 	/* look for duplicate pending IPsec SA's, skip add operation */
 	struct pending **pp = host_pair_first_pending(c);
@@ -113,6 +114,51 @@ void add_pending(struct fd *whack_sock,
 			    ipstr(&c->spd.that.host_addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
+}
+
+void add_v1_pending(struct fd *whackfd,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    const shunk_t sec_label,
+		    bool part_of_initiate)
+{
+	passert(ike->sa.st_ike_version == IKEv1);
+	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
+}
+
+void add_v2_pending(struct fd *whackfd,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    const shunk_t sec_label,
+		    bool part_of_initiate)
+{
+	passert(ike->sa.st_ike_version == IKEv2);
+	if (c->config->sec_label.len > 0 || sec_label.len > 0) {
+		/*
+		 * Convert the template connection into a connection
+		 * instance that contains the sec_label, and toss that
+		 * onto the pending queue.
+		 */
+		if (!pexpect(c->kind == CK_TEMPLATE) ||
+		    !pexpect(c->config->sec_label.len > 0) ||
+		    !pexpect(sec_label.len > 0)) {
+			return;
+		}
+		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
+		struct connection *d = instantiate(c, &remote_address, /*peer_id*/NULL, sec_label);
+		d->kind = CK_INSTANCE;
+		connection_buf db;
+		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
+		    pri_connection(d, &db), pri_shunk(sec_label));
+		c = d;
+	}
+	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
 }
 
 /*
@@ -278,10 +324,8 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					 */
 					what = "delete from";
 				} else if (!already_has_larval_v2_child(ike, p->connection)) {
-					submit_v2_CREATE_CHILD_SA_new_child(ike,
-									    p->connection,
+					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
 									    p->policy, p->try,
-									    p->sec_label,
 									    p->whack_sock);
 				}
 				break;

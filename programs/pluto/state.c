@@ -1262,42 +1262,6 @@ bool shared_phase1_connection(const struct connection *c)
 	return FALSE;
 }
 
-bool v2_child_connection_probably_shared(struct child_sa *child)
-{
-	struct connection *c = child->sa.st_connection;
-
-	if (connection_is_pending(c)) {
-		dbg("#%lu connection is also pending; but what about pending for this state???",
-		    child->sa.st_serialno);
-		return true;
-	}
-
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct ike_sa *ike = ike_sa(&child->sa, HERE);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		if (st->st_connection != c) {
-			continue;
-		}
-		if (st == &child->sa) {
-			dbg("ignoring ourselves #%lu sharing connection %s",
-			    st->st_serialno, c->name);
-			continue;
-		}
-		if (st == &ike->sa) {
-			dbg("ignoring IKE SA #%lu sharing connection %s with #%lu",
-			    st->st_serialno, c->name, child->sa.st_serialno);
-			continue;
-		}
-		dbg("#%lu and #%lu share connection %s",
-		    child->sa.st_serialno, st->st_serialno,
-		    c->name);
-		return true;
-	}
-
-	return false;
-}
-
 /*
  * delete all states that were created for a given connection,
  * additionally delete any states for which func(st, c)
@@ -2032,8 +1996,8 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				struct state *pst = state_with_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					jam(buf, "; lastlive=%jds",
-					    !is_monotime_epoch(pst->st_last_liveness) ?
-					    deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+					    !is_monotime_epoch(pst->st_v2_last_liveness) ?
+					    deltasecs(monotimediff(mononow(), pst->st_v2_last_liveness)) :
 					    0);
 				}
 			}
@@ -2601,7 +2565,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	pexpect_st_local_endpoint(&child->sa);
 
 	/* reset liveness */
-	ike->sa.st_last_liveness = monotime_epoch;
+	ike->sa.st_v2_last_liveness = monotime_epoch;
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c, ike->sa.st_logger)) {
@@ -2616,7 +2580,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		migration_up(child->sa.st_connection, &child->sa);
 		ike->sa.st_deleted_local_addr = ipv4_info.address.any;
 		child->sa.st_deleted_local_addr = ipv4_info.address.any;
-		if (dpd_active_locally(&child->sa) && child->sa.st_liveness_event == NULL) {
+		if (dpd_active_locally(&child->sa) && child->sa.st_v2_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
@@ -3005,9 +2969,9 @@ void list_state_events(struct show *s, monotime_t now)
 	struct state *st = NULL;
 	FOR_EACH_STATE_OLD2NEW(st) {
 		list_state_event(s, st, st->st_event, now);
-		list_state_event(s, st, st->st_liveness_event, now);
-		list_state_event(s, st, st->st_send_xauth_event, now);
-		list_state_event(s, st, st->st_addr_change_event, now);
+		list_state_event(s, st, st->st_v2_liveness_event, now);
+		list_state_event(s, st, st->st_v1_send_xauth_event, now);
+		list_state_event(s, st, st->st_v2_addr_change_event, now);
 		list_state_event(s, st, st->st_dpd_event, now);
 	}
 }

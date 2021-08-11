@@ -16,7 +16,7 @@ east #
 east #
  # ESP should not show TFC
 east #
- grep " IPsec SA established tunnel mode" /tmp/pluto.log
-"tfc" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
+"tfc" #2: established Child SA; IPsec tunnel [192.0.2.0-192.0.2.255:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 east #
  

@@ -25,9 +25,9 @@ west #
  echo "initdone"
 initdone
 west #
- # ike fail tests
+ # IKEv1 fail tests
 west #
- ipsec auto --up ikev1-failtest #retransmits
+ ipsec auto --up ikev1-failtest # sanitze-retransmits
 002 "ikev1-failtest" #1: initiating IKEv1 Main Mode connection
 1v1 "ikev1-failtest" #1: sent Main Mode request
 003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
@@ -42,7 +42,7 @@ west #
 002 "ikev1-failtest": terminating SAs using this connection
 002 "ikev1-failtest" #2: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
- ipsec auto --up ikev1-aggr-failtest #retransmits
+ ipsec auto --up ikev1-aggr-failtest # sanitize-retransmits
 002 "ikev1-aggr-failtest" #3: initiating IKEv1 Aggressive Mode connection
 1v1 "ikev1-aggr-failtest" #3: sent Aggressive Mode request
 002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
@@ -56,7 +56,9 @@ west #
 002 "ikev1-aggr-failtest": terminating SAs using this connection
 002 "ikev1-aggr-failtest" #4: deleting state (STATE_AGGR_I1) and NOT sending notification
 west #
- ipsec auto --up ikev2-failtest #retransmits
+ # IKEv2 fail tests
+west #
+ ipsec auto --up ikev2-failtest # sanitize-retransmits
 1v2 "ikev2-failtest" #5: initiating IKEv2 connection
 1v2 "ikev2-failtest" #5: sent IKE_SA_INIT request
 1v2 "ikev2-failtest" #5: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -67,7 +69,7 @@ west #
 west #
  ipsec auto --delete ikev2-failtest
 002 "ikev2-failtest": terminating SAs using this connection
-002 "ikev2-failtest" #7: deleting state (STATE_PARENT_I2) and NOT sending notification
+002 "ikev2-failtest" #7: deleting state (STATE_PARENT_I1) and NOT sending notification
 west #
  echo done
 done

@@ -48,14 +48,23 @@ struct pending {
 	struct pending *next;
 };
 
-void add_pending(struct fd *whack_sock,
-		 struct ike_sa *ike,
-		 struct connection *c,
-		 lset_t policy,
-		 unsigned long try,
-		 so_serial_t replacing,
-		 shunk_t sec_label,
-		 bool part_of_initiate);
+void add_v1_pending(struct fd *whack_sock,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    shunk_t sec_label,
+		    bool part_of_initiate);
+
+void add_v2_pending(struct fd *whack_sock,
+		    struct ike_sa *ike,
+		    struct connection *c,
+		    lset_t policy,
+		    unsigned long try,
+		    so_serial_t replacing,
+		    shunk_t sec_label,
+		    bool part_of_initiate);
 
 void unpend(struct ike_sa *ike, struct connection *cc);
 void release_pending_whacks(struct state *st, err_t story);

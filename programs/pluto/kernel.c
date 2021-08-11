@@ -89,7 +89,8 @@ static bool route_and_eroute(struct connection *c,
 			     /* st or c */
 			     struct logger *logger);
 
-extern bool eroute_connection(const struct spd_route *sr,
+static bool eroute_connection(enum kernel_policy_op op, const char *opname,
+			      const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
 			      const struct kernel_route *route,
@@ -98,7 +99,7 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
-			      unsigned int op, const char *opname,
+			      shunk_t sec_label,
 			      struct logger *logger);
 
 bool can_do_IPcomp = true;  /* can system actually perform IPCOMP? */
@@ -1016,12 +1017,13 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 static enum routability could_route(struct connection *c, struct logger *logger)
 {
 	esb_buf b;
-	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u",
+	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
 	    c->name,
 	    enum_show(&connection_kind_names, c->kind, &b),
 	    bool_str(c->spd.that.has_client),
 	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	    c->spd.this.host_port);
+	    c->spd.this.host_port,
+	    pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
@@ -1038,13 +1040,14 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_unnecessary;
 
 	/*
-	 * if this is a template connection, we cannot route.
-	 * Opportunistic template is OK. also labels
+	 * If this is a template connection, we cannot route.
+	 * However, opportunistic and sec_label templates can be
+	 * routed (as in install the policy).
 	 */
 	if (!c->spd.that.has_client &&
 	    c->kind == CK_TEMPLATE &&
 	    !(c->policy & POLICY_OPPORTUNISTIC) &&
-	    c->spd.this.sec_label.len == 0) {
+	    c->config->sec_label.len == 0) {
 		policy_buf pb;
 		llog(RC_ROUTE, logger,
 		     "cannot route template policy of %s",
@@ -1118,7 +1121,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		 * other than c, conflicts with c?
 		 */
 
-		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->spd.this.sec_label.len == 0) {
+		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->config->sec_label.len == 0) {
 			/*
 			 * another connection is already using the eroute,
 			 * TODO: XFRM apparently can do this though
@@ -1147,7 +1150,7 @@ bool trap_connection(struct connection *c)
 
 	case route_easy:
 	case route_nearconflict:
-		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+		if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
 			/*
 			 * IKEv2 security labels are treated
 			 * specially: this allocates and installs a
@@ -1217,7 +1220,15 @@ bool shunt_policy(enum kernel_policy_op op,
 		jam_selector(buf, &sr->that.client);
 
 		jam(buf, " sec_label=");
-		jam_sanitized_hunk(buf, sr->this.sec_label);
+		if (sr->this.sec_label.len > 0) {
+			jam_sanitized_hunk(buf, sr->this.sec_label);
+			jam(buf, " (this)");
+#if 0
+		} else if (c->config->sec_label.len > 0) {
+			jam_sanitized_hunk(buf, c->config->sec_label);
+			jam(buf, " (config)");
+#endif
+		}
 	}
 
 	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind, what, logger);
@@ -1251,10 +1262,12 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
+	return eroute_connection(op, why, sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
 				 &route, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, FALSE), &c->sa_marks,
-				 xfrm_if_id, op, why, st->st_logger);
+				 xfrm_if_id,
+				 HUNK_AS_SHUNK(c->config->sec_label),
+				 st->st_logger);
 }
 
 void migration_up(struct connection *c,  struct state *st)
@@ -1528,12 +1541,14 @@ bool delete_bare_shunt(const ip_address *src_address,
 bool install_se_connection_policies(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
-	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s",
+	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
 	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
 	    pri_connection(c, &cb),
-	    enum_name(&routing_story, c->spd.routing));
+	    enum_name(&routing_story, c->spd.routing),
+	    pri_shunk(c->config->sec_label));
 
-	if (!pexpect(c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) ||
+	if (!pexpect(c->ike_version == IKEv2) ||
+	    !pexpect(c->config->sec_label.len > 0) ||
 	    !pexpect(c->kind == CK_TEMPLATE)) {
 		return false;
 	}
@@ -1571,7 +1586,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				/*sa_priority*/priority,
 				/*sa_marks*/NULL,
 				/*xfrm_if_id*/0,
-				/*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
 			if (inbound) {
@@ -1597,7 +1612,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 					   /*sa_priority*/priority,
 					   /*sa_marks*/NULL,
 					   /*xfrm_if_id*/0,
-					   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+					   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 					   /*logger*/logger,
 					   "%s() security label policy", __func__);
 			}
@@ -1633,7 +1648,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				   /*sa_priority*/priority,
 				   /*sa_marks*/NULL,
 				   /*xfrm_if_id*/0,
-				   /*sec_label*/HUNK_AS_SHUNK(c->spd.this.sec_label),
+				   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				   /*logger*/logger,
 				   "%s() security label policy", __func__);
 		}
@@ -1645,7 +1660,8 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 	return true;
 }
 
-bool eroute_connection(const struct spd_route *sr,
+bool eroute_connection(enum kernel_policy_op op, const char *opname,
+		       const struct spd_route *sr,
 		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
 		       const struct kernel_route *route,
@@ -1654,8 +1670,7 @@ bool eroute_connection(const struct spd_route *sr,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
-		       enum kernel_policy_op op,
-		       const char *opname,
+		       shunk_t sec_label,
 		       struct logger *logger)
 {
 	if (sr->this.has_cat) {
@@ -1671,7 +1686,8 @@ bool eroute_connection(const struct spd_route *sr,
 				    deltatime(0),
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
-				    HUNK_AS_SHUNK(sr->this.sec_label), logger,
+				    sec_label,
+				    logger,
 				    "CAT: %s() %s", __func__, opname);
 		if (!t) {
 			llog(RC_LOG, logger,
@@ -1692,7 +1708,8 @@ bool eroute_connection(const struct spd_route *sr,
 			  deltatime(0),
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
-			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			  sec_label,
+			  logger,
 			  "%s() %s", __func__, opname);
 }
 
@@ -1782,15 +1799,15 @@ bool assign_holdpass(const struct connection *c,
 			 */
 			route.dst.host_addr = address_type(&route.dst.host_addr)->address.any;
 
-			if (eroute_connection(sr,
+			if (eroute_connection(op, reason,
+					      sr,
 					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(negotiation_shunt),
 					      &route, ET_INT,
 					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
-					      op,
-					      reason,
+					      HUNK_AS_SHUNK(c->config->sec_label),
 					      c->logger))
 			{
 				dbg("kernel: assign_holdpass() eroute_connection() done");
@@ -1947,7 +1964,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
-	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK,
+	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
 	    str_selector(said_boilerplate.src.client, &scb),
@@ -1957,7 +1974,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_selector(said_boilerplate.dst.client, &dcb),
-	    pri_shunk(said_boilerplate.sec_label));
+	    /* see above */
+	    pri_shunk(said_boilerplate.sec_label),
+	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
+	     st->st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
+	     c->spd.this.sec_label.len > 0 ? " (IKEv2 this)" :
+	     ""))
 
 	/* set up IPCOMP SA, if any */
 
@@ -2322,8 +2344,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
 	    __func__, inbound, c->spd.eroute_owner,
 	    encap_mode_name(encap.mode));
-	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    (c->ike_version != IKEv2 || c->spd.this.sec_label.len == 0)) {
+	if (inbound &&
+	    c->spd.eroute_owner == SOS_NOBODY &&
+	    (c->config->sec_label.len == 0 || c->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
@@ -2351,7 +2374,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				calculate_sa_prio(c, false),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
 				xfrm_if_id,
-				HUNK_AS_SHUNK(c->spd.this.sec_label), st->st_logger,
+				HUNK_AS_SHUNK(c->config->sec_label),
+				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
 			llog(RC_LOG, st->st_logger,
 			     "raw_policy() in setup_half_ipsec_sa() failed to add inbound");
@@ -2489,7 +2513,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
 			0, /* xfrm_if_id. needed to tear down? */
-			HUNK_AS_SHUNK(c->spd.this.sec_label), st->st_logger,
+			/*sec_label:always-null*/null_shunk,
+			st->st_logger,
 			"%s() teardown inbound Child SA", __func__)) {
 		llog(RC_LOG, st->st_logger,
 		     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");

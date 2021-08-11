@@ -222,7 +222,6 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 {
 	return (PICKLE_STRING(&end->leftright) &&
 		PICKLE_STRING(&end->id) &&
-		PICKLE_STRING(&end->sec_label) &&
 		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->rsasigkey) &&
 		PICKLE_STRING(&end->ckaid) &&
@@ -262,6 +261,7 @@ static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *p
 		PICKLE_STRING(&wp->msg->active_redirect_dests) &&
 		PICKLE_CHUNK(&wp->msg->keyval) &&
 		PICKLE_THINGS(&wp->msg->impairments, wp->msg->nr_impairments) &&
+		PICKLE_STRING(&wp->msg->sec_label) &&
 		true);
 }
 

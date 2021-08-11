@@ -53,9 +53,8 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-003 "westnet-eastnet-ikev2" #2: IKE_AUTH response contained the Child SA error notification TS_UNACCEPTABLE
-003 "westnet-eastnet-ikev2" #1: IKE SA established but responder rejected Child SA request
+003 "westnet-eastnet-ikev2" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "westnet-eastnet-ikev2" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  echo done
 done

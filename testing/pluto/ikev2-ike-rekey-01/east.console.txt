@@ -15,7 +15,7 @@ east #
 006 #2: "east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
 east #
  ipsec status |grep STATE_
-000 #2: "east":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
+000 #2: "east":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#4; idle;
 000 #4: "east":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
 east #
  

@@ -28,7 +28,7 @@ west #
 1v2 "labeled" #1: sent IKE_SA_INIT request
 002 "labeled" #1: omitting CHILD SA payloads
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "labeled" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 west #
  # expect policy but no states
 west #
@@ -98,9 +98,9 @@ west #
 west #
  ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
 west #
  ../../guestbin/ipsec-look.sh
@@ -194,11 +194,11 @@ west #
 west #
  ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=273B ESPmax=0B 
-000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #3: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #3: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=164B ESPout=0B ESPmax=0B 
-000 #4: "labeled"[3] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+000 #4: "labeled"[3] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
 000 #4: "labeled"[3] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=429B ESPmax=0B 
 west #
  ../../guestbin/ipsec-look.sh
@@ -325,8 +325,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  

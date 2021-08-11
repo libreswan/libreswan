@@ -246,7 +246,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	}
 
 	/* authenticated decrypted request - It's alive, alive! */
-	ike->sa.st_last_liveness = mononow();
+	ike->sa.st_v2_last_liveness = mononow();
 
 	return STF_OK;
 }
@@ -309,7 +309,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	}
 
 	/* authenticated decrypted response - It's alive, alive! */
-	ike->sa.st_last_liveness = mononow();
+	ike->sa.st_v2_last_liveness = mononow();
 
 	return STF_OK;
 }

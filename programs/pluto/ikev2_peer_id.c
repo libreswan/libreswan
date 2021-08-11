@@ -278,13 +278,11 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
 			remote_cert_matches_id = true;
+		} else if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			return diag_diag(&d, "X509: authentication failed; ");
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-				return diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
-			} else {
-				log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
-			}
+			log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
 		}
 	}
 

@@ -20,9 +20,8 @@ road #
 1v2 "road1" #1: initiating IKEv2 connection
 1v2 "road1" #1: sent IKE_SA_INIT request
 1v2 "road1" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road1" #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "road1" #2: negotiated connection [1.2.3.4-1.2.3.4:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+003 "road1" #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+004 "road1" #2: established Child SA; IPsec tunnel [1.2.3.4-1.2.3.4:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --impair send-no-delete
 road #
@@ -40,9 +39,8 @@ road #
 1v2 "road2" #1: initiating IKEv2 connection
 1v2 "road2" #1: sent IKE_SA_INIT request
 1v2 "road2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road2" #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-002 "road2" #2: negotiated connection [1.2.3.4-1.2.3.4:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "road2" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+003 "road2" #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+004 "road2" #2: established Child SA; IPsec tunnel [1.2.3.4-1.2.3.4:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  echo done
 done

@@ -78,30 +78,31 @@ struct state_event **state_event(struct state *st, enum event_type type)
 	 * XXX: why not just have an array and index it by KIND?
 	 */
 	switch (type) {
+
+	case EVENT_v1_SEND_XAUTH:
+		return &st->st_v1_send_xauth_event;
+
+	case EVENT_v2_LIVENESS:
+		return &st->st_v2_liveness_event;
+
 	case EVENT_v2_ADDR_CHANGE:
-		return &st->st_addr_change_event;
+		return &st->st_v2_addr_change_event;
 		break;
 
 	case EVENT_DPD:
 	case EVENT_DPD_TIMEOUT:
 		return &st->st_dpd_event;
 
-	case EVENT_v2_LIVENESS:
-		return &st->st_liveness_event;
-
-	case EVENT_v1_SEND_XAUTH:
-		return &st->st_send_xauth_event;
-
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
 	case EVENT_SA_DISCARD:
-	case EVENT_SA_REKEY:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
+	case EVENT_v2_REKEY:
 	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
@@ -222,7 +223,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		liveness_check(st);
 		break;
 
-	case EVENT_SA_REKEY:
+	case EVENT_v2_REKEY:
 		pexpect(st->st_ike_version == IKEv2);
 		v2_event_sa_rekey(st);
 		break;

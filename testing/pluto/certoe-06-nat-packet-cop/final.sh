@@ -1,4 +1,4 @@
 # A tunnel should have established with non-zero byte counters
 hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 # you should see both RSA and NULL
-hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log 
+hostname | grep nic > /dev/null || grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" /tmp/pluto.log 

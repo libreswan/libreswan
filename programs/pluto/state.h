@@ -691,8 +691,6 @@ struct state {
 	PK11SymKey *st_sk_pr_no_ppk;
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct state_event *st_event;		/* timer event for this state object */
-
 	/* state list entry */
 	struct list_entry st_serialno_list_entry;
 
@@ -704,11 +702,20 @@ struct state {
 	char st_xauth_username[MAX_XAUTH_USERNAME_LEN];	/* NUL-terminated */
 	chunk_t st_xauth_password;
 
-	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
-	struct state_event *st_liveness_event;	/* IKEv2 only event */
-	struct state_event *st_send_xauth_event;
-	struct state_event *st_addr_change_event;
+	/*
+	 * Events for state object.  Some are shared between IKEv1 and
+	 * IKEv2, some are not.
+	 */
+
+	struct state_event *st_event;			/* generic timer event for this state object */
+
 	struct state_event *st_retransmit_event;
+
+	struct state_event *st_v1_send_xauth_event;
+
+	monotime_t st_v2_last_liveness;			/* Time of last v2 informational (0 means never?) */
+	struct state_event *st_v2_liveness_event;
+	struct state_event *st_v2_addr_change_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -881,7 +888,6 @@ extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 extern void v2_expire_unused_ike_sa(struct ike_sa *ike);
 
 bool shared_phase1_connection(const struct connection *c);
-bool v2_child_connection_probably_shared(struct child_sa *child);
 
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);

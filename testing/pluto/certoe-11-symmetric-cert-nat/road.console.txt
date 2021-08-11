@@ -34,9 +34,9 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
 002 initiate on demand by whack from 192.1.3.209:8 to 192.1.2.23:0 proto=ICMP
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
-002 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: established Child SA; IPsec tunnel [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  # should show established tunnel and no bare shunts
 road #
@@ -120,10 +120,10 @@ road #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
- grep "negotiated connection" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: established Child SA; IPsec tunnel [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
@@ -137,7 +137,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384:
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+OUTPUT/east.pluto.log:"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/road.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
@@ -153,6 +153,6 @@ OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash al
 OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
  

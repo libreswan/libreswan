@@ -234,8 +234,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		 * anything eg, if short DPD timers are used we can
 		 * skip this.
 		 */
-		if (!is_monotime_epoch(st->st_last_liveness) &&
-		    deltasecs(monotimediff(mononow(), st->st_last_liveness)) < DEFAULT_KEEP_ALIVE_SECS)
+		if (!is_monotime_epoch(st->st_v2_last_liveness) &&
+		    deltasecs(monotimediff(mononow(), st->st_v2_last_liveness)) < DEFAULT_KEEP_ALIVE_SECS)
 		{
 			dbg("NAT-T KEEP-ALIVE packet not required as recent DPD event used the IKE SA on conn %s",
 			    c->name);
@@ -261,17 +261,22 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 #ifdef USE_IKEv1
 	case IKEv1:
 		/*
-		 * IKE SA and IPsec SA keepalives happen over the same port/NAT mapping.
-		 * If the IKE SA is idle and triggers keepalives, we don't need to check
-		 * IPsec SA's being idle. If we were to check IPsec SA, we could then
-		 * also update the IKE SA st->st_last_liveness, but we think this is
-		 * too expensive (call get_sa_info() to kernel _and_ find IKE SA.
+		 * IKE SA and IPsec SA keepalives happen over the same
+		 * port/NAT mapping.  If the IKE SA is idle and
+		 * triggers keepalives, we don't need to check IPsec
+		 * SA's being idle. If we were to check IPsec SA, we
+		 * could then also update the IKE SA
+		 * st->st_v2_last_liveness, but we think this is too
+		 * expensive (call get_sa_info() to kernel _and_ find
+		 * IKE SA.
 		 *
-		 * For IKEv2, just use the one IKE SA instead of the one or more IPsec SA's
-		 * (and ignore whether IPsec SA was active or not)
+		 * For IKEv2, just use the one IKE SA instead of the
+		 * one or more IPsec SA's (and ignore whether IPsec SA
+		 * was active or not)
 		 *
-		 * for IKEv1, there can be orphan IPsec SA's. We still are not checking
-		 * the kernel, so we just have to always send the keepalive.
+		 * for IKEv1, there can be orphan IPsec SA's. We still
+		 * are not checking the kernel, so we just have to
+		 * always send the keepalive.
 		 */
 		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
 			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established", st->st_serialno);

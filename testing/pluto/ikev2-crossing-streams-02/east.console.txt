@@ -9,6 +9,6 @@ east #
 east #
  ipsec status |grep STATE_
 000 #6: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #7: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#6; idle;
+000 #7: "static":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#6; idle;
 east #
  

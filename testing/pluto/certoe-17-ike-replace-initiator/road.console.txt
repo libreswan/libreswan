@@ -33,7 +33,7 @@ road #
  # wait on OE retransmits and rekeying
 road #
  ../../guestbin/wait-for.sh --match '#8:.*established' -- ipsec status
-000 #8: "private#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #8: "private#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up

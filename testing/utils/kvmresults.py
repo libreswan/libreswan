@@ -167,8 +167,6 @@ def main():
             result_stats.log_details(stderr_log, header="Details:", prefix="  ")
         if args.stats in [Stats.details, Stats.summary]:
             result_stats.log_summary(stderr_log, header="Summary:", prefix="  ")
-        publish.json_results(logger, args)
-        publish.json_summary(logger, args)
 
     return exit_code
 
@@ -183,13 +181,17 @@ def results(logger, tests, baseline, args, result_stats):
     failures = 0
     unresolved = 0
     passed = 0
+    nr = 0
 
     for test in tests:
 
-        publish.json_status(logger, args, "rebuilding %s" % test.name)
+        nr = nr + 1
+        publish.json_status(logger, args,
+                            "rebuilding %s (test %d of %d)" % (test.name, nr, len(tests)))
 
         # If debug logging is enabled this will provide fine grained
         # per-test timing.
+
         with logger.debug_time("processing test %s", test.name):
 
             # Filter out tests that are being ignored?
@@ -246,6 +248,9 @@ def results(logger, tests, baseline, args, result_stats):
 
             b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
             printer.build_result(logger, result, baseline, args, args.print, b)
+
+        publish.json_results(logger, args)
+        publish.json_summary(logger, args)
 
     publish.json_status(logger, args, "finished")
 

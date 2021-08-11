@@ -53,9 +53,8 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
-002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+003 "westnet-eastnet-ikev2" #1: established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
+004 "westnet-eastnet-ikev2" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -66,7 +65,7 @@ west #
  echo done
 done
 west #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' OUTPUT/*pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
@@ -74,7 +73,7 @@ OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: established IKE SA; authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
@@ -84,6 +83,6 @@ OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: authenticated using authby=null and peer ID_NULL 'ID_NULL'
+OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
 west #
  

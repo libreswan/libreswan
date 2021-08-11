@@ -38,7 +38,7 @@ east #
  ipsec whack --trafficstatus
 006 #4: "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.2/32
 east #
- grep "negotiated connection" /tmp/pluto.log
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.1-10.0.10.1:0-65535 0]
 "clear-or-private#192.1.2.254/32"[2] ...192.1.2.254===10.0.10.2/32 #4: negotiated connection [192.1.2.23-192.1.2.23:0-65535 0] -> [10.0.10.2-10.0.10.2:0-65535 0]
 east #

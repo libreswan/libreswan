@@ -35,16 +35,15 @@ west #
 1v2 "west-east-delete1" #1: initiating IKEv2 connection
 1v2 "west-east-delete1" #1: sent IKE_SA_INIT request
 1v2 "west-east-delete1" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west-east-delete1" #1: authenticated using authby=secret and peer ID_FQDN '@east'
-002 "west-east-delete1" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "west-east-delete1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+003 "west-east-delete1" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+004 "west-east-delete1" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec auto --status | grep STATE_
 000 #1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  echo "sleeping a bit.. 2"
 sleeping a bit.. 2

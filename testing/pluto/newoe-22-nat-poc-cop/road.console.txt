@@ -94,6 +94,6 @@ Certificate Nickname                                         Trust Attributes
 road #
  # a tunnel should have established
 road #
- grep "negotiated connection" /tmp/pluto.log
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
 road #
  

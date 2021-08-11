@@ -71,16 +71,15 @@ BuildRequires: xmlto
 %if 0%{with_efence}
 BuildRequires: ElectricFence
 %endif
+Requires: coreutils
 Requires: iproute >= 2.6.8
 Requires: nss >= %{nss_version}
 Requires: nss-softokn
 Requires: nss-tools
+Requires: procps-ng
 Requires: unbound-libs >= %{unbound_version}
-Requires(post): bash
-Requires(post): coreutils
-Requires(post): systemd
-Requires(preun): systemd
-Requires(postun): systemd
+Suggests: logrotate
+%{?systemd_requires}
 
 %description
 Libreswan is a free implementation of IKE/IPsec for Linux.  IPsec is

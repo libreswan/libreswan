@@ -51,8 +51,8 @@ void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...) PRINT
 bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md);
 
-bool v2_process_ts_request(struct child_sa *child,
-			   const struct msg_digest *md);
+bool v2_process_request_ts_payloads(struct child_sa *child,
+				    const struct msg_digest *md);
 
 struct traffic_selector traffic_selector_from_end(const struct end *e, const char *what);
 

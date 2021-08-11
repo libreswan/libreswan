@@ -101,6 +101,7 @@ struct config_end {
 };
 
 struct config {
+	chunk_t sec_label;
 	struct config_end end[2];
 };
 
@@ -237,11 +238,6 @@ struct end {
 	const struct config_end *config;
 
 	chunk_t sec_label;
-	/*
-	 * True if `sec_label` value is from a connection configuration's
-	 * `policy-label` in ipsec.conf.
-	 */
-	bool has_config_policy_label;
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_id_wildcards;
@@ -327,7 +323,7 @@ struct ephemeral_variables {
 
 struct connection {
 	co_serial_t serialno;
-	co_serial_t serial_from;
+	co_serial_t serial_from; /* "0" when connection root */
 	char *name;
 	struct logger *logger;
 	enum ike_version ike_version;
@@ -472,14 +468,20 @@ struct connection {
 
 	/*
 	 * An extract of the original configuration information for
-	 * the connection's end sent over by whack.
+	 * the connection's end sent over by whack.  This pointer is
+	 * only valid in the root connection created from a whack
+	 * message.
 	 */
-	struct config config;
+	struct config *root_config;
 
 	/*
-	 * Pointers to the connectin's config.  For a connection
-	 * instance, these point into connection template.
+	 * Pointers to the connection's original configuration values
+	 * as specified by whack.
+	 *
+	 * For a connection instance, these point into connection the
+	 * template.
 	 */
+	const struct config *config;
 	const struct config_end *local;
 	const struct config_end *remote;
 };
@@ -561,7 +563,8 @@ struct connection *oppo_instantiate(struct connection *c,
 				    const ip_address *remote_address);
 extern struct connection *instantiate(struct connection *c,
 				      const ip_address *peer_addr,
-				      const struct id *peer_id);
+				      const struct id *peer_id,
+				      shunk_t sec_label);
 
 struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
 							   const ip_endpoint *peer_client);

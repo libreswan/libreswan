@@ -53,6 +53,6 @@ Certificate Nickname                                         Trust Attributes
 east #
  # a tunnel should have established
 east #
- grep "negotiated connection" /tmp/pluto.log
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
 east #
  

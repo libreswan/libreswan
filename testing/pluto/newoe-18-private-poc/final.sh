@@ -1,3 +1,3 @@
 ../../guestbin/ipsec-look.sh
 # tunnel should have been established
-grep "negotiated connection" /tmp/pluto.log
+grep "^[^|].*: established Child SA" /tmp/pluto.log

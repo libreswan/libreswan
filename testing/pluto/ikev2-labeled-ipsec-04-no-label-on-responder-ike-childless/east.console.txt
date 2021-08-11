@@ -1,0 +1,18 @@
+/testing/guestbin/swan-prep
+east #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+east #
+ # get pluto going
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ 

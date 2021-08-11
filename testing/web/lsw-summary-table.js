@@ -34,46 +34,60 @@ function lsw_summary_table(table_id, summary) {
     //
     // and the table reflects this (with some filtering).
 
-    for (const kind of ["kvmplutotest"]) {
+    STATUSES = ["good", "wip"]
+    RESULTS = ["passed", "failed", "unresolved"]
+    KINDS = ["kvmplutotest"]
+    for (const kind of KINDS) {
 
 	let statuses_columns = []
 	statuses_columns.title = kind
 	columns.push(statuses_columns);
 
-	for (const status of ["good", "wip"]) {
+	for (const status of STATUSES) {
 
 	    let results_columns = []
 	    results_columns.title = status
 	    statuses_columns.push(results_columns)
 
-	    for (const result of ["passed", "failed", "unresolved", "untested"]) {
-		// map result onto its title
-		const title = {
-		    "passed": "pass",
-		    "failed": "fail",
-		    "unresolved": "not<br>resolved",
-		    "untested": "not<br>tested",
-		}[result] || result
+	    for (const result of RESULTS) {
 		result_column = {
-		    title: title,
+		    title: result,
 		    kind: kind,
 		    status: status,
-		    result: result,
-		    value: function(test_run_row) {
+		    value: function(summary) {
 			// field may be missing
-			return test_run_row.totals &&
-			    test_run_row.totals[this.kind] &&
-			    test_run_row.totals[this.kind][this.status] &&
-			    test_run_row.totals[this.kind][this.status][this.result] ||
-			    ""
+			return (summary.totals &&
+				summary.totals[this.kind] &&
+				summary.totals[this.kind][this.status] &&
+				summary.totals[this.kind][this.status][this.title] ||
+				"")
 		    },
 		}
 		results_columns.push(result_column)
 	    }
+
 	    results_columns.push({
 		title: "errors",
-		value: function(test_run) {
-		    return lsw_errors_html(test_run.errors)
+		kind: kind,
+		status: status,
+		value: function(summary) {
+		    let errors = (summary.totals &&
+				  summary.totals[this.kind] &&
+				  summary.totals[this.kind][this.status] &&
+				  summary.totals[this.kind][this.status][this.title] ||
+				  null)
+		    html = ""
+		    if (errors) {
+			html += "<div class=\"errors\">"
+			for (const error of Object.keys(errors).sort()) {
+			    // only real errors are UPPER CASE?
+			    if (error == error.toUpperCase()) {
+				html += error + ": " + errors[error] + "<br>"
+			    }
+			}
+			html += "</div>"
+		    }
+		    return html;
 		},
 	    })
 	}

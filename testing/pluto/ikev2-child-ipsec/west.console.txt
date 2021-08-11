@@ -35,9 +35,8 @@ west #
 1v2 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ikev2a" #1: authenticated using authby=secret and peer ID_FQDN '@east'
-002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2a" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+003 "westnet-eastnet-ikev2a" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+004 "westnet-eastnet-ikev2a" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -45,8 +44,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2b
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-002 "westnet-eastnet-ikev2b" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
-004 "westnet-eastnet-ikev2b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2b" #3: established Child SA; IPsec tunnel [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 up
@@ -54,8 +52,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2c
 002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
-002 "westnet-eastnet-ikev2c" #4: negotiated connection [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0]
-004 "westnet-eastnet-ikev2c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2c" #4: established Child SA; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'

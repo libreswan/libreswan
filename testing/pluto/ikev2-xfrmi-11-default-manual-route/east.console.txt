@@ -129,7 +129,7 @@ east #
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
 000 #1: "westnet-eastnet":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (IPsec SA established); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "westnet-eastnet":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 000 #2: "westnet-eastnet" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B ESPmax=0B 
 000  
 000 Bare Shunt list:

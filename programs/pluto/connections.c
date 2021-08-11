@@ -278,6 +278,12 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	remove_connection_from_db(c);
 
+	if (c->root_config != NULL) {
+		passert(co_serial_is_unset(c->serial_from));
+		free_chunk_content(&c->root_config->sec_label);
+		pfree(c->root_config);
+	}
+
 	pfree(c);
 	free_logger(&connection_logger, HERE);
 }
@@ -699,11 +705,13 @@ void unshare_connection_end(struct end *e)
  * XXX: unshare_connection() and the shallow clone should be merged
  * into a routine that allocates a new connection and then explicitly
  * copy over the data.  Cloning pointers and then trying to fix them
- * up after the event, a guaranteed way to create use-after-free
+ * up after the event is a guaranteed way to create use-after-free
  * problems.
  */
 static void unshare_connection(struct connection *c)
 {
+	c->root_config = NULL;
+
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
@@ -773,22 +781,6 @@ static int extract_end(struct connection *c,
 		 * and for @string ID's all chars are valid without processing.
 		 */
 		atoid(src->id, &dst->id);
-	}
-
-	if (src->sec_label != NULL) {
-		dst->sec_label = clone_bytes_as_chunk(src->sec_label, strlen(src->sec_label)+1, "struct end sec_label");
-		dbg("received sec_label '%s' from whack", src->sec_label);
-		err_t ugh = vet_seclabel(HUNK_AS_SHUNK(dst->sec_label));
-		if (ugh != NULL) {
-			llog(RC_LOG, logger, "bad %s; ignored", ugh);
-			dst->sec_label = empty_chunk;
-		} else {
-			/*
-			 * `dst->sec_label` is the `policy-label` from
-			 * ipsec.conf.
-			 */
-			dst->has_config_policy_label = true;
-		}
 	}
 
 	/* decode CA distinguished name, if any */
@@ -1313,6 +1305,10 @@ static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
 	diag_t d;
+
+	struct config *config = alloc_thing(struct config, "root config");
+	c->root_config = config; /* writeable; root only */
+	c->config = config; /* read only; shared */
 
 	passert(c->name != NULL); /* see alloc_connection() */
 	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
@@ -1857,15 +1853,31 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	c->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
 		       wm->ike_version != IKEv2 ? /*generated later*/0 :
-		       wm->left.sec_label != NULL ? gen_reqid() :
-		       wm->right.sec_label != NULL ? gen_reqid() :
+		       wm->sec_label != NULL ? gen_reqid() :
 		       /*generated later*/0);
 	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
 	    c->name, c->sa_reqid, wm->sa_reqid,
 	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
-	     wm->left.sec_label != NULL ? wm->left.sec_label :
-	     wm->right.sec_label != NULL ? wm->right.sec_label :
+	     wm->sec_label != NULL ? wm->sec_label :
 	     "n/a"));
+
+	/*
+	 * Set both end's sec_label to the same value.
+	 */
+
+	if (wm->sec_label != NULL) {
+		dbg("received sec_label '%s' from whack", wm->sec_label);
+		/* include NUL! */
+		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
+		err_t ugh = vet_seclabel(sec_label);
+		if (ugh != NULL) {
+			llog(RC_LOG_SERIOUS, c->logger, "failed to add connection: %s: policy-label=%s",
+			     ugh, wm->sec_label);
+			return false;
+		}
+		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
+	}
+
 
 	/*
 	 * At this point THIS and THAT are disoriented so
@@ -1885,8 +1897,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 * accordingly?
 	 */
 
-	for (enum left_right end_index = 0; end_index < elemsof(c->config.end); end_index++) {
-		struct config_end *config_end = &c->config.end[end_index];
+	for (enum left_right end_index = 0; end_index < elemsof(config->end); end_index++) {
+		struct config_end *config_end = &config->end[end_index];
 		config_end->end_index = end_index;
 		config_end->leftright = (end_index == LEFT_END ? "left" :
 					 end_index == RIGHT_END ? "right" :
@@ -1896,16 +1908,16 @@ static bool extract_connection(const struct whack_message *wm,
 
 	struct end *left = &c->spd.this;
 	struct end *right = &c->spd.that;
-	left->config = c->local = &c->config.end[LEFT_END];
-	right->config = c->remote = &c->config.end[RIGHT_END];
+	left->config = c->local = &config->end[LEFT_END];
+	right->config = c->remote = &config->end[RIGHT_END];
 
-	int same_leftca = extract_end(c, left, &c->config.end[LEFT_END], &wm->left,
+	int same_leftca = extract_end(c, left, &config->end[LEFT_END], &wm->left,
 				      /*other_end*/right, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
 
-	int same_rightca = extract_end(c, right, &c->config.end[RIGHT_END], &wm->right,
+	int same_rightca = extract_end(c, right, &config->end[RIGHT_END], &wm->right,
 				       /*other_end*/left, c->logger);
 	if (same_rightca < 0) {
 		return false;
@@ -2026,8 +2038,9 @@ static bool extract_connection(const struct whack_message *wm,
 	} else if (c->spd.that.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
-	} else if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
-		dbg("connection is template: security label present");
+	} else if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
+		dbg("connection is template: has security label: "PRI_SHUNK,
+		    pri_shunk(c->config->sec_label));
 		c->kind = CK_TEMPLATE;
 	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
 		/*
@@ -2125,9 +2138,9 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 /*
  * Derive a template connection from a group connection and target.
- * Similar to instantiate().  Happens at whack --listen.
- * Returns name of new connection.  NULL on failure (duplicated name).
- * Caller is responsible for pfreeing name.
+ * Similar to instantiate().  Happens at whack --listen.  Returns name
+ * of new connection.  NULL on failure (duplicated name).  Caller is
+ * responsible for pfreeing name.
  */
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
@@ -2235,7 +2248,8 @@ struct connection *add_group_instance(struct connection *group,
  */
 struct connection *instantiate(struct connection *c,
 			       const ip_address *peer_addr,
-			       const struct id *peer_id)
+			       const struct id *peer_id,
+			       shunk_t sec_label)
 {
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.spd_next == NULL);
@@ -2253,26 +2267,31 @@ struct connection *instantiate(struct connection *c,
 	unshare_connection(d);
 
 	if ((c->spd.that.host_type == KH_ANY) /* Wildcard peer IP */ &&
-		(c->spd.this.sec_label.len > 0) /* Security label */ &&
-		c->spd.this.has_config_policy_label /* Label from `policy-label` */) {
+	    (c->config->sec_label.len > 0) /* config security label? */ &&
+	    (c->spd.this.sec_label.len == 0) /* negotiated security label? */) {
 		passert(c->kind == CK_TEMPLATE);
 		/*
-		 * In this case, `c` is a template connection due to _both_:
-		 *  - a peer wildcard IP address (`%any`)
-		 *    and
-		 *  - a security label from the user-specified connection configuration's `policy-label`.
+		 * In this case, `c` is a template connection due to
+		 * _both_:
 		 *
-		 * At this point, we are instantiating a connection with an
-		 * actual address but still don' t have the actual security
-		 * label used for network transmission, i.e. this function
-		 * doesn't have access to a label retrieved via Netlink
-		 * `ACQUIRE` or received from the peer. Therefore, the newly
-		 * instantiated connection remains a template since its current
-		 * security label value is the label from `policy-label`.
+		 * - a peer wildcard IP address (`%any`)
+		 *  AND
+		 * - a security label from the user-specified
+                 *   connection configuration's `policy-label`.
 		 *
-		 * The caller of this function is expected to update `d->kind`
-		 * to `CK_INSTANCE` if `d` ends up getting a label used for
-		 * network transmission.
+		 * At this point, we are instantiating a connection
+		 * with an actual address but still don' t have the
+		 * actual security label used for network
+		 * transmission, i.e. this function doesn't have
+		 * access to a label retrieved via Netlink `ACQUIRE`
+		 * or received from the peer. Therefore, the newly
+		 * instantiated connection remains a template since
+		 * its current security label value is the label from
+		 * `policy-label`.
+		 *
+		 * The caller of this function is expected to update
+		 * `d->kind` to `CK_INSTANCE` if `d` ends up getting a
+		 * label used for network transmission.
 		 *
 		 * And so, let a template beget another template.
 		 */
@@ -2328,6 +2347,22 @@ struct connection *instantiate(struct connection *c,
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
 
+	if (sec_label.len > 0) {
+		/*
+		 * Replace connection template sec_label with label
+		 * from either acquire or child payload.
+		 *
+		 * XXX: Note: only replace when SEC_LABEL is valid.
+		 * When SEC_LABEL isn't valid the instance D inherits
+		 * the template's SEC_LABEL (suspect IKEv1 depends on
+		 * this).
+		 */
+		FOR_EACH_THING(end, &d->spd.this, &d->spd.that) {
+			free_chunk_content(&end->sec_label);
+			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
+		}
+	}
+
 	return d;
 }
 
@@ -2336,7 +2371,7 @@ struct connection *rw_instantiate(struct connection *c,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = instantiate(c, peer_addr, peer_id);
+	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
@@ -2472,8 +2507,8 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
  * Note: result may still need to be instantiated.
  * The winner has the highest policy priority.
  *
- * If there are several with that priority, we give preference to
- * the first one that is an instance.
+ * If there are several with that priority, we give preference to the
+ * first one that is an instance.
  *
  * See also build_outgoing_opportunistic_connection.
  */
@@ -2497,23 +2532,42 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	dbg("find_connection: looking for policy for connection: %s",
 	    str_endpoints(local_client, remote_client, &eb));
 
-	struct connection *c;
-
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (struct connection *c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
 			continue;
 
 		/*
-		 * For labeled IPsec, always start with the template.
-		 * Who are we to argue if the kernel asks for a new SA
-		 * with, seemingly, a security label that matches an
-		 * existing connection instance.
+		 * For both IKEv1 and IKEv2 labeled IPsec, don't try
+		 * to mix 'n' match acquire sec_label with
+		 * non-sec_label connection.
 		 */
-		if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind != CK_TEMPLATE) {
+		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
+			continue;
+		}
+
+		/*
+		 * For IKEv2 labeled IPsec, always start with the
+		 * template.  Who are we to argue if the kernel asks
+		 * for a new SA with, seemingly, a security label that
+		 * matches an existing connection instance.
+		 */
+		if (c->ike_version == IKEv2 &&
+		    c->config->sec_label.len > 0 &&
+		    c->kind != CK_TEMPLATE) {
+			pexpect(c->kind == CK_INSTANCE);
 			connection_buf cb;
 			dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
 			    pri_connection(c, &cb));
+			continue;
+		}
+
+		/*
+		 * When there is a sec_label, it needs to be within
+		 * the configuration's range.
+		 */
+		if (sec_label.len > 0 /*implies c->config->sec_label*/ &&
+		    !sec_label_within_range(sec_label, c->config->sec_label, logger)) {
 			continue;
 		}
 
@@ -2528,7 +2582,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			 */
 			if (!routed(sr->routing) &&
 			    !c->instance_initiation_ok &&
-			    sr->this.sec_label.len == 0) {
+			    c->config->sec_label.len == 0) {
 				continue;
 			}
 
@@ -2538,14 +2592,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			 */
 			if (!endpoint_in_selector(*local_client, sr->this.client) ||
 			    !endpoint_in_selector(*remote_client, sr->that.client)) {
-				continue;
-			}
-
-			/*
-			 * When there is one, the label needs to be
-			 * within range.
-			 */
-			if (sec_label.len > 0 && !sec_label_within_range(sec_label, sr->this.sec_label, logger)) {
 				continue;
 			}
 
@@ -2629,7 +2675,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	    c->name, enum_name(&routing_story, c->spd.routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	struct connection *d = instantiate(c, remote_address, remote_id);
+	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
 
 	passert(d->spd.spd_next == NULL);
 
@@ -4070,13 +4116,25 @@ static void show_one_sr(struct show *s,
 		c->name, instance, c->modecfg_banner);
 	}
 
-	/* we only support symmetric labels, but store it in struct end - pick one */
-	if (sr->this.sec_label.len == 0)
+	/*
+	 * Show the first valid sec_label.
+	 *
+	 * We only support symmetric labels, but store it in struct
+	 * end - pick one.
+	 *
+	 * XXX: IKEv1 stores the negotiated sec_label in the state.
+	 */
+	if (sr->this.sec_label.len > 0) {
+		/* negotiated (IKEv2) */
+		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
+			     c->name, instance, pri_shunk(sr->this.sec_label));
+	} else if (c->config->sec_label.len > 0) {
+		/* configured */
+		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
+			     c->name, instance, pri_shunk(c->config->sec_label));
+	} else {
 		show_comment(s, "\"%s\"%s:   sec_label:unset;", c->name, instance);
-	else
-		show_comment(s, "\"%s\"%s:   sec_label:%.*s;",
-			c->name, instance,
-			(int)sr->this.sec_label.len, sr->this.sec_label.ptr);
+	}
 }
 
 void show_one_connection(struct show *s,

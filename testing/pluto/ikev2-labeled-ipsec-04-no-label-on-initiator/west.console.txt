@@ -1,8 +1,10 @@
 /testing/guestbin/swan-prep
 west #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+west #
  # install selinux; generated in OUTPUT by east
 west #
- semodule -i OUTPUT/ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd-full-perm.pp
 west #
  # start pluto
 west #
@@ -25,15 +27,11 @@ west #
 1v2 "labeled" #1: initiating IKEv2 connection
 1v2 "labeled" #1: sent IKE_SA_INIT request
 1v2 "labeled" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-003 "labeled" #2: IKE_AUTH response contained the Child SA error notification TS_UNACCEPTABLE
-003 "labeled" #1: IKE SA established but responder rejected Child SA request
+003 "labeled" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "labeled" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  echo done
 done
-west #
- semodule -r ipsecspd
-libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
  hostname |grep east > /dev/null && grep "No IKEv2 connection found" /tmp/pluto.log
 west #

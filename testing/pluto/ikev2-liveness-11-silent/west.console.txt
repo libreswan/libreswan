@@ -26,9 +26,8 @@ west #
 1v2 "west-east" #1: initiating IKEv2 connection
 1v2 "west-east" #1: sent IKE_SA_INIT request
 1v2 "west-east" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "west-east" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-002 "west-east" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
+003 "west-east" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+004 "west-east" #2: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
 west #
  # use the tunnel
 west #
@@ -90,8 +89,7 @@ west #
  ipsec auto --up west-east
 002 "west-east" #3: initiating Child SA using IKE SA #1
 1v2 "west-east" #3: sent CREATE_CHILD_SA request for new IPsec SA
-002 "west-east" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
-004 "west-east" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
+004 "west-east" #3: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
 west #
  sleep 1
 west #

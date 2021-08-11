@@ -237,7 +237,7 @@ static void ikev2_record_newaddr(struct state *st, void *arg_ip)
 		 * A work around for delay between new address and new route
 		 * A better fix would be listen to RTM_NEWROUTE, RTM_DELROUTE
 		 */
-		if (st->st_addr_change_event == NULL) {
+		if (st->st_v2_addr_change_event == NULL) {
 			event_schedule(EVENT_v2_ADDR_CHANGE,
 				       RTM_NEWADDR_ROUTE_DELAY, st);
 		} else {
@@ -274,7 +274,7 @@ static void ikev2_record_deladdr(struct state *st, void *arg_ip)
 
 		event_delete(EVENT_v2_LIVENESS, cst);
 
-		if (st->st_addr_change_event == NULL) {
+		if (st->st_v2_addr_change_event == NULL) {
 			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
 		} else {
 			ipstr_buf o, n;

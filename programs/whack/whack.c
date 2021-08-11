@@ -193,7 +193,7 @@ static void help(void)
 		"	--ddos-auto)\n"
 		"\n"
 		"list: whack [--utc] [--checkpubkeys] [--listpubkeys] [--listcerts] \\\n"
-		"	[--listcacerts] [--listcrls] [--listpsks] [--listall]\n"
+		"	[--listcacerts] [--listcrls] [--listpsks] [--listevents] [--listall]\n"
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
@@ -2080,8 +2080,7 @@ int main(int argc, char **argv)
 
 		case CD_SEC_LABEL:	/* --sec-label */
 			/* we only support symmetric labels but put it in struct end */
-			msg.right.sec_label = optarg;
-			msg.left.sec_label = optarg;
+			msg.sec_label = optarg;
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */

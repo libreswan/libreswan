@@ -40,7 +40,7 @@ west #
 1v2 "westnet-eastnet-vti-01" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-vti-01" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-vti-01" #1: authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "westnet-eastnet-vti-01" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 002 "westnet-eastnet-vti-01" #2: up-client output: net.ipv4.conf.ipsec0.forwarding = 1
@@ -49,8 +49,7 @@ west #
 002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
 002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
-002 "westnet-eastnet-vti-01" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-vti-01" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
 002 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
@@ -64,8 +63,7 @@ west #
 002 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
 002 "westnet-eastnet-vti-02" #3: route-client output: RTNETLINK answers: File exists
 002 "westnet-eastnet-vti-02" #3: route-client output: done ip route
-002 "westnet-eastnet-vti-02" #3: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
-004 "westnet-eastnet-vti-02" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-vti-02" #3: established Child SA; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

@@ -70,7 +70,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 			return 0;
 		}
 
-		struct connection *d = instantiate(c, &remote_ip, NULL);
+		struct connection *d = instantiate(c, &remote_ip, NULL, null_shunk);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
@@ -163,7 +163,7 @@ bool initiate_connection_2(struct connection *c,
 	if (c->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) &&
 	    c->kind == CK_TEMPLATE) {
-		struct connection *d = instantiate(c, NULL, NULL);
+		struct connection *d = instantiate(c, NULL, NULL, null_shunk);
 		/* XXX: something better? */
 		close_any(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
@@ -299,10 +299,10 @@ void ipsecdoi_initiate(struct connection *c,
 				    replacing, sec_label);
 		} else {
 			/* leave our Phase 2 negotiation pending */
-			add_pending(whackfd, pexpect_ike_sa(st),
-				    c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
+			add_v1_pending(whackfd, pexpect_ike_sa(st),
+				       c, policy, try,
+				       replacing, sec_label,
+				       false /*part of initiate*/);
 		}
 		break;
 	}
@@ -311,29 +311,54 @@ void ipsecdoi_initiate(struct connection *c,
 	{
 		/*
 		 * If there's already an IKEv2 IKE SA established, use
-		 * that and go directly to Quick Mode.  We are even
-		 * willing to use one that is still being negotiated,
-		 * but only if we are the Initiator (thus we can be
-		 * sure that the IDs are not going to change; other
-		 * issues around intent might matter).  Note: there is
-		 * no way to initiate with a Road Warrior.
+		 * that and go directly to a CHILD exchange.
+		 *
+		 * We are even willing to use one that is still being
+		 * established, but only if we are the Initiator (thus
+		 * we can be sure that the IDs are not going to
+		 * change; other issues around intent might matter).
+		 * Note: there is no way to initiate with a Road
+		 * Warrior.
 		 */
 		struct ike_sa *ike =
 			pexpect_ike_sa(find_phase1_state(c,
 							 LELEM(STATE_V2_ESTABLISHED_IKE_SA) |
 							 IKEV2_ISAKMP_INITIATOR_STATES));
+		if (ike != NULL) {
+			dbg("found #%lu in state %s established=%s viable=%s",
+			    ike->sa.st_serialno, ike->sa.st_state->name,
+			    bool_str(IS_IKE_SA_ESTABLISHED(&ike->sa)),
+			    bool_str(ike->sa.st_viable_parent));
+		}
 		if (ike == NULL) {
 			ikev2_out_IKE_SA_INIT_I(c, NULL, policy, try, inception,
 						sec_label, background, logger);
 		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
-			add_pending(background ? null_fd : logger->global_whackfd,
-				    ike, c, policy, try,
-				    replacing, sec_label,
-				    false /*part of initiate*/);
+			add_v2_pending(background ? null_fd : logger->global_whackfd,
+				       ike, c, policy, try,
+				       replacing, sec_label,
+				       false /*part of initiate*/);
 		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
-			submit_v2_CREATE_CHILD_SA_new_child(ike, c, policy, try, sec_label,
+			struct connection *cc;
+			if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
+				/*
+				 * create instance and switch to it.
+				 *
+				 * Since the newly instantiated
+				 * connection has a security label due
+				 * to an `ACQUIRE` message from the
+				 * kernel, it is not a template
+				 * connection.
+				 */
+				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+				cc = instantiate(c, &remote_addr, NULL, sec_label);
+				cc->kind = CK_INSTANCE;
+			} else {
+				cc = c;
+			}
+			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy, try,
 							    logger->global_whackfd);
 		}
 		break;
@@ -644,7 +669,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0 && c->kind == CK_TEMPLATE) {
+	if (c->ike_version == IKEv2 &&
+	    c->config->sec_label.len > 0 &&
+	    c->kind == CK_TEMPLATE) {
 		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {
@@ -654,7 +681,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 
 		if (!sec_label_within_range(HUNK_AS_SHUNK(b->sec_label),
-					    c->spd.this.sec_label , b->logger)) {
+					    c->config->sec_label, b->logger)) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
 					"received kernel security label does not fall within range of our connection");
 			return;

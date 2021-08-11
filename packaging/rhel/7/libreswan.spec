@@ -77,16 +77,14 @@ Requires: unbound-libs >= 1.6.0
 %else
 %global USE_DNSSEC false
 %endif
+Requires: coreutils
 Requires: fipscheck%{_isa}
 Requires: iproute
+Requires: logrotate
 Requires: nss >= %{nss_version}
 Requires: nss-softokn
 Requires: nss-tools
-Requires(post): bash
-Requires(post): coreutils
-Requires(post): systemd
-Requires(postun): systemd
-Requires(preun): systemd
+%{?systemd_requires}
 
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}

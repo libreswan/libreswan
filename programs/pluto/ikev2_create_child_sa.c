@@ -575,28 +575,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
 void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 struct connection *c, /* for child */
 					 lset_t policy, int try,
-					 shunk_t sec_label,
 					 struct fd *whackfd)
 {
-	if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
-		/* create instance and switch to it */
-		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		c = instantiate(c, &remote_addr, NULL);
-		/* replace connection template label with ACQUIREd label */
-		free_chunk_content(&c->spd.this.sec_label);
-		free_chunk_content(&c->spd.that.sec_label);
-		c->spd.this.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
-		c->spd.this.has_config_policy_label = false;
-		c->spd.that.sec_label = clone_hunk(sec_label, "ACQUIRED sec_label");
-		c->spd.that.has_config_policy_label = false;
-		/*
-		 * Since the newly instantiated connection has a security label
-		 * due to a Netlink `ACQUIRE` message from the kernel, it is
-		 * not a template connection.
-		 */
-		c->kind = CK_INSTANCE;
-	}
-
 	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA,
 						    SA_INITIATOR,
 						    STATE_V2_NEW_CHILD_I0,
@@ -929,8 +909,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		return STF_INTERNAL_ERROR;
 	}
 
-	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
-
 	return STF_OK;
 }
 
@@ -1006,8 +984,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	log_ipsec_sa_established("negotiated new IPsec SA", &larval_child->sa);
 
 	return STF_OK;
 }
@@ -1496,8 +1472,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 }
 
 stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
-                                                struct child_sa *child,
-                                                struct msg_digest *md UNUSED)
+						       struct child_sa *child,
+						       struct msg_digest *md UNUSED)
 {
 	passert(ike != NULL);
 	passert(child != NULL);
@@ -1511,13 +1487,12 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				"CREATE_CHILD_SA failed with error notification %s",
 				name);
-			// re-add child to pending queue with exponential back-off
+			dbg("re-add child to pending queue with exponential back-off?");
 			break;
 		}
 	}
 	return STF_FAIL;
 }
-

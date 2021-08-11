@@ -124,7 +124,9 @@ static struct connection *finish_connection(struct connection *c, const char *na
 	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
 	static co_serial_t connection_serialno;
+	/* first save old SERIALNO (0 for new connection) ... */
 	c->serial_from = c->serialno;
+	/* ... then update to new value */
 	connection_serialno.co++;
 	c->serialno = connection_serialno;
 	add_connection_to_db(c);

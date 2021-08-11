@@ -298,10 +298,10 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 
 	id_buf idb;
 	esb_buf kb;
-	log_state(RC_LOG_SERIOUS, &ike->sa,
-		  "authenticated using authby=%s and peer %s '%s'",
-		  enum_name(&keyword_authby_names, authby),
-		  enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-		  str_id(&ike->sa.st_connection->spd.that.id, &idb));
+	llog_sa(RC_LOG_SERIOUS, ike,
+		"established IKE SA; authenticated using authby=%s and peer %s '%s'",
+		enum_name(&keyword_authby_names, authby),
+		enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
+		str_id(&ike->sa.st_connection->spd.that.id, &idb));
 	return NULL;
 }

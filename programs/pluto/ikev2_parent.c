@@ -541,7 +541,7 @@ void v2_schedule_replace_event(struct state *st)
 
 		if (delay > marg) {
 			delay -= marg;
-			kind = EVENT_SA_REKEY;
+			kind = EVENT_v2_REKEY;
 			story = "attempting re-key";
 		} else {
 			marg = 0;
@@ -552,7 +552,7 @@ void v2_schedule_replace_event(struct state *st)
 
 	st->st_replace_margin = deltatime(marg);
 	if (marg > 0) {
-		passert(kind == EVENT_SA_REKEY);
+		passert(kind == EVENT_v2_REKEY);
 		dbg("#%lu will start re-keying in %jd seconds with margin of %jd seconds (%s)",
 		    st->st_serialno, delay, marg, story);
 	} else {

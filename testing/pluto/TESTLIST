@@ -863,7 +863,7 @@ kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 kvmplutotest	ikev1-rw-multiple-subnets			good
-kvmplutotest	ikev1-rw-multiple-subnets-split			wip
+kvmplutotest	ikev1-rw-multiple-subnets-split			good
 kvmplutotest	ikev2-rw-multiple-subnets			good
 kvmplutotest	ikev2-rw-multiple-subnets-split			wip
 kvmplutotest	ikev2-rw-multiple-subnets-2			good
@@ -913,19 +913,21 @@ kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
-# Selinux / secure labeling tests
-kvmplutotest	ikev1-labeled-ipsec-01					wip
-kvmplutotest	ikev1-labeled-ipsec-02-mismatch				wip
-kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires			wip
-kvmplutotest	ikev2-labeled-ipsec-01					good
-kvmplutotest	ikev2-labeled-ipsec-01-childless			good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires			wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced		wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey		wip
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder		good
-kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-acquire	good
-kvmplutotest	ikev2-labeled-ipsec-05-any				good
+# IKEv1 Selinux / secure labeling tests
+kvmplutotest	ikev1-labeled-ipsec-01						wip
+kvmplutotest	ikev1-labeled-ipsec-02-mismatch					wip
+kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires				wip
+# IKEv2 Selinux / secure labeling tests
+kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand				good
+kvmplutotest	ikev2-labeled-ipsec-01-ike-childless				good
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires				wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced			wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey			wip
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator			good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-childless	good
+kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-ondemand	good
+kvmplutotest	ikev2-labeled-ipsec-05-any					good
+kvmplutotest	ikev2-labeled-ipsec-06-rekey-ike-acquire			good
 
 # compress tests
 kvmplutotest    compress-pluto-01		good

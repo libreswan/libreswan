@@ -81,4 +81,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 NULL);							\
 	})
 
+void jam_v2_child_details(struct jambuf *buf, struct state *child_sa);
+
 #endif

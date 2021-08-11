@@ -1,0 +1,76 @@
+/testing/guestbin/swan-prep
+east #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+east #
+ # build install se module
+east #
+ ../../guestbin/semodule.sh ipsecspd-full-perm.te
+Compiling targeted ipsecspd-full-perm module
+Creating targeted ipsecspd-full-perm.pp policy package
+rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
+ipsecspd-full-perm.pp installed
+east #
+ # get pluto going
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add labeled
+002 "labeled": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # There should be FOUR IPsec SA states (two sets), all with same
+east #
+ # reqid. And there should be one set of tunnel policies using the
+east #
+ # configured ipsec_spd_t label, and no outgoing %trap policy
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir out priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority 2080702 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ # The IKE SA should be associated with the template connection
+east #
+ ipsec status |grep STATE_
+000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#1; idle;
+east #
+ 

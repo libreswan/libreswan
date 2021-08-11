@@ -781,27 +781,37 @@ stf_status process_v2_childs_sa_payload(const char *what,
 	return STF_OK;
 }
 
+void jam_v2_child_details(struct jambuf *buf, struct state *child_sa)
+{
+	/* log Child SA Traffic Selector details for admin's pleasure */
+	struct connection *c = child_sa->st_connection;
+
+	const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
+	const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
+	range_buf ba, bb;
+	jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
+	    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),
+	    str_range(&a.net, &ba),
+	    a.startport,
+	    a.endport,
+	    a.ipprotoid,
+	    str_range(&b.net, &bb),
+	    b.startport,
+	    b.endport,
+	    b.ipprotoid);
+	jam(buf, " ");
+	jam_child_sa_details(buf, child_sa);
+}
+
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
-	struct connection *c = child->sa.st_connection;
 	change_state(&child->sa, STATE_V2_ESTABLISHED_CHILD_SA);
 
 	pstat_sa_established(&child->sa);
-	log_ipsec_sa_established("negotiated connection", &child->sa);
 
-	/*
-	 * ULGH, mixing debug and non debug output.
-	 */
-	lset_t rc_flags =
-		(!(c->policy & POLICY_OPPORTUNISTIC) ? ALL_STREAMS|RC_SUCCESS :
-		 (c->policy & POLICY_OPPORTUNISTIC) && DBGP(DBG_BASE) ? DEBUG_STREAM :
-		 NO_STREAM);
-	if (rc_flags != NO_STREAM) {
-		LLOG_JAMBUF(rc_flags, child->sa.st_logger, buf) {
-			jam(buf, "%s", child->sa.st_state->story);
-			/* document SA details for admin's pleasure */
-			lswlog_child_sa_established(buf, &child->sa);
-		}
+	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
+		jam(buf, "%s; ", child->sa.st_state->story);
+		jam_v2_child_details(buf, &child->sa);
 	}
 
 	v2_schedule_replace_event(&child->sa);
@@ -849,7 +859,7 @@ v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
 	} else {
-		if (!v2_process_ts_request(child, md)) {
+		if (!v2_process_request_ts_payloads(child, md)) {
 			/* already logged? */
 			return v2N_TS_UNACCEPTABLE;
 		}
@@ -1000,21 +1010,9 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 
 	/* try to process them */
 	if (!has_v2_IKE_AUTH_child_sa_payloads(md)) {
-		struct connection *ic = ike->sa.st_connection;
-		if (ic->spd.this.sec_label.len > 0) {
-			pexpect(ic->kind == CK_TEMPLATE);
-			llog_sa(RC_LOG, ike,
-				"connection has a security label; allowing childless IKE SA");
-			return v2N_NOTHING_WRONG;
-		}
-		/*
-		 * XXX: not right, need way to determine if policy
-		 * allows childless IKE SAs with this connection (or
-		 * just always enable them).
-		 */
-		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; rejecting request");
+		llog_sa(RC_LOG, ike, "IKE_AUTH request does not propose a Child SA; creating childless SA");
 		/* caller will send notification, if needed */
-		return v2N_AUTHENTICATION_FAILED; /* fatal */
+		return v2N_NOTHING_WRONG;
 	}
 
 	/* above confirmed there's enough to build a Child SA */
@@ -1098,8 +1096,8 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 	 * XXX: fudge a state transition.
 	 *
 	 * Code extracted and simplified from
-	 * success_v2_state_transition(); suspect very similar
-	 * code will appear in the initiator.
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the initiator.
 	 */
 	v2_child_sa_established(ike, child);
 
@@ -1168,10 +1166,8 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			 */
 			esb_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				"IKE_AUTH response contained the Child SA error notification %s",
+				"IKE_AUTH response rejected Child SA with %s",
 				enum_show_short(&ikev2_notify_names, n, &esb));
-			llog_sa(RC_LOG_SERIOUS, ike,
-				"IKE SA established but responder rejected Child SA request");
 			connection_buf cb;
 			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
 			    ike->sa.st_serialno, child->sa.st_serialno,
@@ -1266,6 +1262,13 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		return n;
 	}
 
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the responder.
+	 */
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
 	close_any(&child->sa.st_logger->object_whackfd);

@@ -8,7 +8,7 @@ ipsec whack --shuntstatus
 # ping should succeed through tunnel
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
-grep "negotiated connection" /tmp/pluto.log
+grep "^[^|].*: established Child SA" /tmp/pluto.log
 # you should see both RSA and NULL
-grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
+grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" /tmp/pluto.log
 echo done

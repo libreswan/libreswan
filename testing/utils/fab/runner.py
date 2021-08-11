@@ -19,6 +19,7 @@ import threading
 import queue
 import re
 import subprocess
+import argparse
 from datetime import datetime
 from concurrent import futures
 
@@ -47,7 +48,7 @@ def add_arguments(parser):
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--tcpdump", action="store_true",
                        help="enable experimental TCPDUMP support")
-    group.add_argument("--run-post-mortem", default=None, action="store_true",
+    group.add_argument("--run-post-mortem", default=None, action=argparse.BooleanOptionalAction,
                        help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
 
     # Default to BACKUP under the current directory.  Name is
@@ -459,7 +460,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
                                     test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)
                                     logger.info("running %s on %s", script, host_name)
                                     try:
-                                        status = test_domain.console.run(script)
+                                        status = test_domain.console.run(script, timeout=TEST_TIMEOUT)
                                         if status:
                                             logger.error("%s failed on %s with status %s", script, host_name, status)
                                         else:

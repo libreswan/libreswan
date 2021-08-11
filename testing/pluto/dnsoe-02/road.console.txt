@@ -33,8 +33,8 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere east.testing.libreswan.org
 002 initiate on demand by whack from 192.1.3.209:8 to 192.1.2.23:0 proto=ICMP
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
+004 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: established Child SA; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
  # should show established tunnel and no bare shunts
 road #
@@ -65,12 +65,12 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.2.23'
 road #
- grep "negotiated connection" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+ grep "^[^|].*: established Child SA" /tmp/pluto.log
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: established Child SA; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
  # you should one RSA and one NULL, asymetric OE
 road #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e ': authenticated using ' /tmp/pluto.log
+ grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" /tmp/pluto.log
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
@@ -85,6 +85,6 @@ road #
 | hash algorithm identifier (network ordered)
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGSIG (0xe)
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '192.1.2.23'
 road #
  
