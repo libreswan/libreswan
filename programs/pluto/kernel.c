@@ -1223,9 +1223,11 @@ bool shunt_policy(enum kernel_policy_op op,
 		if (sr->this.sec_label.len > 0) {
 			jam_sanitized_hunk(buf, sr->this.sec_label);
 			jam(buf, " (this)");
+#if 0
 		} else if (c->config->sec_label.len > 0) {
 			jam_sanitized_hunk(buf, c->config->sec_label);
 			jam(buf, " (config)");
+#endif
 		}
 	}
 
