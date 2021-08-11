@@ -167,7 +167,9 @@ struct pubkey_type {
 
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
+#ifdef NSS_EDDSA
 extern const struct pubkey_type pubkey_type_eddsa;
+#endif
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 

@@ -25,7 +25,9 @@ extern const struct hash_desc ike_alg_hash_sha2_384;
 extern const struct hash_desc ike_alg_hash_sha2_512;
 #endif
 
+#ifdef NSS_EDDSA
 extern const struct hash_desc ike_alg_hash_identity;
+#endif
 
 #ifdef USE_MD5
 extern const struct hash_desc ike_alg_hash_md5;

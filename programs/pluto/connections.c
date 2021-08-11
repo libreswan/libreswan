@@ -1492,7 +1492,9 @@ static bool extract_connection(const struct whack_message *wm,
 					break;
 				case AUTHBY_RSASIG:
 				case AUTHBY_ECDSA:
+#ifdef NSS_EDDSA
 				case AUTHBY_EDDSA:
+#endif
 					/* will be fixed later below */
 					break;
 				default:
@@ -1545,19 +1547,34 @@ static bool extract_connection(const struct whack_message *wm,
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
-	if (c->ike_version == IKEv1)
-		c->policy = (c->policy & ~(POLICY_EDDSA | (POLICY_ECDSA | POLICY_RSASIG_v1_5)));
+	if (c->ike_version == IKEv1){
+	    c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
+#ifdef NSS_EDDSA
+        c->policy = (c->policy & ~POLICY_EDDSA);
+#endif
+	}
+
 	/* ignore symmetrical defaults if we got left/rightauth */
 	if (wm->left.authby != wm->right.authby)
 		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
 	/* remove default pubkey policy if left/rightauth is specified */
 	if (wm->left.authby == wm->right.authby) {
-		if (wm->left.authby == AUTHBY_RSASIG)
-			c->policy = (c->policy & ~(POLICY_EDDSA | POLICY_ECDSA));
-		if (wm->left.authby == AUTHBY_ECDSA)
-			c->policy = (c->policy & ~(POLICY_EDDSA | (POLICY_RSASIG | POLICY_RSASIG_v1_5)));
+		if (wm->left.authby == AUTHBY_RSASIG) {
+		    c->policy = (c->policy & ~POLICY_ECDSA);
+#ifdef NSS_EDDSA
+            c->policy = (c->policy & ~POLICY_EDDSA);
+#endif
+	    }
+		if (wm->left.authby == AUTHBY_ECDSA){
+		    c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
+#ifdef NSS_EDDSA
+            c->policy = (c->policy & ~POLICY_EDDSA);
+#endif
+		}
+#ifdef NSS_EDDSA
 		if (wm->left.authby == AUTHBY_EDDSA)
 			c->policy = (c->policy & ~(POLICY_ECDSA | (POLICY_RSASIG | POLICY_RSASIG_v1_5)));
+#endif
 	}
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
 	if (c->ike_version == IKEv2)
@@ -1622,10 +1639,12 @@ static bool extract_connection(const struct whack_message *wm,
 		    (wm->left.authby == AUTHBY_ECDSA && wm->right.authby == AUTHBY_NULL)) {
 			c->policy |= POLICY_ECDSA;
 		}
+#ifdef NSS_EDDSA
 		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_EDDSA) ||
 		    (wm->left.authby == AUTHBY_EDDSA && wm->right.authby == AUTHBY_NULL)) {
 			c->policy |= POLICY_EDDSA;
 		}
+#endif
 
 		/* IKE cipher suites */
 
@@ -1934,8 +1953,10 @@ static bool extract_connection(const struct whack_message *wm,
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_RSASIG;
 		else if (c->policy & POLICY_ECDSA)
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_ECDSA;
+#ifdef NSS_EDDSA
 		else if (c->policy & POLICY_EDDSA)
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_EDDSA;
+#endif
 		else if (c->policy & POLICY_PSK)
 			c->spd.this.authby = c->spd.that.authby = AUTHBY_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
@@ -1951,9 +1972,11 @@ static bool extract_connection(const struct whack_message *wm,
 		case AUTHBY_ECDSA:
 			c->policy |= POLICY_ECDSA;
 			break;
+#ifdef NSS_EDDSA
 		case AUTHBY_EDDSA:
 			c->policy |= POLICY_EDDSA;
 			break;
+#endif
 		case AUTHBY_PSK:
 			c->policy |= POLICY_PSK;
 			break;
@@ -3226,6 +3249,7 @@ struct connection *refine_host_connection(const struct state *st,
 			}
 			break;
 		}
+
 #if 0
 		case AUTHBY_ECDSA:
 		{
@@ -3242,6 +3266,7 @@ struct connection *refine_host_connection(const struct state *st,
 			}
 			break;
 		}
+#ifdef NSS_EDDSA
 		case AUTHBY_EDDSA:
 		{
 			/*
@@ -3258,6 +3283,7 @@ struct connection *refine_host_connection(const struct state *st,
 			break;
 		}
 
+#endif
 #endif
 		default:
 			/* don't die on bad_case(auth); */

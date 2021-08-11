@@ -179,13 +179,21 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->ike_version = IKEv2;
 	d->policy =
 		POLICY_TUNNEL |
-		POLICY_ECDSA | POLICY_EDDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
+		POLICY_ECDSA  | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
 
+#ifdef NSS_EDDSA
+    d->policy |= POLICY_EDDSA;
+#endif
+
 	d->sighash_policy =
-		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512| POL_SIGHASH_IDENTITY;
+		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
+
+#ifdef NSS_EDDSA
+    d->sighash_policy |= POL_SIGHASH_IDENTITY;
+#endif
 
 	d->left.host_family = &ipv4_info;
 	d->left.addr = ipv4_info.address.any;
@@ -1494,9 +1502,11 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (streq(val, "ecdsa-sha1")) {
 				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
 				return TRUE;
+#ifdef NSS_EDDSA
 			} else if (streq(val, "eddsa") || streq(val, "eddsa-identity")) {
 				conn->policy |= POLICY_EDDSA;
 				conn->sighash_policy |= POL_SIGHASH_IDENTITY;
+#endif
 			} else {
 				starter_error_append(perrl, "connection authby= value is unknown");
 				return TRUE;

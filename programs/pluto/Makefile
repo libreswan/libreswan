@@ -219,6 +219,9 @@ endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJS += ikev2_states.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
+ifeq ($(NSS_EDDSA),true)
+OBJS += ikev2_eddsa.o
+endif
 OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
 OBJS += kernel.o

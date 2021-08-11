@@ -503,6 +503,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.extract_pubkey_content = EC_extract_pubkey_content,
 };
 
+#ifdef NSS_EDDSA
 const struct pubkey_type pubkey_type_eddsa = {
 	.alg = PUBKEY_ALG_EDDSA,
 	.name = "EDDSA",
@@ -515,6 +516,7 @@ const struct pubkey_type pubkey_type_eddsa = {
 	.sign_hash = EC_sign_hash,
 	.extract_pubkey_content = EC_extract_pubkey_content,
 };
+#endif
 
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
@@ -522,7 +524,9 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
 	static const struct pubkey_type *pubkey_types[] = {
 		[PUBKEY_ALG_RSA] = &pubkey_type_rsa,
 		[PUBKEY_ALG_ECDSA] = &pubkey_type_ecdsa,
+#ifdef NSS_EDDSA
 		[PUBKEY_ALG_EDDSA] = &pubkey_type_eddsa,
+#endif
 	};
 	passert(alg < elemsof(pubkey_types));
 	const struct pubkey_type *type = pubkey_types[alg];
@@ -541,7 +545,9 @@ const keyid_t *pubkey_keyid(const struct pubkey *pk)
 	switch (pk->type->alg) {
 	case PUBKEY_ALG_RSA:
 	case PUBKEY_ALG_ECDSA:
+#ifdef NSS_EDDSA
 	case PUBKEY_ALG_EDDSA:
+#endif
 		return &pk->keyid;
 	default:
 		bad_case(pk->type->alg);
@@ -569,7 +575,9 @@ const keyid_t *secret_keyid(const struct secret *secret)
 		switch (secret->pks.pubkey_type->alg) {
 		case PUBKEY_ALG_RSA:
 		case PUBKEY_ALG_ECDSA:
+#ifdef NSS_EDDSA
 		case PUBKEY_ALG_EDDSA:
+#endif
 			return &secret->pks.keyid;
 		default:
 			bad_case(secret->pks.pubkey_type->alg);
@@ -584,7 +592,9 @@ unsigned pubkey_size(const struct pubkey *pk)
 	switch (pk->type->alg) {
 	case PUBKEY_ALG_RSA:
 	case PUBKEY_ALG_ECDSA:
+#ifdef NSS_EDDSA
 	case PUBKEY_ALG_EDDSA:
+#endif
 		return pk->size;
 	default:
 		bad_case(pk->type->alg);
@@ -1550,12 +1560,13 @@ static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
-	    SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key);
+#ifdef NSS_EDDSA
 	    if(pubk == NULL)
 	        return NULL;
 	    if (pk11_ECGetPubkeyEncoding(pubk) == ECPoint_XOnly)
 	        return &pubkey_type_eddsa;
 	    else
+#endif
 	        return &pubkey_type_ecdsa;
 	default:
 		return NULL;
@@ -1569,9 +1580,12 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
+#ifdef NSS_EDDSA
+        SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key);
 	    if (pk11_ECGetPubkeyEncoding(pubk) == ECPoint_XOnly)
             return &pubkey_type_eddsa;
         else
+#endif
             return &pubkey_type_ecdsa;
 	default:
 		return NULL;

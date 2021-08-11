@@ -32,7 +32,7 @@ $PKI --pub --in strongEastEd25519Key.der | $PKI --issue --cacert strongCAEd25519
 openssl x509 -inform der -outform pem -in strongCAEd25519cert.der -out strongCAEd25519cert.pem
 openssl x509 -inform der -outform pem -in strongWestEd25519Cert.der -out strongWestEd25519Cert.pem
 openssl x509 -inform der -outform pem -in strongEastEd25519Cert.der -out strongEastEd25519Cert.pem
-openssl ec -inform der -outform pem -in strongWestEd25519Key.der -out strongWestEd25519Key.pem
-openssl ec -inform der -outform pem -in strongEastEd25519Key.der -out strongEastEd25519Key.pem
+openssl pkey -inform der -outform pem -in strongWestEd25519Key.der -out strongWestEd25519Key.pem
+openssl pkey -inform der -outform pem -in strongEastEd25519Key.der -out strongEastEd25519Key.pem
 openssl pkcs12 -export -nodes -in strongWestEd25519Cert.pem -inkey strongWestEd25519Key.pem -certfile strongCAEd25519cert.pem -name strongWest -export -out strongWestEd25519.p12 -passout pass:foobar
 openssl pkcs12 -export -nodes -in strongEastEd25519Cert.pem -inkey strongEastEd25519Key.pem -certfile strongCAEd25519cert.pem -name strongEast -export -out strongEastEd25519.p12 -passout pass:foobar

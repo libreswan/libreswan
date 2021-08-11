@@ -102,7 +102,9 @@ enum keyword_authby {
 	AUTHBY_PSK,
 	AUTHBY_RSASIG,
 	AUTHBY_ECDSA,
+#ifdef NSS_EDDSA
 	AUTHBY_EDDSA,
+#endif
 	AUTHBY_NULL,
 };
 
@@ -849,7 +851,9 @@ enum sa_policy_bits {
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
 	POLICY_ECDSA_IX = 2,
+#ifdef NSS_EDDSA
 	POLICY_EDDSA_IX = 3,
+#endif
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
@@ -936,7 +940,9 @@ enum sa_policy_bits {
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
 #define POLICY_ECDSA   LELEM(POLICY_ECDSA_IX)
+#ifdef NSS_EDDSA
 #define POLICY_EDDSA   LELEM(POLICY_EDDSA_IX)
+#endif
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
 #define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -997,13 +1003,17 @@ enum sa_policy_bits {
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
 #define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
 #define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
+#ifdef NSS_EDDSA
 #define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
+#endif
 
 enum sighash_policy_bits {
 	POL_SIGHASH_SHA2_256_IX,
 	POL_SIGHASH_SHA2_384_IX,
 	POL_SIGHASH_SHA2_512_IX,
+#ifdef NSS_EDDSA
 	POL_SIGHASH_IDENTITY_IX,
+#endif
 };
 
 extern const struct enum_names sighash_policy_bit_names;
@@ -1011,8 +1021,9 @@ extern const struct enum_names sighash_policy_bit_names;
 #define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
 #define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
 #define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
+#ifdef NSS_EDDSA
 #define POL_SIGHASH_IDENTITY LELEM(POL_SIGHASH_IDENTITY_IX)
-
+#endif
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG
 
