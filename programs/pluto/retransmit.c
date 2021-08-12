@@ -117,8 +117,8 @@ void start_retransmits(struct state *st)
 	rt->nr_retransmits = 0;
 	rt->limit = MAXIMUM_RETRANSMITS_PER_EXCHANGE;
 	/* correct values */
-	rt->timeout = c->r_timeout;
-	rt->delay = c->r_interval;
+	rt->timeout = c->config->retransmit_timeout;
+	rt->delay = c->config->retransmit_interval;
 	if (impair.suppress_retransmits) {
 		/*
 		 * Suppress retransmits by using the full TIMEOUT as
@@ -128,7 +128,7 @@ void start_retransmits(struct state *st)
 		 * operation that is expected to be slow (and the
 		 * network is assumed to be reliable).
 		 */
-		rt->delay = c->r_timeout;
+		rt->delay = c->config->retransmit_timeout;
 		deltatime_buf db;
 		log_state(RC_LOG, st, "IMPAIR: suppressing retransmits; scheduling timeout in %s seconds",
 			  str_deltatime(rt->delay, &db));

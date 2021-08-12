@@ -2801,7 +2801,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				break;
 
 			case EVENT_SA_DISCARD:
-				event_schedule(EVENT_SA_DISCARD, c->r_timeout, st);
+				event_schedule(EVENT_SA_DISCARD, c->config->retransmit_timeout, st);
 				break;
 
 			default:

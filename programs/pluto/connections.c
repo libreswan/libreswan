@@ -1719,8 +1719,8 @@ static bool extract_connection(const struct whack_message *wm,
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
 		c->sa_replay_window = wm->sa_replay_window;
-		c->r_timeout = wm->r_timeout;
-		c->r_interval = wm->r_interval;
+		config->retransmit_timeout = wm->retransmit_timeout;
+		config->retransmit_interval = wm->retransmit_interval;
 
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
@@ -4201,8 +4201,8 @@ void show_one_connection(struct show *s,
 		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
 		  c->name,
 		  instance,
-		  deltamillisecs(c->r_interval),
-		  deltasecs(c->r_timeout),
+		  deltamillisecs(c->config->retransmit_interval),
+		  deltasecs(c->config->retransmit_timeout),
 		  c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" :
 			c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
 		  c->remote_tcpport);

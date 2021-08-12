@@ -102,6 +102,10 @@ struct config_end {
 
 struct config {
 	chunk_t sec_label;
+
+	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
+	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
+
 	struct config_end end[2];
 };
 
@@ -347,8 +351,6 @@ struct connection {
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
-	deltatime_t r_interval; /* initial retransmit time, doubles each time */
-	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	/*
 	 * XXX: this field is used by the kernel to remember the mode

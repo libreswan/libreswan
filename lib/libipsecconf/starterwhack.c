@@ -499,8 +499,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
 
-	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
-	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
+	msg.retransmit_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
+	msg.retransmit_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
 
 	msg.ike_version = conn->ike_version;
 	msg.policy = conn->policy;

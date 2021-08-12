@@ -1033,8 +1033,8 @@ int main(int argc, char **argv)
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
-	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
-	msg.r_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
+	msg.retransmit_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
+	msg.retransmit_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
 	msg.active_redirect_dests = NULL;
 
@@ -1868,11 +1868,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_T:	/* --retransmit-timeout <seconds> */
-			msg.r_timeout = deltatime(opt_whole);
+			msg.retransmit_timeout = deltatime(opt_whole);
 			continue;
 
 		case CD_RETRANSMIT_I:	/* --retransmit-interval <msecs> */
-			msg.r_interval = deltatime_ms(opt_whole);
+			msg.retransmit_interval = deltatime_ms(opt_whole);
 			continue;
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
