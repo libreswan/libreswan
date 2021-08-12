@@ -174,6 +174,8 @@ enum natt_method {
  * timers).
  */
 
+extern const struct enum_names global_timer_names;
+
 enum global_timer {
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
@@ -194,11 +196,11 @@ enum global_timer {
 	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
 };
 
-extern const struct enum_names global_timer_names;
-
 /*
  * State based events and timers.
  */
+
+extern const struct enum_names event_type_names;
 
 enum event_type {
 	EVENT_NULL,			/* non-event */

@@ -1962,7 +1962,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		FOR_EACH_THING(liveness, st->st_retransmit_event, st->st_event) {
 			if (liveness != NULL) {
 				jam(buf, "; ");
-				jam_enum_short(buf, &timer_event_names, liveness->ev_type);
+				jam_enum_short(buf, &event_type_names, liveness->ev_type);
 				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
 				jam(buf, " in %jds", delta);
 			}

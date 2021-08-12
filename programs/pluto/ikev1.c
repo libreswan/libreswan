@@ -809,7 +809,7 @@ void init_ikev1(struct logger *logger)
 				}
 			}
 			DBG_log("    -> %s %s (%s)", to->short_name,
-				enum_name_short(&timer_event_names,
+				enum_name_short(&event_type_names,
 						t->timeout_event),
 				t->message);
 		}

@@ -701,7 +701,7 @@ void init_ikev2(void)
 			default: bad_case(t->send);
 			}
 			DBG_log("    -> %s %s%s (%s)", to->short_name,
-				enum_name_short(&timer_event_names,
+				enum_name_short(&event_type_names,
 						t->timeout_event),
 				send, t->story);
 		}
@@ -2577,7 +2577,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			/* the previous event is retained */
 			dbg("#%lu is retaining %s with is previously set timeout",
 			    st->st_serialno, (st->st_event == NULL ? "<no-event>" :
-					      enum_name(&timer_event_names, st->st_event->ev_type)));
+					      enum_name(&event_type_names, st->st_event->ev_type)));
 			break;
 
 		default:

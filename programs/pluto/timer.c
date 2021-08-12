@@ -146,7 +146,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		struct state_event *ev = arg;
 		passert(ev != NULL);
 		event_type = ev->ev_type;
-		event_name = enum_name_short(&timer_event_names, event_type);
+		event_name = enum_name_short(&event_type_names, event_type);
 		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
@@ -463,7 +463,7 @@ void delete_event(struct state *st)
 			esb_buf b;
 			dbg("state #%lu deleting .%s %s",
 			    st->st_serialno, l->name,
-			    enum_show(&timer_event_names, (*l->event)->ev_type, &b));
+			    enum_show(&event_type_names, (*l->event)->ev_type, &b));
 			delete_pluto_event(l->event);
 		}
 	}
@@ -481,14 +481,14 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	pexpect(deltasecs(delay) < secs_per_day * 31);
 
-	const char *en = enum_name(&timer_event_names, type);
+	const char *en = enum_name(&event_type_names, type);
 
 	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_*event field for %s",
 			     st->st_serialno,
-			     enum_name(&timer_event_names, type));
+			     enum_name(&event_type_names, type));
 		return;
 	}
 
@@ -497,7 +497,7 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu already has a scheduled %s; forcing replacement",
 			     st->st_serialno,
-			     enum_name(&timer_event_names, type));
+			     enum_name(&event_type_names, type));
 		delete_pluto_event(evp);
 	}
 
@@ -528,12 +528,12 @@ void event_delete(enum event_type type, struct state *st)
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, HERE,
 			     "#%lu has no .st_event field for %s",
-			     st->st_serialno, enum_name(&timer_event_names, type));
+			     st->st_serialno, enum_name(&event_type_names, type));
 		return;
 	}
 	if (*evp != NULL) {
 		dbg("#%lu requesting %s-pe@%p be deleted",
-		    st->st_serialno, enum_name(&timer_event_names, (*evp)->ev_type), *evp);
+		    st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type), *evp);
 		pexpect(st == (*evp)->ev_state);
 		delete_pluto_event(evp);
 		pexpect((*evp) == NULL);
@@ -554,18 +554,18 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	struct state_event **evp = state_event(st, event);
 	if (evp == NULL) {
 		llog(RC_COMMENT, logger, "%s is not a valid event",
-		     enum_name(&timer_event_names, event));
+		     enum_name(&event_type_names, event));
 		return;
 	}
 	if (*evp == NULL) {
 		llog(RC_COMMENT, logger, "no handler for %s",
-		     enum_name(&timer_event_names, event));
+		     enum_name(&event_type_names, event));
 		return;
 	}
 	if ((*evp)->ev_type != event) {
 		llog(RC_COMMENT, logger, "handler for %s is actually %s",
-		     enum_name(&timer_event_names, event),
-		     enum_name(&timer_event_names, (*evp)->ev_type));
+		     enum_name(&event_type_names, event),
+		     enum_name(&event_type_names, (*evp)->ev_type));
 		return;
 	}
 	/*
@@ -573,6 +573,6 @@ void call_state_event_inline(struct logger *logger, struct state *st,
 	 * pending?
 	 */
 	llog(RC_COMMENT, logger, "calling %s",
-	     enum_name(&timer_event_names, event));
+	     enum_name(&event_type_names, event));
 	timer_event_cb(0/*sock*/, 0/*event*/, *evp);
 }
