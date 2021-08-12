@@ -84,11 +84,6 @@ void rehash_state_reqid(struct state *st);
 /*
  * For querying and iterating over the state DB.
  *
- * - calling with NULL ST returns first match
- * - re-calling with non-NULL ST returns next match
- *
- * Also:
- *
  * - option parameters are only matched when non-NULL
  * - ST can be deleted between two calls
  * - certain queries, such as using IKE_SPIs, are faster
@@ -102,11 +97,9 @@ struct state_query {
 	const ike_spis_t *ike_spis;
 	const struct ike_sa *ike;
 	/* internal */
-	struct {
-		struct list_entry *next;
-	} internal;
+	struct list_entry *internal;
 };
 
-struct state *next_state(struct state *st, struct state_query *query);
+struct state *next_state(struct state_query *query);
 
 #endif

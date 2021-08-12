@@ -83,6 +83,78 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 }
 
 /*
+ * See also {next,prev}_state()
+ */
+
+static struct list_head *query_head(struct connection_query *query UNUSED)
+{
+	return &connection_serialno_list_head;
+}
+
+static bool query_matches(struct connection *c UNUSED, struct connection_query *query UNUSED)
+{
+	return true; /* sure */
+}
+
+struct connection *next_connection(struct connection_query *query)
+{
+#define ADV newer
+	if (query->internal == NULL) {
+		/*
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data).
+		 */
+		query->internal = query_head(query)->head.ADV;
+	}
+	/* Walk list until an entry matches */
+	for (struct list_entry *entry = query->internal;
+	     entry->data != NULL /* head has DATA == NULL */;
+	     entry = entry->ADV) {
+		struct connection *c = (struct connection *) entry->data;
+		if (query_matches(c, query)) {
+			/* save connection; but step off current entry */
+			query->internal = entry->ADV;
+			dbg("found "PRI_CO" for "PRI_WHERE,
+			    pri_co(c->serialno), pri_where(query->where));
+			return c;
+		}
+	}
+	dbg("no match for "PRI_WHERE, pri_where(query->where));
+	return NULL;
+#undef ADV
+}
+
+struct connection *prev_connection(struct connection_query *query)
+{
+#define ADV older
+	if (query->internal == NULL) {
+		/*
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data).
+		 */
+		query->internal = query_head(query)->head.ADV;
+	}
+	/* Walk list until an entry matches */
+	for (struct list_entry *entry = query->internal;
+	     entry->data != NULL /* head has DATA == NULL */;
+	     entry = entry->ADV) {
+		struct connection *c = (struct connection *) entry->data;
+		if (query_matches(c, query)) {
+			/* save connection; but step off current entry */
+			query->internal = entry->ADV;
+			dbg("found "PRI_CO" for "PRI_WHERE,
+			    pri_co(c->serialno), pri_where(query->where));
+			return c;
+		}
+	}
+	dbg("no match for "PRI_WHERE, pri_where(query->where));
+	return NULL;
+#undef ADV
+}
+
+/*
  * Maintain the contents of the hash tables.
  *
  * Unlike serialno, the IKE SPI[ir] keys can change over time.

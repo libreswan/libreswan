@@ -642,4 +642,17 @@ ip_port end_host_port(const struct end *end, const struct end *other);
 
 extern struct connection *connections;
 
+/*
+ * For querying and iterating over the connection DB.
+ */
+
+struct connection_query {
+	where_t where;
+	/* internal */
+	struct list_entry *internal;
+};
+
+struct connection *next_connection(struct connection_query *query);
+struct connection *prev_connection(struct connection_query *query);
+
 #endif

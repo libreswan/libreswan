@@ -367,51 +367,67 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 	return NULL;
 }
 
-struct state *next_state(struct state *prev_st, struct state_query *query)
+/*
+ * See also {next,prev}_connection()
+ */
+
+static struct list_head *query_head(struct state_query *query)
+{
+	/* select list head */
+	struct list_head *bucket;
+	if (query->ike_spis != NULL) {
+		hash_t hash = ike_spis_hasher(query->ike_spis);
+		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
+	} else if (query->ike != NULL) {
+		hash_t hash = ike_spis_hasher(&query->ike->sa.st_ike_spis);
+		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
+	} else {
+		/* else other queries? */
+		bucket = &state_serialno_list_head;
+	}
+	return bucket;
+}
+
+static bool query_matches(struct state *st, struct state_query *query)
+{
+	if (query->ike_version != 0 &&
+	    st->st_ike_version != query->ike_version) {
+		return false;
+	}
+	if (query->ike_spis != NULL &&
+	    !ike_spis_eq(&st->st_ike_spis, query->ike_spis)) {
+		return false;
+	}
+	if (query->ike != NULL &&
+	    query->ike->sa.st_serialno != st->st_clonedfrom) {
+		return false;
+	}
+	return true;
+}
+
+struct state *next_state(struct state_query *query)
 {
 #define NEXT newer /* old-to-new */
-	if (prev_st == NULL) {
-		/* cross check first call */
-		passert(query->internal.next == NULL);
-		/* select list head */
-		struct list_head *bucket;
-		if (query->ike_spis != NULL) {
-			hash_t hash = ike_spis_hasher(query->ike_spis);
-			bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
-		} else if (query->ike != NULL) {
-			hash_t hash = ike_spis_hasher(&query->ike->sa.st_ike_spis);
-			bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
-		} else {
-			/* else other queries? */
-			bucket = &state_serialno_list_head;
-		}
-		/* even an empty list has a head */
-		passert(bucket != NULL);
-		/* advance to first entry of circular list */
-		query->internal.next = bucket->head.NEXT;
-		passert(query->internal.next != NULL);
+	if (query->internal == NULL) {
+		/*
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data).
+		 */
+		query->internal = query_head(query)->head.NEXT;
 	}
 	/* Walk list until an entry matches */
-	for (struct list_entry *entry = query->internal.next;
+	for (struct list_entry *entry = query->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->NEXT) {
 		struct state *st = (struct state *) entry->data;
-		if (query->ike_version != 0 &&
-		    st->st_ike_version != query->ike_version) {
-			continue;
+		if (query_matches(st, query)) {
+			/* save state; but step off current entry */
+			query->internal = entry->NEXT;
+			dbg("found "PRI_SO" for "PRI_WHERE,
+			    pri_so(st->st_serialno), pri_where(query->where));
+			return st;
 		}
-		if (query->ike_spis != NULL &&
-		    !ike_spis_eq(&st->st_ike_spis, query->ike_spis)) {
-			continue;
-		}
-		if (query->ike != NULL &&
-		    query->ike->sa.st_serialno != st->st_clonedfrom) {
-			continue;
-		}
-		/* save state; but step off current entry */
-		query->internal.next = entry->NEXT;
-		dbg("found #%lu for "PRI_WHERE, st->st_serialno, pri_where(query->where));
-		return st;
 	}
 	dbg("no match for "PRI_WHERE, pri_where(query->where));
 	return NULL;
