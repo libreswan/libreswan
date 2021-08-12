@@ -1,0 +1,9 @@
+IKEv2 labeled IPsec with an acquire happening part way through the childless IKE exchange
+
+- pluto configured to drop the first IKE_SA_INIT request
+- initiate childless IKE SA in background
+- while IKE SA is stalled, trigger acquire
+
+The acquire should be put on the IKE's pending queue.  The retransmit
+will then unstuck the entire process and establish both the IKE and
+Child SAs.

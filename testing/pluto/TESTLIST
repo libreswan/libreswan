@@ -928,6 +928,7 @@ kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-childless	good
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-ondemand	good
 kvmplutotest	ikev2-labeled-ipsec-05-any					good
 kvmplutotest	ikev2-labeled-ipsec-06-rekey-ike-acquire			good
+kvmplutotest	ikev2-labeled-ipsec-06-reauth-ike-acquire			wip
 
 # compress tests
 kvmplutotest    compress-pluto-01		good
