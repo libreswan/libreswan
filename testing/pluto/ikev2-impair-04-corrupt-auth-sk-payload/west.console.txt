@@ -18,7 +18,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: cloning incoming encrypted message and scheduling its replay
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: corrupting incoming encrypted message's SK payload's first byte
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: NSS: AEAD decryption using AES_GCM_16_256 and PK11_Decrypt() failed: SEC_ERROR 2 (0x2): security library: received bad data.

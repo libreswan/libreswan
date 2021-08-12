@@ -32,7 +32,7 @@ west #
  ipsec auto --up west-x509
 1v2 "west-x509" #1: initiating IKEv2 connection
 1v2 "west-x509" #1: sent IKE_SA_INIT request
-1v2 "west-x509" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "west-x509" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "west-x509" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate 'CN=east-selfsigned.testing.libreswan.org' issued by CA 'CN=east-selfsigned.testing.libreswan.org'
 004 "west-x509" #2: established Child SA; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -43,7 +43,7 @@ west #
  ipsec auto --up road-x509
 1v2 "road-x509" #3: initiating IKEv2 connection
 1v2 "road-x509" #3: sent IKE_SA_INIT request
-1v2 "road-x509" #3: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+1v2 "road-x509" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-x509" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "road-x509" #3: encountered fatal error in state STATE_V2_PARENT_I2
 002 "road-x509" #3: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
