@@ -32,7 +32,6 @@
 
 #include <unistd.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
@@ -558,40 +557,58 @@ void schedule_v2_replace_event(struct state *st)
 	event_schedule(kind, deltatime(delay), st);
 }
 
-void v2_event_sa_rekey(struct state *st)
+static bool state_is_expired(struct state *st, const char *what)
 {
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/*
 		 * An IKE SA must return itself so NULL implies a
-		 * child.
+		 * parentless child.
 		 *
 		 * Even it is decided that Child SAs can linger after
 		 * the IKE SA has gone they shouldn't be getting
 		 * rekeys!
 		 */
 		pexpect_fail(st->st_logger, HERE,
-			     "not replacing Child SA #%lu; as IKE SA #%lu has diasppeared",
-			     st->st_serialno, st->st_clonedfrom);
-		return;
-	}
-
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-
-	so_serial_t newer_sa = get_newer_sa_from_connection(st);
-	if (newer_sa != SOS_NOBODY) {
-		/* implies a double re-key? */
-		pexpect_fail(st->st_logger, HERE,
-			     "not replacing stale %s SA #%lu; as already got a newer #%lu",
-			     satype, st->st_serialno, newer_sa);
+			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
+			     what, st->st_serialno, st->st_clonedfrom);
 		event_force(EVENT_SA_EXPIRE, st);
-		return;
+		return true;
 	}
 
 	if (expire_ike_because_child_not_used(st)) {
+		struct ike_sa *ike = ike_sa(st, HERE);
 		event_force(EVENT_SA_EXPIRE, &ike->sa);
+		return true;
+	}
+
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (newer_sa != SOS_NOBODY) {
+		/*
+		 * A newer SA implies that this SA has already been
+		 * successfully replaced (it's only set when the newer
+		 * SA establishes).  This SA should have been expired
+		 * at the same time; do it now.
+		 */
+		pexpect_fail(st->st_logger, HERE,
+			     "not %s stale %s SA #%lu; as already got a newer #%lu",
+			     what, satype, st->st_serialno, newer_sa);
+		event_force(EVENT_SA_EXPIRE, st);
+		return true;
+	}
+
+	return false;
+}
+
+void v2_event_sa_rekey(struct state *st)
+{
+	if (state_is_expired(st, "rekey")) {
 		return;
 	}
+
+	struct ike_sa *ike = ike_sa(st, HERE);
 
 	struct child_sa *larval_sa;
 	if (IS_IKE_SA(st)) {
@@ -600,6 +617,7 @@ void v2_event_sa_rekey(struct state *st)
 		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
 	}
 
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 	llog_sa(RC_LOG, larval_sa,
 		"initiating rekey to replace %s SA #%lu",
 		satype, st->st_serialno);
@@ -607,54 +625,17 @@ void v2_event_sa_rekey(struct state *st)
 
 void v2_event_sa_replace(struct state *st)
 {
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
-
-	/*
-	 * Is ST obsolete?
-	 *
-	 * When ST and connection serial numbers match, or whn
-	 * connection has no serial number SOS_NOBODY is returned.
-	 */
-	so_serial_t newer_sa = get_newer_sa_from_connection(st);
-	if (newer_sa != SOS_NOBODY) {
-		/*
-		 * This state is somehow newer then the established
-		 * state as identified by the connection.
-		 *
-		 * Presumably it is a failed rekey (see above?) that
-		 * didn't complete.
-		 *
-		 * For an IKE SA blow away the entire family
-		 * (including the in-progress rekey).  For a CHILD SA
-		 * this will delete the old SA but leave the rekey
-		 * alone.  Confusing.
-		 */
-		if (IS_IKE_SA(st)) {
-			dbg("replacing entire stale IKE SA #%lu family; rekey #%lu will be deleted",
-			    st->st_serialno, newer_sa);
-			ipsecdoi_replace(st, 1);
-		} else {
-			dbg("expiring stale CHILD SA #%lu; newer #%lu will replace?",
-			    st->st_serialno, newer_sa);
-		}
-		/* XXX: are these calls needed? it's about to die */
-		event_delete(EVENT_v2_LIVENESS, st);
-		event_force(EVENT_SA_EXPIRE, st);
+	if (state_is_expired(st, "replace")) {
 		return;
 	}
 
-	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st, HERE);
-		event_force(EVENT_SA_EXPIRE, &ike->sa);
-		return;
-	}
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+	dbg("replacing stale %s SA", satype);
 
 	/*
 	 * XXX: For a CHILD SA, will this result in a re-key attempt?
 	 */
-	dbg("replacing stale %s SA", satype);
 	ipsecdoi_replace(st, 1);
-	event_delete(EVENT_v2_LIVENESS, st);
 	event_force(EVENT_SA_EXPIRE, st);
 }
 
