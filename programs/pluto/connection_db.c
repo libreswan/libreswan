@@ -86,9 +86,11 @@ struct connection *connection_by_serialno(co_serial_t serialno)
  * See also {next,prev}_state()
  */
 
-static struct list_head *query_head(struct connection_query *query UNUSED)
+static struct list_head *query_head(struct connection_query *query)
 {
-	return &connection_serialno_list_head;
+	struct list_head *bucket = &connection_serialno_list_head;
+	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(query->where));
+	return bucket;
 }
 
 static bool query_matches(struct connection *c UNUSED, struct connection_query *query UNUSED)
