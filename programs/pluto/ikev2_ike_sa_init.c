@@ -200,7 +200,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			}
 			if (verbose_state_busy(&old->sa)) {
 				/* already logged */;
-			} else if (old->sa.st_state->kind == STATE_PARENT_R1 &&
+			} else if (old->sa.st_state->kind == STATE_V2_PARENT_R1 &&
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
@@ -326,7 +326,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * Does the message match the (only) expected
 		 * transition?
 		 */
-		const struct finite_state *start_state = finite_states[STATE_PARENT_R0];
+		const struct finite_state *start_state = finite_states[STATE_V2_PARENT_R0];
 		const struct v2_state_transition *transition =
 			find_v2_state_transition(md->md_logger, start_state, md);
 		if (transition == NULL) {
@@ -439,7 +439,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			return;
 		}
 
-		if (ike->sa.st_state->kind != STATE_PARENT_I1 ||
+		if (ike->sa.st_state->kind != STATE_V2_PARENT_I1 ||
 		    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
 		    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
 		    ike->sa.st_v2_msgid_wip.initiator != 0) {
@@ -516,7 +516,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		}
 	}
 
-	const struct finite_state *fs = finite_states[STATE_PARENT_I0];
+	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2_transitions[0];
 	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
@@ -526,7 +526,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state->kind == STATE_PARENT_I0);
+	passert(ike->sa.st_state->kind == STATE_V2_PARENT_I0);
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
 
@@ -591,12 +591,12 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		} else {
 			what = "establishing CHILD SA";
 		}
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection to replace %s #%lu",
 			  what, predecessor->st_serialno);
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_PARENT_I1), &ike->sa,
+		log_state(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection");
 	}
 
@@ -653,8 +653,8 @@ stf_status ikev2_parent_outI1_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(unused_md == NULL);
 	/* I1 is from INVALID KE */
-	pexpect(ike->sa.st_state->kind == STATE_PARENT_I0 ||
-		ike->sa.st_state->kind == STATE_PARENT_I1);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_I0 ||
+		ike->sa.st_state->kind == STATE_V2_PARENT_I1);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -834,11 +834,11 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/* set up new state */
 	update_ike_endpoints(ike, md);
 	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state->kind == STATE_PARENT_R0);
+	passert(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 	/* set by caller */
-	pexpect(md->svm == finite_states[STATE_PARENT_R0]->v2_transitions);
-	pexpect(md->svm->state == STATE_PARENT_R0);
+	pexpect(md->svm == finite_states[STATE_V2_PARENT_R0]->v2_transitions);
+	pexpect(md->svm->state == STATE_V2_PARENT_R0);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
@@ -959,7 +959,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_PARENT_R0);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
 	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -1151,7 +1151,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
  *
  *
  */
-/* STATE_PARENT_I1: R1B --> I1B
+/* STATE_V2_PARENT_I1: R1B --> I1B
  *                     <--  HDR, N
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
@@ -1236,7 +1236,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	return STF_OK;
 }
 
-/* STATE_PARENT_I1: R1 --> I2
+/* STATE_V2_PARENT_I1: R1 --> I2
  *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *      [IDr,] AUTH, SAi2,

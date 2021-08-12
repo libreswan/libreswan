@@ -245,10 +245,10 @@ enum retransmit_status retransmit(struct state *st)
 				}
 				break;
 #endif
-			case STATE_PARENT_I2:
+			case STATE_V2_PARENT_I2:
 				jam_string(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
 				break;
-			case STATE_PARENT_I1:
+			case STATE_V2_PARENT_I1:
 				jam_string(buf, ".  No response (or no acceptable response) to our first IKEv2 message");
 				break;
 			default:

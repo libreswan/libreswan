@@ -111,7 +111,7 @@ west #
 west #
  # there should be only one IKE_INIT exchange
 west #
- grep "STATE_PARENT_I1 with STF_OK" /tmp/pluto.log
+ grep "STATE_V2_PARENT_I1 with STF_OK" /tmp/pluto.log
 west #
  grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
 west #

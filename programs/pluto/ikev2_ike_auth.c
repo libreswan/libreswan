@@ -546,7 +546,7 @@ static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_si
 				   MESSAGE_REQUEST);
 }
 
-/* STATE_PARENT_R1: I2 --> R2
+/* STATE_V2_PARENT_R1: I2 --> R2
  *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
  *                             [IDr,] AUTH, SAi2,
  *                             TSi, TSr}
@@ -582,7 +582,7 @@ static stf_status process_v2_IKE_AUTH_request_no_skeyseed_continue(struct state 
  	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -619,7 +619,7 @@ static stf_status ikev2_pam_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
 	dbg("%s() for #%lu %s",
 	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -1289,7 +1289,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	return status;
 }
 
-/* STATE_PARENT_I2: R2 --> I3
+/* STATE_V2_PARENT_I2: R2 --> I3
  *                     <--  HDR, SK {IDr, [CERT,] AUTH,
  *                               [SAr2,] [TSi,] [TSr,]}
  * [Parent SA established]

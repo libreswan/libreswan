@@ -115,7 +115,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_request_no_skeyseed_post_dh_shared
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
-	pexpect(ike->sa.st_state->kind == STATE_PARENT_R1);
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
