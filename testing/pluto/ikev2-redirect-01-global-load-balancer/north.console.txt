@@ -25,7 +25,7 @@ north #
 002 "north-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #2: sent IKE_SA_INIT request
 002 "north-east" #2: IMPAIR: retransmit so deleting SA
-002 "north-east" #2: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "north-east" #2: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
  echo "1. north connection add+up done"
@@ -49,7 +49,7 @@ north #
 002 "north-east" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #4: sent IKE_SA_INIT request
 002 "north-east" #4: IMPAIR: retransmit so deleting SA
-002 "north-east" #4: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "north-east" #4: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "north-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
  echo "2. north connection add+up done"

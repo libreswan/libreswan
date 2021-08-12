@@ -30,8 +30,8 @@ west #
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-031 "westnet-eastnet-k1" #1: STATE_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-k1" #1: deleting state (STATE_PARENT_I1) and NOT sending notification
+031 "westnet-eastnet-k1" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+002 "westnet-eastnet-k1" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-k1" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  sleep 5
@@ -48,7 +48,7 @@ west #
 003 "westnet-eastnet-k3" #2: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet-k3" #2: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet-k3" #2: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-031 "westnet-eastnet-k3" #2: STATE_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+031 "westnet-eastnet-k3" #2: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet-k3" #2: starting keying attempt 2 of at most 3, but releasing whack
 west #
  sleep 15
@@ -65,7 +65,7 @@ west #
 003 "westnet-eastnet" #5: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet" #5: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet" #5: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
-031 "westnet-eastnet" #5: STATE_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+031 "westnet-eastnet" #5: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  # give whack released connection some time to do a few keyingtries

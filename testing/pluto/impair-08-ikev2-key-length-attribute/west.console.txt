@@ -42,7 +42,7 @@ west #
 1v2 "aes128" #3: sent IKE_SA_INIT request
 003 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
-002 "aes128" #3: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #3: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "aes128" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -117,7 +117,7 @@ west #
 1v2 "aes128" #11: sent IKE_SA_INIT request
 003 "aes128" #11: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #11: IMPAIR: retransmit so deleting SA
-002 "aes128" #11: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #11: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "aes128" #11: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -153,7 +153,7 @@ west #
 1v2 "aes128" #15: sent IKE_SA_INIT request
 003 "aes128" #15: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #15: IMPAIR: retransmit so deleting SA
-002 "aes128" #15: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #15: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "aes128" #15: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -172,7 +172,7 @@ west #
 1v2 "aes128" #17: sent IKE_SA_INIT request
 003 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #17: IMPAIR: retransmit so deleting SA
-002 "aes128" #17: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "aes128" #17: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "aes128" #17: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -231,7 +231,7 @@ west #
 1v2 "3des" #23: sent IKE_SA_INIT request
 003 "3des" #23: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "3des" #23: IMPAIR: retransmit so deleting SA
-002 "3des" #23: deleting state (STATE_PARENT_I1) and NOT sending notification
+002 "3des" #23: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "3des" #23: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none

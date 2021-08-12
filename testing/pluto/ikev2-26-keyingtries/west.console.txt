@@ -33,14 +33,14 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 0.5 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 1 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 2 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 4 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 8 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 16 seconds for response
-010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: retransmission; will wait 32 seconds for response
-031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 0.5 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 1 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 2 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 4 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 8 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 16 seconds for response
+010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 32 seconds for response
+031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
 west #
@@ -51,12 +51,12 @@ west #
  # failed
 west #
  ../../guestbin/wait-for.sh --match 'sent IKE_AUTH request' -- ipsec status
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
 west #
  # only one pending CHILD SA event should show up
 west #
  ipsec status |egrep "STATE_|pending"
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_PARENT_I2 (sent IKE_AUTH request); RETRANSMIT in XXs; idle;
 000 #3: pending CHILD SA for "westnet-eastnet-ipv4-psk-ikev2"
 000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_IKE_AUTH_CHILD_I0 (ephemeral: initiator creating child from IKE exchange); idle;
 west #
