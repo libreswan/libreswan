@@ -127,18 +127,22 @@ struct state_event **state_event(struct state *st, enum event_type type)
  * to event specific data (for example, to a state structure).
  */
 
+static void dispatch_event(struct state *st, enum event_type event_type,
+			   deltatime_t event_delay);
 static event_callback_routine timer_event_cb;
+
 static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			   const short unused_event UNUSED,
 			   void *arg)
 {
+	/*
+	 * Start billing before state is found.
+	 */
 	threadtime_t inception = threadtime_start();
 
 	/*
 	 * Get rid of the old timer event before calling the timer
-	 * event processor (was deleting the old timer after calling
-	 * the processor giving the impression that the processor's
-	 * just created event was being deleted).
+	 * event processor.
 	 */
 	struct state *st;
 	enum event_type event_type;
@@ -181,7 +185,13 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	}
 
 	statetime_t start = statetime_backdate(st, &inception);
+	dispatch_event(st, event_type, event_delay);
+	statetime_stop(&start, "%s() %s", __func__, event_name);
+}
 
+static void dispatch_event(struct state *st, enum event_type event_type,
+			   deltatime_t event_delay)
+{
 	/*
 	 * Check that st is as expected for the event type.
 	 *
@@ -428,8 +438,6 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 	default:
 		bad_case(event_type);
 	}
-
-	statetime_stop(&start, "%s() %s", __func__, event_name);
 }
 
 /*
@@ -551,31 +559,43 @@ void event_force(enum event_type type, struct state *st)
 }
 
 void call_state_event_handler(struct logger *logger, struct state *st,
-			      enum event_type event)
+			      enum event_type event_type)
 {
+	const char *event_name = enum_name_short(&event_type_names, event_type);
+	if (event_name == NULL) {
+		llog(RC_COMMENT, logger, "%d is not a valid event", event_type);
+		return;
+	}
+
 	/* sanity checks */
-	struct state_event **evp = state_event(st, event);
+	struct state_event **evp = state_event(st, event_type);
 	if (evp == NULL) {
-		llog(RC_COMMENT, logger, "%s is not a valid event",
-		     enum_name(&event_type_names, event));
+		llog(RC_COMMENT, logger, "%s is not a valid event", event_name);
 		return;
 	}
-	if (*evp == NULL) {
-		llog(RC_COMMENT, logger, "no handler for %s",
-		     enum_name(&event_type_names, event));
-		return;
-	}
-	if ((*evp)->ev_type != event) {
-		llog(RC_COMMENT, logger, "handler for %s is actually %s",
-		     enum_name(&event_type_names, event),
-		     enum_name(&event_type_names, (*evp)->ev_type));
-		return;
-	}
+
 	/*
-	 * XXX: can this kill off the old event when it is still
-	 * pending?
+	 * Like timer_event_cb(), delete the old event before calling
+	 * the event handler.
 	 */
-	llog(RC_COMMENT, logger, "calling %s",
-	     enum_name(&event_type_names, event));
-	timer_event_cb(0/*sock*/, 0/*event*/, *evp);
+	deltatime_t event_delay = deltatime(1);
+	if (*evp == NULL) {
+		llog(RC_COMMENT, logger,
+		     "no existing %s event to delete", event_name);
+	} else if ((*evp)->ev_type != event_type) {
+		llog(RC_COMMENT, logger,
+		     "deleting existing %s event occupying the slot shared with %s",
+		     enum_name(&event_type_names, (*evp)->ev_type),
+		     event_name);
+		delete_pluto_event(evp);
+	} else {
+		llog(RC_COMMENT, logger,
+		     "deleting existing %s event",
+		     event_name);
+		event_delay = (*evp)->ev_delay;
+		delete_pluto_event(evp);
+	}
+
+	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
+	dispatch_event(st, event_type, event_delay);
 }
