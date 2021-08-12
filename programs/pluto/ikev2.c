@@ -350,7 +350,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_request_no_skeyseed,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request (no SKEYSEED)",
 	  .state      = STATE_V2_PARENT_R1,
@@ -363,7 +363,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_INTERMEDIATE_request_no_skeyseed,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request (with SKEYSEED)",
 	  .state      = STATE_V2_PARENT_R1,
@@ -376,7 +376,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/*
 	 * These two transitions should be merged; the no-child
