@@ -19,11 +19,9 @@ west #
  echo "initdone"
 initdone
 west #
- # Start the IKE SA exchange in the background; first outgoing packet
+ # Establish a childless IKE SA which will install the policy ready for
 west #
- # is lost.  Things will restart when the 10s retransmit-timer kicks in
-west #
- # (which is hopefully enough time to trigger an acquire).
+ # an acquire.
 west #
  ipsec auto --up labeled
 1v2 "labeled" #1: initiating IKEv2 connection
@@ -67,8 +65,8 @@ west #
  ipsec whack --impair drop-outgoing:1
 002 IMPAIR: will drop outgoing message 1
 west #
- ipsec whack --asynchronous --rekey-ike --name 1
-002 rekeying IKE SA state #1 of connection "labeled"
+ ipsec whack --asynchronous --impair event-v2-rekey:1
+000 "labeled" #1: calling EVENT_v2_REKEY
 west #
  ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
 000 #2: "labeled":500 STATE_V2_REKEY_IKE_I1 (sent CREATE_CHILD_SA request to rekey IKE SA); idle;

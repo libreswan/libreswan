@@ -1,6 +1,5 @@
-# Start the IKE SA exchange in the background; first outgoing packet
-# is lost.  Things will restart when the 10s retransmit-timer kicks in
-# (which is hopefully enough time to trigger an acquire).
+# Establish a childless IKE SA which will install the policy ready for
+# an acquire.
 ipsec auto --up labeled
 ../../guestbin/ipsec-look.sh
 
@@ -8,7 +7,7 @@ ipsec auto --up labeled
 # request.  This will cause the exchange to become stuck; the
 # retransmit, scheduled for 10s, will unstick it.
 ipsec whack --impair drop-outgoing:1
-ipsec whack --asynchronous --rekey-ike --name 1
+ipsec whack --asynchronous --impair event-v2-rekey:1
 ../../guestbin/wait-for.sh --match REKEY_IKE_I1 -- ipsec whack --showstates
 
 # Trigger traffic using the predefined ping_t context.  Because the
