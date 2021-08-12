@@ -147,7 +147,7 @@ static stf_status send_v2_delete_child_request(struct ike_sa *ike,
 static const struct v2_state_transition v2_delete_ike = {
 	.story = "delete IKE SA",
 	.state = STATE_V2_ESTABLISHED_IKE_SA,
-	.next_state = STATE_IKESA_DEL,
+	.next_state = STATE_V2_IKE_SA_DELETE,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_delete_ike_request,
 	.timeout_event =  EVENT_RETAIN,

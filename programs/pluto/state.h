@@ -581,7 +581,7 @@ struct state {
 	 * indication (or defaults to REASON_UNKNOWN).  Note that the
 	 * information can't be reliably extracted from enum
 	 * state_kind in delete_state() because, by that point, state
-	 * may have further transitioned to STATE_IKESA_DEL etc.
+	 * may have further transitioned to STATE_V2_IKE_SA_DELETE etc.
 	 * Also, note that the information can't be reliably set in
 	 * complete*transition() as, at least in the case of IKEv2,
 	 * there can be two states involved where one success and one

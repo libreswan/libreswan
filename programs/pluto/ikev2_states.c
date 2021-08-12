@@ -42,15 +42,6 @@ struct finite_state v2_states[] = {
 		.kind = KIND,					\
 		.name = #KIND,					\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
-		.short_name = &#KIND[6]/*STATE_*/,		\
-		.story = STORY,					\
-		.category = CAT,				\
-	}
-
-#define V2(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
-		.kind = KIND,					\
-		.name = #KIND,					\
-		/* Not using #KIND + 9 because of clang's -Wstring-plus-int */ \
 		.short_name = &#KIND[9]/*STATE_V2_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
@@ -59,11 +50,11 @@ struct finite_state v2_states[] = {
 	/*
 	 * IKEv2 IKE SA initiator, while the the SA_INIT packet is
 	 * being constructed, are in state.  Only once the packet has
-	 * been sent out does it transition to STATE_PARENT_I1 and
+	 * been sent out does it transition to STATE_V2_PARENT_I1 and
 	 * start being counted as half-open.
 	 */
 
-	S(STATE_PARENT_I0, "waiting for KE to finish", CAT_IGNORE),
+	S(STATE_V2_PARENT_I0, "waiting for KE to finish", CAT_IGNORE),
 
 	/*
 	 * Count I1 as half-open too because with ondemand, a
@@ -71,16 +62,16 @@ struct finite_state v2_states[] = {
 	 * IKE SA.
 	 */
 
-	S(STATE_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last
 	 * ones are not authenticated.
 	 */
 
-	S(STATE_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA),
 
 	/* IKE exchange can also create a child */
 
@@ -106,13 +97,13 @@ struct finite_state v2_states[] = {
 	 * IKEv2 established states.
 	 */
 
-	V2(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
 	/* this message is used for both initial exchanges and rekeys */
-	V2(STATE_V2_ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA),
+	S(STATE_V2_ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA),
 
 	/* ??? better story needed for these */
-	S(STATE_IKESA_DEL, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_CHILDSA_DEL, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL),
+	S(STATE_V2_IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL),
 #undef S
 };
 

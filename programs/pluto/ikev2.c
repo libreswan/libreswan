@@ -208,20 +208,20 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 * HDR, SAi1, KEi, Ni -->
 	 */
 	{ .story      = "initiate IKE_SA_INIT",
-	  .state      = STATE_PARENT_I0,
-	  .next_state = STATE_PARENT_I1,
+	  .state      = STATE_V2_PARENT_I0,
+	  .next_state = STATE_V2_PARENT_I1,
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
-	/* STATE_PARENT_I1: R1B --> I1B
+	/* STATE_V2_PARENT_I1: R1B --> I1B
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
 	 */
 
 	{ .story      = "received anti-DDOS COOKIE notify response; resending IKE_SA_INIT request with cookie payload added",
-	  .state      = STATE_PARENT_I1,
-	  .next_state = STATE_PARENT_I0,
+	  .state      = STATE_V2_PARENT_I1,
+	  .next_state = STATE_V2_PARENT_I0,
 	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = NO_MESSAGE,
 	  .message_payloads = { .required = P(N), .notification = v2N_COOKIE, },
@@ -231,8 +231,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received IKE_SA_INIT INVALID_KE_PAYLOAD notify response; resending IKE_SA_INIT with new KE payload",
-	  .state      = STATE_PARENT_I1,
-	  .next_state = STATE_PARENT_I0,
+	  .state      = STATE_V2_PARENT_I1,
+	  .next_state = STATE_V2_PARENT_I0,
 	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = NO_MESSAGE,
 	  .message_payloads = { .required = P(N), .notification = v2N_INVALID_KE_PAYLOAD, },
@@ -242,8 +242,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received REDIRECT notify response; resending IKE_SA_INIT request to new destination",
-	  .state      = STATE_PARENT_I1,
-	  .next_state = STATE_IKESA_DEL,
+	  .state      = STATE_V2_PARENT_I1,
+	  .next_state = STATE_V2_IKE_SA_DELETE,
 	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = NO_MESSAGE,
 	  .message_payloads = { .required = P(N), .notification = v2N_REDIRECT, },
@@ -254,15 +254,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_v2_REDIRECT,
 	},
 
-	/* STATE_PARENT_I1: R1 --> I2
+	/* STATE_V2_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
 	 * HDR, SK {IDi, [CERT,] [CERTREQ,]
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .state      = STATE_PARENT_I1,
-	  .next_state = STATE_PARENT_I2,
+	  .state      = STATE_V2_PARENT_I1,
+	  .next_state = STATE_V2_PARENT_I2,
 	  .send       = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
@@ -272,8 +272,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I2,
+	  .state      = STATE_V2_PARENT_I2,
+	  .next_state = STATE_V2_PARENT_I2,
 	  .flags = MESSAGE_RESPONSE,
 	  .send = MESSAGE_REQUEST,
 	  .req_clear_payloads = P(SK),
@@ -283,7 +283,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
-	/* STATE_PARENT_I2: R2 -->
+	/* STATE_V2_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
@@ -293,7 +293,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 * This pair of state transitions should be merged?
 	 */
 	{ .story      = "Initiator: process IKE_AUTH response",
-	  .state      = STATE_PARENT_I2,
+	  .state      = STATE_V2_PARENT_I2,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  /* logged mid transition */
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
@@ -307,8 +307,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I2,
+	  .state      = STATE_V2_PARENT_I2,
+	  .next_state = STATE_V2_PARENT_I2,
 	  .message_payloads = { .required = P(SK), },
 	  /* .encrypted_payloads = { .required = P(N), }, */
 	  .processor  = process_v2_IKE_AUTH_failure_response,
@@ -321,8 +321,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
-	  .state      = STATE_PARENT_R0,
-	  .next_state = STATE_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R0,
+	  .next_state = STATE_V2_PARENT_R1,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
@@ -330,7 +330,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
-	/* STATE_PARENT_R1: I2 --> R2
+	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
 	 *                             [IDr,] AUTH, SAi2,
 	 *                             TSi, TSr}
@@ -340,8 +340,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 * [Parent SA established]
 	 */
 	{ .story      = "Responder: process IKE_AUTH request (no SKEYSEED)",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R1,
+	  .next_state = STATE_V2_PARENT_R1,
 	  .flags = SMF2_NO_SKEYSEED,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -353,8 +353,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request (no SKEYSEED)",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R1,
+	  .next_state = STATE_V2_PARENT_R1,
 	  .flags = MESSAGE_REQUEST | SMF2_NO_SKEYSEED,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -366,8 +366,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request (with SKEYSEED)",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R1,
+	  .next_state = STATE_V2_PARENT_R1,
 	  .flags = MESSAGE_REQUEST,
 	  .send = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
@@ -384,7 +384,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 */
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .state      = STATE_PARENT_R1,
+	  .state      = STATE_V2_PARENT_R1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
@@ -452,7 +452,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
-	  .next_state = STATE_CHILDSA_DEL, /* never reached */
+	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
@@ -505,7 +505,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
-	  .next_state = STATE_CHILDSA_DEL, /* never reached */
+	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
@@ -557,7 +557,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
-	  .next_state = STATE_CHILDSA_DEL, /* never reached */
+	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
@@ -626,8 +626,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
-	  .state      = STATE_IKESA_DEL,
-	  .next_state = STATE_IKESA_DEL,
+	  .state      = STATE_V2_IKE_SA_DELETE,
+	  .next_state = STATE_V2_IKE_SA_DELETE,
 	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
@@ -1613,13 +1613,13 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 	const struct v2_state_transition *transition;
 	const struct finite_state *state = st->st_state;
 	switch (state->kind) {
-	case STATE_PARENT_R1:
+	case STATE_V2_PARENT_R1:
 		/*
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request: look for the NOSKEYSEED
 		 * transitions (and prefer IKE_AUTH).
 		 *
-		 * Once SKEYSEED is off-loaded and STATE_PARENT_I1 has
+		 * Once SKEYSEED is off-loaded and STATE_V2_PARENT_I1 has
 		 * only one (ok, two) transition, this is no longer a
 		 * hack.
 		 */
@@ -1627,16 +1627,16 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
 			transition = &state->v2_transitions[2];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
-			pexpect(transition->next_state == STATE_PARENT_R1);
+			pexpect(transition->next_state == STATE_V2_PARENT_R1);
 		} else {
 			transition = &state->v2_transitions[3];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
 			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		}
 		pexpect((transition->flags & SMF2_NO_SKEYSEED) == 0);
-		pexpect(transition->state == STATE_PARENT_R1);
+		pexpect(transition->state == STATE_V2_PARENT_R1);
 		break;
-	case STATE_PARENT_I2:
+	case STATE_V2_PARENT_I2:
 	{
 		/*
 		 * Receiving IKE_AUTH response: it is buried deep
@@ -1646,7 +1646,7 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		unsigned transition_nr = 1;
 		pexpect(state->nr_transitions > transition_nr);
 		transition = &state->v2_transitions[transition_nr];
-		pexpect(transition->state == STATE_PARENT_I2);
+		pexpect(transition->state == STATE_V2_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	}
@@ -1943,7 +1943,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		if (svm->state != from_state->kind && ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * The IKE SA is receiving a CREATE_CHILD_SA
-			 * request.  Unlike STATE_PARENT_R0 (and the
+			 * request.  Unlike STATE_V2_PARENT_R0 (and the
 			 * initial responder) the R0 state isn't
 			 * obvious - rekey IKE SA, rekey CHILD SA, and
 			 * create CHILD SA are all slightly different.
@@ -2348,11 +2348,11 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* ike_sa_established() called elsewhere */
 		jam_details = jam_v2_ike_details;
 		w = RC_SUCCESS; /* also triggers detach */
-	} else if (transition->state == STATE_PARENT_I1 &&
-		   transition->next_state == STATE_PARENT_I2) {
+	} else if (transition->state == STATE_V2_PARENT_I1 &&
+		   transition->next_state == STATE_V2_PARENT_I2) {
 		jam_details = jam_v2_ike_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (st->st_state->kind == STATE_PARENT_R1) {
+	} else if (st->st_state->kind == STATE_V2_PARENT_R1) {
 		jam_details = jam_v2_ike_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else {
@@ -2796,7 +2796,7 @@ void complete_v2_state_transition(struct state *st,
 		 * exchange ready for delete request.
 		 */
 		dbg("Message ID: forcing a response received update (deleting IKE_AUTH initiator)");
-		pexpect(st->st_state->kind == STATE_PARENT_I2);
+		pexpect(st->st_state->kind == STATE_V2_PARENT_I2);
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 		v2_msgid_update_recv(ike, &ike->sa, md);
 		/*
@@ -2956,7 +2956,7 @@ static void reinitiate_ike_sa_init(struct state *st, void *arg)
 	/*
 	 * Pretend to be running the initiate state.
 	 */
-	set_v2_transition(&ike->sa, finite_states[STATE_PARENT_I0]->v2_transitions, HERE); /* first */
+	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2_transitions, HERE); /* first */
 	complete_v2_state_transition(&ike->sa, NULL/*no-MD*/, resume(ike));
 }
 

@@ -890,14 +890,14 @@ void delete_state_tail(struct state *st)
 	 */
 	if (IS_IKE_SA_ESTABLISHED(st) ||
 	    IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
-	    st->st_state->kind == STATE_IKESA_DEL)
+	    st->st_state->kind == STATE_V2_IKE_SA_DELETE)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	/* If we are failed OE initiator, make shunt bare */
 	if (IS_IKE_SA(st) &&
 	    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
-	    (st->st_state->kind == STATE_PARENT_I1 ||
-	     st->st_state->kind == STATE_PARENT_I2)) {
+	    (st->st_state->kind == STATE_V2_PARENT_I1 ||
+	     st->st_state->kind == STATE_V2_PARENT_I2)) {
 		struct connection *c = st->st_connection;
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
 		ipsec_spi_t nego_shunt = shunt_policy_spi(c, TRUE /* negotiation shunt */);

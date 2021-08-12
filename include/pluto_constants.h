@@ -516,12 +516,12 @@ enum state_kind {
 
 	/* IKE SA */
 
-	STATE_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
-	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
-	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
+	STATE_V2_PARENT_I0 = STATE_IKEv2_FLOOR,	/* waiting for KE to finish */
+	STATE_V2_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
+	STATE_V2_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
 
-	STATE_PARENT_R0,	/* just starting */
-	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
+	STATE_V2_PARENT_R0,	/* just starting */
+	STATE_V2_PARENT_R1,	/* IKE_SA_INIT: sent response */
 
 	STATE_V2_ESTABLISHED_IKE_SA,
 
@@ -544,14 +544,14 @@ enum state_kind {
 	/* IKEv2 CREATE_CHILD_SA Responder states */
 
 	STATE_V2_NEW_CHILD_R0,		/* larval: sent nothing yet. */
-	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_PARENT_R2 */
+	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_V2_PARENT_R2 */
 	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
 
 	STATE_V2_ESTABLISHED_CHILD_SA,	/* IPsec SA final state - CREATE_CHILD & AUTH */
 
 	/* IKEv2 Delete States */
-	STATE_IKESA_DEL,
-	STATE_CHILDSA_DEL,
+	STATE_V2_IKE_SA_DELETE,
+	STATE_V2_CHILD_SA_DELETE,
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };
@@ -678,9 +678,9 @@ extern struct keywords sa_role_names;
 #define IS_V1_ISAKMP_SA_ESTABLISHED(ST) false
 #endif
 
-#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
-				       LELEM(STATE_PARENT_I1) |	\
-				       LELEM(STATE_PARENT_I2))
+#define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_V2_PARENT_I0) |	\
+				       LELEM(STATE_V2_PARENT_I1) |	\
+				       LELEM(STATE_V2_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
 #ifdef USE_IKEv1
@@ -696,7 +696,7 @@ extern struct keywords sa_role_names;
 
 /*
  * ??? Issue here is that our child SA appears as a
- * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
+ * STATE_V2_PARENT_I3/STATE_PARENT_R2 state which it should not.
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 
