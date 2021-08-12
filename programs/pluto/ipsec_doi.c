@@ -349,14 +349,15 @@ void jam_parent_sa_details(struct jambuf *buf, struct state *st)
 	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
 
-	jam_string(buf, "{auth=");
-	if (st->st_ike_version == IKEv2) {
-		jam(buf, "IKEv2");
-	} else {
+	jam_string(buf, "{");
+
+	if (st->st_ike_version == IKEv1) {
+		jam(buf, "auth=");
 		jam_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
+		jam(buf, " ");
 	}
 
-	jam(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
+	jam(buf, "cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
 	if (st->st_oakley.enckeylen > 0) {
 		/* XXX: also check omit key? */
 		jam(buf, "_%d", st->st_oakley.enckeylen);
