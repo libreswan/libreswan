@@ -22,10 +22,13 @@ establishing CHILD_SA westnet-eastnet-ikev2{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ N(NO_PROP) ]
-IDr payload missing
-generating INFORMATIONAL request 2 [ N(AUTH_FAILED) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ IDr AUTH N(NO_PROP) ]
+authentication of 'east' with pre-shared key successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+received NO_PROPOSAL_CHOSEN notify, no CHILD_SA built
+failed to establish CHILD_SA, keeping IKE_SA
 establishing connection 'westnet-eastnet-ikev2' failed
 west #
  echo done
@@ -48,7 +51,9 @@ westnet-eastnet-ikev2:   child:  dynamic === dynamic TUNNEL
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Security Associations (0 up, 0 connecting):
-  none
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 west #
  
