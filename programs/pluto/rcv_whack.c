@@ -134,13 +134,13 @@ static void whack_impair_action(enum impair_action impairment_action,
 	case CALL_IMPAIR_UPDATE:
 		/* err... */
 		break;
-	case CALL_GLOBAL_EVENT:
+	case CALL_GLOBAL_EVENT_HANDLER:
 	{
 		passert(biased_value > 0);
 		call_global_event_inline(biased_value, logger);
 		break;
 	}
-	case CALL_STATE_EVENT:
+	case CALL_STATE_EVENT_HANDLER:
 	{
 		struct state *st = find_impaired_state(biased_value, logger);
 		if (st == NULL) {
@@ -149,7 +149,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		}
 		/* will log */
 		struct logger loggers = merge_loggers(st, background, logger);
-		call_state_event_inline(&loggers, st, impairment_param);
+		call_state_event_handler(&loggers, st, (enum event_type)impairment_param);
 		break;
 	}
 	case CALL_INITIATE_v2_LIVENESS:
@@ -186,34 +186,6 @@ static void whack_impair_action(enum impair_action impairment_action,
 		struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
 		merge_loggers(st, background, logger);
 		submit_v2_delete_exchange(ike, child);
-		break;
-	}
-	case CALL_INITIATE_v2_REKEY:
-	{
-		struct state *st = find_impaired_state(biased_value, logger);
-		if (st == NULL) {
-			/* already logged */
-			return;
-		}
-		/* will log */
-		struct ike_sa *ike = ike_sa(st, HERE);
-		if (ike == NULL) {
-			/* already logged */
-			return;
-		}
-		merge_loggers(st, background, logger);
-		struct child_sa *larval_sa;
-		const char *satype;
-		if (IS_IKE_SA(st)) {
-			larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike);
-			satype = "IKE";
-		} else {
-			larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st));
-			satype = "Child";
-		}
-		llog_sa(RC_LOG, larval_sa,
-			"initiating rekey to replace %s SA #%lu",
-			satype, st->st_serialno);
 		break;
 	}
 	case CALL_SEND_KEEPALIVE:

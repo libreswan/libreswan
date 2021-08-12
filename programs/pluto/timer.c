@@ -550,8 +550,8 @@ void event_force(enum event_type type, struct state *st)
 	event_schedule(type, delay, st);
 }
 
-void call_state_event_inline(struct logger *logger, struct state *st,
-			     enum event_type event)
+void call_state_event_handler(struct logger *logger, struct state *st,
+			      enum event_type event)
 {
 	/* sanity checks */
 	struct state_event **evp = state_event(st, event);

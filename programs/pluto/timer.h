@@ -48,8 +48,8 @@ extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);
 
-void call_state_event_inline(struct logger *logger, struct state *st,
-			     enum event_type type);
+void call_state_event_handler(struct logger *logger, struct state *st,
+			      enum event_type type);
 
 extern void list_timers(struct show *s, monotime_t now);
 extern char *revive_conn;

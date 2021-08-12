@@ -169,7 +169,6 @@ struct impairment impairments[] = {
 
 	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
 	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "SA"),
-	A("initiate-v2-rekey", INITIATE_v2_REKEY, 0, "initiate an IKEv2 rekey using the CREATE_CHILD_SA exchange", "SA"),
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
@@ -190,8 +189,12 @@ struct impairment impairments[] = {
 	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,
 	  "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
 
-	A("trigger", GLOBAL_EVENT, 0, "trigger the global event", "EVENT",
+	A("trigger", GLOBAL_EVENT_HANDLER, 0, "trigger the global event", "EVENT",
 	  .how_enum_names = &global_timer_names),
+	A("event-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
+	  "trigger the rekey event", "SA"),
+	A("event-sa-replace", STATE_EVENT_HANDLER, EVENT_SA_REPLACE,
+	  "trigger the replace event", "SA"),
 
 #undef V
 #undef A
@@ -548,10 +551,9 @@ bool process_impair(const struct whack_impair *wc,
 		return true;
 	case CALL_INITIATE_v2_DELETE:
 	case CALL_INITIATE_v2_LIVENESS:
-	case CALL_INITIATE_v2_REKEY:
 	case CALL_SEND_KEEPALIVE:
-	case CALL_GLOBAL_EVENT:
-	case CALL_STATE_EVENT:
+	case CALL_GLOBAL_EVENT_HANDLER:
+	case CALL_STATE_EVENT_HANDLER:
 	case CALL_IMPAIR_DROP_INCOMING:
 	case CALL_IMPAIR_DROP_OUTGOING:
 		/* how is always biased */
