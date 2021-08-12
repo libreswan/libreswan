@@ -639,6 +639,21 @@ void v2_event_sa_replace(struct state *st)
 	event_force(EVENT_SA_EXPIRE, st);
 }
 
+void v2_event_sa_reauth(struct state *st)
+{
+	if (state_is_expired(st, "re-authenticating")) {
+		return;
+	}
+
+	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+	dbg("re-authenticating %s SA", satype);
+
+	/*
+	 * XXX: For a CHILD SA, will this result in a re-key attempt?
+	 */
+	ipsecdoi_replace(st, 1);
+}
+
 /*
  * an ISAKMP SA has been established.
  * Note the serial number, and release any connections with

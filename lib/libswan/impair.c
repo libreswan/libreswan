@@ -193,6 +193,8 @@ struct impairment impairments[] = {
 	  .how_enum_names = &global_timer_names),
 	A("event-v2-rekey", STATE_EVENT_HANDLER, EVENT_v2_REKEY,
 	  "trigger the rekey event", "SA"),
+	A("event-v2-reauth", STATE_EVENT_HANDLER, EVENT_v2_REAUTH,
+	  "trigger the reauthenticate event", "SA"),
 	A("event-sa-replace", STATE_EVENT_HANDLER, EVENT_SA_REPLACE,
 	  "trigger the replace event", "SA"),
 

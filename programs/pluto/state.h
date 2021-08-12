@@ -716,6 +716,7 @@ struct state {
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
 	struct state_event *st_v2_rekey_event;
+	struct state_event *st_v2_reauth_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

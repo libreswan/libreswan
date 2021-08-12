@@ -206,6 +206,7 @@ extern void init_ikev2(void);
 void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
 
 void v2_event_sa_rekey(struct state *st);
+void v2_event_sa_reauth(struct state *st);
 void v2_event_sa_replace(struct state *st);
 
 struct payload_summary ikev2_decode_payloads(struct logger *log,

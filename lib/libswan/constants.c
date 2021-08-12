@@ -2313,6 +2313,7 @@ static const enum_names event_v1_names = {
 static const char *const event_v2_name[] = {
 #define E(EVENT) [EVENT - EVENT_v2_REKEY] = #EVENT
 	E(EVENT_v2_REKEY),
+	E(EVENT_v2_REAUTH),
 	E(EVENT_v2_LIVENESS),
 	E(EVENT_v2_ADDR_CHANGE),
 	E(EVENT_v2_REDIRECT),

@@ -93,6 +93,10 @@ struct state_event **state_event(struct state *st, enum event_type type)
 		return &st->st_v2_rekey_event;
 		break;
 
+	case EVENT_v2_REAUTH:
+		return &st->st_v2_reauth_event;
+		break;
+
 	case EVENT_DPD:
 	case EVENT_DPD_TIMEOUT:
 		return &st->st_dpd_event;
@@ -239,6 +243,11 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v2_REKEY:
 		pexpect(st->st_ike_version == IKEv2);
 		v2_event_sa_rekey(st);
+		break;
+
+	case EVENT_v2_REAUTH:
+		pexpect(st->st_ike_version == IKEv2);
+		v2_event_sa_reauth(st);
 		break;
 
 	case EVENT_SA_REPLACE:

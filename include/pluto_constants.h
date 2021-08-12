@@ -228,6 +228,7 @@ enum event_type {
 	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */
+	EVENT_v2_REAUTH,		/* SA re-authenticate event */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 	EVENT_v2_REDIRECT,		/* initiate new IKE exchange on new address */

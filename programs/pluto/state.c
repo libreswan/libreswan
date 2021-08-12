@@ -998,6 +998,7 @@ void delete_state_tail(struct state *st)
 	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v2_ADDR_CHANGE, st);
 	event_delete(EVENT_v2_REKEY, st);
+	event_delete(EVENT_v2_REAUTH, st);
 
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
