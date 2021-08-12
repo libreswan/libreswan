@@ -334,8 +334,12 @@ void delete_connections_by_name(const char *name, bool strict, struct logger *lo
 
 void delete_every_connection(void)
 {
-	while (connections != NULL) {
-		struct connection *c = connections;
+	struct connection_query cq = {
+		.where = HERE,
+		.internal = NULL,
+	};
+	struct connection *c = NULL;
+	while ((c = prev_connection(&cq)) != NULL) {
 		delete_connection(&c, true);
 	}
 }
