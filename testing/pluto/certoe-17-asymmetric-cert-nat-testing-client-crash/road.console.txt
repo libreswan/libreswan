@@ -82,7 +82,8 @@ road #
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.2/32
 road #
  grep "^[^|].*: established Child SA" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.2-10.0.10.2:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.2/32=== ...192.1.2.23 #2: established Child SA; IPsec tunnel [10.0.10.2-10.0.10.2:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP=>0xESPESP <0xE
+SPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=active}
 road #
  grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
