@@ -512,8 +512,11 @@ enum state_kind {
 	/*
 	 * IKEv2 states.
 	 *
-	 * Note that message reliably sending is done by initiator
+	 * Note: that message reliably sending is done by initiator
 	 * only, unlike with IKEv1.
+	 *
+	 * Note: order matters.  Larval states come before
+	 * ESTABLISHED_*_SA.
 	 */
 	STATE_IKEv2_FLOOR,
 
@@ -525,8 +528,6 @@ enum state_kind {
 
 	STATE_V2_PARENT_R0,	/* just starting */
 	STATE_V2_PARENT_R1,	/* IKE_SA_INIT: sent response */
-
-	STATE_V2_ESTABLISHED_IKE_SA,
 
 	/* IKE exchange can also create a child */
 
@@ -550,7 +551,10 @@ enum state_kind {
 	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_V2_PARENT_R2 */
 	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
 
-	STATE_V2_ESTABLISHED_CHILD_SA,	/* IPsec SA final state - CREATE_CHILD & AUTH */
+	/* IKEv2's established states */
+
+	STATE_V2_ESTABLISHED_IKE_SA,
+	STATE_V2_ESTABLISHED_CHILD_SA,
 
 	/* IKEv2 Delete States */
 	STATE_V2_IKE_SA_DELETE,
