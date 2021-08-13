@@ -81,7 +81,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 }
 
 /*
- * See also {next,prev}_state()
+ * See also {new2old,old2new}_state()
  */
 
 static struct list_head *query_head(struct connection_query *query)
@@ -96,7 +96,7 @@ static bool query_matches(struct connection *c UNUSED, struct connection_query *
 	return true; /* sure */
 }
 
-struct connection *next_connection(struct connection_query *query)
+bool old2new_connection(struct connection_query *query)
 {
 #define ADV newer
 	if (query->internal == NULL) {
@@ -108,6 +108,7 @@ struct connection *next_connection(struct connection_query *query)
 		query->internal = query_head(query)->head.ADV;
 	}
 	/* Walk list until an entry matches */
+	query->c = NULL;
 	for (struct list_entry *entry = query->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->ADV) {
@@ -117,15 +118,16 @@ struct connection *next_connection(struct connection_query *query)
 			query->internal = entry->ADV;
 			dbg("found "PRI_CO" for "PRI_WHERE,
 			    pri_co(c->serialno), pri_where(query->where));
-			return c;
+			query->c = c;
+			return true;
 		}
 	}
 	dbg("no match for "PRI_WHERE, pri_where(query->where));
-	return NULL;
+	return false;
 #undef ADV
 }
 
-struct connection *prev_connection(struct connection_query *query)
+bool new2old_connection(struct connection_query *query)
 {
 #define ADV older
 	if (query->internal == NULL) {
@@ -137,6 +139,7 @@ struct connection *prev_connection(struct connection_query *query)
 		query->internal = query_head(query)->head.ADV;
 	}
 	/* Walk list until an entry matches */
+	query->c = NULL;
 	for (struct list_entry *entry = query->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->ADV) {
@@ -146,11 +149,12 @@ struct connection *prev_connection(struct connection_query *query)
 			query->internal = entry->ADV;
 			dbg("found "PRI_CO" for "PRI_WHERE,
 			    pri_co(c->serialno), pri_where(query->where));
-			return c;
+			query->c = c;
+			return true;
 		}
 	}
 	dbg("no match for "PRI_WHERE, pri_where(query->where));
-	return NULL;
+	return false;
 #undef ADV
 }
 

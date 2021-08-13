@@ -334,12 +334,10 @@ void delete_connections_by_name(const char *name, bool strict, struct logger *lo
 
 void delete_every_connection(void)
 {
-	struct connection_query cq = {
-		.where = HERE,
-		.internal = NULL,
-	};
-	struct connection *c = NULL;
-	while ((c = prev_connection(&cq)) != NULL) {
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	/* Delete instances before templates. */
+	while (new2old_connection(&cq)) {
+		struct connection *c = cq.c;
 		delete_connection(&c, true);
 	}
 }

@@ -1368,9 +1368,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		passert(best_connection == c);
 		dbg("no best spd route; looking for a better template connection to instantiate");
 
-		struct connection_query cq = { HERE, NULL, };
-		struct connection *t;
-		while ((t = next_connection(&cq)) != NULL) {
+		struct connection_query cq = { .where = HERE, .c = NULL, };
+		while (new2old_connection(&cq)) {
+			struct connection *t = cq.c;
 			/* require a template */
 			if (t->kind != CK_TEMPLATE) {
 				continue;

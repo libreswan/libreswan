@@ -292,9 +292,9 @@ void release_dead_interfaces(struct logger *logger)
 	 * connection could (?) trigger deleting other connections,
 	 * but presumably they are further down in the list?
 	 */
-	struct connection_query cq = { HERE, NULL, };
-	struct connection *c;
-	while ((c = next_connection(&cq)) != NULL ) {
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *c = cq.c;
 
 		if (!oriented(*c)) {
 			connection_buf cb;

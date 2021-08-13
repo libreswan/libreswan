@@ -661,9 +661,11 @@ struct connection_query {
 	where_t where;
 	/* internal */
 	struct list_entry *internal;
+	/* current query */
+	struct connection *c;
 };
 
-struct connection *next_connection(struct connection_query *query);
-struct connection *prev_connection(struct connection_query *query);
+bool old2new_connection(struct connection_query *query);
+bool new2old_connection(struct connection_query *query);
 
 #endif
