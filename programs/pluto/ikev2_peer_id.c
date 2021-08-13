@@ -125,10 +125,9 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
 
 		if (authby != AUTHBY_NULL) {
-			r = refine_host_connection(&ike->sa, &peer_id, tarzan_id,
-						   false/*initiator*/,
-						   LEMPTY /* auth_policy */,
-						   authby, &fromcert);
+			r = refine_host_connection_on_responder(&ike->sa, &peer_id, tarzan_id,
+								LEMPTY /* auth_policy */,
+								authby, &fromcert);
 		}
 
 		if (r == NULL) {

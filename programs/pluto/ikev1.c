@@ -3197,12 +3197,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		bool fromcert;
 		struct connection *r =
-			refine_host_connection(st, &peer,
-				NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
-				FALSE,	/* we are responder */
-				auth_policy,
-				AUTHBY_UNSET,	/* ikev2 only */
-				&fromcert);
+			refine_host_connection_on_responder(st, &peer,
+							    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
+							    auth_policy,
+							    AUTHBY_UNSET,	/* ikev2 only */
+							    &fromcert);
 
 		if (r == NULL) {
 			id_buf buf;

@@ -3133,10 +3133,6 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  * now that we just got the Phase 1 Id Payload from the peer.
  *
  * Comments in the code describe the (tricky!) matching criteria.
- * Although this routine could handle the initiator case,
- * it isn't currently called in this case.
- * If it were, it could "upgrade" an Opportunistic Connection
- * to a Road Warrior Connection if a suitable Peer ID were found.
  *
  * In RFC 2409 "The Internet Key Exchange (IKE)",
  * in 5.1 "IKE Phase 1 Authenticated With Signatures", describing Main
@@ -3160,8 +3156,6 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  *               HDR*, IDii, HASH_I  -->
  *                                   <--    HDR*, IDir, HASH_R
  *
- * refine_host_connection could be called in two case:
- *
  * - the Responder receives the IDii payload:
  *   + [PSK] after using PSK to decode this message
  *   + before sending its IDir payload
@@ -3170,31 +3164,15 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  *   + before using the Initiator's ID in HASH_I calculation
  *   + [DSig] before using the Initiator's public key to check SIG_I
  *
- * - the Initiator receives the IDir payload:
- *   + [PSK] after using PSK to encode previous message and decode this message
- *   + after sending its IDii payload
- *   + after using its ID in HASH_I computation
- *   + [DSig] after using its private key to sign SIG_I
- *   + before using the Responder's ID to compute HASH_R
- *   + [DSig] before using Responder's public key to check SIG_R
- *
  * refine_host_connection can choose a different connection, as long as
  * nothing already used is changed.
- *
- * In the Initiator case, the particular connection might have been
- * specified by whatever provoked Pluto to initiate.  For example:
- *	whack --initiate connection-name
- * The advantages of switching connections when we're the Initiator seem
- * less important than the disadvantages, so after FreeS/WAN 1.9, we
- * don't do this.
  */
-struct connection *refine_host_connection(const struct state *st,
-					const struct id *peer_id,
-					const struct id *tarzan_id,
-					bool initiator,
-					lset_t auth_policy /* used by ikev1 */,
-					enum keyword_authby this_authby /* used by ikev2 */,
-					bool *fromcert)
+struct connection *refine_host_connection_on_responder(const struct state *st,
+						       const struct id *peer_id,
+						       const struct id *tarzan_id,
+						       lset_t auth_policy /* used by ikev1 */,
+						       enum keyword_authby this_authby /* used by ikev2 */,
+						       bool *fromcert)
 {
 	struct connection *c = st->st_connection;
 	const generalName_t *requested_ca = st->st_requested_ca;
@@ -3253,8 +3231,12 @@ struct connection *refine_host_connection(const struct state *st,
 			dbg("refine_host_connection: happy with starting point: "PRI_CONNECTION"",
 			    pri_connection(c, &cib));
 
-			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
-			if (!initiator && tarzan_id != NULL) {
+			/*
+			 * Peer ID matches current connection -- check
+			 * for "you Tarzan, me Jane" (remember this is
+			 * the responder).
+			 */
+			if (tarzan_id != NULL) {
 				/* ??? pexpect(c->spd.spd_next == NULL); */
 				if (idr_wildmatch(&c->spd.this, tarzan_id, st->st_logger)) {
 					dbg("the remote specified our ID in its IDr payload");
@@ -3266,72 +3248,6 @@ struct connection *refine_host_connection(const struct state *st,
 				dbg("the remote did not specify an IDr and our current connection is good enough");
 				return c;
 			}
-		}
-	}
-
-	const chunk_t *psk = NULL;
-	const struct RSA_private_key *my_RSA_pri = NULL;
-
-	if (initiator)
-	{
-		switch (this_authby) {
-		case AUTHBY_PSK:
-			psk = get_connection_psk(c);
-			/*
-			 * It should be virtually impossible to fail to find
-			 * PSK: we just used it to decode the current message!
-			 * Paul: only true for IKEv1
-			 */
-			if (psk == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find PSK");
-				return c; /* cannot determine PSK, so not switching */
-			}
-			break;
-
-		case AUTHBY_NULL:
-			/* we know our AUTH_NULL key :) */
-			break;
-
-		case AUTHBY_RSASIG:
-		{
-			/*
-			 * At this point, we've committed to our
-			 * private key: we used it in our previous
-			 * message.  Paul: only true for IKEv1
-			 */
-			const struct pubkey_type *type = &pubkey_type_rsa;
-			if (get_connection_private_key(c, type, st->st_logger) == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
-				 /* cannot determine my private key, so not switching */
-				return c;
-			}
-			break;
-		}
-#if 0
-		case AUTHBY_ECDSA:
-		{
-			/*
-			 * At this point, we've committed to our
-			 * private key: we used it in our previous
-			 * message.  Paul: only true for IKEv1
-			 */
-			const struct pubkey_type *type = &pubkey_type_ecdsa;
-			if (get_connection_private_key(c, type) == NULL) {
-				log_state(RC_LOG_SERIOUS, st, "cannot find %s key", type->name);
-				 /* cannot determine my private key, so not switching */
-				return c;
-			}
-			break;
-		}
-#endif
-		default:
-			/* don't die on bad_case(auth); */
-
-			/* ??? why not dies?  How could this happen? */
-			log_state(RC_LOG_SERIOUS, st,
-				  "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-				  enum_name(&keyword_authby_names, this_authby));
-			return c;
 		}
 	}
 
@@ -3396,8 +3312,12 @@ struct connection *refine_host_connection(const struct state *st,
 				DBG_log("warning: not switching back to template of current instance");
 			}
 
-			/* 'You Tarzan, me Jane' check based on received IDr */
-			if (!initiator && tarzan_id != NULL) {
+			/*
+			 * 'You Tarzan, me Jane' check based on
+			 * received IDr (remember, this is the
+			 * responder).
+			 */
+			if (tarzan_id != NULL) {
 				id_buf tzb;
 				esb_buf tzesb;
 				dbg("peer expects us to be %s (%s) according to its IDr payload",
@@ -3443,13 +3363,6 @@ struct connection *refine_host_connection(const struct state *st,
 				}
 			}
 
-			/* if initiator, our ID must match exactly */
-			if (initiator &&
-				!same_id(&c->spd.this.id, &d->spd.this.id)) {
-					dbg("skipping because initiator id does not match");
-					continue;
-			}
-
 			if (d->ike_version != st->st_ike_version) {
 				/* IKE version has to match */
 				dbg("skipping because mismatching IKE version");
@@ -3478,7 +3391,6 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				pexpect(!initiator);
 				if (this_authby != d->spd.that.authby) {
 					dbg("skipping because mismatched authby");
 					continue;
@@ -3513,13 +3425,6 @@ struct connection *refine_host_connection(const struct state *st,
 				if (!((st->st_ike_version == IKEv2) || (auth_policy & POLICY_AGGRESSIVE))) {
 					if (dpsk == NULL)
 						continue; /* no secret */
-
-					if (initiator &&
-					    !(psk->len == dpsk->len &&
-					      memeq(psk->ptr, dpsk->ptr, psk->len)))
-					{
-						continue; /* different secret */
-					}
 				}
 			}
 
@@ -3534,15 +3439,6 @@ struct connection *refine_host_connection(const struct state *st,
 				const struct private_key_stuff *pks = get_connection_private_key(d, type, st->st_logger);
 				if (pks == NULL)
 					continue;	/* no key */
-
-				/* XXX: same_{RSA,ECDSA}_public_key()? */
-				const struct RSA_private_key *pri = &pks->u.RSA_private_key;
-
-				if (initiator &&
-				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {
-					dbg("skipping because mismatched pubkey");
-					continue;	/* different key */
-				}
 			}
 
 			/*

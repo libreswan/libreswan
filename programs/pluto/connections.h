@@ -548,11 +548,11 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 
 extern struct connection *conn_by_name(const char *nm, bool strict);
 
-extern struct connection
-	*refine_host_connection(const struct state *st, const struct id *peer_id,
-			const struct id *tarzan_id,
-			bool initiator, lset_t auth_policy /* used by ikev1 */,
-			enum keyword_authby, bool *fromcert);
+extern struct connection *refine_host_connection_on_responder(const struct state *st,
+							      const struct id *peer_id,
+							      const struct id *tarzan_id,
+							      lset_t auth_policy /* used by ikev1 */,
+							      enum keyword_authby, bool *fromcert);
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
 					     const ip_selector *remote_client);
