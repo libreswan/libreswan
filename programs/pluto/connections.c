@@ -1366,11 +1366,6 @@ static bool extract_connection(const struct whack_message *wm,
 	c->config = config; /* read only; shared */
 
 	passert(c->name != NULL); /* see alloc_connection() */
-	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
-		llog(RC_DUPNAME, c->logger,
-		     "attempt to redefine connection \"%s\"", wm->name);
-		return false;
-	}
 
 	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
 		llog(RC_FATAL, c->logger,
@@ -2157,6 +2152,17 @@ static const char *const policy_shunt_names[4] = {
 
 void add_connection(const struct whack_message *wm, struct logger *logger)
 {
+	/*
+	 * Check for duplicate before allocating; otherwize the lookup
+	 * will return the just allocated connection missing the
+	 * original.
+	 */
+	if (conn_by_name(wm->name, false/*!strict*/) != NULL) {
+		llog(RC_DUPNAME, logger,
+		     "attempt to redefine connection \"%s\"", wm->name);
+		return;
+	}
+
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
