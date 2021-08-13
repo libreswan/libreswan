@@ -11,6 +11,7 @@ v4.5 (unreleased)
 * IKEv2: redirect: make peer redirecting in IKE_AUTH childless [Vukasin]
 * IKEv2: Labeled IPsec --up causes Childless IKE SA [Andrew/Paul]
 * IKEv2: Labeled IPsec uses one set of SPD policies (like IKEv1) [Andrew/Paul]
+* IKEv2: Performance; eliminate more O(#CONNECTIONS) code [Andrew]
 * pluto: mismatched subnets= could take down all conns [Paul]
 * pluto: Don't delete existing IKE SA of connection instance [Paul]
 * pluto: fail better on parse errors in subnet= clause [Paul]
