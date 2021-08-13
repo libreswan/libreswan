@@ -48,7 +48,7 @@ static int rekey_connection_now(struct connection *c,
 	if (c->ike_version != IKEv2) {
 		llog(RC_LOG, logger, "cannot force rekey of %s connection",
 		     enum_name(&ike_version_names, c->ike_version));
-		return 1;
+		return 0;
 	}
 	struct rekey_how *how = arg;
 	struct state *st;
@@ -65,28 +65,15 @@ static int rekey_connection_now(struct connection *c,
 	if (st == NULL) {
 		llog(RC_LOG, logger, "connection does not have %s",
 		     enum_enum_name(&sa_type_names, c->ike_version, how->sa_type));
-		return 1;
+		return 0;
 	}
 	rekey_state(st, how->background, logger);
-	return 0;
+	return 1;
 }
 
 void rekey_now(const char *str, enum sa_type sa_type,
 	       bool background, struct logger *logger)
 {
-	struct rekey_how how = {
-		.background = background,
-		.sa_type = sa_type,
-	};
-
-	/*
-	 * Loop because more than one may match (template and
-	 * instances) But at least one is required (enforced by
-	 * conn_by_name).  Don't log an error if not found before we
-	 * checked aliases
-	 *
-	 * connection instances may need more work to work ???
-	 */
 
 	/* see if we got a stat enumber or name */
 	char *err = NULL;
@@ -94,28 +81,36 @@ void rekey_now(const char *str, enum sa_type sa_type,
 
 	if (str == err || *err != '\0') {
 
-		/* str is a connection name */
-		struct connection *c = conn_by_name(str, true/*strict*/);
-		if (c != NULL) {
-			while (c != NULL) {
-				if (streq(c->name, str) &&
-				    c->kind >= CK_PERMANENT &&
-				    !NEVER_NEGOTIATE(c->policy)) {
-					rekey_connection_now(c, &how, logger);
-				}
-				c = c->ac_next;
-			}
+		struct rekey_how how = {
+			.background = background,
+			.sa_type = sa_type,
+		};
+
+		/*
+		 * Loop because more than one may match (template and
+		 * instances) but only interested in instances.  Don't
+		 * log an error if not found before we checked
+		 * aliases.
+		 *
+		 * connection instances may need more work to work ???
+		 */
+
+		if (foreach_concrete_connection_by_name(str, rekey_connection_now,
+							&how, logger) >= 0) {
+			/* logged by rekey_connection_now() */
+			dbg("found connections by name");
+			return;
+		}
+
+		int count = foreach_connection_by_alias(str, rekey_connection_now,
+							&how, logger);
+		if (count == 0) {
+			llog(RC_UNKNOWN_NAME, logger,
+			     "no such connection or aliased connection named \"%s\"", str);
 		} else {
-			int count = foreach_connection_by_alias(str, rekey_connection_now,
-								&how, logger);
-			if (count == 0) {
-				llog(RC_UNKNOWN_NAME, logger,
-				     "no such connection or aliased connection named \"%s\"", str);
-			} else {
-				llog(RC_COMMENT, logger,
-				     "terminated %d connections from aliased connection \"%s\"",
-				     count, str);
-			}
+			llog(RC_COMMENT, logger,
+			     "rekeyed %d connections from aliased connection \"%s\"",
+			     count, str);
 		}
 	} else {
 		/* str is a state number - this overrides ike vs ipsec rekey command */

@@ -640,6 +640,12 @@ extern int foreach_connection_by_alias(const char *alias,
 						void *arg, struct logger *logger),
 				       void *arg, struct logger *logger);
 
+/* -1: none found */
+extern int foreach_concrete_connection_by_name(const char *name,
+					       int (*f)(struct connection *c,
+							void *arg, struct logger *logger),
+					       void *arg, struct logger *logger);
+
 extern void unshare_connection_end(struct end *e);
 
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);

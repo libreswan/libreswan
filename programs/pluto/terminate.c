@@ -110,29 +110,20 @@ void terminate_connections_by_name(const char *name, bool quiet, struct logger *
 	 * conn_by_name).  Don't log an error if not found before we
 	 * checked aliases
 	 */
-	struct connection *c = conn_by_name(name, true/*strict*/);
 
-	if (c != NULL) {
-		while (c != NULL) {
-			struct connection *n = c->ac_next; /* grab this before c might disappear */
+	if (foreach_concrete_connection_by_name(name, terminate_a_connection, NULL, logger) >= 0) {
+		/* logged by terminate_a_connection() */
+		return;
+	}
 
-			if (streq(c->name, name) &&
-			    c->kind >= CK_PERMANENT &&
-			    !NEVER_NEGOTIATE(c->policy)) {
-				terminate_a_connection(c, NULL, logger);
-			}
-			c = n;
-		}
+	int count = foreach_connection_by_alias(name, terminate_a_connection, NULL, logger);
+	if (count == 0) {
+		if (!quiet)
+			llog(RC_UNKNOWN_NAME, logger,
+			     "no such connection or aliased connection named \"%s\"", name);
 	} else {
-		int count = foreach_connection_by_alias(name, terminate_a_connection, NULL, logger);
-		if (count == 0) {
-			if (!quiet)
-				llog(RC_UNKNOWN_NAME, logger,
-				     "no such connection or aliased connection named \"%s\"", name);
-		} else {
-			llog(RC_COMMENT, logger,
+		llog(RC_COMMENT, logger,
 			     "terminated %d connections from aliased connection \"%s\"",
-			     count, name);
-		}
+		     count, name);
 	}
 }
