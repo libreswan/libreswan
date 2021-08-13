@@ -18,14 +18,12 @@
 #include "log.h"
 #include "hash_table.h"
 
-const co_serial_t unset_co_serial;
-
 static struct hash_table connection_hash_tables[];
 
 static void jam_connection_serialno(struct jambuf *buf, const void *data)
 {
 	if (data == NULL) {
-		jam(buf, PRI_CO, 0UL);
+		jam(buf, PRI_CO, UNSET_CO_SERIAL);
 	} else {
 		const struct connection *c = data;
 		jam(buf, PRI_CO, pri_co(c->serialno));
@@ -75,7 +73,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 	hash_t hash = connection_serialno_hasher(&serialno);
 	struct list_head *bucket = hash_table_bucket(&connection_hash_tables[CONNECTION_SERIALNO_HASH_TABLE], hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, c) {
-		if (c->serialno.co == serialno.co) {
+		if (c->serialno == serialno) {
 			return c;
 		}
 	}
@@ -180,7 +178,7 @@ static struct hash_table connection_hash_tables[] = {
 static void add_connection_to_db(struct connection *c)
 {
 	dbg("Connection DB: adding connection \"%s\" "PRI_CO"", c->name, pri_co(c->serialno));
-	passert(c->serialno.co != 0);
+	passert(c->serialno != UNSET_CO_SERIAL);
 
 	/* serial NR list, entries are only added */
 	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
@@ -201,7 +199,7 @@ static struct connection *finish_connection(struct connection *c, const char *na
 	/* first save old SERIALNO (0 for new connection) ... */
 	c->serial_from = c->serialno;
 	/* ... then update to new value */
-	connection_serialno.co++;
+	connection_serialno++;
 	c->serialno = connection_serialno;
 	add_connection_to_db(c);
 	return c;

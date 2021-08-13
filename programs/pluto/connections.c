@@ -4341,7 +4341,7 @@ void show_one_connection(struct show *s,
 		    c->newest_ike_sa,
 		    c->newest_ipsec_sa,
 		    pri_co(c->serialno));
-		if (c->serial_from.co/*oops*/ != 0) {
+		if (c->serial_from != UNSET_CO_SERIAL) {
 			jam(buf, ", instantiated from: "PRI_CO";",
 			    pri_co(c->serial_from));
 		} else {

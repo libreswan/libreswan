@@ -464,7 +464,7 @@ void free_that_address_lease(struct connection *c)
 
 	/* break the link */
 	c->spd.that.has_lease = false;
-	lease->assigned_to = unset_co_serial;
+	lease->assigned_to = UNSET_CO_SERIAL;
 }
 
 /*
