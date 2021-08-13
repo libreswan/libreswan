@@ -1179,7 +1179,7 @@ kvmplutotest	ikev2-leak-02-no-psk		good
 # seccomp
 kvmplutotest	seccomp-01-enabled		good
 kvmplutotest	seccomp-02-tolerant		good
-kvmplutotest	seccomp-03-updown		good
+kvmplutotest	seccomp-03-updown		wip
 
 # Utility tests like "ipsec showhostkey"
 kvmplutotest	ipsec-hostkey-ckaid-01		good
