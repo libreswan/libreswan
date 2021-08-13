@@ -23,7 +23,7 @@ road #
 1v2 "road-east" #1: sent IKE_SA_INIT request
 002 "road-east" #1: initiating a redirect to new gateway (address: 192.1.2.45)
 1v2 "road-east" #2: initiating IKEv2 connection
-002 "road-east" #1: deleting state (STATE_IKESA_DEL) and NOT sending notification
+002 "road-east" #1: deleting state (STATE_V2_IKE_SA_DELETE) and NOT sending notification
 002 "road-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "road-east" #2: sent IKE_SA_INIT request
 1v2 "road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -66,7 +66,7 @@ road #
 1v2 "road-east" #4: sent IKE_SA_INIT request
 002 "road-east" #4: initiating a redirect to new gateway (address: 192.1.2.44)
 1v2 "road-east" #5: initiating IKEv2 connection
-002 "road-east" #4: deleting state (STATE_IKESA_DEL) and NOT sending notification
+002 "road-east" #4: deleting state (STATE_V2_IKE_SA_DELETE) and NOT sending notification
 002 "road-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "road-east" #5: sent IKE_SA_INIT request
 002 "road-east" #5: IMPAIR: retransmit so deleting SA
