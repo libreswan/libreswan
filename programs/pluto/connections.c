@@ -3337,6 +3337,12 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				dbg("    no IDr payload received from peer");
 			}
 
+			/* only consider sec_label+template */
+			if (d->config->sec_label.len > 0 && d->kind != CK_TEMPLATE) {
+				dbg("    skipping because sec_label requires template");
+				continue;
+			}
+
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP) {
 				dbg("    skipping because group connection");
