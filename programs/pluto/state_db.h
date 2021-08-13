@@ -98,8 +98,11 @@ struct state_query {
 	const struct ike_sa *ike;
 	/* internal */
 	struct list_entry *internal;
+	/* result */
+	struct state *st;
 };
 
-struct state *next_state(struct state_query *query);
+bool new2old_state(struct state_query *query);
+bool old2new_state(struct state_query *query);
 
 #endif

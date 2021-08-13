@@ -405,33 +405,35 @@ static bool query_matches(struct state *st, struct state_query *query)
 	return true;
 }
 
-struct state *next_state(struct state_query *query)
+bool old2new_state(struct state_query *query)
 {
-#define NEXT newer /* old-to-new */
+#define ADV newer /* old-to-new */
 	if (query->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		query->internal = query_head(query)->head.NEXT;
+		query->internal = query_head(query)->head.ADV;
 	}
+	query->st = NULL;
 	/* Walk list until an entry matches */
 	for (struct list_entry *entry = query->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->NEXT) {
+	     entry = entry->ADV) {
 		struct state *st = (struct state *) entry->data;
 		if (query_matches(st, query)) {
 			/* save state; but step off current entry */
-			query->internal = entry->NEXT;
+			query->internal = entry->ADV;
 			dbg("found "PRI_SO" for "PRI_WHERE,
 			    pri_so(st->st_serialno), pri_where(query->where));
-			return st;
+			query->st = st;
+			return true;
 		}
 	}
 	dbg("no match for "PRI_WHERE, pri_where(query->where));
-	return NULL;
-#undef NEXT
+	return false;
+#undef ADV
 }
 
 /*
