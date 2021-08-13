@@ -103,35 +103,23 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
  * Find a connection by name.
  *
  * no_inst: don't accept a CK_INSTANCE.
- *
- * If none is found, and strict&&!queit, a diagnostic is logged to
- * whack.
- *
- * XXX: Fun fact: this function re-orders the list, moving the entry
- * to the front as a side effect (ulgh)!.
  */
+
 struct connection *conn_by_name(const char *nm, bool no_inst)
 {
-	struct connection *p, *prev;
-
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
-		if (p == NULL) {
-			break;
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *c = cq.c;
+		if (no_inst && c->kind == CK_INSTANCE) {
+			continue;
 		}
-		if (streq(p->name, nm) &&
-		    (!no_inst || p->kind != CK_INSTANCE)) {
-			if (prev != NULL) {
-				/* remove p from list */
-				prev->ac_next = p->ac_next;
-				/* and stick it on front */
-				p->ac_next = connections;
-				connections = p;
-			}
-			break;
+		if (!streq(c->name, nm)) {
+			continue;
 		}
+		return c;
 	}
-	return p;
+	return NULL;
 }
 
 void release_connection(struct connection *c, bool relations)
