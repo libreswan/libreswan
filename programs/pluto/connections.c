@@ -92,8 +92,6 @@
 #include "labeled_ipsec.h"		/* for vet_seclabel() */
 #include "orient.h"
 
-struct connection *connections = NULL;
-
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
@@ -204,17 +202,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c);
-
-	/* find and delete c from connections list */
-	/* XXX: if in list, remove_list_entry(c->ac_next); */
-	for (struct connection **head = &connections;
-	     *head != NULL; head = &(*head)->ac_next) {
-		if (*head == c) {
-			*head = c->ac_next;
-			c->ac_next = NULL;
-			break;
-		}
-	}
 
 	struct logger *connection_logger = clone_logger(c->logger, HERE);
 
@@ -2023,14 +2010,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->spd.spd_next = NULL;
 
-	/*
-	 * XXX: Install the connection.  Yes right in the middle of
-	 * the struct being constructed!  Why?  Because that's the way
-	 * it's always been done.
-	 */
-	c->ac_next = connections;
-	connections = c;
-
 	/* set internal fields */
 	c->instance_serial = 0;
 	c->interface = NULL;
@@ -2261,10 +2240,6 @@ struct connection *add_group_instance(struct connection *group,
 	dbg("%s t->spd.reqid=%d because group->sa_reqid=%d",
 	    t->name, t->spd.reqid, group->sa_reqid);
 
-	/* add to connections list */
-	t->ac_next = connections;
-	connections = t;
-
 	/* same host_pair as parent: stick after parent on list */
 	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
 	group->hp_next = t;
@@ -2371,8 +2346,6 @@ struct connection *instantiate(struct connection *c,
 	set_policy_prio(d);
 
 	/* set internal fields */
-	d->ac_next = connections;
-	connections = d;
 	d->spd.routing = RT_UNROUTED;
 	d->newest_ike_sa = SOS_NOBODY;
 	d->newest_ipsec_sa = SOS_NOBODY;

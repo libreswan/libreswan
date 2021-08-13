@@ -456,8 +456,6 @@ struct connection {
 	struct host_pair *host_pair;
 	struct connection *hp_next;
 
-	struct connection *ac_next;	/* all connections list link */
-
 	enum send_ca_policy send_ca;
 	char *dnshostname;
 
@@ -656,8 +654,6 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *d
 					    bool preserve_ca, struct logger *logger);
 
 ip_port end_host_port(const struct end *end, const struct end *other);
-
-extern struct connection *connections;
 
 /*
  * For querying and iterating over the connection DB.
