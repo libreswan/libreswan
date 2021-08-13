@@ -64,7 +64,9 @@ initdone
 west #
  ipsec whack --impair suppress-retransmits
 west #
- # this should fail
+ ipsec whack --impair revival
+west #
+ # this should fail fast
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
@@ -73,7 +75,7 @@ west #
 003 "westnet-eastnet-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "westnet-eastnet-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done

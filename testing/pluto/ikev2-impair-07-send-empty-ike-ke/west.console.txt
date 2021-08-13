@@ -8,12 +8,12 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- ipsec whack --impair revival
-west #
  echo "initdone"
 initdone
 west #
  # should fail fast
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair ke-payload:empty
 west #
@@ -32,6 +32,8 @@ west #
 west #
  # expected to fail with a timeout
 west #
+ ipsec whack --impair revival
+west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
@@ -40,7 +42,7 @@ west #
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: KE has 0 byte DH public value; 256 required
 036 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done
