@@ -3302,14 +3302,14 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 
 			if (DBGP(DBG_BASE)) {
 				connection_buf b1, b2;
-				DBG_log("refine_host_connection: checking "PRI_CONNECTION" against "PRI_CONNECTION", best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
+				DBG_log("  refine_host_connection: checking "PRI_CONNECTION" against "PRI_CONNECTION", best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
 					pri_connection(c, &b1), pri_connection(d, &b2),
 					best_found != NULL ? best_found->name : "(none)",
 					matching_peer_id && matching_peer_ca && matching_requested_ca,
 					matching_peer_id, wildcards,
 					matching_peer_ca, peer_pathlen,
 					matching_requested_ca, our_pathlen);
-				DBG_log("warning: not switching back to template of current instance");
+				DBG_log("  warning: not switching back to template of current instance");
 			}
 
 			/*
@@ -3320,32 +3320,32 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			if (tarzan_id != NULL) {
 				id_buf tzb;
 				esb_buf tzesb;
-				dbg("peer expects us to be %s (%s) according to its IDr payload",
+				dbg("    peer expects us to be %s (%s) according to its IDr payload",
 				    str_id(tarzan_id, &tzb),
 				    enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
 				id_buf usb;
 				esb_buf usesb;
-				dbg("this connection's local id is %s (%s)",
+				dbg("    this connection's local id is %s (%s)",
 				    str_id(&d->spd.this.id, &usb),
 				    enum_show(&ike_id_type_names, d->spd.this.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
-					dbg("peer IDr payload does not match our expected ID, this connection will not do");
+					dbg("    skipping because peer IDr payload does not match our expected ID");
 					continue;
 				}
 			} else {
-				dbg("no IDr payload received from peer");
+				dbg("    no IDr payload received from peer");
 			}
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP) {
-				dbg("skipping group connection");
+				dbg("    skipping because group connection");
 				continue;
 			}
 
 			/* matching_peer_ca and matching_requested_ca are required */
 			if (!matching_peer_ca || !matching_requested_ca) {
-				dbg("skipping !match2 || !match3");
+				dbg("    skipping because !matching_peer_ca || !matching_requested_ca");
 				continue;
 			}
 			/*
@@ -3358,14 +3358,14 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			if (!matching_peer_id) {
 				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
 				if (!d_fromcert) {
-					dbg("skipping because peer_id does not match");
+					dbg("    skipping because peer_id does not match");
 					continue;
 				}
 			}
 
 			if (d->ike_version != st->st_ike_version) {
 				/* IKE version has to match */
-				dbg("skipping because mismatching IKE version");
+				dbg("    skipping because mismatching IKE version");
 				continue;
 			}
 
@@ -3374,12 +3374,14 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 * connection.
 			 */
 			if (ikev1) {
-				if ((auth_policy ^ d->policy) & POLICY_AGGRESSIVE)
+				if ((auth_policy ^ d->policy) & POLICY_AGGRESSIVE) {
+					dbg("    skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
+				}
 
 				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
-					dbg("skipping because AUTH isn't right");
+					dbg("    skipping because AUTH isn't right");
 					continue;
 				}
 			} else {
@@ -3392,25 +3394,25 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				 * switch away from previously used this.authby.
 				 */
 				if (this_authby != d->spd.that.authby) {
-					dbg("skipping because mismatched authby");
+					dbg("    skipping because mismatched authby");
 					continue;
 				}
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg("skipping because mismatched xauthserver");
+				dbg("    skipping because mismatched xauthserver");
 				continue;
 			}
 
 			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg("skipping because mismatched xauthclient");
+				dbg("    skipping because mismatched xauthclient");
 				continue;
 			}
 
 			connection_buf b1, b2;
-			dbg("refine_host_connection: checked "PRI_CONNECTION" against "PRI_CONNECTION", now for see if best",
+			dbg("    refine_host_connection: checked "PRI_CONNECTION" against "PRI_CONNECTION", now for see if best",
 			    pri_connection(c, &b1), pri_connection(d, &b2));
 
 			if (this_authby == AUTHBY_PSK) {
@@ -3451,10 +3453,11 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
 			if (matching_peer_id && wildcards == 0 &&
-			    peer_pathlen == 0 && our_pathlen == 0)
-			{
+			    peer_pathlen == 0 && our_pathlen == 0) {
 				*fromcert = d_fromcert;
-				dbg("returning because exact peer id match");
+				connection_buf dcb;
+				dbg("    returning "PRI_CONNECTION" because exact peer id match",
+				    pri_connection(d, &dcb));
 				return d;
 			}
 
@@ -3471,7 +3474,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				 (peer_pathlen == best_peer_pathlen &&
 				  our_pathlen < best_our_pathlen))) {
 				connection_buf cib;
-				dbg("refine_host_connection: picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
+				dbg("    refine_host_connection: picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 				    pri_connection(d, &cib),
 				    wildcards, peer_pathlen,
 				    our_pathlen);
