@@ -874,15 +874,26 @@ void delete_state_tail(struct state *st)
 	}
 
 	/*
-	 * IKEv2 IKE failures are logged in the state transition completion.
-	 * IKEv1 IKE failures do not go through a transition, so we catch
-	 * these in delete_state()
+	 * Audit-log failures.  Just assume any state failing to
+	 * establish needs reporting.
 	 */
+	switch (st->st_ike_version) {
+	case IKEv1:
 #ifdef USE_IKEv1
-	if (IS_V1_ISAKMP_SA(st) && !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		linux_audit_conn(st, LAK_PARENT_FAIL);
-	}
+		if (IS_V1_ISAKMP_SA(st) && !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
+			linux_audit_conn(st, LAK_PARENT_FAIL);
+		}
 #endif
+		break;
+	case IKEv2:
+		if (IS_IKE_SA(st) && st->st_state->kind < STATE_V2_ESTABLISHED_IKE_SA) {
+			linux_audit_conn(st, LAK_PARENT_FAIL);
+		}
+		if (IS_CHILD_SA(st) && st->st_state->kind < STATE_V2_ESTABLISHED_CHILD_SA) {
+			linux_audit_conn(st, LAK_CHILD_FAIL);
+		}
+		break;
+	}
 
 	/*
 	 * only log parent state deletes, we log children in

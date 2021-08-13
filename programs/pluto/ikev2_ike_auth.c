@@ -1610,7 +1610,6 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 						log_state(RC_LOG_SERIOUS, &ike->sa,
 							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child", name);
 					} else {
-						linux_audit_conn(&child->sa, LAK_CHILD_FAIL);
 						log_state(RC_LOG_SERIOUS, &child->sa,
 							  "IKE_AUTH response contained the error notification %s", name);
 					}

@@ -2738,11 +2738,6 @@ void complete_v2_state_transition(struct state *st,
 		}
 	}
 
-	/* audit log failures - success is audit logged in ikev2_ike_sa_established() */
-	if (result > STF_OK) {
-		linux_audit_conn(st, IS_IKE_SA_ESTABLISHED(st) ? LAK_CHILD_FAIL : LAK_PARENT_FAIL);
-	}
-
 	switch (result) {
 
 	case STF_SUSPEND:
