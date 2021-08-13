@@ -141,8 +141,9 @@ struct bare_shunt {
 	 * Simple rule: use a string literal.
 	 */
 	const char *why;
+
 	/* the connection from where it came - used to re-load /32 conns */
-	char *from_cn;
+	co_serial_t from_serialno;
 
 	struct bare_shunt *next;
 };
@@ -205,7 +206,6 @@ void add_bare_shunt(const ip_selector *our_client,
 	struct bare_shunt *bs = alloc_thing(struct bare_shunt, "bare shunt");
 
 	bs->why = why;
-	bs->from_cn = NULL;
 	bs->our_client = *our_client;
 	bs->peer_client = *peer_client;
 	bs->transport_proto = transport_proto;
@@ -1378,7 +1378,6 @@ static void free_bare_shunt(struct bare_shunt **pp)
 
 	*pp = p->next;
 	dbg_bare_shunt("delete", p);
-	pfreeany(p->from_cn);
 	pfree(p);
 }
 
@@ -3535,7 +3534,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->count = 0;
 		bs->last_activity = mononow();
 		if (strstr(c->name, "/32") != NULL || strstr(c->name, "/128") != NULL) {
-			bs->from_cn = clone_str(c->name, "conn name in bare shunt");
+			bs->from_serialno = c->serialno;
 		}
 
 		bs->next = bare_shunts;
@@ -3660,28 +3659,28 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
-		struct connection *c = NULL;
 
 		if (age > deltasecs(pluto_shunt_lifetime) || all) {
 			dbg_bare_shunt("expiring old", bsp);
-			if (bsp->from_cn != NULL) {
-				c = conn_by_name(bsp->from_cn, false);
+			if (co_serial_is_set(bsp->from_serialno)) {
+				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
 					if (!shunt_policy(KP_ADD_OUTBOUND, c, &c->spd,
 							  RT_ROUTED_PROSPECTIVE,
 							  "expire_bare_shunts() add",
 							  logger)) {
 						llog(RC_LOG, logger,
-							    "trap shunt install failed ");
+						     "trap shunt install failed ");
 					}
 				}
 			}
 			ip_address our_addr = selector_prefix(bsp->our_client);
 			ip_address peer_addr = selector_prefix(bsp->peer_client);
+			bool skip_xfrm_policy_delete = co_serial_is_set(bsp->from_serialno);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
 					       ntohl(bsp->said.spi),
-					       /*skip_xfrm_policy_delete?*/(bsp->from_cn != NULL),
+					       skip_xfrm_policy_delete,
 					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
