@@ -1001,12 +1001,10 @@ void initiate_ondemand(const ip_endpoint *local_client,
  */
 struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
 {
+	struct connection_query cq = { HERE, NULL, };
 	struct connection *c;
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
+	while ((c = next_connection(&cq)) != NULL) {
 		const struct spd_route *sr;
-
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
 			    selector_subnet_eq_subnet(*ours, sr->this.client) &&
@@ -1155,12 +1153,11 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 void connection_check_ddns(struct logger *logger)
 {
-	struct connection *c, *cnext;
 	threadtime_t start = threadtime_start();
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = cnext) {
-		cnext = c->ac_next;
+	struct connection_query cq = { HERE, NULL, };
+	struct connection *c;
+	while ((c = next_connection(&cq)) != NULL) {
 		connection_check_ddns1(c, logger);
 	}
 	check_orientations(logger);
@@ -1177,11 +1174,9 @@ void connection_check_ddns(struct logger *logger)
  */
 void connection_check_phase2(struct logger *logger)
 {
-	struct connection *c, *cnext;
-
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = cnext) {
-		cnext = c->ac_next;
+	struct connection_query cq = { HERE, NULL, };
+	struct connection *c;
+	while ((c = next_connection(&cq)) != NULL ) {
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			connection_buf cib;

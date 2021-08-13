@@ -3346,10 +3346,9 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 		 * unorient the (old) connection (if different from current connection)
 		 * Only do this for connections with the same name (can be shared ike sa)
 		 */
-		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-		for (struct connection *d = connections; d != NULL; ) {
-			/* might move underneath us */
-			struct connection *next = d->ac_next;
+		struct connection_query cq = { HERE, NULL, };
+		struct connection *d;
+		while ((d = next_connection(&cq)) != NULL ) {
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
@@ -3388,7 +3387,6 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 					}
 				}
 			}
-			d = next;
 		}
 
 		/*

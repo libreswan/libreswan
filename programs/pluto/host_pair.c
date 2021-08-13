@@ -292,15 +292,14 @@ void release_dead_interfaces(struct logger *logger)
 	 * connection could (?) trigger deleting other connections,
 	 * but presumably they are further down in the list?
 	 */
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection **cp = &connections, *c = connections;
-	     c != NULL; c = *cp) {
+	struct connection_query cq = { HERE, NULL, };
+	struct connection *c;
+	while ((c = next_connection(&cq)) != NULL ) {
 
 		if (!oriented(*c)) {
 			connection_buf cb;
 			dbg("connection interface un-oriented: "PRI_CONNECTION,
 			    pri_connection(c, &cb));
-			cp = &c->ac_next;
 			continue;
 		}
 
@@ -309,7 +308,6 @@ void release_dead_interfaces(struct logger *logger)
 			connection_buf cb;
 			dbg("connection interface safe: "PRI_CONNECTION,
 			    pri_connection(c, &cb));
-			cp = &c->ac_next;
 			continue;
 		}
 
@@ -326,8 +324,10 @@ void release_dead_interfaces(struct logger *logger)
 		 * Note: this used to pass relations as true, to cleanup
 		 * everything but that did not take into account a site to
 		 * site conn on right=%any also being an instance.
+		 *
+		 * If there's a template then it is earlier so not
+		 * affected by this.
 		 */
-		passert(c == *cp);
 		if (c->kind == CK_INSTANCE) {
 			delete_connection(&c, /*relations?*/false);
 			pexpect(c == NULL);
@@ -339,7 +339,6 @@ void release_dead_interfaces(struct logger *logger)
 		 * and move it to the unoriented_connections list.
 		 */
 		release_connection(c, /*relations?*/true);
-		passert(c == *cp);
 		terminate_connections_by_name(c->name, /*quiet?*/false, logger);
 
 		/*
@@ -355,9 +354,6 @@ void release_dead_interfaces(struct logger *logger)
 
 		/* XXX: something better? */
 		close_any(&c->logger->global_whackfd);
-
-		/* advance */
-		cp = &c->ac_next;
 	}
 }
 

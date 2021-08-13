@@ -75,8 +75,9 @@ static void reread_cert(struct connection *c, struct logger *logger)
 /* reread all left/right certificates from NSS DB */
 void reread_cert_connections(struct logger *logger)
 {
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection *c = connections; c != NULL; c = c->ac_next) {
+	struct connection_query cq = { HERE, NULL, };
+	struct connection *c;
+	while ((c = next_connection(&cq)) != NULL ) {
 		reread_cert(c, logger);
 	}
 }
