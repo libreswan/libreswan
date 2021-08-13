@@ -293,12 +293,11 @@ int foreach_connection_by_alias(const char *alias,
 					 void *arg, struct logger *logger),
 				void *arg, struct logger *logger)
 {
-	struct connection *p, *pnext;
 	int count = 0;
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (p = connections; p != NULL; p = pnext) {
-		pnext = p->ac_next;
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *p = cq.c;
 
 		if (lsw_alias_cmp(alias, p->connalias))
 			count += (*f)(p, arg, logger);
@@ -2530,10 +2529,13 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	dbg("find_connection: looking for policy for connection: %s",
 	    str_endpoints(local_client, remote_client, &eb));
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection *c = connections; c != NULL; c = c->ac_next) {
-		if (c->kind == CK_GROUP)
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *c = cq.c;
+
+		if (c->kind == CK_GROUP) {
 			continue;
+		}
 
 		/*
 		 * For both IKEv1 and IKEv2 labeled IPsec, don't try
@@ -2943,8 +2945,11 @@ struct connection *route_owner(struct connection *c,
 	enum routing_t best_routing = cur_spd->routing,
 		best_erouting = best_routing;
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
+
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *d = cq.c;
+
 		if (!oriented(*d))
 			continue;
 
@@ -3535,8 +3540,9 @@ static bool is_virtual_net_used(struct connection *c,
 				const ip_selector *peer_net,
 				const struct id *peer_id)
 {
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *d = cq.c;
 		switch (d->kind) {
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
@@ -4362,14 +4368,14 @@ void show_connections_status(struct show *s)
 {
 	int count = 0;
 	int active = 0;
-	struct connection *c;
 
 	show_separator(s);
 	show_comment(s, "Connection list:");
 	show_separator(s);
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (c = connections; c != NULL; c = c->ac_next) {
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *c = cq.c;
 		count++;
 		if (c->spd.routing == RT_ROUTED_TUNNEL)
 			active++;
@@ -4383,9 +4389,11 @@ void show_connections_status(struct show *s)
 				"connection array");
 		int i = 0;
 
-		dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-		for (c = connections; c != NULL; c = c->ac_next)
-			array[i++] = c;
+
+		struct connection_query cq = { .where = HERE, .c = NULL, };
+		while (new2old_connection(&cq)) {
+			array[i++] = cq.c;
+		}
 
 		/* sort it! */
 		qsort(array, count, sizeof(struct connection *),
@@ -4513,20 +4521,16 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
 
 	/* XXX This logic also predates support for protoports, which isn't handled below */
-	struct connection *ue;
 
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	for (ue = connections; ue != NULL; ue = ue->ac_next) {
-		struct spd_route *srue;
+	struct connection_query cq = { .where = HERE, .c = NULL, };
+	while (new2old_connection(&cq)) {
+		struct connection *ue = cq.c;
 
-		for (srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
-			const struct spd_route *src;
-
-			for (src = &c->spd; src != NULL; src = src->spd_next) {
+		for (struct spd_route *srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
+			for (const struct spd_route *src = &c->spd; src != NULL; src = src->spd_next) {
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
 				    selector_subnet_eq_subnet(src->this.client, srue->this.client) &&
-				    selector_subnet_eq_subnet(src->that.client, srue->that.client))
-				{
+				    selector_subnet_eq_subnet(src->that.client, srue->that.client)) {
 					dbg("%s eclipsed %s", c->name, ue->name);
 					*esrp = srue;
 					return ue;
