@@ -579,7 +579,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 				c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (address_in_selector_subnet(sr->that.host_addr, sr->that.client)) {
+		} else if (address_in_selector_range(sr->that.host_addr, sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 				c->xfrmi->if_id);
 		} else {
@@ -671,7 +671,7 @@ bool do_command(const struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "unknown address family");
 			return false;
 		}
-		verb_suffix = selector_subnet_eq_address(sr->this.client, sr->this.host_addr) ? hs : cs;
+		verb_suffix = selector_range_eq_address(sr->this.client, sr->this.host_addr) ? hs : cs;
 	}
 
 	dbg("kernel: command executing %s%s", verb, verb_suffix);
@@ -1359,8 +1359,8 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
 		if (transport_proto == p->transport_proto &&
-		    selector_subnet_eq_subnet(*our_client, p->our_client) &&
-		    selector_subnet_eq_subnet(*peer_client, p->peer_client)) {
+		    selector_range_eq_selector_range(*our_client, p->our_client) &&
+		    selector_range_eq_selector_range(*peer_client, p->peer_client)) {
 			return pp;
 		}
 	}

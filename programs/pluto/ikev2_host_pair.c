@@ -237,7 +237,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			 * Opportunistic or Shunt: keep searching
 			 * selecting the tightest match.
 			 */
-			if (address_in_selector_subnet(remote_address, d->spd.that.client) &&
+			if (address_in_selector_range(remote_address, d->spd.that.client) &&
 			    (c == NULL || !selector_in_selector(c->spd.that.client,
 								d->spd.that.client))) {
 
@@ -379,7 +379,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 			continue;
 		}
 		ip_address sender = endpoint_address(md->sender);
-		if (!address_in_selector_subnet(sender, tmp->spd.that.client)) {
+		if (!address_in_selector_range(sender, tmp->spd.that.client)) {
 			continue;
 		}
 		dbgl(md->md_logger,

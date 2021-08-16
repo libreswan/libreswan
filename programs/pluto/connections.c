@@ -2456,7 +2456,7 @@ static size_t jam_connection_client(struct jambuf *b,
 				    const ip_address host_addr)
 {
 	size_t s = 0;
-	if (selector_subnet_eq_address(client, host_addr)) {
+	if (selector_range_eq_address(client, host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
@@ -2712,7 +2712,7 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 
 		/* opportunistic connections do not use port selectors */
-		if (address_in_selector_subnet(*local_address, d->spd.this.client)) {
+		if (address_in_selector_range(*local_address, d->spd.this.client)) {
 			/*
 			 * the required client is within that subnet
 			 * narrow it(?), ...
@@ -2741,7 +2741,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If the client is the peer, excise the client from the connection.
 	 */
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(address_in_selector_subnet(*remote_address, d->spd.that.client));
+	passert(address_in_selector_range(*remote_address, d->spd.that.client));
 	d->spd.that.client = selector_from_address(*remote_address);
 
 	if (address_eq_address(*remote_address, d->spd.that.host_addr))
@@ -3007,7 +3007,7 @@ struct connection *route_owner(struct connection *c,
 				if (src == srd)
 					continue;
 
-				if (!selector_subnet_eq_subnet(src->that.client, srd->that.client) ||
+				if (!selector_range_eq_selector_range(src->that.client, srd->that.client) ||
 				    src->that.protocol != srd->that.protocol ||
 				    src->that.port != srd->that.port ||
 				    !sameaddr(&src->this.host_addr,
@@ -3020,7 +3020,7 @@ struct connection *route_owner(struct connection *c,
 					best_routing = srd->routing;
 				}
 
-				if (selector_subnet_eq_subnet(src->this.client, srd->this.client) &&
+				if (selector_range_eq_selector_range(src->this.client, srd->this.client) &&
 				    src->this.protocol == srd->this.protocol &&
 				    src->this.port == srd->this.port &&
 				    srd->routing > best_erouting)
@@ -3477,8 +3477,8 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_PERMANENT:
 		case CK_TEMPLATE:
 		case CK_INSTANCE:
-			if ((selector_subnet_in_subnet(*peer_net, d->spd.that.client) ||
-			     selector_subnet_in_subnet(d->spd.that.client, *peer_net)) &&
+			if ((selector_range_in_selector_range(*peer_net, d->spd.that.client) ||
+			     selector_range_in_selector_range(d->spd.that.client, *peer_net)) &&
 			    !same_id(&d->spd.that.id, peer_id))
 			{
 				id_buf idb;
@@ -3644,7 +3644,7 @@ static struct connection *fc_try(const struct connection *c,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
-			if (!selector_subnet_eq_subnet(sr->this.client, *local_client)) {
+			if (!selector_range_eq_selector_range(sr->this.client, *local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in local_net (%s)",
@@ -3656,7 +3656,7 @@ static struct connection *fc_try(const struct connection *c,
 
 			if (sr->that.has_client) {
 
-				if (!selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
+				if (!selector_range_eq_selector_range(sr->that.client, *remote_client) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
@@ -3779,8 +3779,8 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					str_selector(&sr->that.client, &d3));
 			}
 
-			if (!selector_subnet_in_subnet(*local_client, sr->this.client) ||
-			    !selector_subnet_in_subnet(*remote_client, sr->that.client))
+			if (!selector_range_in_selector_range(*local_client, sr->this.client) ||
+			    !selector_range_in_selector_range(*remote_client, sr->that.client))
 				continue;
 
 			/*
@@ -3861,8 +3861,8 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			unsigned local_port = selector_port(*local_client).hport;
 			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 			unsigned remote_port = selector_port(*remote_client).hport;
-			if (selector_subnet_eq_subnet(sr->this.client, *local_client) &&
-			    selector_subnet_eq_subnet(sr->that.client, *remote_client) &&
+			if (selector_range_eq_selector_range(sr->this.client, *local_client) &&
+			    selector_range_eq_selector_range(sr->that.client, *remote_client) &&
 			    sr->this.protocol == local_protocol &&
 			    (!sr->this.port || sr->this.port == local_port) &&
 			    (sr->that.protocol == remote_protocol) &&
@@ -4459,8 +4459,8 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 		for (struct spd_route *srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
 			for (const struct spd_route *src = &c->spd; src != NULL; src = src->spd_next) {
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
-				    selector_subnet_eq_subnet(src->this.client, srue->this.client) &&
-				    selector_subnet_eq_subnet(src->that.client, srue->that.client)) {
+				    selector_range_eq_selector_range(src->this.client, srue->this.client) &&
+				    selector_range_eq_selector_range(src->that.client, srue->that.client)) {
 					dbg("%s eclipsed %s", c->name, ue->name);
 					*esrp = srue;
 					return ue;

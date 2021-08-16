@@ -177,8 +177,8 @@ const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *d
 size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
 
 /*
- * XXX: two hacks to get around .client not containing a proper
- * selector and instead needing to compare just the client's subnet.
+ * XXX: hacks to get around .client not containing a proper selector
+ * and instead needing to compare just the client's subnet.
  *
  * These are needed by code manipulating end.client because it is
  * serving double time.  It holding either:
@@ -188,10 +188,10 @@ size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const
  */
 
 ip_subnet selector_subnet(const ip_selector selector);
-bool selector_subnet_eq_subnet(const ip_selector lhs, const ip_selector rhs);
-bool selector_subnet_in_subnet(const ip_selector lhs, const ip_selector rhs);
-bool selector_subnet_eq_address(const ip_selector selector, const ip_address address);
-bool address_in_selector_subnet(const ip_address l, const ip_selector r);
+bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs);
+bool selector_range_in_selector_range(const ip_selector lhs, const ip_selector rhs);
+bool selector_range_eq_address(const ip_selector selector, const ip_address address);
+bool address_in_selector_range(const ip_address l, const ip_selector r);
 
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);

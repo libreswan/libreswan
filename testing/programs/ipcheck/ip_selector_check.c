@@ -436,7 +436,7 @@ static void check_selector_op_selector(void)
 		}
 
 		ip_address inner_address = selector_prefix(inner_selector);
-		bool address = address_in_selector_subnet(inner_address, outer_selector);
+		bool address = address_in_selector_range(inner_address, outer_selector);
 		if (address != t->address) {
 			address_buf ab;
 			selector_buf sb;

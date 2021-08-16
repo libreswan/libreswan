@@ -456,7 +456,7 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 	return true;
 }
 
-bool address_in_selector_subnet(const ip_address address, const ip_selector selector)
+bool address_in_selector_range(const ip_address address, const ip_selector selector)
 {
 	if (address_is_unset(&address) || selector_is_unset(&selector)) {
 		return false;
@@ -653,7 +653,7 @@ ip_subnet selector_subnet(const ip_selector selector)
 	return subnet_from_address_prefix_bits(address, prefix_bits);
 }
 
-bool selector_subnet_eq_subnet(const ip_selector lhs, const ip_selector rhs)
+bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs)
 {
 	if (selector_is_unset(&lhs) || selector_is_unset(&rhs)) {
 		return false;
@@ -664,7 +664,7 @@ bool selector_subnet_eq_subnet(const ip_selector lhs, const ip_selector rhs)
 	return range_eq_range(lhs_range, rhs_range);
 }
 
-bool selector_subnet_in_subnet(const ip_selector lhs, const ip_selector rhs)
+bool selector_range_in_selector_range(const ip_selector lhs, const ip_selector rhs)
 {
 	if (selector_is_unset(&lhs) || selector_is_unset(&rhs)) {
 		return false;
@@ -675,7 +675,7 @@ bool selector_subnet_in_subnet(const ip_selector lhs, const ip_selector rhs)
 	return subnet_in_subnet(lhs_subnet, rhs_subnet);
 }
 
-bool selector_subnet_eq_address(const ip_selector selector, const ip_address address)
+bool selector_range_eq_address(const ip_selector selector, const ip_address address)
 {
 	if (address_is_unset(&address) || selector_is_unset(&selector)) {
 		return false;

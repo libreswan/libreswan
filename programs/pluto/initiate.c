@@ -1007,8 +1007,8 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 		const struct spd_route *sr;
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
-			    selector_subnet_eq_subnet(*ours, sr->this.client) &&
-			    selector_subnet_eq_subnet(*peers, sr->that.client))
+			    selector_range_eq_selector_range(*ours, sr->this.client) &&
+			    selector_range_eq_selector_range(*peers, sr->that.client))
 				return c;
 		}
 	}

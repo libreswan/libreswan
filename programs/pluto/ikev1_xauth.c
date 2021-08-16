@@ -1835,7 +1835,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 					struct spd_route *sr;
 					for (sr = &c->spd; ; sr = sr->spd_next) {
-						if (selector_subnet_eq_subnet(wire_selector, sr->that.client)) {
+						if (selector_range_eq_selector_range(wire_selector, sr->that.client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
 								  "Subnet %s already has an spd_route - ignoring",
