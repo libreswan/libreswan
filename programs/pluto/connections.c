@@ -726,7 +726,7 @@ void unshare_connection_end(struct end *e)
 	if (e->ckaid != NULL) {
 		e->ckaid = clone_thing(*e->ckaid, "ckaid");
 	}
-	e->sec_label = clone_hunk(e->sec_label, "unshare connection policy label");
+	pexpect(e->sec_label.ptr == NULL);
 }
 
 /*
@@ -766,9 +766,7 @@ static void unshare_connection(struct connection *c)
 	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
 					"connection accept_redirect_to");
 
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		unshare_connection_end(&sr->this);
 		unshare_connection_end(&sr->that);
 	}
@@ -2371,16 +2369,11 @@ struct connection *instantiate(struct connection *c,
 
 	if (sec_label.len > 0) {
 		/*
-		 * Replace connection template sec_label with label
-		 * from either acquire or child payload.
-		 *
-		 * XXX: Note: only replace when SEC_LABEL is valid.
-		 * When SEC_LABEL isn't valid the instance D inherits
-		 * the template's SEC_LABEL (suspect IKEv1 depends on
-		 * this).
+		 * Install the sec_label from either an acquire or
+		 * child payload into both ends.
 		 */
 		FOR_EACH_THING(end, &d->spd.this, &d->spd.that) {
-			free_chunk_content(&end->sec_label);
+			pexpect(end->sec_label.ptr == NULL);
 			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
 		}
 	}
