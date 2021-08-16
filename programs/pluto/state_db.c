@@ -383,6 +383,7 @@ static struct list_head *query_head(struct state_query *query)
 		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
 	} else {
 		/* else other queries? */
+		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(query->where));
 		bucket = &state_serialno_list_head;
 	}
 	return bucket;
