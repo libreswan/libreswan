@@ -252,7 +252,7 @@ struct connection *next_host_pair_connection(const ip_address local,
 
 void connect_to_host_pair(struct connection *c)
 {
-	if (oriented(*c)) {
+	if (oriented(c)) {
 		struct host_pair *hp = find_host_pair(c->spd.this.host_addr,
 						      /* remote could be unset OR any */
 						      c->spd.that.host_addr);
@@ -296,7 +296,7 @@ void release_dead_interfaces(struct logger *logger)
 	while (new2old_connection(&cq)) {
 		struct connection *c = cq.c;
 
-		if (!oriented(*c)) {
+		if (!oriented(c)) {
 			connection_buf cb;
 			dbg("connection interface un-oriented: "PRI_CONNECTION,
 			    pri_connection(c, &cb));

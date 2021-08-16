@@ -215,7 +215,7 @@ static int whack_route_connection(struct connection *c,
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
-	if (!oriented(*c)) {
+	if (!oriented(c)) {
 		/* XXX: why whack only? */
 		llog(WHACK_STREAM|RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection");

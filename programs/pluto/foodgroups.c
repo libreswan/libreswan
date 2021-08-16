@@ -290,7 +290,7 @@ void load_groups(struct logger *logger)
 
 	/* for each group, add config file targets into new_targets */
 	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
-		if (oriented(*g->connection)) {
+		if (oriented(g->connection)) {
 			struct file_lex_position flp = {
 				.logger = logger,
 			};

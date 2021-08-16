@@ -703,7 +703,7 @@ static char *format_connection(char *buf, size_t buf_len,
 	struct jambuf b = array_as_jambuf(buf, buf_len);
 	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, FALSE);
 	jam(&b, "...");
-	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(*c));
+	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(c));
 	return buf;
 }
 
@@ -2175,7 +2175,7 @@ struct connection *add_group_instance(struct connection *group,
 				      uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
-	passert(oriented(*group));
+	passert(oriented(group));
 
 	/*
 	 * Manufacture a unique name for this template.
@@ -2324,7 +2324,7 @@ struct connection *instantiate(struct connection *c,
 		d->kind = CK_INSTANCE;
 	}
 
-	passert(oriented(*d));
+	passert(oriented(d));
 	if (peer_addr != NULL) {
 		d->spd.that.host_addr = *peer_addr;
 	}
@@ -2956,7 +2956,7 @@ struct connection *route_owner(struct connection *c,
 			struct connection **erop,
 			struct spd_route **esrp)
 {
-	if (!oriented(*c)) {
+	if (!oriented(c)) {
 		llog(RC_LOG, c->logger,
 		     "route_owner: connection no longer oriented - system interface change?");
 		return NULL;
@@ -2975,7 +2975,7 @@ struct connection *route_owner(struct connection *c,
 	while (new2old_connection(&cq)) {
 		struct connection *d = cq.c;
 
-		if (!oriented(*d))
+		if (!oriented(d))
 			continue;
 
 		/*
@@ -3826,7 +3826,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	struct connection *d;
 
 	/* weird things can happen to our interfaces */
-	if (!oriented(*c)) {
+	if (!oriented(c)) {
 		return NULL;
 	}
 
@@ -3983,7 +3983,7 @@ static void show_one_sr(struct show *s,
 	show_comment(s,
 		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
-		oriented(*c) ? "oriented" : "unoriented",
+		oriented(c) ? "oriented" : "unoriented",
 		OPT_HOST(c->spd.this.host_srcip, thisipb),
 		OPT_HOST(c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
@@ -4083,7 +4083,7 @@ void show_one_connection(struct show *s,
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
 
-	if (oriented(*c)) {
+	if (oriented(c)) {
 		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
 			char *n = jam_str(ifnstr, sizeof(ifnstr),
 					c->xfrmi->name);

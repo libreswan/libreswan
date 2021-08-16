@@ -220,7 +220,7 @@ void initialize_new_state(struct state *st,
 	 * updating connection's ends?
 	 */
 	struct connection *c = st->st_connection;
-	pexpect(oriented(*c));
+	pexpect(oriented(c));
 	c->interface = NULL;
 	orient(c, st->st_logger);
 	st->st_interface = c->interface;

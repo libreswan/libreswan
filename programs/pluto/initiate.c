@@ -99,7 +99,7 @@ bool initiate_connection_2(struct connection *c,
 			   bool background,
 			   const threadtime_t inception)
 {
-	if (!oriented(*c)) {
+	if (!oriented(c)) {
 		ipstr_buf a;
 		ipstr_buf b;
 		llog(RC_ORIENT, c->logger,

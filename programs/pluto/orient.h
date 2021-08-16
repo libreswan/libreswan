@@ -21,7 +21,7 @@
 
 struct connection;
 
-#define oriented(c) ((c).interface != NULL)
-extern bool orient(struct connection *c, struct logger *logger);
+bool oriented(const struct connection *c);
+bool orient(struct connection *c, struct logger *logger);
 
 #endif

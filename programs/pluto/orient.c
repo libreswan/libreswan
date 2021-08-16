@@ -33,6 +33,15 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 
+bool oriented(const struct connection *c)
+{
+	if (!pexpect(c != NULL)) {
+		return false;
+	}
+
+	return c->interface != NULL;
+}
+
 /*
  * Swap ends and try again.
  * It is a little tricky to see that this loop will stop.
@@ -149,7 +158,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 
 bool orient(struct connection *c, struct logger *logger)
 {
-	if (oriented(*c)) {
+	if (oriented(c)) {
 		dbg("already oriented");
 		return true;
 	}
@@ -194,7 +203,7 @@ bool orient(struct connection *c, struct logger *logger)
 		}
 		pexpect(this != that); /* only one */
 
-		if (oriented(*c)) {
+		if (oriented(c)) {
 			/* oops, second match */
 			if (c->interface->ip_dev == ifp->ip_dev) {
 				connection_buf cib;
@@ -241,9 +250,9 @@ bool orient(struct connection *c, struct logger *logger)
 			swap = true;
 		}
 		c->interface = ifp;
-		passert(oriented(*c));
+		passert(oriented(c));
 	}
-	if (oriented(*c)) {
+	if (oriented(c)) {
 		if (swap) {
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
 			    c->spd.that.config->leftright);
