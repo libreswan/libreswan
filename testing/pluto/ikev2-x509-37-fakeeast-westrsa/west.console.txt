@@ -34,6 +34,8 @@ west #
  echo "initdone"
 initdone
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up ikev2-westnet-eastnet-x509-cr
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request
@@ -43,7 +45,7 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
 036 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
 002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "ikev2-westnet-eastnet-x509-cr" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo "done"
 done
@@ -51,10 +53,6 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES
