@@ -2378,6 +2378,17 @@ struct connection *instantiate(struct connection *c,
 		}
 	}
 
+	connection_buf cb, db;
+	address_buf pab;
+	id_buf pib;
+	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s remote_id=%s sec_label="PRI_SHUNK,
+	    pri_co(c->serialno), pri_connection(c, &cb),
+	    pri_co(d->serialno), pri_connection(d, &db),
+	    enum_name(&connection_kind_names, d->kind),
+	    peer_addr != NULL ? str_address(peer_addr, &pab) : "N/A",
+	    peer_id != NULL ? str_id(peer_id, &pib) : "N/A",
+	    pri_shunk(d->spd.this.sec_label));
+
 	return d;
 }
 
