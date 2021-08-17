@@ -132,8 +132,8 @@ west #
 west #
  ipsec status > /dev/null || echo status should have returned 0
 west #
- grep "pending IPsec SA" /tmp/pluto.log
-| queuing pending IPsec SA negotiating with 1.2.3.4 IKE SA #1 "mytunnel"
+ grep "waiting on" /tmp/pluto.log
+| queue IPsec SA; waiting on ISAKMP SA "mytunnel" #1 negotiating with 1.2.3.4
 west #
  echo done
 done

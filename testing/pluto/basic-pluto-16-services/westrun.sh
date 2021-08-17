@@ -45,5 +45,5 @@ ipsec auto --add mytunnel
 # will fail
 timeout 10s ipsec auto --up mytunnel
 ipsec status > /dev/null || echo status should have returned 0
-grep "pending IPsec SA" /tmp/pluto.log
+grep "waiting on" /tmp/pluto.log
 echo done
