@@ -152,7 +152,6 @@ void add_v2_pending(struct fd *whackfd,
 		}
 		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
 		struct connection *d = instantiate(c, &remote_address, /*peer_id*/NULL, sec_label);
-		d->kind = CK_INSTANCE;
 		connection_buf db;
 		dbg("generating and then tossing child connection "PRI_CONNECTION" with sec_label="PRI_SHUNK" into the pending queue",
 		    pri_connection(d, &db), pri_shunk(sec_label));

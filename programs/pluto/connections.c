@@ -2276,6 +2276,44 @@ struct connection *instantiate(struct connection *c,
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.spd_next == NULL);
 
+	/*
+	 * Is the new connection still a template?
+	 *
+	 * For instance, a responder with a template connection T with
+	 * both remote=%any and configuration sec_label will:
+	 *
+	 * - during IKE_SA_INIT, instantiate T with the remote
+         *   address; creating a new template T.IKE (since the
+         *   negotiated sec_label isn't known it is still a template)
+	 *
+	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantate T.IKE
+	 *   with the Child SA's negotiated SEC_LABEL creating the
+	 *   connection instance C.CHILD
+	 */
+	enum connection_kind kind;
+	if (c->config->sec_label.len > 0) {
+		/*
+		 * Either:
+		 *
+		 * - C is T, and D is T.IKE (the remote address is
+		 *   updated below) -> CK_TEMPLATE
+		 *
+		 * Or:
+		 *
+		 * - or C is T.IKE and D is C.CHILD (the sec_label is
+		 *   updated below) -> CK_INSTANCE
+		 */
+		pexpect(address_is_specified(c->spd.that.host_addr) || peer_addr != NULL);
+		if (sec_label.len == 0) {
+			kind = CK_TEMPLATE;
+		} else {
+			kind = CK_INSTANCE;
+		}
+	} else {
+		/* pexpect(address_is_specified(c->spd.that.host_addr) || peer_addr != NULL); true??? */
+		kind = CK_INSTANCE;
+	}
+
 	c->instance_serial++;
 	struct connection *d = clone_connection(c->name, c, HERE);
 	passert(c->name != d->name); /* see clone_connection() */
@@ -2287,41 +2325,7 @@ struct connection *instantiate(struct connection *c,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection(d);
-
-	if ((c->spd.that.host_type == KH_ANY) /* Wildcard peer IP */ &&
-	    (c->config->sec_label.len > 0) /* config security label? */ &&
-	    (c->spd.this.sec_label.len == 0) /* negotiated security label? */) {
-		passert(c->kind == CK_TEMPLATE);
-		/*
-		 * In this case, `c` is a template connection due to
-		 * _both_:
-		 *
-		 * - a peer wildcard IP address (`%any`)
-		 *  AND
-		 * - a security label from the user-specified
-                 *   connection configuration's `policy-label`.
-		 *
-		 * At this point, we are instantiating a connection
-		 * with an actual address but still don' t have the
-		 * actual security label used for network
-		 * transmission, i.e. this function doesn't have
-		 * access to a label retrieved via Netlink `ACQUIRE`
-		 * or received from the peer. Therefore, the newly
-		 * instantiated connection remains a template since
-		 * its current security label value is the label from
-		 * `policy-label`.
-		 *
-		 * The caller of this function is expected to update
-		 * `d->kind` to `CK_INSTANCE` if `d` ends up getting a
-		 * label used for network transmission.
-		 *
-		 * And so, let a template beget another template.
-		 */
-		d->kind = CK_TEMPLATE;
-	} else {
-		d->kind = CK_INSTANCE;
-	}
-
+	d->kind = kind;
 	passert(oriented(d));
 	if (peer_addr != NULL) {
 		d->spd.that.host_addr = *peer_addr;

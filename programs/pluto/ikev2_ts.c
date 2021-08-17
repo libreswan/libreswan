@@ -1488,7 +1488,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 		struct connection *s = instantiate(c, &child->sa.st_connection->spd.that.host_addr,
 						   NULL, best_sec_label);
-		s->kind = CK_INSTANCE;
 		scribble_request_ts_on_connection(child, s, n);
 
 		/* switch */

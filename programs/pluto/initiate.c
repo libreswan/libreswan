@@ -354,7 +354,6 @@ void ipsecdoi_initiate(struct connection *c,
 				 */
 				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 				cc = instantiate(c, &remote_addr, NULL, sec_label);
-				cc->kind = CK_INSTANCE;
 			} else {
 				cc = c;
 			}
