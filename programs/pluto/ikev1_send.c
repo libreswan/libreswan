@@ -217,7 +217,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 {
-	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, TRUE);
+	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, true);
 
 	if (st->st_state->kind == STATE_XAUTH_R0 &&
 	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
@@ -231,7 +231,7 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
 	record_outbound_v1_ike_msg(st, pbs, what);
-	return send_or_resend_v1_ike_msg_from_state(st, what, FALSE);
+	return send_or_resend_v1_ike_msg_from_state(st, what, false);
 }
 
 void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)

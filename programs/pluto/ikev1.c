@@ -1975,7 +1975,7 @@ void process_packet_tail(struct msg_digest *md)
 		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
-					 st->st_v1_new_iv.ptr, FALSE,
+					 st->st_v1_new_iv.ptr, false,
 					 st->st_logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
@@ -2403,7 +2403,7 @@ void process_packet_tail(struct msg_digest *md)
 		p = md->chain[ISAKMP_NEXT_VID];
 		while (p != NULL) {
 			handle_vendorid(md, (char *)p->pbs.cur,
-					pbs_left(&p->pbs), FALSE,
+					pbs_left(&p->pbs), false,
 					st != NULL ? st->st_logger : md->md_logger);
 			p = p->next;
 		}
@@ -3246,7 +3246,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ike_decode_peer_id() with new conn");
 			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id(md, FALSE, FALSE);
+			return ikev1_decode_peer_id(md, false, false);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = false;

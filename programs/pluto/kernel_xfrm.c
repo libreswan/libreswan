@@ -2173,7 +2173,7 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 	deltatime_t idle_time;
 
 	passert(st != NULL);
-	return !get_sa_info(st, TRUE, &idle_time) ||
+	return !get_sa_info(st, true, &idle_time) ||
 		deltatime_cmp(idle_time, >=, idle_max);
 }
 
@@ -2294,7 +2294,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			ET_INT,
 			esp_transport_proto_info,
 			deltatime(0),
-			calculate_sa_prio(c, FALSE),
+			calculate_sa_prio(c, false),
 			&c->sa_marks,
 			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 			HUNK_AS_SHUNK(sr->this.sec_label), logger,
@@ -2323,7 +2323,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  ET_INT,
 			  esp_transport_proto_info,
 			  deltatime(0),
-			  calculate_sa_prio(c, FALSE),
+			  calculate_sa_prio(c, false),
 			  &c->sa_marks,
 			  0, /* xfrm_if_id needed for shunt? */
 			  HUNK_AS_SHUNK(sr->this.sec_label), logger,

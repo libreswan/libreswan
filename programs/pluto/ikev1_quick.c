@@ -817,7 +817,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 		if (!ikev1_out_sa(&rbody,
 				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
-				  st, FALSE, FALSE)) {
+				  st, false, false)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1350,7 +1350,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	/* HDR* out */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
@@ -1508,7 +1508,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 		RETURN_STF_FAILURE(parse_ipsec_sa_body(&sa_pd->pbs,
 						       &sa_pd->payload.sa,
-						       NULL, TRUE, st));
+						       NULL, true, st));
 	}
 
 	/* Nr in */
@@ -1546,7 +1546,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection;
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
@@ -1687,7 +1687,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(st, TRUE))
+	if (!install_ipsec_sa(st, true))
 		return STF_INTERNAL_ERROR;
 
 	/* encrypt message, except for fixed part of header */
@@ -1726,7 +1726,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 		if (add_xfrmi(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(st, FALSE))
+	if (!install_ipsec_sa(st, false))
 		return STF_INTERNAL_ERROR;
 
 	set_newest_ipsec_sa("inI2", st);

@@ -164,7 +164,7 @@ void main_outI1(struct fd *whack_sock,
 		uint8_t *sa_start = rbody.cur;
 
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
-				  st, TRUE, FALSE)) {
+				  st, true, false)) {
 			log_state(RC_LOG, st, "outsa fail");
 			return;
 		}
@@ -364,7 +364,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
-				 st->st_v1_new_iv.ptr, TRUE,
+				 st->st_v1_new_iv.ptr, true,
 				 st->st_logger);
 
 	update_iv(st);
@@ -625,7 +625,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	/* SA body in and out */
 	RETURN_STF_FAILURE(parse_isakmp_sa_body(&sa_pd->pbs,
 						&sa_pd->payload.sa,
-						&r_sa_pbs, FALSE, st));
+						&r_sa_pbs, false, st));
 
 	/* send Vendor IDs */
 	if (!out_vid_set(&rbody, c))
@@ -671,7 +671,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 		RETURN_STF_FAILURE(parse_isakmp_sa_body(&sapd->pbs,
 							&sapd->payload.sa,
-							NULL, TRUE, st));
+							NULL, true, st));
 	}
 
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
@@ -715,7 +715,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 	 * depends on the type of Auth (eventually).
 	 */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, FALSE,
+	ikev1_init_pbs_out_from_md_hdr(md, false,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
@@ -873,7 +873,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	/* HDR out */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, FALSE,
+	ikev1_init_pbs_out_from_md_hdr(md, false,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
@@ -915,11 +915,11 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 					if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 								     gn->name,
 								     &rbody)) {
-						free_generalNames(ca, FALSE);
+						free_generalNames(ca, false);
 						return STF_INTERNAL_ERROR;
 					}
 				}
-				free_generalNames(ca, FALSE);
+				free_generalNames(ca, false);
 			} else {
 				if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
 							     EMPTY_CHUNK,
@@ -993,7 +993,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	calc_v1_skeyid_and_iv(st);
 
 	struct pbs_out rbody[1]; /* hack */
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       rbody, st->st_logger);
 
@@ -1375,7 +1375,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * since we are a Main Mode Responder.
 	 */
 	{
-		stf_status r = oakley_id_and_auth(md, FALSE, FALSE);
+		stf_status r = oakley_id_and_auth(md, false, false);
 		if (r != STF_OK)
 			return r;
 	}
@@ -1430,7 +1430,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * be first payload.
 	 */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, TRUE,
+	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->st_logger);
 
@@ -1582,7 +1582,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 * because we are the Responder.
 	 */
 	{
-		stf_status r = oakley_id_and_auth(md, TRUE, FALSE);
+		stf_status r = oakley_id_and_auth(md, true, false);
 		if (r != STF_OK)
 			return r;
 	}

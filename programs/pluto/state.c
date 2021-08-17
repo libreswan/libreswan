@@ -925,10 +925,10 @@ void delete_state_tail(struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 	    IS_CHILD_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
-		if (!get_sa_info(st, FALSE, NULL)) {
+		if (!get_sa_info(st, false, NULL)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
-		if (!get_sa_info(st, TRUE, NULL)) {
+		if (!get_sa_info(st, true, NULL)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
@@ -1184,7 +1184,7 @@ void delete_state_tail(struct state *st)
 	release_certs(&st->st_remote_certs.verified);
 	free_public_keys(&st->st_remote_certs.pubkey_db);
 
-	free_generalNames(st->st_requested_ca, TRUE);
+	free_generalNames(st->st_requested_ca, true);
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_peer);
@@ -1895,14 +1895,14 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
 	    st->st_esp.add_time);
 
-	if (get_sa_info(st, TRUE, NULL)) {
+	if (get_sa_info(st, true, NULL)) {
 		unsigned inb = (st->st_esp.present ? st->st_esp.our_bytes:
 				st->st_ah.present ? st->st_ah.our_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0);
 		jam(buf, ", inBytes=%u", inb);
 	}
 
-	if (get_sa_info(st, FALSE, NULL)) {
+	if (get_sa_info(st, false, NULL)) {
 		unsigned outb = (st->st_esp.present ? st->st_esp.peer_bytes :
 				 st->st_ah.present ? st->st_ah.peer_bytes :
 				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
@@ -2120,7 +2120,7 @@ static void show_established_child_details(struct show *s, struct state *st)
 				jam(buf, " AHout=");
 				jam_readable_humber(buf, st->st_ah.peer_bytes, false);
 			}
-			if (get_sa_info(st, TRUE, NULL)) {
+			if (get_sa_info(st, true, NULL)) {
 				jam(buf, " AHin=");
 				jam_readable_humber(buf, st->st_ah.our_bytes, false);
 			}
@@ -2128,11 +2128,11 @@ static void show_established_child_details(struct show *s, struct state *st)
 			jam_readable_humber(buf, st->st_ah.attrs.life_kilobytes, true);
 		}
 		if (st->st_esp.present) {
-			if (get_sa_info(st, TRUE, NULL)) {
+			if (get_sa_info(st, true, NULL)) {
 				jam(buf, " ESPin=");
 				jam_readable_humber(buf, st->st_esp.our_bytes, false);
 			}
-			if (get_sa_info(st, FALSE, NULL)) {
+			if (get_sa_info(st, false, NULL)) {
 				jam(buf, " ESPout=");
 				jam_readable_humber(buf, st->st_esp.peer_bytes, false);
 			}
@@ -2140,11 +2140,11 @@ static void show_established_child_details(struct show *s, struct state *st)
 			jam_readable_humber(buf, st->st_esp.attrs.life_kilobytes, true);
 		}
 		if (st->st_ipcomp.present) {
-			if (get_sa_info(st, FALSE, NULL)) {
+			if (get_sa_info(st, false, NULL)) {
 				jam(buf, " IPCOMPout=");
 				jam_readable_humber(buf, st->st_ipcomp.peer_bytes, false);
 			}
-			if (get_sa_info(st, TRUE, NULL)) {
+			if (get_sa_info(st, true, NULL)) {
 				jam(buf, " IPCOMPin=");
 				jam_readable_humber(buf, st->st_ipcomp.our_bytes, false);
 			}

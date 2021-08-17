@@ -978,7 +978,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	}
 #endif
 
-	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, TRUE);
+	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, true);
 }
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */

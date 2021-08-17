@@ -428,7 +428,7 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 		}
 	}
 
-	free_generalNames(gnt, FALSE);
+	free_generalNames(gnt, false);
 	if (arena != NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 	}
@@ -1180,11 +1180,11 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 							     ca->name, outpbs)) {
-					free_generalNames(gn, FALSE);
+					free_generalNames(gn, false);
 					return STF_INTERNAL_ERROR;
 				}
 			}
-			free_generalNames(gn, FALSE);
+			free_generalNames(gn, false);
 		} else {
 			dbg("not a roadwarrior instance, sending empty CA in CERTREQ");
 			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
@@ -1368,13 +1368,13 @@ static bool crl_time_to_str(char *buf, size_t buflen, SECItem *t)
 static bool cert_detail_notbefore_to_str(char *buf, size_t buflen,
 					CERTCertificate *cert)
 {
-	return cert_time_to_str(buf, buflen, cert, TRUE);
+	return cert_time_to_str(buf, buflen, cert, true);
 }
 
 static bool cert_detail_notafter_to_str(char *buf, size_t buflen,
 					CERTCertificate *cert)
 {
-	return cert_time_to_str(buf, buflen, cert, FALSE);
+	return cert_time_to_str(buf, buflen, cert, false);
 }
 
 static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)

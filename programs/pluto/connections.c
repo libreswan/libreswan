@@ -701,7 +701,7 @@ static char *format_connection(char *buf, size_t buf_len,
 			       const struct spd_route *sr)
 {
 	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, FALSE);
+	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, false);
 	jam(&b, "...");
 	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(c));
 	return buf;
@@ -1209,7 +1209,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	select_nss_cert_id(cert, &dst_end->id);
 
 	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
+	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
 			secCertTimeValid) {
 		return diag("%s certificate '%s' is expired or not yet valid",
 			    leftright, nickname);

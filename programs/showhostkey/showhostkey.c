@@ -192,7 +192,7 @@ static int list_key(struct secret *secret,
 		    struct private_key_stuff *pks,
 		    void *uservoid UNUSED)
 {
-	print_key(secret, pks, FALSE);
+	print_key(secret, pks, false);
 	return 1;
 }
 
@@ -200,7 +200,7 @@ static int dump_key(struct secret *secret,
 		    struct private_key_stuff *pks,
 		    void *uservoid UNUSED)
 {
-	print_key(secret, pks, TRUE);
+	print_key(secret, pks, true);
 	return 1;
 }
 

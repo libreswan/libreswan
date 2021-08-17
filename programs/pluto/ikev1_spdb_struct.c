@@ -2275,7 +2275,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		 * group
 		 */
 		revised_sadb = v1_ike_alg_make_sadb(c->ike_proposals,
-						    auth_method, TRUE,
+						    auth_method, true,
 						    st->st_logger);
 	}
 

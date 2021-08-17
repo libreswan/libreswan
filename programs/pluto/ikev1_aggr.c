@@ -200,7 +200,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
-	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
+	if (!ikev1_decode_peer_id(md, false, true)) {
 		id_buf buf;
 		endpoint_buf b;
 		log_state(RC_LOG_SERIOUS, st,
@@ -253,7 +253,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 
 		RETURN_STF_FAILURE(parse_isakmp_sa_body(&sabs,
 							&sa_pd->payload.sa,
-							NULL, FALSE, st));
+							NULL, false, st));
 	}
 
 	/* KE in */
@@ -379,7 +379,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 		/* SA body in and out */
 		notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
-			&sa_pd->payload.sa, &r_sa_pbs, FALSE, st);
+			&sa_pd->payload.sa, &r_sa_pbs, false, st);
 		if (rn != NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
@@ -533,7 +533,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * note: ikev1_decode_peer_id may change which connection is referenced by md->v1_st->st_connection.
 	 * But not in this case because we are Aggressive Mode
 	 */
-	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
+	if (!ikev1_decode_peer_id(md, true, true)) {
 		id_buf buf;
 		endpoint_buf b;
 
@@ -550,7 +550,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 		notification_t r = \
 			parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
-					     NULL, TRUE, st);
+					     NULL, true, st);
 
 		if (r != NOTHING_WRONG)
 			return STF_FAIL + r;
@@ -605,7 +605,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		 * Note: oakley_id_and_auth won't switch connections
 		 * because we are Aggressive Mode.
 		 */
-		stf_status r = oakley_id_and_auth(md, TRUE, TRUE);
+		stf_status r = oakley_id_and_auth(md, true, true);
 
 		if (r != STF_OK)
 			return r;
@@ -884,7 +884,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		 * Note: oakley_id_and_auth won't switch connections
 		 * because we are Aggressive Mode.
 		 */
-		stf_status r = oakley_id_and_auth(md, FALSE, TRUE);
+		stf_status r = oakley_id_and_auth(md, false, true);
 		if (r != STF_OK)
 			return r;
 	}
@@ -1079,7 +1079,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 
 		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
-				  st, TRUE, TRUE)) {
+				  st, true, true)) {
 			return STF_INTERNAL_ERROR;
 		}
 

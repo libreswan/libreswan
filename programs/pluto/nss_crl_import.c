@@ -119,7 +119,7 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 	/* arena owned by crl */
 	if ((crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE)) == NULL) {
 		dbg_nss_error(logger, "decoding CRL using CERT_DecodeDERCrl() failed");
-		PORT_FreeArena(arena, FALSE);
+		PORT_FreeArena(arena, false);
 		goto end;
 	}
 
