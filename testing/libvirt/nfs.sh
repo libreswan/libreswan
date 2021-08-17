@@ -7,6 +7,7 @@ testing=$(realpath $0 | sed "s;testing/.*;testing;")
 
 # check NFS is installed and start it (no need to enable it).
 if test -f /lib/systemd/system/nfs-server.service ; then
+    echo "starting NFS ..."
     sudo systemctl start nfs-server
 #elif some other os ...
 else
@@ -18,12 +19,14 @@ fi
 if sudo exportfs | grep ${testing} ; then
     echo ${testing} already exported
 else
-    sudo exportfs -r
+    echo "exporting ${testing} ..."
+    #sudo exportfs -r
     sudo exportfs -o rw,no_root_squash 192.168.234.0/24:${testing}
 fi
 
 # poke a hole in the firewall; see systemctl EXIT CODE 0 indicates it is running
 if test -f /lib/systemd/system/firewalld.service && systemctl status firewalld > /dev/null ; then
+    echo "configuring firewall ..."
     # add the zone swandefault; replace old
     #
     # problem is that libvirt screws around with the firewall zones so
