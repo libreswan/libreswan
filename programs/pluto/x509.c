@@ -114,7 +114,7 @@ bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
 	/* if no ca is requested than any ca will match */
 	if (requested_ca == NULL) {
 		*our_pathlen = 0;
-		return TRUE;
+		return true;
 	}
 
 	*our_pathlen = MAX_CA_PATH_LEN + 1;
@@ -208,20 +208,20 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	/* no CA b specified => any CA a is accepted */
 	if (b.ptr == NULL) {
 		*pathlen = (a.ptr == NULL) ? 0 : MAX_CA_PATH_LEN;
-		return TRUE;
+		return true;
 	}
 
 	/* no CA a specified => trust cannot be established */
 	if (a.ptr == NULL) {
 		*pathlen = MAX_CA_PATH_LEN;
-		return FALSE;
+		return false;
 	}
 
 	*pathlen = 0;
 
 	/* CA a equals CA b => we have a match */
 	if (same_dn(a, b)) {
-		return TRUE;
+		return true;
 	}
 
 	/*
@@ -1029,10 +1029,10 @@ bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
 	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
 				&cert_pbs) ||
 	    !out_hunk(cert, &cert_pbs, "CERT"))
-		return FALSE;
+		return false;
 
 	close_output_pbs(&cert_pbs);
-	return TRUE;
+	return true;
 }
 
 bool ikev1_build_and_ship_CR(enum ike_cert_type type,
@@ -1045,10 +1045,10 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 
 	if (!out_struct(&cr_hd, &isakmp_ipsec_cert_req_desc, outs, &cr_pbs) ||
 	    (ca.ptr != NULL && !out_hunk(ca, &cr_pbs, "CA")))
-		return FALSE;
+		return false;
 
 	close_output_pbs(&cr_pbs);
-	return TRUE;
+	return true;
 }
 
 bool ikev2_build_and_ship_CR(enum ike_cert_type type,
@@ -1072,7 +1072,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 
 	/* build CR header */
 	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
-		return FALSE;
+		return false;
 	/*
 	 * The Certificate Encoding field has the same values as those defined
 	 * in Section 3.6.  The Certification Authority field contains an
@@ -1105,7 +1105,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 
 			if (!out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
 				free_chunk_content(&cr_full_hash);
-				return FALSE;
+				return false;
 			}
 			free_chunk_content(&cr_full_hash);
 		} else {
@@ -1122,7 +1122,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	 * this function's returns need fixing
 	 * */
 	close_output_pbs(&cr_pbs);
-	return TRUE;
+	return true;
 }
 
 /*
@@ -1203,29 +1203,29 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 
 	if (role != SA_INITIATOR) {
 		dbg("IKEv2 CERTREQ: not the original initiator");
-		return FALSE;
+		return false;
 	}
 
 	const struct connection *c = st->st_connection;
 
 	if ((c->policy & POLICY_ID_AUTH_MASK) == POLICY_PSK || (c->policy & POLICY_ID_AUTH_MASK) == POLICY_AUTH_NULL) {
 		dbg("IKEv2 CERTREQ: authby=secret and authby=null do not require CERTREQ");
-		return FALSE;
+		return false;
 	}
 
 	if (has_preloaded_public_key(st)) {
 		dbg("IKEv2 CERTREQ: public key already known");
-		return FALSE;
+		return false;
 	}
 
 	if (c->spd.that.ca.ptr == NULL || c->spd.that.ca.len < 1) {
 		dbg("IKEv2 CERTREQ: no CA DN known to send");
-		return FALSE;
+		return false;
 	}
 
 	dbg("IKEv2 CERTREQ: OK to send a certificate request");
 
-	return TRUE;
+	return true;
 }
 
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
@@ -1335,7 +1335,7 @@ static bool cert_time_to_str(char *buf, size_t buflen,
 	PRTime notBefore_tm, notAfter_tm;
 
 	if (CERT_GetCertTimes(cert, &notBefore_tm, &notAfter_tm) != SECSuccess)
-		return FALSE;
+		return false;
 
 	PRTime ptime = notbefore ? notBefore_tm : notAfter_tm;
 
@@ -1344,9 +1344,9 @@ static bool cert_time_to_str(char *buf, size_t buflen,
 	PR_ExplodeTime(ptime, PR_GMTParameters, &printtime);
 
 	if (!PR_FormatTime(buf, buflen, "%a %b %d %H:%M:%S %Y", &printtime))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool crl_time_to_str(char *buf, size_t buflen, SECItem *t)
@@ -1355,14 +1355,14 @@ static bool crl_time_to_str(char *buf, size_t buflen, SECItem *t)
 	PRTime time;
 
 	if (DER_DecodeTimeChoice(&time, t) != SECSuccess)
-		return FALSE;
+		return false;
 
 	PR_ExplodeTime(time, PR_GMTParameters, &printtime);
 
 	if (!PR_FormatTime(buf, buflen, "%a %b %d %H:%M:%S %Y", &printtime))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool cert_detail_notbefore_to_str(char *buf, size_t buflen,

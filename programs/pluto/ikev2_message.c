@@ -946,7 +946,7 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 
 	if (!ike->sa.st_seen_fragmentation_supported) {
 		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
-		return FALSE;
+		return false;
 	}
 
 	if (!ikev2_check_fragment(md, ike)) {

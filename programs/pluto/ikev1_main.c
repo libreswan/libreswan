@@ -344,7 +344,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 		if (padding != 0) {
 			if (!out_zero(padding, pbs, "encryption padding"))
-				return FALSE;
+				return false;
 
 			enc_len += padding;
 		}
@@ -360,7 +360,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	/* close just before encrypting so NP backpatching isn't confused */
 	if (!ikev1_close_message(pbs, st))
-		return FALSE;
+		return false;
 
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
@@ -372,7 +372,7 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 		DBG_dump_hunk("next IV:", st->st_v1_iv);
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -408,11 +408,11 @@ bool ikev1_close_message(pb_stream *pbs, const struct state *st)
 	} else {
 		dbg("padding IKEv1 message with %zu bytes", padding);
 		if (!out_zero(padding, pbs, "message padding"))
-			return FALSE;
+			return false;
 	}
 
 	close_output_pbs(pbs);
-	return TRUE;
+	return true;
 }
 
 /*
@@ -2171,7 +2171,7 @@ bool accept_delete(struct msg_digest *md,
 	if (!md->encrypted) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: not encrypted");
-		return FALSE;
+		return false;
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
@@ -2179,13 +2179,13 @@ bool accept_delete(struct msg_digest *md,
 		/* can't happen (if msg is encrypt), but just to be sure */
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: ISAKMP SA not established");
-		return FALSE;
+		return false;
 	}
 
 	if (d->isad_nospi == 0) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "ignoring Delete SA payload: no SPI");
-		return FALSE;
+		return false;
 	}
 
 	switch (d->isad_protoid) {
@@ -2200,7 +2200,7 @@ bool accept_delete(struct msg_digest *md,
 
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
-		return FALSE;
+		return false;
 
 	default:
 	{

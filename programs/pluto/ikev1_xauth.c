@@ -958,7 +958,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 		log_state(RC_LOG, st,
 			  "XAUTH: unable to open password file (%s) for verification",
 			  pswdpath);
-		return FALSE;
+		return false;
 	}
 
 	log_state(RC_LOG, st, "XAUTH: password file (%s) open.", pswdpath);

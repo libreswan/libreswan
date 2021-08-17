@@ -627,7 +627,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 							&seen_internal_address)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -635,7 +635,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -644,7 +644,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 							&seen_internal_address)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -652,7 +652,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -668,7 +668,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			break;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 stf_status process_v2_childs_sa_payload(const char *what,

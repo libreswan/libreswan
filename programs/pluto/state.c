@@ -1263,16 +1263,16 @@ bool shared_phase1_connection(const struct connection *c)
 	so_serial_t serial_us = c->newest_ike_sa;
 
 	if (serial_us == SOS_NOBODY)
-		return FALSE;
+		return false;
 
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st = NULL;
 	FOR_EACH_STATE_NEW2OLD(st) {
 		if (st->st_connection != c && st->st_clonedfrom == serial_us)
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -1802,7 +1802,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 {
 	/* this check is defined only for an IKEv2 parent */
 	if (ike->sa.st_ike_version != IKEv2)
-		return TRUE;
+		return true;
 
 	monotime_t now = mononow();
 	const struct state_event *ev = ike->sa.st_event;

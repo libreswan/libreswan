@@ -36,7 +36,7 @@ bool all_zero(const unsigned char *m, size_t len)
 
 	for (i = 0; i != len; i++)
 		if (m[i] != '\0')
-			return FALSE;
+			return false;
 
-	return TRUE;
+	return true;
 }

@@ -2688,7 +2688,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 
 	close_output_pbs(&pbs);
-	return TRUE;
+	return true;
 }
 
 static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3) MUST_USE_RESULT;

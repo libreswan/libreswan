@@ -3503,7 +3503,7 @@ static bool is_virtual_net_used(struct connection *c,
 					llog(RC_LOG, c->logger,
 					     "Kernel method '%s' does not support overlapping IP ranges",
 					     kernel_ops->kern_name);
-					return TRUE;
+					return true;
 				}
 
 				if (LIN(POLICY_OVERLAPIP, c->policy & d->policy)) {
@@ -3537,7 +3537,7 @@ static bool is_virtual_net_used(struct connection *c,
 				llog(RC_LOG, c->logger,
 				     "Your ID is '%s'", str_id(peer_id, &idb));
 
-				return TRUE; /* already used by another one */
+				return true; /* already used by another one */
 			}
 			break;
 
@@ -3546,7 +3546,7 @@ static bool is_virtual_net_used(struct connection *c,
 			break;
 		}
 	}
-	return FALSE; /* you can safely use it */
+	return false; /* you can safely use it */
 }
 
 /*

@@ -44,7 +44,7 @@ bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
 {
 	payl->type = PPK_ID_FIXED;	/* currently we support only this type */
 	payl->ppk_id = *ppk_id;
-	return TRUE;
+	return true;
 }
 
 /*

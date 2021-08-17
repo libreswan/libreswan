@@ -132,12 +132,12 @@ static bool send_v1_frags(struct state *st, const char *where)
 					     chunk2(frag_prefix,
 						    NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
 					     chunk2(packet_cursor, data_len)))
-			return FALSE;
+			return false;
 
 		packet_remainder_len -= data_len;
 		packet_cursor += data_len;
 	}
-	return TRUE;
+	return true;
 }
 
 static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resending)
@@ -180,7 +180,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 {
 	if (st->st_interface == NULL) {
 		log_state(RC_LOG, st, "Cannot send packet - interface vanished!");
-		return FALSE;
+		return false;
 	}
 	/* another bandaid */
 	if (st->st_v1_tpacket.ptr == NULL) {

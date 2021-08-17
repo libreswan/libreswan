@@ -64,7 +64,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 	 */
 	log_state(RC_LOG_SERIOUS, st,
 		  "Received IPsec Security Label support for labeled ipsec not compiled in");
-	return FALSE;
+	return false;
 }
 #else
 #include "ikev1_labeled_ipsec.h"
@@ -143,7 +143,7 @@ static bool out_attr(int type,
 			.isaat_lv = val,
 		};
 		if (!out_struct(&attr, attr_desc, pbs, NULL))
-			return FALSE;
+			return false;
 	} else {
 		/* This is a real fudge!  Since we rarely use long attributes
 		 * and since this is the only place where we can cause an
@@ -163,7 +163,7 @@ static bool out_attr(int type,
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))
-			return FALSE;
+			return false;
 
 		close_output_pbs(&val_pbs);
 	}
@@ -174,7 +174,7 @@ static bool out_attr(int type,
 			DBG_log("    [%lu is %s]", val, enum_show(d, val, &b));
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 /*
@@ -363,7 +363,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			} else {
 				dbg("requested kernel enc ealg_id=%d not present", ealg_i);
 			}
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -372,7 +372,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	/* already checked by the parser? */
 	if (!kernel_alg_integ_ok(algs.integ)) {
 		dbg("kernel_alg_db_add() kernel auth aalg_id=%d not present", aalg_i);
-		return FALSE;
+		return false;
 	}
 
 	if (policy & POLICY_ENCRYPT) {
@@ -422,7 +422,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				   algs.integ->common.id[IKEv1_ESP_ID]);
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -1391,11 +1391,11 @@ bool ikev1_out_sa(pb_stream *outs,
 	}
 	close_output_pbs(&sa_pbs);
 	free_sa(&revised_sadb);
-	return TRUE;
+	return true;
 
 fail:
 	free_sa(&revised_sadb);
-	return FALSE;
+	return false;
 }
 
 /** Handle long form of duration attribute.
@@ -2280,7 +2280,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	}
 
 	if (revised_sadb == NULL)
-		return FALSE;
+		return false;
 
 	passert(revised_sadb->prop_conj_cnt == 1);
 	const struct db_prop_conj *cprop = &revised_sadb->prop_conjs[0];
@@ -2333,7 +2333,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	st->st_oakley = ta;
 
 	free_sa(&revised_sadb);
-	return TRUE;
+	return true;
 }
 
 /**
@@ -2388,7 +2388,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	if (trans->isat_transnum <= previous_transnum) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Transform Numbers in Proposal are not monotonically increasing");
-		return FALSE;
+		return false;
 	}
 
 	switch (trans->isat_tnp) {
@@ -2396,14 +2396,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (is_last) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "Proposal Payload has more Transforms than specified");
-			return FALSE;
+			return false;
 		}
 		break;
 	case ISAKMP_NEXT_NONE:
 		if (!is_last) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "Proposal Payload has fewer Transforms than specified");
-			return FALSE;
+			return false;
 		}
 		break;
 	default:
@@ -2448,7 +2448,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					 &a, sizeof(a), &attr_pbs);
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-			return FALSE;
+			return false;
 		}
 
 		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
@@ -2459,7 +2459,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_LOG_SERIOUS, st,
 					  "repeated SECCTX attribute in IPsec Transform %u",
 					  trans->isat_transnum);
-				return FALSE;
+				return false;
 			}
 			seen_secctx_attr = true;
 			vdesc = NULL;
@@ -2471,7 +2471,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "repeated %s attribute in IPsec Transform %u",
 					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b),
 					  trans->isat_transnum);
-				return FALSE;
+				return false;
 			}
 
 			seen_attrs |= LELEM(ty);
@@ -2487,7 +2487,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
 					  val,
 					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
-				return FALSE;
+				return false;
 			}
 			if (DBGP(DBG_BASE)) {
 				if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) ==
@@ -2508,7 +2508,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_LOG_SERIOUS, st,
 					  "attribute SA_LIFE_TYPE value %s repeated in message",
 					  enum_show(&sa_lifetime_names, val, &b));
-				return FALSE;
+				return false;
 			}
 			seen_durations |= LELEM(val);
 			life_type = val;
@@ -2522,7 +2522,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
-				return FALSE;
+				return false;
 			}
 			seen_attrs &=
 				~(LELEM(SA_LIFE_DURATION) |
@@ -2583,7 +2583,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_LOG_SERIOUS, st,
 					  "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
 					  val);
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -2675,7 +2675,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		{
 			pb_stream *pbs = &attr_pbs;
 			if (!parse_secctx_attr(pbs, st))
-				return FALSE;
+				return false;
 			break;
 		}
 
@@ -2685,7 +2685,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			log_state(RC_LOG_SERIOUS, st,
 				  "unsupported IPsec attribute %s",
 				  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
-			return FALSE;
+			return false;
 		}
 		}
 
@@ -2694,7 +2694,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			log_state(RC_LOG_SERIOUS, st,
 				  "IPsec attribute %s inappropriate for IPCOMP",
 				  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -2710,14 +2710,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			log_state(RC_LOG_SERIOUS, st,
 				  "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
 				  selection ? "the Proposal" : "a previous Transform");
-			return FALSE;
+			return false;
 		}
 	}
 
 	if (LHAS(seen_attrs, SA_LIFE_DURATION)) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "SA_LIFE_TYPE IPsec attribute not followed by SA_LIFE_DURATION attribute in message");
-		return FALSE;
+		return false;
 	}
 
 	if (!LHAS(seen_attrs, ENCAPSULATION_MODE)) {
@@ -2735,7 +2735,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 */
 			log_state(RC_LOG_SERIOUS, st,
 				  "IPsec Transform must specify ENCAPSULATION_MODE");
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -2787,7 +2787,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to emit */

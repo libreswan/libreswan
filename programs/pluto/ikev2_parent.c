@@ -255,7 +255,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	struct id id = c->spd.that.id;
 
 	if (!c->spd.that.key_from_DNS_on_demand)
-		return FALSE;
+		return false;
 
 	if (c->spd.that.authby == AUTHBY_RSASIG &&
 	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
@@ -264,7 +264,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		case IKEv2_AUTH_RESERVED:
 		case IKEv2_AUTH_DIGSIG:
 		case IKEv2_AUTH_RSA:
-			return TRUE; /* success */
+			return true; /* success */
 		default:
 			break;	/*  failure */
 		}
@@ -297,7 +297,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 			str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 			str_id(&id, &thatid));
 	}
-	return FALSE;
+	return false;
 }
 
 /*
@@ -319,7 +319,7 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 	};
 
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
-		return FALSE;
+		return false;
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
@@ -340,11 +340,11 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 		}
 	} else {
 		if (!out_hunk(g, &kepbs, "ikev2 g^x"))
-			return FALSE;
+			return false;
 	}
 
 	close_output_pbs(&kepbs);
-	return TRUE;
+	return true;
 }
 
 bool need_v2_configuration_payload(const struct connection *const cc,

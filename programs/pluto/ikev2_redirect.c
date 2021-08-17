@@ -319,7 +319,7 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 			dbg("address %.*s isn't a valid address", len, t);
 		} else if (sameaddr(dest_ip, &ip_addr)) {
 			dbg("address %.*s is a match to received GW identity", len, t);
-			return TRUE;
+			return true;
 		} else {
 			dbg("address %.*s is not a match to received GW identity", len, t);
 		}

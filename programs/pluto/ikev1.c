@@ -1006,7 +1006,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					log_state(RC_LOG_SERIOUS, st,
 						  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
 						  ipstr(&new_peer, &b));
-					return FALSE; /* XXX: STF_*? */
+					return false; /* XXX: STF_*? */
 				}
 
 				/* Saving connection name and whack sock id */
@@ -3099,7 +3099,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		 * We have turned this into a warning because of bugs in other
 		 * vendors' products. Specifically CISCO VPN3000.
 		 */
-		/* return FALSE; */
+		/* return false; */
 	}
 
 	struct id peer;
@@ -3162,12 +3162,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 				  str_id(&c->spd.that.id, &expect),
 				  str_id(&peer, &found));
-			return FALSE;
+			return false;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer.kind != ID_DER_ASN1_DN) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "peer ID is not a certificate type");
-				return FALSE;
+				return false;
 			}
 			duplicate_id(&c->spd.that.id, &peer);
 		}
@@ -3192,7 +3192,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P521:
 		default:
 			dbg("ikev1 ike_decode_peer_id bad_case due to not supported policy");
-			return FALSE;
+			return false;
 		}
 
 		bool fromcert;
@@ -3212,7 +3212,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			    !same_id(&c->spd.that.id, &peer) &&
 			    c->spd.that.id.kind != ID_FROMCERT) {
 				log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
-				return FALSE;
+				return false;
 			} else {
 				dbg("Peer ID matches and no better connection found - continuing with existing connection");
 				r = c;
@@ -3256,7 +3256,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,

@@ -62,9 +62,9 @@ static bool present(const char* pattern, chunk_t* ch)
 		strneq((char *)ch->ptr, pattern, pattern_len)) {
 		ch->ptr += pattern_len;
 		ch->len -= pattern_len;
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
 /*
@@ -84,13 +84,13 @@ static bool find_boundary(const char *tag, chunk_t *line)
 	chunk_t name = EMPTY_CHUNK;
 
 	if (!present("-----", line))
-		return FALSE;
+		return false;
 
 	if (!present(tag, line))
-		return FALSE;
+		return false;
 
 	if (*line->ptr != ' ')
-		return FALSE;
+		return false;
 
 	line->ptr++;
 	line->len--;
@@ -100,13 +100,13 @@ static bool find_boundary(const char *tag, chunk_t *line)
 	while (line->len > 0) {
 		if (present("-----", line)) {
 			dbg("  -----%s %.*s-----", tag, (int)name.len, name.ptr);
-			return TRUE;
+			return true;
 		}
 		line->ptr++;
 		line->len--;
 		name.len++;
 	}
-	return FALSE;
+	return false;
 }
 
 /*
@@ -131,7 +131,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 	*token = EMPTY_CHUNK;
 
 	if (eot == NULL)	/* termination symbol not found */
-		return FALSE;
+		return false;
 
 	/* extract token */
 	token->ptr = src->ptr;
@@ -141,7 +141,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 	src->ptr = eot + 1;
 	src->len -= (token->len + 1);
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -153,13 +153,13 @@ static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 
 	/* extract name */
 	if (!extract_token(name, ':', line))
-		return FALSE;
+		return false;
 
 	eat_whitespace(line);
 
 	/* extract value */
 	*value = *line;
-	return TRUE;
+	return true;
 }
 
 /*
@@ -168,7 +168,7 @@ static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 static bool fetchline(chunk_t *src, chunk_t *line)
 {
 	if (src->len == 0)	/* end of src reached */
-		return FALSE;
+		return false;
 
 	if (extract_token(line, '\n', src)) {
 		if (line->len > 0 && *(line->ptr + line->len - 1) == '\r')
@@ -179,7 +179,7 @@ static bool fetchline(chunk_t *src, chunk_t *line)
 		src->ptr += src->len;
 		src->len = 0;
 	}
-	return TRUE;
+	return true;
 }
 
 /*

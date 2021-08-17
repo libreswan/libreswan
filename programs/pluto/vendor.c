@@ -931,14 +931,14 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 	if (c->send_vendorid) {
 		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
-			return FALSE;
+			return false;
 		}
 	}
 
 #define MAYBE_VID(q, vid) {  \
 	if (q) {  \
 		if (!out_vid(outs, vid)) {  \
-			return FALSE;  \
+			return false;  \
 		}  \
 	}  \
 }
@@ -959,10 +959,10 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 	 */
 
 	if (!out_vid(outs, VID_MISC_DPD)) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
@@ -978,8 +978,8 @@ bool vid_is_oppo(const char *vid, size_t len)
 
 	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
 		dbg("VID_OPPORTUNISTIC received");
-		return TRUE;
+		return true;
 	} else {
-		return FALSE;
+		return false;
 	}
 }

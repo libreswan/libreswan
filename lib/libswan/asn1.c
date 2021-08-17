@@ -255,9 +255,9 @@ bool is_printablestring(chunk_t str)
 		unsigned u = (unsigned)str.ptr[i] - 0x20u;
 		if (!(u <= 0x7fU - 0x20u &&
 		      (printable_set[u / 8u] & 1u << (u % 8u))))
-			return FALSE;
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
 /*
@@ -269,7 +269,7 @@ bool is_asn1(chunk_t blob)
 
 	if (blob.len < 1) {
 		dbg("  cert blob is empty: not binary ASN.1");
-		return FALSE;
+		return false;
 	}
 
 	switch (blob.ptr[0]) {
@@ -278,16 +278,16 @@ bool is_asn1(chunk_t blob)
 		break;	/* looks OK */
 	default:
 		dbg("  cert blob content is not binary ASN.1");
-		return FALSE;
+		return false;
 	}
 
 	len = asn1_length(&blob);
 	if (len != blob.len) {
 		dbg("  cert blob size (%zu) does not match ASN.1 coded length (%u)",
 		    blob.len, len);
-		return FALSE;
+		return false;
 	}
-	return TRUE;
+	return true;
 }
 
 bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
@@ -295,7 +295,7 @@ bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
 
 	if (blob.len < 1) {
 		dbg("  Signature is empty: not binary ASN.1 DER encoded Signature");
-		return FALSE;
+		return false;
 	}
 
 	switch (blob.ptr[0]) {
@@ -303,9 +303,9 @@ bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
 		break;	/* looks OK */
 	default:
 		dbg("  Signature blob content is not binary ASN.1");
-		return FALSE;
+		return false;
 	}
 
 	asn1_length_signature(&blob , sig_val);
-	return TRUE;
+	return true;
 }

@@ -134,12 +134,12 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 			}
 		} else {
 			if (!out_hunk(sig, a_pbs, "rsa signature"))
-				return FALSE;
+				return false;
 		}
 	}
 
 	statetime_stop(&start, "%s()", __func__);
-	return TRUE;
+	return true;
 }
 
 diag_t v2_authsig_and_log_using_RSA_pubkey(struct ike_sa *ike,

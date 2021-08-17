@@ -43,7 +43,7 @@ static struct lsw_conf_options global_oco;
 static bool lsw_conf_setdefault(void)
 {
 	if (global_oco.rootdir != NULL) {
-		return FALSE;
+		return false;
 	}
 
 	/* copy everything to the heap for consistency. */
@@ -60,7 +60,7 @@ static bool lsw_conf_setdefault(void)
 	global_oco.nssdir = clone_str(IPSEC_NSSDIR, "default nssdir");
 
 	/* see also lsw_conf_calculate() below */
-	return TRUE;
+	return true;
 }
 
 static void subst(char **field, const char *value, const char *name)

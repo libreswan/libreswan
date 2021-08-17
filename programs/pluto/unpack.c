@@ -108,7 +108,7 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 			llog(RC_LOG_SERIOUS, logger,
 				    "peer's ID_USER_FQDN contains no @: %.*s",
 				    (int) left, id_pbs->cur);
-			/* return FALSE; */
+			/* return false; */
 		}
 #endif
 		if (memchr(id_pbs->cur, '\0', left) != NULL) {

@@ -321,7 +321,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			 * will fire again, dropping further packets.
 			 */
 			dbg("netlink_raw_policy: SPI_HOLD implemented as no-op");
-			return TRUE; /* yes really */
+			return true; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
 		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
@@ -330,7 +330,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		case SPI_TRAP:
 			if (sadb_op == KP_ADD_INBOUND ||
 				sadb_op == KP_DELETE_INBOUND)
-				return TRUE;
+				return true;
 
 			break;
 		case SPI_IGNORE:
@@ -458,7 +458,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			break;
 		case KP_ADD_OUTBOUND:
 			/* add nothing == do nothing */
-			return TRUE;
+			return true;
 
 		case KP_DELETE_OUTBOUND:
 			/* delete remains delete */
@@ -508,7 +508,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 		case KP_DELETE_OUTBOUND:
 			/* delete unnecessary: we don't actually have an eroute */
 			eclipse_count--;
-			return TRUE;
+			return true;
 
 		case KP_ADD_OUTBOUND:
 		default:
@@ -621,9 +621,9 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			     str_selector(&mine, &s),
 			     str_selector(&peers, &d),
 			     pfkey_seq, opname);
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 	}
 
 	case KP_DELETE_OUTBOUND:
@@ -677,9 +677,9 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			     str_selector(&mine, &s),
 			     str_selector(&peers, &d),
 			     pfkey_seq, opname);
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 
 		break;
 	}
@@ -688,7 +688,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 	case KP_DELETE_INBOUND:
 		bad_case(op);
 	}
-	return FALSE;
+	return false;
 }
 
 static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
@@ -728,7 +728,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 			    "Key material is too big for kernel interface: %d>%zu",
 			    (sa->enckeylen + sa->authkeylen),
 			    sizeof(keymat));
-		return FALSE;
+		return false;
 	}
 
 	pfkey_seq++;
@@ -792,16 +792,16 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 		llog(RC_LOG, logger,
 			    "ret = %d from add_sa: %s seq=%d", ret,
 			    ipsec_strerror(), pfkey_seq);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED,
 				   struct logger *logger UNUSED)
 {
-	return TRUE;
+	return true;
 }
 
 /* Check if there was traffic on given SA during the last idle_max
@@ -813,7 +813,7 @@ static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
 				    deltatime_t idle_max UNUSED)
 {
 	passert(FALSE);
-	return FALSE;
+	return false;
 }
 
 static bool bsdkame_except_socket(int socketfd, int family, struct logger *logger)
@@ -834,7 +834,7 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 #endif
 	default:
 		llog(RC_LOG, logger, "unsupported address family (%d)", family);
-		return FALSE;
+		return false;
 	}
 
 	zero(&policy);	/* OK: no pointer fields */
@@ -845,15 +845,15 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
 		log_errno(logger, errno, "bsdkame except socket setsockopt");
-		return FALSE;
+		return false;
 	}
 	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
 		log_errno(logger, errno, "bsdkame except socket setsockopt");
-		return FALSE;
+		return false;
 	}
-	return TRUE;
+	return true;
 }
 
 static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED,

@@ -113,7 +113,7 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 		return ike_alg_is_ike(alg);
 	} else {
 		/* no kernel to ask! */
-		return TRUE;
+		return true;
 	}
 }
 

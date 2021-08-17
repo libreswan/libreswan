@@ -172,10 +172,10 @@ bool ike_alg_is_valid(const struct ike_alg *alg)
 {
 	FOR_EACH_IKE_ALGP(alg->algo_type, algp) {
 		if (*algp == alg) {
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 bool ike_alg_is_ike(const struct ike_alg *alg)

@@ -60,9 +60,9 @@ static bool prepare_nss_import(PK11SlotInfo **slot)
 			jam(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
 			jam_nss_error(buf);
 		}
-		return FALSE;
+		return false;
 	}
-	return TRUE;
+	return true;
 }
 
 static bool crl_is_current(CERTSignedCrl *crl)

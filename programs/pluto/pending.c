@@ -398,12 +398,12 @@ bool pending_check_timeout(const struct connection *c)
 				connection_buf cib;
 				dbg("connection "PRI_CONNECTION" stuck, restarting",
 				    pri_connection(c, &cib));
-				return TRUE;
+				return true;
 			}
 		}
 		pp = &p->next;
 	}
-	return FALSE;
+	return false;
 }
 
 /* a IKE SA negotiation has been replaced; update any pending */
@@ -498,11 +498,11 @@ bool connection_is_pending(const struct connection *c)
 
 	pp = host_pair_first_pending(c);
 	if (pp == NULL)
-		return FALSE;
+		return false;
 
 	for (p = *pp; p != NULL; p = p->next)
 		if (p->connection == c)
-			return TRUE; /* in use, so we're done */
+			return true; /* in use, so we're done */
 
-	return FALSE;
+	return false;
 }
