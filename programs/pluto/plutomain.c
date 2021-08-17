@@ -107,7 +107,7 @@ bool in_main_thread(void)
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
-static bool selftest_only = FALSE;
+static bool selftest_only = false;
 
 #ifdef FIPS_CHECK
 # include <fipscheck.h> /* from fipscheck devel */
@@ -120,7 +120,7 @@ static char *coredir;
 static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
-static bool do_dnssec = FALSE;
+static bool do_dnssec = false;
 static char *pluto_dnssec_rootfile = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
@@ -586,7 +586,7 @@ static void usage(FILE *stream)
 	for (opt = long_opts; opt->name != NULL; opt++) {
 		const char *nm = opt->name;
 		const char *meta = nm + strlen(nm) + 1;
-		bool force_nl = FALSE;
+		bool force_nl = false;
 		char chunk[sizeof(line) - 1];
 		int cw;
 
@@ -597,7 +597,7 @@ static void usage(FILE *stream)
 			/* ignore these entries */
 			break;
 		case '^':
-			force_nl = TRUE;
+			force_nl = true;
 			meta++;	/* eat ^ */
 			/* FALL THROUGH */
 		default:
@@ -666,7 +666,7 @@ int main(int argc, char **argv)
 	 */
 	for (int i = 1; i < argc; ++i) {
 		if (streq(argv[i], "--leak-detective"))
-			leak_detective = TRUE;
+			leak_detective = true;
 #ifdef USE_EFENCE
 		else if (streq(argv[i], "--efence-protect")) {
 			EF_PROTECT_BELOW = 1;
@@ -692,8 +692,8 @@ int main(int argc, char **argv)
 	 * actually do logging according to the methods desired, we set the
 	 * variables for those methods
 	 */
-	bool log_to_stderr_desired = FALSE;
-	bool log_to_file_desired = FALSE;
+	bool log_to_stderr_desired = false;
+	bool log_to_file_desired = false;
 
 	/*
 	 * Start with the program name logger.
@@ -843,16 +843,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case '0':	/* --nofork*/
-			fork_desired = FALSE;
+			fork_desired = false;
 			continue;
 
 		case 'e':	/* --stderrlog */
-			log_to_stderr_desired = TRUE;
+			log_to_stderr_desired = true;
 			continue;
 
 		case 'g':	/* --logfile */
 			pluto_log_file = clone_str(optarg, "pluto_log_file");
-			log_to_file_desired = TRUE;
+			log_to_file_desired = true;
 			continue;
 #ifdef USE_DNSSEC
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
@@ -869,23 +869,23 @@ int main(int argc, char **argv)
 #endif  /* USE_DNSSEC */
 
 		case 't':	/* --log-no-time */
-			log_param.log_with_timestamp = FALSE;
+			log_param.log_with_timestamp = false;
 			continue;
 
 		case '7':	/* --log-no-append */
-			log_append = FALSE;
+			log_append = false;
 			continue;
 
 		case '<':	/* --log-no-ip */
-			log_ip = FALSE;
+			log_ip = false;
 			continue;
 
 		case 'a':	/* --log-no-audit */
-			log_to_audit = FALSE;
+			log_to_audit = false;
 			continue;
 
 		case '8':	/* --drop-oppo-null */
-			pluto_drop_oppo_null = TRUE;
+			pluto_drop_oppo_null = true;
 			continue;
 
 		case '9':	/* --expire-shunt-interval <interval> */
@@ -965,7 +965,7 @@ int main(int argc, char **argv)
 		}
 
 		case 'r':	/* --crl-strict */
-			crl_strict = TRUE;
+			crl_strict = true;
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
@@ -978,11 +978,11 @@ int main(int argc, char **argv)
 		}
 
 		case 'o':
-			ocsp_strict = TRUE;
+			ocsp_strict = true;
 			continue;
 
 		case 'O':
-			ocsp_enable = TRUE;
+			ocsp_enable = true;
 			continue;
 
 		case 'Y':
@@ -1033,7 +1033,7 @@ int main(int argc, char **argv)
 		case 'B':	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
 				ocsp_method = OCSP_METHOD_POST;
-				ocsp_post = TRUE;
+				ocsp_post = true;
 			} else {
 				if (streq(optarg, "get")) {
 					ocsp_method = OCSP_METHOD_GET;
@@ -1044,11 +1044,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'u':	/* --uniqueids */
-			uniqueIDs = TRUE;
+			uniqueIDs = true;
 			continue;
 
 		case 'R':	/* --no-dnssec */
-			do_dnssec = FALSE;
+			do_dnssec = false;
 			continue;
 
 		case 'i':	/* --interface <ifname|ifaddr> */
@@ -1058,7 +1058,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case '1':	/* --ike-socket-no-errqueue */
-			pluto_sock_errqueue = FALSE;
+			pluto_sock_errqueue = false;
 			continue;
 
 		case 'W':	/* --ike-socket-bufsize <bufsize> */
@@ -1073,11 +1073,11 @@ int main(int argc, char **argv)
 		}
 
 		case 'p':	/* --no-listen-udp */
-			pluto_listen_udp = FALSE;
+			pluto_listen_udp = false;
 			continue;
 
 		case 'm':	/* --listen-tcp */
-			pluto_listen_tcp = TRUE;
+			pluto_listen_tcp = true;
 			continue;
 
 		case 'b':	/* --rundir <path> */
@@ -1155,10 +1155,10 @@ int main(int argc, char **argv)
 		}
 
 		case '5':	/* --selftest */
-			selftest_only = TRUE;
-			log_to_stderr_desired = TRUE;
-			log_param.log_with_timestamp = FALSE;
-			fork_desired = FALSE;
+			selftest_only = true;
+			log_to_stderr_desired = true;
+			log_param.log_with_timestamp = false;
+			fork_desired = false;
 			continue;
 
 		case '6':	/* --virtual-private */
@@ -1185,7 +1185,7 @@ int main(int argc, char **argv)
 #endif
 
 			if (pluto_log_file != NULL)
-				log_to_syslog = FALSE;
+				log_to_syslog = false;
 			/* plutofork= no longer supported via config file */
 			log_param.log_with_timestamp = cfg->setup.options[KBF_LOGTIME];
 			log_append = cfg->setup.options[KBF_LOGAPPEND];
@@ -1248,7 +1248,7 @@ int main(int argc, char **argv)
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
 #else
-			do_dnssec = FALSE;
+			do_dnssec = false;
 #endif
 			/*
 			 * We don't check interfaces= here because that part
@@ -1448,9 +1448,9 @@ int main(int argc, char **argv)
 	/* select between logging methods */
 
 	if (log_to_stderr_desired || log_to_file_desired)
-		log_to_syslog = FALSE;
+		log_to_syslog = false;
 	if (!log_to_stderr_desired)
-		log_to_stderr = FALSE;
+		log_to_stderr = false;
 
 	/*
 	 * create control socket.

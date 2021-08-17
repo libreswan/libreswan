@@ -1823,7 +1823,7 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 static void DBG_print_struct(const char *label, const void *struct_ptr,
 		      struct_desc *sd, bool len_meaningful)
 {
-	bool immediate = FALSE;
+	bool immediate = false;
 	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
 	uintmax_t last_enum = 0;
@@ -2442,7 +2442,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 	}
 
 
-	bool immediate = FALSE;
+	bool immediate = false;
 
 	/* new child stream for portion of payload after this struct */
 	struct pbs_out obj = {

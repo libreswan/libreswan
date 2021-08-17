@@ -461,7 +461,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	 *      if NULL proposals, propose everything ...
 	 */
 
-	bool success = TRUE;
+	bool success = true;
 	if (proposals.p != NULL) {
 		FOR_EACH_PROPOSAL(proposals.p, proposal) {
 			LSWDBGP(DBG_BASE, buf) {
@@ -469,7 +469,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				jam_proposal(buf, proposal);
 			}
 			if (!kernel_alg_db_add(ctx_new, proposal, policy, logit, logger))
-				success = FALSE;	/* ??? should we break? */
+				success = false;	/* ??? should we break? */
 		}
 	} else {
 		pexpect_fail(logger, HERE, "%s", "proposals should be non-NULL");
@@ -516,7 +516,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 		/* make copy, to keep from freeing the static policies */
 		const struct db_sa *db = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
 		struct db_sa *sadb = sa_copy_sa(db, HERE);
-		sadb->parentSA = FALSE;
+		sadb->parentSA = false;
 		return sadb;
 	}
 
@@ -541,7 +541,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 
 	/* make a fresh copy */
 	struct db_sa *n = sa_copy_sa(&t, HERE);
-	n->parentSA = FALSE;
+	n->parentSA = false;
 
 	db_destroy(dbnew);
 
@@ -628,7 +628,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 	/* Next two are for multiple proposals in aggressive mode... */
 	unsigned last_modp = 0;
-	bool warned_dropped_dhgr = FALSE;
+	bool warned_dropped_dhgr = false;
 
 	int transcnt = 0;
 
@@ -784,7 +784,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				free_sa(&gsp);
 			}
 
-			warned_dropped_dhgr = TRUE;
+			warned_dropped_dhgr = true;
 		}
 
 		 if (emp_sp != NULL) {
@@ -872,7 +872,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	}
 
 	if (gsp != NULL)
-		gsp->parentSA = TRUE;
+		gsp->parentSA = true;
 
 	dbg("oakley_alg_makedb() returning %p", gsp);
 	return gsp;
@@ -1012,7 +1012,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 	bool ah_spi_generated = FALSE,
 	     esp_spi_generated = FALSE,
-	     ipcomp_cpi_generated = FALSE;
+	     ipcomp_cpi_generated = false;
 
 	for (unsigned pcn = 0; pcn < sadb->prop_conj_cnt; pcn++) {
 		const struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
@@ -1140,7 +1140,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						if (st->st_ipcomp.our_spi == 0)
 							goto fail; /* problem generating CPI */
 
-						ipcomp_cpi_generated = TRUE;
+						ipcomp_cpi_generated = true;
 					}
 					/*
 					 * CPI is stored in network low order end of an
@@ -1165,7 +1165,7 @@ bool ikev1_out_sa(pb_stream *outs,
 									 &c->spd,
 									 tunnel_mode,
 									 st->st_logger);
-						*spi_generated = TRUE;
+						*spi_generated = true;
 					}
 					if (!out_raw((uint8_t *)spi_ptr,
 						     IPSEC_DOI_SPI_SIZE,
@@ -1617,7 +1617,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	diag_t d;
 	const struct connection *const c = st->st_connection;
 	bool xauth_init = FALSE,
-		xauth_resp = FALSE;
+		xauth_resp = false;
 	const char *const role = selection ? "initiator" : "responder";
 	const chunk_t *pss = &empty_chunk;
 
@@ -1896,7 +1896,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						    role);
 						break;
 					}
-					ta.doing_xauth = TRUE;
+					ta.doing_xauth = true;
 					goto psk_common;
 
 				case XAUTHRespPreShared:
@@ -1905,7 +1905,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 						    role);
 						break;
 					}
-					ta.doing_xauth = TRUE;
+					ta.doing_xauth = true;
 					goto psk_common;
 
 				case OAKLEY_PRESHARED_KEY:
@@ -1949,7 +1949,7 @@ psk_common:
 						    role);
 						break;
 					}
-					ta.doing_xauth = TRUE;
+					ta.doing_xauth = true;
 					goto rsasig_common;
 
 				case XAUTHRespRSA:
@@ -1958,7 +1958,7 @@ psk_common:
 						    role);
 						break;
 					}
-					ta.doing_xauth = TRUE;
+					ta.doing_xauth = true;
 					goto rsasig_common;
 
 				case OAKLEY_RSA_SIG:
@@ -2375,7 +2375,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 {
 	lset_t seen_attrs = LEMPTY,
 	       seen_durations = LEMPTY;
-	bool seen_secctx_attr = FALSE;
+	bool seen_secctx_attr = false;
 	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct dh_desc *pfs_group = NULL;
 
@@ -2461,7 +2461,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  trans->isat_transnum);
 				return FALSE;
 			}
-			seen_secctx_attr = TRUE;
+			seen_secctx_attr = true;
 			vdesc = NULL;
 		} else {
 			passert(ty < LELEM_ROOF);
@@ -2502,7 +2502,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		switch (a.isaat_af_type) {
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
-			ipcomp_inappropriate = FALSE;
+			ipcomp_inappropriate = false;
 			if (LHAS(seen_durations, val)) {
 				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
@@ -2518,7 +2518,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			val = decode_long_duration(&attr_pbs);
 			/* FALL THROUGH */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
-			ipcomp_inappropriate = FALSE;
+			ipcomp_inappropriate = false;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
@@ -2574,7 +2574,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				/* Accept reluctantly.  Should not happen, according to
 				 * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 				 */
-				ipcomp_inappropriate = FALSE;
+				ipcomp_inappropriate = false;
 				log_state(RC_COMMENT, st,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
@@ -2588,7 +2588,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
-			ipcomp_inappropriate = FALSE;
+			ipcomp_inappropriate = false;
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
@@ -2861,7 +2861,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 	struct isakmp_proposal next_proposal;
 	ipsec_spi_t next_spi;
 
-	bool next_full = TRUE;
+	bool next_full = true;
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
@@ -2926,9 +2926,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		bool
 			ah_seen = FALSE,
 			esp_seen = FALSE,
-			ipcomp_seen = FALSE;
+			ipcomp_seen = false;
 		const ip_protocol *inner_proto = NULL;
-		bool tunnel_mode = FALSE;
+		bool tunnel_mode = false;
 		uint16_t well_known_cpi = 0;
 
 		pb_stream
@@ -3070,7 +3070,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						  "IPsec SA contains two simultaneous AH Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
-				ah_seen = TRUE;
+				ah_seen = true;
 				ah_prop_pbs = next_proposal_pbs;
 				ah_proposal = next_proposal;
 				ah_spi = next_spi;
@@ -3082,7 +3082,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						  "IPsec SA contains two simultaneous ESP Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
-				esp_seen = TRUE;
+				esp_seen = true;
 				esp_prop_pbs = next_proposal_pbs;
 				esp_proposal = next_proposal;
 				esp_spi = next_spi;
@@ -3094,7 +3094,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						  "IPsec SA contains two simultaneous IPCOMP Proposals");
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
-				ipcomp_seen = TRUE;
+				ipcomp_seen = true;
 				ipcomp_prop_pbs = next_proposal_pbs;
 				ipcomp_proposal = next_proposal;
 				ipcomp_cpi = next_spi;
@@ -3113,7 +3113,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* refill next_proposal */
 			if (next_proposal.isap_pnp == ISAKMP_NEXT_NONE) {
-				next_full = FALSE;
+				next_full = false;
 				break;
 			} else if (next_proposal.isap_pnp != ISAKMP_NEXT_P) {
 				esb_buf b;
@@ -3207,7 +3207,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			ah_attrs.spi = ah_spi;
 			inner_proto = &ip_protocol_ah;
 			if (ah_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = TRUE;
+				tunnel_mode = true;
 		}
 
 		if (esp_seen) {
@@ -3269,7 +3269,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			esp_attrs.spi = esp_spi;
 			inner_proto = &ip_protocol_esp;
 			if (esp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = TRUE;
+				tunnel_mode = true;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
 			address_buf b;
@@ -3371,7 +3371,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			ipcomp_attrs.spi = ipcomp_cpi;
 			inner_proto = &ip_protocol_comp;
 			if (ipcomp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = TRUE;
+				tunnel_mode = true;
 		}
 
 		/* Eureka: we liked what we saw -- accept it. */

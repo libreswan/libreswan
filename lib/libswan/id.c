@@ -383,10 +383,10 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 
 	if (b->kind == ID_NONE) {
 		*wildcards = MAX_WILDCARDS;
-		match = TRUE;
+		match = true;
 	} else if (a->kind != b->kind) {
 		/* should this allow SAN match of cert with right ID_DER_ASN1_DN? */
-		match = FALSE;
+		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
 		match = match_dn_any_order_wild(a->name, b->name, wildcards);
 	} else {
@@ -459,7 +459,7 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 					if (has_wild != NULL &&
 					    val_b->len == 1 &&
 					    val_b->data[0] == '*') {
-						*has_wild = TRUE;
+						*has_wild = true;
 						matched++;
 						SECITEM_FreeItem(val_b, PR_TRUE);
 						break;
@@ -523,7 +523,7 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 		CERTRDN *const *rdns_a;
 		for (rdns_a = a_name->rdns; *rdns_a != NULL; rdns_a++) {
 			CERTRDN *const rdn_a = *rdns_a;
-			bool has_wild = FALSE;
+			bool has_wild = false;
 
 			if (match_rdn(rdn_a, rdn_b,
 				      wildcards != NULL ? &has_wild : NULL)) {

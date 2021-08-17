@@ -296,7 +296,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = TRUE;
+		st->hidden_variables.st_got_certrequest = true;
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
@@ -324,7 +324,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 					   c->send_ca == CA_SEND_ALL);
 
 		if (chain_len == 0)
-			send_authcerts = FALSE;
+			send_authcerts = false;
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
@@ -622,7 +622,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	ikev1_decode_cr(md, st->st_logger);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = TRUE;
+		st->hidden_variables.st_got_certrequest = true;
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
@@ -650,7 +650,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 					   c->send_ca == CA_SEND_ALL);
 
 		if (chain_len == 0)
-			send_authcerts = FALSE;
+			send_authcerts = false;
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
@@ -775,26 +775,26 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
-		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.doing_xauth = FALSE;
+		st->hidden_variables.st_xauth_client_done = true;
+		st->st_oakley.doing_xauth = false;
 
 		if (c->spd.this.modecfg_client) {
 			dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
-			st->hidden_variables.st_modecfg_vars_set = TRUE;
-			st->hidden_variables.st_modecfg_started = TRUE;
+			st->hidden_variables.st_modecfg_vars_set = true;
+			st->hidden_variables.st_modecfg_started = true;
 		}
 	}
 
 	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.xauth_client &&
 	    c->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
-		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.doing_xauth = FALSE;
+		st->hidden_variables.st_xauth_client_done = true;
+		st->st_oakley.doing_xauth = false;
 
 		if (c->spd.this.modecfg_client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
-			st->hidden_variables.st_modecfg_vars_set = TRUE;
-			st->hidden_variables.st_modecfg_started = TRUE;
+			st->hidden_variables.st_modecfg_vars_set = true;
+			st->hidden_variables.st_modecfg_started = true;
 		}
 	}
 
@@ -901,13 +901,13 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
-		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.doing_xauth = FALSE;
+		st->hidden_variables.st_xauth_client_done = true;
+		st->st_oakley.doing_xauth = false;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			dbg("skipping ModeCFG for rekey for Cisco Peer compatibility.");
-			st->hidden_variables.st_modecfg_vars_set = TRUE;
-			st->hidden_variables.st_modecfg_started = TRUE;
+			st->hidden_variables.st_modecfg_vars_set = true;
+			st->hidden_variables.st_modecfg_started = true;
 		}
 	}
 
@@ -915,13 +915,13 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	    st->st_connection->spd.this.xauth_client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
-		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.doing_xauth = FALSE;
+		st->hidden_variables.st_xauth_client_done = true;
+		st->st_oakley.doing_xauth = false;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
-			st->hidden_variables.st_modecfg_vars_set = TRUE;
-			st->hidden_variables.st_modecfg_started = TRUE;
+			st->hidden_variables.st_modecfg_vars_set = true;
+			st->hidden_variables.st_modecfg_started = true;
 		}
 	}
 

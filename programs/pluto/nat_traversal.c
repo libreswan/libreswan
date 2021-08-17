@@ -44,10 +44,10 @@
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20
 
-bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
+bool nat_traversal_enabled = true; /* can get disabled if kernel lacks support */
 
 static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);	/* keep-alive period */
-static bool nat_kap_event = FALSE;
+static bool nat_kap_event = false;
 
 void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger)
 {
@@ -164,7 +164,7 @@ void nat_traversal_new_ka_event(void)
 		return;	/* Event already schedule */
 
 	schedule_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_kap);
-	nat_kap_event = TRUE;
+	nat_kap_event = true;
 }
 
 static void nat_traversal_send_ka(struct state *st)
@@ -295,7 +295,7 @@ void nat_traversal_ka_event(struct logger *unused_logger UNUSED)
 {
 	unsigned int nat_kap_st = 0;
 
-	nat_kap_event = FALSE;  /* ready to be reschedule */
+	nat_kap_event = false;  /* ready to be reschedule */
 
 	for_each_state(nat_traversal_ka_event_state, &nat_kap_st, __func__);
 

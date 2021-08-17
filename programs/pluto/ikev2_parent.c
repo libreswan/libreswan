@@ -212,7 +212,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	 */
 	change_state(&ike->sa, new_state);
 	c->newest_ike_sa = ike->sa.st_serialno;
-	ike->sa.st_viable_parent = TRUE;
+	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 }
 

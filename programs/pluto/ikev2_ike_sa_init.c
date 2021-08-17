@@ -964,7 +964,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	struct connection *c = ike->sa.st_connection;
-	bool send_certreq = FALSE;
+	bool send_certreq = false;
 
 	/* note that we don't update the state here yet */
 

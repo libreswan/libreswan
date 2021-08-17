@@ -1704,13 +1704,13 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
 				case IKEv2_ESN_ENABLED:
-					ta.esn_enabled = TRUE;
+					ta.esn_enabled = true;
 					break;
 				case IKEv2_ESN_DISABLED:
-					ta.esn_enabled = FALSE;
+					ta.esn_enabled = false;
 					break;
 				default:
-					ta.esn_enabled = FALSE;
+					ta.esn_enabled = false;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ESN %d",
 						     transform->id);
@@ -1752,7 +1752,7 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	}
 
 	proto_info->attrs.transattrs = ta;
-	proto_info->present = TRUE;
+	proto_info->present = true;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
 

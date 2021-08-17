@@ -232,7 +232,7 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 * address and not the global address
 		 */
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
-		has_dst = TRUE;
+		has_dst = true;
 	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
@@ -266,7 +266,7 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		}
 
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
-		has_dst = TRUE;
+		has_dst = true;
 		if (seeking_src && seeking_gateway) {
 			/*
 			 * If we have only peer IP and no gateway/src we must
@@ -402,7 +402,7 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 
 			if (err == NULL) {
 				host->addrtype = KH_IPADDR;
-				seeking_src = FALSE;
+				seeking_src = false;
 				if (verbose_rc_flags) {
 					llog(verbose_rc_flags, logger,
 					     "set addr: %s\n", r_source.buf);
@@ -435,7 +435,7 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				} else {
 					/* Note: Use first even if multiple */
 					host->nexttype = KH_IPADDR;
-					seeking_gateway = FALSE;
+					seeking_gateway = false;
 					if (verbose_rc_flags) {
 						llog(verbose_rc_flags, logger,
 						     "set nexthop: %s", r_gateway.buf);

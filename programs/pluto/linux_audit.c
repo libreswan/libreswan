@@ -84,7 +84,7 @@ void linux_audit_init(int do_audit, struct logger *logger)
 			llog(RC_LOG_SERIOUS, logger,
 				    "Warning: kernel has no audit support");
 			close(audit_fd);
-			log_to_audit = FALSE;
+			log_to_audit = false;
 			return;
 		} else {
 			fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
@@ -92,7 +92,7 @@ void linux_audit_init(int do_audit, struct logger *logger)
 		}
 	} else {
 		if (do_audit)
-			log_to_audit = TRUE;
+			log_to_audit = true;
 	}
 	close(audit_fd);
 	if (do_audit)

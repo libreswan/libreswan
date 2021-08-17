@@ -65,7 +65,7 @@
 #include "ikev2_delete.h"	/* for record_v2_delete() */
 #include "orient.h"
 
-bool uniqueIDs = FALSE;
+bool uniqueIDs = false;
 
 /*
  * default global NFLOG group - 0 means no logging
@@ -1764,7 +1764,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	const struct connection *p1c = p1st->st_connection;
 	struct state *bogusst = NULL;
 
-	*bogus = FALSE;
+	*bogus = false;
 	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct state *st;
 	FOR_EACH_STATE_NEW2OLD(st) {
@@ -1779,12 +1779,12 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 
 			if (pr->present) {
 				if (pr->attrs.spi == spi) {
-					*bogus = FALSE;
+					*bogus = false;
 					return st;
 				}
 
 				if (pr->our_spi == spi) {
-					*bogus = TRUE;
+					*bogus = true;
 					bogusst = st;
 					/* don't return! */
 				}

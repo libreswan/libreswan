@@ -298,7 +298,7 @@ static void init_netlink(struct logger *logger)
 	 * IPIP=10 which conflicts with the aboe, that might be the
 	 * source of the problem?
 	 */
-	can_do_IPcomp = TRUE;
+	can_do_IPcomp = true;
 
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
@@ -2352,8 +2352,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		bool after = FALSE;	/* has vfp passed ifp on the list? */
-		bool bad = FALSE;
+		bool after = false;	/* has vfp passed ifp on the list? */
+		bool bad = false;
 		struct raw_iface *vfp;
 
 		/* ignore if virtual (ipsec*) interface */
@@ -2396,7 +2396,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 					/* XXX: isn't this always true? */
 					if (kernel_ops->type == USE_XFRM) {
 						if (after) {
-							bad = TRUE;
+							bad = true;
 							break;
 						}
 						continue;
@@ -2409,7 +2409,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 							    ifp->name, vfp->name,
 							    ipstr(&ifp->addr, &b));
 					}
-					bad = TRUE;
+					bad = true;
 				}
 			}
 		}

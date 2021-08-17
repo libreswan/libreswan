@@ -223,7 +223,7 @@ static const char *name = NULL;
 
 static const char *remote_host = NULL;
 
-static bool auth_specified = FALSE;
+static bool auth_specified = false;
 
 /*
  * Print a string as a diagnostic, then exit whack unhappily
@@ -982,9 +982,9 @@ int main(int argc, char **argv)
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;
 	int xauthpasslen = 0;
-	bool gotusername = FALSE, gotxauthpass = FALSE;
+	bool gotusername = FALSE, gotxauthpass = false;
 	const char *ugh;
-	bool ignore_errors = FALSE;
+	bool ignore_errors = false;
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
@@ -1012,11 +1012,11 @@ int main(int argc, char **argv)
 	msg.pfsgroup = NULL;
 
 	msg.remotepeertype = NON_CISCO;
-	msg.nat_keepalive = TRUE;
+	msg.nat_keepalive = true;
 
 	/* Network Manager support */
 #ifdef HAVE_NM
-	msg.nmconfigured = FALSE;
+	msg.nmconfigured = false;
 #endif
 
 	msg.xauthby = XAUTHBY_FILE;
@@ -1126,7 +1126,7 @@ int main(int argc, char **argv)
 			 * DBGOPT_* options are treated separately to reduce
 			 * potential members of opts1_seen.
 			 */
-			msg.whack_options = TRUE;
+			msg.whack_options = true;
 		} else if (END_FIRST <= c && c <= END_LAST) {
 			/*
 			 * END_* options are added to end_seen.
@@ -1245,7 +1245,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
-			msg.whack_key = TRUE;
+			msg.whack_key = true;
 			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
@@ -1254,17 +1254,17 @@ int main(int argc, char **argv)
 				diag("Ignoring extremely unwise IKE buffer size choice");
 			} else {
 				msg.ike_buf_size = opt_whole;
-				msg.whack_listen = TRUE;
+				msg.whack_listen = true;
 			}
 			continue;
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
-			msg.ike_sock_err_toggle = TRUE;
-			msg.whack_listen = TRUE;
+			msg.ike_sock_err_toggle = true;
+			msg.whack_listen = true;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
-			msg.whack_addkey = TRUE;
+			msg.whack_addkey = true;
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
@@ -1321,39 +1321,39 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ROUTE:	/* --route */
-			msg.whack_route = TRUE;
+			msg.whack_route = true;
 			continue;
 
 		case OPT_UNROUTE:	/* --unroute */
-			msg.whack_unroute = TRUE;
+			msg.whack_unroute = true;
 			continue;
 
 		case OPT_INITIATE:	/* --initiate */
-			msg.whack_initiate = TRUE;
+			msg.whack_initiate = true;
 			continue;
 
 		case OPT_TERMINATE:	/* --terminate */
-			msg.whack_terminate = TRUE;
+			msg.whack_terminate = true;
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
-			msg.whack_rekey_ike = TRUE;
+			msg.whack_rekey_ike = true;
 			continue;
 
 		case OPT_REKEY_IPSEC: /* --rekey-ipsec */
-			msg.whack_rekey_ipsec = TRUE;
+			msg.whack_rekey_ipsec = true;
 			continue;
 
 		case OPT_DELETE:	/* --delete */
-			msg.whack_delete = TRUE;
+			msg.whack_delete = true;
 			continue;
 
 		case OPT_DELETEID: /* --deleteid --name <id> */
-			msg.whack_deleteid = TRUE;
+			msg.whack_deleteid = true;
 			continue;
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
-			msg.whack_deletestate = TRUE;
+			msg.whack_deletestate = true;
 			msg.whack_deletestateno = opt_whole;
 			continue;
 
@@ -1368,7 +1368,7 @@ int main(int argc, char **argv)
 
 		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
-			msg.whack_deleteuser = TRUE;
+			msg.whack_deleteuser = true;
 			continue;
 
 		case OPT_ACTIVE_REDIRECT:	/* --redirect-to */
@@ -1408,15 +1408,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DDNS:	/* --ddns */
-			msg.whack_ddns = TRUE;
+			msg.whack_ddns = true;
 			continue;
 
 		case OPT_LISTEN:	/* --listen */
-			msg.whack_listen = TRUE;
+			msg.whack_listen = true;
 			continue;
 
 		case OPT_UNLISTEN:	/* --unlisten */
-			msg.whack_unlisten = TRUE;
+			msg.whack_unlisten = true;
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
@@ -1431,46 +1431,46 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
-			msg.whack_purgeocsp = TRUE;
+			msg.whack_purgeocsp = true;
 			continue;
 
 		case OPT_STATUS:	/* --status */
-			msg.whack_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_GLOBAL_STATUS:	/* --global-status */
-			msg.whack_global_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_global_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_CLEAR_STATS:	/* --clearstats */
-			msg.whack_clear_stats = TRUE;
+			msg.whack_clear_stats = true;
 			continue;
 
 		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
-			msg.whack_traffic_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_traffic_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
-			msg.whack_shunt_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_shunt_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_ADDRESSPOOL_STATUS:	/* --addresspoolstatus */
-			msg.whack_addresspool_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_addresspool_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_FIPS_STATUS:	/* --fipsstatus */
-			msg.whack_fips_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_fips_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_BRIEF_STATUS:	/* --briefstatus */
-			msg.whack_brief_status = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_brief_status = true;
+			ignore_errors = true;
 			continue;
 
 		case OPT_PROCESS_STATUS:	/* --processstatus */
@@ -1479,21 +1479,21 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SHOW_STATES:	/* --showstates */
-			msg.whack_show_states = TRUE;
-			ignore_errors = TRUE;
+			msg.whack_show_states = true;
+			ignore_errors = true;
 			continue;
 #ifdef HAVE_SECCOMP
 		case OPT_SECCOMP_CRASHTEST:	/* --seccomp-crashtest */
-			msg.whack_seccomp_crashtest = TRUE;
+			msg.whack_seccomp_crashtest = true;
 			continue;
 #endif
 
 		case OPT_SHUTDOWN:	/* --shutdown */
-			msg.whack_shutdown = TRUE;
+			msg.whack_shutdown = true;
 			continue;
 
 		case OPT_SHUTDOWN_DIRTY:	/* --leave-state */
-			msg.whack_leave_state = TRUE;
+			msg.whack_leave_state = true;
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
@@ -1533,7 +1533,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
-			msg.whack_async = TRUE;
+			msg.whack_async = true;
 			continue;
 
 		/* List options */
@@ -1548,7 +1548,7 @@ int main(int argc, char **argv)
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */
 			msg.whack_list |= LELEM(c - LST_PUBKEYS);
-			ignore_errors = TRUE;
+			ignore_errors = true;
 			continue;
 
 		case LST_PUBKEYS:	/* --listpubkeys */
@@ -1564,7 +1564,7 @@ int main(int argc, char **argv)
 		case LST_ALL:	/* --listall */
 			msg.whack_list = LIST_ALL;
 			msg.whack_listpubkeys = true;
-			ignore_errors = TRUE;
+			ignore_errors = true;
 			continue;
 
 		/* Connection Description options */
@@ -1625,7 +1625,7 @@ int main(int argc, char **argv)
 					tunnel_af_used_by = optarg;
 					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->subnet.all);
 				}
-				msg.right.has_client = TRUE;
+				msg.right.has_client = true;
 			}
 			if (new_policy & POLICY_GROUP) {
 				/*
@@ -1638,7 +1638,7 @@ int main(int argc, char **argv)
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
-				msg.right.key_from_DNS_on_demand = TRUE;
+				msg.right.key_from_DNS_on_demand = true;
 			continue;
 		}
 
@@ -1714,7 +1714,7 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTHBY:
-			auth_specified = TRUE;
+			auth_specified = true;
 			if (streq(optarg, "psk"))
 				msg.right.authby = AUTHBY_PSK;
 			else if (streq(optarg, "null"))
@@ -1738,7 +1738,7 @@ int main(int argc, char **argv)
 						'6', &msg.right.client,
 						logger),
 					optarg);
-				msg.right.has_client = TRUE;
+				msg.right.has_client = true;
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
 			continue;
@@ -1750,7 +1750,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
-			msg.right.key_from_DNS_on_demand = TRUE;
+			msg.right.key_from_DNS_on_demand = true;
 			continue;
 
 		case END_UPDOWN:	/* --updown <updown> */
@@ -1783,7 +1783,7 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
-			auth_specified = TRUE;
+			auth_specified = true;
 			/* FALL THROUGH */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
@@ -1942,7 +1942,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
-			msg.nat_keepalive = FALSE;
+			msg.nat_keepalive = false;
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
@@ -1959,15 +1959,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */
-			msg.initial_contact = TRUE;
+			msg.initial_contact = true;
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = TRUE;
+			msg.cisco_unity = true;
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan */
-			msg.fake_strongswan = TRUE;
+			msg.fake_strongswan = true;
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay */
@@ -2059,7 +2059,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_NM
 		case CD_NMCONFIGURED:	/* --nm-configured */
-			msg.nmconfigured = TRUE;
+			msg.nmconfigured = true;
 			continue;
 #endif
 
@@ -2084,7 +2084,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.policy |= POLICY_RSASIG;
 			msg.policy |= POLICY_RSASIG_v1_5;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
@@ -2092,51 +2092,51 @@ int main(int argc, char **argv)
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA1: /* --rsa-sha1 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.policy |= POLICY_RSASIG_v1_5;
 			continue;
 		case ALGO_RSA_SHA2: /* --rsa-sha2 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.policy |= POLICY_RSASIG;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA2_256:	/* --rsa-sha2_256 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_384:	/* --rsa-sha2_384 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_512:	/* --rsa-sha2_512 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 
 		case ALGO_ECDSA: /* --ecdsa and --ecdsa-sha2 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.policy |= POLICY_ECDSA;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
-			auth_specified = TRUE;
+			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			msg.policy |= POLICY_ECDSA;
 			continue;
@@ -2220,11 +2220,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver */
-			msg.right.xauth_server = TRUE;
+			msg.right.xauth_server = true;
 			continue;
 
 		case END_XAUTHCLIENT:	/* --xauthclient */
-			msg.right.xauth_client = TRUE;
+			msg.right.xauth_client = true;
 			continue;
 
 		case OPT_USERNAME:	/* --username, was --xauthname */
@@ -2234,7 +2234,7 @@ int main(int argc, char **argv)
 			 * both actions
 			 */
 			msg.right.xauth_username = optarg;
-			gotusername = TRUE;
+			gotusername = true;
 			/* ??? why does this length include NUL? */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername),
 					optarg) -
@@ -2242,7 +2242,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_XAUTHPASS:	/* --xauthpass */
-			gotxauthpass = TRUE;
+			gotxauthpass = true;
 			/* ??? why does this length include NUL? */
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
 					optarg) -
@@ -2250,11 +2250,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			msg.right.modecfg_client = TRUE;
+			msg.right.modecfg_client = true;
 			continue;
 
 		case END_MODECFGSERVER:	/* --modeconfigserver */
-			msg.right.modecfg_server = TRUE;
+			msg.right.modecfg_server = true;
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
@@ -2289,10 +2289,10 @@ int main(int argc, char **argv)
 					optarg);
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing */
-			msg.vti_routing = TRUE;
+			msg.vti_routing = true;
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared */
-			msg.vti_shared = TRUE;
+			msg.vti_shared = true;
 			continue;
 
 		case CD_IPSEC_IFACE:      /* --ipsec-interface */
@@ -2347,7 +2347,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
-			msg.send_no_esp_tfc = TRUE;
+			msg.send_no_esp_tfc = true;
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
@@ -2524,7 +2524,7 @@ int main(int argc, char **argv)
 		diag("--oppohere and --oppothere must be used together");
 		/*NOTREACHED*/
 	case LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE):
-		msg.whack_oppo_initiate = TRUE;
+		msg.whack_oppo_initiate = true;
 		if (LIN(cd_seen,
 			LELEM(CD_TUNNELIPV4 -
 			      CD_FIRST) | LELEM(CD_TUNNELIPV6 - CD_FIRST)))
@@ -2580,7 +2580,7 @@ int main(int argc, char **argv)
 				diag("must not specify clients for ISAKMP-only connection");
 		}
 
-		msg.whack_connection = TRUE;
+		msg.whack_connection = true;
 	}
 
 	/* decide whether --name is mandatory or forbidden */

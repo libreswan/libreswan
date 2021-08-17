@@ -82,7 +82,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 {
 	const size_t salt_size = encrypt_desc->salt_size;
 
-	bool ok = TRUE;
+	bool ok = true;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
 
@@ -130,7 +130,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 				  text_and_tag.ptr, to.len) ||		\
 		    !verify_bytes("TAG", tag.ptr, tag.len,		\
 				  text_and_tag.ptr + len, tag.len))	\
-			ok = FALSE;					\
+			ok = false;					\
 		if (DBGP(DBG_CRYPT)) {					\
 			DBG_dump_hunk("test_gcm_vector: text+tag on return", \
 				      text_and_tag);			\
@@ -165,12 +165,12 @@ bool test_gcm_vectors(const struct encrypt_desc *desc,
 		      const struct gcm_test_vector *tests,
 		      struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 	const struct gcm_test_vector *test;
 	for (test = tests; test->key != NULL; test++) {
 		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_gcm_vector(desc, test, logger)) {
-			ok = FALSE;
+			ok = false;
 		}
 	}
 	return ok;

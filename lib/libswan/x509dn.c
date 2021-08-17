@@ -295,7 +295,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 
 	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
-	for (bool first = TRUE; more; first = FALSE) {
+	for (bool first = true; more; first = FALSE) {
 		chunk_t oid;
 		chunk_t value_ber;
 		asn1_t value_type;

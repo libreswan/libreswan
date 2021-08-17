@@ -96,13 +96,13 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces,
 	 * There are no virtual interfaces, so all interfaces are valid
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		bool after = FALSE; /* has vfp passed ifp on the list? */
-		bool bad = FALSE;
+		bool after = false; /* has vfp passed ifp on the list? */
+		bool bad = false;
 		struct raw_iface *vfp;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
-				after = TRUE;
+				after = true;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
 				if (after) {
 					ipstr_buf b;
@@ -112,7 +112,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces,
 					       ifp->name, vfp->name,
 					       ipstr(&ifp->addr, &b));
 				}
-				bad = TRUE;
+				bad = true;
 			}
 		}
 
@@ -167,7 +167,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 		    alg->sadb_alg_ivlen,
 		    alg->sadb_alg_minbits,
 		    alg->sadb_alg_maxbits);
-		can_do_IPcomp = TRUE;
+		can_do_IPcomp = true;
 		break;
 
 	default:
@@ -185,7 +185,7 @@ static void bsdkame_pfkey_register(void)
 	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
 	pfkey_recv_register(pfkeyfd);
 
-	can_do_IPcomp = FALSE; /* It can probably do it - we just need to check out how */
+	can_do_IPcomp = false; /* It can probably do it - we just need to check out how */
 	pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
 	pfkey_recv_register(pfkeyfd);
 

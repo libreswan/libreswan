@@ -162,7 +162,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
 
-	bool ok = TRUE;
+	bool ok = true;
 	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb);
 	chunk_t tmp = decode_to_chunk(input_name, input);
 	chunk_t expected_output = decode_to_chunk(output_name, output);
@@ -174,12 +174,12 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	if (!verify_hunk(op, expected_output, tmp)) {
 		DBGF(DBG_CRYPT, "test_ctr_op: %s: %s: output does not match",
 		     description, op);
-		ok = FALSE;
+		ok = false;
 	}
 	if (!verify_hunk("counter-block", expected_cb, cb)) {
 		DBGF(DBG_CRYPT, "test_ctr_op: %s: %s: counter-block does not match",
 		     description, op);
-		ok = FALSE;
+		ok = false;
 	}
 
 	free_chunk_content(&cb);
@@ -194,7 +194,7 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct ctr_test_vector *test,
 			    struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
 	if (!test_ctr_op(encrypt_desc, test->description, 1, sym_key,
@@ -202,14 +202,14 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 			 "Plaintext", test->plaintext,
 			 "Ciphertext", test->ciphertext,
 			 logger)) {
-		ok = FALSE;
+		ok = false;
 	}
 	if (!test_ctr_op(encrypt_desc, test->description, 0, sym_key,
 			 test->cb, test->output_cb,
 			 "Ciphertext", test->ciphertext,
 			 "Plaintext", test->plaintext,
 			 logger)) {
-		ok = FALSE;
+		ok = false;
 	}
 
 	/* Clean up. */
@@ -224,12 +224,12 @@ bool test_ctr_vectors(const struct encrypt_desc *desc,
 		      const struct ctr_test_vector *tests,
 		      struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 	const struct ctr_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_ctr_vector(desc, test, logger)) {
-			ok = FALSE;
+			ok = false;
 		}
 	}
 	return ok;

@@ -88,10 +88,10 @@
 #include "crl_queue.h"
 #include "ip_info.h"
 
-bool crl_strict = FALSE;
-bool ocsp_strict = FALSE;
-bool ocsp_enable = FALSE;
-bool ocsp_post = FALSE;
+bool crl_strict = false;
+bool ocsp_strict = false;
+bool ocsp_enable = false;
+bool ocsp_post = false;
 char *curl_iface = NULL;
 long curl_timeout = -1;
 
@@ -235,7 +235,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	/* CA a might be a subordinate CA of b */
 
-	bool match = FALSE;
+	bool match = false;
 	CERTCertificate *cacert = NULL;
 
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {

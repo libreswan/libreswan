@@ -688,7 +688,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md,
 				  size_t len,
 				  struct vid_struct *vid)
 {
-	bool vid_useful = TRUE; /* tentatively TRUE */
+	bool vid_useful = true; /* tentatively TRUE */
 
 	/* IKEv2 VID processing */
 	switch (vid->id) {
@@ -699,7 +699,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md,
 		/* not really useful, but it changes the msg from "ignored" to "received" */
 		break;
 	default:
-		vid_useful = FALSE;
+		vid_useful = false;
 		break;
 	}
 
@@ -725,7 +725,7 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 				     struct vid_struct *vid,
 				     struct logger *logger)
 {
-	bool vid_useful = TRUE; /* tentatively TRUE */
+	bool vid_useful = true; /* tentatively TRUE */
 
 	switch (vid->id) {
 	/*
@@ -745,7 +745,7 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
-		vid_useful = FALSE; /* no longer supported */
+		vid_useful = false; /* no longer supported */
 		break;
 
 	case VID_NATT_IETF_02:
@@ -764,45 +764,45 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 			md->quirks.qnat_traversal_vid = vid->id;
 		} else {
 			dbg("Ignoring older NAT-T Vendor ID payload [%s]", vid->descr);
-			vid_useful = FALSE;
+			vid_useful = false;
 		}
 		break;
 
 	case VID_MISC_DPD:
 	case VID_DPD1_NG:
 		/* Remote side would like to do DPD with us on this connection */
-		md->dpd = TRUE;
+		md->dpd = true;
 		break;
 
 	case VID_MISC_IKEv2:
-		md->ikev2 = TRUE;
+		md->ikev2 = true;
 		break;
 
 	case VID_NORTEL:
-		md->nortel = TRUE;
+		md->nortel = true;
 		break;
 
 	case VID_SSH_SENTINEL_1_4_1:
 		llog(RC_LOG_SERIOUS, logger,
 			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
-		md->quirks.xauth_ack_msgid = TRUE;
+		md->quirks.xauth_ack_msgid = true;
 		break;
 
 	case VID_CISCO_UNITY:
-		md->quirks.modecfg_pull_mode = TRUE;
+		md->quirks.modecfg_pull_mode = true;
 		break;
 
 	case VID_MISC_XAUTH:
-		md->quirks.xauth_vid = TRUE;
+		md->quirks.xauth_vid = true;
 		break;
 
 	case VID_CISCO_IKE_FRAGMENTATION:
 	case VID_IKE_FRAGMENTATION:
-		md->fragvid = TRUE;
+		md->fragvid = true;
 		break;
 
 	default:
-		vid_useful = FALSE;
+		vid_useful = false;
 		break;
 	}
 	dbg_vid(md->md_logger, vidstr, len, vid, vid_useful);

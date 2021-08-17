@@ -768,7 +768,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			isakmp_sa->hidden_variables.st_nat_traversal;
 		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
 			 NATED_HOST))
-			has_client = TRUE;
+			has_client = true;
 		v1_maybe_natify_initiator_endpoints(st, HERE);
 	} else {
 		st->hidden_variables.st_nat_traversal = LEMPTY;

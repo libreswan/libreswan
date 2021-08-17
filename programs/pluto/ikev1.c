@@ -1246,7 +1246,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  */
 void process_v1_packet(struct msg_digest *md)
 {
-	bool new_iv_set = FALSE;
+	bool new_iv_set = false;
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
@@ -1407,10 +1407,10 @@ void process_v1_packet(struct msg_digest *md)
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_v1_msgid.reserved = FALSE;
+			st->st_v1_msgid.reserved = false;
 
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			from_state = STATE_INFO_PROTECTED;
 		} else {
@@ -1497,11 +1497,11 @@ void process_v1_packet(struct msg_digest *md)
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
-			st->st_v1_msgid.reserved = FALSE;
+			st->st_v1_msgid.reserved = false;
 
 			/* Quick Mode Initial IV */
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			from_state = STATE_QUICK_R0;
 		} else {
@@ -1569,7 +1569,7 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			dbg(" call init_phase2_iv");
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			/*
 			 * okay, now we have to figure out if we are receiving a bogus
@@ -1903,7 +1903,7 @@ void process_packet_tail(struct msg_digest *md)
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
 	bool new_iv_set = md->new_iv_set;
-	bool self_delete = FALSE;
+	bool self_delete = false;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
@@ -1922,7 +1922,7 @@ void process_packet_tail(struct msg_digest *md)
 		}
 
 		/* Mark as encrypted */
-		md->encrypted = TRUE;
+		md->encrypted = true;
 
 		/* do the specified decryption
 		 *
@@ -2557,12 +2557,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (md->fragvid) {
 			dbg("peer supports fragmentation");
-			st->st_seen_fragmentation_supported = TRUE;
+			st->st_seen_fragmentation_supported = true;
 		}
 
 		if (md->dpd) {
 			dbg("peer supports DPD");
-			st->hidden_variables.st_peer_supports_dpd = TRUE;
+			st->hidden_variables.st_peer_supports_dpd = true;
 			if (dpd_active_locally(st)) {
 				dbg("DPD is configured locally");
 			}
@@ -2571,7 +2571,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* If state has VID_NORTEL, import it to activate workaround */
 		if (md->nortel) {
 			dbg("peer requires Nortel Contivity workaround");
-			st->st_seen_nortel_vid = TRUE;
+			st->st_seen_nortel_vid = true;
 		}
 
 		if (!st->st_v1_msgid.reserved &&
@@ -2585,7 +2585,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				reserve_msgid(p1st, st->st_v1_msgid.id);
 			}
 
-			st->st_v1_msgid.reserved = TRUE;
+			st->st_v1_msgid.reserved = true;
 		}
 
 		dbg("IKEv1: transition from state %s to state %s",
@@ -2691,7 +2691,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			dbg("!event_already_set at reschedule");
 			intmax_t delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
-			bool agreed_time = FALSE;
+			bool agreed_time = false;
 			struct connection *c = st->st_connection;
 
 			/* fixup in case of state machine jump for xauth without modecfg */
@@ -2724,7 +2724,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 					if ((c->policy & POLICY_DONT_REKEY) ||
 					    delay_ms >= deltamillisecs(st->st_oakley.life_seconds))
 					{
-						agreed_time = TRUE;
+						agreed_time = true;
 						delay_ms = deltamillisecs(st->st_oakley.life_seconds);
 					}
 				} else {
@@ -2736,7 +2736,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 #define clamp_delay(trans) { \
 		if (st->trans.present && \
 		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
-			agreed_time = TRUE; \
+			agreed_time = true; \
 			delay = deltasecs(st->trans.attrs.life_seconds); \
 		} \
 	}
@@ -3249,7 +3249,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			return ikev1_decode_peer_id(md, FALSE, FALSE);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
-			c->spd.that.has_id_wildcards = FALSE;
+			c->spd.that.has_id_wildcards = false;
 		} else if (fromcert) {
 			dbg("copying ID for fromcert");
 			duplicate_id(&c->spd.that.id, &peer);

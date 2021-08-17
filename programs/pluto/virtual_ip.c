@@ -85,7 +85,7 @@ static bool read_subnet(const char *src, size_t len,
 		afi = NULL;	/* "guess from src" */
 	}
 
-	bool incl = TRUE;
+	bool incl = true;
 
 	if (dstexcl != NULL)
 		*isincl = incl = !eat(p, "!");
@@ -131,7 +131,7 @@ void init_virtual_ip(const char *private_list,
 		if (next == NULL)
 			next = str + strlen(str);
 
-		bool incl = FALSE;
+		bool incl = false;
 		ip_subnet sub;	/* sink: value never used */
 
 		if (read_subnet(str, next - str, &sub, &sub, &incl, logger)) {
@@ -168,7 +168,7 @@ void init_virtual_ip(const char *private_list,
 			if (next == NULL)
 				next = str + strlen(str);
 
-			bool incl = FALSE;
+			bool incl = false;
 			if (read_subnet(str, next - str,
 					&(private_net_incl[i_incl]),
 					&(private_net_excl[i_excl]),

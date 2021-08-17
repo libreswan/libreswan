@@ -135,7 +135,7 @@ static void UpdateNSS_RNG(int seedbits, struct logger *logger)
 
 int main(int argc, char *argv[])
 {
-	log_to_stderr = FALSE;
+	log_to_stderr = false;
 	struct logger *logger = tool_init_log("ipsec ecdsasigkey");
 
 	int opt;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
 		switch (opt) {
 		case 'v':       /* verbose description */
-			log_to_stderr = TRUE;
+			log_to_stderr = true;
 			break;
 
 		case OPT_DEBUG:

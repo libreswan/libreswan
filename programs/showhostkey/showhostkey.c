@@ -454,15 +454,15 @@ static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid
 
 int main(int argc, char *argv[])
 {
-	log_to_stderr = FALSE;
+	log_to_stderr = false;
 	struct logger *logger = tool_init_log("ipsec showhostkey");
 
 	int opt;
-	bool left_flg = FALSE;
-	bool right_flg = FALSE;
-	bool dump_flg = FALSE;
-	bool list_flg = FALSE;
-	bool ipseckey_flg = FALSE;
+	bool left_flg = false;
+	bool right_flg = false;
+	bool dump_flg = false;
+	bool list_flg = false;
+	bool ipseckey_flg = false;
 	char *gateway = NULL;
 	int precedence = 10;
 	char *ckaid = NULL;
@@ -475,18 +475,18 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			left_flg = TRUE;
+			left_flg = true;
 			break;
 		case 'r':
-			right_flg = TRUE;
+			right_flg = true;
 			break;
 
 		case OPT_DUMP:
-			dump_flg = TRUE;
+			dump_flg = true;
 			break;
 
 		case 'K':
-			ipseckey_flg = TRUE;
+			ipseckey_flg = true;
 			gateway = clone_str(optarg, "gateway");
 			break;
 
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'L':
-			list_flg = TRUE;
+			list_flg = true;
 			break;
 
 		case 's':
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'g':
-			ipseckey_flg = TRUE;
+			ipseckey_flg = true;
 			gateway = clone_str(optarg, "gateway");
 			break;
 
@@ -539,7 +539,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'v':
-			log_to_stderr = TRUE;
+			log_to_stderr = true;
 			break;
 
 		case OPT_DEBUG:

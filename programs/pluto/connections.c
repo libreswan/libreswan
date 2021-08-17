@@ -425,7 +425,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
 		this->id.kind = afi->id_ip_addr;
 		this->id.ip_addr = this->host_addr;
-		this->has_id_wildcards = FALSE;
+		this->has_id_wildcards = false;
 	}
 
 	/* propagate this HOST_ADDR to that. */
@@ -1267,11 +1267,11 @@ static void mark_parse(/*const*/ char *wmmark,
 {
 	/*const*/ char *val_end;
 
-	sa_mark->unique = FALSE;
+	sa_mark->unique = false;
 	sa_mark->val = 0xffffffff;
 	sa_mark->mask = 0xffffffff;
 	if (streq(wmmark, "-1") || startswith(wmmark, "-1/")) {
-		sa_mark->unique = TRUE;
+		sa_mark->unique = true;
 		val_end = wmmark + strlen("-1");
 	} else {
 		errno = 0;
@@ -2026,7 +2026,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		c->spd.that.has_client = TRUE;
+		c->spd.that.has_client = true;
 		c->spd.that.client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
 		/*
 		 * We cannot have unlimited keyingtries for Opportunistic, or else
@@ -2093,7 +2093,7 @@ static bool extract_connection(const struct whack_message *wm,
 						  wm->right.virt,
 						  c->logger);
 		if (c->spd.that.virt != NULL)
-			c->spd.that.has_client = TRUE;
+			c->spd.that.has_client = true;
 	}
 
 	if (c->pool !=  NULL)
@@ -2232,7 +2232,7 @@ struct connection *add_group_instance(struct connection *group,
 	/* reset log file info */
 	t->log_file_name = NULL;
 	t->log_file = NULL;
-	t->log_file_err = FALSE;
+	t->log_file_err = false;
 
 	t->spd.reqid = group->sa_reqid == 0 ? gen_reqid() : group->sa_reqid;
 	dbg("%s t->spd.reqid=%d because group->sa_reqid=%d",
@@ -2322,7 +2322,7 @@ struct connection *instantiate(struct connection *c,
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(peer_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *peer_id;
-		d->spd.that.has_id_wildcards = FALSE;
+		d->spd.that.has_id_wildcards = false;
 	}
 	unshare_connection(d);
 	d->kind = kind;
@@ -2356,7 +2356,7 @@ struct connection *instantiate(struct connection *c,
 	/* reset log file info */
 	d->log_file_name = NULL;
 	d->log_file = NULL;
-	d->log_file_err = FALSE;
+	d->log_file_err = false;
 
 	if (c->sa_marks.in.unique) {
 		d->sa_marks.in.val = global_marks;
@@ -2406,7 +2406,7 @@ struct connection *rw_instantiate(struct connection *c,
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
 		if (selector_eq_address(*peer_subnet, *peer_addr))
-			d->spd.that.has_client = FALSE;
+			d->spd.that.has_client = false;
 	}
 
 	if (d->policy & POLICY_OPPORTUNISTIC) {
@@ -3155,7 +3155,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	bool ikev1 = auth_policy != LEMPTY;
 	bool ikev2 = this_authby != AUTHBY_UNSET;
 
-	*fromcert = FALSE;
+	*fromcert = false;
 
 	passert(ikev1 != ikev2 && ikev2 == (st->st_ike_version == IKEv2));
 	passert(this_authby != AUTHBY_NEVER);
@@ -3335,7 +3335,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 * Check for the match but also check to see if it's
 			 * the %fromcert + peer id match result. - matt
 			 */
-			bool d_fromcert = FALSE;
+			bool d_fromcert = false;
 			if (!matching_peer_id) {
 				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
 				if (!d_fromcert) {
@@ -4431,7 +4431,7 @@ void update_state_connection(struct state *st, struct connection *new)
 
 	if (old != new) {
 		st->st_connection = new;
-		st->st_v1_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
+		st->st_v1_peer_alt_id = false; /* must be rechecked against new 'that' */
 		rehash_state_connection(st);
 		if (old != NULL) {
 			connection_delete_unused_instance(&old, st,

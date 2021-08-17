@@ -964,12 +964,12 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]"
 		 * so need to handle that.
 		 */
-		bool at_least_one_valid_id = FALSE;
+		bool at_least_one_valid_id = false;
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
 			if (id >= 0) {
-				at_least_one_valid_id = TRUE;
+				at_least_one_valid_id = true;
 				check_enum_name(ike_alg_key_name(key),
 						alg, id,
 						type->enum_names[key],
@@ -1086,8 +1086,8 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 		v1_ike = alg->id[IKEv1_OAKLEY_ID] >= 0;
 		v2_ike = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
-		v1_ike = FALSE;
-		v2_ike = FALSE;
+		v1_ike = false;
+		v2_ike = false;
 	}
 	bool v1_esp;
 	bool v2_esp;
@@ -1095,12 +1095,12 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	bool v2_ah;
 	if (alg->algo_type == &ike_alg_hash ||
 	    alg->algo_type == &ike_alg_prf) {
-		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
+		v1_esp = v2_esp = v1_ah = v2_ah = false;
 	} else if (alg->algo_type == &ike_alg_encrypt) {
 		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
-		v1_ah = FALSE;
-		v2_ah = FALSE;
+		v1_ah = false;
+		v2_ah = false;
 	} else if (alg->algo_type == &ike_alg_integ) {
 		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;

@@ -478,7 +478,7 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 
 	ret = dnsr->dns_status;
 	if (dnsr->dns_status == DNS_SUSPEND) {
-		dnsr->cache_hit = FALSE;
+		dnsr->cache_hit = false;
 	} else {
 		free_ipseckey_dns(dnsr);
 	}

@@ -149,7 +149,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(
 				log_state(RC_LOG, &ike->sa,
 					  "failed to find PPK and PPK_ID, continuing without PPK");
 				/* we should omit sending any PPK Identity, so we pretend we didn't see USE_PPK */
-				ike->sa.st_seen_ppk = FALSE;
+				ike->sa.st_seen_ppk = false;
 			}
 		}
 	}
@@ -771,7 +771,7 @@ stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
 stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
 {
 	lset_t policy = ike->sa.st_connection->policy;
-	bool found_ppk = FALSE;
+	bool found_ppk = false;
 	chunk_t null_auth = EMPTY_CHUNK;
 
 	/*
@@ -790,7 +790,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id);
 		free_chunk_content(&payl.ppk_id);
 		if (ppk != NULL) {
-			found_ppk = TRUE;
+			found_ppk = true;
 		}
 
 		if (found_ppk && LIN(POLICY_PPK_ALLOW, policy)) {
@@ -799,7 +799,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
 					ike->sa.st_logger);
-			ike->sa.st_ppk_used = TRUE;
+			ike->sa.st_ppk_used = true;
 			log_state(RC_LOG, &ike->sa,
 				  "PPK AUTH calculated as responder");
 		} else {
@@ -1125,7 +1125,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 		}
 	}
 
-	bool send_redirect = FALSE;
+	bool send_redirect = false;
 
 	if (ike->sa.st_seen_redirect_sup &&
 	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
@@ -1135,7 +1135,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "redirect-to is not specified, can't redirect requests");
 		} else {
-			send_redirect = TRUE;
+			send_redirect = true;
 		}
 	}
 
