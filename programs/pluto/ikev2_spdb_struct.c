@@ -500,7 +500,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 
 		struct ikev2_transform remote_transform = {
 			.id = remote_trans.isat_transid,
-			.valid = TRUE,
+			.valid = true,
 		};
 
 		/* followed by attributes */
@@ -1802,7 +1802,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 	*transform = (struct ikev2_transform) {
 		.id = id,
 		.attr_keylen = attr_keylen,
-		.valid = TRUE,
+		.valid = true,
 	};
 }
 

@@ -1260,7 +1260,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	static unsigned char unknown[] = "<unknown>";	/* never written to */
 	chunk_t name;
 	chunk_t password = EMPTY_CHUNK;
-	bool gotname = FALSE,
+	bool gotname = false,
 		gotpassword = false;
 
 	name = chunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */

@@ -982,7 +982,7 @@ int main(int argc, char **argv)
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;
 	int xauthpasslen = 0;
-	bool gotusername = FALSE, gotxauthpass = false;
+	bool gotusername = false, gotxauthpass = false;
 	const char *ugh;
 	bool ignore_errors = false;
 

@@ -1010,8 +1010,8 @@ bool ikev1_out_sa(pb_stream *outs,
 	 * See RFC 2408 "ISAKMP" 4.2
 	 */
 
-	bool ah_spi_generated = FALSE,
-	     esp_spi_generated = FALSE,
+	bool ah_spi_generated = false,
+	     esp_spi_generated = false,
 	     ipcomp_cpi_generated = false;
 
 	for (unsigned pcn = 0; pcn < sadb->prop_conj_cnt; pcn++) {
@@ -1616,7 +1616,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 {
 	diag_t d;
 	const struct connection *const c = st->st_connection;
-	bool xauth_init = FALSE,
+	bool xauth_init = false,
 		xauth_resp = false;
 	const char *const role = selection ? "initiator" : "responder";
 	const chunk_t *pss = &empty_chunk;
@@ -2924,8 +2924,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			esp_spi = 0,
 			ipcomp_cpi = 0;
 		bool
-			ah_seen = FALSE,
-			esp_seen = FALSE,
+			ah_seen = false,
+			esp_seen = false,
 			ipcomp_seen = false;
 		const ip_protocol *inner_proto = NULL;
 		bool tunnel_mode = false;

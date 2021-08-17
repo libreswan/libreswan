@@ -230,12 +230,12 @@ int main(int argc, char *argv[])
 	bool checkconfig = false;
 	const char *export = "export"; /* display export before the foo=bar or not */
 	bool
-		dolist = FALSE,
-		listadd = FALSE,
-		listroute = FALSE,
-		liststart = FALSE,
-		listignore = FALSE,
-		listall = FALSE,
+		dolist = false,
+		listadd = false,
+		listroute = false,
+		liststart = false,
+		listignore = false,
+		listall = false,
 		liststack = false;
 	char *configfile = NULL;
 	const char *varprefix = "";

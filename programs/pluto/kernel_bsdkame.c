@@ -882,8 +882,8 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
 	.process_raw_ifaces = bsdkame_process_raw_ifaces,
-	.overlap_supported = FALSE,
-	.sha2_truncbug_support = FALSE,
+	.overlap_supported = false,
+	.sha2_truncbug_support = false,
 	.v6holes = NULL,
 	.detect_offload = bsdkame_detect_offload,
 };
