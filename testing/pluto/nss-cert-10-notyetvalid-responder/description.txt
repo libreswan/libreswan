@@ -1,8 +1,0 @@
-East has a certificate that is not yet valid, west attempts to connect to
-east. This connection should fail.
-
-Oddly enough, NSS tells us "Peer's Certificate has expired" instead of telling
-us "not yet valid".
-
-Also, west's whack isn't getting released after this error, which seems odd,
-since we used --impair-retransmits and it should just fail fully.

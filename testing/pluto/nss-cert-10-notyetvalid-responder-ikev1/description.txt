@@ -1,0 +1,11 @@
+east has a certificate that is not yet valid, west should reject it
+
+- west initiates an IKEv1 ISAKMP exchange
+- east authenticates west's credentials, but
+- west then fails to authenticate east's credentials
+- west then kills the connection with v2N_INVALID_ID_INFORMATION
+
+Oddly enough, NSS tells us "Peer's Certificate has expired" instead of
+telling us "not yet valid".
+
+Oddly enough, east ignores the notification.

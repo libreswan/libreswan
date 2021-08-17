@@ -27,6 +27,8 @@ initdone
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up nss-cert
 002 "nss-cert" #1: initiating IKEv1 Main Mode connection
 1v1 "nss-cert" #1: sent Main Mode request
