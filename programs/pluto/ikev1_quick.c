@@ -1237,7 +1237,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 							       &sapd->payload.
 							       sa,
 							       NULL,
-							       FALSE, st));
+							       false, st));
 		}
 
 		/* Ni in */
@@ -1377,7 +1377,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	RETURN_STF_FAILURE(parse_ipsec_sa_body(&sapd->pbs,
 					       &sapd->payload.sa,
 					       &r_sa_pbs,
-					       FALSE, st));
+					       false, st));
 
 	passert(st->st_pfs_group != &unset_group);
 

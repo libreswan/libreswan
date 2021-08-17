@@ -520,7 +520,7 @@ static stf_status modecfg_send_set(struct state *st)
 		     MODECFG_SET_ITEM,
 		     &rbody,
 		     ISAKMP_CFG_SET,
-		     TRUE,
+		     true,
 		     0 /* XXX ID */);
 
 	if (stat != STF_OK)
@@ -1490,7 +1490,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			stf_status stat = modecfg_resp(st, resp,
 						       &rbody,
 						       ISAKMP_CFG_REPLY,
-						       TRUE,
+						       true,
 						       ma->isama_identifier);
 
 			if (stat != STF_OK) {
@@ -1603,7 +1603,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		stf_status stat = modecfg_resp(st, resp,
 					       rbody,
 					       ISAKMP_CFG_ACK,
-					       FALSE,
+					       false,
 					       isama_id);
 
 		if (stat != STF_OK) {
@@ -1975,7 +1975,7 @@ static stf_status xauth_client_resp(struct state *st,
 
 						if (!whack_prompt_for(st,
 							"Username",
-							TRUE,
+							true,
 							xauth_username,
 							sizeof(xauth_username)))
 						{
@@ -2053,7 +2053,7 @@ static stf_status xauth_client_resp(struct state *st,
 
 						if (!whack_prompt_for(st,
 								      "Password",
-								      FALSE,
+								      false,
 								      xauth_password,
 								      sizeof(xauth_password)))
 						{
