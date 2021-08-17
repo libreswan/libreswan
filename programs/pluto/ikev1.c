@@ -1006,7 +1006,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					log_state(RC_LOG_SERIOUS, st,
 						  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
 						  ipstr(&new_peer, &b));
-					return FALSE; /* XXX: STF_*? */
+					return false; /* XXX: STF_*? */
 				}
 
 				/* Saving connection name and whack sock id */
@@ -1246,7 +1246,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  */
 void process_v1_packet(struct msg_digest *md)
 {
-	bool new_iv_set = FALSE;
+	bool new_iv_set = false;
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
@@ -1407,10 +1407,10 @@ void process_v1_packet(struct msg_digest *md)
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_v1_msgid.reserved = FALSE;
+			st->st_v1_msgid.reserved = false;
 
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			from_state = STATE_INFO_PROTECTED;
 		} else {
@@ -1497,11 +1497,11 @@ void process_v1_packet(struct msg_digest *md)
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
-			st->st_v1_msgid.reserved = FALSE;
+			st->st_v1_msgid.reserved = false;
 
 			/* Quick Mode Initial IV */
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			from_state = STATE_QUICK_R0;
 		} else {
@@ -1569,7 +1569,7 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			dbg(" call init_phase2_iv");
 			init_phase2_iv(st, &md->hdr.isa_msgid);
-			new_iv_set = TRUE;
+			new_iv_set = true;
 
 			/*
 			 * okay, now we have to figure out if we are receiving a bogus
@@ -1903,7 +1903,7 @@ void process_packet_tail(struct msg_digest *md)
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
 	bool new_iv_set = md->new_iv_set;
-	bool self_delete = FALSE;
+	bool self_delete = false;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
@@ -1922,7 +1922,7 @@ void process_packet_tail(struct msg_digest *md)
 		}
 
 		/* Mark as encrypted */
-		md->encrypted = TRUE;
+		md->encrypted = true;
 
 		/* do the specified decryption
 		 *
@@ -1975,7 +1975,7 @@ void process_packet_tail(struct msg_digest *md)
 		e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
 					 pbs_left(&md->message_pbs),
 					 st->st_enc_key_nss,
-					 st->st_v1_new_iv.ptr, FALSE,
+					 st->st_v1_new_iv.ptr, false,
 					 st->st_logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
@@ -2403,7 +2403,7 @@ void process_packet_tail(struct msg_digest *md)
 		p = md->chain[ISAKMP_NEXT_VID];
 		while (p != NULL) {
 			handle_vendorid(md, (char *)p->pbs.cur,
-					pbs_left(&p->pbs), FALSE,
+					pbs_left(&p->pbs), false,
 					st != NULL ? st->st_logger : md->md_logger);
 			p = p->next;
 		}
@@ -2557,12 +2557,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (md->fragvid) {
 			dbg("peer supports fragmentation");
-			st->st_seen_fragmentation_supported = TRUE;
+			st->st_seen_fragmentation_supported = true;
 		}
 
 		if (md->dpd) {
 			dbg("peer supports DPD");
-			st->hidden_variables.st_peer_supports_dpd = TRUE;
+			st->hidden_variables.st_peer_supports_dpd = true;
 			if (dpd_active_locally(st)) {
 				dbg("DPD is configured locally");
 			}
@@ -2571,7 +2571,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* If state has VID_NORTEL, import it to activate workaround */
 		if (md->nortel) {
 			dbg("peer requires Nortel Contivity workaround");
-			st->st_seen_nortel_vid = TRUE;
+			st->st_seen_nortel_vid = true;
 		}
 
 		if (!st->st_v1_msgid.reserved &&
@@ -2585,7 +2585,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				reserve_msgid(p1st, st->st_v1_msgid.id);
 			}
 
-			st->st_v1_msgid.reserved = TRUE;
+			st->st_v1_msgid.reserved = true;
 		}
 
 		dbg("IKEv1: transition from state %s to state %s",
@@ -2691,7 +2691,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			dbg("!event_already_set at reschedule");
 			intmax_t delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
-			bool agreed_time = FALSE;
+			bool agreed_time = false;
 			struct connection *c = st->st_connection;
 
 			/* fixup in case of state machine jump for xauth without modecfg */
@@ -2724,7 +2724,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 					if ((c->policy & POLICY_DONT_REKEY) ||
 					    delay_ms >= deltamillisecs(st->st_oakley.life_seconds))
 					{
-						agreed_time = TRUE;
+						agreed_time = true;
 						delay_ms = deltamillisecs(st->st_oakley.life_seconds);
 					}
 				} else {
@@ -2736,7 +2736,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 #define clamp_delay(trans) { \
 		if (st->trans.present && \
 		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
-			agreed_time = TRUE; \
+			agreed_time = true; \
 			delay = deltasecs(st->trans.attrs.life_seconds); \
 		} \
 	}
@@ -3099,7 +3099,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		 * We have turned this into a warning because of bugs in other
 		 * vendors' products. Specifically CISCO VPN3000.
 		 */
-		/* return FALSE; */
+		/* return false; */
 	}
 
 	struct id peer;
@@ -3162,12 +3162,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 				  str_id(&c->spd.that.id, &expect),
 				  str_id(&peer, &found));
-			return FALSE;
+			return false;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer.kind != ID_DER_ASN1_DN) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "peer ID is not a certificate type");
-				return FALSE;
+				return false;
 			}
 			duplicate_id(&c->spd.that.id, &peer);
 		}
@@ -3192,7 +3192,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P521:
 		default:
 			dbg("ikev1 ike_decode_peer_id bad_case due to not supported policy");
-			return FALSE;
+			return false;
 		}
 
 		bool fromcert;
@@ -3212,7 +3212,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			    !same_id(&c->spd.that.id, &peer) &&
 			    c->spd.that.id.kind != ID_FROMCERT) {
 				log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
-				return FALSE;
+				return false;
 			} else {
 				dbg("Peer ID matches and no better connection found - continuing with existing connection");
 				r = c;
@@ -3246,17 +3246,17 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ike_decode_peer_id() with new conn");
 			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id(md, FALSE, FALSE);
+			return ikev1_decode_peer_id(md, false, false);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
-			c->spd.that.has_id_wildcards = FALSE;
+			c->spd.that.has_id_wildcards = false;
 		} else if (fromcert) {
 			dbg("copying ID for fromcert");
 			duplicate_id(&c->spd.that.id, &peer);
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,

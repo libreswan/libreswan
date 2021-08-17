@@ -627,7 +627,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 							&seen_internal_address)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -635,7 +635,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -644,7 +644,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 							&seen_internal_address)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -652,7 +652,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
 				log_state(RC_LOG_SERIOUS, &child->sa,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
-				return FALSE;
+				return false;
 			}
 			break;
 
@@ -668,7 +668,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			break;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 stf_status process_v2_childs_sa_payload(const char *what,
@@ -695,8 +695,8 @@ stf_status process_v2_childs_sa_payload(const char *what,
 
 	ret = ikev2_process_sa_payload(what,
 				       &sa_pd->pbs,
-				       /*expect_ike*/ FALSE,
-				       /*expect_spi*/ TRUE,
+				       /*expect_ike*/ false,
+				       /*expect_spi*/ true,
 				       expect_accepted_proposal,
 				       LIN(POLICY_OPPORTUNISTIC, c->policy),
 				       &child->sa.st_accepted_esp_or_ah_proposal,
@@ -970,7 +970,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 				return v2N_INVALID_SYNTAX; /* fatal */
 #endif
 	/* now install child SAs */
-	if (!install_ipsec_sa(&child->sa, TRUE))
+	if (!install_ipsec_sa(&child->sa, true))
 		/* This affects/kills the IKE SA? Oops :-( */
 		return v2N_INVALID_SYNTAX; /* fatal */
 

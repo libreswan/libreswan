@@ -842,7 +842,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE, ike->sa.st_logger);
+		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), true, ike->sa.st_logger);
 	}
 
 	/* Get the proposals ready. */
@@ -854,9 +854,9 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 */
 	stf_status ret = ikev2_process_sa_payload("IKE responder",
 						  &md->chain[ISAKMP_NEXT_v2SA]->pbs,
-						  /*expect_ike*/ TRUE,
-						  /*expect_spi*/ FALSE,
-						  /*expect_accepted*/ FALSE,
+						  /*expect_ike*/ true,
+						  /*expect_spi*/ false,
+						  /*expect_accepted*/ false,
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &ike->sa.st_accepted_ike_proposal,
 						  ike_proposals, ike->sa.st_logger);
@@ -964,7 +964,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	struct connection *c = ike->sa.st_connection;
-	bool send_certreq = FALSE;
+	bool send_certreq = false;
 
 	/* note that we don't update the state here yet */
 
@@ -1347,9 +1347,9 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
-							  /*expect_ike*/ TRUE,
-							  /*expect_spi*/ FALSE,
-							  /*expect_accepted*/ TRUE,
+							  /*expect_ike*/ true,
+							  /*expect_spi*/ false,
+							  /*expect_accepted*/ true,
 							  LIN(POLICY_OPPORTUNISTIC, c->policy),
 							  &ike->sa.st_accepted_ike_proposal,
 							  ike_proposals, ike->sa.st_logger);

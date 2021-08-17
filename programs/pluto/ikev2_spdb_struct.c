@@ -500,7 +500,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 
 		struct ikev2_transform remote_transform = {
 			.id = remote_trans.isat_transid,
-			.valid = TRUE,
+			.valid = true,
 		};
 
 		/* followed by attributes */
@@ -1544,7 +1544,7 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 	};
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
-		return FALSE;
+		return false;
 
 	int propnum;
 	const struct ikev2_proposal *proposal;
@@ -1558,12 +1558,12 @@ bool ikev2_emit_sa_proposals(struct pbs_out *pbs,
 				    ? v2_PROPOSAL_NON_LAST
 				    : v2_PROPOSAL_LAST),
 				   false/*allow-single-transform=none*/)) {
-			return FALSE;
+			return false;
 		}
 	}
 
 	close_output_pbs(&sa_pbs);
-	return TRUE;
+	return true;
 }
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
@@ -1579,7 +1579,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 	};
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs)) {
-		return FALSE;
+		return false;
 	}
 
 	/*
@@ -1589,11 +1589,11 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
 			   local_spi, v2_PROPOSAL_LAST,
 			   true/*allow-single-transform=NONE*/)) {
-		return FALSE;
+		return false;
 	}
 
 	close_output_pbs(&sa_pbs);
-	return TRUE;
+	return true;
 }
 
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
@@ -1704,13 +1704,13 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_ESN:
 				switch (transform->id) {
 				case IKEv2_ESN_ENABLED:
-					ta.esn_enabled = TRUE;
+					ta.esn_enabled = true;
 					break;
 				case IKEv2_ESN_DISABLED:
-					ta.esn_enabled = FALSE;
+					ta.esn_enabled = false;
 					break;
 				default:
-					ta.esn_enabled = FALSE;
+					ta.esn_enabled = false;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ESN %d",
 						     transform->id);
@@ -1727,7 +1727,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 	}
 
 	*ta_out = ta;
-	return TRUE;
+	return true;
 }
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
@@ -1748,17 +1748,17 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	 */
 	struct trans_attrs ta;
 	if (!ikev2_proposal_to_trans_attrs(proposal, &ta, logger)) {
-		return FALSE;
+		return false;
 	}
 
 	proto_info->attrs.transattrs = ta;
-	proto_info->present = TRUE;
+	proto_info->present = true;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();
 
 	proto_info->attrs.mode = ENCAPSULATION_MODE_TUNNEL;
 
-	return TRUE;
+	return true;
 }
 
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
@@ -1802,7 +1802,7 @@ static void append_transform(struct ikev2_proposal *proposal,
 	*transform = (struct ikev2_transform) {
 		.id = id,
 		.attr_keylen = attr_keylen,
-		.valid = TRUE,
+		.valid = true,
 	};
 }
 
@@ -1915,7 +1915,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			break;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal *proposal,
@@ -2284,12 +2284,12 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			if (transform->id == modp) {
-				return TRUE;
+				return true;
 			}
 		}
 	}
 	dbg("no first MODP (DH) transform found");
-	return FALSE;
+	return false;
 }
 
 void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,

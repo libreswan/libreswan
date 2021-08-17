@@ -155,7 +155,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 					log_state(RC_LOG, &ike->sa,
 						  "Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 						  str_id(&peer_id, &peer_str));
-					ike->sa.st_peer_wants_null = TRUE;
+					ike->sa.st_peer_wants_null = true;
 				} else {
 					id_buf peer_str;
 					return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
@@ -189,7 +189,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 
 		if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer_id);
-			c->spd.that.has_id_wildcards = FALSE;
+			c->spd.that.has_id_wildcards = false;
 		} else if (fromcert) {
 			dbg("copying ID for fromcert");
 			duplicate_id(&c->spd.that.id, &peer_id);

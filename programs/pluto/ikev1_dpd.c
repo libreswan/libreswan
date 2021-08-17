@@ -380,7 +380,7 @@ static void p1_dpd_outI1(struct state *p1st)
 	deltatime_t delay = p1st->st_connection->dpd_delay;
 	deltatime_t timeout = p1st->st_connection->dpd_timeout;
 
-	dpd_outI(p1st, p1st, TRUE, delay, timeout);
+	dpd_outI(p1st, p1st, true, delay, timeout);
 }
 
 static void p2_dpd_outI1(struct state *p2st)
@@ -404,7 +404,7 @@ static void p2_dpd_outI1(struct state *p2st)
 		return;
 	}
 
-	dpd_outI(st, p2st, TRUE, delay, timeout);
+	dpd_outI(st, p2st, true, delay, timeout);
 }
 
 void dpd_event(struct state *st)

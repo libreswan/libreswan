@@ -638,7 +638,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 
 	best = lsw_find_secret_by_id(pluto_secrets,
 				     PKK_XAUTH,
-				     &xa_id, NULL, TRUE);
+				     &xa_id, NULL, true);
 
 	return best;
 }

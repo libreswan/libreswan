@@ -66,7 +66,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 	case NATT_BOTH:
 		dbg("sending draft and RFC NATT VIDs");
 		if (!out_vid(outs, VID_NATT_RFC))
-			return FALSE;
+			return false;
 		/* FALL THROUGH */
 	case NATT_DRAFTS:
 		dbg("skipping VID_NATT_RFC");
@@ -78,7 +78,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
 		dbg("not sending any NATT VID's");
-		return TRUE;
+		return true;
 
 	default:
 		bad_case(c->ikev1_natt);
@@ -230,7 +230,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 			 st->st_logger);
 	if (!ikev1_out_generic_raw(pd, outs, hash.ptr, hash.len,
 				   "NAT-D"))
-		return FALSE;
+		return false;
 
 	/* second: emit payload with hash of my IP & port */
 

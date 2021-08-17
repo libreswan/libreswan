@@ -690,11 +690,11 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					 * two good matches are equally good:
 					 * do they agree?
 					 */
-					bool same = FALSE;
+					bool same = false;
 
 					switch (kind) {
 					case PKK_NULL:
-						same = TRUE;
+						same = true;
 						break;
 					case PKK_PSK:
 						same = hunk_eq(s->pks.u.preshared_secret,

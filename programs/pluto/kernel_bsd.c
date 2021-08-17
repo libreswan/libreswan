@@ -107,9 +107,9 @@ struct raw_iface *find_raw_ifaces6(struct logger *logger UNUSED)
 bool use_interface(const char *rifn)
 {
 	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
-		return FALSE;
+		return false;
 	} else {
 		pluto_ifn[pluto_ifn_roof++] = rifn;
-		return TRUE;
+		return true;
 	}
 }

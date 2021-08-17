@@ -295,7 +295,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 
 	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
-	for (bool first = TRUE; more; first = FALSE) {
+	for (bool first = true; more; first = FALSE) {
 		chunk_t oid;
 		chunk_t value_ber;
 		asn1_t value_type;
@@ -877,11 +877,11 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		/* fast checks possible without wildcards */
 		/* same lengths for the DNs */
 		if (a.len != b.len)
-			return FALSE;
+			return false;
 
 		/* try a binary comparison first */
 		if (memeq(a.ptr, b.ptr, b.len))
-			return TRUE;
+			return true;
 	}
 
 	/*
@@ -891,13 +891,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
 		if (ua != NULL) {
 			dbg("match_dn bad a: %s", ua);
-			return FALSE;
+			return false;
 		}
 
 		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
 		if (ub != NULL) {
 			dbg("match_dn bad b: %s", ub);
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -918,7 +918,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 						&more_a);
 			if (ua != NULL) {
 				dbg("match_dn bad a[%d]: %s", n, ua);
-				return FALSE;
+				return false;
 			}
 
 			err_t ub = get_next_rdn(&rdn_b, &attribute_b, &oid_b,
@@ -926,13 +926,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 						&more_b);
 			if (ub != NULL) {
 				dbg("match_dn bad b[%d]: %s", n, ub);
-				return FALSE;
+				return false;
 			}
 		}
 
 		/* OIDs must agree */
 		if (!hunk_eq(oid_a, oid_b))
-			return FALSE;
+			return false;
 
 		/* does rdn_b contain a wildcard? */
 		/* ??? this does not care whether types match.  Should it? */
@@ -944,7 +944,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		}
 
 		if (value_content_a.len != value_content_b.len)
-			return FALSE;	/* lengths must match */
+			return false;	/* lengths must match */
 
 		/*
 		 * If the two types treat the high bit differently
@@ -957,7 +957,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			for (size_t i = 0; i != value_content_a.len; i++)
 				or |= value_content_a.ptr[i] | value_content_b.ptr[i];
 			if (or & 0x80)
-				return FALSE;
+				return false;
 		}
 
 		/*
@@ -985,7 +985,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		{
 			continue;	/* component match */
 		}
-		return FALSE;	/* not a match */
+		return false;	/* not a match */
 	}
 
 	/* both DNs must have same number of RDNs */
@@ -1001,7 +1001,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	}
 
 	/* the two DNs match! */
-	return TRUE;
+	return true;
 }
 
 /*

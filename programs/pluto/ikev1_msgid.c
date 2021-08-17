@@ -76,9 +76,9 @@ bool unique_msgid(const struct state *st, msgid_t msgid)
 
 	for (p = st->st_used_msgids; p != NULL; p = p->next)
 		if (p->msgid == msgid)
-			return FALSE;
+			return false;
 
-	return TRUE;
+	return true;
 }
 
 void reserve_msgid(struct state *st, msgid_t msgid)

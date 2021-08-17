@@ -292,7 +292,7 @@ bool any_id(const struct id *a)
 {
 	switch (a->kind) {
 	case ID_NONE:
-		return TRUE; /* wildcard */
+		return true; /* wildcard */
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
@@ -304,7 +304,7 @@ bool any_id(const struct id *a)
 	case ID_DER_ASN1_GN:
 	case ID_KEY_ID:
 	case ID_NULL:
-		return FALSE;
+		return false;
 
 	default:
 		bad_case(a->kind);
@@ -316,23 +316,23 @@ bool same_id(const struct id *a, const struct id *b)
 {
 	if (b->kind == ID_NONE || a->kind == ID_NONE) {
 		dbg("id type with ID_NONE means wildcard match");
-		return TRUE; /* it's the wildcard */
+		return true; /* it's the wildcard */
 	}
 
 	if (a->kind != b->kind) {
-		return FALSE;
+		return false;
 	}
 
 	switch (a->kind) {
 	case ID_NONE:
-		return TRUE; /* repeat of above for completeness */
+		return true; /* repeat of above for completeness */
 
 	case ID_NULL:
 		if (a->kind == b->kind) {
 			dbg("ID_NULL: id kind matches");
-			return TRUE;
+			return true;
 		}
-		return FALSE;
+		return false;
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
@@ -383,10 +383,10 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 
 	if (b->kind == ID_NONE) {
 		*wildcards = MAX_WILDCARDS;
-		match = TRUE;
+		match = true;
 	} else if (a->kind != b->kind) {
 		/* should this allow SAN match of cert with right ID_DER_ASN1_DN? */
-		match = FALSE;
+		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
 		match = match_dn_any_order_wild(a->name, b->name, wildcards);
 	} else {
@@ -435,7 +435,7 @@ void duplicate_id(struct id *dst, const struct id *src)
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
-		return FALSE;
+		return false;
 
 	int matched = 0;
 	int ava_num = 0;
@@ -459,7 +459,7 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 					if (has_wild != NULL &&
 					    val_b->len == 1 &&
 					    val_b->data[0] == '*') {
-						*has_wild = TRUE;
+						*has_wild = true;
 						matched++;
 						SECITEM_FreeItem(val_b, PR_TRUE);
 						break;
@@ -523,7 +523,7 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 		CERTRDN *const *rdns_a;
 		for (rdns_a = a_name->rdns; *rdns_a != NULL; rdns_a++) {
 			CERTRDN *const rdn_a = *rdns_a;
-			bool has_wild = FALSE;
+			bool has_wild = false;
 
 			if (match_rdn(rdn_a, rdn_b,
 				      wildcards != NULL ? &has_wild : NULL)) {

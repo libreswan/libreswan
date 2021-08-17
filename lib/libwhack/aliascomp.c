@@ -32,7 +32,7 @@
 bool lsw_alias_cmp(const char *name, const char *aliases)
 {
 	if (aliases == NULL)
-		return FALSE;
+		return false;
 
 	size_t nlen = strlen(name);
 
@@ -40,12 +40,12 @@ bool lsw_alias_cmp(const char *name, const char *aliases)
 		s += strspn(s, " \t");	/* skip whitespace */
 
 		if (*s == '\0')
-			return FALSE;	/* string exhausted */
+			return false;	/* string exhausted */
 
 		size_t aw = strcspn(s, " \t");	/* alias width */
 
 		if (aw == nlen && strneq(s, name, nlen))
-			return TRUE;	/* found */
+			return true;	/* found */
 
 		s += aw;	/* skip this alias */
 	}

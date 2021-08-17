@@ -893,7 +893,7 @@ struct db_sa *sa_copy_sa(const struct db_sa *sa, where_t where)
 {
 	struct db_sa *nsa = clone_const_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
 	dbg_alloc("sadb", nsa, where);
-	nsa->dynamic = TRUE;
+	nsa->dynamic = true;
 	nsa->parentSA = sa->parentSA;
 
 	nsa->prop_conjs = clone_bytes(nsa->prop_conjs,

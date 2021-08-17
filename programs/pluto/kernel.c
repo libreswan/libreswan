@@ -1264,7 +1264,7 @@ static bool sag_eroute(const struct state *st,
 
 	return eroute_connection(op, why, sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
 				 &route, encap.inner_proto->ipproto, &encap,
-				 calculate_sa_prio(c, FALSE), &c->sa_marks,
+				 calculate_sa_prio(c, false), &c->sa_marks,
 				 xfrm_if_id,
 				 HUNK_AS_SHUNK(c->config->sec_label),
 				 st->st_logger);

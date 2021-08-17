@@ -599,7 +599,7 @@ stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
-				   enc_iv, TRUE,
+				   enc_iv, true,
 				   sk->logger);
 
 		if (DBGP(DBG_CRYPT)) {
@@ -797,7 +797,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
-				   enc_iv, FALSE,
+				   enc_iv, false,
 				   ike->sa.st_logger);
 
 		if (DBGP(DBG_CRYPT)) {
@@ -946,7 +946,7 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 
 	if (!ike->sa.st_seen_fragmentation_supported) {
 		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
-		return FALSE;
+		return false;
 	}
 
 	if (!ikev2_check_fragment(md, ike)) {

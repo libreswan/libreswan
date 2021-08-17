@@ -248,7 +248,7 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 	if (ugh != 0) {
 		llog(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
 		ub_resolve_free(result);
-		return FALSE;
+		return false;
 	}
 
 	if (result->bogus) {
@@ -256,7 +256,7 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 			    "ERROR: %s failed DNSSEC validation!",
 			    result->qname);
 		ub_resolve_free(result);
-		return FALSE;
+		return false;
 	}
 
 	if (!result->havedata) {
@@ -268,7 +268,7 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 				result->bogus ? "BOGUS" : "insecure");
 		}
 		ub_resolve_free(result);
-		return FALSE;
+		return false;
 	}
 
 	if (!result->secure) {

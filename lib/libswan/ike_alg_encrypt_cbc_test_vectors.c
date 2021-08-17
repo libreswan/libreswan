@@ -130,7 +130,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 			struct logger *logger)
 {
 	const char *op = encrypt ? "encrypt" : "decrypt";
-	bool ok = TRUE;
+	bool ok = true;
 	chunk_t iv = decode_to_chunk("IV: ", encoded_iv);
 
 	/*
@@ -151,13 +151,13 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	if (!verify_hunk(op, expected, tmp)) {
 		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: output does not match",
 		     description, op);
-		ok = FALSE;
+		ok = false;
 	}
 	if (!verify_bytes("updated CBC IV", iv.ptr, iv.len,
 			  expected_iv.ptr + expected_iv.len - iv.len, iv.len)) {
 		DBGF(DBG_CRYPT, "test_cbc_op: %s: %s: IV does not match",
 		     description, op);
-		ok = FALSE;
+		ok = false;
 	}
 
 	free_chunk_content(&iv);
@@ -177,7 +177,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct cbc_test_vector *test,
 			    struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 
 	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
@@ -185,14 +185,14 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 			 "plaintext: ", test->plaintext,
 			 "ciphertext: ", test->ciphertext,
 			 logger)) {
-		ok = FALSE;
+		ok = false;
 	}
 	if (!test_cbc_op(encrypt_desc, test->description, 0,
 			 sym_key, test->iv,
 			 "cipertext: ", test->ciphertext,
 			 "plaintext: ", test->plaintext,
 			 logger)) {
-		ok = FALSE;
+		ok = false;
 	}
 
 	/* Clean up. */
@@ -207,12 +207,12 @@ bool test_cbc_vectors(const struct encrypt_desc *desc,
 		      const struct cbc_test_vector *tests,
 		      struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 	const struct cbc_test_vector *test;
 	for (test = tests; test->description != NULL; test++) {
 		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_cbc_vector(desc, test, logger)) {
-			ok = FALSE;
+			ok = false;
 		}
 	}
 	return ok;

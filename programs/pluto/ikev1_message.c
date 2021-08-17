@@ -122,7 +122,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
-			(close_output_pbs(&z), TRUE);
+			(close_output_pbs(&z), true);
 	}
 	}
 }

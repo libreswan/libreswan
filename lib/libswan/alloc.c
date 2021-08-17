@@ -31,7 +31,7 @@
 
 #include "lswalloc.h"
 
-bool leak_detective = FALSE;	/* must not change after first alloc! */
+bool leak_detective = false;	/* must not change after first alloc! */
 
 /*
  * memory allocation

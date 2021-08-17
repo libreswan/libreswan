@@ -298,7 +298,7 @@ static void init_netlink(struct logger *logger)
 	 * IPIP=10 which conflicts with the aboe, that might be the
 	 * source of the problem?
 	 */
-	can_do_IPcomp = TRUE;
+	can_do_IPcomp = true;
 
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
@@ -388,7 +388,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
 				  description, story);
-			return FALSE;
+			return false;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
 				    "netlink read truncated message: %zd bytes; ignore message", r);
@@ -414,7 +414,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			    description, story,
 			    len, (size_t) rsp.n.nlmsg_len);
-		return FALSE;
+		return false;
 	}
 
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
@@ -423,7 +423,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 				    "ERROR: netlink response for %s %s included errno %d: %s",
 				    description, story, -rsp.u.e.error,
 				    strerror(-rsp.u.e.error));
-			return FALSE;
+			return false;
 		}
 		/*
 		 * What the heck does a 0 error mean?
@@ -436,7 +436,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		/* ignore */
 	}
 	if (rbuf == NULL) {
-		return TRUE;
+		return true;
 	}
 	if (rsp.n.nlmsg_type != expected_resp_type) {
 		llog(RC_LOG_SERIOUS, logger,
@@ -444,10 +444,10 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			    sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			    description, story,
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type));
-		return FALSE;
+		return false;
 	}
 	memcpy(rbuf, &rsp, r);
-	return TRUE;
+	return true;
 }
 
 /*
@@ -939,7 +939,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		proto = &ip_protocol_ah;
 		proto_info = &st->st_ah;
 	} else {
-		return FALSE;
+		return false;
 	}
 
 	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
@@ -1035,7 +1035,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	dbg("%s", story->buf);
 
 	*ret_sa = sa;
-	return TRUE;
+	return true;
 }
 
 static bool migrate_xfrm_sa(const struct kernel_sa *sa,
@@ -1416,7 +1416,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			llog(RC_LOG_SERIOUS, logger,
 				    "XFRM: unknown authentication algorithm: %s",
 				    sa->integ->common.fqn);
-			return FALSE;
+			return false;
 		}
 
 		/*
@@ -1485,7 +1485,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 			llog(RC_LOG_SERIOUS, logger,
 				    "unknown encryption algorithm: %s",
 				    sa->encrypt->common.fqn);
-			return FALSE;
+			return false;
 		}
 
 		if (encrypt_desc_is_aead(sa->encrypt)) {
@@ -2049,14 +2049,14 @@ static bool netlink_get(int fd, struct logger *logger)
 
 	if (r < 0) {
 		if (errno == EAGAIN)
-			return FALSE;
+			return false;
 
 		if (errno != EINTR) {
 			log_errno(logger, errno,
 				  "kernel: recvfrom() failed in netlink_get: errno(%d): %s",
 				  errno, strerror(errno));
 		}
-		return TRUE;
+		return true;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		llog(RC_LOG, logger,
 			    "kernel: netlink_get read truncated message: %zd bytes; ignore message",
@@ -2067,7 +2067,7 @@ static bool netlink_get(int fd, struct logger *logger)
 		dbg("kernel: netlink_get: ignoring %s message from process %u",
 		    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
 		    addr.nl_pid);
-		return TRUE;
+		return true;
 	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		llog(RC_LOG, logger,
 		     "kernel: netlink_get: read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
@@ -2102,7 +2102,7 @@ static bool netlink_get(int fd, struct logger *logger)
 		break;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void netlink_process_msg(int fd, struct logger *logger)
@@ -2173,7 +2173,7 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 	deltatime_t idle_time;
 
 	passert(st != NULL);
-	return !get_sa_info(st, TRUE, &idle_time) ||
+	return !get_sa_info(st, true, &idle_time) ||
 		deltatime_cmp(idle_time, >=, idle_max);
 }
 
@@ -2216,7 +2216,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			break;
 		case KP_ADD_OUTBOUND:
 			/* add nothing == do nothing */
-			return TRUE;
+			return true;
 
 		case KP_DELETE_OUTBOUND:
 			/* delete remains delete */
@@ -2252,7 +2252,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			 * we don't actually have an eroute
 			 */
 			eclipse_count--;
-			return TRUE;
+			return true;
 
 		case KP_ADD_OUTBOUND:
 		default:
@@ -2294,7 +2294,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			ET_INT,
 			esp_transport_proto_info,
 			deltatime(0),
-			calculate_sa_prio(c, FALSE),
+			calculate_sa_prio(c, false),
 			&c->sa_marks,
 			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 			HUNK_AS_SHUNK(sr->this.sec_label), logger,
@@ -2323,7 +2323,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  ET_INT,
 			  esp_transport_proto_info,
 			  deltatime(0),
-			  calculate_sa_prio(c, FALSE),
+			  calculate_sa_prio(c, false),
 			  &c->sa_marks,
 			  0, /* xfrm_if_id needed for shunt? */
 			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
@@ -2352,8 +2352,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		bool after = FALSE;	/* has vfp passed ifp on the list? */
-		bool bad = FALSE;
+		bool after = false;	/* has vfp passed ifp on the list? */
+		bool bad = false;
 		struct raw_iface *vfp;
 
 		/* ignore if virtual (ipsec*) interface */
@@ -2396,7 +2396,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 					/* XXX: isn't this always true? */
 					if (kernel_ops->type == USE_XFRM) {
 						if (after) {
-							bad = TRUE;
+							bad = true;
 							break;
 						}
 						continue;
@@ -2409,7 +2409,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 							    ifp->name, vfp->name,
 							    ipstr(&ifp->addr, &b));
 					}
-					bad = TRUE;
+					bad = true;
 				}
 			}
 		}
@@ -2495,12 +2495,12 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
 			      "Get SA", sa->story,
 			      &recv_errno, logger)) {
-		return FALSE;
+		return false;
 	}
 
 	*bytes = rsp.u.info.curlft.bytes;
 	*add_time = rsp.u.info.curlft.add_time;
-	return TRUE;
+	return true;
 }
 
 /* add bypass policies/holes icmp */
@@ -2549,23 +2549,23 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.sport_mask = 0xffff;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
-			return FALSE;
+			return false;
 
 		req.u.p.dir = XFRM_POLICY_FWD;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
-			return FALSE;
+			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
-			return FALSE;
+			return false;
 	} else {
 		req.u.p.sel.dport = htons(port);
 		req.u.p.sel.dport_mask = 0xffff;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
-			return FALSE;
+			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
 
@@ -2575,10 +2575,10 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.dport_mask = 0;
 
 		if (!netlink_policy(&req.n, 1, text, logger))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void netlink_v6holes(struct logger *logger)
@@ -2657,7 +2657,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 			  "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
 		close(nl_fd);
 
-		return FALSE;
+		return false;
 	}
 
 	/* hdr->nlmsg_seq = ++seq; */
@@ -2669,13 +2669,13 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 		log_errno(logger, errno,
 			  "netlink write() xfrm_migrate_support lookup");
 		close(nl_fd);
-		return FALSE;
+		return false;
 	} else if ((size_t)r != len) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);
-		return FALSE;
+		return false;
 	}
 
 	for (;;) {
@@ -2699,10 +2699,10 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 
 	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -ENOPROTOOPT) {
 		dbg("MOBIKE will fail got ENOPROTOOPT");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static err_t netlink_migrate_sa_check(struct logger *logger)
@@ -2809,8 +2809,8 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
-	.overlap_supported = FALSE,
-	.sha2_truncbug_support = TRUE,
+	.overlap_supported = false,
+	.sha2_truncbug_support = true,
 	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_offload = netlink_detect_offload,

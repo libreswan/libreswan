@@ -210,12 +210,12 @@ bool test_prf_vectors(const struct prf_desc *desc,
 		      const struct prf_test_vector *tests,
 		      struct logger *logger)
 {
-	bool ok = TRUE;
+	bool ok = true;
 	for (const struct prf_test_vector *test = tests;
 	     test->description != NULL; test++) {
 		llog(RC_LOG, logger, "  %s", test->description);
 		if (!test_prf_vector(desc, test, logger)) {
-			ok = FALSE;
+			ok = false;
 		}
 	}
 	return ok;

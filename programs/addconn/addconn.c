@@ -225,18 +225,18 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_init_log(argv[0]);
 
 	int opt;
-	bool autoall = FALSE;
-	bool configsetup = FALSE;
-	bool checkconfig = FALSE;
+	bool autoall = false;
+	bool configsetup = false;
+	bool checkconfig = false;
 	const char *export = "export"; /* display export before the foo=bar or not */
 	bool
-		dolist = FALSE,
-		listadd = FALSE,
-		listroute = FALSE,
-		liststart = FALSE,
-		listignore = FALSE,
-		listall = FALSE,
-		liststack = FALSE;
+		dolist = false,
+		listadd = false,
+		listroute = false,
+		liststart = false,
+		listignore = false,
+		listall = false,
+		liststack = false;
 	char *configfile = NULL;
 	const char *varprefix = "";
 	int exit_status = 0;
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'a':
-			autoall = TRUE;
+			autoall = true;
 			break;
 
 		case 'D':
@@ -268,11 +268,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			configsetup = TRUE;
+			configsetup = true;
 			break;
 
 		case 'K':
-			checkconfig = TRUE;
+			checkconfig = true;
 			break;
 
 		case 'N':
@@ -288,33 +288,33 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'L':
-			listadd = TRUE;
-			dolist = TRUE;
+			listadd = true;
+			dolist = true;
 			break;
 
 		case 'r':
-			listroute = TRUE;
-			dolist = TRUE;
+			listroute = true;
+			dolist = true;
 			break;
 
 		case 's':
-			liststart = TRUE;
-			dolist = TRUE;
+			liststart = true;
+			dolist = true;
 			break;
 
 		case 'S':
-			liststack = TRUE;
-			dolist = TRUE;
+			liststack = true;
+			dolist = true;
 			break;
 
 		case 'i':
-			listignore = TRUE;
-			dolist = TRUE;
+			listignore = true;
+			dolist = true;
 			break;
 
 		case 'A':
-			listall = TRUE;
-			dolist = TRUE;
+			listall = true;
+			dolist = true;
 			break;
 
 		case 'P':
@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
 	if (verbose > 0)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose != 0, TRUE, verbose == 0);
+	starter_use_log(verbose != 0, true, verbose == 0);
 
 	struct starter_config *cfg = NULL;
 

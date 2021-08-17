@@ -202,11 +202,11 @@ bool has_preloaded_public_key(const struct state *st)
 			    same_id(&c->spd.that.id, &key->id) &&
 			    is_realtime_epoch(key->until_time)) {
 				/* found a preloaded public key */
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 void initialize_new_state(struct state *st,

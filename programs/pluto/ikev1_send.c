@@ -132,12 +132,12 @@ static bool send_v1_frags(struct state *st, const char *where)
 					     chunk2(frag_prefix,
 						    NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
 					     chunk2(packet_cursor, data_len)))
-			return FALSE;
+			return false;
 
 		packet_remainder_len -= data_len;
 		packet_cursor += data_len;
 	}
-	return TRUE;
+	return true;
 }
 
 static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resending)
@@ -180,7 +180,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 {
 	if (st->st_interface == NULL) {
 		log_state(RC_LOG, st, "Cannot send packet - interface vanished!");
-		return FALSE;
+		return false;
 	}
 	/* another bandaid */
 	if (st->st_v1_tpacket.ptr == NULL) {
@@ -217,7 +217,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 
 bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 {
-	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, TRUE);
+	bool ret = send_or_resend_v1_ike_msg_from_state(st, where, true);
 
 	if (st->st_state->kind == STATE_XAUTH_R0 &&
 	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
@@ -231,7 +231,7 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 bool record_and_send_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
 	record_outbound_v1_ike_msg(st, pbs, what);
-	return send_or_resend_v1_ike_msg_from_state(st, what, FALSE);
+	return send_or_resend_v1_ike_msg_from_state(st, what, false);
 }
 
 void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *what)

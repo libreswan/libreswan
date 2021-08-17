@@ -53,10 +53,10 @@ static struct log_param log_param = {
 };
 
 bool
-	log_to_stderr = TRUE,		/* should log go to stderr? */
-	log_to_syslog = TRUE,		/* should log go to syslog? */
-	log_append = TRUE,
-	log_to_audit = FALSE;
+	log_to_stderr = true,		/* should log go to stderr? */
+	log_to_syslog = true,		/* should log go to syslog? */
+	log_append = true,
+	log_to_audit = false;
 
 char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;

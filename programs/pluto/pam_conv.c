@@ -171,7 +171,7 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 
 		/* success! */
 		pam_end(pamh, PAM_SUCCESS);
-		return TRUE;
+		return true;
 	} while (FALSE);
 
 	/* common failure code */
@@ -181,5 +181,5 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 		    arg->st_serialno, arg->c_name, arg->c_instance_serial,
 		    arg->name);
 	pam_end(pamh, retval);
-	return FALSE;
+	return false;
 }

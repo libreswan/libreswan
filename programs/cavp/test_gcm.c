@@ -76,13 +76,13 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	8,
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
@@ -94,13 +94,13 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	8,
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
@@ -112,13 +112,13 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	8,
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
@@ -130,13 +130,13 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	8,
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,

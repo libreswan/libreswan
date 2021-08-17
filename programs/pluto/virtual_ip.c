@@ -85,7 +85,7 @@ static bool read_subnet(const char *src, size_t len,
 		afi = NULL;	/* "guess from src" */
 	}
 
-	bool incl = TRUE;
+	bool incl = true;
 
 	if (dstexcl != NULL)
 		*isincl = incl = !eat(p, "!");
@@ -95,10 +95,10 @@ static bool read_subnet(const char *src, size_t len,
 	if (ugh != NULL) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "virtual-private entry is not a proper subnet: %s", ugh);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 void free_virtual_ip(void)
@@ -131,7 +131,7 @@ void init_virtual_ip(const char *private_list,
 		if (next == NULL)
 			next = str + strlen(str);
 
-		bool incl = FALSE;
+		bool incl = false;
 		ip_subnet sub;	/* sink: value never used */
 
 		if (read_subnet(str, next - str, &sub, &sub, &incl, logger)) {
@@ -168,7 +168,7 @@ void init_virtual_ip(const char *private_list,
 			if (next == NULL)
 				next = str + strlen(str);
 
-			bool incl = FALSE;
+			bool incl = false;
 			if (read_subnet(str, next - str,
 					&(private_net_incl[i_incl]),
 					&(private_net_excl[i_excl]),
@@ -332,9 +332,9 @@ bool is_virtual_connection(const struct connection *c)
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next)
 		if (sr->that.virt != NULL)
-			return TRUE;
+			return true;
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -372,9 +372,9 @@ static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
 {
 	for (int i = 0; i < len; i++)
 		if (subnet_in_subnet(peer_net, list[i]))
-			return TRUE;
+			return true;
 
-	return FALSE;
+	return false;
 }
 
 /*

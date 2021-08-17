@@ -144,7 +144,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 	}
 
-	dnsr->fwd_addr_valid = TRUE;
+	dnsr->fwd_addr_valid = true;
 	endpoint_buf ra;
 	dbg("address of IDi %s match remote address %s",
 	    dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
@@ -384,7 +384,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 
 	p->qclass = ns_c_in;
 	p->qtype = qtype;
-	p->cache_hit = TRUE;
+	p->cache_hit = true;
 	p->dns_status = DNS_SUSPEND;
 	p->cb = dnsr_cb;
 
