@@ -759,10 +759,10 @@ void IKE_SA_established(const struct ike_sa *ike)
 				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
-					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
-					    c->newest_ipsec_sa, c->name);
+					dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
+					    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
 					old_p2->st_send_delete = DONT_SEND_DELETE;
-					event_force(EVENT_SA_EXPIRE, old_p2);
+					event_force(EVENT_SA_DISCARD, old_p2);
 				}
 			}
 		}
