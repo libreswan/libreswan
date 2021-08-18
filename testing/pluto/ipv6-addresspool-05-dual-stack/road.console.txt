@@ -23,7 +23,7 @@ road #
 destination 2001:db8:1:2::23 is alive
 road #
  ip route get to 2001:db8:1:2::23
-2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0 src 2001:db8:1:3::209 metric 1024 pref medium
+2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0
 road #
  # change the default route
 road #
@@ -64,7 +64,23 @@ Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 0, has_peer = 0
+seeking_src = 0, seeking_gateway = 1, has_dst = 1
+dst ::1 via  dev lo src  table 254
+dst 2001:db8:1:3:: via  dev eth0 src  table 254
+dst fe80:: via  dev eth0 src  table 254
+dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
+set nexthop: fe80::1000:ff:fe32:64ba
+dst ::1 via  dev lo src  table 255 (ignored)
+dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
+dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
+dst fe80:: via  dev eth0 src  table 255 (ignored)
+dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
+dst ff00:: via  dev eth0 src  table 255 (ignored)
+seeking_src = 1, seeking_gateway = 0, has_peer = 1
+seeking_src = 1, seeking_gateway = 0, has_dst = 1
+dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:1:3::209 table 254
+set addr: 2001:db8:1:3::209
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
@@ -85,8 +101,7 @@ road #
 1v2 "road"[1] 2001:db8:1:2::23 #1: initiating IKEv2 connection
 1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request
 1v2 "road"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "road"[1] 2001:db8:1:2::23 #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "road"[1] 2001:db8:1:2::23 #1: authenticated using RSA with SHA2_512 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "road"[1] 2001:db8:1:2::23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate '@east.testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
 004 "road"[1] 2001:db8:1:2::23 #2: established Child SA; IPsec tunnel [2001:db8:0:3:1::-2001:db8:0:3:1:::0-65535 0] -> [::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 road #
@@ -132,7 +147,26 @@ Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
 seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 0, has_peer = 0
+seeking_src = 0, seeking_gateway = 1, has_dst = 1
+dst ::1 via  dev lo src  table 254
+dst 2001:db8:0:3:1:: via  dev lo src  table 254
+dst 2001:db8:1:3:: via  dev eth0 src  table 254
+dst 2000:: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
+dst fe80:: via  dev eth0 src  table 254
+dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
+set nexthop: fe80::1000:ff:fe32:64ba
+dst ::1 via  dev lo src  table 255 (ignored)
+dst 2001:db8:0:3:1:: via  dev lo src  table 255 (ignored)
+dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
+dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
+dst fe80:: via  dev eth0 src  table 255 (ignored)
+dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
+dst ff00:: via  dev eth0 src  table 255 (ignored)
+seeking_src = 1, seeking_gateway = 0, has_peer = 1
+seeking_src = 1, seeking_gateway = 0, has_dst = 1
+dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
+set addr: 2001:db8:0:3:1::
+seeking_src = 0, seeking_gateway = 0, has_peer = 1
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
@@ -149,4 +183,4 @@ road #
  echo done
 done
 road #
-
+ 

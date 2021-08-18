@@ -39,6 +39,8 @@ north #
 002 "north-east" #2: up-client output: updating resolvconf
 004 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=xnorth}
 north #
+ sleep 2
+north #
  ../../guestbin/ping-once.sh --up -I 192.0.2.201 192.0.2.254
 up
 north #
