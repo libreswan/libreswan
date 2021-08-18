@@ -45,6 +45,6 @@ west #
 west #
  # east howvever, should be attempting to connect to west because it has auto=start
 west #
- ipsec status |grep EVENT_RETRANSMIT | sed "s/EVENT_RETRANSMIT in .*$/EVENT_RETRANSMIT in .../"
+ ipsec status |grep RETRANSMIT | sed "s/RETRANSMIT in .*$/RETRANSMIT in .../"
 west #
  

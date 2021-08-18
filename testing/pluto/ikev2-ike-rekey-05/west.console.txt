@@ -135,8 +135,8 @@ west #
 west #
  grep "STATE_V2_PARENT_I1 to " /tmp/pluto.log
 | ikev2_calculate_psk_sighash() called from STATE_V2_PARENT_I1 to create PSK with authby=secret
-| transitioning from state STATE_V2_PARENT_I1 to state STATE_PARENT_I2
+| transitioning from state STATE_V2_PARENT_I1 to state STATE_V2_PARENT_I2
 west #
- grep "PARENT_R1 with status STF_OK" /tmp/pluto.log
+ grep "STATE_V2_PARENT_R1 with status STF_OK" /tmp/pluto.log
 west #
  
