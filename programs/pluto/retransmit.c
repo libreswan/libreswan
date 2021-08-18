@@ -174,7 +174,7 @@ enum retransmit_status retransmit(struct state *st)
 	}
 
 	if (st->st_interface->protocol == &ip_protocol_tcp) {
-		log_state(RC_LOG, st, "TCP: retransmit skipped because TCP is handling retransmits");
+		dbg_retransmit(st, "TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;
 	}
 
