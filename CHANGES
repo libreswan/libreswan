@@ -2,15 +2,15 @@
 See also https://libreswan.org/
 
 v4.5 (unreleased)
-* IKEv1: multiple subnets could lead to crossed wires [Paul]
+* IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
 * IKEv2: don't tear down IKE SA on TS_UNACCEPTABLE [Paul]
 * IKEv2: unpend/delete Child SA when rejected by IKE_AUTH response [Andrew]
 * IKEv2: mobike: resolve_defaultroute_one() updates [Andrew]
-* IKEv2: mobike: preten sending duplicate mobike response [Andrew]
+* IKEv2: mobike: prevent sending duplicate mobike response [Andrew]
 * IKEv2: Support for Childless IKE SA [Andrew]
 * IKEv2: redirect: make peer redirecting in IKE_AUTH childless [Vukasin]
 * IKEv2: Labeled IPsec --up causes Childless IKE SA [Andrew/Paul]
-* IKEv2: Labeled IPsec uses one set of SPD policies (like IKEv1) [Andrew/Paul]
+* IKEv2: Labeled IPsec conns share SPD policies (as IKEv1) [Andrew/Paul/Kavinda]
 * IKEv2: Performance; eliminate more O(#CONNECTIONS) code [Andrew]
 * pluto: mismatched subnets= could take down all conns [Paul]
 * pluto: Don't delete existing IKE SA of connection instance [Paul]
@@ -20,6 +20,7 @@ v4.5 (unreleased)
 * X509: directly append new CRL requests to the fetch queue [Andrew]
 * whack: implement --impair trigger:<global-event> [Andrew]
 * ipsec.service: remove reload which did not work as expected [Tuomo]
+* portexcludes: update to use python3 [Kim]
 * building: fix NetBSD build [Andrew]
 * building: fix arm / aarch64 build [kekePower@github]
 * building: Remove support for RHEL6 USE_OLD_SELINUX [Paul]
