@@ -15,6 +15,9 @@ east #
 initdone
 east #
  ipsec status | grep STATE_
+000 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
+000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
+000 #5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
 000 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
 000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 east #
@@ -55,5 +58,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
+east #
+ ../../guestbin/xfrmcheck.sh
 east #
  
