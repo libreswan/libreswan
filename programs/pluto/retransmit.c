@@ -130,7 +130,7 @@ void start_retransmits(struct state *st)
 		 */
 		rt->delay = c->config->retransmit_timeout;
 		deltatime_buf db;
-		log_state(RC_LOG, st, "IMPAIR: suppressing retransmits; scheduling timeout in %s seconds",
+		dbg_retransmit(st, "IMPAIR: suppressing retransmits; scheduling timeout in %s seconds",
 			  str_deltatime(rt->delay, &db));
 	}
 	rt->start = mononow();
