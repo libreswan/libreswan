@@ -1,0 +1,3 @@
+east has two pools for different tennants
+
+ensure connection switching based on rightid works properly
