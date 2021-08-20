@@ -787,7 +787,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 			warned_dropped_dhgr = true;
 		}
 
-		 if (emp_sp != NULL) {
+		if (emp_sp != NULL) {
 			/*
 			 * Exclude 3des et.al. which do not include
 			 * default key lengths in the proposal.
@@ -865,10 +865,10 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				}
 			}
 			last_modp = algs.dh->group;
-		 }
+		}
 
-		 pexpect(emp_sp == NULL);
-		 transcnt++;
+		pexpect(emp_sp == NULL);
+		transcnt++;
 	}
 
 	if (gsp != NULL)
