@@ -47,7 +47,7 @@ extern void llog_passert(const struct logger *logger, where_t where,
 			const struct logger *logger_ = LOGGER;		\
 			llog_passert(logger_, here, "%s", #ASSERTION);	\
 		}							\
-		true;							\
+		(void) true;							\
 	})
 
 /*
