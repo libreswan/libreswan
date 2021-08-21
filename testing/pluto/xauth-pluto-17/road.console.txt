@@ -35,7 +35,7 @@ road #
 004 "xauth-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 002 "xauth-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "xauth-road-eastnet-psk" #2: sent Quick Mode request
-004 "xauth-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active username=use2}
+004 "xauth-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use2}
 road #
  # let a few DPD probes happen
 road #
@@ -44,7 +44,7 @@ road #
  ipsec auto --up xauth-road-eastnet-psk
 002 "xauth-road-eastnet-psk" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "xauth-road-eastnet-psk" #3: sent Quick Mode request
-004 "xauth-road-eastnet-psk" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=active username=use2}
+004 "xauth-road-eastnet-psk" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use2}
 road #
  sleep 10
 road #

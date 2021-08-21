@@ -38,7 +38,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
-004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ping -n -q -c 2 -I 192.0.2.1 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
@@ -81,7 +81,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #4: sent Quick Mode request
-004 "westnet-eastnet-ipv4-psk-ikev1" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
@@ -112,7 +112,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #5: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #6: sent Quick Mode request
-004 "westnet-eastnet-ipv4-psk-ikev1" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
@@ -143,7 +143,7 @@ road #
 004 "westnet-eastnet-ipv4-psk-ikev1" #7: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #8: sent Quick Mode request
-004 "westnet-eastnet-ipv4-psk-ikev1" #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
+004 "westnet-eastnet-ipv4-psk-ikev1" #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ping -n -q -c 4 -I 192.0.2.1 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.

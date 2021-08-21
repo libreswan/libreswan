@@ -37,7 +37,7 @@ west #
 004 "westnet-eastnet-ah" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ah" #2: initiating Quick Mode IKEv1+RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-ah" #2: sent Quick Mode request
-004 "westnet-eastnet-ah" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ah" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
