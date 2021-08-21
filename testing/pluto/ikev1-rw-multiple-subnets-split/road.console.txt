@@ -21,12 +21,12 @@ road #
 004 "road-1" #1: IKE SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 002 "road-1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-1" #2: sent Quick Mode request
-004 "road-1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road-1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --up road-2
 002 "road-2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-2" #3: sent Quick Mode request
-004 "road-2" #3: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road-2" #3: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up

@@ -254,6 +254,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 	const char *ini = "{";
 
 	if (st->st_esp.present) {
+		jam_string(buf, ini);
+		ini = " ";
 		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
@@ -266,13 +268,12 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		jam(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
-			ini,
-			tcp ? "inTCP" : nat ? "inUDP" : "",
-			esn ? "/ESN" : "",
-			tfc ? "/TFC" : "",
-			ntohl(st->st_esp.attrs.spi),
-			ntohl(st->st_esp.our_spi));
+		jam(buf, "ESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+		    tcp ? "inTCP" : nat ? "inUDP" : "",
+		    esn ? "/ESN" : "",
+		    tfc ? "/TFC" : "",
+		    ntohl(st->st_esp.attrs.spi),
+		    ntohl(st->st_esp.our_spi));
 		jam(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
 		/* log keylen when it is required and/or "interesting" */
 		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
@@ -286,57 +287,51 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 			jam_string(buf, "-");
 			jam_string(buf, st->st_pfs_group->common.fqn);
 		}
-
-		ini = " ";
 	}
 
 	if (st->st_ah.present) {
-		jam(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
-			ini,
-			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			ntohl(st->st_ah.attrs.spi),
-			ntohl(st->st_ah.our_spi),
-			st->st_ah.attrs.transattrs.ta_integ->common.fqn);
-
+		jam_string(buf, ini);
 		ini = " ";
+		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
+		    st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
+		    ntohl(st->st_ah.attrs.spi),
+		    ntohl(st->st_ah.our_spi),
+		    st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 	}
 
 	if (st->st_ipcomp.present) {
-		jam(buf, "%sIPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
-			ini,
-			ntohl(st->st_ipcomp.attrs.spi),
-			ntohl(st->st_ipcomp.our_spi));
-
+		jam_string(buf, ini);
 		ini = " ";
+		jam(buf, "IPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
+		    ntohl(st->st_ipcomp.attrs.spi),
+		    ntohl(st->st_ipcomp.our_spi));
+	}
+
+	if (address_is_specified(st->hidden_variables.st_nat_oa)) {
+		jam_string(buf, ini);
+		ini = " ";
+		jam_string(buf, "NATOA=");
+		jam_address_sensitive(buf, &st->hidden_variables.st_nat_oa);
+	}
+
+	if (address_is_specified(st->hidden_variables.st_natd)) {
+		jam_string(buf, ini);
+		ini = " ";
+		jam_string(buf, "NATD=");
+		jam_address_sensitive(buf, &st->hidden_variables.st_natd);
+		jam(buf, ":%d", endpoint_hport(st->st_remote_endpoint));
 	}
 
 	jam_string(buf, ini);
 	ini = " ";
-	jam_string(buf, "NATOA=");
-	/* XXX: can lswlog_ip() be used? */
-	ipstr_buf ipb;
-	jam_string(buf,
-		   (address_is_unset(&st->hidden_variables.st_nat_oa) ||
-		    address_is_any(st->hidden_variables.st_nat_oa)) ? "none" :
-		   ipstr(&st->hidden_variables.st_nat_oa, &ipb));
-
-	jam_string(buf, " NATD=");
-
-	if (address_is_unset(&st->hidden_variables.st_natd) ||
-	    address_is_any(st->hidden_variables.st_natd)) {
-		jam_string(buf, "none");
-	} else {
-		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
-		jam(buf, "%s:%d",
-		    str_address_sensitive(&st->hidden_variables.st_natd, &ipb),
-		    endpoint_hport(st->st_remote_endpoint));
-	}
-
-	jam(buf, (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) ? " DPD=unsupported" :
-			dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
+	jam(buf, "DPD=%s", (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd ? "unsupported" :
+			    dpd_active_locally(st) ? "active" :
+			    "passive"));
 
 	if (st->st_xauth_username[0] != '\0') {
-		jam_string(buf, " username=");
+		jam_string(buf, ini);
+		ini = " ";
+		jam_string(buf, "username=");
 		jam_string(buf, st->st_xauth_username);
 	}
 

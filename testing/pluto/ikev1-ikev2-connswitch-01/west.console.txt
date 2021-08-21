@@ -28,7 +28,7 @@ west #
 004 "westnet-eastnet1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet1" #2: sent Quick Mode request
-004 "westnet-eastnet1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # Should not re-use the existing ikev1 IKE SA, but a start a new ikev2 IKE SA
 west #
@@ -37,7 +37,7 @@ west #
 1v2 "westnet-eastnet2" #3: sent IKE_SA_INIT request
 1v2 "westnet-eastnet2" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet2" #3: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-004 "westnet-eastnet2" #4: established Child SA; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet2" #4: established Child SA; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  echo done
 done

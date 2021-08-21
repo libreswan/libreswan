@@ -34,7 +34,7 @@ road #
 002 "road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO
 1v1 "road-east" #2: sent Quick Mode request
 002 "road-east" #2: up-client output: updating resolvconf
-004 "road-east" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=xroad}
+004 "road-east" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=xroad}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.102 192.0.2.254
 up

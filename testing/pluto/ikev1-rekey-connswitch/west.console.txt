@@ -51,17 +51,17 @@ west #
 004 "TUNNEL-A" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "TUNNEL-A" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "TUNNEL-A" #2: sent Quick Mode request
-004 "TUNNEL-A" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "TUNNEL-A" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --up TUNNEL-B
 002 "TUNNEL-B" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "TUNNEL-B" #3: sent Quick Mode request
-004 "TUNNEL-B" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "TUNNEL-B" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --up TUNNEL-C
 002 "TUNNEL-C" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "TUNNEL-C" #4: sent Quick Mode request
-004 "TUNNEL-C" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "TUNNEL-C" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

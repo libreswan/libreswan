@@ -118,10 +118,10 @@ west #
 1v1 "westnet-eastnet-subnets/1x2" #3: sent Quick Mode request
 1v1 "westnet-eastnet-subnets/2x1" #4: sent Quick Mode request
 1v1 "westnet-eastnet-subnets/2x2" #5: sent Quick Mode request
-004 "westnet-eastnet-subnets/1x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
-004 "westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
-004 "westnet-eastnet-subnets/2x1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
-004 "westnet-eastnet-subnets/2x2" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-subnets/1x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "westnet-eastnet-subnets/2x1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "westnet-eastnet-subnets/2x2" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-subnets/1x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'

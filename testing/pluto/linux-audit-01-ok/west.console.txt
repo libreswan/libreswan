@@ -33,7 +33,7 @@ west #
 004 "ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1" #2: sent Quick Mode request
-004 "ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
+004 "ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
  ipsec auto --delete ikev1
 002 "ikev1": terminating SAs using this connection
@@ -51,7 +51,7 @@ west #
 004 "ikev1-aggr" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "ikev1-aggr" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO
 1v1 "ikev1-aggr" #4: sent Quick Mode request
-004 "ikev1-aggr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
+004 "ikev1-aggr" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
  ipsec auto --delete ikev1-aggr
 002 "ikev1-aggr": terminating SAs using this connection
@@ -65,7 +65,7 @@ west #
 1v2 "ikev2" #5: sent IKE_SA_INIT request
 1v2 "ikev2" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2" #5: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east-v2'
-004 "ikev2" #6: established Child SA; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+004 "ikev2" #6: established Child SA; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete ikev2
 002 "ikev2": terminating SAs using this connection
