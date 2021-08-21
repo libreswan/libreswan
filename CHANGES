@@ -1,6 +1,8 @@
 
 See also https://libreswan.org/
 
+v4.6 (unreleased)
+
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
 * IKEv2: don't tear down IKE SA on TS_UNACCEPTABLE [Paul]
