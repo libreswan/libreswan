@@ -1155,9 +1155,9 @@ kvmplutotest	nss-cert-ocsp-06		good
 kvmplutotest	nss-cert-ocsp-07-nourl		good
 kvmplutotest	nss-cert-ocsp-08-post		good
 #
-kvmplutotest	nss-cert-09-notyetvalid-initiator	good
+kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev1	good
 kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev2	good
-kvmplutotest	nss-cert-10-notyetvalid-responder	good
+kvmplutotest	nss-cert-10-notyetvalid-responder-ikev1	good
 kvmplutotest	nss-cert-10-notyetvalid-responder-ikev2	good
 #
 kvmplutotest	nss-cert-badca-01		good
