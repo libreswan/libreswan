@@ -34,7 +34,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->signature_skeyid(prf_desc, Ni, Nr,
@@ -51,7 +51,7 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->pre_shared_key_skeyid(prf_desc, pre_shared_key,
@@ -69,7 +69,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_d(prf_desc, skeyid, dh_secret,
@@ -87,7 +87,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_a(prf_desc, skeyid, skeyid_d, dh_secret,
@@ -105,7 +105,7 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->skeyid_e(prf_desc, skeyid, skeyid_a, dh_secret,
@@ -120,7 +120,7 @@ PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		dbgl(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
+		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
 	PK11SymKey *result = prf_desc->prf_ikev1_ops->appendix_b_keymat_e(prf_desc, encrypter, skeyid_e,

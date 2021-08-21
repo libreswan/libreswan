@@ -539,7 +539,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * Their ID isn't declared yet.
 		 */
 		connection_buf cib;
-		dbgl(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+		ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 		     pri_connection(c, &cib));
 		ip_address sender_address = endpoint_address(md->sender);
 		c = rw_instantiate(c, &sender_address, NULL, NULL);
@@ -549,7 +549,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		 * instantiation anyway (eg vnet=)
 		 */
 		if (c->kind == CK_TEMPLATE) {
-			dbgl(md->md_logger,
+			ldbg(md->md_logger,
 			     "local endpoint needs instantiation");
 			ip_address sender_address = endpoint_address(md->sender);
 			c = rw_instantiate(c, &sender_address, NULL, NULL);

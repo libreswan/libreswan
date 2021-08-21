@@ -249,7 +249,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (c == NULL) {
 			endpoint_buf b;
 			policy_buf pb;
-			dbgl(md->md_logger,
+			ldbg(md->md_logger,
 			     "%s message received on %s but no connection has been authorized with policy %s",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 			     str_endpoint(local_endpoint, &b),
@@ -261,7 +261,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		if (c->kind != CK_TEMPLATE) {
 			endpoint_buf b;
 			connection_buf cib;
-			dbgl(md->md_logger,
+			ldbg(md->md_logger,
 			     "%s message received on %s for "PRI_CONNECTION" with kind=%s dropped",
 			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 			     str_endpoint(local_endpoint, &b),
@@ -289,12 +289,12 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->ike_version == IKEv2) {
-			dbgl(md->md_logger, "oppo_instantiate");
+			ldbg(md->md_logger, "oppo_instantiate");
 			c = oppo_instantiate(c, &c->spd.that.id,
 					     &local_address, &remote_address);
 		} else {
 			/* regular roadwarrior */
-			dbgl(md->md_logger, "rw_instantiate");
+			ldbg(md->md_logger, "rw_instantiate");
 			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		}
 	} else {
@@ -306,12 +306,12 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		passert(c->spd.this.virt == NULL);
 
 		if (c->kind == CK_TEMPLATE && c->spd.that.virt != NULL) {
-			dbgl(md->md_logger,
+			ldbg(md->md_logger,
 			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		} else if ((c->kind == CK_TEMPLATE) &&
 				(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			dbgl(md->md_logger,
+			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
 			c = rw_instantiate(c, &remote_address, NULL, NULL);
 		}
@@ -363,7 +363,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 
 	connection_buf ci;
 	policy_buf pb;
-	dbgl(md->md_logger,
+	ldbg(md->md_logger,
 	     "found connection: "PRI_CONNECTION" with policy %s",
 	     pri_connection(c, &ci),
 	     str_policy(*policy, &pb));
@@ -382,12 +382,12 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 		if (!address_in_selector_range(sender, tmp->spd.that.client)) {
 			continue;
 		}
-		dbgl(md->md_logger,
+		ldbg(md->md_logger,
 		     "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
 		if (c->spd.that.client.maskbits >= tmp->spd.that.client.maskbits) {
 			continue;
 		}
-		dbgl(md->md_logger,
+		ldbg(md->md_logger,
 		     "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
 		     tmp->spd.that.client.maskbits,
 		     c->spd.that.client.maskbits);

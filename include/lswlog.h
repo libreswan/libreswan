@@ -331,7 +331,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBGF(COND, MESSAGE, ...) { if (DBGP(COND)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
 #define dbg(MESSAGE, ...) { if (DBGP(DBG_BASE)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
 
-#define dbgl(LOGGER, FMT, ...)					\
+#define ldbg(LOGGER, FMT, ...)					\
 	{							\
 		if (DBGP(DBG_BASE)) {				\
 			llog(DEBUG_STREAM, (LOGGER),		\
