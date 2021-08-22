@@ -3269,6 +3269,12 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 
 		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
+			connection_buf b1, b2;
+			indent = 2;
+			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
+				pri_connection(d, &b2), pri_connection(c, &b1));
+			indent = 3;
+
 			int wildcards;
 			bool matching_peer_id = (c->connalias != NULL && d->connalias != NULL && 
 						streq(c->connalias, d->connalias)) ||
@@ -3286,16 +3292,12 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 							d->spd.this.ca,
 							&our_pathlen);
 
-			connection_buf b1, b2;
-			indent = 2;
-			dbg_rhc("checking "PRI_CONNECTION" against "PRI_CONNECTION", best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
-				pri_connection(c, &b1), pri_connection(d, &b2),
+			dbg_rhc("best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
 				best_found != NULL ? best_found->name : "(none)",
 				matching_peer_id && matching_peer_ca && matching_requested_ca,
 				matching_peer_id, wildcards,
 				matching_peer_ca, peer_pathlen,
 				matching_requested_ca, our_pathlen);
-			indent = 3;
 
 			/*
 			 * 'You Tarzan, me Jane' check based on
