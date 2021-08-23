@@ -226,10 +226,10 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 */
 
 		/*
-		 * AA_2019 Why use nexthop and not peer->addr to look up src address
-		 * the lore is there is (old) bug when looking up IPv4 src
+		 * AA_2019 Why use nexthop and not peer->addr to look up src address?
+		 * The lore is that there is an (old) bug when looking up IPv4 src
 		 * IPv6 with gateway link local address will return link local
-		 * address and not the global address
+		 * address and not the global address.
 		 */
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
 		has_dst = true;
