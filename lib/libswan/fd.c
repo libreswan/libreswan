@@ -34,8 +34,7 @@ struct fd {
 struct fd *fd_dup(struct fd *fd, const struct where *where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	addref(fd, where);
-	return fd;
+	return addref(fd, where);
 }
 
 static void free_fd(void *obj, where_t where)
