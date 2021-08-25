@@ -30,9 +30,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <poll.h>       /* only used for forensic poll call */
 #include <sys/types.h>
 #include <sys/time.h>   /* only used for belt-and-suspenders select call */
-#include <sys/poll.h>   /* only used for forensic poll call */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

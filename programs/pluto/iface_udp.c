@@ -852,7 +852,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				llog(RC_LOG, logger,
 				     "unknown cmsg: level %d, type %d, len %zu",
 				     cm->cmsg_level, cm->cmsg_type,
-				     cm->cmsg_len);
+				     (size_t)cm->cmsg_len);
 			}
 		}
 	}
