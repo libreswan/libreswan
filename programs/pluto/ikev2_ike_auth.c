@@ -1058,23 +1058,22 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	}
 }
 
-static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
-									     struct msg_digest *md,
-									     const struct hash_signature *auth_sig)
+stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
+							       struct msg_digest *md,
+							       const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
 
 	/*
 	 * Update the parent state to make sure that it knows we have
 	 * authenticated properly.
-	 *
+	 */
+	v2_ike_sa_established(ike);
+	/*
 	 * XXX: is this double book keeping?  Same action happens in
 	 * success_v2_state_transition() and almost happens in
 	 * ikev2_ike_sa_established().
 	 */
-	c->newest_ike_sa = ike->sa.st_serialno;
-	ike->sa.st_viable_parent = true;
-	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);
 
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
