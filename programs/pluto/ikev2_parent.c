@@ -691,7 +691,7 @@ void IKE_SA_established(const struct ike_sa *ike)
 		 * Only do this for connections with the same name (can be shared ike sa)
 		 */
 		struct connection_query cq = { .where = HERE, .c = NULL, };
-		while (new2old_connection(&cq)) {
+		while (next_connection_new2old(&cq)) {
 			struct connection *d = cq.c;
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */

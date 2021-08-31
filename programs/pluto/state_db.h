@@ -102,7 +102,7 @@ struct state_query {
 	struct state *st;
 };
 
-bool new2old_state(struct state_query *query);
-bool old2new_state(struct state_query *query);
+bool next_state_new2old(struct state_query *query);
+bool next_state_old2new(struct state_query *query);
 
 #endif

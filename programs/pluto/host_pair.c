@@ -293,7 +293,7 @@ void release_dead_interfaces(struct logger *logger)
 	 * but presumably they are further down in the list?
 	 */
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
 		if (!oriented(c)) {

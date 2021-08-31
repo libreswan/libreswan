@@ -107,7 +107,7 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		if (no_inst && c->kind == CK_INSTANCE) {
 			continue;
@@ -271,7 +271,7 @@ int foreach_connection_by_alias(const char *alias,
 	int count = 0;
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *p = cq.c;
 
 		if (lsw_alias_cmp(alias, p->connalias))
@@ -307,7 +307,7 @@ int foreach_concrete_connection_by_name(const char *name,
 	 */
 	struct connection_query cq = { .where = HERE, .c = NULL, };
 	bool found = false;
-	while (old2new_connection(&cq)) {
+	while (next_connection_old2new(&cq)) {
 		struct connection *c = cq.c;
 		if (c->kind == CK_INSTANCE) {
 			continue;
@@ -334,7 +334,7 @@ int foreach_concrete_connection_by_name(const char *name,
 		    streq(c->name, name)) {
 			total += f(c, arg, logger);
 		}
-	} while (old2new_connection(&cq));
+	} while (next_connection_old2new(&cq));
 	return total;
 }
 
@@ -368,7 +368,7 @@ void delete_every_connection(void)
 {
 	struct connection_query cq = { .where = HERE, .c = NULL, };
 	/* Delete instances before templates. */
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		delete_connection(&c, true);
 	}
@@ -2563,7 +2563,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	    str_endpoints(local_client, remote_client, &eb));
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
 		if (c->kind == CK_GROUP) {
@@ -2980,7 +2980,7 @@ struct connection *route_owner(struct connection *c,
 
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *d = cq.c;
 
 		if (!oriented(d))
@@ -3500,7 +3500,7 @@ static bool is_virtual_net_used(struct connection *c,
 				const struct id *peer_id)
 {
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *d = cq.c;
 		switch (d->kind) {
 		case CK_PERMANENT:
@@ -4333,7 +4333,7 @@ void show_connections_status(struct show *s)
 	show_separator(s);
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		count++;
 		if (c->spd.routing == RT_ROUTED_TUNNEL)
@@ -4350,7 +4350,7 @@ void show_connections_status(struct show *s)
 
 
 		struct connection_query cq = { .where = HERE, .c = NULL, };
-		while (new2old_connection(&cq)) {
+		while (next_connection_new2old(&cq)) {
 			array[i++] = cq.c;
 		}
 
@@ -4482,7 +4482,7 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 	/* XXX This logic also predates support for protoports, which isn't handled below */
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *ue = cq.c;
 
 		for (struct spd_route *srue = &ue->spd; srue != NULL; srue =srue->spd_next) {

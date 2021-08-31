@@ -1001,7 +1001,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
 struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
 {
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		const struct spd_route *sr;
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
@@ -1155,7 +1155,7 @@ void connection_check_ddns(struct logger *logger)
 	threadtime_t start = threadtime_start();
 
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		connection_check_ddns1(c, logger);
 	}
@@ -1174,7 +1174,7 @@ void connection_check_ddns(struct logger *logger)
 void connection_check_phase2(struct logger *logger)
 {
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
 		if (NEVER_NEGOTIATE(c->policy)) {

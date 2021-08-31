@@ -96,7 +96,7 @@ static bool query_matches(struct connection *c UNUSED, struct connection_query *
 	return true; /* sure */
 }
 
-bool old2new_connection(struct connection_query *query)
+bool next_connection_old2new(struct connection_query *query)
 {
 #define ADV newer
 	if (query->internal == NULL) {
@@ -127,7 +127,7 @@ bool old2new_connection(struct connection_query *query)
 #undef ADV
 }
 
-bool new2old_connection(struct connection_query *query)
+bool next_connection_new2old(struct connection_query *query)
 {
 #define ADV older
 	if (query->internal == NULL) {

@@ -667,7 +667,7 @@ struct connection_query {
 	struct connection *c;
 };
 
-bool old2new_connection(struct connection_query *query);
-bool new2old_connection(struct connection_query *query);
+bool next_connection_old2new(struct connection_query *query);
+bool next_connection_new2old(struct connection_query *query);
 
 #endif

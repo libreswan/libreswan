@@ -406,7 +406,7 @@ static bool query_matches(struct state *st, struct state_query *query)
 	return true;
 }
 
-bool old2new_state(struct state_query *query)
+bool next_state_old2new(struct state_query *query)
 {
 #define ADV newer /* old-to-new */
 	if (query->internal == NULL) {

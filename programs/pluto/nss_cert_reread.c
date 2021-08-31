@@ -76,7 +76,7 @@ static void reread_cert(struct connection *c, struct logger *logger)
 void reread_cert_connections(struct logger *logger)
 {
 	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (new2old_connection(&cq)) {
+	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		reread_cert(c, logger);
 	}

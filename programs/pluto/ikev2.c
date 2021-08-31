@@ -1014,7 +1014,7 @@ static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid
 			.ike_spis = &ike->sa.st_ike_spis,
 		};
 		st = NULL;
-		while (old2new_state(&stq)) {
+		while (next_state_old2new(&stq)) {
 			if (stq.st->st_v2_msgid_wip.initiator == msgid) {
 				st = stq.st;
 				break;
@@ -1045,7 +1045,7 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
 			.ike_spis = &ike->sa.st_ike_spis,
 		};
 		st = NULL;
-		while (old2new_state(&stq)) {
+		while (next_state_old2new(&stq)) {
 			if (stq.st->st_v2_msgid_wip.responder == msgid) {
 				st = stq.st;
 				break;
@@ -2994,7 +2994,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		.ike = ike,
 	};
 
-	while (old2new_state(&query)) {
+	while (next_state_old2new(&query)) {
 		struct state *st = query.st;
 
 		/* larval child state? */
