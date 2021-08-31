@@ -1076,6 +1076,12 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 	 */
 	pstat_sa_established(&ike->sa);
 
+	/*
+	 * Wipes any connections that were using an old version of
+	 * this SA?  Is this too early or too late?
+	 */
+	wipe_old_v2_connections(ike);
+
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {
@@ -1108,22 +1114,6 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 			send_redirect = true;
 		}
 	}
-
-	/*
-	 * Wipes any connections that were using an old version of
-	 * this SA?  Is this too early or too late?
-	 *
-	 * XXX: The call was originally sandwiched vis:
-	 *
-	 *    - create child sa()
-	 *    - add_xfrmi()
-	 *    - IKE_SA_established()
-	 *    - install_ipsec_sa()
-	 *
-	 * which means things were deleted after the child sa was
-	 * created.  But now it happens before.  Is this a problem?
-	 */
-	IKE_SA_established(ike);
 
 	/* make sure HDR is at start of a clean buffer */
 	struct pbs_out reply_stream = open_pbs_out("reply packet",

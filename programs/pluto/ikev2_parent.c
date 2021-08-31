@@ -633,23 +633,18 @@ void v2_event_sa_reauth(struct state *st)
 }
 
 /*
- * an ISAKMP SA has been established.
- * Note the serial number, and release any connections with
- * the same peer ID but different peer IP address.
+ * An IKE SA has been established.  Check if the freshly established
+ * connection is replacing an established version of itself.
  *
- * Called by IKEv1 and IKEv2 when the IKE SA is established.
- * It checks if the freshly established connection needs is
- * replacing an established version of itself.
- *
+ * Note the serial number, and release any connections with the same
+ * peer ID but different peer IP address.
+ * *
  * The use of uniqueIDs is mostly historic and might be removed
  * in a future version. It is ignored for PSK based connections,
  * which only act based on being a "server using PSK".
- *
- * IKEv1 code does not send or process INITIAL_CONTACT
- * IKEv2 codes does so we take it into account.
  */
 
-void IKE_SA_established(const struct ike_sa *ike)
+void wipe_old_v2_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTHBY_NULL);
