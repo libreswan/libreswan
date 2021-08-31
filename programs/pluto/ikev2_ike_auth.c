@@ -63,52 +63,21 @@
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
-							  struct msg_digest *md,
-							  bool pam_status);
+						   struct msg_digest *md,
+						   bool pam_status);
 
-static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(struct ike_sa *ike,
-												 struct msg_digest *md,
-												 const struct hash_signature *sig);
+static stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
+								  struct msg_digest *md,
+								  const struct hash_signature *sig);
 
-
-stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *ike_st,
-										struct msg_digest *md)
+stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
-
-	if (!(md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE)) {
-		if (ike->sa.st_dh_shared_secret == NULL) {
-			/*
-			* XXX: this is the initiator so returning a
-			* notification is kind of useless.
-			*/
-			pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-			return STF_FAIL;
-		}
-		calc_v2_keymat(&ike->sa, NULL, NULL, /*no old keymat*/
-			       &ike->sa.st_ike_rekey_spis);
-	}
-
-	/*
-	 * All systems are go.
-	 *
-	 * Since DH succeeded, a secure (but unauthenticated) SA
-	 * (channel) is available.  From this point on, should things
-	 * go south, the state needs to be abandoned (but it shouldn't
-	 * happen).
-	 */
-
-	/*
-	 * Since systems are go, start updating the state, starting
-	 * with SPIr.
-	 */
-	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
 
 	/*
 	 * If we and responder are willing to use a PPK, we need to
@@ -193,7 +162,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(
 						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
-						      ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue)) {
+						      initiate_v2_IKE_AUTH_request_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				return STF_FATAL;
 			}
@@ -210,7 +179,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(
 						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
-						      ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue)) {
+						      initiate_v2_IKE_AUTH_request_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				return STF_FATAL;
 			}
@@ -220,7 +189,7 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(
 		case IKEv2_AUTH_NULL:
 		{
 			struct hash_signature sig = { .len = 0, };
-			return ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(ike, md, &sig);
+			return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, &sig);
 		}
 		default:
 			log_state(RC_LOG, &ike->sa,
@@ -231,9 +200,9 @@ stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(
 	}
 }
 
-static stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_signature_continue(struct ike_sa *ike,
-												 struct msg_digest *md,
-												 const struct hash_signature *auth_sig)
+stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
+							   struct msg_digest *md,
+							   const struct hash_signature *auth_sig)
 {
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 	ikev2_log_parentSA(&ike->sa);
@@ -599,7 +568,9 @@ static stf_status process_v2_IKE_AUTH_request_no_skeyseed_continue(struct state 
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&ike->sa, NULL/*old_skey_d*/, NULL/*old_prf*/,
+	calc_v2_keymat(&ike->sa,
+		       NULL /* no old keymat; not a rekey */,
+		       NULL /* no old prf; not a rekey */,
 		       &ike->sa.st_ike_spis/*new SPIs*/);
 
 	ikev2_process_state_packet(ike, &ike->sa, md);

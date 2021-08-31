@@ -33,43 +33,15 @@
 #include "ikev2_ike_auth.h"
 #include "pluto_stats.h"
 
+static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_request_no_skeyseed_post_dh_shared;	/* type assertion */
 
-stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue(struct state *ike_st,
-											struct msg_digest *mdp)
+stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_digest *mdp)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(v2_msg_role(mdp) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
-
-	if (ike->sa.st_dh_shared_secret == NULL) {
-		/*
-		 * XXX: this is the initiator so returning a
-		 * notification is kind of useless.
-		 */
-		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-		return STF_FAIL;
-	}
-
-	calc_v2_keymat(&ike->sa, NULL, NULL, /*previous keymat*/
-		       &ike->sa.st_ike_rekey_spis);
-
-	/*
-	 * All systems are go.
-	 *
-	 * Since DH succeeded, a secure (but unauthenticated) SA
-	 * (channel) is available.  From this point on, should things
-	 * go south, the state needs to be abandoned (but it shouldn't
-	 * happen).
-	 */
-
-	/*
-	 * Since systems are go, start updating the state, starting
-	 * with SPIr.
-	 */
-	rehash_state(&ike->sa, &mdp->hdr.isa_ike_responder_spi);
 
 	/* beginning of data going out */
 
@@ -130,7 +102,9 @@ static stf_status process_v2_IKE_INTERMEDIATE_request_no_skeyseed_post_dh_shared
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&ike->sa, NULL, NULL, /* no old keymat */
+	calc_v2_keymat(&ike->sa,
+		       NULL /* no old keymat; not a rekey */,
+		       NULL /* no old prf; not a rekey */,
 		       &ike->sa.st_ike_spis);
 
 	ikev2_process_state_packet(ike, &ike->sa, md);
@@ -258,14 +232,33 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	};
 
 	/*
-	 * If we seen the intermediate AND we are configured to use
-	 * intermediate.
-	 *
 	 * For now, do only one Intermediate Exchange round and
 	 * proceed with IKE_AUTH.
 	 */
 	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
-				ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue,
-				HERE);
+				process_v2_IKE_INTERMEDIATE_response_continue, HERE);
 	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	if (ike->sa.st_dh_shared_secret == NULL) {
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
+		return STF_FAIL;
+	}
+
+	/*
+	 * XXX: does the keymat need to be re-computed here?
+	 */
+
+	/*
+	 * We've done one intermediate exchange round, now proceed to
+	 * IKE AUTH.
+	 */
+	return initiate_v2_IKE_AUTH_request(ike, md);
 }

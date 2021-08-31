@@ -56,6 +56,8 @@
 #include "ikev2_ipseckey.h"
 #include "pluto_stats.h"
 
+static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
+
 void process_v2_IKE_SA_INIT(struct msg_digest *md)
 {
 	/*
@@ -1425,12 +1427,53 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	ike->sa.st_v2_ike_intermediate_used = ((c->policy & POLICY_INTERMEDIATE) &&
 					       md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL);
 
-	dh_shared_secret_cb (*pcrc_func) =
-		(ike->sa.st_v2_ike_intermediate_used /* SHH: GNU style ?: */
-		 ? ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_INTERMEDIATE_I_continue
-		 : ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue);
-
 	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
-				pcrc_func, HERE);
+				process_v2_IKE_SA_INIT_response_continue, HERE);
 	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
+						    struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+
+	/*
+	 * The DH code should have filled this in.
+	 */
+	if (ike->sa.st_dh_shared_secret == NULL) {
+		/*
+		 * XXX: this is the initiator so returning a
+		 * notification is kind of useless.
+		 */
+		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
+		return STF_FATAL;
+	}
+
+	calc_v2_keymat(&ike->sa,
+		       NULL /* no old keymat; not a rekey */,
+		       NULL /* no old prf; not a rekey */,
+		       &ike->sa.st_ike_rekey_spis);
+
+	/*
+	 * All systems are go.
+	 *
+	 * Since DH succeeded, a secure (but unauthenticated) SA
+	 * (channel) is available.  From this point on, should things
+	 * go south, the state needs to be abandoned (but it shouldn't
+	 * happen).
+	 */
+
+	/*
+	 * Since systems are go, start updating the state, starting
+	 * with SPIr.
+	 */
+	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
+
+	/*
+	 * The IKE_SA_INIT response has been processed, now dispatch
+	 * the next request.
+	 */
+	return (ike->sa.st_v2_ike_intermediate_used /* SHH: GNU style ?: */
+		? initiate_v2_IKE_INTERMEDIATE_request
+		: initiate_v2_IKE_AUTH_request)(ike, md);
 }

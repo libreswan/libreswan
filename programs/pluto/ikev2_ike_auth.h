@@ -16,12 +16,11 @@
 #ifndef IKEV2_IKE_AUTH_H
 #define IKEV2_IKE_AUTH_H
 
+stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md);
+
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_no_skeyseed;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
-
-stf_status ikev2_in_IKE_SA_INIT_R_or_IKE_INTERMEDIATE_R_out_IKE_AUTH_I_continue(struct state *ike_st,
-										struct msg_digest *md);
 
 #endif
