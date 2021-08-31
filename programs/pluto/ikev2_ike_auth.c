@@ -1069,12 +1069,6 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 	 * authenticated properly.
 	 */
 	v2_ike_sa_established(ike);
-	/*
-	 * XXX: is this double book keeping?  Same action happens in
-	 * success_v2_state_transition() and almost happens in
-	 * ikev2_ike_sa_established().
-	 */
-	pstat_sa_established(&ike->sa);
 
 	/*
 	 * Wipes any connections that were using an old version of
