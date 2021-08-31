@@ -307,10 +307,8 @@ void pstat_sa_established(struct state *st)
 	 * Check for double billing.  Only care that IKEv2 gets this
 	 * right (IKEv1 is known to be broken).
 	 */
-#ifdef NOT_YET
 	pexpect(st->st_ike_version == IKEv1 ||
 		st->st_pstats.delete_reason == REASON_UNKNOWN);
-#endif
 	st->st_pstats.delete_reason = REASON_COMPLETED;
 
 	switch (st->st_pstats.sa_type) {
