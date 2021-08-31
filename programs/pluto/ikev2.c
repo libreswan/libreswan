@@ -2260,9 +2260,13 @@ static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
 	dbg("moving over any pending requests");
 	v2_msgid_migrate_queue(from, to);
 
+	/* complete the state transition */
+	passert(transition->timeout_event == EVENT_SA_REPLACE);
+	passert(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_state(&to->sa, transition->next_state);
+
 	/* child is now a parent */
-	ikev2_ike_sa_established(pexpect_ike_sa(&to->sa),
-				 transition, transition->next_state);
+	v2_ike_sa_established(pexpect_ike_sa(&to->sa));
 }
 
 static void jam_v2_ike_details(struct jambuf *buf, struct state *st)

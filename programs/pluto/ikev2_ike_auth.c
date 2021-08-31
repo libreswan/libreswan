@@ -1379,10 +1379,13 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	/*
 	 * AUTH succeeed
 	 *
-	 * update the parent state to make sure that it knows we have
+	 * Update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	ikev2_ike_sa_established(ike, md->svm, STATE_V2_ESTABLISHED_IKE_SA);
+	passert(md->svm->timeout_event == EVENT_SA_REPLACE);
+	passert(md->svm->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_state(&ike->sa, md->svm->next_state);
+	v2_ike_sa_established(ike);
 
 	/*
 	 * IF there's a redirect, process it and return immediately.

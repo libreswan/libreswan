@@ -186,31 +186,9 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 	return true;
 }
 
-void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct v2_state_transition *svm,
-			      enum state_kind new_state)
+void v2_ike_sa_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	/*
-	 * Taking it (what???) current from current state I2/R1.
-	 * The parent has advanced but not the svm???
-	 * Ideally this should be timeout of I3/R2 state svm.
-	 * How to find that svm???
-	 * I wonder what this comment means?  Needs rewording.
-	 *
-	 * XXX: .timeout_event is tied to a state transition.  Does
-	 * that mean it applies to the transition or to the final
-	 * state?  It is kind of treated as all three (the third case
-	 * is where a transition gets shared between the parent and
-	 * child).
-	 */
-	pexpect(svm->timeout_event == EVENT_SA_REPLACE);
-
-	/*
-	 * update the parent state to make sure that it knows we have
-	 * authenticated properly.
-	 */
-	change_state(&ike->sa, new_state);
 	c->newest_ike_sa = ike->sa.st_serialno;
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);

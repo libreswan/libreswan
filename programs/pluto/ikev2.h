@@ -195,9 +195,7 @@ struct v2_state_transition {
 void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
 				ike_spi_t *cookie);
 
-void ikev2_ike_sa_established(struct ike_sa *ike,
-			      const struct v2_state_transition *svm,
-			      enum state_kind new_state);
+void v2_ike_sa_established(struct ike_sa *ike);
 
 extern bool emit_v2KE(chunk_t g, const struct dh_desc *group, pb_stream *outs);
 
