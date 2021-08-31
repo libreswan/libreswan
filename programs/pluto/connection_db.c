@@ -91,8 +91,20 @@ static struct list_head *query_head(struct connection_query *query)
 	return bucket;
 }
 
-static bool query_matches(struct connection *c UNUSED, struct connection_query *query UNUSED)
+static bool query_matches(struct connection *c, struct connection_query *query)
 {
+	if (query->kind != 0 && query->kind != c->kind) {
+		return false;
+	}
+	if (query->name != NULL && !streq(query->name, c->name)) {
+		return false;
+	}
+	if (query->this_id != NULL && !same_id(query->this_id, &c->spd.this.id)) {
+		return false;
+	}
+	if (query->that_id != NULL && !same_id(query->that_id, &c->spd.that.id)) {
+		return false;
+	}
 	return true; /* sure */
 }
 

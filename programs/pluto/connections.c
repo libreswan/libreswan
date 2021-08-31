@@ -106,13 +106,13 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_query cq = {
+		.name = nm,
+		.where = HERE, .c = NULL,
+	};
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		if (no_inst && c->kind == CK_INSTANCE) {
-			continue;
-		}
-		if (!streq(c->name, nm)) {
 			continue;
 		}
 		return c;
@@ -305,14 +305,14 @@ int foreach_concrete_connection_by_name(const char *name,
 	 *
 	 * This code achieves the same effect by searching old2new.
 	 */
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_query cq = {
+		.name = name,
+		.where = HERE, .c = NULL,
+	};
 	bool found = false;
 	while (next_connection_old2new(&cq)) {
 		struct connection *c = cq.c;
 		if (c->kind == CK_INSTANCE) {
-			continue;
-		}
-		if (!streq(c->name, name)) {
 			continue;
 		}
 		found = true;
