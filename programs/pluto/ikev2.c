@@ -2243,30 +2243,30 @@ void ikev2_log_parentSA(const struct state *st)
 	}
 }
 
-static void ikev2_child_emancipate(struct ike_sa *from, struct child_sa *to,
+static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike,
 				   const struct v2_state_transition *transition)
 {
 	/* initialize the the new IKE SA. reset and message ID */
-	to->sa.st_clonedfrom = SOS_NOBODY;
-	v2_msgid_init_ike(pexpect_ike_sa(&to->sa));
+	new_ike->sa.st_clonedfrom = SOS_NOBODY;
+	v2_msgid_init_ike(pexpect_ike_sa(&new_ike->sa));
 
 	/* Switch to the new IKE SPIs */
-	to->sa.st_ike_spis = to->sa.st_ike_rekey_spis;
-	rehash_state_cookies_in_db(&to->sa);
+	new_ike->sa.st_ike_spis = new_ike->sa.st_ike_rekey_spis;
+	rehash_state_cookies_in_db(&new_ike->sa);
 
-	/* TO has correct IKE_SPI so can migrate */
-	v2_migrate_children(from, to);
+	dbg("NEW_IKE has updated IKE_SPIs, migrate children");
+	v2_migrate_children(old_ike, new_ike);
 
 	dbg("moving over any pending requests");
-	v2_msgid_migrate_queue(from, to);
+	v2_msgid_migrate_queue(old_ike, new_ike);
 
 	/* complete the state transition */
 	passert(transition->timeout_event == EVENT_SA_REPLACE);
 	passert(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-	change_state(&to->sa, transition->next_state);
+	change_state(&new_ike->sa, transition->next_state);
 
 	/* child is now a parent */
-	v2_ike_sa_established(pexpect_ike_sa(&to->sa));
+	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
 }
 
 static void jam_v2_ike_details(struct jambuf *buf, struct state *st)
