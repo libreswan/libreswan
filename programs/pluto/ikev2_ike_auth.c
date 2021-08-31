@@ -1082,6 +1082,39 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 	 */
 	wipe_old_v2_connections(ike);
 
+	if (ike->sa.st_ike_seen_v2n_initial_contact && c->newest_ipsec_sa != SOS_NOBODY) {
+		/*
+		 * XXX: This is for the first child only.
+		 *
+		 * The IKE SA should be cleaned up after all children
+		 * have been replaced (or it expires).
+		 *
+		 * CREATE_CHILD_SA children should also be cleaned up.
+		 */
+		if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+			/*
+			 * If we are a server and use PSK, all clients
+			 * use the same group ID.
+			 *
+			 * Note that "xauth_server" also refers to
+			 * IKEv2 CP
+			 */
+			dbg("ignoring initial contact: we are a server using PSK and clients are using a group ID");
+		} else if (!uniqueIDs) {
+			dbg("ignoring initial contact: uniqueIDs disabled");
+		} else {
+			struct state *old_p2 = state_with_serialno(c->newest_ipsec_sa);
+			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+				dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
+				    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
+				old_p2->st_send_delete = DONT_SEND_DELETE;
+				event_force(EVENT_SA_DISCARD, old_p2);
+			}
+		}
+	}
+
 	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/* ensure we run keepalives if needed */
 		if (c->nat_keepalive) {

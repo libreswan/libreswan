@@ -705,38 +705,5 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 				}
 			}
 		}
-
-		/*
-		 * This only affects IKEv2, since we don't store any
-		 * received INITIAL_CONTACT for IKEv1.
-		 * We don't do this on IKEv1, because it seems to
-		 * confuse various third parties (Windows, Cisco VPN 300,
-		 * and juniper
-		 * likely because this would be called before the IPsec SA
-		 * of QuickMode is installed, so the remote endpoints view
-		 * this IKE SA still as the active one?
-		 */
-		if (ike->sa.st_ike_seen_v2n_initial_contact) {
-			/*
-			 * XXX: This is for the first child only.
-			 *
-			 * The IKE SA should be cleaned up after all
-			 * children have been replaced (or it
-			 * expires).
-			 *
-			 * CREATE_CHILD_SA children should also be cleaned up.
-			 */
-			if (c->newest_ipsec_sa != SOS_NOBODY) {
-				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
-				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
-
-				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
-					dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
-					    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
-					old_p2->st_send_delete = DONT_SEND_DELETE;
-					event_force(EVENT_SA_DISCARD, old_p2);
-				}
-			}
-		}
 	}
 }
