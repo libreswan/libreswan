@@ -1446,7 +1446,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 		 * notification is kind of useless.
 		 */
 		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-		return STF_FATAL;
+		return STF_FAIL;
 	}
 
 	calc_v2_keymat(&ike->sa,
