@@ -744,16 +744,15 @@ void IKE_SA_established(const struct ike_sa *ike)
 		 * this IKE SA still as the active one?
 		 */
 		if (ike->sa.st_ike_seen_v2n_initial_contact) {
-			if (c->newest_ike_sa != SOS_NOBODY &&
-			    c->newest_ike_sa != ike->sa.st_serialno) {
-				struct state *old_p1 = state_by_serialno(c->newest_ike_sa);
-
-				dbg("deleting replaced IKE state for %s",
-				    old_p1->st_connection->name);
-				old_p1->st_send_delete = DONT_SEND_DELETE;
-				event_force(EVENT_SA_EXPIRE, old_p1);
-			}
-
+			/*
+			 * XXX: This is for the first child only.
+			 *
+			 * The IKE SA should be cleaned up after all
+			 * children have been replaced (or it
+			 * expires).
+			 *
+			 * CREATE_CHILD_SA children should also be cleaned up.
+			 */
 			if (c->newest_ipsec_sa != SOS_NOBODY) {
 				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
@@ -767,6 +766,4 @@ void IKE_SA_established(const struct ike_sa *ike)
 			}
 		}
 	}
-
-	c->newest_ike_sa = ike->sa.st_serialno;
 }
