@@ -70,7 +70,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 	 * SOS_NOBODY always returns NULL.
 	 */
 	struct connection *c;
-	hash_t hash = connection_serialno_hasher(&serialno);
+	hash_t hash = serialno_hasher(&serialno);
 	struct list_head *bucket = hash_table_bucket(&connection_hash_tables[CONNECTION_SERIALNO_HASH_TABLE], hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, c) {
 		if (c->serialno == serialno) {
