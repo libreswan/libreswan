@@ -3341,13 +3341,19 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 		dbg("uniqueIDs disabled, not contemplating releasing older self");
 	} else {
 		/*
-		 * for all existing connections: if the same Phase 1 IDs are used,
-		 * unorient the (old) connection (if different from current connection)
-		 * Only do this for connections with the same name (can be shared ike sa)
+		 * For all existing connections: if the same Phase 1
+		 * IDs are used, unorient the (old) connection (if
+		 * different from current connection).
+		 *
+		 * Only do this for connections with the same name
+		 * (can be shared ike sa)
 		 */
-		struct connection_query cq = { .where = HERE, .c = NULL, };
-		while (next_connection_new2old(&cq)) {
-			struct connection *d = cq.c;
+		struct connection_filter cf = {
+			.where = HERE,
+			.c = NULL,
+		};
+		while (next_connection_new2old(&cf)) {
+			struct connection *d = cf.c;
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&

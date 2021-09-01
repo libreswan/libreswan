@@ -106,7 +106,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 struct connection *conn_by_name(const char *nm, bool no_inst)
 {
 	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
-	struct connection_query cq = {
+	struct connection_filter cq = {
 		.name = nm,
 		.where = HERE, .c = NULL,
 	};
@@ -270,7 +270,7 @@ int foreach_connection_by_alias(const char *alias,
 {
 	int count = 0;
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *p = cq.c;
 
@@ -305,7 +305,7 @@ int foreach_concrete_connection_by_name(const char *name,
 	 *
 	 * This code achieves the same effect by searching old2new.
 	 */
-	struct connection_query cq = {
+	struct connection_filter cq = {
 		.name = name,
 		.where = HERE, .c = NULL,
 	};
@@ -366,7 +366,7 @@ void delete_connections_by_name(const char *name, bool strict, struct logger *lo
 
 void delete_every_connection(void)
 {
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	/* Delete instances before templates. */
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
@@ -2562,7 +2562,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	dbg("find_connection: looking for policy for connection: %s",
 	    str_endpoints(local_client, remote_client, &eb));
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
@@ -2979,7 +2979,7 @@ struct connection *route_owner(struct connection *c,
 		best_erouting = best_routing;
 
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *d = cq.c;
 
@@ -3499,7 +3499,7 @@ static bool is_virtual_net_used(struct connection *c,
 				const ip_selector *peer_net,
 				const struct id *peer_id)
 {
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *d = cq.c;
 		switch (d->kind) {
@@ -4332,7 +4332,7 @@ void show_connections_status(struct show *s)
 	show_comment(s, "Connection list:");
 	show_separator(s);
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		count++;
@@ -4349,7 +4349,7 @@ void show_connections_status(struct show *s)
 		int i = 0;
 
 
-		struct connection_query cq = { .where = HERE, .c = NULL, };
+		struct connection_filter cq = { .where = HERE, .c = NULL, };
 		while (next_connection_new2old(&cq)) {
 			array[i++] = cq.c;
 		}
@@ -4481,7 +4481,7 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 	/* XXX This logic also predates support for protoports, which isn't handled below */
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
+	struct connection_filter cq = { .where = HERE, .c = NULL, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *ue = cq.c;
 

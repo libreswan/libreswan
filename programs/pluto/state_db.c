@@ -371,68 +371,68 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
  * See also {next,prev}_connection()
  */
 
-static struct list_head *query_head(struct state_query *query)
+static struct list_head *filter_head(struct state_filter *filter)
 {
 	/* select list head */
 	struct list_head *bucket;
-	if (query->ike_spis != NULL) {
-		hash_t hash = ike_spis_hasher(query->ike_spis);
+	if (filter->ike_spis != NULL) {
+		hash_t hash = ike_spis_hasher(filter->ike_spis);
 		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
-	} else if (query->ike != NULL) {
-		hash_t hash = ike_spis_hasher(&query->ike->sa.st_ike_spis);
+	} else if (filter->ike != NULL) {
+		hash_t hash = ike_spis_hasher(&filter->ike->sa.st_ike_spis);
 		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
 	} else {
 		/* else other queries? */
-		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(query->where));
+		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->where));
 		bucket = &state_serialno_list_head;
 	}
 	return bucket;
 }
 
-static bool query_matches(struct state *st, struct state_query *query)
+static bool matches_filter(struct state *st, struct state_filter *filter)
 {
-	if (query->ike_version != 0 &&
-	    st->st_ike_version != query->ike_version) {
+	if (filter->ike_version != 0 &&
+	    st->st_ike_version != filter->ike_version) {
 		return false;
 	}
-	if (query->ike_spis != NULL &&
-	    !ike_spis_eq(&st->st_ike_spis, query->ike_spis)) {
+	if (filter->ike_spis != NULL &&
+	    !ike_spis_eq(&st->st_ike_spis, filter->ike_spis)) {
 		return false;
 	}
-	if (query->ike != NULL &&
-	    query->ike->sa.st_serialno != st->st_clonedfrom) {
+	if (filter->ike != NULL &&
+	    filter->ike->sa.st_serialno != st->st_clonedfrom) {
 		return false;
 	}
 	return true;
 }
 
-bool next_state_old2new(struct state_query *query)
+bool next_state_old2new(struct state_filter *filter)
 {
 #define ADV newer /* old-to-new */
-	if (query->internal == NULL) {
+	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		query->internal = query_head(query)->head.ADV;
+		filter->internal = filter_head(filter)->head.ADV;
 	}
-	query->st = NULL;
+	filter->st = NULL;
 	/* Walk list until an entry matches */
-	for (struct list_entry *entry = query->internal;
+	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->ADV) {
 		struct state *st = (struct state *) entry->data;
-		if (query_matches(st, query)) {
+		if (matches_filter(st, filter)) {
 			/* save state; but step off current entry */
-			query->internal = entry->ADV;
+			filter->internal = entry->ADV;
 			dbg("found "PRI_SO" for "PRI_WHERE,
-			    pri_so(st->st_serialno), pri_where(query->where));
-			query->st = st;
+			    pri_so(st->st_serialno), pri_where(filter->where));
+			filter->st = st;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(query->where));
+	dbg("no match for "PRI_WHERE, pri_where(filter->where));
 	return false;
 #undef ADV
 }

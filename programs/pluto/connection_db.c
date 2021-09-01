@@ -84,88 +84,88 @@ struct connection *connection_by_serialno(co_serial_t serialno)
  * See also {new2old,old2new}_state()
  */
 
-static struct list_head *query_head(struct connection_query *query)
+static struct list_head *filter_head(struct connection_filter *filter)
 {
 	struct list_head *bucket = &connection_serialno_list_head;
-	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(query->where));
+	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
 	return bucket;
 }
 
-static bool query_matches(struct connection *c, struct connection_query *query)
+static bool matches_filter(struct connection *c, struct connection_filter *filter)
 {
-	if (query->kind != 0 && query->kind != c->kind) {
+	if (filter->kind != 0 && filter->kind != c->kind) {
 		return false;
 	}
-	if (query->name != NULL && !streq(query->name, c->name)) {
+	if (filter->name != NULL && !streq(filter->name, c->name)) {
 		return false;
 	}
-	if (query->this_id != NULL && !same_id(query->this_id, &c->spd.this.id)) {
+	if (filter->this_id != NULL && !same_id(filter->this_id, &c->spd.this.id)) {
 		return false;
 	}
-	if (query->that_id != NULL && !same_id(query->that_id, &c->spd.that.id)) {
+	if (filter->that_id != NULL && !same_id(filter->that_id, &c->spd.that.id)) {
 		return false;
 	}
 	return true; /* sure */
 }
 
-bool next_connection_old2new(struct connection_query *query)
+bool next_connection_old2new(struct connection_filter *filter)
 {
 #define ADV newer
-	if (query->internal == NULL) {
+	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		query->internal = query_head(query)->head.ADV;
+		filter->internal = filter_head(filter)->head.ADV;
 	}
 	/* Walk list until an entry matches */
-	query->c = NULL;
-	for (struct list_entry *entry = query->internal;
+	filter->c = NULL;
+	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->ADV) {
 		struct connection *c = (struct connection *) entry->data;
-		if (query_matches(c, query)) {
+		if (matches_filter(c, filter)) {
 			/* save connection; but step off current entry */
-			query->internal = entry->ADV;
+			filter->internal = entry->ADV;
 			dbg("found "PRI_CO" for "PRI_WHERE,
-			    pri_co(c->serialno), pri_where(query->where));
-			query->c = c;
+			    pri_co(c->serialno), pri_where(filter->where));
+			filter->c = c;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(query->where));
+	dbg("no match for "PRI_WHERE, pri_where(filter->where));
 	return false;
 #undef ADV
 }
 
-bool next_connection_new2old(struct connection_query *query)
+bool next_connection_new2old(struct connection_filter *filter)
 {
 #define ADV older
-	if (query->internal == NULL) {
+	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		query->internal = query_head(query)->head.ADV;
+		filter->internal = filter_head(filter)->head.ADV;
 	}
 	/* Walk list until an entry matches */
-	query->c = NULL;
-	for (struct list_entry *entry = query->internal;
+	filter->c = NULL;
+	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->ADV) {
 		struct connection *c = (struct connection *) entry->data;
-		if (query_matches(c, query)) {
+		if (matches_filter(c, filter)) {
 			/* save connection; but step off current entry */
-			query->internal = entry->ADV;
+			filter->internal = entry->ADV;
 			dbg("found "PRI_CO" for "PRI_WHERE,
-			    pri_co(c->serialno), pri_where(query->where));
-			query->c = c;
+			    pri_co(c->serialno), pri_where(filter->where));
+			filter->c = c;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(query->where));
+	dbg("no match for "PRI_WHERE, pri_where(filter->where));
 	return false;
 #undef ADV
 }

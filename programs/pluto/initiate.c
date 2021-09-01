@@ -1000,9 +1000,9 @@ void initiate_ondemand(const ip_endpoint *local_client,
  */
 struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
 {
-	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
+	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	while (next_connection_new2old(&cf)) {
+		struct connection *c = cf.c;
 		const struct spd_route *sr;
 		for (sr = &c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
@@ -1154,9 +1154,9 @@ void connection_check_ddns(struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 
-	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
+	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	while (next_connection_new2old(&cf)) {
+		struct connection *c = cf.c;
 		connection_check_ddns1(c, logger);
 	}
 	check_orientations(logger);
@@ -1173,9 +1173,9 @@ void connection_check_ddns(struct logger *logger)
  */
 void connection_check_phase2(struct logger *logger)
 {
-	struct connection_query cq = { .where = HERE, .c = NULL, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *c = cq.c;
+	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	while (next_connection_new2old(&cf)) {
+		struct connection *c = cf.c;
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			connection_buf cib;

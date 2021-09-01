@@ -659,11 +659,14 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		dbg("uniqueIDs disabled, not contemplating releasing older self");
 	} else {
 		/*
-		 * for all existing connections: if the same Phase 1 IDs are used,
-		 * unorient the (old) connection (if different from current connection)
-		 * Only do this for connections with the same name (can be shared ike sa)
+		 * For all existing connections: if the same Phase 1
+		 * IDs are used, unorient the (old) connection (if
+		 * different from current connection).
+		 *
+		 * Only do this for connections with the same name
+		 * (can be shared ike sa).
 		 */
-		struct connection_query cq = {
+		struct connection_filter cf = {
 			.name = c->name,
 			.kind = c->kind,
 			.this_id = &c->spd.this.id,
@@ -671,8 +674,8 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			.where = HERE,
 			.c = NULL,
 		};
-		while (next_connection_new2old(&cq)) {
-			struct connection *d = cq.c;
+		while (next_connection_new2old(&cf)) {
+			struct connection *d = cf.c;
 
 			/*
 			 * If old IKE SA is same as new IKE sa and

@@ -82,27 +82,27 @@ struct state *state_by_reqid(reqid_t reqid,
 void rehash_state_reqid(struct state *st);
 
 /*
- * For querying and iterating over the state DB.
+ * For iterating over the state DB.
  *
- * - option parameters are only matched when non-NULL
- * - ST can be deleted between two calls
- * - certain queries, such as using IKE_SPIs, are faster
+ * - parameters are only matched when non-NULL or non-zero
+ * - .st can be deleted between calls
+ * - some filters have been optimized using hashing, but
+ * - worst case is it scans through all states
  */
 
-struct state_query {
-	/* required */
+struct state_filter {
 	where_t where;
-	enum ike_version ike_version;
-	/* optional; non-NULL implies must match */
-	const ike_spis_t *ike_spis;
+	/* filters */
+	enum ike_version ike_version;	/* required */
+	const ike_spis_t *ike_spis;	/* hashed */
 	const struct ike_sa *ike;
-	/* internal */
-	struct list_entry *internal;
-	/* result */
+	/* current result (can be safely deleted) */
 	struct state *st;
+	/* internal (handle on next entry) */
+	struct list_entry *internal;
 };
 
-bool next_state_new2old(struct state_query *query);
-bool next_state_old2new(struct state_query *query);
+bool next_state_new2old(struct state_filter *query);
+bool next_state_old2new(struct state_filter *query);
 
 #endif

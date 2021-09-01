@@ -1368,12 +1368,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		passert(best_connection == c);
 		dbg("no best spd route; looking for a better template connection to instantiate");
 
-		struct connection_query cq = {
+		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
-			.where = HERE, .c = NULL,
+			.where = HERE,
+			.c = NULL,
 		};
-		while (next_connection_new2old(&cq)) {
-			struct connection *t = cq.c;
+		while (next_connection_new2old(&cf)) {
+			struct connection *t = cf.c;
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "  investigating template \"%s\";",

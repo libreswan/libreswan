@@ -1008,15 +1008,15 @@ static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid
 		/* short-cut */
 		st = &ike->sa;
 	} else {
-		struct state_query stq = {
+		struct state_filter sf = {
 			.where = HERE,
 			.ike_version = IKEv2,
 			.ike_spis = &ike->sa.st_ike_spis,
 		};
 		st = NULL;
-		while (next_state_old2new(&stq)) {
-			if (stq.st->st_v2_msgid_wip.initiator == msgid) {
-				st = stq.st;
+		while (next_state_old2new(&sf)) {
+			if (sf.st->st_v2_msgid_wip.initiator == msgid) {
+				st = sf.st;
 				break;
 			}
 		}
@@ -1039,15 +1039,15 @@ static struct state *find_v2_sa_by_responder_wip(struct ike_sa *ike, const msgid
 		/* short-cut */
 		st = &ike->sa;
 	} else {
-		struct state_query stq = {
+		struct state_filter sf = {
 			.where = HERE,
 			.ike_version = IKEv2,
 			.ike_spis = &ike->sa.st_ike_spis,
 		};
 		st = NULL;
-		while (next_state_old2new(&stq)) {
-			if (stq.st->st_v2_msgid_wip.responder == msgid) {
-				st = stq.st;
+		while (next_state_old2new(&sf)) {
+			if (sf.st->st_v2_msgid_wip.responder == msgid) {
+				st = sf.st;
 				break;
 			}
 		}
@@ -2990,7 +2990,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 				       LELEM(STATE_V2_NEW_CHILD_I0) |
 				       LELEM(STATE_V2_NEW_CHILD_R0));
 
-	struct state_query query = {
+	struct state_filter sf = {
 		.where = HERE,
 		.ike_version = IKEv2,
 		.ike_spis = &ike->sa.st_ike_spis,
@@ -2998,8 +2998,8 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		.ike = ike,
 	};
 
-	while (next_state_old2new(&query)) {
-		struct state *st = query.st;
+	while (next_state_old2new(&sf)) {
+		struct state *st = sf.st;
 
 		/* larval child state? */
 		if (!LHAS(pending_states, st->st_state->kind)) {

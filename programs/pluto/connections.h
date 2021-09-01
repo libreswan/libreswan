@@ -656,23 +656,28 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *d
 ip_port end_host_port(const struct end *end, const struct end *other);
 
 /*
- * For querying and iterating over the connection DB.
+ * For iterating over the connection DB.
+ *
+ * - parameters are only matched when non-NULL or non-zero
+ * - .connection can be deleted between calls
+ * - some filters have been optimized using hashing, but
+ * - worst case is it scans through all connections
  */
 
-struct connection_query {
+struct connection_filter {
 	where_t where;
 	/* filters */
 	enum connection_kind kind;
 	const char *name;
 	const struct id *this_id;
 	const struct id *that_id;
-	/* current query */
+	/* current result (can be safely deleted) */
 	struct connection *c;
-	/* internal */
+	/* internal (handle on next entry) */
 	struct list_entry *internal;
 };
 
-bool next_connection_old2new(struct connection_query *query);
-bool next_connection_new2old(struct connection_query *query);
+bool next_connection_old2new(struct connection_filter *query);
+bool next_connection_new2old(struct connection_filter *query);
 
 #endif
