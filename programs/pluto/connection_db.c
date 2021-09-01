@@ -48,7 +48,7 @@ static struct list_head connection_serialno_list_head = INIT_LIST_HEAD(&connecti
 
 static hash_t serialno_hasher(const co_serial_t *serialno)
 {
-	return hash_table_hasher(shunk2(serialno, sizeof(*serialno)), zero_hash);
+	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
 static hash_t connection_serialno_hasher(const void *data)

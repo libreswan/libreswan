@@ -76,7 +76,7 @@ struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_
 
 static hash_t serialno_hasher(const so_serial_t *serialno)
 {
-	return hash_table_hasher(shunk2(serialno, sizeof(*serialno)), zero_hash);
+	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
 static hash_t state_serialno_hasher(const void *data)
@@ -124,7 +124,7 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno)
 
 static hash_t connection_hasher(struct connection *const *connection)
 {
-	return hash_table_hasher(shunk2(connection, sizeof(*connection)), zero_hash);
+	return hash_table_hash_thing(*connection, zero_hash);
 }
 
 static hash_t state_connection_hasher(const void *data)
@@ -178,7 +178,7 @@ void rehash_state_connection(struct state *st)
 
 static hash_t reqid_hasher(const reqid_t *reqid)
 {
-	return hash_table_hasher(shunk2(reqid, sizeof(*reqid)), zero_hash);
+	return hash_table_hash_thing(*reqid, zero_hash);
 }
 
 static hash_t state_reqid_hasher(const void *data)
@@ -239,7 +239,7 @@ void rehash_state_reqid(struct state *st)
 
 static hash_t ike_initiator_spi_hasher(const ike_spi_t *ike_initiator_spi)
 {
-	return hash_table_hasher(shunk2(ike_initiator_spi, sizeof(*ike_initiator_spi)), zero_hash);
+	return hash_table_hash_thing(*ike_initiator_spi, zero_hash);
 }
 
 static hash_t state_ike_initiator_spi_hasher(const void *data)
@@ -306,7 +306,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 
 static hash_t ike_spis_hasher(const ike_spis_t *ike_spis)
 {
-	return hash_table_hasher(shunk2(ike_spis, sizeof(*ike_spis)), zero_hash);
+	return hash_table_hash_thing(*ike_spis, zero_hash);
 }
 
 static hash_t state_ike_spis_hasher(const void *data)

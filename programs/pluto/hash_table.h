@@ -38,6 +38,7 @@ struct hash_table {
 void init_hash_table(struct hash_table *table);
 
 hash_t hash_table_hasher(shunk_t data, hash_t hash);
+#define hash_table_hash_thing(THING, HASH) hash_table_hasher(THING_AS_SHUNK(THING), HASH)
 
 /*
  * Maintain the table.
