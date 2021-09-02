@@ -40,7 +40,7 @@ struct hash_table {
 	static hash_t STRUCT##_##NAME##_hasher(const void *data)	\
 	{								\
 		const struct STRUCT *s = data;				\
-		return NAME##_hasher(&s->FIELD);			\
+		return NAME##_hasher(&(*s)FIELD);			\
 	}								\
 									\
 	static struct list_entry *STRUCT##_##NAME##_entry(void *data)	\

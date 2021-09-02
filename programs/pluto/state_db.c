@@ -76,7 +76,7 @@ static hash_t serialno_hasher(const so_serial_t *serialno)
 	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
-HASH_TABLE(state, serialno, st_serialno, STATE_TABLE_SIZE);
+HASH_TABLE(state, serialno, .st_serialno, STATE_TABLE_SIZE);
 
 struct state *state_by_serialno(so_serial_t serialno)
 {
@@ -119,7 +119,7 @@ static void jam_state_connection(struct jambuf *buf, const struct state *st)
 	jam_connection(buf, st->st_connection);
 }
 
-HASH_TABLE(state, connection, st_connection, STATE_TABLE_SIZE);
+HASH_TABLE(state, connection, .st_connection, STATE_TABLE_SIZE);
 
 struct state *state_by_connection(struct connection *connection,
 				  state_by_predicate *predicate /*optional*/,
@@ -169,7 +169,7 @@ static void jam_state_reqid(struct jambuf *buf, const struct state *st)
 	jam(buf, ": reqid=%u", st->st_reqid);
 }
 
-HASH_TABLE(state, reqid, st_reqid, STATE_TABLE_SIZE);
+HASH_TABLE(state, reqid, .st_reqid, STATE_TABLE_SIZE);
 
 struct state *state_by_reqid(reqid_t reqid,
 			     state_by_predicate *predicate /*optional*/,
@@ -228,7 +228,7 @@ static void jam_state_ike_initiator_spi(struct jambuf *buf, const struct state *
 		       sizeof(st->st_ike_spis.initiator.bytes));
 }
 
-HASH_TABLE(state, ike_initiator_spi, st_ike_spis.initiator, STATE_TABLE_SIZE);
+HASH_TABLE(state, ike_initiator_spi, .st_ike_spis.initiator, STATE_TABLE_SIZE);
 
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const so_serial_t *clonedfrom, /*optional*/
@@ -287,7 +287,7 @@ static void jam_state_ike_spis(struct jambuf *buf, const struct state *st)
 		       sizeof(st->st_ike_spis.responder.bytes));
 }
 
-HASH_TABLE(state, ike_spis, st_ike_spis, STATE_TABLE_SIZE);
+HASH_TABLE(state, ike_spis, .st_ike_spis, STATE_TABLE_SIZE);
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				const so_serial_t *clonedfrom,

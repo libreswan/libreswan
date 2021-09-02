@@ -46,7 +46,7 @@ static hash_t serialno_hasher(const co_serial_t *serialno)
 	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
-HASH_TABLE(connection, serialno, serialno, STATE_TABLE_SIZE);
+HASH_TABLE(connection, serialno, .serialno, STATE_TABLE_SIZE);
 
 struct connection *connection_by_serialno(co_serial_t serialno)
 {
