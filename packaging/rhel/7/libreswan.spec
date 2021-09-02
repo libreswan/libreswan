@@ -208,7 +208,8 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %systemd_postun_with_restart ipsec.service
 
 %files
-%doc CHANGES COPYING CREDITS README* LICENSE
+%license LICENSE COPYING
+%doc CHANGES CREDITS README*
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
