@@ -41,7 +41,9 @@ struct host_pair {
 	ip_address remote;
 	struct connection *connections;         /* connections with this pair */
 	struct pending *pending;                /* awaiting Keying Channel */
-	struct list_entry host_pair_entry;
+	struct {
+		struct list_entry addresses;
+	} hash_table_entries;
 };
 
 /* export to pending.c */

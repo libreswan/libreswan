@@ -40,9 +40,8 @@
 
 const char host_pair_magic[] = "host pair magic";
 
-static void jam_host_pair(struct jambuf *buf, const void *data)
+static void jam_host_pair_addresses(struct jambuf *buf, const struct host_pair *hp)
 {
-	const struct host_pair *hp = data;
 	passert(hp->magic == host_pair_magic);
 	jam_address(buf, &hp->local);
 	jam(buf, "->");
@@ -61,37 +60,12 @@ static hash_t hp_hasher(const ip_address local, const ip_address remote)
 	return hash;
 }
 
-static hash_t host_pair_hasher(const void *data)
+static hash_t addresses_hasher(const struct host_pair *hp)
 {
-	const struct host_pair *hp = data;
-	passert(hp->magic == host_pair_magic);
 	return hp_hasher(hp->local, hp->remote);
 }
 
-static struct list_entry *host_pair_list_entry(void *data)
-{
-	struct host_pair *hp = data;
-	passert(hp->magic == host_pair_magic);
-	return &hp->host_pair_entry;
-}
-
-struct list_head host_pair_buckets[STATE_TABLE_SIZE];
-
-static struct hash_table host_pairs = {
-	.info = {
-		.name = "host_pair table",
-		.jam = jam_host_pair,
-	},
-	.hasher = host_pair_hasher,
-	.entry = host_pair_list_entry,
-	.nr_slots = elemsof(host_pair_buckets),
-	.slots = host_pair_buckets,
-};
-
-void init_host_pair(void)
-{
-	init_hash_table(&host_pairs);
-}
+HASH_TABLE(host_pair, addresses, , STATE_TABLE_SIZE);
 
 #define LIST_RM(ENEXT, E, EHEAD, EXPECTED)				\
 	{								\
@@ -148,7 +122,7 @@ struct host_pair *find_host_pair(const ip_address local,
 	    str_address(&local, &lb), str_address(&remote, &rb));
 	hash_t hash = hp_hasher(local, remote);
 	struct host_pair *hp = NULL;
-	struct list_head *bucket = hash_table_bucket(&host_pairs, hash);
+	struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
 		/*
 		 * Skip when the first connection is an instance;
@@ -212,7 +186,7 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	 * consistent and comparisons work.
 	 */
 	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.any : remote);
-	add_hash_table_entry(&host_pairs, hp);
+	add_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	dbg_alloc("hp", hp, where);
 	return hp;
 }
@@ -222,7 +196,7 @@ static void free_host_pair(struct host_pair **hp, where_t where)
 	/* ??? must deal with this! */
 	passert((*hp)->pending == NULL);
 	pexpect((*hp)->connections == NULL);
-	del_hash_table_entry(&host_pairs, *hp);
+	del_hash_table_entry(&host_pair_addresses_hash_table, *hp);
 	dbg_free("hp", *hp, where);
 	pfree(*hp);
 	*hp = NULL;
@@ -508,8 +482,8 @@ void check_orientations(struct logger *logger)
 		if (i->ip_dev->ifd_change != IFD_ADD) {
 			continue;
 		}
-		for (unsigned u = 0; u < host_pairs.nr_slots; u++) {
-			struct list_head *bucket = &host_pairs.slots[u];
+		for (unsigned u = 0; u < host_pair_addresses_hash_table.nr_slots; u++) {
+			struct list_head *bucket = &host_pair_addresses_hash_table.slots[u];
 			struct host_pair *hp = NULL;
 			FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
 				/*
@@ -551,4 +525,9 @@ void check_orientations(struct logger *logger)
 			}
 		}
 	}
+}
+
+void init_host_pair(void)
+{
+	init_hash_table(&host_pair_addresses_hash_table);
 }
