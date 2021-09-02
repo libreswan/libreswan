@@ -18,16 +18,11 @@
 #include "log.h"
 #include "hash_table.h"
 
-static struct hash_table connection_hash_tables[];
+static void connection_serialno_jam_hash(struct jambuf *buf, const void *data);
 
-static void jam_connection_serialno(struct jambuf *buf, const void *data)
+static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
 {
-	if (data == NULL) {
-		jam(buf, PRI_CO, UNSET_CO_SERIAL);
-	} else {
-		const struct connection *c = data;
-		jam(buf, PRI_CO, pri_co(c->serialno));
-	}
+	jam(buf, PRI_CO, pri_co(c->serialno));
 }
 
 /*
@@ -36,7 +31,7 @@ static void jam_connection_serialno(struct jambuf *buf, const void *data)
 
 static const struct list_info connection_serialno_list_info = {
 	.name = "serialno list",
-	.jam = jam_connection_serialno,
+	.jam = connection_serialno_jam_hash,
 };
 
 static struct list_head connection_serialno_list_head = INIT_LIST_HEAD(&connection_serialno_list_head,
@@ -51,17 +46,7 @@ static hash_t serialno_hasher(const co_serial_t *serialno)
 	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
-static hash_t connection_serialno_hasher(const void *data)
-{
-	const struct connection *c = data;
-	return serialno_hasher(&c->serialno);
-}
-
-static struct list_entry *connection_serialno_entry(void *data)
-{
-	struct connection *c = data;
-	return &c->hash_table_entries[CONNECTION_SERIALNO_HASH_TABLE];
-}
+HASH_TABLE(connection, serialno, serialno, STATE_TABLE_SIZE);
 
 struct connection *connection_by_serialno(co_serial_t serialno)
 {
@@ -71,7 +56,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 	 */
 	struct connection *c;
 	hash_t hash = serialno_hasher(&serialno);
-	struct list_head *bucket = hash_table_bucket(&connection_hash_tables[CONNECTION_SERIALNO_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&connection_serialno_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, c) {
 		if (c->serialno == serialno) {
 			return c;
@@ -176,19 +161,8 @@ bool next_connection_new2old(struct connection_filter *filter)
  * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
-static struct list_head hash_slots[CONNECTION_HASH_TABLES_ROOF][STATE_TABLE_SIZE];
-
-static struct hash_table connection_hash_tables[] = {
-	[CONNECTION_SERIALNO_HASH_TABLE] = {
-		.info = {
-			.name = "st_serialno table",
-			.jam = jam_connection_serialno,
-		},
-		.hasher = connection_serialno_hasher,
-		.entry = connection_serialno_entry,
-		.nr_slots = elemsof(hash_slots[CONNECTION_SERIALNO_HASH_TABLE]),
-		.slots = hash_slots[CONNECTION_SERIALNO_HASH_TABLE],
-	},
+static struct hash_table *const connection_hash_tables[] = {
+	&connection_serialno_hash_table,
 };
 
 static void add_connection_to_db(struct connection *c)
@@ -202,7 +176,7 @@ static void add_connection_to_db(struct connection *c)
 			  &c->serialno_list_entry);
 
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		add_hash_table_entry(&connection_hash_tables[h], c);
+		add_hash_table_entry(connection_hash_tables[h], c);
 	}
 }
 
@@ -238,13 +212,13 @@ void remove_connection_from_db(struct connection *c)
 	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
 	remove_list_entry(&c->serialno_list_entry);
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		del_hash_table_entry(&connection_hash_tables[h], c);
+		del_hash_table_entry(connection_hash_tables[h], c);
 	}
 }
 
 void init_connection_db(void)
 {
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		init_hash_table(&connection_hash_tables[h]);
+		init_hash_table(connection_hash_tables[h]);
 	}
 }

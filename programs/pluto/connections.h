@@ -84,12 +84,6 @@ typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
  * Fast access to a connection.
  */
 
-enum connection_hash_tables {
-	CONNECTION_SERIALNO_HASH_TABLE,
-	/* add tables here */
-	CONNECTION_HASH_TABLES_ROOF,
-};
-
 struct connection *connection_by_serialno(co_serial_t serialno);
 
 /*
@@ -475,7 +469,9 @@ struct connection {
 	char *accept_redirect_to;
 
 	struct list_entry serialno_list_entry;
-	struct list_entry hash_table_entries[CONNECTION_HASH_TABLES_ROOF];
+	struct {
+		struct list_entry serialno;
+	} hash_table_entries;
 
 	/*
 	 * An extract of the original configuration information for

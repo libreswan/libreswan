@@ -35,6 +35,38 @@ struct hash_table {
 	struct list_head *slots;
 };
 
+#define HASH_TABLE(STRUCT, NAME, FIELD, NR_BUCKETS)			\
+									\
+	static hash_t STRUCT##_##NAME##_hasher(const void *data)	\
+	{								\
+		const struct STRUCT *s = data;				\
+		return NAME##_hasher(&s->FIELD);			\
+	}								\
+									\
+	static struct list_entry *STRUCT##_##NAME##_entry(void *data)	\
+	{								\
+		struct STRUCT *s = data;				\
+		return &s->hash_table_entries.NAME;			\
+	}								\
+									\
+	static void STRUCT##_##NAME##_jam_hash(struct jambuf *buf, const void *data) \
+	{								\
+		const struct STRUCT *s = data;				\
+		jam_##STRUCT##_##NAME(buf, s);				\
+	}								\
+									\
+	static struct list_head STRUCT##_##NAME##_buckets[NR_BUCKETS];	\
+	struct hash_table STRUCT##_##NAME##_hash_table = {		\
+		.hasher = STRUCT##_##NAME##_hasher,			\
+		.entry = STRUCT##_##NAME##_entry,			\
+		.nr_slots = NR_BUCKETS,					\
+		.slots = STRUCT##_##NAME##_buckets,			\
+		.info = {						\
+			.name = #STRUCT"."#NAME,			\
+			.jam = STRUCT##_##NAME##_jam_hash,		\
+		},							\
+	}
+
 void init_hash_table(struct hash_table *table);
 
 hash_t hash_table_hasher(shunk_t data, hash_t hash);

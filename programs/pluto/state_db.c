@@ -20,16 +20,13 @@
 #include "connections.h"
 #include "hash_table.h"
 
-static struct hash_table state_hash_tables[];
+static struct hash_table *const state_hash_tables[];
 
-static void jam_state_serialno(struct jambuf *buf, const void *data)
+static void state_serialno_jam_hash(struct jambuf *buf, const void *data);
+
+static void jam_state_serialno(struct jambuf *buf, const struct state *st)
 {
-	if (data == NULL) {
-		jam(buf, "#0");
-	} else {
-		const struct state *st = data;
-		jam(buf, "#%lu", st->st_serialno);
-	}
+	jam(buf, PRI_SO, st->st_serialno);
 }
 
 static bool state_plausable(struct state *st,
@@ -64,7 +61,7 @@ static bool state_plausable(struct state *st,
 
 static const struct list_info state_serialno_list_info = {
 	.name = "serialno list",
-	.jam = jam_state_serialno,
+	.jam = state_serialno_jam_hash,
 };
 
 struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
@@ -79,17 +76,7 @@ static hash_t serialno_hasher(const so_serial_t *serialno)
 	return hash_table_hash_thing(*serialno, zero_hash);
 }
 
-static hash_t state_serialno_hasher(const void *data)
-{
-	const struct state *st = data;
-	return serialno_hasher(&st->st_serialno);
-}
-
-static struct list_entry *state_serialno_entry(void *data)
-{
-	struct state *st = data;
-	return &st->st_hash_table_entries[STATE_SERIALNO_HASH_TABLE];
-}
+HASH_TABLE(state, serialno, st_serialno, STATE_TABLE_SIZE);
 
 struct state *state_by_serialno(so_serial_t serialno)
 {
@@ -99,7 +86,7 @@ struct state *state_by_serialno(so_serial_t serialno)
 	 */
 	struct state *st;
 	hash_t hash = serialno_hasher(&serialno);
-	struct list_head *bucket = hash_table_bucket(&state_hash_tables[STATE_SERIALNO_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&state_serialno_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_serialno == serialno) {
 			return st;
@@ -127,17 +114,12 @@ static hash_t connection_hasher(struct connection *const *connection)
 	return hash_table_hash_thing(*connection, zero_hash);
 }
 
-static hash_t state_connection_hasher(const void *data)
+static void jam_state_connection(struct jambuf *buf, const struct state *st)
 {
-	const struct state *st = data;
-	return connection_hasher(&st->st_connection);
+	jam_connection(buf, st->st_connection);
 }
 
-static struct list_entry *state_connection_entry(void *data)
-{
-	struct state *st = data;
-	return &st->st_hash_table_entries[STATE_CONNECTION_HASH_TABLE];
-}
+HASH_TABLE(state, connection, st_connection, STATE_TABLE_SIZE);
 
 struct state *state_by_connection(struct connection *connection,
 				  state_by_predicate *predicate /*optional*/,
@@ -150,7 +132,7 @@ struct state *state_by_connection(struct connection *connection,
 	 */
 	struct state *st;
 	hash_t hash = connection_hasher(&connection);
-	struct list_head *bucket = hash_table_bucket(&state_hash_tables[STATE_CONNECTION_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&state_connection_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_connection != connection) {
 			continue;
@@ -169,7 +151,7 @@ struct state *state_by_connection(struct connection *connection,
 
 void rehash_state_connection(struct state *st)
 {
-	rehash_table_entry(&state_hash_tables[STATE_CONNECTION_HASH_TABLE], st);
+	rehash_table_entry(&state_connection_hash_table, st);
 }
 
 /*
@@ -181,17 +163,13 @@ static hash_t reqid_hasher(const reqid_t *reqid)
 	return hash_table_hash_thing(*reqid, zero_hash);
 }
 
-static hash_t state_reqid_hasher(const void *data)
+static void jam_state_reqid(struct jambuf *buf, const struct state *st)
 {
-	const struct state *st = data;
-	return reqid_hasher(&st->st_reqid);
+	jam_state(buf, st);
+	jam(buf, ": reqid=%u", st->st_reqid);
 }
 
-static struct list_entry *state_reqid_entry(void *data)
-{
-	struct state *st = data;
-	return &st->st_hash_table_entries[STATE_REQID_HASH_TABLE];
-}
+HASH_TABLE(state, reqid, st_reqid, STATE_TABLE_SIZE);
 
 struct state *state_by_reqid(reqid_t reqid,
 			     state_by_predicate *predicate /*optional*/,
@@ -204,7 +182,7 @@ struct state *state_by_reqid(reqid_t reqid,
 	 */
 	struct state *st;
 	hash_t hash = reqid_hasher(&reqid);
-	struct list_head *bucket = hash_table_bucket(&state_hash_tables[STATE_REQID_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&state_reqid_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_reqid != reqid) {
 			continue;
@@ -223,7 +201,7 @@ struct state *state_by_reqid(reqid_t reqid,
 
 void rehash_state_reqid(struct state *st)
 {
-	rehash_table_entry(&state_hash_tables[STATE_REQID_HASH_TABLE], st);
+	rehash_table_entry(&state_reqid_hash_table, st);
 }
 
 /*
@@ -242,26 +220,15 @@ static hash_t ike_initiator_spi_hasher(const ike_spi_t *ike_initiator_spi)
 	return hash_table_hash_thing(*ike_initiator_spi, zero_hash);
 }
 
-static hash_t state_ike_initiator_spi_hasher(const void *data)
+static void jam_state_ike_initiator_spi(struct jambuf *buf, const struct state *st)
 {
-	const struct state *st = data;
-	return ike_initiator_spi_hasher(&st->st_ike_spis.initiator);
-}
-
-static struct list_entry *state_ike_initiator_spi_entry(void *data)
-{
-	struct state *st = data;
-	return &st->st_hash_table_entries[STATE_IKE_INITIATOR_SPI_HASH_TABLE];
-}
-
-static void jam_state_ike_initiator_spi(struct jambuf *buf, const void *data)
-{
-	const struct state *st = data;
 	jam_state(buf, st);
 	jam(buf, ": ");
 	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
 		       sizeof(st->st_ike_spis.initiator.bytes));
 }
+
+HASH_TABLE(state, ike_initiator_spi, st_ike_spis.initiator, STATE_TABLE_SIZE);
 
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const so_serial_t *clonedfrom, /*optional*/
@@ -271,7 +238,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const char *name)
 {
 	hash_t hash = ike_initiator_spi_hasher(ike_initiator_spi);
-	struct list_head *bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_INITIATOR_SPI_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&state_ike_initiator_spi_hash_table, hash);
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, role)) {
@@ -309,21 +276,8 @@ static hash_t ike_spis_hasher(const ike_spis_t *ike_spis)
 	return hash_table_hash_thing(*ike_spis, zero_hash);
 }
 
-static hash_t state_ike_spis_hasher(const void *data)
+static void jam_state_ike_spis(struct jambuf *buf, const struct state *st)
 {
-	const struct state *st = data;
-	return ike_spis_hasher(&st->st_ike_spis);
-}
-
-static struct list_entry *state_ike_spis_entry(void *data)
-{
-	struct state *st = data;
-	return &st->st_hash_table_entries[STATE_IKE_SPIS_HASH_TABLE];
-}
-
-static void jam_state_ike_spis(struct jambuf *buf, const void *data)
-{
-	const struct state *st = data;
 	jam_state(buf, st);
 	jam(buf, ": ");
 	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
@@ -332,6 +286,8 @@ static void jam_state_ike_spis(struct jambuf *buf, const void *data)
 	jam_dump_bytes(buf, st->st_ike_spis.responder.bytes,
 		       sizeof(st->st_ike_spis.responder.bytes));
 }
+
+HASH_TABLE(state, ike_spis, st_ike_spis, STATE_TABLE_SIZE);
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				const so_serial_t *clonedfrom,
@@ -343,7 +299,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				const char *name)
 {
 	hash_t hash = ike_spis_hasher(ike_spis);
-	struct list_head *bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
+	struct list_head *bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, sa_role)) {
@@ -377,10 +333,10 @@ static struct list_head *filter_head(struct state_filter *filter)
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
 		hash_t hash = ike_spis_hasher(filter->ike_spis);
-		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
+		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->ike != NULL) {
 		hash_t hash = ike_spis_hasher(&filter->ike->sa.st_ike_spis);
-		bucket = hash_table_bucket(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], hash);
+		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else {
 		/* else other queries? */
 		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->where));
@@ -443,59 +399,12 @@ bool next_state_old2new(struct state_filter *filter)
  * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
-static struct list_head hash_slots[STATE_HASH_TABLES_ROOF][STATE_TABLE_SIZE];
-
-static struct hash_table state_hash_tables[] = {
-	[STATE_SERIALNO_HASH_TABLE] = {
-		.info = {
-			.name = "st_serialno table",
-			.jam = jam_state_serialno,
-		},
-		.hasher = state_serialno_hasher,
-		.entry = state_serialno_entry,
-		.nr_slots = elemsof(hash_slots[STATE_SERIALNO_HASH_TABLE]),
-		.slots = hash_slots[STATE_SERIALNO_HASH_TABLE],
-	},
-	[STATE_CONNECTION_HASH_TABLE] = {
-		.info = {
-			.name = "st_connection table",
-			.jam = jam_state_serialno,
-		},
-		.hasher = state_connection_hasher,
-		.entry = state_connection_entry,
-		.nr_slots = elemsof(hash_slots[STATE_CONNECTION_HASH_TABLE]),
-		.slots = hash_slots[STATE_CONNECTION_HASH_TABLE],
-	},
-	[STATE_REQID_HASH_TABLE] = {
-		.info = {
-			.name = "st_reqid table",
-			.jam = jam_state_serialno,
-		},
-		.hasher = state_reqid_hasher,
-		.entry = state_reqid_entry,
-		.nr_slots = elemsof(hash_slots[STATE_REQID_HASH_TABLE]),
-		.slots = hash_slots[STATE_REQID_HASH_TABLE],
-	},
-	[STATE_IKE_INITIATOR_SPI_HASH_TABLE] = {
-		.info = {
-			.name = "IKE SPIi table",
-			.jam = jam_state_ike_initiator_spi,
-		},
-		.hasher = state_ike_initiator_spi_hasher,
-		.entry = state_ike_initiator_spi_entry,
-		.nr_slots = elemsof(hash_slots[STATE_IKE_INITIATOR_SPI_HASH_TABLE]),
-		.slots = hash_slots[STATE_IKE_INITIATOR_SPI_HASH_TABLE],
-	},
-	[STATE_IKE_SPIS_HASH_TABLE] = {
-		.info = {
-			.name = "IKE SPI[ir] table",
-			.jam = jam_state_ike_spis,
-		},
-		.hasher = state_ike_spis_hasher,
-		.entry = state_ike_spis_entry,
-		.nr_slots = elemsof(hash_slots[STATE_IKE_SPIS_HASH_TABLE]),
-		.slots = hash_slots[STATE_IKE_SPIS_HASH_TABLE],
-	},
+static struct hash_table * const state_hash_tables[] = {
+	&state_serialno_hash_table,
+	&state_connection_hash_table,
+	&state_reqid_hash_table,
+	&state_ike_initiator_spi_hash_table,
+	&state_ike_spis_hash_table,
 };
 
 void add_state_to_db(struct state *st)
@@ -511,7 +420,7 @@ void add_state_to_db(struct state *st)
 			  &st->st_serialno_list_entry);
 
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		add_hash_table_entry(&state_hash_tables[h], st);
+		add_hash_table_entry(state_hash_tables[h], st);
 	}
 }
 
@@ -520,8 +429,8 @@ void rehash_state_cookies_in_db(struct state *st)
 	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
 	    enum_name(&ike_version_names, st->st_connection->ike_version),
 	    st->st_serialno);
-	rehash_table_entry(&state_hash_tables[STATE_IKE_SPIS_HASH_TABLE], st);
-	rehash_table_entry(&state_hash_tables[STATE_IKE_INITIATOR_SPI_HASH_TABLE], st);
+	rehash_table_entry(&state_ike_spis_hash_table, st);
+	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
 }
 
 void del_state_from_db(struct state *st)
@@ -531,13 +440,13 @@ void del_state_from_db(struct state *st)
 	    st->st_serialno, st->st_state->short_name);
 	remove_list_entry(&st->st_serialno_list_entry);
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		del_hash_table_entry(&state_hash_tables[h], st);
+		del_hash_table_entry(state_hash_tables[h], st);
 	}
 }
 
 void init_state_db(void)
 {
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		init_hash_table(&state_hash_tables[h]);
+		init_hash_table(state_hash_tables[h]);
 	}
 }
