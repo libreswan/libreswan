@@ -69,8 +69,17 @@ struct hash_table {
 
 void init_hash_table(struct hash_table *table);
 
-hash_t hash_table_hasher(shunk_t data, hash_t hash);
-#define hash_table_hash_thing(THING, HASH) hash_table_hasher(THING_AS_SHUNK(THING), HASH)
+hash_t hash_table_hash_bytes(const void *ptr, size_t len, hash_t hash);
+#define hash_table_hash_hunk(HUNK, HASH)				\
+	({								\
+		typeof(HUNK) h_ = HUNK; /* evaluate once */		\
+		hash_table_hash_bytes(h_.ptr, h_.len, HASH);		\
+	})
+#define hash_table_hash_thing(THING, HASH)				\
+	({								\
+		shunk_t h_ = THING_AS_SHUNK(THING); /* evaluate once */	\
+		hash_table_hash_bytes(h_.ptr, h_.len, HASH);		\
+	})
 
 /*
  * Maintain the table.

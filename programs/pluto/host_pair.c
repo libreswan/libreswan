@@ -53,10 +53,10 @@ static hash_t hp_hasher(const ip_address local, const ip_address remote)
 {
 	hash_t hash = zero_hash;
 	if (pexpect(address_is_specified(local))) {
-		hash = hash_table_hasher(address_as_shunk(&local), hash);
+		hash = hash_table_hash_hunk(address_as_shunk(&local), hash);
 	}
 	if (address_is_specified(remote)) {
-		hash = hash_table_hasher(address_as_shunk(&remote), hash);
+		hash = hash_table_hash_hunk(address_as_shunk(&remote), hash);
 	}
 	return hash;
 }

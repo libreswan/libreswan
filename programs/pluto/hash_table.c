@@ -29,15 +29,15 @@ void init_hash_table(struct hash_table *table)
 	}
 }
 
-hash_t hash_table_hasher(shunk_t data, hash_t hash)
+hash_t hash_table_hash_bytes(const void *ptr, size_t len, hash_t hash)
 {
 	/*
 	 * 251 is a prime close to 256 (so like <<8).
 	 *
 	 * There's no real rationale for doing this.
 	 */
-	const uint8_t *bytes = data.ptr;
-	for (unsigned j = 0; j < data.len; j++) {
+	const uint8_t *bytes = ptr;
+	for (unsigned j = 0; j < len; j++) {
 		hash.hash = hash.hash * 251 + bytes[j];
 	}
 	return hash;
