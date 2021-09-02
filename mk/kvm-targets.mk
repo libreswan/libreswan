@@ -275,7 +275,9 @@ endef
 # This file is updated during boot then left unchanged.
 #
 
-KVM_FRESH_BOOT_FILE = $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
+KVM_FRESH_BOOT_FILE = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).boot.ok
+$(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
+	touch $@
 
 #
 # Check that there is enough entoropy for running the domains.
@@ -766,11 +768,14 @@ endef
 # The .upgraded target then depends on the .kickstarted target.  This
 # way an upgrade can be triggered without needing to re-create the
 # entire base domain.
+#
+# $(KVM_HOST_OK) is a soft dependency - the files just need to be
+# there.
 
 .PRECIOUS: $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
-		$(KVM_HOST_OK) \
 		| \
+		$(KVM_HOST_OK) \
 		$(KVM_POOLDIR)/$(KVM_ISO) \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
@@ -853,6 +858,10 @@ kvm-transmogrify: $(KVM_HOST_OK)
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 	$(MAKE) $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
 
+
+.PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
+install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified
+
 #
 # Create the local disk images
 #
@@ -909,7 +918,7 @@ $(KVM_BUILD_DISK_CLONES): \
 KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_OPENBSD_DOMAIN_CLONES)))
 $(KVM_OPENBSD_DISK_CLONES): \
 		| \
-		$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2 \
+		$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml \
 		$(KVM_LOCALDIR)
 	: copy-build-disk $@
 	$(call shadow-kvm-disk,$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,$@.tmp)
@@ -936,7 +945,6 @@ $(KVM_OPENBSD_DISK_CLONES): \
 #
 
 $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
-		$(KVM_HOST_OK) \
 		| \
 		$(KVM_BASE_GATEWAY_FILE) \
 		$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified \
@@ -963,7 +971,6 @@ define install-kvm-test-domain
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
-		$(KVM_HOST_OK) \
 		| \
 		$$(foreach subnet,$$(KVM_TEST_SUBNETS), \
 			$$(KVM_POOLDIR)/$(1)$$(subnet).net) \
@@ -1114,10 +1121,7 @@ kvm-demolish: kvm-uninstall-base-network
 # things barf because the build domain things its disk is in use).
 
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
-kvm-$(KVM_BUILD_DOMAIN)-install: \
-		$(KVM_HOST_OK) \
-		| \
-		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+kvm-$(KVM_BUILD_DOMAIN)-install: | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 ifeq ($(KVM_INSTALL_RPM), true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'rm -fr ~/rpmbuild/*RPMS'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make kvm-rpm'
@@ -1170,9 +1174,10 @@ $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_POOLDIR)/$(KVM_OPENBSD_ISO)
 # for testing
 .PHONY: kvm-uninstall-openbsd kvm-openbsd
 kvm-uninstall-openbsd: $(foreach domain, $(KVM_OPENBSD_BASE_DOMAIN) $(KVM_OPENBSD_DOMAIN_CLONES), uninstall-kvm-domain-${domain})
-kvm-openbsd: $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2
+kvm-openbsd: $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
 
-$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2: | $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso
+# XXX: broken when the script dies
+$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso
 	$(call destroy-kvm-domain,$(KVM_OPENBSD_BASE_DOMAIN))
 	$(KVM_PYTHON) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_OPENBSD_BASE_DOMAIN) \
 		"sudo virt-install --name=$(KVM_OPENBSD_BASE_DOMAIN) --virt-type=kvm --memory=2048,maxmemory=2048 \
@@ -1181,6 +1186,7 @@ $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2: | $(KVM_TESTINGDIR)/utils/openb
 		--disk path=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
 		--network=network:$(KVM_GATEWAY),model=virtio \
 		--graphics none --serial pty --check path_in_use=off"
+	touch $@
 
 #
 # kvmsh-HOST
