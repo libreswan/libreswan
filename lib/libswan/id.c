@@ -283,12 +283,9 @@ void free_id_content(struct id *id)
 }
 
 /*
- * Is this a "match anything" id
- * MUST only be called on our configured ID's, not our received ID's,
- * because we would bad_case() on a bogus value
- * (our enum and the IKE IANA values are matching)
+ * Is this a "match anything" id?
  */
-bool any_id(const struct id *a)
+bool id_is_any(const struct id *a)
 {
 	switch (a->kind) {
 	case ID_NONE:
@@ -307,7 +304,7 @@ bool any_id(const struct id *a)
 		return false;
 
 	default:
-		bad_case(a->kind);
+		return false;
 	}
 }
 

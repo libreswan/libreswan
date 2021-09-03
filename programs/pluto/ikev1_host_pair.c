@@ -82,7 +82,7 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 			continue;
 
 		if (peer_id != NULL && !same_id(peer_id, &c->spd.that.id) &&
-			(c->spd.that.id.kind != ID_FROMCERT && !any_id(&c->spd.that.id))) {
+		    (c->spd.that.id.kind != ID_FROMCERT && !id_is_any(&c->spd.that.id))) {
 				continue; /* incompatible ID */
 		}
 

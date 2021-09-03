@@ -83,7 +83,7 @@ const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *b
 struct id clone_id(const struct id *id, const char *why);
 extern void free_id_content(struct id *id); /* also blats ID */
 
-extern bool any_id(const struct id *a);
+extern bool id_is_any(const struct id *a);
 extern bool same_id(const struct id *a, const struct id *b);
 #define MAX_WILDCARDS	15
 extern bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards);

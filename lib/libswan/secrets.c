@@ -617,7 +617,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 				for (i = s->ids; i != NULL; i = i->next) {
 					idnum++;
-					if (any_id(&i->id)) {
+					if (id_is_any(&i->id)) {
 						/*
 						 * match any will
 						 * automatically match
