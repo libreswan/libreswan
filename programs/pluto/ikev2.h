@@ -128,8 +128,6 @@ extern bool emit_v2KE(chunk_t g, const struct dh_desc *group, pb_stream *outs);
 extern void init_ikev2(void);
 
 void jam_v2_ike_details(struct jambuf *buf, struct state *st);
-void jam_v2_stf_status(struct jambuf *buf, unsigned ret);
-
 void v2_event_sa_rekey(struct state *st);
 void v2_event_sa_reauth(struct state *st);
 void v2_event_sa_replace(struct state *st);

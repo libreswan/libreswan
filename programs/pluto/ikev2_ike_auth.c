@@ -578,10 +578,8 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	}
 
 	stf_status e = process_v2_IKE_AUTH_request_continue_tail(&ike->sa, md);
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "process_v2_IKE_AUTH_request_continue_tail returned ");
-		jam_v2_stf_status(buf, e);
-	}
+	dbg("process_v2_IKE_AUTH_request_continue_tail returned %s",
+	    enum_name(&stf_status_names, e));
 
 	/*
 	 * if failed OE, delete state completely, no create_child_sa

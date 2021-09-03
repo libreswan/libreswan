@@ -2637,7 +2637,7 @@ void complete_v2_state_transition(struct state *st,
 		jam(buf, " ");
 		jam_v2_transition(buf, transition);
 		jam(buf, " with status ");
-		jam_v2_stf_status(buf, result);
+		jam_enum(buf, &stf_status_names, result);
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -2789,16 +2789,6 @@ void complete_v2_state_transition(struct state *st,
 		ike = NULL;
 		break;
 	}
-	}
-}
-
-void jam_v2_stf_status(struct jambuf *buf, unsigned status)
-{
-	if (status <= STF_FAIL) {
-		jam_enum(buf, &stf_status_names, status);
-	} else {
-		jam(buf, "STF_FAIL+");
-		jam_enum(buf, &v2_notification_names, status - STF_FAIL);
 	}
 }
 
