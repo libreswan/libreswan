@@ -22,22 +22,27 @@ define transform_script
 	mv $(builddir)/$*.tmp $(builddir)/$*
 endef
 
-%: %.sh $(top_srcdir)/Makefile.ver | $(builddir)
+TRANSFORM_DEPS = \
+	$(top_srcdir)/mk/version.mk \
+	$(top_srcdir)/mk/config.mk \
+	$(wildcard $(top_srcdir)/Makefile.inc.local)
+
+%: %.sh $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
-%: %.in $(top_srcdir)/Makefile.ver | $(builddir)
+%: %.in $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
-%: %.pl $(top_srcdir)/Makefile.ver | $(builddir)
+%: %.pl $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
-$(builddir)/%: %.sh $(top_srcdir)/Makefile.ver | $(builddir)
+$(builddir)/%: %.sh $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
-$(builddir)/%: %.in $(top_srcdir)/Makefile.ver | $(builddir)
+$(builddir)/%: %.in $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
-$(builddir)/%: %.pl $(top_srcdir)/Makefile.ver | $(builddir)
+$(builddir)/%: %.pl $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
 # In addition to compiling the .c file to .o, generate a dependency
