@@ -676,8 +676,8 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 	struct connection_filter cf = {
 		.name = c->name,
 		.kind = c->kind,
-		.this_id = &c->spd.this.id,
-		.that_id = &c->spd.that.id,
+		.this_id_eq = &c->spd.this.id,
+		.that_id_eq = &c->spd.that.id,
 		.where = HERE,
 		.c = NULL,
 	};

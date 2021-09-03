@@ -665,8 +665,8 @@ struct connection_filter {
 	/* filters */
 	enum connection_kind kind;
 	const char *name;
-	const struct id *this_id;
-	const struct id *that_id;
+	const struct id *this_id_eq; /* strict; not same_id() */
+	const struct id *that_id_eq; /* strict; not same_id() */
 	/* current result (can be safely deleted) */
 	struct connection *c;
 	/* internal (handle on next entry) */

@@ -84,10 +84,10 @@ static bool matches_filter(struct connection *c, struct connection_filter *filte
 	if (filter->name != NULL && !streq(filter->name, c->name)) {
 		return false;
 	}
-	if (filter->this_id != NULL && !same_id(filter->this_id, &c->spd.this.id)) {
+	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->spd.this.id)) {
 		return false;
 	}
-	if (filter->that_id != NULL && !same_id(filter->that_id, &c->spd.that.id)) {
+	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->spd.that.id)) {
 		return false;
 	}
 	return true; /* sure */
