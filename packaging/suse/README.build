@@ -1,7 +1,0 @@
-libreswan.spec is a spec file for sles11 and opensuse 11.4.  I also use
-'build' package and invoke "build --dist sl11.4 --define 'buildklips 1'
---debug libreswan.spec" on opensuse 11.4 and kernel modules for all
-flavors are built.
-
-If rpmbuild is used directly, install kernel-syms package and do "rpmbuild
---define 'buildklips 1' libreswan.spec".

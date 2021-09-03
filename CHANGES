@@ -2,7 +2,7 @@
 See also https://libreswan.org/
 
 v4.6 (unreleased)
-* building: packaging for SLES10 removed [Andrew]
+* packaging: replace old SUSE packaging with pointer to upstream [Andrew]
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
