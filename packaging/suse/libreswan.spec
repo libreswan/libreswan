@@ -1,7 +1,6 @@
 # needsrootforbuild
 
 # for sles11+ and opensuse 11.4
-# for sles10, use sles10.spec
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan

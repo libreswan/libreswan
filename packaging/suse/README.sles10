@@ -1,4 +1,0 @@
-The sles10.spec file should be used for building on old SLES10 machines.
-It also uses a required kernel patch "kernelsrc.patch" to work around
-a clash in libreswan and the kernel using $KERNELSRC
-

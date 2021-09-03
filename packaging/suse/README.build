@@ -5,13 +5,3 @@ flavors are built.
 
 If rpmbuild is used directly, install kernel-syms package and do "rpmbuild
 --define 'buildklips 1' libreswan.spec".
-
-sles10.spec is a spec file for sles10.  It needs an additional patch
-kernelsrc.patch.  There are same problems on other projects.
-ex. http://osdir.com/ml/linux.iscsi.iscsi-target.devel/2006-02/msg00049.html
-libreswan uses a KERNELSRC variable in Makefile, and it conflicts the
-same variable in /lib/modules/.../build/Makefile.  Without this patch,
-make process gets into infinite loop.  It is the case for older kernels,
-and it's not the case for RHEL5 though it has older 2.6.18 kernel, it
-has a very customized Makefile.
-
