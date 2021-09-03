@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-if [ ! -f Makefile.ver ]
+if [ ! -f mk/version.mk ]
 then
 	echo >&2 "error: make release should be run from the top directory"
 	exit 1
