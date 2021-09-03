@@ -81,6 +81,7 @@ static chunk_t nss_modp_clone_local_secret_ke(const struct dh_desc *group,
 					      const SECKEYPublicKey *local_pubk)
 {
 	/* clone secitem as chunk()? */
+	/* ??? if pexpect fails, and we are going to clone anyway, should we not use publicValue.len as len? */
 	pexpect(local_pubk->u.dh.publicValue.len == group->bytes);
 	return clone_bytes_as_chunk(local_pubk->u.dh.publicValue.data, group->bytes, "MODP KE");
 }
