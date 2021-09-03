@@ -435,8 +435,8 @@ NONINTCONFIG = oldconfig
 
 -include ${LIBRESWANSRCDIR}/Makefile.ver
 
-# make sure we only run this once per build,  its too expensive to run
-# every time Makefile.inc is included
+# Make sure we only run this once per build, its too expensive to run
+# every time mk/config.mk is included
 ifndef IPSECVERSION
  ifeq ($(VERSION_ADD_GIT_DIRTY),true)
   ADD_GIT_DIRTY = --add-git-diry

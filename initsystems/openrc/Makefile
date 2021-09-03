@@ -8,7 +8,7 @@ SRCDIR?=${LIBRESWANSRCDIR}/initsystems/openrc/
 INITDFILE=$(builddir)/ipsec.init
 SUBDIRS=
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
+include $(top_srcdir)/mk/config.mk
 
 # Use dependencies to force the order.
 #

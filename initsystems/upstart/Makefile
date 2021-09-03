@@ -11,7 +11,7 @@ SUBDIRS=
 UPSTARTDIR=$(SYSCONFDIR)/init
 DEFAULTDIR=$(SYSCONFDIR)/default
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
+include $(top_srcdir)/mk/config.mk
 
 # Use dependencies to force the order.
 #

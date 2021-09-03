@@ -5,7 +5,7 @@ endif
 UNITFILE=ipsec.service
 TMPFILESCONFIG=libreswan.conf
 
-include $(top_srcdir)/Makefile.inc
+include $(top_srcdir)/mk/config.mk
 
 # Use dependencies to force the order: LOCAL-BASE,
 # INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.

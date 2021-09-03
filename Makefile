@@ -22,7 +22,7 @@ endif
 
 LIBRESWANSRCDIR?=$(shell pwd)
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
+include $(top_srcdir)/mk/config.mk
 
 MAIN_RPM_VERSION = $(shell make showversion | sed "s/-.*//")
 MAIN_RPM_PREVER = $(shell make showversion | sed -e  "s/^.[^-]*-\([^-]*\)-\(.*\)/rc\1_\2/" -e "s/-/_/g")

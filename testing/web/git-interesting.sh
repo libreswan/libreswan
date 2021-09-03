@@ -76,7 +76,6 @@ fi
 
 if git show "${gitrev}^{commit}" \
        Makefile \
-       Makefile.inc \
        lib \
        mk \
        programs \

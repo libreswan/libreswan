@@ -16,7 +16,8 @@
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif
-include $(top_srcdir)/Makefile.inc
+
+include $(top_srcdir)/mk/config.mk
 
 SUBDIRS=
 

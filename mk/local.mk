@@ -12,15 +12,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# Currently both mk/dirs.mk and Makefile.inc need to see the local
-# definitions in Makefile.inc.local but Makefile.inc can't (yet)
+# Currently both mk/dirs.mk and mk/config.mk need to see the local
+# definitions in Makefile.inc.local but mk/config.mk can't (yet)
 # assume dirs.mk has been included.  This wrapper prevents multiple
 # includes.
 
-# Why can't mk/dirs.mk include Makefile.inc or Makefile.inc include
+# Why can't mk/dirs.mk include mk/config.mk, or mk/config.mk include
 # mk/dirs?
 #
-# The problem is circular.  Makefile.inc uses variables like
+# The problem is circular.  mk/config.mk uses variables like
 # LIBRESWANSRCDIR but at the point where Makefile.inc.local should be
 # included by mk/dirs.mk (very early as it might set OBJDIR),
 # mk/dirs.mk hasn't yet had a chance to define them.
@@ -35,7 +35,7 @@ ifdef top_srcdir
 # mk/dirs.mk case
 -include $(top_srcdir)/Makefile.inc.local
 else
-# Makefile.inc case, when mk/dirs.mk hasn't been included
+# mk/config.mk case, when mk/dirs.mk hasn't been included
 -include $(LIBRESWANSRCDIR)/Makefile.inc.local
 endif
 endif
