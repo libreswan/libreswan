@@ -288,7 +288,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		if (ntfy != NULL) {
 			jam(buf, " containing ");
-			jam_enum_short(buf, &ikev2_notify_names,
+			jam_enum_short(buf, &v2_notification_names,
 				       ntfy->payload.v2n.isan_type);
 			if (ntfy->next != NULL) {
 				jam(buf, "...");
@@ -322,7 +322,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		}
 		if (errors->notification != v2N_NOTHING_WRONG) {
 			jam(buf, "; missing notification ");
-			jam_enum_short(buf, &ikev2_notify_names,
+			jam_enum_short(buf, &v2_notification_names,
 				       errors->notification);
 		}
 	}

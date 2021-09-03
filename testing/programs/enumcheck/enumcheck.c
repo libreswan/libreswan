@@ -318,7 +318,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("oakley_hash_names", &oakley_hash_names);
 	test_enums("oakley_group_names", &oakley_group_names);
 	test_enum_range("ikev1_notify_names", &ikev1_notify_names, 0, 16384);
-	test_enum_range("ikev2_notify_names", &ikev2_notify_names, 0, 16384);
+	test_enum_range("v2_notification_names", &v2_notification_names, 0, 16384);
 	test_enums("ikev2_ts_type_names", &ikev2_ts_type_names);
 	test_enums("ikev2_cp_type_names", &ikev2_cp_type_names);
 	test_enums("ikev2_cp_attribute_type_names", &ikev2_cp_attribute_type_names);

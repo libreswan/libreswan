@@ -895,7 +895,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		esb_buf esb;
 		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
-			  enum_show(&ikev2_notify_names, md->v2N_error, &esb));
+			  enum_show(&v2_notification_names, md->v2N_error, &esb));
 		return md->v2N_error;
 	}
 
@@ -1167,7 +1167,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			esb_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"IKE_AUTH response rejected Child SA with %s",
-				enum_show_short(&ikev2_notify_names, n, &esb));
+				enum_show_short(&v2_notification_names, n, &esb));
 			connection_buf cb;
 			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
 			    ike->sa.st_serialno, child->sa.st_serialno,
@@ -1253,11 +1253,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		if (v2_notification_fatal(n)) {
 			llog_sa(RC_LOG_SERIOUS, child,
 				"CHILD SA encountered fatal error: %s",
-				enum_name_short(&ikev2_notify_names, n));
+				enum_name_short(&v2_notification_names, n));
 		} else {
 			llog_sa(RC_LOG_SERIOUS, child,
 				"CHILD SA failed: %s",
-				enum_name_short(&ikev2_notify_names, n));
+				enum_name_short(&v2_notification_names, n));
 		}
 		return n;
 	}

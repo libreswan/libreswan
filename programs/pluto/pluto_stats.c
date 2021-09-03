@@ -99,17 +99,17 @@ unsigned long pstats_pamauth_aborted;
 		.count = pstats_##TYPE##_count,				\
 	};
 
-PLUTO_STAT(ikev2_sent_notifies_e, &ikev2_notify_names,
+PLUTO_STAT(ikev2_sent_notifies_e, &v2_notification_names,
 	    "ikev2.sent.notifies.error",
 	    v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
-PLUTO_STAT(ikev2_recv_notifies_e, &ikev2_notify_names,
+PLUTO_STAT(ikev2_recv_notifies_e, &v2_notification_names,
 	   "ikev2.recv.notifies.error",
 	   v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
 
-PLUTO_STAT(ikev2_sent_notifies_s, &ikev2_notify_names,
+PLUTO_STAT(ikev2_sent_notifies_s, &v2_notification_names,
 	    "ikev2.sent.notifies.status",
 	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
-PLUTO_STAT(ikev2_recv_notifies_s, &ikev2_notify_names,
+PLUTO_STAT(ikev2_recv_notifies_s, &v2_notification_names,
 	   "ikev2.recv.notifies.status",
 	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
 

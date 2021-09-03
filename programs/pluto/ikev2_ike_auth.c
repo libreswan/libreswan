@@ -1545,7 +1545,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		if (md->pd[pd] != NULL) {
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
-			const char *why = enum_name_short(&ikev2_notify_names, n);
+			const char *why = enum_name_short(&v2_notification_names, n);
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "IKE SA authentication request rejected by peer: %s", why);
 			logged_something_serious = true;
@@ -1562,7 +1562,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			v2_notification_t n = ntfy->payload.v2n.isan_type;
 			/* same scope */
 			esb_buf esb;
-			const char *name = enum_show_short(&ikev2_notify_names, n, &esb);
+			const char *name = enum_show_short(&v2_notification_names, n, &esb);
 
 			if (ntfy->payload.v2n.isan_spisize != 0) {
 				/* invalid-syntax, but can't do anything about it */

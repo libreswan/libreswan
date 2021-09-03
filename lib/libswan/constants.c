@@ -1733,7 +1733,7 @@ static const char *const ikev2_notify_name_private[] = {
 	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
 };
 
-static enum_names ikev2_notify_names_private = {
+static enum_names v2_notification_names_private = {
 	v2N_NULL_AUTH,
 	v2N_NULL_AUTH,
 	ARRAY_REF(ikev2_notify_name_private),
@@ -1800,12 +1800,12 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_INTERMEDIATE_EXCHANGE_SUPPORTED" /* 16438*/,
 };
 
-static enum_names ikev2_notify_names_16384 = {
+static enum_names v2_notification_names_16384 = {
 	v2N_INITIAL_CONTACT,
 	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
-	&ikev2_notify_names_private
+	&v2_notification_names_private
 };
 
 static const char *const ikev2_notify_name[] = {
@@ -1858,12 +1858,12 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_AUTHORIZATION_FAILED",
 };
 
-enum_names ikev2_notify_names = {
+enum_names v2_notification_names = {
 	v2N_NOTHING_WRONG,
 	v2N_AUTHORIZATION_FAILED,
 	ARRAY_REF(ikev2_notify_name),
 	"v2N_", /* prefix */
-	&ikev2_notify_names_16384
+	&v2_notification_names_16384
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
@@ -2711,7 +2711,7 @@ static const enum_names *en_checklist[] = {
 	&oakley_group_names,
 	&oakley_group_type_names,
 	&ikev1_notify_names,
-	&ikev2_notify_names,
+	&v2_notification_names,
 	&ikev2_ts_type_names,
 	&attr_msg_type_names,
 	&ikev2_proposal_protocol_id_names,

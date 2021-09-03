@@ -1483,7 +1483,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
 		/* same scope */
 		esb_buf esb;
-		const char *name = enum_show_short(&ikev2_notify_names, n, &esb);
+		const char *name = enum_show_short(&v2_notification_names, n, &esb);
 
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);

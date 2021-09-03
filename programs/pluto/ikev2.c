@@ -2887,7 +2887,8 @@ void complete_v2_state_transition(struct state *st,
 		v2_notification_t notification = result - STF_FAIL;
 		llog_pexpect(st->st_logger, HERE,
 			     "state transition '%s' failed with %s",
-			     transition->story, enum_name(&ikev2_notify_names, notification));
+			     transition->story,
+			     enum_name(&v2_notification_names, notification));
 		delete_state(st);
 		st = NULL;
 		ike = NULL;
@@ -2902,7 +2903,7 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned status)
 		jam_enum(buf, &stf_status_names, status);
 	} else {
 		jam(buf, "STF_FAIL+");
-		jam_enum(buf, &ikev2_notify_names, status - STF_FAIL);
+		jam_enum(buf, &v2_notification_names, status - STF_FAIL);
 	}
 }
 

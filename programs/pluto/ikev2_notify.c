@@ -106,7 +106,7 @@ void decode_v2N_payload(struct logger *unused_logger UNUSED, struct msg_digest *
 		type = "status";
 	}
 
-	const char *name = enum_name(&ikev2_notify_names, n); /* might be NULL */
+	const char *name = enum_name(&v2_notification_names, n); /* might be NULL */
 	if (name == NULL) {
 		dbg("%s notification %d is unknown", type, n);
 		return;

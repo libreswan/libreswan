@@ -82,7 +82,7 @@ extern enum_names ikev2_trans_type_esn_names;
 extern enum_names ikev2_trans_attr_descs;
 extern enum_enum_names v2_transform_ID_enums;
 extern enum_names ikev2_cert_type_names;
-extern enum_names ikev2_notify_names;
+extern enum_names v2_notification_names;
 extern enum_names ikev2_ts_type_names;
 extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
