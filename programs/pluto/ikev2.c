@@ -2882,48 +2882,17 @@ void complete_v2_state_transition(struct state *st,
 		break;
 
 	default: /* STF_FAIL+notification */
+	{
 		passert(result > STF_FAIL);
-		/*
-		 * XXX: For IKEv2, this code path isn't sufficient - a
-		 * message request can result in a response that
-		 * contains both a success and a fail.  Better to
-		 * record the responses and and then return
-		 * STF_ZOMBIFY signaling both that the message should
-		 * be sent and the state deleted.
-		 */
 		v2_notification_t notification = result - STF_FAIL;
-		/* Only the responder sends a notification */
-		if (v2_msg_role(md) == MESSAGE_REQUEST) {
-			dbg("sending a notification reply");
-			v2_msgid_update_recv(ike, st, md);
-			record_v2N_response(st->st_logger, ike, md,
-					    notification, NULL/*no data*/,
-					    ENCRYPTED_PAYLOAD);
-			v2_msgid_update_sent(ike, st, md, transition->send);
-			send_recorded_v2_message(ike, "STF_FAIL",
-						 MESSAGE_RESPONSE);
-			/*
-			 * XXX: is this always false; if true above
-			 * record would pexpect()?
-			 */
-			if (md->hdr.isa_xchg == ISAKMP_v2_IKE_SA_INIT) {
-				delete_state(st);
-				/* kill all st pointers */
-				st = NULL; ike = NULL;
-			} else {
-				dbg("forcing #%lu to a discard event",
-				    st->st_serialno);
-				delete_event(st);
-				event_schedule(EVENT_SA_DISCARD,
-					       MAXIMUM_RESPONDER_WAIT_DELAY,
-					       st);
-			}
-		} else {
-			log_state(RC_NOTIFICATION+notification, st,
-				  "state transition '%s' failed with %s",
-				  transition->story, enum_name(&ikev2_notify_names, notification));
-		}
+		llog_pexpect(st->st_logger, HERE,
+			     "state transition '%s' failed with %s",
+			     transition->story, enum_name(&ikev2_notify_names, notification));
+		delete_state(st);
+		st = NULL;
+		ike = NULL;
 		break;
+	}
 	}
 }
 
