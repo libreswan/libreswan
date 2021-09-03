@@ -84,7 +84,8 @@ struct id clone_id(const struct id *id, const char *why);
 extern void free_id_content(struct id *id); /* also blats ID */
 
 extern bool id_is_any(const struct id *a);
-extern bool same_id(const struct id *a, const struct id *b);
+extern bool id_eq(const struct id *a, const struct id *b);
+extern bool same_id(const struct id *a, const struct id *b); /* fuzzy */
 #define MAX_WILDCARDS	15
 extern bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards);
 extern bool match_id(const struct id *a, const struct id *b, int *wildcards);

@@ -309,13 +309,9 @@ bool id_is_any(const struct id *a)
 }
 
 /* compare two struct id values */
-bool same_id(const struct id *a, const struct id *b)
-{
-	if (b->kind == ID_NONE || a->kind == ID_NONE) {
-		dbg("id type with ID_NONE means wildcard match");
-		return true; /* it's the wildcard */
-	}
 
+bool id_eq(const struct id *a, const struct id *b)
+{
 	if (a->kind != b->kind) {
 		return false;
 	}
@@ -325,11 +321,8 @@ bool same_id(const struct id *a, const struct id *b)
 		return true; /* repeat of above for completeness */
 
 	case ID_NULL:
-		if (a->kind == b->kind) {
-			dbg("ID_NULL: id kind matches");
-			return true;
-		}
-		return false;
+		dbg("ID_NULL: id kind matches");
+		return true;
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
@@ -337,25 +330,27 @@ bool same_id(const struct id *a, const struct id *b)
 
 	case ID_FQDN:
 	case ID_USER_FQDN:
+	{
 		/*
 		 * assumptions:
 		 * - case should be ignored
 		 * - trailing "." should be ignored
 		 *   (even if the only character?)
 		 */
-	{
-		size_t al = a->name.len,
-			bl = b->name.len;
 
 		/* strip trailing dots */
+		size_t al = a->name.len;
 		while (al > 0 && a->name.ptr[al - 1] == '.')
 			al--;
+		size_t bl = b->name.len;
 		while (bl > 0 && b->name.ptr[bl - 1] == '.')
 			bl--;
-		return al == bl &&
+
+		return (al == bl /* same length */ &&
 			strncaseeq((char *)a->name.ptr,
-				(char *)b->name.ptr, al);
+				   (char *)b->name.ptr, al));
 	}
+
 	case ID_FROMCERT:
 		dbg("same_id() received ID_FROMCERT - unexpected");
 		/* FALLTHROUGH */
@@ -368,6 +363,16 @@ bool same_id(const struct id *a, const struct id *b)
 	default:
 		bad_case(a->kind);
 	}
+}
+
+bool same_id(const struct id *a, const struct id *b)
+{
+	if (b->kind == ID_NONE || a->kind == ID_NONE) {
+		dbg("id type with ID_NONE means wildcard match");
+		return true; /* it's the wildcard */
+	}
+
+	return id_eq(a, b);
 }
 
 /* compare two struct id values, DNs can contain wildcards */
