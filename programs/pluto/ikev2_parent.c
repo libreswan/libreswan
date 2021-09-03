@@ -693,15 +693,14 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		}
 
 		bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
-		bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
-
-		if (same_remote_ip && (!old_is_nullauth && authnull)) {
-			log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
+		if (!old_is_nullauth && authnull) {
+			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;
 		}
 
+		bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
 		if (!same_remote_ip && old_is_nullauth && authnull) {
-			log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
+			llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
 			continue;
 		}
 
