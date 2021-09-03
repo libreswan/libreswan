@@ -227,8 +227,8 @@ endif
 
 OBJS += $(abs_builddir)/version.o
 
-# build version.c using version number from Makefile.ver
-$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/Makefile.ver
+# build version.c using version number from mk/version.mk
+$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@IPSECVERSION@/$(subst /,\/,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \

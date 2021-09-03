@@ -433,7 +433,7 @@ HAVE_BROKEN_POPEN ?= false
 
 NONINTCONFIG = oldconfig
 
--include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/version.mk
 
 # Make sure we only run this once per build, its too expensive to run
 # every time mk/config.mk is included
