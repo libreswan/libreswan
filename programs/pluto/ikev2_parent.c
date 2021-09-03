@@ -654,68 +654,75 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		 * If we are a server and use PSK, all clients use the same group ID
 		 * Note that "xauth_server" also refers to IKEv2 CP
 		 */
-		dbg("We are a server using PSK and clients are using a group ID");
-	} else if (!uniqueIDs) {
-		dbg("uniqueIDs disabled, not contemplating releasing older self");
-	} else {
+		dbg("%s() skipped, we are a server using PSK and clients are using a group ID", __func__);
+		return;
+	}
+
+	if (!uniqueIDs) {
+		dbg("%s() skipped, uniqueIDs disabled", __func__);
+		return;
+	}
+
+	dbg("%s() contemplating releasing older self", __func__);
+
+	/*
+	 * For all existing connections: if the same Phase 1 IDs are
+	 * used, unorient the (old) connection (if different from
+	 * current connection).
+	 *
+	 * Only do this for connections with the same name (can be
+	 * shared ike sa).
+	 */
+	struct connection_filter cf = {
+		.name = c->name,
+		.kind = c->kind,
+		.this_id = &c->spd.this.id,
+		.that_id = &c->spd.that.id,
+		.where = HERE,
+		.c = NULL,
+	};
+	while (next_connection_new2old(&cf)) {
+		struct connection *d = cf.c;
+
 		/*
-		 * For all existing connections: if the same Phase 1
-		 * IDs are used, unorient the (old) connection (if
-		 * different from current connection).
-		 *
-		 * Only do this for connections with the same name
-		 * (can be shared ike sa).
+		 * If old IKE SA is same as new IKE sa and non-auth
+		 * isn't overwrting auth?
 		 */
-		struct connection_filter cf = {
-			.name = c->name,
-			.kind = c->kind,
-			.this_id = &c->spd.this.id,
-			.that_id = &c->spd.that.id,
-			.where = HERE,
-			.c = NULL,
-		};
-		while (next_connection_new2old(&cf)) {
-			struct connection *d = cf.c;
+		if (c == d) {
+			continue;
+		}
 
-			/*
-			 * If old IKE SA is same as new IKE sa and
-			 * non-auth isn't overwrting auth?
-			 */
-			if (c == d) {
-				continue;
-			}
+		bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
+		bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
 
-			bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
-			bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
+		if (same_remote_ip && (!old_is_nullauth && authnull)) {
+			log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
+			continue;
+		}
 
-			if (same_remote_ip && (!old_is_nullauth && authnull)) {
-				log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
-				continue;
-			}
+		if (!same_remote_ip && old_is_nullauth && authnull) {
+			log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
+			continue;
+		}
 
-			if (!same_remote_ip && old_is_nullauth && authnull) {
-				log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
-				continue;
-			}
-
-			dbg("unorienting old connection with same IDs");
-			/*
-			 * When replacing an old existing connection,
-			 * suppress sending delete notify
-			 */
-			suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
-			suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
-			/*
-			 * XXX: Assume this call doesn't want to log
-			 * to whack?  Even though the IKE SA may have
-			 * whack attached, don't transfer it to the
-			 * old connection.
-			 */
-			if (d->kind == CK_INSTANCE) {
-				delete_connection(&d, /*relations?*/false);
-			} else {
-				release_connection(d, /*relations?*/false); /* this deletes the states */
-			}
+		dbg("unorienting old connection with same IDs");
+		/*
+		 * When replacing an old existing connection, suppress
+		 * sending delete notify.
+		 */
+		suppress_delete_notify(ike, "ISAKMP", d->newest_ike_sa);
+		suppress_delete_notify(ike, "IKE", d->newest_ipsec_sa);
+		/*
+		 * XXX: Assume this call doesn't want to log to whack?
+		 * Even though the IKE SA may have whack attached,
+		 * don't transfer it to the old connection.
+		 */
+		if (d->kind == CK_INSTANCE) {
+			/* this also deletes the states */
+			delete_connection(&d, /*relations?*/false);
+		} else {
+			/* this only deletes the states */
+			release_connection(d, /*relations?*/false);
 		}
 	}
 }
