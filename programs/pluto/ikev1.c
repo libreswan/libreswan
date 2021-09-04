@@ -166,6 +166,7 @@
 #include "unpack.h"
 #include "pending.h"
 #include "state_db.h"
+#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -1083,6 +1084,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* ??? do we know the id.kind has an ip_addr? */
 				tmp_c->spd.that.id.ip_addr = new_peer;
+				rehash_connection_that_id(tmp_c);
 
 				/* update things that were the old peer */
 				if (address_eq_address(tmp_c->spd.this.host_nexthop, old_addr)) {
@@ -3113,6 +3115,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		duplicate_id(&c->spd.that.id, &peer);
+		rehash_connection_that_id(c);
 	}
 
 	/*
@@ -3170,6 +3173,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				return false;
 			}
 			duplicate_id(&c->spd.that.id, &peer);
+			rehash_connection_that_id(c);
 		}
 	} else if (!aggrmode) {
 		/* Main Mode Responder */
@@ -3249,10 +3253,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			return ikev1_decode_peer_id(md, false, false);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
+			rehash_connection_that_id(c);
 			c->spd.that.has_id_wildcards = false;
 		} else if (fromcert) {
 			dbg("copying ID for fromcert");
 			duplicate_id(&c->spd.that.id, &peer);
+			rehash_connection_that_id(c);
 		}
 	}
 

@@ -66,13 +66,52 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 }
 
 /*
+ * An ID hash table.
+ */
+
+static hash_t that_id_hasher(const struct id *id)
+{
+	hash_t hash = zero_hash;
+	if (id->kind != ID_NONE) {
+		shunk_t body;
+		enum ike_id_type type = id_to_payload(id, &unset_address/*ignored*/, &body);
+		hash = hash_table_hash_thing(type, hash);
+		hash = hash_table_hash_hunk(body, hash);
+	}
+	return hash;
+}
+
+static void jam_connection_that_id(struct jambuf *buf, const struct connection *c)
+{
+	jam_connection_serialno(buf, c);
+	jam(buf, ": that_id=");
+	jam_id_bytes(buf, &c->spd.that.id, jam_sanitized_bytes);
+}
+
+HASH_TABLE(connection, that_id, .spd.that.id, STATE_TABLE_SIZE);
+
+void rehash_connection_that_id(struct connection *c)
+{
+	id_buf idb;
+	dbg("%s() rehashing "PRI_CO" that_id=%s",
+	    __func__, pri_co(c->serialno), str_id(&c->spd.that.id, &idb));
+	rehash_table_entry(&connection_that_id_hash_table, c);
+}
+
+/*
  * See also {new2old,old2new}_state()
  */
 
 static struct list_head *filter_head(struct connection_filter *filter)
 {
-	struct list_head *bucket = &connection_serialno_list_head;
-	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+	struct list_head *bucket;
+	if (filter->that_id_eq != NULL) {
+		hash_t hash = that_id_hasher(filter->that_id_eq);
+		bucket = hash_table_bucket(&connection_that_id_hash_table, hash);
+	} else {
+		bucket = &connection_serialno_list_head;
+		dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+	}
 	return bucket;
 }
 
@@ -163,6 +202,7 @@ bool next_connection_new2old(struct connection_filter *filter)
 
 static struct hash_table *const connection_hash_tables[] = {
 	&connection_serialno_hash_table,
+	&connection_that_id_hash_table,
 };
 
 static void add_connection_to_db(struct connection *c)

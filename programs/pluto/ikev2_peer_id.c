@@ -37,6 +37,7 @@
 #include "demux.h"
 #include "unpack.h"
 #include "pluto_x509.h"
+#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 						   struct id peer_id,
@@ -60,9 +61,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	bool remote_cert_matches_id = false;
 	if (ike->sa.st_remote_certs.verified != NULL) {
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id /*ID_FROMCERT => updated*/);
+					     &c->spd.that.id /*ID_FROMCERT=>updated*/);
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
+			rehash_connection_that_id(c); /*ID_FROMCERT=>updated*/
 			remote_cert_matches_id = true;
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
@@ -188,11 +190,14 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 
 		if (c->spd.that.has_id_wildcards) {
+			dbg("setting wildcard ID");
 			duplicate_id(&c->spd.that.id, &peer_id);
+			rehash_connection_that_id(c);
 			c->spd.that.has_id_wildcards = false;
 		} else if (fromcert) {
 			dbg("copying ID for fromcert");
 			duplicate_id(&c->spd.that.id, &peer_id);
+			rehash_connection_that_id(c);
 		}
 	}
 
@@ -273,9 +278,10 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	bool remote_cert_matches_id = false;
 	if (ike->sa.st_remote_certs.verified != NULL) {
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id /*ID_FROMCERT => updated*/);
+					     &c->spd.that.id/*ID_FROMCERT=>updated*/);
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
+			rehash_connection_that_id(c); /*ID_FROMCERT=>updated*/
 			remote_cert_matches_id = true;
 		} else if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			return diag_diag(&d, "X509: authentication failed; ");
@@ -309,6 +315,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 			return diag("peer ID is not a certificate type");
 		}
 		duplicate_id(&c->spd.that.id, &responder_id);
+		rehash_connection_that_id(c);
 	}
 
 	dn_buf dnb;

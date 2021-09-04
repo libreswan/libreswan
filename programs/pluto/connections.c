@@ -2099,11 +2099,15 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
+	rehash_connection_that_id(c); /* that==right */
+
+	/* this triggers a rehash? */
 	orient(c, c->logger);
 
 	connect_to_host_pair(c);
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
+
 	return true;
 }
 
@@ -2322,6 +2326,7 @@ struct connection *instantiate(struct connection *c,
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(peer_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *peer_id;
+		rehash_connection_that_id(d);
 		d->spd.that.has_id_wildcards = false;
 	}
 	unshare_connection(d);

@@ -32,6 +32,7 @@
 #include "iface.h"
 #include "server.h"		/* for listening; */
 #include "orient.h"
+#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 bool oriented(const struct connection *c)
 {
@@ -51,8 +52,8 @@ bool oriented(const struct connection *c)
 static void swap_ends(struct connection *c)
 {
 	struct spd_route *sr = &c->spd;
-	struct end this = sr->this;
 
+	struct end this = sr->this;
 	sr->this = sr->that;
 	sr->that = this;
 
@@ -133,6 +134,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, 
 	if (listening) {
 		listen_on_iface_endpoint(ifp, logger);
 	}
+	rehash_connection_that_id(c);
 	return true;
 }
 

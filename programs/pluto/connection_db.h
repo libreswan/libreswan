@@ -23,7 +23,9 @@ void init_connection_db(void);
 
 struct connection *alloc_connection(const char *name, where_t where);
 struct connection *clone_connection(const char *name, struct connection *template, where_t where);
-/* void rehash_connection_in_db(struct connection *c); */
 void remove_connection_from_db(struct connection *c);
+
+void rehash_connection_that_id(struct connection *c);
+
 
 #endif

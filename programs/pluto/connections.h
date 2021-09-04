@@ -471,6 +471,7 @@ struct connection {
 	struct list_entry serialno_list_entry;
 	struct {
 		struct list_entry serialno;
+		struct list_entry that_id;
 	} hash_table_entries;
 
 	/*

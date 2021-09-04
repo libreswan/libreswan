@@ -37,7 +37,6 @@
 #include <limits.h>
 #include <sys/types.h>
 
-
 #include "sysdep.h"
 #include "lswconf.h"
 #include "lswnss.h"
@@ -87,6 +86,7 @@
 #include "crypt_hash.h"
 #include "crl_queue.h"
 #include "ip_info.h"
+#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 bool crl_strict = false;
 bool ocsp_strict = false;
@@ -834,8 +834,9 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id /*ID_FROMCERT => updated*/);
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id/*ID_FROMCERT=>updated*/);
 		if (d != NULL) {
+			rehash_connection_that_id(c); /*ID_FROMCERT=>updated*/
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
 		}
