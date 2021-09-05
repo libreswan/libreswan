@@ -2946,8 +2946,8 @@ bool route_and_eroute(struct connection *c,
 		/* record unrouting */
 		if (route_installed) {
 			do {
-				dbg("kernel: installed route: ro name=%s, rosr->routing=%d", ro->name,
-					rosr->routing);
+				dbg("kernel: installed route: ro name=%s, rosr->routing was %s",
+					ro->name, enum_name(&routing_story, rosr->routing));
 				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
 				rosr->routing = RT_UNROUTED;
 
