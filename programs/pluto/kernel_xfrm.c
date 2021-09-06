@@ -710,6 +710,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		struct xfrm_user_tmpl tmpl[4] = {0};
 
 		int i;
+		passert(encap->outer < (int)elemsof(tmpl));
 		for (i = 0; i <= encap->outer; i++) {
 			tmpl[i].reqid = encap->rule[i].reqid;
 			tmpl[i].id.proto = encap->rule[i].proto;
@@ -717,12 +718,13 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
 			tmpl[i].family = addrtypeof(dst_host);
 			/* only the inner-most rule gets the worm; er tunnel flag */
-			tmpl[i].mode = (i == 0 && encap->mode == ENCAP_MODE_TUNNEL);
-
-			if (tmpl[i].mode) {
+			if (i == 0 && encap->mode == ENCAP_MODE_TUNNEL) {
+				tmpl[i].mode = XFRM_MODE_TUNNEL;
 				/* tunnel mode needs addresses */
 				tmpl[i].saddr = xfrm_from_address(src_host);
 				tmpl[i].id.daddr = xfrm_from_address(dst_host);
+			} else {
+				tmpl[i].mode = XFRM_MODE_TRANSPORT;
 			}
 
 			address_buf sb, db;
@@ -1772,7 +1774,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		switch (attr->rta_type) {
 		case XFRMA_TMPL:
 		{
-			struct xfrm_user_tmpl* tmpl = (struct xfrm_user_tmpl *) RTA_DATA(attr);
+			struct xfrm_user_tmpl *tmpl = (struct xfrm_user_tmpl *) RTA_DATA(attr);
 			dbg("... xfrm template attribute with reqid:%d, spi:%d, proto:%d",
 			    tmpl->reqid, tmpl->id.spi, tmpl->id.proto);
 			break;
