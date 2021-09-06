@@ -38,7 +38,7 @@ static struct magic {
 };
 
 /*
- * ttosa - convert text "ah507@10.0.0.1" to SA identifier
+ * ttosaid - convert text "ah507@10.0.0.1" to SA identifier
  *
  * NULL for success, else string literal
  */
