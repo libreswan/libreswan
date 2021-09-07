@@ -276,7 +276,7 @@ endef
 #
 
 KVM_FRESH_BOOT_FILE = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).boot.ok
-$(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
+$(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log)) | $(KVM_LOCALDIR)
 	touch $@
 
 #
