@@ -733,6 +733,8 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 					      struct child_sa *larval_child,
 					      struct msg_digest *md)
 {
+	v2_notification_t n;
+
 	pexpect(larval_child != NULL);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
@@ -750,17 +752,13 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
-	stf_status ps = process_v2_childs_sa_payload("CREATE_CHILD_SA request",
-						     ike, larval_child, md,
-						     /*expect-accepted-proposal?*/false);
-	if (ps > STF_FAIL) {
-		v2_notification_t n = ps - STF_FAIL;
+	n = process_v2_childs_sa_payload("CREATE_CHILD_SA request",
+					 ike, larval_child, md,
+					 /*expect-accepted-proposal?*/false);
+	if (n != v2N_NOTHING_WRONG) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		return STF_FAIL; /* CHILD, NOT IKE */
-	}
-	if (ps != STF_OK) {
-		return ps;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
 	/*
@@ -999,6 +997,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 						     struct child_sa *larval_child,
 						     struct msg_digest *response_md)
 {
+	v2_notification_t n;
 	pexpect(larval_child != NULL);
 
 	/* Ni in */
@@ -1015,16 +1014,17 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	stf_status ps = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
-						     ike, larval_child, response_md,
-						     /*expect-accepted-proposal?*/true);
-	if (ps != STF_OK) {
+	n = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
+					 ike, larval_child, response_md,
+					 /*expect-accepted-proposal?*/true);
+	if (n != v2N_NOTHING_WRONG) {
 		/*
-		 * Kill the child, but not the IKE SA.
+		 * Kill the child, but not the IKE SA?
 		 *
-		 * XXX: initiator; need to initiate a delete exchange.
+		 * XXX: initiator; need to initiate a delete
+		 * exchange.
 		 */
-		return STF_FAIL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
 	/*
@@ -1032,21 +1032,16 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 */
 	if (larval_child->sa.st_pfs_group == NULL) {
 		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
-		if (v2_notification_fatal(n)) {
+		if (n != v2N_NOTHING_WRONG) {
 			/*
-			 * XXX: initiator; need to initiate a fatal
-			 * error notification exchange.
-			 */
-			return STF_FATAL;
-		} else if (n != v2N_NOTHING_WRONG) {
-			/*
+			 * Kill the child, but not the IKE SA?
+			 *
 			 * XXX: initiator; need to initiate a delete
 			 * exchange.
 			 */
-			return STF_FAIL;
-		} else {
-			return STF_OK;
+			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 		}
+		return STF_OK;
 	}
 
 	/*
@@ -1181,6 +1176,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							struct child_sa *larval_ike,
 							struct msg_digest *request_md)
 {
+	v2_notification_t n;
 	pexpect(larval_ike != NULL); /* not yet emancipated */
 	pexpect(ike != NULL);
 	struct connection *c = larval_ike->sa.st_connection;
@@ -1205,20 +1201,19 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		get_v2_ike_proposals(c, "IKE SA responding to rekey", ike->sa.st_logger);
 
 	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
-	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
-						  &sa_pd->pbs,
-						  /*expect_ike*/ true,
-						  /*expect_spi*/ true,
-						  /*expect_accepted*/ false,
-						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &larval_ike->sa.st_accepted_ike_proposal,
-						  ike_proposals, larval_ike->sa.st_logger);
-	if (ret != STF_OK) {
+	n = ikev2_process_sa_payload("IKE Rekey responder child",
+				     &sa_pd->pbs,
+				     /*expect_ike*/ true,
+				     /*expect_spi*/ true,
+				     /*expect_accepted*/ false,
+				     LIN(POLICY_OPPORTUNISTIC, c->policy),
+				     &larval_ike->sa.st_accepted_ike_proposal,
+				     ike_proposals, larval_ike->sa.st_logger);
+	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
-		pexpect(ret > STF_FAIL);
-		record_v2N_response(larval_ike->sa.st_logger, ike, request_md, ret - STF_FAIL, NULL,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+		record_v2N_response(larval_ike->sa.st_logger, ike, request_md,
+				    n, NULL, ENCRYPTED_PAYLOAD);
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -1355,6 +1350,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
 							 struct msg_digest *response_md)
 {
+	v2_notification_t n;
 	pexpect(larval_ike != NULL);
 	struct state *st = &larval_ike->sa;
 	pexpect(ike != NULL);
@@ -1377,17 +1373,17 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				     larval_ike->sa.st_logger);
 
 	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
-	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
-						  &sa_pd->pbs,
-						  /*expect_ike*/ true,
-						  /*expect_spi*/ true,
-						  /*expect_accepted*/ true,
-						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &larval_ike->sa.st_accepted_ike_proposal,
-						  ike_proposals, larval_ike->sa.st_logger);
-	if (ret != STF_OK) {
+	n = ikev2_process_sa_payload("IKE initiator (accepting)",
+				     &sa_pd->pbs,
+				     /*expect_ike*/ true,
+				     /*expect_spi*/ true,
+				     /*expect_accepted*/ true,
+				     LIN(POLICY_OPPORTUNISTIC, c->policy),
+				     &larval_ike->sa.st_accepted_ike_proposal,
+				     ike_proposals, larval_ike->sa.st_logger);
+	if (n != v2N_NOTHING_WRONG) {
 		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
-		return ret; /* initiator; no response */
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL; /* initiator; no response */
 	}
 
 	if (DBGP(DBG_BASE)) {

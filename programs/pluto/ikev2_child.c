@@ -671,15 +671,15 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 	return true;
 }
 
-stf_status process_v2_childs_sa_payload(const char *what,
-					struct ike_sa *ike, struct child_sa *child,
-					struct msg_digest *md, bool expect_accepted_proposal)
+v2_notification_t process_v2_childs_sa_payload(const char *what,
+					       struct ike_sa *ike, struct child_sa *child,
+					       struct msg_digest *md, bool expect_accepted_proposal)
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
-	stf_status ret;
+	v2_notification_t n;
 
 	struct ikev2_proposals *child_proposals;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -693,23 +693,19 @@ stf_status process_v2_childs_sa_payload(const char *what,
 								  child->sa.st_logger);
 	}
 
-	ret = ikev2_process_sa_payload(what,
-				       &sa_pd->pbs,
-				       /*expect_ike*/ false,
-				       /*expect_spi*/ true,
-				       expect_accepted_proposal,
-				       LIN(POLICY_OPPORTUNISTIC, c->policy),
-				       &child->sa.st_accepted_esp_or_ah_proposal,
-				       child_proposals, child->sa.st_logger);
-
-	if (ret != STF_OK) {
-		LLOG_JAMBUF(RC_LOG_SERIOUS, child->sa.st_logger, buf) {
-			jam_string(buf, what);
-			jam(buf, " failed, responder SA processing returned ");
-			jam_v2_stf_status(buf, ret);
-		}
-		pexpect(ret > STF_FAIL);
-		return ret;
+	n = ikev2_process_sa_payload(what,
+				     &sa_pd->pbs,
+				     /*expect_ike*/ false,
+				     /*expect_spi*/ true,
+				     expect_accepted_proposal,
+				     LIN(POLICY_OPPORTUNISTIC, c->policy),
+				     &child->sa.st_accepted_esp_or_ah_proposal,
+				     child_proposals, child->sa.st_logger);
+	if (n != v2N_NOTHING_WRONG) {
+		llog_sa(RC_LOG_SERIOUS, child,
+			"%s failed, responder SA processing returned %s",
+			what, enum_name_short(&v2_notification_names, n));
+		return n;
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -717,9 +713,9 @@ stf_status process_v2_childs_sa_payload(const char *what,
 	}
 	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info,
 					  child->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &child->sa,
-			  "%s proposed/accepted a proposal we don't actually support!", what);
-		return STF_FATAL;
+		llog_sa(RC_LOG_SERIOUS, child,
+			"%s proposed/accepted a proposal we don't actually support!", what);
+		return v2N_NO_PROPOSAL_CHOSEN; /* lie */
 	}
 
 	/*
@@ -740,11 +736,11 @@ stf_status process_v2_childs_sa_payload(const char *what,
 	case SA_INITIATOR:
 		pexpect(expect_accepted_proposal);
 		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "expecting %s but remote's accepted proposal includes %s",
-				  child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
-				  accepted_dh->common.fqn);
-			return STF_FATAL;
+			llog_sa(RC_LOG_SERIOUS, child,
+				"expecting %s but remote's accepted proposal includes %s",
+				child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
+				accepted_dh->common.fqn);
+			return v2N_NO_PROPOSAL_CHOSEN;
 		}
 		child->sa.st_pfs_group = accepted_dh;
 		break;
@@ -778,7 +774,7 @@ stf_status process_v2_childs_sa_payload(const char *what,
 		child->sa.st_oakley = accepted_oakley;
 	}
 
-	return STF_OK;
+	return v2N_NOTHING_WRONG;
 }
 
 void jam_v2_child_details(struct jambuf *buf, struct state *child_sa)
@@ -1032,21 +1028,13 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return n;
 	}
 
-	stf_status ret;
-	ret = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
-					   ike, child, md,
-					   /*expect-accepted-proposal?*/false);
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "process_v2_childs_sa_payload returned ");
-		jam_v2_stf_status(buf, ret);
-	}
-	if (ret != STF_OK) {
+	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
+					 ike, child, md,
+					 /*expect-accepted-proposal?*/false);
+	dbg("process_v2_childs_sa_payload returned %s", enum_name(&v2_notification_names, n));
+	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
 		delete_state(&child->sa);
-		if (ret <= STF_FAIL) {
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-		v2_notification_t n = ret - STF_FAIL;
 		return n;
 	}
 
@@ -1107,6 +1095,8 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *response_md)
 {
+	v2_notification_t n;
+
 	if (impair.ignore_v2_ike_auth_child) {
 		/* Try to ignore the CHILD SA payloads. */
 		if (!has_v2_IKE_AUTH_child_sa_payloads(response_md)) {
@@ -1216,16 +1206,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	}
 
 	/* examine and accept SA ESP/AH proposals */
-	stf_status res;
-
-	res = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-					   ike, child,
-					   response_md, /*expect-accepted-proposal?*/true);
-	if (res > STF_FAIL) {
-		v2_notification_t n = res - STF_FAIL;
+	n = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
+					 ike, child,
+					 response_md, /*expect-accepted-proposal?*/true);
+	if (n != v2N_NOTHING_WRONG) {
 		return n;
-	} else if (res != STF_OK) {
-		return v2N_INVALID_SYNTAX; /* fatal */
 	}
 
 	/*
@@ -1248,7 +1233,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		}
 	}
 
-	v2_notification_t n = process_v2_child_response_payloads(ike, child, response_md);
+	n = process_v2_child_response_payloads(ike, child, response_md);
 	if (n != v2N_NOTHING_WRONG) {
 		if (v2_notification_fatal(n)) {
 			llog_sa(RC_LOG_SERIOUS, child,

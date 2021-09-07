@@ -831,6 +831,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 					  struct child_sa *child,
 					  struct msg_digest *md)
 {
+	v2_notification_t n;
 	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;
 	/* set up new state */
@@ -854,21 +855,19 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/*
 	 * Select the proposal.
 	 */
-	stf_status ret = ikev2_process_sa_payload("IKE responder",
-						  &md->chain[ISAKMP_NEXT_v2SA]->pbs,
-						  /*expect_ike*/ true,
-						  /*expect_spi*/ false,
-						  /*expect_accepted*/ false,
-						  LIN(POLICY_OPPORTUNISTIC, c->policy),
-						  &ike->sa.st_accepted_ike_proposal,
-						  ike_proposals, ike->sa.st_logger);
-	if (ret != STF_OK) {
+	n = ikev2_process_sa_payload("IKE responder",
+				     &md->chain[ISAKMP_NEXT_v2SA]->pbs,
+				     /*expect_ike*/ true,
+				     /*expect_spi*/ false,
+				     /*expect_accepted*/ false,
+				     LIN(POLICY_OPPORTUNISTIC, c->policy),
+				     &ike->sa.st_accepted_ike_proposal,
+				     ike_proposals, ike->sa.st_logger);
+	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
-		pexpect(ret > STF_FAIL);
 		record_v2N_response(ike->sa.st_logger, ike, md,
-				    ret - STF_FAIL, NULL,
-				    UNENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+				    n, NULL, UNENCRYPTED_PAYLOAD);
+		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -1254,6 +1253,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					   struct child_sa *unused_child UNUSED,
 					   struct msg_digest *md)
 {
+	v2_notification_t n;
 	struct connection *c = ike->sa.st_connection;
 
 	/* for testing only */
@@ -1347,17 +1347,17 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		struct ikev2_proposals *ike_proposals =
 			get_v2_ike_proposals(c, "IKE SA initiator accepting remote proposal", ike->sa.st_logger);
 
-		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
-							  &sa_pd->pbs,
-							  /*expect_ike*/ true,
-							  /*expect_spi*/ false,
-							  /*expect_accepted*/ true,
-							  LIN(POLICY_OPPORTUNISTIC, c->policy),
-							  &ike->sa.st_accepted_ike_proposal,
-							  ike_proposals, ike->sa.st_logger);
-		if (ret != STF_OK) {
+		n = ikev2_process_sa_payload("IKE initiator (accepting)",
+					     &sa_pd->pbs,
+					     /*expect_ike*/ true,
+					     /*expect_spi*/ false,
+					     /*expect_accepted*/ true,
+					     LIN(POLICY_OPPORTUNISTIC, c->policy),
+					     &ike->sa.st_accepted_ike_proposal,
+					     ike_proposals, ike->sa.st_logger);
+		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
-			return ret; /* initiator; no response */
+			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL; /* initiator; no response */
 		}
 
 		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,

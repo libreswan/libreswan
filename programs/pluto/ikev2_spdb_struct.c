@@ -392,7 +392,7 @@ static void log_proposals(struct logger *logger, const char *prefix,
  *
  * Returns:
  *
- *    -(STF_FAIL+v2...): if things go wrong
+ *    -v2_notification_t: if things go wrong
  *    0: if nothing matches
  *    [LOCAL_PROPNUM_BASE, LOCAL_PROPNUM_BOUND): if there is a match
  *
@@ -486,12 +486,12 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 				 "remote proposal %u transform %d is corrupt",
 				 remote_propnum, remote_transform_nr);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
-			return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
+			return -v2N_INVALID_SYNTAX; /* fatal */
 		}
 
 		/* ignore unknown transform types. */
 		if (remote_trans.isat_type == 0) {
-			return -(STF_FAIL + v2N_INVALID_SYNTAX);
+			return -v2N_INVALID_SYNTAX; /* fatal */
 		}
 		if (remote_trans.isat_type >= IKEv2_TRANS_TYPE_ROOF) {
 			return 0; /* try next proposal */
@@ -514,7 +514,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 					 "remote proposal %u transform %d contains corrupt attribute",
 					 remote_propnum, remote_transform_nr);
 				jam_string(remote_jam_buf, "[corrupt-attribute]");
-				return -(STF_FAIL + v2N_INVALID_SYNTAX); /* bail */
+				return -v2N_INVALID_SYNTAX; /* fatal */
 			}
 
 			/*
@@ -790,7 +790,7 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
 /*
  * Process all the transforms, returning:
  *
- *    -ve: the STF_FAIL status
+ *    -v2_notification_t: the failure notification
  *    0: no proposal matched
  *    [1..LOCAL_PROPOSALS->ROOF): best match so far
  */
@@ -891,7 +891,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	 *
 	 * On loop exit, MATCHING_LOCAL_PROPNUM contains one of:
 	 *
-	 *    -ve - the STF_FAIL status
+	 *    -v2_notification_t: failure notification
 	 *    0: no proposal matched
 	 *    [1..LOCAL_PROPOSALS->ROOF): best match so far
 	 */
@@ -909,7 +909,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		if (d != NULL) {
 			llog_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
-			matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+			matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 			break;
 		}
 		jam_string(remote_jam_buf, remote_proposal_sep);
@@ -935,13 +935,13 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
 				llog(RC_LOG, logger, "Error: more than one accepted proposal received.");
 				jam_string(remote_jam_buf, "[too-many-accepted-proposals]");
-				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
 			}
 			if (remote_proposal.isap_propnum < 1 || remote_proposal.isap_propnum >= local_proposals->roof) {
 				llog(RC_LOG, logger, "Error: invalid accepted proposal.");
 				jam_string(remote_jam_buf, "[invalid-accepted-proposal]");
-				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
 			}
 		} else {
@@ -950,7 +950,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 					      remote_proposal.isap_propnum,
 					      next_propnum);
 				jam_string(remote_jam_buf, "[wrong-protonum]");
-				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
 			}
 			next_propnum++;
@@ -1002,7 +1002,6 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				      remote_proposal.isap_spisize,
 				      remote_spi.size);
 			jam_string(remote_jam_buf, "[spi-size]");
-			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX); */
 			continue;
 		}
 		if (remote_spi.size > 0) {
@@ -1010,7 +1009,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			if (d != NULL) {
 				llog_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
 					 remote_proposal.isap_propnum);
-				matching_local_propnum = -(STF_FAIL + v2N_INVALID_SYNTAX);
+				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				jam_string(remote_jam_buf, "[corrupt-spi]");
 				break;
 			}
@@ -1122,15 +1121,15 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
  * takes more comparisons.  On the other hand, mallocing and pointer
  * juggling is avoided.
  */
-stf_status ikev2_process_sa_payload(const char *what,
-				    pb_stream *sa_payload,
-				    bool expect_ike,
-				    bool expect_spi,
-				    bool expect_accepted,
-				    bool opportunistic,
-				    struct ikev2_proposal **chosen_proposal,
-				    const struct ikev2_proposals *local_proposals,
-				    struct logger *logger)
+v2_notification_t ikev2_process_sa_payload(const char *what,
+					   pb_stream *sa_payload,
+					   bool expect_ike,
+					   bool expect_spi,
+					   bool expect_accepted,
+					   bool opportunistic,
+					   struct ikev2_proposal **chosen_proposal,
+					   const struct ikev2_proposals *local_proposals,
+					   struct logger *logger)
 {
 	dbg("comparing remote proposals against %s %d local proposals",
 	    what, local_proposals->roof - 1);
@@ -1145,11 +1144,10 @@ stf_status ikev2_process_sa_payload(const char *what,
 	struct ikev2_proposal *best_proposal = alloc_thing(struct ikev2_proposal, "best proposal");
 
 	/*
-	 * Buffer to accumulate the entire proposal (in ascii form).
-	 *
-	 * Must be freed by this function.
+	 * Process and accumulate the entire set of proposals (in
+	 * ascii form).
 	 */
-	stf_status status = STF_FAIL;	/* initialized just to silence gcc -Og */
+	v2_notification_t notification = v2N_NOTHING_WRONG;
 	JAMBUF(remote_jam_buf) {
 		int matching_local_propnum = ikev2_process_proposals(sa_payload,
 								     expect_ike, expect_spi,
@@ -1161,7 +1159,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 		if (matching_local_propnum < 0) {
 			/*
-			 * best_local_proposal is -STF_FAIL status
+			 * best_local_proposal is -v2_notification_t
 			 * indicating corruption.
 			 *
 			 * Dump the proposals so far.  The detailed
@@ -1171,7 +1169,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				jam_string(buf, "partial list of remote proposals: ");
 				jam_jambuf(buf, remote_jam_buf);
 			}
-			status = -matching_local_propnum;
+			notification = -matching_local_propnum;
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
@@ -1179,14 +1177,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 					jam_string(buf, "remote accepted the invalid proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
-				status = STF_FAIL;
 			} else {
 				LLOG_JAMBUF(RC_LOG, logger, buf) {
 					jam_string(buf, "no local proposal matches remote proposals ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
-				status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
+			notification = v2N_NO_PROPOSAL_CHOSEN;
 		} else {
 			if (expect_accepted) {
 				pexpect(matching_local_propnum == best_proposal->propnum);
@@ -1212,19 +1209,19 @@ stf_status ikev2_process_sa_payload(const char *what,
 			/* transfer ownership of BEST_PROPOSAL to caller */
 			*chosen_proposal = best_proposal;
 			best_proposal = NULL;
-			status = STF_OK;
+			notification = v2N_NOTHING_WRONG;
 		}
 	}
 
 	pfreeany(best_proposal); /* only free if still owned by us */
 
-	if (status == STF_OK) {
+	if (notification == v2N_NOTHING_WRONG) {
 		passert(*chosen_proposal != NULL);
 	} else {
 		passert(*chosen_proposal == NULL);
 	}
 
-	return status;
+	return notification;
 }
 
 static bool emit_transform_header(struct pbs_out *proposal_pbs,

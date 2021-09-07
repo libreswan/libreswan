@@ -30,10 +30,10 @@ struct pbs_out;
  * fatal.  See RFC.
  */
 
-stf_status process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
-					struct child_sa *larval_child,
-					struct msg_digest *md,
-					bool expect_accepted_proposal);
+v2_notification_t process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
+					       struct child_sa *larval_child,
+					       struct msg_digest *md,
+					       bool expect_accepted_proposal);
 
 /*
  * Work the initiator and responder Child SAs through to being
