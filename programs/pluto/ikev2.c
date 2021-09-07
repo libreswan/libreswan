@@ -427,6 +427,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+#if 1
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_R0,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -438,6 +439,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
+#endif
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
@@ -477,20 +479,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
-	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_CHILD_R0,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .send       = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
-	  .encrypted_payloads.notification = v2N_REKEY_SA,
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_SA_REPLACE, },
-
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -529,19 +517,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
 	  .timeout_event = EVENT_RETRANSMIT, },
-
-	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_NEW_CHILD_R0,
-	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .send       = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
@@ -617,12 +592,62 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 	{ .story      = "Informational Response",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_v2_INFORMATIONAL_response,
-	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
+	  .timeout_event = EVENT_RETAIN, },
+
+	/*
+	 * CREATE_CHILD_SA exchanges
+	 *
+	 * In the responder, note the lack of TS (traffic selectors)
+	 * payload.  Since rekey and create child exchanges contain TS
+	 * they won't match.
+	 */
+
+#if 0
+	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
+	  .opt_enc_payloads = P(N),
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_RETAIN },
+#endif
+
+	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send       = MESSAGE_RESPONSE,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .encrypted_payloads.notification = v2N_REKEY_SA,
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
@@ -1748,7 +1773,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * the Child SA).
 		 */
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA &&
-		    /* matched above */ svm->recv_role == MESSAGE_REQUEST) {
+		    svm->state == STATE_V2_REKEY_IKE_R0 &&
+		    /* matched above */
+		    svm->recv_role == MESSAGE_REQUEST) {
 			dbg("potential CREATE_CHILD_SA responder stumbling through to process_v2_child_ix()");
 		} else if (svm->state != from_state->kind) {
 			continue;
@@ -2084,21 +2111,15 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * let's get a child state either new or existing to
 		 * proceed
 		 */
-		struct child_sa *child;
 		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-			child = pexpect_child_sa(st);
-		} else {
+			pexpect_child_sa(st);
+		} else if (svm->state == STATE_V2_REKEY_IKE_R0) {
 			pexpect(IS_IKE_SA(st));
-			child = process_v2_child_ix(ike, svm);
+			struct child_sa *child = process_v2_child_ix(ike, svm);
+			dbg("forcing ST #%lu to CHILD #%lu.#%lu in FSM processor",
+			    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
+			st = &child->sa;
 		}
-
-		/*
-		 * Switch to child state (possibly from the same child
-		 * state, see above)
-		 */
-		dbg("forcing ST #%lu to CHILD #%lu.#%lu in FSM processor",
-		    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
-		st = &child->sa;
 	}
 
 	v2_dispatch(ike, st, md, svm);

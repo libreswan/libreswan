@@ -542,12 +542,19 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct child_sa *larval_child,
 							  struct msg_digest *md)
 {
-	pexpect(larval_child != NULL);
+	pexpect(larval_child == NULL);
+	larval_child = new_v2_child_state(ike->sa.st_connection,
+					  ike, IPSEC_SA, SA_RESPONDER,
+					  STATE_V2_REKEY_CHILD_R0,
+					  null_fd);
+	ike->sa.st_v2_larval_responder_sa = larval_child;
 
 	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
 	if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
 		/* already logged; already recorded */
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 	pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
 
@@ -555,7 +562,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
@@ -703,7 +712,12 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							struct child_sa *larval_child,
 							struct msg_digest *md)
 {
-	pexpect(larval_child != NULL);
+	pexpect(larval_child == NULL);
+	larval_child = new_v2_child_state(ike->sa.st_connection,
+					  ike, IPSEC_SA, SA_RESPONDER,
+					  STATE_V2_NEW_CHILD_R0,
+					  null_fd);
+	ike->sa.st_v2_larval_responder_sa = larval_child;
 
 	/* state m/c created CHILD SA */
 	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
@@ -712,7 +726,9 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
@@ -735,7 +751,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 {
 	v2_notification_t n;
 
-	pexpect(larval_child != NULL);
+	pexpect(larval_child != NULL); /* created by caller */
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -749,6 +765,8 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
@@ -758,7 +776,9 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	if (n != v2N_NOTHING_WRONG) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
 	/*
@@ -775,7 +795,9 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 			       md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.st_logger)) {
 			record_v2N_response(larval_child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 					    NULL/*no data*/, ENCRYPTED_PAYLOAD);
-			return STF_FAIL;
+			delete_state(&larval_child->sa);
+			ike->sa.st_v2_larval_responder_sa = NULL;
+			return STF_OK; /*IKE*/
 		}
 	}
 
@@ -785,7 +807,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 * acting more like a flag or perhaps, even though DH
 	 * was negotiated it can be ignored?
 	 */
-	submit_ke_and_nonce(&larval_child->sa,
+	submit_ke_and_nonce(&ike->sa,
 			    larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL,
 			    process_v2_CREATE_CHILD_SA_request_continue_1,
 			    "Child Rekey Responder KE and nonce nr");
@@ -828,14 +850,14 @@ static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
 	return true;
 }
 
-static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *larval_child_sa,
+static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ike_sa,
 								struct msg_digest *request_md,
 								struct dh_local_secret *local_secret,
 								chunk_t *nonce)
 {
 	/* responder processing request */
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
 	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
@@ -865,7 +887,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 	if (local_secret != NULL) {
 		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 		/* initiate calculation of g^xy */
-		submit_dh_shared_secret(&larval_child->sa, &larval_child->sa, larval_child->sa.st_gi,
+		submit_dh_shared_secret(&ike->sa, &larval_child->sa, larval_child->sa.st_gi,
 					process_v2_CREATE_CHILD_SA_request_continue_2,
 					HERE);
 		return STF_SUSPEND;
@@ -876,7 +898,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
 	/* install inbound and outbound SPI info */
@@ -885,7 +909,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 
 	/*
@@ -907,15 +933,24 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 		return STF_INTERNAL_ERROR;
 	}
 
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the initiator.
+	 */
+	v2_child_sa_established(ike, larval_child);
+
 	return STF_OK;
 }
 
-static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *larval_child_sa,
+static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ike_sa,
 								struct msg_digest *request_md)
 {
 	/* 'child' responding to request */
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
 	dbg("%s() for #%lu %s",
@@ -934,8 +969,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 		pexpect_fail(larval_child->sa.st_logger, HERE,
 			     "sponsoring child state #%lu has no parent state #%lu",
 			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
-		/* XXX: release child? */
-		return STF_FATAL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
@@ -943,7 +979,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, NULL,
 				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL; /* kill family */
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_FATAL; /* kill IKE family */
 	}
 
 	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
@@ -951,7 +989,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
 
@@ -961,7 +1001,9 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_responder_sa = NULL;
+		return STF_OK; /*IKE*/
 	}
 
 	/*
@@ -983,7 +1025,16 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *la
 		return STF_INTERNAL_ERROR;
 	}
 
-	return STF_OK;
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the initiator.
+	 */
+	v2_child_sa_established(ike, larval_child);
+
+	return STF_OK; /*IKE*/
 }
 
 /*
