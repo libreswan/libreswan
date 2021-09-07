@@ -181,6 +181,8 @@ static stf_status complete_dh_shared_secret(struct state *task_st,
 					    struct task *task)
 {
 	struct state *dh_st = state_with_serialno(task->dh_serialno);
+	dbg("completing DH shared secret for "PRI_SO"/"PRI_SO,
+	    task_st->st_serialno, dh_st->st_serialno);
 	pexpect(dh_st->st_dh_shared_secret == NULL);
 	release_symkey(__func__, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
 	/* transfer */
@@ -201,7 +203,8 @@ void submit_dh_shared_secret(struct state *task_st,
 			     struct state *dh_st, chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
-	dbg("submitting DH shared secret for "PRI_WHERE, pri_where(where));
+	dbg("submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
+	    task_st->st_serialno, dh_st->st_serialno, pri_where(where));
 	if (dh_st->st_dh_shared_secret != NULL) {
 		pexpect_fail(dh_st->st_logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",
