@@ -867,7 +867,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *la
 	if (local_secret != NULL) {
 		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 		/* initiate calculation of g^xy */
-		submit_dh_shared_secret(&larval_child->sa, larval_child->sa.st_gi,
+		submit_dh_shared_secret(&larval_child->sa, &larval_child->sa, larval_child->sa.st_gi,
 					process_v2_CREATE_CHILD_SA_request_continue_2,
 					HERE);
 		return STF_SUSPEND;
@@ -1065,7 +1065,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_FAIL; /* XXX: STF_FATAL? */
 	}
 	chunk_t remote_ke = larval_child->sa.st_gr;
-	submit_dh_shared_secret(&larval_child->sa, remote_ke,
+	submit_dh_shared_secret(&larval_child->sa, &larval_child->sa, remote_ke,
 				process_v2_CREATE_CHILD_SA_child_response_continue_1, HERE);
 	return STF_SUSPEND;
 }
@@ -1297,7 +1297,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 				  &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
 								       larval_ike->sa.st_logger);
-	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gi/*responder needs initiator KE*/,
+	submit_dh_shared_secret(&larval_ike->sa, &larval_ike->sa, larval_ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2,
 				HERE);
 
@@ -1423,7 +1423,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				  &larval_ike->sa.st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
-	submit_dh_shared_secret(&larval_ike->sa, larval_ike->sa.st_gr/*initiator needs responder's KE*/,
+	submit_dh_shared_secret(&larval_ike->sa, &larval_ike->sa, larval_ike->sa.st_gr/*initiator needs responder's KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1,
 				HERE);
 	return STF_SUSPEND;

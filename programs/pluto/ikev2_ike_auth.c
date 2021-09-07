@@ -539,7 +539,7 @@ stf_status process_v2_IKE_AUTH_request_no_skeyseed(struct ike_sa *ike,
 	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
 
 	/* initiate calculation of g^xy */
-	submit_dh_shared_secret(&ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
+	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_IKE_AUTH_request_no_skeyseed_continue,
 				HERE);
 	return STF_SUSPEND;

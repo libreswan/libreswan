@@ -127,6 +127,7 @@ struct task {
 	chunk_t remote_ke;
 	struct dh_local_secret *local_secret;
 	PK11SymKey *shared_secret;
+	so_serial_t dh_serialno; /* where to put result */
 	dh_shared_secret_cb *cb;
 };
 
@@ -175,16 +176,17 @@ static void cleanup_dh_shared_secret(struct task **task)
 	pfreeany(*task);
 }
 
-static stf_status complete_dh_shared_secret(struct state *st,
+static stf_status complete_dh_shared_secret(struct state *task_st,
 					    struct msg_digest *md,
 					    struct task *task)
 {
-	pexpect(st->st_dh_shared_secret == NULL);
-	release_symkey(__func__, "st_dh_shared_secret", &st->st_dh_shared_secret);
+	struct state *dh_st = state_with_serialno(task->dh_serialno);
+	pexpect(dh_st->st_dh_shared_secret == NULL);
+	release_symkey(__func__, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
 	/* transfer */
-	st->st_dh_shared_secret = task->shared_secret;
+	dh_st->st_dh_shared_secret = task->shared_secret;
 	task->shared_secret = NULL;
-	stf_status status = task->cb(st, md);
+	stf_status status = task->cb(task_st, md);
 	return status;
 }
 
@@ -195,18 +197,20 @@ static const struct task_handler dh_shared_secret_handler = {
 	.completed_cb = complete_dh_shared_secret,
 };
 
-void submit_dh_shared_secret(struct state *st, chunk_t remote_ke,
+void submit_dh_shared_secret(struct state *task_st,
+			     struct state *dh_st, chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
 	dbg("submitting DH shared secret for "PRI_WHERE, pri_where(where));
-	if (st->st_dh_shared_secret != NULL) {
-		pexpect_fail(st->st_logger, where,
+	if (dh_st->st_dh_shared_secret != NULL) {
+		pexpect_fail(dh_st->st_logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",
 			     __func__);
 	}
 	struct task *task = alloc_thing(struct task, "dh");
 	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
-	task->local_secret = dh_local_secret_addref(st->st_dh_local_secret, HERE);
+	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
+	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;
-	submit_task(st->st_logger, st, task, &dh_shared_secret_handler, "DH shared secret");
+	submit_task(dh_st->st_logger, task_st, task, &dh_shared_secret_handler, "DH shared secret");
 }

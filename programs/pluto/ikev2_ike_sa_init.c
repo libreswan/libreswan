@@ -1427,7 +1427,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	ike->sa.st_v2_ike_intermediate_used = ((c->policy & POLICY_INTERMEDIATE) &&
 					       md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL);
 
-	submit_dh_shared_secret(&ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
+	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
 				process_v2_IKE_SA_INIT_response_continue, HERE);
 	return STF_SUSPEND;
 }
