@@ -250,4 +250,6 @@ stf_status stf_status_from_v2_notification(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
+void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike);
+
 #endif

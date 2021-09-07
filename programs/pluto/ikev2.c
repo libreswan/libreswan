@@ -427,20 +427,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
-#if 1
-	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_REKEY_IKE_R0,
-	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .send       = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
-	  .opt_enc_payloads = P(N),
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_SA_REPLACE },
-#endif
-
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -608,7 +594,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	 * they won't match.
 	 */
 
-#if 0
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
@@ -621,7 +606,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_RETAIN },
-#endif
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
@@ -974,41 +958,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 	}
 
 	return summary;
-}
-
-static struct child_sa *process_v2_child_ix(struct ike_sa *ike,
-					    const struct v2_state_transition *svm)
-{
-	/*
-	 * XXX: Still a mess.  Should call processor with the IKE SA.
-	 * The processor can then create a nested state.
-	 */
-	enum sa_type sa_type;
-	switch (svm->state) {
-	case STATE_V2_NEW_CHILD_R0:
-	case STATE_V2_REKEY_CHILD_R0:
-		sa_type = IPSEC_SA;
-		break;
-	default:
-		pexpect(svm->state == STATE_V2_REKEY_IKE_R0);
-		sa_type = IKE_SA;
-	}
-
-	struct child_sa *child = new_v2_child_state(ike->sa.st_connection,
-						    ike, sa_type,
-						    SA_RESPONDER,
-						    svm->state,
-						    null_fd);
-
-	connection_buf ibuf;
-	connection_buf cbuf;
-	dbg(PRI_CONNECTION" #%lu received %s CREATE_CHILD_SA Child "PRI_CONNECTION" #%lu in %s will process it further",
-	    pri_connection(ike->sa.st_connection, &ibuf),
-	    ike->sa.st_serialno, svm->story,
-	    pri_connection(child->sa.st_connection, &cbuf),
-	    child->sa.st_serialno, child->sa.st_state->name);
-
-	return child;
 }
 
 /*
@@ -1756,28 +1705,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		if (svm->recv_role != v2_msg_role(md)) {
 			continue;
 		}
-
-		/*
-		 * Does the from state match the SA's current state?
-		 *
-		 * XXX: Eventually this part won't be needed as each
-		 * state will have its own list of transitions.  See
-		 * find_v2_state_transition() which is currently only
-		 * used by IKES_SA_INIT.
-		 *
-		 * Unfortunately ...
-		 *
-		 * For CREATE_CHILD_SA, the responder ignores the
-		 * .from_state and instead applies some other magic
-		 * (the .from_state ends up being used when creating
-		 * the Child SA).
-		 */
-		if (ix == ISAKMP_v2_CREATE_CHILD_SA &&
-		    svm->state == STATE_V2_REKEY_IKE_R0 &&
-		    /* matched above */
-		    svm->recv_role == MESSAGE_REQUEST) {
-			dbg("potential CREATE_CHILD_SA responder stumbling through to process_v2_child_ix()");
-		} else if (svm->state != from_state->kind) {
+		if (svm->state != from_state->kind) {
 			continue;
 		}
 
@@ -2104,22 +2032,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		/* going to switch to child st. before that update parent */
 		if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
 			update_ike_endpoints(ike, md);
-
-		/* bit further processing of create CREATE_CHILD_SA exchange */
-
-		/*
-		 * let's get a child state either new or existing to
-		 * proceed
-		 */
-		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-			pexpect_child_sa(st);
-		} else if (svm->state == STATE_V2_REKEY_IKE_R0) {
-			pexpect(IS_IKE_SA(st));
-			struct child_sa *child = process_v2_child_ix(ike, svm);
-			dbg("forcing ST #%lu to CHILD #%lu.#%lu in FSM processor",
-			    st->st_serialno, ike->sa.st_serialno, child->sa.st_serialno);
-			st = &child->sa;
-		}
 	}
 
 	v2_dispatch(ike, st, md, svm);
@@ -2264,8 +2176,7 @@ void ikev2_log_parentSA(const struct state *st)
 	}
 }
 
-static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike,
-				   const struct v2_state_transition *transition)
+void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
 	new_ike->sa.st_clonedfrom = SOS_NOBODY;
@@ -2282,9 +2193,7 @@ static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_
 	v2_msgid_migrate_queue(old_ike, new_ike);
 
 	/* complete the state transition */
-	passert(transition->timeout_event == EVENT_SA_REPLACE);
-	passert(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-	change_state(&new_ike->sa, transition->next_state);
+	change_state(&new_ike->sa, STATE_V2_ESTABLISHED_IKE_SA);
 
 	/* child is now a parent */
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
@@ -2324,10 +2233,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	bool established_before = (IS_IKE_SA_ESTABLISHED(st) ||
 				   IS_CHILD_SA_ESTABLISHED(st));
 
-	if (from_state == STATE_V2_REKEY_IKE_R0 ||
-	    from_state == STATE_V2_REKEY_IKE_I1) {
-		ikev2_child_emancipate(ike, pexpect_child_sa(st),
-				       transition);
+	if (from_state == STATE_V2_REKEY_IKE_I1) {
+		passert(transition->timeout_event == EVENT_SA_REPLACE);
+		passert(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+		ikev2_child_emancipate(ike, pexpect_child_sa(st));
 		/* Emancipated ST answers to no one - it's an IKE SA */
 		v2_msgid_schedule_next_initiator(pexpect_ike_sa(st));
 	} else {
