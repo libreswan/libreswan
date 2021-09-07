@@ -2356,7 +2356,7 @@ IETF registry enum_names:
          short_name 30: UNEQUAL_PAYLOAD_LENGTHS OK
          jam_enum_short 30: UNEQUAL_PAYLOAD_LENGTHS OK
 
-  ikev2_notify_names:
+  v2_notification_names:
     0 -> v2N_RESERVED
          jam_enum 0: v2N_RESERVED OK
          search v2N_RESERVED: OK
