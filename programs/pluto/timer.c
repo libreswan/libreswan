@@ -297,7 +297,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				ipsecdoi_replace(st, 1);
 			}
 
-			event_delete(EVENT_v2_LIVENESS, st);
 			event_delete(EVENT_v1_DPD, st);
 			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 			break;
