@@ -626,7 +626,7 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	bool keyleft;
 	int keywordtype;
 
-	keyleft = FALSE;
+	keyleft = false;
 	k = ipsec_conf_keywords;
 
 	while (k->keyname != NULL) {
@@ -636,11 +636,11 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		if (k->validity & kv_leftright) {
 			if (strncaseeq(s, "left", 4) &&
 			    strcaseeq(s + 4, k->keyname)) {
-				keyleft = TRUE;
+				keyleft = true;
 				break;
 			} else if (strncaseeq(s, "right", 5) &&
 				   strcaseeq(s + 5, k->keyname)) {
-				keyleft = FALSE;
+				keyleft = false;
 				break;
 			}
 		}

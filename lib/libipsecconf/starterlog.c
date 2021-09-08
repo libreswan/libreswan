@@ -34,9 +34,9 @@
  * o use syslog option in config file
  */
 
-static bool log_debugging = FALSE;
-static bool log_to_console = FALSE;
-static bool log_to_syslog = FALSE;
+static bool log_debugging = false;
+static bool log_to_console = false;
+static bool log_to_syslog = false;
 
 static void log_one_line(int level, const char *buff)
 {

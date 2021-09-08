@@ -232,7 +232,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 {
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(FALSE, ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(false, ike, authby, idhash,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {

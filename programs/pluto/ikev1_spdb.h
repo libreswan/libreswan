@@ -121,10 +121,8 @@ extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c);
 extern const struct db_sa ipsec_sadb[1 << 3];
 
 /* for db_sa */
-#define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), \
-	.parentSA = TRUE
-#define AD_SAc(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), \
-	.parentSA = FALSE
+#define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = true
+#define AD_SAc(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = false
 #define AD_NULL     .prop_conjs = NULL, .prop_conj_cnt = 0,
 
 /* for db_trans */

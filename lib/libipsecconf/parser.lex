@@ -97,7 +97,7 @@ void parser_y_init (const char *name, FILE *f)
 {
 	memset(&ic_private, 0, sizeof(ic_private));
 	ic_private.stack[0].line = 1;
-	ic_private.stack[0].once = TRUE;
+	ic_private.stack[0].once = true;
 	ic_private.stack[0].file = f;
 	ic_private.stack[0].filename = strdup(name);
 	stacktop = &ic_private.stack[0];
@@ -149,7 +149,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	}
 
 	iis->line = 1;
-	iis->once = TRUE;
+	iis->once = true;
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
@@ -401,7 +401,7 @@ static unsigned parser_lex_number(const char *yytext)
 	 * that it can be detected repeatedly.
 	 */
 	if (stacktop->once) {
-		stacktop->once = FALSE;
+		stacktop->once = false;
 		return EOL;
 	}
 

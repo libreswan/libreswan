@@ -18,9 +18,9 @@
 
 #if defined(linux) && defined(XFRM_SUPPORT) && defined(USE_XFRM_INTERFACE)
 /* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
-# define IS_XFRMI TRUE
+# define IS_XFRMI true
 #else
-# define IS_XFRMI FALSE
+# define IS_XFRMI false
 #endif
 
 /* xfrmi interface format. start with ipsec1 IFNAMSIZ - 1 */

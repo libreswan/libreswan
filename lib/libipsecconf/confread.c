@@ -73,17 +73,17 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # define SOPT(kbf, v)  { cfg->setup.options[kbf] = (v) ; }
 
-	SOPT(KBF_LOGTIME, TRUE);
-	SOPT(KBF_LOGAPPEND, TRUE);
-	SOPT(KBF_LOGIP, TRUE);
-	SOPT(KBF_AUDIT_LOG, TRUE);
-	SOPT(KBF_UNIQUEIDS, TRUE);
-	SOPT(KBF_LISTEN_UDP, TRUE);
-	SOPT(KBF_LISTEN_TCP, FALSE);
-	SOPT(KBF_DO_DNSSEC, TRUE);
-	SOPT(KBF_PERPEERLOG, FALSE);
+	SOPT(KBF_LOGTIME, true);
+	SOPT(KBF_LOGAPPEND, true);
+	SOPT(KBF_LOGIP, true);
+	SOPT(KBF_AUDIT_LOG, true);
+	SOPT(KBF_UNIQUEIDS, true);
+	SOPT(KBF_LISTEN_UDP, true);
+	SOPT(KBF_LISTEN_TCP, false);
+	SOPT(KBF_DO_DNSSEC, true);
+	SOPT(KBF_PERPEERLOG, false);
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
-	SOPT(KBF_IKE_ERRQUEUE, TRUE);
+	SOPT(KBF_IKE_ERRQUEUE, true);
 	SOPT(KBF_NFLOG_ALL, 0); /* disabled per default */
 	SOPT(KBF_XFRMLIFETIME, XFRM_LIFETIME_DEFAULT); /* not used by pluto itself */
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
@@ -94,7 +94,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_SHUNTLIFETIME, PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
 	/* Don't inflict BSI requirements on everyone */
 	SOPT(KBF_SEEDBITS, 0);
-	SOPT(KBF_DROP_OPPO_NULL, FALSE);
+	SOPT(KBF_DROP_OPPO_NULL, false);
 
 #ifdef HAVE_LABELED_IPSEC
 	SOPT(KBF_SECCTX, SECCTX);
@@ -127,18 +127,18 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # define DOPT(kbf, v)  { d->options[kbf] = (v); }
 
-	DOPT(KNCF_NAT_KEEPALIVE, TRUE);    /* per conn */
+	DOPT(KNCF_NAT_KEEPALIVE, true);    /* per conn */
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
-	DOPT(KNCF_INITIAL_CONTACT, TRUE);
-	DOPT(KNCF_CISCO_UNITY, FALSE);
-	DOPT(KNCF_NO_ESP_TFC, FALSE);
-	DOPT(KNCF_VID_STRONGSWAN, FALSE);
-	DOPT(KNCF_SEND_VENDORID, FALSE);
+	DOPT(KNCF_INITIAL_CONTACT, true);
+	DOPT(KNCF_CISCO_UNITY, false);
+	DOPT(KNCF_NO_ESP_TFC, false);
+	DOPT(KNCF_VID_STRONGSWAN, false);
+	DOPT(KNCF_SEND_VENDORID, false);
 
 	DOPT(KNCF_REMOTEPEERTYPE, NON_CISCO);
 
-	DOPT(KNCF_IKEPAD, TRUE);
+	DOPT(KNCF_IKEPAD, true);
 
 	DOPT(KNCF_IKEV1_NATT, NATT_BOTH);
 	DOPT(KNCF_ENCAPS, yna_auto);
@@ -148,7 +148,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	/* Network Manager support */
 #ifdef HAVE_NM
-	DOPT(KNCF_NMCONFIGURED, FALSE);
+	DOPT(KNCF_NMCONFIGURED, false);
 #endif
 
 	DOPT(KNCF_XAUTHBY, XAUTHBY_FILE);
@@ -200,8 +200,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->xfrm_if_id = UINT32_MAX;
 
 	/* default is NOT to look in DNS */
-	d->left.key_from_DNS_on_demand = FALSE;
-	d->right.key_from_DNS_on_demand = FALSE;
+	d->left.key_from_DNS_on_demand = false;
+	d->right.key_from_DNS_on_demand = false;
 
 	d->state = STATE_LOADED;
 
@@ -321,7 +321,7 @@ static char **tokens_from_string(const char *value, int *n)
 static bool load_setup(struct starter_config *cfg,
 		       const struct config_parsed *cfgp)
 {
-	bool err = FALSE;
+	bool err = false;
 	const struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
@@ -342,7 +342,7 @@ static bool load_setup(struct starter_config *cfg,
 			pfreeany(cfg->setup.strings[f]);
 			cfg->setup.strings[f] =
 				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->setup.strings_set[f] = TRUE;
+			cfg->setup.strings_set[f] = true;
 			break;
 
 		case kt_list:
@@ -356,7 +356,7 @@ static bool load_setup(struct starter_config *cfg,
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup.options));
 			cfg->setup.options[f] = kw->number;
-			cfg->setup.options_set[f] = TRUE;
+			cfg->setup.options_set[f] = true;
 			break;
 
 		case kt_bitstring:
@@ -365,7 +365,7 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-			err = TRUE;
+			err = true;
 			break;
 
 		case kt_comment:
@@ -412,7 +412,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct logger *logger)
 {
 	err_t er = NULL;
-	bool err = FALSE;
+	bool err = false;
 
 	/*
 	 * TODO:
@@ -433,7 +433,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 	pexpect(hostfam == &ipv4_info || hostfam == &ipv6_info); /* i.e., not NULL */
 
-#  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = TRUE; }
+#  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = true; }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
@@ -543,7 +543,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
-			end->has_client = TRUE;
+			end->has_client = true;
 			er = ttosubnet(shunk1(value), AF_UNSPEC, '0',
 				       &end->subnet, logger);
 		}
@@ -613,11 +613,11 @@ static bool validate_end(struct starter_conn *conn_st,
 
 		switch (end->options[KSCF_RSASIGKEY]) {
 		case PUBKEY_DNSONDEMAND:
-			end->key_from_DNS_on_demand = TRUE;
+			end->key_from_DNS_on_demand = true;
 			break;
 
 		default:
-			end->key_from_DNS_on_demand = FALSE;
+			end->key_from_DNS_on_demand = false;
 			/* validate the KSCF_RSASIGKEY1/RSASIGKEY2 */
 			if (end->strings[KSCF_RSASIGKEY] != NULL) {
 				char *value = end->strings[KSCF_RSASIGKEY];
@@ -661,7 +661,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		end->sourceip = sourceip;
 		if (!end->has_client) {
 			end->subnet = subnet_from_address(end->sourceip);
-			end->has_client = TRUE;
+			end->has_client = true;
 		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
 			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
@@ -774,7 +774,7 @@ static bool translate_conn(struct starter_conn *conn,
 		    starter_errors_t *perrl)
 {
 	/* note: not all errors are considered serious */
-	bool serious_err = FALSE;
+	bool serious_err = false;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if ((kw->keyword.keydef->validity & kv_conn) == 0) {
@@ -856,7 +856,7 @@ static bool translate_conn(struct starter_conn *conn,
 				    !streq(kw->keyword.string,
 					   (*the_strings)[field]))
 				{
-					serious_err = TRUE;
+					serious_err = true;
 					break;
 				}
 			}
@@ -865,7 +865,7 @@ static bool translate_conn(struct starter_conn *conn,
 			if (kw->string == NULL) {
 				starter_error_append(perrl, "Invalid %s value",
 					 kw->keyword.keydef->keyname);
-				serious_err = TRUE;
+				serious_err = true;
 				break;
 			}
 
@@ -891,7 +891,7 @@ static bool translate_conn(struct starter_conn *conn,
 				(*the_strings)[field] = n;
 				pfree(s);
 			}
-			(*set_strings)[field] = TRUE;
+			(*set_strings)[field] = true;
 			break;
 
 		case kt_rsasigkey:
@@ -920,7 +920,7 @@ static bool translate_conn(struct starter_conn *conn,
 				      streq(kw->keyword.string,
 					     (*the_strings)[field])))
 				{
-					serious_err = TRUE;
+					serious_err = true;
 					break;
 				}
 			}
@@ -958,7 +958,7 @@ static bool translate_conn(struct starter_conn *conn,
 				starter_error_append(perrl, "%s", tmp_err);
 				/* only fatal if we try to change values */
 				if ((*the_options)[field] != (int)kw->number) {
-					serious_err = TRUE;
+					serious_err = true;
 					break;
 				}
 			}
@@ -1027,7 +1027,7 @@ static bool load_conn(struct starter_conn *conn,
 			    sl->name);
 		starter_error_append(perrl, "also= is not valid in section '%s'",
 			sl->name);
-		return TRUE;	/* error */
+		return true;	/* error */
 	}
 
 	/*
@@ -1052,8 +1052,8 @@ static bool load_conn(struct starter_conn *conn,
 		/* reset all of the "beenhere" flags */
 		for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
 		     s = s->link.tqe_next)
-			s->beenhere = FALSE;
-		sl->beenhere = TRUE;
+			s->beenhere = false;
+		sl->beenhere = true;
 
 		for (int alsoplace = 0; alsoplace < alsosize; alsoplace++) {
 			/*
@@ -1070,7 +1070,7 @@ static bool load_conn(struct starter_conn *conn,
 					conn->name,
 					alsos[alsosize],
 					ALSO_LIMIT);
-				return TRUE;	/* error */
+				return true;	/* error */
 			}
 
 			/*
@@ -1093,7 +1093,7 @@ static bool load_conn(struct starter_conn *conn,
 					    alsos[alsoplace], conn->name);
 				starter_error_append(perrl, "cannot find conn '%s' needed by conn '%s'",
 					alsos[alsoplace], conn->name);
-				err = TRUE;
+				err = true;
 				continue;	/* allowing further error detection */
 			}
 
@@ -1104,10 +1104,10 @@ static bool load_conn(struct starter_conn *conn,
 				    "\twhile loading conn '%s' also including '%s'",
 				    conn->name, alsos[alsoplace]);
 
-			conn->strings_set[KSCF_ALSO] = FALSE;
+			conn->strings_set[KSCF_ALSO] = false;
 			pfreeany(conn->strings[KSCF_ALSO]);
 			conn->strings[KSCF_ALSO] = NULL;
-			addin->beenhere = TRUE;
+			addin->beenhere = true;
 
 			/* translate things, but do not replace earlier settings! */
 			err |= translate_conn(conn, addin, k_set, perrl);
@@ -1450,7 +1450,7 @@ static bool load_conn(struct starter_conn *conn,
 			/* everything else is only supported for IKEv2 */
 			} else if (conn->ike_version == IKEv1) {
 				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
-				return TRUE;
+				return true;
 			} else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
 			} else if (streq(val, "rsa-sha1")) {
@@ -1485,10 +1485,10 @@ static bool load_conn(struct starter_conn *conn,
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "ecdsa-sha1")) {
 				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
-				return TRUE;
+				return true;
 			} else {
 				starter_error_append(perrl, "connection authby= value is unknown");
-				return TRUE;
+				return true;
 			}
 			val = strtok(NULL, ", ");
 		}
@@ -1623,7 +1623,7 @@ static bool init_load_conn(struct starter_config *cfg,
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
+	bool connerr = load_conn(conn, cfgp, sconn, true,
 				 defaultconn, perrl, logger);
 
 	if (connerr) {
@@ -1642,7 +1642,7 @@ struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger)
 {
-	bool err = FALSE;
+	bool err = false;
 
 	/**
 	 * Load file

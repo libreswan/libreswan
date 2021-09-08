@@ -105,10 +105,10 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	}
 
 	if (ocsp_post) {
-		rv = CERT_ForcePostMethodForOCSP(TRUE);
+		rv = CERT_ForcePostMethodForOCSP(true);
 		dbg("OCSP will use POST method");
 	} else {
-		rv = CERT_ForcePostMethodForOCSP(FALSE);
+		rv = CERT_ForcePostMethodForOCSP(false);
 	}
 
 	if (rv != SECSuccess) {

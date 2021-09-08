@@ -42,8 +42,8 @@ struct logger;
 #define ALSO_LIMIT 32
 
 enum keyword_set {
-	k_unset   = FALSE,
-	k_set     = TRUE,
+	k_unset   = false,
+	k_set     = true,
 	k_default = 2
 };
 typedef char *ksf[KEY_STRINGS_ROOF];

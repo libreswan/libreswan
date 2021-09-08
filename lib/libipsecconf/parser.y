@@ -153,13 +153,13 @@ statement_kw:
 
 		switch (kw.keydef->type) {
 		case kt_list:
-			number = parser_enum_list(kw.keydef, value, TRUE);
+			number = parser_enum_list(kw.keydef, value, true);
 			break;
 		case kt_lset:
 			number = parser_lset(kw.keydef, value);	/* XXX: truncates! */
 			break;
 		case kt_enum:
-			number = parser_enum_list(kw.keydef, value, FALSE);
+			number = parser_enum_list(kw.keydef, value, false);
 			break;
 		case kt_rsasigkey:
 		case kt_loose_enum:
@@ -217,13 +217,13 @@ statement_kw:
 
 		switch (kw.keydef->type) {
 		case kt_list:
-			number = parser_enum_list(kw.keydef, $3, TRUE);
+			number = parser_enum_list(kw.keydef, $3, true);
 			break;
 		case kt_lset:
 			number = parser_lset(kw.keydef, $3); /* XXX: truncates! */
 			break;
 		case kt_enum:
-			number = parser_enum_list(kw.keydef, $3, FALSE);
+			number = parser_enum_list(kw.keydef, $3, false);
 			break;
 		case kt_rsasigkey:
 		case kt_loose_enum:
@@ -316,7 +316,7 @@ duration:
 			snprintf(buf, sizeof(buf), "bad duration value \"%s\"", str);
 			yyerror(buf);
 		} else {
-			bool bad_suffix = FALSE;
+			bool bad_suffix = false;
 			unsigned scale;
 
 			if (*endptr == '\0') {
@@ -331,10 +331,10 @@ duration:
 				case 'd': scale = secs_per_day; break;
 				case 'w': scale = 7*secs_per_day; break;
 				default:
-					bad_suffix = TRUE;
+					bad_suffix = true;
 				}
 			} else {
-				bad_suffix = TRUE;
+				bad_suffix = true;
 			}
 
 			if (bad_suffix) {
@@ -385,7 +385,7 @@ struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl
 
 	yyin = f;
 	parser_y_init(file, f);
-	save_errors = TRUE;
+	save_errors = true;
 	TAILQ_INIT(&cfg->sections);
 	TAILQ_INIT(&cfg->comments);
 	parser_cfg = cfg;
@@ -395,7 +395,7 @@ struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl
 			snprintf(parser_errstring, ERRSTRING_LEN,
 				"Unknown error...");
 		}
-		save_errors = FALSE;
+		save_errors = false;
 		do {} while (yyparse() != 0);
 		goto err;
 	}

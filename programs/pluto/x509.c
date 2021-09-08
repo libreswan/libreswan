@@ -1270,7 +1270,7 @@ stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 					   mycert,
-					   send_full_chain ? TRUE : FALSE);
+					   send_full_chain ? true : false);
 	}
 
 	const struct ikev2_cert certhdr = {

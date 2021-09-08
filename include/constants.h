@@ -122,7 +122,7 @@ enum {
 #define streq(a, b) (strcmp((a), (b)) == 0)
 #define strneq(a, b, c) (strncmp((a), (b), (c)) == 0)
 #define startswith(a, b) strneq((a), (b), strlen(b))
-#define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), TRUE : FALSE)
+#define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), true : false)
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)

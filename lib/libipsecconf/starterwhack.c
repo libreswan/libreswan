@@ -586,7 +586,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KNCF_NAT_KEEPALIVE];
 	else
-		msg.nat_keepalive = TRUE;
+		msg.nat_keepalive = true;
 
 	if (conn->options_set[KNCF_IKEV1_NATT])
 		msg.ikev1_natt = conn->options[KNCF_IKEV1_NATT];
@@ -696,7 +696,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	err_t e;
 
 	if (subnets == NULL)
-		return FALSE;
+		return false;
 
 	/* find first non-space item */
 	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ','))
@@ -704,7 +704,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 
 	/* did we find something? */
 	if (*subnets == '\0')
-		return FALSE;	/* no */
+		return false;	/* no */
 
 	eln = subnets;
 
@@ -721,7 +721,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	}
 
 	*psubnets = subnets;
-	return TRUE;
+	return true;
 }
 
 /*
@@ -800,10 +800,10 @@ static int starter_permutate_conns(int
 		 * that has_client is set.
 		 */
 		sc.left.subnet = lnet;
-		sc.left.has_client = TRUE;
+		sc.left.has_client = true;
 
 		sc.right.subnet = rnet;
-		sc.right.has_client = TRUE;
+		sc.right.has_client = true;
 
 		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
 			conn->name, lc, rc);

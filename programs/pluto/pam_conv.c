@@ -172,7 +172,7 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 		/* success! */
 		pam_end(pamh, PAM_SUCCESS);
 		return true;
-	} while (FALSE);
+	} while (false);
 
 	/* common failure code */
 	llog(RC_LOG, logger,

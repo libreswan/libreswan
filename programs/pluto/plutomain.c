@@ -1468,7 +1468,7 @@ int main(int argc, char **argv)
 	/* If not suppressed, do daemon fork */
 	if (fork_desired) {
 #if USE_DAEMON
-		if (daemon(TRUE, true) < 0) {
+		if (daemon(true, true) < 0) {
 			fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, "daemon failed");
 		}
 		/*

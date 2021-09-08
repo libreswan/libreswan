@@ -139,11 +139,11 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 	/* test decryption */
 	memcpy(text_and_tag.ptr + len, tag.ptr, tag.len);
-	try(FALSE, "decrypt", ciphertext, plaintext);
+	try(false, "decrypt", ciphertext, plaintext);
 
 	/* test encryption */
 	memset(text_and_tag.ptr + len, '\0', tag.len);
-	try(TRUE, "encrypt", plaintext, ciphertext);
+	try(true, "encrypt", plaintext, ciphertext);
 
 #	undef try
 

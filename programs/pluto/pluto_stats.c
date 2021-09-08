@@ -290,7 +290,7 @@ static void pstat_child_sa_established(struct state *st)
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
 			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv1_ESP_ID],
 			st->st_ah.attrs.transattrs.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats_sa(FALSE, false, esn);
+		pstats_sa(false, false, esn);
 	}
 	if (st->st_ipcomp.present) {
 		pstats_ipsec_ipcomp++;

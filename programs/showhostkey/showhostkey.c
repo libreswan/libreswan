@@ -333,7 +333,7 @@ static int show_confkey(struct private_key_stuff *pks,
 		pfree(base64);
 		break;
 	default:
-		passert(FALSE);
+		passert(false);
 	}
 
 	return 0;

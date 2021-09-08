@@ -812,7 +812,7 @@ static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED,
 static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
 				    deltatime_t idle_max UNUSED)
 {
-	passert(FALSE);
+	passert(false);
 	return false;
 }
 

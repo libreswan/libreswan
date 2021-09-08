@@ -2287,11 +2287,9 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 		/* must have gotten a status */
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
-			st->hidden_variables.st_xauth_client_done =
-				TRUE;
+			st->hidden_variables.st_xauth_client_done = true;
 			log_state(RC_LOG, st, "XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = false;
-
 			return STF_OK;
 		} else {
 			log_state(RC_LOG, st, "xauth: xauth_client_ackstatus() returned %s",

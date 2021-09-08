@@ -834,7 +834,7 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 				      ? dh->common.id[IKEv1_ESP_ID] == dh->group
 				      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
 				      ? dh->common.id[IKEv1_ESP_ID] < 0
-				      : FALSE));
+				      : false));
 	}
 }
 
