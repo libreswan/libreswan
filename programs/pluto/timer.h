@@ -22,6 +22,7 @@
 
 #include "deltatime.h"
 #include "monotime.h"
+#include "where.h"
 
 struct state;   /* forward declaration */
 struct fd;
@@ -39,9 +40,13 @@ struct state_event {
 	struct state_event *next;
 };
 
-extern void event_schedule(enum event_type type, deltatime_t delay,
-			   struct state *st);
-void event_delete(enum event_type type, struct state *st);
+extern void event_schedule_where(enum event_type type, deltatime_t delay,
+				 struct state *st, where_t where);
+#define event_schedule(TYPE, DELAY, ST) event_schedule_where(TYPE, DELAY, ST, HERE)
+
+void event_delete_where(enum event_type type, struct state *st, where_t where);
+#define event_delete(TYPE, ST) event_delete_where(TYPE, ST, HERE)
+
 struct state_event **state_event(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
 extern void delete_event(struct state *st);

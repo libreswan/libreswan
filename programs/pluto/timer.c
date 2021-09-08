@@ -490,7 +490,7 @@ void delete_event(struct state *st)
 /*
  * This routine schedules a state event.
  */
-void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
+void event_schedule_where(enum event_type type, deltatime_t delay, struct state *st, where_t where)
 {
 	passert(st != NULL);
 	/*
@@ -499,30 +499,29 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	pexpect(deltasecs(delay) < secs_per_day * 31);
 
-	const char *en = enum_name(&event_type_names, type);
+	const char *event_name = enum_name(&event_type_names, type);
 
 	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(st->st_logger, where,
 			     "#%lu has no .st_*event field for %s",
-			     st->st_serialno,
-			     enum_name(&event_type_names, type));
+			     st->st_serialno, event_name);
 		return;
 	}
 
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
-		pexpect_fail(st->st_logger, HERE,
-			     "#%lu already has a scheduled %s; forcing replacement",
+		pexpect_fail(st->st_logger, where,
+			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
-			     enum_name(&event_type_names, type));
+			     enum_name(&event_type_names, (*evp)->ev_type),
+			     event_name);
 		delete_pluto_event(evp);
 	}
 
-	struct state_event *ev = alloc_thing(struct state_event, en);
-	dbg("%s: newref %s-pe@%p", __func__, en, ev);
+	struct state_event *ev = alloc_thing(struct state_event, event_name);
 	ev->ev_type = type;
-	ev->ev_name = en;
+	ev->ev_name = event_name;
 	ev->ev_state = st;
 	ev->ev_epoch = mononow();
 	ev->ev_delay = delay;
@@ -530,8 +529,8 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	*evp = ev;
 
 	deltatime_buf buf;
-	dbg("inserting event %s, timeout in %s seconds for #%lu",
-	    en, str_deltatime(delay, &buf),
+	dbg("%s: newref %s-pe@%p timeout in %s seconds for #%lu",
+	    __func__, event_name, ev, str_deltatime(delay, &buf),
 	    ev->ev_state->st_serialno);
 
 	fire_timer_photon_torpedo(&ev->ev, timer_event_cb, ev, delay);
@@ -540,18 +539,19 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 /*
  * Delete a state backlinked event (if any); leave *evp == NULL.
  */
-void event_delete(enum event_type type, struct state *st)
+void event_delete_where(enum event_type type, struct state *st, where_t where)
 {
 	struct state_event **evp = state_event(st, type);
 	if (evp == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(st->st_logger, where,
 			     "#%lu has no .st_event field for %s",
 			     st->st_serialno, enum_name(&event_type_names, type));
 		return;
 	}
 	if (*evp != NULL) {
-		dbg("#%lu requesting %s-pe@%p be deleted",
-		    st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type), *evp);
+		dbg("#%lu requesting %s-event@%p be deleted "PRI_WHERE,
+		    st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type),
+		    *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
 		delete_pluto_event(evp);
 		pexpect((*evp) == NULL);
