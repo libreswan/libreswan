@@ -108,7 +108,7 @@ struct state_event **state_event(struct state *st, enum event_type type)
 	case EVENT_SA_EXPIRE:
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
-	case EVENT_PAM_TIMEOUT:
+	case EVENT_v1_PAM_TIMEOUT:
 	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
@@ -421,7 +421,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 
 #ifdef USE_PAM_AUTH
-	case EVENT_PAM_TIMEOUT:
+	case EVENT_v1_PAM_TIMEOUT:
 		dbg("PAM thread timeout on state #%lu", st->st_serialno);
 		pam_auth_abort(st, "timeout");
 		/*

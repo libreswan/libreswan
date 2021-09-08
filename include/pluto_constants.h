@@ -212,7 +212,6 @@ enum event_type {
 	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
 
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
-	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
 	/*
 	 * For IKEv2 'replace' is really either a re-key a full
@@ -225,6 +224,7 @@ enum event_type {
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_v1_DPD,			/* v1 dead peer detection */
 	EVENT_v1_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
+	EVENT_v1_PAM_TIMEOUT,		/* v1 give up on PAM helper */
 	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */
@@ -258,7 +258,7 @@ enum event_type {
 #endif
 #define DELETE_SA_DELAY			deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
-#define EVENT_PAM_TIMEOUT_DELAY		deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
+#define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
 
 #define REVIVE_CONN_DELAY	5 /* seconds */
 #define REVIVE_CONN_DELAY_MAX  300 /* Do not delay more than 5 minutes per attempt */
