@@ -81,6 +81,9 @@ struct state_event **state_event(struct state *st, enum event_type type)
 
 	case EVENT_v1_SEND_XAUTH:
 		return &st->st_v1_send_xauth_event;
+	case EVENT_v1_DPD:
+	case EVENT_v1_DPD_TIMEOUT:
+		return &st->st_v1_dpd_event;
 
 	case EVENT_v2_LIVENESS:
 		return &st->st_v2_liveness_event;
@@ -96,10 +99,6 @@ struct state_event **state_event(struct state *st, enum event_type type)
 	case EVENT_v2_REAUTH:
 		return &st->st_v2_reauth_event;
 		break;
-
-	case EVENT_DPD:
-	case EVENT_DPD_TIMEOUT:
-		return &st->st_dpd_event;
 
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
@@ -299,7 +298,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			}
 
 			event_delete(EVENT_v2_LIVENESS, st);
-			event_delete(EVENT_DPD, st);
+			event_delete(EVENT_v1_DPD, st);
 			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 			break;
 		default:
@@ -414,11 +413,11 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 
 #ifdef USE_IKEv1
-	case EVENT_DPD:
+	case EVENT_v1_DPD:
 		dpd_event(st);
 		break;
 
-	case EVENT_DPD_TIMEOUT:
+	case EVENT_v1_DPD_TIMEOUT:
 		dpd_timeout(st);
 		break;
 

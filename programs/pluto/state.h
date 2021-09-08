@@ -718,7 +718,7 @@ struct state {
 	uint32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
 	uint32_t st_dpd_peerseqno;             /* global variables */
 	uint32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct state_event *st_dpd_event;	/* backpointer for IKEv1 DPD events */
+	struct state_event *st_v1_dpd_event;	/* backpointer for IKEv1 DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */

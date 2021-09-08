@@ -211,8 +211,6 @@ enum event_type {
 
 	EVENT_RETRANSMIT,		/* v1/v2 retransmit IKE packet */
 
-	EVENT_DPD,			/* v1 dead peer detection */
-	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
 	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
@@ -225,6 +223,8 @@ enum event_type {
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
 
 	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
+	EVENT_v1_DPD,			/* v1 dead peer detection */
+	EVENT_v1_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */

@@ -1004,7 +1004,7 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_intermediate_packet_me);
 	free_chunk_content(&st->st_intermediate_packet_peer);
 
-	event_delete(EVENT_DPD, st);
+	event_delete(EVENT_v1_DPD, st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 	event_delete(EVENT_v2_LIVENESS, st);
 	event_delete(EVENT_v2_ADDR_CHANGE, st);
@@ -3001,7 +3001,7 @@ void list_state_events(struct show *s, monotime_t now)
 		list_state_event(s, st, st->st_v2_liveness_event, now);
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
 		list_state_event(s, st, st->st_v2_addr_change_event, now);
-		list_state_event(s, st, st->st_dpd_event, now);
+		list_state_event(s, st, st->st_v1_dpd_event, now);
 	}
 }
 

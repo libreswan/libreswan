@@ -217,11 +217,11 @@ stf_status dpd_init(struct state *st)
 			return STF_FAIL;
 		}
 
-		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
+		if (st->st_v1_dpd_event == NULL || ev_before(st->st_v1_dpd_event,
 			st->st_connection->dpd_delay))
 		{
-			event_delete(EVENT_DPD, st);
-			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
+			event_delete(EVENT_v1_DPD, st);
+			event_schedule(EVENT_v1_DPD, st->st_connection->dpd_delay, st);
 		}
 	}
 	return STF_OK;
@@ -234,11 +234,11 @@ stf_status dpd_init(struct state *st)
 static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t timeout)
 {
 	passert(deltasecs(timeout) > 0);
-	if (p1st->st_dpd_event == NULL ||
-	    monobefore(monotime_add(nw, timeout), p1st->st_dpd_event->ev_time)) {
+	if (p1st->st_v1_dpd_event == NULL ||
+	    monobefore(monotime_add(nw, timeout), p1st->st_v1_dpd_event->ev_time)) {
 		dbg("DPD: scheduling timeout to %jd", deltasecs(timeout));
-		event_delete(EVENT_DPD, p1st);
-		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
+		event_delete(EVENT_v1_DPD, p1st);
+		event_schedule(EVENT_v1_DPD_TIMEOUT, timeout, p1st);
 	}
 }
 
@@ -299,7 +299,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		dbg("DPD: not yet time for dpd event: %s < %s",
 		    str_monotime(nw, &mb1),
 		    str_monotime(next_time, &mb2));
-		event_schedule(EVENT_DPD, next_delay, st);
+		event_schedule(EVENT_v1_DPD, next_delay, st);
 		return;
 	}
 
@@ -318,18 +318,20 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		st->st_last_dpd = nw;
 
 		/*
-		 * Since there was activity, kill any EVENT_DPD_TIMEOUT that might
-		 * be waiting. This can happen when a R_U_THERE_ACK is lost, and
-		 * subsequently traffic started flowing over the SA again, and no
-		 * more DPD packets are sent to cancel the outstanding DPD timer.
+		 * Since there was activity, kill any
+		 * EVENT_v1_DPD_TIMEOUT that might be waiting. This
+		 * can happen when a R_U_THERE_ACK is lost, and
+		 * subsequently traffic started flowing over the SA
+		 * again, and no more DPD packets are sent to cancel
+		 * the outstanding DPD timer.
 		 */
-		if (p1st->st_dpd_event != NULL &&
-		    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
+		if (p1st->st_v1_dpd_event != NULL &&
+		    p1st->st_v1_dpd_event->ev_type == EVENT_v1_DPD_TIMEOUT) {
 			dbg("DPD: deleting p1st DPD event");
-			event_delete(EVENT_DPD, p1st);
+			event_delete(EVENT_v1_DPD, p1st);
 		}
 
-		event_schedule(EVENT_DPD, next_delay, st);
+		event_schedule(EVENT_v1_DPD, next_delay, st);
 		return;
 	}
 
@@ -338,7 +340,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 * reschedule next event, since we cannot do it from the activity
 		 * routine.
 		 */
-		event_schedule(EVENT_DPD, next_delay, st);
+		event_schedule(EVENT_v1_DPD, next_delay, st);
 	}
 
 	if (p1st->st_dpd_seqno == 0) {
@@ -512,12 +514,12 @@ stf_status dpd_inI_outR(struct state *p1st,
 	pstats_ike_dpd_replied++;
 
 	/*
-	 * since there was activity, kill any EVENT_DPD_TIMEOUT that might
-	 * be waiting.
+	 * Since there was activity, kill any EVENT_v1_DPD_TIMEOUT
+	 * that might be waiting.
 	 */
-	if (p1st->st_dpd_event != NULL &&
-	    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
-		event_delete(EVENT_DPD, p1st);
+	if (p1st->st_v1_dpd_event != NULL &&
+	    p1st->st_v1_dpd_event->ev_type == EVENT_v1_DPD_TIMEOUT)
+		event_delete(EVENT_v1_DPD_TIMEOUT, p1st);
 
 	return STF_IGNORE;
 }
@@ -589,12 +591,12 @@ stf_status dpd_inR(struct state *p1st,
 	pstats_ike_dpd_recv++;
 
 	/*
-	 * since there was activity, kill any EVENT_DPD_TIMEOUT that might
-	 * be waiting.
+	 * Since there was activity, kill any EVENT_v1_DPD_TIMEOUT
+	 * that might be waiting.
 	 */
-	if (p1st->st_dpd_event != NULL &&
-	    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
-		event_delete(EVENT_DPD, p1st);
+	if (p1st->st_v1_dpd_event != NULL &&
+	    p1st->st_v1_dpd_event->ev_type == EVENT_v1_DPD_TIMEOUT)
+		event_delete(EVENT_v1_DPD_TIMEOUT, p1st);
 
 	return STF_IGNORE;
 }
