@@ -1032,6 +1032,7 @@ void delete_state_tail(struct state *st)
 	delete_state_event(&st->st_v2_liveness_event, HERE);
 	delete_state_event(&st->st_v2_addr_change_event, HERE);
 	delete_state_event(&st->st_v2_refresh_event, HERE);
+	delete_state_event(&st->st_v2_lifetime_event, HERE);
 	clear_retransmits(st);
 
 	/*
@@ -1806,7 +1807,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 		return true;
 
 	monotime_t now = mononow();
-	const struct state_event *ev = ike->sa.st_event;
+	const struct state_event *ev = ike->sa.st_v2_lifetime_event;
 	deltatime_t lifetime = monotimediff(ev->ev_time, now);
 
 	if (deltatime_cmp(lifetime, >, PARENT_MIN_LIFE_DELAY) &&
@@ -1987,7 +1988,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				jam(buf, " in %jds", delta);
 			}
 		}
-		FOR_EACH_THING(liveness, st->st_v2_refresh_event, st->st_event) {
+		FOR_EACH_THING(liveness, st->st_event, st->st_v2_refresh_event, st->st_v2_lifetime_event) {
 			/* show first */
 			if (liveness != NULL) {
 				jam(buf, "; ");
@@ -2996,10 +2997,13 @@ void list_state_events(struct show *s, monotime_t now)
 	struct state *st = NULL;
 	FOR_EACH_STATE_OLD2NEW(st) {
 		list_state_event(s, st, st->st_event, now);
-		list_state_event(s, st, st->st_v2_liveness_event, now);
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
-		list_state_event(s, st, st->st_v2_addr_change_event, now);
 		list_state_event(s, st, st->st_v1_dpd_event, now);
+		/* order makes no sense */
+		list_state_event(s, st, st->st_v2_lifetime_event, now);
+		list_state_event(s, st, st->st_v2_liveness_event, now);
+		list_state_event(s, st, st->st_v2_addr_change_event, now);
+		/*list_state_event(s, st, st->st_v2_refresh_event, now);*/
 	}
 }
 

@@ -102,9 +102,15 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
-	case EVENT_SA_DISCARD:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_EXPIRE:
+		switch (st->st_ike_version) {
+		case IKEv1: return &st->st_event;
+		case IKEv2: return &st->st_v2_lifetime_event;
+		}
+		break;
+
+	case EVENT_SA_DISCARD:
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_v1_PAM_TIMEOUT:

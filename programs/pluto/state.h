@@ -710,6 +710,7 @@ struct state {
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
 	struct state_event *st_v2_refresh_event;	/* REKEY / REAUTH */
+	struct state_event *st_v2_lifetime_event;	/* REPLACE / EXPIRE (not DISCARD) */
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

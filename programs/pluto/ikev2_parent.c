@@ -378,26 +378,31 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_
 		return;
 	}
 
-	deltatime_t lifetime = deltatime(0); /* .lt. EXPIRE_OLD_SA_DELAY */
-	if (IS_IKE_SA_ESTABLISHED(rst) || IS_CHILD_SA_ESTABLISHED(rst)) {
-		/* on initiator, delete st_ipsec_pred. The responder should not */
-		monotime_t now = mononow();
-		const struct state_event *ev = rst->st_event;
-		if (ev != NULL)
-			lifetime = monotimediff(ev->ev_time, now);
+	/*
+	 * Only established states have a lifetime scheduled.
+	 */
+
+	deltatime_t lifetime = deltatime(0);
+	if (rst->st_v2_lifetime_event != NULL) {
+		lifetime = monotimediff(rst->st_v2_lifetime_event->ev_time, mononow());
 	}
 
 	deltatime_buf lb;
 	llog_sa(RC_LOG, larval_sa,
 		"rekeyed #%lu %s and expire it remaining life %ss",
 		pred, larval_sa->sa.st_state->name,
-		str_deltatime(lifetime, &lb));
+		(rst->st_v2_lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
-		delete_event(rst);
+		/* replace the REPLACE/EXPIRE event */
+		delete_state_event(&rst->st_v2_lifetime_event, HERE);
 		event_schedule(EVENT_SA_EXPIRE, EXPIRE_OLD_SA_DELAY, rst);
+		pexpect(rst->st_v2_lifetime_event->ev_type == EVENT_SA_EXPIRE);
 	}
-	/* else it should be on its way to expire no need to kick dead state */
+	/*
+	 * else it should be on its way to expire, no need to kick
+	 * dead state when it is down
+	 */
 }
 
 /*
@@ -472,6 +477,7 @@ void schedule_v2_replace_event(struct state *st)
 	 * during a state's lifetime.
 	 */
 	pexpect(st->st_v2_refresh_event == NULL);
+	pexpect(st->st_v2_lifetime_event == NULL);
 
 	struct connection *c = st->st_connection;
 
@@ -517,6 +523,10 @@ void schedule_v2_replace_event(struct state *st)
 		intmax_t rekey_delay = delay - marg;
 
 		if (rekey_delay > 0) {
+			/*
+			 * Time to rekey/reauth; scheduled once during
+			 * a state's lifetime.
+			 */
 			dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
 			    st->st_serialno, rekey_delay, delay);
 			event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
@@ -538,8 +548,12 @@ void schedule_v2_replace_event(struct state *st)
 	    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
 	    delay, story);
 
-	delete_event(st);
+	/*
+	 * Schedule the lifetime (death) event.  Only happens once
+	 * when the state is established.
+	 */
 	event_schedule(kind, deltatime(delay), st);
+	pexpect(st->st_v2_lifetime_event->ev_type == kind);
 }
 
 static bool state_is_expired(struct state *st, const char *what)

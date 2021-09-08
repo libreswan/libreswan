@@ -2583,10 +2583,13 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			break;
 
 		case EVENT_RETAIN:
-			/* the previous event is retained */
-			dbg("#%lu is retaining %s with is previously set timeout",
-			    st->st_serialno, (st->st_event == NULL ? "<no-event>" :
-					      enum_name(&event_type_names, st->st_event->ev_type)));
+			/* the previous lifetime event is retained */
+			if (pexpect(st->st_v2_lifetime_event != NULL)) {
+				delete_event(st); /* relying on retained */
+				dbg("#%lu is retaining %s with is previously set timeout",
+				    st->st_serialno,
+				    enum_name(&event_type_names, st->st_v2_lifetime_event->ev_type));
+			}
 			break;
 
 		default:
@@ -2598,9 +2601,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		 * schedule once when moving from I2->I3 or R1->R2
 		 */
 		if (st->st_state->kind != from_state &&
-			st->st_state->kind != STATE_UNDEFINED &&
-			IS_CHILD_SA_ESTABLISHED(st) &&
-			dpd_active_locally(st)) {
+		    st->st_state->kind != STATE_UNDEFINED &&
+		    IS_CHILD_SA_ESTABLISHED(st) &&
+		    dpd_active_locally(st)) {
 			dbg("dpd enabled, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, st);
