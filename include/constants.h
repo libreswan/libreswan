@@ -91,22 +91,6 @@ enum {
 #define PMIN(x,y) ((x) <= (y) ? (x) : (y))
 #define PMAX(x,y) ((x) >= (y) ? (x) : (y))
 
-/*
- * Libreswan was written before <stdbool.h> was standardized.
- * We continue to use TRUE and FALSE because we think that they are clearer
- * than true or false.
- */
-
-#include <stdbool.h> /* for 'bool' */
-
-#ifndef TRUE
-#  define TRUE true
-#endif
-
-#ifndef FALSE
-#  define FALSE false
-#endif
-
 #define NULL_FD (-1)	/* NULL file descriptor */
 
 #include <inttypes.h>
