@@ -24,10 +24,7 @@ west #
  echo done
 done
 west #
- grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
-|    Notify Message Type: v2N_NO_PROPOSAL_CHOSEN (0xe)
+ grep '^[^|].*NO_PROPOSAL_CHOSEN' /tmp/pluto.log
 "westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-west #
- ipsec whack --shutdown
 west #
  
