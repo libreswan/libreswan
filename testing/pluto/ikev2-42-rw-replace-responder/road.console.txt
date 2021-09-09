@@ -174,7 +174,7 @@ road #
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in 28800 seconds for #2
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in 28800 seconds for #1
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in 28800 seconds for #3
-| state #1 deleting .st_event EVENT_SA_EXPIRE
+| #1 deleting EVENT_SA_EXPIRE
 road #
  ipsec status
 000 using kernel interface: xfrm

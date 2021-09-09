@@ -173,9 +173,10 @@ road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep '#' | sed -e 's/ timeout in [1-9][^ ]* / timeout in N.N /' -e 's/@0x[0-9a-f]*/@0xXXX/'
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #2
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #1
-| state #1 deleting .st_event EVENT_SA_REPLACE
+| #1 deleting EVENT_SA_REPLACE
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #3
+| #1 deleting EVENT_SA_EXPIRE
 road #
  : "re-authenticateded. The state number should 3 and 2"
 road #
