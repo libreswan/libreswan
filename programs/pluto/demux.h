@@ -156,7 +156,6 @@ struct msg_digest {
 	bool ikev2;				/* Peer supports IKEv2 */
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
-	bool event_already_set;			/* (v1) */
 	bool fake_clone;			/* is this a fake (clone) message */
 
 	/*

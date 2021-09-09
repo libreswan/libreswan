@@ -2618,21 +2618,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Schedule for whatever timeout is specified */
-		if (!md->event_already_set) {
-			/*
-			 * This md variable is hardly ever set.
-			 * Only deals with v1 <-> v2 switching
-			 * which will be removed in the near future anyway
-			 * (PW 2017 Oct 8)
-			 */
-			dbg("event_already_set, deleting event");
-			/*
-			 * Delete previous retransmission event.
-			 * New event will be scheduled below.
-			 */
-			delete_event(st);
-			clear_retransmits(st);
-		}
+
+		/*
+		 * Delete previous retransmission event.
+		 * New event will be scheduled below.
+		 */
+		delete_event(st);
+		clear_retransmits(st);
 
 		/* Delete IKE fragments */
 		free_v1_message_queues(st);
@@ -2689,126 +2681,131 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Schedule for whatever timeout is specified */
-		if (!md->event_already_set) {
-			dbg("!event_already_set at reschedule");
-			intmax_t delay_ms; /* delay is in milliseconds here */
-			enum event_type kind = smc->timeout_event;
+
+		enum event_type event_type = smc->timeout_event;
+		struct connection *c = st->st_connection;
+
+		/* fixup in case of state machine jump for xauth without modecfg */
+		if (c->spd.this.xauth_client &&
+		    st->hidden_variables.st_xauth_client_done &&
+		    !c->spd.this.modecfg_client &&
+		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
+			dbg("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_SA_REPLACE");
+			event_type = EVENT_SA_REPLACE;
+		}
+
+		switch (event_type) {
+		case EVENT_RETRANSMIT: /* Retransmit packet */
+			start_retransmits(st);
+			break;
+
+		case EVENT_SA_REPLACE: /* SA replacement event */
+		{
+			deltatime_t event_delay;
 			bool agreed_time = false;
-			struct connection *c = st->st_connection;
-
-			/* fixup in case of state machine jump for xauth without modecfg */
-			if (c->spd.this.xauth_client &&
-			    st->hidden_variables.st_xauth_client_done &&
-			    !c->spd.this.modecfg_client &&
-			    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2))
-			{
-				dbg("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_SA_REPLACE");
-				kind = EVENT_SA_REPLACE;
-			}
-
-			switch (kind) {
-			case EVENT_RETRANSMIT: /* Retransmit packet */
-				start_retransmits(st);
-				break;
-
-			case EVENT_SA_REPLACE: /* SA replacement event */
-				if (IS_V1_PHASE1(st->st_state->kind) ||
-				    IS_V1_PHASE15(st->st_state->kind)) {
-					/* Note: we will defer to the "negotiated" (dictated)
-					 * lifetime if we are POLICY_DONT_REKEY.
-					 * This allows the other side to dictate
-					 * a time we would not otherwise accept
-					 * but it prevents us from having to initiate
-					 * rekeying.  The negative consequences seem
-					 * minor.
-					 */
-					delay_ms = deltamillisecs(c->sa_ike_life_seconds);
-					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay_ms >= deltamillisecs(st->st_oakley.life_seconds))
-					{
-						agreed_time = true;
-						delay_ms = deltamillisecs(st->st_oakley.life_seconds);
-					}
-				} else {
-					/* Delay is min of up to four things:
-					 * each can limit the lifetime.
-					 */
-					time_t delay = deltasecs(c->sa_ipsec_life_seconds);
-
-#define clamp_delay(trans) { \
-		if (st->trans.present && \
-		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
-			agreed_time = true; \
-			delay = deltasecs(st->trans.attrs.life_seconds); \
-		} \
-	}
-					clamp_delay(st_ah);
-					clamp_delay(st_esp);
-					clamp_delay(st_ipcomp);
-					delay_ms = delay * 1000;
-#undef clamp_delay
-				}
-
-				/* By default, we plan to rekey.
+			if (IS_V1_PHASE1(st->st_state->kind) ||
+			    IS_V1_PHASE15(st->st_state->kind)) {
+				/*
+				 * ISAKMP:
 				 *
-				 * If there isn't enough time to rekey, plan to
-				 * expire.
-				 *
-				 * If we are --dontrekey, a lot more rules apply.
-				 * If we are the Initiator, use REPLACE_IF_USED.
-				 * If we are the Responder, and the dictated time
-				 * was unacceptable (too large), plan to REPLACE
-				 * (the only way to ratchet down the time).
-				 * If we are the Responder, and the dictated time
-				 * is acceptable, plan to EXPIRE.
-				 *
-				 * Important policy lies buried here.
-				 * For example, we favour the initiator over the
-				 * responder by making the initiator start rekeying
-				 * sooner.  Also, fuzz is only added to the
-				 * initiator's margin.
-				 *
-				 * Note: for ISAKMP SA, we let the negotiated
-				 * time stand (implemented by earlier logic).
+				 * Note: we will defer to the
+				 * "negotiated" (dictated) lifetime if
+				 * we are POLICY_DONT_REKEY.  This
+				 * allows the other side to dictate a
+				 * time we would not otherwise accept
+				 * but it prevents us from having to
+				 * initiate rekeying.  The negative
+				 * consequences seem minor.
 				 */
-				if (agreed_time &&
-				    (c->policy & POLICY_DONT_REKEY)) {
-					kind = (smc->flags & SMF_INITIATOR) ?
-					       EVENT_v1_REPLACE_IF_USED :
-					       EVENT_SA_EXPIRE;
+				event_delay = c->sa_ike_life_seconds;
+				if ((c->policy & POLICY_DONT_REKEY) ||
+				    deltatime_cmp(event_delay, >=, st->st_oakley.life_seconds)) {
+					agreed_time = true;
+					event_delay = st->st_oakley.life_seconds;
 				}
-				if (kind != EVENT_SA_EXPIRE) {
-					time_t marg =
-						deltasecs(c->sa_rekey_margin);
+			} else {
+				/*
+				 * IPsec:
+				 *
+				 * Delay is min of up to four things:
+				 * each can limit the lifetime.
+				 */
+				event_delay = c->sa_ipsec_life_seconds;
 
-					if (smc->flags & SMF_INITIATOR) {
-						marg += marg *
-							c->sa_rekey_fuzz /
-							100.E0 *
-							(rand() /
-							 (RAND_MAX + 1.E0));
-					} else {
-						marg /= 2;
-					}
-
-					if (delay_ms > marg * 1000) {
-						delay_ms -= marg * 1000;
-						st->st_replace_margin = deltatime(marg);
-					} else {
-						kind = EVENT_SA_EXPIRE;
-					}
+#define clamp_delay(trans)						\
+				{					\
+					if (st->trans.present &&	\
+					    deltatime_cmp(event_delay, >=, st->trans.attrs.life_seconds)) { \
+						agreed_time = true;	\
+						event_delay = st->trans.attrs.life_seconds; \
+					}				\
 				}
-				/* XXX: DELAY_MS should be a deltatime_t */
-				event_schedule(kind, deltatime_ms(delay_ms), st);
-				break;
-
-			case EVENT_SA_DISCARD:
-				event_schedule(EVENT_SA_DISCARD, c->config->retransmit_timeout, st);
-				break;
-
-			default:
-				bad_case(kind);
+				clamp_delay(st_ah);
+				clamp_delay(st_esp);
+				clamp_delay(st_ipcomp);
+#undef clamp_delay
 			}
+
+			/*
+			 * By default, we plan to rekey.
+			 *
+			 * If there isn't enough time to rekey, plan
+			 * to expire.
+			 *
+			 * If we are --dontrekey, a lot more rules
+			 * apply.  If we are the Initiator, use
+			 * REPLACE_IF_USED.  If we are the Responder,
+			 * and the dictated time was unacceptable (too
+			 * large), plan to REPLACE (the only way to
+			 * ratchet down the time).  If we are the
+			 * Responder, and the dictated time is
+			 * acceptable, plan to EXPIRE.
+			 *
+			 * Important policy lies buried here.  For
+			 * example, we favour the initiator over the
+			 * responder by making the initiator start
+			 * rekeying sooner.  Also, fuzz is only added
+			 * to the initiator's margin.
+			 *
+			 * Note: for ISAKMP SA, we let the negotiated
+			 * time stand (implemented by earlier logic).
+			 */
+			if (agreed_time &&
+			    (c->policy & POLICY_DONT_REKEY)) {
+				event_type = ((smc->flags & SMF_INITIATOR) ?
+					      EVENT_v1_REPLACE_IF_USED :
+					      EVENT_SA_EXPIRE);
+			}
+			if (event_type != EVENT_SA_EXPIRE) {
+				time_t marg_s = deltasecs(c->sa_rekey_margin);
+
+				if (smc->flags & SMF_INITIATOR) {
+					marg_s += marg_s *
+						c->sa_rekey_fuzz /
+						100.E0 *
+						(rand() /
+						 (RAND_MAX + 1.E0));
+				} else {
+					marg_s /= 2;
+				}
+				deltatime_t marg = deltatime(marg_s);
+
+				if (deltatime_cmp(event_delay, >, marg)) {
+					event_delay = deltatime_sub(event_delay, marg);
+					st->st_replace_margin = marg;
+				} else {
+					event_type = EVENT_SA_EXPIRE;
+				}
+			}
+			event_schedule(event_type, event_delay, st);
+			break;
+		}
+		case EVENT_SA_DISCARD:
+			event_schedule(EVENT_SA_DISCARD, c->config->retransmit_timeout, st);
+			break;
+
+		default:
+			bad_case(event_type);
 		}
 
 		/* tell whack and log of progress */
