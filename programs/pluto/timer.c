@@ -70,7 +70,7 @@
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
-struct state_event **state_event(struct state *st, enum event_type type)
+struct state_event **state_event_slot(struct state *st, enum event_type type)
 {
 	/*
 	 * Return a pointer to the event in the state object.
@@ -123,6 +123,30 @@ struct state_event **state_event(struct state *st, enum event_type type)
 	bad_case(type);
 }
 
+/* delete pluto event (if any); leave *evp == NULL */
+static void delete_state_event(struct state_event **evp, where_t where)
+{
+	struct state_event *e = (*evp);
+	if (e == NULL) {
+		return;
+	}
+
+	passert(e->ev_state != NULL);
+
+	dbg("#%lu deleting %s",
+	    e->ev_state->st_serialno,
+	    enum_name(&event_type_names, e->ev_type));
+
+	/* first the event */
+	event_free(e->ev);
+	e->ev = NULL;
+	/* then the structure */
+	dbg_free("state-event", e, where);
+	pfree(e);
+	*evp = NULL;
+
+}
+
 /*
  * This file has the event handling routines. Events are
  * kept as a linked list of event structures. These structures
@@ -167,7 +191,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		    IS_IKE_SA(st) ? "IKE" : "CHILD",
 		    st->st_serialno, st->st_state->short_name);
 
-		struct state_event **evp = state_event(st, event_type);
+		struct state_event **evp = state_event_slot(st, event_type);
 		if (evp == NULL) {
 			pexpect_fail(st->st_logger, HERE,
 				     "#%lu has no .st_event field for %s",
@@ -183,7 +207,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		}
 
 		/* everything useful has been extracted */
-		delete_pluto_event(evp);
+		delete_state_event(evp, HERE);
 		arg = ev = *evp = NULL; /* all gone */
 	}
 
@@ -464,27 +488,10 @@ static void dispatch_event(struct state *st, enum event_type event_type,
  * independently.  This is why the retransmit timer has been split
  * off.
  */
+
 void delete_event(struct state *st)
 {
-	struct liveness {
-		const char *name;
-		struct state_event **event;
-	} events[] = {
-		{ "st_event", &st->st_event, },
-	};
-	for (unsigned e = 0; e < elemsof(events); e++) {
-		struct liveness *l = &events[e];
-		if (*(l->event) == NULL) {
-			dbg("state #%lu has no .%s to delete", st->st_serialno,
-			    l->name);
-		} else {
-			esb_buf b;
-			dbg("state #%lu deleting .%s %s",
-			    st->st_serialno, l->name,
-			    enum_show(&event_type_names, (*l->event)->ev_type, &b));
-			delete_pluto_event(l->event);
-		}
-	}
+	delete_state_event(&st->st_event, HERE);
 }
 
 /*
@@ -501,7 +508,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	const char *event_name = enum_name(&event_type_names, type);
 
-	struct state_event **evp = state_event(st, type);
+	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, where,
 			     "#%lu has no .st_*event field for %s",
@@ -516,12 +523,11 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 			     st->st_serialno,
 			     enum_name(&event_type_names, (*evp)->ev_type),
 			     event_name);
-		delete_pluto_event(evp);
+		delete_state_event(evp, where);
 	}
 
 	struct state_event *ev = alloc_thing(struct state_event, event_name);
 	ev->ev_type = type;
-	ev->ev_name = event_name;
 	ev->ev_state = st;
 	ev->ev_epoch = mononow();
 	ev->ev_delay = delay;
@@ -541,7 +547,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
  */
 void event_delete_where(enum event_type type, struct state *st, where_t where)
 {
-	struct state_event **evp = state_event(st, type);
+	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
 		pexpect_fail(st->st_logger, where,
 			     "#%lu has no .st_event field for %s",
@@ -553,7 +559,7 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 		    st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type),
 		    *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
-		delete_pluto_event(evp);
+		delete_state_event(evp, where);
 		pexpect((*evp) == NULL);
 	};
 }
@@ -575,7 +581,7 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	}
 
 	/* sanity checks */
-	struct state_event **evp = state_event(st, event_type);
+	struct state_event **evp = state_event_slot(st, event_type);
 	if (evp == NULL) {
 		llog(RC_COMMENT, logger, "%s is not a valid event", event_name);
 		return;
@@ -594,15 +600,26 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 		     "deleting existing %s event occupying the slot shared with %s",
 		     enum_name(&event_type_names, (*evp)->ev_type),
 		     event_name);
-		delete_pluto_event(evp);
+		delete_state_event(evp, HERE);
 	} else {
 		llog(RC_COMMENT, logger,
 		     "deleting existing %s event",
 		     event_name);
 		event_delay = (*evp)->ev_delay;
-		delete_pluto_event(evp);
+		delete_state_event(evp, HERE);
 	}
 
 	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
 	dispatch_event(st, event_type, event_delay);
+}
+
+bool state_event_before(struct state_event *pev, deltatime_t delay)
+{
+	/* Get "the time when the event’s timeout will expire". */
+	struct timeval timeout;
+	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {
+		return false;
+	}
+	/* ... XXX: making this comparison meanless?!? */
+	return deltatime_cmp(deltatime_from_timeval(timeout), <, delay);
 }

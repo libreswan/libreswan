@@ -2976,14 +2976,11 @@ static void list_state_event(struct show *s, struct state *st,
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, "event %s is ", pe->ev_name);
-			if (pe->ev_type == EVENT_NULL) {
-				jam(buf, "not timer based");
-			} else {
-				jam(buf, "schd: %jd (in %jds)",
-				    monosecs(pe->ev_time),
-				    deltasecs(monotimediff(pe->ev_time, now)));
-			}
+			jam(buf, "event ");
+			jam_enum_short(buf, &event_type_names, pe->ev_type);
+			jam(buf, "schd: %jd (in %jds)",
+			    monosecs(pe->ev_time),
+			    deltasecs(monotimediff(pe->ev_time, now)));
 			if (st->st_connection != NULL) {
 				connection_buf cib;
 				jam(buf, " "PRI_CONNECTION, pri_connection(st->st_connection, &cib));

@@ -534,25 +534,6 @@ static void link_pluto_event_list(struct fd_event *e) {
 	pluto_events_head = e;
 }
 
-/* delete pluto event (if any); leave *evp == NULL */
-void delete_pluto_event(struct state_event **evp)
-{
-	struct state_event *e = *evp;
-	if (e == NULL || e->ev_state == NULL) {
-		return;
-	}
-
-	pexpect((*evp)->next == NULL);
-	/* unlink this pluto_event from the list */
-	if (e->ev != NULL) {
-		event_free(e->ev);
-		e->ev = NULL;
-	}
-	dbg_free("state-event", e, HERE);
-	pfree(e);
-	*evp = NULL;
-}
-
 /*
  * A wrapper for libevent's event_new + event_add; any error is fatal.
  *
@@ -1068,15 +1049,6 @@ void stop_server(server_stopped_cb cb)
 {
 	server_stopped = cb;
 	event_base_loopbreak(pluto_eb);
-}
-
-bool ev_before(struct state_event *pev, deltatime_t delay)
-{
-	struct timeval timeout;
-	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {
-		return false;
-	}
-	return deltatime_cmp(deltatime_from_timeval(timeout), <, delay);
 }
 
 void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger)

@@ -85,8 +85,6 @@ void add_fd_read_event_handler(evutil_socket_t fd,
 			       event_callback_fn cb, void *arg,
 			       const char *name);
 
-extern void delete_pluto_event(struct state_event **evp);
-bool ev_before(struct state_event *pev, deltatime_t delay);
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger);
 
