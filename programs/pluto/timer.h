@@ -44,6 +44,7 @@ extern void event_schedule_where(enum event_type type, deltatime_t delay,
 
 void event_delete_where(enum event_type type, struct state *st, where_t where);
 #define event_delete(TYPE, ST) event_delete_where(TYPE, ST, HERE)
+void delete_state_event(struct state_event **evp, where_t where);
 
 struct state_event **state_event_slot(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);

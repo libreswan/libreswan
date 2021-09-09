@@ -1005,13 +1005,6 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_intermediate_packet_me);
 	free_chunk_content(&st->st_intermediate_packet_peer);
 
-	event_delete(EVENT_v1_DPD, st);
-	event_delete(EVENT_v1_SEND_XAUTH, st);
-	event_delete(EVENT_v2_LIVENESS, st);
-	event_delete(EVENT_v2_ADDR_CHANGE, st);
-	event_delete(EVENT_v2_REKEY, st);
-	event_delete(EVENT_v2_REAUTH, st);
-
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_md(st);
 	if (md != NULL) {
@@ -1031,7 +1024,14 @@ void delete_state_tail(struct state *st)
 		send_delete(st);
 	}
 
-	delete_event(st); /* delete any pending timer event */
+	/* delete any pending timer event */
+	delete_state_event(&st->st_event, HERE);
+	delete_state_event(&st->st_retransmit_event, HERE);
+	delete_state_event(&st->st_v1_send_xauth_event, HERE);
+	delete_state_event(&st->st_v1_dpd_event, HERE);
+	delete_state_event(&st->st_v2_liveness_event, HERE);
+	delete_state_event(&st->st_v2_addr_change_event, HERE);
+	delete_state_event(&st->st_v2_refresh_event, HERE);
 	clear_retransmits(st);
 
 	/*
@@ -1987,7 +1987,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				jam(buf, " in %jds", delta);
 			}
 		}
-		FOR_EACH_THING(liveness, st->st_v2_rekey_event, st->st_event) {
+		FOR_EACH_THING(liveness, st->st_v2_refresh_event, st->st_event) {
 			/* show first */
 			if (liveness != NULL) {
 				jam(buf, "; ");

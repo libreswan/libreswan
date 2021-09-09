@@ -76,6 +76,10 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	 * Return a pointer to the event in the state object.
 	 *
 	 * XXX: why not just have an array and index it by KIND?
+	 *
+	 * Because events come in groups.  For instance, for IKEv2,
+	 * only one of REPLACE / EXPIRE or REKEY / REAUTH are ever
+	 * scheduled.
 	 */
 	switch (type) {
 
@@ -90,15 +94,10 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 
 	case EVENT_v2_ADDR_CHANGE:
 		return &st->st_v2_addr_change_event;
-		break;
 
 	case EVENT_v2_REKEY:
-		return &st->st_v2_rekey_event;
-		break;
-
 	case EVENT_v2_REAUTH:
-		return &st->st_v2_reauth_event;
-		break;
+		return &st->st_v2_refresh_event;
 
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
@@ -123,8 +122,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	bad_case(type);
 }
 
-/* delete pluto event (if any); leave *evp == NULL */
-static void delete_state_event(struct state_event **evp, where_t where)
+void delete_state_event(struct state_event **evp, where_t where)
 {
 	struct state_event *e = (*evp);
 	if (e == NULL) {
@@ -180,7 +178,7 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		struct state_event *ev = arg;
 		passert(ev != NULL);
 		event_type = ev->ev_type;
-		event_name = enum_name_short(&event_type_names, event_type);
+		event_name = enum_name(&event_type_names, event_type);
 		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);

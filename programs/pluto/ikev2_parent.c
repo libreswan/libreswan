@@ -467,6 +467,12 @@ static bool expire_ike_because_child_not_used(struct state *st)
 
 void schedule_v2_replace_event(struct state *st)
 {
+	/*
+	 * Time to rekey/reauth/replace/discard; scheduled only once
+	 * during a state's lifetime.
+	 */
+	pexpect(st->st_v2_refresh_event == NULL);
+
 	struct connection *c = st->st_connection;
 
 	/* unwrapped deltatime_t in seconds */
@@ -514,6 +520,7 @@ void schedule_v2_replace_event(struct state *st)
 			dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
 			    st->st_serialno, rekey_delay, delay);
 			event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
+			pexpect(st->st_v2_refresh_event->ev_type == EVENT_v2_REKEY);
 			story = "attempting re-key";
 		} else {
 			story = "margin to small for re-key";

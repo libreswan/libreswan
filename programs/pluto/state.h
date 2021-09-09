@@ -700,7 +700,7 @@ struct state {
 	 * IKEv2, some are not.
 	 */
 
-	struct state_event *st_event;			/* generic timer event for this state object */
+	struct state_event *st_event;			/* generic timer event for one-off events */
 
 	struct state_event *st_retransmit_event;
 
@@ -709,8 +709,7 @@ struct state {
 	monotime_t st_v2_last_liveness;			/* Time of last v2 informational (0 means never?) */
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
-	struct state_event *st_v2_rekey_event;
-	struct state_event *st_v2_reauth_event;
+	struct state_event *st_v2_refresh_event;	/* REKEY / REAUTH */
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
