@@ -256,7 +256,6 @@ enum event_type {
 #ifndef RETRANSMIT_INTERVAL_DEFAULT_MS
 # define RETRANSMIT_INTERVAL_DEFAULT_MS	500 /* wait time doubled each retransmit - in milliseconds */
 #endif
-#define DELETE_SA_DELAY			deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
 #define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
 
@@ -349,7 +348,7 @@ typedef enum {
  */
 #define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
 
-#define MAXIMUM_RESPONDER_WAIT_DELAY	   	deltatime(200) /* seconds before responder giveup */
+#define EXCHANGE_TIMEOUT_DELAY	   	deltatime(200) /* seconds before giving up on an exchange */
 
 #define MAXIMUM_INVALID_KE_RETRANS 3
 

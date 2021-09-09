@@ -2558,12 +2558,13 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			break;
 
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
+			delete_event(st); /* relying on replace */
 			schedule_v2_replace_event(st);
 			break;
 
 		case EVENT_SA_DISCARD:
 			delete_event(st);
-			event_schedule(kind, MAXIMUM_RESPONDER_WAIT_DELAY, st);
+			event_schedule(kind, EXCHANGE_TIMEOUT_DELAY, st);
 			break;
 
 		case EVENT_NULL:
@@ -2572,13 +2573,13 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			 * set no timer?  more likely an accident?
 			 */
 			pexpect_fail(st->st_logger, HERE,
-				     "V2 microcode entry (%s) has unspecified timeout_event",
+				     "v2 microcode entry (%s) has unspecified timeout_event",
 				     transition->story);
 			break;
 
 		case EVENT_v2_REDIRECT:
-			event_delete(EVENT_v2_REDIRECT, st);
-			event_schedule(EVENT_v2_REDIRECT, deltatime(0), st);
+			delete_event(st); /* relying on redirect */
+			event_force(EVENT_v2_REDIRECT, st);
 			break;
 
 		case EVENT_RETAIN:

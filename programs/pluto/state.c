@@ -508,6 +508,7 @@ struct ike_sa *new_v2_ike_state(struct connection *c,
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
 	initialize_new_state(&ike->sa, policy, try);
+	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }
 
