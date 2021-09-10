@@ -266,7 +266,7 @@ void release_dead_interfaces(struct logger *logger)
 	 * connection could (?) trigger deleting other connections,
 	 * but presumably they are further down in the list?
 	 */
-	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	struct connection_filter cf = { .where = HERE, };
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 

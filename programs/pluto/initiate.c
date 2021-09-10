@@ -1000,7 +1000,7 @@ void initiate_ondemand(const ip_endpoint *local_client,
  */
 struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
 {
-	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	struct connection_filter cf = { .where = HERE, };
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 		const struct spd_route *sr;
@@ -1154,7 +1154,7 @@ void connection_check_ddns(struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 
-	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	struct connection_filter cf = { .where = HERE, };
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 		connection_check_ddns1(c, logger);
@@ -1173,7 +1173,7 @@ void connection_check_ddns(struct logger *logger)
  */
 void connection_check_phase2(struct logger *logger)
 {
-	struct connection_filter cf = { .where = HERE, .c = NULL, };
+	struct connection_filter cf = { .where = HERE, };
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 

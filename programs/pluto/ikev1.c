@@ -3351,10 +3351,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 		 * Only do this for connections with the same name
 		 * (can be shared ike sa)
 		 */
-		struct connection_filter cf = {
-			.where = HERE,
-			.c = NULL,
-		};
+		struct connection_filter cf = { .where = HERE, };
 		while (next_connection_new2old(&cf)) {
 			struct connection *d = cf.c;
 

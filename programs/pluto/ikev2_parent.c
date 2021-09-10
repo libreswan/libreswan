@@ -700,7 +700,6 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		.this_id_eq = &c->spd.this.id,
 		.that_id_eq = &c->spd.that.id,
 		.where = HERE,
-		.c = NULL,
 	};
 	while (next_connection_new2old(&cf)) {
 		struct connection *d = cf.c;

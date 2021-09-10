@@ -1371,7 +1371,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
 			.where = HERE,
-			.c = NULL,
 		};
 		while (next_connection_new2old(&cf)) {
 			struct connection *t = cf.c;

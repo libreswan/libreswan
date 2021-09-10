@@ -662,7 +662,6 @@ ip_port end_host_port(const struct end *end, const struct end *other);
  */
 
 struct connection_filter {
-	where_t where;
 	/* filters */
 	enum connection_kind kind;
 	const char *name;
@@ -672,6 +671,7 @@ struct connection_filter {
 	struct connection *c;
 	/* internal (handle on next entry) */
 	struct list_entry *internal;
+	where_t where; /* MUST BE LAST (GCC bug?) */
 };
 
 bool next_connection_old2new(struct connection_filter *query);
