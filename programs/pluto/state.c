@@ -529,7 +529,7 @@ void init_states(void)
 	}
 }
 
-void delete_state_by_id_name(struct state *st, void *name)
+void delete_state_by_id_name(struct state *st, const char *name)
 {
 	struct connection *c = st->st_connection;
 
@@ -544,7 +544,7 @@ void delete_state_by_id_name(struct state *st, void *name)
 	}
 }
 
-void v1_delete_state_by_username(struct state *st, void *name)
+void v1_delete_state_by_username(struct state *st, const char *name)
 {
 	/* only support deleting ikev1 with XAUTH username */
 	if (st->st_ike_version == IKEv2)
@@ -1569,20 +1569,6 @@ struct child_sa *new_v2_child_state(struct connection *c,
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
 	return child;
-}
-
-void for_each_state(void (*f)(struct state *, void *data), void *data,
-		    const char *func)
-{
-	dbg("FOR_EACH_STATE_... in %s (%s)", func, __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
-		/*
-		 * Since OLD_STATE might be deleted by f();
-		 * save/restore using serialno.
-		 */
-		(*f)(st, data);
-	}
 }
 
 #ifdef USE_IKEv1

@@ -225,61 +225,31 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 }
 #endif
 
-static void ikev2_record_newaddr(struct state *st, void *arg_ip)
-{
-	ip_address *ip = arg_ip;
-
-	if (!mobike_check_established(st))
-		return;
-
-	if (address_is_specified(st->st_deleted_local_addr)) {
-		/*
-		 * A work around for delay between new address and new route
-		 * A better fix would be listen to RTM_NEWROUTE, RTM_DELROUTE
-		 */
-		if (st->st_v2_addr_change_event == NULL) {
-			event_schedule(EVENT_v2_ADDR_CHANGE,
-				       RTM_NEWADDR_ROUTE_DELAY, st);
-		} else {
-			address_buf b;
-			dbg("#%lu MOBIKE ignore address %s change pending previous",
-			    st->st_serialno, str_address_sensitive(ip, &b));
-		}
-	}
-}
-
 void record_newaddr(ip_address *ip, char *a_type)
 {
 	address_buf ip_str;
 	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
-	for_each_state(ikev2_record_newaddr, ip, __func__);
-}
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 
-static void ikev2_record_deladdr(struct state *st, void *arg_ip)
-{
-	ip_address *ip = arg_ip;
+		if (!mobike_check_established(st))
+			continue;
 
-	if (!mobike_check_established(st))
-		return;
-
-	pexpect_st_local_endpoint(st);
-	ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
-	/* ignore port */
-	if (sameaddr(ip, &local_address)) {
-		ip_address ip_p = st->st_deleted_local_addr;
-		st->st_deleted_local_addr = local_address;
-		struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
-		migration_down(cst->st_connection, cst);
-		unroute_connection(st->st_connection);
-
-		event_delete(EVENT_v2_LIVENESS, cst);
-
-		if (st->st_v2_addr_change_event == NULL) {
-			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
-		} else {
-			ipstr_buf o, n;
-			dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
-			    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
+		if (address_is_specified(st->st_deleted_local_addr)) {
+			/*
+			 * A work around for delay between new address
+			 * and new route A better fix would be listen
+			 * to RTM_NEWROUTE, RTM_DELROUTE
+			 */
+			if (st->st_v2_addr_change_event == NULL) {
+				event_schedule(EVENT_v2_ADDR_CHANGE,
+					       RTM_NEWADDR_ROUTE_DELAY, st);
+			} else {
+				address_buf b;
+				dbg("#%lu MOBIKE ignore address %s change pending previous",
+				    st->st_serialno, str_address_sensitive(ip, &b));
+			}
 		}
 	}
 }
@@ -288,7 +258,34 @@ void record_deladdr(ip_address *ip, char *a_type)
 {
 	address_buf ip_str;
 	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
-	for_each_state(ikev2_record_deladdr, ip, __func__);
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
+
+		if (!mobike_check_established(st))
+			continue;
+
+		pexpect_st_local_endpoint(st);
+		ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
+		/* ignore port */
+		if (sameaddr(ip, &local_address)) {
+			ip_address ip_p = st->st_deleted_local_addr;
+			st->st_deleted_local_addr = local_address;
+			struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
+			migration_down(cst->st_connection, cst);
+			unroute_connection(st->st_connection);
+
+			event_delete(EVENT_v2_LIVENESS, cst);
+
+			if (st->st_v2_addr_change_event == NULL) {
+				event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
+			} else {
+				ipstr_buf o, n;
+				dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
+				    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
+			}
+		}
+	}
 }
 
 #ifdef XFRM_SUPPORT

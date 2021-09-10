@@ -528,8 +528,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			llog(LOG_STREAM, logger,
 			     "received whack to delete connection by user %s", m->name);
-			for_each_state(v1_delete_state_by_username, m->name,
-				       __func__);
+			struct state_filter sf = { .where = HERE, };
+			while (next_state_new2old(&sf)) {
+				v1_delete_state_by_username(sf.st, m->name);
+			}
 		}
 		dbg_whack(s, "stop: deleteuser '%s'", m->name == NULL ? "NULL" : m->name);
 	}
@@ -542,7 +544,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		} else {
 			llog(LOG_STREAM, logger,
 			     "received whack to delete connection by id %s", m->name);
-			for_each_state(delete_state_by_id_name, m->name, __func__);
+			struct state_filter sf = { .where = HERE, };
+			while (next_state_new2old(&sf)) {
+				delete_state_by_id_name(sf.st, m->name);
+			}
 		}
 		dbg_whack(s, "stop: deleteid '%s'", m->name == NULL ? "NULL" : m->name);
 	}

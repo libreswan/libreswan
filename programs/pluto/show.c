@@ -260,10 +260,8 @@ struct log_conn_info {
 #define LOG_CONN_STATSVAL(lci) \
 	((lci)->tunnel | ((lci)->phase1 << 4) | ((lci)->phase2 << 8))
 
-static void connection_state(struct state *st, void *data)
+static void connection_state(struct state *st, struct log_conn_info *lc)
 {
-	struct log_conn_info *lc = data;
-
 	if (st == NULL || st == lc->ignore ||
 	    st->st_connection == NULL || lc->conn == NULL)
 		return;
@@ -358,9 +356,11 @@ void binlog_state(struct state *st, enum state_kind new_state)
 
 	{
 		const struct finite_state *save_state = st->st_state;
-
 		st->st_state = finite_states[new_state];
-		for_each_state(connection_state, &lc, __func__);
+		struct state_filter sf = { .where = HERE, };
+		while (next_state_new2old(&sf)) {
+			connection_state(sf.st, &lc);
+		}
 		st->st_state = save_state;
 	}
 

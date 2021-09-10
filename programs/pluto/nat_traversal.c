@@ -182,7 +182,8 @@ static void nat_traversal_send_ka(struct state *st)
 /*
  * Find ISAKMP States with NAT-T and send keep-alive
  */
-static void nat_traversal_ka_event_state(struct state *st, void *data)
+
+static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 {
 	unsigned int *nat_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
@@ -293,11 +294,14 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 void nat_traversal_ka_event(struct logger *unused_logger UNUSED)
 {
-	unsigned int nat_kap_st = 0;
+	unsigned nat_kap_st = 0;
 
 	nat_kap_event = false;  /* ready to be reschedule */
 
-	for_each_state(nat_traversal_ka_event_state, &nat_kap_st, __func__);
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		nat_traversal_ka_event_state(sf.st, &nat_kap_st);
+	}
 
 	if (nat_kap_st != 0) {
 		/*
