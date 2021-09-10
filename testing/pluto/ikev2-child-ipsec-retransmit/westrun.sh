@@ -1,3 +1,4 @@
+ipsec whack --impair revival
 # initial exchange
 ipsec auto --up westnet-eastnet-ikev2a
 # creat-child-sa request. Expected to fail due to firewall
