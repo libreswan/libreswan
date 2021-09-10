@@ -45,14 +45,10 @@ west #
 west #
  # whack socket will hang because pluto is expected to die
 west #
- ipsec whack --seccomp-crashtest --asynchronous &
+ ipsec whack --seccomp-crashtest & disown ; sleep 2
 [x] PID
-west #
- disown
 003 pluto is running with seccomp=enabled! pluto is expected to die!
 003 Performing seccomp security test using getsid() syscall
-west #
- sleep 1
 west #
  # pluto should not be running anymore
 west #
