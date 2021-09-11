@@ -158,8 +158,10 @@ bool impair_incoming_message(struct msg_digest *md)
 	}
 
 	/* hack to also log to whack */
-	struct state *st;
-	FOR_EACH_STATE_NEW2OLD(st) {
+
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (st->st_logger->object_whackfd != NULL) {
 			llog(RC_LOG, st->st_logger, "IMPAIR: drop incoming message %u",
 				    impairment.message_nr);

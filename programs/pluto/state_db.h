@@ -40,9 +40,6 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno);
 
 extern struct list_head state_serialno_list_head;
 
-#define FOR_EACH_STATE_NEW2OLD(ST)				\
-	FOR_EACH_LIST_ENTRY_NEW2OLD(&state_serialno_list_head, ST)
-
 /*
  * Lookup and generic search functions.
  */

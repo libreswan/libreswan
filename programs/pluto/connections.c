@@ -4419,8 +4419,10 @@ void connection_delete_unused_instance(struct connection **cp,
 		 * up-to-date.
 		 */
 		struct state *dst = NULL;
-		FOR_EACH_STATE_NEW2OLD(dst) {
-			if (dst->st_connection == c) {
+		struct state_filter sf = { .where = HERE, };
+		while (next_state_new2old(&sf)) {
+			if (sf.st->st_connection == c) {
+				dst = sf.st;
 				break;
 			}
 		}

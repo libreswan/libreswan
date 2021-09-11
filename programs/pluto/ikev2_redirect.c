@@ -547,9 +547,9 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 
 	int cnt = 0;
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL ||
 						  streq(conn_name, st->st_connection->name))) {
 			struct ike_sa *ike = pexpect_ike_sa(st);

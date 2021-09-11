@@ -38,7 +38,6 @@
 #include "ip_range.h"
 #include "iface.h"
 #include "pending.h"		/* for connection_is_pending() */
-#include "state_db.h"		/* for FOR_EACH_STATE_NEW2OLD() */
 
 /*
  * While the RFC seems to suggest that the traffic selectors come in
@@ -1020,10 +1019,10 @@ static bool v2_child_connection_probably_shared(struct child_sa *child)
 		return true;
 	}
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
 	struct ike_sa *ike = ike_sa(&child->sa, HERE);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (st->st_connection != c) {
 			continue;
 		}

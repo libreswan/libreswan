@@ -1267,9 +1267,9 @@ bool shared_phase1_connection(const struct connection *c)
 	if (serial_us == SOS_NOBODY)
 		return false;
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (st->st_connection != c && st->st_clonedfrom == serial_us)
 			return true;
 	}
@@ -1296,9 +1296,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 */
 	for (int pass = 0; pass != 2; pass++) {
 		dbg("pass %d", pass);
-		dbg("FOR_EACH_STATE_... in %s", __func__);
-		struct state *this = NULL;
-		FOR_EACH_STATE_NEW2OLD(this) {
+		struct state_filter sf = { .where = HERE, };
+		while (next_state_new2old(&sf)) {
+			struct state *this = sf.st;
 			dbg("state #%lu", this->st_serialno);
 
 			/* on first pass, ignore established ISAKMP SA's */
@@ -1326,9 +1326,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 void delete_states_dead_interfaces(struct logger *logger)
 {
-	struct state *this = NULL;
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	FOR_EACH_STATE_NEW2OLD(this) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *this = sf.st;
 		if (this->st_interface &&
 		    this->st_interface->ip_dev->ifd_change == IFD_DELETE) {
 			char *id_vname = NULL;
@@ -1419,9 +1419,9 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
-		struct state *this;
-		dbg("FOR_EACH_STATE_... in %s", __func__);
-		FOR_EACH_STATE_NEW2OLD(this) {
+		struct state_filter sf = { .where = HERE, };
+		while (next_state_new2old(&sf)) {
+			struct state *this = sf.st;
 			const struct connection *c = this->st_connection;
 			endpoint_buf b;
 			dbg("comparing %s to %s",
@@ -1753,9 +1753,9 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	struct state *bogusst = NULL;
 
 	*bogus = false;
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		const struct connection *c = st->st_connection;
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    p1c->host_pair == c->host_pair &&
@@ -1819,9 +1819,9 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
 
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (LHAS(ok_states, st->st_state->kind) &&
 		    c->ike_version == st->st_connection->ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
@@ -1840,9 +1840,9 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			unsigned long count, monotime_t nw)
 {
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		struct connection *c = st->st_connection;
 
 		/* XXX spd-enum */
@@ -2205,14 +2205,13 @@ static int state_compare_connection(const void *a, const void *b)
  * Caller is responsible for freeing the structure.
  */
 static struct state **sort_states(int (*sort_fn)(const void *, const void *),
-				  const char *func)
+				  where_t where)
 {
 	/* COUNT the number of states. */
 	int count = 0;
 	{
-		dbg("FOR_EACH_STATE_... in %s (%s)", func, __func__);
-		struct state *st;
-		FOR_EACH_STATE_NEW2OLD(st) {
+		struct state_filter sf = { .where = where, };
+		while (next_state_new2old(&sf)) {
 			count++;
 		}
 	}
@@ -2228,9 +2227,9 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	{
 		int p = 0;
 
-		dbg("FOR_EACH_STATE_... in %s", __func__);
-		struct state *st;
-		FOR_EACH_STATE_NEW2OLD(st) {
+		struct state_filter sf = { .where = where, };
+		while (next_state_new2old(&sf)) {
+			struct state *st = sf.st;
 			passert(st != NULL);
 			array[p++] = st;
 		}
@@ -2260,8 +2259,7 @@ static int show_newest_state_traffic(struct connection *c,
 void show_traffic_status(struct show *s, const char *name)
 {
 	if (name == NULL) {
-		struct state **array = sort_states(state_compare_serial,
-						   __func__);
+		struct state **array = sort_states(state_compare_serial, HERE);
 
 		/* now print sorted results */
 		if (array != NULL) {
@@ -2319,8 +2317,7 @@ void show_brief_status(struct show *s)
 void show_states(struct show *s)
 {
 	show_separator(s);
-	struct state **array = sort_states(state_compare_connection,
-					   __func__);
+	struct state **array = sort_states(state_compare_connection, HERE);
 
 	if (array != NULL) {
 		monotime_t now = mononow();
@@ -2358,9 +2355,9 @@ void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi)
 
 startover:
 	closest = ~0;   /* not close at all */
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st;
-	FOR_EACH_STATE_NEW2OLD(st) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
 		if (st->st_ipcomp.present) {
 			cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
 
@@ -2412,9 +2409,9 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *s;
-	FOR_EACH_STATE_NEW2OLD(s) {
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *s = sf.st;
 		if (s->st_ipcomp.present &&
 		    sameaddr(&s->st_connection->spd.that.host_addr,
 			     &st->st_connection->spd.that.host_addr) &&
