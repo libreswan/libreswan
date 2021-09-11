@@ -671,7 +671,8 @@ struct connection_filter {
 	struct connection *c;
 	/* internal (handle on next entry) */
 	struct list_entry *internal;
-	where_t where; /* MUST BE LAST (GCC bug?) */
+	/* .where MUST BE LAST (See GCC bug 102288) */
+	where_t where;
 };
 
 bool next_connection_old2new(struct connection_filter *query);

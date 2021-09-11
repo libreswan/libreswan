@@ -910,6 +910,7 @@ struct state_filter {
 	struct state *st;
 	/* internal (handle on next entry) */
 	struct list_entry *internal;
+	/* .where MUST BE LAST (See GCC bug 102288) */
 	where_t where;
 };
 

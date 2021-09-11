@@ -43,9 +43,6 @@ extern struct list_head state_serialno_list_head;
 #define FOR_EACH_STATE_NEW2OLD(ST)				\
 	FOR_EACH_LIST_ENTRY_NEW2OLD(&state_serialno_list_head, ST)
 
-#define FOR_EACH_STATE_OLD2NEW(ST)				\
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&state_serialno_list_head, ST)
-
 /*
  * Lookup and generic search functions.
  */

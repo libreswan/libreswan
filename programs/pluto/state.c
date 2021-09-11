@@ -2979,9 +2979,11 @@ static void list_state_event(struct show *s, struct state *st,
 
 void list_state_events(struct show *s, monotime_t now)
 {
-	dbg("FOR_EACH_STATE_... in %s", __func__);
-	struct state *st = NULL;
-	FOR_EACH_STATE_OLD2NEW(st) {
+	struct state_filter sf = {
+		.where = HERE,
+	};
+	while (next_state_old2new(&sf)) {
+		struct state *st = sf.st;
 		list_state_event(s, st, st->st_event, now);
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
 		list_state_event(s, st, st->st_v1_dpd_event, now);
