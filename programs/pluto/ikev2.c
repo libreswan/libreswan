@@ -784,6 +784,12 @@ void init_ikev2(void)
 		passert(t->recv_role == NO_MESSAGE ? t->recv_type == 0 : t->recv_type != 0);
 
 		/*
+		 * Check that all transitions from a secured state
+		 * require an SK payload.
+		 */
+		passert(LIN(P(SK), t->message_payloads.required) == from->v2.secured);
+
+		/*
 		 * Point .fs_v2_microcode at the first transition for
 		 * the from state.  All other transitions for the from
 		 * state should follow immediately after (or to put it

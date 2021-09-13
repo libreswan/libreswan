@@ -38,7 +38,7 @@
 
 struct finite_state v2_states[] = {
 
-#define S(KIND, STORY, CAT) [KIND - STATE_IKEv2_FLOOR] = {	\
+#define S(KIND, STORY, CAT, ...) [KIND - STATE_IKEv2_FLOOR] = {	\
 		.kind = KIND,					\
 		.name = #KIND,					\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
@@ -46,6 +46,7 @@ struct finite_state v2_states[] = {
 		.story = STORY,					\
 		.category = CAT,				\
 		.ike_version = IKEv2,				\
+		##__VA_ARGS__,					\
 	}
 
 	/*
@@ -65,14 +66,14 @@ struct finite_state v2_states[] = {
 
 	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
 	S(STATE_V2_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
-	S(STATE_V2_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA, .v2.secured = true),
 
 	/*
 	 * All IKEv1 MAIN modes except the first (half-open) and last
 	 * ones are not authenticated.
 	 */
 
-	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA),
+	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true),
 
 	/* IKE exchange can also create a child */
 
@@ -85,25 +86,25 @@ struct finite_state v2_states[] = {
 
 	/* isn't this an ipsec state */
 	S(STATE_V2_NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
 	S(STATE_V2_NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_V2_REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
 	S(STATE_V2_REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_ESTABLISHED_IKE_SA),
 	S(STATE_V2_REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_ESTABLISHED_IKE_SA),
-	S(STATE_V2_REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
 	S(STATE_V2_REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_ESTABLISHED_IKE_SA),
 
 	/*
 	 * IKEv2 established states.
 	 */
 
-	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
 	/* this message is used for both initial exchanges and rekeys */
 	S(STATE_V2_ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA),
 
 	/* ??? better story needed for these */
-	S(STATE_V2_IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA),
+	S(STATE_V2_IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
 	S(STATE_V2_CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL),
 #undef S
 };
@@ -187,24 +188,37 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 							  const struct finite_state *state,
 							  struct msg_digest *md)
 {
-	dbg("looking for message matching transition from %s", state->name);
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
+
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "looking for transition from %s matching ",
+		    state->short_name);
+		jam_msg_digest(buf, md);
+	}
+
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
 		const struct v2_state_transition *transition = &state->v2.transitions[i];
-		dbg("  trying %s", transition->story);
+
+		dbg("  trying: %s", transition->story);
+
 		/* message type? */
 		if (transition->recv_type != md->hdr.isa_xchg) {
-			dbg("    message has wrong exchange type");
+			enum_buf xb;
+			dbg("    exchange type does not match %s",
+			    str_enum_short(&ikev2_exchange_names, transition->recv_type, &xb));
 			continue;
 		}
+
 		/* role? */
 		if (transition->recv_role != v2_msg_role(md)) {
-			dbg("    not a %s", (transition->recv_role == MESSAGE_REQUEST ? "request" :
-					     transition->recv_role == MESSAGE_RESPONSE ? "response" :
-					     "no-message"));
+			dbg("     message role does not match %s",
+			    (transition->recv_role == MESSAGE_REQUEST ? "request" :
+			     transition->recv_role == MESSAGE_RESPONSE ? "response" :
+			     "no-message"));
 			continue;
 		}
+
 		/* message payloads */
 		if (!pexpect(md->message_payloads.parsed)) {
 			return NULL;
@@ -213,34 +227,49 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			dbg("    message has errors");
+			dbg("    message payloads do not match");
 			/* save error for last pattern!?! */
 			message_payload_status = message_payload_errors;
 			continue;
 		}
-		if (!(transition->message_payloads.required & P(SK))) {
-			dbg("    matched unencrypted message");
+
+		/*
+		 * If the transition isn't secured (there is no SK or
+		 * SKF payload) then checking is complete and things
+		 * have matched.
+		 */
+		if (!state->v2.secured) {
+			pexpect((transition->message_payloads.required & P(SK)) == LEMPTY);
+			dbg("    unsecured message matched");
 			return transition;
 		}
+
 		/* SK{} payloads */
-		if (!pexpect(md->encrypted_payloads.parsed)) {
+		if (!pexpect(md->encrypted_payloads.parsed) ||
+		    !pexpect(state->v2.secured)) {
 			return NULL;
 		}
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			dbg("    encrypted payload has errors");
+			dbg("    secured payloads do not match");
 			/* save error for last pattern!?! */
 			encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
-		dbg("    matched encrypted message");
+
+		dbg("    secured message matched");
 		return transition;
 	}
+
 	/*
-	 * All branches: log error, [complete transition] (why),
-	 * return so first error wins.
+	 * Always log an error.
+	 *
+	 * Does the order of message_payload vs secured_payload
+	 * matter?  Probably not: all the state transitions for a
+	 * secured state have the same message payload set so either
+	 * they all match or they all fail.
 	 */
 	if (message_payload_status.bad) {
 		/*
@@ -249,10 +278,12 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 		 */
 		log_v2_payload_errors(logger, md,
 				      &message_payload_status);
-	} else {
-		pexpect(encrypted_payload_status.bad);
+	} else if (encrypted_payload_status.bad) {
 		log_v2_payload_errors(logger, md,
 				      &encrypted_payload_status);
+	} else {
+		llog(RC_LOG/*RC_LOG_SERIOUS*/, logger,
+		     "no useful state microcode entry found for incoming packet");
 	}
 	return NULL;
 

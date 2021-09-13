@@ -136,6 +136,7 @@ void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
 			jam(buf, "; v1.flags: "PRI_LSET, fs->v1.flags);
 			break;
 		case IKEv2:
+			jam(buf, "; v2.secured: %s", bool_str(fs->v2.secured));
 			break;
 		}
 	}

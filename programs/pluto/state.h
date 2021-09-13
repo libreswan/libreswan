@@ -290,6 +290,10 @@ struct finite_state {
 		} v1;
 		struct {
 			const struct v2_state_transition *transitions;
+			bool secured; /* encrypted and protected; possibly not authenticated */
+#if 0
+			bool authenticated;
+#endif
 		} v2;
 	};
 	size_t nr_transitions;
