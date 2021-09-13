@@ -628,7 +628,7 @@ extern int connection_compare(const struct connection *ca,
 
 void connection_check_ddns(struct logger *logger);
 void connection_check_phase2(struct logger *logger);
-void init_connections(void);
+void init_connections_timer(void);
 
 extern int foreach_connection_by_alias(const char *alias,
 				       int (*f)(struct connection *c,

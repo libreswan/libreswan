@@ -527,7 +527,7 @@ void check_orientations(struct logger *logger)
 	}
 }
 
-void init_host_pair(void)
+void init_host_pair_db(void)
 {
 	init_hash_table(&host_pair_addresses_hash_table);
 }

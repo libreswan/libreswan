@@ -327,7 +327,7 @@ static void reset_log_rate_limit(struct logger *logger)
 	nr_rate_limited_logs = 0;
 }
 
-void init_rate_log(void)
+void init_rate_log_timer(void)
 {
 	enable_periodic_timer(EVENT_RESET_LOG_RATE_LIMIT,
 			      reset_log_rate_limit,

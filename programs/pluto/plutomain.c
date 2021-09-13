@@ -59,13 +59,13 @@
 #include "enum_names.h"
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
-#include "revival.h"		/* for init_revival() */
+#include "revival.h"		/* for init_revival_timer() */
 #include "connection_db.h"	/* for connection_state_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
 #include "ikev2_redirect.h"
 #include "root_certs.h"		/* for init_root_certs() */
-#include "host_pair.h"		/* for init_host_pair() */
+#include "host_pair.h"		/* for init_host_pair_db() */
 #include "ikev1.h"		/* for init_ikev1() */
 #include "ikev2.h"		/* for init_ikev2() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
@@ -1440,10 +1440,12 @@ int main(int argc, char **argv)
 
 	oco = lsw_init_options();
 
-	if (!selftest_only)
-		lockfd = create_lock(logger);
-	else
+	if (selftest_only) {
+		llog(RC_LOG, logger, "selftest: skipping lock");
 		lockfd = 0;
+	} else {
+		lockfd = create_lock(logger);
+	}
 
 	/* select between logging methods */
 
@@ -1458,7 +1460,9 @@ int main(int argc, char **argv)
 	 * there will be no race condition in using it.  The easiest
 	 * place to do this is before the daemon fork.
 	 */
-	if (!selftest_only) {
+	if (selftest_only) {
+		llog(RC_LOG, logger, "selftest: skipping control socket");
+	} else {
 		diag_t d = init_ctl_socket(logger);
 		if (d != NULL) {
 			fatal_diag(PLUTO_EXIT_SOCKET_FAIL, logger, &d, "%s", "");
@@ -1466,7 +1470,9 @@ int main(int argc, char **argv)
 	}
 
 	/* If not suppressed, do daemon fork */
-	if (fork_desired) {
+	if (selftest_only) {
+		llog(RC_LOG, logger, "selftest: skipping fork");
+	} else if (fork_desired) {
 #if USE_DAEMON
 		if (daemon(true, true) < 0) {
 			fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, "daemon failed");
@@ -1575,6 +1581,15 @@ int main(int argc, char **argv)
 
 	init_constants();
 	init_pluto_constants();
+
+#ifdef USE_IKEv1
+	init_ikev1(logger);
+#endif
+	init_ikev2();
+	init_states();
+	init_state_db();
+	init_connection_db();
+	init_host_pair_db();
 
 	pluto_init_nss(oco->nssdir, logger);
 	if (libreswan_fipsmode()) {
@@ -1726,35 +1741,31 @@ int main(int argc, char **argv)
 
 /* Initialize all of the various features */
 
-	init_state_db();
-	init_connection_db();
 	init_server_fork();
 	init_server(logger);
 
-	init_rate_log();
-	init_nat_traversal(keep_alive, logger);
+	/* server initialized; timers can follow */
+	init_rate_log_timer();
+	init_nat_traversal_timer(keep_alive, logger);
+	init_revival_timer();
+	init_connections_timer();
 
 	init_virtual_ip(virtual_private, logger);
-	/* obsoleted by nss code: init_rnd_pool(); */
+
+	/* require NSS */
 	init_root_certs();
-	init_secret(logger);
-#ifdef USE_IKEv1
-	init_ikev1(logger);
-#endif
-	init_ikev2();
-	init_states();
-	init_revival();
-	init_connections();
-	init_host_pair();
+	init_secret_timer(logger);
 	init_ike_alg(logger);
 	test_ike_alg(logger);
 
 	if (selftest_only) {
 		/*
 		 * skip pluto_exit()
-		 * Not all components were initialized and
-		 * no lock files were created.
+		 *
+		 * Not all components were initialized and no lock
+		 * files were created.
 		 */
+		llog(RC_LOG, logger, "selftest: exiting pluto");
 		exit(PLUTO_EXIT_OK);
 	}
 

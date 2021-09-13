@@ -49,12 +49,12 @@ bool nat_traversal_enabled = true; /* can get disabled if kernel lacks support *
 static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);	/* keep-alive period */
 static bool nat_kap_event = false;
 
-void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger)
+void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)
 {
 	if (deltamillisecs(keep_alive_period) != 0)
 		nat_kap = keep_alive_period;
 
-	dbg("init_nat_traversal() initialized with keep_alive=%jds",
+	dbg("init_nat_traversal_timer() initialized with keep_alive=%jds",
 	    deltasecs(keep_alive_period));
 	llog(RC_LOG, logger, "NAT-Traversal support %s",
 		    nat_traversal_enabled ? " [enabled]" : " [disabled]");

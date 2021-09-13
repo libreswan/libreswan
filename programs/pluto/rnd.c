@@ -99,7 +99,7 @@ static void refresh_secrets(struct logger *unused_logger UNUSED)
 	refresh_v2_cookie_secret();
 }
 
-void init_secret(struct logger *logger)
+void init_secret_timer(struct logger *logger)
 {
 	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
 			      deltatime(EVENT_REINIT_SECRET_DELAY));

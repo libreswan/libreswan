@@ -252,7 +252,7 @@ static void revive_conns(struct logger *logger)
 	dbg("revive_conns() done");
 }
 
-void init_revival(void)
+void init_revival_timer(void)
 {
 	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
 }

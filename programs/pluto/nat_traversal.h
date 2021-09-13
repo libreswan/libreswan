@@ -74,7 +74,7 @@ struct hash_desc;
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(deltatime_t keep_alive_period, struct logger *logger);
+void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger);
 
 extern bool nat_traversal_enabled;
 

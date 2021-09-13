@@ -1238,7 +1238,7 @@ void connection_check_phase2(struct logger *logger)
 	}
 }
 
-void init_connections(void)
+void init_connections_timer(void)
 {
 	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
 			      deltatime(PENDING_DDNS_INTERVAL));
