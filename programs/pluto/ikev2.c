@@ -659,6 +659,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 void init_ikev2(void)
 {
 	dbg("checking IKEv2 state table");
+	/* XXX: debug this using <<--selftest --debug-all --stderrlog>> */
 
 	/*
 	 * Fill in FINITE_STATES[].
@@ -688,11 +689,14 @@ void init_ikev2(void)
 		passert(t->state >= STATE_IKEv2_FLOOR);
 		passert(t->state < STATE_IKEv2_ROOF);
 		struct finite_state *from = &v2_states[t->state - STATE_IKEv2_FLOOR];
+		passert(from != NULL);
+		passert(from->kind == t->state);
 
 		passert(t->next_state >= STATE_IKEv2_FLOOR);
 		passert(t->next_state < STATE_IKEv2_ROOF);
 		const struct finite_state *to = finite_states[t->next_state];
 		passert(to != NULL);
+		passert(to->kind == t->next_state);
 
 		if (DBGP(DBG_BASE)) {
 			if (from->nr_transitions == 0) {
@@ -705,35 +709,59 @@ void init_ikev2(void)
 			const char *send;
 			switch (t->send) {
 			case NO_MESSAGE: send = ""; break;
-			case MESSAGE_REQUEST: send = " send-request"; break;
-			case MESSAGE_RESPONSE: send = " send-response"; break;
+			case MESSAGE_REQUEST: send = "; send-request"; break;
+			case MESSAGE_RESPONSE: send = "; send-response"; break;
 			default: bad_case(t->send);
 			}
-			DBG_log("    -> %s %s%s (%s)", to->short_name,
-				enum_name_short(&event_type_names,
-						t->timeout_event),
-				send, t->story);
+			LSWLOG_DEBUG(buf) {
+				jam(buf, "    -> %s; %s%s; payloads: ",
+				    to->short_name,
+				    enum_name_short(&event_type_names, t->timeout_event),
+				    send);
+				FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
+					if (payloads->required == LEMPTY && payloads->optional == LEMPTY) continue;
+					bool encrypted = (payloads == &t->encrypted_payloads);
+					/* assumes SK is last!!! */
+					if (encrypted) jam(buf, " {");
+					const char *sep = "";
+					FOR_EACH_THING(payload, &payloads->required, &payloads->optional) {
+						if (*payload == LEMPTY) continue;
+						bool optional = (payload == &payloads->optional);
+						jam_string(buf, sep); sep = " ";
+						if (optional) jam(buf, "[");
+						jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
+						if (optional) jam(buf, "]");
+					}
+					if (payloads->notification != 0) {
+						jam(buf, " N(");
+						jam_enum_short(buf, &v2_notification_names, payloads->notification);
+						jam(buf, ")");
+					}
+					if (encrypted) jam(buf, "}");
+				}
+			}
+			DBG_log("       %s", t->story);
 		}
 
 		/*
 		 * Check that the NOTIFY -> PBS -> MD.pbs[]!=NULL will work.
 		 */
 		if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
+			passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
 		}
 		if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-			pexpect(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
+			passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
 		}
 
 		/*
-		 * Check recv:MESSAGE_REQUEST->send:MESSAGE_RESPONSE.
+		 * Check recv:MESSAGE_REQUEST <-> send:MESSAGE_RESPONSE.
 		 */
-		pexpect(t->recv_role == MESSAGE_REQUEST ? t->send = MESSAGE_RESPONSE : true);
+		passert((t->recv_role == MESSAGE_REQUEST) == (t->send == MESSAGE_RESPONSE));
 
 		/*
 		 * Check recv_type && recv_role
 		 */
-		pexpect(t->recv_role == NO_MESSAGE ? t->recv_type == 0 : t->recv_type != 0);
+		passert(t->recv_role == NO_MESSAGE ? t->recv_type == 0 : t->recv_type != 0);
 
 		/*
 		 * Point .fs_v2_microcode at the first transition for
