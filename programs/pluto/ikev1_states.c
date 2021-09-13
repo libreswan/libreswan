@@ -37,6 +37,7 @@ struct finite_state v1_states[] = {
 		.short_name = &#KIND[6]/*STATE_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
+		.ike_version = IKEv1,				\
 	}
 
 	/*

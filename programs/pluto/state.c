@@ -130,8 +130,14 @@ void lswlog_finite_state(struct jambuf *buf, const struct finite_state *fs)
 		jam(buf, "%s:", fs->short_name);
 		jam(buf, " category: ");
 		jam_enum_short(buf, &state_category_names, fs->category);
-		/* no enum_name available? */
-		jam(buf, "; flags: "PRI_LSET, fs->flags);
+		switch (fs->ike_version) {
+		case IKEv1:
+			/* no enum_name available? */
+			jam(buf, "; v1.flags: "PRI_LSET, fs->v1.flags);
+			break;
+		case IKEv2:
+			break;
+		}
 	}
 }
 
@@ -1565,7 +1571,7 @@ struct child_sa *new_v2_child_state(struct connection *c,
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
 	change_state(&child->sa, kind);
-	const struct v2_state_transition *transition = child->sa.st_state->v2_transitions;
+	const struct v2_state_transition *transition = child->sa.st_state->v2.transitions;
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
 	return child;

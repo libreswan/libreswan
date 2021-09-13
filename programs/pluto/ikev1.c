@@ -784,7 +784,10 @@ void init_ikev1(struct logger *logger)
 
 		passert(t->state >= STATE_IKEv1_FLOOR);
 		passert(t->state < STATE_IKEv1_ROOF);
+
 		struct finite_state *from = &v1_states[t->state - STATE_IKEv1_FLOOR];
+		passert(from->kind == t->state);
+		passert(from->ike_version == IKEv1);
 
 		/*
 		 * Deal with next_state == STATE_UNDEFINED.
@@ -816,15 +819,15 @@ void init_ikev1(struct logger *logger)
 		}
 
 		/*
-		 * Point .fs_v1_transitions at to the first entry in
+		 * Point .fs_v1.transitions at to the first entry in
 		 * v1_state_microcode_table for that state.  All other
 		 * transitions for that state should follow
 		 * immediately after (or to put it another way, the
 		 * previous transition's state should be the same as
 		 * this).
 		 */
-		if (from->v1_transitions == NULL) {
-			from->v1_transitions = t;
+		if (from->v1.transitions == NULL) {
+			from->v1.transitions = t;
 		} else {
 			passert(t[-1].state == t->state);
 		}
@@ -857,12 +860,12 @@ void init_ikev1(struct logger *logger)
 		 * Or is this more like .fs_timeout_event which is
 		 * always true of a state?
 		 */
-		if ((t->flags & from->flags) != from->flags) {
+		if ((t->flags & from->v1.flags) != from->v1.flags) {
 			DBGF(DBG_BASE, "transition %s -> %s (%s) missing flags 0x%"PRIxLSET,
 			     from->short_name, to->short_name,
-			     t->message, from->flags);
+			     t->message, from->v1.flags);
 		}
-		from->flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
+		from->v1.flags |= t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 
 		if (!(t->flags & SMF_FIRST_ENCRYPTED_INPUT) &&
 		    (t->flags & SMF_INPUT_ENCRYPTED) &&
@@ -1208,7 +1211,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 		bool replied = (st->st_v1_last_transition != NULL &&
 				(st->st_v1_last_transition->flags & SMF_REPLY));
 		bool retransmit_on_duplicate =
-			(st->st_state->flags & SMF_RETRANSMIT_ON_DUPLICATE);
+			(st->st_state->v1.flags & SMF_RETRANSMIT_ON_DUPLICATE);
 		if (replied && retransmit_on_duplicate) {
 			/*
 			 * Transitions with EVENT_SA_DISCARD should
@@ -1806,7 +1809,7 @@ void process_v1_packet(struct msg_digest *md)
 	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
 	const struct finite_state *fs = finite_states[from_state];
 	passert(fs != NULL);
-	const struct state_v1_microcode *smc = fs->v1_transitions;
+	const struct state_v1_microcode *smc = fs->v1.transitions;
 	passert(smc != NULL);
 
 	/*

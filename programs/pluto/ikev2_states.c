@@ -45,6 +45,7 @@ struct finite_state v2_states[] = {
 		.short_name = &#KIND[9]/*STATE_V2_*/,		\
 		.story = STORY,					\
 		.category = CAT,				\
+		.ike_version = IKEv2,				\
 	}
 
 	/*
@@ -190,7 +191,7 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
-		const struct v2_state_transition *transition = &state->v2_transitions[i];
+		const struct v2_state_transition *transition = &state->v2.transitions[i];
 		dbg("  trying %s", transition->story);
 		/* message type? */
 		if (transition->recv_type != md->hdr.isa_xchg) {

@@ -693,12 +693,14 @@ void init_ikev2(void)
 		struct finite_state *from = &v2_states[t->state - STATE_IKEv2_FLOOR];
 		passert(from != NULL);
 		passert(from->kind == t->state);
+		passert(from->ike_version == IKEv2);
 
 		passert(t->next_state >= STATE_IKEv2_FLOOR);
 		passert(t->next_state < STATE_IKEv2_ROOF);
 		const struct finite_state *to = finite_states[t->next_state];
 		passert(to != NULL);
 		passert(to->kind == t->next_state);
+		passert(to->ike_version == IKEv2);
 
 		if (DBGP(DBG_BASE)) {
 			if (from->nr_transitions == 0) {
@@ -787,10 +789,10 @@ void init_ikev2(void)
 		 * state should follow immediately after (or to put it
 		 * another way, previous should match).
 		 */
-		if (from->v2_transitions == NULL) {
+		if (from->v2.transitions == NULL) {
 			/* start of the next state */
 			passert(from->nr_transitions == 0);
-			from->v2_transitions = t;
+			from->v2.transitions = t;
 		} else {
 			passert(prev != NULL);
 			passert(prev->kind == t->state);
@@ -1654,11 +1656,11 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		 */
 		pexpect(state->nr_transitions == 4);
 		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
-			transition = &state->v2_transitions[2];
+			transition = &state->v2.transitions[2];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
 			pexpect(transition->next_state == STATE_V2_PARENT_R1);
 		} else {
-			transition = &state->v2_transitions[3];
+			transition = &state->v2.transitions[3];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
 			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		}
@@ -1674,14 +1676,14 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 		 */
 		unsigned transition_nr = 1;
 		pexpect(state->nr_transitions > transition_nr);
-		transition = &state->v2_transitions[transition_nr];
+		transition = &state->v2.transitions[transition_nr];
 		pexpect(transition->state == STATE_V2_PARENT_I2);
 		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 		break;
 	}
 	default:
 		if (/*pexpect*/(state->nr_transitions > 0)) {
-			transition = &state->v2_transitions[state->nr_transitions - 1];
+			transition = &state->v2.transitions[state->nr_transitions - 1];
 		} else {
 			static const struct v2_state_transition undefined_transition = {
 				.story = "suspect message",
@@ -2914,7 +2916,7 @@ static void reinitiate_ike_sa_init(struct state *st, void *arg)
 	/*
 	 * Pretend to be running the initiate state.
 	 */
-	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2_transitions, HERE); /* first */
+	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2.transitions, HERE); /* first */
 	complete_v2_state_transition(&ike->sa, NULL/*no-MD*/, resume(ike));
 }
 

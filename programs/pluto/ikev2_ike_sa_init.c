@@ -521,7 +521,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 
 	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
-	const struct v2_state_transition *transition = &fs->v2_transitions[0];
+	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
 					      ike_initiator_spi(), zero_ike_spi,
 					      policy, try, logger->global_whackfd);
@@ -841,7 +841,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	passert(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 	/* set by caller */
-	pexpect(md->svm == finite_states[STATE_V2_PARENT_R0]->v2_transitions);
+	pexpect(md->svm == finite_states[STATE_V2_PARENT_R0]->v2.transitions);
 	pexpect(md->svm->state == STATE_V2_PARENT_R0);
 
 	/* Vendor ID processing */

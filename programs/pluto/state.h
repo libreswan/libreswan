@@ -281,10 +281,17 @@ struct finite_state {
 	const char *name;
 	const char *short_name;
 	const char *story;
-	lset_t flags;
 	enum state_category category;
-	const struct state_v1_microcode *v1_transitions;
-	const struct v2_state_transition *v2_transitions;
+	enum ike_version ike_version; /* discriminator */
+	union {
+		struct {
+			lset_t flags;
+			const struct state_v1_microcode *transitions;
+		} v1;
+		struct {
+			const struct v2_state_transition *transitions;
+		} v2;
+	};
 	size_t nr_transitions;
 };
 
