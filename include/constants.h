@@ -195,13 +195,18 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * An enum_names table describes an enumeration (a correspondence
  * between integer values and names).
  *
- * enum_name() returns the name of an enum value, or NULL if unnamed.
+ * Recommended for determining an enum's validity:
  *
- * enum_show() is like enum_name, except it formats a numeric
- * representation for any unnamed value in a caller-supplied buffer.
+ *   enum_name*() returns the name of an enum value, or NULL if
+ *   unnamed.
  *
- * jam_enum() appends the name of an enum value; if unnamed, append a
- * mashup of the standard prefix and the numeric value.
+ * Recommended for logging:
+ *
+ *   str_enum*() is similar to enum_name, except it formats a numeric
+ *   representation for any unnamed value in a caller-supplied buffer.
+ *
+ *   jam_enum() appends the name of an enum value; if unnamed, append
+ *   a mashup of the standard prefix and the numeric value.
  *
  * {*}_short() same as for root, but with any standard prefix removed.
  */
@@ -211,14 +216,13 @@ typedef const struct enum_names enum_names;
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_name_short(enum_names *ed, unsigned long val);
 
-/* old names */
 size_t jam_enum(struct jambuf *, enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
 
 /*
- * caller-allocated E[num] S[how] B[uffer] for enum_show*().
+ * caller-allocated buffer for str_enum*().
  *
- * enough space for decimal rep of any unsigned long + "??"  sizeof
+ * Enough space for decimal rep of any unsigned long + "??"  sizeof
  * yields log-base-256 of maximum value.  Multiplying by 241/100
  * converts this to the number of decimal digits (the common log),
  * rounded up a little (instead of 2.40654...).  The addition of 99
@@ -227,10 +231,14 @@ size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
  */
 typedef struct {
 	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
-} esb_buf;
+} enum_buf;
+typedef enum_buf esb_buf; /* XXX: TBD */
 
-extern const char *enum_show(enum_names *ed, unsigned long val, esb_buf *);
-extern const char *enum_show_short(enum_names *ed, unsigned long val, esb_buf *);
+extern const char *str_enum(enum_names *ed, unsigned long val, enum_buf *);
+extern const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *);
+
+#define enum_show str_enum /* XXX: TBD */
+#define enum_show_short str_enum_short /* XXX: TBD */
 
 /*
  * iterator
@@ -287,10 +295,14 @@ typedef const struct enum_enum_names enum_enum_names;
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
-const char *enum_enum_show(enum_enum_names *e, unsigned long table,
-			   unsigned long val, esb_buf *buf);
-const char *enum_enum_show_short(enum_enum_names *e, unsigned long table,
-				 unsigned long val, esb_buf *buf);
+
+const char *str_enum_enum(enum_enum_names *e, unsigned long table,
+			  unsigned long val, enum_buf *buf);
+const char *str_enum_enum_short(enum_enum_names *e, unsigned long table,
+				unsigned long val, enum_buf *buf);
+
+#define enum_enum_show str_enum_enum /* XXX: TBD */
+#define enum_enum_show_short str_enum_enum_short /* XXX: TBD */
 
 size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);
