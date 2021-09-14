@@ -36,6 +36,21 @@
 #include "connections.h"
 #include "ikev2_notify.h"
 
+struct ikev2_payload_errors {
+	bool bad;
+	lset_t excessive;
+	lset_t missing;
+	lset_t unexpected;
+	v2_notification_t notification;
+};
+
+static void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
+				  const struct ikev2_payload_errors *errors);
+
+static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
+							 const struct payload_summary *summary,
+							 const struct ikev2_expected_payloads *payloads);
+
 struct finite_state v2_states[] = {
 
 #define S(KIND, STORY, CAT, ...) [KIND - STATE_IKEv2_FLOOR] = {	\

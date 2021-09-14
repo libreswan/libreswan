@@ -139,14 +139,6 @@ void schedule_v2_replace_event(struct state *st);
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 
-struct ikev2_payload_errors {
-	bool bad;
-	lset_t excessive;
-	lset_t missing;
-	lset_t unexpected;
-	v2_notification_t notification;
-};
-
 struct ikev2_expected_payloads {
 	/* required payloads: one of each type must be present */
 	lset_t required;

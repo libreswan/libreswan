@@ -17,9 +17,6 @@
 #ifndef IKEV2_STATE_H
 #define IKEV2_STATE_H
 
-struct ikev2_expected_payloads;
-struct payload_summary;
-
 extern struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 
 enum smf2_flags {
@@ -37,18 +34,11 @@ enum smf2_flags {
 	SMF2_RELEASE_WHACK = LELEM(10),
 };
 
-struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
-						  const struct payload_summary *summary,
-						  const struct ikev2_expected_payloads *payloads);
-
 bool sniff_v2_state_transition(struct logger *logger, const struct finite_state *state, struct msg_digest *md);
 
 const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
 							   const struct finite_state *state,
 							   struct msg_digest *md,
 							   bool *secured_payload_failed);
-
-void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
-			   const struct ikev2_payload_errors *errors);
 
 #endif
