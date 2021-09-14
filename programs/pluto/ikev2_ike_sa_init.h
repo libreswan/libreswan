@@ -21,6 +21,7 @@ extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 				    shunk_t sec_label,
 				    bool background, struct logger *logger);
 
+extern ikev2_state_transition_fn process_v2_request_no_skeyseed;
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;

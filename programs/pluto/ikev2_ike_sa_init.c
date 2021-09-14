@@ -56,6 +56,7 @@
 #include "ikev2_ipseckey.h"
 #include "pluto_stats.h"
 
+static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 
 void process_v2_IKE_SA_INIT(struct msg_digest *md)
@@ -1476,4 +1477,52 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	return (ike->sa.st_v2_ike_intermediate_used /* SHH: GNU style ?: */
 		? initiate_v2_IKE_INTERMEDIATE_request
 		: initiate_v2_IKE_AUTH_request)(ike, md);
+}
+
+stf_status process_v2_request_no_skeyseed(struct ike_sa *ike,
+					  struct child_sa *unused_child UNUSED,
+					  struct msg_digest *md UNUSED)
+{
+	/*
+	 * the initiator sent us an encrypted payload. We need to calculate
+	 * our g^xy, and skeyseed values, and then decrypt the payload.
+	 */
+
+	dbg("ikev2 parent %s(): calculating g^{xy} in order to decrypt I2", __func__);
+
+	/* initiate calculation of g^xy */
+	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gi/*responder needs initiator KE*/,
+				process_v2_request_no_skeyseed_continue,
+				HERE);
+	return STF_SUSPEND;
+}
+
+static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
+							  struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
+	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
+	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
+	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+
+	if (ike->sa.st_dh_shared_secret == NULL) {
+		/*
+		 * Since dh failed, the channel isn't end-to-end
+		 * encrypted.  Send back a clear text notify and then
+		 * abandon the connection.
+		 */
+		dbg("aborting IKE SA: DH failed");
+		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		return STF_FATAL;
+	}
+
+	calc_v2_keymat(&ike->sa,
+		       NULL /* no old keymat; not a rekey */,
+		       NULL /* no old prf; not a rekey */,
+		       &ike->sa.st_ike_spis);
+
+	ikev2_process_state_packet(ike, &ike->sa, md);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
