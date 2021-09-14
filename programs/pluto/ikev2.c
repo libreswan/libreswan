@@ -683,6 +683,8 @@ void init_ikev2(void)
 	 * Iterate over the state transitions filling in missing bits
 	 * and checking for consistency.
 	 */
+
+	const struct finite_state *prev = NULL;
 	for (struct v2_state_transition *t = v2_state_transition_table;
 	     t->state < STATE_IKEv2_ROOF; t++) {
 
@@ -700,12 +702,17 @@ void init_ikev2(void)
 
 		if (DBGP(DBG_BASE)) {
 			if (from->nr_transitions == 0) {
+				/* finish the previous state */
+				if (from->nr_transitions == 0 && prev != NULL) {
+					dbg("    %zu transitions", prev->nr_transitions);
+				}
+				/* start the new one */
 				LSWLOG_DEBUG(buf) {
 					jam(buf, "  ");
 					lswlog_finite_state(buf, from);
-					jam(buf, ":");
 				}
 			}
+
 			const char *send;
 			switch (t->send) {
 			case NO_MESSAGE: send = ""; break;
@@ -713,11 +720,21 @@ void init_ikev2(void)
 			case MESSAGE_RESPONSE: send = "; send-response"; break;
 			default: bad_case(t->send);
 			}
+
+			enum_buf tb;
+			DBG_log("    -> %s; %s%s",
+				to->short_name,
+				str_enum_short(&event_type_names, t->timeout_event, &tb),
+				send);
+
 			LSWLOG_DEBUG(buf) {
-				jam(buf, "    -> %s; %s%s; payloads: ",
-				    to->short_name,
-				    enum_name_short(&event_type_names, t->timeout_event),
-				    send);
+				enum_buf xb;
+				jam(buf, "       %s %s; payloads: ",
+				    str_enum_short(&ikev2_exchange_names, t->recv_type, &xb),
+				    (t->recv_role == MESSAGE_REQUEST ? "request" :
+				     t->recv_role == MESSAGE_RESPONSE ? "response" :
+				     t->recv_role == NO_MESSAGE ? "no-message" :
+				     "EXPECATATION FAILED"));
 				FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
 					if (payloads->required == LEMPTY && payloads->optional == LEMPTY) continue;
 					bool encrypted = (payloads == &t->encrypted_payloads);
@@ -740,6 +757,7 @@ void init_ikev2(void)
 					if (encrypted) jam(buf, "}");
 				}
 			}
+
 			DBG_log("       %s", t->story);
 		}
 
@@ -774,10 +792,15 @@ void init_ikev2(void)
 			passert(from->nr_transitions == 0);
 			from->v2_transitions = t;
 		} else {
-			passert(t[-1].state == t->state);
+			passert(prev != NULL);
+			passert(prev->kind == t->state);
 		}
 		from->nr_transitions++;
+		prev = from;
 	}
+
+	/* finish the final state */
+	dbg("    %zu transitions", prev->nr_transitions);
 }
 
 /*
