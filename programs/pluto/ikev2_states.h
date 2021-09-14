@@ -24,17 +24,6 @@ extern struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 
 enum smf2_flags {
 	/*
-	 * Should the SK (secured-by-key) decryption and verification
-	 * be skipped?
-	 *
-	 * The original responder, when it receives the encrypted AUTH
-	 * payload, isn't yet ready to decrypt it - receiving the
-	 * packet is what triggers the DH calculation needed before
-	 * encryption can occur.
-	 */
-	SMF2_NO_SKEYSEED = LELEM(7),
-
-	/*
 	 * Suppress logging of a successful state transition.
 	 *
 	 * This is here simply to stop liveness check transitions
@@ -52,9 +41,12 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 						  const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *payloads);
 
+bool sniff_v2_state_transition(struct logger *logger, const struct finite_state *state, struct msg_digest *md);
+
 const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
 							   const struct finite_state *state,
-							   struct msg_digest *md);
+							   struct msg_digest *md,
+							   bool *secured_payload_failed);
 
 void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors);

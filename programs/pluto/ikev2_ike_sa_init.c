@@ -331,7 +331,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 */
 		const struct finite_state *start_state = finite_states[STATE_V2_PARENT_R0];
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(md->md_logger, start_state, md);
+			find_v2_state_transition(md->md_logger, start_state, md,
+						 /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
 			send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
@@ -470,7 +471,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 
 		/* transition? */
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md);
+			find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md,
+						 /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
 			return;

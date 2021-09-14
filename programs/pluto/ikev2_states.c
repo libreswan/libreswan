@@ -184,9 +184,11 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
-							  const struct finite_state *state,
-							  struct msg_digest *md)
+static const struct v2_state_transition *v2_state_transition(struct logger *logger,
+							     const struct finite_state *state,
+							     struct msg_digest *md,
+							     bool check_secured_payloads,
+							     bool *secured_payload_failed)
 {
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -195,6 +197,9 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 		jam(buf, "looking for transition from %s matching ",
 		    state->short_name);
 		jam_msg_digest(buf, md);
+		if (!check_secured_payloads) {
+			jam(buf, " (ignoring secured payloads)");
+		}
 	}
 
 	for (unsigned i = 0; i < state->nr_transitions; i++) {
@@ -244,6 +249,15 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 			return transition;
 		}
 
+		/*
+		 * Sniff test; is there at least one plausable payload
+		 * without looking at the SK payload?
+		 */
+		if (!check_secured_payloads) {
+			dbg("    matching by ignoring secured payloads");
+			return transition;
+		}
+
 		/* SK{} payloads */
 		if (!pexpect(md->encrypted_payloads.parsed) ||
 		    !pexpect(state->v2.secured)) {
@@ -281,12 +295,34 @@ const struct v2_state_transition *find_v2_state_transition(struct logger *logger
 	} else if (encrypted_payload_status.bad) {
 		log_v2_payload_errors(logger, md,
 				      &encrypted_payload_status);
+		/*
+		 * Notify caller so that evasive action can be taken.
+		 */
+		passert(secured_payload_failed != NULL);
+		*secured_payload_failed = true;
 	} else {
 		llog(RC_LOG/*RC_LOG_SERIOUS*/, logger,
 		     "no useful state microcode entry found for incoming packet");
 	}
 	return NULL;
 
+}
+
+bool sniff_v2_state_transition(struct logger *logger, const struct finite_state *state,
+			       struct msg_digest *md)
+{
+	bool secured_payload_failed; /* ignored */
+	return v2_state_transition(logger, state, md, /*check-secured-payloads?*/false,
+				   &secured_payload_failed) != NULL;
+}
+
+const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
+							   const struct finite_state *state,
+							   struct msg_digest *md,
+							   bool *secured_payload_failed)
+{
+	return v2_state_transition(logger, state, md, /*check-secured-payloads?*/true,
+				   secured_payload_failed);
 }
 
 /*
