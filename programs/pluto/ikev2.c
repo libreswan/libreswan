@@ -765,6 +765,14 @@ void init_ikev2(void)
 		passert(LIN(P(SK), t->message_payloads.required) == from->v2.secured);
 
 		/*
+		 * Check that only IKE_SA_INIT transitions are from an
+		 * unsecured state.
+		 */
+		if (t->recv_role != 0) {
+			passert((t->recv_type == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
+		}
+
+		/*
 		 * Point .fs_v2_microcode at the first transition for
 		 * the from state.  All other transitions for the from
 		 * state should follow immediately after (or to put it
@@ -1392,10 +1400,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
  *
- * This routine will not release_any_md(mdp).  It is expected that its
- * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
- * **mdp should not be freed.  So the caller should be prepared for
- * *mdp being set to NULL.
+ * This routine will not release_any_md(mdp).
  *
  * Start by looking for (or creating) the IKE SA responsible for the
  * IKE SPIs group .....
@@ -1405,18 +1410,15 @@ static void ike_process_packet(struct msg_digest *mdp, struct ike_sa *ike);
 
 void ikev2_process_packet(struct msg_digest *md)
 {
-	/* Look for an state that matches the various things we know:
-	 *
-	 * 1) exchange type received?
-	 * 2) is it initiator or not?
-	 */
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
 	/*
-	 * If the IKE SA initiator sent the message then this end is
-	 * looking for the IKE SA responder (and vice versa).
+	 * If the IKE SA initiator (IKE_I) sent the message then this
+	 * end is looking for the IKE SA responder (and vice versa).
 	 */
-	enum sa_role expected_local_ike_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER : SA_INITIATOR;
+	enum sa_role expected_local_ike_role =
+		(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) ? SA_RESPONDER :
+		SA_INITIATOR;
 
 	/*
 	 * Dump what the message says, once a state has been found
@@ -1448,19 +1450,36 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
-	 * If the message is a new IKE_SA_INIT request (or previously
-	 * discarded request due to cookies) then there is no IKE SA,
-	 * and no point trying to use the state machinery.
 	 *
-	 * If the message is an IKE_SA_INIT response, then there might
-	 * be an IKE SA; but the number of checks required means that
-	 * it is also a good idea to just avoid the state machinery.
+	 * Handle the unsecured IKE_SA_INIT exchange.
+	 *
+	 * Unlike for a secured message (which requires an existing
+	 * IKE SA), the code processing an unsecured IKE_SA_INIT
+	 * message may never need, create, or search for an IKE SA;
+	 * and when it does it uses a specalized tools.
+	 *
+	 * For instance, when a cookie is required, a message with no
+	 * cookie is rejected before the IKE SA is created.
+	 *
+	 * Hence, the unsecured IKE_SA_INIT exchange is given its own
+	 * separate code path.
 	 */
 
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		process_v2_IKE_SA_INIT(md);
 		return;
 	}
+
+	/*
+	 * Sine the two cases:
+	 *
+	 *    - IKE_SA_INIT exchange
+	 *    - secured exchange
+	 *
+	 * are mutually exclusive, and this isn't an IKE_SA_INIT
+	 * exchange, the message should be for a secured exchange.
+	 * Lets see.
+	 */
 
 	passert(v2_msg_role(md) == MESSAGE_REQUEST ||
 		v2_msg_role(md) == MESSAGE_RESPONSE);
@@ -1523,20 +1542,12 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	case MESSAGE_REQUEST:
 		/*
 		 * The IKE SA always processes requests.
-		 *
-		 * XXX: except further down where the code creates a
-		 * new state when CREATE_CHILD_SA and switches to
-		 * that.
-		 *
-		 * The other quirk is with fragments; but the only
-		 * case that matters it when the IKE SA accumulating
-		 * them.
 		 */
 		if (md->fake_clone) {
 			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
 		/*
-		 * Is this duplicate?
+		 * Is this a duplicate?
 		 *
 		 * If MD is a fragment then it isn't considered a
 		 * duplicate.
@@ -1553,8 +1564,8 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		 * exchange (sent that request).
 		 *
 		 * If the response is a fragment then ST will be
-		 * non-NULL; is_duplicate_state() gets to figure out
-		 * if the fragments are complete or need to wait
+		 * non-NULL; is_duplicate_response() gets to figure
+		 * out if the fragments are complete or need to wait
 		 * longer.
 		 */
 		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
@@ -1573,22 +1584,20 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 	/*
 	 * Now that the state that is to process the message has been
 	 * selected, switch logging to it.
-	 *
-	 * XXX: why the need to constantly pick a single winner and
-	 * switch to it?  Because tests expect messages to be logged
-	 * against a specific state.  It would be better of that code
-	 * specified that state as a parameter.
 	 */
 	passert(st != NULL);
-	/* XXX: debug-logging this is redundant */
+	/* XXX: debug-logging this decision is redundant */
 
 	/*
-	 * Have a state an and IKE SA, time to decode the payloads.
+	 * Have a state and an IKE SA, time to decode the message
+	 * payloads.
+	 *
+	 * IKE_SA_INIT were handled earlier (so should never get this
+	 * far).
 	 */
 	dbg("unpacking clear payload");
 	passert(!md->message_payloads.parsed);
-	pexpect(v2_msg_role(md) == MESSAGE_RESPONSE ||
-		md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 	md->message_payloads =
 		ikev2_decode_payloads(ike->sa.st_logger, md,
 				      &md->message_pbs,
@@ -1600,27 +1609,82 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		 * when dealing with cookies so here, there's zero
 		 * reason to respond.
 		 *
-		 * decode calls packet code and that logs errors on
+		 * already logged:
+		 *
+		 * Decode calls packet code and that logs errors on
 		 * the spot
 		 */
-		/* already logged */
 		return;
 	}
+
+	/*
+	 * Examine the non-secured parts of the message weeding out
+	 * anything that isn't at least vaguely plausable:
+	 *
+	 * - if the IKE SA isn't secured then this will reject
+         *   everything
+	 *
+	 *   IKE_SA_INIT was handled earlier and nothing else is
+	 *   valid.
+	 *
+	 * - if the IKE SA is secured then this will reject any
+         *   message that doesn't contan an SK or SKF payload
+	 *
+	 *   Any transition from a secured state must include a
+	 *   secured payload.
+	 *
+	 * XXX:
+	 *
+	 * When the message is valid, the state's transitions are
+	 * scanned twice: first here and then, further down, when
+	 * looking for the real transition.  Fortunately we're talking
+	 * about at most 7 transitions and, in this case, a relatively
+	 * cheap compare (the old code scanned all transitions).
+	 *
+	 * Something to worry about after the SKEYSEED has been
+	 * changed so that it is computed in the background?
+	 */
+	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+	if (!sniff_v2_state_transition(st->st_logger, st->st_state, md)) {
+		/* already logged */
+		/* drop packet on the floor */
+		return;
+	}
+	passert(ike->sa.st_state->v2.secured);
+	passert(md->message_payloads.present & (P(SK) | P(SKF)));
 
 	ikev2_process_state_packet(ike, st, md);
 }
 
 /*
- * XXX: Hack to find the transition that would have been run if the
- * packet was ok, so it can be 'failed'.
+ * Payload decrypted and integrity was ok but contents weren't valid.
+ * Either because the secured payload didn't unpack, or the contents
+ * of the unpacked secured weren't recognized (didn't match any state
+ * transition).
+ *
+ * XXX: According to "2.21.2.  Error Handling in IKE_AUTH" and
+ * "2.21.3.  Error Handling after IKE SA is Authenticated" this should
+ * be fatal, killing the IKE SA.  Oops.
+ *
+ * Since there's no state transition to complete, find one vaguely
+ * plausable, and then complete it with a fatal error, triggering the
+ * delete of the IKE family.
  *
  * This is largely astetic.  It could use the first transition but
  * often a later transition reads better.  Perhaps the last transition
  * since, presumably, that is the most generic?
+ *
+ * XXX: the transition should match the exchange, the below probably
+ * gets that wrong?
  */
 
-static void hack_error_transition(struct state *st, struct msg_digest *md)
+static void complete_secured_but_fatal_exchange(struct ike_sa *ike, struct state *st,
+						struct msg_digest *md,
+						v2_notification_t n, chunk_t *data)
 {
+	/*
+	 * First find a transition to fail.
+	 */
 	passert(md != NULL);
 	const struct v2_state_transition *transition;
 	const struct finite_state *state = st->st_state;
@@ -1671,15 +1735,36 @@ static void hack_error_transition(struct state *st, struct msg_digest *md)
 	}
 	/*pexpect(st->st_v2_transition == NULL);*/
 	md->svm = st->st_v2_transition = transition;
+
+	/*
+	 * Now send a secured response, and fail the transition.
+	 */
+	switch (v2_msg_role(md)) {
+	case MESSAGE_REQUEST:
+		/*
+		 * Send back a secured error response.  Need to first
+		 * put the IKE SA into responder mode.
+		 */
+		v2_msgid_start_responder(ike, st, md);
+		record_v2N_response(st->st_logger, ike, md,
+				    n, data, ENCRYPTED_PAYLOAD);
+		break;
+	case MESSAGE_RESPONSE:
+		/*
+		 * Can't respond so kill the IKE SA - the
+		 * secured message contained crap so there's
+		 * little that can be done.
+		 */
+		break;
+	default:
+		bad_case(v2_msg_role(md));
+	}
+	complete_v2_state_transition(st, md, STF_FATAL);
 }
 
 /*
- * The SA the message is intended for has also been identified.
- * Continue ...
- *
- * XXX: Well except for a CREATE_CHILD_SA request where, after further
- * processing the SA may get created.  Should this message instead be
- * sent to the IKE SA, which can then create a WIP child?
+ * The SA the message is intended for has been identified; continuing
+ * ...
  */
 
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
@@ -1688,17 +1773,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	passert(ike != NULL);
 	passert(st != NULL);
 
-	/*
-	 * There is no "struct state" object if-and-only-if we're
-	 * responding to a shiny new SA_INIT message.  The start-state
-	 * transition will (probably) create the object.
-	 *
-	 * But what about when pluto, as the initial responder, is
-	 * fending of an attack attack by sending back and requiring
-	 * cookies - won't the cookie need a "struct state"?
-	 * According to the RFC: no.  Instead a small table of
-	 * constants can be used to generate cookies on the fly.
-	 */
 	const struct finite_state *from_state = st->st_state;
 	dbg("#%lu in state %s: %s", st->st_serialno,
 	    from_state->short_name, from_state->story);
@@ -1706,232 +1780,175 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
 	/*
-	 * If the exchange is secured (encrypted and integrity
-	 * protected) then defragment and decrypt the message.
+	 * The exchange is secured (encrypted and integrity
+	 * protected); defragment and decrypt the message.
 	 *
 	 * On the responder, if SKEYSEED hasn't yet been computed, do
-	 * that now.
+	 * that now (the initiator computes SKEYSEED in the
+	 * IKE_SA_INIT response processor).
 	 *
 	 * XXX: Similar to IKEv1, the SKEYSEED computation should be
 	 * started in the background when the first fragment arrives.
 	 * Currently it only starts after all fragments have arrived.
 	 */
 
-	if (ike->sa.st_state->v2.secured) {
-		pexpect(!md->encrypted_payloads.parsed);
-		/*
-		 * Examine the non-secured parts of the message to see
-		 * if it is at least vaguely plausable.
-		 *
-		 * XXX:
-		 *
-		 * The state's transitions are scanned twice: first
-		 * here and then, further down, when looking for the
-		 * real transition.  Fortunately we're talking about
-		 * at most 7 transitions and a relatively cheap
-		 * compare (the old code scanned all transitions).
-		 *
-		 * Something to worry about after the SKEYSEED has
-		 * been changed so that it is computed in the
-		 * background?
-		 */
-		if (!sniff_v2_state_transition(st->st_logger, st->st_state, md)) {
-			/* already logged */
+	passert(ike->sa.st_state->v2.secured);
+	passert(!md->encrypted_payloads.parsed);
+	passert(md->message_payloads.present & (P(SK) | P(SKF)));
+
+	/*
+	 * Deal with fragmentation.
+	 *
+	 * The function ikev2_collect_fragment() returns FALSE when
+	 * the fragmented message isn't complete and processing should
+	 * stop:
+	 *
+	 * - the fragment was ok, but more to come
+	 *
+	 * - the fragment is corrupt (drop it)
+	 *
+	 * - the is fragment is a duplicate (drop it)
+	 *
+	 * - the fragment count changed (also deletes saved fragments)
+	 *
+	 * Only upon the first arrival of the last fragment, does the
+	 * function return TRUE.  At that point processing flow below
+	 * can then continue to the SKEYSEED check.
+	 *
+	 * XXX: Because fragments are only checked all-at-once after
+	 * they have all arrived, a single corrupt fragment will cause
+	 * all fragments being thrown away, and the entire process
+	 * re-start (Is this tested?)
+	 *
+	 * XXX: This code should instead check each fragment as it
+	 * arrives.  That means kicking off the g^{xy}
+	 * calculation in the background (if it were in the
+	 * foreground, the fragments would be dropped).
+	 */
+	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[v2_msg_role(md)];
+	bool have_all_fragments = (frags != NULL && frags->count == frags->total);
+	if (md->message_payloads.present & P(SKF)) {
+		if (have_all_fragments) {
+			dbg("already have all fragments, skipping fragment collection");
+		} else if (!ikev2_collect_fragment(md, ike)) {
 			return;
 		}
-		/*
-		 * Since the encrypted payload appears plausible, deal
-		 * with fragmentation.
-		 */
-		if (!md->encrypted_payloads.parsed) {
-			/*
-			 * Deal with fragmentation.  The function
-			 * returns FALSE either when there are more
-			 * fragments, the fragment is corrupt, the
-			 * fragment is a duplicate, or the fragment
-			 * count changed (it also drops all
-			 * fragments).  Either way stop processing.
-			 *
-			 * Only upon _first_ arrival of the last
-			 * fragment, does the function return TRUE.
-			 * The the processing flow below can then
-			 * continue to the SKEYSEED check.
-			 *
-			 * However, if SKEYSEED (g^{xy}) needed to be
-			 * computed then this code will be re-entered
-			 * with all fragments present (so "the"
-			 * function should not be called).
-			 */
-			struct v2_incoming_fragments *frags =
-				ike->sa.st_v2_incoming[v2_msg_role(md)];
-			bool have_all_fragments =
-				(frags != NULL && frags->count == frags->total);
-			/*
-			 * XXX: Because fragments are only checked
-			 * all-at-once after they have all arrived, a
-			 * single corrupt fragment will cause all
-			 * fragments being thrown away, and the entire
-			 * process re-start (Is this tested?)
-			 *
-			 * XXX: This code should instead check
-			 * fragments as they arrive.  That means
-			 * kicking off the g^{xy} calculation in the
-			 * background (if it were in the foreground,
-			 * the fragments would be dropped).  Later.
-			 */
-			if (md->message_payloads.present & P(SKF)) {
-				if (have_all_fragments) {
-					dbg("already have all fragments, skipping fragment collection");
-				} else if (!ikev2_collect_fragment(md, ike)) {
-					return;
-				}
-			}
-			/*
-			 * If the SKEYSEED is missing, compute it now.
-			 *
-			 * Fudge up a state transition.  When the
-			 * transition finishes, it will resume packet
-			 * processing by calling back into this
-			 * function.
-			 *
-			 * XXX: This only happens after all fragments
-			 * have been accumulated.  Similar to IKEv1,
-			 * this should be kicked off when the first
-			 * secured fragment arrives, and then run in
-			 * the background.
-			 */
-			if (!ike->sa.hidden_variables.st_skeyid_calculated) {
-				if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
-				    !pexpect(ix == ISAKMP_v2_IKE_INTERMEDIATE || ix == ISAKMP_v2_IKE_AUTH)) {
-					/*
-					 * our screwup; sniff should
-					 * have rejected this
-					 */
-					return;
-				}
-				statetime_t start = statetime_start(st);
-				static const struct v2_state_transition svm = {
-					.story      = "Responder: process IKE_AUTH or IKE_INTERMEDIATE request (no SKEYSEED)",
-					.state      = STATE_V2_PARENT_R1,
-					.next_state = STATE_V2_PARENT_R1,
-					.send       = NO_MESSAGE,
-					.message_payloads.required = P(SK),
-					.processor  = process_v2_request_no_skeyseed,
-					.recv_role  = MESSAGE_REQUEST,
-					.recv_type  = 0,
-					.timeout_event = EVENT_SA_DISCARD,
-				};
-				md->svm = ike->sa.st_v2_transition = &svm;
-				stf_status e = svm.processor(ike, NULL/*no-child*/, md);
-				passert(e == STF_SUSPEND);
-				complete_v2_state_transition(st, md, e);
-				statetime_stop(&start, "processing: %s in %s()",
-					       svm.story, __func__);
-				return;
-			}
-			/*
-			 * XXX: Shouldn't reach this point without
-			 * SKEYSEED so bail if somehow that hasn't
-			 * happened.  No point in even calling
-			 * ikev2_decrypt_msg() (it will also fail).
-			 *
-			 * Suspect it would be cleaner if the state
-			 * machine included an explicit SMF2_SKEYSEED
-			 * flag and all states requiring integrity
-			 * were marked with that. Currently P(SK) and
-			 * P(SKF) imply this.
-			 */
-			if (!pexpect(ike->sa.hidden_variables.st_skeyid_calculated)) {
-				return;
-			}
-			/*
-			 * Decrypt the packet, checking it for
-			 * integrity.  Anything lacking integrity is
-			 * dropped.
-			 */
-			if (!ikev2_decrypt_msg(ike, md)) {
-				log_state(RC_LOG, &ike->sa,
-					  "encrypted payload seems to be corrupt; dropping packet");
-				return;
-			}
-			/*
-			 * The message is protected - the integrity
-			 * check passed - so it was definitely sent by
-			 * the other end of the secured IKE SA.
-			 *
-			 * However, for an AUTH packet, the other end
-			 * hasn't yet been authenticated (and an
-			 * INFORMATIONAL exchange immediately
-			 * following AUTH be due to failed
-			 * authentication).
-			 *
-			 * If there's something wrong with the message
-			 * contents, then the IKE SA gets abandoned,
-			 * but a new new one may be initiated.
-			 *
-			 * See "2.21.2.  Error Handling in IKE_AUTH"
-			 * and "2.21.3.  Error Handling after IKE SA
-			 * is Authenticated".
-			 *
-			 * For UNSUPPORTED_CRITICAL_PAYLOAD, while the
-			 * RFC clearly states that for the initial
-			 * exchanges and an INFORMATIONAL exchange
-			 * immediately following, the notification
-			 * causes a delete, it says nothing for
-			 * exchanges that follow.
-			 *
-			 * For moment treat it the same.  Given the
-			 * PAYLOAD ID that should identify the problem
-			 * isn't being returned this is the least of
-			 * our problems.
-			 */
-			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-			md->encrypted_payloads = ikev2_decode_payloads(ike->sa.st_logger, md, &sk->pbs,
-								       sk->payload.generic.isag_np);
-			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
-				/*
-				 * XXX: Hack to get the
-				 * transition that would have
-				 * been run so it can be
-				 * 'failed'.
-				 */
-				hack_error_transition(st, md);
-				switch (v2_msg_role(md)) {
-				case MESSAGE_REQUEST:
-					/*
-					 * Send back a protected error
-					 * response.  Need to first
-					 * put the IKE SA into
-					 * responder mode.
-					 */
-					v2_msgid_start_responder(ike, st, md);
-					chunk_t data = chunk2(md->encrypted_payloads.data,
-							      md->encrypted_payloads.data_size);
-					record_v2N_response(st->st_logger, ike, md,
-							    md->encrypted_payloads.n, &data,
-							    ENCRYPTED_PAYLOAD);
-					break;
-				case MESSAGE_RESPONSE:
-					/*
-					 * Can't respond so kill the
-					 * IKE SA.  The secured
-					 * message contained crap so
-					 * there's little that can be
-					 * done.
-					 */
-					break;
-				default:
-					bad_case(v2_msg_role(md));
-				}
-				complete_v2_state_transition(st, md, STF_FATAL);
-				return;
-			}
-		}
 	}
+
+	/*
+	 * If the SKEYSEED is missing, compute it now.
+	 *
+	 * Fudge up a state transition that off-loads SKEYSEED and
+	 * then suspends.  Once the SKEYSEED claculation is finished,
+	 * the process or will resume packet processing by calling
+	 * back into this function (which will then dispatch the real
+	 * transition).  Recursive state transition problems are
+	 * avoided by having the fudged transition processor
+	 * STF_SKIP_COMPLETE_STATE_TRANSITION.
+	 *
+	 * XXX: This only happens after all fragments have been
+	 * accumulated.  Similar to IKEv1, this should be kicked off
+	 * when the first secured fragment arrives, and then run in
+	 * the background.
+	 */
+	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
+		if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+			/*
+			 * Responder only: the initiator's IKE_SA_INIT
+			 * response processor calculates SKEYSEED.
+			 */
+			return;
+		}
+		if (!pexpect(ix == ISAKMP_v2_IKE_INTERMEDIATE || ix == ISAKMP_v2_IKE_AUTH)) {
+			/*
+			 * Only IKE_INTERMEDIATE and IKE_AUTH requests
+			 * require SKEYSEED (the sniffer should have
+			 * filtered this).
+			 */
+			return;
+		}
+		statetime_t start = statetime_start(st);
+		static const struct v2_state_transition svm = {
+			.story      = "Responder: process IKE_AUTH or IKE_INTERMEDIATE request (no SKEYSEED)",
+			.state      = STATE_V2_PARENT_R1,
+			.next_state = STATE_V2_PARENT_R1,
+			.send       = NO_MESSAGE,
+			.message_payloads.required = P(SK),
+			.processor  = process_v2_request_no_skeyseed,
+			.recv_role  = MESSAGE_REQUEST,
+			.recv_type  = 0,
+			.timeout_event = EVENT_SA_DISCARD,
+		};
+		md->svm = ike->sa.st_v2_transition = &svm;
+		stf_status e = svm.processor(ike, NULL/*no-child*/, md);
+		passert(e == STF_SUSPEND);
+		complete_v2_state_transition(st, md, e);
+		statetime_stop(&start, "processing: %s in %s()",
+			       svm.story, __func__);
+		return;
+	}
+
+	/*
+	 * Decrypt the packet and it for integrity.
+	 *
+	 * Since all messages should be secured, anything lacking
+	 * integrity is dropped.
+	 */
+	passert(ike->sa.hidden_variables.st_skeyid_calculated);
+	if (!ikev2_decrypt_msg(ike, md)) {
+		log_state(RC_LOG, &ike->sa,
+			  "encrypted payload seems to be corrupt; dropping packet");
+		/* Secure exchange: NEVER EVER RESPOND */
+		return;
+	}
+
+	/*
+	 * The message successfully decrypted and passed integrity
+	 * protected so definitely sent by the other end of the
+	 * secured IKE SA channel.
+	 *
+	 * However, for IKE_AUTH (and an INFORMATIONAL exchange
+	 * immediately following IKE_AUTH be due to failed
+	 * authentication), the other end hasn't yet been
+	 * authenticated so the secured contents can't always be
+	 * trusted.
+	 *
+	 * If there's something wrong with the message contents, then
+	 * the IKE SA gets abandoned, but a new new one may be
+	 * initiated.
+	 *
+	 * See "2.21.2.  Error Handling in IKE_AUTH"
+	 * and "2.21.3.  Error Handling after IKE SA is Authenticated".
+	 *
+	 * For UNSUPPORTED_CRITICAL_PAYLOAD, while the RFC clearly
+	 * states that for the initial exchanges and an INFORMATIONAL
+	 * exchange immediately following, the notification causes a
+	 * delete, it says nothing for exchanges that follow.
+	 *
+	 * For moment treat it the same.  Given the PAYLOAD ID that
+	 * should identify the problem isn't being returned this is
+	 * the least of our problems.
+	 */
+	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.st_logger, md, &sk->pbs,
+						       sk->payload.generic.isag_np);
+	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+		chunk_t data = chunk2(md->encrypted_payloads.data,
+				      md->encrypted_payloads.data_size);
+		complete_secured_but_fatal_exchange(ike, st, md, md->encrypted_payloads.n, &data);
+		return;
+	}
+
+	/*
+	 * XXX: is SECURED_PAYLOAD_FAILED redundant?  Earlier checks
+	 * that the message payload is valid mean this can only fail
+	 * on the secured payload?
+	 */
 
 	bool secured_payload_failed = false;
 	const struct v2_state_transition *svm =
 		find_v2_state_transition(st->st_logger, st->st_state, md, &secured_payload_failed);
+
 	/* no useful state microcode entry? */
 	if (svm == NULL) {
 		/* already logged */
@@ -1940,57 +1957,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		     ntfy != NULL; ntfy = ntfy->next) {
 			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
-		if (secured_payload_failed) {
-			/*
-			 * Payload decrypted and integrity was ok but
-			 * contents weren't valid.
-			 *
-			 * XXX: According to "2.21.2.  Error Handling
-			 * in IKE_AUTH" and "2.21.3.  Error Handling
-			 * after IKE SA is Authenticated" this should
-			 * be fatal, killing the IKE SA.  Oops.
-			 *
-			 * XXX: how can one complete a state
-			 * transition on something that was never
-			 * started?  Since this is fatal, the state
-			 * needs to be deleted.
-			 *
-			 * XXX: an alternative would be to treat this
-			 * like some new but as-of-yet not supported
-			 * message combination so just ignore it (but
-			 * update Message IDs).
-			 */
-			/*
-			 * XXX: Hack to get the transition
-			 * that would have been run so it can
-			 * be 'failed'.
-			 */
-			hack_error_transition(st, md);
-			switch (v2_msg_role(md)) {
-			case MESSAGE_REQUEST:
-				/*
-				 * Send back a protected error
-				 * response.  Need to first put the
-				 * IKE SA into responder mode.
-				 */
-				v2_msgid_start_responder(ike, st, md);
-				record_v2N_response(st->st_logger, ike, md,
-						    v2N_INVALID_SYNTAX, NULL,
-						    ENCRYPTED_PAYLOAD);
-				break;
-			case MESSAGE_RESPONSE:
-				/*
-				 * Can't respond so kill the IKE SA -
-				 * the secured message contained crap
-				 * so there's little that can be done.
-				 */
-				break;
-			default:
-				bad_case(v2_msg_role(md));
-			}
-			/* XXX: calls delete_state() */
-			complete_v2_state_transition(st, md, STF_FATAL);
-		}
+		pexpect(secured_payload_failed);
+		/* XXX: calls delete_state() */
+		complete_secured_but_fatal_exchange(ike, st, md, v2N_INVALID_SYNTAX, NULL);
 		return;
 	}
 
