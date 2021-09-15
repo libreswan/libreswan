@@ -247,7 +247,7 @@ extern void process_packet(struct msg_digest **mdp);
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name,
 			     bool keep, struct logger *logger);
 
-extern void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
+void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
 
 void shutdown_demux(void);
 

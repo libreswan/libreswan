@@ -588,6 +588,18 @@ void jam_msg_digest(struct jambuf *buf, const struct msg_digest *md)
 		jam_enum_enum_short(buf, &payload_type_names,
 				    ike_version,
 				    pd->payload_type);
+		/* go deeper? */
+		switch (pd->payload_type) {
+		case ISAKMP_NEXT_v2N:
+		{
+			const char *name = enum_name_short(&v2_notification_names,
+							   pd->payload.v2n.isan_type);
+			if (name != NULL) {
+				jam(buf, "(%s)", name);
+			}
+			break;
+		}
+		}
 	}
 	jam_string(buf, term);
 }
