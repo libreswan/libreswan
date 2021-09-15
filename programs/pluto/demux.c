@@ -628,7 +628,7 @@ char *cisco_stringify(pb_stream *input_pbs, const char *attr_name,
 /*
  * list all the payload types
  */
-void lswlog_msg_digest(struct jambuf *buf, const struct msg_digest *md)
+void jam_msg_digest(struct jambuf *buf, const struct msg_digest *md)
 {
 	enum ike_version ike_version = hdr_ike_version(&md->hdr);
 	jam_enum_enum_short(buf, &exchange_type_names, ike_version,

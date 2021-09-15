@@ -577,7 +577,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	LLOG_JAMBUF(RC_LOG, ike->sa.st_logger, buf) {
 		jam(buf, "processing decrypted ");
-		lswlog_msg_digest(buf, md);
+		jam_msg_digest(buf, md);
 	}
 
 	stf_status e = process_v2_IKE_AUTH_request_continue_tail(&ike->sa, md);
