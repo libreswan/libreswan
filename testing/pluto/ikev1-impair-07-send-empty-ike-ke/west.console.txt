@@ -19,6 +19,8 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
@@ -28,7 +30,10 @@ west #
 003 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
-002 "westnet-eastnet-ipv4-psk" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+west #
+ ipsec auto --delete westnet-eastnet-ipv4-psk
+002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
 west #
  ipsec whack --impair none
 west #
@@ -40,19 +45,23 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
-002 "westnet-eastnet-ipv4-psk" #3: initiating IKEv1 Main Mode connection
-1v1 "westnet-eastnet-ipv4-psk" #3: sent Main Mode request
-1v1 "westnet-eastnet-ipv4-psk" #3: sent Main Mode I2
-003 "westnet-eastnet-ipv4-psk" #3: KE has 0 byte DH public value; 256 required
-217 "westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-031 "westnet-eastnet-ipv4-psk" #3: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
-000 "westnet-eastnet-ipv4-psk" #3: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection
+1v1 "westnet-eastnet-ipv4-psk" #2: sent Main Mode request
+1v1 "westnet-eastnet-ipv4-psk" #2: sent Main Mode I2
+003 "westnet-eastnet-ipv4-psk" #2: KE has 0 byte DH public value; 256 required
+217 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+031 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
+000 "westnet-eastnet-ipv4-psk" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+west #
+ ipsec auto --delete westnet-eastnet-ipv4-psk
+002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
+002 "westnet-eastnet-ipv4-psk" #3: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
@@ -61,10 +70,6 @@ west #
 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #

@@ -176,6 +176,7 @@ road #
 | #1 deleting EVENT_SA_REPLACE
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #3
+| timer_event_cb: processing EVENT_SA_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
 | #1 deleting EVENT_SA_EXPIRE
 road #
  : "re-authenticateded. The state number should 3 and 2"
