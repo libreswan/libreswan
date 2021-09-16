@@ -59,18 +59,7 @@ static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
 	 * It trumps everything else.  Should delete also be ignored?
 	 */
 	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		struct pbs_in pbs = md->pd[PD_v2N_REDIRECT]->pbs;
-		dbg("received v2N_REDIRECT in informational");
-		ip_address redirect_to;
-		err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->accept_redirect_to,
-						 NULL, &redirect_to, ike->sa.st_logger);
-		if (e != NULL) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "warning: parsing of v2N_REDIRECT payload failed: %s", e);
-		} else {
-			ike->sa.st_connection->temp_vars.redirect_ip = redirect_to;
-			event_force(EVENT_v2_REDIRECT, &ike->sa);
-		}
+		process_v2_INFORMATIONAL_request_v2N_REDIRECT(ike, md);
 		return true;
 	}
 

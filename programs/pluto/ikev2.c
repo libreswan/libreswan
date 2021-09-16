@@ -247,16 +247,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .state      = STATE_V2_PARENT_I1,
-	  .next_state = STATE_V2_IKE_SA_DELETE,
-	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .next_state = STATE_V2_PARENT_I0, /* XXX: never happens STF_SUSPEND */
+	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
 	  .send       = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
-	  /* XXX: this is an instant timeout */
-	  .timeout_event = EVENT_v2_REDIRECT,
+	  .timeout_event = EVENT_SA_DISCARD,
 	},
 
 	/* STATE_V2_PARENT_I1: R1 --> I2
@@ -2455,11 +2454,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 				     transition->story);
 			break;
 
-		case EVENT_v2_REDIRECT:
-			delete_event(st); /* relying on redirect */
-			event_force(EVENT_v2_REDIRECT, st);
-			break;
-
 		case EVENT_RETAIN:
 			/* the previous lifetime event is retained */
 			if (pexpect(st->st_v2_lifetime_event != NULL)) {
@@ -2827,7 +2821,6 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 	}
 	statetime_stop(&start, "processing: %s in %s()", story, __func__);
 	/* our caller with release_any_md(mdp) */
-
 }
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,

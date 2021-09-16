@@ -114,7 +114,6 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_v1_PAM_TIMEOUT:
-	case EVENT_v2_REDIRECT:
 		/*
 		 * Many of these don't make sense - however that's
 		 * what happens when (the replaced) default: is used.
@@ -433,10 +432,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * spontaneously deleting IKE families).
 		 */
 		delete_state(st);
-		break;
-
-	case EVENT_v2_REDIRECT:
-		initiate_redirect(st);
 		break;
 
 #ifdef USE_IKEv1

@@ -1,5 +1,4 @@
-/*
- * IKEv2 Redirect Mechanism (RFC 5685) related functions
+/* IKEv2 Redirect Mechanism (RFC 5685) related functions, for libreswan
  *
  * Copyright (C) 2018 - 2020 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -40,6 +39,8 @@
 #include "pending.h"
 #include "pluto_stats.h"
 
+static callback_cb initiate_redirect;
+
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
 struct redirect_dests {
@@ -48,7 +49,6 @@ struct redirect_dests {
 };
 
 static struct redirect_dests global_dests = { NULL, NULL };
-static struct redirect_dests active_dests = { NULL, NULL };
 
 const char *global_redirect_to(void)
 {
@@ -89,7 +89,8 @@ void set_global_redirect_dests(const char *grd_str)
  * @param rl struct containing redirect destinations
  * @return shunk_t string to be shipped.
  */
-static shunk_t get_redirect_dest(struct redirect_dests *rl)
+
+static shunk_t next_redirect_dest(struct redirect_dests *rl)
 {
 	const char *r = *rl->next == '\0' ? rl->whole : rl->next;
 	size_t len = strcspn(r, ", \t");
@@ -250,7 +251,7 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	shunk_t dest = get_redirect_dest(&global_dests);
+	shunk_t dest = next_redirect_dest(&global_dests);
 	if (dest.len == 0) {
 		dbg("no (meaningful) destination for global redirection has been specified");
 		pstats_ikev2_redirect_failed++;
@@ -329,11 +330,29 @@ static bool allow_to_be_redirected(const char *allowed_targets_list, ip_address 
 	return false;
 }
 
-err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
-			     const char *allowed_targets_list,
-			     const chunk_t *nonce,
-			     ip_address *redirect_ip /* result */,
-			     struct logger *logger)
+/*
+ * Extract needed information from IKEv2 Notify Redirect
+ * notification.
+ *
+ * @param data that was transferred in v2_REDIRECT Notify
+ * @param char* list of addresses we accept being redirected
+ * 	  to, specified with conn option accept-redirect-to
+ * @param nonce that was send in IKE_SA_INIT request,
+ * 	  we need to compare it with nonce data sent
+ * 	  in Notify data. We do all that only if
+ * 	  nonce isn't NULL.
+ * @param redirect_ip ip address we need to redirect to
+ * @return err_t NULL if everything went right,
+ * 		 otherwise (non-NULL) what went wrong
+ *
+ * XXX: this logs and returns err_t; sometimes.
+ */
+
+static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
+				    const char *allowed_targets_list,
+				    const chunk_t *nonce,
+				    ip_address *redirect_ip /* result */,
+				    struct logger *logger)
 {
 	struct pbs_in input_pbs = *notify_pbs;
 	struct ikev2_redirect_part gw_info;
@@ -444,16 +463,25 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 		return false;
 	}
 
+	/*
+	 * MAGIC: the IKE SA is put into limbo (STF_SUSPEND), and then
+	 * the initiate_redirect() callback initiates a new SA with
+	 * the new IP, and then deletes the old in-limbo IKE SA.
+	 */
+
 	/* will use this when initiating in a callback */
 	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-
-	/* EVENT_v2_REDIRECT will eventually trigger initiate_redirect() */
-	event_force(EVENT_v2_REDIRECT, &ike->sa);
+	schedule_callback("IKE_AUTH redirect", ike->sa.st_serialno,
+			  initiate_redirect, NULL);
 	*redirect_status = STF_SUSPEND;
 	return true;
 }
 
-void initiate_redirect(struct state *ike_sa)
+/*
+ * Initiate via initiate_connection new IKE_SA_INIT exchange.
+ */
+
+static void initiate_redirect(const char *story, struct state *ike_sa, void *context UNUSED)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	struct connection *c = ike->sa.st_connection;
@@ -480,7 +508,9 @@ void initiate_redirect(struct state *ike_sa)
 		if (deltatime_cmp(realtimediff(c->temp_vars.first_redirect_time, now),
 				  <,
 				  deltatime(REDIRECT_LOOP_DETECT_PERIOD))) {
-			llog_sa(RC_LOG_SERIOUS, ike, "redirect loop, stop initiating IKEv2 exchanges");
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"%s loop, stop initiating IKEv2 exchanges",
+				story);
 			return;
 		}
 
@@ -499,8 +529,11 @@ void initiate_redirect(struct state *ike_sa)
 	c->spd.that.host_addr = redirect_ip;
 
 	address_buf b;
-	llog_sa(RC_LOG, ike, "initiating a redirect to new gateway (address: %s)",
-		str_address_sensitive(&redirect_ip, &b));
+	llog_sa(RC_LOG, ike,
+		"initiating %s to new gateway (address: %s)",
+		story, str_address_sensitive(&redirect_ip, &b));
+
+	/* XXX: only makes sense when IKE_SA_INIT / IKE_AUTH redirect? */
 	flush_pending_by_state(ike);
 
 	/*
@@ -539,25 +572,29 @@ static const struct v2_state_transition v2_redirect_ike_transition = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
-void find_states_and_redirect(const char *conn_name, char *ard_str,
-			      struct logger *logger)
+void find_and_active_redirect_states(const char *conn_name,
+				     const char *active_redirect_dests,
+				     struct logger *logger)
 {
-	passert(ard_str != NULL);
-	set_redirect_dests(ard_str, &active_dests);
+	passert(active_redirect_dests != NULL);
+	struct redirect_dests active_dests = { NULL, NULL };
+	set_redirect_dests(active_redirect_dests, &active_dests);
 
 	int cnt = 0;
 
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL ||
-						  streq(conn_name, st->st_connection->name))) {
+		if (IS_IKE_SA_ESTABLISHED(st) &&
+		    (conn_name == NULL || streq(conn_name, st->st_connection->name))) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			shunk_t active_dest = get_redirect_dest(&active_dests);
+			/* cycle through the list of redirects */
+			shunk_t active_dest = next_redirect_dest(&active_dests);
+			/* not whack; there could be thousands? */
+			llog_sa(RC_LOG|LOG_STREAM, ike, "redirecting to: "PRI_SHUNK,
+				pri_shunk(active_dest));
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
-			dbg("successfully found an IKE state (#%lu) with connection name \"%s\"",
-			    ike->sa.st_serialno, conn_name);
 			cnt++;
 			v2_msgid_queue_initiator(ike, NULL, NULL, ISAKMP_v2_INFORMATIONAL,
 						 &v2_redirect_ike_transition);
@@ -565,14 +602,14 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	}
 
 	if (cnt == 0) {
-		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
 			jam(buf, "no active tunnels found");
 			if (conn_name != NULL) {
 				jam(buf, " for connection \"%s\"", conn_name);
 			}
 		}
 	} else {
-		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
 			jam(buf, "redirections sent for %d tunnels", cnt);
 			if (conn_name != NULL) {
 				jam(buf, " of connection \"%s\"", conn_name);
@@ -612,12 +649,41 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	}
 
 	/*
-	 * MAGIC: the redirect event will delete the IKE SA and start
-	 * a new one with the new IP.
+	 * MAGIC: the IKE SA is put into limbo (STF_SUSPEND), and then
+	 * the initiate_redirect() callback initiates a new SA with
+	 * the new IP, and then deletes the old in-limbo IKE SA.
 	 *
-	 * XXX: could this, like COOKIE and INVALID_KE_PAYLOAD, just
-	 * continue with the current state.
+	 * XXX: could this, like for COOKIE and INVALID_KE_PAYLOAD,
+	 * use schedule_reinitiate_v2_ike_sa_init() and continue with
+	 * the current state?
 	 */
+
+	/* will use this when initiating in a callback */
 	ike->sa.st_connection->temp_vars.redirect_ip = redirect_ip;
-	return STF_OK;
+	schedule_callback("IKE_SA_INIT redirect", ike->sa.st_serialno,
+			  initiate_redirect, NULL);
+	return STF_SUSPEND;
+}
+
+void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct msg_digest *md)
+{
+	struct pbs_in pbs = md->pd[PD_v2N_REDIRECT]->pbs;
+	dbg("received v2N_REDIRECT in informational");
+	ip_address redirect_to;
+	err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->accept_redirect_to,
+					 NULL, &redirect_to, ike->sa.st_logger);
+	if (e != NULL) {
+		/* XXX: parse_redirect_payload() also often logs! */
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
+		return;
+	}
+
+	/*
+	 * MAGIC: the initiate_redirect() callback initiates a new SA
+	 * with the new IP, and then deletes the old IKE SA.
+	 */
+	ike->sa.st_connection->temp_vars.redirect_ip = redirect_to;
+	schedule_callback("active session redirect", ike->sa.st_serialno,
+			  initiate_redirect, NULL);
 }

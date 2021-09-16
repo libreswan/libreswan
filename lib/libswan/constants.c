@@ -2316,12 +2316,11 @@ static const char *const event_v2_name[] = {
 	E(EVENT_v2_REAUTH),
 	E(EVENT_v2_LIVENESS),
 	E(EVENT_v2_ADDR_CHANGE),
-	E(EVENT_v2_REDIRECT),
 #undef E
 };
 
 static const enum_names event_v2_names = {
-	EVENT_v2_REKEY, EVENT_v2_REDIRECT,
+	EVENT_v2_REKEY, EVENT_v2_ADDR_CHANGE,
 	ARRAY_REF(event_v2_name),
 	"EVENT_v2_", /* prefix */
 	&event_v1_names,
