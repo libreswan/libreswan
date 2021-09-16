@@ -1,5 +1,4 @@
-/*
- * IKEv2 Redirect Mechanism (RFC 5685) related functions
+/* IKEv2 Redirect Mechanism (RFC 5685) related functions, for libreswan
  *
  * Copyright (C) 2018 - 2020 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -48,7 +47,6 @@ struct redirect_dests {
 };
 
 static struct redirect_dests global_dests = { NULL, NULL };
-static struct redirect_dests active_dests = { NULL, NULL };
 
 const char *global_redirect_to(void)
 {
@@ -89,7 +87,8 @@ void set_global_redirect_dests(const char *grd_str)
  * @param rl struct containing redirect destinations
  * @return shunk_t string to be shipped.
  */
-static shunk_t get_redirect_dest(struct redirect_dests *rl)
+
+static shunk_t next_redirect_dest(struct redirect_dests *rl)
 {
 	const char *r = *rl->next == '\0' ? rl->whole : rl->next;
 	size_t len = strcspn(r, ", \t");
@@ -250,7 +249,7 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	shunk_t dest = get_redirect_dest(&global_dests);
+	shunk_t dest = next_redirect_dest(&global_dests);
 	if (dest.len == 0) {
 		dbg("no (meaningful) destination for global redirection has been specified");
 		pstats_ikev2_redirect_failed++;
@@ -539,25 +538,29 @@ static const struct v2_state_transition v2_redirect_ike_transition = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
-void find_states_and_redirect(const char *conn_name, char *ard_str,
-			      struct logger *logger)
+void find_and_active_redirect_states(const char *conn_name,
+				     const char *active_redirect_dests,
+				     struct logger *logger)
 {
-	passert(ard_str != NULL);
-	set_redirect_dests(ard_str, &active_dests);
+	passert(active_redirect_dests != NULL);
+	struct redirect_dests active_dests = { NULL, NULL };
+	set_redirect_dests(active_redirect_dests, &active_dests);
 
 	int cnt = 0;
 
 	struct state_filter sf = { .where = HERE, };
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		if (IS_IKE_SA_ESTABLISHED(st) && (conn_name == NULL ||
-						  streq(conn_name, st->st_connection->name))) {
+		if (IS_IKE_SA_ESTABLISHED(st) &&
+		    (conn_name == NULL || streq(conn_name, st->st_connection->name))) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			shunk_t active_dest = get_redirect_dest(&active_dests);
+			/* cycle through the list of redirects */
+			shunk_t active_dest = next_redirect_dest(&active_dests);
+			/* not whack; there could be thousands? */
+			llog_sa(RC_LOG|LOG_STREAM, ike, "redirecting to: "PRI_SHUNK,
+				pri_shunk(active_dest));
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
-			dbg("successfully found an IKE state (#%lu) with connection name \"%s\"",
-			    ike->sa.st_serialno, conn_name);
 			cnt++;
 			v2_msgid_queue_initiator(ike, NULL, NULL, ISAKMP_v2_INFORMATIONAL,
 						 &v2_redirect_ike_transition);
@@ -565,14 +568,14 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	}
 
 	if (cnt == 0) {
-		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
 			jam(buf, "no active tunnels found");
 			if (conn_name != NULL) {
 				jam(buf, " for connection \"%s\"", conn_name);
 			}
 		}
 	} else {
-		LLOG_JAMBUF(WHACK_STREAM|RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
 			jam(buf, "redirections sent for %d tunnels", cnt);
 			if (conn_name != NULL) {
 				jam(buf, " of connection \"%s\"", conn_name);

@@ -1,5 +1,4 @@
-/*
- * IKEv2 Redirect Mechanism (RFC 5685) related functions
+/* IKEv2 Redirect Mechanism (RFC 5685) related functions, for libreswan
  *
  * Copyright (C) 2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -101,8 +100,9 @@ extern void initiate_redirect(struct state *st);
  * 	  peers on the machine.
  * @param ard_str comma-separated string containing the destinations.
  */
-extern void find_states_and_redirect(const char *conn_name, char *ard_str,
-				     struct logger *logger);
+extern void find_and_active_redirect_states(const char *conn_name,
+					    const char *active_redirect_dests,
+					    struct logger *logger);
 
 extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							       struct child_sa *child,
