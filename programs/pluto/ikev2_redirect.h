@@ -64,33 +64,7 @@ extern bool emit_redirect_notification(
 		const shunk_t destination,
 		pb_stream *pbs);
 
-/*
- * Extract needed information from IKEv2 Notify Redirect
- * notification.
- *
- * @param data that was transferred in v2_REDIRECT Notify
- * @param char* list of addresses we accept being redirected
- * 	  to, specified with conn option accept-redirect-to
- * @param nonce that was send in IKE_SA_INIT request,
- * 	  we need to compare it with nonce data sent
- * 	  in Notify data. We do all that only if
- * 	  nonce isn't NULL.
- * @param redirect_ip ip address we need to redirect to
- * @return err_t NULL if everything went right,
- * 		 otherwise (non-NULL) what went wrong
- */
-extern err_t parse_redirect_payload(const struct pbs_in *pbs,
-				    const char *allowed_targets_list,
-				    const chunk_t *nonce,
-				    ip_address *redirect_ip /* result */,
-				    struct logger *logger);
-
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
-
-/*
- * Initiate via initiate_connection new IKE_SA_INIT exchange
- */
-extern void initiate_redirect(struct state *st);
 
 /*
  * Used for active redirect mechanism (RFC 5685)
@@ -107,5 +81,8 @@ extern void find_and_active_redirect_states(const char *conn_name,
 extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							       struct child_sa *child,
 							       struct msg_digest *md);
+
+void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike,
+						   struct msg_digest *md);
 
 #endif
