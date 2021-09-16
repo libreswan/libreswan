@@ -104,14 +104,8 @@ extern void initiate_redirect(struct state *st);
 extern void find_states_and_redirect(const char *conn_name, char *ard_str,
 				     struct logger *logger);
 
-/*
- * Send IKEv2 INFORMATIONAL exchange with REDIRECT payload.
- * This is the case of redirection during the active tunnel.
- */
-extern void send_active_redirect_in_informational(struct state *st);
-
-extern stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
-						      struct child_sa *child,
-						      struct msg_digest *md);
+extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
+							       struct child_sa *child,
+							       struct msg_digest *md);
 
 #endif

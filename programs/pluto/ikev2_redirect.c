@@ -582,9 +582,9 @@ void find_states_and_redirect(const char *conn_name, char *ard_str,
 	free_redirect_dests(&active_dests);
 }
 
-stf_status ikev2_in_IKE_SA_INIT_R_v2N_REDIRECT(struct ike_sa *ike,
-					       struct child_sa *child,
-					       struct msg_digest *md)
+stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
+							struct child_sa *child,
+							struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
 	pexpect(child == NULL);
