@@ -2029,7 +2029,8 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			jam(buf, "; nodpd");
 		}
 
-		if (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background) {
+		if (st->st_offloaded_task != NULL &&
+		    !st->st_offloaded_task_in_background) {
 			jam(buf, "; crypto_calculating");
 		} else if (st->st_suspended_md != NULL) {
 			jam(buf, "; crypto/dns-lookup");
@@ -2805,7 +2806,7 @@ bool state_is_busy(const struct state *st)
 	 * If IKEv1 is doing something in the background then the
 	 * state isn't busy.
 	 */
-	if (st->st_v1_offloaded_task_in_background) {
+	if (st->st_offloaded_task_in_background) {
 		pexpect(st->st_offloaded_task != NULL);
 		dbg("#%lu is idle; has background offloaded task",
 		    st->st_serialno);

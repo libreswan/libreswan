@@ -347,7 +347,7 @@ void submit_task(const struct logger *logger,
 
 	pexpect(st->st_offloaded_task == NULL);
 	st->st_offloaded_task = job;
-	st->st_v1_offloaded_task_in_background = false;
+	st->st_offloaded_task_in_background = false;
 	job->logger = clone_logger(logger, HERE);
 	dbg(PRI_JOB": added to pending queue", pri_job(job));
 
@@ -433,7 +433,7 @@ static stf_status handle_helper_answer(struct state *st,
 		dbg(PRI_JOB": calling state's callback function", pri_job(job));
 		pexpect(st->st_offloaded_task == job);
 		st->st_offloaded_task = NULL;
-		st->st_v1_offloaded_task_in_background = false;
+		st->st_offloaded_task_in_background = false;
 		/* bill the thread time */
 		cpu_usage_add(st->st_timing.helper_usage, job->time_used);
 		/* wall clock time not billed */

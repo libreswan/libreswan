@@ -959,7 +959,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 				main_inI2_outR2_continue2, HERE);
 	/* we are calculating in the background, so it doesn't count */
 	dbg("#%lu %s:%u st->st_calculating = false;", st->st_serialno, __func__, __LINE__);
-	st->st_v1_offloaded_task_in_background = true;
+	st->st_offloaded_task_in_background = true;
 
 	return STF_OK;
 }

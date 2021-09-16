@@ -646,7 +646,7 @@ struct state {
 	 * have also served as a state-is-busy marker.
 	 */
 	struct job *st_offloaded_task;
-	bool st_v1_offloaded_task_in_background;
+	bool st_offloaded_task_in_background;
 
 	struct msg_digest *st_suspended_md;     /* suspended state-transition */
 	const char        *st_suspended_md_func;
