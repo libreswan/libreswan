@@ -132,8 +132,8 @@ void schedule_resume(const char *name, so_serial_t serialno,
  * doesn't try to unsuspend MD.
  */
 
-typedef void callback_cb(struct state *st, void *context);
-void schedule_callback(const char *name, so_serial_t serialno,
+typedef void callback_cb(const char *story, struct state *st, void *context);
+void schedule_callback(const char *story, so_serial_t serialno,
 		       callback_cb *callback, void *context);
 
 void call_global_event_inline(enum global_timer type,

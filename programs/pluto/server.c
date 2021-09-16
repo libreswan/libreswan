@@ -706,7 +706,7 @@ struct callback_event {
 	so_serial_t serialno;
 	callback_cb *callback;
 	void *context;
-	const char *name;
+	const char *story;
 	struct event *event;
 };
 
@@ -714,61 +714,52 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 			     short events UNUSED, void *arg)
 {
 	/*
-	 * Extract all needed fields so that all event-loop memory can
-	 * be freed _before_ making callback.
+	 * Save all fields so that all event-loop memory can be freed
+	 * _before_ making callback (the callback might run
+	 * leak-detective and exit).
 	 *
-	 * At one point, the .event field was only being set after the
-	 * event was enabled.  With multiple threads this resulted in
-	 * a race where the event ran before .event was set.
+	 * Danger!
+	 *
+	 * At one point, the code scheduling the event was only
+	 * setting the .event field after the event was enabled.  With
+	 * multiple threads this resulted in a race where the event
+	 * ran and was deleted .event was valid.  Oops!
 	 */
-	callback_cb *callback;
-	void *context;
-	so_serial_t serialno;
-	const char *name;
-	struct state *st;
-	{
-		struct callback_event *e = (struct callback_event *)arg;
-		passert(e->event != NULL);
-		callback = e->callback;
-		name = e->name;
-		serialno = e->serialno;
-		context = e->context;
-		event_free(e->event);
-		pfree(e);
-	}
+	struct callback_event e = *(struct callback_event *)arg;
+	passert(e.event != NULL);
+	event_free(e.event);
+	e.event = NULL;
+	pfree(arg);
 
-	if (serialno == SOS_NOBODY) {
-		dbg("processing callback %s", name);
+	struct state *st;
+	if (e.serialno == SOS_NOBODY) {
+		dbg("processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		dbg("processing callback %s for #%lu", name, serialno);
-		st = state_with_serialno(serialno);
+		dbg("processing callback %s for #%lu", e.story, e.serialno);
+		st = state_with_serialno(e.serialno);
 	}
 
 	threadtime_t start = threadtime_start();
-	if (st != NULL) {
-	}
-	callback(st, context);
-	if (st != NULL) {
-	}
-	threadtime_stop(&start, SOS_NOBODY, "callback %s", name);
+	e.callback(e.story, st, e.context);
+	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
 }
 
-extern void schedule_callback(const char *name, so_serial_t serialno,
+extern void schedule_callback(const char *story, so_serial_t serialno,
 			      callback_cb *callback, void *context)
 {
 	struct callback_event tmp = {
 		.serialno = serialno,
 		.callback = callback,
 		.context = context,
-		.name = name,
+		.story = story,
 	};
-	struct callback_event *e = clone_thing(tmp, name);
-	dbg("scheduling callback %s (#%lu)", e->name, e->serialno);
+	struct callback_event *e = clone_thing(tmp, story);
+	dbg("scheduling callback %s (#%lu)", e->story, e->serialno);
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below

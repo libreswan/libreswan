@@ -87,6 +87,8 @@
 #include "ikev2_delete.h"		/* for record_v2_delete() */
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 
+static callback_cb reinitiate_ike_sa_init;	/* type assertion */
+
 /*
  * IKEv2 has slightly different states than IKEv1.
  *
@@ -2787,18 +2789,19 @@ void jam_v2_stf_status(struct jambuf *buf, unsigned status)
 	}
 }
 
-static void reinitiate_ike_sa_init(struct state *st, void *arg)
+static void reinitiate_ike_sa_init(const char *story, struct state *st, void *arg)
 {
+	stf_status (*resume)(struct ike_sa *ike) = arg;
+
 	if (st == NULL) {
-		dbg("re-initiate lost state");
+		dbg(" lost state for %s", story);
 		return;
 	}
-	struct ike_sa *ike = ike_sa(st, HERE);
+	struct ike_sa *ike = pexpect_ike_sa(st);
 	if (ike == NULL) {
 		/* already logged */
 		return;
 	}
-	stf_status (*resume)(struct ike_sa *ike) = arg;
 
 	/*
 	 * Need to wind back the Message ID counters so that the send
@@ -2810,7 +2813,21 @@ static void reinitiate_ike_sa_init(struct state *st, void *arg)
 	 * Pretend to be running the initiate state.
 	 */
 	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2.transitions, HERE); /* first */
-	complete_v2_state_transition(&ike->sa, NULL/*no-MD*/, resume(ike));
+	so_serial_t old_st = st->st_serialno;
+	statetime_t start = statetime_start(st);
+	stf_status e = resume(ike);
+	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+		/*
+		 * Danger! Processor did something dodgy like free ST!
+		 */
+		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
+		    story, old_st);
+	} else {
+		complete_v2_state_transition(st, NULL, e);
+	}
+	statetime_stop(&start, "processing: %s in %s()", story, __func__);
+	/* our caller with release_any_md(mdp) */
+
 }
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,

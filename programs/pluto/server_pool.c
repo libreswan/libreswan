@@ -44,10 +44,10 @@
 # include "pluto_seccomp.h"
 #endif
 
-static void helper_thread_stopped_callback(struct state *st, void *arg);
-
-static resume_cb handle_helper_answer;
-
+static callback_cb helper_thread_stopped_callback;	/* type assertion */
+static resume_cb handle_helper_answer;			/* type assertion */
+static callback_cb inline_worker;			/* type assertion */
+static callback_cb call_server_helpers_stopped_callback; /* type assertion */
 /*
  * The job structure
  *
@@ -270,10 +270,7 @@ static void *helper_thread(void *arg)
  * with the possibly cancelled result.
  */
 
-static callback_cb inline_worker; /* type assertion */
-
-static void inline_worker(struct state *unused_st UNUSED,
-			  void *arg)
+static void inline_worker(const char *story UNUSED, struct state *unused_st UNUSED, void *arg)
 {
 	struct job *job = arg;
 	/* might be cancelled */
@@ -551,7 +548,9 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 
 static void (*server_helpers_stopped_callback)(void);
 
-static void helper_thread_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+static void helper_thread_stopped_callback(const char *story UNUSED,
+					   struct state *st UNUSED,
+					   void *context UNUSED)
 {
 	nr_helper_threads--;
 	dbg("one helper thread exited, %u remaining", nr_helper_threads);
@@ -567,7 +566,9 @@ static void helper_thread_stopped_callback(struct state *st UNUSED, void *contex
 	server_helpers_stopped_callback();
 }
 
-static void call_server_helpers_stopped_callback(struct state *st UNUSED, void *context UNUSED)
+static void call_server_helpers_stopped_callback(const char *story UNUSED,
+						 struct state *st UNUSED,
+						 void *context UNUSED)
 {
 	server_helpers_stopped_callback();
 }

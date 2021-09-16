@@ -72,6 +72,8 @@
 #include "iface.h"
 #include "impair_message.h"
 
+static callback_cb handle_md_event;		/* type assertion */
+
 /*
  * read the message.
  *
@@ -491,8 +493,7 @@ void free_demux(void)
 	}
 }
 
-static callback_cb handle_md_event; /* type assertion */
-static void handle_md_event(struct state *st, void *context)
+static void handle_md_event(const char *story UNUSED, struct state *st, void *context)
 {
 	pexpect(st == NULL);
 	struct msg_digest *md = context;
@@ -501,9 +502,9 @@ static void handle_md_event(struct state *st, void *context)
 	pexpect(md == NULL);
 }
 
-void schedule_md_event(const char *name, struct msg_digest *md)
+void schedule_md_event(const char *story, struct msg_digest *md)
 {
-	schedule_callback(name, SOS_NOBODY, handle_md_event, md);
+	schedule_callback(story, SOS_NOBODY, handle_md_event, md);
 }
 
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr)

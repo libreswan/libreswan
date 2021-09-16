@@ -23,6 +23,8 @@
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 #include "state_db.h"		/* for ike_sa_by_serialno() */
 
+static callback_cb initiate_next;		/* type assertion */
+
 /*
  * Logging.
  */
@@ -539,11 +541,11 @@ void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to)
 	from->sa.st_v2_msgid_windows.initiator.pending = NULL;
 }
 
-static void initiate_next(struct state *ike_sa, void *context UNUSED)
+static void initiate_next(const char *story, struct state *ike_sa, void *context UNUSED)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
-		dbg("IKE SA with pending initiates disappeared");
+		dbg("IKE SA with pending initiates disappeared (%s)", story);
 		return;
 	}
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
@@ -619,7 +621,7 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 		struct state *who_for = state_by_serialno(initiator->pending->who_for);
 		if (unack < ike->sa.st_connection->ike_window) {
 			dbg_v2_msgid(ike, who_for, "wakeing IKE SA for next initiator (unack %jd)", unack);
-			schedule_callback(__func__, ike->sa.st_serialno, initiate_next, NULL);
+			schedule_callback("next initiator", ike->sa.st_serialno, initiate_next, NULL);
 		} else {
 			dbg_v2_msgid(ike, who_for, "next initiator blocked by outstanding response (unack %jd)", unack);
 		}
