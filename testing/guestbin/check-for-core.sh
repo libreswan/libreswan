@@ -9,14 +9,22 @@ set width 0
 set height 0
 set pagination no
 set charset ASCII
-echo \nCODE:\n\n
-x/i \$pc
-echo \nLOCAL VARIABLES:\n\n
-info locals
-echo \nSOURCE CODE:\n\n
-list
 echo \nCRASHING THREAD:\n\n
 bt
+echo \nINSTRUCTION:\n\n
+x/i \$pc
+echo \nSOURCE CODE:\n\n
+list
+echo \nLOCAL VARIABLES:\n\n
+info locals
+echo \nFUNCTION ARGUMENTS:\n\n
+info args
+echo \nLOCAL SCOPE:\n\n
+info scope $pc
+echo \nFRAME:\n\n
+info frame
+echo \nREGISTERS:\n\n
+info registers
 echo \nALL THREADS:\n\n
 thread apply all bt
 EOF
@@ -65,7 +73,7 @@ for core in ${DIR}/core* ; do
 	) >> /tmp/pluto.log
     fi
 
-    mv -f $core OUTPUT/
+    cp -f $core OUTPUT/
 done
 
 ${ok}
