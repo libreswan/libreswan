@@ -213,28 +213,17 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
-struct msg_digest *unsuspend_md(struct state *st);
-
 /*
  * On entry to this macro, when crypto has been off loaded then
- * st_offloaded_task is non-NULL.  However, with XAUTH immediate,
+ * st_offloaded.job is non-NULL.  However, with XAUTH immediate,
  * there's nothing to check.
  */
 
-#define suspend_any_md(ST, MD)						\
-	{								\
-		if (MD != NULL) {					\
-			dbg("suspending state #%lu and saving MD %p",	\
-			    (ST)->st_serialno, MD);			\
-			passert((ST)->st_suspended_md == NULL);		\
-			(ST)->st_suspended_md = md_addref(MD, HERE);	\
-			(ST)->st_suspended_md_func = __func__;		\
-			(ST)->st_suspended_md_line = __LINE__;		\
-			passert(state_is_busy(ST));			\
-		} else {						\
-			dbg("no MD to suspend");			\
-		}							\
-	}
+struct msg_digest *unsuspend_any_md_where(struct state *st, where_t where);
+#define unsuspend_any_md(ST) unsuspend_any_md_where(ST, HERE)
+
+void suspend_any_md_where(struct state *st, struct msg_digest *md, where_t where);
+#define suspend_any_md(ST, MD) suspend_any_md_where(ST, MD, HERE)
 
 /*
  * For auditing, why an SA is being deleted.
@@ -648,9 +637,7 @@ struct state {
 	struct job *st_offloaded_task;
 	bool st_offloaded_task_in_background;
 
-	struct msg_digest *st_suspended_md;     /* suspended state-transition */
-	const char        *st_suspended_md_func;
-	int st_suspended_md_line;
+	struct msg_digest *st_suspended_md;  /* suspended state-transition */
 
 	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */
 

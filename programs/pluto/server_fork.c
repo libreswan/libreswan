@@ -246,7 +246,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
-				struct msg_digest *md = unsuspend_md(st);
+				struct msg_digest *md = unsuspend_any_md(st);
 				if (DBGP(DBG_CPU_USAGE)) {
 					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;

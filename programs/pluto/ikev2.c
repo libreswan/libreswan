@@ -2624,13 +2624,6 @@ void complete_v2_state_transition(struct state *st,
 		/*
 		 * If this transition was triggered by an
 		 * incoming packet, save it.
-		 *
-		 * XXX: some initiator code creates a fake MD
-		 * (there isn't a real one); save that as
-		 * well.
-		 *
-		 * XXX: should the helper code be responsible for
-		 * saving an MD reference?
 		 */
 		suspend_any_md(st, md);
 		return;

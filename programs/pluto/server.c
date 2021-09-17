@@ -622,7 +622,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
-		struct msg_digest *md = unsuspend_md(st);
+		struct msg_digest *md = unsuspend_any_md(st);
 
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;

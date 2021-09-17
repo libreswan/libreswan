@@ -1884,9 +1884,10 @@ void process_v1_packet(struct msg_digest *md)
 		 * with most recent one.
 		 */
 		if (st->st_suspended_md != NULL) {
-			dbg("releasing suspended operation before completion: %p",
-			    st->st_suspended_md);
-			release_any_md(&st->st_suspended_md);
+			dbg("suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
+			    st->st_serialno, st->st_suspended_md,
+			    pri_where(HERE));
+			md_delref(&st->st_suspended_md, HERE);
 		}
 		suspend_any_md(st, md);
 		return;
@@ -2519,6 +2520,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 *
 		 * XXX: some initiator code creates a fake MD (there
 		 * isn't a real one); save that as well.
+		 *
+		 * XXX: is this still true?
 		 */
 		passert(md != NULL);
 		suspend_any_md(md->v1_st, md);

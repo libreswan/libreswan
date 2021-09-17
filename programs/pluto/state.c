@@ -1013,10 +1013,10 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_intermediate_packet_peer);
 
 	/* if there is a suspended state transition, disconnect us */
-	struct msg_digest *md = unsuspend_md(st);
+	struct msg_digest *md = unsuspend_any_md(st);
 	if (md != NULL) {
 		dbg("disconnecting state #%lu from md", st->st_serialno);
-		release_any_md(&md);
+		md_delref(&md, HERE);
 	}
 
 	if (should_send_delete(st)) {
@@ -2765,14 +2765,32 @@ void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
  * an offloaded task.
  */
 
-struct msg_digest *unsuspend_md(struct state *st)
+void suspend_any_md_where(struct state *st, struct msg_digest *md, where_t where)
+{
+	if (md != NULL) {
+		dbg("suspend: saving MD@%p in state "PRI_SO" "PRI_WHERE,
+		    md, (st)->st_serialno, pri_where(where));
+		passert(st->st_suspended_md == NULL);
+		st->st_suspended_md = md_addref(md, where);
+		passert(state_is_busy(st));
+	} else {
+		dbg("suspend: no MD to save in state "PRI_SO" "PRI_WHERE,
+		    st->st_serialno, pri_where(where));
+	}
+}
+
+struct msg_digest *unsuspend_any_md_where(struct state *st, where_t where)
 {
 	/* don't assume it is non-NULL */
 	struct msg_digest *md = st->st_suspended_md;
-	st->st_suspended_md = NULL;
-	st->st_suspended_md_func = NULL;
-	st->st_suspended_md_line = 0;
-	dbg("unsuspending #%lu MD %p", st->st_serialno, md);
+	if (md != NULL) {
+		dbg("suspend: restoring MD@%p from state "PRI_SO" "PRI_WHERE,
+		    md, st->st_serialno, pri_where(where));
+		st->st_suspended_md = NULL;
+	} else {
+		dbg("suspend: no MD saved in state "PRI_SO" "PRI_WHERE,
+		    st->st_serialno, pri_where(where));
+	}
 	return md;
 }
 
@@ -2790,12 +2808,12 @@ bool state_is_busy(const struct state *st)
 	 *
 	 * See comments in state.h.
 	 *
-	 * ST_SUSPENDED_MD acts as a poor proxy for indicating a busy
+	 * ST_SUSPENDED.MD acts as a poor proxy for indicating a busy
 	 * state.  For instance, the initial initiator (both IKEv1 and
 	 * IKEv2) doesn't have a suspended MD.  To get around this a
 	 * 'fake_md' MD is created.
 	 *
-	 * XXX: what about xauth? It sets ST_SUSPENDED_MD.
+	 * XXX: what about xauth? It sets ST_SUSPENDED.MD.
 	 */
 	if (st->st_suspended_md != NULL) {
 		dbg("#%lu is busy; has suspended MD %p",
