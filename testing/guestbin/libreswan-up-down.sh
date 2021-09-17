@@ -24,11 +24,13 @@ config=$1 ; shift
 
 ipsec auto --add ${config}
 
-# can't trust exit code; for moment preserve old behaviour - should be
-# always deleting
+# Can't assume a 0 exit code code returned by --up means that the
+# connection is up; hence also look to see if there's traffic status.
+
+# down+delete is redundant; should always delete unconditionally
 
 if ipsec auto --up ${config} && ipsec whack --trafficstatus | grep "${config}" >/dev/null; then
-    ${bindir}/wait-until-alive "$@"
+    ${bindir}/ping-once.sh --up "$@"
     ipsec auto --down ${config}
     ipsec auto --delete ${config}
 else

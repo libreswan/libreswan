@@ -33,7 +33,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
 003 "ikev2-ike=aes128-sha1-dh19" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh19" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-destination -I 192.0.1.254 192.0.2.254 is alive
+up
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
 005 "ikev2-ike=aes128-sha1-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh19" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -46,7 +46,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
 003 "ikev2-ike=aes128-sha1-dh20" #3: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh20" #4: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-destination -I 192.0.1.254 192.0.2.254 is alive
+up
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
 005 "ikev2-ike=aes128-sha1-dh20" #4: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh20" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -59,7 +59,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
 003 "ikev2-ike=aes128-sha1-dh21" #5: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh21" #6: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-destination -I 192.0.1.254 192.0.2.254 is alive
+up
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection
 005 "ikev2-ike=aes128-sha1-dh21" #6: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh21" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification

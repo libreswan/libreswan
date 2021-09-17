@@ -31,7 +31,7 @@ west #
 1v2 "ah=md5" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "ah=md5" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ah=md5" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
-destination -I 192.0.1.254 192.0.2.254 is alive
+up
 002 "ah=md5": terminating SAs using this connection
 005 "ah=md5" #2: AH traffic information: in=84B out=84B
 002 "ah=md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -44,7 +44,7 @@ west #
 1v2 "ah=sha1" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "ah=sha1" #3: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ah=sha1" #4: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
-destination -I 192.0.1.254 192.0.2.254 is alive
+up
 002 "ah=sha1": terminating SAs using this connection
 005 "ah=sha1" #4: AH traffic information: in=84B out=84B
 002 "ah=sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
