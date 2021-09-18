@@ -639,17 +639,16 @@ stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
  * the actual starting-variable (a.k.a. IV).
  */
 
-static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
-						struct msg_digest *md,
-						chunk_t text,
-						chunk_t *plain,
-						size_t iv_offset)
+static bool verify_and_decrypt_v2SK_payload(struct ike_sa *ike,
+					    chunk_t text,
+					    chunk_t *plain,
+					    size_t iv_offset)
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
 		pexpect_fail(ike->sa.st_logger, HERE,
 			     "received encrypted packet from %s but no exponents for state #%lu to decrypt it",
-			     str_endpoint(&md->sender, &b),
+			     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 			     ike->sa.st_serialno);
 		return false;
 	}
@@ -1006,8 +1005,9 @@ static bool ikev2_reassemble_fragments(struct ike_sa *ike,
 		 * decrypt in-place.  After the decryption, PLAIN will
 		 * have been adjusted to just point at the data.
 		 */
-		if (!ikev2_verify_and_decrypt_sk_payload(ike, md, frag->text,
-							 &frag->plain, frag->iv_offset)) {
+		if (!verify_and_decrypt_v2SK_payload(ike, frag->text,
+						     &frag->plain,
+						     frag->iv_offset)) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "fragment %u of %u invalid", i, (*frags)->total);
 			free_v2_incoming_fragments(frags);
@@ -1084,8 +1084,8 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 		chunk_t c = chunk2(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);
 		chunk_t plain;
-		ok = ikev2_verify_and_decrypt_sk_payload(ike, md, c, &plain,
-							 e_pbs->cur - md->packet_pbs.start);
+		ok = verify_and_decrypt_v2SK_payload(ike, c, &plain,
+						     e_pbs->cur - md->packet_pbs.start);
 		md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_pbs_in(plain, "decrypted SK payload");
 	}
 
