@@ -860,97 +860,85 @@ static bool verify_and_decrypt_v2_payload(struct ike_sa *ike,
 }
 
 /*
- * The IKE SA is responsible for fragments; which means this code can
- * only handle a message window size of one.
- *
- * (the message may contain a delete, but that delete could contain
- * multiple CHILD SAs so the assumption that the child could hold the
- * fragments was flawed).
+ * Incomming IKEv2 fragments.
  */
 
-static bool ikev2_check_fragment(struct msg_digest *md, struct ike_sa *ike)
+static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *frags,
+						struct ikev2_skf *skf_hdr)
 {
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
-	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	/* Sanity check header */
 
-	/* ??? CLANG 3.5 thinks st might be NULL */
-	if (!(ike->sa.st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
-		dbg("discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)");
-		return false;
+	if (skf_hdr->isaskf_number == 0) {
+		return "fragment number must be 1 or greater (not 0)";
 	}
 
-	if (!(ike->sa.st_seen_fragmentation_supported)) {
-		dbg("discarding IKE encrypted fragment - remote never proposed fragmentation");
-		return false;
+	if (skf_hdr->isaskf_number > skf_hdr->isaskf_total) {
+		return "fragment number must be no greater than the total number of fragments";
 	}
 
-	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
-	    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np);
-
-	/*
-	 * Sanity check:
-	 * fragment number must be 1 or greater (not 0)
-	 * fragment number must be no greater than the total number of fragments
-	 * total number of fragments must be no more than MAX_IKE_FRAGMENTS
-	 * first fragment's next payload must not be ISAKMP_NEXT_v2NONE.
-	 * later fragments' next payload must be ISAKMP_NEXT_v2NONE.
-	 */
-	if (!(skf->isaskf_number != 0 &&
-	      skf->isaskf_number <= skf->isaskf_total &&
-	      skf->isaskf_total <= MAX_IKE_FRAGMENTS &&
-	      (skf->isaskf_number == 1) != (skf->isaskf_np == ISAKMP_NEXT_v2NONE))) {
-		dbg("ignoring invalid IKE encrypted fragment");
-		return false;
+	if (skf_hdr->isaskf_total > MAX_IKE_FRAGMENTS) {
+		return "total number of fragments must be no more than MAX_IKE_FRAGMENTS";
 	}
 
-	if (*frags == NULL) {
-		/* first fragment, so must be good */
-		return true;
+	if (skf_hdr->isaskf_number == 1 && skf_hdr->isaskf_np == ISAKMP_NEXT_v2NONE) {
+		return "first fragment's next payload must not be ISAKMP_NEXT_v2NONE";
 	}
 
-	if (skf->isaskf_total != (*frags)->total) {
-		/*
-		 * total number of fragments changed.
-		 * Either this fragment is wrong or all the
-		 * stored fragments are wrong or superseded.
-		 * The only reason the other end would have
-		 * started over with a different number of fragments
-		 * is because it decided to ratchet down the packet size
-		 * (and thus increase total).
-		 * OK: skf->isaskf_total > i->total
-		 * Bad: skf->isaskf_total < i->total
-		 */
-		if (skf->isaskf_total > (*frags)->total) {
-			dbg("discarding saved fragments because this fragment has larger total");
-			free_v2_incoming_fragments(frags);
-			return true;
-		} else {
-			dbg("ignoring odd IKE encrypted fragment (total shrank)");
-			return false;
-		}
-	} else if ((*frags)->frags[skf->isaskf_number].text.ptr != NULL) {
+	if (skf_hdr->isaskf_number > 1 && skf_hdr->isaskf_np != ISAKMP_NEXT_v2NONE) {
+		return "later fragment's next payload must be ISAKMP_NEXT_v2NONE";
+	}
+
+	/* header's ok; if it's the first it is always good */
+
+	if (frags == NULL) {
+		return NULL;
+	}
+
+	/* is it consistent with previous fragments */
+
+	if (frags->total == 0) {
+		return "message is not fragmented";
+	}
+
+	if (skf_hdr->isaskf_total != frags->total) {
+		return "fragment total changed";
+	}
+
+	if (frags->frags[skf_hdr->isaskf_number].text.ptr != NULL) {
 		/* retain earlier fragment with same index */
-		dbg("ignoring repeated IKE encrypted fragment");
-		return false;
-	} else {
-		return true;
+		return "repeat";
 	}
+
+	return NULL;
 }
 
 bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 {
+	if (!(ike->sa.st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
+		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as not allowed by local policy");
+		return false;
+	}
+
+	if (!(ike->sa.st_seen_fragmentation_supported)) {
+		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as peer never proposed fragmentation");
+		return false;
+	}
+
 	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
-	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	struct ikev2_skf *skf_hdr = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+
+	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+	    skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
+
+	const char *why = ignore_v2_incoming_fragment((*frags), skf_hdr);
+	if (why != NULL) {
+		llog_sa(RC_LOG_SERIOUS, ike, "dropping fragment %u of %u as %s",
+			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
+		return false;
+	}
+
+	struct ikev2_skf *skf = skf_hdr; /* TBD */
 	struct pbs_in *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
-
-	if (!ike->sa.st_seen_fragmentation_supported) {
-		dbg(" fragments claiming to be from peer while peer did not signal fragmentation support - dropped");
-		return false;
-	}
-
-	if (!ikev2_check_fragment(md, ike)) {
-		return false;
-	}
 
 	/*
 	 * Since the fragment check above can result in all fragments
