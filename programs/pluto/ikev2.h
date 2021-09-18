@@ -27,8 +27,11 @@ typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
 
 void ikev2_process_packet(struct msg_digest *mdp);
+
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest *mdp);
+void process_secured_v2_message(struct ike_sa *ike, struct state *st,
+				struct msg_digest *md);
 
 typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */

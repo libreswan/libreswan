@@ -1829,8 +1829,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * calculation in the background (if it were in the
 	 * foreground, the fragments would be dropped).
 	 */
-	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[v2_msg_role(md)];
-	bool have_all_fragments = (frags != NULL && frags->count == frags->total);
+	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+	bool have_all_fragments = ((*frags) != NULL && (*frags)->count == (*frags)->total);
 	if (md->message_payloads.present & P(SKF)) {
 		if (have_all_fragments) {
 			dbg("already have all fragments, skipping fragment collection");
@@ -1893,16 +1893,33 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	}
 
 	/*
-	 * Decrypt the packet and it for integrity.
+	 * Decrypt the packet and check it for integrity.
 	 *
 	 * Since all messages should be secured, anything lacking
 	 * integrity is dropped.
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
-	if (!ikev2_decrypt_msg(ike, md)) {
-		log_state(RC_LOG, &ike->sa,
-			  "encrypted payload seems to be corrupt; dropping packet");
-		/* Secure exchange: NEVER EVER RESPOND */
+	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
+	case P(SKF):
+		if (!decrypt_v2_incoming_fragments(ike, frags)) {
+			/* already logged */
+			return;
+		}
+		/* reconstitute into MD, will release fragments */
+		reassemble_v2_incoming_fragments(ike, md);
+		break;
+	case P(SK):
+		if (!ikev2_decrypt_msg(ike, md)) {
+			llog_sa(RC_LOG, ike,
+				"encrypted payload seems to be corrupt; dropping packet");
+			/* Secure exchange: NEVER EVER RESPOND */
+			return;
+		}
+		break;
+	default:
+		/* packet decode should have rejected this */
+		llog_pexpect(ike->sa.st_logger, HERE,
+			     "message contains both SK and SKF payloads");
 		return;
 	}
 

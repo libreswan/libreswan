@@ -25,6 +25,7 @@ struct dh_desc;
 struct ike_sa;
 struct state;
 struct end;
+struct v2_incoming_fragments;
 
 pb_stream open_v2_message(struct pbs_out *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
@@ -60,6 +61,10 @@ stf_status record_v2SK_message(struct pbs_out *msg,
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
 bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike);
+bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
+				   struct v2_incoming_fragments **frags);
+void reassemble_v2_incoming_fragments(struct ike_sa *ike,
+				      struct msg_digest *md);
 
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
 
