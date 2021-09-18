@@ -60,7 +60,13 @@ stf_status record_v2SK_message(struct pbs_out *msg,
 
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
-bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike);
+enum  collected_fragment {
+	FRAGMENT_IGNORED,
+	FRAGMENTS_MISSING,
+	FRAGMENTS_COMPLETE,
+};
+enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
+						     struct msg_digest *md);
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags);
 void reassemble_v2_incoming_fragments(struct ike_sa *ike,

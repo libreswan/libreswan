@@ -912,7 +912,52 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 	return NULL;
 }
 
-bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
+/*
+ * IKEv2 message fragment:
+ *
+ *                       1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * message_pbs.start (AAD):
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                       IKE SA Initiator's SPI                  |
+ *   |                                                               |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                       IKE SA Responder's SPI                  |
+ *   |                                                               |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                          Message ID                           |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                            Length                             |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * skf_pbs.start:
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   | Next Payload  |C|  RESERVED   |         Payload Length        |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |        Fragment Number        |        Total Fragments        |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * skf_pbs.cur:
+ * pointed to by iv_offset; IV length determined by crypto suite
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |                     Initialization Vector                     |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * cipher text (plain text after trimming):
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   ~                      Encrypted content                        ~
+ *   +               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |               |             Padding (0-255 octets)            |
+ *   +-+-+-+-+-+-+-+-+                               +-+-+-+-+-+-+-+-+
+ *   |                                               |  Pad Length   |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   ~                    Integrity Checksum Data                    ~
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * skf_pbs.roof:
+ * message_pbs.roof:
+ */
+
+enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
+						     struct msg_digest *md)
 {
 	if (!(ike->sa.st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
 		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as not allowed by local policy");
@@ -937,33 +982,78 @@ bool ikev2_collect_fragment(struct msg_digest *md, struct ike_sa *ike)
 		return false;
 	}
 
-	struct ikev2_skf *skf = skf_hdr; /* TBD */
-	struct pbs_in *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+	/* locate what is interesting */
 
-	/*
-	 * Since the fragment check above can result in all fragments
-	 * so-far being discarded; always check/fix frags.
-	 */
+	/* entire SKF pbs; cur points past SKF header */
+	const struct pbs_in *skf_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+	/* entire payload: AAD+SKF-header+IV+cipher-text) */
+	chunk_t text = chunk2(md->packet_pbs.start, skf_pbs->roof - md->packet_pbs.start);
+	/* first thing after SKF header is Initialization Vector */
+	unsigned iv_offset = skf_pbs->cur - md->packet_pbs.start;
+
+	/* if possible, decrypt (in place) */
+
+	chunk_t plain = empty_chunk;
+	if (ike->sa.hidden_variables.st_skeyid_calculated) {
+		/*
+		 * Try to decrypt in-place.
+		 *
+		 * If this fails, don't even bother saving the
+		 * packet.
+		 *
+		 * After the call, PLAIN is pointing at the
+		 * decrypted plain-text within TEXT.
+		 */
+		if (!verify_and_decrypt_v2_payload(ike, text, &plain,
+						   iv_offset)) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"fragment %u of %u invalid",
+				skf_hdr->isaskf_number,
+				skf_hdr->isaskf_total);
+			return FRAGMENT_IGNORED;
+		}
+		dbg("fragment %u of %u decrypted", 
+		    skf_hdr->isaskf_number,
+		    skf_hdr->isaskf_total);
+	}
+
+	/* it is worth saving */
+
 	if ((*frags) == NULL) {
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
-		(*frags)->total = skf->isaskf_total;
+		(*frags)->total = skf_hdr->isaskf_total;
 	}
 
-	passert(skf->isaskf_number < elemsof((*frags)->frags));
-	struct v2_incoming_fragment *frag = &(*frags)->frags[skf->isaskf_number];
-	passert(frag->text.ptr == NULL);
-	frag->iv_offset = e_pbs->cur - md->packet_pbs.start;
-	frag->text = clone_bytes_as_chunk(md->packet_pbs.start,
-					  e_pbs->roof - md->packet_pbs.start,
-					  "incoming IKEv2 encrypted fragment");
+	/* save a packet if needed (could have been dropped) */
 
-	if (skf->isaskf_number == 1) {
-		(*frags)->first_np = skf->isaskf_np;
+	if ((*frags)->md == NULL) {
+		(*frags)->md = md_addref(md, HERE);
 	}
+
+	/* save the fragment */
 
 	passert((*frags)->count < (*frags)->total);
 	(*frags)->count++;
-	return (*frags)->count == (*frags)->total;
+	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
+	passert(skf_hdr->isaskf_number < elemsof((*frags)->frags));
+	passert(frag->text.ptr == NULL);
+	passert(frag->plain.ptr == NULL);
+	frag->text = clone_hunk(text, "incoming IKEv2 encrypted fragment");
+	frag->iv_offset = iv_offset;
+	if (ike->sa.hidden_variables.st_skeyid_calculated) {
+		/* point into saved text */
+		frag->plain = chunk2(frag->text.ptr + (plain.ptr - text.ptr), plain.len);
+	}
+
+	/*
+	 * In the first fragment, the SKF's next-payload is for the
+	 * decrypted and reassembled SK payload
+	 */
+	if (skf_hdr->isaskf_number == 1) {
+		(*frags)->first_np = skf_hdr->isaskf_np;
+	}
+
+	return (*frags)->count == (*frags)->total ? FRAGMENTS_COMPLETE : FRAGMENTS_MISSING;
 }
 
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
@@ -1006,7 +1096,7 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 	if ((*frags)->count == 0) {
 		/*
 		 * Without a valid fragment there's no way to trust
-		 * .total, start again from scratch.
+		 * .md and .total, start again from scratch.
 		 */
 		dbg("all fragments were invalid, .total can NOT be trusted");
 		free_v2_incoming_fragments(frags);
@@ -1016,6 +1106,8 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 	if ((*frags)->count < (*frags)->total) {
 		/* more to do */
 		dbg("some, but not all fragments were invalid, .total can be trusted");
+		/* also release the first message; it may not be trustworth */
+		md_delref(&(*frags)->md, HERE);
 		return false;
 	}
 

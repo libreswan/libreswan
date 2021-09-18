@@ -89,6 +89,8 @@
 
 static callback_cb reinitiate_ike_sa_init;	/* type assertion */
 
+static void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
+				       struct msg_digest *mdp);
 /*
  * IKEv2 has slightly different states than IKEv1.
  *
@@ -1256,7 +1258,17 @@ static bool is_duplicate_request(struct ike_sa *ike,
 	}
 
 	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[MESSAGE_REQUEST];
-	if (frags != NULL) {
+	if (ike->sa.st_offloaded_task_in_background) {
+		if (pexpect(frags != NULL)) {
+			pexpect(/* single message */
+				(frags->total == 0 && frags->md != NULL) ||
+				/* multiple fragments */
+				(frags->total >= 1 && frags->count <= frags->total));
+		}
+		dbg_v2_msgid(ike, &ike->sa,
+			     "not a duplicate - responder is dealing with SKEYSEED for message request %jd",
+			     msgid);
+	} else if (frags != NULL) {
 		pexpect(frags->count < frags->total);
 		dbg_v2_msgid(ike, &ike->sa,
 			     "not a duplicate - responder is accumulating fragments for message request %jd",
@@ -1781,129 +1793,45 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	dbg("#%lu in state %s: %s", st->st_serialno,
 	    from_state->short_name, from_state->story);
 
-	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
-
 	/*
-	 * The exchange is secured (encrypted and integrity
-	 * protected); defragment and decrypt the message.
-	 *
-	 * On the responder, if SKEYSEED hasn't yet been computed, do
-	 * that now (the initiator computes SKEYSEED in the
-	 * IKE_SA_INIT response processor).
-	 *
-	 * XXX: Similar to IKEv1, the SKEYSEED computation should be
-	 * started in the background when the first fragment arrives.
-	 * Currently it only starts after all fragments have arrived.
+	 * The exchange should be secure (encrypted and integrity
+	 * protected), but is it?
 	 */
 
 	passert(ike->sa.st_state->v2.secured);
+	passert(md != NULL);
 	passert(!md->encrypted_payloads.parsed);
 	passert(md->message_payloads.present & (P(SK) | P(SKF)));
 
 	/*
-	 * Deal with fragmentation.
+	 * If the SKEYSEED is missing, compute it now (unless, of
+	 * course, it is already being computed in the background).
 	 *
-	 * The function ikev2_collect_fragment() returns FALSE when
-	 * the fragmented message isn't complete and processing should
-	 * stop:
-	 *
-	 * - the fragment was ok, but more to come
-	 *
-	 * - the fragment is corrupt (drop it)
-	 *
-	 * - the is fragment is a duplicate (drop it)
-	 *
-	 * - the fragment count changed (also deletes saved fragments)
-	 *
-	 * Only upon the first arrival of the last fragment, does the
-	 * function return TRUE.  At that point processing flow below
-	 * can then continue to the SKEYSEED check.
-	 *
-	 * XXX: Because fragments are only checked all-at-once after
-	 * they have all arrived, a single corrupt fragment will cause
-	 * all fragments being thrown away, and the entire process
-	 * re-start (Is this tested?)
-	 *
-	 * XXX: This code should instead check each fragment as it
-	 * arrives.  That means kicking off the g^{xy}
-	 * calculation in the background (if it were in the
-	 * foreground, the fragments would be dropped).
-	 */
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
-	bool have_all_fragments = ((*frags) != NULL && (*frags)->count == (*frags)->total);
-	if (md->message_payloads.present & P(SKF)) {
-		if (have_all_fragments) {
-			dbg("already have all fragments, skipping fragment collection");
-		} else if (!ikev2_collect_fragment(md, ike)) {
-			return;
-		}
-	}
-
-	/*
-	 * If the SKEYSEED is missing, compute it now.
-	 *
-	 * Fudge up a state transition that off-loads SKEYSEED and
-	 * then suspends.  Once the SKEYSEED claculation is finished,
-	 * the process or will resume packet processing by calling
-	 * back into this function (which will then dispatch the real
-	 * transition).  Recursive state transition problems are
-	 * avoided by having the fudged transition processor
-	 * STF_SKIP_COMPLETE_STATE_TRANSITION.
-	 *
-	 * XXX: This only happens after all fragments have been
-	 * accumulated.  Similar to IKEv1, this should be kicked off
-	 * when the first secured fragment arrives, and then run in
-	 * the background.
+	 * If necessary, this code will also acumulate fragments /
+	 * messages.
 	 */
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
-		if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
-			/*
-			 * Responder only: the initiator's IKE_SA_INIT
-			 * response processor calculates SKEYSEED.
-			 */
-			return;
-		}
-		if (!pexpect(ix == ISAKMP_v2_IKE_INTERMEDIATE || ix == ISAKMP_v2_IKE_AUTH)) {
-			/*
-			 * Only IKE_INTERMEDIATE and IKE_AUTH requests
-			 * require SKEYSEED (the sniffer should have
-			 * filtered this).
-			 */
-			return;
-		}
-		statetime_t start = statetime_start(st);
-		static const struct v2_state_transition svm = {
-			.story      = "Responder: process IKE_AUTH or IKE_INTERMEDIATE request (no SKEYSEED)",
-			.state      = STATE_V2_PARENT_R1,
-			.next_state = STATE_V2_PARENT_R1,
-			.send       = NO_MESSAGE,
-			.message_payloads.required = P(SK),
-			.processor  = process_v2_request_no_skeyseed,
-			.recv_role  = MESSAGE_REQUEST,
-			.recv_type  = 0,
-			.timeout_event = EVENT_SA_DISCARD,
-		};
-		md->svm = ike->sa.st_v2_transition = &svm;
-		stf_status e = svm.processor(ike, NULL/*no-child*/, md);
-		passert(e == STF_SUSPEND);
-		complete_v2_state_transition(st, md, e);
-		statetime_stop(&start, "processing: %s in %s()",
-			       svm.story, __func__);
+		process_v2_request_no_skeyseed(ike, md);
 		return;
 	}
 
 	/*
-	 * Decrypt the packet and check it for integrity.
+	 * Deal with fragmentation.
 	 *
-	 * Since all messages should be secured, anything lacking
-	 * integrity is dropped.
+	 * Accumulate fragments (they are encrypted as they arrive),
+	 * and if all are present, reassemble them.
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
 	case P(SKF):
-		if (!decrypt_v2_incoming_fragments(ike, frags)) {
-			/* already logged */
+		switch (collect_v2_incoming_fragment(ike, md)) {
+		case FRAGMENT_IGNORED:
 			return;
+		case FRAGMENTS_MISSING:
+			dbg("waiting for more fragments");
+			return;
+		case FRAGMENTS_COMPLETE:
+			break;
 		}
 		/* reconstitute into MD, will release fragments */
 		reassemble_v2_incoming_fragments(ike, md);
@@ -1922,6 +1850,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			     "message contains both SK and SKF payloads");
 		return;
 	}
+
+	process_secured_v2_message(ike, st, md);
+}
+
+void process_secured_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)
+{
+	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
 	/*
 	 * The message successfully decrypted and passed integrity

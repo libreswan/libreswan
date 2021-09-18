@@ -29,13 +29,20 @@ enum payload_security;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
-	chunk_t plain;		/* read-only; points into cipher text */
+	chunk_t plain;		/* read-only; points into decrypted plain text */
 	size_t iv_offset;	/* into text */
 };
 
 struct v2_incoming_fragments {
 	unsigned total;
 	unsigned count;
+	/*
+	 * The first message received (not first fragment).  Used to
+	 * reconstituting the original message after SKEYSEED
+	 * finishes.  Also abused by SKEYSEED to hold the
+	 * non-fragmented message.
+	 */
+	struct msg_digest *md;
 	/*
 	 * Next-Payload from first fragment.
 	 */
