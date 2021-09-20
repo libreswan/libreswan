@@ -23,7 +23,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  # IKE will be triggered by acquire; expect two labels
 west #
