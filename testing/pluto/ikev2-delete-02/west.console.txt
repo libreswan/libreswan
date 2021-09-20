@@ -134,7 +134,7 @@ west #
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-delete1":   our auth:secret, their auth:secret
+000 "west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "west-east-delete1":   sec_label:unset;
 000 "west-east-delete1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -266,7 +266,7 @@ west #
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-delete1":   our auth:secret, their auth:secret
+000 "west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "west-east-delete1":   sec_label:unset;
 000 "west-east-delete1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -391,7 +391,7 @@ west #
 000 "west-east-delete1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
 000 "west-east-delete1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "west-east-delete1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "west-east-delete1":   our auth:secret, their auth:secret
+000 "west-east-delete1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "west-east-delete1":   sec_label:unset;
 000 "west-east-delete1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

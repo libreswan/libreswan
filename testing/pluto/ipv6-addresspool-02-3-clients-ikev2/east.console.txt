@@ -12,7 +12,7 @@ east #
 000 "east": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east,MS+S=C]...%any[+MC+S=C]; unrouted; eroute owner: #0
 000 "east":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "east":   our auth:secret, their auth:secret
+000 "east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "east":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "east":   sec_label:unset;
 000 "east":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

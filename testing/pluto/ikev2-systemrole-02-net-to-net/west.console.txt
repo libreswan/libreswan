@@ -137,7 +137,7 @@ west #
 000 "192.1.2.45-to-192.1.2.23": 192.1.2.45<192.1.2.45>...192.1.2.23<192.1.2.23>; prospective erouted; eroute owner: #0
 000 "192.1.2.45-to-192.1.2.23":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret
+000 "192.1.2.45-to-192.1.2.23":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
 000 "192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

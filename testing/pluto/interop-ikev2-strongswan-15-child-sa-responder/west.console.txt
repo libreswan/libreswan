@@ -65,7 +65,7 @@ west #
 000 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
 000 "westnet-eastnet-ikev2a":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2a":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2a":   sec_label:unset;
 000 "westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
@@ -85,7 +85,7 @@ west #
 000 "westnet-eastnet-ikev2b": 192.0.100.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.200.0/24; erouted; eroute owner: #3
 000 "westnet-eastnet-ikev2b":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2b":   sec_label:unset;
 000 "westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
@@ -104,7 +104,7 @@ west #
 000 "westnet-eastnet-ikev2c": 192.0.101.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.201.0/24; erouted; eroute owner: #4
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2c":   sec_label:unset;
 000 "westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;

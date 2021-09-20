@@ -19,11 +19,11 @@ east #
 000 Total IPsec connections: loaded 11, active 0
 east #
  ipsec status | grep "our auth" | grep private
-000 "clear-or-private":   our auth:null, their auth:null
-000 "clear-or-private#192.1.3.0/24":   our auth:null, their auth:null
-000 "private":   our auth:null, their auth:null
-000 "private-or-clear":   our auth:null, their auth:null
-000 "private-or-clear-all":   our auth:null, their auth:null
+000 "clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+000 "clear-or-private#192.1.3.0/24":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+000 "private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+000 "private-or-clear":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+000 "private-or-clear-all":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 east #
  echo "initdone"
 initdone

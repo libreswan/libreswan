@@ -150,7 +150,7 @@ west #
 000 "clear": 192.1.2.45---192.1.2.254...%group; unrouted; eroute owner: #0
 000 "clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear":   our auth:unset, their auth:unset
+000 "clear":   our auth:unset, their auth:unset, our autheap:none, their autheap:none;
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear":   sec_label:unset;
 000 "clear":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
@@ -165,7 +165,7 @@ west #
 000 "clear#192.1.2.254/32": 192.1.2.45---192.1.2.254...%any; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.254/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "clear#192.1.2.254/32":   our auth:unset, their auth:unset
+000 "clear#192.1.2.254/32":   our auth:unset, their auth:unset, our autheap:none, their autheap:none;
 000 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear#192.1.2.254/32":   sec_label:unset;
 000 "clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
@@ -180,7 +180,7 @@ west #
 000 "private": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0
 000 "private":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private":   our auth:rsasig, their auth:rsasig
+000 "private":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "private":   sec_label:unset;
 000 "private":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -197,7 +197,7 @@ west #
 000 "private#10.1.0.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; prospective erouted; eroute owner: #0
 000 "private#10.1.0.0/24":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "private#10.1.0.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private#10.1.0.0/24":   our auth:rsasig, their auth:rsasig
+000 "private#10.1.0.0/24":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "private#10.1.0.0/24":   sec_label:unset;
 000 "private#10.1.0.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -214,7 +214,7 @@ west #
 000 "private-or-clear": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0
 000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private-or-clear":   our auth:rsasig, their auth:rsasig
+000 "private-or-clear":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "private-or-clear":   sec_label:unset;
 000 "private-or-clear":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -231,7 +231,7 @@ west #
 000 "private-or-clear#192.1.2.0/24": 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; prospective erouted; eroute owner: #0
 000 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "private-or-clear#192.1.2.0/24":   our auth:rsasig, their auth:rsasig
+000 "private-or-clear#192.1.2.0/24":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "private-or-clear#192.1.2.0/24":   sec_label:unset;
 000 "private-or-clear#192.1.2.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

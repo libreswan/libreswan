@@ -106,7 +106,7 @@ east #
 000 "westnet-eastnet": 0.0.0.0/0===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===0.0.0.0/0; erouted; eroute owner: #2
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet":   our auth:secret, their auth:secret
+000 "westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet":   sec_label:unset;
 000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

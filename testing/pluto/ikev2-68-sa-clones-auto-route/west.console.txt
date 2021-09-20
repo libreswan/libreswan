@@ -19,7 +19,7 @@ west #
 000 "westnet-eastnet-0": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-0":   our auth:secret, their auth:secret
+000 "westnet-eastnet-0":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   sec_label:unset;
@@ -36,7 +36,7 @@ west #
 000 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-1":   our auth:secret, their auth:secret
+000 "westnet-eastnet-1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   sec_label:unset;
@@ -53,7 +53,7 @@ west #
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-2":   our auth:secret, their auth:secret
+000 "westnet-eastnet-2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   sec_label:unset;
@@ -138,7 +138,7 @@ west #
 000 "westnet-eastnet-0": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #2
 000 "westnet-eastnet-0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-0":   our auth:secret, their auth:secret
+000 "westnet-eastnet-0":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   sec_label:unset;
@@ -157,7 +157,7 @@ west #
 000 "westnet-eastnet-1": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #4
 000 "westnet-eastnet-1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-1":   our auth:secret, their auth:secret
+000 "westnet-eastnet-1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   sec_label:unset;
@@ -175,7 +175,7 @@ west #
 000 "westnet-eastnet-2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; erouted; eroute owner: #3
 000 "westnet-eastnet-2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-2":   our auth:secret, their auth:secret
+000 "westnet-eastnet-2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   sec_label:unset;
