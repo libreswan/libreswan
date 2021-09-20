@@ -37,6 +37,8 @@ west #
  echo "initdone"
 initdone
 west #
+ # IKE #1 Child #3
+west #
  ipsec auto --up westnet-eastnet-ikev2a
 1v2 "westnet-eastnet-ikev2a" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request
@@ -44,114 +46,124 @@ west #
 003 "westnet-eastnet-ikev2a" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "westnet-eastnet-ikev2a" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ # Child #3
 west #
  ipsec auto --up westnet-eastnet-ikev2b
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 004 "westnet-eastnet-ikev2b" #3: established Child SA; IPsec tunnel [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
-PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
---- 192.0.200.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+up
+west #
+ # Child #4
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 004 "westnet-eastnet-ikev2c" #4: established Child SA; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
-PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
---- 192.0.201.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+up
+west #
+ # expect Child #2 #3 #4
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- ipsec status |grep STATE_
-000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+ # rekey to Child #5 #6 #7
 west #
- echo "sleep 23"
-sleep 23
+ ../../guestbin/wait-for.sh --match '#5: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2a" #5: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- sleep 23
+ ../../guestbin/wait-for.sh --match '#6: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2b" #6: established Child SA; IPsec tunnel [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match '#7: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2c" #7: established Child SA; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
-PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
---- 192.0.200.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
-PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
---- 192.0.201.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+up
+west #
+ # wait for old, so that they are not in traffic status
+west #
+ ../../guestbin/wait-for.sh --match '#2: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/wait-for.sh --match '#3: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2b" #3: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/wait-for.sh --match '#4: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2c" #4: ESP traffic information: in=84B out=84B
+west #
+ # expect Child #5 #6 #7
 west #
  ipsec whack --trafficstatus
-006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- ipsec status |grep STATE_
-000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+ # rekey to Child #8 #9 #10
 west #
- echo "sleep 25"
-sleep 25
+ ../../guestbin/wait-for.sh --match '#8: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2a" #8: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- sleep 25
+ ../../guestbin/wait-for.sh --match '#9: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2b" #9: established Child SA; IPsec tunnel [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/wait-for.sh --match '#10: established Child SA' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2c" #10: established Child SA; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping -n -q -w 4 -c 4 -I 192.0.100.254 192.0.200.254
-PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
---- 192.0.200.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
- ping -n -q -w 4 -c 4 -I 192.0.101.254 192.0.201.254
-PING 192.0.201.254 (192.0.201.254) from 192.0.101.254 : 56(84) bytes of data.
---- 192.0.201.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
+up
+west #
+ # wait for old, so that they are not in traffic status
+west #
+ ../../guestbin/wait-for.sh --match '#5: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2a" #5: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/wait-for.sh --match '#6: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2b" #6: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/wait-for.sh --match '#7: ESP traffic information:' -- cat /tmp/pluto.log
+"westnet-eastnet-ikev2c" #7: ESP traffic information: in=84B out=84B
+west #
+ # expect Child #8 #9 #10
+west #
+ ipsec whack --trafficstatus
+006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-006 #11: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #12: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #13: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  ipsec status |grep STATE_
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #11: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #12: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
-000 #13: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
 west #
  
