@@ -366,6 +366,13 @@ static const struct keyword_enum_value kw_global_ikev1_values[] = {
 };
 static const struct keyword_enum_values kw_global_ikev1_list = VALUES_INITIALIZER(kw_global_ikev1_values);
 
+static const struct keyword_enum_value kw_eap_values[] = {
+	{ "none", IKE_EAP_NONE }, /* default */
+	{ "tls", IKE_EAP_TLS },
+};
+
+static const struct keyword_enum_values kw_eap_list = VALUES_INITIALIZER(kw_eap_values);
+
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
@@ -475,6 +482,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  &kw_authby_lr_list, NULL, },
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
+  { "autheap",  kv_conn | kv_leftright,  kt_enum,  KNCF_EAP,  &kw_eap_list, NULL, },
 
   /* these are conn statements which are not left/right */
 

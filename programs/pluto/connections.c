@@ -992,6 +992,7 @@ static int extract_end(struct connection *c,
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
 	dst->xauth_username = clone_str(src->xauth_username, "xauth username");
+	dst->eap = src->eap;
 
 	dst->authby = src->authby;
 
@@ -4061,10 +4062,13 @@ static void show_one_sr(struct show *s,
 	esb_buf auth1, auth2;
 
 	show_comment(s,
-		"\"%s\"%s:   our auth:%s, their auth:%s",
+		"\"%s\"%s:   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		c->name, instance,
 		enum_show_short(&keyword_authby_names, sr->this.authby, &auth1),
-		enum_show_short(&keyword_authby_names, sr->that.authby, &auth2));
+		enum_show_short(&keyword_authby_names, sr->that.authby, &auth2),
+		sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
+		sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
+	);
 
 	show_comment(s,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",

@@ -801,6 +801,11 @@ enum tcp_options {
        IKE_TCP_FALLBACK = 3,
 };
 
+enum eap_options {
+	IKE_EAP_NONE = 0, /* default */
+	IKE_EAP_TLS = 1,
+};
+
 /*
  * Policies for establishing an SA
  *

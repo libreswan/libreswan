@@ -391,6 +391,11 @@ static bool set_whack_end(char *lr,
 	if (l->options_set[KNCF_AUTH])
 		w->authby = l->options[KNCF_AUTH];
 
+	if (l->options_set[KNCF_EAP])
+		w->eap = l->options[KNCF_EAP];
+	else
+		w->eap = IKE_EAP_NONE;
+
 	w->updown = l->updown;
 	w->virt = NULL;
 	w->virt = l->virt;

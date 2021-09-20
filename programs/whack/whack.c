@@ -79,6 +79,7 @@ static void help(void)
 		"	[--vtiip <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | ecdsa | null>] \\\n"
+		"	[--autheap none | tls] \\\n"
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
@@ -406,6 +407,7 @@ enum option_enums {
 	END_SRCIP,
 	END_VTIIP,
 	END_AUTHBY,
+	END_AUTHEAP,
 	END_UPDOWN,
 
 #define END_LAST  END_UPDOWN	/* last end description*/
@@ -660,6 +662,7 @@ static const struct option long_opts[] = {
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
+	{ "autheap",  required_argument, NULL, END_AUTHEAP + OO },
 	{ "updown", required_argument, NULL, END_UPDOWN + OO },
 
 	/* options for a connection description */
@@ -1724,6 +1727,14 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "ecdsa"))
 				msg.right.authby = AUTHBY_ECDSA;
 			else diag("authby option is not one of psk, ecdsa, rsasig or null");
+			continue;
+
+		case END_AUTHEAP:
+			if (streq(optarg, "tls"))
+				msg.right.eap = IKE_EAP_TLS;
+			else if (streq(optarg, "none"))
+				msg.right.eap = IKE_EAP_NONE;
+			else diag("--autheap option is not one of none, tls");
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */

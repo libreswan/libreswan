@@ -194,8 +194,9 @@ enum keyword_numeric_conn_field {
 	KNCF_SENDCERT,	/* left/right */
 	KNCF_IKEPORT,		/* left/right: IKE Port that must be used */
 	KNCF_AUTH,	/* left/right */
+	KNCF_EAP,	/* left/right */
 
-		KNCF_last_leftright = KNCF_AUTH,
+		KNCF_last_leftright = KNCF_EAP,
 
 	KNCF_FIREWALL,
 	KNCF_IDTYPE,
@@ -359,7 +360,7 @@ enum keyword_type {
 	kt_invertbool,          /* value is an off/on type ("disable") */
 	kt_enum,                /* value is from a set of key words */
 	kt_list,                /* a set of values from a set of key words */
-	kt_lset,		/* a set of values from an enum name */
+	kt_lset,                /* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_rsasigkey,           /* a public key, or set of values */
 	kt_number,              /* an integer */
