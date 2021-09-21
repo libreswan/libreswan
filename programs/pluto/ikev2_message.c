@@ -1022,17 +1022,13 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		    skf_hdr->isaskf_total);
 	}
 
-	/* it is worth saving */
+	/* make space for the fragment (it's worth saving) */
 
 	if ((*frags) == NULL) {
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->total = skf_hdr->isaskf_total;
 		(*frags)->xchg = md->hdr.isa_xchg;
-	}
-
-	/* save a packet if needed (could have been dropped) */
-
-	if ((*frags)->md == NULL) {
+		/* may not be fragment 1; will replace when it arrives */
 		(*frags)->md = md_addref(md, HERE);
 	}
 
@@ -1052,11 +1048,41 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	}
 
 	/*
-	 * In the first fragment, the SKF's next-payload is for the
-	 * decrypted and reassembled SK payload
+	 * Additionally, save fragment 1.  The first fragment's
+	 * message is needed for two reasons:
+	 *
+	 * - the next-payload field in the first fragment's SKF header
+	 * is used as the next-payload field of the reconstituted SK
+	 * payload header
+	 *
+	 * - any unencrypted payloads from the first message are
+	 * included in the reconstituted message
+	 *
+	 * RFC 7383:
+	 *  2.5.3.  Fragmenting Messages Containing Unprotected Payloads
+	 *
+	 *  Currently, there are no IKEv2 exchanges that define
+	 *  messages, containing both unprotected payloads and
+	 *  payloads, that are protected by the Encrypted payload.
+	 *  However, IKEv2 does not prohibit such construction.  If
+	 *  some future IKEv2 extension defines such a message and it
+	 *  needs to be fragmented, all unprotected payloads MUST be
+	 *  placed in the first fragment (with the Fragment Number
+	 *  field equal to 1), along with the Encrypted Fragment
+	 *  payload, which MUST be present in every IKE Fragment
+	 *  message and be the last payload in it.
+	 *
+	 * XXX: to be honest, the use of "protected" here seems
+	 * confused.  The entire message is protected, it is just that
+	 * the SKF payload is encrypted.
+	 *
+	 * If .md contains some other fragment saved earlier by the
+	 * above, replace it now.
 	 */
 	if (skf_hdr->isaskf_number == 1) {
 		(*frags)->first_np = skf_hdr->isaskf_np;
+		md_delref(&(*frags)->md, HERE);
+		(*frags)->md = md_addref(md, HERE);
 	}
 
 	return (*frags)->count == (*frags)->total ? FRAGMENTS_COMPLETE : FRAGMENTS_MISSING;
@@ -1112,20 +1138,19 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 	if ((*frags)->count < (*frags)->total) {
 		/* more to do */
 		dbg("some, but not all fragments were invalid, .total can be trusted");
-		/* also release the first message; it may not be trustworth */
-		md_delref(&(*frags)->md, HERE);
 		return false;
 	}
 
 	return true;
 }
 
-void reassemble_v2_incoming_fragments(struct ike_sa *ike, struct msg_digest *md)
+struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 {
 	dbg("reassembling incoming fragments");
-	struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+	struct msg_digest *md = md_addref((*frags)->md, HERE);
 	passert(md->chain[ISAKMP_NEXT_v2SK] == NULL);
 	passert(md->chain[ISAKMP_NEXT_v2SKF] != NULL);
+	pexpect(md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);
 	passert(md->digest_roof < elemsof(md->digest));
 
 	/*
@@ -1170,6 +1195,7 @@ void reassemble_v2_incoming_fragments(struct ike_sa *ike, struct msg_digest *md)
 
 	/* clean up */
 	free_v2_incoming_fragments(frags);
+	return md;
 }
 
 /*

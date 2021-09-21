@@ -1787,8 +1787,12 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 *
 	 * Accumulate fragments (they are encrypted as they arrive),
 	 * and if all are present, reassemble them.
+	 *
+	 * PROTECTED_MD will need to be released by this function. to
+	 * be relased, MD is released by the caller.
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
+	struct msg_digest *protected_md; /* MUST md_delref() */
 	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
 	case P(SKF):
 		switch (collect_v2_incoming_fragment(ike, md)) {
@@ -1800,8 +1804,13 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
-		/* reconstitute into MD, will release fragments */
-		reassemble_v2_incoming_fragments(ike, md);
+		/*
+		 * Replace MD with a message constructed starting with
+		 * fragment 1 (which also contains unencrypted
+		 * payloads).
+		 */
+		struct v2_incoming_fragments **frags = &ike->sa.st_v2_incoming[v2_msg_role(md)];
+		protected_md = reassemble_v2_incoming_fragments(frags);
 		break;
 	case P(SK):
 		if (!ikev2_decrypt_msg(ike, md)) {
@@ -1810,6 +1819,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			/* Secure exchange: NEVER EVER RESPOND */
 			return;
 		}
+		protected_md = md_addref(md, HERE);
 		break;
 	default:
 		/* packet decode should have rejected this */
@@ -1818,7 +1828,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		return;
 	}
 
-	process_secured_v2_message(ike, st, md);
+	process_secured_v2_message(ike, st, protected_md);
+	md_delref(&protected_md, HERE);
 }
 
 void process_secured_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)

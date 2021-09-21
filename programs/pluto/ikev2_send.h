@@ -38,10 +38,30 @@ struct v2_incoming_fragments {
 	unsigned count;
 	enum isakmp_xchg_type xchg;
 	/*
-	 * The first message received (not first fragment).  Used to
-	 * reconstituting the original message after SKEYSEED
-	 * finishes.  Also abused by SKEYSEED to hold the
-	 * non-fragmented message.
+	 * A fragment.
+	 *
+	 * - initially it contains the first fragment to arrive (which
+	 *   may not be fragment 1)
+	 *
+	 *   on the responder, should there be a problem during
+	 *   SKEYSEED then the saved message is used to construct the
+	 *   headers for the un-protected error response
+	 *
+	 * - when fragment 1 arrives, it replaces any previously saved
+         *   fragment
+	 *
+	 *   once all fragments have arrived, fragment 1 with its
+	 *   protected, but not encrypted, payloads, is used to
+	 *   reconstitute the message
+	 *
+	 * Additionally:
+	 *
+	 * - on the responder, while waiting for SKEYSEED to be
+         *   calculated, it can contain the first secured message
+         *   (instead of a fragment)
+	 *
+	 * Note: until all fragments have arrived and been decrypted,
+	 * the saved fragment should not be trusted.
 	 */
 	struct msg_digest *md;
 	/*
