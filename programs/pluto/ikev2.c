@@ -1110,9 +1110,11 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			return true;
 		}
 		/*
-		 * Is this a fragment?  So far only the header has
-		 * been parsed (the SKF payload has not, so parse it
-		 * now).
+		 * Is this an obvious fragment (obvious fragments have
+		 * SKF as the first payload)?
+		 *
+		 * So far only the header has been parsed (the SKF
+		 * payload has not, so parse it now).
 		 */
 		unsigned fragment = 0;
 		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
@@ -1129,8 +1131,8 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			fragment = skf.isaskf_number;
 		}
 		/*
-		 * Respond if needed.  For fragments only respond when
-		 * the first fragment.
+		 * Respond if needed.  For fragments, only respond
+		 * when the message contains fragment 1.
 		 */
 		if (fragment == 0) {
 			llog_sa(RC_LOG, ike,
@@ -1185,14 +1187,19 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	struct v2_incoming_fragments *frags = ike->sa.st_v2_incoming[MESSAGE_REQUEST];
 	if (ike->sa.st_offloaded_task_in_background) {
 		/*
-		 * The IKE SA responder is living in the twilight zone
-		 * where, while it has already received an IKE_AUTH
-		 * request (fragment) it hasn't yet computed the
-		 * SKEYSEED, and hence can't decrypt or verify any
-		 * messages.
+		 * The IKE SA responder is in the twilight zone:
 		 *
-		 * The code below (process_v2_request_no_skeyseed())
-		 * will carefully accumulate the fragments.
+		 *   Even though the responder has received an
+		 *   IKE_AUTH message (or fragment), it hasn't started
+		 *   processing it, and isn't considered "busy".  It
+		 *   needs SKEYSEED to do that.
+		 *
+		 * Further down:
+		 *
+		 * - this message is unpacked locating SK/SKF payload
+		 * - checked to see if there's a transition
+		 * - passed to process_v2_request_no_skeyseed() which
+		 *   may decide to save it
 		 */
 		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
 		pexpect(!ike->sa.hidden_variables.st_skeyid_calculated);
@@ -1208,11 +1215,13 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	} else if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
 		 * The IKE SA responder is standing at the gateway to
-		 * the twilight zone where, it has received a message,
-		 * but isn't yet ready to decrypt / verify it.
+		 * the twilight zone (see above).
 		 *
-		 * Code below (process_v2_request_no_skeyseed())
-		 * checks the message, possibly dropping it instead.
+		 * Same as above, however ...
+		 *
+		 * This time, process_v2_request_no_skeyseed() also
+		 * decides if the twilight zone should even be entered
+		 * (SKEYSEED started).
 		 */
 		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
 		dbg_v2_msgid(ike, &ike->sa,
@@ -1222,10 +1231,13 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		/*
 		 * A fragment and SKEYSEED is available.
 		 *
-		 * The code below will decrypt each fragment, and if
-		 * acceptable, save it.  Only once the entire message
-		 * has been accumulated will the code below start
-		 * processing it.
+		 * The code below will:
+		 *
+		 * - unpack the message to find SK/SKF
+		 * - decrypt and accumulate fragments
+		 *
+		 * Only once the entire message has been accumulated
+		 * will the code below start processing it.
 		 */
 		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
 		pexpect(frags->count < frags->total);
@@ -1236,8 +1248,10 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		/*
 		 * A simple message and SKEYSEED is available.
 		 *
-		 * The code below will decrypt the message and then,
-		 * if acceptable, start processing it.
+		 * The code below will unpack the, and decrypt the
+		 * message and then, if acceptable, start processing
+		 * it.  If it turns out to be a fragment then it will
+		 * start accumulating them.
 		 */
 		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
 		dbg_v2_msgid(ike, &ike->sa,
@@ -1390,7 +1404,16 @@ static bool is_duplicate_response(struct ike_sa *ike,
 
 void ikev2_process_packet(struct msg_digest *md)
 {
-	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
+	/*
+	 * Caller did their job?
+	 *
+	 * Message role is determined by 1 bit, so one of these must
+	 * be tree.
+	 */
+	passert(md != NULL);
+	passert(hdr_ike_version(&md->hdr) == IKEv2);
+	passert(v2_msg_role(md) == MESSAGE_REQUEST ||
+		v2_msg_role(md) == MESSAGE_RESPONSE);
 
 	/*
 	 * If the IKE SA initiator (IKE_I) sent the message then this
@@ -1404,6 +1427,8 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * Dump what the message says, once a state has been found
 	 * this can be checked against what is.
 	 */
+
+	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 	LSWDBGP(DBG_BASE, buf) {
 		switch (expected_local_ike_role) {
 		case SA_RESPONDER:
@@ -1430,39 +1455,24 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
+	 * Handle the unprotected IKE_SA_INIT exchange.
 	 *
-	 * Handle the unsecured IKE_SA_INIT exchange.
-	 *
-	 * Unlike for a secured message (which requires an existing
-	 * IKE SA), the code processing an unsecured IKE_SA_INIT
-	 * message may never need, create, or search for an IKE SA;
-	 * and when it does it uses a specalized tools.
+	 * Unlike for later exchanges (which requires an existing
+	 * secured IKE SA), the code processing an unsecured
+	 * IKE_SA_INIT message may never need, create, or search for
+	 * an IKE SA; and when it does it uses a specalized lookup.
 	 *
 	 * For instance, when a cookie is required, a message with no
 	 * cookie is rejected before the IKE SA is created.
 	 *
-	 * Hence, the unsecured IKE_SA_INIT exchange is given its own
-	 * separate code path.
+	 * Hence, the unprotected IKE_SA_INIT exchange is given its
+	 * own separate code path.
 	 */
 
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
 		process_v2_IKE_SA_INIT(md);
 		return;
 	}
-
-	/*
-	 * Sine the two cases:
-	 *
-	 *    - IKE_SA_INIT exchange
-	 *    - secured exchange
-	 *
-	 * are mutually exclusive, and this isn't an IKE_SA_INIT
-	 * exchange, the message should be for a secured exchange.
-	 * Lets see.
-	 */
-
-	passert(v2_msg_role(md) == MESSAGE_REQUEST ||
-		v2_msg_role(md) == MESSAGE_RESPONSE);
 
 	/*
 	 * Find the IKE SA with matching SPIs.
@@ -1480,12 +1490,6 @@ void ikev2_process_packet(struct msg_digest *md)
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
-
-	/*
-	 * There's at least an IKE SA, and possibly ST willing to
-	 * process the message.
-	 */
-	passert(ike != NULL);
 
 	/*
 	 * Re-check ST's IKE SA's role against the I(Initiator) flag
@@ -1635,17 +1639,21 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 }
 
 /*
- * The IKE SA for the message has been found (or created).  Continue
- * verification, and identify the state (ST) that the message should
- * be sent to.
+ * A secured IKE SA for the message has been found (the message also
+ * needs to be protected, but that has yet to be confirmed).
+ *
+ * First though filter, use the Message ID to filter out duplicates.
  */
 
 static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike_sa *ike)
 {
+	passert(ike->sa.st_state->v2.secured);
+	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
+
 	/*
 	 * Deal with duplicate messages and busy states.
 	 */
-	struct state *st;
+	struct state *st; /* set below */
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
 		/*
@@ -1655,7 +1663,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
 		/*
-		 * Is this a true duplicate?
+		 * Based on the Message ID, is this a true duplicate?
 		 *
 		 * If MD is a fragment then it isn't considered a
 		 * duplicate.
@@ -1688,25 +1696,21 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	default:
 		bad_case(v2_msg_role(md));
 	}
-
-	/*
-	 * Now that the state that is to process the message has been
-	 * selected, switch logging to it.
-	 */
 	passert(st != NULL);
 
-	/* XXX: debug-logging this decision is redundant */
-
 	/*
-	 * Have a state and an IKE SA, time to decode the message
-	 * payloads.
+	 * Is the message protected, or at least looks to be protected
+	 * (i.e., does it have an SK or SKF payload).
 	 *
-	 * IKE_SA_INIT were handled earlier (so should never get this
-	 * far).
+	 * Because there can be other payloads before SK or SKF, the
+	 * only way to truely confirm this is to unpack the all the
+	 * payload headers.
+	 *
+	 * Remember, the unprotected IKE_SA_INIT exchange was excluded
+	 * earlier, and the IKE SA is confirmed as secure.
 	 */
 	dbg("unpacking clear payload");
 	passert(!md->message_payloads.parsed);
-	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 	md->message_payloads =
 		ikev2_decode_payloads(ike->sa.st_logger, md,
 				      &md->message_pbs,
@@ -1727,33 +1731,31 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	}
 
 	/*
-	 * Examine the non-secured parts of the message weeding out
-	 * anything that isn't at least vaguely plausable:
+	 * Using the (in theory) protected but not encrypted parts of
+	 * the message, weed out anything that isn't at least vaguely
+	 * plausable:
 	 *
-	 * - if the IKE SA isn't secured then this will reject
-         *   everything
+	 * - if the IKE SA isn't protecting exchanges then this will
+         *   reject everything
 	 *
-	 *   IKE_SA_INIT was handled earlier and nothing else is
-	 *   valid.
+	 *   IKE_SA_INIT was handled earlier, all further exchanges
+	 *   are protected.
 	 *
-	 * - if the IKE SA is secured then this will reject any
-         *   message that doesn't contan an SK or SKF payload
+	 * - if the IKE SA is protecting exchanges then this will
+         *   reject any message that doesn't contan an SK or SKF
+         *   payload
 	 *
-	 *   Any transition from a secured state must include a
-	 *   secured payload.
+	 *   Any transition from a secured state must invole a
+	 *   protected payload.
 	 *
 	 * XXX:
 	 *
-	 * When the message is valid, the state's transitions are
+	 * If the message is valid then state's transition's will be
 	 * scanned twice: first here and then, further down, when
 	 * looking for the real transition.  Fortunately we're talking
 	 * about at most 7 transitions and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
-	 *
-	 * Something to worry about after the SKEYSEED has been
-	 * changed so that it is computed in the background?
 	 */
-	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 	if (!sniff_v2_state_transition(st->st_logger, st->st_state, md)) {
 		/* already logged */
 		/* drop packet on the floor */
@@ -1773,8 +1775,8 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * If the SKEYSEED is missing, compute it now (unless, of
 	 * course, it is already being computed in the background).
 	 *
-	 * If necessary, this code will also acumulate fragments /
-	 * messages.
+	 * If necessary, this code will also acumulate unvalidated
+	 * fragments / messages.
 	 */
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		process_v2_request_no_skeyseed(ike, md);
@@ -1782,13 +1784,13 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	}
 
 	/*
-	 * Deal with fragmentation.
+	 * Decrypt the message, verifying the protection.
 	 *
-	 * Accumulate fragments (they are encrypted as they arrive),
-	 * and if all are present, reassemble them.
+	 * For fragments, also accumulate them (they are encrypted as
+	 * they arrive), and once all are present, reassemble them.
 	 *
-	 * PROTECTED_MD will need to be released by this function. to
-	 * be relased, MD is released by the caller.
+	 * PROTECTED_MD will need to be released by this function (MD
+	 * is released by the caller).
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 	struct msg_digest *protected_md; /* MUST md_delref() */
