@@ -89,8 +89,8 @@
 
 static callback_cb reinitiate_ike_sa_init;	/* type assertion */
 
-static void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
-				       struct msg_digest *mdp);
+static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
+
 /*
  * IKEv2 has slightly different states than IKEv1.
  *
@@ -1388,8 +1388,6 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * IKE SPIs group .....
  */
 
-static void ike_process_packet(struct msg_digest *mdp, struct ike_sa *ike);
-
 void ikev2_process_packet(struct msg_digest *md)
 {
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
@@ -1477,7 +1475,7 @@ void ikev2_process_packet(struct msg_digest *md)
 					    expected_local_ike_role);
 	if (ike == NULL) {
 		esb_buf ixb;
-		rate_log(md, "%s message %s has no corresponding IKE SA",
+		rate_log(md, "no IKE SA for %s %s; message dropped",
 			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
@@ -1500,11 +1498,33 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
+	 * Since the IKE_SA_INIT exchanges have been excluded, the
+	 * only acceptable option is a protected exchange (has SK or
+	 * SKF) using a secured IKE SA.
+	 *
+	 * Narrow things further by ensuring that the IKE SA is,
+	 * indeed, secured.
+	 *
+	 * An attacker sending a non IKE_SA_INIT response to an
+	 * IKE_SA_INIT request, for instance, would tickle this code
+	 * path.
+	 */
+	if (!ike->sa.st_state->v2.secured) {
+		esb_buf ixb;
+		/* there's no rate_llog() */
+		rate_log(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
+			 ike->sa.st_serialno,
+			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
+			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		return;
+	}
+
+	/*
 	 * Since there's an IKE SA start billing and logging against
 	 * it.
 	 */
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-	ike_process_packet(md, ike);
+	process_packet_with_secured_ike_sa(md, ike);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -1620,7 +1640,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
  * be sent to.
  */
 
-static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
+static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike_sa *ike)
 {
 	/*
 	 * Deal with duplicate messages and busy states.
@@ -1739,32 +1759,11 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 		/* drop packet on the floor */
 		return;
 	}
-	passert(ike->sa.st_state->v2.secured);
-	passert(md->message_payloads.present & (P(SK) | P(SKF)));
-
-	ikev2_process_state_packet(ike, st, md);
-}
-
-/*
- * The SA the message is intended for has been identified; continuing
- * ...
- */
-
-void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
-				struct msg_digest *md)
-{
-	passert(ike != NULL);
-	passert(st != NULL);
-
-	const struct finite_state *from_state = st->st_state;
-	dbg("#%lu in state %s: %s", st->st_serialno,
-	    from_state->short_name, from_state->story);
 
 	/*
-	 * The exchange should be secure (encrypted and integrity
-	 * protected), but is it?
+	 * The message looks protected, only step left is to validate
+	 * the message.
 	 */
-
 	passert(ike->sa.st_state->v2.secured);
 	passert(md != NULL);
 	passert(!md->encrypted_payloads.parsed);
