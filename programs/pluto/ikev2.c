@@ -1509,6 +1509,112 @@ void ikev2_process_packet(struct msg_digest *md)
 }
 
 /*
+ * Payload decrypted and integrity was ok but contents weren't valid.
+ * Either because the secured payload didn't unpack, or the contents
+ * of the unpacked secured weren't recognized (didn't match any state
+ * transition).
+ *
+ * XXX: According to "2.21.2.  Error Handling in IKE_AUTH" and
+ * "2.21.3.  Error Handling after IKE SA is Authenticated" this should
+ * be fatal, killing the IKE SA.  Oops.
+ *
+ * Since there's no state transition to complete, find one vaguely
+ * plausable, and then complete it with a fatal error, triggering the
+ * delete of the IKE family.
+ *
+ * This is largely astetic.  It could use the first transition but
+ * often a later transition reads better.  Perhaps the last transition
+ * since, presumably, that is the most generic?
+ *
+ * XXX: the transition should match the exchange, the below probably
+ * gets that wrong?
+ */
+
+static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct state *st,
+						  struct msg_digest *md,
+						  v2_notification_t n, chunk_t *data)
+{
+	/*
+	 * First find a transition to fail.
+	 */
+	passert(md != NULL);
+	const struct v2_state_transition *transition;
+	const struct finite_state *state = st->st_state;
+	switch (state->kind) {
+	case STATE_V2_PARENT_R1:
+		/*
+		 * Responding to either an IKE_INTERMEDIATE or
+		 * IKE_AUTH request.
+		 */
+		pexpect(state->nr_transitions == 2);
+		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
+			transition = &state->v2.transitions[0];
+			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
+			pexpect(transition->next_state == STATE_V2_PARENT_R1);
+		} else {
+			transition = &state->v2.transitions[1];
+			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
+			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+		}
+		pexpect(transition->state == STATE_V2_PARENT_R1);
+		break;
+	case STATE_V2_PARENT_I2:
+	{
+		/*
+		 * Receiving IKE_AUTH response: it is buried deep
+		 * down; would adding an extra transition that always
+		 * matches be better?
+		 */
+		unsigned transition_nr = 1;
+		pexpect(state->nr_transitions > transition_nr);
+		transition = &state->v2.transitions[transition_nr];
+		pexpect(transition->state == STATE_V2_PARENT_I2);
+		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+		break;
+	}
+	default:
+		if (/*pexpect*/(state->nr_transitions > 0)) {
+			transition = &state->v2.transitions[state->nr_transitions - 1];
+		} else {
+			static const struct v2_state_transition undefined_transition = {
+				.story = "suspect message",
+				.state = STATE_UNDEFINED,
+				.next_state = STATE_UNDEFINED,
+			};
+			transition = &undefined_transition;
+		}
+		break;
+	}
+	/*pexpect(st->st_v2_transition == NULL);*/
+	md->svm = st->st_v2_transition = transition;
+
+	/*
+	 * Now send a secured response, and fail the transition.
+	 */
+	switch (v2_msg_role(md)) {
+	case MESSAGE_REQUEST:
+		/*
+		 * Send back a secured error response.  Need to first
+		 * put the IKE SA into responder mode.
+		 */
+		v2_msgid_start_responder(ike, st, md);
+		record_v2N_response(st->st_logger, ike, md,
+				    n, data, ENCRYPTED_PAYLOAD);
+		break;
+	case MESSAGE_RESPONSE:
+		/*
+		 * Can't respond so kill the IKE SA - the
+		 * secured message contained crap so there's
+		 * little that can be done.
+		 */
+		break;
+	default:
+		bad_case(v2_msg_role(md));
+	}
+	complete_v2_state_transition(st, md, STF_FATAL);
+}
+
+/*
  * The IKE SA for the message has been found (or created).  Continue
  * verification, and identify the state (ST) that the message should
  * be sent to.
@@ -1640,112 +1746,6 @@ static void ike_process_packet(struct msg_digest *md, struct ike_sa *ike)
 }
 
 /*
- * Payload decrypted and integrity was ok but contents weren't valid.
- * Either because the secured payload didn't unpack, or the contents
- * of the unpacked secured weren't recognized (didn't match any state
- * transition).
- *
- * XXX: According to "2.21.2.  Error Handling in IKE_AUTH" and
- * "2.21.3.  Error Handling after IKE SA is Authenticated" this should
- * be fatal, killing the IKE SA.  Oops.
- *
- * Since there's no state transition to complete, find one vaguely
- * plausable, and then complete it with a fatal error, triggering the
- * delete of the IKE family.
- *
- * This is largely astetic.  It could use the first transition but
- * often a later transition reads better.  Perhaps the last transition
- * since, presumably, that is the most generic?
- *
- * XXX: the transition should match the exchange, the below probably
- * gets that wrong?
- */
-
-static void complete_secured_but_fatal_exchange(struct ike_sa *ike, struct state *st,
-						struct msg_digest *md,
-						v2_notification_t n, chunk_t *data)
-{
-	/*
-	 * First find a transition to fail.
-	 */
-	passert(md != NULL);
-	const struct v2_state_transition *transition;
-	const struct finite_state *state = st->st_state;
-	switch (state->kind) {
-	case STATE_V2_PARENT_R1:
-		/*
-		 * Responding to either an IKE_INTERMEDIATE or
-		 * IKE_AUTH request.
-		 */
-		pexpect(state->nr_transitions == 2);
-		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
-			transition = &state->v2.transitions[0];
-			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
-			pexpect(transition->next_state == STATE_V2_PARENT_R1);
-		} else {
-			transition = &state->v2.transitions[1];
-			pexpect(transition->recv_type == ISAKMP_v2_IKE_AUTH);
-			pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-		}
-		pexpect(transition->state == STATE_V2_PARENT_R1);
-		break;
-	case STATE_V2_PARENT_I2:
-	{
-		/*
-		 * Receiving IKE_AUTH response: it is buried deep
-		 * down; would adding an extra transition that always
-		 * matches be better?
-		 */
-		unsigned transition_nr = 1;
-		pexpect(state->nr_transitions > transition_nr);
-		transition = &state->v2.transitions[transition_nr];
-		pexpect(transition->state == STATE_V2_PARENT_I2);
-		pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-		break;
-	}
-	default:
-		if (/*pexpect*/(state->nr_transitions > 0)) {
-			transition = &state->v2.transitions[state->nr_transitions - 1];
-		} else {
-			static const struct v2_state_transition undefined_transition = {
-				.story = "suspect message",
-				.state = STATE_UNDEFINED,
-				.next_state = STATE_UNDEFINED,
-			};
-			transition = &undefined_transition;
-		}
-		break;
-	}
-	/*pexpect(st->st_v2_transition == NULL);*/
-	md->svm = st->st_v2_transition = transition;
-
-	/*
-	 * Now send a secured response, and fail the transition.
-	 */
-	switch (v2_msg_role(md)) {
-	case MESSAGE_REQUEST:
-		/*
-		 * Send back a secured error response.  Need to first
-		 * put the IKE SA into responder mode.
-		 */
-		v2_msgid_start_responder(ike, st, md);
-		record_v2N_response(st->st_logger, ike, md,
-				    n, data, ENCRYPTED_PAYLOAD);
-		break;
-	case MESSAGE_RESPONSE:
-		/*
-		 * Can't respond so kill the IKE SA - the
-		 * secured message contained crap so there's
-		 * little that can be done.
-		 */
-		break;
-	default:
-		bad_case(v2_msg_role(md));
-	}
-	complete_v2_state_transition(st, md, STF_FATAL);
-}
-
-/*
  * The SA the message is intended for has been identified; continuing
  * ...
  */
@@ -1828,11 +1828,11 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		return;
 	}
 
-	process_secured_v2_message(ike, st, protected_md);
+	process_protected_v2_message(ike, st, protected_md);
 	md_delref(&protected_md, HERE);
 }
 
-void process_secured_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)
+void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)
 {
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
@@ -1869,7 +1869,7 @@ void process_secured_v2_message(struct ike_sa *ike, struct state *st, struct msg
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 		chunk_t data = chunk2(md->encrypted_payloads.data,
 				      md->encrypted_payloads.data_size);
-		complete_secured_but_fatal_exchange(ike, st, md, md->encrypted_payloads.n, &data);
+		complete_protected_but_fatal_exchange(ike, st, md, md->encrypted_payloads.n, &data);
 		return;
 	}
 
@@ -1893,7 +1893,7 @@ void process_secured_v2_message(struct ike_sa *ike, struct state *st, struct msg
 		}
 		pexpect(secured_payload_failed);
 		/* XXX: calls delete_state() */
-		complete_secured_but_fatal_exchange(ike, st, md, v2N_INVALID_SYNTAX, NULL);
+		complete_protected_but_fatal_exchange(ike, st, md, v2N_INVALID_SYNTAX, NULL);
 		return;
 	}
 

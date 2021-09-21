@@ -1612,7 +1612,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		md = reassemble_v2_incoming_fragments(frags);
 	}
 
-	process_secured_v2_message(ike, &ike->sa, md);
+	process_protected_v2_message(ike, &ike->sa, md);
 	md_delref(&md, HERE);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }

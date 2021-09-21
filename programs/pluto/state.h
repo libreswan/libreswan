@@ -279,7 +279,7 @@ struct finite_state {
 		} v1;
 		struct {
 			const struct v2_state_transition *transitions;
-			bool secured; /* encrypted and protected; possibly not authenticated */
+			bool secured; /* hence, exchanges must be integrity protected */
 #if 0
 			bool authenticated;
 #endif
