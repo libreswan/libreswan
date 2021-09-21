@@ -36,6 +36,7 @@ struct v2_incoming_fragment {
 struct v2_incoming_fragments {
 	unsigned total;
 	unsigned count;
+	enum isakmp_xchg_type xchg;
 	/*
 	 * The first message received (not first fragment).  Used to
 	 * reconstituting the original message after SKEYSEED

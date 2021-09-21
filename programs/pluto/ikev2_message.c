@@ -864,7 +864,8 @@ static bool verify_and_decrypt_v2_payload(struct ike_sa *ike,
  */
 
 static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *frags,
-						struct ikev2_skf *skf_hdr)
+					       struct msg_digest *md,
+					       struct ikev2_skf *skf_hdr)
 {
 	/* Sanity check header */
 
@@ -895,6 +896,10 @@ static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *fra
 	}
 
 	/* is it consistent with previous fragments */
+
+	if (md->hdr.isa_xchg != frags->xchg) {
+		return "message exchange does not match";
+	}
 
 	if (frags->total == 0) {
 		return "message is not fragmented";
@@ -975,7 +980,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
 	    skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
 
-	const char *why = ignore_v2_incoming_fragment((*frags), skf_hdr);
+	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
 	if (why != NULL) {
 		llog_sa(RC_LOG_SERIOUS, ike, "dropping fragment %u of %u as %s",
 			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
@@ -1012,7 +1017,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 				skf_hdr->isaskf_total);
 			return FRAGMENT_IGNORED;
 		}
-		dbg("fragment %u of %u decrypted", 
+		dbg("fragment %u of %u decrypted",
 		    skf_hdr->isaskf_number,
 		    skf_hdr->isaskf_total);
 	}
@@ -1022,6 +1027,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	if ((*frags) == NULL) {
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->total = skf_hdr->isaskf_total;
+		(*frags)->xchg = md->hdr.isa_xchg;
 	}
 
 	/* save a packet if needed (could have been dropped) */
