@@ -6,15 +6,17 @@ Redirecting to: [initsystem]
 north #
  ../../guestbin/wait-until-pluto-started
 north #
- ipsec auto --add north-east
-002 "north-east": added IKEv2 connection
-north #
- ipsec whack --impair delete-on-retransmit
-north #
- ipsec whack --impair revival
-north #
  echo initdone
 initdone
+north #
+ # north is redirected to 1 - 192.1.2.44 - which is down
+north #
+ ipsec whack --impair none
+north #
+ ipsec whack --impair revival --impair delete-on-retransmit
+north #
+ ipsec auto --add north-east
+002 "north-east": added IKEv2 connection
 north #
  ipsec auto --up north-east
 1v2 "north-east" #1: initiating IKEv2 connection
@@ -28,14 +30,14 @@ north #
 002 "north-east" #2: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
- echo "1. north connection add+up done"
-1. north connection add+up done
-north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection
 north #
- echo "1. north connection delete done"
-1. north connection delete done
+ # north is redirected to 3 - 192.1.2.46 - which is down
+north #
+ ipsec whack --impair none
+north #
+ ipsec whack --impair revival --impair delete-on-retransmit
 north #
  ipsec auto --add north-east
 002 "north-east": added IKEv2 connection
@@ -52,14 +54,14 @@ north #
 002 "north-east" #4: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "north-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
- echo "2. north connection add+up done"
-2. north connection add+up done
-north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection
 north #
- echo "2. north connection delete done"
-2. north connection delete done
+ # north is redirected to 2 - 192.1.2.45 - which is up
+north #
+ ipsec whack --impair none
+north #
+ ipsec whack --impair revival --impair suppress-retransmits
 north #
  ipsec auto --add north-east
 002 "north-east": added IKEv2 connection
@@ -80,13 +82,6 @@ north #
 002 "north-east" #7: up-client output: updating resolvconf
 004 "north-east" #7: established Child SA; IPsec tunnel [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
- echo "3. north connection add+up done"
-3. north connection add+up done
-north #
- sleep 1
-north #
- # should be connected to west!
-north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 north #
@@ -98,9 +93,6 @@ north #
 005 "north-east" #7: ESP traffic information: in=84B out=84B
 002 "north-east" #7: down-client output: restoring resolvconf
 002 "north-east" #6: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-north #
- echo "3. north connection delete done"
-3. north connection delete done
 north #
  ipsec whack --trafficstatus
 north #

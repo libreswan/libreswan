@@ -9,14 +9,14 @@ road #
  ipsec auto --add road-east
 002 "road-east": added IKEv2 connection
 road #
- # we cannot have --impair retransmit, because for some reason
-road #
- # first IKE_AUTH request road sends is actually retransmitted once.
-road #
- ipsec whack --impair revival
-road #
  echo initdone
 initdone
+road #
+ # road is redirected to 2 - 192.1.2.45 - which is up
+road #
+ ipsec whack --impair none
+road #
+ ipsec whack --impair revival --impair suppress-retransmits
 road #
  ipsec auto --up road-east
 1v2 "road-east" #1: initiating IKEv2 connection
@@ -34,13 +34,6 @@ road #
 002 "road-east" #3: up-client output: updating resolvconf
 004 "road-east" #3: established Child SA; IPsec tunnel [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
- echo "1. road connection add+up done"
-1. road connection add+up done
-road #
- sleep 1
-road #
- # should be connected to west!
-road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
@@ -53,13 +46,14 @@ road #
 002 "road-east" #3: down-client output: restoring resolvconf
 002 "road-east" #2: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 road #
- echo "1. road connection delete done"
-1. road connection delete done
+ # road is redirected to 1 - 192.1.2.44 - which is down
+road #
+ ipsec whack --impair none
+road #
+ ipsec whack --impair revival --impair delete-on-retransmit
 road #
  ipsec auto --add road-east
 002 "road-east": added IKEv2 connection
-road #
- ipsec whack --impair delete-on-retransmit
 road #
  ipsec auto --up road-east
 1v2 "road-east" #4: initiating IKEv2 connection
@@ -72,9 +66,6 @@ road #
 002 "road-east" #5: IMPAIR: retransmit so deleting SA
 002 "road-east" #5: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "road-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up
-road #
- echo "2. road connection add+up done"
-2. road connection add+up done
 road #
  ipsec whack --trafficstatus
 road #
