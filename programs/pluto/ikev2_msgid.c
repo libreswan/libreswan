@@ -213,8 +213,7 @@ void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
 			  &child->sa, &old_child);
 }
 
-void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
-			      const struct msg_digest *md)
+void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);
 	if (!pexpect(role == MESSAGE_REQUEST)) {
@@ -222,22 +221,21 @@ void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
 	}
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
-	const struct v2_msgid_wip wip = responder->st_v2_msgid_wip;
+	const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 
 	if (DBGP(DBG_BASE) &&
-	    responder->st_v2_msgid_wip.responder != -1) {
-		FAIL_V2_MSGID(ike, responder,
-			      "responder->st_v2_msgid_wip.responder == -1; was %jd",
-			      responder->st_v2_msgid_wip.responder);
+	    ike->sa.st_v2_msgid_wip.responder != -1) {
+		FAIL_V2_MSGID(ike, &ike->sa,
+			      "ike->sa.st_v2_msgid_wip.responder == -1; was %jd",
+			      ike->sa.st_v2_msgid_wip.responder);
 	}
-	responder->st_v2_msgid_wip.responder = msgid;
+	ike->sa.st_v2_msgid_wip.responder = msgid;
 	dbg_msgids_update("responder starting", role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
-			  responder, &wip);
+			  &ike->sa, &wip);
 }
 
-void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
-			       const struct msg_digest *md)
+void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role msg_role = v2_msg_role(md);
 	if (!pexpect(msg_role == MESSAGE_REQUEST)) {
@@ -245,22 +243,22 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
 	}
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
-	const struct v2_msgid_wip wip = responder->st_v2_msgid_wip;
+	const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 
 	/*
 	 * If an encrypted message is corrupt things bail before
 	 * start_responder() but then STF_IGNORE tries to clear it.
 	 */
 	if (DBGP(DBG_BASE) &&
-	    responder->st_v2_msgid_wip.responder != msgid) {
-		FAIL_V2_MSGID(ike, responder,
-			      "responder->st_v2_msgid_wip.responder == %jd(msgid); was %jd",
-			      msgid, responder->st_v2_msgid_wip.responder);
+	    ike->sa.st_v2_msgid_wip.responder != msgid) {
+		FAIL_V2_MSGID(ike, &ike->sa,
+			      "ike->sa.st_v2_msgid_wip.responder == %jd(msgid); was %jd",
+			      msgid, ike->sa.st_v2_msgid_wip.responder);
 	}
-	responder->st_v2_msgid_wip.responder = -1;
+	ike->sa.st_v2_msgid_wip.responder = -1;
 	dbg_msgids_update("cancelling responder", msg_role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
-			  responder, &wip);
+			  &ike->sa, &wip);
 }
 
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,

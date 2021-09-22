@@ -76,10 +76,8 @@ void v2_msgid_init_ike(struct ike_sa *ike);
 void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child);
 void v2_msgid_free(struct state *st);
 
-void v2_msgid_start_responder(struct ike_sa *ike, struct state *responder,
-			      const struct msg_digest *md);
-void v2_msgid_cancel_responder(struct ike_sa *ike, struct state *responder,
-			       const struct msg_digest *md);
+void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md);
+void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md);
 
 bool v2_msgid_request_outstanding(struct ike_sa *ike);
 bool v2_msgid_request_pending(struct ike_sa *ike);

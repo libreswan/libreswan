@@ -1621,7 +1621,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 		 * Send back a secured error response.  Need to first
 		 * put the IKE SA into responder mode.
 		 */
-		v2_msgid_start_responder(ike, st, md);
+		v2_msgid_start_responder(ike, md);
 		record_v2N_response(st->st_logger, ike, md,
 				    n, data, ENCRYPTED_PAYLOAD);
 		break;
@@ -1927,7 +1927,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	 * window (since work has commenced).
 	 */
 	if (v2_msg_role(md) == MESSAGE_REQUEST) {
-		v2_msgid_start_responder(ike, st, md);
+		v2_msgid_start_responder(ike, md);
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -2569,7 +2569,7 @@ void complete_v2_state_transition(struct state *st,
 		 * processing the message.
 		 */
 		if (v2_msg_role(md) == MESSAGE_REQUEST) {
-			v2_msgid_cancel_responder(ike, st, md);
+			v2_msgid_cancel_responder(ike, md);
 		}
 		return;
 
