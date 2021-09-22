@@ -1074,7 +1074,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 {
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(ike->sa.st_state->v2.secured); /* not IKE_SA_INIT */
-	intmax_t msgid = md->hdr.isa_msgid;
+	intmax_t msgid = md->hdr.isa_msgid; /* zero extend */
 
 	/* lie to keep test results happy */
 	dbg("#%lu st.st_msgid_lastrecv %jd md.hdr.isa_msgid %08jx",
@@ -1084,40 +1084,124 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	pexpect(ike->sa.st_v2_msgid_windows.responder.recv ==
 		ike->sa.st_v2_msgid_windows.responder.sent);
 
+	/*
+	 * Is this request old?  Yes, drop it.
+	 *
+	 * If the Message ID is earlier than the last response sent,
+	 * then the message is too old and not worth a retransmit:
+	 * since a message with ID SENT was received, the initiator
+	 * must have received up to SENT-1 responses.
+	 */
 	if (msgid < ike->sa.st_v2_msgid_windows.responder.sent) {
-		/*
-		 * This is an OLD retransmit and out sliding window
-		 * holds only the most recent response. we can't do
-		 * anything.
-		 */
-		log_state(RC_LOG, &ike->sa,
-			  "received too old retransmit: %jd < %jd",
-			  msgid, ike->sa.st_v2_msgid_windows.responder.sent);
+		llog_sa(RC_LOG, ike,
+			"%s request has duplicate Message ID %jd but it is older than last response (%jd); message dropped",
+			enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+			msgid, ike->sa.st_v2_msgid_windows.responder.sent);
 		return true;
 	}
 
+	/*
+	 * Is this request for last response? Yes, retransmit.
+	 *
+	 * Since the request Message ID matches the most recent
+	 * response, the response was presumably lost.  Retransmit
+	 * (with some fuzzy logic around fragments).
+	 *
+	 * The code is using just the Message ID.  Shouldn't this code
+	 * instead compare entire message before retransmitting?
+	 *
+	 * Little point:
+	 *
+	 * - the attacker is both in-the-middle and active
+	 *
+	 *   Only messages that match the randomly chosen IKE
+	 *   responder's SPI can reach this point.  Obtaining this
+	 *   means being in-the-middle.  Exploiting it means being
+	 *   active.
+	 *
+	 * - the attacker will just re-transmit the original message
+	 *
+	 *   Since it is capturing the IKE responder's SPI then it can
+	 *   just as easily save the entire message.  Hence, such a
+	 *   check could easily be defeated.
+	 *
+	 *   OTOH, making the attacker do this would give them
+	 *   slightly more work.  Is it worth it?
+	 *
+	 * Besides, RFC 7296 in:
+	 *
+	 *   2.1.  Use of Retransmission Timers
+	 *
+	 * say to focus on the message IDs:
+	 *
+	 *   The responder MUST remember each response until it
+	 *   receives a request whose sequence number is larger than
+	 *   or equal to the sequence number in the response plus its
+	 *   window size
+	 *
+	 * Where there is a problem, abet theoretical, is with
+	 * fragments.  The code assumes that a message fragment only
+	 * contains the SKF payload - if there were ever to be other
+	 * payloads then the check would fail.
+	 *
+	 * Fortunately RFC 7383 (once it's wording is fixed) in:
+	 *
+	 *   2.5.3.  Fragmenting Messages Containing [unencrypted] payloads
+	 *
+	 * points out that:
+	 *
+	 *   Currently, there are no IKEv2 exchanges that define
+	 *   messages, containing both [integrity protected payloads,
+	 *   and encrypted and integrity protected payloads].
+	 *
+	 * Lets hold our breath.
+	 */
 	if (msgid == ike->sa.st_v2_msgid_windows.responder.sent) {
 		/*
-		 * This was the last request processed and,
-		 * presumably, a response was sent.  Retransmit the
-		 * saved response (the response was saved right?).
+		 * XXX: should a local timer delete the last outgoing
+		 * message after a short while so that retransmits
+		 * don't go for ever?  The RFC seems to think so:
+		 *
+		 * 2.1.  Use of Retransmission Timers
+		 *
+		 *   [...] In order to allow saving memory, responders
+		 *   are allowed to forget the response after a
+		 *   timeout of several minutes.
 		 */
 		if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] == NULL) {
 			FAIL_V2_MSGID(ike, &ike->sa,
-				      "retransmission for message %jd exchange %s failed responder.sent %jd - there is no stored message or fragments to retransmit",
-				      msgid, enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				      ike->sa.st_v2_msgid_windows.responder.sent);
+				      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
+				      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+				      msgid);
 			return true;
 		}
+
 		/*
-		 * Is this an obvious fragment (obvious fragments have
-		 * SKF as the first payload)?
+		 * Does the message only contain an SKF payload?  (no
+		 * exchange is defiend that contains more than just
+		 * that payload).
 		 *
-		 * So far only the header has been parsed (the SKF
-		 * payload has not, so parse it now).
+		 * The RFC 7383, in:
+		 *
+		 *   2.6.1.  Replay Detection and Retransmissions
+		 *
+		 * says to check:
+		 *
+		 *   If an incoming message contains an Encrypted
+		 *   Fragment payload, the values of the Fragment
+		 *   Number and Total Fragments fields MUST be used
+		 *   along with the Message ID to detect
+		 *   retransmissions and replays.
 		 */
-		unsigned fragment = 0;
-		if (md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+
+		switch (md->hdr.isa_np) {
+		case ISAKMP_NEXT_v2SK:
+			llog_sa(RC_LOG, ike,
+				"%s request has duplicate Message ID %jd; retransmitting response",
+				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+				msgid);
+			break;
+		case ISAKMP_NEXT_v2SKF:
 			pexpect(md->chain[ISAKMP_NEXT_v2SKF] == NULL); /* not yet parsed */
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
@@ -1128,32 +1212,28 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 				return true;
 			}
-			fragment = skf.isaskf_number;
-		}
-		/*
-		 * Respond if needed.  For fragments, only respond
-		 * when the message contains fragment 1.
-		 */
-		if (fragment == 0) {
+			if (skf.isaskf_number != 1) {
+				dbg_v2_msgid(ike, &ike->sa,
+					     "%s request fragment %u of %u has duplicate Message ID %jd but is not fragment 1; message dropped",
+					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					     skf.isaskf_number, skf.isaskf_total, msgid);
+				return true;
+			}
 			llog_sa(RC_LOG, ike,
-				"received duplicate %s message request (Message ID %jd); retransmitting response",
+				"%s request fragment %u of %u has duplicate Message ID %jd; retransmitting response",
+				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+				skf.isaskf_number, skf.isaskf_total, msgid);
+			break;
+		default:
+			/* until there's evidence that this is valid */
+			llog_sa(RC_LOG, ike,
+				"%s request has duplicate Message ID %jd but does not start with SK or SKF payload; message dropped",
 				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 				msgid);
-			send_recorded_v2_message(ike, "ikev2-responder-retransmit",
-						 MESSAGE_RESPONSE);
-		} else if (fragment == 1) {
-			llog_sa(RC_LOG, ike,
-				"received duplicate %s message request (Message ID %jd, fragment %u); retransmitting response",
-				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
-				msgid, fragment);
-			send_recorded_v2_message(ike, "ikev2-responder-retransmt (fragment 1)",
-						 MESSAGE_RESPONSE);
-		} else {
-			dbg_v2_msgid(ike, &ike->sa,
-				     "received duplicate %s message request (Message ID %jd, fragment %u); discarded as not fragment 1",
-				     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
-				     msgid, fragment);
+			return true;
 		}
+		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
+					 MESSAGE_RESPONSE);
 		return true;
 	}
 
