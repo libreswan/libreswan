@@ -1485,7 +1485,7 @@ void ikev2_process_packet(struct msg_digest *md)
 					    expected_local_ike_role);
 	if (ike == NULL) {
 		esb_buf ixb;
-		rate_log(md, "no IKE SA for %s %s; message dropped",
+		rate_log(md, "%s %s has no corresponding IKE SA; message dropped",
 			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;

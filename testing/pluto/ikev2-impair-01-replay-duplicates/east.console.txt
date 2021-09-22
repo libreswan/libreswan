@@ -51,7 +51,7 @@ packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes
 "westnet-eastnet" #1: received duplicate INFORMATIONAL message request (Message ID 2); retransmitting response
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
-packet from 192.1.2.45:500: INFORMATIONAL message request has no corresponding IKE SA
+packet from 192.1.2.45:500: INFORMATIONAL request has no corresponding IKE SA; message dropped
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 east #
  
