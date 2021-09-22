@@ -1174,7 +1174,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * - the message successfully decrypts
 	 *
 	 */
-	if (ike->sa.st_v2_msgid_wip.responder == msgid) {
+	if (ike->sa.st_v2_msgid_windows.responder.recv_wip == msgid) {
 		/* this generates the log message */
 		pexpect(verbose_state_busy(&ike->sa));
 		return true;

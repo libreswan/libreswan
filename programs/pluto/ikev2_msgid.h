@@ -45,6 +45,7 @@ struct v2_msgid_window {
 	monotime_t last_contact;  /* received a message */
 	intmax_t sent;
 	intmax_t recv;
+	intmax_t recv_wip;
 	struct v2_msgid_pending *pending;
 };
 
@@ -69,7 +70,6 @@ struct v2_msgid_windows {
 
 struct v2_msgid_wip {
 	intmax_t initiator;
-	intmax_t responder;
 };
 
 void v2_msgid_init_ike(struct ike_sa *ike);
