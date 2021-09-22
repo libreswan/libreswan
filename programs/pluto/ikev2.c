@@ -1554,8 +1554,7 @@ void ikev2_process_packet(struct msg_digest *md)
  * gets that wrong?
  */
 
-static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct state *st,
-						  struct msg_digest *md,
+static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg_digest *md,
 						  v2_notification_t n, chunk_t *data)
 {
 	/*
@@ -1563,7 +1562,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 	 */
 	passert(md != NULL);
 	const struct v2_state_transition *transition;
-	const struct finite_state *state = st->st_state;
+	const struct finite_state *state = ike->sa.st_state;
 	switch (state->kind) {
 	case STATE_V2_PARENT_R1:
 		/*
@@ -1610,7 +1609,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 		break;
 	}
 	/*pexpect(st->st_v2_transition == NULL);*/
-	md->svm = st->st_v2_transition = transition;
+	md->svm = ike->sa.st_v2_transition = transition;
 
 	/*
 	 * Now send a secured response, and fail the transition.
@@ -1622,7 +1621,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 		 * put the IKE SA into responder mode.
 		 */
 		v2_msgid_start_responder(ike, md);
-		record_v2N_response(st->st_logger, ike, md,
+		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, data, ENCRYPTED_PAYLOAD);
 		break;
 	case MESSAGE_RESPONSE:
@@ -1635,7 +1634,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct sta
 	default:
 		bad_case(v2_msg_role(md));
 	}
-	complete_v2_state_transition(st, md, STF_FATAL);
+	complete_v2_state_transition(&ike->sa, md, STF_FATAL);
 }
 
 /*
@@ -1870,7 +1869,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct m
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 		chunk_t data = chunk2(md->encrypted_payloads.data,
 				      md->encrypted_payloads.data_size);
-		complete_protected_but_fatal_exchange(ike, st, md, md->encrypted_payloads.n, &data);
+		complete_protected_but_fatal_exchange(ike, md, md->encrypted_payloads.n, &data);
 		return;
 	}
 
@@ -1894,7 +1893,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct m
 		}
 		pexpect(secured_payload_failed);
 		/* XXX: calls delete_state() */
-		complete_protected_but_fatal_exchange(ike, st, md, v2N_INVALID_SYNTAX, NULL);
+		complete_protected_but_fatal_exchange(ike, md, v2N_INVALID_SYNTAX, NULL);
 		return;
 	}
 
