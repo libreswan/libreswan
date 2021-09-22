@@ -157,6 +157,7 @@ struct msg_digest {
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool fake_clone;			/* is this a fake (clone) message */
+	unsigned v2_frags_total;		/* total fragments */
 
 	/*
 	 * Note that .pd[] is indexed using either enum v1_pd or enum

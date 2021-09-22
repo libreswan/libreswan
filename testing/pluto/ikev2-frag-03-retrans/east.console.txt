@@ -16,12 +16,12 @@ initdone
 east #
  # On east this shows the duplicates on west there is nothing.
 east #
- grep "received duplicate [^ ]* message request .* fragment" /tmp/pluto.log | sed "s/last_contact=XX.XXX[^ ]* /last_contact=XXX /g"
-"westnet-eastnet-ikev2" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
-| Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 2); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
-| Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 3); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
-| Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 4); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
-| Message ID: IKE #1 received duplicate IKE_AUTH message request (Message ID 1, fragment 5); discarded as not fragment 1: ike.initiator.sent=-1 ike.initiator.recv=-1 ike.initiator.last_contact=XXX ike.responder.sent=1 ike.responder.recv=1 ike.responder.last_contact=XXX ike.wip.initiator=-1 ike.wip.responder=-1
+ grep "fragment .* duplicate Message ID" /tmp/pluto.log | sed "s/last_contact=XX.XXX[^ ]* /last_contact=XXX /g"
+"westnet-eastnet-ikev2" #1: IKE_AUTH request fragment 1 of 5 has duplicate Message ID 1; retransmitting response
+| Message ID: IKE #1 IKE_AUTH request fragment 2 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
+| Message ID: IKE #1 IKE_AUTH request fragment 3 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
+| Message ID: IKE #1 IKE_AUTH request fragment 4 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
+| Message ID: IKE #1 IKE_AUTH request fragment 5 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
 east #
  ../../guestbin/ipsec-look.sh
 east NOW

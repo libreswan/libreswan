@@ -67,7 +67,7 @@ packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 4
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of 4 (539 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: received duplicate IKE_AUTH message request (Message ID 1, fragment 1); retransmitting response
+"westnet-eastnet" #1: IKE_AUTH request fragment 1 of 2 has duplicate Message ID 1; retransmitting response
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 4
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 4 (169 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
@@ -83,15 +83,15 @@ packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 1 of 5
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of 5 (539 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: received too old retransmit: 1 < 2
+"westnet-eastnet" #1: IKE_AUTH request has duplicate Message ID 1 but it is older than last response (2); message dropped
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 5
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 5 (169 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: received too old retransmit: 1 < 2
+"westnet-eastnet" #1: IKE_AUTH request has duplicate Message ID 1 but it is older than last response (2); message dropped
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 5
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 5 (69 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: received duplicate INFORMATIONAL message request (Message ID 2); retransmitting response
+"westnet-eastnet" #1: INFORMATIONAL request has duplicate Message ID 2; retransmitting response
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 5
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 5 of 5 (65 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message

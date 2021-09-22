@@ -50,18 +50,33 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 			   const struct v2_msgid_window *old,
 			   const struct v2_msgid_window *new)
 {
-	jam(buf, " ike.%s.sent=%jd", what, old->sent);
-	if (new != NULL && old->sent != new->sent) {
+	jam(buf, " ike.%s", what);
+
+	jam(buf, " .sent=%jd", old->sent);
+	if (old->sent != new->sent) {
 		jam(buf, "->%jd", new->sent);
 	}
-	jam(buf, " ike.%s.recv=%jd", what, old->recv);
-	if (new != NULL && old->recv != new->recv) {
+
+	jam(buf, " .recv=%jd", old->recv);
+	if (old->recv != new->recv) {
 		jam(buf, "->%jd", new->recv);
 	}
+
+	jam(buf, " .recv_frags=%u", old->recv_frags);
+	if (old->recv_frags != new->recv_frags) {
+		jam(buf, "->%u", new->recv_frags);
+	}
+
+	if (old->recv_wip > -1 || new->recv_wip > -1) {
+		jam(buf, " .recv_wip=%jd", old->recv_wip);
+		if (old->recv_wip != new->recv_wip) {
+			jam(buf, "->%jd", new->recv_wip);
+		}
+	}
+
 	monotime_buf mb;
-	jam(buf, " ike.%s.last_contact=%s", what,
-	    str_monotime(old->last_contact, &mb));
-	if (new != NULL && monotime_cmp(old->last_contact, !=, new->last_contact)) {
+	jam(buf, " .last_contact=%s", str_monotime(old->last_contact, &mb));
+	if (monotime_cmp(old->last_contact, !=, new->last_contact)) {
 		jam(buf, "->%s", str_monotime(new->last_contact, &mb));
 	}
 }
@@ -70,10 +85,10 @@ static void jam_ike_windows(struct jambuf *buf,
 			    const struct v2_msgid_windows *old,
 			    const struct v2_msgid_windows *new)
 {
-	jam_ike_window(buf, "initiator", &old->initiator,
-		       new != NULL ? &new->initiator : NULL);
-	jam_ike_window(buf, "responder", &old->responder,
-		       new != NULL ? &new->responder : NULL);
+	jam_ike_window(buf, "initiator",
+		       &old->initiator, &new->initiator);
+	jam_ike_window(buf, "responder",
+		       &old->responder, &new->responder);
 }
 
 static void jam_wip_sa(struct jambuf *buf, const char *who,
@@ -81,12 +96,8 @@ static void jam_wip_sa(struct jambuf *buf, const char *who,
 		       const struct v2_msgid_wip *new)
 {
 	jam(buf, " %s.wip.initiator=%jd", who, old->initiator);
-	if (new != NULL && old->initiator != new->initiator) {
+	if (old->initiator != new->initiator) {
 		jam(buf, "->%jd", new->initiator);
-	}
-	jam(buf, " %s.wip.responder=%jd", who, old->responder);
-	if (new != NULL && old->responder != new->responder) {
-		jam(buf, "->%jd", new->responder);
 	}
 }
 
@@ -99,9 +110,13 @@ static void jam_v2_msgid(struct jambuf *buf,
 	jam(buf, " ");
 	jam_va_list(buf, fmt, ap);
 	jam(buf, ":");
-	jam_ike_windows(buf, &ike->sa.st_v2_msgid_windows, NULL);
+	jam_ike_windows(buf,
+			/*old*/&ike->sa.st_v2_msgid_windows,
+			/*new*/&ike->sa.st_v2_msgid_windows);
 	if (wip_sa != NULL) {
-		jam_wip_sa(buf, who, &wip_sa->st_v2_msgid_wip, NULL);
+		jam_wip_sa(buf, who,
+			   /*old*/&wip_sa->st_v2_msgid_wip,
+			   /*new*/&wip_sa->st_v2_msgid_wip);
 	}
 }
 
@@ -175,16 +190,17 @@ static const struct v2_msgid_windows empty_v2_msgid_windows = {
 	.initiator = {
 		.sent = -1,
 		.recv = -1,
+		.recv_wip = -1,
 	},
 	.responder = {
 		.sent = -1,
 		.recv = -1,
+		.recv_wip = -1,
 	},
 };
 
 static const struct v2_msgid_wip empty_v2_msgid_wip = {
 	.initiator = -1,
-	.responder = -1,
 };
 
 void v2_msgid_init_ike(struct ike_sa *ike)
@@ -221,18 +237,17 @@ void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md)
 	}
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
-	const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 
 	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_wip.responder != -1) {
+	    ike->sa.st_v2_msgid_windows.responder.recv_wip != -1) {
 		FAIL_V2_MSGID(ike, &ike->sa,
-			      "ike->sa.st_v2_msgid_wip.responder == -1; was %jd",
-			      ike->sa.st_v2_msgid_wip.responder);
+			      "ike->sa.st_v2_msgid_windows.responder.recv_wip == -1; was %jd",
+			      ike->sa.st_v2_msgid_windows.responder.recv_wip);
 	}
-	ike->sa.st_v2_msgid_wip.responder = msgid;
+	ike->sa.st_v2_msgid_windows.responder.recv_wip = msgid;
 	dbg_msgids_update("responder starting", role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
-			  &ike->sa, &wip);
+			  &ike->sa, &ike->sa.st_v2_msgid_wip);
 }
 
 void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
@@ -243,22 +258,21 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
 	}
 	/* extend msgid */
 	intmax_t msgid = md->hdr.isa_msgid;
-	const struct v2_msgid_wip wip = ike->sa.st_v2_msgid_wip;
 
 	/*
 	 * If an encrypted message is corrupt things bail before
 	 * start_responder() but then STF_IGNORE tries to clear it.
 	 */
 	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_wip.responder != msgid) {
+	    ike->sa.st_v2_msgid_windows.responder.recv_wip != msgid) {
 		FAIL_V2_MSGID(ike, &ike->sa,
-			      "ike->sa.st_v2_msgid_wip.responder == %jd(msgid); was %jd",
-			      msgid, ike->sa.st_v2_msgid_wip.responder);
+			      "ike->sa.st_v2_msgid_windows.responder.recv_wip == %jd(msgid); was %jd",
+			      msgid, ike->sa.st_v2_msgid_windows.responder.recv_wip);
 	}
-	ike->sa.st_v2_msgid_wip.responder = -1;
+	ike->sa.st_v2_msgid_windows.responder.recv_wip = -1;
 	dbg_msgids_update("cancelling responder", msg_role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows,
-			  &ike->sa, &wip);
+			  &ike->sa, &ike->sa.st_v2_msgid_wip);
 }
 
 void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
@@ -281,6 +295,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	enum message_role receiving = v2_msg_role(md);
 	intmax_t msgid;
+	struct v2_msgid_window *update;
 
 	const char *update_received_story;
 	switch (receiving) {
@@ -296,18 +311,17 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		msgid = md->hdr.isa_msgid; /* zero-extended */
 		if (receiver != NULL) {
 			if (DBGP(DBG_BASE) &&
-			    receiver->st_v2_msgid_wip.responder != msgid) {
+			    receiver->st_v2_msgid_windows.responder.recv_wip != msgid) {
 				FAIL_V2_MSGID(ike, receiver,
-					      "wip.responder == %jd(msgid); was %jd",
-					      msgid, receiver->st_v2_msgid_wip.responder);
+					      "windows.responder.recv_wip == %jd(msgid); was %jd",
+					      msgid, receiver->st_v2_msgid_windows.responder.recv_wip);
 			}
-			receiver->st_v2_msgid_wip.responder = -1;
+			receiver->st_v2_msgid_windows.responder.recv_wip = -1;
 		} else {
 			FAIL_V2_MSGID(ike, NULL, "XXX: message request receiver lost!?!");
 		}
-		/* last request we received */
-		new->responder.recv = msgid;
-		new->responder.last_contact = time_received;
+		/* update responder's last request received */
+		update = &new->responder;
 		break;
 	case MESSAGE_RESPONSE:
 		update_received_story = "updating initiator received";
@@ -374,9 +388,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			dbg("Message ID: IKE #%lu XXX: message response receiver lost; probably a deleted child",
 			    ike->sa.st_serialno);
 		}
-		/* last response we received */
-		new->initiator.recv = msgid;
-		new->initiator.last_contact = time_received;
+		/* update initiator's last response received */
+		update = &new->initiator;
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
@@ -385,6 +398,10 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	default:
 		bad_case(receiving);
 	}
+
+	update->recv = msgid;
+	update->recv_frags = md->v2_frags_total;
+	update->last_contact = time_received;
 
 	dbg_msgids_update(update_received_story, receiving, msgid,
 			  ike, &old, receiver, &old_receiver);
