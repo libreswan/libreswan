@@ -1712,7 +1712,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		break;
 	}
 	/*pexpect(st->st_v2_transition == NULL);*/
-	md->svm = ike->sa.st_v2_transition = transition;
+	set_v2_transition(&ike->sa, transition, HERE);
 
 	/*
 	 * Now send a secured response, and fail the transition.
@@ -2022,7 +2022,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 		 struct msg_digest *md,
 		 const struct v2_state_transition *svm)
 {
-	md->svm = svm;
+	set_v2_transition(st, svm, HERE);
 
 	/*
 	 * For the responder, update the work-in-progress Message ID
@@ -2606,15 +2606,8 @@ void complete_v2_state_transition(struct state *st,
 	 * and .st_v2_state_transition - it just isn't possible to
 	 * squeeze both the IKE and CHILD transitions into MD.ST.
 	 */
-#if 0
 	const struct v2_state_transition *transition = st->st_v2_transition;
-	if (!pexpect(transition != NULL) && md != NULL) {
-		transition = md->svm;
-	}
-#else
-	const struct v2_state_transition *transition = (md != NULL && md->svm != NULL ? md->svm :
-						       st->st_v2_transition);
-#endif
+	passert(transition != NULL);
 	static const struct v2_state_transition undefined_transition = {
 		.story = "suspect message",
 		.state = STATE_UNDEFINED,
@@ -2636,16 +2629,8 @@ void complete_v2_state_transition(struct state *st,
 		jam_v2_transition(buf, transition);
 		jam(buf, " with status ");
 		jam_v2_stf_status(buf, result);
-		/* does MD.SVM diverge? */
-		if (md != NULL && transition != md->svm) {
-			jam(buf, "; md.svm=");
-			jam_v2_transition(buf, md->svm);
-		}
-		/* does ST.ST_V2_TRANSITION diverge? */
-		if (transition != st->st_v2_transition) {
-			jam(buf, "; .st_v2_transition=");
-			jam_v2_transition(buf, st->st_v2_transition);
-		}
+		jam(buf, "; transition=");
+		jam_v2_transition(buf, st->st_v2_transition);
 	}
 
 	switch (result) {

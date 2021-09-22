@@ -1345,9 +1345,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 * Update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	passert(md->svm->timeout_event == EVENT_SA_REPLACE);
-	passert(md->svm->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-	change_state(&ike->sa, md->svm->next_state);
+	passert(ike->sa.st_v2_transition->timeout_event == EVENT_SA_REPLACE);
+	passert(ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_state(&ike->sa, ike->sa.st_v2_transition->next_state);
 	v2_ike_sa_established(ike);
 
 	/*

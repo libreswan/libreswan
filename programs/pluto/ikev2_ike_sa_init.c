@@ -842,9 +842,6 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state->kind == STATE_V2_PARENT_R0);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
-	/* set by caller */
-	pexpect(md->svm == finite_states[STATE_V2_PARENT_R0]->v2.transitions);
-	pexpect(md->svm->state == STATE_V2_PARENT_R0);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
