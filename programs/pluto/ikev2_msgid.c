@@ -50,23 +50,32 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 			   const struct v2_msgid_window *old,
 			   const struct v2_msgid_window *new)
 {
-	jam(buf, " ike.%s.sent=%jd", what, old->sent);
+	jam(buf, " ike.%s", what);
+
+	jam(buf, " .sent=%jd", old->sent);
 	if (old->sent != new->sent) {
 		jam(buf, "->%jd", new->sent);
 	}
-	jam(buf, " ike.%s.recv=%jd", what, old->recv);
+
+	jam(buf, " .recv=%jd", old->recv);
 	if (old->recv != new->recv) {
 		jam(buf, "->%jd", new->recv);
 	}
+
+	jam(buf, " .recv_frags=%u", old->recv_frags);
+	if (old->recv_frags != new->recv_frags) {
+		jam(buf, "->%u", new->recv_frags);
+	}
+
 	if (old->recv_wip > -1 || new->recv_wip > -1) {
-		jam(buf, " ike.%s.recv_wip=%jd", what, old->recv_wip);
+		jam(buf, " .recv_wip=%jd", old->recv_wip);
 		if (old->recv_wip != new->recv_wip) {
 			jam(buf, "->%jd", new->recv_wip);
 		}
 	}
+
 	monotime_buf mb;
-	jam(buf, " ike.%s.last_contact=%s", what,
-	    str_monotime(old->last_contact, &mb));
+	jam(buf, " .last_contact=%s", str_monotime(old->last_contact, &mb));
 	if (monotime_cmp(old->last_contact, !=, new->last_contact)) {
 		jam(buf, "->%s", str_monotime(new->last_contact, &mb));
 	}
@@ -286,6 +295,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	enum message_role receiving = v2_msg_role(md);
 	intmax_t msgid;
+	struct v2_msgid_window *update;
 
 	const char *update_received_story;
 	switch (receiving) {
@@ -310,9 +320,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		} else {
 			FAIL_V2_MSGID(ike, NULL, "XXX: message request receiver lost!?!");
 		}
-		/* last request we received */
-		new->responder.recv = msgid;
-		new->responder.last_contact = time_received;
+		/* update responder's last request received */
+		update = &new->responder;
 		break;
 	case MESSAGE_RESPONSE:
 		update_received_story = "updating initiator received";
@@ -379,9 +388,8 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 			dbg("Message ID: IKE #%lu XXX: message response receiver lost; probably a deleted child",
 			    ike->sa.st_serialno);
 		}
-		/* last response we received */
-		new->initiator.recv = msgid;
-		new->initiator.last_contact = time_received;
+		/* update initiator's last response received */
+		update = &new->initiator;
 		break;
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
@@ -390,6 +398,10 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	default:
 		bad_case(receiving);
 	}
+
+	update->recv = msgid;
+	update->recv_frags = md->v2_frags_total;
+	update->last_contact = time_received;
 
 	dbg_msgids_update(update_received_story, receiving, msgid,
 			  ike, &old, receiver, &old_receiver);

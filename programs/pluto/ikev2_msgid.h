@@ -45,6 +45,7 @@ struct v2_msgid_window {
 	monotime_t last_contact;  /* received a message */
 	intmax_t sent;
 	intmax_t recv;
+	unsigned recv_frags;	/* number of fragments making up message */
 	intmax_t recv_wip;
 	struct v2_msgid_pending *pending;
 };

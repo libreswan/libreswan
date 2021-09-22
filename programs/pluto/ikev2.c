@@ -1196,12 +1196,27 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 
 		switch (md->hdr.isa_np) {
 		case ISAKMP_NEXT_v2SK:
+			if (ike->sa.st_v2_msgid_windows.responder.recv_frags > 0 &&
+			    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+				llog_sa(RC_LOG, ike,
+					"%s request has duplicate Message ID %jd but original was fragmented; message dropped",
+					enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					msgid);
+				return true;
+			}
 			llog_sa(RC_LOG, ike,
 				"%s request has duplicate Message ID %jd; retransmitting response",
 				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 				msgid);
 			break;
 		case ISAKMP_NEXT_v2SKF:
+			if (ike->sa.st_v2_msgid_windows.responder.recv_frags == 0) {
+				llog_sa(RC_LOG, ike,
+					"%s request fragment has duplicate Message ID %jd but original was not fragmented; message dropped",
+					enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					msgid);
+				return true;
+			}
 			pexpect(md->chain[ISAKMP_NEXT_v2SKF] == NULL); /* not yet parsed */
 			struct ikev2_skf skf;
 			pb_stream in_pbs = md->message_pbs; /* copy */
@@ -1210,6 +1225,14 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 						 &skf, sizeof(skf), &ignored);
 			if (d != NULL) {
 				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+				return true;
+			}
+			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {
+				dbg_v2_msgid(ike, &ike->sa,
+					     "%s request fragment %u of %u has duplicate Message ID %jd but should have fragment total %u; message dropped",
+					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					     skf.isaskf_number, skf.isaskf_total, msgid,
+					     ike->sa.st_v2_msgid_windows.responder.recv_frags);
 				return true;
 			}
 			if (skf.isaskf_number != 1) {

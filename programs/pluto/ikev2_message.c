@@ -1193,6 +1193,9 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
 	*skf = sk; /* scribble */
 
+	/* save the fragment total; used later by duplicate code */
+	md->v2_frags_total = (*frags)->total;
+
 	/* clean up */
 	free_v2_incoming_fragments(frags);
 	return md;
