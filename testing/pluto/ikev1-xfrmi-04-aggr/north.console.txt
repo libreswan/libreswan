@@ -32,6 +32,9 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
 up
 north #
+ ipsec whack --trafficstatus
+006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+north #
  echo done
 done
 north #
