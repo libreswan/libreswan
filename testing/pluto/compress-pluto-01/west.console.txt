@@ -56,24 +56,36 @@ west #
 1v1 "westnet-eastnet-compress" #2: sent Quick Mode request
 004 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- # this ping wont be compressed
+ # these small pings won't be compressed
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  # test compression via large pings that can be compressed on IPCOMP SA
 west #
- ping -n -q -c 4 -s 8184  -p ff -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 8184(8212) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=649, outBytes=652, id='@east'
+006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=656, outBytes=663, id='@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
@@ -89,7 +101,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.23 dst 192.1.2.45
-	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -102,24 +114,24 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xSPISPI reqid REQID mode tunnel
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority 2084815 ptype main
+	dir out priority 2084814 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority 2084815 ptype main
+	dir fwd priority 2084814 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority 2084815 ptype main
+	dir in priority 2084814 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
 		level use
@@ -140,7 +152,7 @@ west #
  ipsec auto --down westnet-eastnet-compress
 002 "westnet-eastnet-compress": terminating SAs using this connection
 002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "westnet-eastnet-compress" #2: ESP traffic information: in=649B out=652B
+005 "westnet-eastnet-compress" #2: ESP traffic information: in=656B out=663B
 005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=0B out=0B
 002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
