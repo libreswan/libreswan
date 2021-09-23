@@ -55,6 +55,7 @@
 #include "unpack.h"
 #include "pending.h"
 #include "ipsec_doi.h"			/* for capture_child_rekey_policy */
+#include "ike_alg_dh.h"			/* for ike_alg_dh_none */
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
@@ -375,9 +376,13 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	 */
 	const struct dh_desc *default_dh =
 		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
-	struct ikev2_proposals *child_proposals =
-		get_v2_create_child_proposals(c, "Child SA proposals (initiating rekey)",
-					      default_dh, logger);
+	/*
+	 * XXX: this code should be converting CHILD_BEING_REPLACE's
+	 * negotiated crypto suite into a proposal.
+	 */
+	const struct ikev2_proposals *child_proposals =
+		get_v2_create_child_proposals("Child SA proposals (initiating rekey)",
+					      child_being_replaced, default_dh);
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
@@ -583,21 +588,21 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 lset_t policy, int try,
 					 struct fd *whackfd)
 {
-	struct child_sa *child = new_v2_child_state(c, ike, IPSEC_SA,
-						    SA_INITIATOR,
-						    STATE_V2_NEW_CHILD_I0,
-						    whackfd);
+	struct child_sa *larval_child = new_v2_child_state(c, ike, IPSEC_SA,
+							   SA_INITIATOR,
+							   STATE_V2_NEW_CHILD_I0,
+							   whackfd);
 
-	free_chunk_content(&child->sa.st_ni); /* this is from the parent. */
-	free_chunk_content(&child->sa.st_nr); /* this is from the parent. */
-	child->sa.st_try = try;
+	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
+	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
+	larval_child->sa.st_try = try;
 
 	/* share the love; XXX: something better? */
 	close_any(&ike->sa.st_logger->object_whackfd);
 	ike->sa.st_logger->object_whackfd = fd_dup(whackfd, HERE);
-	child->sa.st_policy = policy;
+	larval_child->sa.st_policy = policy;
 
-	llog_sa(RC_LOG, child,
+	llog_sa(RC_LOG, larval_child,
 		"initiating Child SA using IKE SA #%lu", ike->sa.st_serialno);
 
 
@@ -613,22 +618,23 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	 */
 	const struct dh_desc *default_dh =
 		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
-	struct ikev2_proposals *child_proposals =
-		get_v2_create_child_proposals(c, "Child SA proposals (initiating)",
-					      default_dh, child->sa.st_logger);
+	const struct ikev2_proposals *child_proposals =
+		get_v2_create_child_proposals("Child SA proposals (initiating)",
+					      larval_child, default_dh);
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
-	child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, child->sa.st_logger);
+	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals,
+								 larval_child->sa.st_logger);
 
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",
-	    child->sa.st_serialno,
+	    larval_child->sa.st_serialno,
 	    ike->sa.st_serialno,
 	    str_policy(policy, &pb),
-	    child->sa.st_pfs_group == NULL ? "no-pfs" : child->sa.st_pfs_group->common.fqn);
+	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
-	submit_ke_and_nonce(&child->sa, child->sa.st_pfs_group /*possibly-null*/,
+	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_initiator,
 			    "Child Initiator KE? and nonce");
 }
@@ -765,8 +771,15 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		return STF_FATAL; /* invalid syntax means we're dead */
 	}
 
+	const struct dh_desc *default_dh =
+		(larval_child->sa.st_connection->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh
+		: &ike_alg_dh_none;
+	const struct ikev2_proposals *child_proposals = get_v2_create_child_proposals("Child SA (responder)",
+										      larval_child,
+										      default_dh);
+
 	n = process_v2_childs_sa_payload("CREATE_CHILD_SA request",
-					 ike, larval_child, md,
+					 ike, larval_child, md, child_proposals,
 					 /*expect-accepted-proposal?*/false);
 	if (n != v2N_NOTHING_WRONG) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
@@ -1060,8 +1073,15 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
+	const struct dh_desc *default_dh =
+		(larval_child->sa.st_connection->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh
+		: &ike_alg_dh_none;
+	const struct ikev2_proposals *child_proposals =
+		get_v2_create_child_proposals("Child SA (responder)",
+					      larval_child, default_dh);
+
 	n = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
-					 ike, larval_child, response_md,
+					 ike, larval_child, response_md, child_proposals,
 					 /*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
 		/*

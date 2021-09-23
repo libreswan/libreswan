@@ -75,9 +75,9 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const char *why,
 					       const struct dh_desc *default_dh,
 					       struct logger *logger);
-struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
-						      const struct dh_desc *default_dh,
-						      struct logger *logger);
+const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
+							    struct child_sa *child,
+							    const struct dh_desc *default_dh);
 
 bool ikev2_emit_sa_proposal(struct pbs_out *pbs,
 			    const struct ikev2_proposal *proposal,

@@ -2164,10 +2164,11 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
  * Horrible.
  */
 
-struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
-						      const struct dh_desc *default_dh,
-						      struct logger *logger)
+const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
+							    struct child_sa *child,
+							    const struct dh_desc *default_dh)
 {
+	struct connection *c = child->sa.st_connection;
 	if (c->v2_create_child_proposals_default_dh != default_dh) {
 		const char *old_fqn = (c->v2_create_child_proposals_default_dh != NULL
 				       ? c->v2_create_child_proposals_default_dh->common.fqn
@@ -2187,8 +2188,9 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 	} else {
 		c->v2_create_child_proposals = get_v2_child_proposals(c, why,
 								      c->v2_create_child_proposals_default_dh,
-								      logger);
-		llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, logger,
+								      child->sa.st_logger);
+		llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
+				  child->sa.st_logger,
 				  c->v2_create_child_proposals, why);
 	}
 	return c->v2_create_child_proposals;

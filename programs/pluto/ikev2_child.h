@@ -33,6 +33,7 @@ struct pbs_out;
 v2_notification_t process_v2_childs_sa_payload(const char *what, struct ike_sa *ike,
 					       struct child_sa *larval_child,
 					       struct msg_digest *md,
+					       const struct ikev2_proposals *child_proposals,
 					       bool expect_accepted_proposal);
 
 /*

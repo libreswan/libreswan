@@ -672,25 +672,17 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 }
 
 v2_notification_t process_v2_childs_sa_payload(const char *what,
-					       struct ike_sa *ike, struct child_sa *child,
-					       struct msg_digest *md, bool expect_accepted_proposal)
+					       struct ike_sa *ike UNUSED,
+					       struct child_sa *child,
+					       struct msg_digest *md,
+					       const struct ikev2_proposals *child_proposals,
+					       bool expect_accepted_proposal)
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	v2_notification_t n;
-
-	const struct ikev2_proposals *child_proposals;
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		const struct dh_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
-			? ike->sa.st_oakley.ta_dh
-			: &ike_alg_dh_none;
-		child_proposals = get_v2_create_child_proposals(c, "Child SA (responder)",
-								default_dh, child->sa.st_logger);
-	} else {
-		child_proposals = c->config->v2_ike_auth_child_proposals;
-	}
 
 	n = ikev2_process_sa_payload(what,
 				     &sa_pd->pbs,
@@ -1029,6 +1021,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 
 	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					 ike, child, md,
+					 child->sa.st_connection->config->v2_ike_auth_child_proposals,
 					 /*expect-accepted-proposal?*/false);
 	dbg("process_v2_childs_sa_payload returned %s", enum_name(&v2_notification_names, n));
 	if (n != v2N_NOTHING_WRONG) {
@@ -1205,9 +1198,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	}
 
 	/* examine and accept SA ESP/AH proposals */
+
 	n = process_v2_childs_sa_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
-					 ike, child,
-					 response_md, /*expect-accepted-proposal?*/true);
+					 ike, child, response_md,
+					 child->sa.st_connection->config->v2_ike_auth_child_proposals,
+					 /*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;
 	}
