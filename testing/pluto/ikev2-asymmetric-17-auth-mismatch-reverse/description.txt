@@ -10,7 +10,3 @@ leftid="%null"
 rightid="%fromcert"
 
 This test should not establish a connection. The initiator should reject it.
-
-Also, the initiator should REALLY send an encrypted informational to DELETE
-the conn, as east has it as established. Current output does not reflect the
-delete confirmation yet.
