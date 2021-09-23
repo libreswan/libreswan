@@ -111,6 +111,9 @@ struct config {
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
 
+	struct ike_proposals ike_proposals;
+	struct child_proposals child_proposals;
+
 	struct config_end end[2];
 };
 
@@ -419,9 +422,6 @@ struct connection {
 
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
-
-	struct ike_proposals ike_proposals;
-	struct child_proposals child_proposals;
 
 	/*
 	 * The ALG_INFO converted to IKEv2 format.

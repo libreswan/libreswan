@@ -48,8 +48,8 @@ void show_ike_alg_connection(struct show *s,
 			     const struct connection *c,
 			     const char *instance)
 {
-	if (c->ike_proposals.p != NULL
-	    && !default_proposals(c->ike_proposals.p)) {
+	if (c->config->ike_proposals.p != NULL
+	    && !default_proposals(c->config->ike_proposals.p)) {
 		/*
 		 * List the algorithms as found in alg_info_ike and as
 		 * will be fed into the proposal code.
@@ -81,7 +81,7 @@ void show_ike_alg_connection(struct show *s,
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam(buf, "\"%s\"%s:   IKE algorithms: ",
 			    c->name, instance);
-			jam_proposals(buf, c->ike_proposals.p);
+			jam_proposals(buf, c->config->ike_proposals.p);
 		}
 	}
 

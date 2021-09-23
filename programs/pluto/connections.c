@@ -243,9 +243,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		sr = next_sr;
 	}
 
-	proposals_delref(&c->ike_proposals.p);
-	proposals_delref(&c->child_proposals.p);
-
 	free_ikev2_proposals(&c->v2_ike_proposals);
 	free_ikev2_proposals(&c->v2_ike_auth_child_proposals);
 	free_ikev2_proposals(&c->v2_create_child_proposals);
@@ -254,8 +251,11 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	remove_connection_from_db(c);
 
 	if (c->root_config != NULL) {
+		struct config *rc = c->root_config;
 		passert(co_serial_is_unset(c->serial_from));
-		free_chunk_content(&c->root_config->sec_label);
+		free_chunk_content(&rc->sec_label);
+		proposals_delref(&rc->ike_proposals.p);
+		proposals_delref(&rc->child_proposals.p);
 		pfree(c->root_config);
 	}
 
@@ -772,8 +772,6 @@ static void unshare_connection(struct connection *c)
 	}
 
 	/* increment references to algo's, if any */
-	proposals_addref(&c->ike_proposals.p);
-	proposals_addref(&c->child_proposals.p);
 	c->v2_ike_proposals = NULL; /* don't share IKE proposals */
 
 	if (c->pool !=  NULL)
@@ -1661,9 +1659,9 @@ static bool extract_connection(const struct whack_message *wm,
 			};
 
 			struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
-			c->ike_proposals.p = proposals_from_str(parser, wm->ike);
+			config->ike_proposals.p = proposals_from_str(parser, wm->ike);
 
-			if (c->ike_proposals.p == NULL) {
+			if (c->config->ike_proposals.p == NULL) {
 				pexpect(parser->diag != NULL); /* something */
 				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
@@ -1677,7 +1675,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam_string(buf, "ike (phase1) algorithm values: ");
-				jam_proposals(buf, c->ike_proposals.p);
+				jam_proposals(buf, c->config->ike_proposals.p);
 			}
 		}
 
@@ -1721,8 +1719,8 @@ static bool extract_connection(const struct whack_message *wm,
 				NULL;
 			passert(fn != NULL);
 			struct proposal_parser *parser = fn(&proposal_policy);
-			c->child_proposals.p = proposals_from_str(parser, wm->esp);
-			if (c->child_proposals.p == NULL) {
+			config->child_proposals.p = proposals_from_str(parser, wm->esp);
+			if (c->config->child_proposals.p == NULL) {
 				pexpect(parser->diag != NULL);
 				llog_diag(RC_FATAL, c->logger, &parser->diag,
 					 "failed to add connection: ");
@@ -1736,7 +1734,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam_string(buf, "ESP/AH string values: ");
-				jam_proposals(buf, c->child_proposals.p);
+				jam_proposals(buf, c->config->child_proposals.p);
 			};
 		}
 

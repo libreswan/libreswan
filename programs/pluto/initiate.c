@@ -229,9 +229,9 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 #ifdef USE_IKEv1
 	if (c->ike_version == IKEv1 &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
-		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->child_proposals,
+		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->config->child_proposals,
 							       true, c->logger);
-		if (c->child_proposals.p != NULL && phase2_sa == NULL) {
+		if (c->config->child_proposals.p != NULL && phase2_sa == NULL) {
 			llog(WHACK_STREAM|RC_LOG_SERIOUS, c->logger,
 			     "cannot initiate: no acceptable kernel algorithms loaded");
 			return false;

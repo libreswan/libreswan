@@ -275,12 +275,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	if (c->child_proposals.p == NULL) {
+	if (c->config->child_proposals.p == NULL) {
 		dbg("ESP IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {
+	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.encrypt == ta->ta_encrypt &&
 		    (algs.enckeylen == 0 ||
@@ -322,12 +322,12 @@ static bool ikev1_verify_ah(const struct connection *c,
 			     ta->ta_dh->common.fqn);
 		return false;
 	}
-	if (c->child_proposals.p == NULL) {
+	if (c->config->child_proposals.p == NULL) {
 		dbg("AH IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	FOR_EACH_PROPOSAL(c->child_proposals.p, proposal) {	/* really AH */
+	FOR_EACH_PROPOSAL(c->config->child_proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
 			dbg("ESP IPsec Transform verified; matches alg_info entry");
@@ -927,13 +927,13 @@ bool ikev1_out_sa(pb_stream *outs,
 		 * Aggr-Mode - Max transforms == 2 - Multiple
 		 * transforms, 1 DH group
 		 */
-		revised_sadb = v1_ike_alg_make_sadb(c->ike_proposals,
+		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
 						    auth_method,
 						    aggressive_mode,
 						    st->st_logger);
 	} else {
 		revised_sadb = v1_kernel_alg_makedb(c->policy,
-						    c->child_proposals,
+						    c->config->child_proposals,
 						    true, st->st_logger);
 
 		/* add IPcomp proposal if policy asks for it */
@@ -2141,7 +2141,7 @@ rsasig_common:
 			/*
 			 * ML: at last check for allowed transforms in ike_proposals
 			 */
-			if (!ikev1_verify_ike(&ta, c->ike_proposals, st->st_logger)) {
+			if (!ikev1_verify_ike(&ta, c->config->ike_proposals, st->st_logger)) {
 				/*
 				 * already logged; UGH acts as a skip
 				 * rest of checks flag
@@ -2274,7 +2274,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		 * Max transforms == 2 - Multiple transforms, 1 DH
 		 * group
 		 */
-		revised_sadb = v1_ike_alg_make_sadb(c->ike_proposals,
+		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
 						    auth_method, true,
 						    st->st_logger);
 	}

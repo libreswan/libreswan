@@ -2014,11 +2014,11 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 		return c->v2_ike_proposals;
 	}
 
-	if (!pexpect(c->ike_proposals.p != NULL)) {
+	if (!pexpect(c->config->ike_proposals.p != NULL)) {
 		return NULL;
 	}
 	dbg("constructing local IKE proposals for %s (%s)", c->name, why);
-	struct proposals *const proposals = c->ike_proposals.p;
+	struct proposals *const proposals = c->config->ike_proposals.p;
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "proposals");
 	/* +1 as proposal[0] is empty */
@@ -2082,7 +2082,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 		return *child_proposals;
 	}
 
-	if (!pexpect(c->child_proposals.p != NULL)) {
+	if (!pexpect(c->config->child_proposals.p != NULL)) {
 		return NULL;
 	}
 
@@ -2111,7 +2111,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
 	/* proposal[0] is empty so +1 */
-	int v2_proposals_roof = nr_proposals(c->child_proposals.p) + 1;
+	int v2_proposals_roof = nr_proposals(c->config->child_proposals.p) + 1;
 	if (add_empty_msdh_duplicates) {
 		/* make space for everything duplicated; note +1 above */
 		v2_proposals_roof = v2_proposals_roof * 2 - 1;
@@ -2133,7 +2133,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 	}
 
 	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
-		FOR_EACH_PROPOSAL(c->child_proposals.p, esp_info) {
+		FOR_EACH_PROPOSAL(c->config->child_proposals.p, esp_info) {
 			LSWDBGP(DBG_BASE, log) {
 				jam(log, "converting proposal ");
 				jam_proposal(log, esp_info);
