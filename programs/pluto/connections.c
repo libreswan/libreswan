@@ -243,19 +243,19 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		sr = next_sr;
 	}
 
-	free_ikev2_proposals(&c->v2_ike_proposals);
-	free_ikev2_proposals(&c->v2_ike_auth_child_proposals);
 	free_ikev2_proposals(&c->v2_create_child_proposals);
 	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
 
 	remove_connection_from_db(c);
 
-	if (c->root_config != NULL) {
-		struct config *rc = c->root_config;
+	struct config *config = c->root_config;
+	if (config != NULL) {
 		passert(co_serial_is_unset(c->serial_from));
-		free_chunk_content(&rc->sec_label);
-		free_proposals(&rc->ike_proposals.p);
-		free_proposals(&rc->child_proposals.p);
+		free_chunk_content(&config->sec_label);
+		free_proposals(&config->ike_proposals.p);
+		free_proposals(&config->child_proposals.p);
+		free_ikev2_proposals(&config->v2_ike_sa_init_ike_proposals);
+		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfree(c->root_config);
 	}
 
@@ -770,9 +770,6 @@ static void unshare_connection(struct connection *c)
 		unshare_connection_end(&sr->this);
 		unshare_connection_end(&sr->that);
 	}
-
-	/* increment references to algo's, if any */
-	c->v2_ike_proposals = NULL; /* don't share IKE proposals */
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
@@ -1677,6 +1674,13 @@ static bool extract_connection(const struct whack_message *wm,
 				jam_string(buf, "ike (phase1) algorithm values: ");
 				jam_proposals(buf, c->config->ike_proposals.p);
 			}
+
+			if (c->ike_version == IKEv2) {
+				config->v2_ike_sa_init_ike_proposals = get_v2_ike_proposals(c);
+				llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+						  config->v2_ike_sa_init_ike_proposals,
+						  "IKE SA proposals");
+			}
 		}
 
 		/* ESP or AH cipher suites (but not both) */
@@ -1736,6 +1740,33 @@ static bool extract_connection(const struct whack_message *wm,
 				jam_string(buf, "ESP/AH string values: ");
 				jam_proposals(buf, c->config->child_proposals.p);
 			};
+
+			/*
+			 * For IKEv2, also generate the Child proposal
+			 * that will be used during IKE AUTH.
+			 *
+			 * Since a Child SA established during an
+			 * IKE_AUTH exchange does not propose DH
+			 * (keying material is taken from the IKE SA's
+			 * SKEYSEED), DH is stripped from the
+			 * proposals.
+			 *
+			 * Since only things that affect this proposal
+			 * suite are the connection's .policy bits and
+			 * the contents .child_proposals, and
+			 * modifiying those triggers the creation of a
+			 * new connection (true?), the connection can
+			 * be cached.
+			 */
+			if (c->ike_version == IKEv2) {
+				/* UNSET_GROUP means strip DH from the proposal. */
+				config->v2_ike_auth_child_proposals =
+					get_v2_child_proposals(c, "loading config", &unset_group,
+							       c->logger);
+				llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+						  config->v2_ike_auth_child_proposals,
+						  "Child SA proposals");
+			}
 		}
 
 		c->nic_offload = wm->nic_offload;

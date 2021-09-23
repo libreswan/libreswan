@@ -423,10 +423,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 * not propose DH - the IKE SA's SKEYSEED is always
 		 * used.
 		 */
-		struct ikev2_proposals *child_proposals =
-			get_v2_ike_auth_child_proposals(cc, "IKE SA initiator emitting ESP/AH proposals",
-							child->sa.st_logger);
-
+		const struct ikev2_proposals *child_proposals = cc->config->v2_ike_auth_child_proposals;
 		if (!emit_v2_child_request_payloads(child, child_proposals, &sk.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}

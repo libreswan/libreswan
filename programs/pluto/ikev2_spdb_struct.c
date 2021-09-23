@@ -372,14 +372,16 @@ static void jam_v2_proposals(struct jambuf *buf,
 	}
 }
 
-static void log_proposals(struct logger *logger, const char *prefix,
-			  const struct ikev2_proposals *proposals)
+void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
+		       const struct ikev2_proposals *proposals,
+		       const char *title)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
+	llog(rc_flags, logger, "%s:", title);
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		LLOG_JAMBUF(RC_LOG|LOG_STREAM, logger, buf) {
-			jam_string(buf, prefix);
+		LLOG_JAMBUF(rc_flags, logger, buf) {
+			jam_string(buf, "  ");
 			jam_v2_proposal(buf, propnum, proposal);
 		}
 	}
@@ -2002,29 +2004,20 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
  * Never returns NULL (see passert).
  */
 
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why,
-					     struct logger *logger)
+struct ikev2_proposals *get_v2_ike_proposals(struct connection *c)
 {
-	if (c->v2_ike_proposals != NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "using existing local IKE proposals for connection %s (%s): ",
-				c->name, why);
-			jam_v2_proposals(buf, c->v2_ike_proposals);
-		}
-		return c->v2_ike_proposals;
-	}
-
 	if (!pexpect(c->config->ike_proposals.p != NULL)) {
 		return NULL;
 	}
-	dbg("constructing local IKE proposals for %s (%s)", c->name, why);
+	dbg("constructing local IKE proposals for %s", c->name);
 	struct proposals *const proposals = c->config->ike_proposals.p;
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "proposals");
 	/* +1 as proposal[0] is empty */
 	int v2_proposals_roof = nr_proposals(proposals) + 1;
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal,
-					      v2_proposals_roof, "propsal");
+					      v2_proposals_roof,
+					      "v2 ike proposal");
 	v2_proposals->roof = 1;
 
 	FOR_EACH_PROPOSAL(proposals, ike_info) {
@@ -2039,7 +2032,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 			ikev2_proposal_from_proposal_info(ike_info,
 							  IKEv2_SEC_PROTO_IKE,
 							  v2_proposals, NULL,
-							  logger);
+							  c->logger);
 		if (v2_proposal != NULL) {
 			if (DBGP(DBG_BASE)) {
 				DBG_log_ikev2_proposal("... ", v2_proposal);
@@ -2047,13 +2040,7 @@ struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *w
 			v2_proposals->roof++;
 		}
 	}
-
-	c->v2_ike_proposals = v2_proposals;
-	passert(c->v2_ike_proposals != NULL);
-	llog(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
-	     "local IKE proposals (%s): ", why);
-	log_proposals(c->logger, "  ", c->v2_ike_proposals);
-	return c->v2_ike_proposals;
+	return v2_proposals;
 }
 
 static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
@@ -2067,21 +2054,11 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **child_proposals,
-						      struct connection *c,
-						      const char *why,
-						      const struct dh_desc *default_dh,
-						      struct logger *logger)
+struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
+					       const char *why,
+					       const struct dh_desc *default_dh,
+					       struct logger *logger)
 {
-	if (*child_proposals != NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "using existing local ESP/AH proposals for %s (%s): ",
-				c->name, why);
-			jam_v2_proposals(buf, *child_proposals);
-		}
-		return *child_proposals;
-	}
-
 	if (!pexpect(c->config->child_proposals.p != NULL)) {
 		return NULL;
 	}
@@ -2167,34 +2144,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct ikev2_proposals **c
 			}
 		}
 	}
-
-	*child_proposals = v2_proposals;
-	passert(*child_proposals != NULL);
-	llog(LOG_STREAM/*not-whack*/|RC_LOG, c->logger, "local ESP/AH proposals (%s): ", why);
-	log_proposals(c->logger, "  ", *child_proposals);
-	return *child_proposals;
-}
-
-/*
- * If needed, generate the proposals for a CHILD SA being created
- * during the IKE_AUTH exchange.
- *
- * Since a CHILD_SA established during an IKE_AUTH exchange does not
- * propose DH (keying material is taken from the IKE SA's SKEYSEED),
- * DH is stripped from the proposals.
- *
- * Since only things that affect this proposal suite are the
- * connection's .policy bits and the contents .child_proposals, and
- * modifiying those triggers the creation of a new connection (true?),
- * the connection can be cached.
- */
-
-struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why,
-							struct logger *logger)
-{
-	/* UNSET_GROUP means strip DH from the proposal. */
-	return get_v2_child_proposals(&c->v2_ike_auth_child_proposals, c,
-				      why, &unset_group, logger);
+	return v2_proposals;
 }
 
 /*
@@ -2213,6 +2163,7 @@ struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, co
  *
  * Horrible.
  */
+
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
 						      const struct dh_desc *default_dh,
 						      struct logger *logger)
@@ -2227,9 +2178,20 @@ struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, cons
 		free_ikev2_proposals(&c->v2_create_child_proposals);
 		c->v2_create_child_proposals_default_dh = default_dh;
 	}
-	return get_v2_child_proposals(&c->v2_create_child_proposals, c, why,
-				      c->v2_create_child_proposals_default_dh,
-				      logger);
+	if (c->v2_create_child_proposals != NULL) {
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "using existing local ESP/AH proposals for %s (%s): ",
+			    c->name, why);
+			jam_v2_proposals(buf, c->v2_create_child_proposals);
+		}
+	} else {
+		c->v2_create_child_proposals = get_v2_child_proposals(c, why,
+								      c->v2_create_child_proposals_default_dh,
+								      logger);
+		llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, logger,
+				  c->v2_create_child_proposals, why);
+	}
+	return c->v2_create_child_proposals;
 }
 
 /*

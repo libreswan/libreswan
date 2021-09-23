@@ -263,9 +263,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	case SA_INITIATOR:
 	{
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
-		struct ikev2_proposals *ike_proposals =
-			get_v2_ike_proposals(c, "IKE SA initiating rekey",
-					     larval_ike->sa.st_logger);
+		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
 
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(payload.pbs, ike_proposals, local_spi)) {
@@ -378,8 +376,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	const struct dh_desc *default_dh =
 		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
 	struct ikev2_proposals *child_proposals =
-		get_v2_create_child_proposals(c,
-					      "ESP/AH rekey Child SA initiator emitting proposals",
+		get_v2_create_child_proposals(c, "Child SA proposals (initiating rekey)",
 					      default_dh, logger);
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
@@ -617,10 +614,8 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	const struct dh_desc *default_dh =
 		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
 	struct ikev2_proposals *child_proposals =
-		get_v2_create_child_proposals(c,
-					      "ESP/AH initiator emitting proposals",
-					      default_dh,
-					      child->sa.st_logger);
+		get_v2_create_child_proposals(c, "Child SA proposals (initiating)",
+					      default_dh, child->sa.st_logger);
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
@@ -1258,8 +1253,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	}
 
 	/* Get the proposals ready. */
-	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA responding to rekey", ike->sa.st_logger);
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
 
 	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
 	n = ikev2_process_sa_payload("IKE Rekey responder child",
@@ -1455,10 +1449,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 
 	/* Get the proposals ready. */
-	struct ikev2_proposals *ike_proposals =
-		get_v2_ike_proposals(c, "IKE SA accept response to rekey",
-				     larval_ike->sa.st_logger);
-
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
 	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
 	n = ikev2_process_sa_payload("IKE initiator (accepting)",
 				     &sa_pd->pbs,

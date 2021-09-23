@@ -111,8 +111,23 @@ struct config {
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
 
+	/*
+	 * The proposal specified in the config file, and for IKEv2,
+	 * that proposal converted to IKEv2 form.
+	 *
+	 * IKEv2 proposals negotiated during the initial exchanges
+	 * (IKE_SA_INIT - IKE SA, IKE_AUTH - Child SA) can be computed
+	 * ahead of time, and are stored below.
+	 *
+	 * However, proposals negotiated during CREATE_CHILD_SA
+	 * cannot.  For instance, the CREATE_CHILD_SA may be re-keying
+	 * the IKE SA and it's DH is only determined during the
+	 * initial negotiation.
+	 */
 	struct ike_proposals ike_proposals;
 	struct child_proposals child_proposals;
+	struct ikev2_proposals *v2_ike_sa_init_ike_proposals;
+	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
 	struct config_end end[2];
 };
@@ -424,26 +439,16 @@ struct connection {
 	struct connection *policy_next;
 
 	/*
-	 * The ALG_INFO converted to IKEv2 format.
+	 * The CREATE_CHILD_SA exchange proposal converted to IKEv2
+	 * format.
 	 *
-	 * Since they are allocated on-demand so there's no need to
-	 * worry about copying them when a connection object gets
-	 * cloned.
-	 *
-	 * For a child SA, two different proposals are used:
-	 *
-	 * - during the IKE_AUTH exchange a proposal stripped of any
-	 *   DH (it uses keying material from the IKE SA's SKSEED).
-	 *
-	 * - during a CREATE_CHILD_SA exchange, a mash up of the
-	 *   proposal and the IKE SA's DH algorithm.  Since the IKE
-	 *   SA's DH can change, it too is saved so a rebuild can be
-	 *   triggered.
+	 * During a CREATE_CHILD_SA exchange, a mash up of the
+	 * proposal and the IKE SA's DH algorithm is used.  Since the
+	 * IKE SA's DH can change, it too is saved so a rebuild can be
+	 * triggered.
 	 *
 	 * XXX: has to be a better way?
 	 */
-	struct ikev2_proposals *v2_ike_proposals;
-	struct ikev2_proposals *v2_ike_auth_child_proposals;
 	struct ikev2_proposals *v2_create_child_proposals;
 	const struct dh_desc *v2_create_child_proposals_default_dh;
 

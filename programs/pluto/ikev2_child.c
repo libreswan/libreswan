@@ -681,16 +681,15 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	v2_notification_t n;
 
-	struct ikev2_proposals *child_proposals;
+	const struct ikev2_proposals *child_proposals;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		const struct dh_desc *default_dh = (c->policy & POLICY_PFS) != LEMPTY
 			? ike->sa.st_oakley.ta_dh
 			: &ike_alg_dh_none;
-		child_proposals = get_v2_create_child_proposals(c, what, default_dh,
-								child->sa.st_logger);
+		child_proposals = get_v2_create_child_proposals(c, "Child SA (responder)",
+								default_dh, child->sa.st_logger);
 	} else {
-		child_proposals = get_v2_ike_auth_child_proposals(c, what,
-								  child->sa.st_logger);
+		child_proposals = c->config->v2_ike_auth_child_proposals;
 	}
 
 	n = ikev2_process_sa_payload(what,

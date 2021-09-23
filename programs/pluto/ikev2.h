@@ -67,10 +67,14 @@ void free_ikev2_proposals(struct ikev2_proposals **proposals);
  * XXX: Should the CREATE CHILD SA proposals be stored in the state?
  */
 
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c, const char *why,
-					     struct logger *logger);
-struct ikev2_proposals *get_v2_ike_auth_child_proposals(struct connection *c, const char *why,
-							struct logger *logger);
+void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
+		       const struct ikev2_proposals *proposals,
+		       const char *title);
+struct ikev2_proposals *get_v2_ike_proposals(struct connection *c);
+struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
+					       const char *why,
+					       const struct dh_desc *default_dh,
+					       struct logger *logger);
 struct ikev2_proposals *get_v2_create_child_proposals(struct connection *c, const char *why,
 						      const struct dh_desc *default_dh,
 						      struct logger *logger);
