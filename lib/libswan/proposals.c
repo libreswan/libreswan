@@ -43,7 +43,6 @@ struct proposal {
 
 struct proposals {
 	bool defaulted;
-	int ref_cnt;
 	struct proposal *proposals;
 };
 
@@ -157,28 +156,17 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	return true;
 }
 
-
 /*
- * proposals struct can be shared by several connections instances,
- * handle free() with ref_cnts.
+ * Proposals struct can be shared by a connection template and its
+ * instances.  Fortunately, the connection template is only deleted
+ * after all instances.
  */
 
-void proposals_addref(struct proposals **proposals)
+void free_proposals(struct proposals **proposals)
 {
 	if ((*proposals) != NULL) {
-		(*proposals)->ref_cnt++;
-	}
-}
-
-void proposals_delref(struct proposals **proposals)
-{
-	if ((*proposals) != NULL) {
-		if ((*proposals)->ref_cnt == 0) {
-			free_proposal(&(*proposals)->proposals);
-			pfree((*proposals));
-		} else {
-			(*proposals)->ref_cnt--;
-		}
+		free_proposal(&(*proposals)->proposals);
+		pfree((*proposals));
 		*proposals = NULL;
 	}
 }
@@ -645,17 +633,17 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	default: ok = v1_proposals_parse_str(parser, proposals, shunk1(str)); break;
 	}
 	if (!ok) {
-		proposals_delref(&proposals);
+		free_proposals(&proposals);
 		return NULL;
 	}
 	if (proposals->proposals == NULL) {
-		proposals_delref(&proposals);
+		free_proposals(&proposals);
 		return NULL;
 	}
 	if (parser->policy->check_pfs_vs_dh &&
 	    !proposals_pfs_vs_dh_check(parser, proposals)) {
 		passert(parser->diag != NULL);
-		proposals_delref(&proposals);
+		free_proposals(&proposals);
 		return NULL;
 	}
 	return proposals;

@@ -76,7 +76,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 						pri_shunk(jambuf_as_shunk(buf))); \
 				}					\
 			}						\
-			proposals_delref(&proposals);			\
+			free_proposals(&proposals);			\
 			if (expected == FAIL) {				\
 				failures++;				\
 				fprintf(stderr,				\

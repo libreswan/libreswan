@@ -894,7 +894,7 @@ static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposa
 							  auth_method,
 							  single_dh,
 							  logger);
-		proposals_delref(&default_info.p);
+		free_proposals(&default_info.p);
 		return new_db;
 	} else {
 		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh, logger);

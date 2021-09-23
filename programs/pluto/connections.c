@@ -254,8 +254,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		struct config *rc = c->root_config;
 		passert(co_serial_is_unset(c->serial_from));
 		free_chunk_content(&rc->sec_label);
-		proposals_delref(&rc->ike_proposals.p);
-		proposals_delref(&rc->child_proposals.p);
+		free_proposals(&rc->ike_proposals.p);
+		free_proposals(&rc->child_proposals.p);
 		pfree(c->root_config);
 	}
 

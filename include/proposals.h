@@ -163,8 +163,7 @@ bool proposal_integ_none(const struct proposal *proposal);
 unsigned nr_proposals(struct proposals *proposals);
 bool default_proposals(struct proposals *proposals);
 
-extern void proposals_addref(struct proposals **proposals);
-extern void proposals_delref(struct proposals **proposals);
+void free_proposals(struct proposals **proposals);
 
 extern struct proposal *alloc_proposal(struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
