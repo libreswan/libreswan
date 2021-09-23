@@ -51,52 +51,18 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2" #1: authentication failed: peer attempted NULL authentication but we want rsasig
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_PARENT_I2) and sending notification
-002 "westnet-eastnet-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done
-west #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].*: established IKE SA" OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #3: established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
