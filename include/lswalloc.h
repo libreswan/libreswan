@@ -90,6 +90,8 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 		THINGS = things_;					\
 	}
 
+#define zero_thing(THING) memset(&(THING), '\0', sizeof(THING))
+
 #define clone_thing(orig, name)						\
 	((__typeof__(&(orig))) clone_bytes((const void *)&(orig),	\
 					   sizeof(orig), (name)))
