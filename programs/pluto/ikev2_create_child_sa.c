@@ -1434,6 +1434,14 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&larval_ike->sa));
 
 	/*
+	 * Announce this to the world.
+	 */
+	LLOG_JAMBUF(RC_LOG_SERIOUS, larval_ike->sa.st_logger, buf) {
+		jam(buf, "rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
+		jam_v2_ike_details(buf, &larval_ike->sa);
+	}
+
+	/*
 	 * Count successful transition into an established
 	 * state.
 	 */

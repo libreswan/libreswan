@@ -2176,7 +2176,7 @@ void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
 }
 
-static void jam_v2_ike_details(struct jambuf *buf, struct state *st)
+void jam_v2_ike_details(struct jambuf *buf, struct state *st)
 {
 	jam_parent_sa_details(buf, st);
 }
