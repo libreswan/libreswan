@@ -1760,6 +1760,22 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	return true;
 }
 
+struct ikev2_proposals *ikev2_proposals_from_proposal(const char *story, const struct ikev2_proposal *proposal)
+{
+	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
+	proposals->roof = 2;
+	proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof, story);
+	/* reset some fields */
+	proposals->proposal[1] = *proposal;
+	proposals->proposal[1].propnum = 0; /* auto assign */
+	zero_thing(proposals->proposal[1].remote_spi);
+	LSWDBGP(DBG_BASE, buf) {
+		jam_string(buf, story);
+		jam_v2_proposals(buf, proposals);
+	}
+	return proposals;
+}
+
 void free_ikev2_proposals(struct ikev2_proposals **proposals)
 {
 	if (proposals == NULL || *proposals == NULL) {
@@ -1996,43 +2012,42 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 }
 
 /*
- * On-demand compute and return the IKE proposals for the connection.
+ * Transform the IKE proposals into something IKEv2 likes.
  *
  * If the default alg_info_ike includes unknown algorithms those get
  * dropped, which can lead to no proposals.
- *
- * Never returns NULL (see passert).
  */
 
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c)
+struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id protoid,
+						       const struct proposals *proposals,
+						       struct logger *logger)
 {
-	if (!pexpect(c->config->ike_proposals.p != NULL)) {
-		return NULL;
-	}
-	dbg("constructing local IKE proposals for %s", c->name);
-	struct proposals *const proposals = c->config->ike_proposals.p;
-	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
-							   "proposals");
+	const char *name = enum_name_short(&ikev2_proposal_protocol_id_names, protoid);
+	passert(name != NULL);
+	dbg("generating IKEv2 %s proposals", name);
+	passert(proposals != NULL);
+	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals, "v2 proposals");
 	/* +1 as proposal[0] is empty */
 	int v2_proposals_roof = nr_proposals(proposals) + 1;
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal,
 					      v2_proposals_roof,
-					      "v2 ike proposal");
-	v2_proposals->roof = 1;
+					      "v2 proposal");
+	v2_proposals->roof = 1; /* i.e., empty: [1,1) */
 
-	FOR_EACH_PROPOSAL(proposals, ike_info) {
+	FOR_EACH_PROPOSAL(proposals, proposal) {
 		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "converting ike_info ");
-			jam_proposal(buf, ike_info);
+			jam(buf, "converting %s proposal ", name);
+			jam_proposal(buf, proposal);
 			jam_string(buf, " to ikev2 ...");
 		}
 
 		passert(v2_proposals->roof < v2_proposals_roof);
 		struct ikev2_proposal *v2_proposal =
-			ikev2_proposal_from_proposal_info(ike_info,
-							  IKEv2_SEC_PROTO_IKE,
-							  v2_proposals, NULL,
-							  c->logger);
+			ikev2_proposal_from_proposal_info(proposal,
+							  protoid,
+							  v2_proposals,
+							  /*default_dh*/NULL,
+							  logger);
 		if (v2_proposal != NULL) {
 			if (DBGP(DBG_BASE)) {
 				DBG_log_ikev2_proposal("... ", v2_proposal);

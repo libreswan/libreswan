@@ -69,9 +69,19 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
 				  struct logger *logger);
 
+struct ikev2_proposals *ikev2_proposals_from_proposal(const char *story, const struct ikev2_proposal *proposal);
+
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
+
+/*
+ * Convert the proposal to something IKEv2 likes.
+ */
+
+struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id protoid,
+						       const struct proposals *proposals,
+						       struct logger *logger);
 
 /*
  * On-demand compute and return the IKE proposals for the connection.
@@ -81,8 +91,6 @@ void free_ikev2_proposal(struct ikev2_proposal **proposal);
  *
  * Never returns NULL (see passert).
  */
-
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c);
 
 struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const char *why,

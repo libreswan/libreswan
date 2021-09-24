@@ -632,7 +632,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	 * Initialize ike->sa.st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		log_state(RC_LOG, &ike->sa, "proposals do not contain a valid DH");
@@ -705,7 +705,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* SA out */
 
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
 				     null_shunk /* IKE - no CHILD SPI */)) {
 		return false;
@@ -848,7 +848,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	/* Get the proposals ready. */
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 	/*
 	 * Select the proposal.
@@ -1201,7 +1201,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	pstats(invalidke_recv_s, sg.sg_group);
 	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
 
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 		esb_buf esb;
 		log_state(RC_LOG, &ike->sa,
@@ -1341,7 +1341,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 		n = ikev2_process_sa_payload("IKE initiator (accepting)",
 					     &sa_pd->pbs,

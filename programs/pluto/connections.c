@@ -255,7 +255,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
 		free_proposals(&config->child_proposals.p);
-		free_ikev2_proposals(&config->v2_ike_sa_init_ike_proposals);
+		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfree(c->root_config);
 	}
@@ -1677,9 +1677,13 @@ static bool extract_connection(const struct whack_message *wm,
 			}
 
 			if (c->ike_version == IKEv2) {
-				config->v2_ike_sa_init_ike_proposals = get_v2_ike_proposals(c);
+				dbg("constructing local IKE proposals for %s", c->name);
+				config->v2_ike_proposals =
+					ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
+								       config->ike_proposals.p,
+								       c->logger);
 				llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
-						  config->v2_ike_sa_init_ike_proposals,
+						  config->v2_ike_proposals,
 						  "IKE SA proposals");
 			}
 		}

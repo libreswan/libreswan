@@ -126,7 +126,7 @@ struct config {
 	 */
 	struct ike_proposals ike_proposals;
 	struct child_proposals child_proposals;
-	struct ikev2_proposals *v2_ike_sa_init_ike_proposals;
+	struct ikev2_proposals *v2_ike_proposals;
 	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
 	struct config_end end[2];

@@ -243,8 +243,6 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	pexpect((request_md == NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I0));
 	pexpect((request_md != NULL) == (larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0));
 
-	struct connection *c = larval_ike->sa.st_connection;
-
 	struct v2_payload payload;
 	if (!open_v2_payload("CREATE_CHILD_SA rekey ike",
 			     ike, larval_ike->sa.st_logger,
@@ -255,20 +253,20 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	}
 
 	/*
-	 * Send all proposals; or agreed proposal.
-	 *
-	 * XXX: bug: initiator should only send send previously
-	 * negotiated proposal (changing it isn't desirable).
+	 * Emit the proposal, there's only one.
 	 */
 
 	switch (larval_ike->sa.st_sa_role) {
 	case SA_INITIATOR:
 	{
+		/*
+		 * Emit the proposal from the old exchange rebuilt to
+		 * work as a fresh proposal (things like propnum are
+		 * zapped).
+		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.initiator);
-		const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
-
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(payload.pbs, ike_proposals, local_spi)) {
+		if (!ikev2_emit_sa_proposals(payload.pbs, larval_ike->sa.st_v2_rekey_proposal, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -276,6 +274,9 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	}
 	case SA_RESPONDER:
 	{
+		/*
+		 * Emit the agreed to proposal.
+		 */
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
@@ -1210,6 +1211,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	larval_ike->sa.st_ike_pred = ike->sa.st_serialno;
 	larval_ike->sa.st_try = 1;
 	larval_ike->sa.st_policy = LEMPTY;
+	larval_ike->sa.st_v2_rekey_proposal = ikev2_proposals_from_proposal("rekeying ike",
+									    ike->sa.st_v2_accepted_proposal);
 
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
@@ -1274,7 +1277,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	}
 
 	/* Get the proposals ready. */
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 
 	struct payload_digest *const sa_pd = request_md->chain[ISAKMP_NEXT_v2SA];
 	n = ikev2_process_sa_payload("IKE Rekey responder child",
@@ -1469,8 +1472,10 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return STF_FATAL; /* NEED RESTART? */
 	}
 
-	/* Get the proposals ready. */
-	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_sa_init_ike_proposals;
+	/*
+	 * Parse the proposal determing what was accepted, and confirm
+	 * that it matches the rekey proposal originaly sent.
+	 */
 	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
 	n = ikev2_process_sa_payload("IKE initiator (accepting)",
 				     &sa_pd->pbs,
@@ -1479,7 +1484,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				     /*expect_accepted*/ true,
 				     LIN(POLICY_OPPORTUNISTIC, c->policy),
 				     &larval_ike->sa.st_v2_accepted_proposal,
-				     ike_proposals, larval_ike->sa.st_logger);
+				     larval_ike->sa.st_v2_rekey_proposal,
+				     larval_ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
 		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
 		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL; /* initiator; no response */
