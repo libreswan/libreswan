@@ -1179,12 +1179,8 @@ void delete_state_tail(struct state *st)
 #endif
 	pubkey_delref(&st->st_peer_pubkey, HERE);
 
-	/*
-	 * Free the accepted proposal first, it points into the
-	 * proposals.
-	 */
-	free_ikev2_proposal(&st->st_accepted_ike_proposal);
-	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
+	free_ikev2_proposal(&st->st_v2_accepted_proposal);
+
 	/* helper may have its own ref */
 	dh_local_secret_delref(&st->st_dh_local_secret, HERE);
 

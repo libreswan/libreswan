@@ -248,7 +248,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 {
 	struct connection *cc = larval_child->sa.st_connection;
 
-	pexpect(larval_child->sa.st_accepted_esp_or_ah_proposal != NULL);
+	pexpect(larval_child->sa.st_v2_accepted_proposal != NULL);
 
 	/*
 	 * Verify if transport / tunnel mode matches; update the
@@ -367,7 +367,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 		shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
-					    larval_child->sa.st_accepted_esp_or_ah_proposal,
+					    larval_child->sa.st_v2_accepted_proposal,
 					    local_spi)) {
 			dbg("problem emitting accepted proposal");
 			return false;
@@ -691,7 +691,7 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 				     /*expect_spi*/ true,
 				     expect_accepted_proposal,
 				     LIN(POLICY_OPPORTUNISTIC, c->policy),
-				     &child->sa.st_accepted_esp_or_ah_proposal,
+				     &child->sa.st_v2_accepted_proposal,
 				     child_proposals, child->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
 		llog_sa(RC_LOG_SERIOUS, child,
@@ -701,9 +701,9 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		DBG_log_ikev2_proposal(what, child->sa.st_accepted_esp_or_ah_proposal);
+		DBG_log_ikev2_proposal(what, child->sa.st_v2_accepted_proposal);
 	}
-	if (!ikev2_proposal_to_proto_info(child->sa.st_accepted_esp_or_ah_proposal, proto_info,
+	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
 					  child->sa.st_logger)) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			"%s proposed/accepted a proposal we don't actually support!", what);

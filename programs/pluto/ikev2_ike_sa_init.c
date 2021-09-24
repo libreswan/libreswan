@@ -859,7 +859,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				     /*expect_spi*/ false,
 				     /*expect_accepted*/ false,
 				     LIN(POLICY_OPPORTUNISTIC, c->policy),
-				     &ike->sa.st_accepted_ike_proposal,
+				     &ike->sa.st_v2_accepted_proposal,
 				     ike_proposals, ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
@@ -870,7 +870,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       ike->sa.st_accepted_ike_proposal);
+				       ike->sa.st_v2_accepted_proposal);
 	}
 
 	/*
@@ -878,7 +878,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * basic validation.  If this somehow fails (it shouldn't but
 	 * ...), drop everything.
 	 */
-	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
 					   &ike->sa.st_oakley, ike->sa.st_logger)) {
 		log_state(RC_LOG_SERIOUS, &ike->sa, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
@@ -1009,8 +1009,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
-		passert(ike->sa.st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_accepted_ike_proposal,
+		passert(ike->sa.st_v2_accepted_proposal != NULL);
+		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_v2_accepted_proposal,
 					    null_shunk/*IKE has no SPI*/)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
@@ -1349,19 +1349,19 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					     /*expect_spi*/ false,
 					     /*expect_accepted*/ true,
 					     LIN(POLICY_OPPORTUNISTIC, c->policy),
-					     &ike->sa.st_accepted_ike_proposal,
+					     &ike->sa.st_v2_accepted_proposal,
 					     ike_proposals, ike->sa.st_logger);
 		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL; /* initiator; no response */
 		}
 
-		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_accepted_ike_proposal,
+		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
 						   &ike->sa.st_oakley, ike->sa.st_logger)) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "IKE initiator proposed an unsupported algorithm");
-			free_ikev2_proposal(&ike->sa.st_accepted_ike_proposal);
-			passert(ike->sa.st_accepted_ike_proposal == NULL);
+			free_ikev2_proposal(&ike->sa.st_v2_accepted_proposal);
+			passert(ike->sa.st_v2_accepted_proposal == NULL);
 			/*
 			 * Assume caller et.al. will clean up the
 			 * reset of the mess?

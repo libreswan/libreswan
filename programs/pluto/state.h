@@ -424,8 +424,7 @@ struct state {
 	struct v2_incoming_fragments *st_v2_incoming[MESSAGE_ROLE_ROOF];
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
-	struct ikev2_proposal *st_accepted_ike_proposal;
-	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
+	struct ikev2_proposal *st_v2_accepted_proposal;
 
 	enum sa_role st_sa_role;			/* who initiated the SA */
 

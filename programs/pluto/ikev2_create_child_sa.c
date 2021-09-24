@@ -278,7 +278,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 	{
 		shunk_t local_spi = THING_AS_SHUNK(larval_ike->sa.st_ike_rekey_spis.responder);
 		/* send selected v2 IKE SA */
-		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_accepted_ike_proposal, local_spi)) {
+		if (!ikev2_emit_sa_proposal(payload.pbs, larval_ike->sa.st_v2_accepted_proposal, local_spi)) {
 			llog_sa(RC_LOG, larval_ike, "outsa fail");
 			return false;
 		}
@@ -1283,7 +1283,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				     /*expect_spi*/ true,
 				     /*expect_accepted*/ false,
 				     LIN(POLICY_OPPORTUNISTIC, c->policy),
-				     &larval_ike->sa.st_accepted_ike_proposal,
+				     &larval_ike->sa.st_v2_accepted_proposal,
 				     ike_proposals, larval_ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
@@ -1296,10 +1296,10 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       larval_ike->sa.st_accepted_ike_proposal);
+				       larval_ike->sa.st_v2_accepted_proposal);
 	}
 
-	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
 		llog_sa(RC_LOG_SERIOUS, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
@@ -1373,7 +1373,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 	/* initiate calculation of g^xy */
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
-	ikev2_copy_cookie_from_sa(larval_ike->sa.st_accepted_ike_proposal,
+	ikev2_copy_cookie_from_sa(larval_ike->sa.st_v2_accepted_proposal,
 				  &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
 								       larval_ike->sa.st_logger);
@@ -1478,7 +1478,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				     /*expect_spi*/ true,
 				     /*expect_accepted*/ true,
 				     LIN(POLICY_OPPORTUNISTIC, c->policy),
-				     &larval_ike->sa.st_accepted_ike_proposal,
+				     &larval_ike->sa.st_v2_accepted_proposal,
 				     ike_proposals, larval_ike->sa.st_logger);
 	if (n != v2N_NOTHING_WRONG) {
 		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
@@ -1487,15 +1487,15 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       larval_ike->sa.st_accepted_ike_proposal);
+				       larval_ike->sa.st_v2_accepted_proposal);
 	}
-	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.st_logger)) {
 		llog_sa(RC_LOG_SERIOUS, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
 		/* free early return items */
-		free_ikev2_proposal(&larval_ike->sa.st_accepted_ike_proposal);
-		passert(larval_ike->sa.st_accepted_ike_proposal == NULL);
+		free_ikev2_proposal(&larval_ike->sa.st_v2_accepted_proposal);
+		passert(larval_ike->sa.st_v2_accepted_proposal == NULL);
 		return STF_FATAL;
 	}
 
@@ -1514,7 +1514,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	/* fill in the missing responder SPI */
 	passert(!ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.initiator));
 	passert(ike_spi_is_zero(&larval_ike->sa.st_ike_rekey_spis.responder));
-	ikev2_copy_cookie_from_sa(larval_ike->sa.st_accepted_ike_proposal,
+	ikev2_copy_cookie_from_sa(larval_ike->sa.st_v2_accepted_proposal,
 				  &larval_ike->sa.st_ike_rekey_spis.responder);
 
 	/* initiate calculation of g^xy for rekey */
