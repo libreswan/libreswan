@@ -2608,29 +2608,16 @@ void complete_v2_state_transition(struct state *st,
 	 */
 	const struct v2_state_transition *transition = st->st_v2_transition;
 	passert(transition != NULL);
-	static const struct v2_state_transition undefined_transition = {
-		.story = "suspect message",
-		.state = STATE_UNDEFINED,
-		.next_state = STATE_UNDEFINED,
-	};
-	/* double negative */
-	if (!pexpect(transition != NULL)) {
-		transition = &undefined_transition;
-	}
 
 	LSWDBGP(DBG_BASE, buf) {
-		const struct finite_state *transition_from = finite_states[transition->state];
-
 		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
-		if (st->st_state != transition_from) {
+		if (st->st_state->kind != transition->state) {
 			jam(buf, " in state %s", st->st_state->short_name);
 		}
 		jam(buf, " ");
 		jam_v2_transition(buf, transition);
 		jam(buf, " with status ");
 		jam_v2_stf_status(buf, result);
-		jam(buf, "; transition=");
-		jam_v2_transition(buf, st->st_v2_transition);
 	}
 
 	switch (result) {
