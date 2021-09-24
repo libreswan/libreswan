@@ -1,7 +1,8 @@
-IKEv2 RW test with rekey=yes
-rekey=no on initiator, east ikelifetime 90s. The responder will try to replace IKE SA.
+IKEv2 RW test with rekey=no on initiator and rekey=yes on responder
 
-1. Road initiates and establish connection.
-2. Initiator keeps the tunnel up.
-3. Responder ike rekeys the tunnel stays up.
+Responder's ikelifetime is 60s (margin 10s) so it will try to re-key
+the IKE SA around then.
 
+1. Road (initiator) initiates and establish connection.
+2. Road (initiator) keeps the tunnel up.
+3. East (responder) initiates rekey and tunnel stays up.
