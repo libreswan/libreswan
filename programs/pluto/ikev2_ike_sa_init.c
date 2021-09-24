@@ -55,6 +55,7 @@
 #include "pending.h"
 #include "ikev2_ipseckey.h"
 #include "pluto_stats.h"
+#include "ikev2_proposals.h"
 
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */

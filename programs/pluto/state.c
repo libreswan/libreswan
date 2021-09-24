@@ -64,6 +64,7 @@
 #include "ikev1.h"		/* for send_v1_delete() */
 #include "ikev2_delete.h"	/* for record_v2_delete() */
 #include "orient.h"
+#include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
 
 bool uniqueIDs = false;
 

@@ -1,4 +1,4 @@
-/* Security Policy Data Base/structure output
+/* IKEv2 SA (Secure Association) Payloads, for libreswan
  *
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
@@ -43,7 +43,7 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
-
+#include "ikev2_proposals.h"
 #include "crypto.h"
 
 #include "kernel_alg.h"

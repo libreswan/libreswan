@@ -91,6 +91,7 @@
 #include "ip_selector.h"
 #include "labeled_ipsec.h"		/* for vet_seclabel() */
 #include "orient.h"
+#include "ikev2_proposals.h"
 
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;

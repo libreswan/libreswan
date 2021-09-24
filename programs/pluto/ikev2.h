@@ -42,74 +42,6 @@ extern void complete_v2_state_transition(struct state *st,
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
-struct ikev2_proposal;
-struct ikev2_proposals;
-
-void DBG_log_ikev2_proposal(const char *prefix, const struct ikev2_proposal *proposal);
-
-void free_ikev2_proposal(struct ikev2_proposal **proposal);
-void free_ikev2_proposals(struct ikev2_proposals **proposals);
-
-/*
- * On-demand, generate proposals for either the IKE SA or the CHILD
- * SA.
- *
- * For CHILD SAs, two different proposal suites are used: during the
- * IKE_AUTH exchange a stripped down proposal that excludes DH; and
- * during the CREATE_CHILD_SA exchange DH a mashed up proposal that
- * can include the IKE SA's latest DH.
- *
- * This is done on-demand as, only at the point where the IKE or CHILD
- * SA is being instantiated, is it clear what proposals are needed.
- * For instance, when a CHILD SA shares an existing IKE SA, the CHILD
- * won't need IKE proposals but will need the IKE SA's DH.
- *
- * XXX: Should the CREATE CHILD SA proposals be stored in the state?
- */
-
-void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
-		       const struct ikev2_proposals *proposals,
-		       const char *title);
-struct ikev2_proposals *get_v2_ike_proposals(struct connection *c);
-struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
-					       const char *why,
-					       const struct dh_desc *default_dh,
-					       struct logger *logger);
-const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
-							    struct child_sa *child,
-							    const struct dh_desc *default_dh);
-
-bool ikev2_emit_sa_proposal(struct pbs_out *pbs,
-			    const struct ikev2_proposal *proposal,
-			    shunk_t local_spi);
-
-bool ikev2_emit_sa_proposals(struct pbs_out *outs,
-			     const struct ikev2_proposals *proposals,
-			     const shunk_t local_spi);
-
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct logger *logger);
-
-bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
-				  oakley_group_t modp);
-
-v2_notification_t ikev2_process_sa_payload(const char *what,
-					   pb_stream *sa_payload,
-					   bool expect_ike,  /* IKE vs ESP or AH */
-					   bool expect_spi,
-					   bool expect_accepted,
-					   bool opportunistic,
-					   struct ikev2_proposal **chosen,
-					   const struct ikev2_proposals *local_proposals,
-					   struct logger *logger);
-
-bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
-				  struct ipsec_proto_info *proto_info,
-				  struct logger *logger);
-
-bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
-				   struct trans_attrs *ta_out, struct logger *logger);
-
 extern void ikev2_log_parentSA(const struct state *st);
 
 extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
@@ -188,9 +120,6 @@ struct v2_state_transition {
 	const enum event_type timeout_event;
 	ikev2_state_transition_fn *const processor;
 };
-
-void ikev2_copy_cookie_from_sa(const struct ikev2_proposal *accepted_ike_proposal,
-				ike_spi_t *cookie);
 
 void v2_ike_sa_established(struct ike_sa *ike);
 

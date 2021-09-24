@@ -56,6 +56,7 @@
 #include "pending.h"
 #include "ipsec_doi.h"			/* for capture_child_rekey_policy */
 #include "ike_alg_dh.h"			/* for ike_alg_dh_none */
+#include "ikev2_proposals.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;

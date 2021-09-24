@@ -215,7 +215,8 @@ OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_s
 OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o ikev1_nat.o
 OBJS += crypt_dh_v1.o
 endif
-OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
+OBJS += ikev2.o ikev2_parent.o ikev2_child.o
+OBJS += ikev2_proposals.o
 OBJS += ikev2_states.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
