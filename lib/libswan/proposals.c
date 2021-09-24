@@ -180,7 +180,7 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	}
 }
 
-unsigned nr_proposals(struct proposals *proposals)
+unsigned nr_proposals(const struct proposals *proposals)
 {
 	unsigned nr = 0;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
@@ -283,7 +283,7 @@ void free_algorithms(struct proposal *proposal,
 	proposal->algorithms[algorithm] = NULL;
 }
 
-struct proposal *alloc_proposal(struct proposal_parser *parser)
+struct proposal *alloc_proposal(const struct proposal_parser *parser)
 {
 	struct proposal *proposal = alloc_thing(struct proposal, "proposal");
 	proposal->protocol = parser->protocol;
@@ -649,7 +649,7 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 	return proposals;
 }
 
-bool default_proposals(struct proposals *proposals)
+bool default_proposals(const struct proposals *proposals)
 {
 	return proposals == NULL || proposals->defaulted;
 }

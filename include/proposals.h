@@ -160,12 +160,12 @@ bool proposal_encrypt_aead(const struct proposal *proposal);
 bool proposal_encrypt_norm(const struct proposal *proposal);
 bool proposal_integ_none(const struct proposal *proposal);
 
-unsigned nr_proposals(struct proposals *proposals);
-bool default_proposals(struct proposals *proposals);
+unsigned nr_proposals(const struct proposals *proposals);
+bool default_proposals(const struct proposals *proposals);
 
 void free_proposals(struct proposals **proposals);
 
-extern struct proposal *alloc_proposal(struct proposal_parser *parser);
+extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
 void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorithm);
