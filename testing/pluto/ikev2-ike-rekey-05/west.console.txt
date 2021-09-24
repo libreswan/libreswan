@@ -131,12 +131,9 @@ west #
 000 #15: "westnet-eastnet-b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#17; idle;
 000 #14: "westnet-eastnet-c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#17; idle;
 west #
- # there should be only one IKE_INIT exchange
+ # there should be only one IKE_SA_INIT exchange
 west #
- grep "STATE_V2_PARENT_I1 to " /tmp/pluto.log
-| ikev2_calculate_psk_sighash() called from STATE_V2_PARENT_I1 to create PSK with authby=secret
-| transitioning from state STATE_V2_PARENT_I1 to state STATE_V2_PARENT_I2
-west #
- grep "STATE_V2_PARENT_R1 with status STF_OK" /tmp/pluto.log
+ grep "PARENT_[IR]1 with status STF_OK" /tmp/pluto.log
+| #1 complete_v2_state_transition() PARENT_I0->PARENT_I1 with status STF_OK
 west #
  
