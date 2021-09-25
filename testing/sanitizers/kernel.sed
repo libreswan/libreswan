@@ -14,6 +14,8 @@ s/\[\s\+[0-9]\+\.[0-9]\+\] /[ 00.00] /
 /\[ 00.00] alg: No test for / b join
 /\[ 00.00] tun: Universal TUN\/TAP device driver/ b join
 /\[ 00.00] SELinux: / b join
+/\[ 00.00] gre: GRE over IPv4 demultiplexor driver/ b join
+/\[ 00.00] ip_gre: GRE over IPv4 tunneling driver/ b join
 
 b
 
