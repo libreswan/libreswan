@@ -1,7 +1,7 @@
 # match: ip addr ...
 
 /^ ip addr/ b match
-b end
+b
 
 :match
 
@@ -10,14 +10,16 @@ b end
 
 :next
 
-  /^[a-z]* #/ b end
+  # next line; exit
+  /^[a-z]* #/ b
 
   # strip trailing spaces
   s/ $//
+
+  # strip trailing stuff
+  s/ qlen 1000$//
 
   # append next line; delete current; try again
   /altname / { N; s/^.*\n//; b next }
 
 b match
-
-:end
