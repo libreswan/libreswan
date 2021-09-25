@@ -99,6 +99,9 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define clone_const_thing(orig, name) clone_bytes((const void *)&(orig), \
 					    sizeof(orig), (name))
 
+#define clone_const_things(ORIG, COUNT, NAME) \
+	clone_bytes((ORIG), (COUNT) * sizeof((ORIG)[0]), (NAME))
+
 #define clone_str(str, name) \
 	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
 
