@@ -2236,66 +2236,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	/*
-	 * Tell whack and logs our progress.
-	 *
-	 * If it's OE or a state transition we're not telling anyone
-	 * about, then be quiet.
-	 */
-
-	dbg("announcing the state transition");
-	enum rc_type w;
-	void (*jam_details)(struct jambuf *buf, struct state *st);
-	bool suppress_log = ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
-			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
-	const char *sep = " ";
-	if (transition->state == transition->next_state) {
-		/*
-		 * HACK for seemingly going around in circles
-		 */
-		jam_details = NULL;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (IS_CHILD_SA(st) && just_established) {
-		jam_details = jam_v2_child_details;
-		suppress_log = false;
-		sep = "; ";
-		w = RC_SUCCESS; /* also triggers detach */
-	} else if (IS_IKE_SA(st) && just_established) {
-		/* ike_sa_established() called elsewhere */
-		jam_details = jam_v2_ike_details;
-		w = RC_SUCCESS; /* also triggers detach */
-	} else if (transition->state == STATE_V2_PARENT_I1 &&
-		   transition->next_state == STATE_V2_PARENT_I2) {
-		jam_details = jam_v2_ike_details;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (st->st_state->kind == STATE_V2_PARENT_R1) {
-		jam_details = jam_v2_ike_details;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else {
-		jam_details = NULL;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	}
-
-        if (suppress_log) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "%s", st->st_state->story);
-			/* document SA details for admin's pleasure */
-			if (jam_details != NULL) {
-				jam_string(buf, sep);
-				jam_details(buf, st);
-			}
-		}
-	} else {
-		LLOG_JAMBUF(w, st->st_logger, buf) {
-			jam(buf, "%s", st->st_state->story);
-			/* document SA details for admin's pleasure */
-			if (jam_details != NULL) {
-				jam_string(buf, sep);
-				jam_details(buf, st);
-			}
-		}
-	}
-
-	/*
 	 * 2.23.  NAT Traversal
 	 *
 	 * There are cases where a NAT box decides to remove mappings
@@ -2384,68 +2324,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		}
 	}
 
-	/* if requested, send the new reply packet */
-	switch (transition->send) {
-	case MESSAGE_REQUEST:
-	case MESSAGE_RESPONSE:
-		send_recorded_v2_message(ike, finite_states[from_state]->name,
-					 transition->send);
-		break;
-	case NO_MESSAGE:
-		break;
-	default:
-		bad_case(transition->send);;
-	}
-
-	if (just_established) {
-		release_any_whack(st, HERE, "IKEv2 transitions finished");
-
-		/* XXX should call unpend again on parent SA */
-		if (IS_CHILD_SA(st)) {
-			/* with failed child sa, we end up here with an orphan?? */
-			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
-			    ike->sa.st_serialno);
-			/* a better call unpend in ikev2_ike_sa_established? */
-			unpend(ike, c);
-
-			/*
-			 * If this was an OE connection, check for removing a potential
-			 * matching bare shunt entry - bare shunts are always a %pass or
-			 * %hold SPI but are found regardless of whether we passed in
-			 * SPI_PASS or SPI_HOLD ?
-			 */
-			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
-				struct spd_route *sr = &c->spd;
-				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
-									&sr->that.client,
-									sr->this.protocol,
-									"old bare shunt to delete");
-
-				if (bs != NULL) {
-					dbg("deleting old bare shunt");
-					if (!delete_bare_shunt(&c->spd.this.host_addr,
-							       &c->spd.that.host_addr,
-							       c->spd.this.protocol,
-							       SPI_PASS /* else its not bare */,
-							       /*skip_xfrm_policy_delete?*/true,
-							       "installed IPsec SA replaced old bare shunt",
-							       st->st_logger)) {
-						log_state(RC_LOG_SERIOUS, &ike->sa,
-							  "Failed to delete old bare shunt");
-					}
-				}
-			}
-			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
-		}
-	} else if (transition->flags & SMF2_RELEASE_WHACK) {
-		dbg("releasing whack");
-		release_any_whack(st, HERE, "ST per transition");
-		if (st != &ike->sa) {
-			release_any_whack(&ike->sa, HERE, "IKE per transition");
-		}
-	}
-
-	/* Schedule for whatever timeout is specified */
+	/*
+	 * Schedule for whatever timeout is specified (and shut down
+	 * any short term timers).
+	 */
 	{
 		enum event_type kind = transition->timeout_event;
 		struct connection *c = st->st_connection;
@@ -2509,6 +2391,133 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 			dbg("dpd enabled, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, st);
+		}
+	}
+
+	/*
+	 * If requested, send the new reply packet.
+	 *
+	 * XXX: On responder, should this schedule a timer that deletes the
+	 * re-transmit buffer?
+	 */
+	switch (transition->send) {
+	case MESSAGE_REQUEST:
+	case MESSAGE_RESPONSE:
+		send_recorded_v2_message(ike, finite_states[from_state]->name,
+					 transition->send);
+		break;
+	case NO_MESSAGE:
+		break;
+	default:
+		bad_case(transition->send);;
+	}
+
+	/*
+	 * Tell whack and logs our progress.
+	 *
+	 * If it's OE or a state transition we're not telling anyone
+	 * about, then be quiet.
+	 */
+
+	dbg("announcing the state transition");
+	enum rc_type w;
+	void (*jam_details)(struct jambuf *buf, struct state *st);
+	bool suppress_log = ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
+			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
+	const char *sep = " ";
+	if (transition->state == transition->next_state) {
+		/*
+		 * HACK for seemingly going around in circles
+		 */
+		jam_details = NULL;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
+	} else if (IS_CHILD_SA(st) && just_established) {
+		jam_details = jam_v2_child_details;
+		suppress_log = false;
+		sep = "; ";
+		w = RC_SUCCESS; /* also triggers detach */
+	} else if (IS_IKE_SA(st) && just_established) {
+		/* ike_sa_established() called elsewhere */
+		jam_details = jam_v2_ike_details;
+		w = RC_SUCCESS; /* also triggers detach */
+	} else if (transition->state == STATE_V2_PARENT_I1 &&
+		   transition->next_state == STATE_V2_PARENT_I2) {
+		jam_details = jam_v2_ike_details;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
+	} else if (st->st_state->kind == STATE_V2_PARENT_R1) {
+		jam_details = jam_v2_ike_details;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
+	} else {
+		jam_details = NULL;
+		w = RC_NEW_V2_STATE + st->st_state->kind;
+	}
+
+        if (suppress_log) {
+		LSWDBGP(DBG_BASE, buf) {
+			jam_logger_prefix(buf, st->st_logger);
+			jam(buf, "%s: %s", transition->story, st->st_state->story);
+			/* document SA details for admin's pleasure */
+			if (jam_details != NULL) {
+				jam_string(buf, sep);
+				jam_details(buf, st);
+			}
+		}
+	} else {
+		LLOG_JAMBUF(w, st->st_logger, buf) {
+			jam(buf, "%s", st->st_state->story);
+			/* document SA details for admin's pleasure */
+			if (jam_details != NULL) {
+				jam_string(buf, sep);
+				jam_details(buf, st);
+			}
+		}
+	}
+
+	if (just_established) {
+		release_any_whack(st, HERE, "IKEv2 transitions finished");
+
+		/* XXX should call unpend again on parent SA */
+		if (IS_CHILD_SA(st)) {
+			/* with failed child sa, we end up here with an orphan?? */
+			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
+			    ike->sa.st_serialno);
+			/* a better call unpend in ikev2_ike_sa_established? */
+			unpend(ike, c);
+
+			/*
+			 * If this was an OE connection, check for removing a potential
+			 * matching bare shunt entry - bare shunts are always a %pass or
+			 * %hold SPI but are found regardless of whether we passed in
+			 * SPI_PASS or SPI_HOLD ?
+			 */
+			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
+				struct spd_route *sr = &c->spd;
+				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
+									&sr->that.client,
+									sr->this.protocol,
+									"old bare shunt to delete");
+
+				if (bs != NULL) {
+					dbg("deleting old bare shunt");
+					if (!delete_bare_shunt(&c->spd.this.host_addr,
+							       &c->spd.that.host_addr,
+							       c->spd.this.protocol,
+							       SPI_PASS /* else its not bare */,
+							       /*skip_xfrm_policy_delete?*/true,
+							       "installed IPsec SA replaced old bare shunt",
+							       st->st_logger)) {
+						log_state(RC_LOG_SERIOUS, &ike->sa,
+							  "Failed to delete old bare shunt");
+					}
+				}
+			}
+			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
+		}
+	} else if (transition->flags & SMF2_RELEASE_WHACK) {
+		dbg("releasing whack");
+		release_any_whack(st, HERE, "ST per transition");
+		if (st != &ike->sa) {
+			release_any_whack(&ike->sa, HERE, "IKE per transition");
 		}
 	}
 }
