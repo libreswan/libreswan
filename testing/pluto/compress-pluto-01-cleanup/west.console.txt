@@ -87,7 +87,94 @@ west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
 006 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, id='@east'
 west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 2084814 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto comp reqid REQID mode tunnel
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 2084814 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 2084814 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ ipsec auto --down westnet-eastnet-compress | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
+002 "westnet-eastnet-compress": terminating SAs using this connection
+002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
+005 "westnet-eastnet-compress" #2: ESP traffic information: in=659B out=664B
+005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=0B out=0B
+002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
+west #
  echo done
 done
+west #
+!! this should not have states !!
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+!! this should not have states !!
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 west #
  

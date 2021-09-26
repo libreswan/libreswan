@@ -1,0 +1,9 @@
+Basic pluto test, but now using compress=yes on both ends.
+
+NOTE:
+
+- not all policy is properly cleaned up when compression is used
+  see bug github:514.
+
+- due to compression, byte counts are not stable, solution?
+
