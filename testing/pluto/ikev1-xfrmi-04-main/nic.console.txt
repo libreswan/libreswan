@@ -1,0 +1,9 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ iptables -X
+nic #
+ echo initdone
+initdone
+

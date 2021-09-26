@@ -1,0 +1,9 @@
+north has a tunnel to the second interface of east, eth0 192.0.2.254
+The all traffic ingress and egress via eth1, 193.1.2.23, to test
+xfrmi interface is not interface specific.
+
+The extrouded tunnel
+192.0.22.0/24%eth0<=>-192.0.2.254%eth1<-->192.1.3.33%eth1-<=>192.0.3.0/24%eth0
+
+on north:
+ping -w 4 -c 4 -I 192.0.3.254 192.0.22.254
