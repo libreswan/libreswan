@@ -16,6 +16,9 @@ s/\[\s\+[0-9]\+\.[0-9]\+\] /[ 00.00] /
 /\[ 00.00] SELinux: / b join
 /\[ 00.00] gre: GRE over IPv4 demultiplexor driver/ b join
 /\[ 00.00] ip_gre: GRE over IPv4 tunneling driver/ b join
+/\[ 00.00] PPP / b join
+/\[ 00.00] NET: / b join
+/\[ 00.00] hrtimer: interrupt took / b join
 
 b
 
