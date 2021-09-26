@@ -19,6 +19,8 @@ s/\[\s\+[0-9]\+\.[0-9]\+\] /[ 00.00] /
 /\[ 00.00] PPP / b join
 /\[ 00.00] NET: / b join
 /\[ 00.00] hrtimer: interrupt took / b join
+/\[ 00.00] kauditd_printk_skb: / b join
+/\[ 00.00] audit: / b join
 
 b
 
