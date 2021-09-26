@@ -16,9 +16,9 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair delete-on-retransmit
+ #  should get back authentication failed
 west #
- # should fail - our FIPS code requires 2048 minimum key
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
