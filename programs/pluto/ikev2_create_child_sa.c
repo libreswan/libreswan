@@ -386,7 +386,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
-	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals, logger);
+	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals);
 
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s sec_label="PRI_SHUNK,
@@ -623,8 +623,7 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	/* see emit_v2_child_sa_request_payloads */
 	passert(c->v2_create_child_proposals != NULL);
 
-	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals,
-								 larval_child->sa.st_logger);
+	larval_child->sa.st_pfs_group = ikev2_proposals_first_dh(child_proposals);
 
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",

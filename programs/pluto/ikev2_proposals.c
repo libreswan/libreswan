@@ -56,6 +56,10 @@
 #include "ikev2_message.h"		/* for build_ikev2_critical() */
 #include "nat_traversal.h"
 
+static void append_transform(struct ikev2_proposal *proposal,
+			     enum ikev2_trans_type type, unsigned id,
+			     unsigned attr_keylen);
+
 /*
  * Two possible attribute formats (fixed and variable).  In IKEv2 the
  * attribute type determines the format that an attribute must use (in
@@ -2214,32 +2218,40 @@ const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
 /*
  * Return the first valid DH proposal that is supported.
  */
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct logger *logger)
+
+const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal)
+{
+	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
+	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
+		int groupnum = transforms->transform[t].id;
+		const struct dh_desc *group = ikev2_get_dh_desc(groupnum);
+		if (!pexpect(group != NULL)/*double-negative*/) {
+			/*
+			 * Things screwed up (this group should have
+			 * been pruned earlier), rather than crash,
+			 * continue looking for a valid group.
+			 */
+			continue;
+		}
+
+		if (group == &ike_alg_dh_none) {
+			dbg("ignoring DH=none when looking for first DH");
+			continue;
+		}
+
+		return group;
+	}
+	return NULL;
+}
+
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
-		int t;
-		for (t = 0; t < transforms->transform[t].valid; t++) {
-			int groupnum = transforms->transform[t].id;
-			const struct dh_desc *group =
-				ikev2_get_dh_desc(groupnum);
-			if (group == NULL) {
-				/*
-				 * Things screwed up (this group
-				 * should have been pruned earlier),
-				 * rather than crash, continue looking
-				 * for a valid group.
-				 */
-				pexpect_fail(logger, HERE,
-					     "proposals include unsupported group %d", groupnum);
-			} else if (group == &ike_alg_dh_none) {
-				dbg("ignoring DH=none when looking for first DH");
-			} else {
-				return group;
-			}
+		const struct dh_desc *dh = ikev2_proposal_first_dh(proposal);
+		if (dh != NULL) {
+			return dh;
 		}
 	}
 	return NULL;

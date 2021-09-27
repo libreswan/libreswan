@@ -633,7 +633,7 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, ike->sa.st_logger);
+	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		log_state(RC_LOG, &ike->sa, "proposals do not contain a valid DH");
 		delete_state(&ike->sa);

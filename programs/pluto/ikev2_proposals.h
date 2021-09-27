@@ -104,8 +104,9 @@ const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
 /*
  * Return the first valid DH proposal that is supported.
  */
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct logger *logger);
+
+const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal);
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 
 /*
  * Is the modp group in the proposal set?
