@@ -4,6 +4,8 @@ See also https://libreswan.org/
 v4.6 (unreleased)
 * IKEv2: agressively check incoming fragments [Andrew]
 * packaging: replace old SUSE packaging with pointer to upstream [Andrew]
+* IKEv2: when rekeying and PFS, only propose/allow original crypt-suite [Andrew]
+* IKEv2: when PFS, don't repeatedly log all proposals
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
