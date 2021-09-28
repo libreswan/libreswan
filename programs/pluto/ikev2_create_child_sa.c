@@ -125,73 +125,74 @@ stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	return STF_SUSPEND;
 }
 
-static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
-				   struct msg_digest *md)
+static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
+						struct msg_digest *md)
 {
 	/*
 	 * Previously found by the state machine.
 	 */
 	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
-		pexpect_fail(child->sa.st_logger, HERE,
+		pexpect_fail(ike->sa.st_logger, HERE,
 			     "rekey child can't find its rekey_sa payload");
-		return STF_INTERNAL_ERROR;
+		return NULL;
 	}
 #if 0
 	/* XXX: this would require a separate .pd_next link? */
 	if (rekey_sa_payload->next != NULL) {
 		/* will tolerate multiple */
-		log_state(RC_LOG_SERIOUS, &child->sa,
+		log_state(RC_LOG_SERIOUS, &ike->sa,
 			  "ignoring duplicate v2N_REKEY_SA in exchange");
 	}
 #endif
 
-	const struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
 	/*
 	 * find old state to rekey
 	 */
+
+	const struct ikev2_notify *rekey_notify = &rekey_sa_payload->payload.v2n;
 	esb_buf b;
 	dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
 	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
 	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
-		log_state(RC_LOG, &child->sa,
+		log_state(RC_LOG, &ike->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
 			  rekey_notify->isan_spisize);
-		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return false;
+		return NULL;
 	}
 
 	ipsec_spi_t spi = 0;
 	struct pbs_in rekey_pbs = rekey_sa_payload->pbs;
 	diag_t d = pbs_in_raw(&rekey_pbs, &spi, sizeof(spi), "SPI");
 	if (d != NULL) {
-		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
-		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return false; /* cannot happen; XXX: why? */
+		return NULL; /* cannot happen; XXX: why? */
 	}
 
 	if (spi == 0) {
-		log_state(RC_LOG, &child->sa,
+		log_state(RC_LOG, &ike->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
-		record_v2N_response(child->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
+		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return false;
+		return NULL;
 	}
 
 	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
 		esb_buf b;
-		log_state(RC_LOG, &child->sa,
+		log_state(RC_LOG, &ike->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
-		record_v2N_spi_response(child->sa.st_logger, ike, md,
+		record_v2N_spi_response(ike->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return false;
+		return NULL;
 	}
 
 	esb_buf protoesb;
@@ -211,27 +212,24 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 	if (replaced_child == NULL) {
 		esb_buf b;
-		log_state(RC_LOG, &child->sa,
+		log_state(RC_LOG, &ike->sa,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
 			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
-		record_v2N_spi_response(child->sa.st_logger, ike, md,
+		record_v2N_spi_response(ike->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
 					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
-		return false;
+		return NULL;
 	}
 
-	child->sa.st_ipsec_pred = replaced_child->sa.st_serialno;
-
 	connection_buf cb;
-	dbg("#%lu rekey request for "PRI_CONNECTION" #%lu TSi TSr",
-	    child->sa.st_serialno,
+	dbg("#%lu hasa a rekey request for "PRI_CONNECTION" #%lu TSi TSr",
+	    ike->sa.st_serialno,
 	    pri_connection(replaced_child->sa.st_connection, &cb),
 	    replaced_child->sa.st_serialno);
-	update_state_connection(&child->sa, replaced_child->sa.st_connection);
 
-	return true;
+	return replaced_child;
 }
 
 static bool record_v2_rekey_ike_message(struct ike_sa *ike,
@@ -546,21 +544,20 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							  struct child_sa *larval_child,
 							  struct msg_digest *md)
 {
+
+	struct child_sa *predecessor = find_v2N_REKEY_SA_child(ike, md);
+	if (predecessor == NULL) {
+		/* already logged; already recorded */
+		return STF_OK; /*IKE*/
+	}
+
 	pexpect(larval_child == NULL);
-	larval_child = new_v2_child_state(ike->sa.st_connection,
+	larval_child = new_v2_child_state(predecessor->sa.st_connection,
 					  ike, IPSEC_SA, SA_RESPONDER,
 					  STATE_V2_REKEY_CHILD_R0,
 					  null_fd);
 	ike->sa.st_v2_larval_responder_sa = larval_child;
-
-	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY); /* TBD */
-	if (!ikev2_rekey_child_resp(ike, larval_child, md)) {
-		/* already logged; already recorded */
-		delete_state(&larval_child->sa);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		return STF_OK; /*IKE*/
-	}
-	pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY);
+	larval_child->sa.st_ipsec_pred = predecessor->sa.st_serialno;
 
 	if (!child_rekey_responder_ts_verify(larval_child, md)) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
