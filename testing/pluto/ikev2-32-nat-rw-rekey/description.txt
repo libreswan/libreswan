@@ -1,18 +1,31 @@
-IKEv2 RW test with rekey=no and dpdaction clear on the responder,east.
-rekey=yes on initiator, rod. ikelifetime 80s.  East will clear with dpd action.
+IKEv2 road's rekey times out so it re-establishes
 
+initiator (road) has rekey=yes liveness=no
+responder (east) has liveness=yes+action=clear
 
 The initiator is behind NAT.
-1. Road initiates and establish connection.
-2. Road block traffic to east.
-3. East hit liveness clear and clears the connection , do not retry.
-4. Initiator keeps the tunnel up.
-4. initiator ike expires and rekey/reauthenticate, brings up the tunnel.
 
+- road initiates and establish IKE SA #1 and Child SA #2
+- road block traffic to east.
+- east hit liveness clear and clears the connection, do not retry.
+- road initiates IKE SA rekey (#3 say), but that too times out
+- road tries to establish replacement (but that is blocked
+- road clears block
+- road establishes new IKE and Child SAs
 
-Issue: recent libreswan's with revival code try to re-use the IKE SA to send a CREATE_CHILD_SA
-that east answers incorrectly:
+Issue #1:
 
-"road-east-x509-ipv4"[1] 192.1.2.23 #7: missing v2CP reply, not attempting to setup child SA
+- when the rekey times out, the Child SA both initiates a replacement
+  IKE SA, and puts itself into the pending queue
+- as part of establishing the IKE SA, the connection (a template), is
+  also established as a Child
+- but then the same connection, sitting on pending, also tries to
+  establish that using CREATE_CHILD_SA
+
+(possible) Issue 2:
+
+- response to the CREATE_CHILD_SA is:
+
+  "road-east-x509-ipv4"[1] 192.1.2.23 #7: missing v2CP reply, not attempting to setup child SA
 
 This indicates a few bugs interacting with each other

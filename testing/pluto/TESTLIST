@@ -153,7 +153,7 @@ kvmplutotest	ikev2-16-alias-whack-start		good
 kvmplutotest	ikev2-19-x509-auto-start		wip
 kvmplutotest	ikev2-30-rw-no-rekey			good
 kvmplutotest	ikev2-31-nat-rw-no-rekey		good
-kvmplutotest	ikev2-32-nat-rw-rekey			good
+kvmplutotest	ikev2-32-nat-rw-rekey			wip	github:514
 kvmplutotest	ikev2-33-clearport-01			good
 kvmplutotest	ikev2-34-clearport-02			good
 kvmplutotest	ikev2-35-mismatched-child		good
