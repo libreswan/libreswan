@@ -919,9 +919,9 @@ typedef struct {
 } story_buf;
 
 static bool create_xfrm_migrate_sa(struct state *st,
-				   const int dir,	/* netkey SA direction XFRM_POLICY_* */
+				   const int dir,	/* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
 				   struct kernel_sa *ret_sa,
-				   story_buf *story /* must live as long as sa */)
+				   story_buf *story /* must live as long as *ret_sa */)
 {
 	const struct connection *const c = st->st_connection;
 
@@ -944,7 +944,41 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		return false;
 	}
 
-	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
+	struct end_info {
+		const struct end *end;
+		const ip_endpoint endpoint;
+		const ipsec_spi_t spi;
+	};
+
+	const struct end_info local = {
+		.end = &c->spd.this,
+		.endpoint = st->st_interface->local_endpoint,
+		.spi = proto_info->our_spi,
+	};
+
+	const struct end_info remote = {
+		.end = &c->spd.that,
+		.endpoint = st->st_remote_endpoint,
+		.spi = proto_info->attrs.spi,
+	};
+
+	const struct end_info *src, *dst;
+
+	switch (dir) {
+	case XFRM_POLICY_OUT:
+		src = &local;
+		dst = &remote;
+		break;
+
+	case XFRM_POLICY_IN:
+	case XFRM_POLICY_FWD:	/* treat as inbound */
+		src = &remote;
+		dst = &local;
+		break;
+
+	default:
+		bad_case(dir);
+	}
 
 	struct kernel_sa sa = {
 		.xfrm_dir = dir,
@@ -954,83 +988,53 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 		.story = story->buf,	/* content will evolve */
+		.spi = dst->spi,
+		.src = {
+			.address = &src->end->host_addr,
+			.new_address = src->end->host_addr,	/* may change */
+			.client = &src->end->client,
+			.encap_port = endpoint_hport(src->endpoint),	/* may change */
+		},
+		.dst = {
+			.address = &dst->end->host_addr,
+			.new_address = dst->end->host_addr,	/* may change */
+			.client = &dst->end->client,
+			.encap_port = endpoint_hport(dst->endpoint),	/* may change */
+		},
 		/* WWW what about sec_label? */
 	};
 
-	ip_endpoint new_endpoint;
-	uint16_t old_port;
-	uint16_t encap_sport;
-	uint16_t encap_dport;
+	passert(endpoint_is_specified(st->st_mobike_local_endpoint) != endpoint_is_specified(st->st_mobike_remote_endpoint));
 
-	/* note: XFRM_POLICY_FWD is inbound too */
-	bool inbound = dir != XFRM_POLICY_OUT;
-
-	const struct end *src_end, *dst_end;
-
-	if (inbound) {
-		src_end = &c->spd.that;
-		dst_end = &c->spd.this;
-		sa.spi = proto_info->our_spi;
-	} else {
-		src_end = &c->spd.this;
-		dst_end = &c->spd.that;
-		sa.spi = proto_info->attrs.spi;
-	}
-	const ip_address *src = &src_end->host_addr;
-	const ip_address *dst = &dst_end->host_addr;
-
-	sa.src.new_address = *src;	/* may be overridden */
-	sa.dst.new_address = *dst;	/* may be overridden */
+	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
+	const struct end_info *old_ei;
+	ip_endpoint new_ep;
 
 	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
 		jam_string(&story_jb, "initiator migrate kernel SA ");
-		old_port = endpoint_hport(st->st_interface->local_endpoint);
-		new_endpoint = st->st_mobike_local_endpoint;
-
-		if (inbound) {
-			sa.dst.new_address = endpoint_address(new_endpoint);
-			encap_sport = endpoint_hport(st->st_remote_endpoint);
-			encap_dport = endpoint_hport(new_endpoint);
-		} else {
-			sa.src.new_address = endpoint_address(new_endpoint);
-			encap_sport = endpoint_hport(new_endpoint);
-			encap_dport = endpoint_hport(st->st_remote_endpoint);
-		}
+		old_ei = &local;
+		new_ep = st->st_mobike_local_endpoint;
 	} else {
 		jam_string(&story_jb, "responder migrate kernel SA ");
-		old_port = endpoint_hport(st->st_remote_endpoint);
-		new_endpoint = st->st_mobike_remote_endpoint;
-
-		if (inbound) {
-			sa.src.new_address = endpoint_address(new_endpoint);
-			encap_sport = endpoint_hport(new_endpoint);
-			encap_dport = endpoint_hport(st->st_interface->local_endpoint);
-		} else {
-			sa.dst.new_address = endpoint_address(new_endpoint);
-			encap_sport = endpoint_hport(st->st_interface->local_endpoint);
-			encap_dport = endpoint_hport(new_endpoint);
-		}
+		old_ei = &remote;
+		new_ep = st->st_mobike_remote_endpoint;
 	}
 
-	if (encap_type == NULL) {
-		encap_sport = 0;
-		encap_dport = 0;
-	}
+	struct kernel_end *changing_ke = (old_ei == src) ? &sa.src : &sa.dst;
 
-	sa.src.address = src;
-	sa.dst.address = dst;
-	sa.src.client = &src_end->client;
-	sa.dst.client = &dst_end->client;
-	sa.src.encap_port = encap_sport;
-	sa.dst.encap_port = encap_dport;
+	changing_ke->new_address = endpoint_address(new_ep);
+	changing_ke->encap_port = endpoint_hport(new_ep);
 
-	ip_said said = said_from_address_protocol_spi(*dst, proto, sa.spi);
+	if (encap_type == NULL)
+		sa.src.encap_port = sa.dst.encap_port = 0;
+
+	ip_said said = said_from_address_protocol_spi(dst->end->host_addr, proto, sa.spi);
 	jam_said(&story_jb, &said);
 
-	endpoint_buf ra;
-	jam(&story_jb, ":%u to %s reqid=%u %s",
-		 old_port,
-		 str_endpoint(&new_endpoint, &ra),
+	endpoint_buf ra_old, ra_new;
+	jam(&story_jb, ":%s to %s reqid=%u %s",
+		 str_endpoint(&old_ei->endpoint, &ra_old),
+		 str_endpoint(&new_ep, &ra_new),
 		 sa.reqid,
 		 enum_name(&netkey_sa_dir_names, dir));
 
