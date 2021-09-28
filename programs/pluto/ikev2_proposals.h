@@ -97,9 +97,10 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 					       const struct dh_desc *default_dh,
 					       struct logger *logger);
 
-const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
-							    struct child_sa *child,
-							    const struct dh_desc *default_dh);
+struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
+								   struct child_sa *child);
+struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
+								     struct child_sa *child);
 
 /*
  * Return the first valid DH proposal that is supported.

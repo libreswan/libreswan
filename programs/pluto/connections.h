@@ -438,20 +438,6 @@ struct connection {
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 
-	/*
-	 * The CREATE_CHILD_SA exchange proposal converted to IKEv2
-	 * format.
-	 *
-	 * During a CREATE_CHILD_SA exchange, a mash up of the
-	 * proposal and the IKE SA's DH algorithm is used.  Since the
-	 * IKE SA's DH can change, it too is saved so a rebuild can be
-	 * triggered.
-	 *
-	 * XXX: has to be a better way?
-	 */
-	struct ikev2_proposals *v2_create_child_proposals;
-	const struct dh_desc *v2_create_child_proposals_default_dh;
-
 	/* host_pair linkage */
 	struct host_pair *host_pair;
 	struct connection *hp_next;

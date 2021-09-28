@@ -1179,7 +1179,7 @@ void delete_state_tail(struct state *st)
 #endif
 	pubkey_delref(&st->st_peer_pubkey, HERE);
 
-	free_ikev2_proposals(&st->st_v2_rekey_proposal);
+	free_ikev2_proposals(&st->st_v2_create_child_sa_proposals);
 	free_ikev2_proposal(&st->st_v2_accepted_proposal);
 
 	/* helper may have its own ref */

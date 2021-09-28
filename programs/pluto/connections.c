@@ -244,9 +244,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		sr = next_sr;
 	}
 
-	free_ikev2_proposals(&c->v2_create_child_proposals);
-	c->v2_create_child_proposals_default_dh = NULL; /* static pointer */
-
 	remove_connection_from_db(c);
 
 	struct config *config = c->root_config;

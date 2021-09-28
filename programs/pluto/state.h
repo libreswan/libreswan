@@ -425,7 +425,7 @@ struct state {
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_v2_accepted_proposal;
-	struct ikev2_proposals *st_v2_rekey_proposal; /* there's only 1 */
+	struct ikev2_proposals *st_v2_create_child_sa_proposals;
 
 	enum sa_role st_sa_role;			/* who initiated the SA */
 

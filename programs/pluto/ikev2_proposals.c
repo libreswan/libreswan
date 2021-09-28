@@ -2167,52 +2167,63 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 }
 
 /*
- * If needed, generate the proposals for a CHILD SA being created (or
- * re-keyed) during a CREATE_CHILD_SA exchange.
+ * Use the CREATE_CHILD_SA proposal suite - the
+ * proposal generated during IKE_AUTH will have been
+ * stripped of DH.
  *
- * If the proposals do not include DH, and PFS is enabled, then the
- * DEFAULT_DH (DH used by the IKE SA) is added to all proposals.
- *
- * XXX:
- *
- * This means that the CHILD SA's proposal suite will change depending
- * on what DH is negotiated by the IKE SA!  Hence the need to save the
- * DEFAULT_DH and check for change.  It should probably be storing the
- * proposal in the state.
- *
- * Horrible.
+ * XXX: If the IKE SA's DH changes, then the child
+ * proposals will be re-generated.  Should the child
+ * proposals instead be somehow stored in state and
+ * dragged around?
  */
 
-const struct ikev2_proposals *get_v2_create_child_proposals(const char *why,
-							    struct child_sa *child,
-							    const struct dh_desc *default_dh)
+struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
+								   struct child_sa *larval_child)
 {
-	struct connection *c = child->sa.st_connection;
-	if (c->v2_create_child_proposals_default_dh != default_dh) {
-		const char *old_fqn = (c->v2_create_child_proposals_default_dh != NULL
-				       ? c->v2_create_child_proposals_default_dh->common.fqn
-				       : "no-PFS");
-		const char *new_fqn = default_dh != NULL ? default_dh->common.fqn : "no-PFS";
-		dbg("create child proposal's DH changed from %s to %s, flushing",
-		    old_fqn, new_fqn);
-		free_ikev2_proposals(&c->v2_create_child_proposals);
-		c->v2_create_child_proposals_default_dh = default_dh;
-	}
-	if (c->v2_create_child_proposals != NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "using existing local ESP/AH proposals for %s (%s): ",
-			    c->name, why);
-			jam_v2_proposals(buf, c->v2_create_child_proposals);
-		}
-	} else {
-		c->v2_create_child_proposals = get_v2_child_proposals(c, why,
-								      c->v2_create_child_proposals_default_dh,
-								      child->sa.st_logger);
-		llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
-				  child->sa.st_logger,
-				  c->v2_create_child_proposals, why);
-	}
-	return c->v2_create_child_proposals;
+	const char *why = "new Child SA";
+	struct connection *c = larval_child->sa.st_connection;
+	const struct dh_desc *default_dh =
+		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+	struct ikev2_proposals *proposals =
+		get_v2_child_proposals(larval_child->sa.st_connection,
+				       "Child SA proposals (new)", default_dh,
+				       larval_child->sa.st_logger);
+	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
+			  larval_child->sa.st_logger, proposals, why);
+	return proposals;
+}
+
+/*
+ * Use the CREATE_CHILD_SA proposal suite - the
+ * proposal generated during IKE_AUTH will have been
+ * stripped of DH.
+ *
+ * XXX: If the IKE SA's DH changes, then the child
+ * proposals will be re-generated.  Should the child
+ * proposals instead be somehow stored in state and
+ * dragged around?
+ *
+ * XXX: this choice of default_dh is wrong: It should use the
+ * Child SA's DH (assuming child was established using
+ * CREATE_CHILD_SA and negotiated DH) or the IKE SA's DH
+ * (assuming this is the child negotiated using IKE_AUTH), or
+ * ?
+ */
+
+struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
+								     struct child_sa *larval_child)
+{
+	const char *why = "rekey Child SA";
+	struct connection *c = larval_child->sa.st_connection;
+	const struct dh_desc *default_dh =
+		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+	struct ikev2_proposals *proposals =
+		get_v2_child_proposals(larval_child->sa.st_connection,
+				       why, default_dh,
+				       larval_child->sa.st_logger);
+	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
+			  larval_child->sa.st_logger, proposals, why);
+	return proposals;
 }
 
 /*
