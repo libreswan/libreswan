@@ -360,7 +360,9 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	larval_child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, larval_child);
+		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
+							     child_being_replaced->sa.st_v2_accepted_proposal,
+							     larval_child);
 	larval_child->sa.st_pfs_group =
 		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
 
@@ -524,7 +526,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	ike->sa.st_v2_larval_responder_sa = larval_child;
 	larval_child->sa.st_ipsec_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, larval_child);
+		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
+							     predecessor->sa.st_v2_accepted_proposal,
+							     larval_child);
 
 	if (!child_rekey_responder_ts_verify(larval_child, md)) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
