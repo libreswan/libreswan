@@ -368,7 +368,7 @@ void delete_every_connection(void)
 	/* Delete instances before templates. */
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
-		delete_connection(&c, true);
+		delete_connection(&c, false);
 	}
 }
 
