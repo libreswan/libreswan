@@ -167,6 +167,7 @@ void delete_connection(struct connection **cp, bool relations)
 {
 	struct connection *c = *cp;
 	*cp = NULL;
+	dbg_free(c->name, c, HERE);
 
 	/*
 	 * Must be careful to avoid circularity:

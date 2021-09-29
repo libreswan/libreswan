@@ -17,6 +17,7 @@
 #include "connections.h"
 #include "log.h"
 #include "hash_table.h"
+#include "refcnt.h"
 
 static void connection_serialno_jam_hash(struct jambuf *buf, const void *data);
 
@@ -232,6 +233,7 @@ static struct connection *finish_connection(struct connection *c, const char *na
 	connection_serialno++;
 	c->serialno = connection_serialno;
 	add_connection_to_db(c);
+	dbg_alloc(name, c, where);
 	return c;
 }
 
