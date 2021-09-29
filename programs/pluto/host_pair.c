@@ -262,9 +262,11 @@ void connect_to_host_pair(struct connection *c)
 void release_dead_interfaces(struct logger *logger)
 {
 	/*
-	 * Delete any connections with a dead interface.  Deleting the
-	 * connection could (?) trigger deleting other connections,
-	 * but presumably they are further down in the list?
+	 * Release (and for instances, delete) any connections with a
+	 * dead interface.
+	 *
+	 * The connections are scanned new-to-old so that instances
+	 * are deleted before templates are released.
 	 */
 	struct connection_filter cf = { .where = HERE, };
 	while (next_connection_new2old(&cf)) {
@@ -294,13 +296,17 @@ void release_dead_interfaces(struct logger *logger)
 		c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
 
 		/*
-		 * This connection instance interface is going away.
-		 * Note: this used to pass relations as true, to cleanup
-		 * everything but that did not take into account a site to
-		 * site conn on right=%any also being an instance.
+		 * This connection instance's interface is going away.
 		 *
-		 * If there's a template then it is earlier so not
-		 * affected by this.
+		 * Note: this used to pass relations as true, to
+		 * cleanup everything but that did not take into
+		 * account a site to site conn on right=%any also
+		 * being an instance.
+		 *
+		 * Since the search is new2old and a connection
+		 * instance's template is older, the connection's
+		 * template will only be processed after all instances
+		 * have been deleted.
 		 */
 		if (c->kind == CK_INSTANCE) {
 			delete_connection(&c, /*relations?*/false);
@@ -309,15 +315,27 @@ void release_dead_interfaces(struct logger *logger)
 		}
 
 		/*
-		 * The connection is somewhat permenant; release it
-		 * and move it to the unoriented_connections list.
+		 * The somewhat permenant connection is going away;
+		 * release it ...
+		 *
+		 * XXX: this code was passing relations=true to
+		 * release_connection() - i.e., delete any Child SAs
+		 * sharing this connection's IKE SA.  However, since
+		 * those's Child SAs sharing the IKE SA are also
+		 * sharing the IKE SA's interface and that is going
+		 * away, the'll be deleted anyway.
+		 *
+		 * XXX: terminate_connections_by_name() added for
+		 * https://bugzilla.redhat.com/show_bug.cgi?id=609343.
+		 * removed.  Since then the host_pair iterator's been
+		 * replaced by the more robust for-all-connections
+		 * loop, presumably making the call unnecessary.
 		 */
-		release_connection(c, /*relations?*/true);
-		terminate_connections_by_name(c->name, /*quiet?*/false, logger);
+		release_connection(c, /*relations?*/false);
 
 		/*
-		 * disorient connection and then put on the unoriented
-		 * list.
+		 * ... and then disorient it, moving it to the
+		 * unoriented list.
 		 */
 		pexpect(c->host_pair != NULL);
 		delete_oriented_hp(c);
