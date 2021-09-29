@@ -859,17 +859,13 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 	}
 
 	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old
-	 * connection we should do this after installing
-	 * ipsec_sa, but that will give us a "eroute in use"
-	 * error.
+	 * Mark that the connection has an established Child SA
+	 * associated with it.
 	 *
-	 * XXX: useless?
+	 * (The IKE SA's connection may not be the same as the Child
+	 * SAs connection).
 	 */
-	ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
-
-	/* mark the connection as now having an IPsec SA associated with it. */
+	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
 			    &larval_child->sa);
 
@@ -951,17 +947,13 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	}
 
 	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old
-	 * connection we should do this after installing
-	 * ipsec_sa, but that will give us a "eroute in use"
-	 * error.
+	 * Mark that the connection has an established Child SA
+	 * associated with it.
 	 *
-	 * XXX: useless?
+	 * (The IKE SA's connection may not be the same as the Child
+	 * SAs connection).
 	 */
-	ike->sa.st_connection->newest_ike_sa = ike->sa.st_serialno;
-
-	/* mark the connection as now having an IPsec SA associated with it. */
+	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
 			    &larval_child->sa);
 
