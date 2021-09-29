@@ -68,8 +68,8 @@ static void add_pending(struct fd *whack_sock,
 			bool part_of_initiate)
 {
 	/* look for duplicate pending IPsec SA's, skip add operation */
-	struct pending **pp = host_pair_first_pending(c);
-	for (struct pending *p = pp ? *pp : NULL; p != NULL; p = p->next) {
+	for (struct pending *p, **pp = host_pair_first_pending(c);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->connection == c) {
 			address_buf b;
 			connection_buf cib;
@@ -218,10 +218,8 @@ void release_pending_whacks(struct state *st, err_t story)
 	 * printed.
 	 */
 
-	struct pending **pp = host_pair_first_pending(st->st_connection);
-	if (pp == NULL)
-		return;
-	for (struct pending *p = *pp; p != NULL; p = p->next) {
+	for (struct pending *p, **pp = host_pair_first_pending(st->st_connection);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		dbg("%s: IKE SA #%lu "PRI_FD" has pending CHILD SA with socket "PRI_FD,
 		    __func__, p->ike->sa.st_serialno,
 		    pri_fd(p->ike->sa.st_logger->object_whackfd),
@@ -308,7 +306,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 	}
 
 	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
-	     (p = *pp) != NULL; ) {
+	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
 		if (p->ike == ike) {
 			p->pend_time = mononow();
 			char *what ="unqueuing";
@@ -359,13 +357,10 @@ struct connection *first_pending(const struct ike_sa *ike,
 				 lset_t *policy,
 				 struct fd **p_whack_sock)
 {
-	struct pending **pp, *p;
-
 	dbg("getting first pending from state #%lu", ike->sa.st_serialno);
 
-	for (pp = host_pair_first_pending(ike->sa.st_connection);
-	     (p = *pp) != NULL; pp = &p->next)
-	{
+	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->ike == ike) {
 			close_any(p_whack_sock); /*on-heap*/
 			*p_whack_sock = fd_dup(p->whack_sock, HERE); /*on-heap*/
@@ -383,9 +378,8 @@ struct connection *first_pending(const struct ike_sa *ike,
  */
 bool pending_check_timeout(const struct connection *c)
 {
-	struct pending **pp, *p;
-
-	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
+	for (struct pending *p, **pp = host_pair_first_pending(c);
+	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
 		deltatime_t waited = monotimediff(mononow(), p->pend_time);
 		connection_buf cib;
 		dbg("checking connection "PRI_CONNECTION" for stuck phase 2s (waited %jd, patience 3*%jd)",
@@ -409,31 +403,22 @@ bool pending_check_timeout(const struct connection *c)
 /* a IKE SA negotiation has been replaced; update any pending */
 void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 {
-	struct pending *p, **pp;
-
 	pexpect(old_ike != NULL);
 	if (old_ike == NULL)
 		return;
 
-	pp = host_pair_first_pending(old_ike->sa.st_connection);
-	if (pp == NULL)
-		return;
-
-	for (p = *pp; p != NULL; p = p->next)
+	for (struct pending *p, **pp = host_pair_first_pending(old_ike->sa.st_connection);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->ike == old_ike)
 			p->ike = new_ike;
+	}
 }
 
 /* a IKE SA negotiation has failed; discard any pending */
 void flush_pending_by_state(struct ike_sa *ike)
 {
-	struct pending **pp, *p;
-
-	pp = host_pair_first_pending(ike->sa.st_connection);
-	if (pp == NULL)
-		return;
-
-	while ((p = *pp) != NULL) {
+	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
+	     pp != NULL && (p = *pp) != NULL; /*see-below*/ ) {
 		if (p->ike == ike) {
 			/* we don't have to worry about deref to free'ed
 			 * *pp, because delete_pending updates pp to
@@ -449,13 +434,8 @@ void flush_pending_by_state(struct ike_sa *ike)
 /* a connection has been deleted; discard any related pending */
 void flush_pending_by_connection(const struct connection *c)
 {
-	struct pending **pp, *p;
-
-	pp = host_pair_first_pending(c);
-	if (pp == NULL)
-		return;
-
-	while ((p = *pp) != NULL) {
+	for (struct pending *p, **pp = host_pair_first_pending(c);
+	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
 		if (p->connection == c) {
 			p->connection = NULL; /* prevent delete_pending from releasing */
 			delete_pending(pp);	/* in effect, advances pp */
@@ -469,13 +449,8 @@ void show_pending_child_details(struct show *s,
 				const struct connection *c,
 				const struct ike_sa *ike)
 {
-	struct pending **pp, *p;
-
-	pp = host_pair_first_pending(c);
-	if (pp == NULL)
-		return;
-
-	for (p = *pp; p != NULL; p = p->next) {
+	for (struct pending *p, **pp = host_pair_first_pending(c);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->ike == ike) {
 			/* connection-name state-number [replacing state-number] */
 			SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -494,15 +469,11 @@ void show_pending_child_details(struct show *s,
 bool connection_is_pending(const struct connection *c)
 {
 	/* see if it is being used by a pending */
-	struct pending **pp, *p;
-
-	pp = host_pair_first_pending(c);
-	if (pp == NULL)
-		return false;
-
-	for (p = *pp; p != NULL; p = p->next)
+	for (struct pending *p, **pp = host_pair_first_pending(c);
+	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->connection == c)
 			return true; /* in use, so we're done */
+	}
 
 	return false;
 }
