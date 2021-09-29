@@ -372,10 +372,12 @@ struct connection *first_pending(const struct ike_sa *ike,
 }
 
 /*
- * Look for phase2s that were waiting for a phase 1.  If the time that we
- * have been pending exceeds a DPD timeout that was set, then we call the
- * dpd_timeout() on this state.  We hope this kills the pending state.
+ * Look for phase2s that were waiting for a phase 1.  If the time that
+ * we have been pending exceeds a DPD timeout that was set, then we
+ * call the dpd_timeout() on this state.  We hope this kills the
+ * pending state.
  */
+
 bool pending_check_timeout(const struct connection *c)
 {
 	for (struct pending *p, **pp = host_pair_first_pending(c);

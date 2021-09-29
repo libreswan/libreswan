@@ -1191,49 +1191,50 @@ void connection_check_phase2(struct logger *logger)
 			continue;
 		}
 
-		connection_buf cib;
-		dbg("pending review: connection "PRI_CONNECTION" checked",
-		    pri_connection(c, &cib));
-
-		if (pending_check_timeout(c)) {
-			ipstr_buf b;
+		if (!pending_check_timeout(c)) {
 			connection_buf cib;
+			dbg("pending review: connection "PRI_CONNECTION" has no timed out pending connections, skipped",
+			    pri_connection(c, &cib));
+			continue;
+		}
 
-			llog(RC_LOG, logger,
-				    "pending IPsec SA negotiation with %s "PRI_CONNECTION" took too long -- replacing phase 1",
-				    ipstr(&c->spd.that.host_addr, &b),
-				    pri_connection(c, &cib));
+		/* XXX: push/pop LOGGER's WHACK? */
+		address_buf ab;
+		enum_buf eb;
+		llog(RC_LOG, c->logger,
+		     "%s SA negotiating with %s took too long -- replacing",
+		     str_enum(&ike_version_ike_names, c->ike_version, &eb),
+		     str_address_sensitive(&c->spd.that.host_addr, &ab));
 
-			struct state *p1st;
-			switch (c->ike_version) {
+		struct state *p1st;
+		switch (c->ike_version) {
 #ifdef USE_IKEv1
-			case IKEv1:
-				p1st = find_phase1_state(c,
-							 (V1_ISAKMP_SA_ESTABLISHED_STATES |
-							  V1_PHASE1_INITIATOR_STATES));
-				break;
+		case IKEv1:
+			p1st = find_phase1_state(c,
+						 (V1_ISAKMP_SA_ESTABLISHED_STATES |
+						  V1_PHASE1_INITIATOR_STATES));
+			break;
 #endif
-			case IKEv2:
-				p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
-				break;
-			default:
-				bad_case(c->ike_version);
-			}
+		case IKEv2:
+			p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
+			break;
+		default:
+			bad_case(c->ike_version);
+		}
 
-			if (p1st != NULL) {
-				/* arrange to rekey the phase 1, if there was one. */
-				if (c->dnshostname != NULL) {
-					restart_connections_by_peer(c, logger);
-				} else {
-					event_force(EVENT_SA_REPLACE, p1st);
-				}
+		if (p1st != NULL) {
+			/* arrange to rekey the phase 1, if there was one. */
+			if (c->dnshostname != NULL) {
+				restart_connections_by_peer(c, logger);
 			} else {
-				/* start a new connection. Something wanted it up */
-				struct initiate_stuff is = {
-					.remote_host = NULL,
-				};
-				initiate_a_connection(c, &is, logger);
+				event_force(EVENT_SA_REPLACE, p1st);
 			}
+		} else {
+			/* start a new connection. Something wanted it up */
+			struct initiate_stuff is = {
+				.remote_host = NULL,
+			};
+			initiate_a_connection(c, &is, logger);
 		}
 	}
 }
