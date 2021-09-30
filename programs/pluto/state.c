@@ -1329,9 +1329,11 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-static void delete_v1_states_by_connection_bottom_up(struct connection **cp)
+static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
+						     bool siblings)
 {
 	struct connection *c = (*cp);
+	struct fd *whackfd = c->logger->global_whackfd;
 
 	/*
 	 * Stop recursive calls trying to delete this connection by
@@ -1343,45 +1345,60 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp)
 	}
 
 	/*
-	 * We take two passes so that we delete any ISAKMP SAs last.
-	 * This allows Delete Notifications to be sent.
-	 *
-	 * ?? We could probably double the performance by caching any
-	 * ISAKMP SA states found in the first pass, avoiding a
-	 * second.
-	 *
-	 * this kludge avoids an n^2 algorithm
+	 * IKEv1 needs children to be deleted before the parent;
+	 * otherwise the child has no way to send its delete message.
 	 */
-	for (int pass = 0; pass != 2; pass++) {
-		dbg("pass %d", pass);
-		struct state_filter sf = { .where = HERE, };
+
+	/*
+	 * Pass 0: any siblings, assuming the connection is bound to a
+	 * parent.
+	 */
+
+	struct ike_sa *ike = ike_sa_by_serialno(c->newest_ike_sa);
+	if (siblings && ike != NULL) {
+		struct state_filter sf = {
+			.ike = ike,
+			.where = HERE,
+		};
 		while (next_state_new2old(&sf)) {
-			struct state *this = sf.st;
-			dbg("state #%lu", this->st_serialno);
-
-			/* on first pass, ignore established ISAKMP SA's */
-			if (pass == 0 &&
-			    (IS_V1_ISAKMP_SA_ESTABLISHED(this) ||
-			     IS_IKE_SA_ESTABLISHED(this))) {
-				continue;
-			}
-
-			if (this->st_connection == c) {
-				/* XXX: something better? */
-				close_any(&this->st_logger->global_whackfd);
-				this->st_logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
-				delete_state(this);
-			}
+			struct state *st = sf.st;
+			dbg("pass 0: delete "PRI_SO" which is a sibling",
+			    st->st_serialno);
+			/* XXX: something better? */
+			close_any(&st->st_logger->global_whackfd);
+			st->st_logger->global_whackfd = fd_addref(whackfd);
+			delete_state(st);
 		}
 	}
 
-	for (const struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		/*
-		 * these passerts are not true currently due to mobike.
-		 * Requires some re-implementation. Use pexpect for now.
-		 */
-		pexpect(sr->eroute_owner == SOS_NOBODY);
-		pexpect(sr->routing != RT_ROUTED_TUNNEL);
+ 	/*
+	 * We take two passes so that we delete any ISAKMP SAs last.
+	 * This allows Delete Notifications to be sent.
+	 *
+	 * XXX: need to go through all states using the connection as,
+	 * in addition to .newest_ike_sa there could be larval or
+	 * dying states hanging around.
+	 */
+	for (int pass = 1; pass <= 2; pass++) {
+		struct state_filter sf = {
+			.connection_serialno = c->serialno,
+			.where = HERE,
+		};
+		while (next_state_new2old(&sf)) {
+			struct state *this = sf.st;
+			/* on first pass, ignore established ISAKMP SA's */
+			if (pass == 1 &&
+			    IS_V1_ISAKMP_SA_ESTABLISHED(this)) {
+				continue;
+			}
+			dbg("pass %d: delete "PRI_SO" which has connection",
+			    pass, this->st_serialno);
+			pexpect(this->st_connection == (*cp));
+			/* XXX: something better? */
+			close_any(&this->st_logger->global_whackfd);
+			this->st_logger->global_whackfd = fd_addref(whackfd);
+			delete_state(this);
+		}
 	}
 
 	if (ck == CK_INSTANCE) {
@@ -1459,7 +1476,7 @@ void delete_states_by_connection(struct connection **cp)
 	co_serial_t connection_serialno = (*cp)->serialno;
 
 	switch ((*cp)->ike_version) {
-	case IKEv1: delete_v1_states_by_connection_bottom_up(cp); break;
+	case IKEv1: delete_v1_states_by_connection_bottom_up(cp, /*siblings*/false); break;
 	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
 	}
 
@@ -1483,70 +1500,12 @@ void delete_states_by_connection(struct connection **cp)
 }
 
 
-void delete_states_by_connection_family(struct connection *c)
+void delete_v1_states_by_connection_family(struct connection **cp)
 {
 	connection_buf cb;
 	dbg("deleting states including all other IPsec SA's of this IKE SA's connection "PRI_CONNECTION,
-	    pri_connection(c, &cb));
-
-	/*
-	 * Stop recursive calls trying to delete this connection by
-	 * flaging this connection as going away.
-	 */
-	enum connection_kind ck = c->kind;
-	if (ck == CK_INSTANCE) {
-		c->kind = CK_GOING_AWAY;
-	}
-
-	/*
-	 * We take two passes so that we delete any ISAKMP SAs last.
-	 * This allows Delete Notifications to be sent.
-	 *
-	 * ?? We could probably double the performance by caching any
-	 * ISAKMP SA states found in the first pass, avoiding a
-	 * second.
-	 *
-	 * this kludge avoids an n^2 algorithm
-	 */
-	for (int pass = 0; pass != 2; pass++) {
-		dbg("pass %d", pass);
-		struct state_filter sf = { .where = HERE, };
-		while (next_state_new2old(&sf)) {
-			struct state *this = sf.st;
-			dbg("state #%lu", this->st_serialno);
-
-			/* on first pass, ignore established ISAKMP SA's */
-			if (pass == 0 &&
-			    (IS_V1_ISAKMP_SA_ESTABLISHED(this) ||
-			     IS_IKE_SA_ESTABLISHED(this))) {
-				continue;
-			}
-
-			if (this->st_connection == c ||
-			    (c->newest_ike_sa != SOS_NOBODY &&
-			     this->st_clonedfrom == c->newest_ike_sa)) {
-				/* XXX: something better? */
-				close_any(&this->st_logger->global_whackfd);
-				this->st_logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
-				delete_state(this);
-			}
-		}
-	}
-
-	for (const struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		/*
-		 * these passerts are not true currently due to mobike.
-		 * Requires some re-implementation. Use pexpect for now.
-		 */
-		pexpect(sr->eroute_owner == SOS_NOBODY);
-		pexpect(sr->routing != RT_ROUTED_TUNNEL);
-	}
-
-	if (ck == CK_INSTANCE) {
-		c->kind = ck;
-		/* already delt with relations above!?! */
-		delete_connection(&c);
-	}
+	    pri_connection(*cp, &cb));
+	delete_v1_states_by_connection_bottom_up(cp, /*siblings?*/true);
 }
 
 /*
