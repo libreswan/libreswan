@@ -42,10 +42,14 @@ struct fd;
 
 struct fd *fd_accept(int socket, const struct where *where, struct logger *logger);
 
-struct fd *fd_dup(struct fd *fd, const struct where *where);
+struct fd *fd_addref_where(struct fd *fd, const struct where *where);
+void fd_delref_where(struct fd **fd, const struct where *where);
 
-#define close_any(FD) close_any_fd((FD), HERE)
-void close_any_fd(struct fd **fd, const struct where *where);
+#define fd_addref(FD) fd_addref_where(FD, HERE)
+#define fd_delref(FD) fd_delref_where(FD, HERE)
+
+#define fd_dup fd_addref_where		/* XXX: TBD */
+#define close_any fd_delref		/* XXX: TBD */
 
 void fd_leak(struct fd *fd, const struct where *where);
 

@@ -72,9 +72,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 	c->policy &= ~POLICY_UP;
 	flush_pending_by_connection(c);
 
-	bool connection_still_exists;
 	if (shared_phase1_connection(c)) {
-		connection_still_exists = true;
 		llog(RC_LOG, c->logger,
 		     "IKE SA is shared - only terminating IPsec SA");
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
@@ -86,15 +84,14 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 		}
 	} else {
 		/*
-		 * CK_INSTANCE is deleted simultaneous to deleting
-		 * state :-/
+		 * CK_INSTANCE is deleted as a side effect of deleting
+		 * the state.
 		 */
-		connection_still_exists = c->kind != CK_INSTANCE;
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		delete_states_by_connection(c);
+		delete_states_by_connection(&c);
 	}
 
-	if (connection_still_exists) {
+	if (c != NULL) {
 		/* XXX: something better? */
 		close_any(&c->logger->global_whackfd);
 	}

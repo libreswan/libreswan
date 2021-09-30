@@ -125,7 +125,8 @@ void release_connection(struct connection *c)
 {
 	pexpect(c->kind != CK_INSTANCE);
 	flush_pending_by_connection(c);
-	delete_states_by_connection(c);
+	delete_states_by_connection(&c);
+	passert(c != NULL);
 	unroute_connection(c);
 }
 

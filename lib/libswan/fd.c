@@ -31,7 +31,7 @@ struct fd {
 	refcnt_t refcnt;
 };
 
-struct fd *fd_dup(struct fd *fd, const struct where *where)
+struct fd *fd_addref_where(struct fd *fd, const struct where *where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
 	return addref(fd, where);
@@ -55,7 +55,7 @@ static void free_fd(void *obj, where_t where)
 	pfree(fd);
 }
 
-void close_any_fd(struct fd **fd, where_t where)
+void fd_delref_where(struct fd **fd, where_t where)
 {
 	delref(fd, where);
 }
