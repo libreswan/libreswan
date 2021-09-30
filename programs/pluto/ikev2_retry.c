@@ -34,64 +34,70 @@
 #include "ipsec_doi.h"
 #include "kernel.h"
 
-static void retry_action(struct ike_sa *ike_tbd)
+static void retransmit_timeout_action(struct ike_sa *ike)
 {
-	/*
-	 * XXX: Danger! These connection calls, notably
-	 * restart_connections_by_peer(), can end up deleting IKE_TBD.
-	 *
-	 * So that the logger is valid after IKE_TBD's been deleted,
-	 * create a clone of IKE_TBD's logger and kill the IKE_TBD
-	 * pointer.
-	 */
-	struct logger *logger = clone_logger(ike_tbd->sa.st_logger, HERE);
-	struct connection *c = ike_tbd->sa.st_connection;
-	const char *liveness_name = enum_name(&ike_version_liveness_names, ike_tbd->sa.st_ike_version);
-	passert(liveness_name != NULL);
-	ike_tbd = NULL; /* kill IKE_TBD; can no longer be trusted */
+	const char *kind_name = enum_name(&connection_kind_names,
+					  ike->sa.st_connection->kind);
 
-	switch (c->dpd_action) {
+	switch (ike->sa.st_connection->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		llog(RC_LOG, logger,
-		     "%s action - clearing connection kind %s",
-		     liveness_name, enum_name(&connection_kind_names, c->kind));
+	{
 		/*
-		 * Danger: delete_states_by_connection_family()
-		 * delete's C when CK_INSTANCE.
+		 * Danger: delete_ike_family() can delete the IKE SA's
+		 * connection.  Cover our bases by saving a handle.
 		 */
-		if (c->kind == CK_INSTANCE) {
-			delete_states_by_connection_family(c);
-		} else {
-			flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-			delete_states_by_connection_family(c);
-			dbg("%s: unrouting connection %s action - clearing",
-			    enum_name(&connection_kind_names, c->kind),
-			    liveness_name);
+		llog_sa(RC_LOG, ike,
+			"liveness action - clearing connection kind %s",
+			kind_name);
+		co_serial_t co = ike->sa.st_connection->serialno;
+		/* remove any partial negotiations that are failing */
+		flush_pending_by_connection(ike->sa.st_connection);
+		delete_ike_family(&ike, DONT_SEND_DELETE);
+		pexpect(ike == NULL);
+		struct connection *c = connection_by_serialno(co);
+		if (c != NULL) {
+			dbg("unrouting connection kind %s",
+			    kind_name);
 			unroute_connection(c); /* --unroute */
 		}
 		break;
+	}
 
 	case DPD_ACTION_RESTART:
-		llog(RC_LOG, logger,
-		     "%s action - restarting all connections that share this peer",
-		     liveness_name);
+	{
+		/*
+		 * XXX: Danger! This connection call can end up
+		 * deleting IKE.
+		 *
+		 * So that the logger is valid after IKE_TBD's been
+		 * deleted, create a clone of IKE's logger and
+		 * kill the IKE pointer.
+		 *
+		 * XXX: and how is this different to REVIVE?
+		 */
+		llog_sa(RC_LOG, ike,
+			"liveness action - restarting all connections that share this peer");
+		struct logger *logger = clone_logger(ike->sa.st_logger, HERE);
+		struct connection *c = ike->sa.st_connection;
+		ike = NULL;
 		restart_connections_by_peer(c, logger);
+		ike = NULL; /* potentially deleted */
+		free_logger(&logger, HERE);
 		break;
+	}
 
 	case DPD_ACTION_HOLD:
-		llog(RC_LOG, logger,
-		     "%s action - putting connection into hold",
-		     liveness_name);
-		if (c->kind == CK_INSTANCE) {
-			dbg("%s warning dpdaction=hold on instance futile - will be deleted", liveness_name);
+		llog_sa(RC_LOG, ike,
+			"liveness action - putting connection into hold");
+		if (ike->sa.st_connection->kind == CK_INSTANCE) {
+			dbg("liveness warning: dpdaction=hold on instance futile - will be deleted");
 		}
-		delete_states_by_connection_family(c);
+		delete_ike_family(&ike, DONT_SEND_DELETE);
 		break;
 
 	default:
-		bad_case(c->dpd_action);
+		bad_case(ike->sa.st_connection->dpd_action);
 	}
-	free_logger(&logger, HERE);
 }
 
 /*
@@ -181,7 +187,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 		 * the IKE SA and not just this one child(?).
 		 */
 		/* already logged */
-		retry_action(ike);
+		retransmit_timeout_action(ike);
 		/* presumably retry_action() deletes the state? */
 		return;
 	}
