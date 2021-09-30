@@ -561,7 +561,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			llog(RC_UNKNOWN_NAME, logger, "no state #%lu to delete",
 			     m->whack_deletestateno);
 		} else {
-			/* needs an abstraction */
+			/* XXX: something better? */
 			close_any(&st->st_logger->global_whackfd);
 			st->st_logger->global_whackfd = fd_dup(whackfd, HERE);
 			log_state(LOG_STREAM/*not-whack*/, st,
@@ -573,8 +573,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
 				log_state(LOG_STREAM/*not-whack*/, st,
 					  "Also deleting any corresponding CHILD_SAs");
-				delete_ike_family(pexpect_ike_sa(st),
-						  PROBABLY_SEND_DELETE);
+				struct ike_sa *ike = pexpect_ike_sa(st);
+				delete_ike_family(&ike, PROBABLY_SEND_DELETE);
 				st = NULL;
 				/* note: no md->st to clear */
 			} else {

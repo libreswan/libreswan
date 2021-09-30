@@ -152,7 +152,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
 			  c->newest_ike_sa, ike->sa.st_try);
 		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
-		delete_ike_family(ike, DONT_SEND_DELETE);
+		delete_ike_family(&ike, DONT_SEND_DELETE);
 		return;
 	}
 
@@ -166,7 +166,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 	case RETRANSMITS_TIMED_OUT:
 		break;
 	case DELETE_ON_RETRANSMIT:
-		delete_ike_family(ike, DONT_SEND_DELETE);
+		delete_ike_family(&ike, DONT_SEND_DELETE);
 		return;
 	}
 
@@ -230,7 +230,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 	/* can't send delete as message window is full */
-	delete_ike_family(ike, DONT_SEND_DELETE);
+	delete_ike_family(&ike, DONT_SEND_DELETE);
 
 	/* note: no md->st to clear */
 }

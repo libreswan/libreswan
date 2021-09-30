@@ -2690,9 +2690,9 @@ void complete_v2_state_transition(struct state *st,
 		 * call v2_msgid_queue_initiator() with high priority
 		 * so this is performed as a separate transition?
 		 */
-		delete_ike_family(ike, DO_SEND_DELETE);
+		delete_ike_family(&ike, DO_SEND_DELETE);
 		/* get out of here -- everything is invalid */
-		ike = NULL;
+		pexpect(ike == NULL);
 		st = NULL;
 		return;
 
@@ -2727,8 +2727,8 @@ void complete_v2_state_transition(struct state *st,
 
 		/* if this was a child fail, don't destroy the IKE SA */
 		if (IS_IKE_SA(st)) {
-			delete_ike_family(ike, DONT_SEND_DELETE);
-			ike = NULL;
+			delete_ike_family(&ike, DONT_SEND_DELETE);
+			pexpect(ike == NULL);
 		}
 
 		/* kill all st pointers */

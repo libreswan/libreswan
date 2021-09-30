@@ -547,8 +547,8 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	id_buf thatidb;
 	const char *thatidbuf = str_id(&c->spd.that.id, &thatidb);
 	if (streq(thatidbuf, name)) {
-		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
-		/* note: no md->v1_st to clear */
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		delete_ike_family(&ike, PROBABLY_SEND_DELETE);
 	}
 }
 
@@ -559,7 +559,8 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 		return;
 
 	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
-		delete_ike_family(pexpect_ike_sa(st), PROBABLY_SEND_DELETE);
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		delete_ike_family(&ike, PROBABLY_SEND_DELETE);
 		/* note: no md->v1_st to clear */
 	}
 }
@@ -2872,8 +2873,11 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	return false; /* keep going */
 }
 
-void delete_ike_family(struct ike_sa *ike, enum send_delete send_delete)
+void delete_ike_family(struct ike_sa **ikep, enum send_delete send_delete)
 {
+	struct ike_sa *ike = (*ikep);
+	(*ikep) = NULL;
+
 	/*
 	 * We are a parent: delete our children and
 	 * then prepare to delete ourself.
