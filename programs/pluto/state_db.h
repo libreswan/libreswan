@@ -62,11 +62,6 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				void *predicate_context,
 				const char *reason);
 
-struct state *state_by_connection(struct connection *c,
-				  state_by_predicate *predicate /*optional*/,
-				  void *predicate_context,
-				  const char *reason);
-
 void rehash_state_connection(struct state *st);
 
 struct state *state_by_reqid(reqid_t reqid,

@@ -122,9 +122,6 @@ void log_state(lset_t rc_flags, const struct state *st,
 	       const char *msg, ...) PRINTF_LIKE(3);
 #define llog_sa(RC_FLAGS, SA, MSG, ...) llog(RC_FLAGS, (SA)->sa.st_logger, MSG, ##__VA_ARGS__)
 
-#define PRI_SO "#%lu"
-#define pri_so(SO) (SO)
-
 #define state_buf connection_buf /* hack */
 #define PRI_STATE PRI_CONNECTION" "PRI_SO
 #define pri_state(ST, B) pri_connection((ST)->st_connection, B), pri_so((ST)->st_serialno)

@@ -682,7 +682,7 @@ struct state {
 	/* all the hash table entries */
 	struct {
 		struct list_entry serialno;
-		struct list_entry connection;
+		struct list_entry connection_serialno;
 		struct list_entry reqid;
 		struct list_entry ike_spis;
 		struct list_entry ike_initiator_spi;
@@ -902,9 +902,10 @@ void list_state_events(struct show *s, monotime_t now);
 
 struct state_filter {
 	/* filters */
-	enum ike_version ike_version;	/* required */
+	enum ike_version ike_version;
 	const ike_spis_t *ike_spis;	/* hashed */
 	const struct ike_sa *ike;
+	co_serial_t connection_serialno;
 	/* current result (can be safely deleted) */
 	struct state *st;
 	/* internal (handle on next entry) */

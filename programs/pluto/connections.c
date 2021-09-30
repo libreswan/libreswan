@@ -4447,29 +4447,14 @@ void connection_delete_unused_instance(struct connection **cp,
 		return;
 	}
 
-	/* find the first */
-	struct state *st = state_by_connection(c, NULL, NULL, __func__);
-	if (DBGP(DBG_BASE)) {
-		/*
-		 * Cross check that the state DB has been kept
-		 * up-to-date.
-		 */
-		struct state *dst = NULL;
-		struct state_filter sf = { .where = HERE, };
-		while (next_state_new2old(&sf)) {
-			if (sf.st->st_connection == c) {
-				dst = sf.st;
-				break;
-			}
-		}
-		/* found a state, may not be the same */
-		pexpect((dst == NULL) == (st == NULL));
-		st = dst; /* let the truth be free */
-	}
-
-	if (st != NULL) {
+	/* see of a state, any state, is using the connection */
+	struct state_filter sf = {
+		.connection_serialno = c->serialno,
+		.where = HERE,
+	};
+	if (next_state_new2old(&sf)) {
 		dbg("connection instance %s in use by #%lu, skipping delete-unused",
-		    c->name, st->st_serialno);
+		    c->name, sf.st->st_serialno);
 		return;
 	}
 

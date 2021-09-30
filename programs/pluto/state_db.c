@@ -106,52 +106,24 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno)
 }
 
 /*
- * A table hashed by the connection's address.
+ * A table hashed by the connection's serial no.
  */
 
-static hash_t connection_hasher(struct connection *const *connection)
+static hash_t connection_serialno_hasher(const co_serial_t *connection_serial)
 {
-	return hash_table_hash_thing(*connection, zero_hash);
+	return hash_table_hash_thing(*connection_serial, zero_hash);
 }
 
-static void jam_state_connection(struct jambuf *buf, const struct state *st)
+static void jam_state_connection_serialno(struct jambuf *buf, const struct state *st)
 {
-	jam_connection(buf, st->st_connection);
+	jam(buf, PRI_CO, st->st_connection->serialno);
 }
 
-HASH_TABLE(state, connection, .st_connection, STATE_TABLE_SIZE);
-
-struct state *state_by_connection(struct connection *connection,
-				  state_by_predicate *predicate /*optional*/,
-				  void *predicate_context,
-				  const char *reason)
-{
-	/*
-	 * Note that since SOS_NOBODY is never hashed, a lookup of
-	 * SOS_NOBODY always returns NULL.
-	 */
-	struct state *st;
-	hash_t hash = connection_hasher(&connection);
-	struct list_head *bucket = hash_table_bucket(&state_connection_hash_table, hash);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
-		if (st->st_connection != connection) {
-			continue;
-		}
-		if (predicate != NULL &&
-		    !predicate(st, predicate_context)) {
-			continue;
-		}
-		dbg("State DB: found state #%lu in %s (%s)",
-		    st->st_serialno, st->st_state->short_name, reason);
-		return st;
-	}
-	dbg("State DB: state not found (%s)", reason);
-	return NULL;
-}
+HASH_TABLE(state, connection_serialno, .st_connection->serialno, STATE_TABLE_SIZE);
 
 void rehash_state_connection(struct state *st)
 {
-	rehash_table_entry(&state_connection_hash_table, st);
+	rehash_table_entry(&state_connection_serialno_hash_table, st);
 }
 
 /*
@@ -337,6 +309,9 @@ static struct list_head *filter_head(struct state_filter *filter)
 	} else if (filter->ike != NULL) {
 		hash_t hash = ike_spis_hasher(&filter->ike->sa.st_ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
+	} else if (filter->connection_serialno != 0) {
+		hash_t hash = connection_serialno_hasher(&filter->connection_serialno);
+		bucket = hash_table_bucket(&state_connection_serialno_hash_table, hash);
 	} else {
 		/* else other queries? */
 		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->where));
@@ -357,6 +332,10 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	}
 	if (filter->ike != NULL &&
 	    filter->ike->sa.st_serialno != st->st_clonedfrom) {
+		return false;
+	}
+	if (filter->connection_serialno != 0 &&
+	    filter->connection_serialno != st->st_connection->serialno) {
 		return false;
 	}
 	return true;
@@ -432,7 +411,7 @@ bool next_state_new2old(struct state_filter *filter)
 
 static struct hash_table * const state_hash_tables[] = {
 	&state_serialno_hash_table,
-	&state_connection_hash_table,
+	&state_connection_serialno_hash_table,
 	&state_reqid_hash_table,
 	&state_ike_initiator_spi_hash_table,
 	&state_ike_spis_hash_table,
