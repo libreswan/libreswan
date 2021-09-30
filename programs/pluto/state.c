@@ -1328,11 +1328,9 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-void delete_states_by_connection(struct connection *c)
+static void delete_v1_states_by_connection_bottom_up(struct connection **cp)
 {
-	connection_buf cb;
-	dbg("deleting all states for connection "PRI_CONNECTION,
-	    pri_connection(c, &cb));
+	struct connection *c = (*cp);
 
 	/*
 	 * Stop recursive calls trying to delete this connection by
@@ -1388,9 +1386,101 @@ void delete_states_by_connection(struct connection *c)
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
 		/* already delt with relations above!?! */
-		delete_connection(&c);
+		delete_connection(cp);
 	}
 }
+
+static void delete_v2_states_by_connection_top_down(struct connection **cp)
+{
+	/*
+	 * Capture anything useful in the connection.
+	 *
+	 * From here on out, the pointer (*cp) can't be deferenced as
+	 * the connection may have been deleted.
+	 */
+
+	co_serial_t connection_serialno = (*cp)->serialno;
+	so_serial_t newest_ike_sa = (*cp)->newest_ike_sa;
+	so_serial_t newest_child_sa = (*cp)->newest_ipsec_sa;
+	struct fd *whackfd = fd_addref((*cp)->logger->global_whackfd); /* must delref */
+
+	/*
+	 * Stop recursive calls trying to delete this connection by
+	 * flaging this connection as going away.
+	 */
+
+	struct state *sa;
+	if (newest_ike_sa != SOS_NOBODY) {
+		sa = state_by_serialno(newest_ike_sa);
+		pexpect(sa != NULL);
+	} else if (newest_child_sa != SOS_NOBODY) {
+		/* IKEv1 children can be parents! */
+		sa = state_by_serialno(newest_child_sa);
+		pexpect(sa != NULL);
+	} else {
+		sa = NULL;
+	}
+
+	if (sa != NULL) {
+		pexpect(sa->st_connection == (*cp));
+		/* XXX: something better? */
+		close_any(&sa->st_logger->global_whackfd);
+		sa->st_logger->global_whackfd = fd_addref(whackfd);
+		delete_state(sa);
+	}
+
+	/*
+	 * Now clean up anything left behind.
+	 */
+	struct state_filter sf = {
+		.connection_serialno = connection_serialno,
+		.where = HERE,
+	};
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
+		pexpect(st->st_connection == (*cp));
+		/* XXX: something better? */
+		close_any(&st->st_logger->global_whackfd);
+		st->st_logger->global_whackfd = fd_addref(whackfd);
+		delete_state(st);
+	}
+
+	fd_delref(&whackfd);
+}
+
+void delete_states_by_connection(struct connection **cp)
+{
+	connection_buf cb;
+	dbg("deleting all states for connection "PRI_CONNECTION,
+	    pri_connection((*cp), &cb));
+
+	enum connection_kind ck = (*cp)->kind;
+	co_serial_t connection_serialno = (*cp)->serialno;
+
+	switch ((*cp)->ike_version) {
+	case IKEv1: delete_v1_states_by_connection_bottom_up(cp); break;
+	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
+	}
+
+	/* was (*cp) deleted? */
+	struct connection *c = connection_by_serialno(connection_serialno);
+	if (c == NULL) {
+		pexpect(ck == CK_INSTANCE);
+		*cp = NULL;
+		return;
+	}
+
+	for (const struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		/*
+		 * these passerts are not true currently due to mobike.
+		 * Requires some re-implementation. Use pexpect for now.
+		 */
+		pexpect(sr->eroute_owner == SOS_NOBODY);
+		pexpect(sr->routing != RT_ROUTED_TUNNEL);
+	}
+
+}
+
 
 void delete_states_by_connection_family(struct connection *c)
 {
