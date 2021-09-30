@@ -7,5 +7,5 @@ sleep 30
 sleep 1
 ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 # this should find a match
-grep "replacing phase 1" /tmp/pluto.log
+grep "took too long" /tmp/pluto.log
 echo done

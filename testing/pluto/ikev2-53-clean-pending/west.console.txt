@@ -82,8 +82,8 @@ west #
 west #
  # this should find a match
 west #
- grep "replacing phase 1" /tmp/pluto.log
-pending IPsec SA negotiation with 192.1.2.23 "westnet-eastnet-ipv4-psk-ikev2" took too long -- replacing phase 1
+ grep "took too long" /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2": IKE SA negotiating with 192.1.2.23 took too long -- replacing
 west #
  echo done
 done
