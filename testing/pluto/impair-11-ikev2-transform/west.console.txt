@@ -21,8 +21,8 @@ west #
 004 "conf" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "conf": terminating SAs using this connection
-005 "conf" #2: ESP traffic information: in=84B out=84B
 002 "conf" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "conf" #2: ESP traffic information: in=84B out=84B
 002 "conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -43,8 +43,8 @@ west #
 004 "conf" #4: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "conf": terminating SAs using this connection
-005 "conf" #4: ESP traffic information: in=84B out=84B
 002 "conf" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "conf" #4: ESP traffic information: in=84B out=84B
 002 "conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -65,8 +65,8 @@ west #
 004 "conf" #6: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "conf": terminating SAs using this connection
-005 "conf" #6: ESP traffic information: in=84B out=84B
 002 "conf" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "conf" #6: ESP traffic information: in=84B out=84B
 002 "conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -87,8 +87,8 @@ west #
 004 "conf" #8: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 002 "conf": terminating SAs using this connection
-005 "conf" #8: ESP traffic information: in=84B out=84B
 002 "conf" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "conf" #8: ESP traffic information: in=84B out=84B
 002 "conf": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -109,8 +109,8 @@ west #
 004 "conf" #10: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "conf": terminating SAs using this connection
-005 "conf" #10: ESP traffic information: in=84B out=84B
 002 "conf" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "conf" #10: ESP traffic information: in=84B out=84B
 002 "conf": terminating SAs using this connection
 west #
  ipsec whack --impair none

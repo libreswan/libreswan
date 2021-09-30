@@ -2357,7 +2357,7 @@ bool accept_delete(struct msg_digest *md,
 						 * states tied to the
 						 * connection?
 						 */
-						delete_states_by_connection(rc);
+						delete_states_by_connection(&rc);
 						md->v1_st = NULL;
 					}
 				}

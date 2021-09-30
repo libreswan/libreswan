@@ -34,8 +34,8 @@ west #
 004 "ike,esp=aes_gcm" #2: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  # force its addition
@@ -55,8 +55,8 @@ west #
 004 "ike,esp=aes_gcm" #4: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  # force its exclusion
@@ -76,8 +76,8 @@ west #
 004 "ike,esp=aes_gcm" #6: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  ipsec whack --impair v2-proposal-integ:no
@@ -95,8 +95,8 @@ west #
 004 "ike,esp=aes_gcm" #8: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #8: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #8: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  # force its addition
@@ -114,8 +114,8 @@ west #
 004 "ike,esp=aes_gcm" #10: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #10: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #10: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  # force its exclusion
@@ -133,8 +133,8 @@ west #
 004 "ike,esp=aes_gcm" #12: established Child SA; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-005 "ike,esp=aes_gcm" #12: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "ike,esp=aes_gcm" #12: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
  ipsec whack --impair v2-proposal-integ:no
