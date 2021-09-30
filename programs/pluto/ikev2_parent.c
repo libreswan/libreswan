@@ -738,7 +738,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 		 */
 		if (d->kind == CK_INSTANCE) {
 			/* this also deletes the states */
-			delete_connection(&d, /*relations?*/false);
+			delete_connection(&d);
 		} else {
 			/* this only deletes the states */
 			release_connection(d, /*relations?*/false);

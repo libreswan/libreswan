@@ -309,7 +309,7 @@ void release_dead_interfaces(struct logger *logger)
 		 * have been deleted.
 		 */
 		if (c->kind == CK_INSTANCE) {
-			delete_connection(&c, /*relations?*/false);
+			delete_connection(&c);
 			pexpect(c == NULL);
 			continue;
 		}

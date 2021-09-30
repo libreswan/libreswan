@@ -2727,7 +2727,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 				  pri_connection(o, &cib),
 				  str_address_sensitive(&o->spd.that.host_addr, &b));
 			if (o->kind == CK_INSTANCE) {
-				delete_connection(&o, /*relations?*/false);
+				delete_connection(&o);
 			} else {
 				release_connection(o, /*relations?*/false);
 			}

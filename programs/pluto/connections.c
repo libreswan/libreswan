@@ -163,7 +163,7 @@ static void delete_sr(struct spd_route *sr)
 
 static void discard_connection(struct connection **cp, bool connection_valid);
 
-void delete_connection(struct connection **cp, bool relations)
+void delete_connection(struct connection **cp)
 {
 	struct connection *c = *cp;
 	*cp = NULL;
@@ -187,7 +187,7 @@ void delete_connection(struct connection **cp, bool relations)
 			free_that_address_lease(c);
 		}
 	}
-	release_connection(c, relations);
+	release_connection(c, /*relations*/false);
 	discard_connection(&c, true/*connection_valid*/);
 }
 
@@ -343,7 +343,7 @@ static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE); /* freed by discard_conection() */
 
-	delete_connection(&c, false);
+	delete_connection(&c);
 	return 1;
 }
 
@@ -369,7 +369,7 @@ void delete_every_connection(void)
 	/* Delete instances before templates. */
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
-		delete_connection(&c, false);
+		delete_connection(&c);
 	}
 }
 
@@ -1311,7 +1311,7 @@ static void mark_parse(/*const*/ char *wmmark,
  *
  * This code is responsible for cloning strings and other structures
  * so that they out live the whack message.  When things go wrong,
- * return false, the caller will then use delete_connection() to free
+ * return false, the caller will then use discard_connection() to free
  * the partially constructed connection.
  *
  * Checks from confread/whack should be moved here so it is similar
@@ -4477,7 +4477,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	/* XXX: something better? */
 	close_any(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_dup(whackfd, HERE);
-	delete_connection(&c, false);
+	delete_connection(&c);
 }
 
 /*

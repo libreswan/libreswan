@@ -82,7 +82,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 		/* flip cur_connection */
 		ok = initiate_connection_2(d, remote_host, background, inception);
 		if (!ok) {
-			delete_connection(&d, false);
+			delete_connection(&d);
 		} else {
 			/* XXX: something better? */
 			close_any(&d->logger->global_whackfd);
@@ -175,7 +175,7 @@ bool initiate_connection_2(struct connection *c,
 		/* flip cur_connection */
 		ok = initiate_connection_3(d, background, inception);
 		if (!ok) {
-			delete_connection(&d, false);
+			delete_connection(&d);
 		} else {
 			/* XXX: something better? */
 			close_any(&d->logger->global_whackfd);

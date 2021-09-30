@@ -3392,7 +3392,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 					 * old connection.
 					 */
 					if (d->kind == CK_INSTANCE) {
-						delete_connection(&d, /*relations?*/false);
+						delete_connection(&d);
 					} else {
 						release_connection(d, /*relations?*/false); /* this deletes the states */
 					}
