@@ -620,8 +620,8 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 void free_logger(struct logger **logp, where_t where)
 {
 	dbg_free("logger", *logp, where);
-	fd_delref_where(&(*logp)->global_whackfd, where);
-	fd_delref_where(&(*logp)->object_whackfd, where);
+	close_any_fd(&(*logp)->global_whackfd, where);
+	close_any_fd(&(*logp)->object_whackfd, where);
 	/*
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.

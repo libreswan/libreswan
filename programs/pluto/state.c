@@ -599,8 +599,8 @@ void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
 	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why);
-	fd_delref_where(&st->st_logger->object_whackfd, where);
-	fd_delref_where(&st->st_logger->global_whackfd, where);
+	close_any_fd(&st->st_logger->object_whackfd, where);
+	close_any_fd(&st->st_logger->global_whackfd, where);
 }
 
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
@@ -1328,88 +1328,68 @@ void delete_states_dead_interfaces(struct logger *logger)
  * also clean up larval and dying State.
  */
 
-void delete_states_by_connection(struct connection **cp)
+void delete_states_by_connection(struct connection *c)
 {
 	connection_buf cb;
 	dbg("deleting all states for connection "PRI_CONNECTION,
-	    pri_connection((*cp), &cb));
-
-	enum connection_kind ck = (*cp)->kind;
-	co_serial_t connection_serialno = (*cp)->serialno;
-	so_serial_t newest_ike_sa = (*cp)->newest_ike_sa;
-	so_serial_t newest_child_sa = (*cp)->newest_ipsec_sa;
-	struct fd *whackfd = fd_dup((*cp)->logger->global_whackfd, HERE); /* must delref */
-	/* from here on out, don't access **CP */
+	    pri_connection(c, &cb));
 
 	/*
-	 * Step 1: find the highest ranking established SA associated
-	 * with the connection and delete it.
-	 *
-	 * This is playing by IKEv2's rules: deleting the IKE SA will
-	 * trigger a child delete anyway.
+	 * Stop recursive calls trying to delete this connection by
+	 * flaging this connection as going away.
 	 */
-	struct state *sa;
-	if (newest_ike_sa != SOS_NOBODY) {
-		sa = state_by_serialno(newest_ike_sa);
-		pexpect(sa != NULL);
-	} else if (newest_child_sa != SOS_NOBODY) {
-		/* IKEv1 children can be parents! */
-		sa = state_by_serialno(newest_child_sa);
-		pexpect(sa != NULL);
-	} else {
-		sa = NULL;
-	}
-
-	if (sa != NULL) {
-		pexpect(sa->st_connection == (*cp));
-		/* XXX: something better? */
-		close_any(&sa->st_logger->global_whackfd);
-		sa->st_logger->global_whackfd = fd_dup(whackfd, HERE);
-		delete_state(sa);
+	enum connection_kind ck = c->kind;
+	if (ck == CK_INSTANCE) {
+		c->kind = CK_GOING_AWAY;
 	}
 
 	/*
-	 * Step 2: clean up any stragglers.
+	 * We take two passes so that we delete any ISAKMP SAs last.
+	 * This allows Delete Notifications to be sent.
 	 *
-	 * Search new2old so that larval states picked up up first?
-	 * Would it be better to delete dead states first?
+	 * ?? We could probably double the performance by caching any
+	 * ISAKMP SA states found in the first pass, avoiding a
+	 * second.
 	 *
-	 * Danger: at this point *CP can't be trusted as the above may
-	 * have deleted the connection.
+	 * this kludge avoids an n^2 algorithm
 	 */
-	struct state_filter sf = {
-		.connection_serialno = connection_serialno,
-		.where = HERE,
-	};
-	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
-		pexpect(st->st_connection == (*cp));
-		/* XXX: something better? */
-		close_any(&st->st_logger->global_whackfd);
-		st->st_logger->global_whackfd = fd_dup(whackfd, HERE);
-		delete_state(st);
-	}
+	for (int pass = 0; pass != 2; pass++) {
+		dbg("pass %d", pass);
+		struct state_filter sf = { .where = HERE, };
+		while (next_state_new2old(&sf)) {
+			struct state *this = sf.st;
+			dbg("state #%lu", this->st_serialno);
 
-	/* was (*cp) deleted? */
-	struct connection *c = connection_by_serialno(connection_serialno);
-	if (c == NULL) {
-		pexpect(ck == CK_INSTANCE);
-		*cp = NULL;
-		return;
+			/* on first pass, ignore established ISAKMP SA's */
+			if (pass == 0 &&
+			    (IS_V1_ISAKMP_SA_ESTABLISHED(this) ||
+			     IS_IKE_SA_ESTABLISHED(this))) {
+				continue;
+			}
+
+			if (this->st_connection == c) {
+				/* XXX: something better? */
+				close_any(&this->st_logger->global_whackfd);
+				this->st_logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
+				delete_state(this);
+			}
+		}
 	}
 
 	for (const struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		/*
-		 * These passerts are not true currently due to
-		 * mobike.  Requires some re-implementation. Use
-		 * pexpect for now.
-		 *
-		 * XXX: why exactly?
+		 * these passerts are not true currently due to mobike.
+		 * Requires some re-implementation. Use pexpect for now.
 		 */
 		pexpect(sr->eroute_owner == SOS_NOBODY);
 		pexpect(sr->routing != RT_ROUTED_TUNNEL);
 	}
 
+	if (ck == CK_INSTANCE) {
+		c->kind = ck;
+		/* already delt with relations above!?! */
+		delete_connection(&c);
+	}
 }
 
 void delete_states_by_connection_family(struct connection *c)
