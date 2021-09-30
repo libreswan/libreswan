@@ -599,8 +599,8 @@ void release_any_whack(struct state *st, where_t where, const char *why)
 {
 	dbg("releasing #%lu's "PRI_FD" because %s",
 	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why);
-	close_any_fd(&st->st_logger->object_whackfd, where);
-	close_any_fd(&st->st_logger->global_whackfd, where);
+	fd_delref_where(&st->st_logger->object_whackfd, where);
+	fd_delref_where(&st->st_logger->global_whackfd, where);
 }
 
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
