@@ -30,8 +30,6 @@
 #ifndef CONNECTIONS_H
 #define CONNECTIONS_H
 
-#include <limits.h>		/* for UINT_MAX */
-
 #include "fd.h"
 #include "id.h"    /* for struct id */
 #include "lmod.h"
@@ -54,31 +52,6 @@
 #include "reqid.h"
 #include "state.h"
 #include "whack.h"
-
-/*
- * Per-connection unique ID.
- *
- * Define co_serial_t as an enum so that GCC 10 will detect and
- * complain when code attempts to assign the wrong type.
- *
- * - an enum is always the size of <<signed int> or <<unsigned int>>
- *   (presumably so that the size of <<enum foo f>> is always known)
- *
- * - an enum's sign can be signed or unsigned; specifying a UINT_MAX
- *   value forces it to unsigned
- */
-
-typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
-
-#define PRI_CO "$%u"
-#define pri_co(CO) ((CO))
-
-#define co_serial_is_unset(CO) ((CO) == UNSET_CO_SERIAL)
-#define co_serial_is_set(CO)   ((CO) != UNSET_CO_SERIAL)
-/* as in co_serial_cmp(L,>=,R); unset never matches */
-#define co_serial_cmp(L, OP, R) ((L) != UNSET_CO_SERIAL && \
-				 (R) != UNSET_CO_SERIAL && \
-				 (L) OP (R))
 
 /*
  * Fast access to a connection.

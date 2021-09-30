@@ -19,19 +19,53 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include <limits.h>		/* for UINT_MAX */
+
 #include "lswcdefs.h"
 #include "lswalloc.h"
 #include "realtime.h"
+
+/*
+ * Per-connection unique ID.
+ *
+ * Define co_serial_t as an enum so that GCC 10 will detect and
+ * complain when code attempts to assign the wrong type.
+ *
+ * - an enum is always the size of <<signed int> or <<unsigned int>>
+ *   (presumably so that the size of <<enum foo f>> is always known)
+ *
+ * - an enum's sign can be signed or unsigned; specifying a UINT_MAX
+ *   value forces it to unsigned
+ */
+
+typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
+
+#define PRI_CO "$%u"
+#define pri_co(CO) ((CO))
+
+#define co_serial_is_unset(CO) ((CO) == UNSET_CO_SERIAL)
+#define co_serial_is_set(CO)   ((CO) != UNSET_CO_SERIAL)
+/* as in co_serial_cmp(L,>=,R); unset never matches */
+#define co_serial_cmp(L, OP, R) ((L) != UNSET_CO_SERIAL && \
+				 (R) != UNSET_CO_SERIAL && \
+				 (L) OP (R))
 
 /*
  * Type of serial number of a state object.
  *
  * Used everywhere as a safe proxy for a state object.  Needed in
  * connections.h and state.h; here to simplify dependencies.
+ *
+ * XXX: like co_connection_t, this should be changed to an enum.
+ * Doing this will require updating all the print statements using
+ * "#%lu".  Sigh.
  */
 typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
+
+#define PRI_SO "#%lu"
+#define pri_so(SO) (SO)
 
 enum sa_type {
 #define SA_TYPE_FLOOR 0
