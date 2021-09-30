@@ -1381,7 +1381,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
-		delete_connection(&c, relations);
+		/* already delt with relations above!?! */
+		delete_connection(&c, false);
 	}
 }
 
