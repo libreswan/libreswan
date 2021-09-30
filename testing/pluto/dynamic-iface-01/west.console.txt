@@ -72,7 +72,6 @@ west #
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 002 "float-east": unroute-host output: RTNETLINK answers: Network is unreachable
-002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"
