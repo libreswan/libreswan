@@ -741,7 +741,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			delete_connection(&d);
 		} else {
 			/* this only deletes the states */
-			release_connection(d, /*relations?*/false);
+			release_connection(d);
 		}
 	}
 }

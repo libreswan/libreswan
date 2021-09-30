@@ -331,7 +331,7 @@ void release_dead_interfaces(struct logger *logger)
 		 * replaced by the more robust for-all-connections
 		 * loop, presumably making the call unnecessary.
 		 */
-		release_connection(c, /*relations?*/false);
+		release_connection(c);
 
 		/*
 		 * ... and then disorient it, moving it to the

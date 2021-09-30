@@ -505,7 +505,7 @@ extern void restart_connections_by_peer(struct connection *c, struct logger *log
 extern void flush_revival(const struct connection *c);
 
 extern void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger);
-extern void release_connection(struct connection *c, bool relations);
+extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
 extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
 extern void delete_every_connection(void);

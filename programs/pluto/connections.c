@@ -121,11 +121,11 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 	return NULL;
 }
 
-void release_connection(struct connection *c, bool relations)
+void release_connection(struct connection *c)
 {
 	pexpect(c->kind != CK_INSTANCE);
 	flush_pending_by_connection(c);
-	delete_states_by_connection(c, relations);
+	delete_states_by_connection(c, /*relations*/false);
 	unroute_connection(c);
 }
 
@@ -187,7 +187,7 @@ void delete_connection(struct connection **cp)
 			free_that_address_lease(c);
 		}
 	}
-	release_connection(c, /*relations*/false);
+	release_connection(c);
 	discard_connection(&c, true/*connection_valid*/);
 }
 

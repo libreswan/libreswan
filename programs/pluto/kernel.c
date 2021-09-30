@@ -2729,7 +2729,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 			if (o->kind == CK_INSTANCE) {
 				delete_connection(&o);
 			} else {
-				release_connection(o, /*relations?*/false);
+				release_connection(o);
 			}
 		}
 	}
