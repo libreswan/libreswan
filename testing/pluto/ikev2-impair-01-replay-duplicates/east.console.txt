@@ -47,10 +47,6 @@ packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes
 "westnet-eastnet" #1: dropping fragment 2 of 2 as repeat
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
-"westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: INFORMATIONAL request has duplicate Message ID 2; retransmitting response
-packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
-packet from 192.1.2.45:500: IMPAIR: start processing duplicate packet (xxx bytes)
 packet from 192.1.2.45:500: INFORMATIONAL request has no corresponding IKE SA; message dropped
 packet from 192.1.2.45:500: IMPAIR: stop processing duplicate packet
 east #
