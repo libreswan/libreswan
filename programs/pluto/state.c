@@ -729,16 +729,22 @@ static bool should_send_delete(const struct state *st)
 		break;
 	}
 
-	/*
-	 * PW: But this is valid for IKEv1, where it would need to start a
-	 * new IKE SA to send the delete notification ???
-	 */
 	switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !IS_IPSEC_SA_ESTABLISHED(st)) {
 			dbg("%s: #%lu? no, IKEv1 SA in state %s is not established",
+			    __func__, st->st_serialno, st->st_state->name);
+			return false;
+		}
+		if (find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
+			/*
+			 * PW: But this is valid for IKEv1, where it
+			 * would need to start a new IKE SA to send
+			 * the delete notification ???
+			 */
+			dbg("%s: #%lu? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
@@ -844,16 +850,19 @@ static void delete_state_tail(struct state *st);
 /* delete a state object */
 void delete_state(struct state *st)
 {
+	/*
+	 * Where to log?  IKEv2 children don't send a delete
+	 * notification, it's their IKE SA.
+	 */
 	lset_t rc_flags;
 	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
 		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
 	} else {
-		/*
-		 * Don't log state and connection if it is the same as
-		 * the message prefix.
-		 */
 		rc_flags = RC_LOG;
 	}
+	/*
+	 * Use heuristics to predict the send-delete decision.
+	 */
 	if (rc_flags != LEMPTY) {
 		bool del_notify = !impair.send_no_delete && should_send_delete(st);
 		deltatime_buf dtb;
