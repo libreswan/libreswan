@@ -34,24 +34,6 @@
 #include "ipsec_doi.h"
 #include "kernel.h"
 
-static void liveness_clear_connection(struct connection *c, const char *v)
-{
-	/*
-	 * For CK_INSTANCE, delete_states_by_connection() will clear
-	 * Note that delete_states_by_connection changes c->kind but we need
-	 * to remember what it was to know if we still need to unroute after delete
-	 */
-	if (c->kind == CK_INSTANCE) {
-		delete_states_by_connection_family(c);
-	} else {
-		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-		delete_states_by_connection_family(c);
-		dbg("%s: unrouting connection %s action - clearing",
-		    enum_name(&connection_kind_names, c->kind), v);
-		unroute_connection(c); /* --unroute */
-	}
-}
-
 static void retry_action(struct ike_sa *ike_tbd)
 {
 	/*
@@ -73,7 +55,20 @@ static void retry_action(struct ike_sa *ike_tbd)
 		llog(RC_LOG, logger,
 		     "%s action - clearing connection kind %s",
 		     liveness_name, enum_name(&connection_kind_names, c->kind));
-		liveness_clear_connection(c, liveness_name);
+		/*
+		 * Danger: delete_states_by_connection_family()
+		 * delete's C when CK_INSTANCE.
+		 */
+		if (c->kind == CK_INSTANCE) {
+			delete_states_by_connection_family(c);
+		} else {
+			flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+			delete_states_by_connection_family(c);
+			dbg("%s: unrouting connection %s action - clearing",
+			    enum_name(&connection_kind_names, c->kind),
+			    liveness_name);
+			unroute_connection(c); /* --unroute */
+		}
 		break;
 
 	case DPD_ACTION_RESTART:
