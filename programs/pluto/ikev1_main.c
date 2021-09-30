@@ -2345,8 +2345,19 @@ bool accept_delete(struct msg_digest *md,
 					rc->policy &= ~POLICY_UP;
 					if (!shared_phase1_connection(rc)) {
 						flush_pending_by_connection(rc);
-						/* why loop? there can be only one IKE SA, just delete_state(st) ? */
-						delete_states_by_connection(rc, /*relations*/false);
+						/*
+						 * why loop? there can
+						 * be only one IKE SA,
+						 * just
+						 * delete_state(st)?
+						 *
+						 * XXX: because there
+						 * could also be
+						 * larval or dieing
+						 * states tied to the
+						 * connection?
+						 */
+						delete_states_by_connection(rc);
 						md->v1_st = NULL;
 					}
 				}

@@ -70,10 +70,10 @@ static void dpd_clear_connection(struct connection *c, const char *v)
 	 * to remember what it was to know if we still need to unroute after delete
 	 */
 	if (c->kind == CK_INSTANCE) {
-		delete_states_by_connection(c, /*relations?*/true);
+		delete_states_by_connection_family(c);
 	} else {
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-		delete_states_by_connection(c, /*relations?*/true);
+		delete_states_by_connection_family(c);
 		dbg("%s: unrouting connection %s action - clearing",
 		    enum_name(&connection_kind_names, c->kind), v);
 		unroute_connection(c); /* --unroute */
@@ -118,7 +118,7 @@ static void dpd_action(struct state *tbd_st)
 		if (c->kind == CK_INSTANCE) {
 			dbg("%s warning dpdaction=hold on instance futile - will be deleted", liveness_name);
 		}
-		delete_states_by_connection(c, /*relations?*/true);
+		delete_states_by_connection_family(c);
 		break;
 
 	default:
