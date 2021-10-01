@@ -159,9 +159,6 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- echo done
-done
-west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
