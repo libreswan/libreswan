@@ -644,7 +644,7 @@ kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	wip
 
 
 # RFC 3706 DPD and IKEv2 liveness tests
-kvmplutotest	dpd-01	good
+kvmplutotest	dpd-01			wip github:517
 kvmplutotest	dpd-02	good
 kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
