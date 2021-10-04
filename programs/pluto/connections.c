@@ -408,33 +408,40 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
 	const struct ip_info *afi = address_type(&this->host_addr);
 	if (afi == NULL) {
-		dbg("%s.host_addr's address family is unknown; skipping default_end()",
+		dbg("  %s.host_addr's address family is unknown; skipping default_end()",
 		    this->config->leftright);
 		return;
 	}
 
 	if (address_is_any(this->host_addr)) {
-		dbg("%s.host_addr's is %%any; skipping default_end()",
+		dbg("  %s.host_addr's is %%any; skipping default_end()",
 		    this->config->leftright);
 		return;
 	}
 
-	dbg("updating connection from %s.host_addr", this->config->leftright);
+	address_buf hab;
+	dbg("updating ends from %s.host_addr %s",
+	    this->config->leftright, str_address(&this->host_addr, &hab));
 
 	/* Default ID to IP (but only if not NO_IP -- WildCard) */
 	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
 		this->id.kind = afi->id_ip_addr;
 		this->id.ip_addr = this->host_addr;
 		this->has_id_wildcards = false;
+		id_buf idb;
+		dbg("  updated %s.id to %s",
+		    this->config->leftright,
+		    str_id(&this->id, &idb));
 	}
 
-	/* propagate this HOST_ADDR to that. */
+	/* propagate this.HOST_ADDR to that.NEXT_HOP */
 	if (address_is_unset(&that->host_nexthop) ||
 	    address_is_any(that->host_nexthop)) {
 		that->host_nexthop = this->host_addr;
 		address_buf ab;
-		dbg("%s host_nexthop %s",
-		    that->config->leftright, str_address(&that->host_nexthop, &ab));
+		dbg("  updated %s.host_nexthop to %s",
+		    that->config->leftright,
+		    str_address(&that->host_nexthop, &ab));
 	}
 
 	/*
@@ -443,9 +450,10 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
 	unsigned host_port = hport(end_host_port(this, that));
-	dbg("%s() %s.host_port: %u->%u", __func__, this->config->leftright,
-	    this->host_port, host_port);
 	this->host_port = host_port;
+	dbg("  updated %s.host_port to %u",
+	    this->config->leftright,
+	    this->host_port);
 
 	/* Default client to subnet containing only self */
 	if (!this->has_client) {
@@ -457,11 +465,19 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 */
 		this->client = selector_from_address_protoport(this->host_addr,
 							       this->config->client.protoport);
+		selector_buf sb;
+		dbg("  updated %s.client to %s",
+		    this->config->leftright,
+		    str_selector(&this->client, &sb));
 	}
 
 	if (this->sendcert == 0) {
 		/* uninitialized (ugly hack) */
 		this->sendcert = CERT_SENDIFASKED;
+		enum_buf eb;
+		dbg("  updated %s.sendsert to %s",
+		    this->config->leftright,
+		    str_enum_short(&certpolicy_type_names, this->sendcert, &eb));
 	}
 }
 
