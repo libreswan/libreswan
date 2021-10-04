@@ -38,9 +38,11 @@
 #include "ip_info.h"
 #include "lswlog.h"
 
+#define verbose(FMT, ...) if (verbose_rc_flags) llog(verbose_rc_flags, logger, FMT, ##__VA_ARGS__)
+
 static void resolve_point_to_point_peer(const char *interface,
 					const struct ip_info *afi,
-					address_reversed_buf *peer,
+					ip_address *peer,
 					lset_t verbose_rc_flags,
 					struct logger *logger)
 {
@@ -52,25 +54,35 @@ static void resolve_point_to_point_peer(const char *interface,
 
 	/* Find the right interface, if any */
 	for (const struct ifaddrs *ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
-			streq(ifa->ifa_name, interface)) {
-			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
-
-			if (sa != NULL && sa->sa_family == afi->af &&
-			    getnameinfo(sa, afi->sockaddr_size,
-					peer->buf, sizeof(peer->buf),
-					NULL, 0,
-					NI_NUMERICHOST) == 0) {
-				if (verbose_rc_flags) {
-					llog(verbose_rc_flags, logger,
-					     "found peer %s to interface %s\n",
-					     peer->buf, interface);
-				}
-				break;
-			}
-			/* in case failing getnameinfo set peer */
-			peer->buf[0] = '\0';
+		if ((ifa->ifa_flags & IFF_POINTOPOINT) == 0) {
+			continue;
 		}
+
+		if (!streq(ifa->ifa_name, interface)) {
+			continue;
+		}
+
+		struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
+		if (sa == NULL || sa->sa_family != afi->af) {
+			continue;
+		}
+
+		ip_sockaddr isa = {
+			.len = sizeof(*sa),
+			.sa.sa = *sa,
+		};
+		err_t err = sockaddr_to_address_port(isa, peer,
+						     NULL/*ignore port*/);
+		if (err != NULL) {
+			verbose("  interface %s had invalid sockaddr: %s",
+				interface, err);
+			continue;
+		}
+
+		address_buf ab;
+		verbose("  found peer %s to interface %s",
+			str_address(peer, &ab), interface);
+		break;
 	}
 	freeifaddrs(ifap);
 }
@@ -91,42 +103,50 @@ static void resolve_point_to_point_peer(const char *interface,
 /*
  * Initialize netlink query message.
  */
-static void netlink_query_init(char *msgbuf, sa_family_t family)
+
+static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
+					   char type, int flags,
+					   lset_t verbose_rc_flags,
+					   struct logger *logger)
 {
-	struct nlmsghdr *nlmsg;
+	struct nlmsghdr *nlmsg = alloc_bytes(RTNL_BUFSIZE, "netlink query");
 	struct rtmsg *rtmsg;
 
-	/* Create request for route */
-	nlmsg = (struct nlmsghdr *)msgbuf;
-
 	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-	nlmsg->nlmsg_flags = NLM_F_REQUEST;
-	nlmsg->nlmsg_type = RTM_GETROUTE;
+	nlmsg->nlmsg_flags = flags;
+	nlmsg->nlmsg_type = type;
 	nlmsg->nlmsg_seq = 0;
 	nlmsg->nlmsg_pid = getpid();
 
 	rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
-	rtmsg->rtm_family = family;
-	rtmsg->rtm_table = 0;
+	rtmsg->rtm_family = afi->af;
+	rtmsg->rtm_table = 0; /* RT_TABLE_MAIN doesn't seem to do much */
 	rtmsg->rtm_protocol = 0;
 	rtmsg->rtm_scope = 0;
 	rtmsg->rtm_type = 0;
 	rtmsg->rtm_src_len = 0;
 	rtmsg->rtm_dst_len = 0;
 	rtmsg->rtm_tos = 0;
+
+	verbose("  query %s%s%s%s",
+		(type == RTM_GETROUTE ? "getroute" : "?"),
+		(flags & NLM_F_REQUEST ? "+request" : ""),
+		/*NLM_F_DUMP==NLM_F_ROOT|NLM_F_MATCH*/
+		(flags & NLM_F_ROOT ? "+root" : ""),
+		(flags & NLM_F_MATCH ? "+match" : ""));
+
+	return nlmsg;
 }
 
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
-static void netlink_query_add(char *msgbuf, int rta_type, const ip_address *addr)
+static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type, const ip_address *addr)
 {
-	struct nlmsghdr *nlmsg;
 	struct rtmsg *rtmsg;
 	struct rtattr *rtattr;
 	int rtlen;
 
-	nlmsg = (struct nlmsghdr *)msgbuf;
 	rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
 
 	/* Find first empty attribute slot */
@@ -150,7 +170,7 @@ static void netlink_query_add(char *msgbuf, int rta_type, const ip_address *addr
 /*
  * Send netlink query message and read reply.
  */
-static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
+static ssize_t netlink_query(struct nlmsghdr **nlmsgp, size_t bufsize)
 {
 	int sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
@@ -162,7 +182,7 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 	}
 
 	/* Send request */
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)*pmsgbuf;
+	struct nlmsghdr *nlmsg = *nlmsgp;
 
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
@@ -172,9 +192,11 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 		return -1;
 	}
 
-	/* Read response */
+	/*
+	 * Read response; netlink_read_reply() may re-allocate buffer.
+	 */
 	errno = 0;	/* in case failure does not set it */
-	ssize_t len = netlink_read_reply(sock, pmsgbuf, bufsize, 1, getpid());
+	ssize_t len = netlink_read_reply(sock, (char**)nlmsgp, bufsize, 1, getpid());
 
 	if (len < 0)
 		printf("read netlink socket failure: (%d: %s)\n",
@@ -187,6 +209,23 @@ static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 /*
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
+
+static const char *pa(enum keyword_host type, ip_address address, const char *hostname, address_buf *buf)
+{
+	switch (type) {
+	case KH_NOTSET: return "<not-set>";
+	case KH_DEFAULTROUTE: return "<defaultroute>";
+	case KH_ANY: return "<any>";
+	case KH_IFACE: return hostname;
+	case KH_OPPO: return "<oppo>";
+	case KH_OPPOGROUP: return "<oppogroup>";
+	case KH_GROUP: return "<group>";
+	case KH_IPHOSTNAME: return hostname;
+	case KH_IPADDR: return str_address(&address, buf);
+	default: return "<other>";
+	}
+}
+
 enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 					     struct starter_end *peer,
 					     lset_t verbose_rc_flags,
@@ -196,30 +235,64 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	 * "left="         == host->addrtype and host->addr
 	 * "leftnexthop="  == host->nexttype and host->nexthop
 	 */
+	const struct ip_info *afi = host->host_family;
 
-	/* What kind of result are we seeking? */
-	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE);
-	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
+	address_buf ab, gb, pb;
+	verbose("resolving src = %s gateway = %s peer %s",
+		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
+		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb),
+		pa(peer->addrtype, peer->addr, peer->strings[KSCF_IP], &pb));
 
-	bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
 
-	if (verbose_rc_flags) {
-		llog(verbose_rc_flags, logger,
-		     "seeking_src = %d, seeking_gateway = %d, has_peer = %d",
-		     seeking_src, seeking_gateway, has_peer);
-	}
-	if (!seeking_src && !seeking_gateway)
+	/*
+	 * Can only resolve one at a time.
+	 *
+	 * XXX: OLD comments:
+	 *
+	 * If we have for example host=%defaultroute + peer=%any
+	 * (no destination) the netlink reply will be full routing table.
+	 * We must do two queries:
+	 * 1) find out default gateway
+	 * 2) find out src for that default gateway
+	 *
+	 * If we have only peer IP and no gateway/src we must
+	 * do two queries:
+	 * 1) find out gateway for dst
+	 * 2) find out src for that gateway
+	 * Doing both in one query returns src for dst.
+	 */
+	enum seeking { NOTHING, PREFSRC, GATEWAY, } seeking
+		= (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
+		   host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
+		   NOTHING);
+	verbose("  seeking %s",
+		(seeking == NOTHING ? "nothing" :
+		 seeking == PREFSRC ? "prefsrc" :
+		 seeking == GATEWAY ? "gateway" :
+		 "?"));
+	if (seeking == NOTHING) {
 		return RESOLVE_SUCCESS;	/* this end already figured out */
+	}
 
-	/* msgbuf is dynamically allocated since the buffer may need to be grown */
-	char *msgbuf = alloc_bytes(RTNL_BUFSIZE, "netlink query");
+	/*
+	 * msgbuf is dynamically allocated since the buffer may need
+	 * to be grown.
+	 */
+	struct nlmsghdr *msgbuf =
+		netlink_query_init(afi, /*type*/RTM_GETROUTE,
+				   (/*flags*/NLM_F_REQUEST |
+				    (seeking == GATEWAY ? NLM_F_DUMP : 0)),
+				   verbose_rc_flags, logger);
 
-	bool has_dst = false;
-	enum resolve_status status = RESOLVE_SUCCESS;
+	/*
+	 * If known, add a destination address.  Either the peer, or
+	 * the gateway.
+	 */
 
-	/* Fill netlink request */
-	netlink_query_init(msgbuf, host->host_family->af);
-	if (host->nexttype == KH_IPADDR && peer->host_family == &ipv4_info) {
+	const bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
+	bool added_dst;
+	if (host->nexttype == KH_IPADDR && afi == &ipv4_info) {
+		pexpect(seeking == PREFSRC);
 		/*
 		 * My nexthop (gateway) is specified.
 		 * We need to figure out our source IP to get there.
@@ -231,13 +304,17 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 * IPv6 with gateway link local address will return link local
 		 * address and not the global address.
 		 */
+		address_buf ab;
+		verbose("  added dst %s (host->nexthop)", str_address(&host->nexthop, &ab));
+		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
-		has_dst = true;
 	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
 		 * We may need to figure out source IP
 		 * and gateway IP to get there.
+		 *
+		 * XXX: should this also update peer->addrtype?
 		 */
 		pexpect(peer->host_family != NULL);
 		if (peer->addrtype == KH_IPHOSTNAME) {
@@ -263,49 +340,23 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				return RESOLVE_FAILURE;
 			}
 #endif
+		} else {
+			pexpect(peer->addrtype == KH_IPADDR);
 		}
-
+		address_buf ab;
+		verbose("  added dst %s (peer->addr)", str_address(&peer->addr, &ab));
+		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
-		has_dst = true;
-		if (seeking_src && seeking_gateway) {
-			/*
-			 * If we have only peer IP and no gateway/src we must
-			 * do two queries:
-			 * 1) find out gateway for dst
-			 * 2) find out src for that gateway
-			 * Doing both in one query returns src for dst.
-			 */
-			seeking_src = false;
-			status = RESOLVE_PLEASE_CALL_AGAIN;
-		}
+	} else {
+		added_dst = false;
 	}
 
-	if (has_dst && host->addrtype == KH_IPADDR) {
+	if (added_dst && host->addrtype == KH_IPADDR) {
 		/* SRC works only with DST */
+		pexpect(seeking == GATEWAY);
+		address_buf ab;
+		verbose("  adding src %s (host->addr)", str_address(&host->addr, &ab));
 		netlink_query_add(msgbuf, RTA_SRC, &host->addr);
-	}
-
-	/*
-	 * If we have for example host=%defaultroute + peer=%any
-	 * (no destination) the netlink reply will be full routing table.
-	 * We must do two queries:
-	 * 1) find out default gateway
-	 * 2) find out src for that default gateway
-	 */
-	if (!has_dst && seeking_src && seeking_gateway) {
-		seeking_src = false;
-		status = RESOLVE_PLEASE_CALL_AGAIN;
-	}
-	if (seeking_gateway) {
-		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
-
-		nlmsg->nlmsg_flags |= NLM_F_DUMP;
-	}
-
-	if (verbose_rc_flags) {
-		llog(verbose_rc_flags, logger,
-		     "seeking_src = %d, seeking_gateway = %d, has_dst = %d",
-		     seeking_src, seeking_gateway, has_dst);
 	}
 
 	/* Send netlink get_route request */
@@ -319,7 +370,9 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
-	for (; NLMSG_OK(nlmsg, (size_t)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+	enum resolve_status status = RESOLVE_FAILURE; /* assume the worst */
+	for (; NLMSG_OK(nlmsg, (size_t)len) && status == RESOLVE_FAILURE;
+	     nlmsg = NLMSG_NEXT(nlmsg, len)) {
 
 		if (nlmsg->nlmsg_type == NLMSG_DONE)
 			break;
@@ -332,44 +385,84 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 
 		/* ignore all but IPv4 and IPv6 */
 		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
-
-		if (rtmsg->rtm_family != AF_INET &&
-			rtmsg->rtm_family != AF_INET6)
+		if (rtmsg->rtm_family != afi->af) {
 			continue;
+		}
 
 		/* Parse one route entry */
 
 		char r_interface[IF_NAMESIZE+1];
 		zero(&r_interface);
-		/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-		address_reversed_buf r_source = {""};
-		address_reversed_buf r_gateway = {""};
-		address_reversed_buf r_destination = {""};
+		ip_address src = unset_address;
+		ip_address prefsrc = unset_address;
+		ip_address gateway = unset_address;
+		ip_address dst = unset_address;
+		int priority = -1;
+		signed char pref = -1;
+		int table;
 
 		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		int rtlen = RTM_PAYLOAD(nlmsg);
 
 		while (RTA_OK(rtattr, rtlen)) {
+			const void *data = RTA_DATA(rtattr);
+			unsigned len = RTA_PAYLOAD(rtattr);
+			err_t err;
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
 				if_indextoname(*(int *)RTA_DATA(rtattr),
-					r_interface);
+					       r_interface);
 				break;
-
 			case RTA_PREFSRC:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_source.buf, sizeof(r_source));
+				err = data_to_address(data, len, afi, &prefsrc);
+				if (err != NULL) {
+					verbose("  unknown prefsrc from kernel: %s", err);
+				}
 				break;
-
 			case RTA_GATEWAY:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_gateway.buf, sizeof(r_gateway));
+				err = data_to_address(data, len, afi, &gateway);
+				if (err != NULL) {
+					verbose("  unknown gateway from kernel: %s", err);
+				}
 				break;
-
 			case RTA_DST:
-				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_destination.buf, sizeof(r_destination));
+				err = data_to_address(data, len, afi, &dst);
+				if (err != NULL) {
+					verbose("  unknown dst from kernel: %s", err);
+				}
 				break;
+			case RTA_SRC:
+				err = data_to_address(data, len, afi, &src);
+				if (err != NULL) {
+					verbose("  unknown src from kernel: %s", err);
+				}
+				break;
+			case RTA_PRIORITY:
+				if (len != sizeof(priority)) {
+					verbose("  ignoring PRIORITY with wrong size %d", len);
+					break;
+				}
+				memcpy(&priority, data, len);
+				break;
+			case RTA_PREF:
+				if (len != sizeof(pref)) {
+					verbose("  ignoring PREF with wrong size %d", len);
+					break;
+				}
+				memcpy(&pref, data, len);
+				break;
+			case RTA_TABLE:
+				if (len != sizeof(table)) {
+					verbose("  ignoring TABLE with wrong size %d", len);
+					break;
+				}
+				memcpy(&table, data, len);
+				break;
+			case RTA_CACHEINFO:
+				// verbose("  ignoring CACHEINFO"); */
+				break;
+			default:
+				verbose("  ignoring %d", rtattr->rta_type);
 			}
 			rtattr = RTA_NEXT(rtattr, rtlen);
 		}
@@ -377,73 +470,80 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		/*
 		 * Ignore if not main table.
 		 * Ignore ipsecX or mastX interfaces.
+		 *
+		 * XXX: instead of rtm_table, should this be checking
+		 * TABLE?
 		 */
-		bool ignore = rtmsg->rtm_table != RT_TABLE_MAIN ||
-			startswith(r_interface, "ipsec") ||
-			startswith(r_interface, "mast");
+		const char *ignore = ((rtmsg->rtm_table != RT_TABLE_MAIN) ? "; ignore: wrong table" :
+				      startswith(r_interface, "ipsec") ? "; ignore: ipsec interface" :
+				      startswith(r_interface, "mast") ? "; ignore: mast interface" :
+				      NULL);
 
-		if (verbose_rc_flags) {
-			llog(verbose_rc_flags, logger,
-			     "dst %s via %s dev %s src %s table %d%s",
-			     r_destination.buf,
-			     r_gateway.buf,
-			     r_interface,
-			     r_source.buf, rtmsg->rtm_table,
-			     ignore ? " (ignored)" : "");
-		}
+		address_buf sb, psb, db, gb;
+		verbose("  src %s prefsrc %s gateway %s dst %s dev %s priority %d pref %d table %d%s",
+			str_address(&src, &sb),
+			str_address(&prefsrc, &psb),
+			str_address(&gateway, &gb),
+			str_address(&dst, &db),
+			(r_interface[0] ? r_interface : "?"),
+			priority, pref, rtmsg->rtm_table,
+			(ignore != NULL ? ignore : ""));
 
-		if (ignore)
+		if (ignore != NULL)
 			continue;
 
-		if (seeking_src && r_source.buf[0] != '\0') {
-			err_t err = ttoaddress_num(shunk1(r_source.buf),
-						   aftoinfo(rtmsg->rtm_family),
-						   &host->addr);
-
-			if (err == NULL) {
+		switch (seeking) {
+		case PREFSRC:
+			if (!address_is_unset(&prefsrc)) {
+				status = RESOLVE_SUCCESS;
 				host->addrtype = KH_IPADDR;
-				seeking_src = false;
-				if (verbose_rc_flags) {
-					llog(verbose_rc_flags, logger,
-					     "set addr: %s\n", r_source.buf);
+				host->addr = prefsrc;
+				address_buf ab;
+				verbose("  found prefsrc (host_addr): %s",
+					str_address(&host->addr, &ab));
+			}
+			break;
+		case GATEWAY:
+			if (address_is_unset(&dst)) {
+				if (address_is_unset(&gateway) && r_interface[0] != '\0') {
+					/*
+					 * Point-to-Point default gw without
+					 * "via IP".  Attempt to find gateway
+					 * as the IP address on the interface.
+					 */
+					resolve_point_to_point_peer(r_interface, host->host_family,
+								    &gateway, verbose_rc_flags,
+								    logger);
 				}
-			} else if (verbose_rc_flags) {
-				llog(verbose_rc_flags, logger,
-				     "unknown source results from kernel (%s): %s",
-				     r_source.buf, err);
-			}
-		}
-
-		if (seeking_gateway && r_destination.buf[0] == '\0') {
-			if (r_gateway.buf[0] == '\0' && r_interface[0] != '\0') {
-				/*
-				 * Point-to-Point default gw without "via IP"
-				 * Attempt to find r_gateway as the IP address
-				 * on the interface.
-				 */
-				resolve_point_to_point_peer(r_interface, host->host_family,
-							    &r_gateway, verbose_rc_flags,
-							    logger);
-			}
-			if (r_gateway.buf[0] != '\0') {
-				err_t err = ttoaddress_num(shunk1(r_gateway.buf),
-							   aftoinfo(rtmsg->rtm_family),
-							   &host->nexthop);
-
-				if (err != NULL) {
-					DBG_log("unknown gateway results from kernel: %s", err);
-				} else {
-					/* Note: Use first even if multiple */
+				if (!address_is_unset(&gateway)) {
+					/*
+					 * Note: Use first even if
+					 * multiple.
+					 *
+					 * XXX: assume a gateway
+					 * always requires a second
+					 * call to get PREFSRC, code
+					 * above will quickly return
+					 * when it isn't.
+					 */
+					status = RESOLVE_PLEASE_CALL_AGAIN;
 					host->nexttype = KH_IPADDR;
-					seeking_gateway = false;
-					if (verbose_rc_flags) {
-						llog(verbose_rc_flags, logger,
-						     "set nexthop: %s", r_gateway.buf);
-					}
+					host->nexthop = gateway;
+					address_buf ab;
+					verbose("  found gateway (host_nexthop): %s",
+						str_address(&host->nexthop, &ab));
 				}
 			}
+			break;
+		default:
+			bad_case(seeking);
 		}
 	}
 	pfree(msgbuf);
+
+	verbose("  %s", (status == RESOLVE_FAILURE ? "failure" :
+			 status == RESOLVE_SUCCESS ? "success" :
+			 status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
+			 "???"));
 	return status;
 }
