@@ -468,7 +468,7 @@ extern bool same_peer_ids(const struct connection *c,
  * hop Note: if that==NULL, skip nexthop
  */
 void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
-	     bool is_left, lset_t policy, bool filter_rnh);
+	     enum left_right left_right, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);

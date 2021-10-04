@@ -469,12 +469,14 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
  * Format the topology of a connection end, leaving out defaults.
  * Used to construct strings of the form:
  *
- *      LOCAL_END ...END_REMOTE
+ *      [this]LOCAL_END ...END_REMOTE[that]
  *
  * where END_REMOTE is roughly formatted as the mirror image of
- * LOCAL_END.  IS_LEFT (confusing name given connection left/right)
- * determines if the LHS or RHS string is being emitted..  LOCAL_END's
- * longest string is:
+ * LOCAL_END.  LEFT_RIGHT is used to determine if the LHS or RHS
+ * string is being emitted (however, note that the LHS here is _not_
+ * the configuration file's left*=).
+ *
+ * LOCAL_END's longest string is:
  *
  *    client === host : port [ host_id ] --- HOP
  *
@@ -545,7 +547,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 }
 
 static void jam_end_client(struct jambuf *buf, const struct end *this,
-			   lset_t policy, bool is_left)
+			   lset_t policy, enum left_right left_right)
 {
 	/* [CLIENT===] or [===CLIENT] */
 	if (!this->has_client) {
@@ -557,7 +559,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	bool boring = (selector_is_all(this->client) &&
 		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
-	if (!boring && !is_left) {
+	if (!boring && left_right == RIGHT_END) {
 		jam_string(buf, "===");
 	}
 
@@ -574,7 +576,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 		jam_selector_subnet(buf, &this->client);
 	}
 
-	if (!boring && is_left) {
+	if (!boring && left_right == LEFT_END) {
 		jam_string(buf, "===");
 	}
 }
@@ -644,28 +646,30 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 }
 
 static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
-			    const struct end *that, bool filter_rnh, bool is_left)
+			    const struct end *that, bool filter_rnh,
+			    enum left_right left_right)
 {
 	/* [---hop] */
 	if (that != NULL &&
 	    !filter_rnh &&
 	    !sameaddr(&this->host_nexthop, &that->host_addr)) {
-		if (is_left) {
+		if (left_right == LEFT_END) {
 			jam_string(buf, "---");
 		}
 		jam_address(buf, &this->host_nexthop);
-		if (!is_left) {
+		if (left_right == RIGHT_END) {
 			jam_string(buf, "---");
 		}
 	}
 }
 
 void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
-	     bool is_left, lset_t policy, bool filter_rnh)
+	     enum left_right left_right, lset_t policy, bool filter_rnh)
 {
-	if (is_left) {
+	switch (left_right) {
+	case LEFT_END:
 		/* CLIENT=== */
-		jam_end_client(buf, this, policy, is_left);
+		jam_end_client(buf, this, policy, left_right);
 		/* HOST */
 		jam_end_host(buf, this, policy);
 		/* [ID+OPTS] */
@@ -673,10 +677,11 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 		/* /PROTOCOL:PORT */
 		jam_end_protoport(buf, this);
 		/* ---NEXTHOP */
-		jam_end_nexthop(buf, this, that, filter_rnh, is_left);
-	} else {
+		jam_end_nexthop(buf, this, that, filter_rnh, left_right);
+		break;
+	case RIGHT_END:
 		/* HOPNEXT--- */
-		jam_end_nexthop(buf, this, that, filter_rnh, is_left);
+		jam_end_nexthop(buf, this, that, filter_rnh, left_right);
 		/* HOST */
 		jam_end_host(buf, this, policy);
 		/* [ID+OPTS] */
@@ -684,7 +689,8 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 		/* /PROTOCOL:PORT */
 		jam_end_protoport(buf, this);
 		/* ===CLIENT */
-		jam_end_client(buf, this, policy, is_left);
+		jam_end_client(buf, this, policy, left_right);
+		break;
 	}
 }
 
@@ -701,9 +707,9 @@ static char *format_connection(char *buf, size_t buf_len,
 			       const struct spd_route *sr)
 {
 	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, &sr->this, &sr->that, /*left?*/true, LEMPTY, false);
+	jam_end(&b, &sr->this, &sr->that, LEFT_END, LEMPTY, false);
 	jam(&b, "...");
-	jam_end(&b, &sr->that, &sr->this, /*left?*/false, c->policy, oriented(c));
+	jam_end(&b, &sr->that, &sr->this, RIGHT_END, c->policy, oriented(c));
 	return buf;
 }
 

@@ -1084,7 +1084,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				local.has_client = !selector_eq_address(*local_client, local.host_addr);
 				local.protocol = selector_protocol(*local_client)->ipproto;
 				local.port = selector_port(*local_client).hport;
-				jam_end(buf, &local, NULL, /*left?*/true, LEMPTY, oriented(c));
+				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
 
@@ -1093,7 +1093,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
 				remote.protocol = selector_protocol(*remote_client)->ipproto;
 				remote.port = selector_port(*remote_client).hport;
-				jam_end(buf, &remote, NULL, /*left?*/false, LEMPTY, oriented(c));
+				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
@@ -1152,7 +1152,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "setting phase 2 virtual values to ");
-				jam_end(buf, &c->spd.that, NULL, /*left?*/true, LEMPTY, oriented(c));
+				jam_end(buf, &c->spd.that, NULL, LEFT_END, LEMPTY, oriented(c));
 			}
 		}
 	}
@@ -1394,9 +1394,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = &c->spd;
-		jam_end(buf, &sr->this, &sr->that, /*left?*/true, LEMPTY, oriented(c));
+		jam_end(buf, &sr->this, &sr->that, LEFT_END, LEMPTY, oriented(c));
 		jam(buf, "  them: ");
-		jam_end(buf, &sr->that, &sr->this, /*left?*/false, LEMPTY, oriented(c));
+		jam_end(buf, &sr->that, &sr->this, RIGHT_END, LEMPTY, oriented(c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
