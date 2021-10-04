@@ -68,11 +68,12 @@ if test "$#" -eq 0; then
     exit 1
 fi
 
-# "$@" is left containing grep expression
+# "$@" is left containing the command to run
 
 count=0
 while true ; do
-    if output=$("$@" | grep "${regex}"); then
+    input=$("$@")
+    if output=$(echo "${input}" | grep "${regex}"); then
 	if ${match} ; then
 	    echo "${output}"
 	    exit 0
@@ -83,7 +84,7 @@ while true ; do
     count=$(expr ${count} + 1)
     if test ${count} -ge ${timeout} ; then
 	echo timeout waiting ${timeout} seconds for "$@" to $(${match} && echo match || echo mismatch) "${regex}" 1>&2
-	echo "${output}"
+	echo "${input}" | sed -e 's/^/output: /'
 	exit 1
     fi
     sleep 1
