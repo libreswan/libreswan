@@ -14,6 +14,7 @@
  * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -974,43 +975,6 @@ enum routability {
 	route_unnecessary
 };
 
-static enum routability note_nearconflict(struct connection *outside,	/* CK_PERMANENT */
-					  struct connection *inside,	/* CK_TEMPLATE */
-					  struct logger *logger)
-{
-	/*
-	 * this is a co-terminal attempt of the "near" kind.
-	 * when chaining, we chain from inside to outside
-	 *
-	 * XXX permit multiple deep connections?
-	 */
-	passert(inside->policy_next == NULL);
-
-	inside->policy_next = outside;
-
-	/*
-	 * since we are going to steal the eroute from the secondary
-	 * policy, we need to make sure that it no longer thinks that
-	 * it owns the eroute.
-	 */
-	outside->spd.eroute_owner = SOS_NOBODY;
-	outside->spd.routing = RT_UNROUTED_KEYED;
-
-	/*
-	 * set the priority of the new eroute owner to be higher
-	 * than that of the current eroute owner
-	 */
-	inside->policy_prio = outside->policy_prio + 1;
-
-	connection_buf inst;
-	llog(RC_LOG_SERIOUS, logger,
-	     "conflict on eroute (%s), switching eroute to %s and linking %s",
-	     str_connection_instance(inside, &inst),
-	     inside->name, outside->name);
-
-	return route_nearconflict;
-}
-
 /*
  * Note: this may mutate c
  */
@@ -1032,11 +996,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_impossible;
 	}
 
-	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy))
+	if (!LIN(POLICY_TUNNEL, c->policy))
 		return route_unnecessary;
 
 	/*
@@ -1055,88 +1015,6 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		return route_impossible;
 	}
 
-	struct spd_route *esr, *rosr;
-	struct connection *ero,		/* who, if anyone, owns our eroute? */
-		*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
-
-	/*
-	 * If there is already a route for peer's client subnet
-	 * and it disagrees about interface or nexthop, we cannot steal it.
-	 * Note: if this connection is already routed (perhaps for another
-	 * state object), the route will agree.
-	 * This is as it should be -- it will arise during rekeying.
-	 */
-	if (ro != NULL && !routes_agree(ro, c)) {
-
-		if (!compatible_overlapping_connections(c, ero)) {
-			/*
-			 * Another connection is already using the eroute.
-			 * TODO: XFRM supports this. For now, only allow this for OE
-			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				connection_buf cib;
-				llog(RC_LOG_SERIOUS, logger,
-					    "cannot route -- route already in use for "PRI_CONNECTION"",
-					    pri_connection(ro, &cib));
-				return route_impossible;
-			} else {
-				connection_buf cib;
-				llog(RC_LOG_SERIOUS, logger,
-					    "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
-					    pri_connection(ro, &cib));
-			}
-		}
-	}
-
-
-	/* if there is an eroute for another connection, there is a problem */
-	if (ero != NULL && ero != c) {
-		/*
-		 * note, wavesec (PERMANENT) goes *outside* and
-		 * OE goes *inside* (TEMPLATE)
-		 */
-		if (ero->kind == CK_PERMANENT &&
-			c->kind == CK_TEMPLATE) {
-			return note_nearconflict(ero, c, logger);
-		} else if (c->kind == CK_PERMANENT &&
-			ero->kind == CK_TEMPLATE) {
-			return note_nearconflict(c, ero, logger);
-		}
-
-		/* look along the chain of policies for one with the same name */
-
-		for (struct connection *ep = ero; ep != NULL; ep = ero->policy_next) {
-			if (ep->kind == CK_TEMPLATE &&
-				streq(ep->name, c->name))
-				return route_easy;
-		}
-
-		/*
-		 * If we fell off the end of the list, then we found no
-		 * TEMPLATE so there must be a conflict that we can't resolve.
-		 * As the names are not equal, then we aren't
-		 * replacing/rekeying.
-		 *
-		 * ??? should there not be a conflict if ANYTHING in the list,
-		 * other than c, conflicts with c?
-		 */
-
-		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->config->sec_label.len == 0) {
-			/*
-			 * another connection is already using the eroute,
-			 * TODO: XFRM apparently can do this though
-			 */
-			connection_buf erob;
-			llog(RC_LOG_SERIOUS, logger,
-				    "cannot install eroute -- it is in use for "PRI_CONNECTION" #%lu",
-				    pri_connection(ero, &erob), esr->eroute_owner);
-			return route_impossible;
-		}
-
-		connection_buf erob;
-		dbg("kernel: overlapping permitted with "PRI_CONNECTION" #%lu",
-		    pri_connection(ero, &erob), esr->eroute_owner);
-	}
 	return route_easy;
 }
 
@@ -2704,20 +2582,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 					&c->spd.that.host_addr) &&
 				o->interface == c->interface)
 				break;  /* existing route is compatible */
-
-			if (kernel_ops->overlap_supported) {
-				/*
-				 * Both are transport mode, allow overlapping.
-				 * [bart] not sure if this is actually
-				 * intended, but am leaving it in to make it
-				 * behave like before
-				 */
-				if (!LIN(POLICY_TUNNEL, c->policy | o->policy))
-					break;
-
-				/* Both declared that overlapping is OK. */
-				if (LIN(POLICY_OVERLAPIP, c->policy & o->policy))
-					break;
 			}
 
 			address_buf b;

@@ -252,7 +252,6 @@ enum keyword_numeric_conn_field {
 	KNCF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KNCF_HOSTADDRFAMILY,
 	KNCF_CLIENTADDRFAMILY,
-	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_REMOTEPEERTYPE,	/* Cisco interop: remote peer type */
 	KNCF_NMCONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */

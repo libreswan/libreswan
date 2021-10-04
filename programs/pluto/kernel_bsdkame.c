@@ -5,6 +5,7 @@
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -882,7 +883,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
 	.process_raw_ifaces = bsdkame_process_raw_ifaces,
-	.overlap_supported = false,
 	.sha2_truncbug_support = false,
 	.v6holes = NULL,
 	.detect_offload = bsdkame_detect_offload,
