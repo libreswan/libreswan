@@ -93,7 +93,7 @@ static void help(void)
 		"		[ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
 		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--tunnel] [--pfs] \\\n"
 		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
 		"	[--pfsgroup <modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
