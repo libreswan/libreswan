@@ -2579,8 +2579,8 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 			/* note: we ignore the client addresses at this end */
 			if (sameaddr(&o->spd.that.host_addr,
-					&c->spd.that.host_addr) &&
-				o->interface == c->interface)
+				     &c->spd.that.host_addr) &&
+			    o->interface == c->interface) {
 				break;  /* existing route is compatible */
 			}
 
