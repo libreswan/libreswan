@@ -211,8 +211,6 @@ if os.path.isfile("/usr/libexec/ipsec/pluto"):
                  "ABORT: found a swan userland in the base system as well as /usr/local\n"
                  "---------------------------------------------------------------------\n")
 
-ipv = 0
-ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
 exclusive_grp_dnsserver = parser.add_mutually_exclusive_group()
 
@@ -246,9 +244,7 @@ parser.add_argument('--nsspw', action='store_true',
 parser.add_argument('--certchain', '-c', action='store_true',
                     help='import the ca-chain test certs')
 parser.add_argument('--46', '--64', action='store_true',
-                    help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv', default=False)
-parser.add_argument('--6', action='store_true',
-                    help='Enable IPv6 and run - /etc/init.d/network restart', dest='ipv6', default=False)
+                    help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv46', default=False)
 parser.add_argument('--verbose', '-v', action='store_true',
                     help='more verbose')
 parser.add_argument('--nokeys', action='store_true',
@@ -643,19 +639,9 @@ if args.namespace:
     # good idea for namespace. KVM sysctl.conf get copid.
     subprocess.getoutput("sysctl -p /testing/baseconfigs/all/etc/sysctl.conf")
 
-if hostname != "nic" and not args.ipv:
+if hostname != "nic" and not args.ipv46:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
-
-if args.ipv6:
-    subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=0")
-    subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
-
-    if not args.namespace: # AA_201902 check if this works inside ns
-        if os.path.isfile("/usr/bin/systemctl"):
-            subprocess.getoutput("systemctl restart systemd-networkd")
-        else:
-            subprocess.getoutput("service network restart")
 
 if args.nsd or args.dnssec:
     if args.namespace:
