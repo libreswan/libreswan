@@ -38,25 +38,21 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 
 	/* locate delimiter '/' between protocol and port */
 	char *end = strchr(src, '/');
-	const char*service_name;
-	int proto_len;
+	const char *service_name;
+	shunk_t proto_name;
 	if (end != NULL) {
-		proto_len = end - src;
+		proto_name = shunk2(src, end - src);
 		service_name = end + 1;
 	} else {
-		proto_len = src_len;
-		service_name = src + src_len;
+		proto_name = shunk2(src, src_len);
+		service_name = src + src_len; /*NUL*/
 	}
 
 	/* extract protocol by trying to resolve it by name */
-	unsigned protocol;
-	{
-		char *proto_name = clone_bytes_as_string(src, proto_len, "proto name"); /* must free */
-		err = ttoipproto(proto_name, &protocol);
-		pfree(proto_name);
-		if (err != NULL) {
-			return err;
-		}
+	const struct ip_protocol *protocol;
+	err = ttoprotocol(proto_name, &protocol);
+	if (err != NULL) {
+		return err;
 	}
 
 	/* is there a port wildcard? */
@@ -74,11 +70,11 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 		}
 	}
 
-	if (protocol == 0 && port != 0) {
+	if (protocol == &ip_protocol_unset && port != 0) {
 		return "protocol 0 must have 0 port";
 	}
 
-	protoport->ipproto = protocol;
+	protoport->ipproto = protocol->ipproto;
 	protoport->any_port = any_port;
 	protoport->hport = port;
 	return NULL;
