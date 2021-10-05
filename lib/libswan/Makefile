@@ -57,7 +57,6 @@ OBJS += constants.o \
 	alg_byname.o
 
 OBJS += ttoaddress.o
-OBJS += ttoprotocol.o
 OBJS += alloc.o
 OBJS += alloc_printf.o
 

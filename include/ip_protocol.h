@@ -98,7 +98,7 @@ const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix);
 const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
 const struct ip_protocol *protocol_by_shunk(shunk_t protocol);
 
-err_t ttoprotocol(shunk_t text, const ip_protocol **ipproto);
+err_t ttoipproto(const char *text, unsigned *ipproto);
 
 /* ex: '=TCP=>' */
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,

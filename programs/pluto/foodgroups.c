@@ -175,24 +175,19 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		if (shift(flp)) {
 			err_t err;
 			/* protocol */
-			const struct ip_protocol *protocol;
-			err = ttoprotocol(shunk1(flp->tok), &protocol);
+			err = ttoipproto(flp->tok, &proto);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
-				     "protocol '%s' invalid: %s",
-				     flp->tok, err);
+					    "protocol '%s' invalid: %s",
+					    flp->tok, err);
 				break;
 			}
-			pexpect(protocol != NULL);
-			if (protocol == &ip_protocol_unset ||
-			    protocol == &ip_protocol_esp ||
-			    protocol == &ip_protocol_ah) {
+			if (proto == 0 || proto == IPPROTO_ESP || proto == IPPROTO_AH) {
 				llog(RC_LOG_SERIOUS, flp->logger,
-				     "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
-				     flp->tok, IPPROTO_ESP, IPPROTO_AH);
+					    "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
+					    flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
-			proto = protocol->ipproto;
 			/* source port */
 			if (!shift(flp)) {
 				llog(RC_LOG_SERIOUS, flp->logger,
@@ -258,11 +253,11 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			subnet_buf source;
 			subnet_buf dest;
 			llog(RC_LOG_SERIOUS, flp->logger,
-			     "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
-			     str_selector_subnet(&sn, &dest),
-			     proto, sport, dport,
-			     str_selector_subnet(lsn, &source),
-			     (*pp)->group->connection->name);
+				    "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+				    str_selector_subnet(&sn, &dest),
+				    proto, sport, dport,
+				    str_selector_subnet(lsn, &source),
+				    (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
