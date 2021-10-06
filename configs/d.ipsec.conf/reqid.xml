@@ -21,5 +21,9 @@ If you use manual assigning you should make sure your connections
 only match single road warrior only or you break multiple road warriors
 behind same NAT router because this feature requires unique reqids to work.
 </para>
+<para>
+For KLIPS, when using the MAST variant, a different mechanism called
+SAref is in use. See overlapip and sareftrack.
+</para>
 </listitem>
   </varlistentry>

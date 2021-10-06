@@ -8,7 +8,6 @@
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
- * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -290,6 +289,7 @@ extern char *pluto_listen;	/* from --listen flag */
 struct kernel_ops {
 	enum kernel_interface type;
 	const char *kern_name;
+	bool overlap_supported;
 	bool sha2_truncbug_support;
 	int replay_window;
 	int *async_fdp;
@@ -476,6 +476,15 @@ extern bool del_spi(ipsec_spi_t spi,
 		    const ip_address *src,
 		    const ip_address *dest,
 		    struct logger *logger);
+
+static inline bool compatible_overlapping_connections(const struct connection *a,
+						      const struct connection *b)
+{
+	return kernel_ops->overlap_supported &&
+	       a != NULL && b != NULL &&
+	       a != b &&
+	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
+}
 
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);

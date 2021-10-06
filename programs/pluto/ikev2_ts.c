@@ -1317,6 +1317,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			     POLICY_XAUTH |				\
 			     POLICY_MODECFG_PULL |			\
 			     POLICY_AGGRESSIVE |			\
+			     POLICY_OVERLAPIP |				\
 			     POLICY_IKEV2_ALLOW_NARROWING)
 
 	/*
