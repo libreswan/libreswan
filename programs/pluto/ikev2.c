@@ -2432,8 +2432,18 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		jam_details = NULL;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (IS_CHILD_SA(st) && just_established) {
-		jam_details = jam_v2_child_details;
-		suppress_log = false;
+		/*
+		 * XXX:
+		 *
+		 * This is a CREATE_CHILD_SA exchange initiator
+		 * completing its transition.  It has already been
+		 * announced.
+		 *
+		 * If the initiator's create child sa is made nested
+		 * then this code can be removed.
+		 */
+		jam_details = NULL;
+		suppress_log = true;
 		sep = "; ";
 		w = RC_SUCCESS; /* also triggers detach */
 	} else if (IS_IKE_SA(st) && just_established) {

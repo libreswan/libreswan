@@ -1029,6 +1029,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 			 */
 			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
 		}
+		llog_v2_child_sa_established(ike, larval_child);
 		return STF_OK;
 	}
 
@@ -1096,15 +1097,16 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 		 * notification exchange.
 		 */
 		return STF_FATAL;
-	} else if (n != v2N_NOTHING_WRONG) {
+	}
+
+	if (n != v2N_NOTHING_WRONG) {
 		/*
 		 * XXX: initiator; need to intiate a delete exchange.
 		 */
 		return STF_FAIL;
-	} else {
-		return STF_OK;
 	}
 
+	llog_v2_child_sa_established(ike, larval_child);
 	return STF_OK;
 }
 

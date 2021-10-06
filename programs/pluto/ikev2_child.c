@@ -769,26 +769,29 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	return v2N_NOTHING_WRONG;
 }
 
-void jam_v2_child_details(struct jambuf *buf, struct state *child_sa)
+void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
-	/* log Child SA Traffic Selector details for admin's pleasure */
-	struct connection *c = child_sa->st_connection;
-
-	const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
-	const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
-	range_buf ba, bb;
-	jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
-	    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),
-	    str_range(&a.net, &ba),
-	    a.startport,
-	    a.endport,
-	    a.ipprotoid,
-	    str_range(&b.net, &bb),
-	    b.startport,
-	    b.endport,
-	    b.ipprotoid);
-	jam(buf, " ");
-	jam_child_sa_details(buf, child_sa);
+	struct connection *c = child->sa.st_connection;
+	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
+		jam(buf, "established Child SA using "PRI_SO"; ",
+		    ike->sa.st_serialno);
+		/* log Child SA Traffic Selector details for admin's pleasure */
+		const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
+		const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
+		range_buf ba, bb;
+		jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
+		    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),
+		    str_range(&a.net, &ba),
+		    a.startport,
+		    a.endport,
+		    a.ipprotoid,
+		    str_range(&b.net, &bb),
+		    b.startport,
+		    b.endport,
+		    b.ipprotoid);
+		jam(buf, " ");
+		jam_child_sa_details(buf, &child->sa);
+	}
 }
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
@@ -797,10 +800,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 
 	pstat_sa_established(&child->sa);
 
-	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
-		jam(buf, "%s; ", child->sa.st_state->story);
-		jam_v2_child_details(buf, &child->sa);
-	}
+	llog_v2_child_sa_established(ike, child);
 
 	schedule_v2_replace_event(&child->sa);
 
