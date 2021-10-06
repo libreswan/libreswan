@@ -63,24 +63,25 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 1, has_dst = 1
-dst ::1 via  dev lo src  table 254
-dst 2001:db8:1:3:: via  dev eth0 src  table 254
-dst fe80:: via  dev eth0 src  table 254
-dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
-set nexthop: fe80::1000:ff:fe32:64ba
-dst ::1 via  dev lo src  table 255 (ignored)
-dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
-dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
-dst fe80:: via  dev eth0 src  table 255 (ignored)
-dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
-dst ff00:: via  dev eth0 src  table 255 (ignored)
-seeking_src = 1, seeking_gateway = 0, has_peer = 1
-seeking_src = 1, seeking_gateway = 0, has_dst = 1
-dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:1:3::209 table 254
-set addr: 2001:db8:1:3::209
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
+resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
+  seeking gateway
+  query getroute+request+root+match
+  added dst 2001:db8:1:2::23 (peer->addr)
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254
+  found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
+  please-call-again
+resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
+  seeking prefsrc
+  query getroute+request
+  added dst 2001:db8:1:2::23 (peer->addr)
+  src :: prefsrc 2001:db8:1:3::209 gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254
+  found prefsrc (host_addr): 2001:db8:1:3::209
+  success
+resolving src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:1:3::209
+  seeking nothing
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
@@ -146,27 +147,27 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-seeking_src = 1, seeking_gateway = 1, has_peer = 1
-seeking_src = 0, seeking_gateway = 1, has_dst = 1
-dst ::1 via  dev lo src  table 254
-dst 2001:db8:0:3:1:: via  dev lo src  table 254
-dst 2001:db8:1:3:: via  dev eth0 src  table 254
-dst 2000:: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
-dst fe80:: via  dev eth0 src  table 254
-dst  via fe80::1000:ff:fe32:64ba dev eth0 src  table 254
-set nexthop: fe80::1000:ff:fe32:64ba
-dst ::1 via  dev lo src  table 255 (ignored)
-dst 2001:db8:0:3:1:: via  dev lo src  table 255 (ignored)
-dst 2001:db8:1:3:: via  dev eth0 src  table 255 (ignored)
-dst 2001:db8:1:3::209 via  dev eth0 src  table 255 (ignored)
-dst fe80:: via  dev eth0 src  table 255 (ignored)
-dst fe80::1000:ff:feab:cd02 via  dev eth0 src  table 255 (ignored)
-dst ff00:: via  dev eth0 src  table 255 (ignored)
-seeking_src = 1, seeking_gateway = 0, has_peer = 1
-seeking_src = 1, seeking_gateway = 0, has_dst = 1
-dst 2001:db8:1:2::23 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: table 254
-set addr: 2001:db8:0:3:1::
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
+resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
+  seeking gateway
+  query getroute+request+root+match
+  added dst 2001:db8:1:2::23 (peer->addr)
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:0:3:1:: dev lo priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254
+  src <unset-address> prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2000:: dev eth0 priority 1024 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254
+  found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
+  please-call-again
+resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
+  seeking prefsrc
+  query getroute+request
+  added dst 2001:db8:1:2::23 (peer->addr)
+  src :: prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254
+  found prefsrc (host_addr): 2001:db8:0:3:1::
+  success
+resolving src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:0:3:1::
+  seeking nothing
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>

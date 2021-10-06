@@ -14,8 +14,10 @@ Loading conn west
 Loading conn west-bogus
 Loading conn east
 loading named conns: west
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
-seeking_src = 0, seeking_gateway = 0, has_peer = 0
+resolving src = %eth1 gateway = <not-set> peer 192.1.2.23
+  seeking nothing
+resolving src = 192.1.2.23 gateway = <not-set> peer %eth1
+  seeking nothing
 conn: "west" modecfgdns=<unset>
 conn: "west" modecfgdomains=<unset>
 conn: "west" modecfgbanner=<unset>
@@ -38,8 +40,10 @@ Loading conn west
 Loading conn west-bogus
 Loading conn east
 loading named conns: west-bogus
-seeking_src = 0, seeking_gateway = 0, has_peer = 1
-seeking_src = 0, seeking_gateway = 0, has_peer = 0
+resolving src = %bogus1 gateway = <not-set> peer 192.1.2.23
+  seeking nothing
+resolving src = 192.1.2.23 gateway = <not-set> peer %bogus1
+  seeking nothing
 conn: "west-bogus" modecfgdns=<unset>
 conn: "west-bogus" modecfgdomains=<unset>
 conn: "west-bogus" modecfgbanner=<unset>
