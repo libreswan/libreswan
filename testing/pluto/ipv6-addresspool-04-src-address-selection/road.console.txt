@@ -46,19 +46,19 @@ resolving src = <defaultroute> gateway = <defaultroute> peer 2001:db8:1:2::23
   seeking gateway
   query getroute+request+root+match
   added dst 2001:db8:1:2::23 (peer->addr)
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
-  please-call-again
+  please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
 resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking prefsrc
   query getroute+request
   added dst 2001:db8:1:2::23 (peer->addr)
-  src :: prefsrc 2001:db8:1:3::209 gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254
+  src :: prefsrc 2001:db8:1:3::209 gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:1:3::209
-  success
+  success: src = 2001:db8:1:3::209 gateway = fe80::1000:ff:fe32:64ba
 resolving src = 2001:db8:1:2::23 gateway = <not-set> peer 2001:db8:1:3::209
   seeking nothing
 conn: "road" modecfgdns=<unset>
@@ -130,21 +130,21 @@ resolving src = <defaultroute> gateway = <defaultroute> peer 2001:db8:1:2::23
   seeking gateway
   query getroute+request+root+match
   added dst 2001:db8:1:2::23 (peer->addr)
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:0:3:1:: dev lo priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254
-  src <unset-address> prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2000:: dev eth0 priority 1024 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254
-  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:0:3:1:: dev lo priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2000:: dev eth0 priority 1024 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
+  src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
-  please-call-again
+  please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
 resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking prefsrc
   query getroute+request
   added dst 2001:db8:1:2::23 (peer->addr)
-  src :: prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254
+  src :: prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:0:3:1::
-  success
+  success: src = 2001:db8:0:3:1:: gateway = fe80::1000:ff:fe32:64ba
 resolving src = 2001:db8:1:2::23 gateway = <not-set> peer 2001:db8:0:3:1::
   seeking nothing
 conn: "road" modecfgdns=<unset>
