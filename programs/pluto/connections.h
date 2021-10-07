@@ -75,6 +75,7 @@ struct config_end {
 	} client;
 	struct {
 		unsigned ikeport;
+		enum keyword_host type;
 	} host;
 };
 
@@ -215,7 +216,6 @@ struct host_pair;	/* opaque type */
 struct end {
 	struct id id;
 
-	enum keyword_host host_type;
 	char *host_addr_name;	/* string version from whack */
 	ip_address host_addr;
 	uint16_t host_port;		/* where the IKE port is */

@@ -508,7 +508,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	if (address_is_unset(&this->host_addr) ||
 	    address_is_any(this->host_addr)) {
 		dohost_port = false;
-		if (this->host_type == KH_IPHOSTNAME) {
+		if (this->config->host.type == KH_IPHOSTNAME) {
 			dohost_name = true;
 			jam_string(buf, "%dns");
 		} else {
@@ -996,7 +996,7 @@ static int extract_end(struct connection *c,
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
 
 	/* the rest is simple copying of corresponding fields */
-	dst->host_type = src->host_type;
+	config_end->host.type = src->host_type;
 	dst->host_addr = src->host_addr;
 	dst->host_addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host_nexthop = src->host_nexthop;
@@ -1053,7 +1053,7 @@ static int extract_end(struct connection *c,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
-	switch (dst->host_type) {
+	switch (dst->config->host.type) {
 	case KH_IPHOSTNAME:
 	{
 		err_t er = ttoaddress_dns(shunk1(dst->host_addr_name),

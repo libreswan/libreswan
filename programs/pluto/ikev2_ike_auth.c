@@ -1063,7 +1063,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 
 	/* send response */
 	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->spd.that.host_type == KH_ANY) {
+		if (c->spd.that.config->host.type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
