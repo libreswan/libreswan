@@ -3035,10 +3035,10 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
  * *erop is used to find other connections sharing an eroute.
  */
 struct connection *route_owner(struct connection *c,
-			const struct spd_route *cur_spd,
-			struct spd_route **srp,
-			struct connection **erop,
-			struct spd_route **esrp)
+			       const struct spd_route *cur_spd,
+			       struct spd_route **srp,
+			       struct connection **erop,
+			       struct spd_route **esrp)
 {
 	if (!oriented(c)) {
 		llog(RC_LOG, c->logger,
@@ -3046,74 +3046,72 @@ struct connection *route_owner(struct connection *c,
 		return NULL;
 	}
 
-	struct connection
-		*best_ro = c,
-		*best_ero = c;
-	struct spd_route *best_sr = NULL,
-		*best_esr = NULL;
-	enum routing_t best_routing = cur_spd->routing,
-		best_erouting = best_routing;
+	struct connection *best_routing_connection = c;
+	struct spd_route *best_routing_spd = NULL;
+	enum routing_t best_routing = cur_spd->routing;
 
+	struct connection *best_ero = c;
+	struct spd_route *best_esr = NULL;
+	enum routing_t best_erouting = best_routing;
 
-	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *d = cq.c;
+	for (const struct spd_route *c_spd = &c->spd;
+	     c_spd != NULL; c_spd = c_spd->spd_next) {
 
-		if (!oriented(d))
-			continue;
+		struct connection_filter dq = { .where = HERE, };
+		while (next_connection_new2old(&dq)) {
 
-		/*
-		 * consider policies different if the either in or out marks
-		 * differ (after masking)
-		 */
-		if (DBGP(DBG_BASE)) {
-			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
-				c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
-				c->sa_marks.out.val, c->sa_marks.out.mask);
-			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-				d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
-				d->sa_marks.out.val, d->sa_marks.out.mask);
-		}
+			for (struct spd_route *d_spd = &dq.c->spd; d_spd != NULL; d_spd = d_spd->spd_next) {
 
-		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
-		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
-			continue;
-
-		struct spd_route *srd;
-
-		for (srd = &d->spd; srd != NULL; srd = srd->spd_next) {
-			passert(srd->connection == d);
-			if (srd->routing == RT_UNROUTED)
-				continue;
-
-			const struct spd_route *src;
-
-			for (src = &c->spd; src != NULL; src = src->spd_next) {
-				passert(src->connection == c);
-				if (src == srd)
+				if (!selector_range_eq_selector_range(c_spd->that.client, d_spd->that.client))
+					continue;
+				if (c_spd->that.protocol != d_spd->that.protocol)
+					continue;
+				if (c_spd->that.port != d_spd->that.port)
+					continue;
+				if (!sameaddr(&c_spd->this.host_addr, &d_spd->this.host_addr))
 					continue;
 
-				if (!selector_range_eq_selector_range(src->that.client, srd->that.client) ||
-				    src->that.protocol != srd->that.protocol ||
-				    src->that.port != srd->that.port ||
-				    !sameaddr(&src->this.host_addr,
-						&srd->this.host_addr))
+				struct connection *d = d_spd->connection;
+
+				if (!oriented(d))
 					continue;
 
-				if (srd->routing > best_routing) {
-					best_ro = d;
-					best_sr = srd;
-					best_routing = srd->routing;
+				/*
+				 * Consider policies different if the either
+				 * in or out marks differ (after masking).
+				 */
+				if (DBGP(DBG_BASE)) {
+					DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+						c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+						c->sa_marks.out.val, c->sa_marks.out.mask);
+					DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+						d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+						d->sa_marks.out.val, d->sa_marks.out.mask);
 				}
 
-				if (selector_range_eq_selector_range(src->this.client, srd->this.client) &&
-				    src->this.protocol == srd->this.protocol &&
-				    src->this.port == srd->this.port &&
-				    srd->routing > best_erouting)
-				{
+				if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+				     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+					continue;
+
+				if (d_spd->routing == RT_UNROUTED)
+					continue;
+
+				if (c_spd == d_spd)
+					continue;
+
+				if (d_spd->routing > best_routing) {
+					best_routing_connection = d;
+					best_routing_spd = d_spd;
+					best_routing = d_spd->routing;
+				}
+
+				if (selector_range_eq_selector_range(c_spd->this.client, d_spd->this.client) &&
+				    c_spd->this.protocol == d_spd->this.protocol &&
+				    c_spd->this.port == d_spd->this.port &&
+				    d_spd->routing > best_erouting) {
 					best_ero = d;
-					best_esr = srd;
-					best_erouting = srd->routing;
+					best_esr = d_spd;
+					best_erouting = d_spd->routing;
 				}
 			}
 		}
@@ -3127,12 +3125,12 @@ struct connection *route_owner(struct connection *c,
 
 		if (!routed(best_routing)) {
 			jam(buf, "NULL");
-		} else if (best_ro == c) {
+		} else if (best_routing_connection == c) {
 			jam(buf, "self");
 		} else {
 			connection_buf cib;
 			jam(buf, ""PRI_CONNECTION" %s",
-			    pri_connection(best_ro, &cib),
+			    pri_connection(best_routing_connection, &cib),
 			    enum_name(&routing_story, best_routing));
 		}
 
@@ -3155,12 +3153,12 @@ struct connection *route_owner(struct connection *c,
 		*erop = erouted(best_erouting) ? best_ero : NULL;
 
 	if (srp != NULL ) {
-		*srp = best_sr;
+		*srp = best_routing_spd;
 		if (esrp != NULL )
 			*esrp = best_esr;
 	}
 
-	return routed(best_routing) ? best_ro : NULL;
+	return routed(best_routing) ? best_routing_connection : NULL;
 }
 
 /*
