@@ -72,6 +72,7 @@ struct config_end {
 	struct {
 		ip_subnet subnet;
 		ip_protoport protoport;
+		char *updown;
 	} client;
 	struct {
 		unsigned ikeport;
@@ -242,7 +243,7 @@ struct end {
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_id_wildcards;
-	char *updown;
+
 	/*
 	 * Was the PORT, in the PROTOPORT included in the whack
 	 * message "wild"?  Can't use .port as that will have been

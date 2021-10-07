@@ -139,7 +139,6 @@ static void delete_end(struct end *e)
 		CERT_DestroyCertificate(e->cert.nss_cert);
 
 	free_chunk_content(&e->ca);
-	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
@@ -740,7 +739,6 @@ void unshare_connection_end(struct end *e)
 	}
 
 	e->ca = clone_hunk(e->ca, "ca string");
-	e->updown = clone_str(e->updown, "updown");
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
@@ -1037,7 +1035,7 @@ static int extract_end(struct connection *c,
 	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	dst->updown = clone_str(src->updown, "updown");
+	config_end->client.updown = clone_str(src->updown, "updown");
 	dst->sendcert =  src->sendcert;
 
 	config_end->host.ikeport = src->host_ikeport;
@@ -4078,16 +4076,16 @@ static void show_one_sr(struct show *s,
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
 	show_comment(s,
-		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
-		c->name, instance,
-		oriented(c) ? "oriented" : "unoriented",
-		OPT_HOST(c->spd.this.host_srcip, thisipb),
-		OPT_HOST(c->spd.that.host_srcip, thatipb),
-		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
-		OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
-		(sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) ?
-			"<disabled>" : sr->this.updown
-	);
+		     "\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
+		     c->name, instance,
+		     oriented(c) ? "oriented" : "unoriented",
+		     OPT_HOST(c->spd.this.host_srcip, thisipb),
+		     OPT_HOST(c->spd.that.host_srcip, thatipb),
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
+		     ((sr->this.config->client.updown == NULL ||
+		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
+		      : sr->this.config->client.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR

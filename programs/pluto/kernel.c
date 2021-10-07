@@ -645,11 +645,12 @@ bool do_command(const struct connection *c,
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
 	 */
-	if (sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) {
+	const char *updown = sr->this.config->client.updown;
+	if (updown == NULL || streq(updown, "%disabled")) {
 		dbg("kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
 	}
-	dbg("kernel: running updown command \"%s\" for verb %s ", sr->this.updown, verb);
+	dbg("kernel: running updown command \"%s\" for verb %s ", updown, verb);
 
 	/*
 	 * Figure out which verb suffix applies.
@@ -693,7 +694,7 @@ bool do_command(const struct connection *c,
 				 "%s",        /* actual script */
 				 verb, verb_suffix,
 				 common_shell_out_str,
-				 sr->this.updown);
+				 updown);
 	if (cmd == NULL) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "%s%s command too long!", verb,
