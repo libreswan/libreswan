@@ -132,10 +132,10 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 
 	verbose("  query %s%s%s%s",
 		(type == RTM_GETROUTE ? "getroute" : "?"),
-		(flags & NLM_F_REQUEST ? "+request" : ""),
+		(flags & NLM_F_REQUEST ? " +REQUEST" : ""),
 		/*NLM_F_DUMP==NLM_F_ROOT|NLM_F_MATCH*/
-		(flags & NLM_F_ROOT ? "+root" : ""),
-		(flags & NLM_F_MATCH ? "+match" : ""));
+		(flags & NLM_F_ROOT ? " +ROOT" : ""),
+		(flags & NLM_F_MATCH ? " +MATCH" : ""));
 
 	return nlmsg;
 }
@@ -143,7 +143,9 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
-static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type, const ip_address *addr)
+static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
+			      const ip_address *addr, const char *what,
+			      lset_t verbose_rc_flags, struct logger *logger)
 {
 	struct rtmsg *rtmsg;
 	struct rtattr *rtattr;
@@ -167,6 +169,15 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type, const ip_add
 	else
 		rtmsg->rtm_dst_len = bytes.len * 8;
 	nlmsg->nlmsg_len += rtattr->rta_len;
+
+	address_buf ab;
+	verbose("  add %s %s (%s)",
+		(rta_type == RTA_DST ? "dst" :
+		 rta_type == RTA_GATEWAY ? "gateway" :
+		 rta_type == RTA_SRC ? "src" :
+		 rta_type == RTA_PREFSRC ? "prefsrc" :
+		 "???"),
+		str_address(addr, &ab), what);
 }
 
 /*
@@ -306,10 +317,9 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 * IPv6 with gateway link local address will return link local
 		 * address and not the global address.
 		 */
-		address_buf ab;
-		verbose("  added dst %s (host->nexthop)", str_address(&host->nexthop, &ab));
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
+				  "host->nexthop", verbose_rc_flags, logger);
 	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
@@ -345,10 +355,9 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		} else {
 			pexpect(peer->addrtype == KH_IPADDR);
 		}
-		address_buf ab;
-		verbose("  added dst %s (peer->addr)", str_address(&peer->addr, &ab));
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
+		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
+				  "peer->addr", verbose_rc_flags, logger);
 	} else {
 		added_dst = false;
 	}
@@ -356,9 +365,8 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	if (added_dst && host->addrtype == KH_IPADDR) {
 		/* SRC works only with DST */
 		pexpect(seeking == GATEWAY);
-		address_buf ab;
-		verbose("  adding src %s (host->addr)", str_address(&host->addr, &ab));
-		netlink_query_add(msgbuf, RTA_SRC, &host->addr);
+		netlink_query_add(msgbuf, RTA_SRC, &host->addr,
+				  "host->addr", verbose_rc_flags, logger);
 	}
 
 	/* Send netlink get_route request */
