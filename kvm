@@ -38,10 +38,12 @@ fi
 
 # accumulate pass 2 commands; execute pass 1 commands
 
+topdir=$(dirname $0)
 ops=
 modified=
 baseline=
-__baseline=$(sed -n -e 's/^KVM_BASELINE.*=/--baseline /p' Makefile.inc.local)
+__baseline=$(sed -n -e 's/^KVM_BASELINE[ ]*=[ ]*/--baseline /p' ${topdir}/Makefile.inc.local)
+prefix=$(sed -n -e 's/^KVM_PREFIXES[ ]*=[ ]*\([^ ]*\).*/\1/p' ${topdir}/Makefile.inc.local)
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -63,7 +65,12 @@ while test $# -gt 0 ; do
 		# git wrappers
 		commit ) shift ; exec git commit "$@" ;;
 		# invoke now
-		sh ) exec gmake kvmsh-$2 ;;
+		sh )
+		    shift
+		    host=${prefix}$1
+		    echo "Connecting to ${host}" 1>&2
+		    exec ${topdir}/testing/utils/kvmsh.py ${host}
+		    ;;
 		# wrappers
 		modified )
 		    modified=$(git status testing/pluto/ \
