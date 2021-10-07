@@ -17,14 +17,14 @@ starter: left is KH_DEFAULTROUTE
 loading named conns: test
 resolving src = <defaultroute> gateway = <defaultroute> peer <any>
   seeking gateway
-  query getroute+request+root+match
+  query getroute +REQUEST +ROOT +MATCH
   src <unset-address> prefsrc <unset-address> gateway 192.1.2.254 dst <unset-address> dev eth1 priority -1 pref -1 table 254
   found gateway (host_nexthop): 192.1.2.254
   please-call-again: src = <defaultroute> gateway = 192.1.2.254
 resolving src = <defaultroute> gateway = 192.1.2.254 peer <any>
   seeking prefsrc
-  query getroute+request
-  added dst 192.1.2.254 (host->nexthop)
+  query getroute +REQUEST
+  add dst 192.1.2.254 (host->nexthop)
   src <unset-address> prefsrc 192.1.2.45 gateway <unset-address> dst 192.1.2.254 dev eth1 priority -1 pref -1 table 254 +cacheinfo +uid
   found prefsrc (host_addr): 192.1.2.45
   success: src = 192.1.2.45 gateway = 192.1.2.254

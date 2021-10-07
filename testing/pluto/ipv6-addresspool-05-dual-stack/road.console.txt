@@ -65,8 +65,8 @@ starter: left is KH_DEFAULTROUTE
 loading named conns: road
 resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
   seeking gateway
-  query getroute+request+root+match
-  added dst 2001:db8:1:2::23 (peer->addr)
+  query getroute +REQUEST +ROOT +MATCH
+  add dst 2001:db8:1:2::23 (peer->addr)
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254 +cacheinfo
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst fe80:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
@@ -75,8 +75,8 @@ resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libr
   please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
 resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
   seeking prefsrc
-  query getroute+request
-  added dst 2001:db8:1:2::23 (peer->addr)
+  query getroute +REQUEST
+  add dst 2001:db8:1:2::23 (peer->addr)
   src :: prefsrc 2001:db8:1:3::209 gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:1:3::209
   success: src = 2001:db8:1:3::209 gateway = fe80::1000:ff:fe32:64ba
@@ -149,8 +149,8 @@ starter: left is KH_DEFAULTROUTE
 loading named conns: road
 resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
   seeking gateway
-  query getroute+request+root+match
-  added dst 2001:db8:1:2::23 (peer->addr)
+  query getroute +REQUEST +ROOT +MATCH
+  add dst 2001:db8:1:2::23 (peer->addr)
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst ::1 dev lo priority 256 pref 0 table 254 +cacheinfo
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:0:3:1:: dev lo priority 256 pref 0 table 254 +cacheinfo
   src <unset-address> prefsrc <unset-address> gateway <unset-address> dst 2001:db8:1:3:: dev eth0 priority 256 pref 0 table 254 +cacheinfo
@@ -161,8 +161,8 @@ resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libr
   please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
 resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
   seeking prefsrc
-  query getroute+request
-  added dst 2001:db8:1:2::23 (peer->addr)
+  query getroute +REQUEST
+  add dst 2001:db8:1:2::23 (peer->addr)
   src :: prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:0:3:1::
   success: src = 2001:db8:0:3:1:: gateway = fe80::1000:ff:fe32:64ba
