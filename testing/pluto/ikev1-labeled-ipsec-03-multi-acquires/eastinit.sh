@@ -6,5 +6,5 @@ setsebool nis_enabled=1
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add labeled
-runcon -t netutils_t ipsec getpeercon_server 4300 &
+runcon -t netutils_t ipsec getpeercon_server -d 4300
 echo "initdone"

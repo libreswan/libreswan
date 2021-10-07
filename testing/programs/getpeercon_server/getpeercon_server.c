@@ -26,6 +26,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -46,22 +47,39 @@
 /**
  * main
  */
+static void usage(char *argv[])
+{
+	fprintf(stderr, "usage: %s [-d] <port|path>\n", argv[0]);
+	exit(1);
+}
+
 int main(int argc, char *argv[])
 {
 	int rc;
-	short srv_sock_port;
 	int srv_sock;
 	const int true_const = 1;
 	char *srv_sock_path = NULL;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s <port|path>\n", argv[0]);
-		return 1;
+	bool detach = false;
+	int opt;
+	while ((opt = getopt(argc, argv, "d")) != -1) {
+		switch (opt) {
+		case 'd':
+			detach = true;
+			break;
+		default: /* '?' */
+			usage(argv);
+		}
 	}
 
-	srv_sock_port = atoi(argv[1]);
+	if (optind != argc - 1) {
+		usage(argv);
+	}
+
+	short srv_sock_port;
+	srv_sock_port = atoi(argv[optind]);
 	if (srv_sock_port == 0)
-		srv_sock_path = argv[1];
+		srv_sock_path = argv[optind];
 
 	{
 		char *ctx;
@@ -134,6 +152,16 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "-> waiting ... ");
 	fflush(stdout);
+
+	if (detach) {
+		fprintf(stderr, "\n");
+		fflush(stdout);
+		switch (fork()) {
+		case 0: break; /* child */
+		default: exit(0);
+		}
+	}
+
 	/* loop forever */
 	for (;;) {
 		int cli_sock;
