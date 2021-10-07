@@ -1,4 +1,6 @@
 /testing/guestbin/swan-prep --46
+ip -6 route
+ipsec addconn --verbose clear
 cp policies/* /etc/ipsec.d/policies/
 echo "2001:db8:1:2::0/64" >>  /etc/ipsec.d/policies/private-or-clear
 echo "2001:db8:1:3::254/128" >> /etc/ipsec.d/policies/clear
