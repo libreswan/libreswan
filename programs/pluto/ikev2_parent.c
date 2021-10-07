@@ -235,7 +235,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return false;
 
-	if (c->spd.that.authby == AUTHBY_RSASIG &&
+	if (c->spd.that.config->host.authby == AUTHBY_RSASIG &&
 	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
 {
 		switch (atype) {
@@ -668,7 +668,8 @@ void v2_event_sa_reauth(struct state *st)
 void wipe_old_v2_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) || c->spd.that.authby == AUTHBY_NULL);
+	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
+			 c->spd.that.config->host.authby == AUTHBY_NULL);
 
 	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
 		/*
@@ -712,7 +713,8 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) || d->spd.that.authby == AUTHBY_NULL);
+		bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
+					d->spd.that.config->host.authby == AUTHBY_NULL);
 		if (!old_is_nullauth && authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;

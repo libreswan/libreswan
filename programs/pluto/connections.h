@@ -76,6 +76,7 @@ struct config_end {
 	struct {
 		unsigned ikeport;
 		enum keyword_host type;
+		enum keyword_authby authby;
 	} host;
 };
 
@@ -258,8 +259,6 @@ struct end {
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 
 	struct virtual_ip *virt;
-
-	enum keyword_authby authby;
 
 	bool xauth_server;
 	bool xauth_client;

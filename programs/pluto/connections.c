@@ -1011,7 +1011,7 @@ static int extract_end(struct connection *c,
 	dst->xauth_username = clone_str(src->xauth_username, "xauth username");
 	dst->eap = src->eap;
 
-	dst->authby = src->authby;
+	config_end->host.authby = src->authby;
 
 	/* save some defaults */
 	config_end->client.subnet = src->client;
@@ -2015,17 +2015,24 @@ static bool extract_connection(const struct whack_message *wm,
 	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
-	 * If both left/rightauth is unset, fill it in with (preferred) symmetric policy
+	 * If both left/rightauth is unset, fill it in with
+	 * (preferred) symmetric policy.
 	 */
-	if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
+	if (wm->left.authby == AUTHBY_UNSET &&
+	    wm->right.authby == AUTHBY_UNSET) {
+		enum keyword_authby authby;
 		if (c->policy & POLICY_RSASIG)
-			c->spd.this.authby = c->spd.that.authby = AUTHBY_RSASIG;
+			authby = AUTHBY_RSASIG;
 		else if (c->policy & POLICY_ECDSA)
-			c->spd.this.authby = c->spd.that.authby = AUTHBY_ECDSA;
+			authby = AUTHBY_ECDSA;
 		else if (c->policy & POLICY_PSK)
-			c->spd.this.authby = c->spd.that.authby = AUTHBY_PSK;
+			authby = AUTHBY_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
-			c->spd.this.authby = c->spd.that.authby = AUTHBY_NULL;
+			authby = AUTHBY_NULL;
+		else
+			authby = AUTHBY_UNSET;
+		config->end[LEFT_END].host.authby = authby;
+		config->end[RIGHT_END].host.authby = authby;
 	}
 
 	/* if left/rightauth are set, but symmetric policy is not, fill it in */
@@ -3447,7 +3454,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				if (this_authby != d->spd.that.authby) {
+				if (this_authby != d->spd.that.config->host.authby) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
@@ -4119,8 +4126,8 @@ static void show_one_sr(struct show *s,
 	show_comment(s,
 		"\"%s\"%s:   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		c->name, instance,
-		enum_show_short(&keyword_authby_names, sr->this.authby, &auth1),
-		enum_show_short(&keyword_authby_names, sr->that.authby, &auth2),
+		enum_show_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
+		enum_show_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
 		sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
 		sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
 	);

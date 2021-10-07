@@ -121,7 +121,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			    chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_authby authby = c->spd.this.authby;
+	enum keyword_authby authby = c->spd.this.config->host.authby;
 
 	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 

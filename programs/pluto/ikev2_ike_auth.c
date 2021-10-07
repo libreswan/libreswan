@@ -792,7 +792,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.authby;
+	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.config->host.authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
@@ -810,7 +810,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 					      ike, &idhash_in, &pbs_no_ppk_auth,
-					      ike->sa.st_connection->spd.that.authby);
+					      ike->sa.st_connection->spd.that.config->host.authby);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
@@ -854,7 +854,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			dbg("responder verifying AUTH payload");
 			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						      ike->sa.st_connection->spd.that.authby);
+						      ike->sa.st_connection->spd.that.config->host.authby);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
@@ -1273,7 +1273,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_authby that_authby = c->spd.that.authby;
+	enum keyword_authby that_authby = c->spd.that.config->host.authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
