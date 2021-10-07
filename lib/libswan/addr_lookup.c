@@ -1,9 +1,11 @@
 /*
  * addr_lookup: resolve_defaultroute_one() -- attempt to resolve a default route
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2021 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -400,6 +402,8 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		int priority = -1;
 		signed char pref = -1;
 		int table;
+		const char *cacheinfo = "";
+		const char *uid = "";
 
 		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		int rtlen = RTM_PAYLOAD(nlmsg);
@@ -459,7 +463,10 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				memcpy(&table, data, len);
 				break;
 			case RTA_CACHEINFO:
-				// verbose("  ignoring CACHEINFO"); */
+				cacheinfo = " +cacheinfo";
+				break;
+			case RTA_UID:
+				uid = " +uid";
 				break;
 			default:
 				verbose("  ignoring %d", rtattr->rta_type);
@@ -480,13 +487,14 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				      NULL);
 
 		address_buf sb, psb, db, gb;
-		verbose("  src %s prefsrc %s gateway %s dst %s dev %s priority %d pref %d table %d%s",
+		verbose("  src %s prefsrc %s gateway %s dst %s dev %s priority %d pref %d table %d%s%s%s",
 			str_address(&src, &sb),
 			str_address(&prefsrc, &psb),
 			str_address(&gateway, &gb),
 			str_address(&dst, &db),
 			(r_interface[0] ? r_interface : "?"),
 			priority, pref, rtmsg->rtm_table,
+			cacheinfo, uid,
 			(ignore != NULL ? ignore : ""));
 
 		if (ignore != NULL)
@@ -541,9 +549,12 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	}
 	pfree(msgbuf);
 
-	verbose("  %s", (status == RESOLVE_FAILURE ? "failure" :
-			 status == RESOLVE_SUCCESS ? "success" :
-			 status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
-			 "???"));
+	verbose("  %s: src = %s gateway = %s",
+		(status == RESOLVE_FAILURE ? "failure" :
+		 status == RESOLVE_SUCCESS ? "success" :
+		 status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
+		 "???"),
+		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
+		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb));
 	return status;
 }
