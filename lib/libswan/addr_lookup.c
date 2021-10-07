@@ -358,6 +358,13 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
 				  "peer->addr", verbose_rc_flags, logger);
+	} else if (host->nexttype == KH_IPADDR &&
+		   (peer->addrtype == KH_GROUP ||
+		    peer->addrtype == KH_OPPOGROUP)) {
+		added_dst = true;
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
+				  "host->nexthop peer=group",
+				  verbose_rc_flags, logger);
 	} else {
 		added_dst = false;
 	}
