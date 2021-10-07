@@ -1,0 +1,103 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec auto --add road-east-x509-ipv4
+002 "road-east-x509-ipv4": added IKEv2 connection
+road #
+ ipsec auto --up road-east-x509-ipv4
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ #pkill pluto
+road #
+ ipsec whack --shutdown --leave-state
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec auto --add road-east-x509-ipv4
+002 "road-east-x509-ipv4": added IKEv2 connection
+road #
+ ipsec auto --up road-east-x509-ipv4
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request
+1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ ../../guestbin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.100/32
+	dir fwd priority 2080767 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.100/32
+	dir in priority 2080767 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.100/32 dst 0.0.0.0/0
+	dir out priority 2080767 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 via 192.1.3.254 dev eth0 src 192.0.2.100
+default via 192.1.3.254 dev eth0
+128.0.0.0/1 via 192.1.3.254 dev eth0 src 192.0.2.100
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         P,,  
+east-ec                                                      P,,  
+hashsha1                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+road                                                         u,u,u
+west                                                         P,,  
+west-ec                                                      P,,  
+road #
+ 
