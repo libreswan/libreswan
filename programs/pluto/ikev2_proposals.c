@@ -1713,7 +1713,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					ta.esn_enabled = false;
 					break;
 				default:
-					ta.esn_enabled = false;
+					ta.esn_enabled = true;
 					pexpect_fail(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ESN %d",
 						     transform->id);
