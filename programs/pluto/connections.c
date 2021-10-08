@@ -144,12 +144,17 @@ static void delete_end(struct end *e)
 	pfreeany(e->xauth_username);
 	pfreeany(e->ckaid);
 	free_chunk_content(&e->sec_label);
+	virtual_ip_delref(&e->virt, HERE);
 }
 
-static void delete_sr(struct spd_route *sr)
+static void delete_spd_route(struct spd_route **sr, bool first)
 {
-	delete_end(&sr->this);
-	delete_end(&sr->that);
+	remove_spd_route_from_db(*sr);
+	delete_end(&(*sr)->this);
+	delete_end(&(*sr)->that);
+	if (!first) {
+		pfreeany(*sr);
+	}
 }
 
 /*
@@ -227,22 +232,10 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	/* deal with top spd_route and then the rest */
 
 	passert(c->spd.this.virt == NULL);
+	for (struct spd_route *sr = &c->spd, *next = NULL; sr != NULL; sr = next) {
+		next = sr->spd_next;
 
-	virtual_ip_delref(&c->spd.this.virt, HERE);
-	virtual_ip_delref(&c->spd.that.virt, HERE);
-
-	struct spd_route *sr = c->spd.spd_next;
-
-	delete_sr(&c->spd);
-
-	while (sr != NULL) {
-		struct spd_route *next_sr = sr->spd_next;
-
-		passert(sr->this.virt == NULL);
-		passert(sr->that.virt == NULL);
-		delete_sr(sr);
-		/* ??? should we: pfree(sr); */
-		sr = next_sr;
+		delete_spd_route(&sr, /*first?*/sr == &c->spd);
 	}
 
 	remove_connection_from_db(c);
@@ -3057,63 +3050,63 @@ struct connection *route_owner(struct connection *c,
 	for (const struct spd_route *c_spd = &c->spd;
 	     c_spd != NULL; c_spd = c_spd->spd_next) {
 
-		struct connection_filter dq = { .where = HERE, };
-		while (next_connection_new2old(&dq)) {
+		struct spd_route_filter srf = {
+			.remote_client_range = &c_spd->that.client,
+			.where = HERE,
+		};
+		while (next_spd_route(NEW2OLD, &srf)) {
+			struct spd_route *d_spd = srf.spd;
+			struct connection *d = d_spd->connection;
 
-			for (struct spd_route *d_spd = &dq.c->spd; d_spd != NULL; d_spd = d_spd->spd_next) {
+			if (c_spd == d_spd)
+				continue;
 
-				if (!selector_range_eq_selector_range(c_spd->that.client, d_spd->that.client))
-					continue;
-				if (c_spd->that.protocol != d_spd->that.protocol)
-					continue;
-				if (c_spd->that.port != d_spd->that.port)
-					continue;
-				if (!sameaddr(&c_spd->this.host_addr, &d_spd->this.host_addr))
-					continue;
+			if (!oriented(d))
+				continue;
 
-				struct connection *d = d_spd->connection;
+			if (d_spd->routing == RT_UNROUTED)
+				continue;
 
-				if (!oriented(d))
-					continue;
+			pexpect(selector_range_eq_selector_range(c_spd->that.client, d_spd->that.client));
+			if (c_spd->that.protocol != d_spd->that.protocol)
+				continue;
+			if (c_spd->that.port != d_spd->that.port)
+				continue;
+			if (!sameaddr(&c_spd->this.host_addr, &d_spd->this.host_addr))
+				continue;
 
-				/*
-				 * Consider policies different if the either
-				 * in or out marks differ (after masking).
-				 */
-				if (DBGP(DBG_BASE)) {
-					DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
-						c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
-						c->sa_marks.out.val, c->sa_marks.out.mask);
-					DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-						d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
-						d->sa_marks.out.val, d->sa_marks.out.mask);
-				}
-
-				if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
-				     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
-					continue;
-
-				if (d_spd->routing == RT_UNROUTED)
-					continue;
-
-				if (c_spd == d_spd)
-					continue;
-
-				if (d_spd->routing > best_routing) {
-					best_routing_connection = d;
-					best_routing_spd = d_spd;
-					best_routing = d_spd->routing;
-				}
-
-				if (selector_range_eq_selector_range(c_spd->this.client, d_spd->this.client) &&
-				    c_spd->this.protocol == d_spd->this.protocol &&
-				    c_spd->this.port == d_spd->this.port &&
-				    d_spd->routing > best_erouting) {
-					best_ero = d;
-					best_esr = d_spd;
-					best_erouting = d_spd->routing;
-				}
+			/*
+			 * Consider policies different if the either
+			 * in or out marks differ (after masking).
+			 */
+			if (DBGP(DBG_BASE)) {
+				DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+					c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+					c->sa_marks.out.val, c->sa_marks.out.mask);
+				DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+					d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+					d->sa_marks.out.val, d->sa_marks.out.mask);
 			}
+
+			if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+			     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+				continue;
+
+			if (d_spd->routing > best_routing) {
+				best_routing_connection = d;
+				best_routing_spd = d_spd;
+				best_routing = d_spd->routing;
+			}
+
+			if (selector_range_eq_selector_range(c_spd->this.client, d_spd->this.client) &&
+			    c_spd->this.protocol == d_spd->this.protocol &&
+			    c_spd->this.port == d_spd->this.port &&
+			    d_spd->routing > best_erouting) {
+				best_ero = d;
+				best_esr = d_spd;
+				best_erouting = d_spd->routing;
+			}
+
 		}
 	}
 

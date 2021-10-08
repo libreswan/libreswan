@@ -80,6 +80,7 @@
 #include "ikev1_hash.h"
 #include "impair.h"
 #include "ikev1_message.h"
+#include "connection_db.h"		/* for clone_spd_route() */
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -1833,8 +1834,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						  "Received subnet %s",
 						  pretty_subnet.buf);
 
-					struct spd_route *sr;
-					for (sr = &c->spd; ; sr = sr->spd_next) {
+					for (struct spd_route *sr = &c->spd; ; sr = sr->spd_next) {
 						if (selector_range_eq_selector_range(wire_selector, sr->that.client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
@@ -1843,26 +1843,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							break;
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/
-							sr = sr->spd_next = clone_thing(c->spd,
-								"remote subnets policies");
-							sr->spd_next = NULL;
-
-							sr->connection = c;
-							sr->this.id.name = EMPTY_CHUNK;
-							sr->that.id.name = EMPTY_CHUNK;
-
-							sr->this.host_addr_name = NULL;
+							sr->spd_next = clone_spd_route(c, HERE);
 							sr->that.client = wire_selector;
-
-							sr->this.ca = EMPTY_CHUNK;
-							sr->that.ca = EMPTY_CHUNK;
-
-							/* unshare pointers */
-							sr->this.virt = NULL;
-							sr->that.virt = NULL;
-
-							unshare_connection_end(&sr->this);
-							unshare_connection_end(&sr->that);
+							rehash_spd_route(sr);
 							break;
 						}
 					}

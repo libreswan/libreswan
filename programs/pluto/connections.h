@@ -300,6 +300,7 @@ struct spd_route {
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
 	reqid_t reqid;
+	struct list_entry spd_route_list_entry;
 };
 
 struct sa_mark {
@@ -645,5 +646,26 @@ struct connection_filter {
 
 bool next_connection_old2new(struct connection_filter *query);
 bool next_connection_new2old(struct connection_filter *query);
+
+/*
+ * For iterating over the spd_route DB.
+ *
+ * - parameters are only matched when non-NULL or non-zero
+ * - .connection can be deleted between calls
+ * - some filters have been optimized using hashing, but
+ * - worst case is it scans through all spds
+ */
+
+struct spd_route_filter {
+	const ip_selector *remote_client_range;
+	/* current result (can be safely deleted) */
+	struct spd_route *spd;
+	/* internal (handle on next entry) */
+	struct list_entry *internal;
+	/* .where MUST BE LAST (See GCC bug 102288) */
+	where_t where;
+};
+
+bool next_spd_route(enum chrono order, struct spd_route_filter *srf);
 
 #endif

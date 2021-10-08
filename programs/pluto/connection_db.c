@@ -103,7 +103,7 @@ void rehash_connection_that_id(struct connection *c)
  * See also {new2old,old2new}_state()
  */
 
-static struct list_head *filter_head(struct connection_filter *filter)
+static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
 	struct list_head *bucket;
 	if (filter->that_id_eq != NULL) {
@@ -116,7 +116,7 @@ static struct list_head *filter_head(struct connection_filter *filter)
 	return bucket;
 }
 
-static bool matches_filter(struct connection *c, struct connection_filter *filter)
+static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
 {
 	if (filter->kind != 0 && filter->kind != c->kind) {
 		return false;
@@ -141,7 +141,7 @@ static bool next_connection(enum chrono adv, struct connection_filter *filter)
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = filter_head(filter)->head.next[adv];
+		filter->internal = connection_filter_head(filter)->head.next[adv];
 	}
 	/* Walk list until an entry matches */
 	filter->c = NULL;
@@ -149,7 +149,7 @@ static bool next_connection(enum chrono adv, struct connection_filter *filter)
 	     entry->data != NULL /* head has DATA == NULL */;
 	     entry = entry->next[adv]) {
 		struct connection *c = (struct connection *) entry->data;
-		if (matches_filter(c, filter)) {
+		if (matches_connection_filter(c, filter)) {
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[adv];
 			dbg("found "PRI_CO" for "PRI_WHERE,
@@ -196,7 +196,120 @@ static void add_connection_to_db(struct connection *c)
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
 		add_hash_table_entry(connection_hash_tables[h], c);
 	}
+
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		add_spd_route_to_db(sr);
+	}
+
 }
+
+void remove_connection_from_db(struct connection *c)
+{
+	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
+	remove_list_entry(&c->serialno_list_entry);
+	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
+		del_hash_table_entry(connection_hash_tables[h], c);
+	}
+}
+
+/*
+ * SPD_ROUTE database.
+ */
+
+static void spd_route_jam(struct jambuf *buf, const void *data)
+{
+	const struct spd_route *spd = data;
+	jam(buf, PRI_CO" SPD_ROUTE", pri_co(spd->connection->serialno));
+}
+
+static const struct list_info spd_route_list_info = {
+	.name = "spd_route list",
+	.jam = spd_route_jam,
+};
+
+static struct list_head spd_route_list_head = INIT_LIST_HEAD(&spd_route_list_head,
+							     &spd_route_list_info);
+
+void add_spd_route_to_db(struct spd_route *sr)
+{
+	sr->spd_route_list_entry = list_entry(&spd_route_list_info, sr);
+	insert_list_entry(&spd_route_list_head,
+			  &sr->spd_route_list_entry);
+}
+
+void remove_spd_route_from_db(struct spd_route *spd)
+{
+	remove_list_entry(&spd->spd_route_list_entry);
+}
+
+void rehash_spd_route(struct spd_route *sr UNUSED)
+{
+}
+
+static struct list_head *spd_route_filter_head(struct spd_route_filter *filter UNUSED)
+{
+	return &spd_route_list_head;
+}
+
+static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
+{
+	if (filter->remote_client_range != NULL &&
+	    !selector_range_eq_selector_range(*filter->remote_client_range, spd->that.client)) {
+		return false;
+	}
+	return true;
+}
+
+bool next_spd_route(enum chrono order, struct spd_route_filter *filter)
+{
+	if (filter->internal == NULL) {
+		/*
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data).
+		 */
+		filter->internal = spd_route_filter_head(filter)->head.next[order];
+	}
+	/* Walk list until an entry matches */
+	filter->spd = NULL;
+	for (struct list_entry *entry = filter->internal;
+	     entry->data != NULL /* head has DATA == NULL */;
+	     entry = entry->next[order]) {
+		struct spd_route *spd = (struct spd_route *) entry->data;
+		if (matches_spd_route_filter(spd, filter)) {
+			/* save connection; but step off current entry */
+			filter->internal = entry->next[order];
+			dbg("found "PRI_CO" SPD_ROUTE for "PRI_WHERE,
+			    pri_co(spd->connection->serialno), pri_where(filter->where));
+			filter->spd = spd;
+			return true;
+		}
+	}
+	dbg("no match for "PRI_WHERE, pri_where(filter->where));
+	return false;
+}
+
+struct spd_route *clone_spd_route(struct connection *c, where_t where)
+{
+	/* always first!?! */
+	struct spd_route *sr = clone_thing(c->spd, where->func);
+	sr->spd_next = NULL;
+	pexpect(sr->connection == c);
+	/* unshare pointers */
+	sr->this.host_addr_name = NULL;
+	sr->this.id.name = EMPTY_CHUNK;
+	sr->that.id.name = EMPTY_CHUNK;
+	sr->this.virt = NULL;
+	sr->that.virt = NULL;
+	unshare_connection_end(&sr->this);
+	unshare_connection_end(&sr->that);
+	add_spd_route_to_db(sr);
+	return sr;
+}
+
+/*
+ * Allocate connections.
+ */
 
 static struct connection *finish_connection(struct connection *c, const char *name, where_t where)
 {
@@ -224,15 +337,6 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 {
 	struct connection *c = clone_thing(*t, where->func);
 	return finish_connection(c, name, where);
-}
-
-void remove_connection_from_db(struct connection *c)
-{
-	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
-	remove_list_entry(&c->serialno_list_entry);
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		del_hash_table_entry(connection_hash_tables[h], c);
-	}
 }
 
 void init_connection_db(void)

@@ -27,5 +27,9 @@ void remove_connection_from_db(struct connection *c);
 
 void rehash_connection_that_id(struct connection *c);
 
+struct spd_route *clone_spd_route(struct connection *c, where_t where);
+void add_spd_route_to_db(struct spd_route *sr);
+void remove_spd_route_from_db(struct spd_route *sr);
+void rehash_spd_route(struct spd_route *sr);
 
 #endif
