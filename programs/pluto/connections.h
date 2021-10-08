@@ -296,6 +296,7 @@ struct spd_route {
 	struct spd_route *spd_next;
 	struct end this;
 	struct end that;
+	struct connection *connection;
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
 	reqid_t reqid;

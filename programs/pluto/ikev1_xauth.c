@@ -1847,6 +1847,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 								"remote subnets policies");
 							sr->spd_next = NULL;
 
+							sr->connection = c;
 							sr->this.id.name = EMPTY_CHUNK;
 							sr->that.id.name = EMPTY_CHUNK;
 

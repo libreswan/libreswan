@@ -125,6 +125,11 @@ enum {
 	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
 	     thingp_++)
 
+#define FOR_EACH_ELEMENT(THING, ARRAY)			\
+	for (typeof(&(ARRAY)[0]) THING = (ARRAY);	\
+	     THING < (ARRAY) + elemsof(ARRAY);		\
+	     THING++)
+
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
  * If termination isn't required, strncpy would do.

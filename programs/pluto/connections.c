@@ -255,6 +255,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_proposals(&config->child_proposals.p);
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
+		FOR_EACH_ELEMENT(end, config->end) {
+			pfreeany(end->client.updown);
+		}
 		pfree(c->root_config);
 	}
 
@@ -786,9 +789,17 @@ static void unshare_connection(struct connection *c)
 	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
 					"connection accept_redirect_to");
 
+	/*
+	 * XXX: this doesn't unshare .spd_next.
+	 */
+
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		unshare_connection_end(&sr->this);
 		unshare_connection_end(&sr->that);
+		sr->connection = c;
+		if (sr->spd_next != NULL) {
+			sr->spd_next = clone_thing(*sr->spd_next, "spd clone");
+		}
 	}
 
 	if (c->pool !=  NULL)
@@ -1035,7 +1046,7 @@ static int extract_end(struct connection *c,
 	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	config_end->client.updown = clone_str(src->updown, "updown");
+	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
 	dst->sendcert =  src->sendcert;
 
 	config_end->host.ikeport = src->host_ikeport;
@@ -1973,13 +1984,12 @@ static bool extract_connection(const struct whack_message *wm,
 	 * accordingly?
 	 */
 
-	for (enum left_right end_index = 0; end_index < elemsof(config->end); end_index++) {
-		struct config_end *config_end = &config->end[end_index];
-		config_end->end_index = end_index;
-		config_end->leftright = (end_index == LEFT_END ? "left" :
-					 end_index == RIGHT_END ? "right" :
-					 NULL);
-		passert(config_end->leftright != NULL);
+	FOR_EACH_ELEMENT(end, config->end) {
+		end->end_index = end - config->end;
+		end->leftright = (end->end_index == LEFT_END ? "left" :
+				  end->end_index == RIGHT_END ? "right" :
+				  NULL);
+		passert(end->leftright != NULL);
 	}
 
 	struct end *left = &c->spd.this;
@@ -2067,6 +2077,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	c->spd.spd_next = NULL;
+	c->spd.connection = c;
 
 	/* set internal fields */
 	c->instance_serial = 0;
@@ -3071,12 +3082,14 @@ struct connection *route_owner(struct connection *c,
 		struct spd_route *srd;
 
 		for (srd = &d->spd; srd != NULL; srd = srd->spd_next) {
+			passert(srd->connection == d);
 			if (srd->routing == RT_UNROUTED)
 				continue;
 
 			const struct spd_route *src;
 
 			for (src = &c->spd; src != NULL; src = src->spd_next) {
+				passert(src->connection == c);
 				if (src == srd)
 					continue;
 
