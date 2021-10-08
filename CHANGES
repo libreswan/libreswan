@@ -6,6 +6,8 @@ v4.6 (unreleased)
 * packaging: replace old SUSE packaging with pointer to upstream [Andrew]
 * IKEv2: when rekeying and PFS, only propose/allow original crypt-suite [Andrew]
 * IKEv2: when PFS, don't repeatedly log all proposals
+* pluto: Change default replay-window from 32 to 128 [Paul]
+* pluto: Change default esn= to "either" and prefer "yes" [Paul]
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
