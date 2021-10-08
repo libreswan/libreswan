@@ -182,7 +182,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
 		POLICY_ENCRYPT | POLICY_PFS |
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
-		POLICY_ESN_NO;      	     /* esn=no */
+		POLICY_ESN_NO | POLICY_ESN_YES; /* esn=either */
 
 	d->sighash_policy =
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
