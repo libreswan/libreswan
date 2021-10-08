@@ -133,26 +133,25 @@ static bool matches_filter(struct connection *c, struct connection_filter *filte
 	return true; /* sure */
 }
 
-bool next_connection_old2new(struct connection_filter *filter)
+static bool next_connection(enum chrono adv, struct connection_filter *filter)
 {
-#define ADV newer
 	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = filter_head(filter)->head.ADV;
+		filter->internal = filter_head(filter)->head.next[adv];
 	}
 	/* Walk list until an entry matches */
 	filter->c = NULL;
 	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->ADV) {
+	     entry = entry->next[adv]) {
 		struct connection *c = (struct connection *) entry->data;
 		if (matches_filter(c, filter)) {
 			/* save connection; but step off current entry */
-			filter->internal = entry->ADV;
+			filter->internal = entry->next[adv];
 			dbg("found "PRI_CO" for "PRI_WHERE,
 			    pri_co(c->serialno), pri_where(filter->where));
 			filter->c = c;
@@ -161,38 +160,16 @@ bool next_connection_old2new(struct connection_filter *filter)
 	}
 	dbg("no match for "PRI_WHERE, pri_where(filter->where));
 	return false;
-#undef ADV
+}
+
+bool next_connection_old2new(struct connection_filter *filter)
+{
+	return next_connection(OLD2NEW, filter);
 }
 
 bool next_connection_new2old(struct connection_filter *filter)
 {
-#define ADV older
-	if (filter->internal == NULL) {
-		/*
-		 * Advance to first entry of the circular list (if the
-		 * list is entry it ends up back on HEAD which has no
-		 * data).
-		 */
-		filter->internal = filter_head(filter)->head.ADV;
-	}
-	/* Walk list until an entry matches */
-	filter->c = NULL;
-	for (struct list_entry *entry = filter->internal;
-	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->ADV) {
-		struct connection *c = (struct connection *) entry->data;
-		if (matches_filter(c, filter)) {
-			/* save connection; but step off current entry */
-			filter->internal = entry->ADV;
-			dbg("found "PRI_CO" for "PRI_WHERE,
-			    pri_co(c->serialno), pri_where(filter->where));
-			filter->c = c;
-			return true;
-		}
-	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
-	return false;
-#undef ADV
+	return next_connection(NEW2OLD, filter);
 }
 
 /*

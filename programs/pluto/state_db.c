@@ -341,26 +341,25 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	return true;
 }
 
-bool next_state_old2new(struct state_filter *filter)
+static bool next_state(enum chrono adv, struct state_filter *filter)
 {
-#define ADV newer /* old-to-new */
 	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = filter_head(filter)->head.ADV;
+		filter->internal = filter_head(filter)->head.next[adv];
 	}
 	filter->st = NULL;
 	/* Walk list until an entry matches */
 	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->ADV) {
+	     entry = entry->next[adv]) {
 		struct state *st = (struct state *) entry->data;
 		if (matches_filter(st, filter)) {
 			/* save state; but step off current entry */
-			filter->internal = entry->ADV;
+			filter->internal = entry->next[adv];
 			dbg("found "PRI_SO" for "PRI_WHERE,
 			    pri_so(st->st_serialno), pri_where(filter->where));
 			filter->st = st;
@@ -369,38 +368,16 @@ bool next_state_old2new(struct state_filter *filter)
 	}
 	dbg("no match for "PRI_WHERE, pri_where(filter->where));
 	return false;
-#undef ADV
+}
+
+bool next_state_old2new(struct state_filter *filter)
+{
+	return next_state(OLD2NEW, filter);
 }
 
 bool next_state_new2old(struct state_filter *filter)
 {
-#define ADV older /* old-to-new */
-	if (filter->internal == NULL) {
-		/*
-		 * Advance to first entry of the circular list (if the
-		 * list is entry it ends up back on HEAD which has no
-		 * data).
-		 */
-		filter->internal = filter_head(filter)->head.ADV;
-	}
-	filter->st = NULL;
-	/* Walk list until an entry matches */
-	for (struct list_entry *entry = filter->internal;
-	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->ADV) {
-		struct state *st = (struct state *) entry->data;
-		if (matches_filter(st, filter)) {
-			/* save state; but step off current entry */
-			filter->internal = entry->ADV;
-			dbg("found "PRI_SO" for "PRI_WHERE,
-			    pri_so(st->st_serialno), pri_where(filter->where));
-			filter->st = st;
-			return true;
-		}
-	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
-	return false;
-#undef ADV
+	return next_state(NEW2OLD, filter);
 }
 
 /*

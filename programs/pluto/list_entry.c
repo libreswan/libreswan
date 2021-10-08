@@ -62,7 +62,7 @@ void jam_list_entry(struct jambuf *buf, const struct list_entry *entry)
 		} else {
 			entry->info->jam(buf, entry->data);
 		}
-		jam(buf, " %p<-%p->%p", entry->older, entry, entry->newer);
+		jam(buf, " %p<-%p->%p", entry->next[NEW2OLD], entry, entry->next[OLD2NEW]);
 	}
 }
 
@@ -75,11 +75,11 @@ static void log_entry(const char *op, struct list_entry *entry)
 			jam_list_entry(buf, entry);
 		}
 	}
-	if (entry->newer != NULL || entry->older != NULL) {
-		passert_entry(entry, entry->newer != NULL);
-		passert_entry(entry, entry->newer->older == entry);
-		passert_entry(entry, entry->older != NULL);
-		passert_entry(entry, entry->older->newer == entry);
+	if (entry->next[OLD2NEW] != NULL || entry->next[NEW2OLD] != NULL) {
+		passert_entry(entry, entry->next[OLD2NEW] != NULL);
+		passert_entry(entry, entry->next[OLD2NEW]->next[NEW2OLD] == entry);
+		passert_entry(entry, entry->next[NEW2OLD] != NULL);
+		passert_entry(entry, entry->next[NEW2OLD]->next[OLD2NEW] == entry);
 	}
 }
 
@@ -90,8 +90,6 @@ struct list_entry list_entry(const struct list_info *info,
 	passert_info(info, data != NULL);
 
 	return (struct list_entry) {
-		.older = NULL,
-		.newer = NULL,
 		.data = data,
 		.info = info,
 	};
@@ -100,8 +98,8 @@ struct list_entry list_entry(const struct list_info *info,
 bool detached_list_entry(const struct list_entry *entry)
 {
 	passert_entry(entry, entry->data != NULL);	/* entry is not a list head */
-	passert_entry(entry, (entry->newer == NULL) == (entry->newer == NULL));
-	return entry->newer == NULL;
+	passert_entry(entry, (entry->next[OLD2NEW] == NULL) == (entry->next[OLD2NEW] == NULL));
+	return entry->next[OLD2NEW] == NULL;
 }
 
 void insert_list_entry(struct list_head *list,
@@ -120,14 +118,14 @@ void insert_list_entry(struct list_head *list,
 	}
 	passert_entry(entry, list->head.info == entry->info);
 	passert_entry(entry, entry->data != NULL);
-	passert_entry(entry, entry->older == NULL && entry->newer == NULL);
-	passert_entry(entry, list->head.newer != NULL && list->head.older != NULL);
+	passert_entry(entry, entry->next[NEW2OLD] == NULL && entry->next[OLD2NEW] == NULL);
+	passert_entry(entry, list->head.next[NEW2OLD] != NULL && list->head.next[OLD2NEW] != NULL);
 	/* insert at the front */
-	entry->newer = &list->head;
-	entry->older = list->head.older;
-	entry->older->newer = entry;
-	entry->newer->older = entry;
-	/* list->newer = list->newer; */
+	entry->next[OLD2NEW] = &list->head;
+	entry->next[NEW2OLD] = list->head.next[NEW2OLD];
+	entry->next[NEW2OLD]->next[OLD2NEW] = entry;
+	entry->next[OLD2NEW]->next[NEW2OLD] = entry;
+	/* list->next[OLD2NEW] = list->next[OLD2NEW]; */
 	if (DBGP(DBG_TMI)) {
 		LSWLOG_DEBUG(buf) {
 			jam(buf, "%s: inserted  ",
@@ -147,15 +145,15 @@ void remove_list_entry(struct list_entry *entry)
 	passert_entry(entry, entry->data != NULL);
 
 	/* unlink: older - entry - newer */
-	struct list_entry *newer = entry->newer;
-	struct list_entry *older = entry->older;
+	struct list_entry *newer = entry->next[OLD2NEW];
+	struct list_entry *older = entry->next[NEW2OLD];
 	passert_entry(entry, older != NULL && newer != NULL);
 
-	entry->older = NULL;	/* detach from list */
-	entry->newer = NULL;
+	entry->next[NEW2OLD] = NULL;	/* detach from list */
+	entry->next[OLD2NEW] = NULL;
 
-	newer->older = older;	/* seal the rift */
-	older->newer = newer;
+	newer->next[NEW2OLD] = older;	/* seal the rift */
+	older->next[OLD2NEW] = newer;
 
 	if (older == newer) {
 		DBGF(DBG_TMI, "%s: empty", entry->info->name);

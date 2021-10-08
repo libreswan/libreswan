@@ -49,9 +49,14 @@ struct list_info {
  * This could easily be changed if we needed heterogeneous lists.
  */
 
+enum chrono {
+	OLD2NEW, NEW2OLD,
+};
+
+#define CHRONO_ROOF 2
+
 struct list_entry {
-	struct list_entry *older;
-	struct list_entry *newer;
+	struct list_entry *next[CHRONO_ROOF];
 	void *data;
 	const struct list_info *info;
 };
@@ -70,13 +75,13 @@ struct list_head {
 };
 
 struct list_entry list_entry(const struct list_info *info, void *data);
-#define INIT_LIST_HEAD(LIST_HEAD_PTR, LIST_INFO_PTR)		\
-	{							\
-		.head = {					\
-			.info = (LIST_INFO_PTR),		\
-			.older = &(LIST_HEAD_PTR)->head,	\
-			.newer = &(LIST_HEAD_PTR)->head,	\
-		},						\
+#define INIT_LIST_HEAD(LIST_HEAD_PTR, LIST_INFO_PTR)			\
+	{								\
+		.head = {						\
+			.info = (LIST_INFO_PTR),			\
+			.next[NEW2OLD] = &(LIST_HEAD_PTR)->head,	\
+			.next[OLD2NEW] = &(LIST_HEAD_PTR)->head,	\
+		},							\
 	}
 
 /*
@@ -108,20 +113,20 @@ void remove_list_entry(struct list_entry *entry);
 #define FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEXT)				\
 									\
 	/* entry = either first entry or back at head */		\
-	for (struct list_entry *entry_ = (HEAD)->head.NEXT;		\
+	for (struct list_entry *entry_ = (HEAD)->head.next[NEXT];	\
 	     entry_ != NULL; entry_ = NULL)				\
 									\
 		/* DATA = ENTRY->data; ENTRY = ENTRY->NEXT */		\
 		for (DATA = (typeof(DATA))entry_->data,			\
-			     entry_ = entry_->NEXT;			\
+			     entry_ = entry_->next[NEXT];		\
 		     DATA != NULL;					\
 		     DATA = (typeof(DATA))entry_->data,			\
-			     entry_ = entry_->NEXT)
+			     entry_ = entry_->next[NEXT])
 
 #define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)		\
-	FOR_EACH_LIST_ENTRY_(HEAD, DATA, newer)
+	FOR_EACH_LIST_ENTRY_(HEAD, DATA, OLD2NEW)
 
 #define FOR_EACH_LIST_ENTRY_NEW2OLD(HEAD, DATA)		\
-	FOR_EACH_LIST_ENTRY_(HEAD, DATA, older)
+	FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEW2OLD)
 
 #endif
