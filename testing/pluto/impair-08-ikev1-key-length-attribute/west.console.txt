@@ -30,7 +30,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
 002 "aes128" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "aes128" #2: ESP traffic information: in=84B out=168B
+005 "aes128" #2: ESP traffic information: in=84B out=84B
 002 "aes128" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 "aes128": terminating SAs using this connection
 west #

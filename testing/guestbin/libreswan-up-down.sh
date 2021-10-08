@@ -45,6 +45,10 @@ if ipsec auto --up ${config} && ipsec whack --trafficstatus | grep "${config}" >
 	    ${bindir}/ping-once.sh --up "$@"
 	    ;;
 	alive )
+	    # Massive hack for IKEv1: quick-mode doesn't wait for a
+	    # response to the last message sent so need to give the
+	    # responder time to digest it.
+	    sleep 5
 	    ${bindir}/wait-until-alive "$@"
 	    ;;
 	* )
