@@ -480,9 +480,12 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 			case RTA_CACHEINFO:
 				cacheinfo = " +cacheinfo";
 				break;
+#if 0
 			case RTA_UID:
+				/* XXX: only present with newer kernels */
 				uid = " +uid";
 				break;
+#endif
 			default:
 				verbose("  ignoring %d", rtattr->rta_type);
 			}
