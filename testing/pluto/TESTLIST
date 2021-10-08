@@ -168,7 +168,7 @@ kvmplutotest	ikev2-impair-02-replay-forward		good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
-kvmplutotest	ikev2-48-nat-cp-start			good
+kvmplutotest	ikev2-48-nat-cp-start			wip	github:518
 kvmplutotest	ikev2-48-nat-cp-nondefault		good
 kvmplutotest	ikev2-48-nat-cp-two-servers-same	good
 kvmplutotest	ikev2-48-nat-cp-two-servers		good

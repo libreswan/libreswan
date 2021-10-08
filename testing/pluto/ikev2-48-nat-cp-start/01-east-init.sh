@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep
+ip route
+# confirm that the network is alive
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
+ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
 echo "initdone"
