@@ -84,7 +84,7 @@ while true ; do
     count=$(expr ${count} + 1)
     if test ${count} -ge ${timeout} ; then
 	echo timeout waiting ${timeout} seconds for "$@" to $(${match} && echo match || echo mismatch) "${regex}" 1>&2
-	echo "${input}" | sed -e 's/^/output: /'
+	echo "${input}" | tail -1000 | sed -e 's/^/output: /'
 	exit 1
     fi
     sleep 1
