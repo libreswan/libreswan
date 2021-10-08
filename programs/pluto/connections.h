@@ -105,6 +105,8 @@ struct config {
 	struct ikev2_proposals *v2_ike_proposals;
 	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
+	enum yna_options nic_offload;
+
 	struct config_end end[2];
 };
 
@@ -356,7 +358,6 @@ struct connection {
 	 * state?
 	 */
 	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
-	enum yna_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
