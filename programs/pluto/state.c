@@ -1136,7 +1136,7 @@ void delete_state_tail(struct state *st)
 	 * Release stored IKE fragments. This is a union in st so only
 	 * call one!  XXX: should be a union???
 	 */
-	switch (st->st_connection->ike_version) {
+	switch (st->st_ike_version) {
 	case IKEv1:
 #ifdef USE_IKEv1
 		free_v1_message_queues(st);
@@ -1146,7 +1146,7 @@ void delete_state_tail(struct state *st)
 		free_v2_message_queues(st);
 		break;
 	default:
-		bad_case(st->st_connection->ike_version);
+		bad_case(st->st_ike_version);
 	}
 
 	/*
@@ -1475,7 +1475,7 @@ void delete_states_by_connection(struct connection **cp)
 	enum connection_kind ck = (*cp)->kind;
 	co_serial_t connection_serialno = (*cp)->serialno;
 
-	switch ((*cp)->ike_version) {
+	switch ((*cp)->config->ike_version) {
 	case IKEv1: delete_v1_states_by_connection_bottom_up(cp, /*siblings*/false); break;
 	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
 	}
@@ -1926,7 +1926,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
 		if (LHAS(ok_states, st->st_state->kind) &&
-		    c->ike_version == st->st_connection->ike_version &&
+		    c->config->ike_version == st->st_ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
 		    endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&

@@ -78,7 +78,7 @@ static struct connection *find_next_v2_host_connection(struct connection *c,
 		 * Each of our callers knows what is known so specifies
 		 * the policy_exact_mask.
 		 */
-		if (c->ike_version != ike_version)
+		if (c->config->ike_version != ike_version)
 			continue;
 		if ((req_policy ^ c->policy) & policy_exact_mask)
 			continue;
@@ -288,7 +288,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 		}
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
-		    c->ike_version == IKEv2) {
+		    c->config->ike_version == IKEv2) {
 			ldbg(md->md_logger, "oppo_instantiate");
 			c = oppo_instantiate(c, &c->spd.that.id,
 					     &local_address, &remote_address);

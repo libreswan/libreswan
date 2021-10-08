@@ -82,6 +82,8 @@ struct config_end {
 };
 
 struct config {
+	enum ike_version ike_version;
+
 	chunk_t sec_label;
 
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
@@ -329,7 +331,6 @@ struct connection {
 	co_serial_t serial_from; /* "0" when connection root */
 	char *name;
 	struct logger *logger;
-	enum ike_version ike_version;
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;

@@ -104,7 +104,7 @@ void show_kernel_alg_connection(struct show *s,
 		 * If this is NULL and PFS is required then callers fall back to using
 		 * the parent's DH algorithm.
 		 */
-		switch (c->ike_version) {
+		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
 		{

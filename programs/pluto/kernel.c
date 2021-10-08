@@ -1151,7 +1151,7 @@ bool trap_connection(struct connection *c)
 
 	case route_easy:
 	case route_nearconflict:
-		if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
+		if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
 			/*
 			 * IKEv2 security labels are treated
 			 * specially: this allocates and installs a
@@ -1547,7 +1547,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 	    enum_name(&routing_story, c->spd.routing),
 	    pri_shunk(c->config->sec_label));
 
-	if (!pexpect(c->ike_version == IKEv2) ||
+	if (!pexpect(c->config->ike_version == IKEv2) ||
 	    !pexpect(c->config->sec_label.len > 0) ||
 	    !pexpect(c->kind == CK_TEMPLATE)) {
 		return false;
@@ -2346,7 +2346,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    encap_mode_name(encap.mode));
 	if (inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY &&
-	    (c->config->sec_label.len == 0 || c->ike_version == IKEv1)) {
+	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
 		uint32_t xfrm_if_id = c->xfrmi != NULL ?
 			c->xfrmi->if_id : 0;
@@ -3172,7 +3172,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	struct connection *c = st->st_connection;
-	if (c->ike_version == IKEv2 && c->spd.this.sec_label.len > 0) {
+	if (c->config->ike_version == IKEv2 &&
+	    c->spd.this.sec_label.len > 0) {
 		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
 	} else {
 		for (; sr != NULL; sr = sr->spd_next) {

@@ -160,7 +160,7 @@ bool initiate_connection_2(struct connection *c,
 	}
 
 	bool ok;
-	if (c->ike_version == IKEv2 &&
+	if (c->config->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) &&
 	    c->kind == CK_TEMPLATE) {
 		struct connection *d = instantiate(c, NULL, NULL, null_shunk);
@@ -224,10 +224,10 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	 * all it does is give spdb.c some busy work (and log bogus
 	 * stats).
 	 *
-	 * XXX: mumble something about c->ike_version
+	 * XXX: mumble something about c->config->ike_version
 	 */
 #ifdef USE_IKEv1
-	if (c->ike_version == IKEv1 &&
+	if (c->config->ike_version == IKEv1 &&
 	    (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE))) {
 		struct db_sa *phase2_sa = v1_kernel_alg_makedb(c->policy, c->config->child_proposals,
 							       true, c->logger);
@@ -250,7 +250,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	 */
 
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
-			  (c->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd.this.sec_label) : null_shunk),
+			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd.this.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
 }
@@ -266,7 +266,7 @@ void ipsecdoi_initiate(struct connection *c,
 	if (sec_label.len > 0)
 		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
 
-	switch (c->ike_version) {
+	switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
 	{
@@ -363,7 +363,7 @@ void ipsecdoi_initiate(struct connection *c,
 		break;
 	}
 	default:
-		bad_case(c->ike_version);
+		bad_case(c->config->ike_version);
 	}
 }
 
@@ -668,7 +668,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (c->ike_version == IKEv2 &&
+	if (c->config->ike_version == IKEv2 &&
 	    c->config->sec_label.len > 0 &&
 	    c->kind == CK_TEMPLATE) {
 		dbg("IKEv2 connection has security label");
@@ -1203,11 +1203,11 @@ void connection_check_phase2(struct logger *logger)
 		enum_buf eb;
 		llog(RC_LOG, c->logger,
 		     "%s SA negotiating with %s took too long -- replacing",
-		     str_enum(&ike_version_ike_names, c->ike_version, &eb),
+		     str_enum(&ike_version_ike_names, c->config->ike_version, &eb),
 		     str_address_sensitive(&c->spd.that.host_addr, &ab));
 
 		struct state *p1st;
-		switch (c->ike_version) {
+		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:
 			p1st = find_phase1_state(c,
@@ -1219,7 +1219,7 @@ void connection_check_phase2(struct logger *logger)
 			p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
 			break;
 		default:
-			bad_case(c->ike_version);
+			bad_case(c->config->ike_version);
 		}
 
 		if (p1st != NULL) {

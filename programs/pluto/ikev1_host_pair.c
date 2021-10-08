@@ -76,7 +76,7 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 		 * Each of our callers knows what is known so specifies
 		 * the policy_exact_mask.
 		 */
-		if (c->ike_version != ike_version)
+		if (c->config->ike_version != ike_version)
 			continue;
 		if ((req_policy ^ c->policy) & policy_exact_mask)
 			continue;

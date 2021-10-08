@@ -1423,31 +1423,31 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 #endif
 	}
-	c->ike_version = wm->ike_version;
+	config->ike_version = wm->ike_version;
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
-	    c->ike_version == IKEv1) {
+	    c->config->ike_version == IKEv1) {
 		llog(RC_FATAL, c->logger,
 			    "failed to add connection: opportunistic connection MUST have IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
-	    c->ike_version == IKEv1) {
+	    c->config->ike_version == IKEv1) {
 		llog(RC_FATAL, c->logger,
 			    "failed to add connection: MOBIKE requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
-	    c->ike_version == IKEv1) {
+	    c->config->ike_version == IKEv1) {
 		llog(RC_FATAL, c->logger,
 			    "failed to add connection: narrowing=yes requires IKEv2");
 		return false;
 	}
 
 	if (wm->iketcp != IKE_TCP_NO &&
-	    c->ike_version != IKEv2) {
+	    c->config->ike_version != IKEv2) {
 		llog(RC_FATAL, c->logger,
 			    "failed to add connection: enable-tcp= requires IKEv2");
 		return false;
@@ -1498,7 +1498,7 @@ static bool extract_connection(const struct whack_message *wm,
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
-			if (c->ike_version == IKEv1) {
+			if (c->config->ike_version == IKEv1) {
 				llog(RC_FATAL, c->logger,
 					    "failed to add connection: leftauth= and rightauth= require ikev2");
 				return false;
@@ -1583,7 +1583,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
-	if (c->ike_version == IKEv1)
+	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
 	/* ignore symmetrical defaults if we got left/rightauth */
 	if (wm->left.authby != wm->right.authby)
@@ -1596,12 +1596,11 @@ static bool extract_connection(const struct whack_message *wm,
 			c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
 	}
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
-	if (c->ike_version == IKEv2)
+	if (c->config->ike_version == IKEv2)
 		c->sighash_policy = wm->sighash_policy;
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
-		c->ike_version = 0;
 		c->iketcp = IKE_TCP_NO;
 		c->remote_tcpport = 0;
 	}
@@ -1622,7 +1621,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	policy_buf pb;
 	dbg("added new %s connection %s with policy %s%s",
-	    enum_name(&ike_version_names, c->ike_version),
+	    enum_name(&ike_version_names, c->config->ike_version),
 	    c->name, str_policy(c->policy, &pb),
 	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
 
@@ -1662,10 +1661,10 @@ static bool extract_connection(const struct whack_message *wm,
 		/* IKE cipher suites */
 
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
-		    (wm->ike != NULL || c->ike_version == IKEv2)) {
+		    (wm->ike != NULL || c->config->ike_version == IKEv2)) {
 			const struct proposal_policy proposal_policy = {
 				/* logic needs to match pick_initiator() */
-				.version = c->ike_version,
+				.version = c->config->ike_version,
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = false,
@@ -1695,7 +1694,7 @@ static bool extract_connection(const struct whack_message *wm,
 				jam_proposals(buf, c->config->ike_proposals.p);
 			}
 
-			if (c->ike_version == IKEv2) {
+			if (c->config->ike_version == IKEv2) {
 				dbg("constructing local IKE proposals for %s", c->name);
 				config->v2_ike_proposals =
 					ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
@@ -1710,7 +1709,7 @@ static bool extract_connection(const struct whack_message *wm,
 		/* ESP or AH cipher suites (but not both) */
 
 		if (wm->esp != NULL ||
-		    (c->ike_version == IKEv2 &&
+		    (c->config->ike_version == IKEv2 &&
 		     (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
 			const char *esp = wm->esp != NULL ? wm->esp : "";
 			dbg("from whack: got --esp=%s", esp);
@@ -1724,7 +1723,7 @@ static bool extract_connection(const struct whack_message *wm,
 				 * magic into pluto proper and instead pass a
 				 * simple boolean.
 				 */
-				.version = c->ike_version,
+				.version = c->config->ike_version,
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 				.check_pfs_vs_dh = true,
@@ -1782,7 +1781,7 @@ static bool extract_connection(const struct whack_message *wm,
 			 * new connection (true?), the connection can
 			 * be cached.
 			 */
-			if (c->ike_version == IKEv2) {
+			if (c->config->ike_version == IKEv2) {
 				/* UNSET_GROUP means strip DH from the proposal. */
 				config->v2_ike_auth_child_proposals =
 					get_v2_child_proposals(c, "loading config", &unset_group,
@@ -2114,7 +2113,7 @@ static bool extract_connection(const struct whack_message *wm,
 	} else if (c->spd.that.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
-	} else if (c->ike_version == IKEv2 && c->config->sec_label.len > 0) {
+	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
 		dbg("connection is template: has security label: "PRI_SHUNK,
 		    pri_shunk(c->config->sec_label));
 		c->kind = CK_TEMPLATE;
@@ -2206,8 +2205,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 	/* log all about this connection */
 	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
-			    c->ike_version == IKEv1 ? "IKEv1" :
-			    c->ike_version == IKEv2 ? "IKEv2" :
+			    c->config->ike_version == IKEv1 ? "IKEv1" :
+			    c->config->ike_version == IKEv2 ? "IKEv2" :
 			    "IKEv?");
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
@@ -2651,7 +2650,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		 * for a new SA with, seemingly, a security label that
 		 * matches an existing connection instance.
 		 */
-		if (c->ike_version == IKEv2 &&
+		if (c->config->ike_version == IKEv2 &&
 		    c->config->sec_label.len > 0 &&
 		    c->kind != CK_TEMPLATE) {
 			pexpect(c->kind == CK_INSTANCE);
@@ -3222,7 +3221,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	connection_buf cib;
 	int indent = 0;
 	dbg_rhc("starting with %s connection "PRI_CONNECTION"",
-	    enum_name(&ike_version_names, c->ike_version),
+	    enum_name(&ike_version_names, c->config->ike_version),
 	    pri_connection(c, &cib));
 	indent = 1;
 
@@ -3422,7 +3421,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				}
 			}
 
-			if (d->ike_version != st->st_ike_version) {
+			if (d->config->ike_version != st->st_ike_version) {
 				/* IKE version has to match */
 				dbg_rhc("skipping because mismatching IKE version");
 				continue;
@@ -4262,8 +4261,8 @@ void show_one_connection(struct show *s,
 	policy_buf pb;
 	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
 		     c->name, instance,
-		     c->ike_version > 0 ? enum_name(&ike_version_names, c->ike_version) : "",
-		     c->ike_version > 0 && policy != LEMPTY ? "+" : "",
+		     c->config->ike_version > 0 ? enum_name(&ike_version_names, c->config->ike_version) : "",
+		     c->config->ike_version > 0 && policy != LEMPTY ? "+" : "",
 		     str_policy(policy, &pb),
 		     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "",
 		     (c->spd.this.key_from_DNS_on_demand ||
@@ -4271,7 +4270,7 @@ void show_one_connection(struct show *s,
 		     c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
 		     c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
 
-	if (c->ike_version == IKEv2) {
+	if (c->config->ike_version == IKEv2) {
 		lset_buf hashpolbuf;
 		const char *hashstr = str_lset(&sighash_policy_bit_names,
 					       c->sighash_policy,
