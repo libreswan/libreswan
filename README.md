@@ -5,7 +5,7 @@ Libreswan is an Internet Key Exchange (IKE) implementation for Linux.
 It supports IKEv1 and IKEv2 and has support for most of the extensions
 (RFC + IETF drafts) related to IPsec, including IKEv2, X.509 Digital
 Certificates, NAT Traversal, and many others.  Libreswan uses the native
-Linux IPsec stack XFRM (NETKEY) per default.
+Linux XFRM IPsec stack.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
@@ -61,7 +61,8 @@ For RHEL7/CentOS7
 		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
 		pam-devel pkgconfig systemd-devel unbound-devel xmlto
 
-	(fipscheck is needed because the nss library is too old for USE_NSS_KDF=true)
+	(fipscheck is needed because the nss library is too old for
+	USE_NSS_KDF=true)
 
 
 Runtime requirements (usually already present on the system)
@@ -97,8 +98,8 @@ If you want to build without creating and installing manual pages, run:
 
 Note: For Linux, the ipsec-tools package or setkey is not needed. Instead
 the iproute2 packakge (>= 2.6.8) is required. Run `ipsec verify` to determine
-if your system misses any of the requirements. This will also tell you if any of
-the kernel sysctl values needs changing.
+if your system misses any of the requirements. This will also tell you if any
+of the kernel sysctl values needs changing.
 
 ## Starting Libreswan
 The install will detect the init system used (systemd, upstart, sysvinit,
@@ -153,7 +154,7 @@ overwrite your your `/etc/ipsec.*` configuration files. The default install
 target installs in `/usr/local`. Ensure you do not install libreswan twice,
 one from a distribution package in /usr and once manually in /usr/local.
 
-Note that for rpm based systems, the NSS directory used changed from /etc/ipsec.d
+Note that for rpm based systems, the NSS directory changed from /etc/ipsec.d
 to /var/lib/ipsec/nss/
 
 ## Support
@@ -169,12 +170,12 @@ Wiki:
 
 IRC:
 
-    Libreswan developers and users can be found on IRC, on #swan
+    Libreswan developers and users can be found on IRC, on #libreswan
     irc.libera.chat
 
 ## Bugs
 Bugs can be reported on the mailing list or using our bug tracking system,
-at https://bugs.libreswan.org/
+at https://github.com/libreswan/libreswan/issues
 
 ## Security Information
 All security issues found that require public disclosure will
