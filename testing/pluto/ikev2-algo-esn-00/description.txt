@@ -1,0 +1,3 @@
+Test of negotiating ESN. Without specification, it should use esn=either, and
+it should end up using ESN.
+
