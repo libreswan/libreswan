@@ -5,7 +5,7 @@ Libreswan is an Internet Key Exchange (IKE) implementation for Linux.
 It supports IKEv1 and IKEv2 and has support for most of the extensions
 (RFC + IETF drafts) related to IPsec, including IKEv2, X.509 Digital
 Certificates, NAT Traversal, and many others.  Libreswan uses the native
-Linux IPsec stack (NETKEY/XFRM) per default.
+Linux IPsec stack XFRM (NETKEY) per default.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
 FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
@@ -24,12 +24,13 @@ version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
 a different license.
 
 ## Requirements
-Recent Linux distributions based on kernel 2.x, 3.x or 4.x
-are supported platforms. Libreswan has been ported to
-Win2k/BSD/OSX in the past as well.
+Recent Linux distributions based on kernel 2.x to 5.x, as well as NetBSD
+and FreeBSD are supported platforms. Libreswan has been ported to
+Windows and OSX in the past as well. With effort, it can be compiled
+to run on Linux no-mmu systems as well.
 
 Most distributions have native packaged support for Libreswan. Libreswan is
-available for RHEL, Fedora, Ubuntu, Debian, Arch, OpenWrt and more.
+available for RHEL, Fedora, CentOS, Ubuntu, Debian, Arch, OpenWrt and more.
 
 Unless a source-based build is truly needed,  it is often best to use
 the pre-built version of the distribution you are using.
@@ -75,8 +76,10 @@ Runtime requirements (usually already present on the system)
 
 
 ## Building for RPM based systems
-See packaging/ for an up to date spec file for your distribution. For example,
-to build for CentOS8, use: rpmbuild -ba packaging/centos/8/libreswan.spec
+The packaging/ directory is used to find the proper spce file for your
+distribution. Simply issue the command: make rpm
+You can also pick a specific spec file. For example, to build for CentOS8,
+use: rpmbuild -ba packaging/centos/8/libreswan.spec
 
 ## Building for DEB based systems
 The packaging/debian directly is used to build deb files. Simply issue the
@@ -92,9 +95,9 @@ If you want to build without creating and installing manual pages, run:
     make base
     sudo make install-base
 
-Note: The ipsec-tools package or setkey is not needed. Instead the iproute2
-packakge (>= 2.6.8) is required. Run `ipsec verify` to determine if your
-system misses any of the requirements. This will also tell you if any of
+Note: For Linux, the ipsec-tools package or setkey is not needed. Instead
+the iproute2 packakge (>= 2.6.8) is required. Run `ipsec verify` to determine
+if your system misses any of the requirements. This will also tell you if any of
 the kernel sysctl values needs changing.
 
 ## Starting Libreswan
@@ -137,10 +140,11 @@ See README.NSS and `certutil --help` for more details on using NSS and
 migrating from the old Openswan `/etc/ipsec.d/` directories to using NSS.
 
 ## Upgrading
-If you are upgrading from FreeS/WAN 1.x or Openswan 2.x to Libreswan 3.x,
-you might need to adjust your config files, although great care has been
-put into making the configuration files full backwards compatible. See
-also: https://libreswan.org/wiki/HOWTO:_openswan_to_libreswan_migration
+If you are upgrading from FreeS/WAN 1.x, Openswan 2.x or older Libreswan
+versions to Libreswan 4.x, you might need to adjust your config files,
+although great care has been put into making the configuration files full
+backwards compatible. See also:
+https://libreswan.org/wiki/HOWTO:_openswan_to_libreswan_migration
 
 See 'man ipsec.conf' for the list of options to find any new features.
 
@@ -148,6 +152,9 @@ You can run `make install` on top of your old version - it will not
 overwrite your your `/etc/ipsec.*` configuration files. The default install
 target installs in `/usr/local`. Ensure you do not install libreswan twice,
 one from a distribution package in /usr and once manually in /usr/local.
+
+Note that for rpm based systems, the NSS directory used changed from /etc/ipsec.d
+to /var/lib/ipsec/nss/
 
 ## Support
 
@@ -163,7 +170,7 @@ Wiki:
 IRC:
 
     Libreswan developers and users can be found on IRC, on #swan
-    irc.freenode.net.
+    irc.libera.chat
 
 ## Bugs
 Bugs can be reported on the mailing list or using our bug tracking system,
@@ -180,7 +187,7 @@ https://libreswan.org/security/
 ## Development
 Those interested in the development, patches, and beta releases of
 Libreswan can join the development mailing list "swan-dev" or talk to the
-development team on IRC in #swan on irc.freenode.net
+development team on IRC in #swan on irc.libera.chat
 
 For those who want to track things a bit more closely, the
 swan-commits@lists.libreswan.org mailing list will mail all the commit
@@ -193,6 +200,7 @@ with the software. Further documentation can be found at https://libreswan.org/
 and the wiki at https://libreswan.org/wiki/
 
 ## KLIPS IPsec stack
-The KLIPS IPsec stack has been removed. Please use the netlink/XFRM stack.
+The KLIPS IPsec stack has been removed. Please use the XFRM stack.
 If you wish to have network interfaces like KLIPS had, please use the XFRMi
-interfaces via the ipsec-interface= keyword.
+interfaces via the ipsec-interface= keyword, or use the less capable VTI
+interface support.
