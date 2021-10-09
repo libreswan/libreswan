@@ -254,7 +254,6 @@ struct end {
 	 * scribbled on by a negotiation :-(
 	 */
 	bool has_port_wildcard;
-	uint16_t port;			/* port number, if per-port keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	enum eap_options eap;		/* wether to require/do EAP auth (eg EAPTLS) */

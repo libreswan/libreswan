@@ -604,8 +604,8 @@ static void jam_end_protoport(struct jambuf *buf, const struct end *this)
 	/* payload portocol and port */
 	if (this->has_port_wildcard) {
 		jam(buf, ":%u/%%any", this->client.ipproto);
-	} else if (this->port || this->client.ipproto) {
-		jam(buf, ":%u/%u", this->client.ipproto, this->port);
+	} else if (this->client.hport || this->client.ipproto) {
+		jam(buf, ":%u/%u", this->client.ipproto, this->client.hport);
 	}
 }
 
@@ -1056,9 +1056,9 @@ static int extract_end(struct connection *c,
 		 * is a bogus client.
 		 */
 		dst->client.ipproto = src->protoport.ipproto;
+		dst->client.hport = src->protoport.hport;
 	}
 
-	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
@@ -2310,8 +2310,8 @@ struct connection *add_group_instance(struct connection *group,
 		/* if foodgroup entry specifies protoport, override protoport= settings */
 		update_selector_ipproto(&t->spd.this.client, proto);
 		update_selector_ipproto(&t->spd.that.client, proto);
-		t->spd.this.port = sport;
-		t->spd.that.port = dport;
+		update_selector_hport(&t->spd.this.client, sport);
+		update_selector_hport(&t->spd.that.client, dport);
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -2722,8 +2722,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
 			policy_prio_t prio =
 				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
-				 2 * (sr->this.port == local_port) +
-				 2 * (sr->that.port == remote_port) +
+				 2 * (sr->this.client.hport == local_port) +
+				 2 * (sr->that.client.hport == remote_port) +
 				 1 * (sr->this.client.ipproto == ipproto));
 
 			if (DBGP(DBG_BASE)) {
@@ -2799,12 +2799,6 @@ struct connection *oppo_instantiate(struct connection *c,
 	    c->name, enum_name(&routing_story, c->spd.routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	const struct ip_protocol *local_protocol = selector_protocol(c->spd.this.client);
-	ip_port local_port = selector_port(c->spd.this.client);
-	dbg("oppo local(c) protocol %s port %d",
-	    local_protocol->name,
-	    local_port.hport);
-
 	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
 
 	passert(d->spd.spd_next == NULL);
@@ -2812,6 +2806,12 @@ struct connection *oppo_instantiate(struct connection *c,
 	/*
 	 * Fill in (or fix up) our client side.
 	 */
+
+	const struct ip_protocol *local_protocol = selector_protocol(c->spd.this.client);
+	ip_port local_port = selector_port(c->spd.this.client);
+	dbg("oppo local(c) protocol %s port %d",
+	    local_protocol->name,
+	    local_port.hport);
 
 	if (d->spd.this.has_client) {
 		/*
@@ -2868,17 +2868,21 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If the client is the peer, excise the client from the connection.
 	 */
 
+	dbg("oppo remote(c) protocol %s port %d",
+	    selector_protocol(c->spd.that.client)->name,
+	    selector_port(c->spd.that.client).hport);
+
 	const struct ip_protocol *remote_protocol = selector_protocol(c->spd.that.client);
 	ip_port remote_port = selector_port(c->spd.that.client);
-	dbg("oppo remote protocol %s port %d",
-	    remote_protocol->name,
-	    remote_port.hport);
-
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(address_in_selector_range(*remote_address, d->spd.that.client));
 	d->spd.that.client = selector_from_address_protocol_port(*remote_address,
 								 remote_protocol,
 								 remote_port);
+
+	dbg("oppo remote(d) protocol %s port %d",
+	    selector_protocol(d->spd.that.client)->name,
+	    selector_port(d->spd.that.client).hport);
 
 	if (address_eq_address(*remote_address, d->spd.that.host_addr))
 		d->spd.that.has_client = false;
@@ -3129,7 +3133,7 @@ struct connection *route_owner(struct connection *c,
 			pexpect(selector_range_eq_selector_range(c_spd->that.client, d_spd->that.client));
 			if (c_spd->that.client.ipproto != d_spd->that.client.ipproto)
 				continue;
-			if (c_spd->that.port != d_spd->that.port)
+			if (c_spd->that.client.hport != d_spd->that.client.hport)
 				continue;
 			if (!sameaddr(&c_spd->this.host_addr, &d_spd->this.host_addr))
 				continue;
@@ -3159,7 +3163,7 @@ struct connection *route_owner(struct connection *c,
 
 			if (selector_range_eq_selector_range(c_spd->this.client, d_spd->this.client) &&
 			    c_spd->this.client.ipproto == d_spd->this.client.ipproto &&
-			    c_spd->this.port == d_spd->this.port &&
+			    c_spd->this.client.hport == d_spd->this.client.hport &&
 			    d_spd->routing > best_erouting) {
 				best_ero = d;
 				best_esr = d_spd;
@@ -3752,9 +3756,8 @@ static struct connection *fc_try(const struct connection *c,
 
 		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
 			if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
-				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
-			{
+			      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+			      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen))) {
 				continue;
 			}
 		}
@@ -3762,13 +3765,14 @@ static struct connection *fc_try(const struct connection *c,
 		/* compare protocol and ports */
 		unsigned local_protocol = local_client->ipproto;
 		unsigned remote_protocol = remote_client->ipproto;
-		unsigned local_port = hport(selector_port(*local_client));
-		unsigned remote_port = hport(selector_port(*remote_client));
+		int local_port = local_client->hport;
+		int remote_port = remote_client->hport;
 		if (!(d->spd.this.client.ipproto == local_protocol &&
 		      d->spd.that.client.ipproto == remote_protocol &&
-		      (d->spd.this.port == 0 || d->spd.this.port == local_port) &&
-		      (d->spd.that.has_port_wildcard || d->spd.that.port == remote_port)))
-		{
+		      (d->spd.this.client.hport == 0 ||
+		       d->spd.this.client.hport == local_port) &&
+		      (d->spd.that.has_port_wildcard ||
+		       d->spd.that.client.hport == remote_port))) {
 			continue;
 		}
 
@@ -3793,16 +3797,19 @@ static struct connection *fc_try(const struct connection *c,
 				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
 					c->name, str_selector(local_client, &s1),
-					c->spd.this.client.ipproto, c->spd.this.port,
+					c->spd.this.client.ipproto,
+					c->spd.this.client.hport,
 					str_selector(remote_client, &d1),
 					c->spd.that.client.ipproto,
-					c->spd.that.port,
+					c->spd.that.client.hport,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
 					str_selector(&sr->this.client, &s3),
-					sr->this.client.ipproto, sr->this.port,
+					sr->this.client.ipproto,
+					sr->this.client.hport,
 					str_selector(&sr->that.client, &d3),
-					sr->that.client.ipproto, sr->that.port,
+					sr->that.client.ipproto,
+					sr->that.client.hport,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
@@ -3908,13 +3915,14 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		/* compare protocol and ports */
 		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
 		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
-		unsigned local_port = hport(selector_port(*local_client));
-		unsigned remote_port = hport(selector_port(*remote_client));
+		int local_port = hport(selector_port(*local_client));
+		int remote_port = hport(selector_port(*remote_client));
 		if (d->spd.this.client.ipproto != local_protocol ||
-			(d->spd.this.port && d->spd.this.port != local_port) ||
+			(d->spd.this.client.hport &&
+			 d->spd.this.client.hport != local_port) ||
 			d->spd.that.client.ipproto != remote_protocol ||
-			(d->spd.that.port != remote_port &&
-				!d->spd.that.has_port_wildcard))
+			(d->spd.that.client.hport != remote_port &&
+			 !d->spd.that.has_port_wildcard))
 			continue;
 
 		/*
@@ -4020,15 +4028,17 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			}
 
 			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
-			unsigned local_port = selector_port(*local_client).hport;
+			int local_port = selector_port(*local_client).hport;
 			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
-			unsigned remote_port = selector_port(*remote_client).hport;
+			int remote_port = selector_port(*remote_client).hport;
 			if (selector_range_eq_selector_range(sr->this.client, *local_client) &&
 			    selector_range_eq_selector_range(sr->that.client, *remote_client) &&
 			    sr->this.client.ipproto == local_protocol &&
-			    (!sr->this.port || sr->this.port == local_port) &&
+			    (!sr->this.client.hport ||
+			     sr->this.client.hport == local_port) &&
 			    (sr->that.client.ipproto == remote_protocol) &&
-			    (!sr->that.port || sr->that.port == remote_port)) {
+			    (!sr->that.client.hport ||
+			     sr->that.client.hport == remote_port)) {
 				if (routed(sr->routing))
 					return c;
 
@@ -4699,8 +4709,8 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	passert(sizeof(unsigned) >= sizeof(uint32_t));
 
 	unsigned portsw = /* max 2 (2 bits) */
-		(c->spd.this.port == 0 ? 0 : 1) +
-		(c->spd.that.port == 0 ? 0 : 1);
+		(c->spd.this.client.hport == 0 ? 0 : 1) +
+		(c->spd.that.client.hport == 0 ? 0 : 1);
 
 	unsigned protow = c->spd.this.client.ipproto == 0 ? 0 : 1;	/* (1 bit) */
 

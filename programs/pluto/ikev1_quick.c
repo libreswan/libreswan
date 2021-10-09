@@ -754,8 +754,8 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			   c->spd.that.has_client ||
 			   c->spd.this.client.ipproto != 0 ||
 			   c->spd.that.client.ipproto != 0 ||
-			   c->spd.this.port != 0 ||
-			   c->spd.that.port != 0);
+			   c->spd.this.client.hport != 0 ||
+			   c->spd.that.client.hport != 0);
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
@@ -844,10 +844,10 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* IDci (we are initiator), then IDcr (peer is responder) */
 		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
 				    c->spd.this.client.ipproto,
-				    c->spd.this.port, &rbody) ||
+				    c->spd.this.client.hport, &rbody) ||
 		    !emit_subnet_id(selector_subnet(c->spd.that.client),
 				    c->spd.that.client.ipproto,
-				    c->spd.that.port, &rbody)) {
+				    c->spd.that.client.hport, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1085,7 +1085,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				struct end local = c->spd.this;
 				local.client = *local_client;
 				local.has_client = !selector_eq_address(*local_client, local.host_addr);
-				local.port = selector_port(*local_client).hport;
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
@@ -1093,7 +1092,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				struct end remote = c->spd.that;
 				remote.client = *remote_client;
 				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
-				remote.port = selector_port(*remote_client).hport;
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1137,7 +1135,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		if (c->spd.that.has_port_wildcard) {
 			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
-			c->spd.that.port = port;
 			c->spd.that.has_port_wildcard = false;
 		}
 
@@ -1566,7 +1563,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  c->spd.this.client.ipproto, c->spd.this.port,
+					  c->spd.this.client.ipproto,
+					  c->spd.this.client.hport,
 					  selector_subnet(st->st_connection->spd.this.client),
 					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1578,7 +1576,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  c->spd.that.client.ipproto, c->spd.that.port,
+					  c->spd.that.client.ipproto,
+					  c->spd.that.client.hport,
 					  selector_subnet(st->st_connection->spd.that.client),
 					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;

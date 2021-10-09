@@ -442,7 +442,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam(buf, "' ");
 	}
 
-	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
+	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.client.hport);
 	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.client.ipproto);
 	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
 	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
@@ -480,7 +480,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam_address(buf, &ta);
 	jam(buf, "' ");
 
-	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
+	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.client.hport);
 	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.client.ipproto);
 
 	jam(buf, "PLUTO_PEER_CA='");
@@ -2792,16 +2792,7 @@ bool route_and_eroute(struct connection *c,
 	selectors_buf sb;
 	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
 	    str_selectors(&sr->this.client, &sr->that.client, &sb),
-	    sr->this.client.ipproto, sr->this.port, sr->that.port);
-#if 0
-	/* XXX: apparently not so */
-	pexpect(sr->this.client.hport == sr->this.port);
-	pexpect(sr->that.client.hport == sr->that.port);
-#endif
-
-	/* XXX: ... so make it so */
-	update_selector_hport(&sr->this.client, sr->this.port);
-	update_selector_hport(&sr->that.client, sr->that.port);
+	    sr->this.client.ipproto, sr->this.client.hport, sr->that.client.hport);
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero;
@@ -3465,7 +3456,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	dbg("kernel: orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
-	    c->name, transport_proto, sr->this.port, sr->that.port);
+	    c->name, transport_proto, sr->this.client.hport, sr->that.client.hport);
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
 				LELEM(CK_GOING_AWAY), c->kind));
@@ -3496,8 +3487,6 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 	{
 		/* are we replacing a bare shunt ? */
-		update_selector_hport(&sr->this.client, sr->this.port);
-		update_selector_hport(&sr->that.client, sr->that.port);
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client,
 							 &sr->that.client,
 							 sr->this.client.ipproto,

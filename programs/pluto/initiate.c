@@ -604,10 +604,10 @@ static ip_selector shunt_from_traffic_end(const char *what,
 	ip_port shunt_port;
 	if (end->client.ipproto == 0) {
 		dbg("widening %s shunt to all protocols + all ports", what);
-		pexpect(end->port == 0);
+		pexpect(end->client.hport == 0);
 		shunt_protocol = &ip_protocol_unset;
 		shunt_port = unset_port;
-	} else if (end->port == 0) {
+	} else if (end->client.hport == 0) {
 		dbg("widening %s shunt to all ports", what);
 		shunt_protocol = selector_protocol(end->client);
 		shunt_port = unset_port;
@@ -616,7 +616,7 @@ static ip_selector shunt_from_traffic_end(const char *what,
 		dbg("leaving %s shunt alone", what);
 		shunt_protocol = selector_protocol(end->client);
 		shunt_port = endpoint_port(traffic_endpoint);
-		pexpect(end->port == hport(shunt_port));
+		pexpect(end->client.hport == (int)hport(shunt_port));
 		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
 	}
 	return selector_from_address_protocol_port(shunt_address,

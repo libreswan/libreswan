@@ -114,8 +114,7 @@ static void traffic_selector_to_end(const struct traffic_selector *ts, struct en
 	/* XXX: check port range valid */
 	ip_port port = ip_hport(ts->startport);
 	end->client = selector_from_subnet_protocol_port(subnet, protocol, port);
-	/* redundant */
-	end->port = ts->startport;
+	/* redundant? */
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
 }
 
@@ -150,12 +149,12 @@ struct traffic_selector traffic_selector_from_end(const struct end *e, const cha
 	 * ICMPv6(58) we only support providing Type, not Code, eg
 	 * protoport=1/1
 	 */
-	if (e->port == 0 || e->has_port_wildcard) {
+	if (e->client.hport == 0 || e->has_port_wildcard) {
 		ts.startport = 0;
 		ts.endport = 65535;
 	} else {
-		ts.startport = e->port;
-		ts.endport = e->port;
+		ts.startport = e->client.hport;
+		ts.endport = e->client.hport;
 	}
 
 	dbg_v2_ts(&ts, "%s TS", what);
@@ -627,8 +626,8 @@ static int narrow_port(const struct end *end,
 	passert(index < tss->nr);
 	const struct traffic_selector *ts = &tss->ts[index];
 
-	int end_low = end->port;
-	int end_high = end->port == 0 ? 65535 : end->port;
+	int end_low = end->client.hport;
+	int end_high = end->client.hport == 0 ? 65535 : end->client.hport;
 	int port = -1;
 
 	switch (fit) {
@@ -755,9 +754,9 @@ static int score_address_range(const struct end *end,
 	 * XXX: why do this?
 	 */
 	/* ??? arbitrary modification to objective function */
-	if (end->port != 0 &&
-	    ts->startport == end->port &&
-	    ts->endport == end->port)
+	if (end->client.hport != 0 &&
+	    ts->startport == end->client.hport &&
+	    ts->endport == end->client.hport)
 		f = f << 1;
 
 	LSWDBGP(DBG_BASE, buf) {
@@ -961,9 +960,11 @@ static struct best_score score_ends_iprange(enum fit fit,
 		DBG_log("evaluating our conn="PRI_CONNECTION" I=%s:%d/%d R=%s:%d/%d%s to their:",
 			pri_connection(d, &cib),
 			str_selector(&ends->i->client, &ei3),
-			ends->i->client.ipproto, ends->i->port,
+			ends->i->client.ipproto,
+			ends->i->client.hport,
 			str_selector(&ends->r->client, &er3),
-			ends->r->client.ipproto, ends->r->port,
+			ends->r->client.ipproto,
+			ends->r->client.hport,
 			is_virtual_connection(d) ? " (virt)" : "");
 	}
 
@@ -1108,9 +1109,6 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 		    child->sa.st_serialno, pri_connection(c, &cib));
 	}
 
-	/* "this" == responder; see function name */
-	c->spd.this.port = n.tsr_port;
-	c->spd.that.port = n.tsi_port;
 	/* hack */
 	dbg("XXX: updating best connection's ports/protocols");
 	update_selector_hport(&c->spd.this.client, n.tsr_port);
