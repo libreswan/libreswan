@@ -18,6 +18,8 @@
  * for more details.
  */
 
+#include <linux/version.h>	/* RTA_UID hack */
+
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -480,9 +482,34 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 			case RTA_CACHEINFO:
 				cacheinfo = " +cacheinfo";
 				break;
-#if 0
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,11,16)
 			case RTA_UID:
-				/* XXX: only present with newer kernels */
+				/*
+				 * XXX: Above kernel version matches
+				 * when this code was added to this
+				 * file and not when RTA_UID was added
+				 * to the kernel herders.  That was:
+				 *
+				 *  commit 4fb74506838b3e34eaaebfcf90ebcd1fd52ab813
+				 *  Merge: 0d53072aa42b e2d118a1cb5e
+				 *  Author: David S. Miller <davem@davemloft.net>
+				 *  Date:   Fri Nov 4 14:45:24 2016 -0400
+				 *
+				 *    Merge branch 'uid-routing'
+				 *
+				 * but who knows what that kernel
+				 * version was.
+				 *
+				 * A sane kernel would include:
+				 *
+				 *   #define RTA_UID RTA_UID
+				 *
+				 * when adding the enum so that:
+				 *
+				 *   #ifdef RTA_ID
+				 *
+				 * could do the right thing.  Sigh.
+				 */
 				uid = " +uid";
 				break;
 #endif
