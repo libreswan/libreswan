@@ -1107,12 +1107,9 @@ static int extract_end(struct connection *c,
 		return -1;
 	}
 
-	dst->has_client = src->has_client;
-	if (src->has_client) {
-		if (subnet_is_unset(&src->client)) {
-			llog(RC_BADID, logger, "subnet error - failing to load connection");
-			return -1;
-		}
+
+	if (src->client.is_set) {
+		dst->has_client = true;
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
 	} else if (src->protoport.is_set) {

@@ -101,8 +101,6 @@ struct whack_end {
 	ip_subnet client;
 	ip_protoport protoport;
 
-	bool has_client;
-
 	bool key_from_DNS_on_demand;
 	char *updown;		/* string */
 	char *virt;

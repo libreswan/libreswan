@@ -956,7 +956,7 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 	if (haf != NULL && haf != address_type(&this->host_addr))
 		diag("address family of host inconsistent");
 
-	if (this->has_client) {
+	if (this->client.is_set) {
 		if (caf != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
@@ -1643,7 +1643,7 @@ int main(int argc, char **argv)
 					 */
 					msg.right.client = get_address_family(&client_family)->subnet.all;
 				}
-				msg.right.has_client = true;
+				pexpect(msg.right.client.is_set);
 			}
 			if (new_policy & POLICY_GROUP) {
 				/*
@@ -1757,7 +1757,7 @@ int main(int argc, char **argv)
 				msg.right.virt = optarg;
 			} else {
 				opt_to_subnet(&client_family, &msg.right.client, logger);
-				msg.right.has_client = true;
+				pexpect(msg.right.client.is_set);
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
 			continue;
@@ -2600,7 +2600,7 @@ int main(int argc, char **argv)
 			 * These interlocking tests should be redone.
 			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
-			    (msg.left.has_client || msg.right.has_client))
+			    (msg.left.client.is_set || msg.right.client.is_set))
 				diag("must not specify clients for ISAKMP-only connection");
 		}
 

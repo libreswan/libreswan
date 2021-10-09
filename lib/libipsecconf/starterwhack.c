@@ -353,11 +353,10 @@ static bool set_whack_end(char *lr,
 	if (cidr_is_specified(l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
-	w->has_client = l->has_client;
 	if (l->has_client) {
 		w->client = l->subnet;
 	} else {
-		w->client = l->host_family->subnet.all;
+		w->client = unset_subnet;
 	}
 
 	w->host_ikeport = l->options[KNCF_IKEPORT];
