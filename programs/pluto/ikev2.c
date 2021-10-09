@@ -2494,14 +2494,14 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 				struct spd_route *sr = &c->spd;
 				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
 									&sr->that.client,
-									sr->this.protocol,
+									sr->this.client.ipproto,
 									"old bare shunt to delete");
 
 				if (bs != NULL) {
 					dbg("deleting old bare shunt");
 					if (!delete_bare_shunt(&c->spd.this.host_addr,
 							       &c->spd.that.host_addr,
-							       c->spd.this.protocol,
+							       c->spd.this.client.ipproto,
 							       SPI_PASS /* else its not bare */,
 							       /*skip_xfrm_policy_delete?*/true,
 							       "installed IPsec SA replaced old bare shunt",

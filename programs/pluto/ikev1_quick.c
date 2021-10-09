@@ -750,9 +750,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
-	bool has_client = c->spd.this.has_client || c->spd.that.has_client ||
-			  c->spd.this.protocol != 0 || c->spd.that.protocol != 0 ||
-			  c->spd.this.port != 0 || c->spd.that.port != 0;
+	bool has_client = (c->spd.this.has_client ||
+			   c->spd.that.has_client ||
+			   c->spd.this.client.ipproto != 0 ||
+			   c->spd.that.client.ipproto != 0 ||
+			   c->spd.this.port != 0 ||
+			   c->spd.that.port != 0);
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
@@ -840,10 +843,10 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
 		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
-				    c->spd.this.protocol,
+				    c->spd.this.client.ipproto,
 				    c->spd.this.port, &rbody) ||
 		    !emit_subnet_id(selector_subnet(c->spd.that.client),
-				    c->spd.that.protocol,
+				    c->spd.that.client.ipproto,
 				    c->spd.that.port, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1082,7 +1085,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				struct end local = c->spd.this;
 				local.client = *local_client;
 				local.has_client = !selector_eq_address(*local_client, local.host_addr);
-				local.protocol = selector_protocol(*local_client)->ipproto;
 				local.port = selector_port(*local_client).hport;
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
@@ -1091,7 +1093,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				struct end remote = c->spd.that;
 				remote.client = *remote_client;
 				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
-				remote.protocol = selector_protocol(*remote_client)->ipproto;
 				remote.port = selector_port(*remote_client).hport;
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
@@ -1565,7 +1566,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  c->spd.this.protocol, c->spd.this.port,
+					  c->spd.this.client.ipproto, c->spd.this.port,
 					  selector_subnet(st->st_connection->spd.this.client),
 					  "our client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1577,7 +1578,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  c->spd.that.protocol, c->spd.that.port,
+					  c->spd.that.client.ipproto, c->spd.that.port,
 					  selector_subnet(st->st_connection->spd.that.client),
 					  "peer client", st->st_logger))
 				return STF_FAIL + INVALID_ID_INFORMATION;

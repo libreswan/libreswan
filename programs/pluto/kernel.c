@@ -443,7 +443,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	}
 
 	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.port);
-	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.protocol);
+	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.client.ipproto);
 	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
 	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
 					st->st_esp.present ? "ESP" :
@@ -481,7 +481,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.port);
-	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.protocol);
+	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.client.ipproto);
 
 	jam(buf, "PLUTO_PEER_CA='");
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
@@ -924,7 +924,7 @@ static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 		break;
 	case ENCAP_MODE_TRANSPORT:
 		remote_client = selector_from_address_protocol_port(spd->that.host_addr,
-								    protocol_by_ipproto(spd->that.protocol),
+								    selector_protocol(spd->that.client),
 								    selector_port(spd->that.client));
 		break;
 	default:
@@ -1217,7 +1217,7 @@ bool shunt_policy(enum kernel_policy_op op,
 
 		jam(buf, " ");
 		jam_selector(buf, &sr->this.client);
-		jam(buf, "-%s->", protocol_by_ipproto(sr->this.protocol)->name);
+		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
 		jam_selector(buf, &sr->that.client);
 
 		jam(buf, " sec_label=");
@@ -1579,7 +1579,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				/*src*/&src->host_addr, &src->client,
 				/*dst*/&dst->host_addr, &dst->client,
 				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				/*transport_proto*/c->spd.this.protocol,
+				/*transport_proto*/c->spd.this.client.ipproto,
 				/*esatype*/encap.inner_proto->ipproto,
 				/*encap*/&encap,
 				/*use_lifetime*/deltatime(0),
@@ -1605,7 +1605,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
 					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
 					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-					   /*transport_proto*/c->spd.this.protocol,
+					   /*transport_proto*/c->spd.this.client.ipproto,
 					   /*esatype*/encap.inner_proto->ipproto,
 					   /*encap*/&encap,
 					   /*use_lifetime*/deltatime(0),
@@ -1641,7 +1641,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				   /*src*/&src->host_addr, &src->client,
 				   /*dst*/&dst->host_addr, &dst->client,
 				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
-				   /*transport_proto*/c->spd.this.protocol,
+				   /*transport_proto*/c->spd.this.client.ipproto,
 				   /*esatype*/encap.inner_proto->ipproto,
 				   /*encap*/&encap,
 				   /*use_lifetime*/deltatime(0),
@@ -1680,7 +1680,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 				    &route->dst.host_addr, &route->dst.client,
 				    cur_spi,
 				    new_spi,
-				    sr->this.protocol,
+				    sr->this.client.ipproto,
 				    esatype,
 				    encap,
 				    deltatime(0),
@@ -1702,7 +1702,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			  &route->dst.host_addr, &route->dst.client,
 			  cur_spi,
 			  new_spi,
-			  sr->this.protocol,
+			  sr->this.client.ipproto,
 			  esatype,
 			  encap,
 			  deltatime(0),
@@ -1752,7 +1752,8 @@ bool assign_holdpass(const struct connection *c,
 		 * no longer be bare so we must ditch it from the bare table
 		 */
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client,
-							 sr->this.protocol, "assign_holdpass");
+							 sr->this.client.ipproto,
+							 "assign_holdpass");
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
@@ -1954,7 +1955,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.dst.client = &route.dst.client,
 		.inbound = inbound,
 		.tunnel = (encap.mode == ENCAP_MODE_TUNNEL),
-		.transport_proto = c->spd.this.protocol,
+		.transport_proto = c->spd.this.client.ipproto,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.outif = -1,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
@@ -2367,7 +2368,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				&route.dst.host_addr,	/* dst_host */
 				&route.dst.client,	/* dst_client */
 				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
-				c->spd.this.protocol,	/* transport_proto */
+				/*transport_proto*/c->spd.this.client.ipproto,
 				encap.inner_proto->ipproto,	/* esatype */
 				&encap,			/* " */
 				deltatime(0),		/* lifetime */
@@ -2505,7 +2506,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
 			htonl(SPI_IGNORE), htonl(SPI_IGNORE),
-			c->spd.this.protocol,
+			c->spd.this.client.ipproto,
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 			ET_ESP : ET_UNSPEC,
 			esp_transport_proto_info,
@@ -2791,22 +2792,16 @@ bool route_and_eroute(struct connection *c,
 	selectors_buf sb;
 	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
 	    str_selectors(&sr->this.client, &sr->that.client, &sb),
-	    sr->this.protocol, sr->this.port, sr->that.port);
+	    sr->this.client.ipproto, sr->this.port, sr->that.port);
 #if 0
 	/* XXX: apparently not so */
-	pexpect(sr->this.client.addr.ipproto == sr->this.protocol);
-	pexpect(sr->that.client.addr.ipproto == sr->that.protocol);
-	pexpect(sr->this.client.addr.hport == sr->this.port);
-	pexpect(sr->that.client.addr.hport == sr->that.port);
+	pexpect(sr->this.client.hport == sr->this.port);
+	pexpect(sr->that.client.hport == sr->that.port);
 #endif
 
 	/* XXX: ... so make it so */
 	update_selector_hport(&sr->this.client, sr->this.port);
 	update_selector_hport(&sr->that.client, sr->that.port);
-#if 0
-	sr->this.client.addr.ipproto = sr->this.protocol;
-	sr->that.client.addr.ipproto = sr->that.protocol;
-#endif
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero;
@@ -2828,7 +2823,7 @@ bool route_and_eroute(struct connection *c,
 	/* but port set is sr->this.port and sr.that.port ! */
 	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->this.client,
 								   &sr->that.client,
-								   sr->this.protocol,
+								   sr->this.client.ipproto,
 								   "route and eroute") :
 				    NULL);
 
@@ -2999,7 +2994,7 @@ bool route_and_eroute(struct connection *c,
 			sr->eroute_owner = st->st_serialno;
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->this.client, &sr->that.client,
-					   sr->this.protocol, logger);
+					   sr->this.client.ipproto, logger);
 		}
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3043,7 +3038,7 @@ bool route_and_eroute(struct connection *c,
 						&bs->peer_client,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
-						sr->this.protocol,    /* transport_proto */
+						/*transport_proto*/sr->this.client.ipproto,
 						ET_INT,
 						esp_transport_proto_info,
 						deltatime(SHUNT_PATIENCE),
@@ -3505,7 +3500,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		update_selector_hport(&sr->that.client, sr->that.port);
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client,
 							 &sr->that.client,
-							 sr->this.protocol,
+							 sr->this.client.ipproto,
 							 "orphan holdpass");
 
 		if (old != NULL) {
@@ -3526,7 +3521,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		bs->why = "oe-failing";
 		bs->our_client = sr->this.client;
 		bs->peer_client = sr->that.client;
-		bs->transport_proto = sr->this.protocol;
+		bs->transport_proto = sr->this.client.ipproto;
 		bs->policy_prio = BOTTOM_PRIO;
 
 		bs->said = said_from_address_protocol_spi(selector_type(&sr->this.client)->address.any,

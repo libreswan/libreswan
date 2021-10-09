@@ -450,7 +450,14 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	    this->config->leftright,
 	    this->host_port);
 
-	/* Default client to subnet containing only self */
+	/*
+	 * Default client to subnet containing only self.
+	 *
+	 * XXX: This gets OPPO wrong when instantiating a template
+	 * that has proto/port: it scribbles on the proto/port stored
+	 * in the .client field.  oppo_instantiate() fixes this up
+	 * after instantiate() returns.
+	 */
 	if (!this->has_client) {
 		/*
 		 * Default client to a subnet containing only self.
@@ -596,9 +603,9 @@ static void jam_end_protoport(struct jambuf *buf, const struct end *this)
 {
 	/* payload portocol and port */
 	if (this->has_port_wildcard) {
-		jam(buf, ":%u/%%any", this->protocol);
-	} else if (this->port || this->protocol) {
-		jam(buf, ":%u/%u", this->protocol, this->port);
+		jam(buf, ":%u/%%any", this->client.ipproto);
+	} else if (this->port || this->client.ipproto) {
+		jam(buf, ":%u/%u", this->client.ipproto, this->port);
 	}
 }
 
@@ -1020,10 +1027,15 @@ static int extract_end(struct connection *c,
 	config_end->client.protoport = src->protoport;
 
 	/*
-	 * .has_client means that .client contains a hardwired value,
-	 * if it doesn't then it is filled in later (for instance by
-	 * instantiate() calling default_end() after host_addr is
-	 * known).
+	 * .has_client means that src.client (a subnet) contains a
+	 * value and dst.client (a selector) should be filled in using
+	 * that value+protoport.
+	 *
+	 * XXX: should just use src.client.is_set, but whack's a mess.
+	 *
+	 * If there isn't a valid client then dst.client is filled in
+	 * later (for instance by instantiate() calling default_end()
+	 * which merges the (now known) host_addr and protoport).
 	 */
 	dst->has_client = src->has_client;
 	if (src->has_client) {
@@ -1033,9 +1045,8 @@ static int extract_end(struct connection *c,
 		}
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
-	}
+	} /* see above; dst.client set in default_end() say */
 
-	dst->protocol = src->protoport.ipproto;
 	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
@@ -2238,7 +2249,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
  */
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
-				      uint8_t proto , uint16_t sport , uint16_t dport)
+				      uint8_t proto, uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(group));
@@ -2286,8 +2297,8 @@ struct connection *add_group_instance(struct connection *group,
 	t->spd.that.client = *target;
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
-		t->spd.this.protocol = proto;
-		t->spd.that.protocol = proto;
+		update_selector_ipproto(&t->spd.this.client, proto);
+		update_selector_ipproto(&t->spd.that.client, proto);
 		t->spd.this.port = sport;
 		t->spd.that.port = dport;
 	}
@@ -2702,7 +2713,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
 				 2 * (sr->this.port == local_port) +
 				 2 * (sr->that.port == remote_port) +
-				 1 * (sr->this.protocol == ipproto));
+				 1 * (sr->this.client.ipproto == ipproto));
 
 			if (DBGP(DBG_BASE)) {
 				connection_buf cib_c;
@@ -2777,11 +2788,20 @@ struct connection *oppo_instantiate(struct connection *c,
 	    c->name, enum_name(&routing_story, c->spd.routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
+	const struct ip_protocol *local_protocol = selector_protocol(c->spd.this.client);
+	ip_port local_port = selector_port(c->spd.this.client);
+	dbg("oppo local(c) protocol %s port %d",
+	    local_protocol->name,
+	    local_port.hport);
+
 	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
 
 	passert(d->spd.spd_next == NULL);
 
-	/* fill in our client side */
+	/*
+	 * Fill in (or fix up) our client side.
+	 */
+
 	if (d->spd.this.has_client) {
 		/*
 		 * There was a client in the abstract connection so we
@@ -2794,7 +2814,10 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * the required client is within that subnet
 			 * narrow it(?), ...
 			*/
-			d->spd.this.client = selector_from_address(*local_address);
+			d->spd.this.client =
+				selector_from_address_protocol_port(*local_address,
+								    local_protocol,
+								    local_port);
 		} else if (address_eq_address(*local_address, d->spd.this.host_addr)) {
 			/*
 			 * or that it is our private ip in case we are
@@ -2809,17 +2832,42 @@ struct connection *oppo_instantiate(struct connection *c,
 		/*
 		 * There was no client in the abstract connection so
 		 * we demand that the required client be the host.
+		 *
+		 * Because instantiate(), when !has_client, updates
+		 * client using config->protoport, any proto/port
+		 * added to the template is lost.
+		 *
+		 * XXX: it's all a bit weird.  Should the oppo group
+		 * just set the selector and work with that?
 		 */
+		dbg("oppo local has no client; patching damage by instantiate()");
 		passert(address_eq_address(*local_address, d->spd.this.host_addr));
+		d->spd.this.client =
+			selector_from_address_protocol_port(*local_address,
+							    local_protocol,
+							    local_port);
 	}
+
+	dbg("oppo local(d) protocol %s port %d",
+	    selector_protocol(d->spd.this.client)->name,
+	    selector_port(d->spd.this.client).hport);
 
 	/*
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
+
+	const struct ip_protocol *remote_protocol = selector_protocol(c->spd.that.client);
+	ip_port remote_port = selector_port(c->spd.that.client);
+	dbg("oppo remote protocol %s port %d",
+	    remote_protocol->name,
+	    remote_port.hport);
+
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(address_in_selector_range(*remote_address, d->spd.that.client));
-	d->spd.that.client = selector_from_address(*remote_address);
+	d->spd.that.client = selector_from_address_protocol_port(*remote_address,
+								 remote_protocol,
+								 remote_port);
 
 	if (address_eq_address(*remote_address, d->spd.that.host_addr))
 		d->spd.that.has_client = false;
@@ -3068,7 +3116,7 @@ struct connection *route_owner(struct connection *c,
 				continue;
 
 			pexpect(selector_range_eq_selector_range(c_spd->that.client, d_spd->that.client));
-			if (c_spd->that.protocol != d_spd->that.protocol)
+			if (c_spd->that.client.ipproto != d_spd->that.client.ipproto)
 				continue;
 			if (c_spd->that.port != d_spd->that.port)
 				continue;
@@ -3099,7 +3147,7 @@ struct connection *route_owner(struct connection *c,
 			}
 
 			if (selector_range_eq_selector_range(c_spd->this.client, d_spd->this.client) &&
-			    c_spd->this.protocol == d_spd->this.protocol &&
+			    c_spd->this.client.ipproto == d_spd->this.client.ipproto &&
 			    c_spd->this.port == d_spd->this.port &&
 			    d_spd->routing > best_erouting) {
 				best_ero = d;
@@ -3701,8 +3749,8 @@ static struct connection *fc_try(const struct connection *c,
 		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 		unsigned local_port = hport(selector_port(*local_client));
 		unsigned remote_port = hport(selector_port(*remote_client));
-		if (!(d->spd.this.protocol == local_protocol &&
-		      d->spd.that.protocol == remote_protocol &&
+		if (!(d->spd.this.client.ipproto == local_protocol &&
+		      d->spd.that.client.ipproto == remote_protocol &&
 		      (d->spd.this.port == 0 || d->spd.this.port == local_port) &&
 		      (d->spd.that.has_port_wildcard || d->spd.that.port == remote_port)))
 		{
@@ -3730,15 +3778,16 @@ static struct connection *fc_try(const struct connection *c,
 				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
 					c->name, str_selector(local_client, &s1),
-					c->spd.this.protocol, c->spd.this.port,
+					c->spd.this.client.ipproto, c->spd.this.port,
 					str_selector(remote_client, &d1),
-					c->spd.that.protocol, c->spd.that.port,
+					c->spd.that.client.ipproto,
+					c->spd.that.port,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
 					str_selector(&sr->this.client, &s3),
-					sr->this.protocol, sr->this.port,
+					sr->this.client.ipproto, sr->this.port,
 					str_selector(&sr->that.client, &d3),
-					sr->that.protocol, sr->that.port,
+					sr->that.client.ipproto, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
@@ -3846,9 +3895,9 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 		unsigned local_port = hport(selector_port(*local_client));
 		unsigned remote_port = hport(selector_port(*remote_client));
-		if (d->spd.this.protocol != local_protocol ||
+		if (d->spd.this.client.ipproto != local_protocol ||
 			(d->spd.this.port && d->spd.this.port != local_port) ||
-			d->spd.that.protocol != remote_protocol ||
+			d->spd.that.client.ipproto != remote_protocol ||
 			(d->spd.that.port != remote_port &&
 				!d->spd.that.has_port_wildcard))
 			continue;
@@ -3961,9 +4010,9 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			unsigned remote_port = selector_port(*remote_client).hport;
 			if (selector_range_eq_selector_range(sr->this.client, *local_client) &&
 			    selector_range_eq_selector_range(sr->that.client, *remote_client) &&
-			    sr->this.protocol == local_protocol &&
+			    sr->this.client.ipproto == local_protocol &&
 			    (!sr->this.port || sr->this.port == local_port) &&
-			    (sr->that.protocol == remote_protocol) &&
+			    (sr->that.client.ipproto == remote_protocol) &&
 			    (!sr->that.port || sr->that.port == remote_port)) {
 				if (routed(sr->routing))
 					return c;
@@ -4638,7 +4687,7 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 		(c->spd.this.port == 0 ? 0 : 1) +
 		(c->spd.that.port == 0 ? 0 : 1);
 
-	unsigned protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
+	unsigned protow = c->spd.this.client.ipproto == 0 ? 0 : 1;	/* (1 bit) */
 
 
 	/*

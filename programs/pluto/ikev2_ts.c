@@ -116,7 +116,6 @@ static void traffic_selector_to_end(const struct traffic_selector *ts, struct en
 	end->client = selector_from_subnet_protocol_port(subnet, protocol, port);
 	/* redundant */
 	end->port = ts->startport;
-	end->protocol = ts->ipprotoid;
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
 }
 
@@ -134,7 +133,7 @@ struct traffic_selector traffic_selector_from_end(const struct end *e, const cha
 		.ts_type = selector_type(&e->client)->ikev2_ts_addr_range_type,
 		/* subnet => range */
 		.net = selector_range(e->client),
-		.ipprotoid = e->protocol,
+		.ipprotoid = e->client.ipproto,
 		/*
 		 * Use the 'instance/narrowed' label from the ACQUIRE
 		 * and stored in the connection instance's sends, if
@@ -556,19 +555,19 @@ static int narrow_protocol(const struct end *end,
 
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (end->protocol == ts->ipprotoid) {
-			protocol = end->protocol;
+		if (end->client.ipproto == ts->ipprotoid) {
+			protocol = end->client.ipproto;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
 		if (ts->ipprotoid == 0 /* wild-card */ ||
-		    ts->ipprotoid == end->protocol) {
-			protocol = end->protocol;
+		    ts->ipprotoid == end->client.ipproto) {
+			protocol = end->client.ipproto;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (end->protocol == 0 /* wild-card */ ||
-		    end->protocol == ts->ipprotoid) {
+		if (end->client.ipproto == 0 /* wild-card */ ||
+		    end->client.ipproto == ts->ipprotoid) {
 			protocol = ts->ipprotoid;
 		}
 		break;
@@ -576,7 +575,7 @@ static int narrow_protocol(const struct end *end,
 		bad_case(fit);
 	}
 	dbg(MATCH_PREFIX "narrow protocol end=%s%d %s %s[%u]=%s%d: %d",
-	    end->protocol == 0 ? "*" : "", end->protocol,
+	    end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 	    fit_string(fit),
 	    tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
 	    protocol);
@@ -599,8 +598,8 @@ static int score_narrow_protocol(const struct end *end,
 	}
 	LSWDBGP(DBG_BASE, buf) {
 		const struct traffic_selector *ts = &tss->ts[index];
-		jam(buf, MATCH_PREFIX "match end->protocol=%s%d %s %s[%u].ipprotoid=%s%d: ",
-			end->protocol == 0 ? "*" : "", end->protocol,
+		jam(buf, MATCH_PREFIX "match end->client.ipproto=%s%d %s %s[%u].ipprotoid=%s%d: ",
+			end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 			fit_string(fit),
 			tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid);
 		if (f > 0) {
@@ -961,8 +960,10 @@ static struct best_score score_ends_iprange(enum fit fit,
 		connection_buf cib;
 		DBG_log("evaluating our conn="PRI_CONNECTION" I=%s:%d/%d R=%s:%d/%d%s to their:",
 			pri_connection(d, &cib),
-			str_selector(&ends->i->client, &ei3), ends->i->protocol, ends->i->port,
-			str_selector(&ends->r->client, &er3), ends->r->protocol, ends->r->port,
+			str_selector(&ends->i->client, &ei3),
+			ends->i->client.ipproto, ends->i->port,
+			str_selector(&ends->r->client, &er3),
+			ends->r->client.ipproto, ends->r->port,
 			is_virtual_connection(d) ? " (virt)" : "");
 	}
 
@@ -1110,8 +1111,6 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	/* "this" == responder; see function name */
 	c->spd.this.port = n.tsr_port;
 	c->spd.that.port = n.tsi_port;
-	c->spd.this.protocol = n.tsr_protocol;
-	c->spd.that.protocol = n.tsi_protocol;
 	/* hack */
 	dbg("XXX: updating best connection's ports/protocols");
 	update_selector_hport(&c->spd.this.client, n.tsr_port);

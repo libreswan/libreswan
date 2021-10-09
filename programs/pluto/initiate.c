@@ -602,19 +602,19 @@ static ip_selector shunt_from_traffic_end(const char *what,
 	ip_address shunt_address = endpoint_address(traffic_endpoint);
 	const ip_protocol *shunt_protocol;
 	ip_port shunt_port;
-	if (end->protocol == 0) {
+	if (end->client.ipproto == 0) {
 		dbg("widening %s shunt to all protocols + all ports", what);
 		pexpect(end->port == 0);
 		shunt_protocol = &ip_protocol_unset;
 		shunt_port = unset_port;
 	} else if (end->port == 0) {
 		dbg("widening %s shunt to all ports", what);
-		shunt_protocol = protocol_by_ipproto(end->protocol);
+		shunt_protocol = selector_protocol(end->client);
 		shunt_port = unset_port;
 		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
 	} else {
 		dbg("leaving %s shunt alone", what);
-		shunt_protocol = protocol_by_ipproto(end->protocol);
+		shunt_protocol = selector_protocol(end->client);
 		shunt_port = endpoint_port(traffic_endpoint);
 		pexpect(end->port == hport(shunt_port));
 		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
@@ -889,7 +889,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 *
 	 * XXX: should local/remote shunts be computed independently?
 	 */
-	pexpect(c->spd.this.protocol == c->spd.that.protocol);
+	pexpect(selector_protocol(c->spd.this.client) ==
+		selector_protocol(c->spd.that.client));
 	ip_selector local_shunt = shunt_from_traffic_end("local", b->local.client, &c->spd.this);
 	ip_selector remote_shunt = shunt_from_traffic_end("remote", b->remote.client, &c->spd.that);
 
