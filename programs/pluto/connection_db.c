@@ -196,11 +196,6 @@ static void add_connection_to_db(struct connection *c)
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
 		add_hash_table_entry(connection_hash_tables[h], c);
 	}
-
-	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		add_spd_route_to_db(sr);
-	}
-
 }
 
 void remove_connection_from_db(struct connection *c)
@@ -323,6 +318,10 @@ static struct connection *finish_connection(struct connection *c, const char *na
 	connection_serialno++;
 	c->serialno = connection_serialno;
 	add_connection_to_db(c);
+	/* needed by spd_route_jam() */
+	c->spd.connection = c;
+	add_spd_route_to_db(&c->spd);
+	/* announce it */
 	dbg_alloc(name, c, where);
 	return c;
 }
