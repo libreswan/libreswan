@@ -28,18 +28,18 @@ src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp 
+	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp dport 22 
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	sel src 192.1.2.23/32 dst 192.1.3.209/32 proto tcp 
+	sel src 192.1.2.23/32 dst 192.1.3.209/32 proto tcp sport 22 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.3.209/32 proto tcp sport 22
 	dir out priority 3333 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp
+src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp dport 22
 	dir in priority 3333 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
