@@ -470,7 +470,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		selector_buf sb;
 		dbg("  updated %s.client to %s",
 		    this->config->leftright,
-		    str_selector(&this->client, &sb));
+		    str_selector_subnet_port(&this->client, &sb));
 	}
 
 	if (this->sendcert == 0) {
@@ -3796,18 +3796,19 @@ static struct connection *fc_try(const struct connection *c,
 				selector_buf s1, d1;
 				selector_buf s3, d3;
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name, str_selector(local_client, &s1),
+					c->name,
+					str_selector_subnet_port(local_client, &s1),
 					c->spd.this.client.ipproto,
 					c->spd.this.client.hport,
-					str_selector(remote_client, &d1),
+					str_selector_subnet_port(remote_client, &d1),
 					c->spd.that.client.ipproto,
 					c->spd.that.client.hport,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
-					str_selector(&sr->this.client, &s3),
+					str_selector_subnet_port(&sr->this.client, &s3),
 					sr->this.client.ipproto,
 					sr->this.client.hport,
-					str_selector(&sr->that.client, &d3),
+					str_selector_subnet_port(&sr->that.client, &d3),
 					sr->that.client.ipproto,
 					sr->that.client.hport,
 					is_virtual_sr(sr) ? "(virt)" : "");
@@ -3817,8 +3818,8 @@ static struct connection *fc_try(const struct connection *c,
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in local_net (%s)",
-						str_selector(&sr->this.client, &s3),
-						str_selector(local_client, &s1));
+						str_selector_subnet_port(&sr->this.client, &s3),
+						str_selector_subnet_port(local_client, &s1));
 				}
 				continue;
 			}
@@ -3830,8 +3831,8 @@ static struct connection *fc_try(const struct connection *c,
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same remote_net (%s)",
-							str_selector(&sr->that.client, &d3),
-							str_selector(remote_client, &d1));
+							str_selector_subnet_port(&sr->that.client, &d3),
+							str_selector_subnet_port(remote_client, &d1));
 					}
 					continue;
 				}
@@ -3943,10 +3944,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				selector_buf s3;
 				selector_buf d3;
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
-					c->name, str_selector(local_client, &s1),
-					str_selector(remote_client, &d1),
-					d->name, str_selector(&sr->this.client, &s3),
-					str_selector(&sr->that.client, &d3));
+					c->name, str_selector_subnet_port(local_client, &s1),
+					str_selector_subnet_port(remote_client, &d1),
+					d->name, str_selector_subnet_port(&sr->this.client, &s3),
+					str_selector_subnet_port(&sr->that.client, &d3));
 			}
 
 			if (!selector_range_in_selector_range(*local_client, sr->this.client) ||
@@ -4023,8 +4024,8 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
-					str_selector(&sr->this.client, &s2),
-					str_selector(&sr->that.client, &d2));
+					str_selector_subnet_port(&sr->this.client, &s2),
+					str_selector_subnet_port(&sr->that.client, &d2));
 			}
 
 			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
@@ -4072,8 +4073,8 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  checking hostpair %s -> %s is %s",
-					str_selector(&sra->this.client, &s2),
-					str_selector(&sra->that.client, &d2),
+					str_selector_subnet_port(&sra->this.client, &s2),
+					str_selector_subnet_port(&sra->that.client, &d2),
 					(hp ? "found" : "not found"));
 			}
 		}

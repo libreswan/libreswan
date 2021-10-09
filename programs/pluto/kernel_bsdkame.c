@@ -421,8 +421,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		llog(RC_LOG, logger,
 		     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=eroute", ret,
 		     ipsec_strerror(),
-		     str_selector(src_client, &s),
-		     str_selector(dst_client, &d),
+		     str_selector_subnet_port(src_client, &s),
+		     str_selector_subnet_port(dst_client, &d),
 		     pfkey_seq);
 		return false;
 	}
@@ -618,8 +618,8 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			llog(RC_LOG, logger,
 			     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s",
 			     ret, ipsec_strerror(),
-			     str_selector(&mine, &s),
-			     str_selector(&peers, &d),
+			     str_selector_subnet_port(&mine, &s),
+			     str_selector_subnet_port(&peers, &d),
 			     pfkey_seq, opname);
 			return false;
 		}
@@ -674,8 +674,8 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 			llog(RC_LOG, logger,
 			     "ret = %d from send_spdadd: %s addr=%s/%s seq=%u opname=%s",
 			     ret, ipsec_strerror(),
-			     str_selector(&mine, &s),
-			     str_selector(&peers, &d),
+			     str_selector_subnet_port(&mine, &s),
+			     str_selector_subnet_port(&peers, &d),
 			     pfkey_seq, opname);
 			return false;
 		}

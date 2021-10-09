@@ -1059,7 +1059,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 							str_address(&tmp_spd->that.host_srcip, &b));
 						selector_buf sb;
 						DBG_log("that client: %s",
-							str_selector(&tmp_spd->that.client, &sb));
+							str_selector_subnet_port(&tmp_spd->that.client, &sb));
 						DBG_log("that has_client: %d",
 							tmp_spd->that.has_client);
 						DBG_log("that has_port_wildcard: %d",

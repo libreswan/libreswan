@@ -1010,7 +1010,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector(buf, &remote_client);
+					jam_selector_subnet_port(buf, &remote_client);
 					jam(buf, " as IDci");
 				}
 			}

@@ -310,8 +310,8 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			selector_buf atarget;
 			DBG_log("  %s->%s %d sport %d dport %d %s",
-				str_selector(&t->group->connection->spd.this.client, &asource),
-				str_selector(&t->subnet, &atarget),
+				str_selector_subnet_port(&t->group->connection->spd.this.client, &asource),
+				str_selector_subnet_port(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
 		}
@@ -321,8 +321,8 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			selector_buf atarget;
 			DBG_log("  %s->%s %d sport %d dport %d %s",
-				str_selector(&t->group->connection->spd.this.client, &asource),
-				str_selector(&t->subnet, &atarget),
+				str_selector_subnet_port(&t->group->connection->spd.this.client, &asource),
+				str_selector_subnet_port(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
 		}

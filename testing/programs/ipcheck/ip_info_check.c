@@ -429,6 +429,8 @@ static void check_ip_info_selector(void)
 
 		const ip_selector *selector = t->selector;
 
+#define str_selector str_selector_subnet_port
+#define jam_selector jam_selector_subnet_port
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
 

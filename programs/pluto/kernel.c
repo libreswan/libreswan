@@ -157,9 +157,9 @@ static int num_ipsec_eroute = 0;
 static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
 	jam(buf, "bare shunt %p ", bs);
-	jam_selector(buf, &bs->our_client);
+	jam_selector_subnet_port(buf, &bs->our_client);
 	jam(buf, " --%d--> ", bs->transport_proto);
-	jam_selector(buf, &bs->peer_client);
+	jam_selector_subnet_port(buf, &bs->peer_client);
 	jam(buf, " => ");
 	jam_said(buf, &bs->said);
 	jam(buf, " ");
@@ -587,7 +587,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			selector_buf peerclient_str;
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			    str_address(&sr->that.host_addr, &bpeer),
-			    str_selector(&sr->that.client, &peerclient_str));
+			    str_selector_subnet_port(&sr->that.client, &peerclient_str));
 			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
@@ -933,8 +933,8 @@ static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 	selector_buf os, ns;
 	dbg("%s() changing remote selector %s to %s",
 	    __func__,
-	    str_selector(&spd->that.client, &os),
-	    str_selector(&remote_client, &ns));
+	    str_selector_subnet_port(&spd->that.client, &os),
+	    str_selector_subnet_port(&remote_client, &ns));
 
 	struct kernel_route route = {0};
 	struct route_end *local;
@@ -1216,9 +1216,9 @@ bool shunt_policy(enum kernel_policy_op op,
 		    enum_name(&routing_story, rt_kind));
 
 		jam(buf, " ");
-		jam_selector(buf, &sr->this.client);
+		jam_selector_subnet_port(buf, &sr->this.client);
 		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
-		jam_selector(buf, &sr->that.client);
+		jam_selector_subnet_port(buf, &sr->that.client);
 
 		jam(buf, " sec_label=");
 		if (sr->this.sec_label.len > 0) {
@@ -1408,9 +1408,9 @@ void show_shunt_status(struct show *s)
 		policy_prio_buf prio;
 
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
-			     str_selector(&(bs)->our_client, &ourb),
+			     str_selector_subnet_port(&(bs)->our_client, &ourb),
 			     bs->transport_proto,
-			     str_selector(&(bs)->peer_client, &peerb),
+			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
 			     str_said(&(bs)->said, &sat),
 			     str_policy_prio(bs->policy_prio, &prio),
 			     bs->why);
@@ -1968,13 +1968,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
-	    str_selector(said_boilerplate.src.client, &scb),
+	    str_selector_subnet_port(said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_address(said_boilerplate.src.address, &sab),
 	    encap.inner_proto->name,
 	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_selector(said_boilerplate.dst.client, &dcb),
+	    str_selector_subnet_port(said_boilerplate.dst.client, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :

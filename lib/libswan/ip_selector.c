@@ -69,6 +69,7 @@ bool selector_contains_one_address(const ip_selector selector)
 		selector.hport == 0);
 }
 
+#if 0
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector_is_unset(selector)) {
@@ -82,36 +83,31 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 
 	size_t s = 0;
 	ip_address sa = selector_prefix(*selector);
-	s += jam_address(buf, &sa); /* sensitive? */
+	s += jam_address(buf, &sa);
 	s += jam(buf, "/%u", selector->maskbits);
 	if (selector->ipproto != 0 || selector->hport != 0) {
-		s += jam(buf, ":%d", selector->hport);
+		s += jam(buf, ":");
+		if (selector->ipproto != 0) {
+			s += jam(buf, "%s/", selector_protocol(*selector)->name);
+		}
+		if (selector->hport == 0) {
+			s += jam(buf, "%any");
+		} else {
+			s += jam(buf, "%d", selector->hport);
+		}
 	}
 	return s;
 }
+#endif
 
+#if 0
 const char *str_selector(const ip_selector *selector, selector_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_selector(&buf, selector);
 	return out->buf;
 }
-
-size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector)
-{
-	if (!log_ip) {
-		return jam_string(buf, "<selector>");
-	}
-
-	return jam_selector(buf, selector);
-}
-
-const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out)
-{
-	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_selector_sensitive(&buf, selector);
-	return out->buf;
-}
+#endif
 
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
@@ -132,6 +128,34 @@ const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
 	return out->buf;
 }
 
+size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
+{
+	if (selector_is_unset(selector)) {
+		return jam_string(buf, "<unset-selector>");
+	}
+
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-selector>");
+	}
+
+	size_t s = 0;
+	ip_address sa = selector_prefix(*selector);
+	s += jam_address(buf, &sa);
+	s += jam(buf, "/%u", selector->maskbits);
+	if (selector->ipproto != 0 || selector->hport != 0) {
+		s += jam(buf, ":%d", selector->hport);
+	}
+	return s;
+}
+
+const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_selector_subnet_port(&buf, selector);
+	return out->buf;
+}
+
 size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst)
 {
 	if (selector_is_unset(src) || selector_is_unset(dst)) {
@@ -141,11 +165,11 @@ size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_select
 	const struct ip_protocol *srcp = selector_protocol(*src);
 	const struct ip_protocol *dstp = selector_protocol(*dst);
 	size_t s = 0;
-	s += jam_selector(buf, src);
+	s += jam_selector_subnet_port(buf, src);
 	s += jam_char(buf, ' ');
 	s += jam_protocols(buf, srcp, '-', dstp);
 	s += jam_char(buf, ' ');
-	s += jam_selector(buf, dst);
+	s += jam_selector_subnet_port(buf, dst);
 	return s;
 }
 

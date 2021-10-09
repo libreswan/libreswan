@@ -2205,8 +2205,8 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 		selector_buf this_buf, that_buf;
 		DBG_log("netlink_shunt_policy for proto %d, and source %s dest %s",
 			sr->this.client.ipproto,
-			str_selector(&sr->this.client, &this_buf),
-			str_selector(&sr->that.client, &that_buf));
+			str_selector_subnet_port(&sr->this.client, &this_buf),
+			str_selector_subnet_port(&sr->that.client, &that_buf));
 	}
 
 	if (spi == 0) {

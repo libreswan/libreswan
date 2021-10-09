@@ -67,7 +67,7 @@ typedef struct {
 
 #define PRI_SELECTOR "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d"
 #define pri_selector(S,B) \
-	str_selector(S, B),			\
+	str_selector_subnet_port(S, B),			\
 		bool_str((S)->is_set),		\
 		(S)->version,			\
 		pri_bytes((S)->bytes),		\
@@ -160,11 +160,17 @@ typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
 } selector_buf;
 
+#if 0
 const char *str_selector(const ip_selector *selector, selector_buf *out);
-size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
+#endif
+const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
+const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out);
 
-const char *str_selector_sensitive(const ip_selector *selector, selector_buf *out);
-size_t jam_selector_sensitive(struct jambuf *buf, const ip_selector *selector);
+#if 0
+size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
+#endif
+size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
+size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector);
 
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
@@ -192,8 +198,5 @@ bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector r
 bool selector_range_in_selector_range(const ip_selector lhs, const ip_selector rhs);
 bool selector_range_eq_address(const ip_selector selector, const ip_address address);
 bool address_in_selector_range(const ip_address l, const ip_selector r);
-
-const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
-size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
 
 #endif

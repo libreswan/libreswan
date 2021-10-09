@@ -552,7 +552,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s' and old address %s",
 			 reusable ? "reusable" : "one-time",
 			 pri_connection(c, &cb), thatstr,
-			 str_selector(&c->spd.that.client, &b));
+			 str_selector_subnet_port(&c->spd.that.client, &b));
 	}
 
 	struct lease *new_lease = NULL;
@@ -660,7 +660,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 			  pri_connection(c, &cb),
 			  pri_co(new_lease->assigned_to),
 			  thatstr,
-			  str_selector(&c->spd.that.client, &a));
+			  str_selector_subnet_port(&c->spd.that.client, &a));
 	}
 
 	return NULL;

@@ -59,13 +59,13 @@ bool raw_policy(enum kernel_policy_op op,
 		va_end(ap);
 
 		jam(buf, " ");
-		jam_selector(buf, src_client);
+		jam_selector_subnet_port(buf, src_client);
 		jam(buf, "-%s-", src_client_proto->name);
 		jam_address(buf, src_host);
 		jam(buf, "==");
 		jam_address(buf, dst_host);
 		jam(buf, "-%s-", dst_client_proto->name);
-		jam_selector(buf, dst_client);
+		jam_selector_subnet_port(buf, dst_client);
 
 		/*
 		 * Dump the {old,new}_spi.
@@ -218,7 +218,7 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		jam(buf, " %s", sa->tunnel ? "tunnel" : "transport");
 
 		jam(buf, " ");
-		jam_selector(buf, sa->src.client);
+		jam_selector_subnet_port(buf, sa->src.client);
 		jam(buf, "-%s->", src_proto->name);
 		jam_address(buf, sa->src.address);
 		jam(buf, "=%s", esa_proto->name);
@@ -229,7 +229,7 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		jam(buf, "=>");
 		jam_address(buf, sa->dst.address);
 		jam(buf, "-%s->", dst_proto->name);
-		jam_selector(buf, sa->dst.client);
+		jam_selector_subnet_port(buf, sa->dst.client);
 
 		if (sa->esn) jam(buf, " +esn");
 		if (sa->decap_dscp) jam(buf, " +decap_dscp");

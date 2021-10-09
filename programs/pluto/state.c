@@ -1966,8 +1966,8 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 		selector_buf ourst;
 		selector_buf hist;
 		DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			str_selector(ours, &ourst),
-			str_selector(peers, &hist));
+			str_selector_subnet_port(ours, &ourst),
+			str_selector_subnet_port(peers, &hist));
 	}
 }
 

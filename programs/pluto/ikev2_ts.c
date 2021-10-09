@@ -761,7 +761,7 @@ static int score_address_range(const struct end *end,
 
 	LSWDBGP(DBG_BASE, buf) {
 	    jam(buf, MATCH_PREFIX "match address end->client=");
-	    jam_selector(buf, &end->client);
+	    jam_selector_subnet_port(buf, &end->client);
 	    jam(buf, " %s %s[%u]net=", fit_string(fit), tss->name, index);
 	    jam_range(buf, &ts->net);
 	    jam(buf, ": ");
@@ -959,10 +959,10 @@ static struct best_score score_ends_iprange(enum fit fit,
 		connection_buf cib;
 		DBG_log("evaluating our conn="PRI_CONNECTION" I=%s:%d/%d R=%s:%d/%d%s to their:",
 			pri_connection(d, &cib),
-			str_selector(&ends->i->client, &ei3),
+			str_selector_subnet_port(&ends->i->client, &ei3),
 			ends->i->client.ipproto,
 			ends->i->client.hport,
-			str_selector(&ends->r->client, &er3),
+			str_selector_subnet_port(&ends->r->client, &er3),
 			ends->r->client.ipproto,
 			ends->r->client.hport,
 			is_virtual_connection(d) ? " (virt)" : "");
