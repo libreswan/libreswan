@@ -1045,7 +1045,18 @@ static int extract_end(struct connection *c,
 		}
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
-	} /* see above; dst.client set in default_end() say */
+	} else if (protoport_is_set(&src->protoport)) {
+		/*
+		 * XXX: if there's no client _yet_ there's a
+		 * protoport, then there _is_ a client.
+		 * But the code doesn't yet believe this.
+		 *
+		 * Should really be figuring out the address family
+		 * and combining that with %any.  As things stand this
+		 * is a bogus client.
+		 */
+		dst->client.ipproto = src->protoport.ipproto;
+	}
 
 	dst->port = src->protoport.hport;
 	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
@@ -3733,6 +3744,10 @@ static struct connection *fc_try(const struct connection *c,
 		if (d->policy & POLICY_GROUP)
 			continue;
 
+		selectors_buf sb;
+		dbg("  fc_try: looking at %s",
+		    str_selectors(&d->spd.this.client, &d->spd.that.client, &sb));
+
 		int wildcards, pathlen;
 
 		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
@@ -3745,8 +3760,8 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/* compare protocol and ports */
-		unsigned local_protocol = selector_protocol(*local_client)->ipproto;
-		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
+		unsigned local_protocol = local_client->ipproto;
+		unsigned remote_protocol = remote_client->ipproto;
 		unsigned local_port = hport(selector_port(*local_client));
 		unsigned remote_port = hport(selector_port(*remote_client));
 		if (!(d->spd.this.client.ipproto == local_protocol &&
