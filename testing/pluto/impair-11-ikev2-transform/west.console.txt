@@ -12,7 +12,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #1: initiating IKEv2 connection
 1v2 "conf" #1: sent IKE_SA_INIT request
@@ -29,11 +29,11 @@ west #
 west #
  # add IKE transform type 6 id 0 unknown
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair ikev2-add-ike-transform:0x60000
 west #
- ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #3: initiating IKEv2 connection
 002 "conf" #3: IMPAIR: adding transform type 6?? (0x6) id 0?? (0x0)
@@ -51,11 +51,11 @@ west #
 west #
  # add IKE transform type 3 (PRF) id 0xff unknown
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair ikev2-add-ike-transform:0x3ffff
 west #
- ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #5: initiating IKEv2 connection
 002 "conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535?? (0xffff)
@@ -73,11 +73,11 @@ west #
 west #
  # add CHILD transform type 6 id 0 unknown
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair ikev2-add-child-transform:0x60000
 west #
- ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #7: initiating IKEv2 connection
 1v2 "conf" #7: sent IKE_SA_INIT request
@@ -95,11 +95,11 @@ west #
 west #
  # add CHILD transform type 3 (PRF) id 0xffff unknown
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair ikev2-add-child-transform:0x3ffff
 west #
- ../../guestbin/libreswan-up-down.sh conf -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 002 "conf": added IKEv2 connection
 1v2 "conf" #9: initiating IKEv2 connection
 1v2 "conf" #9: sent IKE_SA_INIT request
