@@ -602,7 +602,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 static void jam_end_protoport(struct jambuf *buf, const struct end *this)
 {
 	/* payload portocol and port */
-	if (this->has_port_wildcard) {
+	if (this->config->client.protoport.has_port_wildcard) {
 		jam(buf, ":%u/%%any", this->client.ipproto);
 	} else if (this->client.hport || this->client.ipproto) {
 		jam(buf, ":%u/%u", this->client.ipproto, this->client.hport);
@@ -1059,7 +1059,6 @@ static int extract_end(struct connection *c,
 		dst->client.hport = src->protoport.hport;
 	}
 
-	dst->has_port_wildcard = src->protoport.has_port_wildcard;
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
 	dst->sendcert =  src->sendcert;
@@ -2082,7 +2081,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	if (address_is_unset(&c->spd.this.host_addr) ||
 	    address_is_any(c->spd.this.host_addr) ||
-	    c->spd.this.has_port_wildcard ||
+	    c->spd.this.config->client.protoport.has_port_wildcard ||
 	    c->spd.this.has_id_wildcards) {
 		struct end t = c->spd.this;
 
@@ -2135,7 +2134,7 @@ static bool extract_connection(const struct whack_message *wm,
 						   address_is_any(c->spd.that.host_addr))) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
-	} else if (c->spd.that.has_port_wildcard) {
+	} else if (c->spd.that.config->client.protoport.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
 	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
@@ -3770,7 +3769,7 @@ static struct connection *fc_try(const struct connection *c,
 		      d->spd.that.client.ipproto == remote_protocol &&
 		      (d->spd.this.client.hport == 0 ||
 		       d->spd.this.client.hport == local_port) &&
-		      (d->spd.that.has_port_wildcard ||
+		      (d->spd.that.config->client.protoport.has_port_wildcard ||
 		       d->spd.that.client.hport == remote_port))) {
 			continue;
 		}
@@ -3922,7 +3921,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 d->spd.this.client.hport != local_port) ||
 			d->spd.that.client.ipproto != remote_protocol ||
 			(d->spd.that.client.hport != remote_port &&
-			 !d->spd.that.has_port_wildcard))
+			 !d->spd.that.config->client.protoport.has_port_wildcard))
 			continue;
 
 		/*

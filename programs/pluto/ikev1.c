@@ -1062,8 +1062,6 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 							str_selector_subnet_port(&tmp_spd->that.client, &sb));
 						DBG_log("that has_client: %d",
 							tmp_spd->that.has_client);
-						DBG_log("that has_port_wildcard: %d",
-							tmp_spd->that.has_port_wildcard);
 						DBG_log("that has_id_wildcards: %d",
 							tmp_spd->that.has_id_wildcards);
 					}

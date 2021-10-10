@@ -248,13 +248,6 @@ struct end {
 	bool has_client;
 	bool has_id_wildcards;
 
-	/*
-	 * Was the PORT, in the PROTOPORT included in the whack
-	 * message "wild"?  Can't use .port as that will have been
-	 * scribbled on by a negotiation :-(
-	 */
-	bool has_port_wildcard;
-
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	enum eap_options eap;		/* wether to require/do EAP auth (eg EAPTLS) */
 	cert_t cert;			/* end certificate */

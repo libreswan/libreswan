@@ -1128,14 +1128,13 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		/* fill in the client's true ip address/subnet */
 		dbg("client: %s  port wildcard: %s  virtual: %s",
 		    bool_str(c->spd.that.has_client),
-		    bool_str(c->spd.that.has_port_wildcard),
+		    bool_str(c->spd.that.config->client.protoport.has_port_wildcard),
 		    bool_str(is_virtual_connection(c)));
 
 		/* fill in the client's true port */
-		if (c->spd.that.has_port_wildcard) {
+		if (c->spd.that.config->client.protoport.has_port_wildcard) {
 			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
-			c->spd.that.has_port_wildcard = false;
 		}
 
 		if (is_virtual_connection(c)) {

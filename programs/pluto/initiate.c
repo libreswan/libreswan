@@ -1051,7 +1051,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (c->spd.that.has_port_wildcard ||
+	if (c->spd.that.config->client.protoport.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
 		connection_buf cib;
