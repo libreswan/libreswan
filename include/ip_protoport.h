@@ -28,7 +28,8 @@
 struct jambuf;
 
 typedef struct {
-	bool any_port;
+	bool is_set;
+	bool has_port_wildcard;	/* i.e., must narrow port */
 	unsigned hport;		/* 1..65535; 0->0-65535 */
 	unsigned ipproto;	/* 1..255; 0->unset */
 } ip_protoport;
@@ -36,9 +37,6 @@ typedef struct {
 extern const ip_protoport unset_protoport;
 
 err_t ttoprotoport(const char *src, ip_protoport *protoport);
-
-bool protoport_is_set(const ip_protoport *protoport);
-bool protoport_has_any_port(const ip_protoport *protoport);
 
 typedef struct {
 	char buf[32+1+32+1+1];

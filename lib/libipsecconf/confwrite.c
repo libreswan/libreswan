@@ -354,7 +354,7 @@ static void confwrite_side(FILE *out,
 	if (end->rsasigkey != NULL && end->rsasigkey[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsasigkey);
 
-	if (protoport_is_set(&end->protoport)) {
+	if (end->protoport.is_set) {
 		protoport_buf buf;
 		fprintf(out, "\t%sprotoport=%s\n", side,
 			str_protoport(&end->protoport, &buf));

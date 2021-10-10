@@ -24,17 +24,21 @@ void ip_protoport_check(void)
 		int line;
 		char *in;
 		unsigned ipproto;
+		bool has_port_wildcard;
 		unsigned hport;
 		bool ok;
 	} tests[] = {
-		/* { LN, "", 0, 0, false, }, */
-		{ LN, "tcp/%any", 6, 0, true,  },
-		{ LN, "udp/255", 17, 255, true,  },
-		{ LN, "0/1", 0, 0, false,  },
-		{ LN, "0/0", 0, 0, true,  },
-		{ LN, "47", 47, 0, true, },
-		{ LN, "47/", 47, 0, true, },
-		{ LN, "something-longer-than-16-bytes/0", 0, 0, false, }
+		/* { LN, "",      0, false,   0, false, }, */
+		{ LN, "%any",     0, false,   0, true,  },
+		{ LN, "tcp/%any", 6,  true,   0, true,  },
+		{ LN, "tcp/0",    6, false,   0, true,  },
+		{ LN, "udp/1",   17, false,   1, true,  },
+		{ LN, "udp/255", 17, false, 255, true,  },
+		{ LN, "0/1",      0, false,   0, false, },
+		{ LN, "0/0",      0, false,   0, true,  },
+		{ LN, "47",      47, false,   0, true, },
+		{ LN, "47/",     47, false,   0, true, },
+		{ LN, "something-longer-than-16-bytes/0", 0, false, 0, false, }
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -53,9 +57,20 @@ void ip_protoport_check(void)
 			FAIL("%s got error: %s\n", t->in, err);
 		}
 
+		if (out.is_set != t->ok) {
+			FAIL("%s expected .is_set %s, got %s",
+			     t->in, bool_str(t->ok), bool_str(out.is_set));
+		}
+
 		if (out.ipproto != t->ipproto) {
 			FAIL("%s expected proto %u, got %u", t->in,
 			     t->ipproto, out.ipproto);
+		}
+
+		if (out.has_port_wildcard != t->has_port_wildcard) {
+			FAIL("%s expected .has_port_wildcard %s, got %s",
+			     t->in, bool_str(t->has_port_wildcard),
+			     bool_str(out.has_port_wildcard));
 		}
 
 		if (out.hport != t->hport) {

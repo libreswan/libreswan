@@ -21,6 +21,7 @@
 
 #include "constants.h"		/* for zero() */
 #include "chunk.h"		/* for clone_bytes_as_string() */
+#include "lswlog.h"		/* for pexpect() */
 
 const ip_protoport unset_protoport;
 
@@ -41,9 +42,15 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 	const char *service_name;
 	shunk_t proto_name;
 	if (end != NULL) {
+		/* PROT/PORT */
 		proto_name = shunk2(src, end - src);
 		service_name = end + 1;
+	} else if (streq(src, "%any")) {
+		/* %any */
+		proto_name = shunk1("unknown");
+		service_name = src + src_len; /*NUL*/
 	} else {
+		/* PROTO */
 		proto_name = shunk2(src, src_len);
 		service_name = src + src_len; /*NUL*/
 	}
@@ -57,41 +64,59 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 
 	/* is there a port wildcard? */
 	unsigned port;
-	bool any_port = streq(service_name, "%any");
-	if (any_port) {
+	bool port_wildcard;
+	if (service_name[0] == '\0') {
+		/* allow N/ and N; different to N/%any */
 		port = 0;
-	} else if (service_name[0] == '\0') {
-		/* allow N/ and N */
+		port_wildcard = false;
+	} else if (streq(service_name, "%any")) {
+		if (protocol->ipproto == 0) {
+			return "port wildcard (%any) requires a valid protocol";
+		}
 		port = 0;
+		port_wildcard = true;
 	} else {
+		/* Port 0-65535 is different to %any */
 		err = ttoport(service_name, &port);
 		if (err != NULL) {
 			return err;
 		}
+		if (protocol->ipproto == 0 && port != 0) {
+			return "protocol 0 must have 0 port";
+		}
+		port_wildcard = false;
 	}
 
-	if (protocol == &ip_protocol_unset && port != 0) {
-		return "protocol 0 must have 0 port";
-	}
-
+	protoport->is_set = true;
 	protoport->ipproto = protocol->ipproto;
-	protoport->any_port = any_port;
+	protoport->has_port_wildcard = port_wildcard;
 	protoport->hport = port;
 	return NULL;
 }
 
 size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport)
 {
-	size_t s = 0;
-	if (protoport->ipproto == 0) {
-		s += jam_string(buf, "%any");
-	} else {
-		s += jam(buf, "%u", protoport->ipproto);
+	if (protoport == NULL) {
+		return jam(buf, "<null-protoport>");
 	}
-	jam(buf, "/");
-	if (protoport->any_port) { /* XXX:->any_port?*/
+
+	if (!protoport->is_set) {
+		return jam(buf, "<unset-protoport>");
+	}
+
+	if (protoport->ipproto == 0) {
+		pexpect(protoport->has_port_wildcard == false);
+		pexpect(protoport->hport == 0);
+		return jam_string(buf, "%any");
+	}
+
+	size_t s = 0;
+	s += jam(buf, "%s/", protocol_by_ipproto(protoport->ipproto)->name);
+	if (protoport->has_port_wildcard) {
+		pexpect(protoport->hport == 0);
 		s += jam_string(buf, "%any");
 	} else {
+		/* 0 implies 0-65535 */
 		s += jam(buf, "%u", protoport->hport);
 	}
 	return s;
@@ -102,14 +127,4 @@ const char *str_protoport(const ip_protoport *protoport, protoport_buf *buf)
 	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
 	jam_protoport(&jambuf, protoport);
 	return buf->buf;
-}
-
-bool protoport_is_set(const ip_protoport *protoport)
-{
-	return protoport->ipproto != 0;
-}
-
-bool protoport_has_any_port(const ip_protoport *protoport)
-{
-	return protoport->ipproto != 0 && protoport->any_port;
 }

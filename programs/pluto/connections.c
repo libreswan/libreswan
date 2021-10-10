@@ -1045,7 +1045,7 @@ static int extract_end(struct connection *c,
 		}
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
-	} else if (protoport_is_set(&src->protoport)) {
+	} else if (src->protoport.is_set) {
 		/*
 		 * XXX: if there's no client _yet_ there's a
 		 * protoport, then there _is_ a client.
@@ -1059,7 +1059,7 @@ static int extract_end(struct connection *c,
 		dst->client.hport = src->protoport.hport;
 	}
 
-	dst->has_port_wildcard = protoport_has_any_port(&src->protoport);
+	dst->has_port_wildcard = src->protoport.has_port_wildcard;
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
 	dst->sendcert =  src->sendcert;
@@ -1585,10 +1585,9 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (protoport_has_any_port(&wm->right.protoport) &&
-	    protoport_has_any_port(&wm->left.protoport)) {
+	if (wm->right.protoport.has_port_wildcard && wm->left.protoport.has_port_wildcard) {
 		llog(RC_FATAL, c->logger,
-			    "failed to add connection: cannot have protoport with %%any on both sides");
+		     "failed to add connection: cannot have protoports with wildcard (%%any) ports on both sides");
 		return false;
 	}
 
