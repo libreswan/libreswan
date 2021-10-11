@@ -65,11 +65,11 @@ src 192.1.2.23/32 dst 192.1.3.209/32 proto tcp sport 22
 	dir out priority 3784639 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp
+src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp dport 22
 	dir fwd priority 3784639 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp
+src 192.1.3.209/32 dst 192.1.2.23/32 proto tcp dport 22
 	dir in priority 3784639 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
