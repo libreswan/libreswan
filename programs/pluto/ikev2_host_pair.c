@@ -227,6 +227,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 				dbg("  skipping as GROUP");
 				continue;
 			}
+
 			/*
 			 * Road Warrior: we have an instant winner.
 			 */
@@ -237,8 +238,20 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			}
 
 			/*
-			 * Opportunistic or Shunt: keep searching
-			 * selecting the tightest match each time.
+			 * Opportunistic or Shunt:
+			 *
+			 * Keep searching selecting the narrowest
+			 * match, based on addresses, each time.
+			 *
+			 * Don't consider the protocol/port as, at
+			 * this point (just received an IKE_SA_INIT
+			 * request), they are not known (and won't be
+			 * known until the next exchange - IKE_AUTH).
+			 *
+			 * The end result, which depends on the order
+			 * that the connections are loaded, is
+			 * probably going to be wrong (for instance
+			 * when connections include protocol / port).
 			 */
 
 			if (!address_in_selector_range(remote_address, d->spd.that.client)) {
@@ -251,9 +264,10 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			}
 
 			if (c != NULL &&
-			    selector_in_selector(c->spd.that.client, d->spd.that.client)) {
+			    selector_range_in_selector_range(c->spd.that.client,
+							     d->spd.that.client)) {
 				selector_buf s1, s2;
-				dbg("  skipping as best oppo so far %s narrower than %s",
+				dbg("  skipping as best range of %s is narrower than %s",
 				    str_selector(&c->spd.that.client, &s1),
 				    str_selector(&d->spd.that.client, &s2));
 				continue;
