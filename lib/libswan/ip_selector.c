@@ -69,11 +69,14 @@ bool selector_contains_one_address(const ip_selector selector)
 		selector.hport == 0);
 }
 
-#if 0
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
+	if (selector == NULL) {
+		return jam_string(buf, "<null-selector");
+	}
+
+	if (!selector->is_set) {
+		return jam(buf, PRI_SELECTOR, pri_selector("unset", selector));
 	}
 
 	const struct ip_info *afi = selector_type(selector);
@@ -87,27 +90,22 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 	s += jam(buf, "/%u", selector->maskbits);
 	if (selector->ipproto != 0 || selector->hport != 0) {
 		s += jam(buf, ":");
-		if (selector->ipproto != 0) {
-			s += jam(buf, "%s/", selector_protocol(*selector)->name);
-		}
+		s += jam(buf, "%s/", selector_protocol(*selector)->name);
 		if (selector->hport == 0) {
-			s += jam(buf, "%any");
+			s += jam_string(buf, "0-65535");
 		} else {
 			s += jam(buf, "%d", selector->hport);
 		}
 	}
 	return s;
 }
-#endif
 
-#if 0
 const char *str_selector(const ip_selector *selector, selector_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_selector(&buf, selector);
 	return out->buf;
 }
-#endif
 
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
@@ -538,9 +536,7 @@ void pexpect_selector(const ip_selector *s, where_t where)
 
 	if (s->is_set == false ||
 	    s->version == 0) {
-		selector_buf b;
-		log_pexpect(where, "invalid selector: "PRI_SELECTOR,
-			    pri_selector(s, &b));
+		log_pexpect(where, PRI_SELECTOR, pri_selector("invalid", s));
 	}
 }
 

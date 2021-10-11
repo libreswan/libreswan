@@ -65,9 +65,8 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d"
-#define pri_selector(S,B) \
-	str_selector_subnet_port(S, B),			\
+#define PRI_SELECTOR "<%s-selector is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d>"
+#define pri_selector(R,S) R,			\
 		bool_str((S)->is_set),		\
 		(S)->version,			\
 		pri_bytes((S)->bytes),		\
@@ -160,15 +159,11 @@ typedef struct {
 	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
 } selector_buf;
 
-#if 0
 const char *str_selector(const ip_selector *selector, selector_buf *out);
-#endif
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
 const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out);
 
-#if 0
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
-#endif
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
 size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector);
 
