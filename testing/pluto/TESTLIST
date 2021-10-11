@@ -615,7 +615,7 @@ kvmplutotest	newoe-18-poc-cop-port22-whack		good
 kvmplutotest	newoe-18-poc-cop-port22			good
 kvmplutotest	newoe-18-poc-cop-port22-transport	good
 kvmplutotest	newoe-18-poc-cop-port22-both		good
-kvmplutotest	newoe-18-poc-cop-port22-both-reorder	good
+kvmplutotest	newoe-18-poc-cop-port22-both-reorder	wip	github:519
 
 kvmplutotest	mixoe-01-authanon-authanon		good
 kvmplutotest	mixoe-02-anon-authanon			good
