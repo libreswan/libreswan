@@ -224,6 +224,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 								    policy, LEMPTY, ppeer_id);
 		     d != NULL; d = find_next_v2_host_connection(d->hp_next, policy, LEMPTY, ppeer_id)) {
 			if (d->kind == CK_GROUP) {
+				dbg("  skipping as GROUP");
 				continue;
 			}
 			/*
@@ -231,19 +232,39 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			 */
 			if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC)) {
 				c = d;
+				dbg("  accepting non-opportunistic");
 				break;
 			}
+
 			/*
 			 * Opportunistic or Shunt: keep searching
-			 * selecting the tightest match.
+			 * selecting the tightest match each time.
 			 */
-			if (address_in_selector_range(remote_address, d->spd.that.client) &&
-			    (c == NULL || !selector_in_selector(c->spd.that.client,
-								d->spd.that.client))) {
 
-				c = d;
-				/* keep looking */
+			if (!address_in_selector_range(remote_address, d->spd.that.client)) {
+				address_buf ab;
+				selector_buf sb;
+				dbg("  skipping as %s is-not in range:%s",
+				    str_address(&remote_address, &ab),
+				    str_selector(&d->spd.that.client, &sb));
+				continue;
 			}
+
+			if (c != NULL &&
+			    selector_in_selector(c->spd.that.client, d->spd.that.client)) {
+				selector_buf s1, s2;
+				dbg("  skipping as best oppo so far %s narrower than %s",
+				    str_selector(&c->spd.that.client, &s1),
+				    str_selector(&d->spd.that.client, &s2));
+				continue;
+			}
+
+			selector_buf s1, s2;
+			dbg("  saving oppo %s for later, previous %s",
+			    str_selector(&d->spd.that.client, &s1),
+			    c == NULL ? "n/a" : str_selector(&c->spd.that.client, &s2));
+			c = d;
+			/* keep looking */
 		}
 
 		if (c == NULL) {
@@ -286,10 +307,13 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 			*send_reject_response = false;
 			return NULL;
 		}
+
 		/* only allow opportunistic for IKEv2 connections */
 		if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
 		    c->config->ike_version == IKEv2) {
-			ldbg(md->md_logger, "oppo_instantiate");
+			connection_buf cb;
+			ldbg(md->md_logger, "oppo_instantiate called by %s with "PRI_CONNECTION,
+			     __func__, pri_connection(c, &cb));
 			c = oppo_instantiate(c, &c->spd.that.id,
 					     &local_address, &remote_address);
 		} else {
