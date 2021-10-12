@@ -809,11 +809,63 @@ static void unshare_connection(struct connection *c)
 		reference_xfrmi(c);
 }
 
+/*
+ * Figure out the host / client address family.
+ *
+ * Returns diag() when there's a conflict.  leaves *AFI NULL if could
+ * not be determined.
+ */
+
+#define EXTRACT_AFI(LEVEL, NAME, TYPE, FIELD)				\
+	{								\
+		const struct ip_info *wfi = TYPE##_type(&FIELD);	\
+		if (*afi == NULL) {					\
+			*afi = wfi;					\
+			leftright = w->leftright;			\
+			name = NAME;					\
+			struct jambuf buf = ARRAY_AS_JAMBUF(value);	\
+			jam_##TYPE(&buf, &FIELD);			\
+		} else if (wfi != NULL && wfi != *afi) {		\
+			TYPE##_buf tb;					\
+			return diag(LEVEL" address family %s from %s%s=%s conflicts with %s%s=%s", \
+				    (*afi)->ip_name, leftright, name, value, \
+				    w->leftright, NAME, str_##TYPE(&FIELD, &tb)); \
+		}							\
+	}
+
+static diag_t extract_host_afi(const struct whack_message *wm,
+			       const struct ip_info **afi)
+{
+	*afi = NULL;
+	const char *leftright;
+	const char *name;
+	char value[sizeof(selector_buf)];
+	FOR_EACH_THING(w, &wm->left, &wm->right) {
+		EXTRACT_AFI("host", "", address, w->host_addr);
+		EXTRACT_AFI("host", "nexthop", address, w->host_nexthop);
+	}
+	return NULL;
+}
+
+static diag_t extract_client_afi(const struct whack_message *wm,
+				 const struct ip_info **afi)
+{
+	*afi = NULL;
+	const char *leftright;
+	const char *name;
+	char value[sizeof(selector_buf)];
+	FOR_EACH_THING(w, &wm->left, &wm->right) {
+		EXTRACT_AFI("client", "subnet", subnet, w->client);
+	}
+	return NULL;
+}
+
 static int extract_end(struct connection *c,
 		       struct end *dst,
 		       struct config_end *config_end,
 		       const struct whack_end *src,
 		       struct end *other_end,
+		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
 {
 	passert(dst->config == config_end);
@@ -1037,6 +1089,14 @@ static int extract_end(struct connection *c,
 	 * later (for instance by instantiate() calling default_end()
 	 * which merges the (now known) host_addr and protoport).
 	 */
+
+	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "failed to add connection: %sprotoport cannot specify non-zero port %d for prototcol 0",
+		     src->leftright, src->protoport.hport);
+		return -1;
+	}
+
 	dst->has_client = src->has_client;
 	if (src->has_client) {
 		if (subnet_is_unset(&src->client)) {
@@ -1055,8 +1115,8 @@ static int extract_end(struct connection *c,
 		 * and combining that with %any.  As things stand this
 		 * is a bogus client.
 		 */
-		dst->client.ipproto = src->protoport.ipproto;
-		dst->client.hport = src->protoport.hport;
+		dst->client = selector_from_subnet_protoport(client_afi->subnet.all,
+							     src->protoport);
 	}
 
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
@@ -1130,42 +1190,6 @@ static diag_t check_connection_end(const struct whack_end *this,
 				   const struct whack_end *that,
 				   const struct whack_message *wm)
 {
-	/*
-	 * This should have been diagnosed by whack,
-	 * so we need not be clear.
-	 *
-	 * XXX: don't trust whack.
-	 * XXX: don't assume values were set (defaulted).
-	 * XXX: don't assume unset's type is NULL.
-	 * XXX: because both directions are tested some checks are redundant.
-	 */
-
-	/*
-	 * Find a type for the host addresses.  Order search by what
-	 * was most liklely specified.
-	 */
-	const struct ip_info *type = (!address_is_unset(&this->host_addr) ? address_type(&this->host_addr) :
-				      !address_is_unset(&this->host_nexthop) ? address_type(&this->host_nexthop) :
-				      NULL);
-
-	if (type != NULL) {
-		if (!address_is_unset(&this->host_nexthop) &&
-		    address_type(&this->host_nexthop) != type) {
-			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
-				    type->ip_name, this->leftright, address_type(&this->host_nexthop)->ip_name);
-		}
-		if (!address_is_unset(&that->host_addr) &&
-		    address_type(&that->host_addr) != type) {
-			return diag("host address family inconsistent: expecting %s but %shost is %s",
-				    type->ip_name, that->leftright, address_type(&that->host_addr)->ip_name);
-		}
-		if (!address_is_unset(&that->host_nexthop) &&
-		    address_type(&that->host_nexthop) != type) {
-			return diag("host address family inconsistent: expecting %s but %snexthop is %s",
-				    type->ip_name, that->leftright, address_type(&that->host_nexthop)->ip_name);
-		}
-	}
-
 	/* ??? seems like a nasty test (in-band, low-level) */
 	/* XXX: still nasty; just less low-level */
 	if (range_size(this->pool_range) > 0) {
@@ -1174,13 +1198,6 @@ static diag_t check_connection_end(const struct whack_end *this,
 		if (d != NULL) {
 			return d;
 		}
-	}
-
-	const struct ip_info *this_afi = subnet_type(&this->client);
-	const struct ip_info *that_afi = subnet_type(&that->client);
-	if (this_afi != NULL && that_afi != NULL && this_afi != that_afi) {
-		/* IPv4 vs IPv6? */
-		return diag("subnets must have the same address family");
 	}
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
@@ -1195,11 +1212,6 @@ static diag_t check_connection_end(const struct whack_end *this,
 			return diag("connection %s must specify host IP address for our side",
 				    wm->name);
 		}
-	}
-
-	if (this->protoport.ipproto == 0 && this->protoport.hport != 0) {
-		return diag("connection %s cannot specify non-zero port %d for prototcol 0",
-			    wm->name, this->protoport.hport);
 	}
 
 	if (this->id != NULL && streq(this->id, "%fromcert")) {
@@ -1590,6 +1602,37 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
+	/*
+	 * Determine the host/client's family.
+	 *
+	 * XXX: idle speculation: if traffic selectors with different
+	 * address families are to be supported then these will need
+	 * to be nested within some sort of loop.  One for host, one
+	 * for client, one for IPv4, and one for IPv6.
+	 */
+	const struct ip_info *host_afi = NULL;
+	d = extract_host_afi(wm, &host_afi);
+	if (d != NULL) {
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		return false;
+	}
+	if (host_afi == NULL) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: host address family unknown");
+		return false;
+	}
+
+	const struct ip_info *client_afi = NULL;
+	d = extract_client_afi(wm, &client_afi);
+	if (d != NULL) {
+		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+		return false;
+	}
+	if (client_afi == NULL) {
+		dbg("defaulting client afi to host afi");
+		client_afi = host_afi;
+	}
+
 	d = check_connection_end(&wm->right, &wm->left, wm);
 	if (d != NULL) {
 		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
@@ -1978,7 +2021,6 @@ static bool extract_connection(const struct whack_message *wm,
 		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
 	}
 
-
 	/*
 	 * At this point THIS and THAT are disoriented so
 	 * distinguishing one as local and the other as remote is
@@ -1989,12 +2031,6 @@ static bool extract_connection(const struct whack_message *wm,
 	 *
 	 *    LEFT == LOCAL / THIS
 	 *    RIGHT == REMOTE / THAT
-	 *
-	 * XXX: This is all too confusing - wouldn't it be simpler if
-	 * there was a '.left' and '.right' (or even .end[2] - this
-	 * code seems to be crying out for a for loop) and then having
-	 * orient() set up .local and .remote pointers or indexes
-	 * accordingly?
 	 */
 
 	FOR_EACH_ELEMENT(end, config->end) {
@@ -2011,13 +2047,13 @@ static bool extract_connection(const struct whack_message *wm,
 	right->config = c->remote = &config->end[RIGHT_END];
 
 	int same_leftca = extract_end(c, left, &config->end[LEFT_END], &wm->left,
-				      /*other_end*/right, c->logger);
+				      /*other_end*/right, client_afi, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
 
 	int same_rightca = extract_end(c, right, &config->end[RIGHT_END], &wm->right,
-				       /*other_end*/left, c->logger);
+				       /*other_end*/left, client_afi, c->logger);
 	if (same_rightca < 0) {
 		return false;
 	}
