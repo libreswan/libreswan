@@ -2111,20 +2111,6 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	/*
-	 * force any wildcard host IP address, any wildcard subnet
-	 * or any wildcard ID to _that_ end
-	 */
-	if (address_is_unset(&c->spd.this.host_addr) ||
-	    address_is_any(c->spd.this.host_addr) ||
-	    c->spd.this.config->client.protoport.has_port_wildcard ||
-	    c->spd.this.has_id_wildcards) {
-		struct end t = c->spd.this;
-
-		c->spd.this = c->spd.that;
-		c->spd.that = t;
-	}
-
 	c->spd.spd_next = NULL;
 	c->spd.connection = c;
 
@@ -2144,10 +2130,20 @@ static bool extract_connection(const struct whack_message *wm,
 	dbg("%s c->spd.reqid=%d because c->sa_reqid=%d",
 	    c->name, c->spd.reqid, c->sa_reqid);
 
+	/*
+	 * determine the wild side (the side that likely won't
+	 * orient).
+	 */
+	struct end *wild_side =
+		(address_is_unset(&c->spd.this.host_addr) ||
+		 address_is_any(c->spd.this.host_addr) ||
+		 c->spd.this.config->client.protoport.has_port_wildcard ||
+		 c->spd.this.has_id_wildcards) ? &c->spd.this : &c->spd.that;
+
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		c->spd.that.has_client = true;
-		c->spd.that.client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
+		wild_side->has_client = true;
+		wild_side->client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
 		/*
 		 * We cannot have unlimited keyingtries for Opportunistic, or else
 		 * we gain infinite partial IKE SA's. But also, more than one makes
@@ -2166,11 +2162,11 @@ static bool extract_connection(const struct whack_message *wm,
 		dbg("connection is group: by policy");
 		c->kind = CK_GROUP;
 		add_group(c);
-	} else if (!NEVER_NEGOTIATE(c->policy) && (address_is_unset(&c->spd.that.host_addr) ||
-						   address_is_any(c->spd.that.host_addr))) {
+	} else if (!NEVER_NEGOTIATE(c->policy) && (address_is_unset(&wild_side->host_addr) ||
+						   address_is_any(wild_side->host_addr))) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
-	} else if (c->spd.that.config->client.protoport.has_port_wildcard) {
+	} else if (wild_side->config->client.protoport.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
 	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
@@ -2205,15 +2201,15 @@ static bool extract_connection(const struct whack_message *wm,
 		 * This now happens with wildcards on
 		 * non-instantiations, such as rightsubnet=vnet:%priv
 		 * or rightprotoport=17/%any
-		 * passert(address_is_unset(&c->spd.that.host_addr) || address_is_any(c->spd.that.host_addr));
+		 *
+		 * passert(address_is_unset(&wild_side->host_addr) || address_is_any(wild_side->host_addr));
 		 */
-		passert(c->spd.that.virt == NULL);
-		c->spd.that.virt = create_virtual(wm->left.virt != NULL ?
-						  wm->left.virt :
-						  wm->right.virt,
-						  c->logger);
-		if (c->spd.that.virt != NULL)
-			c->spd.that.has_client = true;
+		passert(wild_side->virt == NULL);
+		wild_side->virt =
+			create_virtual(wm->left.virt != NULL ? wm->left.virt : wm->right.virt,
+				       c->logger);
+		if (wild_side->virt != NULL)
+			wild_side->has_client = true;
 	}
 
 	if (c->pool !=  NULL)
