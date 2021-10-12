@@ -33,7 +33,7 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
@@ -46,7 +46,7 @@ west #
 002 "westnet-eastnet" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #2: sent Quick Mode request
 004 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
@@ -67,7 +67,7 @@ west #
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #3: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #3: sent Main Mode request
@@ -86,7 +86,7 @@ west #
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #5: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #5: sent Main Mode request
@@ -105,7 +105,7 @@ west #
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #7: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #7: sent Main Mode request
@@ -133,11 +133,11 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:delete
 west #
- # HASH payload omitted - should fail
+ # HASH payload omitted - delete should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #9: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #9: sent Main Mode request
@@ -149,7 +149,7 @@ west #
 002 "westnet-eastnet" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #10: sent Quick Mode request
 004 "westnet-eastnet" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #10: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
@@ -158,11 +158,11 @@ up
 002 "westnet-eastnet" #9: IMPAIR: omitting HASH payload for send delete
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload empty - should fail
+ # HASH payload empty - delete should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #11: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #11: sent Main Mode request
@@ -174,7 +174,7 @@ west #
 002 "westnet-eastnet" #12: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #12: sent Quick Mode request
 004 "westnet-eastnet" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #12: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
@@ -183,11 +183,11 @@ up
 002 "westnet-eastnet" #11: IMPAIR: sending HASH payload with no data for send delete
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload badly calculated - should fail
+ # HASH payload badly calculated - delete should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #13: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #13: sent Main Mode request
@@ -199,7 +199,7 @@ west #
 002 "westnet-eastnet" #14: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #14: sent Quick Mode request
 004 "westnet-eastnet" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #14: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
@@ -221,11 +221,11 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:xauth
 west #
- # HASH payload omitted - should fail
+ # HASH payload omitted - XAUTH should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #15: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #15: sent Main Mode request
@@ -237,18 +237,18 @@ west #
 002 "westnet-eastnet" #16: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #16: sent Quick Mode request
 004 "westnet-eastnet" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #16: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #16: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #15: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload empty - should fail
+ # HASH payload empty - XAUTH should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #17: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #17: sent Main Mode request
@@ -260,18 +260,18 @@ west #
 002 "westnet-eastnet" #18: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #18: sent Quick Mode request
 004 "westnet-eastnet" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #18: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #18: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #17: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload badly calculated - should fail
+ # HASH payload badly calculated - XAUTH should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #19: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #19: sent Main Mode request
@@ -283,7 +283,7 @@ west #
 002 "westnet-eastnet" #20: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #20: sent Quick Mode request
 004 "westnet-eastnet" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #20: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #20: ESP traffic information: in=84B out=84B
@@ -303,11 +303,11 @@ west #
 west #
  ipsec whack --impair v1-hash-exchange:notification
 west #
- # HASH payload omitted - should fail
+ # HASH payload omitted - INFO should fail
 west #
  ipsec whack --impair v1-hash-payload:omit
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #21: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #21: sent Main Mode request
@@ -319,18 +319,18 @@ west #
 002 "westnet-eastnet" #22: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #22: sent Quick Mode request
 004 "westnet-eastnet" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #22: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #22: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #21: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload empty - should fail
+ # HASH payload empty - INFO should fail
 west #
  ipsec whack --impair v1-hash-payload:empty
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #23: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #23: sent Main Mode request
@@ -342,18 +342,18 @@ west #
 002 "westnet-eastnet" #24: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #24: sent Quick Mode request
 004 "westnet-eastnet" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #24: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #24: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet" #23: deleting state (STATE_MAIN_I4) and sending notification
 002 "westnet-eastnet": terminating SAs using this connection
 west #
- # HASH payload badly calculated - should fail
+ # HASH payload badly calculated - INFO should fail
 west #
  ipsec whack --impair v1-hash-payload:0
 west #
- ../../guestbin/libreswan-up-down.sh  westnet-eastnet -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet": added IKEv1 connection
 002 "westnet-eastnet" #25: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #25: sent Main Mode request
@@ -365,7 +365,7 @@ west #
 002 "westnet-eastnet" #26: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet" #26: sent Quick Mode request
 004 "westnet-eastnet" #26: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet": terminating SAs using this connection
 002 "westnet-eastnet" #26: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet" #26: ESP traffic information: in=84B out=84B
