@@ -1,8 +1,8 @@
   <varlistentry>
   <term><emphasis remap='B'>esn</emphasis></term>
   <listitem>
-<para>Whether or not to enable Extended Sequence Number (ESN) for the IPsec SA.
-ESN is typically used for very high-speed links (10Gbps or faster) where the
+<para>Whether or not to enable Extended Sequence Number (ESN) for the IPsec SA. This
+option is only implemented for IKEv2. ESN is typically used for very high-speed links (10Gbps or faster) where the
 standard 32 bit sequence number is exhausted too quickly, causing IPsec SA's
 rekeys to happen too often. Accepted values are
 <emphasis remap='B'>no</emphasis> (the default),
