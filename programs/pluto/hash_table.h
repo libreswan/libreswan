@@ -37,19 +37,19 @@ struct hash_table {
 
 #define HASH_TABLE(STRUCT, NAME, FIELD, NR_BUCKETS)			\
 									\
-	static hash_t STRUCT##_##NAME##_hasher(const void *data)	\
+	static hash_t hash_table_hash_##STRUCT##_##NAME(const void *data) \
 	{								\
 		const struct STRUCT *s = data;				\
-		return NAME##_hasher(&(*s)FIELD);			\
+		return hash_##STRUCT##_##NAME(&(*s)FIELD);		\
 	}								\
 									\
-	static struct list_entry *STRUCT##_##NAME##_entry(void *data)	\
+	static struct list_entry *hash_table_entry_##STRUCT##_##NAME(void *data) \
 	{								\
 		struct STRUCT *s = data;				\
 		return &s->hash_table_entries.NAME;			\
 	}								\
 									\
-	static void STRUCT##_##NAME##_jam_hash(struct jambuf *buf, const void *data) \
+	static void hash_table_jam_##STRUCT##_##NAME(struct jambuf *buf, const void *data) \
 	{								\
 		const struct STRUCT *s = data;				\
 		jam_##STRUCT##_##NAME(buf, s);				\
@@ -57,28 +57,28 @@ struct hash_table {
 									\
 	static struct list_head STRUCT##_##NAME##_buckets[NR_BUCKETS];	\
 	struct hash_table STRUCT##_##NAME##_hash_table = {		\
-		.hasher = STRUCT##_##NAME##_hasher,			\
-		.entry = STRUCT##_##NAME##_entry,			\
+		.hasher = hash_table_hash_##STRUCT##_##NAME,		\
+		.entry = hash_table_entry_##STRUCT##_##NAME,		\
 		.nr_slots = NR_BUCKETS,					\
 		.slots = STRUCT##_##NAME##_buckets,			\
 		.info = {						\
 			.name = #STRUCT"."#NAME,			\
-			.jam = STRUCT##_##NAME##_jam_hash,		\
+			.jam = hash_table_jam_##STRUCT##_##NAME,	\
 		},							\
 	}
 
 void init_hash_table(struct hash_table *table);
 
-hash_t hash_table_hash_bytes(const void *ptr, size_t len, hash_t hash);
-#define hash_table_hash_hunk(HUNK, HASH)				\
+hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
+#define hash_hunk(HUNK, HASH)						\
 	({								\
 		typeof(HUNK) h_ = HUNK; /* evaluate once */		\
-		hash_table_hash_bytes(h_.ptr, h_.len, HASH);		\
+		hash_bytes(h_.ptr, h_.len, HASH);			\
 	})
-#define hash_table_hash_thing(THING, HASH)				\
+#define hash_thing(THING, HASH)						\
 	({								\
 		shunk_t h_ = THING_AS_SHUNK(THING); /* evaluate once */	\
-		hash_table_hash_bytes(h_.ptr, h_.len, HASH);		\
+		hash_bytes(h_.ptr, h_.len, HASH);			\
 	})
 
 /*

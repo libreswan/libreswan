@@ -19,7 +19,7 @@
 #include "hash_table.h"
 #include "refcnt.h"
 
-static void connection_serialno_jam_hash(struct jambuf *buf, const void *data);
+static void hash_table_jam_connection_serialno(struct jambuf *buf, const void *data);
 
 static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
 {
@@ -32,7 +32,7 @@ static void jam_connection_serialno(struct jambuf *buf, const struct connection 
 
 static const struct list_info connection_serialno_list_info = {
 	.name = "serialno list",
-	.jam = connection_serialno_jam_hash,
+	.jam = hash_table_jam_connection_serialno,
 };
 
 static struct list_head connection_serialno_list_head = INIT_LIST_HEAD(&connection_serialno_list_head,
@@ -42,9 +42,9 @@ static struct list_head connection_serialno_list_head = INIT_LIST_HEAD(&connecti
  * A table hashed by serialno.
  */
 
-static hash_t serialno_hasher(const co_serial_t *serialno)
+static hash_t hash_connection_serialno(const co_serial_t *serialno)
 {
-	return hash_table_hash_thing(*serialno, zero_hash);
+	return hash_thing(*serialno, zero_hash);
 }
 
 HASH_TABLE(connection, serialno, .serialno, STATE_TABLE_SIZE);
@@ -56,7 +56,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 	 * SOS_NOBODY always returns NULL.
 	 */
 	struct connection *c;
-	hash_t hash = serialno_hasher(&serialno);
+	hash_t hash = hash_connection_serialno(&serialno);
 	struct list_head *bucket = hash_table_bucket(&connection_serialno_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, c) {
 		if (c->serialno == serialno) {
@@ -70,14 +70,14 @@ struct connection *connection_by_serialno(co_serial_t serialno)
  * An ID hash table.
  */
 
-static hash_t that_id_hasher(const struct id *id)
+static hash_t hash_connection_that_id(const struct id *id)
 {
 	hash_t hash = zero_hash;
 	if (id->kind != ID_NONE) {
 		shunk_t body;
 		enum ike_id_type type = id_to_payload(id, &unset_address/*ignored*/, &body);
-		hash = hash_table_hash_thing(type, hash);
-		hash = hash_table_hash_hunk(body, hash);
+		hash = hash_thing(type, hash);
+		hash = hash_hunk(body, hash);
 	}
 	return hash;
 }
@@ -107,7 +107,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 {
 	struct list_head *bucket;
 	if (filter->that_id_eq != NULL) {
-		hash_t hash = that_id_hasher(filter->that_id_eq);
+		hash_t hash = hash_connection_that_id(filter->that_id_eq);
 		bucket = hash_table_bucket(&connection_that_id_hash_table, hash);
 	} else {
 		bucket = &connection_serialno_list_head;

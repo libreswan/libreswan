@@ -29,7 +29,7 @@ void init_hash_table(struct hash_table *table)
 	}
 }
 
-hash_t hash_table_hash_bytes(const void *ptr, size_t len, hash_t hash)
+hash_t hash_bytes(const void *ptr, size_t len, hash_t hash)
 {
 	/*
 	 * 251 is a prime close to 256 (so like <<8).

@@ -21,8 +21,7 @@
 #include "hash_table.h"
 
 static struct hash_table *const state_hash_tables[];
-
-static void state_serialno_jam_hash(struct jambuf *buf, const void *data);
+static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
 
 static void jam_state_serialno(struct jambuf *buf, const struct state *st)
 {
@@ -61,7 +60,7 @@ static bool state_plausable(struct state *st,
 
 static const struct list_info state_serialno_list_info = {
 	.name = "serialno list",
-	.jam = state_serialno_jam_hash,
+	.jam = hash_table_jam_state_serialno,
 };
 
 struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
@@ -71,9 +70,9 @@ struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_
  * A table hashed by serialno.
  */
 
-static hash_t serialno_hasher(const so_serial_t *serialno)
+static hash_t hash_state_serialno(const so_serial_t *serialno)
 {
-	return hash_table_hash_thing(*serialno, zero_hash);
+	return hash_thing(*serialno, zero_hash);
 }
 
 HASH_TABLE(state, serialno, .st_serialno, STATE_TABLE_SIZE);
@@ -85,7 +84,7 @@ struct state *state_by_serialno(so_serial_t serialno)
 	 * SOS_NOBODY always returns NULL.
 	 */
 	struct state *st;
-	hash_t hash = serialno_hasher(&serialno);
+	hash_t hash = hash_state_serialno(&serialno);
 	struct list_head *bucket = hash_table_bucket(&state_serialno_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_serialno == serialno) {
@@ -109,9 +108,9 @@ struct child_sa *child_sa_by_serialno(so_serial_t serialno)
  * A table hashed by the connection's serial no.
  */
 
-static hash_t connection_serialno_hasher(const co_serial_t *connection_serial)
+static hash_t hash_state_connection_serialno(const co_serial_t *connection_serial)
 {
-	return hash_table_hash_thing(*connection_serial, zero_hash);
+	return hash_thing(*connection_serial, zero_hash);
 }
 
 static void jam_state_connection_serialno(struct jambuf *buf, const struct state *st)
@@ -130,9 +129,9 @@ void rehash_state_connection(struct state *st)
  * A table hashed by reqid.
  */
 
-static hash_t reqid_hasher(const reqid_t *reqid)
+static hash_t hash_state_reqid(const reqid_t *reqid)
 {
-	return hash_table_hash_thing(*reqid, zero_hash);
+	return hash_thing(*reqid, zero_hash);
 }
 
 static void jam_state_reqid(struct jambuf *buf, const struct state *st)
@@ -153,7 +152,7 @@ struct state *state_by_reqid(reqid_t reqid,
 	 * SOS_NOBODY always returns NULL.
 	 */
 	struct state *st;
-	hash_t hash = reqid_hasher(&reqid);
+	hash_t hash = hash_state_reqid(&reqid);
 	struct list_head *bucket = hash_table_bucket(&state_reqid_hash_table, hash);
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
 		if (st->st_reqid != reqid) {
@@ -187,9 +186,9 @@ void rehash_state_reqid(struct state *st)
  * are replaced, hence a rehash is required.
  */
 
-static hash_t ike_initiator_spi_hasher(const ike_spi_t *ike_initiator_spi)
+static hash_t hash_state_ike_initiator_spi(const ike_spi_t *ike_initiator_spi)
 {
-	return hash_table_hash_thing(*ike_initiator_spi, zero_hash);
+	return hash_thing(*ike_initiator_spi, zero_hash);
 }
 
 static void jam_state_ike_initiator_spi(struct jambuf *buf, const struct state *st)
@@ -209,7 +208,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const ike_spi_t *ike_initiator_spi,
 					 const char *name)
 {
-	hash_t hash = ike_initiator_spi_hasher(ike_initiator_spi);
+	hash_t hash = hash_state_ike_initiator_spi(ike_initiator_spi);
 	struct list_head *bucket = hash_table_bucket(&state_ike_initiator_spi_hash_table, hash);
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
@@ -243,9 +242,9 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
  *   exchange
  */
 
-static hash_t ike_spis_hasher(const ike_spis_t *ike_spis)
+static hash_t hash_state_ike_spis(const ike_spis_t *ike_spis)
 {
-	return hash_table_hash_thing(*ike_spis, zero_hash);
+	return hash_thing(*ike_spis, zero_hash);
 }
 
 static void jam_state_ike_spis(struct jambuf *buf, const struct state *st)
@@ -270,7 +269,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				void *predicate_context,
 				const char *name)
 {
-	hash_t hash = ike_spis_hasher(ike_spis);
+	hash_t hash = hash_state_ike_spis(ike_spis);
 	struct list_head *bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	struct state *st = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
@@ -304,13 +303,13 @@ static struct list_head *filter_head(struct state_filter *filter)
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
-		hash_t hash = ike_spis_hasher(filter->ike_spis);
+		hash_t hash = hash_state_ike_spis(filter->ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->ike != NULL) {
-		hash_t hash = ike_spis_hasher(&filter->ike->sa.st_ike_spis);
+		hash_t hash = hash_state_ike_spis(&filter->ike->sa.st_ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->connection_serialno != 0) {
-		hash_t hash = connection_serialno_hasher(&filter->connection_serialno);
+		hash_t hash = hash_state_connection_serialno(&filter->connection_serialno);
 		bucket = hash_table_bucket(&state_connection_serialno_hash_table, hash);
 	} else {
 		/* else other queries? */
