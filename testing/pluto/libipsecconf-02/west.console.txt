@@ -19,6 +19,6 @@ west #
  # this one should fail to load
 west #
  ipsec auto --add subnet6-bad
-036 "subnet6-bad": failed to add connection: subnets must have the same address family
+036 "subnet6-bad": failed to add connection: client address family IPv6 from leftsubnet=fda3:84eb:c4b7:aff6::/64 conflicts with rightsubnet=0.0.0.0/0
 west #
  
