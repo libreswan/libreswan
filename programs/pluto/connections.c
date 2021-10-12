@@ -1455,6 +1455,10 @@ static bool extract_connection(const struct whack_message *wm,
 				    "failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections");
 			return false;
 		}
+		if (wm->policy & POLICY_ESN_YES) {
+			llog(RC_INFORMATIONAL, c->logger,
+				    "ignored esn= option for IKEv1 connection - not implemented");
+		}
 #else
 		llog(RC_FATAL, c->logger, "failed to add IKEv1 connection: IKEv1 support not compiled in");
 		return false;
