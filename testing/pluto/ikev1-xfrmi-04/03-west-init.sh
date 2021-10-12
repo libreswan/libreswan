@@ -3,8 +3,3 @@ ip route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
-ipsec auto --up westnet-eastnet
-../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-ipsec whack --trafficstatus
-echo "initdone"

@@ -31,9 +31,6 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
- echo "initdone"
-initdone
-west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
