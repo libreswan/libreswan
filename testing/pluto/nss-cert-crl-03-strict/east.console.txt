@@ -5,8 +5,10 @@ east #
 east #
  certutil -d sql:/etc/ipsec.d -D -n west
 east #
- ipsec start
-Redirecting to: [initsystem]
+ # ipsec start
+east #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective --impair event-check-crls
+| event-check-crls:yes
 east #
  ../../guestbin/wait-until-pluto-started
 east #
@@ -31,18 +33,31 @@ east #
 000 "nss-cert-crl":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-crl":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
+ ipsec auto --listcrls
+000  
+000 List of CRLs:
+000  
+000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000 revoked certs: 2
+000 updates: this TIMESTAMP
+000          next TIMESTAMP
+east #
  echo "initdone"
 initdone
+east #
+ ../../guestbin/wait-for.sh --match '^[^|].* #2: IPsec SA established' -- cat /tmp/pluto.log
+"nss-cert-crl" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
  crlutil -L -d sql:/etc/ipsec.d | grep mainca
 Libreswan test CA for mainca - Libreswan CRL  
 east #
- ipsec auto --listcrls | grep issuer
+ ipsec auto --listcrls
+000  
+000 List of CRLs:
+000  
 000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org'
-000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'
-000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 revoked certs: 2
+000 updates: this TIMESTAMP
+000          next TIMESTAMP
 east #
  

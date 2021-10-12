@@ -49,11 +49,17 @@ west #
 1v1 "nss-cert-crl" #2: sent Quick Mode request
 004 "nss-cert-crl" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- echo done
-done
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+006 #2: "nss-cert-crl", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  crlutil -L -d sql:/etc/ipsec.d | grep mainca
 west #
- ipsec auto --listcrls | grep issuer
+ ipsec auto --listcrls
+000  
+000 List of CRLs:
+000  
 west #
  
