@@ -503,29 +503,45 @@ void start_crl_fetch_helper(struct logger *logger)
 	 * XXX: CRT checking is probably really a periodic timer,
 	 * however: the first fetch 5 seconds after startup; and
 	 * further fetches are defined by the config(?) file (is that
-	 * loaded before this function was called?).
+	 * loaded before this function was called? yes).
 	 */
 	init_oneshot_timer(EVENT_CHECK_CRLS, check_crls);
-	if (deltasecs(crl_check_interval) > 0) {
-		int status;
+	if (deltasecs(crl_check_interval) <= 0) {
+		dbg("CRL checking disabled");
+		return;
+	}
+
+	int status;
 
 #ifdef LIBCURL
-		/* init curl */
-		status = curl_global_init(CURL_GLOBAL_DEFAULT);
-		if (status != 0)
-			llog(RC_LOG, logger,
-				    "libcurl could not be initialized, status = %d",
-				    status);
+	/* init curl */
+	status = curl_global_init(CURL_GLOBAL_DEFAULT);
+	if (status != 0) {
+		fatal(PLUTO_EXIT_FAIL, logger,
+		      "libcurl could not be initialized, status = %d", status);
+	}
 #endif
 
-		status = pthread_create(&fetch_thread_id, NULL,
-					fetch_thread, NULL);
-		if (status != 0)
-			llog(RC_LOG, logger,
-				    "could not start thread for fetching certificate, status = %d",
-				    status);
-		schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
+	status = pthread_create(&fetch_thread_id, NULL,
+				fetch_thread, NULL);
+	if (status != 0) {
+		fatal(PLUTO_EXIT_FAIL, logger,
+		      "could not start thread for fetching certificate, status = %d", status);
 	}
+
+	if (impair.event_check_crls) {
+		llog(RC_LOG, logger, "IMPAIR: not scheduling EVENT_CHECK_CRLS");
+		return;
+	}
+
+	/*
+	 * XXX: why the delay?
+	 *
+	 * To give pluto time to settle, or so that tests can do stuff
+	 * before the CRL fetch list has been refreshed (for the
+	 * latter, use impair.event_check_crls).
+	 */
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
 }
 
 void stop_crl_fetch_helper(struct logger *logger)

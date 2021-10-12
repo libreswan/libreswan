@@ -158,6 +158,8 @@ struct impairment impairments[] = {
 	V("suppress-retransmits", suppress_retransmits, "causes pluto to never send retransmits (wait the full timeout)"),
 	V("timeout-on-retransmit", timeout_on_retransmit, "causes pluto to 'retry' (switch protocol) on the first retransmit"),
 
+	V("event-check-crls", event_check_crls, "do not schedule the CRL check event"),
+
 	V("v1-hash-check", v1_hash_check, "disable check of incoming IKEv1 hash payload"),
 	V("v1-hash-exchange", v1_hash_exchange, "corrupt the HASH payload in the outgoing exchange",
 	  .how_keywords = &impair_v1_exchange_keywords),

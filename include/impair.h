@@ -153,6 +153,8 @@ struct impair {
 	bool omit_v2_ike_auth_child;
 	bool ignore_v2_ike_auth_child;
 
+	bool event_check_crls;
+
 	/*
 	 * add more here
 	 */

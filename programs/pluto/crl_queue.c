@@ -265,8 +265,10 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_l
 	while (!exiting_pluto) {
 		/* if there's something process it */
 		dbg("processing CRL fetch requests");
+		unsigned requests_processed = 0;
 		for (struct crl_fetch_queue *volatile *volatile reqp = &crl_fetch_queue;
 		     *reqp != NULL && !exiting_pluto; ) {
+			requests_processed++;
 			struct crl_fetch_queue *req = *reqp;
 			pexpect(req->distribution_points != NULL);
 			bool fetched = false;
@@ -299,7 +301,8 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_l
 		if (exiting_pluto) {
 			break;
 		}
-		dbg("waiting for more CRL fetch requests");
+		dbg("%u CRL fetch requests processed, waiting for more to do",
+		    requests_processed);
 		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
 		passert(status == 0);
 	}

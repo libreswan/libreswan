@@ -1242,8 +1242,7 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			crl_check_interval = deltatime(
-				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
+			crl_check_interval = deltatime(cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
