@@ -27,7 +27,7 @@ road #
 002 initiate on demand by whack from 192.1.3.209:8 to 192.1.2.23:22 proto=TCP
 1v2 "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #1: initiating IKEv2 connection
 003 "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #1: established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
-004 "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #2: established Child SA; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:22-22 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:22-22 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -125,6 +125,6 @@ road #
  # a tunnel should have established
 road #
  grep "^[^|].*: established Child SA" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #2: established Child SA; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:22-22 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"private-or-clear#192.1.2.0/24-(0--6--22)"[1] ...192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.1.3.209-192.1.3.209:0-65535 6] -> [192.1.2.23-192.1.2.23:22-22 6] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  
