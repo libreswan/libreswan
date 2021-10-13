@@ -1,0 +1,1 @@
+ipv6 addresspool road with %defaultroute source address selection
