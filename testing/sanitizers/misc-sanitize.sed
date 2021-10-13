@@ -51,3 +51,7 @@ s/serial=[^;]*;token=libreswan/serial=XXXXXXXX;token=libreswan/g
 s/and is reassigned to slot .*$/and is reassigned to slot XXXXX/g
 
 s/tcpdump: listening on .*$/tcpdump: listening on INTERFACE DETAILS/
+
+# prevent stray packets from changing counters
+s/\t 00000000 00000000 00000000 .*$/\t 00000000 00000000 00000000 XXXXXXXX /g
+s/\t seq-hi 0x0, seq [^,]*, oseq-hi 0x0, oseq .*$/\t seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX/g
