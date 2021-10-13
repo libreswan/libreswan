@@ -49,7 +49,7 @@ west #
 002 "westnet-eastnet-vti-01" #2: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 002 "westnet-eastnet-vti-01" #2: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
 002 "westnet-eastnet-vti-01" #2: route-client output: done ip route
-004 "westnet-eastnet-vti-01" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "westnet-eastnet-vti-01" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
 002 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
@@ -63,7 +63,7 @@ west #
 002 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
 002 "westnet-eastnet-vti-02" #3: route-client output: RTNETLINK answers: File exists
 002 "westnet-eastnet-vti-02" #3: route-client output: done ip route
-004 "westnet-eastnet-vti-02" #3: established Child SA using #1; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+004 "westnet-eastnet-vti-02" #3: established Child SA using #1; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -121,20 +121,36 @@ west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 west #
  ip xfrm policy
 src 10.0.1.0/24 dst 10.0.2.0/24 

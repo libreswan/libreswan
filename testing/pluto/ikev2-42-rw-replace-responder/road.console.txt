@@ -23,7 +23,7 @@ road #
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "road-east-x509-ipv4"[1] 192.1.2.23 #1: established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
-004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
 up
@@ -142,10 +142,10 @@ road #
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4":   sec_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
 000 "road-east-x509-ipv4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -159,10 +159,10 @@ road #
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4"[1]:   sec_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4"[1]:   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4"[1]:   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
 000 "road-east-x509-ipv4"[1]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -193,12 +193,20 @@ road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.2.100/32
 	dir fwd priority 2080767 ptype main

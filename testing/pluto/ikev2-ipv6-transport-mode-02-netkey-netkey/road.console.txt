@@ -34,10 +34,10 @@ road #
 000 "v6-transport":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "v6-transport":   sec_label:unset;
-000 "v6-transport":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "v6-transport":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "v6-transport":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "v6-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "v6-transport":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "v6-transport":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
 000 "v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "v6-transport":   conn_prio: 128,128; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -71,11 +71,19 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 
 XFRM policy:
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128

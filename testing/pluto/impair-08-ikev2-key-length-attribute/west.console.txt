@@ -20,7 +20,7 @@ west #
 1v2 "aes128" #1: sent IKE_SA_INIT request
 1v2 "aes128" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-004 "aes128" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "aes128" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
 002 "aes128" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -75,7 +75,7 @@ west #
 1v2 "aes128" #7: sent IKE_SA_INIT request
 1v2 "aes128" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #7: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-004 "aes128" #8: established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "aes128" #8: established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
 002 "aes128" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -95,7 +95,7 @@ west #
 002 "aes128" #9: IMPAIR: duplicating key-length attribute
 1v2 "aes128" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #9: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-004 "aes128" #10: established Child SA using #9; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+004 "aes128" #10: established Child SA using #9; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
 002 "aes128" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -187,7 +187,7 @@ west #
 1v2 "3des" #19: sent IKE_SA_INIT request
 1v2 "3des" #19: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #19: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-004 "3des" #20: established Child SA using #19; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+004 "3des" #20: established Child SA using #19; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 002 "3des": terminating SAs using this connection
 002 "3des" #19: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
@@ -209,7 +209,7 @@ west #
 1v2 "3des" #21: sent IKE_SA_INIT request
 1v2 "3des" #21: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #21: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
-004 "3des" #22: established Child SA using #21; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+004 "3des" #22: established Child SA using #21; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 002 "3des": terminating SAs using this connection
 002 "3des" #21: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification

@@ -103,10 +103,10 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "westnet-eastnet-ipv4-psk-ikev2":   v2-auth-hash-policy: none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -137,7 +137,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 192.168.0.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 192.168.0.2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.1-192.0.2.1:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 road #
  route -n
 Kernel IP routing table

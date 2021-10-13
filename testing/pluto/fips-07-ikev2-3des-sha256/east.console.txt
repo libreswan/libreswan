@@ -20,12 +20,12 @@ east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(des3_ede) 0xENCKEY
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(des3_ede) 0xENCKEY
 XFRM policy:
