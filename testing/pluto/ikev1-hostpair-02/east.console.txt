@@ -8,13 +8,22 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
+ ipsec whack --impair suppress-retransmits
+east #
  ipsec auto --add roadnet-eastnet-ipv4-psk-ikev1
 002 "roadnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat /tmp/pluto.log
+"roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:4500 DPD=passive username=use3}
+east #
+ ../../guestbin/wait-for.sh --match '#8: IPsec SA established' -- cat /tmp/pluto.log
+"roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254 #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:4500 DPD=passive username=use3}
+east #
  ipsec status | grep STATE_
+000 #1: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (IKE SA established); REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; isakmp#1; idle;
 000 #3: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_MAIN_R3 (IKE SA established); REPLACE in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev1"[1] 192.1.2.254:4500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; isakmp#3; idle;

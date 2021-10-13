@@ -6,7 +6,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 road #
  ipsec whack --impair revival
 road #
@@ -40,23 +40,23 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
- ping -n -q -c 2 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=168, outBytes=168
+006 #2: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84
 road #
  # create havoc
 road #
  ipsec whack --impair send-no-delete
 road #
+ # #3.#4
+road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I2) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=168B out=168B XAUTHuser=use3
+005 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
+002 "westnet-eastnet-ipv4-psk-ikev1" #1: deleting state (STATE_MAIN_I4) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
@@ -82,6 +82,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #4: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
+road #
+ # #5.#6
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
@@ -114,6 +116,8 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #6: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #6: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
+ # #7.#8
+road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
 002 "westnet-eastnet-ipv4-psk-ikev1" #6: deleting state (STATE_QUICK_I2) and NOT sending notification
@@ -145,19 +149,19 @@ road #
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #8: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #8: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
- ping -n -q -c 4 -I 192.0.2.1 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # twice so numbers change
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #8: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
-road #
- echo done
-done
+006 #8: "westnet-eastnet-ipv4-psk-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=168, outBytes=168
 road #
  ipsec status | grep STATE_
+000 #7: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_MAIN_I4 (IKE SA established); RETRANSMIT in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
 000 #8: "westnet-eastnet-ipv4-psk-ikev1":4500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
 road #
  ip xfrm policy
