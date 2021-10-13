@@ -11,32 +11,16 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat /tmp/pluto.log
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
+east #
+ ../../guestbin/wait-for.sh --match '#1: DPD action - clearing connection kind CK_PERMANENT' -- cat /tmp/pluto.log
+"west-east" #1: DPD action - clearing connection kind CK_PERMANENT
+east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32
-	dir out priority 2080703 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32
-	dir fwd priority 2080703 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32
-	dir in priority 2080703 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

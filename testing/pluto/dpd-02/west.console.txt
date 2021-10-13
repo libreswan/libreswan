@@ -11,15 +11,10 @@ west #
  echo "initdone"
 initdone
 west #
- #!/bin/sh
-west #
  # we can transmit in the clear
 west #
- ping -n -q -c 8 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  # bring up the tunnel
 west #
@@ -37,68 +32,46 @@ west #
 west #
  # use the tunnel
 west #
- ping -n -q -c 8 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # show the tunnel!
-west #
- echo "Tunnel should be up"
-Tunnel should be up
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- # Let R_U_THERE packets flow
+ # wait for at least one R_U_THERE packet
 west #
- echo "Waiting 15 seconds..."
-Waiting 15 seconds...
+ ../../guestbin/wait-for.sh --match 'processing informational R_U_THERE' -- cat /tmp/pluto.log
+| processing informational R_U_THERE (36136)
 west #
- sleep 15
-west #
- echo "Setting up block via iptables"
-Setting up block via iptables
+ # set up block via iptables
 west #
  iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
  iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 west #
- # DPD should have triggered now
-west #
- echo "Tunnel should be still be up because we don't do DPD"
-Tunnel should be still be up because we don't do DPD
+ # Tunnel should be still be up because this end doesn't do DPD
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
  # Remove the Blockage
-west #
- echo "Removing block"
-Removing block
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
  iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 west #
- sleep 10
+ # this end still things tunnel is up, when it isn't
 west #
- ping -n -q -c 8 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 0 received, 100% packet loss, time XXXX
-west #
- # Tunnel should be still be up, east rekeyed it
-west #
- echo "Tunnel should be up"
-Tunnel should be up
+ # - responder has dpdactin=clear
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=1344, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- echo done
-done
+ ../../guestbin/ping-once.sh --down 192.1.2.23
+down
+west #
+ ipsec whack --trafficstatus
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=168, id='@east'
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

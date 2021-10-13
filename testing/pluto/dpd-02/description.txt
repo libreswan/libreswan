@@ -1,14 +1,15 @@
 This tests the RFC3706 DPD implementation, ensuring we only enable it
-when both sides support it. Note that we don't have a way for _not_ supporting
-or announcing it. So west and east support DPD, but only east activates it. So
-only probes from east to west (and their replies) should happen. West should
-not send out R_U_THERE requests.
+when both sides support it.  Note that we don't have a way for _not_
+supporting or announcing it.  So west and east support DPD, but only
+east activates it.  So only probes from east to west (and their
+replies) should happen. West should not send out R_U_THERE requests
+and should not detect a dead peer.
 
 Order of Operations:
 
 1) East sets up for tunnel with DPD support.
 2) West initiates tunnel to east, but west does not have DPD enabled.
 3) West sends icmp packets to east, which should work.
-
-
-
+4) West blocks packet flow
+5) East detects dead pear and takes dpdaction=clear
+6) West unblocks packet flow, tries ping which fails
