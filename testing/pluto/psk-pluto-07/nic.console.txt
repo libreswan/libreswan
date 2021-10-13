@@ -1,12 +1,8 @@
-#need swan-prep for ipv6 forwarding
+#!/bin/sh
 nic #
- /testing/guestbin/swan-prep --46
+ # Display the table, so we know it is correct.
 nic #
- ip6tables -F
-nic #
- ip6tables -X
-nic #
- ip6tables -t nat -L
+ iptables -t nat -L
 Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination         
 Chain INPUT (policy ACCEPT)
@@ -15,4 +11,7 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
+nic #
+ echo "initdone"
+initdone
 
