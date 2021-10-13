@@ -453,9 +453,9 @@ kvmplutotest	netkey-vti-07				wip
 kvmplutotest	netkey-vti-08				good
 kvmplutotest	netkey-vti-09				good
 
-kvmplutotest	netkey-tfc-01				good
-kvmplutotest	netkey-tfc-02				good
-kvmplutotest	netkey-tfc-03				good
+kvmplutotest	ikev2-tfc-01				good
+kvmplutotest	ikev2-tfc-02				good
+kvmplutotest	ikev2-tfc-03				good
 
 kvmplutotest	ikev2-xfrmi-01				good
 kvmplutotest	ikev2-xfrmi-02				good
