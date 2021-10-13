@@ -46,9 +46,9 @@ north #
 1v1 "north-east-l2tp" #2: sent Quick Mode request
 004 "north-east-l2tp" #2: IPsec SA established transport mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
 north #
- echo "c server" > /var/run/xl2tpd/l2tp-control
+ # give the kernel messages time to appear
 north #
- sleep 5
+ echo "c server" > /var/run/xl2tpd/l2tp-control ; sleep 5
 north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
