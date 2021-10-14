@@ -292,6 +292,9 @@ struct spd_route {
 	enum routing_t routing; /* level of routing in place */
 	reqid_t reqid;
 	struct list_entry spd_route_list_entry;
+	struct {
+		struct list_entry remote_client;
+	} hash_table_entries;
 };
 
 struct sa_mark {

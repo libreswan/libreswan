@@ -105,18 +105,17 @@ void rehash_connection_that_id(struct connection *c)
 
 static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
-	struct list_head *bucket;
+#if 0
 	if (filter->that_id_eq != NULL) {
 		id_buf idb;
 		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
 		    str_id(filter->that_id_eq, &idb), pri_where(filter->where));
 		hash_t hash = hash_connection_that_id(filter->that_id_eq);
-		bucket = hash_table_bucket(&connection_that_id_hash_table, hash);
-	} else {
-		dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
-		bucket = &connection_serialno_list_head;
+		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
-	return bucket;
+#endif
+	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+	return &connection_serialno_list_head;
 }
 
 static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
@@ -179,40 +178,72 @@ bool next_connection_new2old(struct connection_filter *filter)
  * SPD_ROUTE database.
  */
 
-static void spd_route_jam(struct jambuf *buf, const void *data)
+static void hash_table_jam_spd_route_remote_client(struct jambuf *buf, const void *data);
+
+static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
 {
-	const struct spd_route *spd = data;
-	jam(buf, PRI_CO" SPD_ROUTE", pri_co(spd->connection->serialno));
+	jam(buf, PRI_CO".", pri_co(sr->connection->serialno));
+	jam_selectors(buf, &sr->this.client, &sr->that.client);
 }
 
 static const struct list_info spd_route_list_info = {
 	.name = "spd_route list",
-	.jam = spd_route_jam,
+	.jam = hash_table_jam_spd_route_remote_client,
 };
 
 static struct list_head spd_route_list_head = INIT_LIST_HEAD(&spd_route_list_head,
 							     &spd_route_list_info);
 
+static hash_t hash_spd_route_remote_client(const ip_selector *sr)
+{
+	return hash_thing(sr->bytes, zero_hash);
+}
+
+HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
+
+struct hash_table *const spd_route_hash_tables[] = {
+	&spd_route_remote_client_hash_table,
+};
+
 void add_spd_route_to_db(struct spd_route *sr)
 {
 	sr->spd_route_list_entry = list_entry(&spd_route_list_info, sr);
 	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
+	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
+		add_hash_table_entry(*h, sr);
+	}
 }
 
 void del_spd_route_from_db(struct spd_route *sr, bool valid)
 {
 	if (valid) {
 		remove_list_entry(&sr->spd_route_list_entry);
+		FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
+			del_hash_table_entry(*h, sr);
+		}
 	}
 }
 
-void rehash_spd_route(struct spd_route *sr UNUSED)
+void rehash_spd_route(struct spd_route *sr)
 {
+	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
+		rehash_table_entry(*h, sr);
+	}
 }
 
-static struct list_head *spd_route_filter_head(struct spd_route_filter *filter UNUSED)
+static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 {
-	return &spd_route_list_head;
+	/* select list head */
+	struct list_head *bucket;
+	if (filter->remote_client_range != NULL) {
+		hash_t hash = hash_spd_route_remote_client(filter->remote_client_range);
+		bucket = hash_table_bucket(&spd_route_remote_client_hash_table, hash);
+	} else {
+		/* else other queries? */
+		dbg("FOR_EACH_SPD_ROUTE_... in "PRI_WHERE, pri_where(filter->where));
+		bucket = &spd_route_list_head;
+	}
+	return bucket;
 }
 
 static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
@@ -315,16 +346,17 @@ struct connection *alloc_connection(const char *name, where_t where)
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
-	finish_connection(c, name, t->serialno, where);
 
 	/*
-	 * GRRR: need to wipe out all the cloned table entries!
+	 * XXX: GRRR: need to wipe out all the cloned table entries;
+	 * yet again illustrating why clone_thing() is a bad idea.
 	 */
+	zero_thing(c->serialno_list_entry);
 	zero_thing(c->hash_table_entries);
-	// zero_thing(c->spd.hash_table_entries);
-	// XXX: move things into list_entries
 	zero_thing(c->spd.spd_route_list_entry);
+	zero_thing(c->spd.hash_table_entries);
 
+	finish_connection(c, name, t->serialno, where);
 	return c;
 }
 
@@ -381,6 +413,10 @@ void check_connection(struct connection *c, struct logger *logger)
 void init_connection_db(void)
 {
 	FOR_EACH_ELEMENT(connection_hash_tables, h) {
+		init_hash_table(*h);
+	}
+
+	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
 		init_hash_table(*h);
 	}
 }
