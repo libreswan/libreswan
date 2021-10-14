@@ -149,7 +149,7 @@ static void delete_end(struct end *e)
 
 static void delete_spd_route(struct spd_route **sr, bool first)
 {
-	remove_spd_route_from_db(*sr);
+	del_spd_route_from_db(*sr);
 	delete_end(&(*sr)->this);
 	delete_end(&(*sr)->that);
 	if (!first) {
@@ -238,7 +238,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		delete_spd_route(&sr, /*first?*/sr == &c->spd);
 	}
 
-	remove_connection_from_db(c);
+	del_connection_from_db(c);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {

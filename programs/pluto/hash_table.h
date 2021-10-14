@@ -84,12 +84,14 @@ hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
 /*
  * Maintain the table.
  *
- * Use the terms "add" and "del" as this table has no implied
- * ordering.  rehash does "del" then "add".
+ * Use the terms "add" and "del" as this table has true ordering
+ * beyond new is most recent insertion.  Rehash does "del" then "add".
  */
+
 void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
 void rehash_table_entry(struct hash_table *table, void *data);
+void check_hash_table(struct hash_table *table, struct logger *logger);
 
 /*
  * Return the head of the list entries that match HASH.

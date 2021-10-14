@@ -28,6 +28,7 @@ void init_state_db(void);
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st);
+void check_state_db(struct logger *logger);
 
 /*
  * List of all valid states; can be iterated in old-to-new and

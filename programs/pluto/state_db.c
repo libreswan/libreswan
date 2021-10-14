@@ -20,7 +20,6 @@
 #include "connections.h"
 #include "hash_table.h"
 
-static struct hash_table *const state_hash_tables[];
 static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
 
 static void jam_state_serialno(struct jambuf *buf, const struct state *st)
@@ -448,6 +447,13 @@ void del_state_from_db(struct state *st)
 	remove_list_entry(&st->st_serialno_list_entry);
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
 		del_hash_table_entry(state_hash_tables[h], st);
+	}
+}
+
+void check_state_db(struct logger *logger)
+{
+	FOR_EACH_ELEMENT(h, state_hash_tables) {
+		check_hash_table(*h, logger);
 	}
 }
 

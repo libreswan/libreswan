@@ -900,6 +900,10 @@ void list_state_events(struct show *s, monotime_t now);
  * - .st can be deleted between calls
  * - some filters have been optimized using hashing, but
  * - worst case is it scans through all states
+ *
+ * Note: the ORDER is based on insertion; so when an entry gets
+ * re-hashed (i.e., deleted and then inserted) it also becomes the
+ * newest entry.
  */
 
 struct state_filter {

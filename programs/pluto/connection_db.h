@@ -23,13 +23,16 @@ void init_connection_db(void);
 
 struct connection *alloc_connection(const char *name, where_t where);
 struct connection *clone_connection(const char *name, struct connection *template, where_t where);
-void remove_connection_from_db(struct connection *c);
-
-void rehash_connection_that_id(struct connection *c);
 
 struct spd_route *clone_spd_route(struct connection *c, where_t where);
+
 void add_spd_route_to_db(struct spd_route *sr);
-void remove_spd_route_from_db(struct spd_route *sr);
 void rehash_spd_route(struct spd_route *sr);
+void del_spd_route_from_db(struct spd_route *sr);
+
+void add_connection_to_db(struct connection *c);
+void rehash_connection_that_id(struct connection *c);
+void del_connection_from_db(struct connection *c);
+void check_connection_db(struct logger *logger);
 
 #endif

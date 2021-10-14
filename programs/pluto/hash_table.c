@@ -19,6 +19,8 @@
 #include "defs.h"
 #include "hash_table.h"
 
+#include "log.h"
+
 const hash_t zero_hash = { 0 };
 
 void init_hash_table(struct hash_table *table)
@@ -67,6 +69,28 @@ void del_hash_table_entry(struct hash_table *table, void *data)
 
 void rehash_table_entry(struct hash_table *table, void *data)
 {
+	/* XXX: this moves the entry to the front of the table */
 	del_hash_table_entry(table, data);
 	add_hash_table_entry(table, data);
+}
+
+void check_hash_table(struct hash_table *table, struct logger *logger)
+{
+	llog(RC_LOG, logger, "Checking hash_table %s", table->info.name);
+	for (unsigned n = 0; n < table->nr_slots; n++) {
+		const struct list_head *table_bucket = &table->slots[n];
+		void *data;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, data) {
+			hash_t hash = table->hasher(data);
+			struct list_head *hash_bucket = hash_table_bucket(table, hash);
+			if (hash_bucket != table_bucket) {
+				JAMBUF(buf) {
+					jam(buf, " wrong bucket: ");
+					table->info.jam(buf, data);
+					llog_pexpect(logger, HERE, PRI_SHUNK,
+						     pri_shunk(jambuf_as_shunk(buf)));
+				}
+			}
+		}
+	}
 }

@@ -176,41 +176,6 @@ bool next_connection_new2old(struct connection_filter *filter)
 }
 
 /*
- * Maintain the contents of the hash tables.
- *
- * Unlike serialno, the IKE SPI[ir] keys can change over time.
- */
-
-static struct hash_table *const connection_hash_tables[] = {
-	&connection_serialno_hash_table,
-	&connection_that_id_hash_table,
-};
-
-static void add_connection_to_db(struct connection *c)
-{
-	dbg("Connection DB: adding connection \"%s\" "PRI_CO"", c->name, pri_co(c->serialno));
-	passert(c->serialno != UNSET_CO_SERIAL);
-
-	/* serial NR list, entries are only added */
-	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
-	insert_list_entry(&connection_serialno_list_head,
-			  &c->serialno_list_entry);
-
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		add_hash_table_entry(connection_hash_tables[h], c);
-	}
-}
-
-void remove_connection_from_db(struct connection *c)
-{
-	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
-	remove_list_entry(&c->serialno_list_entry);
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		del_hash_table_entry(connection_hash_tables[h], c);
-	}
-}
-
-/*
  * SPD_ROUTE database.
  */
 
@@ -235,9 +200,9 @@ void add_spd_route_to_db(struct spd_route *sr)
 			  &sr->spd_route_list_entry);
 }
 
-void remove_spd_route_from_db(struct spd_route *spd)
+void del_spd_route_from_db(struct spd_route *sr)
 {
-	remove_list_entry(&spd->spd_route_list_entry);
+	remove_list_entry(&sr->spd_route_list_entry);
 }
 
 void rehash_spd_route(struct spd_route *sr UNUSED)
@@ -339,6 +304,48 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 {
 	struct connection *c = clone_thing(*t, where->func);
 	return finish_connection(c, name, where);
+}
+
+/*
+ * Maintain the contents of the hash tables.
+ *
+ * Unlike serialno, the IKE SPI[ir] keys can change over time.
+ */
+
+static struct hash_table *const connection_hash_tables[] = {
+	&connection_serialno_hash_table,
+	&connection_that_id_hash_table,
+};
+
+void add_connection_to_db(struct connection *c)
+{
+	dbg("Connection DB: adding connection \"%s\" "PRI_CO"", c->name, pri_co(c->serialno));
+	passert(c->serialno != UNSET_CO_SERIAL);
+
+	/* serial NR list, entries are only added */
+	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
+	insert_list_entry(&connection_serialno_list_head,
+			  &c->serialno_list_entry);
+
+	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
+		add_hash_table_entry(connection_hash_tables[h], c);
+	}
+}
+
+void del_connection_from_db(struct connection *c)
+{
+	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
+	remove_list_entry(&c->serialno_list_entry);
+	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
+		del_hash_table_entry(connection_hash_tables[h], c);
+	}
+}
+
+void check_connection_db(struct logger *logger)
+{
+	FOR_EACH_ELEMENT(h, connection_hash_tables) {
+		check_hash_table(*h, logger);
+	}
 }
 
 void init_connection_db(void)
