@@ -1,7 +1,0 @@
-This is basic-pluto-01, but each side has been asked to record its whack
-options to a file.   This is a test of the:
-	ipsec whack --whackrecord <file>
-
-feature which is used to collect state information such that it can be used for
-unit testing.
-
