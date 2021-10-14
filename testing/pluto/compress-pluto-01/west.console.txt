@@ -31,10 +31,10 @@ west #
 000 "westnet-eastnet-compress":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet-compress":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-compress":   sec_label:unset;
-000 "westnet-eastnet-compress":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-compress":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-compress":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-compress":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-compress":   policy: IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-compress":   policy: IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "westnet-eastnet-compress":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-compress":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-compress":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -52,7 +52,7 @@ west #
 002 "westnet-eastnet-compress" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-compress" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-compress" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-compress" #2: sent Quick Mode request
 004 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #

@@ -29,17 +29,25 @@ east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto udp sport 1701 dport 1701 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.254/32 proto udp sport 1701 dport 1701

@@ -43,15 +43,23 @@ west NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid 0 mode transport
@@ -87,10 +95,10 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 2001:db8:0:1::/64 dev eth0 proto kernel metric 256
-2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
+2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1 metric 1024
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
-fe80::/64 dev eth1 proto kernel metric 256
 fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
 default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
@@ -104,15 +112,23 @@ west NOW
 XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 32 
+	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid 0 mode transport
@@ -148,10 +164,10 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 2001:db8:0:1::/64 dev eth0 proto kernel metric 256
-2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1
+2001:db8:0:2::/64 via 2001:db8:1:2::23 dev eth1 metric 1024
 2001:db8:1:2::/64 dev eth1 proto kernel metric 256
-fe80::/64 dev eth1 proto kernel metric 256
 fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
 default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes

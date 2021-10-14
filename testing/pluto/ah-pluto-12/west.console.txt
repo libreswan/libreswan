@@ -35,7 +35,7 @@ west #
 002 "westnet-eastnet-ah-sha1" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ah-sha1" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-ah-sha1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-ah-sha1" #2: initiating Quick Mode IKEv1+RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ah-sha1" #2: initiating Quick Mode IKEv1+RSASIG+AUTHENTICATE+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ah-sha1" #2: sent Quick Mode request
 004 "westnet-eastnet-ah-sha1" #2: IPsec SA established tunnel mode {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
@@ -53,12 +53,20 @@ west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec align4
+	replay-window 0 flag af-unspec align4
 	auth-trunc hmac(sha1) 0xHASHKEY 96
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.45 dst 192.1.2.23
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec align4
+	replay-window 0 flag af-unspec align4
 	auth-trunc hmac(sha1) 0xHASHKEY 96
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 2084814 ptype main

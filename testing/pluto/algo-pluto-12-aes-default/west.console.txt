@@ -26,7 +26,7 @@ west #
 002 "westnet-eastnet-aes-default" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-default" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-aes-default" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-default" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes-default" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-aes-default" #2: sent Quick Mode request
 004 "westnet-eastnet-aes-default" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -49,7 +49,7 @@ west #
 002 "westnet-eastnet-aes-128" #3: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-128" #3: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-aes-128" #3: IKE SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-128" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes-128" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-aes-128" #4: sent Quick Mode request
 004 "westnet-eastnet-aes-128" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -72,7 +72,7 @@ west #
 002 "westnet-eastnet-aes-256" #5: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-256" #5: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-aes-256" #5: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-256" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes-256" #6: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-aes-256" #6: sent Quick Mode request
 004 "westnet-eastnet-aes-256" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
@@ -95,7 +95,7 @@ west #
 002 "westnet-eastnet-aes-mix-1" #7: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-1" #7: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-aes-mix-1" #7: IKE SA established {auth=RSA_SIG cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-aes-mix-1" #8: sent Quick Mode request
 004 "westnet-eastnet-aes-mix-1" #8: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
@@ -118,7 +118,7 @@ west #
 002 "westnet-eastnet-aes-mix-2" #9: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aes-mix-2" #9: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-aes-mix-2" #9: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-aes-mix-2" #10: sent Quick Mode request
 004 "westnet-eastnet-aes-mix-2" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

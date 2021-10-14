@@ -34,7 +34,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
@@ -83,7 +83,7 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 004 "westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
@@ -106,10 +106,10 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
 000 "westnet-eastnet-ipv4-psk-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "westnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-ipv4-psk-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-ipv4-psk-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "westnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,32; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ipv4-psk-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ipv4-psk-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
