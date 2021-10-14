@@ -13,7 +13,7 @@ b end
   n
   /^[a-z]* #/ b end
 
-  # some versions print the flag 80, others print esp
+  # some versions print the flag 80, others print esn
   /replay-window [0-9]* flag / s/\( flag.*\) 80/\1 esn/
 
   # fix up keys and other magic numbers; see also ipsec look

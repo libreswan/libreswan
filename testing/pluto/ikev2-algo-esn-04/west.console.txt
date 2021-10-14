@@ -25,7 +25,7 @@ west #
 002 "replay": added IKEv2 connection
 west #
  ipsec auto --status |grep replay_window
-000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 256; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -45,10 +45,14 @@ west #
  echo done
 done
 west #
- # replay-window will show up as 0 when ESN is enabled due to kernel bug.
+ # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
 west #
- ip xfrm state |grep replay-window
+ ip xfrm state |grep replay
 	replay-window 0 flag af-unspec esn
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
 	replay-window 0 flag af-unspec esn
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
 west #
  

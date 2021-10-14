@@ -1,0 +1,27 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add replay
+002 "replay": added IKEv2 connection
+east #
+ ipsec auto --status | grep replay_window
+000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+east #
+ echo "initdone"
+initdone
+east #
+ # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
+east #
+ ip xfrm state |grep replay
+	replay-window 0 flag af-unspec
+	anti-replay esn context:
+	 replay_window 128, bitmap-length 4
+	replay-window 0 flag af-unspec
+	anti-replay esn context:
+	 replay_window 128, bitmap-length 4
+east #
+ 

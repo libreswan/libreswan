@@ -1097,6 +1097,12 @@ enum ikev1_ipsec_attr {
 	COMPRESS_PRIVATE_ALG = 9, /* B/V */
 	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
 		ECN_TUNNEL_or_old_SECCTX = ECN_TUNNEL,
+	ESN_64BIT_SEQNUM = 11, /* RFC 4304 */
+	IKEv1_IPSEC_ATTR_UNSPEC_12 = 12, /* Maybe Tero knows why it was skipped? */
+	SIG_ENC_ALGO_VAL = 13, /* RFC 4359 */
+	ADDRESS_PRESERVATION = 14, /* RFC 6407 */
+	SA_DIRECTION = 15, /* RFC 6407 */
+
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 

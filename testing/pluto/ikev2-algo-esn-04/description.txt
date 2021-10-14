@@ -1,4 +1,4 @@
 As ikev2-algo-esn-01 but now we test with both esn enabled and a replay-window
-of 64.
+of 256.
 
-The connection should establish
+The connection should establish with ESN and custom replay window

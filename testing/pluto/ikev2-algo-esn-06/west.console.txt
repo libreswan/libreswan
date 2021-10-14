@@ -25,7 +25,7 @@ west #
 002 "replay": added IKEv2 connection
 west #
  ipsec auto --status |grep replay_window
-000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 64; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "replay":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 256; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 west #
  ipsec whack --impair suppress-retransmits
 west #
@@ -37,7 +37,7 @@ west #
 1v2 "replay" #1: sent IKE_SA_INIT request
 1v2 "replay" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "replay" #1: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
-004 "replay" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "replay" #2: established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -45,10 +45,14 @@ west #
  echo done
 done
 west #
- # replay-window will show up as 0 when ESN is enabled due to kernel bug.
+ # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
 west #
- ip xfrm state |grep replay-window
-	replay-window 0 flag af-unspec
-	replay-window 0 flag af-unspec
+ ip xfrm state |grep replay
+	replay-window 0 flag af-unspec esn
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
+	replay-window 0 flag af-unspec esn
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
 west #
  

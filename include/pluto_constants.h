@@ -363,7 +363,7 @@ typedef enum {
 #define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
 #define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
 
-#define IPSEC_SA_DEFAULT_REPLAY_WINDOW 32
+#define IPSEC_SA_DEFAULT_REPLAY_WINDOW 128 /* for Linux, requires 2.6.39+ */
 
 #define IKE_V2_OVERLAPPING_WINDOW_SIZE	1 /* our default for rfc 7296 # 2.3 */
 

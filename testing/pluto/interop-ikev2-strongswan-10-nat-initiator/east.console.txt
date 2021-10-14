@@ -16,13 +16,13 @@ east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
+	replay-window 0 flag af-unspec esn
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0

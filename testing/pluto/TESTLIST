@@ -275,12 +275,15 @@ kvmplutotest	ikev1-algo-05-3des-sha2			good
 kvmplutotest	interop-ikev2-strongswan-aes_xcbc	good
 
 # ESN tests
+kvmplutotest	ikev2-algo-esn-00			good
 kvmplutotest	ikev2-algo-esn-01			good
 kvmplutotest	ikev2-algo-esn-02			good
 kvmplutotest	ikev2-algo-esn-03			good
 kvmplutotest	ikev2-algo-esn-04			good
 kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	ikev2-algo-esn-06			good
+kvmplutotest	ikev2-algo-esn-07			good
+kvmplutotest	ikev2-algo-esn-08			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
 
 
@@ -450,9 +453,9 @@ kvmplutotest	netkey-vti-07				wip
 kvmplutotest	netkey-vti-08				good
 kvmplutotest	netkey-vti-09				good
 
-kvmplutotest	netkey-tfc-01				good
-kvmplutotest	netkey-tfc-02				good
-kvmplutotest	netkey-tfc-03				good
+kvmplutotest	ikev2-tfc-01				good
+kvmplutotest	ikev2-tfc-02				good
+kvmplutotest	ikev2-tfc-03				good
 
 kvmplutotest	ikev2-xfrmi-01				good
 kvmplutotest	ikev2-xfrmi-02				good
@@ -480,8 +483,8 @@ kvmplutotest	ikev1-xfrmi-04-aggr			good
 kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
 
 
-kvmplutotest	netkey-decap-dscp-01			good
-kvmplutotest	netkey-nopmtudisc-01			good
+kvmplutotest	ikev2-decap-dscp-01			good
+kvmplutotest	ikev2-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
 kvmplutotest	ikev2-44-switch-initiator-strongswan	good
@@ -492,7 +495,7 @@ kvmplutotest	ikev2-frag-03-retrans			good
 kvmplutotest	ikev2-frag-04-nofrag			good
 
 kvmplutotest	dynamic-iface-01			good
-kvmplutotest	removed-iface-01			good
+kvmplutotest	ikev2-removed-iface-01			good
 
 kvmplutotest	ikev1-replay-window			good
 kvmplutotest	ikev2-replay-window			good
@@ -852,7 +855,7 @@ kvmplutotest    algo-pluto-01          good
 kvmplutotest    algo-pluto-04          wip
 kvmplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
-kvmplutotest    algo-pluto-09          good
+kvmplutotest    ikev2-algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
 kvmplutotest    algo-pluto-12-aes-default	good
 kvmplutotest    algo-pluto-13-invalid-3des	good
@@ -962,7 +965,7 @@ kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 kvmplutotest	ipv6-addresspool-01-ikev2		good
 kvmplutotest	ipv6-addresspool-02-ikev2		good
 kvmplutotest	ipv6-addresspool-02-3-clients-ikev2	good
-kvmplutotest	ipv6-addresspool-04-src-address-selection good
+kvmplutotest	ikev2-ipv6-addresspool-04-src-address-selection good
 kvmplutotest 	ipv6-addresspool-05-dual-stack		wip
 
 
@@ -1125,7 +1128,7 @@ kvmplutotest	nss-cert-04-ikev2		good
 kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
-kvmplutotest	nss-cert-08-mismatch		good
+kvmplutotest	ikev2-nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
@@ -1167,7 +1170,7 @@ kvmplutotest	nss-cert-badca-01		good
 
 # this test is really "good", but installing softhsm causes lots
 # of crashers in pluto shutdown, so we cannot run it for now.
-kvmplutotest	nss-cert-pkcs11-uri-01		skiptest
+kvmplutotest	ikev2-nss-cert-pkcs11-uri-01		skiptest
 
 kvmplutotest	ikev1-2behind-nat-01		wip
 

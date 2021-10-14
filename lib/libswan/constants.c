@@ -951,9 +951,12 @@ static const char *const ipsec_attr_name[] = {
 	"KEY_ROUNDS",
 	"COMPRESS_DICT_SIZE",
 	"COMPRESS_PRIVATE_ALG",
-#ifdef HAVE_LABELED_IPSEC
 	"ECN_TUNNEL or old SECCTX",
-#endif
+	"ESN_64BIT_SEQNUM",
+	"IKEv1_IPSEC_ATTR_UNSPEC_12", /* Maybe Tero knows why it was skipped? */
+	"SIG_ENC_ALGO_VAL",
+	"ADDRESS_PRESERVATION",
+	"SA_DIRECTION",
 };
 
 /*
@@ -970,12 +973,14 @@ static const char *const ipsec_var_attr_name[] = {
 	NULL,	/* KEY_ROUNDS */
 	NULL,	/* COMPRESS_DICT_SIZE */
 	"COMPRESS_PRIVATE_ALG (variable length)",
-#ifdef HAVE_LABELED_IPSEC
 	"NULL", /* ECN_TUNNEL_or_old_SECCTX */
-#endif
+	NULL, /* ESN_64BIT_SEQNUM */
+	NULL, /* IKEv1_IPSEC_ATTR_UNSPEC_12 */
+	NULL, /* SIG_ENC_ALGO_VAL */
+	NULL, /* ADDRESS_PRESERVATION */
+	NULL, /* SA_DIRECTION */
 };
 
-#ifdef HAVE_LABELED_IPSEC
 static const char *const ipsec_private_attr_name[] = {
 	"SECCTX" /* 32001 */
 };
@@ -995,31 +1000,18 @@ static enum_names ipsec_private_attr_names = {
 	NULL, /* prefix */
 	&ipsec_private_attr_names_tv
 };
-#endif
 
 static enum_names ipsec_attr_desc_tv = {
 	SA_LIFE_TYPE + ISAKMP_ATTR_AF_TV,
-#ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL_or_old_SECCTX + ISAKMP_ATTR_AF_TV,
-#else
-	COMPRESS_PRIVATE_ALG + ISAKMP_ATTR_AF_TV,
-#endif
+	SA_DIRECTION + ISAKMP_ATTR_AF_TV,
 	ARRAY_REF(ipsec_attr_name),
 	NULL, /* prefix */
-#ifdef HAVE_LABELED_IPSEC
 	&ipsec_private_attr_names
-#else
-	NULL
-#endif
 };
 
 enum_names ipsec_attr_names = {
 	SA_LIFE_TYPE,
-#ifdef HAVE_LABELED_IPSEC
-	ECN_TUNNEL_or_old_SECCTX,
-#else
-	COMPRESS_PRIVATE_ALG,
-#endif
+	SA_DIRECTION,
 	ARRAY_REF(ipsec_var_attr_name),
 	NULL, /* prefix */
 	&ipsec_attr_desc_tv
@@ -1040,6 +1032,11 @@ enum_names *const ipsec_attr_val_descs[] = {
 #ifdef HAVE_LABELED_IPSEC
 	NULL,	/* ECN_TUNNEL_or_old_SECCTX */
 #endif
+	NULL, /* ESN_64BIT_SEQNUM */
+	NULL, /* IKEv1_IPSEC_ATTR_UNSPEC_12 */
+	NULL, /* SIG_ENC_ALGO_VAL */
+	NULL, /* ADDRESS_PRESERVATION */
+	NULL, /* SA_DIRECTION */
 };
 
 const unsigned int ipsec_attr_val_descs_roof = elemsof(ipsec_attr_val_descs);
