@@ -41,7 +41,7 @@ west #
 002 "westnet-eastnet-vti" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-vti" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-vti" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-vti" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-vti" #2: sent Quick Mode request
 002 "westnet-eastnet-vti" #2: up-client output: net.ipv4.conf.vti0.disable_policy = 1
 002 "westnet-eastnet-vti" #2: up-client output: net.ipv4.conf.vti0.rp_filter = 0
@@ -74,7 +74,7 @@ west #
 west #
  # there should be no vti0 device left
 west #
- ip tun | sort
+ ip tun | grep vti | sort
 ip_vti0: ip/ip remote any local any ttl inherit nopmtudisc key 0
 vti0: ip/ip remote 192.1.2.23 local 192.1.2.45 ttl inherit key 20
 west #
