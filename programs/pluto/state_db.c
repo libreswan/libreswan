@@ -247,15 +247,20 @@ static hash_t hash_state_ike_spis(const ike_spis_t *ike_spis)
 	return hash_thing(*ike_spis, zero_hash);
 }
 
+static void jam_ike_spis(struct jambuf *buf, const ike_spis_t *ike_spis)
+{
+	jam_dump_bytes(buf, ike_spis->initiator.bytes,
+		       sizeof(ike_spis->initiator.bytes));
+	jam(buf, "  ");
+	jam_dump_bytes(buf, ike_spis->responder.bytes,
+		       sizeof(ike_spis->responder.bytes));
+}
+
 static void jam_state_ike_spis(struct jambuf *buf, const struct state *st)
 {
 	jam_state(buf, st);
 	jam(buf, ": ");
-	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
-		       sizeof(st->st_ike_spis.initiator.bytes));
-	jam(buf, "  ");
-	jam_dump_bytes(buf, st->st_ike_spis.responder.bytes,
-		       sizeof(st->st_ike_spis.responder.bytes));
+	jam_ike_spis(buf, &st->st_ike_spis);
 }
 
 HASH_TABLE(state, ike_spis, .st_ike_spis, STATE_TABLE_SIZE);
@@ -303,12 +308,21 @@ static struct list_head *filter_head(struct state_filter *filter)
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "FOR_EACH_STATE[ike_spis=");
+			jam_ike_spis(buf, filter->ike_spis);
+			jam(buf, "]... in "PRI_WHERE, pri_where(filter->where));
+		}
 		hash_t hash = hash_state_ike_spis(filter->ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->ike != NULL) {
+		dbg("FOR_EACH_STATE[ike="PRI_SO"]... in "PRI_WHERE,
+		    pri_so(filter->ike->sa.st_serialno), pri_where(filter->where));
 		hash_t hash = hash_state_ike_spis(&filter->ike->sa.st_ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->connection_serialno != 0) {
+		dbg("FOR_EACH_STATE[connection_serialno="PRI_CO"]... in "PRI_WHERE,
+		    pri_co(filter->connection_serialno), pri_where(filter->where));
 		hash_t hash = hash_state_connection_serialno(&filter->connection_serialno);
 		bucket = hash_table_bucket(&state_connection_serialno_hash_table, hash);
 	} else {
