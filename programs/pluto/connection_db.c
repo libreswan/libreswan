@@ -107,11 +107,14 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 {
 	struct list_head *bucket;
 	if (filter->that_id_eq != NULL) {
+		id_buf idb;
+		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
+		    str_id(filter->that_id_eq, &idb), pri_where(filter->where));
 		hash_t hash = hash_connection_that_id(filter->that_id_eq);
 		bucket = hash_table_bucket(&connection_that_id_hash_table, hash);
 	} else {
-		bucket = &connection_serialno_list_head;
 		dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+		bucket = &connection_serialno_list_head;
 	}
 	return bucket;
 }
