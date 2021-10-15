@@ -348,6 +348,13 @@ void check_connection_db(struct logger *logger)
 	}
 }
 
+void check_connection(struct connection *c, struct logger *logger)
+{
+	FOR_EACH_ELEMENT(h, connection_hash_tables) {
+		check_hash_table_entry(*h, c, logger);
+	}
+}
+
 void init_connection_db(void)
 {
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {

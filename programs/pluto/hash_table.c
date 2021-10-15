@@ -15,7 +15,6 @@
 
 #include <stdint.h>
 
-
 #include "defs.h"
 #include "hash_table.h"
 
@@ -74,23 +73,64 @@ void rehash_table_entry(struct hash_table *table, void *data)
 	add_hash_table_entry(table, data);
 }
 
-void check_hash_table(struct hash_table *table, struct logger *logger)
+/*
+ * Check that the data hashes to the correct bucket.
+ *
+ * (Remember, since there's only one list entry, the data can be in
+ * at-most one bucket at a time).
+ */
+
+void check_hash_table_entry(struct hash_table *table, void *data, struct logger *logger)
 {
-	llog(RC_LOG, logger, "Checking hash_table %s", table->info.name);
+	hash_t hash = table->hasher(data);
+	/* not inserted (might passert) */
+	if (detached_list_entry(table->entry(data))) {
+		return;
+	}
+	/* hope for the best ... */
+	{
+		struct list_head *data_bucket = hash_table_bucket(table, hash);
+		void *bucket_data;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(data_bucket, bucket_data) {
+			if (data == bucket_data) {
+				return;
+			}
+		}
+	}
+	/* ... but plan for the worst */
 	for (unsigned n = 0; n < table->nr_slots; n++) {
 		const struct list_head *table_bucket = &table->slots[n];
-		void *data;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, data) {
-			hash_t hash = table->hasher(data);
-			struct list_head *hash_bucket = hash_table_bucket(table, hash);
-			if (hash_bucket != table_bucket) {
+		void *bucket_data;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
+			if (data == bucket_data) {
 				JAMBUF(buf) {
-					jam(buf, " wrong bucket: ");
+					jam(buf, "%s has data in the wrong bucket: ",
+					    table->info.name);
 					table->info.jam(buf, data);
 					llog_pexpect(logger, HERE, PRI_SHUNK,
 						     pri_shunk(jambuf_as_shunk(buf)));
 				}
+				return;
 			}
+		}
+	}
+	JAMBUF(buf) {
+		/* it might be elsewhere */
+		jam(buf, "%s is missing data: ", table->info.name);
+		table->info.jam(buf, data);
+		llog_pexpect(logger, HERE, PRI_SHUNK,
+			     pri_shunk(jambuf_as_shunk(buf)));
+	}
+}
+
+void check_hash_table(struct hash_table *table, struct logger *logger)
+{
+	for (unsigned n = 0; n < table->nr_slots; n++) {
+		const struct list_head *table_bucket = &table->slots[n];
+		void *bucket_data;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
+			/* overkill */
+			check_hash_table_entry(table, bucket_data, logger);
 		}
 	}
 }

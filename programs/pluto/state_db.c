@@ -457,6 +457,13 @@ void check_state_db(struct logger *logger)
 	}
 }
 
+void check_state(struct state *st, struct logger *logger)
+{
+	FOR_EACH_ELEMENT(h, state_hash_tables) {
+		check_hash_table_entry(*h, st, logger);
+	}
+}
+
 void init_state_db(void)
 {
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {

@@ -33,6 +33,8 @@ void del_spd_route_from_db(struct spd_route *sr);
 void add_connection_to_db(struct connection *c);
 void rehash_connection_that_id(struct connection *c);
 void del_connection_from_db(struct connection *c);
+
 void check_connection_db(struct logger *logger);
+void check_connection(struct connection *connection, struct logger *logger);
 
 #endif
