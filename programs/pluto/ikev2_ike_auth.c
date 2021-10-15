@@ -1041,7 +1041,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 		} else if (!uniqueIDs) {
 			dbg("ignoring initial contact: uniqueIDs disabled");
 		} else {
-			struct state *old_p2 = state_with_serialno(c->newest_ipsec_sa);
+			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {

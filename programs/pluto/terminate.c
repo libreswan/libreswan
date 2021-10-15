@@ -76,7 +76,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 		llog(RC_LOG, c->logger,
 		     "IKE SA is shared - only terminating IPsec SA");
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
-			struct state *st = state_with_serialno(c->newest_ipsec_sa);
+			struct state *st = state_by_serialno(c->newest_ipsec_sa);
 			/* XXX: something better? */
 			close_any(&st->st_logger->global_whackfd);
 			st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);

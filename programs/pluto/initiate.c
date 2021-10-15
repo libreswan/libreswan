@@ -34,7 +34,6 @@
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
 #include "host_pair.h"
-#include "state_db.h"
 #include "orient.h"
 #include "ikev1.h"			/* for aggr_outI1() and main_outI1() */
 #include "ikev1_quick.h"		/* for quick_outI1() */
@@ -1076,7 +1075,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* do not touch what is not broken */
-	struct state *newest_ike_sa = state_with_serialno(c->newest_ike_sa);
+	struct state *newest_ike_sa = state_by_serialno(c->newest_ike_sa);
 	if (newest_ike_sa != NULL &&
 	    (IS_IKE_SA_ESTABLISHED(newest_ike_sa) ||
 	     IS_V1_ISAKMP_SA_ESTABLISHED(newest_ike_sa))) {

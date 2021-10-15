@@ -88,7 +88,6 @@
 #include "addresspool.h"
 
 #include "pluto_stats.h"
-#include "state_db.h"
 
 #include "nss_cert_reread.h"
 #include "send.h"			/* for impair: send_keepalive() */
@@ -555,7 +554,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_deletestate) {
 		dbg_whack(s, "start: deletestate #%lu", m->whack_deletestateno);
 		struct state *st =
-			state_with_serialno(m->whack_deletestateno);
+			state_by_serialno(m->whack_deletestateno);
 
 		if (st == NULL) {
 			llog(RC_UNKNOWN_NAME, logger, "no state #%lu to delete",

@@ -41,7 +41,6 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "ikev2_ike_auth.h"
-#include "state_db.h"
 
 #define LDNS_RR_TYPE_A 1
 #define LDNS_RR_TYPE_IPSECKEY 45
@@ -63,7 +62,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 {
 	passert(dns_pubkeys != NULL);
 
-	const struct state *st = state_with_serialno(dnsr->so_serial);
+	const struct state *st = state_by_serialno(dnsr->so_serial);
 	const struct id *keyid = &st->st_connection->spd.that.id;
 
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
@@ -122,7 +121,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 
 static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 {
-	struct state *st = state_with_serialno(dnsr->so_serial);
+	struct state *st = state_by_serialno(dnsr->so_serial);
 	ip_address ipaddr;
 	const struct ip_info *afi = endpoint_type(&st->st_remote_endpoint);
 

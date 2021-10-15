@@ -21,7 +21,6 @@
 #include "ikev2_msgid.h"
 #include "log.h"
 #include "ikev2.h"		/* for complete_v2_state_transition() */
-#include "state_db.h"		/* for ike_sa_by_serialno() */
 
 static callback_cb initiate_next;		/* type assertion */
 

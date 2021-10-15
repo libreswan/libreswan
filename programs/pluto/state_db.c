@@ -77,6 +77,13 @@ static hash_t hash_state_serialno(const so_serial_t *serialno)
 
 HASH_TABLE(state, serialno, .st_serialno, STATE_TABLE_SIZE);
 
+/*
+ * Find the state object with this serial number.  This allows state
+ * object references that don't turn into dangerous dangling pointers:
+ * reference a state by its serial number.  Returns NULL if there is
+ * no such state.
+ */
+
 struct state *state_by_serialno(so_serial_t serialno)
 {
 	/*

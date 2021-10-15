@@ -165,7 +165,6 @@
 #include "ip_selector.h"
 #include "unpack.h"
 #include "pending.h"
-#include "state_db.h"
 #include "connection_db.h"		/* for rehash_connection_that_id() */
 
 #ifdef HAVE_NM
@@ -2583,8 +2582,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (!st->st_v1_msgid.reserved &&
 		    IS_CHILD_SA(st) &&
 		    st->st_v1_msgid.id != v1_MAINMODE_MSGID) {
-			struct state *p1st = state_with_serialno(
-				st->st_clonedfrom);
+			struct state *p1st = state_by_serialno(st->st_clonedfrom);
 
 			if (p1st != NULL) {
 				/* do message ID reservation */

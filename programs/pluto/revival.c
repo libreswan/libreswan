@@ -38,7 +38,6 @@
 #include "iface.h"
 #include "initiate.h"			/* for initiate_connection() */
 #include "revival.h"
-#include "state_db.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
 #include "ipsec_doi.h"
 

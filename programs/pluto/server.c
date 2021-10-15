@@ -73,7 +73,6 @@
 #include "monotime.h"
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
-#include "state_db.h"
 #include "iface.h"
 #include "server_fork.h"
 #include "pluto_shutdown.h"
@@ -613,7 +612,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 	 * XXX: Don't confuse this and the "callback") code path.
 	 * This unsuspends MD, "callback" does not.
 	 */
-	struct state *st = state_with_serialno(e->serialno);
+	struct state *st = state_by_serialno(e->serialno);
 	if (st == NULL) {
 		threadtime_t start = threadtime_start();
 		stf_status status = e->callback(NULL, NULL, e->context);
@@ -741,7 +740,7 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 		 * - this does not unsuspend MD, "resume" does.
 		 */
 		dbg("processing callback %s for #%lu", e.story, e.serialno);
-		st = state_with_serialno(e.serialno);
+		st = state_by_serialno(e.serialno);
 	}
 
 	threadtime_t start = threadtime_start();

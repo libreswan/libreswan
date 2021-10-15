@@ -747,7 +747,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	pexpect(unused_md == NULL); /* no packet */
 	passert(st != NULL);
 
-	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
+	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
 	bool has_client = (c->spd.this.has_client ||

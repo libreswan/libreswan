@@ -34,7 +34,6 @@
 #include "server.h"
 #include "ikev2.h"			/* for struct v2_state_transition */
 #include "ikev2_liveness.h"
-#include "state_db.h"			/* for state_by_serialno() */
 #include "ikev2_states.h"
 
 static stf_status send_v2_liveness_request(struct ike_sa *ike,

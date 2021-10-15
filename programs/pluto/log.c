@@ -32,7 +32,6 @@
 
 #include "defs.h"
 #include "log.h"
-#include "state_db.h"
 #include "connections.h"
 #include "state.h"
 #include "kernel.h"	/* for kernel_ops */

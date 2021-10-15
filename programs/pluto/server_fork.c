@@ -36,7 +36,6 @@
 #include "server_fork.h"
 #include "hash_table.h"
 #include "log.h"
-#include "state_db.h"
 #include "state.h"		/* for unsuspend_md() */
 #include "demux.h"		/* for release_any_md() */
 #include "pluto_timing.h"

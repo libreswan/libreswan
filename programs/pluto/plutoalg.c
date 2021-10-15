@@ -157,7 +157,7 @@ void show_kernel_alg_connection(struct show *s,
 		}
 	}
 
-	const struct state *st = state_with_serialno(c->newest_ipsec_sa);
+	const struct state *st = state_by_serialno(c->newest_ipsec_sa);
 
 	if (st != NULL && st->st_esp.present) {
 		show_comment(s,

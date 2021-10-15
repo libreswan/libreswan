@@ -24,7 +24,6 @@
 #include "id.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
-#include "state_db.h"
 #include "packet.h"
 #include "demux.h"
 #include "ip_address.h"

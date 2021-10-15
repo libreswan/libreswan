@@ -2656,7 +2656,7 @@ void show_kernel_interface(struct show *s)
 static void look_for_replacement_state(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	struct state *ost = state_with_serialno(c->newest_ipsec_sa);
+	struct state *ost = state_by_serialno(c->newest_ipsec_sa);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_log("checking if this is a replacement state");
@@ -3065,8 +3065,7 @@ bool route_and_eroute(struct connection *c,
 					 * successor (for the same conn).
 					 */
 					struct state *ost =
-						state_with_serialno(
-							esr->eroute_owner);
+						state_by_serialno(esr->eroute_owner);
 
 					if (ost != NULL) {
 						if (!sag_eroute(ost, esr,

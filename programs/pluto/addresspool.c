@@ -38,7 +38,6 @@
 #include "ip_address.h"
 #include "ip_range.h"
 #include "log.h"
-#include "state_db.h"
 
 #define SENTINEL (unsigned)-1
 #define ENTRY_UNUSED (unsigned)-2

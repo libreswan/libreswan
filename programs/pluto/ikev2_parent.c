@@ -82,7 +82,6 @@
 #include "ikev2_notify.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
-#include "state_db.h"
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
 #endif
@@ -371,7 +370,7 @@ struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred)
 {
-	struct state *rst = state_with_serialno(pred);
+	struct state *rst = state_by_serialno(pred);
 	if (rst == NULL) {
 		llog_sa(RC_LOG, larval_sa,
 			"rekeyed #%lu; the state is already is gone", pred);
@@ -443,7 +442,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	struct ike_sa *ike;
 	if (IS_IKE_SA(st)) {
 		ike = pexpect_ike_sa(st);
-		cst = state_with_serialno(c->newest_ipsec_sa);
+		cst = state_by_serialno(c->newest_ipsec_sa);
 		if (cst == NULL) {
 			pexpect_fail(st->st_logger, HERE,
 				     "can't check usage as IKE SA #%lu has no newest child",

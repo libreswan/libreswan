@@ -271,7 +271,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 		if (sameaddr(ip, &local_address)) {
 			ip_address ip_p = st->st_deleted_local_addr;
 			st->st_deleted_local_addr = local_address;
-			struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
+			struct state *cst = state_by_serialno(st->st_connection->newest_ipsec_sa);
 			migration_down(cst->st_connection, cst);
 			unroute_connection(st->st_connection);
 

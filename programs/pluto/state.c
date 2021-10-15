@@ -566,17 +566,6 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 }
 
 /*
- * Find the state object with this serial number.  This allows state
- * object references that don't turn into dangerous dangling pointers:
- * reference a state by its serial number.  Returns NULL if there is
- * no such state.
- */
-struct state *state_with_serialno(so_serial_t sn)
-{
-	return state_by_serialno(sn);
-}
-
-/*
  * Re-insert the state in the database after updating the RCOOKIE, and
  * possibly the ICOOKIE.
  *
@@ -758,7 +747,7 @@ static bool should_send_delete(const struct state *st)
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
-		if (IS_CHILD_SA(st) && state_with_serialno(st->st_clonedfrom) == NULL) {
+		if (IS_CHILD_SA(st) && state_by_serialno(st->st_clonedfrom) == NULL) {
 			/*
 			 * Without an IKE SA sending the notify isn't
 			 * possible.
@@ -2114,7 +2103,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		} else if (dpd_active_locally(st) && (st->st_ike_version == IKEv2)) {
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
-				struct state *pst = state_with_serialno(st->st_clonedfrom);
+				struct state *pst = state_by_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					jam(buf, "; lastlive=%jds",
 					    !is_monotime_epoch(pst->st_v2_last_liveness) ?

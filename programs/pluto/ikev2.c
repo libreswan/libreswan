@@ -61,7 +61,7 @@
 #include "vendor.h"
 #include "ip_address.h"
 #include "ikev2_send.h"
-#include "state_db.h"
+#include "state_db.h"		/* for reash_state_cookies_in_db() */
 #include "ietf_constants.h"
 #include "ikev2_cookie.h"
 #include "plutoalg.h" /* for default_ike_groups */

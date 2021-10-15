@@ -180,7 +180,7 @@ static stf_status complete_dh_shared_secret(struct state *task_st,
 					    struct msg_digest *md,
 					    struct task *task)
 {
-	struct state *dh_st = state_with_serialno(task->dh_serialno);
+	struct state *dh_st = state_by_serialno(task->dh_serialno);
 	dbg("completing DH shared secret for "PRI_SO"/"PRI_SO,
 	    task_st->st_serialno, dh_st->st_serialno);
 	pexpect(dh_st->st_dh_shared_secret == NULL);

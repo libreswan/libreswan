@@ -46,7 +46,6 @@
 #include "server.h"		/* for pluto_sock_bufsize */
 #include "iface.h"
 #include "demux.h"
-#include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
 #include "ip_info.h"
 #include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */

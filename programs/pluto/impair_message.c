@@ -25,7 +25,6 @@
 #include "demux.h"
 #include "impair_message.h"
 #include "state.h"
-#include "state_db.h"		/* for FOR_EACH_STATE */
 
 /*
  * Track each unique message.

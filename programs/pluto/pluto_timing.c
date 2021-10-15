@@ -230,7 +230,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	pexpect(start->level == 0 || DBGP(DBG_CPU_USAGE));
 
 	/* state disappeared? */
-	struct state *st = state_with_serialno(start->so);
+	struct state *st = state_by_serialno(start->so);
 	if (st == NULL) {
 		dbg("in %s() and could not find #%lu", __func__, start->so);
 		return;

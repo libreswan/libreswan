@@ -25,7 +25,6 @@
 #include "connections.h"
 #include "state.h"
 #include "timer.h"
-#include "state_db.h"
 
 struct rekey_how {
 	bool background;
