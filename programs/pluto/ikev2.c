@@ -61,7 +61,7 @@
 #include "vendor.h"
 #include "ip_address.h"
 #include "ikev2_send.h"
-#include "state_db.h"		/* for reash_state_cookies_in_db() */
+#include "state_db.h"		/* for reash_state_cookies_in_db()+check_state() */
 #include "ietf_constants.h"
 #include "ikev2_cookie.h"
 #include "plutoalg.h" /* for default_ike_groups */
@@ -2588,6 +2588,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
  * - remember_received_packet(st, md);
  * - fragvid, dpd, nortel
  */
+
 void complete_v2_state_transition(struct state *st,
 				  struct msg_digest *md,
 				  stf_status result)
@@ -2637,6 +2638,10 @@ void complete_v2_state_transition(struct state *st,
 		jam_v2_transition(buf, transition);
 		jam(buf, " with status ");
 		jam_v2_stf_status(buf, result);
+	}
+
+	if (DBGP(DBG_BASE)) {
+		check_state(st, st->st_logger);
 	}
 
 	switch (result) {
