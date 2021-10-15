@@ -43,19 +43,19 @@ east #
 --
 | ***parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_NON_LAST (0x2)
-|    length: 52 (00 34)
+|    length: 60 (00 3c)
 |    prop #: 1 (01)
 |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
 |    spi size: 4 (04)
-|    # transforms: 4 (04)
+|    # transforms: 5 (05)
 --
 | ***parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
-|    length: 36 (00 24)
+|    length: 44 (00 2c)
 |    prop #: 2 (02)
 |    proto ID: IKEv2_SEC_PROTO_ESP (0x3)
 |    spi size: 4 (04)
-|    # transforms: 3 (03)
+|    # transforms: 4 (04)
 --
 | *****emit IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)

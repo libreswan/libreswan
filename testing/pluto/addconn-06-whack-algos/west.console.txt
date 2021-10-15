@@ -24,13 +24,13 @@ west #
 west #
  ipsec status | grep "policy:" | grep rsasig | grep TUNNEL
 000 "parser---rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
-000 "whack----rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "whack----rsasig":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 west #
  echo ""
 west #
  ipsec status | grep "policy:" | grep defaults | grep TUNNEL
 000 "parser-defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
-000 "whack--defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "whack--defaults":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
 west #
  echo ""
 west #

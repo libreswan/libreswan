@@ -14,10 +14,18 @@ east #
  echo "initdone"
 initdone
 east #
- # replay-window will show up as 0 when ESN is enabled due to kernel bug.
+ # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
 east #
- ip xfrm state |grep replay-window
+ ip xfrm state |grep replay
 	replay-window 0 flag af-unspec
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
 	replay-window 0 flag af-unspec
+	anti-replay esn context:
+	 replay_window 256, bitmap-length 8
+east #
+ # should have no hits
+east #
+ ip xfrm state | grep replay-window |grep esn
 east #
  

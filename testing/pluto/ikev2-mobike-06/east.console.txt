@@ -17,8 +17,16 @@ east #
  ip xfrm state
 src 192.1.2.254 dst 192.1.2.23
 	encap type espinudp sport NATED6501 dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.23 dst 192.1.2.254
 	encap type espinudp sport 4500 sport NATED6501 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 east #
  ip xfrm policy
 src 0.0.0.0/0 dst 192.0.3.10/32 
