@@ -20,12 +20,60 @@
 #include "connections.h"
 #include "hash_table.h"
 
+/*
+ * A table ordered by serialno.
+ */
+
 static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
 
 static void jam_state_serialno(struct jambuf *buf, const struct state *st)
 {
 	jam(buf, PRI_SO, st->st_serialno);
 }
+
+static const struct list_info state_serialno_list_info = {
+	.name = "serialno list",
+	.jam = hash_table_jam_state_serialno,
+};
+
+struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
+							   &state_serialno_list_info);
+
+struct state *alloc_state(struct fd *whackfd, where_t where)
+{
+	union sas {
+		struct child_sa child;
+		struct ike_sa ike;
+		struct state st;
+	};
+	union sas *sap = alloc_thing(union sas, "struct state");
+	passert(&sap->st == &sap->child.sa);
+	passert(&sap->st == &sap->ike.sa);
+	struct state *st = &sap->st;
+
+	/* XXX: something better? Note: needs real ST */
+	st->st_logger = alloc_logger(st, &logger_state_vec, where);
+	st->st_logger->object_whackfd = fd_dup(whackfd, where);
+
+	/*
+	 * Update counter, set serialno and add to serialno list.
+	 *
+	 * The state will be hashed after the caller has finished
+	 * populating it.
+	 */
+	static so_serial_t state_serialno;
+	state_serialno++;
+	passert(state_serialno > 0); /* can't overflow */
+	st->st_serialno = state_serialno;
+	st->st_serialno_list_entry = list_entry(&state_serialno_list_info, st);
+	insert_list_entry(&state_serialno_list_head, &st->st_serialno_list_entry);
+
+	return st;
+}
+
+/*
+ * Legacy search functions.
+ */
 
 static bool state_plausable(struct state *st,
 			    enum ike_version ike_version,
@@ -52,18 +100,6 @@ static bool state_plausable(struct state *st,
 	}
 	return true;
 }
-
-/*
- * A table ordered by serialno.
- */
-
-static const struct list_info state_serialno_list_info = {
-	.name = "serialno list",
-	.jam = hash_table_jam_state_serialno,
-};
-
-struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
-							   &state_serialno_list_info);
 
 /*
  * A table hashed by serialno.
@@ -413,17 +449,12 @@ static struct hash_table * const state_hash_tables[] = {
 	&state_ike_spis_hash_table,
 };
 
-void add_state_to_db(struct state *st)
+void add_state_to_db(struct state *st, where_t where)
 {
-	dbg("State DB: adding %s state #%lu in %s",
+	dbg("State DB: adding %s state #%lu in %s "PRI_WHERE,
 	    enum_name(&ike_version_names, st->st_ike_version),
-	    st->st_serialno, st->st_state->short_name);
+	    st->st_serialno, st->st_state->short_name, pri_where(where));
 	passert(st->st_serialno != SOS_NOBODY);
-
-	/* serial NR list, entries are only added */
-	st->st_serialno_list_entry = list_entry(&state_serialno_list_info, st);
-	insert_list_entry(&state_serialno_list_head,
-			  &st->st_serialno_list_entry);
 
 	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
 		add_hash_table_entry(state_hash_tables[h], st);
