@@ -166,6 +166,7 @@
 #include "unpack.h"
 #include "pending.h"
 #include "connection_db.h"		/* for rehash_connection_that_id() */
+#include "state_db.h"			/* for check_state() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -2521,20 +2522,30 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * XXX: is this still true?
 		 */
 		passert(md != NULL);
+		pexpect(md->v1_st == st);
 		suspend_any_md(md->v1_st, md);
+		if (DBGP(DBG_BASE)) {
+			check_state(md->v1_st, st->st_logger);
+		}
 		return;
 	case STF_IGNORE:
-		/* note: md might be NULL */
+		/* DANGER: MD might be NULL; ST might be NULL */
 		return;
 	default:
-		passert(md != NULL);
 		break;
 	}
+
+	passert(md != NULL);
+	pexpect(md->v1_st == st);
 
 	/* safe to refer to *md */
 
 	enum state_kind from_state = md->smc->state;
 	st = md->v1_st;
+
+	if (DBGP(DBG_BASE)) {
+		check_state(st, st->st_logger);
+	}
 
 	passert(st != NULL);
 	pexpect(!state_is_busy(st));
