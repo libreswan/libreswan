@@ -9,13 +9,16 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ikev2-westnet-eastnet
+002 adding UDP interface eth1 192.1.2.23:443
 002 "ikev2-westnet-eastnet": added IKEv2 connection
 east #
- # block IKE and ESP over UDP
+ # block all TCP and UDP port 500 and 4500
 east #
  iptables -I INPUT -p udp --dport 500 -j DROP
 east #
  iptables -I INPUT -p udp --dport 4500 -j DROP
+east #
+ iptables -I INPUT -p tcp --dport 4500 -j DROP
 east #
  echo "initdone"
 initdone

@@ -67,7 +67,7 @@ src 192.1.3.33 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
+	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 north #
@@ -155,7 +155,7 @@ src 192.1.3.34 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.3.34
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
+	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
