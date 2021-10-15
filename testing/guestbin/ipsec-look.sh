@@ -6,8 +6,11 @@ hostname | grep "nic" > /dev/null && exit
 # dump raw version of what ../../pluto/bin/ipsec-look.sh manges
 echo ==== cut ====
 echo "start raw xfrm state:"
-ip -o xfrm policy
+ip -o xfrm state
 echo "end raw xfrm state:"
+echo "start raw xfrm policy:"
+ip -o xfrm policy
+echo "end raw xfrm policy:"
 echo ==== tuc ====
 
 exec ipsec look "$@"
