@@ -166,7 +166,6 @@
 #include "unpack.h"
 #include "pending.h"
 #include "connection_db.h"		/* for rehash_connection_that_id() */
-#include "state_db.h"			/* for check_state() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -2509,10 +2508,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	    result > STF_FAIL ?
 	    enum_name(&ikev1_notify_names, result - STF_FAIL) :
 	    enum_name(&stf_status_names, result));
-
-	if (DBGP(DBG_BASE)) {
-		check_state(st, st->st_logger);
-	}
 
 	switch (result) {
 	case STF_SUSPEND:
