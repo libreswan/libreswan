@@ -31,7 +31,7 @@ west #
 west #
  # should show tcp being used
 west #
- ../../guestbin/ipsec-look.sh | grep encap
+ ../../guestbin/ipsec-look.sh 2>/dev/null | grep encap
 	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
 	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
 west #
