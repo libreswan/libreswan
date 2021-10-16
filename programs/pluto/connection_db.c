@@ -196,13 +196,14 @@ static struct list_head spd_route_list_head = INIT_LIST_HEAD(&spd_route_list_hea
 void add_spd_route_to_db(struct spd_route *sr)
 {
 	sr->spd_route_list_entry = list_entry(&spd_route_list_info, sr);
-	insert_list_entry(&spd_route_list_head,
-			  &sr->spd_route_list_entry);
+	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
 }
 
-void del_spd_route_from_db(struct spd_route *sr)
+void del_spd_route_from_db(struct spd_route *sr, bool valid)
 {
-	remove_list_entry(&sr->spd_route_list_entry);
+	if (valid) {
+		remove_list_entry(&sr->spd_route_list_entry);
+	}
 }
 
 void rehash_spd_route(struct spd_route *sr UNUSED)
@@ -266,6 +267,9 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->that.virt = NULL;
 	unshare_connection_end(&sr->this);
 	unshare_connection_end(&sr->that);
+	// zero_thing(c->spd.hash_table_entries);
+	// XXX: move things into list_entries
+	zero_thing(c->spd.spd_route_list_entry);
 	add_spd_route_to_db(sr);
 	return sr;
 }
@@ -274,36 +278,54 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
  * Allocate connections.
  */
 
-static struct connection *finish_connection(struct connection *c, const char *name, where_t where)
+static void finish_connection(struct connection *c, const char *name,
+			      co_serial_t serial_from, where_t where)
 {
 	c->name = clone_str(name, __func__);
 	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
+
+	/*
+	 * Update counter, set serialno and add to serialno list.
+	 *
+	 * The connection will be hashed after the caller has finished
+	 * populating it.
+	 */
 	static co_serial_t connection_serialno;
-	/* first save old SERIALNO (0 for new connection) ... */
-	c->serial_from = c->serialno;
-	/* ... then update to new value */
 	connection_serialno++;
+	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	add_connection_to_db(c);
+	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
+	insert_list_entry(&connection_serialno_list_head, &c->serialno_list_entry);
+
+	c->serial_from = serial_from;
 	/* needed by spd_route_jam() */
 	c->spd.connection = c;
-	add_spd_route_to_db(&c->spd);
 	/* announce it */
 	dbg_alloc(name, c, where);
-	return c;
 }
 
 struct connection *alloc_connection(const char *name, where_t where)
 {
 	struct connection *c = alloc_thing(struct connection, where->func);
-	return finish_connection(c, name, where);
+	finish_connection(c, name, 0/*no template*/, where);
+	return c;
 }
 
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
-	return finish_connection(c, name, where);
+	finish_connection(c, name, t->serialno, where);
+
+	/*
+	 * GRRR: need to wipe out all the cloned table entries!
+	 */
+	zero_thing(c->hash_table_entries);
+	// zero_thing(c->spd.hash_table_entries);
+	// XXX: move things into list_entries
+	zero_thing(c->spd.spd_route_list_entry);
+
+	return c;
 }
 
 /*
@@ -317,27 +339,27 @@ static struct hash_table *const connection_hash_tables[] = {
 	&connection_that_id_hash_table,
 };
 
-void add_connection_to_db(struct connection *c)
+void add_connection_to_db(struct connection *c, where_t where)
 {
-	dbg("Connection DB: adding connection \"%s\" "PRI_CO"", c->name, pri_co(c->serialno));
-	passert(c->serialno != UNSET_CO_SERIAL);
-
-	/* serial NR list, entries are only added */
-	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
-	insert_list_entry(&connection_serialno_list_head,
-			  &c->serialno_list_entry);
-
+	dbg("Connection DB: adding connection \"%s\" "PRI_CO" "PRI_WHERE,
+	    c->name, pri_co(c->serialno), pri_where(where));
 	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
 		add_hash_table_entry(connection_hash_tables[h], c);
 	}
+
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		add_spd_route_to_db(sr);
+	}
 }
 
-void del_connection_from_db(struct connection *c)
+void del_connection_from_db(struct connection *c, bool valid)
 {
 	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
 	remove_list_entry(&c->serialno_list_entry);
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		del_hash_table_entry(connection_hash_tables[h], c);
+	if (valid) {
+		for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
+			del_hash_table_entry(connection_hash_tables[h], c);
+		}
 	}
 }
 

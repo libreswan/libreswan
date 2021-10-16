@@ -147,9 +147,9 @@ static void delete_end(struct end *e)
 	virtual_ip_delref(&e->virt, HERE);
 }
 
-static void delete_spd_route(struct spd_route **sr, bool first)
+static void delete_spd_route(struct spd_route **sr, bool first, bool valid)
 {
-	del_spd_route_from_db(*sr);
+	del_spd_route_from_db(*sr, valid);
 	delete_end(&(*sr)->this);
 	delete_end(&(*sr)->that);
 	if (!first) {
@@ -235,10 +235,10 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	for (struct spd_route *sr = &c->spd, *next = NULL; sr != NULL; sr = next) {
 		next = sr->spd_next;
 
-		delete_spd_route(&sr, /*first?*/sr == &c->spd);
+		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
 	}
 
-	del_connection_from_db(c);
+	del_connection_from_db(c, connection_valid);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {
@@ -1382,6 +1382,7 @@ static void mark_parse(/*const*/ char *wmmark,
  * was freshy allocated so no duplication should be needed (or at
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
+
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -2218,14 +2219,20 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
 
-	rehash_connection_that_id(c); /* that==right */
+	/* non configurable */
+	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
-	/* this triggers a rehash? */
+	/*
+	 * All done, enter it into the databases.  Since orient() may
+	 * switch ends, triggering an spd rehash, insert things into
+	 * the database first.
+	 */
+	add_connection_to_db(c, HERE);
+
+	/* this triggers a rehash of the SPDs */
 	orient(c, c->logger);
 
 	connect_to_host_pair(c);
-	/* non configurable */
-	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
 	return true;
 }
@@ -2365,6 +2372,9 @@ struct connection *add_group_instance(struct connection *group,
 	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
 	group->hp_next = t;
 
+	/* all done */
+	add_connection_to_db(t, HERE);
+
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
 		/* XXX: something better? */
@@ -2445,7 +2455,6 @@ struct connection *instantiate(struct connection *c,
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(peer_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *peer_id;
-		rehash_connection_that_id(d);
 		d->spd.that.has_id_wildcards = false;
 	}
 	unshare_connection(d);
@@ -2505,6 +2514,9 @@ struct connection *instantiate(struct connection *c,
 			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
 		}
 	}
+
+	/* all done */
+	add_connection_to_db(d, HERE);
 
 	connection_buf cb, db;
 	address_buf pab;

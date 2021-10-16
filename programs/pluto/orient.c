@@ -259,6 +259,9 @@ bool orient(struct connection *c, struct logger *logger)
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
 			    c->spd.that.config->leftright);
 			swap_ends(c);
+			for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+				rehash_spd_route(sr);
+			}
 		}
 		return true;
 	}
