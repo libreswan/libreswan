@@ -62,14 +62,14 @@ ipsec whack --impair suppress-retransmits
 ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-# send 3DES_0; should fail
+# send 3DES_0; should fail (but doesn't)
 
-ipsec whack --impair delete-on-retransmit
+ipsec whack --impair suppress-retransmits
 ipsec whack --impair ike-key-length-attribute:0
 ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 ipsec whack --impair none
 
-# send 3DES_192; should work?
+# send 3DES_192; should work (but doesn't)
 
 ipsec whack --impair delete-on-retransmit
 ipsec whack --impair ike-key-length-attribute:192

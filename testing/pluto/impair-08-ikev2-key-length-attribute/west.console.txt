@@ -196,9 +196,9 @@ up
 west #
  ipsec whack --impair none
 west #
- # send 3DES_0; should fail
+ # send 3DES_0; should fail (but doesn't)
 west #
- ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec whack --impair ike-key-length-attribute:0
 west #
@@ -218,7 +218,7 @@ up
 west #
  ipsec whack --impair none
 west #
- # send 3DES_192; should work?
+ # send 3DES_192; should work (but doesn't)
 west #
  ipsec whack --impair delete-on-retransmit
 west #
