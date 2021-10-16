@@ -20,6 +20,7 @@ east #
 initdone
 east #
  ../../guestbin/ipsec-look.sh
+PLAINTEXT FROM WEST
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -70,5 +71,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+[1]+  Done                    nc -4 -l 192.1.2.23 222
 east #
  
