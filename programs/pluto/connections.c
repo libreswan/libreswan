@@ -248,7 +248,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_proposals(&config->child_proposals.p);
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
-		FOR_EACH_ELEMENT(end, config->end) {
+		FOR_EACH_ELEMENT(config->end, end) {
 			pfreeany(end->client.updown);
 		}
 		pfree(c->root_config);
@@ -2037,7 +2037,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 *    RIGHT == REMOTE / THAT
 	 */
 
-	FOR_EACH_ELEMENT(end, config->end) {
+	FOR_EACH_ELEMENT(config->end, end) {
 		end->end_index = end - config->end;
 		end->leftright = (end->end_index == LEFT_END ? "left" :
 				  end->end_index == RIGHT_END ? "right" :

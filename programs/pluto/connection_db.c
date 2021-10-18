@@ -343,8 +343,9 @@ void add_connection_to_db(struct connection *c, where_t where)
 {
 	dbg("Connection DB: adding connection \"%s\" "PRI_CO" "PRI_WHERE,
 	    c->name, pri_co(c->serialno), pri_where(where));
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		add_hash_table_entry(connection_hash_tables[h], c);
+
+	FOR_EACH_ELEMENT(connection_hash_tables, h) {
+		add_hash_table_entry(*h, c);
 	}
 
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
@@ -355,31 +356,31 @@ void add_connection_to_db(struct connection *c, where_t where)
 void del_connection_from_db(struct connection *c, bool valid)
 {
 	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
-	remove_list_entry(&c->serialno_list_entry);
+	remove_list_entry(&c->serialno_list_entry); /* always valid */
 	if (valid) {
-		for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-			del_hash_table_entry(connection_hash_tables[h], c);
+		FOR_EACH_ELEMENT(connection_hash_tables, h) {
+			del_hash_table_entry(*h, c);
 		}
 	}
 }
 
 void check_connection_db(struct logger *logger)
 {
-	FOR_EACH_ELEMENT(h, connection_hash_tables) {
+	FOR_EACH_ELEMENT(connection_hash_tables, h) {
 		check_hash_table(*h, logger);
 	}
 }
 
 void check_connection(struct connection *c, struct logger *logger)
 {
-	FOR_EACH_ELEMENT(h, connection_hash_tables) {
+	FOR_EACH_ELEMENT(connection_hash_tables, h) {
 		check_hash_table_entry(*h, c, logger);
 	}
 }
 
 void init_connection_db(void)
 {
-	for (unsigned h = 0; h < elemsof(connection_hash_tables); h++) {
-		init_hash_table(connection_hash_tables[h]);
+	FOR_EACH_ELEMENT(connection_hash_tables, h) {
+		init_hash_table(*h);
 	}
 }

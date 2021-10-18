@@ -456,8 +456,8 @@ void add_state_to_db(struct state *st, where_t where)
 	    st->st_serialno, st->st_state->short_name, pri_where(where));
 	passert(st->st_serialno != SOS_NOBODY);
 
-	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		add_hash_table_entry(state_hash_tables[h], st);
+	FOR_EACH_ELEMENT(state_hash_tables, h) {
+		add_hash_table_entry(*h, st);
 	}
 }
 
@@ -476,28 +476,28 @@ void del_state_from_db(struct state *st)
 	    enum_name(&ike_version_names, st->st_ike_version),
 	    st->st_serialno, st->st_state->short_name);
 	remove_list_entry(&st->st_serialno_list_entry);
-	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		del_hash_table_entry(state_hash_tables[h], st);
+	FOR_EACH_ELEMENT(state_hash_tables, h) {
+		del_hash_table_entry(*h, st);
 	}
 }
 
 void check_state_db(struct logger *logger)
 {
-	FOR_EACH_ELEMENT(h, state_hash_tables) {
+	FOR_EACH_ELEMENT(state_hash_tables, h) {
 		check_hash_table(*h, logger);
 	}
 }
 
 void check_state(struct state *st, struct logger *logger)
 {
-	FOR_EACH_ELEMENT(h, state_hash_tables) {
+	FOR_EACH_ELEMENT(state_hash_tables, h) {
 		check_hash_table_entry(*h, st, logger);
 	}
 }
 
 void init_state_db(void)
 {
-	for (unsigned h = 0; h < elemsof(state_hash_tables); h++) {
-		init_hash_table(state_hash_tables[h]);
+	FOR_EACH_ELEMENT(state_hash_tables, h) {
+		init_hash_table(*h);
 	}
 }
