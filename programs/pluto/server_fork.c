@@ -46,7 +46,9 @@
 
 struct pid_entry {
 	unsigned long magic;
-	struct list_entry hash_entry;
+	struct {
+		struct list_entry pid;
+	} hash_table_entries;
 	pid_t pid;
 	void *context;
 	server_fork_cb *callback;
@@ -56,12 +58,11 @@ struct pid_entry {
 	struct logger *logger;
 };
 
-static void jam_pid_entry(struct jambuf *buf, const void *data)
+static void jam_pid_entry_pid(struct jambuf *buf, const struct pid_entry *entry)
 {
-	if (data == NULL) {
+	if (entry == NULL) {
 		jam(buf, "NULL pid");
 	} else {
-		const struct pid_entry *entry = data;
 		passert(entry->magic == PID_MAGIC);
 		if (entry->serialno != SOS_NOBODY) {
 			jam(buf, "#%lu ", entry->serialno);
@@ -70,45 +71,19 @@ static void jam_pid_entry(struct jambuf *buf, const void *data)
 	}
 }
 
-static hash_t pid_hasher(const pid_t *pid)
+static hash_t hash_pid_entry_pid(const pid_t *pid)
 {
 	return hash_thing(*pid, zero_hash);
 }
 
-static hash_t pid_entry_hasher(const void *data)
-{
-	const struct pid_entry *entry = data;
-	passert(entry->magic == PID_MAGIC);
-	return pid_hasher(&entry->pid);
-}
-
-static struct list_entry *pid_entry_entry(void *data)
-{
-	struct pid_entry *entry = data;
-	passert(entry->magic == PID_MAGIC);
-	return &entry->hash_entry;
-}
-
-static struct list_head pid_entry_slots[23];
-
-static struct hash_table pids_hash_table = {
-	.info = {
-		.name = "pid table",
-		.jam = jam_pid_entry,
-	},
-	.hasher = pid_entry_hasher,
-	.entry = pid_entry_entry,
-	.nr_slots = elemsof(pid_entry_slots),
-	.slots = pid_entry_slots,
-};
+HASH_TABLE(pid_entry, pid, .pid, 23);
 
 void show_process_status(struct show *s)
 {
 	show_separator(s);
 	/* XXX: don't sort for now */
 	show_comment(s, "  PID  Process");
-	for (unsigned i = 0; i < elemsof(pid_entry_slots); i++) {
-		const struct list_head *h = &pid_entry_slots[i];
+	FOR_EACH_ELEMENT(pid_entry_pid_buckets, h) {
 		const struct pid_entry *e;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(h, e) {
 			/*
@@ -134,7 +109,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->name = name;
 	new_pid->start_time = mononow();
 	new_pid->logger = clone_logger(logger, HERE);
-	add_hash_table_entry(&pids_hash_table, new_pid);
+	add_hash_table_entry(&pid_entry_pid_hash_table, new_pid);
 }
 
 static void free_pid_entry(struct pid_entry **p)
@@ -214,8 +189,8 @@ void server_fork_sigchld_handler(struct logger *logger)
 				jam_status(buf, status);
 			}
 			struct pid_entry *pid_entry = NULL;
-			hash_t hash = pid_hasher(&child);
-			struct list_head *bucket = hash_table_bucket(&pids_hash_table, hash);
+			hash_t hash = hash_pid_entry_pid(&child);
+			struct list_head *bucket = hash_table_bucket(&pid_entry_pid_hash_table, hash);
 			FOR_EACH_LIST_ENTRY_OLD2NEW(bucket, pid_entry) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
@@ -238,7 +213,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->logger);
 			} else if (st == NULL) {
 				LSWDBGP(DBG_BASE, buf) {
-					jam_pid_entry(buf, pid_entry);
+					jam_pid_entry_pid(buf, pid_entry);
 					jam_string(buf, " disappeared");
 				}
 				pid_entry->callback(NULL, NULL, status,
@@ -270,7 +245,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					       pid_entry->name);
 			}
 			/* clean it up */
-			del_hash_table_entry(&pids_hash_table, pid_entry);
+			del_hash_table_entry(&pid_entry_pid_hash_table, pid_entry);
 			free_pid_entry(&pid_entry);
 			continue;
 		}
@@ -310,5 +285,5 @@ void server_fork_exec(const char *what, const char *path,
 
 void init_server_fork(void)
 {
-	init_hash_table(&pids_hash_table);
+	init_hash_table(&pid_entry_pid_hash_table);
 }
