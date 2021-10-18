@@ -28,7 +28,7 @@ typedef struct { unsigned hash; } hash_t;
 extern const hash_t zero_hash;
 
 struct hash_table {
-	const struct list_info info;
+	const struct list_info *const info;
 	hash_t (*hasher)(const void *data);
 	struct list_entry *(*entry)(void *data);
 	long nr_entries; /* approx? */
@@ -56,16 +56,18 @@ struct hash_table {
 		jam_##STRUCT##_##NAME(buf, s);				\
 	}								\
 									\
+	static const struct list_info STRUCT##_##NAME##_hash_info = {	\
+		.name = #STRUCT"."#NAME,				\
+		.jam = hash_table_jam_##STRUCT##_##NAME,		\
+	};								\
+									\
 	static struct list_head STRUCT##_##NAME##_buckets[NR_BUCKETS];	\
 	struct hash_table STRUCT##_##NAME##_hash_table = {		\
 		.hasher = hash_table_hash_##STRUCT##_##NAME,		\
 		.entry = hash_table_entry_##STRUCT##_##NAME,		\
 		.nr_slots = NR_BUCKETS,					\
 		.slots = STRUCT##_##NAME##_buckets,			\
-		.info = {						\
-			.name = #STRUCT"."#NAME,			\
-			.jam = hash_table_jam_##STRUCT##_##NAME,	\
-		},							\
+		.info = &STRUCT##_##NAME##_hash_info,			\
 	}
 
 void init_hash_table(struct hash_table *table);

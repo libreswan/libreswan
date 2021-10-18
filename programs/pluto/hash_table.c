@@ -26,7 +26,7 @@ void init_hash_table(struct hash_table *table)
 {
 	for (unsigned i = 0; i < table->nr_slots; i++) {
 		struct list_head *slot = &table->slots[i];
-		*slot = (struct list_head) INIT_LIST_HEAD(slot, &table->info);
+		*slot = (struct list_head) INIT_LIST_HEAD(slot, table->info);
 	}
 }
 
@@ -52,7 +52,7 @@ struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
 void add_hash_table_entry(struct hash_table *table, void *data)
 {
 	struct list_entry *entry = table->entry(data);
-	*entry = list_entry(&table->info, data);
+	*entry = list_entry(table->info, data);
 	hash_t hash = table->hasher(data);
 	struct list_head *bucket = hash_table_bucket(table, hash);
 	table->nr_entries++;
@@ -105,9 +105,9 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
 			if (data == bucket_data) {
 				JAMBUF(buf) {
-					jam_string(buf, table->info.name);
+					jam_string(buf, table->info->name);
 					jam_string(buf, " entry ");
-					table->info.jam(buf, data);
+					table->info->jam(buf, data);
 					jam_string(buf, " is in the wrong bucket");
 					llog_pexpect(logger, where, PRI_SHUNK,
 						     pri_shunk(jambuf_as_shunk(buf)));
@@ -117,9 +117,9 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}
 	}
 	JAMBUF(buf) {
-		jam_string(buf, table->info.name);
+		jam_string(buf, table->info->name);
 		jam_string(buf, " entry ");
-		table->info.jam(buf, data);
+		table->info->jam(buf, data);
 		jam_string(buf, " is missing");
 		llog_pexpect(logger, where, PRI_SHUNK,
 			     pri_shunk(jambuf_as_shunk(buf)));
