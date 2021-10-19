@@ -29,7 +29,7 @@ static struct root_certs *root_cert_db;
 static void root_certs_free(void *obj, where_t unused_where UNUSED)
 {
 	struct root_certs *root_certs = obj;
-	llog(LOG_STREAM, &failsafe_logger, "destroying root certificate cache");
+	dbg("destroying root certificate cache");
 	CERT_DestroyCertList(root_certs->trustcl);
 	pfreeany(root_certs);
 }
@@ -44,7 +44,7 @@ struct root_certs *root_certs_addref(where_t where)
 		return addref(root_cert_db, where);
 	}
 
-	llog(LOG_STREAM, &failsafe_logger, "loading root certificate cache");
+	dbg("loading root certificate cache");
 
 	/*
 	 * Always allocate the ROOT_CERTS structure.  If things fail,
