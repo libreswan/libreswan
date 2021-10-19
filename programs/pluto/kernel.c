@@ -457,14 +457,9 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam_id_bytes(buf, &sr->that.id, jam_shell_quoted_bytes);
 	jam(buf, "' ");
 
-	/* for transport mode, things are complicated */
 	jam(buf, "PLUTO_PEER_CLIENT='");
-	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
-		jam(buf, "%s' ", ipstr(&sr->that.host_addr, &bpeer));
-	} else {
-		jam_selector_subnet(buf, &sr->that.client);
-		jam(buf, "' ");
-	}
+	jam_selector_subnet(buf, &sr->that.client);
+	jam(buf, "' ");
 
 	jam(buf, "PLUTO_PEER_CLIENT_NET='");
 	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
