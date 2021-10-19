@@ -80,7 +80,8 @@ void rehash_table_entry(struct hash_table *table, void *data)
  * at-most one bucket at a time).
  */
 
-void check_hash_table_entry(struct hash_table *table, void *data, struct logger *logger)
+void check_hash_table_entry(struct hash_table *table, void *data,
+			    struct logger *logger, where_t where)
 {
 	hash_t hash = table->hasher(data);
 	/* not inserted (might passert) */
@@ -104,10 +105,11 @@ void check_hash_table_entry(struct hash_table *table, void *data, struct logger 
 		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
 			if (data == bucket_data) {
 				JAMBUF(buf) {
-					jam(buf, "%s has data in the wrong bucket: ",
-					    table->info.name);
+					jam_string(buf, table->info.name);
+					jam_string(buf, " entry ");
 					table->info.jam(buf, data);
-					llog_pexpect(logger, HERE, PRI_SHUNK,
+					jam_string(buf, " is in the wrong bucket");
+					llog_pexpect(logger, where, PRI_SHUNK,
 						     pri_shunk(jambuf_as_shunk(buf)));
 				}
 				return;
@@ -115,10 +117,11 @@ void check_hash_table_entry(struct hash_table *table, void *data, struct logger 
 		}
 	}
 	JAMBUF(buf) {
-		/* it might be elsewhere */
-		jam(buf, "%s is missing data: ", table->info.name);
+		jam_string(buf, table->info.name);
+		jam_string(buf, " entry ");
 		table->info.jam(buf, data);
-		llog_pexpect(logger, HERE, PRI_SHUNK,
+		jam_string(buf, " is missing");
+		llog_pexpect(logger, where, PRI_SHUNK,
 			     pri_shunk(jambuf_as_shunk(buf)));
 	}
 }
@@ -130,7 +133,7 @@ void check_hash_table(struct hash_table *table, struct logger *logger)
 		void *bucket_data;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
 			/* overkill */
-			check_hash_table_entry(table, bucket_data, logger);
+			check_hash_table_entry(table, bucket_data, logger, HERE);
 		}
 	}
 }

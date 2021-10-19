@@ -31,7 +31,7 @@ void add_state_to_db(struct state *st, where_t where);
 void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st);
 void check_state_db(struct logger *logger);
-void check_state(struct state *st, struct logger *logger);
+void check_state_in_db(struct state *st, where_t where);
 
 /*
  * List of all valid states; can be iterated in old-to-new and

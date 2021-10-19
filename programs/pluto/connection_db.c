@@ -403,10 +403,10 @@ void check_connection_db(struct logger *logger)
 	}
 }
 
-void check_connection(struct connection *c, struct logger *logger)
+void check_connection_in_db(struct connection *c, where_t where)
 {
 	FOR_EACH_ELEMENT(connection_hash_tables, h) {
-		check_hash_table_entry(*h, c, logger);
+		check_hash_table_entry(*h, c, c->logger, where);
 	}
 }
 

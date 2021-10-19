@@ -13,11 +13,12 @@
  * for more details.
  */
 
-#ifndef _hash_table_h_
-#define _hash_table_h_
+#ifndef HASH_TABLE_H
+#define HASH_TABLE_H
 
 #include "list_entry.h"
 #include "shunk.h"		/* has constant ptr */
+#include "where.h"
 
 /*
  * Generic hash table.
@@ -94,7 +95,8 @@ void del_hash_table_entry(struct hash_table *table, void *data);
 void rehash_table_entry(struct hash_table *table, void *data);
 
 void check_hash_table(struct hash_table *table, struct logger *logger);
-void check_hash_table_entry(struct hash_table *table, void *data, struct logger *logger);
+void check_hash_table_entry(struct hash_table *table, void *data,
+			    struct logger *logger, where_t where);
 
 /*
  * Return the head of the list entries that match HASH.

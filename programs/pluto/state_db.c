@@ -16,6 +16,7 @@
 #include "defs.h"
 #include "log.h"
 #include "state_db.h"
+#include "connection_db.h"
 #include "state.h"
 #include "connections.h"
 #include "hash_table.h"
@@ -488,10 +489,10 @@ void check_state_db(struct logger *logger)
 	}
 }
 
-void check_state(struct state *st, struct logger *logger)
+void check_state_in_db(struct state *st, where_t where)
 {
 	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		check_hash_table_entry(*h, st, logger);
+		check_hash_table_entry(*h, st, st->st_logger, where);
 	}
 }
 

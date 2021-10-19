@@ -35,6 +35,6 @@ void rehash_connection_that_id(struct connection *c);
 void del_connection_from_db(struct connection *c, bool valid);
 
 void check_connection_db(struct logger *logger);
-void check_connection(struct connection *connection, struct logger *logger);
+void check_connection_in_db(struct connection *connection, where_t where);
 
 #endif
