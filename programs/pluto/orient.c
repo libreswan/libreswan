@@ -90,6 +90,11 @@ static void swap_ends(struct connection *c)
 	}
 	/* re-compute the base policy priority using the swapped left/right */
 	set_policy_prio(c);
+	/* rehash end dependent hashes */
+	rehash_connection_that_id(c);
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		rehash_spd_route(sr);
+	}
 }
 
 static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, bool this)
@@ -134,7 +139,6 @@ static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, 
 	if (listening) {
 		listen_on_iface_endpoint(ifp, logger);
 	}
-	rehash_connection_that_id(c);
 	return true;
 }
 
@@ -259,9 +263,6 @@ bool orient(struct connection *c, struct logger *logger)
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
 			    c->spd.that.config->leftright);
 			swap_ends(c);
-			for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-				rehash_spd_route(sr);
-			}
 		}
 		return true;
 	}
