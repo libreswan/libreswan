@@ -109,6 +109,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->name = name;
 	new_pid->start_time = mononow();
 	new_pid->logger = clone_logger(logger, HERE);
+	init_hash_table_entry(&pid_entry_pid_hash_table, new_pid);
 	add_hash_table_entry(&pid_entry_pid_hash_table, new_pid);
 }
 

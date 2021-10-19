@@ -49,21 +49,26 @@ struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
 	return &table->slots[hash.hash % table->nr_slots];
 }
 
-void add_hash_table_entry(struct hash_table *table, void *data)
+void init_hash_table_entry(struct hash_table *table, void *data)
 {
 	struct list_entry *entry = table->entry(data);
 	*entry = list_entry(table->info, data);
+}
+
+void add_hash_table_entry(struct hash_table *table, void *data)
+{
+	struct list_entry *entry = table->entry(data);
 	hash_t hash = table->hasher(data);
 	struct list_head *bucket = hash_table_bucket(table, hash);
-	table->nr_entries++;
 	insert_list_entry(bucket, entry);
+	table->nr_entries++;
 }
 
 void del_hash_table_entry(struct hash_table *table, void *data)
 {
 	struct list_entry *entry = table->entry(data);
-	table->nr_entries--;
 	remove_list_entry(entry);
+	table->nr_entries--;
 }
 
 void rehash_table_entry(struct hash_table *table, void *data)

@@ -445,7 +445,7 @@ static struct state *new_state(struct connection *c,
 	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
-	add_state_to_db(st, HERE);
+	add_state_to_db(st);
 	pstat_sa_started(st, sa_type);
 
 	return st;
@@ -1113,7 +1113,7 @@ void delete_state_tail(struct state *st)
 	 * This, effectively,  deletes any ISAKMP SA that this state
 	 * represents - lookups for this state no longer work.
 	 */
-	del_state_from_db(st);
+	del_state_from_db(st, true/*valid*/);
 
 	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an
@@ -3130,6 +3130,6 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 
 void check_state(struct state *st, where_t where)
 {
-	check_state_in_db(st, where);
-	check_connection_in_db(st->st_connection, where);
+	check_state_in_db(st, st->st_logger, where);
+	check_connection_in_db(st->st_connection, st->st_connection->logger, where);
 }

@@ -19,6 +19,7 @@
 #include "hash_table.h"
 #include "refcnt.h"
 
+static void init_connection_hash_table_entries(struct connection *c);
 static void hash_table_jam_connection_serialno(struct jambuf *buf, const void *data);
 
 static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
@@ -201,28 +202,8 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 
 HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
 
-struct hash_table *const spd_route_hash_tables[] = {
-	&spd_route_remote_client_hash_table,
-};
-
-void add_spd_route_to_db(struct spd_route *sr)
-{
-	sr->spd_route_list_entry = list_entry(&spd_route_list_info, sr);
-	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
-	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
-		add_hash_table_entry(*h, sr);
-	}
-}
-
-void del_spd_route_from_db(struct spd_route *sr, bool valid)
-{
-	if (valid) {
-		remove_list_entry(&sr->spd_route_list_entry);
-		FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
-			del_hash_table_entry(*h, sr);
-		}
-	}
-}
+HASH_DB(spd_route, &spd_route_list_info, spd_route_list_entry,
+	&spd_route_remote_client_hash_table);
 
 void rehash_spd_route(struct spd_route *sr)
 {
@@ -296,11 +277,12 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->that.id.name = EMPTY_CHUNK;
 	sr->this.virt = NULL;
 	sr->that.virt = NULL;
+	init_spd_route_hash_table_entries(sr);
+	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
+
 	unshare_connection_end(&sr->this);
 	unshare_connection_end(&sr->that);
-	// zero_thing(c->spd.hash_table_entries);
-	// XXX: move things into list_entries
-	zero_thing(c->spd.spd_route_list_entry);
+
 	add_spd_route_to_db(sr);
 	return sr;
 }
@@ -316,6 +298,9 @@ static void finish_connection(struct connection *c, const char *name,
 	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
 
+	init_connection_hash_table_entries(c);
+	init_spd_route_hash_table_entries(&c->spd);
+
 	/*
 	 * Update counter, set serialno and add to serialno list.
 	 *
@@ -326,8 +311,9 @@ static void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	c->serialno_list_entry = list_entry(&connection_serialno_list_info, c);
+
 	insert_list_entry(&connection_serialno_list_head, &c->serialno_list_entry);
+	insert_list_entry(&spd_route_list_head, &c->spd.spd_route_list_entry);
 
 	c->serial_from = serial_from;
 	/* needed by spd_route_jam() */
@@ -346,77 +332,20 @@ struct connection *alloc_connection(const char *name, where_t where)
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
-
-	/*
-	 * XXX: GRRR: need to wipe out all the cloned table entries;
-	 * yet again illustrating why clone_thing() is a bad idea.
-	 */
-	zero_thing(c->serialno_list_entry);
-	zero_thing(c->hash_table_entries);
-	zero_thing(c->spd.spd_route_list_entry);
-	zero_thing(c->spd.hash_table_entries);
-
 	finish_connection(c, name, t->serialno, where);
 	return c;
 }
 
 /*
  * Maintain the contents of the hash tables.
- *
- * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
-static struct hash_table *const connection_hash_tables[] = {
+HASH_DB(connection, &connection_serialno_list_info, serialno_list_entry,
 	&connection_serialno_hash_table,
-	&connection_that_id_hash_table,
-};
-
-void add_connection_to_db(struct connection *c, where_t where)
-{
-	dbg("Connection DB: adding connection \"%s\" "PRI_CO" "PRI_WHERE,
-	    c->name, pri_co(c->serialno), pri_where(where));
-
-	FOR_EACH_ELEMENT(connection_hash_tables, h) {
-		add_hash_table_entry(*h, c);
-	}
-
-	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		add_spd_route_to_db(sr);
-	}
-}
-
-void del_connection_from_db(struct connection *c, bool valid)
-{
-	dbg("Connection DB: deleting connection "PRI_CO, pri_co(c->serialno));
-	remove_list_entry(&c->serialno_list_entry); /* always valid */
-	if (valid) {
-		FOR_EACH_ELEMENT(connection_hash_tables, h) {
-			del_hash_table_entry(*h, c);
-		}
-	}
-}
-
-void check_connection_db(struct logger *logger)
-{
-	FOR_EACH_ELEMENT(connection_hash_tables, h) {
-		check_hash_table(*h, logger);
-	}
-}
-
-void check_connection_in_db(struct connection *c, where_t where)
-{
-	FOR_EACH_ELEMENT(connection_hash_tables, h) {
-		check_hash_table_entry(*h, c, c->logger, where);
-	}
-}
+	&connection_that_id_hash_table);
 
 void init_connection_db(void)
 {
-	FOR_EACH_ELEMENT(connection_hash_tables, h) {
-		init_hash_table(*h);
-	}
-
-	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
-		init_hash_table(*h);
-	}
+	init_connection_hash_tables();
+	init_spd_route_hash_tables();
 }

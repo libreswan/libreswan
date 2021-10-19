@@ -92,6 +92,7 @@ hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
  * "add" which re-orders things.
  */
 
+void init_hash_table_entry(struct hash_table *table, void *data);
 void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
 void rehash_table_entry(struct hash_table *table, void *data);
@@ -99,6 +100,60 @@ void rehash_table_entry(struct hash_table *table, void *data);
 void check_hash_table(struct hash_table *table, struct logger *logger);
 void check_hash_table_entry(struct hash_table *table, void *data,
 			    struct logger *logger, where_t where);
+
+#define HASH_DB(STRUCT, LIST_INFO, LIST_ENTRY, ...)			\
+									\
+	struct hash_table *const STRUCT##_hash_tables[] = {		\
+		__VA_ARGS__,						\
+	};								\
+									\
+	static void init_##STRUCT##_hash_tables(void)			\
+	{								\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+			init_hash_table(*H);				\
+		}							\
+	}								\
+									\
+	static void init_##STRUCT##_hash_table_entries(struct STRUCT *s) \
+	{								\
+		s->LIST_ENTRY = list_entry(LIST_INFO, s); \
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+			init_hash_table_entry(*H, s);			\
+		}							\
+	}								\
+									\
+	void add_##STRUCT##_to_db(struct STRUCT *s)			\
+	{								\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+			add_hash_table_entry(*H, s);			\
+		}							\
+	}								\
+									\
+	void del_##STRUCT##_from_db(struct STRUCT *s, bool valid)	\
+	{								\
+		remove_list_entry(&s->LIST_ENTRY);			\
+		if (valid) {						\
+			FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {	\
+				del_hash_table_entry(*H, s);		\
+			}						\
+		}							\
+	}								\
+									\
+	void check_##STRUCT##_db(struct logger *logger)			\
+	{								\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+			check_hash_table(*H, logger);			\
+		}							\
+	}								\
+									\
+	void check_##STRUCT##_in_db(struct STRUCT *s,			\
+				    struct logger *logger,		\
+				    where_t where)			\
+	{								\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+			check_hash_table_entry(*H, s, logger, where);	\
+		}							\
+	}								\
 
 /*
  * Return the head of the list entries that match HASH.

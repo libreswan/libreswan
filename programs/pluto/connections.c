@@ -98,6 +98,12 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
 static bool idr_wildmatch(const struct end *this, const struct id *b, struct logger *logger);
 
+static void hash_connection(struct connection *c)
+{
+	add_connection_to_db(c);
+	add_spd_route_to_db(&c->spd);
+}
+
 /*
  * Find a connection by name.
  *
@@ -2227,7 +2233,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * switch ends, triggering an spd rehash, insert things into
 	 * the database first.
 	 */
-	add_connection_to_db(c, HERE);
+	hash_connection(c);
 
 	/* this triggers a rehash of the SPDs */
 	orient(c, c->logger);
@@ -2373,7 +2379,7 @@ struct connection *add_group_instance(struct connection *group,
 	group->hp_next = t;
 
 	/* all done */
-	add_connection_to_db(t, HERE);
+	hash_connection(t);
 
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
@@ -2516,7 +2522,7 @@ struct connection *instantiate(struct connection *c,
 	}
 
 	/* all done */
-	add_connection_to_db(d, HERE);
+	hash_connection(d);
 
 	connection_buf cb, db;
 	address_buf pab;

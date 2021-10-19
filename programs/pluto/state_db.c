@@ -25,6 +25,7 @@
  * A table ordered by serialno.
  */
 
+static void init_state_hash_table_entries(struct state *st);
 static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
 
 static void jam_state_serialno(struct jambuf *buf, const struct state *st)
@@ -56,6 +57,8 @@ struct state *alloc_state(struct fd *whackfd, where_t where)
 	st->st_logger = alloc_logger(st, &logger_state_vec, where);
 	st->st_logger->object_whackfd = fd_dup(whackfd, where);
 
+	init_state_hash_table_entries(st);
+
 	/*
 	 * Update counter, set serialno and add to serialno list.
 	 *
@@ -66,7 +69,7 @@ struct state *alloc_state(struct fd *whackfd, where_t where)
 	state_serialno++;
 	passert(state_serialno > 0); /* can't overflow */
 	st->st_serialno = state_serialno;
-	st->st_serialno_list_entry = list_entry(&state_serialno_list_info, st);
+
 	insert_list_entry(&state_serialno_list_head, &st->st_serialno_list_entry);
 
 	return st;
@@ -442,25 +445,12 @@ bool next_state_new2old(struct state_filter *filter)
  * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
-static struct hash_table * const state_hash_tables[] = {
+HASH_DB(state, &state_serialno_list_info, st_serialno_list_entry,
 	&state_serialno_hash_table,
 	&state_connection_serialno_hash_table,
 	&state_reqid_hash_table,
 	&state_ike_initiator_spi_hash_table,
-	&state_ike_spis_hash_table,
-};
-
-void add_state_to_db(struct state *st, where_t where)
-{
-	dbg("State DB: adding %s state #%lu in %s "PRI_WHERE,
-	    enum_name(&ike_version_names, st->st_ike_version),
-	    st->st_serialno, st->st_state->short_name, pri_where(where));
-	passert(st->st_serialno != SOS_NOBODY);
-
-	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		add_hash_table_entry(*h, st);
-	}
-}
+	&state_ike_spis_hash_table);
 
 void rehash_state_cookies_in_db(struct state *st)
 {
@@ -471,34 +461,7 @@ void rehash_state_cookies_in_db(struct state *st)
 	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
 }
 
-void del_state_from_db(struct state *st)
-{
-	dbg("State DB: deleting %s state #%lu in %s",
-	    enum_name(&ike_version_names, st->st_ike_version),
-	    st->st_serialno, st->st_state->short_name);
-	remove_list_entry(&st->st_serialno_list_entry);
-	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		del_hash_table_entry(*h, st);
-	}
-}
-
-void check_state_db(struct logger *logger)
-{
-	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		check_hash_table(*h, logger);
-	}
-}
-
-void check_state_in_db(struct state *st, where_t where)
-{
-	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		check_hash_table_entry(*h, st, st->st_logger, where);
-	}
-}
-
 void init_state_db(void)
 {
-	FOR_EACH_ELEMENT(state_hash_tables, h) {
-		init_hash_table(*h);
-	}
+	init_state_hash_tables();
 }

@@ -186,6 +186,7 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	 * consistent and comparisons work.
 	 */
 	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.any : remote);
+	init_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	add_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	dbg_alloc("hp", hp, where);
 	return hp;
