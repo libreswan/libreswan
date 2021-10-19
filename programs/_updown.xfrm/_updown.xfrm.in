@@ -622,7 +622,7 @@ doroute() {
 	"${PLUTO_XFRMI_ROUTE}" = yes ]
     then
 	xfrmi_route="samesubnets";
-	echo "leftsubet == rightsubnet = ${PLUTO_PEER_CLIENT} cannot add route"
+	echo "leftsubnet == rightsubnet = ${PLUTO_PEER_CLIENT} cannot add route"
     fi
 
     parms="${PLUTO_PEER_CLIENT}"
