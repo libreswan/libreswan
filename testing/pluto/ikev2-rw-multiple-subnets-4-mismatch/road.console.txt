@@ -95,8 +95,6 @@ road #
  ipsec trafficstatus | wc -l
 6
 road #
- ../../guestbin/xfrmcheck.sh
-road #
  ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:

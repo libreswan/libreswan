@@ -5,4 +5,8 @@ east #
  echo "initdone"
 initdone
 east #
+ # west expects XfrmOutNoStates=8
+east #
+ ../../guestbin/xfrmcheck.sh
+east #
  

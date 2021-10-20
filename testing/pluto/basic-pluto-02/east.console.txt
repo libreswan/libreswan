@@ -34,8 +34,6 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- ../../guestbin/xfrmcheck.sh
-east #
  ipsec whack --shutdown
 east #
  

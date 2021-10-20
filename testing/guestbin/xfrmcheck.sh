@@ -2,10 +2,10 @@
 #
 # prefix with ERROR so it becomes clear it is not "normal" output.
 
-OUT=$(grep -v -P "\t0$" /proc/net/xfrm_stat | sed "s/^/ERROR:  /")
+OUT=$(grep -v -P "\t0$" /proc/net/xfrm_stat | sed "s/^/ERROR: $(hostname): /")
 if [ -n "$OUT" ];
 then
-	echo $OUT
+	echo "$OUT"
 	exit 1
 fi
 exit 0

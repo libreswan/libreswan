@@ -24,8 +24,6 @@ east #
  ipsec trafficstatus | wc -l
 6
 east #
- ../../guestbin/xfrmcheck.sh
-east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:

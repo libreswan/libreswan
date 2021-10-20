@@ -192,7 +192,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- # normally xfrmcheck should never fail, but this tests the test :)
+ # normally xfrmcheck should never fail, but this tests the test (on east) :)
 west #
  ../../guestbin/xfrmcheck.sh
 west #

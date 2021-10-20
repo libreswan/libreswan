@@ -59,8 +59,6 @@ road #
 006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 006 #4: "road/0x3", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
- ../../guestbin/xfrmcheck.sh
-road #
  ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:

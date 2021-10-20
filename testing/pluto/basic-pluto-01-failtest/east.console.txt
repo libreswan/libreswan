@@ -169,9 +169,9 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- # normally xfrmcheck should never fail, but this tests the test :)
+ # normally xfrmcheck should never fail, but this tests the test (on east) :)
 east #
  ../../guestbin/xfrmcheck.sh
-ERROR: XfrmInTmplMismatch 1
+ERROR: east: XfrmInTmplMismatch      	1
 east #
  
