@@ -11,6 +11,9 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 DPD=passive}
+east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
