@@ -25,7 +25,7 @@ struct list_entry;
 
 void init_state_db(void);
 
-struct state *alloc_state(struct fd *whackfd, where_t where);
+struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where);
 
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);

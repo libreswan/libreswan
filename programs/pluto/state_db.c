@@ -41,7 +41,7 @@ static const struct list_info state_serialno_list_info = {
 struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
 							   &state_serialno_list_info);
 
-struct state *alloc_state(struct fd *whackfd, where_t where)
+struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where)
 {
 	union sas {
 		struct child_sa child;
@@ -57,6 +57,8 @@ struct state *alloc_state(struct fd *whackfd, where_t where)
 	st->st_logger = alloc_logger(st, &logger_state_vec, where);
 	st->st_logger->object_whackfd = fd_dup(whackfd, where);
 
+	/* needed by jam_state_connection_serialno() */
+	st->st_connection = c;
 	init_state_hash_table_entries(st);
 
 	/*

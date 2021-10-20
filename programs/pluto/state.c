@@ -431,11 +431,10 @@ static struct state *new_state(struct connection *c,
 			       struct fd *whackfd,
 			       where_t where)
 {
-	struct state *st = alloc_state(whackfd, where);
+	struct state *st = alloc_state(whackfd, c, where);
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_establishing_sa = sa_type;
-	st->st_connection = c;
 	st->st_ike_spis.initiator = ike_initiator_spi;
 	st->st_ike_spis.responder = ike_responder_spi;
 	st->st_ah.protocol = &ip_protocol_ah;
