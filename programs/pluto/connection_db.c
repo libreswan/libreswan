@@ -298,6 +298,9 @@ static void finish_connection(struct connection *c, const char *name,
 	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
 
+	/* needed by jam_spd_route_*() */
+	c->spd.connection = c;
+
 	init_connection_hash_table_entries(c);
 	init_spd_route_hash_table_entries(&c->spd);
 
@@ -316,8 +319,6 @@ static void finish_connection(struct connection *c, const char *name,
 	insert_list_entry(&spd_route_list_head, &c->spd.spd_route_list_entry);
 
 	c->serial_from = serial_from;
-	/* needed by spd_route_jam() */
-	c->spd.connection = c;
 	/* announce it */
 	dbg_alloc(name, c, where);
 }
