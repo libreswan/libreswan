@@ -1216,7 +1216,7 @@ kvmplutotest	ikev2-redirect-01-global-load-balancer		good
 # MOBIKE tests
 kvmplutotest	ikev2-mobike-01				good
 kvmplutotest	ikev2-mobike-02				good
-kvmplutotest	ikev2-mobike-03				good
+kvmplutotest	ikev2-mobike-03					wip	github:527
 kvmplutotest	ikev2-mobike-04				good
 kvmplutotest	ikev2-mobike-05-gcm			good
 kvmplutotest	ikev2-mobike-06				good
