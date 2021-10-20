@@ -22,25 +22,6 @@
 #include "hash_table.h"
 
 /*
- * A linked list in insertion order
- */
-
-static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
-
-static void jam_state_serialno(struct jambuf *buf, const struct state *st)
-{
-	jam(buf, PRI_SO, st->st_serialno);
-}
-
-static const struct list_info state_serialno_list_info = {
-	.name = "serialno list",
-	.jam = hash_table_jam_state_serialno,
-};
-
-struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
-							   &state_serialno_list_info);
-
-/*
  * Legacy search functions.
  */
 
@@ -77,6 +58,11 @@ static bool state_plausable(struct state *st,
 static hash_t hash_state_serialno(const so_serial_t *serialno)
 {
 	return hash_thing(*serialno, zero_hash);
+}
+
+static void jam_state_serialno(struct jambuf *buf, const struct state *st)
+{
+	jam_state(buf, st);
 }
 
 HASH_TABLE(state, serialno, .st_serialno, STATE_TABLE_SIZE);
@@ -317,7 +303,6 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
  */
 
 HASH_DB(state,
-	state_serialno_list_info, state_serialno_list_head, st_serialno_list_entry,
 	&state_serialno_hash_table,
 	&state_connection_serialno_hash_table,
 	&state_reqid_hash_table,
@@ -362,7 +347,7 @@ static struct list_head *filter_head(struct state_filter *filter)
 	} else {
 		/* else other queries? */
 		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->where));
-		bucket = &state_serialno_list_head;
+		bucket = &state_db_list_head;
 	}
 	return bucket;
 }

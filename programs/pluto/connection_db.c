@@ -19,28 +19,15 @@
 #include "hash_table.h"
 #include "refcnt.h"
 
-static void hash_table_jam_connection_serialno(struct jambuf *buf, const void *data);
-
-static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
-{
-	jam(buf, PRI_CO, pri_co(c->serialno));
-}
-
-/*
- * A linked list in insertion order
- */
-
-static const struct list_info connection_serialno_list_info = {
-	.name = "serialno list",
-	.jam = hash_table_jam_connection_serialno,
-};
-
-static struct list_head connection_serialno_list_head = INIT_LIST_HEAD(&connection_serialno_list_head,
-								       &connection_serialno_list_info);
-
 /*
  * A table hashed by serialno.
  */
+
+static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
+{
+	jam_connection(buf, c);
+	jam(buf, " "PRI_CO, pri_co(c->serialno));
+}
 
 static hash_t hash_connection_serialno(const co_serial_t *serialno)
 {
@@ -103,21 +90,16 @@ void rehash_db_connection_that_id(struct connection *c)
  * SPD_ROUTE database.
  */
 
-static void hash_table_jam_spd_route_remote_client(struct jambuf *buf, const void *data);
-
-static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
+static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
 	jam(buf, PRI_CO".", pri_co(sr->connection->serialno));
 	jam_selectors(buf, &sr->this.client, &sr->that.client);
 }
 
-static const struct list_info spd_route_list_info = {
-	.name = "spd_route list",
-	.jam = hash_table_jam_spd_route_remote_client,
-};
-
-static struct list_head spd_route_list_head = INIT_LIST_HEAD(&spd_route_list_head,
-							     &spd_route_list_info);
+static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
+{
+	jam_spd_route(buf, sr);
+}
 
 static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 {
@@ -127,7 +109,6 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
 
 HASH_DB(spd_route,
-	spd_route_list_info, spd_route_list_head, spd_route_list_entry,
 	&spd_route_remote_client_hash_table);
 
 void rehash_db_spd_route_remote_client(struct spd_route *sr)
@@ -148,7 +129,7 @@ static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 
 	/* else other queries? */
 	dbg("FOR_EACH_SPD_ROUTE_... in "PRI_WHERE, pri_where(filter->where));
-	return &spd_route_list_head;
+	return &spd_route_db_list_head;
 }
 
 static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
@@ -216,7 +197,6 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
  */
 
 HASH_DB(connection,
-	connection_serialno_list_info, connection_serialno_list_head, serialno_list_entry,
 	&connection_serialno_hash_table,
 	&connection_that_id_hash_table);
 
@@ -282,7 +262,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 	}
 
 	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
-	return &connection_serialno_list_head;
+	return &connection_db_list_head;
 }
 
 static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)

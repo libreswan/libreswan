@@ -50,7 +50,8 @@ struct hash_table {
 		return &s->hash_table_entries.NAME;			\
 	}								\
 									\
-	static void hash_table_jam_##STRUCT##_##NAME(struct jambuf *buf, const void *data) \
+	static void hash_table_jam_##STRUCT##_##NAME(struct jambuf *buf, \
+						     const void *data)	\
 	{								\
 		const struct STRUCT *s = data;				\
 		jam_##STRUCT##_##NAME(buf, s);				\
@@ -101,48 +102,66 @@ void rehash_table_entry(struct hash_table *table, void *data);
 void check_hash_table_entry(struct hash_table *table, void *data,
 			    struct logger *logger, where_t where);
 
-#define HASH_DB(STRUCT, LIST_INFO, LIST_HEAD, LIST_ENTRY, TABLE, ...)	\
+#define HASH_DB(STRUCT, TABLE, ...)					\
 									\
-	struct hash_table *const STRUCT##_hash_tables[] = {		\
+	static void STRUCT##_db_jam_##STRUCT(struct jambuf *buf,	\
+					     const void *data)		\
+	{								\
+		const struct STRUCT *s = data;				\
+		jam_##STRUCT(buf, s);					\
+	}								\
+									\
+	static const struct list_info STRUCT##_db_list_info = {		\
+		.name = #STRUCT " list",				\
+		.jam = STRUCT##_db_jam_##STRUCT,			\
+	};								\
+									\
+	static struct list_head STRUCT##_db_list_head =			\
+		INIT_LIST_HEAD(&STRUCT##_db_list_head,			\
+			       &STRUCT##_db_list_info);			\
+									\
+	struct hash_table *const STRUCT##_db_hash_tables[] = {		\
 		TABLE, ##__VA_ARGS__,					\
 	};								\
 									\
 	void init_##STRUCT##_db(struct logger *logger)			\
 	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, h) {		\
+		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, h) {		\
 			init_hash_table(*h, logger);			\
 		}							\
 	}								\
 									\
 	void check_##STRUCT##_db(struct logger *logger)			\
 	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, h) {		\
+		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, h) {		\
 			check_hash_table(*h, logger);			\
 		}							\
 	}								\
 									\
 	void init_db_##STRUCT(struct STRUCT *s)				\
 	{								\
-		s->LIST_ENTRY = list_entry(&LIST_INFO, s);		\
-		insert_list_entry(&LIST_HEAD, &s->LIST_ENTRY);		\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+		s->hash_table_entries.list =				\
+			list_entry(&STRUCT##_db_list_info, s);	\
+		insert_list_entry(&STRUCT##_db_list_head,	\
+				  &s->hash_table_entries.list);		\
+		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, H) {		\
 			init_hash_table_entry(*H, s);			\
 		}							\
 	}								\
 									\
 	void add_db_##STRUCT(struct STRUCT *s)				\
 	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
+		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, H) {		\
 			add_hash_table_entry(*H, s);			\
 		}							\
 	}								\
 									\
 	void del_db_##STRUCT(struct STRUCT *s, bool valid)		\
 	{								\
-		remove_list_entry(&s->LIST_ENTRY);			\
+		remove_list_entry(&s->hash_table_entries.list);		\
 		if (valid) {						\
-			FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {	\
-				del_hash_table_entry(*H, s);		\
+			FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, h) {	\
+				del_hash_table_entry(*h, s);		\
 			}						\
 		}							\
 	}								\
@@ -151,8 +170,8 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 			       struct logger *logger,			\
 			       where_t where)				\
 	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
-			check_hash_table_entry(*H, s, logger, where);	\
+		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, h) {		\
+			check_hash_table_entry(*h, s, logger, where);	\
 		}							\
 	}								\
 

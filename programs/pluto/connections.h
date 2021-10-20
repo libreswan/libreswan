@@ -291,8 +291,8 @@ struct spd_route {
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
 	reqid_t reqid;
-	struct list_entry spd_route_list_entry;
 	struct {
+		struct list_entry list;
 		struct list_entry remote_client;
 	} hash_table_entries;
 };
@@ -431,8 +431,8 @@ struct connection {
 	char *redirect_to;        /* RFC 5685 */
 	char *accept_redirect_to;
 
-	struct list_entry serialno_list_entry;
 	struct {
+		struct list_entry list;
 		struct list_entry serialno;
 		struct list_entry that_id;
 	} hash_table_entries;

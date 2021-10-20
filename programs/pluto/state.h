@@ -676,11 +676,9 @@ struct state {
 	PK11SymKey *st_sk_pr_no_ppk;
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	/* state list entry */
-	struct list_entry st_serialno_list_entry;
-
 	/* all the hash table entries */
 	struct {
+		struct list_entry list;
 		struct list_entry serialno;
 		struct list_entry connection_serialno;
 		struct list_entry reqid;
