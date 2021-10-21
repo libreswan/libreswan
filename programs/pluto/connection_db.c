@@ -106,7 +106,6 @@ void rehash_db_connection_that_id(struct connection *c)
 
 static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
-#if 0
 	if (filter->that_id_eq != NULL) {
 		id_buf idb;
 		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
@@ -114,7 +113,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		hash_t hash = hash_connection_that_id(filter->that_id_eq);
 		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
-#endif
+
 	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
 	return &connection_serialno_list_head;
 }
