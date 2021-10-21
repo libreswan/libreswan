@@ -22,10 +22,9 @@
 #include "hash_table.h"
 
 /*
- * A table ordered by serialno.
+ * A linked list in insertion order
  */
 
-static void init_state_hash_table_entries(struct state *st);
 static void hash_table_jam_state_serialno(struct jambuf *buf, const void *data);
 
 static void jam_state_serialno(struct jambuf *buf, const struct state *st)
@@ -40,42 +39,6 @@ static const struct list_info state_serialno_list_info = {
 
 struct list_head state_serialno_list_head = INIT_LIST_HEAD(&state_serialno_list_head,
 							   &state_serialno_list_info);
-
-struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where)
-{
-	union sas {
-		struct child_sa child;
-		struct ike_sa ike;
-		struct state st;
-	};
-	union sas *sap = alloc_thing(union sas, "struct state");
-	passert(&sap->st == &sap->child.sa);
-	passert(&sap->st == &sap->ike.sa);
-	struct state *st = &sap->st;
-
-	/* XXX: something better? Note: needs real ST */
-	st->st_logger = alloc_logger(st, &logger_state_vec, where);
-	st->st_logger->object_whackfd = fd_dup(whackfd, where);
-
-	/* needed by jam_state_connection_serialno() */
-	st->st_connection = c;
-	init_state_hash_table_entries(st);
-
-	/*
-	 * Update counter, set serialno and add to serialno list.
-	 *
-	 * The state will be hashed after the caller has finished
-	 * populating it.
-	 */
-	static so_serial_t state_serialno;
-	state_serialno++;
-	passert(state_serialno > 0); /* can't overflow */
-	st->st_serialno = state_serialno;
-
-	insert_list_entry(&state_serialno_list_head, &st->st_serialno_list_entry);
-
-	return st;
-}
 
 /*
  * Legacy search functions.
@@ -348,6 +311,28 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 }
 
 /*
+ * Maintain the contents of the hash tables.
+ *
+ * Unlike serialno, the IKE SPI[ir] keys can change over time.
+ */
+
+HASH_DB(state, &state_serialno_list_info, st_serialno_list_entry,
+	&state_serialno_hash_table,
+	&state_connection_serialno_hash_table,
+	&state_reqid_hash_table,
+	&state_ike_initiator_spi_hash_table,
+	&state_ike_spis_hash_table);
+
+void rehash_state_cookies_in_db(struct state *st)
+{
+	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_serialno);
+	rehash_table_entry(&state_ike_spis_hash_table, st);
+	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
+}
+
+/*
  * See also {next,prev}_connection()
  */
 
@@ -441,24 +426,38 @@ bool next_state_new2old(struct state_filter *filter)
 	return next_state(NEW2OLD, filter);
 }
 
-/*
- * Maintain the contents of the hash tables.
- *
- * Unlike serialno, the IKE SPI[ir] keys can change over time.
- */
-
-HASH_DB(state, &state_serialno_list_info, st_serialno_list_entry,
-	&state_serialno_hash_table,
-	&state_connection_serialno_hash_table,
-	&state_reqid_hash_table,
-	&state_ike_initiator_spi_hash_table,
-	&state_ike_spis_hash_table);
-
-void rehash_state_cookies_in_db(struct state *st)
+struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where)
 {
-	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
-	    enum_name(&ike_version_names, st->st_ike_version),
-	    st->st_serialno);
-	rehash_table_entry(&state_ike_spis_hash_table, st);
-	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
+	union sas {
+		struct child_sa child;
+		struct ike_sa ike;
+		struct state st;
+	};
+	union sas *sap = alloc_thing(union sas, "struct state");
+	passert(&sap->st == &sap->child.sa);
+	passert(&sap->st == &sap->ike.sa);
+	struct state *st = &sap->st;
+
+	/* XXX: something better? Note: needs real ST */
+	st->st_logger = alloc_logger(st, &logger_state_vec, where);
+	st->st_logger->object_whackfd = fd_dup(whackfd, where);
+
+	/* needed by jam_state_connection_serialno() */
+	st->st_connection = c;
+	init_state_hash_table_entries(st);
+
+	/*
+	 * Update counter, set serialno and add to serialno list.
+	 *
+	 * The state will be hashed after the caller has finished
+	 * populating it.
+	 */
+	static so_serial_t state_serialno;
+	state_serialno++;
+	passert(state_serialno > 0); /* can't overflow */
+	st->st_serialno = state_serialno;
+
+	insert_list_entry(&state_serialno_list_head, &st->st_serialno_list_entry);
+
+	return st;
 }

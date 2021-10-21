@@ -19,7 +19,6 @@
 #include "hash_table.h"
 #include "refcnt.h"
 
-static void init_connection_hash_table_entries(struct connection *c);
 static void hash_table_jam_connection_serialno(struct jambuf *buf, const void *data);
 
 static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
@@ -28,7 +27,7 @@ static void jam_connection_serialno(struct jambuf *buf, const struct connection 
 }
 
 /*
- * A table ordered by serialno.
+ * A linked list in insertion order
  */
 
 static const struct list_info connection_serialno_list_info = {
@@ -98,80 +97,6 @@ void rehash_db_connection_that_id(struct connection *c)
 	dbg("%s() rehashing "PRI_CO" that_id=%s",
 	    __func__, pri_co(c->serialno), str_id(&c->spd.that.id, &idb));
 	rehash_table_entry(&connection_that_id_hash_table, c);
-}
-
-/*
- * See also {new2old,old2new}_state()
- */
-
-static struct list_head *connection_filter_head(struct connection_filter *filter)
-{
-	if (filter->that_id_eq != NULL) {
-		id_buf idb;
-		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
-		    str_id(filter->that_id_eq, &idb), pri_where(filter->where));
-		hash_t hash = hash_connection_that_id(filter->that_id_eq);
-		return hash_table_bucket(&connection_that_id_hash_table, hash);
-	}
-
-	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
-	return &connection_serialno_list_head;
-}
-
-static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
-{
-	if (filter->kind != 0 && filter->kind != c->kind) {
-		return false;
-	}
-	if (filter->name != NULL && !streq(filter->name, c->name)) {
-		return false;
-	}
-	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->spd.this.id)) {
-		return false;
-	}
-	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->spd.that.id)) {
-		return false;
-	}
-	return true; /* sure */
-}
-
-static bool next_connection(enum chrono adv, struct connection_filter *filter)
-{
-	if (filter->internal == NULL) {
-		/*
-		 * Advance to first entry of the circular list (if the
-		 * list is entry it ends up back on HEAD which has no
-		 * data).
-		 */
-		filter->internal = connection_filter_head(filter)->head.next[adv];
-	}
-	/* Walk list until an entry matches */
-	filter->c = NULL;
-	for (struct list_entry *entry = filter->internal;
-	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->next[adv]) {
-		struct connection *c = (struct connection *) entry->data;
-		if (matches_connection_filter(c, filter)) {
-			/* save connection; but step off current entry */
-			filter->internal = entry->next[adv];
-			dbg("found "PRI_CO" for "PRI_WHERE,
-			    pri_co(c->serialno), pri_where(filter->where));
-			filter->c = c;
-			return true;
-		}
-	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
-	return false;
-}
-
-bool next_connection_old2new(struct connection_filter *filter)
-{
-	return next_connection(OLD2NEW, filter);
-}
-
-bool next_connection_new2old(struct connection_filter *filter)
-{
-	return next_connection(NEW2OLD, filter);
 }
 
 /*
@@ -287,6 +212,14 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 }
 
 /*
+ * Maintain the contents of the hash tables.
+ */
+
+HASH_DB(connection, &connection_serialno_list_info, serialno_list_entry,
+	&connection_serialno_hash_table,
+	&connection_that_id_hash_table);
+
+/*
  * Allocate connections.
  */
 
@@ -337,9 +270,75 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 }
 
 /*
- * Maintain the contents of the hash tables.
+ * See also {new2old,old2new}_state()
  */
 
-HASH_DB(connection, &connection_serialno_list_info, serialno_list_entry,
-	&connection_serialno_hash_table,
-	&connection_that_id_hash_table);
+static struct list_head *connection_filter_head(struct connection_filter *filter)
+{
+	if (filter->that_id_eq != NULL) {
+		id_buf idb;
+		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
+		    str_id(filter->that_id_eq, &idb), pri_where(filter->where));
+		hash_t hash = hash_connection_that_id(filter->that_id_eq);
+		return hash_table_bucket(&connection_that_id_hash_table, hash);
+	}
+
+	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+	return &connection_serialno_list_head;
+}
+
+static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
+{
+	if (filter->kind != 0 && filter->kind != c->kind) {
+		return false;
+	}
+	if (filter->name != NULL && !streq(filter->name, c->name)) {
+		return false;
+	}
+	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->spd.this.id)) {
+		return false;
+	}
+	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->spd.that.id)) {
+		return false;
+	}
+	return true; /* sure */
+}
+
+static bool next_connection(enum chrono adv, struct connection_filter *filter)
+{
+	if (filter->internal == NULL) {
+		/*
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data).
+		 */
+		filter->internal = connection_filter_head(filter)->head.next[adv];
+	}
+	/* Walk list until an entry matches */
+	filter->c = NULL;
+	for (struct list_entry *entry = filter->internal;
+	     entry->data != NULL /* head has DATA == NULL */;
+	     entry = entry->next[adv]) {
+		struct connection *c = (struct connection *) entry->data;
+		if (matches_connection_filter(c, filter)) {
+			/* save connection; but step off current entry */
+			filter->internal = entry->next[adv];
+			dbg("found "PRI_CO" for "PRI_WHERE,
+			    pri_co(c->serialno), pri_where(filter->where));
+			filter->c = c;
+			return true;
+		}
+	}
+	dbg("no match for "PRI_WHERE, pri_where(filter->where));
+	return false;
+}
+
+bool next_connection_old2new(struct connection_filter *filter)
+{
+	return next_connection(OLD2NEW, filter);
+}
+
+bool next_connection_new2old(struct connection_filter *filter)
+{
+	return next_connection(NEW2OLD, filter);
+}
