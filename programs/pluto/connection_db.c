@@ -207,7 +207,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	unshare_connection_end(&sr->this);
 	unshare_connection_end(&sr->that);
 
-	add_spd_route_to_db(sr);
+	add_db_spd_route(sr);
 	return sr;
 }
 

@@ -419,8 +419,9 @@ struct child_sa *pexpect_child_sa(struct state *st)
 
 /*
  * Get a state object.
- * Caller must schedule an event for this object so that it doesn't leak.
- * Caller must insert_state().
+ *
+ * Caller must schedule an event for this object so that it doesn't
+ * leak.  Caller must add_db_state().
  */
 
 static struct state *new_state(struct connection *c,
@@ -430,7 +431,31 @@ static struct state *new_state(struct connection *c,
 			       struct fd *whackfd,
 			       where_t where)
 {
-	struct state *st = alloc_state(whackfd, c, where);
+	union sas {
+		struct child_sa child;
+		struct ike_sa ike;
+		struct state st;
+	};
+	union sas *sap = alloc_thing(union sas, "struct state");
+	passert(&sap->st == &sap->child.sa);
+	passert(&sap->st == &sap->ike.sa);
+	struct state *st = &sap->st;
+
+	/* Create the logger ASAP; needs real ST */
+	st->st_logger = alloc_logger(st, &logger_state_vec, where);
+	/* XXX: something better? */
+	st->st_logger->object_whackfd = fd_dup(whackfd, where);
+
+	/* Determine the serialno.  */
+	static so_serial_t state_serialno;
+	state_serialno++;
+	passert(state_serialno > 0); /* can't overflow */
+	st->st_serialno = state_serialno;
+
+	/* needed by jam_state_connection_serialno() */
+	st->st_connection = c;
+	init_db_state(st); /* hash called below */
+
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_establishing_sa = sa_type;
@@ -443,7 +468,8 @@ static struct state *new_state(struct connection *c,
 	st->hidden_variables.st_natd = ipv4_info.address.any;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
-	add_state_to_db(st);
+
+	add_db_state(st);
 	pstat_sa_started(st, sa_type);
 
 	return st;
@@ -1111,7 +1137,7 @@ void delete_state_tail(struct state *st)
 	 * This, effectively,  deletes any ISAKMP SA that this state
 	 * represents - lookups for this state no longer work.
 	 */
-	del_state_from_db(st, true/*valid*/);
+	del_db_state(st, true/*valid*/);
 
 	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an

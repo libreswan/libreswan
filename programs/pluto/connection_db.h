@@ -30,8 +30,8 @@ struct connection *clone_connection(const char *name, struct connection *templat
 void init_db_connection(struct connection *c);
 void check_db_connection(struct connection *c, struct logger *logger, where_t where);
 
-void add_connection_to_db(struct connection *c);
-void del_connection_from_db(struct connection *c, bool valid);
+void add_db_connection(struct connection *c);
+void del_db_connection(struct connection *c, bool valid);
 
 /* spd route */
 
@@ -43,7 +43,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where);
 void init_db_spd_route(struct spd_route *sr);
 void check_db_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
 
-void add_spd_route_to_db(struct spd_route *sr);
-void del_spd_route_from_db(struct spd_route *sr, bool valid);
+void add_db_spd_route(struct spd_route *sr);
+void del_db_spd_route(struct spd_route *sr, bool valid);
 
 #endif

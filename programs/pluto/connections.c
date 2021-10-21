@@ -100,9 +100,9 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 
 static void hash_connection(struct connection *c)
 {
-	add_connection_to_db(c);
+	add_db_connection(c);
 	passert(c->spd.spd_next == NULL);
-	add_spd_route_to_db(&c->spd);
+	add_db_spd_route(&c->spd);
 }
 
 /*
@@ -156,7 +156,7 @@ static void delete_end(struct end *e)
 
 static void delete_spd_route(struct spd_route **sr, bool first, bool valid)
 {
-	del_spd_route_from_db(*sr, valid);
+	del_db_spd_route(*sr, valid);
 	delete_end(&(*sr)->this);
 	delete_end(&(*sr)->that);
 	if (!first) {
@@ -245,7 +245,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
 	}
 
-	del_connection_from_db(c, connection_valid);
+	del_db_connection(c, connection_valid);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {

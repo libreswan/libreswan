@@ -426,37 +426,3 @@ bool next_state_new2old(struct state_filter *filter)
 {
 	return next_state(NEW2OLD, filter);
 }
-
-struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where)
-{
-	union sas {
-		struct child_sa child;
-		struct ike_sa ike;
-		struct state st;
-	};
-	union sas *sap = alloc_thing(union sas, "struct state");
-	passert(&sap->st == &sap->child.sa);
-	passert(&sap->st == &sap->ike.sa);
-	struct state *st = &sap->st;
-
-	/* XXX: something better? Note: needs real ST */
-	st->st_logger = alloc_logger(st, &logger_state_vec, where);
-	st->st_logger->object_whackfd = fd_dup(whackfd, where);
-
-	/* needed by jam_state_connection_serialno() */
-	st->st_connection = c;
-	init_db_state(st);
-
-	/*
-	 * Update counter, set serialno and add to serialno list.
-	 *
-	 * The state will be hashed after the caller has finished
-	 * populating it.
-	 */
-	static so_serial_t state_serialno;
-	state_serialno++;
-	passert(state_serialno > 0); /* can't overflow */
-	st->st_serialno = state_serialno;
-
-	return st;
-}

@@ -130,14 +130,14 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}							\
 	}								\
 									\
-	void add_##STRUCT##_to_db(struct STRUCT *s)			\
+	void add_db_##STRUCT(struct STRUCT *s)				\
 	{								\
 		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
 			add_hash_table_entry(*H, s);			\
 		}							\
 	}								\
 									\
-	void del_##STRUCT##_from_db(struct STRUCT *s, bool valid)	\
+	void del_db_##STRUCT(struct STRUCT *s, bool valid)		\
 	{								\
 		remove_list_entry(&s->LIST_ENTRY);			\
 		if (valid) {						\
