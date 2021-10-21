@@ -14,7 +14,7 @@ road #
  echo "initdone"
 initdone
 road #
- #!/bin/sh
+ # establish
 road #
  ipsec auto --up road-east-x509-ipv4
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
@@ -24,20 +24,13 @@ road #
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 road #
- ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-road #
  # Tunnel should be up
 road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
+road #
  ipsec whack --trafficstatus
-006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
-road #
- # Let R_U_THERE packets flow
-road #
- sleep 15
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  # Setting up block via iptables
 road #
@@ -45,28 +38,33 @@ road #
 road #
  iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 road #
- sleep 30
+ # wait for tunnel to die and (%trap/%hold) installed
 road #
- # Tunnel should be down (%trap/%hold)
+ ../../guestbin/wait-for.sh --no-match '#2' -- ipsec whack --trafficstatus
 road #
  ipsec whack --trafficstatus
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+HOLD SHOULD BE HERE
+road #
+ # Remove block
 road #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 road #
  iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 road #
- sleep 30
+ # wait for revival
 road #
- # Tunnel should be back up now even without triggering traffic
+ ../../guestbin/wait-for.sh --match '#04' -- ipsec whack --trafficstatus
+timeout waiting 30 seconds for ipsec whack --trafficstatus to match #04
+output: 006 #5: "road-east-x509-ipv4"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-road #
- ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-road #
- echo done
-done
+006 #5: "road-east-x509-ipv4"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  
