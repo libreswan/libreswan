@@ -30,8 +30,10 @@ struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t wher
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st, bool valid);
+
 void check_state_db(struct logger *logger);
-void check_state_in_db(struct state *st, struct logger *logger, where_t where);
+
+void check_db_state(struct state *st, struct logger *logger, where_t where);
 
 /*
  * List of all valid states; can be iterated in old-to-new and

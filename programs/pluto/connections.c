@@ -4847,3 +4847,13 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 	       same_id(peer_id == NULL ? &c->spd.that.id : peer_id,
 		       &d->spd.that.id);
 }
+
+void check_connection(struct connection *c, where_t where)
+{
+	check_db_connection(c, c->logger, where);
+#if 0
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+		check_db_spd_route(sr, c->logger, where);
+	}
+#endif
+}

@@ -65,7 +65,6 @@
 #include "ikev2_delete.h"	/* for record_v2_delete() */
 #include "orient.h"
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
-#include "connection_db.h"		/* for check_connection_in_db() */
 
 bool uniqueIDs = false;
 
@@ -3129,6 +3128,6 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 
 void check_state(struct state *st, where_t where)
 {
-	check_state_in_db(st, st->st_logger, where);
-	check_connection_in_db(st->st_connection, st->st_connection->logger, where);
+	check_db_state(st, st->st_logger, where);
+	check_connection(st->st_connection, where);
 }

@@ -146,9 +146,9 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}							\
 	}								\
 									\
-	void check_##STRUCT##_in_db(struct STRUCT *s,			\
-				    struct logger *logger,		\
-				    where_t where)			\
+	void check_db_##STRUCT(struct STRUCT *s,			\
+			       struct logger *logger,			\
+			       where_t where)				\
 	{								\
 		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
 			check_hash_table_entry(*H, s, logger, where);	\

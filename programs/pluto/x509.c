@@ -86,7 +86,6 @@
 #include "crypt_hash.h"
 #include "crl_queue.h"
 #include "ip_info.h"
-#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 bool crl_strict = false;
 bool ocsp_strict = false;
@@ -836,7 +835,7 @@ bool v1_verify_certs(struct msg_digest *md)
 	} else {
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id/*ID_FROMCERT=>updated*/);
 		if (d != NULL) {
-			rehash_connection_that_id(c); /*ID_FROMCERT=>updated*/
+			rehash_db_connection_that_id(c); /*ID_FROMCERT=>updated*/
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
 		}

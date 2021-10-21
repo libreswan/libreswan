@@ -1845,7 +1845,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							/* new entry: add at end*/
 							sr->spd_next = clone_spd_route(c, HERE);
 							sr->that.client = wire_selector;
-							rehash_spd_route(sr);
+							rehash_db_spd_route_remote_client(sr);
 							break;
 						}
 					}

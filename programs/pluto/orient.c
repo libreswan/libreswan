@@ -32,7 +32,6 @@
 #include "iface.h"
 #include "server.h"		/* for listening; */
 #include "orient.h"
-#include "connection_db.h"		/* for rehash_connection_that_id() */
 
 bool oriented(const struct connection *c)
 {
@@ -91,9 +90,9 @@ static void swap_ends(struct connection *c)
 	/* re-compute the base policy priority using the swapped left/right */
 	set_policy_prio(c);
 	/* rehash end dependent hashes */
-	rehash_connection_that_id(c);
+	rehash_db_connection_that_id(c);
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		rehash_spd_route(sr);
+		rehash_db_spd_route_remote_client(sr);
 	}
 }
 

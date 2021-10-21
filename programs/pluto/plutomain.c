@@ -60,7 +60,7 @@
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
 #include "revival.h"		/* for init_revival_timer() */
-#include "connection_db.h"	/* for connection_state_db() */
+#include "connection_db.h"	/* for init_connection_db() */
 #include "nat_traversal.h"
 #include "ike_alg.h"
 #include "ikev2_redirect.h"

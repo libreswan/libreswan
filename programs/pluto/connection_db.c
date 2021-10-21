@@ -92,7 +92,7 @@ static void jam_connection_that_id(struct jambuf *buf, const struct connection *
 
 HASH_TABLE(connection, that_id, .spd.that.id, STATE_TABLE_SIZE);
 
-void rehash_connection_that_id(struct connection *c)
+void rehash_db_connection_that_id(struct connection *c)
 {
 	id_buf idb;
 	dbg("%s() rehashing "PRI_CO" that_id=%s",
@@ -205,11 +205,9 @@ HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
 HASH_DB(spd_route, &spd_route_list_info, spd_route_list_entry,
 	&spd_route_remote_client_hash_table);
 
-void rehash_spd_route(struct spd_route *sr)
+void rehash_db_spd_route_remote_client(struct spd_route *sr)
 {
-	FOR_EACH_ELEMENT(spd_route_hash_tables, h) {
-		rehash_table_entry(*h, sr);
-	}
+	rehash_table_entry(&spd_route_remote_client_hash_table, sr);
 }
 
 static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
