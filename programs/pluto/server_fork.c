@@ -284,7 +284,7 @@ void server_fork_exec(const char *what, const char *path,
 	}
 }
 
-void init_server_fork(void)
+void init_server_fork(struct logger *logger)
 {
-	init_hash_table(&pid_entry_pid_hash_table);
+	init_hash_table(&pid_entry_pid_hash_table, logger);
 }

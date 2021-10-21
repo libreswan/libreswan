@@ -70,7 +70,8 @@ struct hash_table {
 		.info = &STRUCT##_##NAME##_hash_info,			\
 	}
 
-void init_hash_table(struct hash_table *table);
+void init_hash_table(struct hash_table *table, struct logger *logger);
+void check_hash_table(struct hash_table *table, struct logger *logger);
 
 hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
 #define hash_hunk(HUNK, HASH)						\
@@ -97,20 +98,26 @@ void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
 void rehash_table_entry(struct hash_table *table, void *data);
 
-void check_hash_table(struct hash_table *table, struct logger *logger);
 void check_hash_table_entry(struct hash_table *table, void *data,
 			    struct logger *logger, where_t where);
 
-#define HASH_DB(STRUCT, LIST_INFO, LIST_ENTRY, ...)			\
+#define HASH_DB(STRUCT, LIST_INFO, LIST_ENTRY, TABLE, ...)		\
 									\
 	struct hash_table *const STRUCT##_hash_tables[] = {		\
-		__VA_ARGS__,						\
+		TABLE, ##__VA_ARGS__,					\
 	};								\
 									\
-	static void init_##STRUCT##_hash_tables(void)			\
+	void init_##STRUCT##_db(struct logger *logger)			\
 	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
-			init_hash_table(*H);				\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, h) {		\
+			init_hash_table(*h, logger);			\
+		}							\
+	}								\
+									\
+	void check_##STRUCT##_db(struct logger *logger)			\
+	{								\
+		FOR_EACH_ELEMENT(STRUCT##_hash_tables, h) {		\
+			check_hash_table(*h, logger);			\
 		}							\
 	}								\
 									\
@@ -136,13 +143,6 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 			FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {	\
 				del_hash_table_entry(*H, s);		\
 			}						\
-		}							\
-	}								\
-									\
-	void check_##STRUCT##_db(struct logger *logger)			\
-	{								\
-		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
-			check_hash_table(*H, logger);			\
 		}							\
 	}								\
 									\

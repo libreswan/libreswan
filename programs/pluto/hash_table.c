@@ -22,8 +22,9 @@
 
 const hash_t zero_hash = { 0 };
 
-void init_hash_table(struct hash_table *table)
+void init_hash_table(struct hash_table *table, struct logger *logger)
 {
+	ldbg(logger, "initialize %s hash table", table->info->name);
 	for (unsigned i = 0; i < table->nr_slots; i++) {
 		struct list_head *slot = &table->slots[i];
 		*slot = (struct list_head) INIT_LIST_HEAD(slot, table->info);

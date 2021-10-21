@@ -23,15 +23,14 @@ struct state;
 struct connection;
 struct list_entry;
 
-void init_state_db(void);
+void init_state_db(struct logger *logger);
+void check_state_db(struct logger *logger);
 
 struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t where);
 
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st, bool valid);
-
-void check_state_db(struct logger *logger);
 
 void check_db_state(struct state *st, struct logger *logger, where_t where);
 

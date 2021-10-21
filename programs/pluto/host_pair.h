@@ -63,7 +63,7 @@ extern void update_host_pairs(struct connection *c);
 extern void release_dead_interfaces(struct logger *logger);
 extern void check_orientations(struct logger *logger);
 
-void init_host_pair_db(void);
+void init_host_pair_db(struct logger *logger);
 
 struct connection *next_host_pair_connection(const ip_address local,
 					     const ip_address remote,

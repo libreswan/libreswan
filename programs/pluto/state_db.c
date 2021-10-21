@@ -462,8 +462,3 @@ void rehash_state_cookies_in_db(struct state *st)
 	rehash_table_entry(&state_ike_spis_hash_table, st);
 	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
 }
-
-void init_state_db(void)
-{
-	init_state_hash_tables();
-}

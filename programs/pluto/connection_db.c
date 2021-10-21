@@ -343,9 +343,3 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 HASH_DB(connection, &connection_serialno_list_info, serialno_list_entry,
 	&connection_serialno_hash_table,
 	&connection_that_id_hash_table);
-
-void init_connection_db(void)
-{
-	init_connection_hash_tables();
-	init_spd_route_hash_tables();
-}
