@@ -946,6 +946,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 	c->spd.this.client = local_shunt;
 	c->spd.that.client = remote_shunt;
+	rehash_db_spd_route_remote_client(&c->spd);
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,

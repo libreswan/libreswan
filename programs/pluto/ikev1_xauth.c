@@ -1802,6 +1802,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					passert(c->spd.spd_next == NULL);
 					c->spd.that.has_client = true;
 					c->spd.that.client = ipv4_info.selector.all;
+					rehash_db_spd_route_remote_client(&c->spd);
 				}
 
 				while (pbs_left(&strattr) > 0) {

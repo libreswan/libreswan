@@ -1566,6 +1566,7 @@ bool v2_process_ts_response(struct child_sa *child,
 				"scribble accepted TSi response on initiator's this");
 	traffic_selector_to_end(best.tsr, &c->spd.that,
 				"scribble accepted TSr response on initiator's that");
+	rehash_db_spd_route_remote_client(&c->spd);
 
 	return true;
 }

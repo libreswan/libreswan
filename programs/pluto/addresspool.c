@@ -647,6 +647,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	c->spd.that.has_lease = true;
 	c->spd.that.has_client = true;
 	c->spd.that.client = selector_from_address(ia);
+	rehash_db_spd_route_remote_client(&c->spd);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {

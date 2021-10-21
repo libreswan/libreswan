@@ -443,6 +443,7 @@ void update_host_pairs(struct connection *c)
 			 */
 			if (!d->spd.that.has_client) {
 				d->spd.that.client = selector_from_address(new_addr);
+				rehash_db_spd_route_remote_client(&d->spd);
 			}
 
 			d->spd.that.host_addr = new_addr;

@@ -1113,6 +1113,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 					    str_address(&old_addr, &ob),
 					    str_address(&new_peer, &nb));
 					tmp_c->spd.that.client = selector_from_address(new_peer);
+					rehash_db_spd_route_remote_client(&tmp_c->spd);
 				}
 
 				/*

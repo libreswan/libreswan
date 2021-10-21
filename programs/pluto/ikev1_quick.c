@@ -1140,6 +1140,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		if (is_virtual_connection(c)) {
 
 			c->spd.that.client = *remote_client;
+			rehash_db_spd_route_remote_client(&c->spd);
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 

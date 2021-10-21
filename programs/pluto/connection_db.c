@@ -275,6 +275,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->that.id.name = EMPTY_CHUNK;
 	sr->this.virt = NULL;
 	sr->that.virt = NULL;
+
 	init_spd_route_hash_table_entries(sr);
 	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
 

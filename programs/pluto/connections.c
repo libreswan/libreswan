@@ -101,6 +101,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *b, struct log
 static void hash_connection(struct connection *c)
 {
 	add_connection_to_db(c);
+	passert(c->spd.spd_next == NULL);
 	add_spd_route_to_db(&c->spd);
 }
 
@@ -2351,7 +2352,7 @@ struct connection *add_group_instance(struct connection *group,
 	unshare_connection(t);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
-	t->spd.that.client = *target;
+	t->spd.that.client = *target;	/* hashed below */
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
 		update_selector_ipproto(&t->spd.this.client, proto);
@@ -2547,6 +2548,7 @@ struct connection *rw_instantiate(struct connection *c,
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *peer_subnet;
+		rehash_db_spd_route_remote_client(&d->spd);
 		if (selector_eq_address(*peer_subnet, *peer_addr))
 			d->spd.that.has_client = false;
 	}
@@ -2559,6 +2561,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * client
 		 */
 		d->spd.that.client = selector_type(&d->spd.that.client)->selector.zero;
+		rehash_db_spd_route_remote_client(&d->spd);
 	}
 	connection_buf inst;
 	address_buf b;
@@ -2930,6 +2933,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	d->spd.that.client = selector_from_address_protocol_port(*remote_address,
 								 remote_protocol,
 								 remote_port);
+	rehash_db_spd_route_remote_client(&d->spd);
 
 	dbg("oppo remote(d) protocol %s port %d",
 	    selector_protocol(d->spd.that.client)->name,
@@ -4851,9 +4855,7 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 void check_connection(struct connection *c, where_t where)
 {
 	check_db_connection(c, c->logger, where);
-#if 0
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		check_db_spd_route(sr, c->logger, where);
 	}
-#endif
 }
