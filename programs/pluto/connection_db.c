@@ -213,16 +213,17 @@ void rehash_db_spd_route_remote_client(struct spd_route *sr)
 static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 {
 	/* select list head */
-	struct list_head *bucket;
 	if (filter->remote_client_range != NULL) {
+		selector_buf sb;
+		dbg("FOR_EACH_SPD_ROUTE[remote_client_range=%s]... in "PRI_WHERE,
+		    str_selector(filter->remote_client_range, &sb), pri_where(filter->where));
 		hash_t hash = hash_spd_route_remote_client(filter->remote_client_range);
-		bucket = hash_table_bucket(&spd_route_remote_client_hash_table, hash);
-	} else {
-		/* else other queries? */
-		dbg("FOR_EACH_SPD_ROUTE_... in "PRI_WHERE, pri_where(filter->where));
-		bucket = &spd_route_list_head;
+		return hash_table_bucket(&spd_route_remote_client_hash_table, hash);
 	}
-	return bucket;
+
+	/* else other queries? */
+	dbg("FOR_EACH_SPD_ROUTE_... in "PRI_WHERE, pri_where(filter->where));
+	return &spd_route_list_head;
 }
 
 static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
