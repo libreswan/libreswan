@@ -126,7 +126,8 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 
 HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
 
-HASH_DB(spd_route, &spd_route_list_info, spd_route_list_entry,
+HASH_DB(spd_route,
+	spd_route_list_info, spd_route_list_head, spd_route_list_entry,
 	&spd_route_remote_client_hash_table);
 
 void rehash_db_spd_route_remote_client(struct spd_route *sr)
@@ -201,8 +202,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->this.virt = NULL;
 	sr->that.virt = NULL;
 
-	init_spd_route_hash_table_entries(sr);
-	insert_list_entry(&spd_route_list_head, &sr->spd_route_list_entry);
+	init_db_spd_route(sr);
 
 	unshare_connection_end(&sr->this);
 	unshare_connection_end(&sr->that);
@@ -215,7 +215,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
  * Maintain the contents of the hash tables.
  */
 
-HASH_DB(connection, &connection_serialno_list_info, serialno_list_entry,
+HASH_DB(connection,
+	connection_serialno_list_info, connection_serialno_list_head, serialno_list_entry,
 	&connection_serialno_hash_table,
 	&connection_that_id_hash_table);
 
@@ -233,8 +234,8 @@ static void finish_connection(struct connection *c, const char *name,
 	/* needed by jam_spd_route_*() */
 	c->spd.connection = c;
 
-	init_connection_hash_table_entries(c);
-	init_spd_route_hash_table_entries(&c->spd);
+	init_db_connection(c);
+	init_db_spd_route(&c->spd);
 
 	/*
 	 * Update counter, set serialno and add to serialno list.
@@ -246,9 +247,6 @@ static void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-
-	insert_list_entry(&connection_serialno_list_head, &c->serialno_list_entry);
-	insert_list_entry(&spd_route_list_head, &c->spd.spd_route_list_entry);
 
 	c->serial_from = serial_from;
 	/* announce it */

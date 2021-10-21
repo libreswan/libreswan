@@ -101,7 +101,7 @@ void rehash_table_entry(struct hash_table *table, void *data);
 void check_hash_table_entry(struct hash_table *table, void *data,
 			    struct logger *logger, where_t where);
 
-#define HASH_DB(STRUCT, LIST_INFO, LIST_ENTRY, TABLE, ...)		\
+#define HASH_DB(STRUCT, LIST_INFO, LIST_HEAD, LIST_ENTRY, TABLE, ...)	\
 									\
 	struct hash_table *const STRUCT##_hash_tables[] = {		\
 		TABLE, ##__VA_ARGS__,					\
@@ -121,9 +121,10 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}							\
 	}								\
 									\
-	static void init_##STRUCT##_hash_table_entries(struct STRUCT *s) \
+	void init_db_##STRUCT(struct STRUCT *s)				\
 	{								\
-		s->LIST_ENTRY = list_entry(LIST_INFO, s); \
+		s->LIST_ENTRY = list_entry(&LIST_INFO, s);		\
+		insert_list_entry(&LIST_HEAD, &s->LIST_ENTRY);		\
 		FOR_EACH_ELEMENT(STRUCT##_hash_tables, H) {		\
 			init_hash_table_entry(*H, s);			\
 		}							\

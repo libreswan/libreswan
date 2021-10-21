@@ -316,7 +316,8 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
  * Unlike serialno, the IKE SPI[ir] keys can change over time.
  */
 
-HASH_DB(state, &state_serialno_list_info, st_serialno_list_entry,
+HASH_DB(state,
+	state_serialno_list_info, state_serialno_list_head, st_serialno_list_entry,
 	&state_serialno_hash_table,
 	&state_connection_serialno_hash_table,
 	&state_reqid_hash_table,
@@ -444,7 +445,7 @@ struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t wher
 
 	/* needed by jam_state_connection_serialno() */
 	st->st_connection = c;
-	init_state_hash_table_entries(st);
+	init_db_state(st);
 
 	/*
 	 * Update counter, set serialno and add to serialno list.
@@ -456,8 +457,6 @@ struct state *alloc_state(struct fd *whackfd, struct connection *c, where_t wher
 	state_serialno++;
 	passert(state_serialno > 0); /* can't overflow */
 	st->st_serialno = state_serialno;
-
-	insert_list_entry(&state_serialno_list_head, &st->st_serialno_list_entry);
 
 	return st;
 }

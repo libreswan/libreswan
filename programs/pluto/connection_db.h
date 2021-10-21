@@ -19,24 +19,31 @@
 #include "where.h"
 #include "connections.h"
 
+/* connections */
+
 void init_connection_db(struct logger *logger);
 void check_connection_db(struct logger *logger);
 
 struct connection *alloc_connection(const char *name, where_t where);
 struct connection *clone_connection(const char *name, struct connection *template, where_t where);
 
-struct spd_route *clone_spd_route(struct connection *c, where_t where);
-
-void add_spd_route_to_db(struct spd_route *sr);
-void del_spd_route_from_db(struct spd_route *sr, bool valid);
+void init_db_connection(struct connection *c);
+void check_db_connection(struct connection *c, struct logger *logger, where_t where);
 
 void add_connection_to_db(struct connection *c);
 void del_connection_from_db(struct connection *c, bool valid);
 
+/* spd route */
+
 void init_spd_route_db(struct logger *logger);
 void check_spd_route_db(struct logger *logger);
 
+struct spd_route *clone_spd_route(struct connection *c, where_t where);
+
+void init_db_spd_route(struct spd_route *sr);
 void check_db_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
-void check_db_connection(struct connection *connection, struct logger *logger, where_t where);
+
+void add_spd_route_to_db(struct spd_route *sr);
+void del_spd_route_from_db(struct spd_route *sr, bool valid);
 
 #endif
