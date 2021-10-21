@@ -51,6 +51,11 @@ struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
 
 void init_hash_table_entry(struct hash_table *table, void *data)
 {
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "entry %s@%p ", table->info->name, data);
+		table->info->jam(buf, data);
+		jam(buf, " initialized");
+	}
 	struct list_entry *entry = table->entry(data);
 	*entry = list_entry(table->info, data);
 }
@@ -62,10 +67,21 @@ void add_hash_table_entry(struct hash_table *table, void *data)
 	struct list_head *bucket = hash_table_bucket(table, hash);
 	insert_list_entry(bucket, entry);
 	table->nr_entries++;
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "entry %s@%p ", table->info->name, data);
+		table->info->jam(buf, data);
+		jam(buf, " added to hash table bucket %p", bucket);
+	}
 }
 
 void del_hash_table_entry(struct hash_table *table, void *data)
 {
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "entry %s@%p ", table->info->name, data);
+		table->info->jam(buf, data);
+		/* HEAD AKA BUCKET isn't directly known */
+		jam(buf, " deleted from hash table");
+	}
 	struct list_entry *entry = table->entry(data);
 	remove_list_entry(entry);
 	table->nr_entries--;
@@ -110,8 +126,7 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
 			if (data == bucket_data) {
 				JAMBUF(buf) {
-					jam_string(buf, table->info->name);
-					jam_string(buf, " entry ");
+					jam(buf, "entry %s@%p ", table->info->name, data);
 					table->info->jam(buf, data);
 					jam_string(buf, " is in the wrong bucket");
 					llog_pexpect(logger, where, PRI_SHUNK,
@@ -122,8 +137,7 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}
 	}
 	JAMBUF(buf) {
-		jam_string(buf, table->info->name);
-		jam_string(buf, " entry ");
+		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
 		jam_string(buf, " is missing");
 		llog_pexpect(logger, where, PRI_SHUNK,
