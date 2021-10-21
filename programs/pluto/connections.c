@@ -217,12 +217,27 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c);
 
-	struct logger *connection_logger = clone_logger(c->logger, HERE);
-
 	/* find and delete c from the host pair list */
 	host_pair_remove_connection(c, connection_valid);
 
 	flush_revival(c);
+
+	del_db_connection(c, connection_valid);
+
+	passert(c->spd.this.virt == NULL);
+	for (struct spd_route *sr = &c->spd, *next = NULL; sr != NULL; sr = next) {
+		next = sr->spd_next;
+
+		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
+	}
+
+	/*
+	 * Danger! Logging no longer valid.
+	 */
+#if 0
+	struct logger *connection_logger = clone_logger(c->logger, HERE);
+#endif
+	free_logger(&c->logger, HERE);
 
 	pfreeany(c->name);
 	pfreeany(c->foodgroup);
@@ -234,18 +249,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
-	free_logger(&c->logger, HERE);
-
-	/* deal with top spd_route and then the rest */
-
-	passert(c->spd.this.virt == NULL);
-	for (struct spd_route *sr = &c->spd, *next = NULL; sr != NULL; sr = next) {
-		next = sr->spd_next;
-
-		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
-	}
-
-	del_db_connection(c, connection_valid);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {
@@ -262,7 +265,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	}
 
 	pfree(c);
-	free_logger(&connection_logger, HERE);
 }
 
 int foreach_connection_by_alias(const char *alias,
