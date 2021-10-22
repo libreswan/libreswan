@@ -179,7 +179,6 @@ void delete_connection(struct connection **cp)
 {
 	struct connection *c = *cp;
 	*cp = NULL;
-	dbg_free(c->name, c, HERE);
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -232,14 +231,13 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	}
 
 	/*
-	 * Danger! Logging no longer valid.
+	 * Logging no longer valid.  Can this be delayed further?
 	 */
 #if 0
 	struct logger *connection_logger = clone_logger(c->logger, HERE);
 #endif
 	free_logger(&c->logger, HERE);
 
-	pfreeany(c->name);
 	pfreeany(c->foodgroup);
 	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
@@ -264,6 +262,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		pfree(c->root_config);
 	}
 
+	/* connection's final gasp; need's c->name */
+	dbg_free(c->name, c, HERE);
+	pfreeany(c->name);
 	pfree(c);
 }
 
