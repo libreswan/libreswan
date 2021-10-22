@@ -58,7 +58,7 @@ void init_hash_table_entry(struct hash_table *table, void *data)
 		jam(buf, " initialized");
 	}
 	struct list_entry *entry = table->entry(data);
-	*entry = list_entry(table->info, data);
+	init_list_entry(table->info, data, entry);
 }
 
 void add_hash_table_entry(struct hash_table *table, void *data)

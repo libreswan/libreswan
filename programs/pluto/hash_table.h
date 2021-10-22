@@ -140,9 +140,9 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 									\
 	void init_db_##STRUCT(struct STRUCT *s)				\
 	{								\
-		s->hash_table_entries.list =				\
-			list_entry(&STRUCT##_db_list_info, s);	\
-		insert_list_entry(&STRUCT##_db_list_head,	\
+		init_list_entry(&STRUCT##_db_list_info, s,		\
+				&s->hash_table_entries.list);		\
+		insert_list_entry(&STRUCT##_db_list_head,		\
 				  &s->hash_table_entries.list);		\
 		FOR_EACH_ELEMENT(STRUCT##_db_hash_tables, H) {		\
 			init_hash_table_entry(*H, s);			\

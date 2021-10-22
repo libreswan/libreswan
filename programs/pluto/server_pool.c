@@ -322,7 +322,7 @@ void submit_task(const struct logger *logger,
 	struct job *job = alloc_thing(struct job, name);
 	job->cancelled = false;
 	job->name = name;
-	job->backlog = list_entry(&backlog_info, job);
+	init_list_entry(&backlog_info, job, &job->backlog);
 	job->so_serialno = SOS_NOBODY;
 
 	passert(st->st_serialno != SOS_NOBODY);

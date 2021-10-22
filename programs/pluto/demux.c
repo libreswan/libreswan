@@ -440,7 +440,7 @@ static void save_md_for_replay(bool already_impaired, struct msg_digest *md)
 		struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
 		e->md = clone_raw_md(md, HERE);
 		e->nr = ++replay_count; /* yes; pre-increment */
-		e->entry = list_entry(&replay_info, e); /* back-link */
+		init_list_entry(&replay_info, e, &e->entry); /* back-link */
 		insert_list_entry(&replay_packets, &e->entry);
 	}
 }

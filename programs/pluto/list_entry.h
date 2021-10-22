@@ -74,7 +74,6 @@ struct list_head {
 	struct list_entry head;
 };
 
-struct list_entry list_entry(const struct list_info *info, void *data);
 #define INIT_LIST_HEAD(LIST_HEAD_PTR, LIST_INFO_PTR)			\
 	{								\
 		.head = {						\
@@ -92,6 +91,13 @@ struct list_entry list_entry(const struct list_info *info, void *data);
  *
  * These operations are O(1).
  */
+
+void init_list_entry(const struct list_info *info, void *data, struct list_entry *entry);
+
+#if 0
+struct list_entry *data_list_entry(const struct list_info *info, void *data);
+void *list_entry_data(const struct list_entry *entry);
+#endif
 
 bool detached_list_entry(const struct list_entry *entry);
 

@@ -78,7 +78,7 @@ static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 	ifd->id_nic_offload = kernel_ops->detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
-	ifd->ifd_entry = list_entry(&iface_dev_info, ifd);
+	init_list_entry(&iface_dev_info, ifd, &ifd->ifd_entry);
 	insert_list_entry(&interface_dev, &ifd->ifd_entry);
 	dbg("iface: marking %s add", ifd->id_rname);
 }

@@ -83,17 +83,44 @@ static void log_entry(const char *op, struct list_entry *entry)
 	}
 }
 
-struct list_entry list_entry(const struct list_info *info,
-			     void *data)
+void init_list_entry(const struct list_info *info, void *data, struct list_entry *entry)
 {
-	passert_info(info, info != NULL);
+	/* something to do? */
 	passert_info(info, data != NULL);
-
-	return (struct list_entry) {
-		.data = data,
+	passert_info(info, entry != NULL);
+	/* not initialized */
+	passert_info(info, entry->info == NULL);
+	passert_info(info, entry->data == NULL);
+	passert_info(info, entry->next[OLD2NEW] == NULL);
+	passert_info(info, entry->next[NEW2OLD] == NULL);
+#if 0
+	/* cross-check */
+	passert_info(info, entry == data_list_entry(info, data));
+#endif
+	/* initialize */
+	*entry = (struct list_entry) {
 		.info = info,
+		.data = data,
 	};
 }
+
+#if 0
+struct list_entry *data_list_entry(const struct list_info *info, void *data)
+{
+	uint8_t *ptr = data;
+	struct list_entry *entry = (void *)(ptr + info->offset);
+	return entry;
+}
+#endif
+
+#if 0
+void *list_entry_data(const struct list_entry *entry)
+{
+	passert(entry->info != NULL);
+	uint8_t *offptr = (void*)entry;
+	return offptr - entry->info->offset;
+}
+#endif
 
 bool detached_list_entry(const struct list_entry *entry)
 {

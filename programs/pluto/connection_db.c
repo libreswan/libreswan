@@ -183,6 +183,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->this.virt = NULL;
 	sr->that.virt = NULL;
 
+	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
 	init_db_spd_route(sr);
 
 	unshare_connection_end(&sr->this);
@@ -244,6 +245,8 @@ struct connection *alloc_connection(const char *name, where_t where)
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
+	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
+	zero_thing(c->spd.hash_table_entries); /* keep init_list_entry() happy */
 	finish_connection(c, name, t->serialno, where);
 	return c;
 }
