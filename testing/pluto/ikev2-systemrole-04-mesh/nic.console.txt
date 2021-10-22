@@ -2,7 +2,12 @@
 nic #
  /testing/guestbin/nic-vpn-role-tmp
 nic #
- ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml 2>&1 | tee OUTPUT/ansible.out | grep -v DEPRECATED | tail -3 | sort
+ # save all output
+nic #
+ ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml > OUTPUT/$(hostname).ansible.log 2>&1
+nic #
+ sed -n -e '/PLAY RECAP/,$ p' OUTPUT/$(hostname).ansible.log
+PLAY RECAP *********************************************************************
 east                       : ok=15   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
 west                       : ok=18   changed=4    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
 nic #
