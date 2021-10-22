@@ -1,3 +1,9 @@
-IKEv2 Message ID deadlock test.
+IKEv2 Message ID queue test.
 
-Response to the second rekey is dropped using an iptable rule, IKE, Message ID (4).
+- west establishes #1/#2
+- west rekeys child #2->#3 in foreground
+- west rekeys child #3->#4 in background
+  will fail as message id dropped using an iptable rule
+- west rekeys child #3->5 in forground
+  blocks waiting on rekey #3->3 to finish; and then
+  fails when IKE family is deleted

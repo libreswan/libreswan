@@ -28,7 +28,7 @@ west #
 west #
  iptables -A INPUT -m u32 --u32 '0x6 & 0xFF = 0x11 && 0x30 & 0xFFFFFFFF = 0x4' -j DROP
 west #
- sleep 4
+ sleep 4 # XXX: why?
 west #
  echo "initdone"
 initdone
@@ -58,18 +58,13 @@ west #
 003 "west" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "west" #2: established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # ../../guestbin/ping-once.sh ...?
-west #
- taskset 0x3 ping -n -q -w 3 -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 west #
  ipsec trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- # this rekey, 1 #3, should succeed
+ # this rekey, #2->#3, should succeed
 west #
  ipsec whack --rekey-ipsec --name west
 002 "west" #3: initiating rekey to replace Child SA #2
@@ -77,36 +72,52 @@ west #
 002 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "west" #3: established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "west" #2: deleting established Child SA using IKE SA #1
-005 "west" #2: ESP traffic information: in=168B out=168B
+005 "west" #2: ESP traffic information: in=84B out=84B
 west #
- sleep 15
+ # this rekey, #3->#4, which is running in the background should fail.
 west #
- # this rekey, 2 #4, should fail creating an unacknowledged message and dead lock
+ # The message is blocked by firewall rules added in 02-west-init.sh
+west #
+ ipsec whack --rekey-ipsec --name west --async
+west #
+ # this rekey, #?->#5, will block (waiting on the asynchronous rekey
+west #
+ # #3->#4) and then die.
 west #
  ipsec whack --rekey-ipsec --name west
-002 "west" #4: initiating rekey to replace Child SA #3
-1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-031 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-002 "west" #1: liveness action - putting connection into hold
-002 "west" #4: deleting state (STATE_V2_REKEY_CHILD_I1) and NOT sending notification
-003 "west" #4: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
+002 "west" #5: initiating rekey to replace Child SA #3
 005 "west" #3: ESP traffic information: in=0B out=0B
-002 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-002 "west" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
- # this rekey, 3 #5, message will not be sent, #1.#5
+ # above whack commans leave much to be desired when it comes to
 west #
- ipsec whack --rekey-ipsec --name west
-002 connection does not have Child SA
+ # logging; get around it by grepping for the expected outcome.
 west #
- # there should be one hit
+ #
 west #
- grep "next initiator blocked by outstanding" OUTPUT/west.pluto.log | sed -e 's/\(.*\ |\)//' | sort -u
+ # Note: need to strip of "MONTH(1) DATE(2) TIME(3): ".
 west #
- ipsec status | grep STATE_
-west #
- echo done
-done
+ cut -d' ' -f4- /tmp/pluto.log | grep '^[^|].* #[1-5]:'
+"west" #1: initiating IKEv2 connection
+"west" #1: sent IKE_SA_INIT request
+"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"west" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+"west" #2: established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #3: initiating rekey to replace Child SA #2
+"west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
+"west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
+"west" #3: established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+"west" #2: deleting established Child SA using IKE SA #1
+"west" #1: established IKE SA
+"west" #2: ESP traffic information: in=84B out=84B
+"west" #1: established IKE SA
+"west" #4: initiating rekey to replace Child SA #3
+"west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+"west" #5: initiating rekey to replace Child SA #3
+"west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+"west" #1: liveness action - putting connection into hold
+"west" #3: ESP traffic information: in=0B out=0B
+"west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
+"west" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --trafficstatus
 west #

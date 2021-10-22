@@ -12,5 +12,5 @@ ipsec auto --add west
 # 3 : DELETE, 4 = REKEY (DROP)
 # iptables -A INPUT -m u32 --u32 '0x6 & 0xFF = 0x11 && 0x30 & 0xFFFFFFFF = 0x4' -j LOG --log-prefix  "ike"
 iptables -A INPUT -m u32 --u32 '0x6 & 0xFF = 0x11 && 0x30 & 0xFFFFFFFF = 0x4' -j DROP
-sleep 4
+sleep 4 # XXX: why?
 echo "initdone"
