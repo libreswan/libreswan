@@ -663,9 +663,9 @@ kvmplutotest	dpd-11-silent		good
 kvmplutotest	ikev2-liveness-01	good
 kvmplutotest	ikev2-liveness-02	good
 kvmplutotest	ikev2-liveness-03	good
-kvmplutotest	ikev2-liveness-05	good
+kvmplutotest	ikev2-liveness-05	wip	github:531
 kvmplutotest	ikev2-liveness-06	good
-kvmplutotest	ikev2-liveness-07			wip	github:531
+kvmplutotest	ikev2-liveness-07	wip	github:531
 kvmplutotest	ikev2-liveness-08	wip
 kvmplutotest	ikev2-liveness-09	good
 kvmplutotest	ikev2-liveness-10	wip
