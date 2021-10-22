@@ -14,13 +14,10 @@ road #
  echo "initdone"
 initdone
 road #
- #!/bin/sh
+ # in the clear; then establish
 road #
- ping -n -q -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec auto --up road-east-x509-ipv4
 1v2 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection
@@ -30,14 +27,11 @@ road #
 002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
 004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: established Child SA using #1; IPsec tunnel [192.0.2.100-192.0.2.100:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 road #
- ping -n -q -c 4 -I 192.0.2.100 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
  # Let R_U_THERE packets flow
 road #
@@ -49,9 +43,10 @@ road #
 road #
  iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 road #
- sleep 30
+ # Wait for liveness to trigger
 road #
- # DPD should have triggered now
+ ../../guestbin/wait-for.sh --match '#1: liveness action' -- cat /tmp/pluto.log
+"road-east-x509-ipv4"[1] 192.1.2.23 #1: liveness action - clearing connection kind CK_INSTANCE
 road #
  # Tunnel should be cleared, no trap/hold
 road #
@@ -62,9 +57,6 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-road #
- echo done
-done
 road #
  # should show there are no tunnels up
 road #
