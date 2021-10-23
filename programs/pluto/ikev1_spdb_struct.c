@@ -106,7 +106,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	if (!sec_label_within_range(sec_label, c->config->sec_label, st->st_logger)) {
+	if (!sec_label_within_range("remote", sec_label, c->config->sec_label, st->st_logger)) {
 		LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 			jam(buf, "received IPsec Security Label '");
 			jam_sanitized_bytes(buf, sec_label.ptr,

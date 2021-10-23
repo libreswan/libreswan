@@ -2748,7 +2748,8 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		 * the configuration's range.
 		 */
 		if (sec_label.len > 0 /*implies c->config->sec_label*/ &&
-		    !sec_label_within_range(sec_label, c->config->sec_label, logger)) {
+		    !sec_label_within_range("acquire", sec_label,
+					    c->config->sec_label, logger)) {
 			continue;
 		}
 

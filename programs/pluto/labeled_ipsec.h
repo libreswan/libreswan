@@ -40,6 +40,7 @@ err_t vet_seclabel(shunk_t sl);
 
 void init_labeled_ipsec(struct logger *logger);
 
-bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger);
+bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
+			    struct logger *logger);
 
 #endif

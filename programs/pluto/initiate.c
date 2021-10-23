@@ -678,7 +678,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			return;
 		}
 
-		if (!sec_label_within_range(HUNK_AS_SHUNK(b->sec_label),
+		if (!sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 					    c->config->sec_label, b->logger)) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
 					"received kernel security label does not fall within range of our connection");

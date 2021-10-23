@@ -899,7 +899,8 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 
 		passert(vet_seclabel(ts->sec_label) == NULL);
 
-		if (!sec_label_within_range(ts->sec_label, config_sec_label, logger)) {
+		if (!sec_label_within_range("Traffic Selector",
+					    ts->sec_label, config_sec_label, logger)) {
 			dbg("ikev2ts: %s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
 			    tss->name, pri_shunk(ts->sec_label), pri_shunk(config_sec_label));
 			continue;

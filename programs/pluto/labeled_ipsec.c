@@ -54,22 +54,56 @@ void init_labeled_ipsec(struct logger *logger)
 	     security_getenforce() ? "ENFORCING" : "PERMISSIVE");
 }
 
-static bool within_range(const char *sl, const char *range, struct logger *logger)
+static bool check_access(const char *perm,
+			 const char *source, const char *scontext,
+			 const char *target, const char *tcontext,
+			 struct logger *logger)
 {
+	const char tclass[] = "association";
+	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
+	int rtn = selinux_check_access(scontext, tcontext, tclass, perm, /*auditdata*/NULL);
+	if (rtn != 0) {
+		/* make error look like an audit record */
+		llog_errno(RC_LOG, logger, errno,
+			   "selinux denied { %s } %s scontext=%s %s tcontext=%s tclass=%s"/*: */,
+			   perm, source, scontext, target, tcontext, tclass);
+		return false;
+	}
+	ldbg(logger,
+	     "selinux granted { %s } %s sec_label=scontext=%s %s sec_label=tcontext=%s tclass=%s",
+	     perm, source, scontext, target, tcontext, tclass);
+	return true;
+}
+
+bool sec_label_within_range(const char *source, shunk_t label,
+			    chunk_t range, struct logger *logger)
+{
+	if (label.len == 0 || range.len == 0) {
+		return false;
+	}
+	/*
+	 * NUL must be part of HUNK.  Too weak?
+	 *
+	 * Translate names into selinux speak.
+	 */
+	passert(hunk_strnlen(label) < label.len);
+	passert(hunk_strnlen(range) < range.len);
+	const char *scontext = label.ptr;
+	const char *tcontext = (const char*)range.ptr;
+
 	/*
 	 * Check access permission for sl (connection policy label from SAD)
 	 * and range (connection flow label from SPD but initially the
 	 * conn policy-label= entry of the ipsec.conf(5) configuration file).
+	 *
+	 * XXX: Check access permission for SCONTEXT (sec_label from
+	 * acquire, or remote traffic selector) within TCONTEXT
+	 * (sec_label from the connection template).
 	 */
-	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
-	int rtn = selinux_check_access(sl, range, "association", "polmatch", NULL);
-	if (rtn != 0) {
-		llog_errno(RC_LOG, logger, errno,
-			   "selinux polmatch within_range: sl (%s) - range (%s)"/*: */,
-			   sl, range);
+	if (!check_access("polmatch", source, scontext,
+			  "connection", tcontext, logger)) {
 		return false;
 	}
-	dbg("selinux within_range: Permission granted (polmatch) sl (%s) - range (%s)", sl, range);
 
 	char *domain;
 	errno = 0;	/* getcon(3) is not documented to set errno */
@@ -83,44 +117,17 @@ static bool within_range(const char *sl, const char *range, struct logger *logge
 
 	/*
 	 * Check if `pluto`'s SELinux domain can `setcontext` against the child/IPsec SA label.
+	 *
+	 * XXX: Pluto's context is within the acquire/ts context.
+	 * XXX: is this the right way around.
 	 */
-	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
-	rtn = selinux_check_access(domain, sl, "association", "setcontext", NULL);
-	if (rtn != 0) {
-		llog_errno(RC_LOG, logger, errno,
-			   "selinux setcontext within_range: domain (%s) - sl (%s)"/*: */,
-			   domain, sl);
-		freecon(domain);
+	if (!check_access("setcontext", "Pluto's SELinux domain", domain,
+			  source, scontext, logger)) {
 		return false;
 	}
-	dbg("selinux within_range: Permission granted (setcontext) domain (%s) - sl (%s)", domain, sl);
 
 	freecon(domain);
 	return true;
-}
-
-bool sec_label_within_range(shunk_t label, chunk_t range, struct logger *logger)
-{
-	if (label.len == 0 || range.len == 0) {
-		return false;
-	}
-	/*
-	 * NUL must be part of HUNK.  Too weak?
-	 */
-	passert(hunk_strnlen(label) < label.len);
-	passert(hunk_strnlen(range) < range.len);
-	/* use as strings */
-	bool within = within_range(label.ptr, (const char*)range.ptr, logger);
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "security label '");
-			jam_sanitized_hunk(buf, label);
-			jam(buf, "' %s within range '", within ? "is" : "is not");
-			jam_sanitized_hunk(buf, range);
-			jam(buf, "'");
-		}
-	}
-	return within;
 }
 
 #else
@@ -134,7 +141,8 @@ void init_labeled_ipsec(struct logger *logger UNUSED)
 {
 }
 
-bool sec_label_within_range(shunk_t label UNUSED, chunk_t range UNUSED, struct logger *logger UNUSED)
+bool sec_label_within_range(const char *source UNUSED, shunk_t label UNUSED,
+			    chunk_t range UNUSED, struct logger *logger UNUSED)
 {
 	return false;
 }
