@@ -5,4 +5,4 @@
 # second tunnel (#3) piggybacks on #1 after #2 establishes
 # it seems the ping goes all alien
 ../../guestbin/wait-for.sh --match '#3: established Child SA' -- cat /tmp/pluto.log
-../../guestbin/ping-once.sh --down 192.0.20.254
+../../guestbin/ping-once.sh --up 192.0.20.254
