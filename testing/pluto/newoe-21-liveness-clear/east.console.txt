@@ -182,8 +182,6 @@ east #
  # grep on east
 east #
  hostname |grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
-"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #2: liveness_check - peer 192.1.3.209 has not responded in 12 seconds, with a timeout of 10, taking action:clear
-"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #2: liveness action - clearing connection kind CK_INSTANCE
 east #
  # A tunnel should have established
 east #
