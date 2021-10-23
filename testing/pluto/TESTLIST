@@ -924,10 +924,12 @@ kvmplutotest	ikev1-labeled-ipsec-01						wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch					wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires				wip
 # IKEv2 Selinux / secure labeling tests
-kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand				good
-kvmplutotest	ikev2-labeled-ipsec-01-ike-childless				good
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires				wip
-kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforced			wip
+kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-permissive			good
+kvmplutotest	ikev2-labeled-ipsec-01-ike-ondemand-enforcing			wip
+kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-permissive			good
+kvmplutotest	ikev2-labeled-ipsec-01-ike-childless-enforcing			wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-permissive		wip
+kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-enforcing			wip
 kvmplutotest	ikev2-labeled-ipsec-03-multi-acquires-rekey			wip
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-initiator			good
 kvmplutotest	ikev2-labeled-ipsec-04-no-label-on-responder-ike-childless	good

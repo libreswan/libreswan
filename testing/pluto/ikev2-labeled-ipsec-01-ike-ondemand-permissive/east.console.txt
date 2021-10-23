@@ -10,6 +10,8 @@ Creating targeted ipsecspd-full-perm.pp policy package
 rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
 ipsecspd-full-perm.pp installed
 east #
+ setenforce 0
+east #
  # get pluto going
 east #
  ipsec start

@@ -6,6 +6,8 @@ west #
 west #
  semodule -i OUTPUT/ipsecspd-full-perm.pp
 west #
+ setenforce 1
+west #
  # start pluto
 west #
  ipsec start
