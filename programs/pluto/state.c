@@ -848,12 +848,15 @@ void delete_state(struct state *st)
 	 * Use heuristics to predict the send-delete decision.
 	 */
 	if (rc_flags != LEMPTY) {
-		bool del_notify = !impair.send_no_delete && should_send_delete(st);
+		bool should_notify = should_send_delete(st);
+		bool will_notify = should_notify && !impair.send_no_delete;
+		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
 		deltatime_buf dtb;
-		log_state(rc_flags, st, "deleting state (%s) aged %ss and %ssending notification",
-			  st->st_state->name,
+		log_state(rc_flags, st,
+			  "%sdeleting state (%s) aged %ss and %ssending notification",
+			  impair_notify, st->st_state->name,
 			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			  del_notify ? "" : "NOT ");
+			  will_notify ? "" : "NOT ");
 	}
 
 	delete_state_tail(st);
@@ -2787,22 +2790,25 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	case IKEv1:
 	{
 		struct connection *const c = st->st_connection;
-		bool del_notify = !impair.send_no_delete && should_send_delete(st);
+		bool should_notify = should_send_delete(st);
+		bool will_notify = should_notify && !impair.send_no_delete;
+		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
 		if (ike->sa.st_connection == st->st_connection) {
 			deltatime_buf dtb;
-			llog_sa(RC_LOG, ike, "deleting other state #%lu (%s) aged %ss and %ssending notification",
-				st->st_serialno, st->st_state->name,
+			llog_sa(RC_LOG, ike,
+				"%sdeleting other state #%lu (%s) aged %ss and %ssending notification",
+				impair_notify, st->st_serialno, st->st_state->name,
 				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-				del_notify ? "" : "NOT ");
+				will_notify ? "" : "NOT ");
 		} else {
 			deltatime_buf dtb;
 			connection_buf cib;
 			llog_sa(RC_LOG, ike,
-				"deleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
-				st->st_serialno, st->st_state->name,
+				"%sdeleting other state #%lu connection (%s) "PRI_CONNECTION" aged %ss and %ssending notification",
+				impair_notify, st->st_serialno, st->st_state->name,
 				pri_connection(c, &cib),
 				str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-				del_notify ? "" : "NOT ");
+				will_notify ? "" : "NOT ");
 		}
 		break;
 	}
