@@ -878,13 +878,36 @@ static void opt_to_address(struct family *family, ip_address *address)
 	diagq(opt_ttoaddress_dns(family, address), optarg);
 }
 
-static ip_address get_address_any(struct family *family)
+static void opt_to_cidr(struct family *family, ip_cidr *cidr)
+{
+	diagq(numeric_to_cidr(shunk1(optarg), family->type, cidr), optarg);
+	if (family->type == NULL) {
+		family->type = cidr_type(cidr);
+		family->used_by = long_opts[long_index].name;
+	}
+}
+
+static void opt_to_subnet(struct family *family, ip_subnet *subnet, struct logger *logger)
+{
+	diagq(ttosubnet(shunk1(optarg), family->type, '6', subnet, logger), optarg);
+	if (family->type == NULL) {
+		family->type = subnet_type(subnet);
+		family->used_by = long_opts[long_index].name;
+	}
+}
+
+static const struct ip_info *get_address_family(struct family *family)
 {
 	if (family->type == NULL) {
 		family->type = &ipv4_info;
 		family->used_by = long_opts[long_index].name;
 	}
-	return family->type->address.any;
+	return family->type;
+}
+
+static ip_address get_address_any(struct family *family)
+{
+	return get_address_family(family)->address.any;
 }
 
 struct sockaddr_un ctl_addr = {
@@ -928,13 +951,13 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      struct family *caf, const struct ip_info *taf)
+		      const struct ip_info *haf, const struct ip_info *caf)
 {
-	if (caf->type != NULL && caf->type != address_type(&this->host_addr))
+	if (haf != NULL && haf != address_type(&this->host_addr))
 		diag("address family of host inconsistent");
 
 	if (this->has_client) {
-		if (taf != subnet_type(&this->client))
+		if (caf != subnet_type(&this->client))
 			diag("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
@@ -977,7 +1000,7 @@ int main(int argc, char **argv)
 		cdp_seen = LEMPTY,
 		end_seen = LEMPTY,
 		algo_seen = LEMPTY;
-	const char *tunnel_af_used_by = NULL;
+
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
@@ -1003,6 +1026,7 @@ int main(int argc, char **argv)
 	clear_end(&msg.right);	/* left set from this after --to */
 
 	struct family host_family = { 0, };
+	struct family client_family = { 0, };
 
 	msg.name = NULL;
 	msg.remote_host = NULL;
@@ -1041,7 +1065,7 @@ int main(int argc, char **argv)
 
 	msg.active_redirect_dests = NULL;
 
-	msg.tunnel_addr_family = AF_INET;
+	msg.tunnel_addr_family = AF_UNSPEC;
 
 	msg.right.updown = DEFAULT_UPDOWN;
 	msg.left.updown = DEFAULT_UPDOWN;
@@ -1500,24 +1524,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddress_dns(shunk1(optarg),
-					     aftoinfo(msg.tunnel_addr_family),
-					     &msg.oppo.local.address), optarg);
-			if (address_is_unset(&msg.oppo.local.address) ||
-			    address_is_any(msg.oppo.local.address)) {
+			opt_to_address(&client_family, &msg.oppo.local.address);
+			if (address_is_any(msg.oppo.local.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			tunnel_af_used_by = long_opts[long_index].name;
-			diagq(ttoaddress_dns(shunk1(optarg),
-					     aftoinfo(msg.tunnel_addr_family),
-					     &msg.oppo.remote.address), optarg);
-			if (address_is_unset(&msg.oppo.remote.address) ||
-			    address_is_any(msg.oppo.remote.address)) {
+			opt_to_address(&client_family, &msg.oppo.remote.address);
+			if (address_is_any(msg.oppo.remote.address)) {
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 				      optarg);
 			}
@@ -1625,8 +1641,7 @@ int main(int argc, char **argv)
 					 * --client to 0.0.0.0/0
 					 * or IPV6 equivalent
 					 */
-					tunnel_af_used_by = optarg;
-					msg.right.client = (aftoinfo(msg.tunnel_addr_family)->subnet.all);
+					msg.right.client = get_address_family(&client_family)->subnet.all;
 				}
 				msg.right.has_client = true;
 			}
@@ -1708,8 +1723,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			diagq(numeric_to_cidr(shunk1(optarg), aftoinfo(msg.tunnel_addr_family),
-					      &msg.right.host_vtiip), optarg);
+			opt_to_cidr(&client_family, &msg.right.host_vtiip);
 			continue;
 
 		/*
@@ -1738,17 +1752,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
-
-			tunnel_af_used_by = long_opts[long_index].name;
 			if (startswith(optarg, "vhost:") ||
 			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
-				diagq(ttosubnet(shunk1(optarg),
-						aftoinfo(msg.tunnel_addr_family),
-						'6', &msg.right.client,
-						logger),
-					optarg);
+				opt_to_subnet(&client_family, &msg.right.client, logger);
 				msg.right.has_client = true;
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
@@ -2171,14 +2179,17 @@ int main(int argc, char **argv)
 			host_family.type = &ipv4_info;
 
 			/*
-			 * Consider defaulting tunnel_addr_family to AF_INET6.
-			 * Do so only if it hasn't yet been specified or used.
+			 * Consider defaulting client_family to
+			 * AF_INET6.  Do so only if it hasn't yet been
+			 * specified or used.
 			 */
 			if (LDISJOINT(cd_seen,
 				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
 				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
-			    tunnel_af_used_by == NULL)
-				msg.tunnel_addr_family = AF_INET;
+			    client_family.used_by == NULL) {
+				client_family.used_by = long_opts[long_index].name;
+				client_family.type = &ipv4_info;
+			}
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
@@ -2200,34 +2211,35 @@ int main(int argc, char **argv)
 			host_family.type = &ipv6_info;
 
 			/*
-			 * Consider defaulting tunnel_addr_family to AF_INET6.
-			 * Do so only if it hasn't yet been specified or used.
+			 * Consider defaulting client_family to
+			 * AF_INET6.  Do so only if it hasn't yet been
+			 * specified or used.
 			 */
 			if (LDISJOINT(cd_seen,
 				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
 				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
-			    tunnel_af_used_by == NULL)
-				msg.tunnel_addr_family = AF_INET6;
+			    client_family.used_by == NULL) {
+				client_family.used_by = long_opts[long_index].name;
+				client_family.type = &ipv6_info;
+			}
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
-
-			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv4 must precede", tunnel_af_used_by);
-
-			msg.tunnel_addr_family = AF_INET;
+			if (client_family.used_by != NULL)
+				diagq("--tunnelipv4 must precede", client_family.used_by);
+			client_family.used_by = long_opts[long_index].name;
+			client_family.type = &ipv4_info;
 			continue;
 
 		case CD_TUNNELIPV6:	/* --tunnelipv6 */
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
-
-			if (tunnel_af_used_by != NULL)
-				diagq("--tunnelipv6 must precede", tunnel_af_used_by);
-
-			msg.tunnel_addr_family = AF_INET6;
+			if (client_family.used_by != NULL)
+				diagq("--tunnelipv6 must precede", client_family.used_by);
+			client_family.used_by = long_opts[long_index].name;
+			client_family.type = &ipv6_info;
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver */
@@ -2501,6 +2513,10 @@ int main(int argc, char **argv)
 		break;
 	}
 
+	if (client_family.type != NULL) {
+		msg.tunnel_addr_family = client_family.type->af;
+	}
+
 	if (!auth_specified) {
 		/* match the parser loading defaults to whack defaults */
 		msg.policy |= POLICY_RSASIG;
@@ -2562,11 +2578,8 @@ int main(int argc, char **argv)
 				diag("encryption required for opportunism");
 		}
 
-		check_end(&msg.left, &msg.right, &host_family,
-			  aftoinfo(msg.tunnel_addr_family));
-
-		check_end(&msg.right, &msg.left, &host_family,
-			  aftoinfo(msg.tunnel_addr_family));
+		check_end(&msg.left, &msg.right, host_family.type, client_family.type);
+		check_end(&msg.right, &msg.left, host_family.type, client_family.type);
 
 		if (subnet_type(&msg.left.client) !=
 		    subnet_type(&msg.right.client))
