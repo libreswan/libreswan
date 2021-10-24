@@ -26,7 +26,7 @@ west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh19 --alive -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh19": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh19" #1: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh19" #1: sent Main Mode request
@@ -37,14 +37,14 @@ west #
 002 "ikev1-ike=aes128-sha1-dh19" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "ikev1-ike=aes128-sha1-dh19" #2: sent Quick Mode request
 004 "ikev1-ike=aes128-sha1-dh19" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev1-ike=aes128-sha1-dh19": terminating SAs using this connection
 002 "ikev1-ike=aes128-sha1-dh19" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "ikev1-ike=aes128-sha1-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ikev1-ike=aes128-sha1-dh19" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 "ikev1-ike=aes128-sha1-dh19": terminating SAs using this connection
 west #
- ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh20 --alive -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh20": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh20" #3: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh20" #3: sent Main Mode request
@@ -55,14 +55,14 @@ west #
 002 "ikev1-ike=aes128-sha1-dh20" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "ikev1-ike=aes128-sha1-dh20" #4: sent Quick Mode request
 004 "ikev1-ike=aes128-sha1-dh20" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev1-ike=aes128-sha1-dh20": terminating SAs using this connection
 002 "ikev1-ike=aes128-sha1-dh20" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "ikev1-ike=aes128-sha1-dh20" #4: ESP traffic information: in=84B out=84B
 002 "ikev1-ike=aes128-sha1-dh20" #3: deleting state (STATE_MAIN_I4) and sending notification
 002 "ikev1-ike=aes128-sha1-dh20": terminating SAs using this connection
 west #
- ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/libreswan-up-down.sh ikev1-ike=aes128-sha1-dh21 --alive -I 192.0.1.254 192.0.2.254
 002 "ikev1-ike=aes128-sha1-dh21": added IKEv1 connection
 002 "ikev1-ike=aes128-sha1-dh21" #5: initiating IKEv1 Main Mode connection
 1v1 "ikev1-ike=aes128-sha1-dh21" #5: sent Main Mode request
@@ -73,15 +73,12 @@ west #
 002 "ikev1-ike=aes128-sha1-dh21" #6: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "ikev1-ike=aes128-sha1-dh21" #6: sent Quick Mode request
 004 "ikev1-ike=aes128-sha1-dh21" #6: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-up
+destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev1-ike=aes128-sha1-dh21": terminating SAs using this connection
 002 "ikev1-ike=aes128-sha1-dh21" #6: deleting state (STATE_QUICK_I2) and sending notification
 005 "ikev1-ike=aes128-sha1-dh21" #6: ESP traffic information: in=84B out=84B
 002 "ikev1-ike=aes128-sha1-dh21" #5: deleting state (STATE_MAIN_I4) and sending notification
 002 "ikev1-ike=aes128-sha1-dh21": terminating SAs using this connection
-west #
- echo done
-done
 west #
  ../../guestbin/ipsec-look.sh
 west NOW
