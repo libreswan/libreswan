@@ -46,25 +46,6 @@
 #include "ip_info.h"
 #include "log.h"
 
-/*
- * set up the slot/handle/trust things that NSS needs
- */
-static bool prepare_nss_import(PK11SlotInfo **slot)
-{
-	/*
-	 * possibly need to handle passworded db case here
-	 */
-	*slot = PK11_GetInternalKeySlot();
-	if (*slot == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
-			jam_nss_error(buf);
-		}
-		return false;
-	}
-	return true;
-}
-
 static bool crl_is_current(CERTSignedCrl *crl)
 {
 	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
@@ -540,22 +521,20 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		return result;
 	}
 
-	PK11SlotInfo *slot = NULL;
-	if (!prepare_nss_import(&slot)) {
-		/* logged by above */
-		return result;
-	}
-
 	if (root_certs_empty(root_certs)) {
-		llog(RC_LOG, logger, "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
+		llog(RC_LOG, logger,
+		     "no Certificate Authority in NSS Certificate DB! certificate payloads discarded");
 		return result;
 	}
 
 	/*
-	 * CERT_GetDefaultCertDB() simply returns the contents of a
-	 * static variable set by NSS_Initialize().  It doesn't check
-	 * the value and doesn't set PR error.  Short of calling
-	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 * CERT_GetDefaultCertDB() returns the contents of a static
+	 * variable set by NSS_Initialize().  It doesn't check the
+	 * value, doesn't set PR error, and doesn't add a reference
+	 * count.
+	 *
+	 * Short of calling CERT_SetDefaultCertDB(NULL), the value can
+	 * never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);

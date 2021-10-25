@@ -143,10 +143,10 @@ void lsw_nss_shutdown(void)
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 {
-	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
+	PK11SlotInfo *slot = PK11_GetInternalKeySlot(); /* refcnt_add() */
 	if (slot == NULL) {
 		llog(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-			    "no internal key slot");
+		     "no internal key slot");
 		return NULL;
 	}
 
@@ -156,8 +156,8 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger)
 		if (status != SECSuccess) {
 			const char *token = PK11_GetTokenName(slot);
 			llog(RC_LOG_SERIOUS|ERROR_STREAM, logger,
-				    "authentication of \"%s\" failed", token);
-			PK11_FreeSlot(slot);
+			     "authentication of \"%s\" failed", token);
+			PK11_FreeSlot(slot); /* refcnt_del() */
 			return NULL;
 		}
 	}
