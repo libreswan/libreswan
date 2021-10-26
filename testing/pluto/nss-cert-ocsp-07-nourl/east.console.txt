@@ -26,13 +26,12 @@ east #
 east #
  hostname | grep east && grep "certificate revoked" /tmp/pluto.log
 east
-"nss-cert-ocsp" #1: certificate revoked!
 east #
  # should show a hit
 east #
  hostname |grep east && grep ERROR /tmp/pluto.log
 east
-"nss-cert-ocsp" #1: NSS ERROR: Peer's Certificate has been revoked.
+"nss-cert-ocsp" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.
 east #
  # should not show a hit
 east #

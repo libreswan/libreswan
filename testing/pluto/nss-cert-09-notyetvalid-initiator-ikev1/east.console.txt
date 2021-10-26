@@ -17,6 +17,6 @@ east #
  # will only show up on east - note "expired" is wrong and should be "not yet valid"
 east #
  grep "ERROR" /tmp/pluto.log
-"nss-cert" #1: NSS ERROR: Peer's Certificate has expired.
+"nss-cert" #1: NSS: ERROR: IPsec certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 east #
  
