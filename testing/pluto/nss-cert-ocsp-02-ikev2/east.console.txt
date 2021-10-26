@@ -37,7 +37,7 @@ initdone
 east #
  # this test should log that west's certificate is revoked
 east #
- grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
-"nss-cert-ocsp" #1: certificate revoked!
+ grep -i -e "^[^|].*SEC_ERROR" /tmp/pluto.log
+"nss-cert-ocsp" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.
 east #
  

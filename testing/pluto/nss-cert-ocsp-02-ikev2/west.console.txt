@@ -51,6 +51,6 @@ done
 west #
  # this test should log that west's certificate is revoked
 west #
- grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
+ grep -i -e "^[^|].*SEC_ERROR" /tmp/pluto.log
 west #
  
