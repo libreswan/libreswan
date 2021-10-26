@@ -72,7 +72,6 @@
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
 #include "nss_cert_verify.h"
-#include "nss_err.h"
 
 /* NSS */
 #include <prtime.h>
@@ -1113,7 +1112,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 				jam(buf, "NSS: locating CA cert \'");
 				jam_dn(buf, ca, jam_sanitized_bytes);
 				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
-				jam_nss_error(buf);
+				jam_nss_error_code(buf, PR_GetError());
 			}
 		}
 	}

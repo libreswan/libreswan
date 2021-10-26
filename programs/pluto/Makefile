@@ -236,7 +236,6 @@ OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
 OBJS += pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
-OBJS += nss_err.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
 OBJS += pluto_shutdown.o

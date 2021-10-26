@@ -40,9 +40,7 @@
 #include "x509.h"
 #include "fetch.h"
 #include "secrets.h"
-#include "nss_err.h"
 #include "nss_crl_import.h"
-#include "nss_err.h"
 #include "keys.h"
 #include "crl_queue.h"
 #include "server.h"
@@ -349,8 +347,7 @@ static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct
 		llog(RC_LOG, logger, "_import_crl internal error");
 	} else if (r != 0) {
 		ret = false;
-		llog(RC_LOG, logger, "NSS CRL import error: %s",
-		     nss_err_str((PRInt32)r));
+		llog_nss_error_code(RC_LOG, logger, r, "CRL import error");
 	} else {
 		ret = true;
 		LLOG_JAMBUF(RC_LOG, logger, buf) {

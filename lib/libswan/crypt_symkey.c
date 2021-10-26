@@ -35,7 +35,7 @@ void init_crypt_symkey(struct logger *logger)
 		char error[LOG_WIDTH];
 		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
 		jam(buf, "NSS: ephemeral slot error: ");
-		jam_nss_error(buf);
+		jam_nss_error_code(buf, PR_GetError());
 		fatal(PLUTO_EXIT_FAIL, logger, "%s", error);
 	}
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
@@ -176,7 +176,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			jam_string(buf, "NSS: ");
 			jam_nss_ckm(buf, derive);
 			jam_string(buf, " failed: ");
-			jam_nss_error(buf);
+			jam_nss_error_code(buf, PR_GetError());
 			/* XXX: hack - double copy */
 			pexpect_fail(logger, HERE, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}

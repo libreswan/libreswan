@@ -16,7 +16,6 @@
  */
 
 #include "x509.h"
-#include "nss_err.h"
 #include "nss_ocsp.h"
 /* NSS needs */
 #include <secerr.h>

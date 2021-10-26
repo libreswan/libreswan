@@ -28,7 +28,6 @@
 #include "defs.h"
 #include "log.h"
 #include "lswalloc.h"
-#include "nss_err.h"
 #include "lswnss.h"	/* for llog_nss_error() */
 
 static const char crl_name[] = "_import_crl";

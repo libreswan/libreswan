@@ -77,7 +77,7 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
 					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
 		if (rv != SECSuccess) {
-			/* NSS: <message...>: SECERR: N (0xX): <error-string> */
+			/* NSS: <message...>: <error-string> (SECERR: N) */
 			diag_t d = diag_nss_error("initialization using %s database \"%s\" failed",
 						  (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
 						  nssdir);

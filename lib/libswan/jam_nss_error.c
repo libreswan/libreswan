@@ -28,47 +28,46 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
-size_t jam_nss_error(struct jambuf *buf)
+size_t jam_nss_error_code(struct jambuf *buf, PRErrorCode code)
 {
-	size_t size = 0;
-	int error = PR_GetError(); /* at least 32-bits */
-	if (error != 0) {
-
-		/* the number */
-		if (IS_SEC_ERROR(error)) {
-			size += jam(buf, "SEC_ERROR %d (0x%x): ",
-				    error - SEC_ERROR_BASE,
-				    error - SEC_ERROR_BASE);
-		} else {
-			size += jam(buf, "NSS %d (0x%x): ", error, error);
-		}
-
-		/*
-		 * NSPR should contain string tables for all known
-		 * error classes.  Query that first.  Should this
-		 * specify the english language?
-		 */
-		const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
-		if (text != NULL) {
-			size += jam_string(buf, text);
-		} else {
-			/*
-			 * Try NSPR directly, is this redundant?
-			 * Sometimes NSS forgets to set the actual
-			 * error and this handles that case?
-			 */
-			PRInt32 length = PR_GetErrorTextLength();
-			if (length != 0) {
-				char *text = alloc_things(char, length, "error message");
-				PR_GetErrorText(text);
-				size += jam_string(buf, text);
-				pfree(text);
-			} else {
-				size += jam_string(buf, "unknown error");
-			}
-		}
-	} else {
-		size += jam_string(buf, "error code not saved by NSS");
+	if (code == 0) {
+		return jam_string(buf, "error code not saved by NSS");
 	}
+
+	size_t size = 0;
+
+	/*
+	 * Print the symbolic name, if known.  This makes tracking
+	 * down the error in NSS's code base easier.
+	 *
+	 * If the name isn't known print the magic code (but would
+	 * that ever happen?).
+	 */
+	const char *name = PR_ErrorToName(code);
+	if (name != NULL) {
+		size += jam_string(buf, name);
+	} else if (IS_SEC_ERROR(code)) {
+		size += jam(buf, "SEC_ERROR_BASE+%d", code - SEC_ERROR_BASE);
+#if 0
+	} else if (IS_SSL_ERROR(code)) {
+		size += jam(buf, "SSL_ERROR_BASE+%d", code - SSL_ERROR_BASE);
+#endif
+	} else {
+		size += jam(buf, "NSS %d 0x%x", code, code);
+	}
+
+	jam_string(buf, ": ");
+
+	/*
+	 * NSPR should contain string tables for all known error
+	 * classes.  When it doesn't it returns "Unknown code ...".
+	 * Should this specify the english language?
+	 *
+	 * Note: PORT_ErrorToString(err) is just a macro wrapper that
+	 * expands to the below call.
+	 */
+	const char *string = PR_ErrorToString(code, PR_LANGUAGE_I_DEFAULT);
+	size += jam_string(buf, string);
+
 	return size;
 }

@@ -32,7 +32,6 @@
 #include "x509.h"
 #include "nss_cert_verify.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
-#include "nss_err.h"
 #include "certs.h"
 #include <secder.h>
 #include <secerr.h>
@@ -110,23 +109,10 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 
 		last_sn = node->cert->subjectName;
 		last_error = node->error;
-		llog(RC_LOG_SERIOUS, logger,
-			    "certificate %s failed %s verification",
-			    node->cert->subjectName, usage);
 		/* ??? we ignore node->depth and node->arg */
-		llog(RC_LOG_SERIOUS, logger, "NSS %s: %s", prefix,
-			    nss_err_str(node->error));
-		/*
-		 * XXX: this redundant log message is to keep tests happy -
-		 * the above ERROR: line will have already explained the the
-		 * problem.
-		 *
-		 * Two things should change - drop the below, and prefix the
-		 * above with "NSS ERROR: ".
-		 */
-		if (node->error == SEC_ERROR_REVOKED_CERTIFICATE) {
-			llog(RC_LOG_SERIOUS, logger, "certificate revoked!");
-		}
+		llog_nss_error_code(RC_LOG_SERIOUS, logger, node->error,
+				    "%s: %s certificate %s invalid",
+				    prefix, usage, node->cert->subjectName);
 	}
 }
 

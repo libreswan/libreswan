@@ -54,24 +54,37 @@ void lsw_nss_shutdown(void);
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
 /*
- * XXX: these get the error using the thread-local PR_GetError() which
- * should always be set.
+ * These get the error using the thread-local PR_GetError() which
+ * should always be set (or is passed in).
+ *
+ * jam: <error-string> (...)
+ * log: NSS: <message...>: <error-string> (...)
+ *
+ * XXX: not all are implemented.
  */
-/* SECERR: N (0xX): <error-string> */
-size_t jam_nss_error(struct jambuf *log);
-/* NSS: <message...>: SECERR: N (0xX): <error-string> */
-void llog_nss_error(lset_t rc_log, struct logger *logger,
-		    const char *message, ...) PRINTF_LIKE(3);
+
+size_t jam_nss_error_code(struct jambuf *log, PRErrorCode code);
+
+void llog_nss_error_code(lset_t rc_log, struct logger *logger,
+			 PRErrorCode code,
+			 const char *message, ...) PRINTF_LIKE(4);
+#define llog_nss_error(RC_LOG, LOGGER, MESSAGE, ...)		\
+	llog_nss_error_code(RC_LOG, LOGGER, PR_GetError(),	\
+			    MESSAGE, ##__VA_ARGS__)
+
 diag_t diag_nss_error(const char *message, ...) PRINTF_LIKE(1);
+
 void passert_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
+
 void pexpect_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...) PRINTF_LIKE(3);
-void DBG_nss_error(struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
+
 #define dbg_nss_error(LOGGER, MESSAGE, ...)				\
 	{								\
 		if (DBGP(DBG_BASE)) {					\
-			DBG_nss_error(LOGGER, MESSAGE, ##__VA_ARGS__);	\
+			llog_nss_error(DEBUG_STREAM, logger,		\
+				       MESSAGE, ##__VA_ARGS__);		\
 		}							\
 	}
 

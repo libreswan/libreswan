@@ -27,23 +27,24 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
-PRINTF_LIKE_VA(2)
-static void jam_va_nss_error(struct jambuf *buf, const char *message, va_list ap)
+PRINTF_LIKE_VA(3)
+static void jam_va_nss_error_code(struct jambuf *buf, PRErrorCode code,
+				  const char *message, va_list ap)
 {
 	jam(buf, "NSS: ");
 	jam_va_list(buf, message, ap);
 	va_end(ap);
 	jam(buf, ": ");
-	jam_nss_error(buf);
+	jam_nss_error_code(buf, code);
 }
 
-void llog_nss_error(lset_t rc_flags, struct logger *logger,
-		    const char *message, ...)
+void llog_nss_error_code(lset_t rc_flags, struct logger *logger,
+			 PRErrorCode code, const char *message, ...)
 {
 	LLOG_JAMBUF(rc_flags, logger, buf) {
 		va_list ap;
 		va_start(ap, message);
-		jam_va_nss_error(buf, message, ap);
+		jam_va_nss_error_code(buf, code, message, ap);
 		va_end(ap);
 	}
 }
@@ -54,7 +55,7 @@ diag_t diag_nss_error(const char *message, ...)
 	struct jambuf buf = ARRAY_AS_JAMBUF(lswbuf);
 	va_list ap;
 	va_start(ap, message);
-	jam_va_nss_error(&buf, message, ap);
+	jam_va_nss_error_code(&buf, PR_GetError(), message, ap);
 	va_end(ap);
 	return diag_jambuf(&buf);
 }
@@ -66,7 +67,7 @@ void passert_nss_error(struct logger *logger, where_t where,
 	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
 	va_list ap;
 	va_start(ap, message);
-	jam_va_nss_error(buf, message, ap);
+	jam_va_nss_error_code(buf, PR_GetError(), message, ap);
 	va_end(ap);
 	/* XXX: double copy */
 	passert_fail(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
@@ -79,19 +80,8 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
 	va_list ap;
 	va_start(ap, message);
-	jam_va_nss_error(buf, message, ap);
+	jam_va_nss_error_code(buf, PR_GetError(), message, ap);
 	va_end(ap);
 	/* XXX: double copy */
 	pexpect_fail(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
-}
-
-void DBG_nss_error(struct logger *logger, const char *message, ...)
-{
-	char scratch[LOG_WIDTH];
-	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
-	va_list ap;
-	va_start(ap, message);
-	jam_va_nss_error(buf, message, ap);
-	va_end(ap);
-	jambuf_to_logger(buf, logger, DEBUG_STREAM);
 }
