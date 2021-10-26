@@ -11,6 +11,35 @@
 set -e
 ok=true
 
+#
+# A feeble attempt at making the messages consistent (and, hence,
+# easier to grep).
+#
+
+CHECK() {
+    test="$@"
+    echo :
+    echo : checking "${test}"
+    echo :
+}
+
+PASS() {
+    echo PASS: no "${test}" found
+}
+
+FAIL() {
+    echo FAIL: found "${test}"
+    ok=false
+}
+
+IGNORE() {
+    echo IGNORE: found "${test}"
+}
+
+SKIP() {
+    echo SKIP: "${test}" "$@"
+}
+
 
 echo :
 echo : shut down pluto
@@ -34,44 +63,36 @@ if test -r /tmp/pluto.log ; then
 fi
 
 
-echo :
-echo : check for core files
-echo :
+CHECK core files
 
 # If any are found, copy them to the output directory.
 
 if $(dirname $0)/check-for-core.sh ; then
-    echo no core files found
+    PASS
     core=false
 else
-    echo core file found
-    ok=false
+    FAIL
     core=true
 fi
 
 
-echo :
-echo : check for leaks
-echo :
+CHECK memory leaks
 
 # The absense of 'leak detective found no leaks' in the log file isn't
 # sufficient.  For instance a pluto self-test (in check-01) doesn't
 # leave any log line.  Hence check for 'NNN leaks'
 
 if test ! -r /tmp/pluto.log ; then
-    echo skipping leaks as pluto was not running
+    SKIP as pluto was not running
 elif grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
-    echo memory leaks found
-    ok=false
+    FAIL
     grep -e leak /tmp/pluto.log | grep -v -e '|'
 else
-    echo no memory leaks found
+    PASS
 fi
 
 
-echo :
-echo : check reference counts
-echo :
+CHECK reference leaks
 
 # For moment don't fail when this fails.  The check is still
 # experimental.  OTOH, when leaks, above, fails, this might prove
@@ -81,20 +102,17 @@ echo :
 # is guarenteed).
 
 if test ! -r /tmp/pluto.log ; then
-    echo skipping reference counts as pluto was not running
+    SKIP as pluto was not running
 elif ${core} ; then
-    echo skipping reference counts as there was a core dump
+    SKIP as there was a core dump
 elif awk -f /testing/utils/refcnt.awk /tmp/pluto.log ; then
-    echo reference counts are off
-    #ok=false -- see above, not yet
+    PASS
 else
-    echo reference counts are ok
+    IGNORE # FAIL -- see above, not yet
 fi
 
 
-echo :
-echo : check xfrm errors
-echo :
+CHECK xfrm errors
 
 # Complications: linux only; some tests expect a bad value; with name
 # spaces the values can't be trusted.
@@ -105,43 +123,39 @@ echo :
 
 
 if test ! -r /tmp/pluto.log ; then
-    echo skipping xfrm errors as pluto was not running
+    SKIP as pluto was not running
 elif test ! -r /proc/net/xfrm_stat ; then
-    echo skipping xfrm errors as no xfrm
+    SKIP as no xfrm
 elif $(dirname $0)/xfrmcheck.sh ; then
-    echo no xfrm errors found
+    PASS
 else
-    echo xfrm errors found
+    IGNORE # FAIL - ongoing research
 fi
 
 
-echo :
-echo : check state/policy tables cleared
-echo :
+CHECK state/policy entries
 
 # For the moment dump the tables so it is possible to access the
 # damage.  Can't use ipsec-look.sh as that screws around with
 # cut/paste?
 
 if test ! -r /tmp/pluto.log ; then
-    echo skipping state/policy as pluto was not running
+    SKIP as pluto was not running
 elif test ! -r /proc/net/xfrm_stat ; then
-    echo skipping state/policy as no xfrm
+    SKIP as no xfrm
 else
     log=OUTPUT/post-mortem.$(hostname).ip-xfrm.log
     ip xfrm stat | tee -a ${log}
     ip xfrm policy | tee -a ${log}
     if test -s ${log} ; then
-	echo lingering state/policy entries found
+	IGNORE # FAIL - ongoing research
     else
-	echo no state/policy entries found
+	PASS
     fi
 fi
 
 
-echo :
-echo : checking for selinux audit records
-echo :
+CHECK selinux audit records
 
 # Should the setup code snapshot austatus before the test is run?
 
@@ -153,13 +167,14 @@ if test -f /sbin/ausearch ; then
     if test -s ${log} && grep -v \
 	    -e '^type=AVC .* avc:  denied  { remount } ' \
 	    ${log} ; then
-	echo selinux audit records found
-	ok=false
+	FAIL
 
 	# Output SELinux reference policy for missing rules.
 	rules=OUTPUT/post-mortem.$(hostname).audit2allow.rules
 	echo saving rules in ${rules}
 	ausearch -r -m avc -ts boot 2>&1 | audit2allow -R | tee ${rules}
+    else
+	PASS
     fi
 fi
 
