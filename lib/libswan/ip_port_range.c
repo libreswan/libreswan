@@ -16,33 +16,32 @@
 #include <arpa/inet.h>		/* for ntohs() */
 
 #include "jambuf.h"
-#include "constants.h"		/* for thingeq() */
 #include "ip_port_range.h"
+#include "lswlog.h"		/* for pexpect() */
 
-const ip_port_range unset_port_range; /* aka all ports? */
+const ip_port_range unset_port_range;
 
-ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi)
+ip_port_range port_range_from_ports(ip_port lo, ip_port hi)
 {
-	ip_port_range port_range = {
-		.lo = lo,
-		.hi = hi,
+	ip_port_range r = {
+		.is_set = true,
+		.lo = lo.hport,
+		.hi = hi.hport,
 	};
-	return port_range;
+	pexpect(r.lo <= r.hi);
+	return r;
 }
 
-bool port_range_is_unset(ip_port_range port_range)
+size_t jam_port_range(struct jambuf *buf, ip_port_range r)
 {
-	return thingeq(port_range, unset_port_range);
-}
+	if (!r.is_set) {
+		return jam(buf, "<unset-port-range>");
+	}
 
-size_t jam_port_range(struct jambuf *buf, ip_port_range port_range)
-{
-	unsigned lo = hport(port_range.lo);
-	unsigned hi = hport(port_range.hi);
-	if (lo == hi) {
-		return jam(buf, "%u", lo);
+	if (r.lo == r.hi) {
+		return jam(buf, "%u", r.lo);
 	} else {
-		return jam(buf, "%u-%u", lo, hi);
+		return jam(buf, "%u-%u", r.lo, r.hi);
 	}
 
 }

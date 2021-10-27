@@ -16,29 +16,27 @@
 #ifndef IP_PORT_RANGE_H
 #define IP_PORT_RANGE_H
 
-/*
- * XXX: Something to force the order of the port.
- *
- * Probably overkill, but then port byte order and parameters keep
- * being messed up.
- */
-
 #include <stdint.h>
 #include <stdbool.h>
 
 #include "ip_port.h"
 
+/*
+ * XXX: open question: all ports should be represented as 0..65535,
+ * but how to represent no ports (magic 0 0?).
+ *
+ * This feeds into the selector code.
+ */
+
 typedef struct {
-	/* XXX: 0 is 0 (is this a good idea?); network ordered */
-	ip_port lo;
-	ip_port hi;
+	bool is_set;
+	unsigned lo;
+	unsigned hi;
 } ip_port_range;
 
-ip_port_range ip_port_range_from_ports(ip_port lo, ip_port hi);
+ip_port_range port_range_from_ports(ip_port lo, ip_port hi);
 
-extern const ip_port_range unset_port_range; /* aka all ports? */
-
-bool port_range_is_unset(ip_port_range port_range);
+extern const ip_port_range unset_port_range;
 
 typedef struct {
 	char buf[sizeof("65535-65535") + 1/*canary*/];
