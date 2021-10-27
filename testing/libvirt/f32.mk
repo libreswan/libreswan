@@ -11,16 +11,18 @@ KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 #
 # NSS
 #
-# If necessary, force the NSS version or RPMs: version 3.40 dumped
-# core while loading the NSS DB; version 3.59, 3.60 all dumped core
-# while computing appendix-b keymat.
+# If necessary, force the NSS version and/or the RPM directory.
 #
-# KVM_NSS_RPMDIR = /source/nss/
-# KVM_NSS_PACKAGE_VERSION = -3.36.0-1.0.fc28.x86_64
-# KVM_NSS_PACKAGES = $(addprefix /source/rpm,$(addsuffix -3.36.0-1.0.fc28.x86_64.rpm,$(NSS_PACKAGE_NAMES)))
+# There's history here: version 3.40 dumped core while loading the NSS
+# DB; version 3.59 and 3.60 both dumped core while computing
+# appendix-b keymat.
+#
+# KVM_NSS_RPMDIR = /pool/nss/x866_64/
+# KVM_NSS_VERSION = -3.36.0-1.0.fc28.x86_64
 
 KVM_NSS_RPMDIR ?=
 KVM_NSS_VERSION ?=
+
 KVM_NSS_DEBUGINFO_NAMES ?= \
 	nss-debugsource \
 	nss-debuginfo \
@@ -30,6 +32,7 @@ KVM_NSS_DEBUGINFO_NAMES ?= \
 	$(NULL)
 KVM_NSS_DEBUGINFO ?= \
 	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_DEBUGINFO_NAMES)))
+
 KVM_NSS_PACKAGE_NAMES ?= \
 	nss \
 	nss-devel \
@@ -45,12 +48,19 @@ KVM_NSS_PACKAGE_NAMES ?= \
 KVM_NSS_PACKAGES ?= \
 	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_PACKAGE_NAMES)))
 
+.PHONY: nss-rpms
+nss-rpms:
+	@for rpm in $(KVM_NSS_DEBUGINFO) ; do echo $$rpm ; done
+	@for rpm in $(KVM_NSS_PACKAGES) ; do echo $$rpm ; done
+
 #
 # KERNEL:
 #
-# The kernel packages can only be installed.  To stop a new version
-# being installed set this to empty.  XL2TPD sucks in the latest
-# kernel so is included in the list.
+# The kernel packages can only be installed.
+#
+# To stop a new version of the kernel being installed set this to
+# empty.  XL2TPD sucks in the latest kernel so is included in the
+# list.
 #
 # KVM_KERNEL_RPMDIR ?= /source/kernel
 # KVM_KERNEL_ARCH ? = x86_64
@@ -58,6 +68,7 @@ KVM_NSS_PACKAGES ?= \
 
 KVM_KERNEL_RPMDIR ?=
 KVM_KERNEL_VERSION ?=
+
 KVM_KERNEL_PACKAGE_NAMES ?= \
 	kernel \
 	kernel-core \
@@ -70,6 +81,11 @@ KVM_KERNEL_PACKAGE_NAMES ?= \
 KVM_KERNEL_PACKAGES ?= \
 	$(addprefix $(KVM_KERNEL_RPMDIR), $(addsuffix $(KVM_KERNEL_VERSION), $(KVM_KERNEL_PACKAGE_NAMES))) \
 	xl2tpd
+
+.PHONY: kernel-rpms
+kernel-prms:
+	@for rpm in $(KVM_KERNEL_PACKAGES) ; do echo $$rpm ; done
+
 
 #    kernel-debuginfo-$(RPM_KERNEL_VERSION)
 #    kernel-debuginfo-common-$(KERNEL_ARCH)-$(RPM_KERNEL_VERSION)
