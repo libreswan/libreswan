@@ -69,7 +69,7 @@ typedef struct ip_protocol {
 #endif
 #define INTERNAL_IPPROTO 61
 
-extern const struct ip_protocol ip_protocols[];
+extern const struct ip_protocol ip_protocols[256];
 
 #define ip_protocol_unset ip_protocols[0]
 #define ip_protocol_icmp ip_protocols[IPPROTO_ICMP]		/* Internet Control Message */
@@ -100,8 +100,14 @@ const struct ip_protocol *protocol_by_shunk(shunk_t protocol);
 
 err_t ttoprotocol(shunk_t text, const ip_protocol **ipproto);
 
-/* ex: '=TCP=>' */
+/* ex: sep='=' gives '=TCP=>' */
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,
 		     const ip_protocol *dst);
+
+/* used to size other buffers */
+
+typedef struct {
+	char buf[19];
+} protocol_buf;
 
 #endif

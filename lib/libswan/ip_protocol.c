@@ -27,7 +27,7 @@
 #include "ip_encap.h"
 #include "jambuf.h"
 
-const struct ip_protocol ip_protocols[] = {
+const struct ip_protocol ip_protocols[256] = {
 	/*
 	 * Hand generated from:
 	 * https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
