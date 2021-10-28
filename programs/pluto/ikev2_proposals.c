@@ -1373,13 +1373,13 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 
-			esb_buf esb_type;
+			enum_buf esb_type; /* same scope */
 			const char *transform_type_name =
-				enum_show_short(&ikev2_trans_type_names, transform_type, &esb_type);
-			esb_buf esb_id;
+				str_enum_short(&ikev2_trans_type_names, transform_type, &esb_type);
+			enum_buf esb_id; /* same scope */
 			const char *transform_id_name =
-				enum_enum_show_short(&v2_transform_ID_enums,
-						     transform_type, transform->id, &esb_id);
+				str_enum_enum_short(&v2_transform_ID_enums,
+						    transform_type, transform->id, &esb_id);
 
 			enum impair_v2_transform impairment;
 			unsigned none;
@@ -1473,12 +1473,12 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			unsigned type_id = add_impaired_transform - 1; /* unbias */
 			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
-			esb_buf typeb, idb;
+			enum_buf typeb, idb;
 			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
-				    enum_show_short(&ikev2_trans_type_names, transform_type, &typeb),
-				    transform_type,
-				    enum_enum_show(&v2_transform_ID_enums, transform_type, transform_id, &idb),
-				    transform_id);
+			     enum_show_short(&ikev2_trans_type_names, transform_type, &typeb),
+			     transform_type,
+			     str_enum_enum(&v2_transform_ID_enums, transform_type, transform_id, &idb),
+			     transform_id);
 			if (!emit_transform_header(proposal_pbs, transform_type, transform_id,
 						   is_last_transform,
 						   NULL/*no nested PBS*/)) {

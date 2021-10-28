@@ -1918,8 +1918,8 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 
 			case ft_loose_enum_enum:
 			{
-				esb_buf buf;
-				const char *name = enum_enum_show(fp->desc, last_enum, n, &buf);
+				enum_buf buf;
+				const char *name = str_enum_enum(fp->desc, last_enum, n, &buf);
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name, name, n);
 				break;

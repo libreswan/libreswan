@@ -285,7 +285,6 @@ const char *enum_range_name(enum_names *range, unsigned long val, const char *pr
  *
  * enum_enum_table() returns TABLE's enum_names, or NULL.
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
- * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
  *
  * jam_enum_enum() appends TABLE VAL's enum name; if unnamed, append a
  * mashup of the standard prefix and the numeric value.
@@ -305,9 +304,6 @@ const char *str_enum_enum(enum_enum_names *e, unsigned long table,
 			  unsigned long val, enum_buf *buf);
 const char *str_enum_enum_short(enum_enum_names *e, unsigned long table,
 				unsigned long val, enum_buf *buf);
-
-#define enum_enum_show str_enum_enum /* XXX: TBD */
-#define enum_enum_show_short str_enum_enum_short /* XXX: TBD */
 
 size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);
