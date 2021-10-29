@@ -982,7 +982,8 @@ define install-kvm-test-domain
 		-e "s:@@NAME@@:$(1)$(2):" \
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$$(KVM_LOCALDIR):" \
+		-e "s:@@POOLDIR@@:$$(KVM_POOLDIR):" \
+		-e "s:@@LOCALDIR@@:$$(KVM_LOCALDIR):" \
 		-e "s:@@USER@@:$$(KVM_UID):" \
 		-e "s:@@GROUP@@:$$(KVM_GID):" \
 		-e "s:network='192_:network='$(1)192_:" \
