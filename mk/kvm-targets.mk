@@ -79,6 +79,8 @@ KVM_USE_FIPSCHECK ?= false
 KVM_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
 
 KVM_MAKEFLAGS ?= \
+	-j$(shell expr $(KVM_WORKERS) + 1) \
+	OBJDIR=$(KVM_OBJDIR) \
 	USE_EFENCE=$(KVM_USE_EFENCE) \
 	ALL_ALGS=$(KVM_ALL_ALGS) \
 	USE_SECCOMP=$(KVM_USE_SECCOMP) \
@@ -172,8 +174,25 @@ VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),
 KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
 VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
+# Fine-tune the BASE and BUILD machines.
+#
+# BASE is kept small.
+#
+# BUILD is more complex:
+#
+# CPUs: so as to not over allocate host cores, stick with
+# $(KVM_WORKERS) (default 1). The heuristic is to set $(KVM_WORKERS)
+# to #cores/2 - as it seems that a [booting] machine ties up two
+# cores.
+#
+# Memory: a test typically requires two 512mb VMs. With $(KVM_WORKERS)
+# that makes at least $(KVM_WORKERS)*2*512mb of ram being used by
+# tests VMs.  Boost build's memory by that amount.
+#
+# XXX: Ignore KVM_PREFIXES, it is probably going away.
+
 VIRT_INSTALL_BASE_FLAGS = --memory 1024
-VIRT_INSTALL_BUILD_FLAGS = --memory 2048 --vcpus 2
+VIRT_INSTALL_BUILD_FLAGS = --memory $(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus $(KVM_WORKERS)
 
 VIRT_INSTALL_COMMAND = \
 	$(VIRT_INSTALL) \
@@ -1131,9 +1150,9 @@ ifeq ($(KVM_INSTALL_RPM), true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/RPMS/x86_64/libreswan*rpm /source/'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/SRPMS/libreswan*rpm /source/'
 else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR) ; make $(KVM_MAKEFLAGS) install-base'
 ifeq ($(KVM_USE_FIPSCHECK),true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make OBJDIR=$(KVM_OBJDIR) $(KVM_MAKEFLAGS) install-fipshmac'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) install-fipshmac'
 endif
 endif
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
