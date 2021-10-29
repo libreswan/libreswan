@@ -432,7 +432,7 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem encoded_signature;
+	SECItem encoded_signature = {0,};	/* must be initialized*/
 	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
 				     raw_signature.len) != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
