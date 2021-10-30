@@ -9,7 +9,7 @@ KVM_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
 #
-# NSS
+# NSS+NSPR
 #
 # If necessary, force the NSS version and/or the RPM directory.
 #
@@ -48,10 +48,23 @@ KVM_NSS_PACKAGE_NAMES ?= \
 KVM_NSS_PACKAGES ?= \
 	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_PACKAGE_NAMES)))
 
+KVM_NSPR_RPMDIR ?=
+KVM_NSPR_VERSION ?=
+
+KVM_NSPR_DEBUGINFO_NAMES ?= nspr-debuginfo
+KVM_NSPR_DEBUGINFO ?= $(addprefix $(KVM_NSPR_RPMDIR), $(addsuffix $(KVM_NSPR_VERSION), $(KVM_NSPR_DEBUGINFO_NAMES)))
+KVM_NSPR_PACKAGE_NAMES ?= nspr nspr-devel
+KVM_NSPR_PACKAGES ?= \
+	$(addprefix $(KVM_NSPR_RPMDIR), $(addsuffix $(KVM_NSPR_VERSION), $(KVM_NSPR_PACKAGE_NAMES)))
+
 .PHONY: nss-rpms
 nss-rpms:
 	@for rpm in $(KVM_NSS_DEBUGINFO) ; do echo $$rpm ; done
 	@for rpm in $(KVM_NSS_PACKAGES) ; do echo $$rpm ; done
+.PHONY: nspr-rpms
+nspr-rpms:
+	@for rpm in $(KVM_NSPR_DEBUGINFO) ; do echo $$rpm ; done
+	@for rpm in $(KVM_NSPR_PACKAGES) ; do echo $$rpm ; done
 
 #
 # KERNEL:
@@ -153,8 +166,7 @@ KVM_UPGRADE_PACKAGES ?= \
     net-tools \
     nmap \
     nsd \
-    nspr \
-    nspr-devel \
+    $(KVM_NSPR_PACKAGES) \
     $(KVM_NSS_PACKAGES) \
     ocspd \
     openldap-devel \
@@ -217,7 +229,7 @@ KVM_DEBUGINFO = \
 	libunistring-debuginfo \
 	libxcrypt-debuginfo \
 	lz4-libs-debuginfo \
-	nspr-debuginfo \
+	$(KVM_NSPR_DEBUGINFO) \
 	$(KVM_NSS_DEBUGINFO) \
 	ocspd-debuginfo \
 	openldap-debuginfo \
