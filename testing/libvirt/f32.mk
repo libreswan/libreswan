@@ -183,8 +183,9 @@ KVM_UPGRADE_PACKAGES ?= \
     rsync \
     selinux-policy-devel \
     screen \
-    strace \
+    socat \
     softhsm \
+    strace \
     systemd-devel \
     tar \
     tcpdump \
