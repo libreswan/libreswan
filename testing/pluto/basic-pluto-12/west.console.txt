@@ -10,10 +10,10 @@ west #
  ipsec auto --add westnet-eastnet
 002 "westnet-eastnet": added IKEv1 connection
 west #
- ipsec auto --add westnet-eastnet-22
-002 "westnet-eastnet-22": added passthrough connection
+ ipsec auto --add westnet-eastnet-7
+002 "westnet-eastnet-7": added passthrough connection
 west #
- ipsec auto --route westnet-eastnet-22
+ ipsec auto --route westnet-eastnet-7
 west #
  echo "initdone"
 initdone
@@ -35,9 +35,8 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- echo take-passthrough-unencrpted | nc -s 192.0.1.254 192.0.2.254 22
-SSH-2.0-OpenSSH_XXX
-Invalid SSH identification string.
+ echo take-passthrough-unencrpted | nc -s 192.0.1.254 192.0.2.254 7
+take-passthrough-unencrpted
 west #
  # still zero
 west #
@@ -79,11 +78,11 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7
 	dir out priority 1691598 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 7
 	dir fwd priority 1691598 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 7
 	dir in priority 1691598 ptype main
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 2084814 ptype main

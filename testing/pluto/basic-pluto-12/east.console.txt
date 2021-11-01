@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep
 east #
- # block plaintext port 22
+ # block plaintext port 7
 east #
- #iptables -A INPUT -i eth1 -s 0.0.0.0/0 -p tcp --dport 22 -j DROP
+ #iptables -A INPUT -i eth1 -s 0.0.0.0/0 -p tcp --dport 7 -j DROP
 east #
  #iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 east #
- (test -z $(ip netns identify) || PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
+ ../../guestbin/echod.sh
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -16,10 +16,10 @@ east #
  ipsec auto --add westnet-eastnet
 002 "westnet-eastnet": added IKEv1 connection
 east #
- ipsec auto --add westnet-eastnet-22
-002 "westnet-eastnet-22": added passthrough connection
+ ipsec auto --add westnet-eastnet-7
+002 "westnet-eastnet-7": added passthrough connection
 east #
- ipsec auto --route westnet-eastnet-22
+ ipsec auto --route westnet-eastnet-7
 east #
  echo "initdone"
 initdone
@@ -46,11 +46,11 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7
 	dir fwd priority 1691598 ptype main
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7
 	dir in priority 1691598 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 7
 	dir out priority 1691598 ptype main
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority 2084814 ptype main
