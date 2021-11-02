@@ -978,10 +978,33 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 
+stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
+{
+	/*
+	 * XXX: have we been here before?
+	 *
+	 * Should this end rejects R2 because of auth failure, the
+	 * other end will keep sending the same KE.  Which leads to a
+	 * pexpect() as .st_dh_shared_secret is expected to be empty.
+	 */
+	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
+
+	/* KE in */
+	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
+		return STF_FAIL + INVALID_KEY_INFORMATION;
+	}
+
+	/* Nr in */
+	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	submit_dh_shared_secret(st, st, st->st_gr, main_inR2_outI3_continue, HERE);
+	return STF_SUSPEND;
+}
+
 static stf_status main_inR2_outI3_continue(struct state *st,
 					   struct msg_digest *md)
 {
-	dbg("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+	dbg("main_inR2_outI3_continue for #%lu: calculated DH, sending R1",
 	    st->st_serialno);
 
 	passert(md != NULL);	/* ??? how would this fail? */
@@ -1216,29 +1239,6 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	return STF_OK;
-}
-
-stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
-{
-	/*
-	 * XXX: have we been here before?
-	 *
-	 * Should this end rejects R2 because of auth failure, the
-	 * other end will keep sending the same KE.  Which leads to a
-	 * pexpect() as .st_dh_shared_secret is expected to be empty.
-	 */
-	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
-
-	/* KE in */
-	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
-	}
-
-	/* Nr in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
-	submit_dh_shared_secret(st, st, st->st_gr, main_inR2_outI3_continue, HERE);
-	return STF_SUSPEND;
 }
 
 /*
