@@ -1,9 +1,0 @@
-An OE connection only covering tcp port 22 to east. This one is
-configured for both incoming and outgoing port 22. This tests
-if the priorities of protoport OE connections get the right
-values.
-
-(we use 22 so we can echo something and get closed connection)
-
-See newoe-18-poc-cop-port22-both-reorder where the order of clear-or-private
-entries is reversed, and east has to switch connections in IKE_AUTH

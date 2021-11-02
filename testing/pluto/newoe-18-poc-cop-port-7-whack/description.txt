@@ -1,0 +1,3 @@
+An OE connection only covering tcp port 7 to east
+
+(we use 7 so we can echo something and get closed connection)

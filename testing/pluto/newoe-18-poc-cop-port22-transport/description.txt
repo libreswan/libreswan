@@ -1,7 +1,0 @@
-An OE connection only covering tcp port 22 to east
-
-(we use 22 so we can echo something and get closed connection)
-
-Now using transport mode to test whether we still properly pick
-up the port numbers, as with tunnel mode these reside in the "client"
-(subnet) defnition and for transport mode the "client" values are not used.

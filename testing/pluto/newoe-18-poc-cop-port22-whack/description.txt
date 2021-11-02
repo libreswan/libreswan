@@ -1,3 +1,0 @@
-An OE connection only covering tcp port 22 to east
-
-(we use 22 so we can echo something and get closed connection)
