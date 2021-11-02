@@ -21,6 +21,7 @@ s/\[\s\+[0-9]\+\.[0-9]\+\] /[ 00.00] /
 /\[ 00.00] hrtimer: interrupt took / b join
 /\[ 00.00] kauditd_printk_skb: / b join
 /\[ 00.00] audit: / b join
+/\[ 00.00] Bluetooth: / b join # yes, apparently NIC has Bluetooth
 
 b
 
