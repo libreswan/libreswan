@@ -41,7 +41,8 @@
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
+static void calc_skeyids_iv(struct state *st,
+			    oakley_auth_t auth, chunk_t pss,
 			    const struct prf_desc *prf_desc,
 			    const struct encrypt_desc *encrypter,
 			    chunk_t ni, chunk_t nr,
@@ -82,6 +83,15 @@ static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
 		bad_case(auth);
 	}
 
+	pexpect(*skeyid_out == NULL);
+	pexpect(*skeyid_d_out == NULL);
+	pexpect(*skeyid_a_out == NULL);
+	pexpect(*skeyid_e_out == NULL);
+	pexpect(*enc_key_out == NULL);
+
+	dbg("NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
+	    st->st_serialno, *skeyid_d_out, *skeyid_a_out, *skeyid_e_out, *enc_key_out);
+
 	/* generate SKEYID_* from SKEYID */
 	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf_desc, skeyid, shared,
 					      icookie, rcookie,
@@ -103,8 +113,8 @@ static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
 	*skeyid_e_out = skeyid_e;
 	*enc_key_out = enc_key;
 
-	DBGF(DBG_CRYPT, "NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
-	     skeyid_d, skeyid_a, skeyid_e, enc_key);
+	dbg("NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
+	    st->st_serialno, *skeyid_d_out, *skeyid_a_out, *skeyid_e_out, *enc_key_out);
 
 	/* generate IV */
 	{
@@ -122,7 +132,8 @@ static void calc_skeyids_iv(oakley_auth_t auth, chunk_t pss,
 void calc_v1_skeyid_and_iv(struct state *st)
 {
 	const chunk_t *pss = get_connection_psk(st->st_connection);
-	calc_skeyids_iv(st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
+	calc_skeyids_iv(st,
+			st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
 			st->st_oakley.ta_prf, st->st_oakley.ta_encrypt,
 			st->st_ni, st->st_nr,
 			chunk2(st->st_ike_spis.initiator.bytes, COOKIE_SIZE),
