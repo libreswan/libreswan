@@ -41,10 +41,6 @@ SKIP() {
 }
 
 
-echo :
-echo : shut down pluto
-echo :
-
 # Sometimes pluto gets turned into a zombie.  The PS line hopefully
 # shows it.  Should this also detect and fail when that happens (ipsec
 # stop will hang anyway).
@@ -59,9 +55,25 @@ ps ajx | sed -n \
 	     -e '/iked/       {p;n;}'
 
 if test -r /tmp/pluto.log ; then
+    CHECK shutting down pluto
     ipsec stop
+    if pgrep pluto ; then
+	IGNORE # FAIL - still assessing the damage
+    else
+	PASS
+    fi
+else
+    echo :
+    echo : pluto is not running, probably strongswan
+    echo :
 fi
 
+ps ajx | sed -n \
+	     -e '1 p' \
+	     -e '/sed/        {n;}' \
+	     -e '/pluto/      {p;n;}' \
+	     -e '/strongswan/ {p;n;}' \
+	     -e '/iked/       {p;n;}'
 
 CHECK core files
 
