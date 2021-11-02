@@ -71,12 +71,14 @@ func error(key, message) {
 op == "new" {
     debug("new")
     if ((key in counts) && counts[key] != 0) {
+	history[key] = history[key] "\n" NR ": " $0
 	error(key, "already in use")
-    }
-    counts[key] = 1
-    history[key] = NR ": " $0
-    if (count >= 0 && count != counts[key]) {
-	error(key, "has wrong count " count "; expecting" counts[key])
+    } else {
+	counts[key] = 1
+	history[key] = NR ": " $0
+	if (count >= 0 && count != counts[key]) {
+	    error(key, "has wrong count " count "; expecting" counts[key])
+	}
     }
     next
 }
@@ -85,14 +87,16 @@ op == "add" {
     debug("add")
     if (!(key in counts)) {
 	error(key, "unknown")
-    } else if (counts[key] == 0) {
-	error(key, "already released")
     } else {
 	history[key] = history[key] "\n" NR ": " $0
-	counts[key]++
-    }
-    if (count >= 0 && count != counts[key]) {
-	error(key, "has wrong count")
+	if (counts[key] == 0) {
+	    error(key, "already released")
+	} else {
+	    counts[key]++
+	}
+	if (count >= 0 && count != counts[key]) {
+	    error(key, "has wrong count")
+	}
     }
     next
 }
@@ -101,14 +105,16 @@ op == "del" {
     debug("del")
     if (!(key in counts)) {
 	error(key, "unknown")
-    } else if (counts[key] == 0) {
-	error(key, "already released")
     } else {
 	history[key] = history[key] "\n" NR ": " $0
-	counts[key]--
-    }
-    if (count >= 0 && count != counts[key]) {
-	error(key, "has wrong count")
+	if (counts[key] == 0) {
+	    error(key, "already released")
+	} else {
+	    counts[key]--
+	}
+	if (count >= 0 && count != counts[key]) {
+	    error(key, "has wrong count")
+	}
     }
     next
 }
@@ -117,13 +123,14 @@ op == "free" {
     debug("free")
     if (!(key in counts)) {
 	error(key, "unknown")
-    } else if (counts[key] != 0) {
-	error(key, "already released")
     } else {
 	history[key] = history[key] "\n" NR ": " $0
-    }
-    if (count >= 0 && count != counts[key]) {
-	error(key, "has wrong count")
+	if (counts[key] != 0) {
+	    error(key, "already released")
+	}
+	if (count >= 0 && count != counts[key]) {
+	    error(key, "has wrong count")
+	}
     }
     next
 }
@@ -136,6 +143,7 @@ op != "" {
     op = "use"
     if (key in counts) {
 	if (counts[key] == 0) {
+	    history[key] = history[key] "\n" NR ": " $0
 	    error(key, "use after free")
 	}
     }
