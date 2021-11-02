@@ -179,6 +179,7 @@ struct host_pair *find_host_pair(const ip_address local,
 static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, where_t where)
 {
 	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
+	dbg_alloc("hp", hp, where);
 	hp->magic = host_pair_magic;
 	hp->local = local;
 	/*
@@ -188,7 +189,6 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.any : remote);
 	init_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	add_hash_table_entry(&host_pair_addresses_hash_table, hp);
-	dbg_alloc("hp", hp, where);
 	return hp;
 }
 
