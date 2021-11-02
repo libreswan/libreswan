@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- (test -z $(ip netns identify) || PATH/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
+ ../../guestbin/echod.sh
 east #
  cp policies/* /etc/ipsec.d/policies/
 east #
@@ -49,17 +49,17 @@ src 192.1.2.23 dst 192.1.3.209
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp dport 22
+src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp dport 7
 	dir fwd priority 1687550 ptype main
-src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp dport 22
+src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp dport 7
 	dir in priority 1687550 ptype main
-src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp sport 22
+src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp sport 7
 	dir fwd priority 1687550 ptype main
-src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp sport 22
+src 0.0.0.0/0 dst 192.1.2.23/32 proto tcp sport 7
 	dir in priority 1687550 ptype main
-src 192.1.2.23/32 dst 0.0.0.0/0 proto tcp dport 22
+src 192.1.2.23/32 dst 0.0.0.0/0 proto tcp dport 7
 	dir out priority 1687550 ptype main
-src 192.1.2.23/32 dst 0.0.0.0/0 proto tcp sport 22
+src 192.1.2.23/32 dst 0.0.0.0/0 proto tcp sport 7
 	dir out priority 1687550 ptype main
 src 192.1.2.23/32 dst 192.1.2.253/32
 	dir out priority 3129279 ptype main

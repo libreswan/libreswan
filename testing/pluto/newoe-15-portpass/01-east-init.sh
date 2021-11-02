@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-(test -z $(ip netns identify) || /usr/sbin/sshd -p 22 > /dev/null 2>/dev/null &)
+../../guestbin/echod.sh
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
