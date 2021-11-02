@@ -985,9 +985,18 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 	 *
 	 * Should this end rejects R2 because of auth failure, the
 	 * other end will keep sending the same KE.  Which leads to a
-	 * pexpect() as .st_dh_shared_secret is expected to be empty.
+	 * pexpect() as .st_dh_shared_secret et.al. are all expected
+	 * to be empty.
+	 *
+	 * XXX: this seems lame, can the state machine detect and
+	 * rejected the duplicate packet?
 	 */
 	release_symkey(__func__, "DH shared secret", &st->st_dh_shared_secret);
+	release_symkey(__func__, "skeyid", &st->st_skeyid_nss);
+	release_symkey(__func__, "skeyid_d", &st->st_skeyid_d_nss);
+	release_symkey(__func__, "skeyid_a", &st->st_skeyid_a_nss);
+	release_symkey(__func__, "skeyid_e", &st->st_skeyid_e_nss);
+	release_symkey(__func__, "enc_key", &st->st_enc_key_nss);
 
 	/* KE in */
 	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
