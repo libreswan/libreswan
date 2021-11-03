@@ -66,7 +66,7 @@ void crypt_hash_digest_byte(struct crypt_hash *hash,
 			    const char *name, uint8_t byte)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s digest %s-byte@0x%x (%d)",
+		DBG_log("%s hash %s digest %s 0x%"PRIx8" (%"PRIu8")",
 			hash->name, hash->desc->common.fqn,
 			name, byte, byte);
 		DBG_dump_thing(NULL, byte);
@@ -80,7 +80,11 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 			     size_t sizeof_bytes)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s digest %s-bytes@%p (length %zu)",
+		/*
+		 * XXX: don't log BYTES using @POINTER syntax as it
+		 * might be bogus - confusing refcnt.awk.
+		 */
+		DBG_log("%s hash %s digest %s (%p length %zu)",
 			hash->name, hash->desc->common.fqn,
 			name, bytes, sizeof_bytes);
 		DBG_dump(NULL, bytes, sizeof_bytes);

@@ -85,7 +85,8 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 			.logger = logger,
 		};
 	}
-	DBGF(DBG_CRYPT, "%s PRF %s crypt-prf@%p",
+	/* not @POINTER, confuses refcnt.awk */
+	DBGF(DBG_CRYPT, "%s PRF %s %p",
 	     name, prf_desc->common.fqn, prf);
 	return prf;
 }
@@ -144,7 +145,7 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 			   const char *name, uint8_t update)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s update %s-byte@0x%x (%u)",
+		DBG_log("%s PRF %s update %s 0x%"PRIx8" (%"PRIu8")",
 			prf->name, prf->desc->common.fqn,
 			name, update, update);
 		DBG_dump_thing(NULL, update);
@@ -156,7 +157,11 @@ void crypt_prf_update_bytes(struct crypt_prf *prf,
 			    const char *name, const void *update, size_t sizeof_update)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s update %s-bytes@%p (length %zd)",
+		/*
+		 * XXX: don't log UPDATE using @POINTER syntax as it
+		 * might be bogus - confusing refcnt.awk.
+		 */
+		DBG_log("%s PRF %s update %s (%p length %zu)",
 			prf->name, prf->desc->common.fqn,
 			name, update, sizeof_update);
 		DBG_dump(NULL, update, sizeof_update);
