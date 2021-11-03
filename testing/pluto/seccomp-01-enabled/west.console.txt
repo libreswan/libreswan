@@ -59,9 +59,8 @@ west #
  grep SECCOMP /var/log/audit/audit.log | sed "s/ip=.*/ip=XXX/"
 type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=XXX
 west #
- echo done
-done
+ # don't leave post-mortem.sh thinking pluto is running
 west #
- if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+ rm /run/pluto/pluto.ctl
 west #
  
