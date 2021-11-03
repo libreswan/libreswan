@@ -431,8 +431,8 @@ kvmplutotest	ikev1-hub-spoke 			good
 
 kvmplutotest	ikev1-hostpair-01			good
 kvmplutotest	ikev2-hostpair-01			good
-kvmplutotest	ikev1-hostpair-02			good	github:521
-kvmplutotest	ikev2-hostpair-02			good	github:521
+kvmplutotest	ikev1-hostpair-02			wip	github:521
+kvmplutotest	ikev2-hostpair-02			wip	github:521
 kvmplutotest	ikev2-hostpair-03-initial-contact	good
 
 kvmplutotest	pluto-ipcmp-01				good
