@@ -63,7 +63,7 @@ if test -r /run/pluto/pluto.ctl ; then
     CHECK shutting down pluto
     if ! RUN ipsec whack --shutdown ; then
 	FAIL
-    elif RUN pgrep pluto ; then
+    elif RUN pidof pluto ; then
 	FAIL
     else
 	PASS
