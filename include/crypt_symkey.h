@@ -93,7 +93,7 @@ void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *prf_key_from_symkey_bytes(const char *name,
+PK11SymKey *prf_key_from_symkey_bytes(const char *result_name,
 				      const struct prf_desc *prf,
 				      size_t symkey_start_byte, size_t sizeof_symkey,
 				      PK11SymKey *source_key,
@@ -108,7 +108,7 @@ PK11SymKey *prf_key_from_symkey_bytes(const char *name,
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
+PK11SymKey *encrypt_key_from_symkey_bytes(const char *result_name,
 					  const struct encrypt_desc *encrypt,
 					  size_t symkey_start_byte, size_t sizeof_symkey,
 					  PK11SymKey *source_key,
@@ -161,7 +161,8 @@ PK11SymKey *prf_key_from_bytes(const char *name,
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
+PK11SymKey *key_from_symkey_bytes(const char *result_name,
+				  PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key,
 				  where_t where, struct logger *logger);
 

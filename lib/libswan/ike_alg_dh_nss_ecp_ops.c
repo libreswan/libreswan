@@ -199,9 +199,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 		return diag_nss_error("shared key calculation using ECP failed");
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey(logger, "g_ir ", "temp", temp);
-	}
+	dbg_alloc("temp", temp, HERE);
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()
@@ -209,10 +207,9 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	 * CKM_CONCATENATE_BASE_AND_KEY - work around this by
 	 * returning a copy of the key.
 	 */
-	*shared_secret = key_from_symkey_bytes(temp, 0, sizeof_symkey(temp), HERE, logger);
-	if (DBGP(DBG_BASE)) {
-		DBG_symkey(logger, "newref ", "ecp-key", *shared_secret);
-	}
+	*shared_secret = key_from_symkey_bytes("ecp-shared-secret", temp,
+					       0, sizeof_symkey(temp),
+					       HERE, logger);
 
 	release_symkey(__func__, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);

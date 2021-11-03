@@ -110,22 +110,25 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 
 	size_t next_byte = 0;
 
-	*SK_d_out = key_from_symkey_bytes(finalkey, next_byte, skd_bytes,
+	*SK_d_out = key_from_symkey_bytes("SK_d", finalkey,
+					  next_byte, skd_bytes,
 					  HERE, logger);
 	next_byte += skd_bytes;
 
-	*SK_ai_out = key_from_symkey_bytes(finalkey, next_byte, integ_size,
+	*SK_ai_out = key_from_symkey_bytes("SK_ai", finalkey,
+					   next_byte, integ_size,
 					   HERE, logger);
 	next_byte += integ_size;
 
-	*SK_ar_out = key_from_symkey_bytes(finalkey, next_byte, integ_size,
+	*SK_ar_out = key_from_symkey_bytes("SK_ar", finalkey,
+					   next_byte, integ_size,
 					   HERE, logger);
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
 
 	if (encrypter != NULL) {
-		*SK_ei_out = encrypt_key_from_symkey_bytes("SK_ei_k",
+		*SK_ei_out = encrypt_key_from_symkey_bytes("SK_ei",
 							   encrypter,
 							   next_byte, key_size,
 							   finalkey,
@@ -133,7 +136,8 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 		next_byte += key_size;
 	}
 
-	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+	PK11SymKey *initiator_salt_key = key_from_symkey_bytes("initiator salt",
+							       finalkey, next_byte,
 							       salt_size,
 							       HERE, logger);
 	*initiator_salt_out = chunk_from_symkey("initiator salt",
@@ -153,7 +157,8 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 		next_byte += key_size;
 	}
 
-	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+	PK11SymKey *responder_salt_key = key_from_symkey_bytes("responder salt",
+							       finalkey, next_byte,
 							       salt_size,
 							       HERE, logger);
 	*responder_salt_out = chunk_from_symkey("responder salt",
@@ -162,14 +167,16 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	release_symkey(__func__, "responder-salt-key", &responder_salt_key);
 	next_byte += salt_size;
 
-	*SK_pi_out = key_from_symkey_bytes(finalkey, next_byte, skp_bytes,
+	*SK_pi_out = key_from_symkey_bytes("SK_pi", finalkey,
+					   next_byte, skp_bytes,
 					   HERE, logger);
 	/* store copy of SK_pi_k for later use in authnull */
 	*chunk_SK_pi_out = chunk_from_symkey("chunk_SK_pi", *SK_pi_out, logger);
 
 	next_byte += skp_bytes;
 
-	*SK_pr_out = key_from_symkey_bytes(finalkey, next_byte, skp_bytes,
+	*SK_pr_out = key_from_symkey_bytes("SK_pr", finalkey,
+					   next_byte, skp_bytes,
 					   HERE, logger);
 	/* store copy of SK_pr_k for later use in authnull */
 	*chunk_SK_pr_out = chunk_from_symkey("chunk_SK_pr", *SK_pr_out, logger);

@@ -580,14 +580,15 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *name,
 				  where, logger);
 }
 
-PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
+PK11SymKey *key_from_symkey_bytes(const char *result_name,
+				  PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key,
 				  where_t where, struct logger *logger)
 {
 	if (sizeof_key == 0) {
 		return NULL;
 	} else {
-		return symkey_from_symkey("result", source_key,
+		return symkey_from_symkey(result_name, source_key,
 					  CKM_EXTRACT_KEY_FROM_KEY,
 					  0, next_byte, sizeof_key,
 					  where, logger);
