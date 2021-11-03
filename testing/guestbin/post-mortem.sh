@@ -24,22 +24,27 @@ CHECK() {
 }
 
 PASS() {
-    echo PASS: no "${test}" found
+    echo PASS: "${test}"
 }
 
 FAIL() {
-    echo FAIL: found "${test}"
+    echo FAIL: "${test}"
     ok=false
 }
 
 IGNORE() {
-    echo IGNORE: found "${test}"
+    echo IGNORE: "${test}"
 }
 
 SKIP() {
     echo SKIP: "${test}" "$@"
 }
 
+RUN() {
+    # a selective set +x?
+    echo "$@" 1>&2
+    "$@"
+}
 
 # Sometimes pluto gets turned into a zombie.  The PS line hopefully
 # shows it.  Should this also detect and fail when that happens (ipsec
@@ -54,26 +59,21 @@ ps ajx | sed -n \
 	     -e '/strongswan/ {p;n;}' \
 	     -e '/iked/       {p;n;}'
 
-if test -r /tmp/pluto.log ; then
+if test -r /run/pluto/pluto.ctl ; then
     CHECK shutting down pluto
-    ipsec stop
-    if pgrep pluto ; then
-	IGNORE # FAIL - still assessing the damage
+    if ! RUN ipsec whack --shutdown ; then
+	FAIL
+    elif RUN pgrep pluto ; then
+	FAIL
     else
 	PASS
     fi
 else
     echo :
-    echo : pluto is not running, probably strongswan
+    echo : pluto is not running, probably strongswan, but possibly iked
     echo :
 fi
 
-ps ajx | sed -n \
-	     -e '1 p' \
-	     -e '/sed/        {n;}' \
-	     -e '/pluto/      {p;n;}' \
-	     -e '/strongswan/ {p;n;}' \
-	     -e '/iked/       {p;n;}'
 
 CHECK core files
 
@@ -199,7 +199,7 @@ echo :
 
 semodule -l | grep ^ipsecspd | while read module ; do
     echo Unloading ${module}
-    semodule -r ${module}
+    RUN semodule -r ${module}
 done
 
 
