@@ -77,22 +77,25 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		return;
 	}
 
-	struct crypt_prf *hash =
-		crypt_prf_init_symkey("HASH(1)", st->st_oakley.ta_prf,
-				      "SKEYID_a", st->st_skeyid_a_nss,
-				      fixup->logger);
+	struct crypt_prf *hash;
 	/* msgid */
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
 	msgid_t raw_msgid = htonl(msgid);
 	switch (fixup->hash_type) {
 	case V1_HASH_1:
 		/* HASH(1) = prf(SKEYID_a, M-ID | payload ) */
+		hash = crypt_prf_init_symkey("HASH(1)", st->st_oakley.ta_prf,
+					     "SKEYID_a", st->st_skeyid_a_nss,
+					     fixup->logger);
 		crypt_prf_update_thing(hash, "M-ID", raw_msgid);
 		crypt_prf_update_bytes(hash, "payload",
 				       fixup->body, roof - fixup->body);
 		break;
 	case V1_HASH_2:
 		/* HASH(2) = prf(SKEYID_a, M-ID | Ni_b | payload ) */
+		hash = crypt_prf_init_symkey("HASH(2)", st->st_oakley.ta_prf,
+					     "SKEYID_a", st->st_skeyid_a_nss,
+					     fixup->logger);
 		crypt_prf_update_thing(hash, "M-ID", raw_msgid);
 		crypt_prf_update_hunk(hash, "Ni_b", st->st_ni);
 		crypt_prf_update_bytes(hash, "payload",
@@ -100,6 +103,9 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		break;
 	case V1_HASH_3:
 		/* HASH(3) = prf(SKEYID_a, 0 | M-ID | Ni_b | Nr_b) */
+		hash = crypt_prf_init_symkey("HASH(3)", st->st_oakley.ta_prf,
+					     "SKEYID_a", st->st_skeyid_a_nss,
+					     fixup->logger);
 		crypt_prf_update_byte(hash, "0", 0);
 		crypt_prf_update_thing(hash, "M-ID", raw_msgid);
 		crypt_prf_update_hunk(hash, "Ni_b", st->st_ni);
