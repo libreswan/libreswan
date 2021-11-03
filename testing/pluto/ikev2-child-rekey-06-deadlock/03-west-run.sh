@@ -17,6 +17,7 @@ ipsec whack --rekey-ipsec --name west
 # above whack commans leave much to be desired when it comes to
 # logging; get around it by grepping for the expected outcome.
 #
-# Note: need to strip of "MONTH(1) DATE(2) TIME(3): ".
+# Note: need to strip of "MONTH(1) DATE(2) TIME(3): "; look for real
+# log lines that just match states we're interested in.
 
-cut -d' ' -f4- /tmp/pluto.log | grep '^[^|].* #[1-5]:'
+cat /tmp/pluto.log | sed -n -e 's/^[^|#]*: \([^#|].* #[1-5]:\)/\1/p'

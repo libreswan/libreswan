@@ -94,9 +94,11 @@ west #
 west #
  #
 west #
- # Note: need to strip of "MONTH(1) DATE(2) TIME(3): ".
+ # Note: need to strip of "MONTH(1) DATE(2) TIME(3): "; look for real
 west #
- cut -d' ' -f4- /tmp/pluto.log | grep '^[^|].* #[1-5]:'
+ # log lines that just match states we're interested in.
+west #
+ cat /tmp/pluto.log | sed -n -e 's/^[^|#]*: \([^#|].* #[1-5]:\)/\1/p'
 "west" #1: initiating IKEv2 connection
 "west" #1: sent IKE_SA_INIT request
 "west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
