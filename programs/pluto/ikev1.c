@@ -2424,7 +2424,7 @@ void process_packet_tail(struct msg_digest *md)
 	 * XXX: danger - the .informational() processor deletes ST;
 	 * and then tunnels this loss through MD.ST.
 	 */
-	stf_status e =smc->processor(st, md);
+	stf_status e = smc->processor(st, md);
 	complete_v1_state_transition(md->v1_st, md, e);
 	statetime_stop(&start, "%s()", __func__);
 	/* our caller will release_any_md(mdp); */
@@ -2528,6 +2528,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 		return;
 	case STF_IGNORE:
+		/* DANGER: MD might be NULL; ST might be NULL */
+		return;
+	case STF_SKIP_COMPLETE_STATE_TRANSITION:
 		/* DANGER: MD might be NULL; ST might be NULL */
 		return;
 	default:
