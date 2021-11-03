@@ -63,15 +63,19 @@ if test -r /run/pluto/pluto.ctl ; then
     CHECK shutting down pluto
     if ! RUN ipsec whack --shutdown ; then
 	FAIL
+	pluto=false
     elif RUN pidof pluto ; then
 	FAIL
+	pluto=false
     else
 	PASS
+	pluto=true
     fi
 else
     echo :
     echo : pluto is not running, probably strongswan, but possibly iked
     echo :
+    pluto=false
 fi
 
 
@@ -94,8 +98,10 @@ CHECK memory leaks
 # sufficient.  For instance a pluto self-test (in check-01) doesn't
 # leave any log line.  Hence check for 'NNN leaks'
 
-if test ! -r /tmp/pluto.log ; then
+if ! ${pluto} ; then
     SKIP as pluto was not running
+elif ${core} ; then
+    SKIP as pluto core dumped
 elif grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
     FAIL
     grep -e leak /tmp/pluto.log | grep -v -e '|'
@@ -113,14 +119,14 @@ CHECK reference leaks
 # Skip this when there's a core dump (little point as refcnt failure
 # is guarenteed).
 
-if test ! -r /tmp/pluto.log ; then
+if ! ${pluto} ; then
     SKIP as pluto was not running
 elif ${core} ; then
-    SKIP as there was a core dump
+    SKIP as pluto core dumped
 elif awk -f /testing/utils/refcnt.awk /tmp/pluto.log ; then
     PASS
 else
-    IGNORE # FAIL -- see above, not yet
+    FAIL
 fi
 
 
@@ -134,7 +140,7 @@ CHECK xfrm errors
 # verified?
 
 
-if test ! -r /tmp/pluto.log ; then
+if ! ${pluto} ; then
     SKIP as pluto was not running
 elif test ! -r /proc/net/xfrm_stat ; then
     SKIP as no xfrm
@@ -151,7 +157,7 @@ CHECK state/policy entries
 # damage.  Can't use ipsec-look.sh as that screws around with
 # cut/paste?
 
-if test ! -r /tmp/pluto.log ; then
+if ! ${pluto} ; then
     SKIP as pluto was not running
 elif test ! -r /proc/net/xfrm_stat ; then
     SKIP as no xfrm
