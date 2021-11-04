@@ -8,14 +8,13 @@ east #
  ipsec auto --add v6-transport
 002 "v6-transport": added IKEv1 connection
 east #
- nc -l 1701 &
-[B] PID
+ ../../guestbin/echo.sh -6 1701
+listening on IPv6 port 1701
 east #
  echo "initdone"
 initdone
 east #
  ../../guestbin/ipsec-look.sh
-transmitted test
 east NOW
 XFRM state:
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
@@ -76,6 +75,5 @@ default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-[1]+  Done                    nc -l 1701
 east #
  

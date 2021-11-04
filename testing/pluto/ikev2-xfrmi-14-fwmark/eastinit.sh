@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add northnet-eastnet
-ncat -k -l -c "printf 'HTTP/1.1 200 OK\r\n\r\ncool, thanks\n'" -p 8888&
+socat TCP-LISTEN:8888,crlf SYSTEM:"echo HTTP/1.0 200; echo ; echo cool thanks" &
 echo "initdone"

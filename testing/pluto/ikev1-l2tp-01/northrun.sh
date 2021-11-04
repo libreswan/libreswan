@@ -8,6 +8,6 @@ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
 cat /tmp/xl2tpd.log
 : ==== tuc ====
 # testing passthrough of non-l2tp/ipsec traffic
-echo quit | nc 192.0.2.254 22
+echo quit | socat - TCP:192.0.2.254:7
 ip addr show dev ppp0 | sed "s/ qdisc.*$//"
 echo done

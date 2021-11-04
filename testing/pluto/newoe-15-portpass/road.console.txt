@@ -49,7 +49,7 @@ road #
 road #
  # echo should go through passthrough, not increase traffic counter of tunnel
 road #
- echo "PLAINTEXT" | nc -s 192.1.3.209 192.1.2.23 7
+ echo "PLAINTEXT" | socat - TCP:192.1.2.23:7,bind=192.1.3.209
 PLAINTEXT
 road #
  sleep 5

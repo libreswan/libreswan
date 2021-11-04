@@ -5,23 +5,22 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir in
+ ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir in
 east #
- ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir out
+ ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir out
 east #
- ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir fwd
+ ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir fwd
 east #
  ipsec auto --add west-east
 002 "west-east": added IKEv1 connection
 east #
- nc -4 -l 192.1.2.23 222 &
-[B] PID
+ ../../guestbin/echo.sh
+listening on IPv4 port 7
 east #
  echo "initdone"
 initdone
 east #
  ../../guestbin/ipsec-look.sh
-PLAINTEXT FROM WEST
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
@@ -43,11 +42,11 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7
 	dir fwd priority 1440 ptype main
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7
 	dir out priority 1440 ptype main
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 7 dport 7
 	dir in priority 1440 ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir out priority 2080702 ptype main
@@ -72,6 +71,5 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-[1]+  Done                    nc -4 -l 192.1.2.23 222
 east #
  

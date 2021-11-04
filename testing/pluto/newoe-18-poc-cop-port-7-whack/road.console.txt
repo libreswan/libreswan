@@ -40,7 +40,7 @@ road #
 road #
  # generate some traffic to be encrypted
 road #
- echo TRIGGER-OE | nc -s 192.1.3.209 192.1.2.23 7
+ echo TRIGGER-OE | socat - TCP:192.1.2.23:7,bind=192.1.3.209
 TRIGGER-OE
 road #
  # show non-zero counters

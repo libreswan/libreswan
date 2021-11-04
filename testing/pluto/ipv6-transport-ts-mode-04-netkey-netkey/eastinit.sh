@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add v6-transport
-nc -l 1701 &
+../../guestbin/echo.sh -6 1701
 echo "initdone"

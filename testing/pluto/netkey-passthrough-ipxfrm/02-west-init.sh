@@ -9,7 +9,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add west-east
-ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir in
-ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir out
-ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 ptype main priority 1440 dir fwd
+ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir in
+ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir out
+ip xfrm policy add src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7 ptype main priority 1440 dir fwd
 echo "initdone"

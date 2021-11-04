@@ -6,7 +6,7 @@ echo "c server" > /var/run/xl2tpd/l2tp-control ; sleep 5
 # workaround for diff err msg between fedora versions resulting in diff byte count
 ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
 # testing passthrough of non-l2tp/ipsec traffic
- echo quit | nc 192.0.2.254 22
+ echo quit | socat - TCP:192.0.2.254:7
 : ==== cut ====
 cat /tmp/xl2tpd.log
 : ==== tuc ====
