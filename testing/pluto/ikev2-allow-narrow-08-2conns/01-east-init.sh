@@ -4,11 +4,11 @@ ipsec start
 ipsec auto --add west-east-ikev2
 ipsec auto --status | grep west
 
-ncat -n -v -v --keep-open --sh-exec 'echo 222; cat' --listen 222 &
+../../guestbin/echod.sh 7
 sleep 1
-echo 222 | ncat localhost 222
+echo 7 | ncat localhost 7
 
-ncat -n -v -v --keep-open --sh-exec 'echo 333; cat' --listen 333 &
+../../guestbin/echod.sh 333
 sleep 1
 echo 333 | ncat localhost 333
 

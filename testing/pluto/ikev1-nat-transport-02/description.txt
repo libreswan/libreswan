@@ -2,8 +2,8 @@ Basic pluto test of transport mode through NAT, using IKEv1
 
 This time behind a NAT, (see transport-01)
 
-A single transport mode SA is created between north and east, for port 222.
+A single transport mode SA is created between north and east, for port 7.
 
-Note packets sent to port 2 and port 222 expect a connection refused. It is
+Note packets sent to port 2 and port 7 expect a connection refused. It is
 enough to test packet flow (and on namespaces we dont have sshd running,
 and we don't really need to start a daemon now)

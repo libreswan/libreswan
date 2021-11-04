@@ -2,5 +2,5 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add west-east
-ipsec auto --add pass-222
+ipsec auto --add pass-7
 echo "initdone"

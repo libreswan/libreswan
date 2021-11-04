@@ -38,11 +38,11 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 222
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7
 	dir fwd priority 1691598 ptype main
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 222
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 7
 	dir in priority 1691598 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 222
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 7
 	dir out priority 1691598 ptype main
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority 2084814 ptype main

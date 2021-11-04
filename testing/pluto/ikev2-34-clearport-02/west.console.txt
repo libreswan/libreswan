@@ -8,8 +8,8 @@ west #
  ipsec auto --add west-east
 002 "west-east": added IKEv2 connection
 west #
- ipsec auto --add pass-222
-002 "pass-222": added passthrough connection
+ ipsec auto --add pass-7
+002 "pass-7": added passthrough connection
 west #
  echo "initdone"
 initdone
@@ -21,16 +21,16 @@ west #
 003 "west-east" #1: established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "west-east" #2: established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # poke a hole to port 222, those packets will be allowed cleartext
+ # poke a hole to port 7, those packets will be allowed cleartext
 west #
- ipsec auto --route pass-222
+ ipsec auto --route pass-7
 west #
  ip xfrm pol
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
 	dir fwd priority 1687486 ptype main 
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
 	dir in priority 1687486 ptype main 
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 222 
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 7 
 	dir out priority 1687486 ptype main 
 src 192.1.2.45/32 dst 192.1.2.23/32 
 	dir out priority 2080702 ptype main 
@@ -71,7 +71,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 west #
  # send packet over the clear exception - should return connection refused
 west #
- echo 'test' | nc -v -w 5 192.1.2.23 222
+ echo 'test' | nc -v -w 5 192.1.2.23 7
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 Ncat: Connection refused.
 west #

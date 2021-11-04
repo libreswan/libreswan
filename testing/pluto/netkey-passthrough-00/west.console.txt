@@ -51,7 +51,8 @@ up
 west #
  # plaintext
 west #
- echo "PLAINTEXT FROM WEST" | nc -p 222 -s 192.1.2.45 192.1.2.23 222
+ echo "PLAINTEXT FROM WEST" | nc -p 7 -s 192.1.2.45 192.1.2.23 7
+PLAINTEXT FROM WEST
 west #
  echo done
 done
@@ -78,11 +79,11 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7
 	dir fwd priority 1425342 ptype main
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 dport 7
 	dir in priority 1425342 ptype main
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 7 dport 7
 	dir out priority 1425342 ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority 2080702 ptype main

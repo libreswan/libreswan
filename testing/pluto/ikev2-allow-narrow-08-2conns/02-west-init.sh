@@ -7,6 +7,6 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
 
-ipsec auto --add west-east-ikev2-222
+ipsec auto --add west-east-ikev2-7
 ipsec auto --add west-east-ikev2-333
 ipsec auto --status | grep west

@@ -5,11 +5,11 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add north-east-222
-002 "north-east-222": added IKEv1 connection
+ ipsec auto --add north-east-7
+002 "north-east-7": added IKEv1 connection
 east #
- ipsec auto --add road-east-222
-002 "road-east-222": added IKEv1 connection
+ ipsec auto --add road-east-7
+002 "road-east-7": added IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -35,7 +35,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222 
+	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 7 
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -46,7 +46,7 @@ src 192.1.2.23 dst 192.1.2.254
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222 
+	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 7 
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -57,7 +57,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222 
+	sel src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 7 
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -68,13 +68,13 @@ src 192.1.2.23 dst 192.1.2.254
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222 
+	sel src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 7 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 222
+src 192.1.2.23/32 dst 192.1.2.254/32 proto tcp sport 7
 	dir out priority 1687487 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 222
+src 192.1.2.254/32 dst 192.1.2.23/32 proto tcp dport 7
 	dir in priority 1687487 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport

@@ -3,5 +3,5 @@
 ../../guestbin/wait-until-alive 192.1.2.23
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add north-east-222
+ipsec auto --add north-east-7
 echo done
