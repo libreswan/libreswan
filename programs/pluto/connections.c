@@ -1701,10 +1701,9 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	policy_buf pb;
-	dbg("added new %s connection %s with policy %s%s",
+	dbg("added new %s connection %s with policy %s",
 	    enum_name(&ike_version_names, c->config->ike_version),
-	    c->name, str_policy(c->policy, &pb),
-	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+	    c->name, str_connection_policies(c, &pb));
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		/* set default to AUTHBY_NEVER if unset and we do not expect to do IKE */
@@ -2287,15 +2286,14 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s",
 	    deltasecs(c->sa_ike_life_seconds),
 	    deltasecs(c->sa_ipsec_life_seconds),
 	    deltasecs(c->sa_rekey_margin),
 	    c->sa_rekey_fuzz,
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
-	    str_policy(c->policy, &pb),
-	    NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "");
+	    str_connection_policies(c, &pb));
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
 	/* XXX: something better? */
@@ -2670,6 +2668,52 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 	if (c->kind == CK_INSTANCE) {
 		jam_connection_instance(&p, c);
 	}
+	return buf->buf;
+}
+
+size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
+{
+	size_t s = 0;
+	s += jam_policy(buf, c->policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK));
+
+	const char *sep = s > 0 ? "+" : "";
+
+	lset_t shunt = (c->policy & POLICY_SHUNT_MASK);
+	if (shunt != POLICY_SHUNT_TRAP) {
+		static const char *const policy_shunt_names[4] = {
+			"TRAP",
+			"PASS",
+			"DROP",
+			"REJECT",
+		};
+		s += jam(buf, "%s%s", sep, policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+		sep = "+";
+	}
+
+	lset_t fail = (c->policy & POLICY_FAIL_MASK);
+	if (fail != POLICY_FAIL_NONE) {
+		static const char *const policy_fail_names[4] = {
+			"NONE",
+			"PASS",
+			"DROP",
+			"REJECT",
+		};
+		s += jam(buf, "%sfailure%s", sep, policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+		sep = "+";
+	}
+
+	if (NEVER_NEGOTIATE(c->policy)) {
+		jam(buf, "%sNEVER_NEGOTIATE", sep);
+		sep = "+";
+	}
+
+	return s;
+}
+
+const char *str_connection_policies(const struct connection *c, policy_buf *buf)
+{
+	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
+	jam_connection_policies(&p, c);
 	return buf->buf;
 }
 

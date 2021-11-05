@@ -40,7 +40,7 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 	for (; c != NULL; c = c->hp_next) {
 		policy_buf fb;
 		dbg("found policy = %s (%s)",
-		    str_policy(c->policy, &fb),
+		    str_connection_policies(c, &fb),
 		    c->name);
 
 		if (NEVER_NEGOTIATE(c->policy)) {

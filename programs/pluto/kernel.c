@@ -514,10 +514,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
 
 	jam_string(buf, "PLUTO_CONN_POLICY='");
-	jam_policy(buf, c->policy);
-	if (NEVER_NEGOTIATE(c->policy)) {
-		jam_string(buf, "+NEVER_NEGOTIATE");
-	}
+	jam_connection_policies(buf, c);
 	jam_string(buf, "' ");
 
 	jam_string(buf, "PLUTO_CONN_KIND='");
@@ -1057,7 +1054,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		policy_buf pb;
 		llog(RC_ROUTE, logger,
 		     "cannot route template policy of %s",
-		     str_policy(c->policy, &pb));
+		     str_connection_policies(c, &pb));
 		return route_impossible;
 	}
 

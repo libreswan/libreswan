@@ -544,6 +544,9 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *ou
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
 
+size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);
+const char *str_connection_policies(const struct connection *c, policy_buf *buf);
+
 /*
  * XXX: Instead of str_connection(), which would require a buffer big
  * enough to fit an any length name, there's PRI_CONNECTION et.al.
