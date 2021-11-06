@@ -1428,13 +1428,13 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
-		if ((wm->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
+		if (wm->shunt_policy == SHUNT_DEFAULT || wm->shunt_policy == SHUNT_TRAP) {
 			llog(RC_FATAL, c->logger,
-				    "failed to add connection: connection with authby=never must specify shunt type via type=");
+			     "failed to add connection: connection with authby=never must specify shunt type via type=");
 			return false;
 		}
 	}
-	if ((wm->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP) {
+	if (wm->shunt_policy != SHUNT_DEFAULT && wm->shunt_policy != SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			llog(RC_FATAL, c->logger,
 				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
@@ -1660,6 +1660,8 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
+	c->shunt_policy = wm->shunt_policy == 0 ? SHUNT_TRAP : wm->shunt_policy;
+	c->failure_shunt_policy = wm->failure_shunt_policy == 0 ? SHUNT_NONE : wm->failure_shunt_policy;
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
@@ -1689,9 +1691,8 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
-		if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
-			c->policy &= ~POLICY_FAIL_MASK;
-			c->policy |= POLICY_FAIL_NONE;
+		if (c->failure_shunt_policy == SHUNT_PASS) {
+			c->failure_shunt_policy = SHUNT_NONE;
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
@@ -2243,14 +2244,6 @@ static bool extract_connection(const struct whack_message *wm,
 	return true;
 }
 
-/* slightly different names compared to pluto_constants.c */
-static const char *const policy_shunt_names[4] = {
-	"trap[should not happen]",
-	"passthrough",
-	"drop",
-	"reject",
-};
-
 void add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/*
@@ -2276,7 +2269,18 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	}
 
 	/* log all about this connection */
-	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[(c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT] :
+
+	/* slightly different names compared to pluto_constants.c */
+	static const char *const policy_shunt_names[SHUNT_POLICY_ROOF] = {
+		[SHUNT_DEFAULT] = "[should not happen]",
+		[SHUNT_TRAP] = "trap[should not happen]",
+		[SHUNT_NONE] = "none",
+		[SHUNT_PASS] = "passthrough",
+		[SHUNT_DROP] = "drop",
+		[SHUNT_REJECT] = "reject",
+	};
+
+	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->shunt_policy] :
 			    c->config->ike_version == IKEv1 ? "IKEv1" :
 			    c->config->ike_version == IKEv2 ? "IKEv2" :
 			    "IKEv?");
@@ -2671,31 +2675,22 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
-	s += jam_policy(buf, c->policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK));
+	s += jam_policy(buf, c->policy);
 
 	const char *sep = s > 0 ? "+" : "";
 
-	lset_t shunt = (c->policy & POLICY_SHUNT_MASK);
-	if (shunt != POLICY_SHUNT_TRAP) {
-		static const char *const policy_shunt_names[4] = {
-			"TRAP",
-			"PASS",
-			"DROP",
-			"REJECT",
-		};
-		s += jam(buf, "%s%s", sep, policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
+	enum shunt_policy shunt = c->shunt_policy;
+	if (shunt != SHUNT_TRAP) {
+		s += jam_string(buf, sep);
+		s += jam_enum_short(buf, &shunt_policy_names, shunt);
 		sep = "+";
 	}
 
-	lset_t fail = (c->policy & POLICY_FAIL_MASK);
-	if (fail != POLICY_FAIL_NONE) {
-		static const char *const policy_fail_names[4] = {
-			"NONE",
-			"PASS",
-			"DROP",
-			"REJECT",
-		};
-		s += jam(buf, "%sfailure%s", sep, policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
+	enum shunt_policy fail = c->failure_shunt_policy;
+	if (fail != SHUNT_NONE) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "failure");
+		s += jam_enum_short(buf, &shunt_policy_names, fail);
 		sep = "+";
 	}
 
@@ -4436,18 +4431,17 @@ void show_one_connection(struct show *s,
 			c->name, instance, c->policy_next->name);
 	}
 
-	lset_t policy = c->policy;
 	policy_buf pb;
-	show_comment(s, "\"%s\"%s:   policy: %s%s%s%s%s%s%s;",
+	const char *policies = str_connection_policies(c, &pb);
+	show_comment(s, PRI_CONNECTION":   policy: %s%s%s%s%s%s;",
 		     c->name, instance,
-		     c->config->ike_version > 0 ? enum_name(&ike_version_names, c->config->ike_version) : "",
-		     c->config->ike_version > 0 && policy != LEMPTY ? "+" : "",
-		     str_policy(policy, &pb),
-		     NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "",
+		     (c->config->ike_version > 0 ? enum_name(&ike_version_names, c->config->ike_version) : ""),
+		     (c->config->ike_version > 0 && policies[0] != '\0' ? "+" : ""),
+		     policies,
 		     (c->spd.this.key_from_DNS_on_demand ||
 		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",
-		     c->spd.this.key_from_DNS_on_demand ? "+lKOD" : "",
-		     c->spd.that.key_from_DNS_on_demand ? "+rKOD" : "");
+		     (c->spd.this.key_from_DNS_on_demand ? "+lKOD" : ""),
+		     (c->spd.that.key_from_DNS_on_demand ? "+rKOD" : ""));
 
 	if (c->config->ike_version == IKEv2) {
 		lset_buf hashpolbuf;

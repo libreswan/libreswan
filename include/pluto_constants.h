@@ -839,11 +839,13 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
  */
 
 enum shunt_policy {
-	SHUNT_DEFAULT, /* TRAP or NONE */
+	SHUNT_DEFAULT,
+	SHUNT_NONE,
+	SHUNT_TRAP,
 	SHUNT_PASS,
 	SHUNT_DROP,
 	SHUNT_REJECT,
-	SHUNT_POLICY_ROOF,
+#define SHUNT_POLICY_ROOF (SHUNT_REJECT+1)
 };
 
 enum sa_policy_bits {
@@ -877,30 +879,6 @@ enum sa_policy_bits {
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
-
-	/* shunt attributes: what to do when routed without tunnel (2 bits) */
-	POLICY_SHUNT0_IX,
-	POLICY_SHUNT1_IX,
-
-#define POLICY_SHUNT_SHIFT	POLICY_SHUNT0_IX
-#define POLICY_SHUNT_MASK	LRANGE(POLICY_SHUNT0_IX, POLICY_SHUNT1_IX)
-
-#define POLICY_SHUNT_TRAP	(SHUNT_DEFAULT * LELEM(POLICY_SHUNT0_IX))	/* default: negotiate */
-#define POLICY_SHUNT_PASS	(SHUNT_PASS * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_DROP	(SHUNT_DROP * LELEM(POLICY_SHUNT0_IX))
-#define POLICY_SHUNT_REJECT	(SHUNT_REJECT * LELEM(POLICY_SHUNT0_IX))
-
-	/* fail attributes: what to do with failed negotiation (2 bits) */
-	POLICY_FAIL0_IX,
-	POLICY_FAIL1_IX,
-
-#define POLICY_FAIL_SHIFT	POLICY_FAIL0_IX
-#define POLICY_FAIL_MASK	LRANGE(POLICY_FAIL0_IX, POLICY_FAIL1_IX)
-
-#define POLICY_FAIL_NONE	(SHUNT_DEFAULT * LELEM(POLICY_FAIL0_IX)) /* default */
-#define POLICY_FAIL_PASS	(SHUNT_PASS * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_DROP	(SHUNT_DROP * LELEM(POLICY_FAIL0_IX))
-#define POLICY_FAIL_REJECT	(SHUNT_REJECT * LELEM(POLICY_FAIL0_IX))
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.

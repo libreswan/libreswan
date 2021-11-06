@@ -457,11 +457,12 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("auto", dsn);
 	}
 
-	if (conn->policy != LEMPTY) {
+	if (conn->policy != LEMPTY ||
+	    conn->shunt_policy != 0) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
-		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
+		enum shunt_policy shunt_policy = conn->shunt_policy;
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
@@ -472,7 +473,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 #		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 
 		switch (shunt_policy) {
-		case POLICY_SHUNT_TRAP:
+		case SHUNT_DEFAULT:
+		case SHUNT_TRAP:
 			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
 
 			cwpb("compress", POLICY_COMPRESS);
@@ -608,17 +610,22 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			break; /* end of case POLICY_SHUNT_TRAP */
 
-		case POLICY_SHUNT_PASS:
+		case SHUNT_PASS:
 			cwf("type", "passthrough");
 			break;
 
-		case POLICY_SHUNT_DROP:
+		case SHUNT_DROP:
 			cwf("type", "drop");
 			break;
 
-		case POLICY_SHUNT_REJECT:
+		case SHUNT_REJECT:
 			cwf("type", "reject");
 			break;
+
+		case SHUNT_NONE:
+			cwf("type", "none"); /* can't happen */
+			break;
+
 		}
 
 #		undef cwpb

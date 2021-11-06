@@ -184,10 +184,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_ALLOW_NO_SAN),
 	P(POLICY_DNS_MATCH_ID),
 	P(POLICY_SHA2_TRUNCBUG),
-	P(POLICY_SHUNT0),
-	P(POLICY_SHUNT1),
-	P(POLICY_FAIL0),
-	P(POLICY_FAIL1),
 	P(POLICY_NEGO_PASS),
 	P(POLICY_DONT_REKEY),
 	P(POLICY_REAUTH),
@@ -272,20 +268,6 @@ enum_names allow_global_redirect_names = {
 	ARRAY_REF(allow_global_redirect_name),
 	NULL,
 	NULL
-};
-
-static const char *const policy_shunt_names[4] = {
-	"TRAP",
-	"PASS",
-	"DROP",
-	"REJECT",
-};
-
-static const char *const policy_fail_names[4] = {
-	"NONE",
-	"PASS",
-	"DROP",
-	"REJECT",
 };
 
 static const char *const dns_auth_level_name[] = {
@@ -374,6 +356,24 @@ enum_names perspective_names = {
 	NULL,
 };
 
+static const char *const shunt_policy_name[] = {
+#define A(S) [S] = #S
+	A(SHUNT_DEFAULT),
+	A(SHUNT_NONE),
+	A(SHUNT_PASS),
+	A(SHUNT_DROP),
+	A(SHUNT_REJECT),
+	A(SHUNT_TRAP),
+#undef A
+};
+
+enum_names shunt_policy_names = {
+	SHUNT_DEFAULT, SHUNT_POLICY_ROOF-1,
+	ARRAY_REF(shunt_policy_name),
+	"SHUNT_", /* prefix */
+	NULL,
+};
+
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
@@ -382,22 +382,8 @@ size_t jam_policy(struct jambuf *buf, lset_t policy)
 {
 	size_t s = 0;
 
-	lset_t other = policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK);
-	const char *sep = "";
-	if (other != LEMPTY) {
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", other);
-		sep = "+";
-	}
-
-	lset_t shunt = (policy & POLICY_SHUNT_MASK);
-	if (shunt != POLICY_SHUNT_TRAP) {
-		s += jam(buf, "%s%s", sep, policy_shunt_names[shunt >> POLICY_SHUNT_SHIFT]);
-		sep = "+";
-	}
-	lset_t fail = (policy & POLICY_FAIL_MASK);
-	if (fail != POLICY_FAIL_NONE) {
-		s += jam(buf, "%sfailure%s", sep, policy_fail_names[fail >> POLICY_FAIL_SHIFT]);
-		sep = "+";
+	if (policy != LEMPTY) {
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
 	}
 	return s;
 }
@@ -424,6 +410,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&perspective_names,
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
+	&shunt_policy_names,
 };
 
 void init_pluto_constants(void) {

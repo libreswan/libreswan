@@ -170,8 +170,12 @@ struct whack_message {
 	bool whack_async;
 
 	enum ike_version ike_version;
+
 	lset_t policy;
 	lset_t sighash_policy;
+	enum shunt_policy shunt_policy;
+	enum shunt_policy failure_shunt_policy;
+
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;

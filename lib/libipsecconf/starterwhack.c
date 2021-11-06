@@ -509,6 +509,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike_version = conn->ike_version;
 	msg.policy = conn->policy;
 	msg.sighash_policy = conn->sighash_policy;
+	msg.shunt_policy = conn->shunt_policy;
+	msg.failure_shunt_policy = conn->failure_shunt_policy;
 
 	msg.connalias = conn->connalias;
 

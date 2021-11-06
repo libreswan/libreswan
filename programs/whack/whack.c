@@ -279,6 +279,7 @@ static void diagq(err_t ugh, const char *this)
  * - DBGOPT_* option (DEBUG options)
  * - END_* options (End description options)
  * - CD_* options (Connection Description options)
+ * - CDP_* options (Connection Description Policy bit options)
  */
 enum option_enums {
 #   define OPT_FIRST1    OPT_RUNDIR	/* first normal option, range 1 */
@@ -500,16 +501,21 @@ enum option_enums {
 #define ALGO_LAST	ALGO_ECDSA_SHA2_512
 
 /*
+ * Shunt policies
+ */
+
+	CDS_SHUNT,
+	CDS_FAIL = CDS_SHUNT + SHUNT_POLICY_ROOF,
+	CDS_LAST = CDS_FAIL + SHUNT_POLICY_ROOF - 1,
+
+/*
  * Policy options
  *
  * Really part of Connection Description but too many bits
  * for cd_seen.
  */
-#define CDP_FIRST	CDP_SHUNT
 
-	/* multi-element policy flags */
-	CDP_SHUNT,
-	CDP_FAIL,
+#define CDP_FIRST	CDP_SINGLETON
 
 	/*
 	 * The next range is for single-element policy options.
@@ -697,23 +703,15 @@ static const struct option long_opts[] = {
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
-	{ "initiateontraffic", no_argument, NULL,
-		CDP_SHUNT +(POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
-	{ "pass", no_argument, NULL,
-		CDP_SHUNT + (POLICY_SHUNT_PASS >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
-	{ "drop", no_argument, NULL,
-		CDP_SHUNT + (POLICY_SHUNT_DROP >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
-	{ "reject", no_argument, NULL,
-		CDP_SHUNT + (POLICY_SHUNT_REJECT >> POLICY_SHUNT_SHIFT << AUX_SHIFT) + OO },
+	{ "initiateontraffic", no_argument, NULL, CDS_SHUNT + SHUNT_TRAP + OO },
+	{ "pass", no_argument, NULL, CDS_SHUNT + SHUNT_PASS + OO },
+	{ "drop", no_argument, NULL, CDS_SHUNT + SHUNT_DROP + OO },
+	{ "reject", no_argument, NULL, CDS_SHUNT + SHUNT_REJECT + OO },
 
-	{ "failnone", no_argument, NULL,
-		CDP_FAIL + (POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
-	{ "failpass", no_argument, NULL,
-		CDP_FAIL + (POLICY_FAIL_PASS >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
-	{ "faildrop", no_argument, NULL,
-		CDP_FAIL + (POLICY_FAIL_DROP >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
-	{ "failreject", no_argument, NULL,
-		CDP_FAIL + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
+	{ "failnone", no_argument, NULL, CDS_FAIL + SHUNT_NONE + OO },
+	{ "failpass", no_argument, NULL, CDS_FAIL + SHUNT_PASS + OO },
+	{ "faildrop", no_argument, NULL, CDS_FAIL + SHUNT_DROP + OO },
+	{ "failreject", no_argument, NULL, CDS_FAIL + SHUNT_REJECT + OO },
 
 	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
@@ -1864,26 +1862,18 @@ int main(int argc, char **argv)
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
-		/*
-		 * --initiateontraffic
-		 * --pass
-		 * --drop
-		 * --reject
-		 */
-		case CDP_SHUNT:
-			msg.policy = (msg.policy & ~POLICY_SHUNT_MASK) |
-				     ((lset_t)aux << POLICY_SHUNT_SHIFT);
+		case CDS_SHUNT + SHUNT_TRAP:	/* --initiateontraffic */
+		case CDS_SHUNT + SHUNT_PASS:	/* --pass */
+		case CDS_SHUNT + SHUNT_DROP:	/* --drop */
+		case CDS_SHUNT + SHUNT_REJECT:	/* --reject */
+			msg.shunt_policy = c - CDS_SHUNT;
 			continue;
 
-		/*
-		 * --failnone
-		 * --failpass
-		 * --faildrop
-		 * --failreject
-		 */
-		case CDP_FAIL:
-			msg.policy = (msg.policy & ~POLICY_FAIL_MASK) |
-				     ((lset_t)aux << POLICY_FAIL_SHIFT);
+		case CDS_FAIL + SHUNT_NONE:	/* --failnone */
+		case CDS_FAIL + SHUNT_PASS:	/* --failpass */
+		case CDS_FAIL + SHUNT_DROP:	/* --faildrop */
+		case CDS_FAIL + SHUNT_REJECT:	/* --failreject */
+			msg.failure_shunt_policy = c - CDS_FAIL;
 			continue;
 
 		case CD_RETRANSMIT_T:	/* --retransmit-timeout <seconds> */
@@ -2586,9 +2576,9 @@ int main(int argc, char **argv)
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.policy & POLICY_AUTH_NEVER) {
-			if ((msg.policy & POLICY_SHUNT_MASK) ==
-			    POLICY_SHUNT_TRAP)
+			if (msg.shunt_policy == SHUNT_TRAP || msg.shunt_policy == SHUNT_DEFAULT) {
 				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
+			}
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&

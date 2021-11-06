@@ -1846,23 +1846,25 @@ enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 	if (prospective) {
 		/* note: these are in host order :-( */
 		static const ipsec_spi_t shunt_spi[SHUNT_POLICY_ROOF] = {
-			[SHUNT_DEFAULT] = SPI_TRAP,      /* --initiateontraffic */
-			[SHUNT_PASS] = SPI_PASS,         /* --pass */
-			[SHUNT_DROP] = SPI_DROP,         /* --drop */
-			[SHUNT_REJECT] = SPI_REJECT,     /* --reject */
+			[SHUNT_DEFAULT] = SPI_TRAP,	/* --initiateontraffic */
+			[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
+			[SHUNT_PASS] = SPI_PASS,	/* --pass */
+			[SHUNT_DROP] = SPI_DROP,	/* --drop */
+			[SHUNT_REJECT] = SPI_REJECT,	/* --reject */
 		};
-		enum shunt_policy sp = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
+		enum shunt_policy sp = c->shunt_policy;
 		passert(sp < elemsof(shunt_spi));
 		return shunt_spi[sp];
 	} else {
 		/* note: these are in host order :-( */
 		static const ipsec_spi_t fail_spi[SHUNT_POLICY_ROOF] = {
 			[SHUNT_DEFAULT] = 0,             /* --none*/
+			[SHUNT_NONE] = 0,	         /* --none */
 			[SHUNT_PASS] = SPI_PASS,         /* --failpass */
 			[SHUNT_DROP] = SPI_DROP,         /* --faildrop */
 			[SHUNT_REJECT] = SPI_REJECT,     /* --failreject */
 		};
-		enum shunt_policy sp = (c->policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
+		enum shunt_policy sp = c->failure_shunt_policy;
 		passert(sp < elemsof(fail_spi));
 		return fail_spi[sp];
 	}
@@ -3272,9 +3274,7 @@ void delete_ipsec_sa(struct state *st)
 					 * failure happened.
 					 */
 					sr->routing =
-						(c->policy &
-							POLICY_FAIL_MASK) ==
-						POLICY_FAIL_NONE ?
+						(c->failure_shunt_policy == SHUNT_NONE) ?
 						RT_ROUTED_PROSPECTIVE :
 						RT_ROUTED_FAILURE;
 

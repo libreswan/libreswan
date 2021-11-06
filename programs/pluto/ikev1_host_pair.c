@@ -45,8 +45,8 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
-			lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
-			if (shunt != POLICY_SHUNT_TRAP) {
+			enum shunt_policy shunt = c->shunt_policy;
+			if (shunt != SHUNT_TRAP) {
 				/*
 				 * We need to match block/clear so we can send back
 				 * NO_PROPOSAL_CHOSEN, otherwise not match so we
