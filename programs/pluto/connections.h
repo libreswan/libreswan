@@ -89,6 +89,10 @@ struct config {
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
 
+	lset_t sighash_policy;
+	enum shunt_policy shunt_policy;
+	enum shunt_policy failure_shunt_policy;
+
 	/*
 	 * The proposal specified in the config file, and for IKEv2,
 	 * that proposal converted to IKEv2 form.
@@ -330,9 +334,6 @@ struct connection {
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;
-	lset_t sighash_policy;
-	enum shunt_policy shunt_policy;
-	enum shunt_policy failure_shunt_policy;
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;

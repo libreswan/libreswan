@@ -136,7 +136,7 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 					   struct ike_sa *ike)
 {
-	lset_t sighash_policy = ike->sa.st_connection->sighash_policy;
+	lset_t sighash_policy = ike->sa.st_connection->config->sighash_policy;
 
 	struct pbs_in pbs = *payload_pbs;
 	while (pbs_left(&pbs) > 0) {

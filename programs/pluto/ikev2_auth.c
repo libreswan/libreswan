@@ -135,7 +135,8 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
 		 */
-		if ((c->policy & POLICY_ECDSA) && (c->sighash_policy != LEMPTY)) {
+		if ((c->policy & POLICY_ECDSA) &&
+		    (c->config->sighash_policy != LEMPTY)) {
 			authby = AUTHBY_ECDSA;
 		} else if (c->policy & POLICY_RSASIG) {
 			authby = AUTHBY_RSASIG;
@@ -169,7 +170,7 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 				auth_method = IKEv2_AUTH_RESERVED;
 			}
 		} else {
-			if (c->sighash_policy != LEMPTY) {
+			if (c->config->sighash_policy != LEMPTY) {
 				auth_method = IKEv2_AUTH_DIGSIG;
 			} else {
 				if (allow_legacy) {
