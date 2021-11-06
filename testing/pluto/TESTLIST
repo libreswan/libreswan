@@ -96,7 +96,7 @@ kvmplutotest	addconn-07-defaultroute			good
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
-kvmplutotest	libipsecconf-02				good
+kvmplutotest	libipsecconf-02				wip	github:540
 kvmplutotest	libipsecconf-04				good
 kvmplutotest	libipsecconf-05-empty_option		wip
 kvmplutotest	libipsecconf-06-ikev2-hash-algo		good

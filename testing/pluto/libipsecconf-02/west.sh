@@ -6,7 +6,11 @@ ipsec start
 ipsec auto --add base
 ipsec auto --add subnet4
 ipsec auto --add subnet6-good
+#ipsec auto --add subnet6-better
+ipsec auto --add subnet6-best
 
 # this one should fail to load
 ipsec auto --add subnet6-bad
+
+ipsec status
 
