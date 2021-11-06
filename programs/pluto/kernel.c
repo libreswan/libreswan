@@ -191,7 +191,7 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
  */
 void add_bare_shunt(const ip_selector *our_client,
 		    const ip_selector *peer_client,
-		    int transport_proto, ipsec_spi_t shunt_spi,
+		    int transport_proto, enum policy_spi shunt_spi,
 		    const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
@@ -1474,7 +1474,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
-		       int transport_proto, ipsec_spi_t cur_shunt_spi,
+		       int transport_proto, enum policy_spi cur_shunt_spi,
 		       bool skip_xfrm_policy_delete,
 		       const char *why, struct logger *logger)
 {
@@ -1718,7 +1718,8 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 /* assign a bare hold or pass to a connection */
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
-		     int transport_proto, ipsec_spi_t negotiation_shunt,
+		     int transport_proto,
+		     enum policy_spi negotiation_shunt,
 		     const ip_address *src, const ip_address *dst)
 {
 	/*
@@ -1845,7 +1846,7 @@ enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 {
 	if (prospective) {
 		/* note: these are in host order :-( */
-		static const ipsec_spi_t shunt_spi[SHUNT_POLICY_ROOF] = {
+		static const enum policy_spi shunt_spi[SHUNT_POLICY_ROOF] = {
 			[SHUNT_DEFAULT] = SPI_TRAP,	/* --initiateontraffic */
 			[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
 			[SHUNT_PASS] = SPI_PASS,	/* --pass */
@@ -1857,12 +1858,12 @@ enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 		return shunt_spi[sp];
 	} else {
 		/* note: these are in host order :-( */
-		static const ipsec_spi_t fail_spi[SHUNT_POLICY_ROOF] = {
-			[SHUNT_DEFAULT] = 0,             /* --none*/
-			[SHUNT_NONE] = 0,	         /* --none */
-			[SHUNT_PASS] = SPI_PASS,         /* --failpass */
-			[SHUNT_DROP] = SPI_DROP,         /* --faildrop */
-			[SHUNT_REJECT] = SPI_REJECT,     /* --failreject */
+		static const enum policy_spi fail_spi[SHUNT_POLICY_ROOF] = {
+			[SHUNT_DEFAULT] = SPI_NONE,	/* --none*/
+			[SHUNT_NONE] = SPI_NONE,	/* --none */
+			[SHUNT_PASS] = SPI_PASS,	/* --failpass */
+			[SHUNT_DROP] = SPI_DROP,	/* --faildrop */
+			[SHUNT_REJECT] = SPI_REJECT,	/* --failreject */
 		};
 		enum shunt_policy sp = c->config->failure_shunt_policy;
 		passert(sp < elemsof(fail_spi));
@@ -3443,12 +3444,12 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 }
 
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-		     int transport_proto, ipsec_spi_t failure_shunt,
+		     int transport_proto, enum policy_spi failure_shunt,
 		     struct logger *logger)
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
-	ipsec_spi_t negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP;
+	enum policy_spi negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP;
 
 	if (negotiation_shunt != failure_shunt ) {
 		dbg("kernel: failureshunt != negotiationshunt, needs replacing");
@@ -3538,8 +3539,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			const ip_address *src_address = &sr->this.host_addr;
 			const ip_address *dst_address = &sr->that.host_addr;
 			policy_prio_t policy_prio = bs->policy_prio;	/* of replacing shunt*/
-			ipsec_spi_t cur_shunt_spi = negotiation_shunt;	/* in host order! */
-			ipsec_spi_t new_shunt_spi = failure_shunt;	/* in host order! */
+			enum policy_spi cur_shunt_spi = negotiation_shunt; /* in host order! */
+			enum policy_spi new_shunt_spi = failure_shunt; /* in host order! */
 			int transport_proto = bs->transport_proto;
 			const char *why = "oe-failed";
 

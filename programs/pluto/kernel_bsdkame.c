@@ -443,12 +443,11 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
-	ipsec_spi_t spi =
-		shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
+	enum policy_spi spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
 	int policy = -1;
 
 	switch (spi) {
-	case 0:
+	case SPI_NONE:
 		/* we're supposed to end up with no eroute: rejig op and opname */
 		switch (op) {
 		case KP_REPLACE_OUTBOUND:

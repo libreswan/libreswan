@@ -439,18 +439,18 @@ extern void migration_up(struct connection *c,  struct state *st);
 extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			      int transport_proto, ipsec_spi_t shunt_spi,
+			      int transport_proto, enum policy_spi shunt_spi,
 			      bool skip_xfrm_policy_delete,
 			      const char *why, struct logger *logger);
 
 extern bool assign_holdpass(const struct connection *c,
-			struct spd_route *sr,
-			int transport_proto,
-			ipsec_spi_t negotiation_shunt,
-			const ip_address *src, const ip_address *dst);
+			    struct spd_route *sr,
+			    int transport_proto,
+			    enum policy_spi negotiation_shunt,
+			    const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-			    int transport_proto, ipsec_spi_t failure_shunt,
+			    int transport_proto, enum policy_spi failure_shunt,
 			    struct logger *logger);
 
 extern enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective);
@@ -495,7 +495,7 @@ void shutdown_kernel(struct logger *logger);
  * Simple rule: use a string literal.
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
-			   int transport_proto, ipsec_spi_t shunt_spi,
+			   int transport_proto, enum policy_spi shunt_spi,
 			   const char *why, struct logger *logger);
 
 bool install_se_connection_policies(struct connection *c, struct logger *logger);

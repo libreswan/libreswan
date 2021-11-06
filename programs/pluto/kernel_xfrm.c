@@ -2190,8 +2190,6 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
-	ipsec_spi_t spi;
-
 	/*
 	 * We are constructing a special SAID for the eroute.
 	 * The destination doesn't seem to matter, but the family does.
@@ -2199,17 +2197,18 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	 * The satype has no meaning, but is required for PF_KEY header!
 	 * The SPI signifies the kind of shunt.
 	 */
-	spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
+	enum policy_spi spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
 
 	if (DBGP(DBG_BASE)) {
 		selector_buf this_buf, that_buf;
-		DBG_log("netlink_shunt_policy for proto %d, and source %s dest %s",
+		DBG_log("netlink_shunt_policy %s for proto %d, and source %s dest %s",
+			enum_name_short(&policy_spi_names, spi),
 			sr->this.client.ipproto,
 			str_selector_subnet_port(&sr->this.client, &this_buf),
 			str_selector_subnet_port(&sr->that.client, &that_buf));
 	}
 
-	if (spi == 0) {
+	if (spi == SPI_NONE) {
 		/*
 		 * we're supposed to end up with no eroute: rejig op and
 		 * opname

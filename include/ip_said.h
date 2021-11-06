@@ -31,9 +31,12 @@ struct jambuf;
  *
  * Danger! these are in host order; but SPIs are often in network
  * order.
+ *
+ * XXX: why do these start at 256? i.e., require more than one byte?
  */
 
 enum policy_spi {
+	SPI_NONE = 0,
 	SPI_PASS = 256,
 	SPI_DROP = 257,
 	SPI_REJECT = 258,

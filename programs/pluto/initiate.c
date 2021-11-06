@@ -520,8 +520,8 @@ struct find_oppo_bundle {
 	const struct ip_protocol *transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
-	ipsec_spi_t negotiation_shunt;	/* in host order! */
-	ipsec_spi_t failure_shunt;	/* in host order! */
+	enum policy_spi negotiation_shunt;	/* in host order! */
+	enum policy_spi failure_shunt;		/* in host order! */
 	struct logger *logger;	/* has whack attached */
 	bool background;
 	shunk_t sec_label;
@@ -806,10 +806,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			 */
 			ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
 			ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-			add_bare_shunt(our_client, peer_client, b->transport_proto->ipproto,
+			add_bare_shunt(our_client, peer_client,
+				       b->transport_proto->ipproto,
 				       SPI_HOLD, b->want, b->logger);
 
-			if (assign_holdpass(c, sr, b->transport_proto->ipproto, b->negotiation_shunt,
+			if (assign_holdpass(c, sr, b->transport_proto->ipproto,
+					    b->negotiation_shunt,
 					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {

@@ -2213,6 +2213,17 @@ enum_names ikev2_redirect_gw_names = {
 
 /* magic SPI values (specific to Libreswan */
 
+static const char *const policy_spi_none_name[] = {
+	"0",
+};
+
+static enum_names policy_spi_none_names = {
+	SPI_NONE, SPI_NONE,
+	ARRAY_REF(policy_spi_none_name),
+	NULL,	/* prefix */
+	NULL
+};
+
 static const char *const policy_spi_name[] = {
 	"%pass",
 	"%drop",
@@ -2227,7 +2238,7 @@ enum_names policy_spi_names = {
 	SPI_PASS, SPI_TRAPSUBNET,
 	ARRAY_REF(policy_spi_name),
 	"%",	/* prefix */
-	NULL
+	&policy_spi_none_names
 };
 
 /*
