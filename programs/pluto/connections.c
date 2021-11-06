@@ -2755,11 +2755,21 @@ const char *str_connection_instance(const struct connection *c, connection_buf *
 
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 {
+	const char *sep = "";
 	size_t s = 0;
-	s += jam_policy(buf, c->policy);
-	enum shunt_policy shunt;
+	lset_t shunt;
 
-	const char *sep = s > 0 ? "+" : "";
+	if (c->config->ike_version > 0) {
+		s += jam_enum(buf, &ike_version_names, c->config->ike_version);
+		sep = "+";
+	}
+
+	lset_t other = c->policy;
+	if (other != LEMPTY) {
+		s += jam_string(buf, sep);
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", other);
+		sep = "+";
+	}
 
 	shunt = c->config->prospective_shunt;
 	if (shunt != SHUNT_TRAP) {
@@ -4571,12 +4581,9 @@ void show_one_connection(struct show *s,
 	}
 
 	policy_buf pb;
-	const char *policies = str_connection_policies(c, &pb);
-	show_comment(s, PRI_CONNECTION":   policy: %s%s%s%s%s%s;",
+	show_comment(s, PRI_CONNECTION":   policy: %s%s%s%s;",
 		     c->name, instance,
-		     (c->config->ike_version > 0 ? enum_name(&ike_version_names, c->config->ike_version) : ""),
-		     (c->config->ike_version > 0 && policies[0] != '\0' ? "+" : ""),
-		     policies,
+		     str_connection_policies(c, &pb),
 		     (c->spd.this.key_from_DNS_on_demand ||
 		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",
 		     (c->spd.this.key_from_DNS_on_demand ? "+lKOD" : ""),

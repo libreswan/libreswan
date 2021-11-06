@@ -8,6 +8,7 @@ extern enum_names ip_protocol_id_names;	/* aka ipproto_*; in ip_protocol.c */
 
 extern enum_names kern_interface_names;
 
+extern enum_names sa_policy_bit_names;
 extern enum_names dpd_action_names;
 #ifdef XFRM_SUPPORT
 extern enum_names netkey_sa_dir_names;

@@ -214,7 +214,7 @@ static const char *const sa_policy_bit_name[] = {
 #undef P
 };
 
-static const enum_names sa_policy_bit_names = {
+enum_names sa_policy_bit_names = {
 	0, POLICY_IX_LAST,
 	ARRAY_REF(sa_policy_bit_name),
 	"POLICY_", /* prefix */
