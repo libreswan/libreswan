@@ -78,7 +78,7 @@
 #endif
 
 #ifdef HAVE_LIBCAP_NG
-# include <cap-ng.h>	/* from libcap-ng devel */
+# include <cap-ng.h>	/* rpm:libcap-ng-devel deb:libcap-ng-dev */
 #endif
 
 #include "labeled_ipsec.h"		/* for init_labeled_ipsec() */

@@ -25,7 +25,7 @@
 #ifndef _X509_H
 #define _X509_H
 
-#include <cert.h>
+#include <cert.h>		/* dep:libnss3-dev */
 
 #include "deltatime.h"
 #include "chunk.h"

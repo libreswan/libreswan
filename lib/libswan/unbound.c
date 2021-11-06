@@ -29,9 +29,9 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <event2/event.h>
-#include <unbound.h>	/* from unbound devel */
-#include <unbound-event.h> /* from unbound devel */
+#include <event2/event.h>	/* deb:libevent-dev */
+#include <unbound.h>		/* rpm:unbound-devel deb:libunbound-dev */
+#include <unbound-event.h>	/* see USE_UNBOUND_EVENT_H_COPY */
 
 #include "lswglob.h"
 #include "dnssec.h"

@@ -169,7 +169,7 @@ static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
 	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
 	 */
-	nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_IF_ID, if_id);
+	nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_IF_ID, if_id);	/* see USE_XFRM_INTERFACE_IFLA_HEADER */
 
 	if (dev_name != NULL) {
 		/* e.g link id of the interface, eth0 */

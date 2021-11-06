@@ -25,7 +25,7 @@
 
 #include "defs.h"
 #include "log.h"
-#include <ldns/ldns.h> /* from ldns-devel */
+#include <ldns/ldns.h>		/* rpm:ldns-devel deb:libldns-dev */
 #include <ldns/rr.h>
 #include <unbound.h>
 #include "unbound-event.h"
