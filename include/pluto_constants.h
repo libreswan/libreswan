@@ -841,6 +841,7 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
 enum shunt_policy {
 	SHUNT_DEFAULT,
 	SHUNT_NONE,
+	SHUNT_HOLD, /* during negotiation, don't change */
 	SHUNT_TRAP,
 	SHUNT_PASS,
 	SHUNT_DROP,

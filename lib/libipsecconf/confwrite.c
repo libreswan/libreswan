@@ -626,6 +626,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwf("type", "none"); /* can't happen */
 			break;
 
+		case SHUNT_HOLD:
+			cwf("type", "hold"); /* can't happen */
+			break;
+
 		}
 
 #		undef cwpb

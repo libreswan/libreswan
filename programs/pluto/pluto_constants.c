@@ -359,6 +359,7 @@ enum_names perspective_names = {
 static const char *const shunt_policy_name[] = {
 #define A(S) [S] = #S
 	A(SHUNT_DEFAULT),
+	A(SHUNT_HOLD),
 	A(SHUNT_NONE),
 	A(SHUNT_PASS),
 	A(SHUNT_DROP),

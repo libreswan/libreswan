@@ -1847,6 +1847,7 @@ enum policy_spi shunt_policy_spi(enum shunt_policy sp)
 
 	static const enum policy_spi shunt_spi[SHUNT_POLICY_ROOF] = {
 		[SHUNT_NONE] = SPI_NONE,	/* --none */
+		[SHUNT_HOLD] = SPI_HOLD,	/* --negotiationshunt=hold */
 		[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
 		[SHUNT_PASS] = SPI_PASS,	/* --pass */
 		[SHUNT_DROP] = SPI_DROP,	/* --drop */
