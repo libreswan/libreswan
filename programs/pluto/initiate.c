@@ -520,8 +520,8 @@ struct find_oppo_bundle {
 	const struct ip_protocol *transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
-	enum policy_spi negotiation_shunt;	/* in host order! */
-	enum policy_spi failure_shunt;		/* in host order! */
+	enum shunt_policy negotiation_shunt;
+	enum shunt_policy failure_shunt;
 	struct logger *logger;	/* has whack attached */
 	bool background;
 	shunk_t sec_label;
@@ -563,10 +563,10 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		 *
 		 * Replace negotiationshunt (hold or pass) with
 		 * failureshunt (hold or pass).  If no failure_shunt
-		 * specified, use SPI_PASS -- THIS MAY CHANGE.
+		 * specified, use SHUNT_PASS -- THIS MAY CHANGE.
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-		    enum_name_short(&policy_spi_names, b->failure_shunt));
+		    enum_name_short(&shunt_policy_names, b->failure_shunt));
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
 		const struct ip_info *afi = address_type(&b->local.host_addr);
 		const ip_address null_host = afi->address.any;
@@ -577,8 +577,8 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 								 b->transport_proto);
 		if (!raw_policy(KP_REPLACE_OUTBOUND,
 				&null_host, &src, &null_host, &dst,
-				/*from*/htonl(b->negotiation_shunt),
-				/*to*/htonl(b->failure_shunt),
+				/*from*/htonl(shunt_policy_spi(b->negotiation_shunt)),
+				/*to*/htonl(shunt_policy_spi(b->failure_shunt)),
 				b->transport_proto->ipproto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
@@ -698,8 +698,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
-		b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
-		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+		b->failure_shunt = c->config->failure_shunt;
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
 
 		/*
 		 * Annouce this to the world.  Use c->logger instead?
@@ -782,8 +782,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
-		b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
-		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+		b->failure_shunt = c->config->failure_shunt;
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
 
 		/*
 		 * Otherwise, there is some kind of static conn that
@@ -811,7 +811,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       SPI_HOLD, b->want, b->logger);
 
 			if (assign_holdpass(c, sr, b->transport_proto->ipproto,
-					    b->negotiation_shunt,
+					    shunt_policy_spi(b->negotiation_shunt),
 					    &b->local.host_addr, &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
@@ -873,8 +873,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
 	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
-	b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
-	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+	b->failure_shunt = c->config->failure_shunt;
+	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
 
 	/*
 	 * Always have shunts with protoports, even when no
@@ -910,7 +910,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
-	    enum_name_short(&policy_spi_names, b->negotiation_shunt));
+	    enum_name_short(&shunt_policy_names, b->negotiation_shunt));
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
@@ -921,7 +921,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			&b->local.host_addr, &local_shunt,
 			&b->remote.host_addr, &remote_shunt,
 			htonl(SPI_HOLD), /* kernel induced */
-			htonl(b->negotiation_shunt),
+			htonl(shunt_policy_spi(b->negotiation_shunt)),
 			shunt_protocol->ipproto,
 			ET_INT, esp_transport_proto_info,
 			deltatime(SHUNT_PATIENCE),
@@ -953,7 +953,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
 				    b->transport_proto->ipproto,
-				    b->negotiation_shunt,
+				    shunt_policy_spi(b->negotiation_shunt),
 				    &b->local.host_addr,
 				    &b->remote.host_addr)) {
 			dbg("assign_holdpass succeeded");
@@ -986,8 +986,8 @@ void initiate_ondemand(const ip_endpoint *local_client,
 		.transport_proto = transport_proto,
 		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
-		.negotiation_shunt = SPI_HOLD, /* until we found connection policy */
-		.failure_shunt = SPI_HOLD, /* until we found connection policy */
+		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
+		.failure_shunt = SHUNT_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
 		.sec_label = sec_label
