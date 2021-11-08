@@ -444,7 +444,10 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
-	enum policy_spi spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
+	enum shunt_policy sp =
+		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
+		 c->config->failure_shunt);
+	enum policy_spi spi = shunt_policy_spi(sp);
 	int policy = -1;
 
 	switch (spi) {

@@ -698,7 +698,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
-		b->failure_shunt = shunt_policy_spi(c, false);
+		b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		/*
@@ -782,7 +782,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
-		b->failure_shunt = shunt_policy_spi(c, false);
+		b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		/*
@@ -873,7 +873,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
 	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
-	b->failure_shunt = shunt_policy_spi(c, false);
+	b->failure_shunt = shunt_policy_spi(c->config->failure_shunt);
 	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 	/*

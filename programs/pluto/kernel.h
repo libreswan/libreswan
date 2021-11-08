@@ -454,7 +454,7 @@ extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			    int transport_proto, enum policy_spi failure_shunt,
 			    struct logger *logger);
 
-extern enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective);
+extern enum policy_spi shunt_policy_spi(enum shunt_policy);
 
 struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,

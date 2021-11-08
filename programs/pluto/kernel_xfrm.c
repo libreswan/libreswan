@@ -2198,7 +2198,10 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	 * The satype has no meaning, but is required for PF_KEY header!
 	 * The SPI signifies the kind of shunt.
 	 */
-	enum policy_spi spi = shunt_policy_spi(c, rt_kind == RT_ROUTED_PROSPECTIVE);
+	enum shunt_policy sp =
+		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
+		 c->config->failure_shunt);
+	enum policy_spi spi = shunt_policy_spi(sp);
 
 	if (DBGP(DBG_BASE)) {
 		selector_buf this_buf, that_buf;

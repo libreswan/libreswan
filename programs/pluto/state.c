@@ -915,15 +915,15 @@ void delete_state_tail(struct state *st)
 	    (st->st_state->kind == STATE_V2_PARENT_I1 ||
 	     st->st_state->kind == STATE_V2_PARENT_I2)) {
 		struct connection *c = st->st_connection;
-		enum policy_spi failure_shunt = shunt_policy_spi(c, false /* failure_shunt */);
-		enum policy_spi nego_shunt = shunt_policy_spi(c, true /* negotiation shunt */);
+		enum shunt_policy failure_shunt = c->config->failure_shunt;
+		enum policy_spi nego_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
 		dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
-		    enum_name_short(&policy_spi_names, failure_shunt),
+		    enum_name_short(&shunt_policy_names, failure_shunt),
 		    enum_name_short(&policy_spi_names, nego_shunt));
 
 		if (!orphan_holdpass(c, &c->spd, c->spd.this.client.ipproto,
-				     failure_shunt, st->st_logger)) {
+				     shunt_policy_spi(failure_shunt), st->st_logger)) {
 			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 		}
 	}

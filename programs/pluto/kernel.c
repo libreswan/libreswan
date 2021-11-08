@@ -1838,33 +1838,22 @@ bool assign_holdpass(const struct connection *c,
 }
 
 /* compute a (host-order!) SPI to implement the policy in connection c */
-enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
+enum policy_spi shunt_policy_spi(enum shunt_policy sp)
 {
-	if (prospective) {
-		/* note: these are in host order :-( */
-		static const enum policy_spi shunt_spi[SHUNT_POLICY_ROOF] = {
-			[SHUNT_DEFAULT] = SPI_TRAP,	/* --initiateontraffic */
-			[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
-			[SHUNT_PASS] = SPI_PASS,	/* --pass */
-			[SHUNT_DROP] = SPI_DROP,	/* --drop */
-			[SHUNT_REJECT] = SPI_REJECT,	/* --reject */
-		};
-		enum shunt_policy sp = c->config->prospective_shunt;
-		passert(sp < elemsof(shunt_spi));
-		return shunt_spi[sp];
-	} else {
-		/* note: these are in host order :-( */
-		static const enum policy_spi fail_spi[SHUNT_POLICY_ROOF] = {
-			[SHUNT_DEFAULT] = SPI_NONE,	/* --none*/
-			[SHUNT_NONE] = SPI_NONE,	/* --none */
-			[SHUNT_PASS] = SPI_PASS,	/* --failpass */
-			[SHUNT_DROP] = SPI_DROP,	/* --faildrop */
-			[SHUNT_REJECT] = SPI_REJECT,	/* --failreject */
-		};
-		enum shunt_policy sp = c->config->failure_shunt;
-		passert(sp < elemsof(fail_spi));
-		return fail_spi[sp];
+	/* note: these are in host order :-( */
+	if (!pexpect(sp != SHUNT_DEFAULT)) {
+		return SPI_NONE;
 	}
+
+	static const enum policy_spi shunt_spi[SHUNT_POLICY_ROOF] = {
+		[SHUNT_NONE] = SPI_NONE,	/* --none */
+		[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
+		[SHUNT_PASS] = SPI_PASS,	/* --pass */
+		[SHUNT_DROP] = SPI_DROP,	/* --drop */
+		[SHUNT_REJECT] = SPI_REJECT,	/* --reject */
+	};
+	passert(sp < elemsof(shunt_spi));
+	return shunt_spi[sp];
 }
 
 bool del_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
