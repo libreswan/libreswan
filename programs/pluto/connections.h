@@ -90,8 +90,8 @@ struct config {
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
 
 	lset_t sighash_policy;
-	enum shunt_policy shunt_policy;
-	enum shunt_policy failure_shunt_policy;
+	enum shunt_policy prospective_shunt;	/* before */
+	enum shunt_policy failure_shunt;	/* after */
 
 	/*
 	 * The proposal specified in the config file, and for IKEv2,

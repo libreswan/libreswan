@@ -1849,7 +1849,7 @@ enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 			[SHUNT_DROP] = SPI_DROP,	/* --drop */
 			[SHUNT_REJECT] = SPI_REJECT,	/* --reject */
 		};
-		enum shunt_policy sp = c->config->shunt_policy;
+		enum shunt_policy sp = c->config->prospective_shunt;
 		passert(sp < elemsof(shunt_spi));
 		return shunt_spi[sp];
 	} else {
@@ -1861,7 +1861,7 @@ enum policy_spi shunt_policy_spi(const struct connection *c, bool prospective)
 			[SHUNT_DROP] = SPI_DROP,	/* --faildrop */
 			[SHUNT_REJECT] = SPI_REJECT,	/* --failreject */
 		};
-		enum shunt_policy sp = c->config->failure_shunt_policy;
+		enum shunt_policy sp = c->config->failure_shunt;
 		passert(sp < elemsof(fail_spi));
 		return fail_spi[sp];
 	}
@@ -3271,9 +3271,9 @@ void delete_ipsec_sa(struct state *st)
 					 * failure happened.
 					 */
 					sr->routing =
-						(c->config->failure_shunt_policy == SHUNT_NONE) ?
-						RT_ROUTED_PROSPECTIVE :
-						RT_ROUTED_FAILURE;
+						(c->config->failure_shunt == SHUNT_NONE ?
+						 RT_ROUTED_PROSPECTIVE :
+						 RT_ROUTED_FAILURE);
 
 					if (sr == &c->spd &&
 						c->remotepeertype == CISCO)

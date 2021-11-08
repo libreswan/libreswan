@@ -1660,8 +1660,10 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-	config->shunt_policy = wm->shunt_policy == 0 ? SHUNT_TRAP : wm->shunt_policy;
-	config->failure_shunt_policy = wm->failure_shunt_policy == 0 ? SHUNT_NONE : wm->failure_shunt_policy;
+	config->prospective_shunt = (wm->shunt_policy == SHUNT_DEFAULT ? SHUNT_TRAP :
+				     wm->shunt_policy);
+	config->failure_shunt = (wm->failure_shunt_policy == SHUNT_DEFAULT ? SHUNT_NONE :
+				 wm->failure_shunt_policy);
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
@@ -1693,8 +1695,8 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
-		if (config->failure_shunt_policy == SHUNT_PASS) {
-			config->failure_shunt_policy = SHUNT_NONE;
+		if (config->failure_shunt == SHUNT_PASS) {
+			config->failure_shunt = SHUNT_NONE;
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
@@ -2282,7 +2284,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 		[SHUNT_REJECT] = "reject",
 	};
 
-	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->shunt_policy] :
+	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->prospective_shunt] :
 			    c->config->ike_version == IKEv1 ? "IKEv1" :
 			    c->config->ike_version == IKEv2 ? "IKEv2" :
 			    "IKEv?");
@@ -2681,14 +2683,14 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	const char *sep = s > 0 ? "+" : "";
 
-	enum shunt_policy shunt = c->config->shunt_policy;
+	enum shunt_policy shunt = c->config->prospective_shunt;
 	if (shunt != SHUNT_TRAP) {
 		s += jam_string(buf, sep);
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
 		sep = "+";
 	}
 
-	enum shunt_policy fail = c->config->failure_shunt_policy;
+	enum shunt_policy fail = c->config->failure_shunt;
 	if (fail != SHUNT_NONE) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "failure");

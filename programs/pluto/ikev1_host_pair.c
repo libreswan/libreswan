@@ -45,7 +45,7 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
-			enum shunt_policy shunt = c->config->shunt_policy;
+			enum shunt_policy shunt = c->config->prospective_shunt;
 			if (shunt != SHUNT_TRAP) {
 				/*
 				 * We need to match block/clear so we can send back

@@ -47,7 +47,7 @@ static struct connection *find_next_v2_host_connection(struct connection *c,
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
-			enum shunt_policy shunt = c->config->shunt_policy;
+			enum shunt_policy shunt = c->config->prospective_shunt;
 			if (shunt != SHUNT_TRAP) {
 				/*
 				 * We need to match block/clear so we can send back
@@ -410,7 +410,7 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	 * Did we overlook a type=passthrough foodgroup?
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, tmp) {
-		if (tmp->config->shunt_policy == SHUNT_TRAP) {
+		if (tmp->config->prospective_shunt == SHUNT_TRAP) {
 			continue;
 		}
 		if (tmp->kind != CK_INSTANCE) {
