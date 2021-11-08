@@ -1661,10 +1661,63 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-	config->prospective_shunt = (wm->prospective_shunt == SHUNT_DEFAULT ? SHUNT_TRAP :
-				     wm->prospective_shunt);
-	config->failure_shunt = (wm->failure_shunt == SHUNT_DEFAULT ? SHUNT_NONE :
-				 wm->failure_shunt);
+
+	switch (wm->prospective_shunt) {
+	case SHUNT_DEFAULT:
+		config->prospective_shunt = SHUNT_TRAP;
+		break;
+	case SHUNT_TRAP:
+	case SHUNT_PASS:
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+		config->prospective_shunt = wm->prospective_shunt;
+		break;
+	case SHUNT_NONE: /* XXX: no default */
+	case SHUNT_HOLD:
+	{
+		enum_buf sb;
+		llog(RC_FATAL, c->logger, "prospective shunt %s invalid",
+		     str_enum_short(&shunt_policy_names, wm->prospective_shunt, &sb));
+		return false;
+	}
+	}
+
+#if 0
+	config->negotiation_shunt = wm->negotiation_shunt;
+#endif
+	if (libreswan_fipsmode() && (c->policy & POLICY_NEGO_PASS)) {
+		c->policy &= ~POLICY_NEGO_PASS;
+		llog(RC_LOG_SERIOUS, c->logger,
+		     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+	}
+
+	switch (wm->failure_shunt) {
+	case SHUNT_DEFAULT:
+		config->failure_shunt = SHUNT_NONE;
+		break;
+	case SHUNT_NONE:
+	case SHUNT_PASS:
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+		config->failure_shunt = wm->failure_shunt;
+		break;
+	case SHUNT_TRAP: /* XXX: no default */
+	case SHUNT_HOLD:
+	{
+		enum_buf sb;
+		llog(RC_FATAL, c->logger, "failure shunt %s invalid",
+		     str_enum_short(&shunt_policy_names, wm->failure_shunt, &sb));
+		return false;
+	}
+	}
+	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
+		enum_buf eb;
+		llog(RC_LOG_SERIOUS, c->logger,
+		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
+		     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
+		config->failure_shunt = SHUNT_NONE;
+	}
+
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
@@ -1688,21 +1741,6 @@ static bool extract_connection(const struct whack_message *wm,
 		/* cleanup inherited default */
 		c->iketcp = IKE_TCP_NO;
 		c->remote_tcpport = 0;
-	}
-
-	if (libreswan_fipsmode()) {
-		if (c->policy & POLICY_NEGO_PASS) {
-			c->policy &= ~POLICY_NEGO_PASS;
-			llog(RC_LOG_SERIOUS, c->logger,
-			     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
-		}
-		if (config->failure_shunt != SHUNT_NONE) {
-			enum_buf eb;
-			llog(RC_LOG_SERIOUS, c->logger,
-			     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
-			     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
-			config->failure_shunt = SHUNT_NONE;
-		}
 	}
 
 	policy_buf pb;
