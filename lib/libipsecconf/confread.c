@@ -185,6 +185,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_ESN_NO | POLICY_ESN_YES; /* esn=either */
 
 	d->prospective_shunt = SHUNT_DEFAULT;
+	d->negotiation_shunt = SHUNT_DEFAULT;
 	d->failure_shunt = SHUNT_DEFAULT;
 
 	d->sighash_policy =
@@ -1188,13 +1189,14 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
+
 	if (conn->options_set[KNCF_NEGOTIATIONSHUNT]) {
 		switch (conn->options[KNCF_NEGOTIATIONSHUNT]) {
 		case KNS_NEGO_PASS:
-			conn->policy |= POLICY_NEGO_PASS;
+			conn->negotiation_shunt = SHUNT_PASS;
 			break;
 		case KNS_NEGO_HOLD:
-			conn->policy &= ~POLICY_NEGO_PASS;
+			conn->negotiation_shunt = SHUNT_HOLD;
 			break;
 		}
 	}

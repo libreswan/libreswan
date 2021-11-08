@@ -699,7 +699,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * and failure_shunt.
 		 */
 		b->failure_shunt = c->config->failure_shunt;
-		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
+		b->negotiation_shunt = c->config->negotiation_shunt;
 
 		/*
 		 * Annouce this to the world.  Use c->logger instead?
@@ -783,7 +783,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * and failure_shunt.
 		 */
 		b->failure_shunt = c->config->failure_shunt;
-		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
+		b->negotiation_shunt = c->config->negotiation_shunt;
 
 		/*
 		 * Otherwise, there is some kind of static conn that
@@ -875,7 +875,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
 	b->failure_shunt = c->config->failure_shunt;
-	b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
+	b->negotiation_shunt = c->config->negotiation_shunt;
 
 	/*
 	 * Always have shunts with protoports, even when no

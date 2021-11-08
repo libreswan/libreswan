@@ -109,6 +109,7 @@ struct starter_conn {
 	lset_t policy;
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;
+	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
 
 	char **alsos;	/* pointer to NULL-terminated array of strings */

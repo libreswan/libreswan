@@ -916,11 +916,11 @@ void delete_state_tail(struct state *st)
 	     st->st_state->kind == STATE_V2_PARENT_I2)) {
 		struct connection *c = st->st_connection;
 		enum shunt_policy failure_shunt = c->config->failure_shunt;
-		enum policy_spi nego_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+		enum shunt_policy nego_shunt = c->config->negotiation_shunt;
 
 		dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
 		    enum_name_short(&shunt_policy_names, failure_shunt),
-		    enum_name_short(&policy_spi_names, nego_shunt));
+		    enum_name_short(&shunt_policy_names, nego_shunt));
 
 		if (!orphan_holdpass(c, &c->spd, failure_shunt, st->st_logger)) {
 			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");

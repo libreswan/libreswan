@@ -505,7 +505,8 @@ enum option_enums {
  */
 
 	CDS_PROSPECTIVE,
-	CDS_FAILURE = CDS_PROSPECTIVE + SHUNT_POLICY_ROOF,
+	CDS_NEGOTIATION = CDS_PROSPECTIVE + SHUNT_POLICY_ROOF,
+	CDS_FAILURE = CDS_NEGOTIATION + SHUNT_POLICY_ROOF,
 	CDS_LAST = CDS_FAILURE + SHUNT_POLICY_ROOF - 1,
 
 /*
@@ -708,12 +709,13 @@ static const struct option long_opts[] = {
 	{ "drop", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_DROP + OO },
 	{ "reject", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_REJECT + OO },
 
+	{ "negopass", no_argument, NULL, CDS_NEGOTIATION + SHUNT_PASS + OO },
+
 	{ "failnone", no_argument, NULL, CDS_FAILURE + SHUNT_NONE + OO },
 	{ "failpass", no_argument, NULL, CDS_FAILURE + SHUNT_PASS + OO },
 	{ "faildrop", no_argument, NULL, CDS_FAILURE + SHUNT_DROP + OO },
 	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT + OO },
 
-	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
 	PS("reauth", REAUTH),
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO }, /* backwards compatibility */
@@ -1811,9 +1813,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 
-		/* --negopass */
-		case CDP_SINGLETON + POLICY_NEGO_PASS_IX:
-
 		/* --donotrekey */
 		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:
 
@@ -1867,6 +1866,10 @@ int main(int argc, char **argv)
 		case CDS_PROSPECTIVE + SHUNT_DROP:	/* --drop */
 		case CDS_PROSPECTIVE + SHUNT_REJECT:	/* --reject */
 			msg.prospective_shunt = c - CDS_PROSPECTIVE;
+			continue;
+
+		case CDS_NEGOTIATION + SHUNT_PASS:	/* --negopass */
+			msg.negotiation_shunt = c - CDS_NEGOTIATION;
 			continue;
 
 		case CDS_FAILURE + SHUNT_NONE:		/* --failnone */

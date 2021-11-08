@@ -91,6 +91,7 @@ struct config {
 
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;	/* before */
+	enum shunt_policy negotiation_shunt;	/* during */
 	enum shunt_policy failure_shunt;	/* after */
 
 	/*

@@ -1819,10 +1819,10 @@ bool assign_holdpass(const struct connection *c,
 		}
 
 		if (!delete_bare_shunt(src, dst, transport_proto,
-				       (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD,
+				       c->config->negotiation_shunt,
 				       /*skip_xfrm_policy_delete?*/false,
-				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-					"assign_holdpass() delete narrow %hold"),
+				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
+				       "assign_holdpass() delete narrow %hold"),
 				       c->logger)) {
 			dbg("kernel: assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
@@ -3430,7 +3430,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
-	enum shunt_policy negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
+	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 
 	if (negotiation_shunt != failure_shunt ) {
 		dbg("kernel: failureshunt != negotiationshunt, needs replacing");

@@ -1682,13 +1682,31 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 	}
 
-#if 0
-	config->negotiation_shunt = wm->negotiation_shunt;
-#endif
-	if (libreswan_fipsmode() && (c->policy & POLICY_NEGO_PASS)) {
-		c->policy &= ~POLICY_NEGO_PASS;
+	switch (wm->negotiation_shunt) {
+	case SHUNT_DEFAULT:
+		config->negotiation_shunt = SHUNT_HOLD;
+		break;
+	case SHUNT_PASS:
+	case SHUNT_HOLD:
+		config->negotiation_shunt = wm->negotiation_shunt;
+		break;
+	case SHUNT_TRAP: /* XXX: no default */
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+	case SHUNT_NONE:
+	{
+		enum_buf sb;
+		llog(RC_FATAL, c->logger, "negotiation shunt %s invalid",
+		     str_enum_short(&shunt_policy_names, wm->negotiation_shunt, &sb));
+		return false;
+	}
+	}
+	if (libreswan_fipsmode() && config->negotiation_shunt == SHUNT_PASS) {
+		enum_buf sb;
 		llog(RC_LOG_SERIOUS, c->logger,
-		     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
+		     str_enum_short(&shunt_policy_names, config->negotiation_shunt, &sb));
+		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
 	switch (wm->failure_shunt) {
@@ -2721,21 +2739,30 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
 	s += jam_policy(buf, c->policy);
+	enum shunt_policy shunt;
 
 	const char *sep = s > 0 ? "+" : "";
 
-	enum shunt_policy shunt = c->config->prospective_shunt;
+	shunt = c->config->prospective_shunt;
 	if (shunt != SHUNT_TRAP) {
 		s += jam_string(buf, sep);
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
 		sep = "+";
 	}
 
-	enum shunt_policy fail = c->config->failure_shunt;
-	if (fail != SHUNT_NONE) {
+	shunt = c->config->negotiation_shunt;
+	if (shunt != SHUNT_HOLD) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "NEGO_");
+		s += jam_enum_short(buf, &shunt_policy_names, shunt);
+		sep = "+";
+	}
+
+	shunt = c->config->failure_shunt;
+	if (shunt != SHUNT_NONE) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "failure");
-		s += jam_enum_short(buf, &shunt_policy_names, fail);
+		s += jam_enum_short(buf, &shunt_policy_names, shunt);
 		sep = "+";
 	}
 
