@@ -504,9 +504,9 @@ enum option_enums {
  * Shunt policies
  */
 
-	CDS_SHUNT,
-	CDS_FAIL = CDS_SHUNT + SHUNT_POLICY_ROOF,
-	CDS_LAST = CDS_FAIL + SHUNT_POLICY_ROOF - 1,
+	CDS_PROSPECTIVE,
+	CDS_FAILURE = CDS_PROSPECTIVE + SHUNT_POLICY_ROOF,
+	CDS_LAST = CDS_FAILURE + SHUNT_POLICY_ROOF - 1,
 
 /*
  * Policy options
@@ -703,15 +703,15 @@ static const struct option long_opts[] = {
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
-	{ "initiateontraffic", no_argument, NULL, CDS_SHUNT + SHUNT_TRAP + OO },
-	{ "pass", no_argument, NULL, CDS_SHUNT + SHUNT_PASS + OO },
-	{ "drop", no_argument, NULL, CDS_SHUNT + SHUNT_DROP + OO },
-	{ "reject", no_argument, NULL, CDS_SHUNT + SHUNT_REJECT + OO },
+	{ "initiateontraffic", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_TRAP + OO },
+	{ "pass", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_PASS + OO },
+	{ "drop", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_DROP + OO },
+	{ "reject", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_REJECT + OO },
 
-	{ "failnone", no_argument, NULL, CDS_FAIL + SHUNT_NONE + OO },
-	{ "failpass", no_argument, NULL, CDS_FAIL + SHUNT_PASS + OO },
-	{ "faildrop", no_argument, NULL, CDS_FAIL + SHUNT_DROP + OO },
-	{ "failreject", no_argument, NULL, CDS_FAIL + SHUNT_REJECT + OO },
+	{ "failnone", no_argument, NULL, CDS_FAILURE + SHUNT_NONE + OO },
+	{ "failpass", no_argument, NULL, CDS_FAILURE + SHUNT_PASS + OO },
+	{ "faildrop", no_argument, NULL, CDS_FAILURE + SHUNT_DROP + OO },
+	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT + OO },
 
 	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
@@ -1862,18 +1862,18 @@ int main(int argc, char **argv)
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
-		case CDS_SHUNT + SHUNT_TRAP:	/* --initiateontraffic */
-		case CDS_SHUNT + SHUNT_PASS:	/* --pass */
-		case CDS_SHUNT + SHUNT_DROP:	/* --drop */
-		case CDS_SHUNT + SHUNT_REJECT:	/* --reject */
-			msg.shunt_policy = c - CDS_SHUNT;
+		case CDS_PROSPECTIVE + SHUNT_TRAP:	/* --initiateontraffic */
+		case CDS_PROSPECTIVE + SHUNT_PASS:	/* --pass */
+		case CDS_PROSPECTIVE + SHUNT_DROP:	/* --drop */
+		case CDS_PROSPECTIVE + SHUNT_REJECT:	/* --reject */
+			msg.prospective_shunt = c - CDS_PROSPECTIVE;
 			continue;
 
-		case CDS_FAIL + SHUNT_NONE:	/* --failnone */
-		case CDS_FAIL + SHUNT_PASS:	/* --failpass */
-		case CDS_FAIL + SHUNT_DROP:	/* --faildrop */
-		case CDS_FAIL + SHUNT_REJECT:	/* --failreject */
-			msg.failure_shunt_policy = c - CDS_FAIL;
+		case CDS_FAILURE + SHUNT_NONE:		/* --failnone */
+		case CDS_FAILURE + SHUNT_PASS:		/* --failpass */
+		case CDS_FAILURE + SHUNT_DROP:		/* --faildrop */
+		case CDS_FAILURE + SHUNT_REJECT:	/* --failreject */
+			msg.failure_shunt = c - CDS_FAILURE;
 			continue;
 
 		case CD_RETRANSMIT_T:	/* --retransmit-timeout <seconds> */
@@ -2576,7 +2576,8 @@ int main(int argc, char **argv)
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.policy & POLICY_AUTH_NEVER) {
-			if (msg.shunt_policy == SHUNT_TRAP || msg.shunt_policy == SHUNT_DEFAULT) {
+			if (msg.prospective_shunt == SHUNT_TRAP ||
+			    msg.prospective_shunt == SHUNT_DEFAULT) {
 				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 			}
 		} else {

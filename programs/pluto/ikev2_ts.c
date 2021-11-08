@@ -1304,8 +1304,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		dbg("  did not find a better connection using host pair");
 	}
 
-#define CONNECTION_POLICIES (POLICY_NEGO_PASS |				\
-			     POLICY_DONT_REKEY |			\
+#define CONNECTION_POLICIES (POLICY_DONT_REKEY |			\
 			     POLICY_REAUTH |				\
 			     POLICY_OPPORTUNISTIC |			\
 			     POLICY_GROUP |				\

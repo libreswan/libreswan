@@ -1428,13 +1428,14 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
-		if (wm->shunt_policy == SHUNT_DEFAULT || wm->shunt_policy == SHUNT_TRAP) {
+		if (wm->prospective_shunt == SHUNT_DEFAULT ||
+		    wm->prospective_shunt == SHUNT_TRAP) {
 			llog(RC_FATAL, c->logger,
 			     "failed to add connection: connection with authby=never must specify shunt type via type=");
 			return false;
 		}
 	}
-	if (wm->shunt_policy != SHUNT_DEFAULT && wm->shunt_policy != SHUNT_TRAP) {
+	if (wm->prospective_shunt != SHUNT_DEFAULT && wm->prospective_shunt != SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			llog(RC_FATAL, c->logger,
 				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
@@ -1660,10 +1661,10 @@ static bool extract_connection(const struct whack_message *wm,
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
-	config->prospective_shunt = (wm->shunt_policy == SHUNT_DEFAULT ? SHUNT_TRAP :
-				     wm->shunt_policy);
-	config->failure_shunt = (wm->failure_shunt_policy == SHUNT_DEFAULT ? SHUNT_NONE :
-				 wm->failure_shunt_policy);
+	config->prospective_shunt = (wm->prospective_shunt == SHUNT_DEFAULT ? SHUNT_TRAP :
+				     wm->prospective_shunt);
+	config->failure_shunt = (wm->failure_shunt == SHUNT_DEFAULT ? SHUNT_NONE :
+				 wm->failure_shunt);
 	/* ignore IKEv2 ECDSA and legacy RSA policies for IKEv1 connections */
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
@@ -1695,10 +1696,12 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
-		if (config->failure_shunt == SHUNT_PASS) {
-			config->failure_shunt = SHUNT_NONE;
+		if (config->failure_shunt != SHUNT_NONE) {
+			enum_buf eb;
 			llog(RC_LOG_SERIOUS, c->logger,
-			     "FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+			     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
+			     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
+			config->failure_shunt = SHUNT_NONE;
 		}
 	}
 

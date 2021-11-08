@@ -458,11 +458,11 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	}
 
 	if (conn->policy != LEMPTY ||
-	    conn->shunt_policy != 0) {
+	    conn->prospective_shunt != SHUNT_DEFAULT) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
-		enum shunt_policy shunt_policy = conn->shunt_policy;
+		enum shunt_policy shunt_policy = conn->prospective_shunt;
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};

@@ -108,8 +108,8 @@ struct starter_conn {
 	enum ike_version ike_version;
 	lset_t policy;
 	lset_t sighash_policy;
-	enum shunt_policy shunt_policy;
-	enum shunt_policy failure_shunt_policy;
+	enum shunt_policy prospective_shunt;
+	enum shunt_policy failure_shunt;
 
 	char **alsos;	/* pointer to NULL-terminated array of strings */
 

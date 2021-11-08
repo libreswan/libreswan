@@ -184,8 +184,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO | POLICY_ESN_YES; /* esn=either */
 
-	d->shunt_policy = SHUNT_DEFAULT;
-	d->failure_shunt_policy = SHUNT_DEFAULT;
+	d->prospective_shunt = SHUNT_DEFAULT;
+	d->failure_shunt = SHUNT_DEFAULT;
 
 	d->sighash_policy =
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
@@ -1157,33 +1157,33 @@ static bool load_conn(struct starter_conn *conn,
 		switch ((enum keyword_satype)conn->options[KNCF_TYPE]) {
 		case KS_TUNNEL:
 			conn->policy |= POLICY_TUNNEL;
-			conn->shunt_policy = SHUNT_TRAP;
+			conn->prospective_shunt = SHUNT_TRAP;
 			break;
 
 		case KS_TRANSPORT:
 			conn->policy &= ~POLICY_TUNNEL;
-			conn->shunt_policy =  SHUNT_TRAP;
+			conn->prospective_shunt =  SHUNT_TRAP;
 			break;
 
 		case KS_PASSTHROUGH:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->shunt_policy = SHUNT_PASS;
+			conn->prospective_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->shunt_policy = SHUNT_DROP;
+			conn->prospective_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->shunt_policy = SHUNT_REJECT;
+			conn->prospective_shunt = SHUNT_REJECT;
 			break;
 		}
 	}
@@ -1191,16 +1191,16 @@ static bool load_conn(struct starter_conn *conn,
 	if (conn->options_set[KNCF_FAILURESHUNT]) {
 		switch (conn->options[KNCF_FAILURESHUNT]) {
 		case KFS_FAIL_NONE:
-			conn->failure_shunt_policy = SHUNT_NONE;
+			conn->failure_shunt = SHUNT_NONE;
 			break;
 		case KFS_FAIL_PASS:
-			conn->failure_shunt_policy = SHUNT_PASS;
+			conn->failure_shunt = SHUNT_PASS;
 			break;
 		case KFS_FAIL_DROP:
-			conn->failure_shunt_policy = SHUNT_DROP;
+			conn->failure_shunt = SHUNT_DROP;
 			break;
 		case KFS_FAIL_REJECT:
-			conn->failure_shunt_policy = SHUNT_REJECT;
+			conn->failure_shunt = SHUNT_REJECT;
 			break;
 		}
 	}

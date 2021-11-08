@@ -173,8 +173,8 @@ struct whack_message {
 
 	lset_t policy;
 	lset_t sighash_policy;
-	enum shunt_policy shunt_policy;
-	enum shunt_policy failure_shunt_policy;
+	enum shunt_policy prospective_shunt;
+	enum shunt_policy failure_shunt;
 
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
