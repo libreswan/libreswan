@@ -122,11 +122,11 @@ kernel-prms:
 KVM_STRONGSWAN_PACKAGES = strongswan libgcrypt
 
 
-KVM_INSTALL_PACKAGES ?= \
+KVM_INSTALL_PACKAGES += \
     $(KVM_KERNEL_PACKAGES) \
     $(KVM_UPGRADE_PACKAGES)
 
-KVM_UPGRADE_PACKAGES ?= \
+KVM_UPGRADE_PACKAGES += \
     ElectricFence \
     audit-libs-devel \
     bind-utils \
@@ -201,7 +201,7 @@ KVM_UPGRADE_PACKAGES ?= \
     $(KVM_STRONGSWAN_PACKAGES) \
 
 
-KVM_DEBUGINFO = \
+KVM_DEBUGINFO += \
 	ElectricFence-debuginfo \
 	audit-libs-debuginfo \
 	conntrack-tools-debuginfo \
