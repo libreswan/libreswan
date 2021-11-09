@@ -2504,7 +2504,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 				struct spd_route *sr = &c->spd;
 				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
 									&sr->that.client,
-									sr->this.client.ipproto,
 									"old bare shunt to delete");
 
 				if (bs != NULL) {

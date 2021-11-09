@@ -421,7 +421,6 @@ extern unsigned shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 				   const ip_selector *peers,
-				   unsigned transport_proto,
 				   const char *why);
 
 /* A netlink header defines EM_MAXRELSPIS, the max number of SAs in a group.

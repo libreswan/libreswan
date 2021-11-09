@@ -197,8 +197,7 @@ void add_bare_shunt(const ip_selector *our_client,
 		    const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
-	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
-						  transport_proto->ipproto, why);
+	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
@@ -1343,23 +1342,19 @@ void unroute_connection(struct connection *c)
  */
 struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const ip_selector *peer_client,
-				   unsigned transport_proto,
 				   const char *why)
 
 {
+	const struct ip_protocol *transport_proto = protocol_by_ipproto(our_client->ipproto);
+	pexpect(peer_client->ipproto == transport_proto->ipproto);
+
 	selectors_buf sb;
-	dbg("kernel: %s looking for %s (%d)",
-	    why, str_selectors(our_client, peer_client, &sb),
-	    transport_proto);
-#if 0
-	/* XXX: transport_proto is redundant */
-	pexpect(selector_protocol(our_client)->ipproto == (unsigned)transport_proto);
-	pexpect(selector_protocol(peer_client)->ipproto == (unsigned)transport_proto);
-#endif
+	dbg("kernel: %s looking for %s",
+	    why, str_selectors(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
-		if (transport_proto == p->transport_proto->ipproto &&
+		if (transport_proto == p->transport_proto &&
 		    selector_range_eq_selector_range(*our_client, p->our_client) &&
 		    selector_range_eq_selector_range(*peer_client, p->peer_client)) {
 			return pp;
@@ -1530,7 +1525,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 	 * There is no kernel-acquire shunt to remove.
 	 */
 
-	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto->ipproto, why);
+	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
 	if (bs_pp == NULL) {
 		selectors_buf sb;
 		llog(RC_LOG, logger,
@@ -1758,7 +1753,6 @@ bool assign_holdpass(const struct connection *c,
 		 * no longer be bare so we must ditch it from the bare table
 		 */
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client,
-							 sr->this.client.ipproto,
 							 "assign_holdpass");
 
 		if (old == NULL) {
@@ -2811,7 +2805,6 @@ bool route_and_eroute(struct connection *c,
 	/* but port set is sr->this.port and sr.that.port ! */
 	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->this.client,
 								   &sr->that.client,
-								   sr->this.client.ipproto,
 								   "route and eroute") :
 				    NULL);
 
@@ -3481,7 +3474,6 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		/* are we replacing a bare shunt ? */
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client,
 							 &sr->that.client,
-							 sr->this.client.ipproto,
 							 "orphan holdpass");
 		if (old != NULL) {
 			free_bare_shunt(old);
@@ -3575,8 +3567,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 * and fiddling with the shunt only just added
 			 * above?
 			 */
-			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst,
-								   sr->this.client.ipproto, why);
+			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
 			/* passert(bs_pp != NULL); */
 			if (bs_pp == NULL) {
 				selectors_buf sb;
