@@ -130,8 +130,8 @@ struct bare_shunt {
 	policy_prio_t policy_prio;
 	ip_selector our_client;
 	ip_selector peer_client;
-	ip_said said;
-	int transport_proto; /* XXX: same value in local/remote */
+	enum shunt_policy shunt_policy;
+	const struct ip_protocol *transport_proto; /* XXX: same value in local/remote */
 	unsigned long count;
 	monotime_t last_activity;
 
@@ -158,10 +158,10 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
 	jam(buf, "bare shunt %p ", bs);
 	jam_selector_subnet_port(buf, &bs->our_client);
-	jam(buf, " --%d--> ", bs->transport_proto);
+	jam(buf, " --%d--> ", bs->transport_proto->ipproto);
 	jam_selector_subnet_port(buf, &bs->peer_client);
 	jam(buf, " => ");
-	jam_said(buf, &bs->said);
+	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, " ");
 	jam_policy_prio(buf, bs->policy_prio);
 	jam(buf, "    %s", bs->why);
@@ -191,12 +191,14 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
  */
 void add_bare_shunt(const ip_selector *our_client,
 		    const ip_selector *peer_client,
-		    int transport_proto, enum policy_spi shunt_spi,
+		    const ip_protocol *transport_proto,
+		    enum shunt_policy shunt_policy,
 		    co_serial_t from_serialno,
 		    const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
-	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, transport_proto, why);
+	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client,
+						  transport_proto->ipproto, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
@@ -213,9 +215,7 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->policy_prio = BOTTOM_PRIO;
 	bs->from_serialno = from_serialno;
 
-	bs->said = said_from_address_protocol_spi(selector_type(our_client)->address.any,
-						  &ip_protocol_internal,
-						  htonl(shunt_spi));
+	bs->shunt_policy = shunt_policy;
 	bs->count = 0;
 	bs->last_activity = mononow();
 
@@ -1343,7 +1343,7 @@ void unroute_connection(struct connection *c)
  */
 struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const ip_selector *peer_client,
-				   int transport_proto,
+				   unsigned transport_proto,
 				   const char *why)
 
 {
@@ -1359,7 +1359,7 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
-		if (transport_proto == p->transport_proto &&
+		if (transport_proto == p->transport_proto->ipproto &&
 		    selector_range_eq_selector_range(*our_client, p->our_client) &&
 		    selector_range_eq_selector_range(*peer_client, p->peer_client)) {
 			return pp;
@@ -1407,11 +1407,16 @@ void show_shunt_status(struct show *s)
 		said_buf sat;
 		policy_prio_buf prio;
 
+		/* XXX: hack to preserve output */
+		ip_said said = said_from_address_protocol_spi(selector_type(&bs->our_client)->address.any,
+							      &ip_protocol_internal,
+							      htonl(shunt_policy_spi(bs->shunt_policy)));
+
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
 			     str_selector_subnet_port(&(bs)->our_client, &ourb),
-			     bs->transport_proto,
+			     bs->transport_proto->ipproto,
 			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
-			     str_said(&(bs)->said, &sat),
+			     str_said(&said, &sat),
 			     str_policy_prio(bs->policy_prio, &prio),
 			     bs->why);
 	}
@@ -1424,7 +1429,7 @@ void show_shunt_status(struct show *s)
  */
 static void clear_narrow_holds(const ip_selector *our_client,
 			       const ip_selector *peer_client,
-			       int transport_proto,
+			       unsigned transport_proto,
 			       struct logger *logger)
 {
 	struct bare_shunt *p, **pp;
@@ -1433,8 +1438,8 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		/*
 		 * is p->{local,remote} within {local,remote}.
 		 */
-		if (p->said.spi == htonl(SPI_HOLD) &&
-		    transport_proto == p->transport_proto &&
+		if (p->shunt_policy == SHUNT_HOLD &&
+		    transport_proto == p->transport_proto->ipproto &&
 		    selector_in_selector(p->our_client, *our_client) &&
 		    selector_in_selector(p->peer_client, *peer_client)) {
 			ip_address our_addr = selector_prefix(p->our_client);
@@ -3013,15 +3018,14 @@ bool route_and_eroute(struct connection *c,
 				 * gotten this far.
 				 */
 				struct bare_shunt *bs = *bspp;
-
-				ip_address dst = said_address(bs->said);
+				ip_address dst = selector_type(&bs->our_client)->address.any;
 				if (!raw_policy(KP_REPLACE_OUTBOUND,
 						&dst,        /* should be useless */
 						&bs->our_client,
 						&dst,        /* should be useless */
 						&bs->peer_client,
-						bs->said.spi,         /* unused? network order */
-						bs->said.spi,         /* network order */
+						shunt_policy_spi(bs->shunt_policy),	/* unused? network order */
+						shunt_policy_spi(bs->shunt_policy),	/* network order */
 						/*transport_proto*/sr->this.client.ipproto,
 						ET_INT,
 						esp_transport_proto_info,
@@ -3491,8 +3495,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		 * Create the bare shunt and ...
 		 */
 		add_bare_shunt(&sr->this.client, &sr->that.client,
-			       sr->this.client.ipproto,
-			       shunt_policy_spi(negotiation_shunt),
+			       protocol_by_ipproto(sr->this.client.ipproto),
+			       negotiation_shunt,
 			       ((strstr(c->name, "/32") != NULL ||
 				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
 			       "oe-failing", logger);
@@ -3591,9 +3595,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 				struct bare_shunt *bs = *bs_pp;
 				bs->why = why;
 				bs->policy_prio = policy_prio;
-				bs->said = said_from_address_protocol_spi(null_host,
-									  &ip_protocol_internal,
-									  htonl(shunt_policy_spi(failure_shunt)));
+				bs->shunt_policy = failure_shunt;
 				bs->count = 0;
 				bs->last_activity = mononow();
 				dbg_bare_shunt("replace", bs);
@@ -3638,8 +3640,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			ip_address peer_addr = selector_prefix(bsp->peer_client);
 			bool skip_xfrm_policy_delete = co_serial_is_set(bsp->from_serialno);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       bsp->transport_proto,
-					       ntohl(bsp->said.spi),
+					       bsp->transport_proto->ipproto,
+					       ntohl(shunt_policy_spi(bsp->shunt_policy)),
 					       skip_xfrm_policy_delete,
 					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,

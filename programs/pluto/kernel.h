@@ -421,7 +421,7 @@ extern unsigned shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 				   const ip_selector *peers,
-				   int transport_proto,
+				   unsigned transport_proto,
 				   const char *why);
 
 /* A netlink header defines EM_MAXRELSPIS, the max number of SAs in a group.
@@ -495,7 +495,7 @@ void shutdown_kernel(struct logger *logger);
  * Simple rule: use a string literal.
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
-			   int transport_proto, enum policy_spi shunt_spi,
+			   const struct ip_protocol *proto, enum shunt_policy shunt_policy,
 			   co_serial_t from_serialno,
 			   const char *why, struct logger *logger);
 
