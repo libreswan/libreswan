@@ -43,6 +43,8 @@ west #
 west #
  ipsec whack --impair delete-on-retransmit
 west #
+ ipsec whack --impair revival
+west #
  ipsec auto --up nss-cert
 002 "nss-cert" #1: initiating IKEv1 Main Mode connection
 1v1 "nss-cert" #1: sent Main Mode request
@@ -54,7 +56,7 @@ west #
 003 "nss-cert" #1: received and ignored notification payload: INVALID_ID_INFORMATION
 002 "nss-cert" #1: IMPAIR: retransmit so deleting SA
 002 "nss-cert" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
-002 "nss-cert" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "nss-cert" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done
 done
