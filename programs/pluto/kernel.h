@@ -451,8 +451,7 @@ extern bool assign_holdpass(const struct connection *c,
 			    const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-			    int transport_proto, enum policy_spi failure_shunt,
-			    struct logger *logger);
+			    enum shunt_policy failure_shunt, struct logger *logger);
 
 extern enum policy_spi shunt_policy_spi(enum shunt_policy);
 

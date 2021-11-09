@@ -922,8 +922,7 @@ void delete_state_tail(struct state *st)
 		    enum_name_short(&shunt_policy_names, failure_shunt),
 		    enum_name_short(&policy_spi_names, nego_shunt));
 
-		if (!orphan_holdpass(c, &c->spd, c->spd.this.client.ipproto,
-				     shunt_policy_spi(failure_shunt), st->st_logger)) {
+		if (!orphan_holdpass(c, &c->spd, failure_shunt, st->st_logger)) {
 			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 		}
 	}

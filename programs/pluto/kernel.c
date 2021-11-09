@@ -3430,12 +3430,12 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 }
 
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
-		     int transport_proto, enum policy_spi failure_shunt,
-		     struct logger *logger)
+		     enum shunt_policy failure_shunt, struct logger *logger)
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
-	enum policy_spi negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP;
+	/* XXX: SHUNT_DROP, nee SPI_DROP, is probably wrong */
+	enum shunt_policy negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_DROP;
 
 	if (negotiation_shunt != failure_shunt ) {
 		dbg("kernel: failureshunt != negotiationshunt, needs replacing");
@@ -3444,7 +3444,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	dbg("kernel: orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
-	    c->name, transport_proto, sr->this.client.hport, sr->that.client.hport);
+	    c->name, sr->this.client.ipproto, sr->this.client.hport, sr->that.client.hport);
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
 				LELEM(CK_GOING_AWAY), c->kind));
@@ -3503,7 +3503,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 		bs->said = said_from_address_protocol_spi(selector_type(&sr->this.client)->address.any,
 							  &ip_protocol_internal,
-							  htonl(negotiation_shunt));
+							  htonl(shunt_policy_spi(negotiation_shunt)));
 
 		bs->count = 0;
 		bs->last_activity = mononow();
@@ -3524,16 +3524,13 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			/* fudge up parameter list */
 			const ip_address *src_address = &sr->this.host_addr;
 			const ip_address *dst_address = &sr->that.host_addr;
-			policy_prio_t policy_prio = bs->policy_prio;	/* of replacing shunt*/
-			enum policy_spi cur_shunt_spi = negotiation_shunt; /* in host order! */
-			enum policy_spi new_shunt_spi = failure_shunt; /* in host order! */
-			int transport_proto = bs->transport_proto;
+			policy_prio_t policy_prio = BOTTOM_PRIO;	/* of replacing shunt*/
 			const char *why = "oe-failed";
 
 			/* fudge up replace_bare_shunt() */
 			const struct ip_info *afi = address_type(src_address);
 			passert(afi == address_type(dst_address));
-			const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
+			const ip_protocol *protocol = protocol_by_ipproto(sr->this.client.ipproto);
 			/* ports? assumed wide? */
 			ip_selector src = selector_from_address_protocol(*src_address, protocol);
 			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
@@ -3558,8 +3555,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			const ip_address null_host = afi->address.any;
 			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
 					     &null_host, &src, &null_host, &dst,
-					     htonl(cur_shunt_spi), htonl(new_shunt_spi),
-					     transport_proto, ET_INT,
+					     /*from*/htonl(shunt_policy_spi(negotiation_shunt)),
+					     /*to*/htonl(shunt_policy_spi(failure_shunt)),
+					     sr->this.client.ipproto, ET_INT,
 					     esp_transport_proto_info,
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */
@@ -3588,7 +3586,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 * and fiddling with the shunt only just added
 			 * above?
 			 */
-			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
+			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst,
+								   sr->this.client.ipproto, why);
 			/* passert(bs_pp != NULL); */
 			if (bs_pp == NULL) {
 				selectors_buf sb;
@@ -3607,7 +3606,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 				bs->policy_prio = policy_prio;
 				bs->said = said_from_address_protocol_spi(null_host,
 									  &ip_protocol_internal,
-									  htonl(new_shunt_spi));
+									  htonl(shunt_policy_spi(failure_shunt)));
 				bs->count = 0;
 				bs->last_activity = mononow();
 				dbg_bare_shunt("replace", bs);
