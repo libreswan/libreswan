@@ -1208,9 +1208,9 @@ bool shunt_policy(enum kernel_policy_op op,
 		  struct logger *logger)
 {
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "kernel: %s() %s %s",
-		    __func__, enum_name_short(&kernel_policy_op_names, op), what);
-
+		jam(buf, "kernel: %s() ", __func__);
+		jam_enum_short(buf, &kernel_policy_op_names, op);
+		jam(buf, " %s", what);
 		jam(buf, " ");
 		jam_connection(buf, c);
 
@@ -1222,19 +1222,15 @@ bool shunt_policy(enum kernel_policy_op op,
 		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
 		jam_selector_subnet_port(buf, &sr->that.client);
 
-		jam(buf, " sec_label=");
-		if (sr->this.sec_label.len > 0) {
-			jam_sanitized_hunk(buf, sr->this.sec_label);
-			jam(buf, " (this)");
-#if 0
-		} else if (c->config->sec_label.len > 0) {
+		jam(buf, " (config)sec_label=");
+		if (c->config->sec_label.len > 0) {
 			jam_sanitized_hunk(buf, c->config->sec_label);
-			jam(buf, " (config)");
-#endif
 		}
 	}
 
-	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind, what, logger);
+	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind,
+					   HUNK_AS_SHUNK(c->config->sec_label),
+					   what, logger);
 	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
 	return ok;
 }

@@ -440,6 +440,7 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
+				 shunk_t sec_label,
 				 const char *opname,
 				 struct logger *logger)
 {

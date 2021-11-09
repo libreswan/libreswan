@@ -2187,6 +2187,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
+				 shunk_t sec_label,
 				 const char *opname,
 				 struct logger *logger)
 {
@@ -2272,6 +2273,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			esr->routing = RT_ROUTED_PROSPECTIVE;
 			return netlink_shunt_policy(KP_REPLACE_OUTBOUND, ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
+						    sec_label,
 						    "restoring eclipsed",
 						    logger);
 		}
@@ -2302,7 +2304,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
 			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
-			HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			sec_label, logger,
 			"%s() adding outbound shunt for %s", __func__, opname))
 		return false;
 
@@ -2331,7 +2333,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  calculate_sa_prio(c, false),
 			  &c->sa_marks,
 			  0, /* xfrm_if_id needed for shunt? */
-			  HUNK_AS_SHUNK(sr->this.sec_label), logger,
+			  sec_label, logger,
 			  "%s() adding inbound shunt for %s", __func__, opname);
 }
 

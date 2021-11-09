@@ -320,6 +320,7 @@ struct kernel_ops {
 			     const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
+			     shunk_t sec_label,
 			     const char *opname,
 			     struct logger *logger);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
