@@ -446,8 +446,8 @@ extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 
 extern bool assign_holdpass(const struct connection *c,
 			    struct spd_route *sr,
-			    int transport_proto,
-			    enum policy_spi negotiation_shunt,
+			    const struct ip_protocol *transport_proto,
+			    enum shunt_policy negotiation_shunt,
 			    const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,

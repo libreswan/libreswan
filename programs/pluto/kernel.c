@@ -1714,8 +1714,8 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 /* assign a bare hold or pass to a connection */
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
-		     int transport_proto,
-		     enum policy_spi negotiation_shunt,
+		     const struct ip_protocol *transport_proto,
+		     enum shunt_policy negotiation_shunt,
 		     const ip_address *src, const ip_address *dst)
 {
 	/*
@@ -1802,7 +1802,7 @@ bool assign_holdpass(const struct connection *c,
 			if (eroute_connection(op, reason,
 					      sr,
 					      htonl(SPI_HOLD), /* kernel induced */
-					      htonl(negotiation_shunt),
+					      htonl(shunt_policy_spi(negotiation_shunt)),
 					      &route, ET_INT,
 					      esp_transport_proto_info,
 					      calculate_sa_prio(c, false),
@@ -1819,7 +1819,7 @@ bool assign_holdpass(const struct connection *c,
 		}
 
 		if (!delete_bare_shunt(src, dst,
-				       transport_proto,
+				       transport_proto->ipproto,
 				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 				       /*skip_xfrm_policy_delete?*/false,
 				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :

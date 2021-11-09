@@ -810,9 +810,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       b->transport_proto->ipproto,
 				       SPI_HOLD, b->want, b->logger);
 
-			if (assign_holdpass(c, sr, b->transport_proto->ipproto,
-					    shunt_policy_spi(b->negotiation_shunt),
-					    &b->local.host_addr, &b->remote.host_addr)) {
+			if (assign_holdpass(c, sr, b->transport_proto,
+					    b->negotiation_shunt,
+					    &b->local.host_addr,
+					    &b->remote.host_addr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				llog(RC_LOG, b->logger,
@@ -952,8 +953,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
-				    b->transport_proto->ipproto,
-				    shunt_policy_spi(b->negotiation_shunt),
+				    b->transport_proto,
+				    b->negotiation_shunt,
 				    &b->local.host_addr,
 				    &b->remote.host_addr)) {
 			dbg("assign_holdpass succeeded");
