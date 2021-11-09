@@ -2194,21 +2194,21 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	 * The satype has no meaning, but is required for PF_KEY header!
 	 * The SPI signifies the kind of shunt.
 	 */
-	enum shunt_policy sp =
+	enum shunt_policy shunt_policy =
 		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
 		 c->config->failure_shunt);
-	enum policy_spi spi = shunt_policy_spi(sp);
 
 	if (DBGP(DBG_BASE)) {
+		enum_buf eb;
 		selector_buf this_buf, that_buf;
 		DBG_log("netlink_shunt_policy %s for proto %d, and source %s dest %s",
-			enum_name_short(&policy_spi_names, spi),
+			str_enum_short(&shunt_policy_names, shunt_policy, &eb),
 			sr->this.client.ipproto,
 			str_selector_subnet_port(&sr->this.client, &this_buf),
 			str_selector_subnet_port(&sr->that.client, &that_buf));
 	}
 
-	if (spi == SPI_NONE) {
+	if (shunt_policy == SHUNT_NONE) {
 		/*
 		 * we're supposed to end up with no eroute: rejig op and
 		 * opname
@@ -2295,7 +2295,8 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	if (!raw_policy(op,
 			&sr->this.host_addr, &sr->this.client,
 			&sr->that.host_addr, &sr->that.client,
-			htonl(spi), htonl(spi),
+			/*from*/htonl(shunt_policy_spi(shunt_policy)),
+			/*to*/htonl(shunt_policy_spi(shunt_policy)),
 			sr->this.client.ipproto,
 			ET_INT,
 			esp_transport_proto_info,
@@ -2324,7 +2325,8 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	return raw_policy(op,
 			  &sr->that.host_addr, &sr->that.client,
 			  &sr->this.host_addr, &sr->this.client,
-			  htonl(spi), htonl(spi),
+			  /*from*/htonl(shunt_policy_spi(shunt_policy)),
+			  /*to*/htonl(shunt_policy_spi(shunt_policy)),
 			  sr->this.client.ipproto,
 			  ET_INT,
 			  esp_transport_proto_info,

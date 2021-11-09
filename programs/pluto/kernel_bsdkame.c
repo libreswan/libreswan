@@ -444,14 +444,13 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 				 const char *opname,
 				 struct logger *logger)
 {
-	enum shunt_policy sp =
+	enum shunt_policy shunt_policy =
 		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
 		 c->config->failure_shunt);
-	enum policy_spi spi = shunt_policy_spi(sp);
 	int policy = -1;
 
-	switch (spi) {
-	case SPI_NONE:
+	switch (shunt_policy) {
+	case SHUNT_NONE:
 		/* we're supposed to end up with no eroute: rejig op and opname */
 		switch (op) {
 		case KP_REPLACE_OUTBOUND:
@@ -478,21 +477,21 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 		}
 		break;
 
-	case SPI_TRAP:
+	case SHUNT_TRAP:
 		policy = IPSEC_POLICY_IPSEC;
 		break;
 
-	case SPI_PASS:
+	case SHUNT_PASS:
 		policy = IPSEC_POLICY_NONE; /* BYPASS is for sockets only */
 		break;
 
-	case SPI_REJECT:
-	case SPI_DROP:
+	case SHUNT_REJECT:
+	case SHUNT_DROP:
 		policy = IPSEC_POLICY_DISCARD;
 		break;
 
 	default:
-		dbg("shunt_policy() called with spi=%08x", spi);
+		dbg("shunt_policy() called with policy=%08x", shunt_policy);
 	}
 
 	if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE) {
