@@ -1429,9 +1429,9 @@ void show_shunt_status(struct show *s)
  */
 static void clear_narrow_holds(const ip_selector *our_client,
 			       const ip_selector *peer_client,
-			       unsigned transport_proto,
 			       struct logger *logger)
 {
+	const ip_protocol *transport_proto = protocol_by_ipproto(our_client->ipproto);
 	struct bare_shunt *p, **pp;
 
 	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
@@ -1439,13 +1439,13 @@ static void clear_narrow_holds(const ip_selector *our_client,
 		 * is p->{local,remote} within {local,remote}.
 		 */
 		if (p->shunt_policy == SHUNT_HOLD &&
-		    transport_proto == p->transport_proto->ipproto &&
+		    transport_proto == p->transport_proto &&
 		    selector_in_selector(p->our_client, *our_client) &&
 		    selector_in_selector(p->peer_client, *peer_client)) {
 			ip_address our_addr = selector_prefix(p->our_client);
 			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       transport_proto, SPI_HOLD,
+					       transport_proto, SHUNT_HOLD,
 					       /*skip_xfrm_policy_delete?*/false,
 					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
@@ -1477,16 +1477,16 @@ static void clear_narrow_holds(const ip_selector *our_client,
 
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
-		       int transport_proto, enum policy_spi cur_shunt_spi,
+		       const struct ip_protocol *transport_proto,
+		       enum shunt_policy cur_shunt,
 		       bool skip_xfrm_policy_delete,
 		       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
 	pexpect(afi == address_type(dst_address));
-	const ip_protocol *protocol = protocol_by_ipproto(transport_proto);
 	/* port? assumed wide? */
-	ip_selector src = selector_from_address_protocol(*src_address, protocol);
-	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
+	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
+	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
 	bool ok;
 	if (kernel_ops->type == USE_XFRM && skip_xfrm_policy_delete) {
@@ -1502,8 +1502,8 @@ bool delete_bare_shunt(const ip_address *src_address,
 		/* assume low code logged action */
 		ok = raw_policy(KP_DELETE_OUTBOUND,
 				&null_host, &src, &null_host, &dst,
-				htonl(cur_shunt_spi), htonl(SPI_PASS),
-				transport_proto,
+				shunt_policy_spi(cur_shunt), htonl(SPI_PASS),
+				transport_proto->ipproto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				0, /* we don't know connection for priority yet */
@@ -1530,7 +1530,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 	 * There is no kernel-acquire shunt to remove.
 	 */
 
-	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto, why);
+	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, transport_proto->ipproto, why);
 	if (bs_pp == NULL) {
 		selectors_buf sb;
 		llog(RC_LOG, logger,
@@ -1825,9 +1825,8 @@ bool assign_holdpass(const struct connection *c,
 			}
 		}
 
-		if (!delete_bare_shunt(src, dst,
-				       transport_proto->ipproto,
-				       (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
+		if (!delete_bare_shunt(src, dst, transport_proto,
+				       (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD,
 				       /*skip_xfrm_policy_delete?*/false,
 				       ((c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
 					"assign_holdpass() delete narrow %hold"),
@@ -2982,8 +2981,7 @@ bool route_and_eroute(struct connection *c,
 			    st->st_connection->newest_ipsec_sa);
 			sr->eroute_owner = st->st_serialno;
 			/* clear host shunts that clash with freshly installed route */
-			clear_narrow_holds(&sr->this.client, &sr->that.client,
-					   sr->this.client.ipproto, logger);
+			clear_narrow_holds(&sr->this.client, &sr->that.client, logger);
 		}
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3640,8 +3638,8 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			ip_address peer_addr = selector_prefix(bsp->peer_client);
 			bool skip_xfrm_policy_delete = co_serial_is_set(bsp->from_serialno);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       bsp->transport_proto->ipproto,
-					       ntohl(shunt_policy_spi(bsp->shunt_policy)),
+					       bsp->transport_proto,
+					       bsp->shunt_policy,
 					       skip_xfrm_policy_delete,
 					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,

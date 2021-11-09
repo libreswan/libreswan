@@ -1848,10 +1848,6 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 				 struct logger *logger)
 {
-	const xfrm_address_t *srcx = &pol->sel.saddr;
-	const xfrm_address_t *dstx = &pol->sel.daddr;
-	unsigned transport_proto = pol->sel.proto;
-
 	const struct ip_info *afi = aftoinfo(pol->sel.family);
 	if (afi == NULL) {
 		llog(RC_LOG, logger,
@@ -1860,11 +1856,11 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 		return;
 	}
 
-	ip_address src = address_from_xfrm(afi, srcx);
-	ip_address dst = address_from_xfrm(afi, dstx);
+	ip_address src = address_from_xfrm(afi, &pol->sel.saddr);
+	ip_address dst = address_from_xfrm(afi, &pol->sel.daddr);
+	const struct ip_protocol *transport_proto = protocol_by_ipproto(pol->sel.proto);
 
-	if (delete_bare_shunt(&src, &dst,
-			      transport_proto, SPI_HOLD /* why spi to use? */,
+	if (delete_bare_shunt(&src, &dst, transport_proto, SHUNT_HOLD,
 			       /*skip_xfrm_policy_delete?*/false,
 			      "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
