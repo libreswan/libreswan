@@ -192,6 +192,7 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
 void add_bare_shunt(const ip_selector *our_client,
 		    const ip_selector *peer_client,
 		    int transport_proto, enum policy_spi shunt_spi,
+		    co_serial_t from_serialno,
 		    const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
@@ -210,6 +211,7 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->peer_client = *peer_client;
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
+	bs->from_serialno = from_serialno;
 
 	bs->said = said_from_address_protocol_spi(selector_type(our_client)->address.any,
 						  &ip_protocol_internal,
@@ -3479,44 +3481,29 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 							 &sr->that.client,
 							 sr->this.client.ipproto,
 							 "orphan holdpass");
-
 		if (old != NULL) {
 			free_bare_shunt(old);
 		}
 	}
 
-	/*
-	 * create the bare shunt and update kernel policy if needed.
-	 */
 	{
 		/*
-		 * XXX: merge this add bare shunt code with that
-		 * following the raw_policy() call!?!
+		 * Create the bare shunt and ...
 		 */
-		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
+		add_bare_shunt(&sr->this.client, &sr->that.client,
+			       sr->this.client.ipproto,
+			       shunt_policy_spi(negotiation_shunt),
+			       ((strstr(c->name, "/32") != NULL ||
+				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
+			       "oe-failing", logger);
 
-		bs->why = "oe-failing";
-		bs->our_client = sr->this.client;
-		bs->peer_client = sr->that.client;
-		bs->transport_proto = sr->this.client.ipproto;
-		bs->policy_prio = BOTTOM_PRIO;
-
-		bs->said = said_from_address_protocol_spi(selector_type(&sr->this.client)->address.any,
-							  &ip_protocol_internal,
-							  htonl(shunt_policy_spi(negotiation_shunt)));
-
-		bs->count = 0;
-		bs->last_activity = mononow();
-		if (strstr(c->name, "/32") != NULL || strstr(c->name, "/128") != NULL) {
-			bs->from_serialno = c->serialno;
-		}
-
-		bs->next = bare_shunts;
-		bare_shunts = bs;
-		dbg_bare_shunt("add", bs);
-
-		/* update kernel policy if needed */
-		/* This really causes the name to remain "oe-failing", we should be able to update only only the name of the shunt */
+		/*
+		 * ... UPDATE kernel policy if needed.
+		 *
+		 * This really causes the name to remain "oe-failing",
+		 * we should be able to update only only the name of
+		 * the shunt.
+		 */
 		if (negotiation_shunt != failure_shunt ) {
 
 			dbg("kernel: replacing negotiation_shunt with failure_shunt");
@@ -3612,7 +3599,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 				dbg_bare_shunt("replace", bs);
 			} else {
 				llog(RC_LOG, logger,
-					    "assign_holdpass() failed to update shunt policy");
+				     "assign_holdpass() failed to update shunt policy");
 				free_bare_shunt(bs_pp);
 			}
 		} else {

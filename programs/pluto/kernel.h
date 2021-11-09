@@ -496,6 +496,7 @@ void shutdown_kernel(struct logger *logger);
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   int transport_proto, enum policy_spi shunt_spi,
+			   co_serial_t from_serialno,
 			   const char *why, struct logger *logger);
 
 bool install_se_connection_policies(struct connection *c, struct logger *logger);

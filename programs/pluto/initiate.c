@@ -808,7 +808,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
 			add_bare_shunt(our_client, peer_client,
 				       b->transport_proto->ipproto,
-				       SPI_HOLD, b->want, b->logger);
+				       SPI_HOLD, UNSET_CO_SERIAL,
+				       b->want, b->logger);
 
 			if (assign_holdpass(c, sr, b->transport_proto,
 					    b->negotiation_shunt,
@@ -934,7 +935,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	} else {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,
-			       shunt_protocol->ipproto, SPI_HOLD,
+			       shunt_protocol->ipproto,
+			       SPI_HOLD, UNSET_CO_SERIAL,
 			       addwidemsg, b->logger);
 	}
 
