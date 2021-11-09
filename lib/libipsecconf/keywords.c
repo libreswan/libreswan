@@ -55,12 +55,12 @@ static const struct keyword_enum_value kw_failureshunt_values[] = {
 static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZER(kw_failureshunt_values);
 
 /*
- * Values for negotiationshunt={passthrough, drop}
+ * Values for negotiationshunt={passthrough, hold}
  */
 static const struct keyword_enum_value kw_negotiationshunt_values[] = {
-	{ "passthrough", KNS_FAIL_PASS },
-	{ "drop",        KNS_FAIL_DROP },
-	{ "hold",        KNS_FAIL_DROP }, /* alias */
+	{ "passthrough", KNS_NEGO_PASS },
+	{ "drop",        KNS_NEGO_HOLD }, /* alias */
+	{ "hold",        KNS_NEGO_HOLD },
 };
 
 

@@ -346,8 +346,8 @@ enum keyword_failure_shunt {
 };
 
 enum keyword_negotiation_shunt {
-	KNS_FAIL_PASS,
-	KNS_FAIL_DROP
+	KNS_NEGO_PASS,
+	KNS_NEGO_HOLD
 };
 
 enum keyword_type {

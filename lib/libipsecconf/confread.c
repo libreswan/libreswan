@@ -1188,6 +1188,17 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
+	if (conn->options_set[KNCF_NEGOTIATIONSHUNT]) {
+		switch (conn->options[KNCF_NEGOTIATIONSHUNT]) {
+		case KNS_NEGO_PASS:
+			conn->policy |= POLICY_NEGO_PASS;
+			break;
+		case KNS_NEGO_HOLD:
+			conn->policy &= ~POLICY_NEGO_PASS;
+			break;
+		}
+	}
+
 	if (conn->options_set[KNCF_FAILURESHUNT]) {
 		switch (conn->options[KNCF_FAILURESHUNT]) {
 		case KFS_FAIL_NONE:
@@ -1201,17 +1212,6 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 		case KFS_FAIL_REJECT:
 			conn->failure_shunt = SHUNT_REJECT;
-			break;
-		}
-	}
-
-	if (conn->options_set[KNCF_NEGOTIATIONSHUNT]) {
-		switch (conn->options[KNCF_NEGOTIATIONSHUNT]) {
-		case KNS_FAIL_PASS:
-			conn->policy |= POLICY_NEGO_PASS;
-			break;
-		case KNS_FAIL_DROP:
-			conn->policy &= ~POLICY_NEGO_PASS;
 			break;
 		}
 	}
