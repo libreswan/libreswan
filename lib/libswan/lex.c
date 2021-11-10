@@ -105,6 +105,7 @@ bool shift(struct file_lex_position *flp)
 
 	*p = flp->under;
 	flp->under = '\0';
+	flp->quote = '\0'; /* truthy */
 
 	for (;;) {
 		switch (*p) {
@@ -150,15 +151,20 @@ bool shift(struct file_lex_position *flp)
 				p = strchr(p + 1, *p);
 				if (p == NULL) {
 					llog(RC_LOG_SERIOUS, flp->logger,
-						    "unterminated string");
+					     "unterminated string");
 					p = flp->tok + strlen(flp->tok);
 				} else {
-					p++;	/* include delimiter in token */
+					/* strip quotes from token */
+					flp->quote = *flp->tok;
+					flp->tok++;
+					*p = '\0';
+					p++;
 				}
 
 				/*
-				 * remember token delimiter and replace
-				 * with '\0'
+				 * Remember token delimiter and
+				 * replace with '\0' (kind of
+				 * pointless but consistent).
 				 */
 				flp->under = *p;
 				*p = '\0';

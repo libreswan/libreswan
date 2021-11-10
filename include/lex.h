@@ -23,6 +23,7 @@ struct file_lex_position {
 	char *cur;				/* cursor */
 	char under;				/* except in shift(): character originally at *cur */
 	char *tok;
+	char quote;				/* was TOK wrapped in QUOTE? */
 	struct logger *logger;			/* where to send errors */
 };
 

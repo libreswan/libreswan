@@ -809,14 +809,13 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 {
 	err_t ugh = NULL;
 
-	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
-		size_t len = flp->cur - flp->tok - 2;
-
+	if (flp->quote == '"' || flp->quote == '\'') {
+		size_t len = strlen(flp->tok);
 		if (len < 8) {
 			llog(RC_LOG_SERIOUS, flp->logger,
-				    "WARNING: using a weak secret (PSK)");
+			     "WARNING: using a weak secret (PSK)");
 		}
-		*psk = clone_bytes_as_chunk(flp->tok + 1, len, "PSK");
+		*psk = clone_bytes_as_chunk(flp->tok, len, "PSK");
 		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -853,9 +852,8 @@ static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 {
 	err_t ugh = NULL;
 
-	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
-		*xauth = clone_bytes_as_chunk(flp->tok + 1, flp->cur - flp->tok - 2,
-					      "XAUTH");
+	if (flp->quote == '"' || flp->quote == '\'') {
+		*xauth = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "XAUTH");
 		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -893,10 +891,8 @@ static err_t process_ppk_static_secret(struct file_lex_position *flp,
 {
 	err_t ugh = NULL;
 
-	if (flp->tok[0] == '"' || flp->tok[0] == '\'') {
-		size_t len = flp->cur - flp->tok - 2;
-
-		*ppk_id = clone_bytes_as_chunk(flp->tok + 1, len, "PPK ID");
+	if (flp->quote == '"' || flp->quote == '\'') {
+		*ppk_id = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK ID");
 	} else {
 		ugh = "No quotation marks found. PPK ID should be in quotation marks";
 		return ugh;
@@ -908,10 +904,8 @@ static err_t process_ppk_static_secret(struct file_lex_position *flp,
 		return ugh;
 	}
 
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		size_t len = flp->cur - flp->tok - 2;
-
-		*ppk = clone_bytes_as_chunk(flp->tok + 1, len, "PPK");
+	if (flp->quote == '"' || flp->quote == '\'') {
+		*ppk = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK");
 		shift(flp);
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
