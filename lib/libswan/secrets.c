@@ -1034,17 +1034,17 @@ static void process_secret(struct file_lex_position *flp,
 {
 	err_t ugh = NULL;
 
-	if (tokeqword("psk")) {
+	if (tokeqword(flp, "psk")) {
 		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_psk_secret(flp, &s->pks.u.preshared_secret);
-	} else if (tokeqword("xauth")) {
+	} else if (tokeqword(flp, "xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PKK_XAUTH;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_xauth_secret(flp, &s->pks.u.preshared_secret);
-	} else if (tokeqword("ppks")) {
+	} else if (tokeqword(flp, "ppks")) {
 		s->pks.kind = PKK_PPK;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
 			process_ppk_static_secret(flp, &s->pks.ppk, &s->pks.ppk_id);
@@ -1087,7 +1087,7 @@ static void process_secret_records(struct file_lex_position *flp,
 		flp->bdry = B_none;	/* eat the Record Boundary */
 		shift(flp);	/* get real first token */
 
-		if (tokeqword("include")) {
+		if (tokeqword(flp, "include")) {
 			/* an include directive */
 			char fn[MAX_TOK_LEN];	/*
 						 * space for filename
@@ -1152,7 +1152,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				struct id id;
 				err_t ugh;
 
-				if (tokeq(":")) {
+				if (tokeq(flp, ":")) {
 					/* found key part */
 					shift(flp);	/* eat ":" */
 					process_secret(flp, psecrets, s);
@@ -1164,12 +1164,12 @@ static void process_secret_records(struct file_lex_position *flp,
 				 * See RFC2407 IPsec Domain of
 				 * Interpretation 4.6.2
 				 */
-				if (tokeq("%any")) {
+				if (tokeq(flp, "%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
 					id.ip_addr = ipv4_info.address.any;
 					ugh = NULL;
-				} else if (tokeq("%any6")) {
+				} else if (tokeq(flp, "%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
 					id.ip_addr = ipv6_info.address.any;

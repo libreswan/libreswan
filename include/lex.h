@@ -30,8 +30,8 @@ extern bool lexopen(struct file_lex_position **flp, const char *name,
 		    bool optional, const struct file_lex_position *oflp);
 extern void lexclose(struct file_lex_position **flp);
 
-#define tokeq(s) (streq(flp->tok, (s)))
-#define tokeqword(s) strcaseeq(flp->tok, (s))
+#define tokeq(FLP, S) streq((FLP)->tok, (S))
+#define tokeqword(FLP, S) strcaseeq((FLP)->tok, (S))
 
 extern bool shift(struct file_lex_position *flp);
 extern bool flushline(struct file_lex_position *flp, const char *message);
