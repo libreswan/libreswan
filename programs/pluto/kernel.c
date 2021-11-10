@@ -3430,8 +3430,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
-	/* XXX: SHUNT_DROP, nee SPI_DROP, is probably wrong */
-	enum shunt_policy negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_DROP;
+	enum shunt_policy negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SHUNT_PASS : SHUNT_HOLD;
 
 	if (negotiation_shunt != failure_shunt ) {
 		dbg("kernel: failureshunt != negotiationshunt, needs replacing");
