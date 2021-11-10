@@ -918,24 +918,24 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_policy()?
 	 */
 
-	if (!raw_policy(KP_ADD_OUTBOUND,
-			&b->local.host_addr, &local_shunt,
-			&b->remote.host_addr, &remote_shunt,
-			htonl(SPI_HOLD), /* kernel induced */
-			htonl(shunt_policy_spi(b->negotiation_shunt)),
-			shunt_protocol->ipproto,
-			ET_INT, esp_transport_proto_info,
-			deltatime(SHUNT_PATIENCE),
-			calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
-			NULL, 0 /* xfrm-if-id */,
-			b->sec_label, b->logger,
-			"%s() %s", __func__, addwidemsg)) {
-		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
-	} else {
+	if (raw_policy(KP_ADD_OUTBOUND,
+		       &b->local.host_addr, &local_shunt,
+		       &b->remote.host_addr, &remote_shunt,
+		       htonl(SPI_HOLD), /* kernel induced; likely ignored */
+		       htonl(shunt_policy_spi(b->negotiation_shunt)),
+		       shunt_protocol->ipproto,
+		       ET_INT, esp_transport_proto_info,
+		       deltatime(SHUNT_PATIENCE),
+		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
+		       NULL, 0 /* xfrm-if-id */,
+		       b->sec_label, b->logger,
+		       "%s() %s", __func__, addwidemsg)) {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-		add_bare_shunt(&local_shunt, &remote_shunt,
-			       shunt_protocol, SHUNT_HOLD, UNSET_CO_SERIAL,
+		add_bare_shunt(&local_shunt, &remote_shunt, shunt_protocol,
+			       b->negotiation_shunt, UNSET_CO_SERIAL,
 			       addwidemsg, b->logger);
+	} else {
+		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
 	}
 
 	/* If we are to proceed asynchronously, b->background will be true. */
