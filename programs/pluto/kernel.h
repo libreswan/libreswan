@@ -495,7 +495,7 @@ void shutdown_kernel(struct logger *logger);
  * Simple rule: use a string literal.
  */
 extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
-			   const struct ip_protocol *proto, enum shunt_policy shunt_policy,
+			   enum shunt_policy shunt_policy,
 			   co_serial_t from_serialno,
 			   const char *why, struct logger *logger);
 

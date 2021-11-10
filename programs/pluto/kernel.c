@@ -191,7 +191,6 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
  */
 void add_bare_shunt(const ip_selector *our_client,
 		    const ip_selector *peer_client,
-		    const ip_protocol *transport_proto,
 		    enum shunt_policy shunt_policy,
 		    co_serial_t from_serialno,
 		    const char *why, struct logger *logger)
@@ -210,6 +209,8 @@ void add_bare_shunt(const ip_selector *our_client,
 	bs->why = why;
 	bs->our_client = *our_client;
 	bs->peer_client = *peer_client;
+	const struct ip_protocol *transport_proto = selector_protocol(*our_client);
+	pexpect(transport_proto == selector_protocol(*peer_client));
 	bs->transport_proto = transport_proto;
 	bs->policy_prio = BOTTOM_PRIO;
 	bs->from_serialno = from_serialno;
@@ -3485,7 +3486,6 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		 * Create the bare shunt and ...
 		 */
 		add_bare_shunt(&sr->this.client, &sr->that.client,
-			       protocol_by_ipproto(sr->this.client.ipproto),
 			       negotiation_shunt,
 			       ((strstr(c->name, "/32") != NULL ||
 				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
