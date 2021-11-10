@@ -157,9 +157,7 @@ static int num_ipsec_eroute = 0;
 static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
 	jam(buf, "bare shunt %p ", bs);
-	jam_selector_subnet_port(buf, &bs->our_client);
-	jam(buf, " --%d--> ", bs->transport_proto->ipproto);
-	jam_selector_subnet_port(buf, &bs->peer_client);
+	jam_selectors(buf, &bs->our_client, &bs->peer_client);
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, " ");
