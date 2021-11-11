@@ -120,7 +120,7 @@ size_t jam_address(struct jambuf *buf, const ip_address *address)
 		return jam_string(buf, "<unknown-address>");
 	}
 
-	return afi->jam_address(buf, afi, &address->bytes);
+	return afi->address.jam(buf, afi, &address->bytes);
 }
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)

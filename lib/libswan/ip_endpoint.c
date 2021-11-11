@@ -172,21 +172,7 @@ size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 		return jam_string(buf, "<unknown-endpoint>");
 	}
 
-	size_t s = 0;
-	switch (afi->af) {
-	case AF_INET: /* N.N.N.N[:PORT] */
-		s += afi->jam_address(buf, afi, &endpoint->bytes);
-		break;
-	case AF_INET6: /* [N:..:N]:PORT */
-		s += jam(buf, "[");
-		s += afi->jam_address(buf, afi, &endpoint->bytes);
-		s += jam(buf, "]");
-		break;
-	default:
-		bad_case(afi->af);
-	}
-	s += jam(buf, ":%d", endpoint->hport);
-	return s;
+	return afi->endpoint.jam(buf, afi, &endpoint->bytes, endpoint->hport);
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)

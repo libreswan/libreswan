@@ -39,6 +39,16 @@ static size_t jam_ipv4_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
+static size_t jam_ipv4_endpoint(struct jambuf *buf, const struct ip_info *afi,
+				const struct ip_bytes *bytes, unsigned hport)
+{
+	size_t s = 0;
+	/* N.N.N.N:PORT */
+	s += afi->address.jam(buf, afi, bytes);
+	s += jam(buf, ":%u", hport);
+	return s;
+}
+
 /*
  * Find longest run of zero pairs that should be suppressed (need at
  * least two).
@@ -99,6 +109,18 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
+static size_t jam_ipv6_endpoint(struct jambuf *buf, const struct ip_info *afi,
+				const struct ip_bytes *bytes, unsigned hport)
+{
+	size_t s = 0;
+	/* [N:..:N]:PORT */
+	s += jam(buf, "[");
+	s += afi->address.jam(buf, afi, bytes);
+	s += jam(buf, "]");
+	s += jam(buf, ":%u", hport);
+	return s;
+}
+
 static ip_address address_from_ipv4_sockaddr(const ip_sockaddr sa)
 {
 	passert(sa.sa.sa.sa_family == AF_INET);
@@ -139,6 +161,10 @@ const struct ip_info ipv4_info = {
 	/* ip_address - .address.any matches grep */
 	.address.any = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
 	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
+	.address.jam = jam_ipv4_address,
+
+	/* ip_endpoint - */
+	.endpoint.jam = jam_ipv4_endpoint,
 
 	/* ip_subnet - .subnet.any matches grep */
 	.subnet.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
@@ -170,9 +196,6 @@ const struct ip_info ipv4_info = {
 	.id_ip_addr = ID_IPV4_ADDR,
 	.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
 	.id_ip_addr_range = ID_IPV4_ADDR_RANGE,
-
-	/* output */
-	.jam_address = jam_ipv4_address,
 };
 
 #define IPv6_FF { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, }, }
@@ -187,6 +210,10 @@ const struct ip_info ipv6_info = {
 	/* ip_address - .address.any matches grep */
 	.address.any = { .is_set = true, .version = IPv6, }, /* :: */
 	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
+	.address.jam = jam_ipv6_address,
+
+	/* ip_endpoint - */
+	.endpoint.jam = jam_ipv6_endpoint,
 
 	/* ip_subnet - .subnet.any matches grep */
 	.subnet.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
@@ -218,9 +245,6 @@ const struct ip_info ipv6_info = {
 	.id_ip_addr = ID_IPV6_ADDR,
 	.id_ip_addr_subnet = ID_IPV6_ADDR_SUBNET,
 	.id_ip_addr_range = ID_IPV6_ADDR_RANGE,
-
-	/* output */
-	.jam_address = jam_ipv6_address,
 };
 
 const struct ip_info *aftoinfo(int af)

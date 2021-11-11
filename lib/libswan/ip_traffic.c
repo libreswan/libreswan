@@ -87,10 +87,10 @@ size_t jam_traffic(struct jambuf *buf, const ip_traffic *t)
 	const struct ip_protocol *proto = protocol_by_ipproto(t->ipproto);
 
 	size_t s = 0;
-	s += afi->jam_address(buf, afi, &t->src.bytes);
+	s += afi->address.jam(buf, afi, &t->src.bytes);
 	s += jam(buf, ":%d", t->src.hport);
 	s += jam(buf, "-%s->", proto->name);
-	s += afi->jam_address(buf, afi, &t->dst.bytes);
+	s += afi->address.jam(buf, afi, &t->dst.bytes);
 	s += jam(buf, ":%d", t->dst.hport);
 	return s;
 }

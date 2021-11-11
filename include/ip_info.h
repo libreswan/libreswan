@@ -25,7 +25,15 @@ struct ip_info {
 	struct {
 		const ip_address any;		/* 0.0.0.0 or :: */
 		const ip_address loopback;	/* 127.0.0.1 or ::1 */
+		size_t (*jam)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 	} address;
+
+	/*
+	 * ip_endpoint
+	 */
+	struct {
+		size_t (*jam)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes, unsigned hport);
+	} endpoint;
 
 	/*
 	 * ip_subnet.
@@ -86,7 +94,6 @@ struct ip_info {
 	enum ike_id_type id_ip_addr_subnet;
 	enum ike_id_type id_ip_addr_range;
 
-	size_t (*jam_address)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 };
 
 extern const struct ip_info ipv4_info;

@@ -155,14 +155,14 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	}
 
 	size_t s = 0;
-	s += afi->jam_address(buf, afi, &range->start);
+	s += afi->address.jam(buf, afi, &range->start);
 	/* when a subnet, try to calculate the prefix-bits */
 	int prefix_bits = (range->is_subnet ? bytes_prefix_bits(afi, range->start, range->end) : -1);
 	if (prefix_bits >= 0) {
 		s += jam(buf, "/%d", prefix_bits);
 	} else {
 		s += jam(buf, "-");
-		s += afi->jam_address(buf, afi, &range->end);
+		s += afi->address.jam(buf, afi, &range->end);
 	}
 	return s;
 }
