@@ -194,9 +194,9 @@ const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *d
 	return out->buf;
 }
 
-static ip_selector selector_from_raw(where_t where, enum ip_version version,
-				     const struct ip_bytes bytes, unsigned prefix_bits,
-				     const struct ip_protocol *protocol, const ip_port port)
+ip_selector selector_from_raw(where_t where, enum ip_version version,
+			      const struct ip_bytes bytes, unsigned prefix_bits,
+			      const struct ip_protocol *protocol, const ip_port port)
 {
 	ip_selector selector = {
 		.is_set = true,

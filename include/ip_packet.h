@@ -1,0 +1,105 @@
+/* ip packet extracted from acquire, for libreswan
+ *
+ * Copyright (C) 2020-2021  Andrew Cagney
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Library General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ * License for more details.
+ *
+ */
+
+#ifndef IP_PACKET_H
+#define IP_PACKET_H
+
+#include "ip_bytes.h"
+#include "ip_port.h"
+#include "ip_endpoint.h"
+#include "ip_selector.h"
+
+struct ip_protocol;
+
+struct jambuf;
+
+/*
+ * Packet between two endpoints.
+ */
+
+typedef struct {
+	bool is_set;
+	const struct ip_info *info; /* 0, 4, 6 */
+	const struct ip_protocol *protocol;
+	struct {
+		struct ip_bytes bytes;
+		/*
+		 * Note: An acquire triggered by a packet that did not
+		 * specify the source port (i.e., it's ephemeral) will
+		 * have .src.hport set to zero.
+		 */
+		int hport;
+	} src, dst;
+} ip_packet;
+
+#define PRI_PACKET "%s is_set=%s info=%s protocol=%s src.bytes="PRI_BYTES" src.hport=%d dst.bytes="PRI_BYTES" dst.hport=%d"
+#define pri_packet(S,B)							\
+	str_packet(S, B),						\
+		bool_str((S)->is_set),					\
+		(S)->info != NULL ? (S)->info->ip_name : "<null>",	\
+		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\
+		pri_bytes((S)->src.bytes),				\
+		(S)->src.hport,						\
+		pri_bytes((S)->dst.bytes),				\
+		(S)->dst.hport
+
+void pexpect_packet(const ip_packet *s, where_t where);
+#define ppacket(S) pexpect_packet(S, HERE)
+
+ip_packet packet_from_raw(where_t where,
+			  const struct ip_info *info,
+			  const struct ip_protocol *protocol,
+			  const struct ip_bytes *src_bytes, const ip_port src_port,
+			  const struct ip_bytes *dst_bytes, const ip_port dst_port);
+
+/*
+ * Magic values.
+ *
+ * XXX: While the headers call the all-zero address "ANY" (INADDR_ANY,
+ * IN6ADDR_ANY_INIT), the headers also refer to the IPv6 value as
+ * unspecified (for instance IN6_IS_ADDR_UNSPECIFIED()) leaving the
+ * term "unspecified" underspecified.
+ *
+ * Consequently an AF_UNSPEC address (i.e., uninitialized or unset),
+ * is identified by *_unset().
+ */
+
+extern const ip_packet unset_packet;
+
+/* attributes */
+
+ip_address packet_src_address(const ip_packet packet);
+ip_address packet_dst_address(const ip_packet packet);
+
+ip_endpoint packet_src_endpoint(const ip_packet packet); /* XXX: can have 0 port so bogus */
+ip_endpoint packet_dst_endpoint(const ip_packet packet);
+
+ip_selector packet_src_selector(const ip_packet packet);
+ip_selector packet_dst_selector(const ip_packet packet);
+
+/*
+ * Output.
+ */
+
+typedef struct {
+	/* way over size? */
+	char buf[sizeof(endpoint_buf) + sizeof("-->") + sizeof(protocol_buf) + sizeof(endpoint_buf) + 1/*canary*/];
+} packet_buf;
+
+size_t jam_packet(struct jambuf *buf, const ip_packet *packet);
+const char *str_packet(const ip_packet *packet, packet_buf *buf);
+
+#endif

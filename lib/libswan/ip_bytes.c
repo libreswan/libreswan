@@ -196,3 +196,8 @@ int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 	/* just compare everything */
 	return memcmp(l_bytes.byte, r_bytes.byte, sizeof(l_bytes));
 }
+
+bool bytes_is_zero(const struct ip_bytes *bytes)
+{
+	return thingeq(*bytes, unset_bytes);
+}

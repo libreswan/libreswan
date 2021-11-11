@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	ip_port_range_check();
 	ip_cidr_check();
 	ip_protocol_check();
-	ip_traffic_check();
+	ip_packet_check();
 
 	if (report_leaks(logger)) {
 		fails++;

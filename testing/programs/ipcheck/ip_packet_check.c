@@ -21,10 +21,10 @@
 
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
-#include "ip_traffic.h"
+#include "ip_packet.h"
 #include "ipcheck.h"
 
-void ip_traffic_check(void)
+void ip_packet_check(void)
 {
 	static const struct test {
 		int line;
@@ -63,15 +63,14 @@ void ip_traffic_check(void)
 			FAIL("ttoendpoint failed: %s", oops);
 		}
 
-		ip_traffic traffic = traffic_from_raw(HERE, afi->ip_version,
-						      t->proto,
-						      sa.bytes, ip_hport(t->sp),
-						      da.bytes, ip_hport(t->dp));
+		ip_packet packet = packet_from_raw(HERE, afi, t->proto,
+						   &sa.bytes, ip_hport(t->sp),
+						   &da.bytes, ip_hport(t->dp));
 
-		traffic_buf tb;
-		const char *str = str_traffic(&traffic, &tb);
+		packet_buf tb;
+		const char *str = str_packet(&packet, &tb);
 		if (!streq(str, t->str)) {
-			FAIL("str_traffic() returned %s, expecting %s", str, t->str);
+			FAIL("str_packet() returned %s, expecting %s", str, t->str);
 		}
 	}
 }

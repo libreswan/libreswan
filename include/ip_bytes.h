@@ -88,4 +88,12 @@ int bytes_prefix_bits(const struct ip_info *afi,
 int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 	      enum ip_version r_version, const struct ip_bytes r_bytes);
 
+bool bytes_is_zero(const struct ip_bytes *bytes);
+
+#define IP_UNSPECIFIED(IP)			\
+	(IP == NULL ? "null" :			\
+	 !IP->is_set ? "unset" :		\
+	 IP->info == NULL ? "unknown" :		\
+	 NULL)
+
 #endif
