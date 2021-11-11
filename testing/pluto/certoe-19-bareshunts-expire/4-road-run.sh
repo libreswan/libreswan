@@ -29,7 +29,7 @@ ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.3.46 || true
 # wait for OE to fail: should show pass in shuntstatus and xfrm policy
 # and without partial STATE
-../../guestbin/wait-for.sh --match oe-failing -- ipsec shuntstatus
+../../guestbin/wait-for.sh --match oe-failed -- ipsec shuntstatus
 ip -o xfrm pol | grep 192.1.3.46 || true
 ipsec status | grep STATE_ || true
 # wait for failing shunt to expire: should show no more shunts for
