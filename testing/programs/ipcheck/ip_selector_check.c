@@ -449,7 +449,7 @@ static void check_selector_op_selector(void)
 
 		const ip_protocol *protocol = selector_protocol(inner_selector);
 		ip_port port = selector_port(inner_selector);
-		if (protocol != &ip_protocol_unset && port.hport != 0) {
+		if (protocol != &ip_protocol_all && port.hport != 0) {
 			ip_endpoint inner_endpoint = endpoint_from_address_protocol_port(inner_address,
 											 protocol, port);
 			bool endpoint = endpoint_in_selector(inner_endpoint, outer_selector);

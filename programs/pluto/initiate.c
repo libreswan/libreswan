@@ -604,7 +604,7 @@ static ip_selector shunt_from_traffic_end(const char *what,
 	if (end->client.ipproto == 0) {
 		dbg("widening %s shunt to all protocols + all ports", what);
 		pexpect(end->client.hport == 0);
-		shunt_protocol = &ip_protocol_unset;
+		shunt_protocol = &ip_protocol_all;
 		shunt_port = unset_port;
 	} else if (end->client.hport == 0) {
 		dbg("widening %s shunt to all ports", what);

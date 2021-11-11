@@ -219,7 +219,7 @@ ip_selector selector_from_address(const ip_address address)
 
 	return selector_from_raw(HERE, address.version,
 				 address.bytes, afi->mask_cnt,
-				 &ip_protocol_unset, unset_port);
+				 &ip_protocol_all, unset_port);
 }
 
 ip_selector selector_from_address_protocol(const ip_address address,
@@ -269,7 +269,7 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 
 	return selector_from_raw(HERE, subnet.version,
 				 subnet.bytes, subnet.maskbits,
-				 &ip_protocol_unset, unset_port);
+				 &ip_protocol_all, unset_port);
 }
 
 ip_selector selector_from_range(const ip_range range)
@@ -280,7 +280,7 @@ ip_selector selector_from_range(const ip_range range)
 
 	ip_subnet subnet;
 	happy(range_to_subnet(range, &subnet));
-	return selector_from_subnet_protocol_port(subnet, &ip_protocol_unset, unset_port);
+	return selector_from_subnet_protocol_port(subnet, &ip_protocol_all, unset_port);
 }
 
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
@@ -622,7 +622,7 @@ err_t numeric_to_selector(shunk_t input,
 	shunk_t protocol_token = shunk_token(&input, &protocol_term, "/");
 	/* fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token)); */
 
-	const ip_protocol *protocol = &ip_protocol_unset; /*0*/
+	const ip_protocol *protocol = &ip_protocol_all; /*0*/
 	if (protocol_token.len > 0) {
 		if (protocol_term != '/') {
 			return "protocol must be followed by '/'";
@@ -651,7 +651,7 @@ err_t numeric_to_selector(shunk_t input,
 		if (oops != NULL) {
 			return oops;
 		}
-		if (protocol == &ip_protocol_unset && hport != 0) {
+		if (protocol == &ip_protocol_all && hport != 0) {
 			return "a non-zero port requires a valid protocol";
 		}
 		port = ip_hport(hport);

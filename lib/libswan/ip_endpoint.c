@@ -219,8 +219,8 @@ size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoi
 	s += jam_char(buf, ' ');
 
 
-	const ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_unset;
-	const ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_unset;
+	const ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_all;
+	const ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_all;
 	s += jam_protocols(buf, srcp, '-', dstp);
 
 	s += jam_char(buf, ' ');

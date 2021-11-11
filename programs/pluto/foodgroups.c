@@ -184,7 +184,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				break;
 			}
 			pexpect(protocol != NULL);
-			if (protocol == &ip_protocol_unset ||
+			if (protocol == &ip_protocol_all ||
 			    protocol == &ip_protocol_esp ||
 			    protocol == &ip_protocol_ah) {
 				llog(RC_LOG_SERIOUS, flp->logger,
