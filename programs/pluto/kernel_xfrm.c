@@ -325,7 +325,7 @@ static void init_netlink(struct logger *logger)
 }
 
 /*
- * send_netlink_msg
+ * sendrecv_xfrm_msg()
  *
  * @param hdr - Data to be sent.
  * @param expected_resp_type - type of message expected from netlink
@@ -336,11 +336,11 @@ static void init_netlink(struct logger *logger)
  * @return bool True if the message was successfully sent.
  */
 
-static bool send_netlink_msg(struct nlmsghdr *hdr,
-			     unsigned expected_resp_type, struct nlm_resp *rbuf,
-			     const char *description, const char *story,
-			     int *recv_errno,
-			     struct logger *logger)
+static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
+			      unsigned expected_resp_type, struct nlm_resp *rbuf,
+			      const char *description, const char *story,
+			      int *recv_errno,
+			      struct logger *logger)
 {
 	dbg("xfrm: %s() sending %d", __func__, hdr->nlmsg_type);
 
@@ -464,9 +464,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	struct nlm_resp rsp;
 
 	int recv_errno;
-	if (!send_netlink_msg(hdr, NLMSG_ERROR, &rsp,
-			      "policy", story,
-			      &recv_errno, logger)) {
+	if (!sendrecv_xfrm_msg(hdr, NLMSG_ERROR, &rsp,
+			       "policy", story,
+			       &recv_errno, logger)) {
 		return false;
 	}
 
@@ -1108,9 +1108,9 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 	 * Maybe there is a way to write this that doesn't mislead Coverity.
 	 */
 	int recv_errno;
-	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp,
-				  "mobike", sa->story,
-				  &recv_errno, logger);
+	bool r = sendrecv_xfrm_msg(&req.n, NLMSG_ERROR, &rsp,
+				   "mobike", sa->story,
+				   &recv_errno, logger);
 	return r && rsp.u.e.error >= 0;
 }
 
@@ -1269,7 +1269,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct rtattr *attr;
-	int ret;
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -1624,11 +1623,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	}
 
 	int recv_errno;
-	ret = send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-			       "Add SA", sa->story,
-			       &recv_errno, logger);
+	bool ret = sendrecv_xfrm_msg(&req.n, NLMSG_NOOP, NULL,
+				     "Add SA", sa->story,
+				     &recv_errno, logger);
 	if (!ret && recv_errno == ESRCH &&
-		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
@@ -1665,9 +1664,9 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
 
 	int recv_errno;
-	return send_netlink_msg(&req.n, NLMSG_NOOP, NULL,
-				"Del SA", sa->story,
-				&recv_errno, logger);
+	return sendrecv_xfrm_msg(&req.n, NLMSG_NOOP, NULL,
+				 "Del SA", sa->story,
+				 &recv_errno, logger);
 }
 
 /*
@@ -1960,9 +1959,9 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	int recv_errno;
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
-			      "Get policy", "?",
-			      &recv_errno, logger)) {
+	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
+			       "Get policy", "?",
+			       &recv_errno, logger)) {
 		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
 		    req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
@@ -2144,9 +2143,9 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.max = max;
 
 	int recv_errno;
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SPI", story,
-			      &recv_errno, logger)) {
+	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
+			       "Get SPI", story,
+			       &recv_errno, logger)) {
 		return 0;
 	}
 
@@ -2500,9 +2499,9 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	int recv_errno;
-	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
-			      "Get SA", sa->story,
-			      &recv_errno, logger)) {
+	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
+			       "Get SA", sa->story,
+			       &recv_errno, logger)) {
 		return false;
 	}
 
