@@ -462,12 +462,12 @@ kvmplutotest	ikev2-xfrmi-02				good
 kvmplutotest	ikev2-xfrmi-02-responder		wip
 kvmplutotest	ikev2-xfrmi-03				good
 kvmplutotest	ikev2-xfrmi-04				good
-kvmplutotest	ikev2-xfrmi-05-remote-access-client	good
+kvmplutotest	ikev2-xfrmi-05-remote-access-client	wip	github:541
 kvmplutotest	ikev2-xfrmi-06				good
 kvmplutotest	ikev2-xfrmi-07				good
 kvmplutotest	ikev2-xfrmi-08				good
 kvmplutotest	ikev2-xfrmi-09-systemd-networkd 	good
-kvmplutotest	ikev2-xfrmi-10				good
+kvmplutotest	ikev2-xfrmi-10				wip	github:541
 kvmplutotest	ikev2-xfrmi-11-default-manual-route	good
 kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
 kvmplutotest	ikev2-xfrmi-11-default-route		good
