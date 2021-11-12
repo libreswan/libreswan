@@ -284,6 +284,42 @@ struct raw_iface {
 	struct raw_iface *next;
 };
 
+/*
+ * What to do when there's a policy op returns the ENOENT response?
+ *
+ * The old test, which looked like this:
+ *
+ *	bool enoent_ok = (op == KP_DELETE_INBOUND ||
+ *			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
+ *
+ * but was too forgiving.  It hid bugs such as trying to delete the
+ * wrong policy.  Hopefully, over time these enums can go away:
+ *
+ * The biggest hack, IGNORE_FWD_INBOUND, gets around raw_policy() not
+ * being good at figuring out when a "fwd" is needed.  Suspect problem
+ * is with callers passing in dud parameters.
+ */
+
+enum what_about_inbound {
+	THIS_IS_NOT_INBOUND = 1,
+	IGNORE_FWD_INBOUND,
+	EXPECT_NO_INBOUND,
+	REPORT_NO_INBOUND,
+};
+
+#define what_about_inbound_name(E)					\
+	({								\
+		enum what_about_inbound e_ = E;				\
+		const char *n_ = "?";					\
+		switch (e_) {						\
+		case THIS_IS_NOT_INBOUND: n_ = "THIS_IS_NOT_INBOUND"; break; \
+		case IGNORE_FWD_INBOUND: n_ = "IGNORE_FWD_INBOUND"; break; \
+		case EXPECT_NO_INBOUND: n_ = "EXPECT_NO_INBOUND"; break; \
+		case REPORT_NO_INBOUND: n_ = "REPORT_NO_INBOUND"; break; \
+		}							\
+		n_;							\
+	})
+
 extern char *pluto_listen;	/* from --listen flag */
 
 struct kernel_ops {
@@ -301,11 +337,11 @@ struct kernel_ops {
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
+			   enum what_about_inbound what_about_inbound,
 			   const ip_address *this_host,
 			   const ip_selector *this_client,
 			   const ip_address *that_host,
 			   const ip_selector *that_client,
-			   ipsec_spi_t cur_spi,
 			   ipsec_spi_t new_spi,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
@@ -317,6 +353,7 @@ struct kernel_ops {
 			   const shunk_t sec_label,
 			   struct logger *logger);
 	bool (*shunt_policy)(enum kernel_policy_op op,
+			     enum what_about_inbound what_about_inbound_entry,
 			     const struct connection *c,
 			     const struct spd_route *sr,
 			     enum routing_t rt_kind,
@@ -466,7 +503,8 @@ extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
-extern void delete_ipsec_sa(struct state *st);
+void delete_ipsec_sa(struct state *st);
+void delete_larval_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
@@ -502,6 +540,7 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 bool install_se_connection_policies(struct connection *c, struct logger *logger);
 
 bool shunt_policy(enum kernel_policy_op op,
+		  enum what_about_inbound what_about_inbound,
 		  const struct connection *c,
 		  const struct spd_route *sr,
 		  enum routing_t rt_kind,

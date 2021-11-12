@@ -1070,11 +1070,18 @@ void delete_state_tail(struct state *st)
 		}
 		break;
 	case IKEv2:
-		if (IS_CHILD_SA_ESTABLISHED(st) ||
-		    /* XXX: initator; regardless of state */
-		    (st->st_sa_role == SA_INITIATOR &&
-		     st->st_establishing_sa == IPSEC_SA)) {
+		if (IS_CHILD_SA_ESTABLISHED(st)) {
 			delete_ipsec_sa(st);
+		} else if (st->st_sa_role == SA_INITIATOR &&
+			   st->st_establishing_sa == IPSEC_SA) {
+			/*
+			 * XXX: so much for dreams of becoming an
+			 * established Child SA.
+			 *
+			 * This is overkill, just the outgoing SA
+			 * needs to be deleted.
+			 */
+			delete_larval_ipsec_sa(st);
 		}
 		break;
 	}

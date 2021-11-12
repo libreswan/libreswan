@@ -458,7 +458,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
  * @return boolean
  */
 static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
-				 bool enoent_ok,
+				 enum what_about_inbound what_about_inbound,
 				 const char *story, const char *adstory,
 				 struct logger *logger)
 {
@@ -477,8 +477,31 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	 */
 
 	int error = -rsp.u.e.error;
-	if (error == 0 || (error == ENOENT && enoent_ok))
+
+	switch (what_about_inbound) {
+	case IGNORE_FWD_INBOUND:
 		return true;
+		break;
+	case THIS_IS_NOT_INBOUND:
+	case REPORT_NO_INBOUND:
+		if (error == 0) {
+			return true;
+		}
+		break;
+	case EXPECT_NO_INBOUND:
+		if (error == ENOENT) {
+			return true;
+		}
+		if (error == 0) {
+			/* pexpect? */
+			llog(RC_LOG, logger,
+			     "kernel: xfrm %s for flow %s%s encountered unexpected policy",
+			     sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
+			     story, adstory);
+			return true;
+		}
+		break;
+	}
 
 	log_errno(logger, error,
 		  "kernel: xfrm %s%s response for flow %s",
@@ -506,11 +529,11 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @return boolean True if successful
  */
 static bool netlink_raw_policy(enum kernel_policy_op op,
+			       enum what_about_inbound what_about_inbound,
 			       const ip_address *src_host,
 			       const ip_selector *src_client,
 			       const ip_address *dst_host,
 			       const ip_selector *dst_client,
-			       ipsec_spi_t cur_spi,	/* current SPI */
 			       ipsec_spi_t new_spi,	/* new SPI */
 			       unsigned int transport_proto,
 			       enum eroute_type esatype,
@@ -835,10 +858,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	bool enoent_ok = (op == KP_DELETE_INBOUND ||
-			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
-
-	bool ok = sendrecv_xfrm_policy(&req.n, enoent_ok, policy_name,
+	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       ((op & KERNEL_POLICY_DIR_OUT) ? "(out)" : "(in)"),
 				       logger);
 
@@ -863,7 +883,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
 		    __func__);
 		req.u.id.dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, enoent_ok,
+		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_FWD_INBOUND,
 					   policy_name, "(fwd)", logger);
 		break;
 	case KP_ADD_INBOUND:
@@ -876,7 +896,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		}
 		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
 		req.u.p.dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, enoent_ok,
+		ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
 					   policy_name, "(fwd)", logger);
 		break;
 	default:
@@ -2170,6 +2190,7 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 }
 
 static bool netlink_shunt_policy(enum kernel_policy_op op,
+				 enum what_about_inbound what_about_inbound,
 				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
@@ -2191,7 +2212,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	if (DBGP(DBG_BASE)) {
 		enum_buf eb;
 		selector_buf this_buf, that_buf;
-		DBG_log("netlink_shunt_policy %s for proto %d, and source %s dest %s",
+		DBG_log("kernel: netlink_shunt_policy %s for proto %d, and source %s dest %s",
 			str_enum_short(&shunt_policy_names, shunt_policy, &eb),
 			sr->this.client.ipproto,
 			str_selector_subnet_port(&sr->this.client, &this_buf),
@@ -2200,8 +2221,8 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 
 	if (shunt_policy == SHUNT_NONE) {
 		/*
-		 * we're supposed to end up with no eroute: rejig op and
-		 * opname
+		 * We're supposed to end up with no eroute: rejig op
+		 * and opname.
 		 */
 		switch (op) {
 		case KP_REPLACE_OUTBOUND:
@@ -2218,12 +2239,9 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			break;
 
 		case KP_ADD_INBOUND:
-			break;
-
+		case KP_REPLACE_INBOUND:
 		case KP_DELETE_INBOUND:
-			break;
-
-		default:
+			/* never inbound */
 			bad_case(op);
 		}
 	}
@@ -2249,8 +2267,11 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			eclipse_count--;
 			return true;
 
-		case KP_ADD_OUTBOUND:
-		default:
+		case KP_ADD_OUTBOUND: /*never eclipsed add*/
+		case KP_ADD_INBOUND:
+		case KP_REPLACE_INBOUND:
+		case KP_DELETE_INBOUND:
+			/* never inbound */
 			bad_case(op);
 		}
 	} else if (eclipse_count > 0 && op == KP_DELETE_OUTBOUND && eclipsable(sr)) {
@@ -2260,7 +2281,9 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
-			return netlink_shunt_policy(KP_REPLACE_OUTBOUND, ue, esr,
+			return netlink_shunt_policy(KP_REPLACE_OUTBOUND,
+						    THIS_IS_NOT_INBOUND,
+						    ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
 						    sec_label,
 						    "restoring eclipsed",
@@ -2282,10 +2305,9 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	if (!raw_policy(op,
+	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
 			&sr->this.host_addr, &sr->this.client,
 			&sr->that.host_addr, &sr->that.client,
-			/*from*/htonl(shunt_policy_spi(shunt_policy)),
 			/*to*/htonl(shunt_policy_spi(shunt_policy)),
 			sr->this.client.ipproto,
 			ET_INT,
@@ -2295,7 +2317,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			&c->sa_marks,
 			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
 			sec_label, logger,
-			"%s() adding outbound shunt for %s", __func__, opname))
+			"%s() outbound shunt for %s", __func__, opname))
 		return false;
 
 	switch (op) {
@@ -2305,17 +2327,26 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 	case KP_DELETE_OUTBOUND:
 		op = KP_DELETE_INBOUND;
 		break;
-	default:
+	case KP_REPLACE_OUTBOUND:
+	case KP_ADD_INBOUND:
+	case KP_REPLACE_INBOUND:
+	case KP_DELETE_INBOUND:
 		return true;
 	}
 
+	pexpect(what_about_inbound != THIS_IS_NOT_INBOUND);
+
 	/*
-	 * note the crossed streams since inbound
+	 * Note the crossed streams since inbound.
+	 *
+	 * Note the NO_INBOUND_ENTRY.  It's a hack to get around a
+	 * connection being unrouted, deleting both inbound and
+	 * outbound policies when there's only the basic outbound
+	 * policy installed.
 	 */
-	return raw_policy(op,
+	return raw_policy(op, what_about_inbound,
 			  &sr->that.host_addr, &sr->that.client,
 			  &sr->this.host_addr, &sr->this.client,
-			  /*from*/htonl(shunt_policy_spi(shunt_policy)),
 			  /*to*/htonl(shunt_policy_spi(shunt_policy)),
 			  sr->this.client.ipproto,
 			  ET_INT,
@@ -2325,7 +2356,7 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  &c->sa_marks,
 			  0, /* xfrm_if_id needed for shunt? */
 			  sec_label, logger,
-			  "%s() adding inbound shunt for %s", __func__, opname);
+			  "%s() inbound shunt for %s", __func__, opname);
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
@@ -2546,23 +2577,31 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.dport = htons(icmp_code);
 		req.u.p.sel.sport_mask = 0xffff;
 
-		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(in)", logger))
+		/*
+		 * EXPECT_NO_INBOUND means no fail on missing and/or
+		 * success.
+		 */
+		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
+					  text, "(in)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_FWD;
 
-		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(fwd)", logger))
+		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
+					  text, "(fwd)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
 
-		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(out)", logger))
+		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
+					  text, "(out)", logger))
 			return false;
 	} else {
 		req.u.p.sel.dport = htons(port);
 		req.u.p.sel.dport_mask = 0xffff;
 
-		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(in)", logger))
+		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
+					  text, "(in)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
@@ -2572,7 +2611,8 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.dport = 0;
 		req.u.p.sel.dport_mask = 0;
 
-		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(out)", logger))
+		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
+					  text, "(out)", logger))
 			return false;
 	}
 

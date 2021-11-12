@@ -1190,51 +1190,6 @@ bool trap_connection(struct connection *c)
 	}
 }
 
-/*
- * Add/replace/delete a shunt eroute.
- *
- * Such an eroute determines the fate of packets without the use
- * of any SAs.  These are defaults, in effect.
- * If a negotiation has not been attempted, use %trap.
- * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
- * is specified in the policy of connection c.
- */
-
-bool shunt_policy(enum kernel_policy_op op,
-		  const struct connection *c,
-		  const struct spd_route *sr,
-		  enum routing_t rt_kind,
-		  const char *what,
-		  struct logger *logger)
-{
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_op_names, op);
-		jam(buf, " %s", what);
-		jam(buf, " ");
-		jam_connection(buf, c);
-
-		jam(buf, " for rt_kind '%s' using",
-		    enum_name(&routing_story, rt_kind));
-
-		jam(buf, " ");
-		jam_selector_subnet_port(buf, &sr->this.client);
-		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
-		jam_selector_subnet_port(buf, &sr->that.client);
-
-		jam(buf, " (config)sec_label=");
-		if (c->config->sec_label.len > 0) {
-			jam_sanitized_hunk(buf, c->config->sec_label);
-		}
-	}
-
-	bool ok = kernel_ops->shunt_policy(op, c, sr, rt_kind,
-					   HUNK_AS_SHUNK(c->config->sec_label),
-					   what, logger);
-	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
-	return ok;
-}
-
 static bool sag_eroute(const struct state *st,
 		       const struct spd_route *sr,
 		       enum kernel_policy_op op,
@@ -1316,7 +1271,16 @@ void unroute_connection(struct connection *c)
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			shunt_policy(KP_DELETE_OUTBOUND, c, sr, RT_UNROUTED,
+			/*
+			 * XXX: note the hack where missing inbound
+			 * policies are ignored.  The connection
+			 * should know if there's an inbound policy,
+			 * in fact the connection shouldn't even have
+			 * inbound policies, just the state.
+			 */
+			shunt_policy(KP_DELETE_OUTBOUND,
+				     EXPECT_NO_INBOUND,
+				     c, sr, RT_UNROUTED,
 				     "unrouting connection",
 				     c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -1472,7 +1436,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       const struct ip_protocol *transport_proto,
-		       enum shunt_policy cur_shunt,
+		       enum shunt_policy cur_shunt UNUSED,
 		       bool skip_xfrm_policy_delete,
 		       const char *why, struct logger *logger)
 {
@@ -1494,9 +1458,9 @@ bool delete_bare_shunt(const ip_address *src_address,
 		    str_selectors(&src, &dst, &sb), why);
 		const ip_address null_host = afi->address.any;
 		/* assume low code logged action */
-		ok = raw_policy(KP_DELETE_OUTBOUND,
+		ok = raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&null_host, &src, &null_host, &dst,
-				shunt_policy_spi(cur_shunt), htonl(SPI_PASS),
+				htonl(SPI_PASS),
 				transport_proto->ipproto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
@@ -1575,9 +1539,10 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 		struct end *src = inbound ? &c->spd.that : &c->spd.this;
 		struct end *dst = inbound ? &c->spd.this : &c->spd.that;
 		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
+				inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				/*src*/&src->host_addr, &src->client,
 				/*dst*/&dst->host_addr, &dst->client,
-				/*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				htonl(SPI_PASS),
 				/*transport_proto*/c->spd.this.client.ipproto,
 				/*esatype*/encap.inner_proto->ipproto,
 				/*encap*/&encap,
@@ -1600,10 +1565,10 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 				 */
 				dbg("pulling previously installed outbound policy");
 				pexpect(i > 0);
-				raw_policy(KP_DELETE_OUTBOUND,
+				raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					   /*src*/&c->spd.this.host_addr, &c->spd.this.client,
 					   /*dst*/&c->spd.that.host_addr, &c->spd.that.client,
-					   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+					   htonl(SPI_PASS),
 					   /*transport_proto*/c->spd.this.client.ipproto,
 					   /*esatype*/encap.inner_proto->ipproto,
 					   /*encap*/&encap,
@@ -1637,9 +1602,10 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
 			/* ignore result */
 			raw_policy(inbound ? KP_DELETE_INBOUND : KP_DELETE_OUTBOUND,
+				   inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				   /*src*/&src->host_addr, &src->client,
 				   /*dst*/&dst->host_addr, &dst->client,
-				   /*ignored?old/new*/htonl(SPI_PASS), ntohl(SPI_PASS),
+				   htonl(SPI_PASS),
 				   /*transport_proto*/c->spd.this.client.ipproto,
 				   /*esatype*/encap.inner_proto->ipproto,
 				   /*encap*/&encap,
@@ -1661,7 +1627,7 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 
 bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct spd_route *sr,
-		       ipsec_spi_t cur_spi,
+		       ipsec_spi_t cur_spi UNUSED,
 		       ipsec_spi_t new_spi,
 		       const struct kernel_route *route,
 		       enum eroute_type esatype,
@@ -1674,10 +1640,9 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 {
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host_addr);
-		bool t = raw_policy(op,
+		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
 				    &route->src.host_addr, &client,
 				    &route->dst.host_addr, &route->dst.client,
-				    cur_spi,
 				    new_spi,
 				    sr->this.client.ipproto,
 				    esatype,
@@ -1696,10 +1661,9 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(op,
+	return raw_policy(op, THIS_IS_NOT_INBOUND,
 			  &route->src.host_addr, &route->src.client,
 			  &route->dst.host_addr, &route->dst.client,
-			  cur_spi,
 			  new_spi,
 			  sr->this.client.ipproto,
 			  esatype,
@@ -2352,12 +2316,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * already indicating that the parameters are going to
 		 * need reversing ...
 		 */
-		if (!raw_policy(KP_ADD_INBOUND,
+		if (!raw_policy(KP_ADD_INBOUND, REPORT_NO_INBOUND,
 				&route.src.host_addr,	/* src_host */
 				&route.src.client,	/* src_client */
 				&route.dst.host_addr,	/* dst_host */
 				&route.dst.client,	/* dst_client */
-				/*old*/htonl(SPI_IGNORE), /*new*/htonl(SPI_IGNORE),
+				htonl(SPI_IGNORE),
 				/*transport_proto*/c->spd.this.client.ipproto,
 				encap.inner_proto->ipproto,	/* esatype */
 				&encap,			/* " */
@@ -2467,7 +2431,8 @@ static unsigned append_teardown(struct dead_spi *dead, bool inbound,
 	return 0;
 }
 
-static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
+static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
+				   enum what_about_inbound what_about_inbound)
 {
 	/* Delete any AH, ESP, and IP in IP SPIs. */
 
@@ -2490,12 +2455,12 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_policy(KP_DELETE_INBOUND,
+	    !raw_policy(KP_DELETE_INBOUND, what_about_inbound,
 			&effective_remote_address,
 			&c->spd.that.client,
 			&c->spd.this.host_addr,
 			&c->spd.this.client,
-			htonl(SPI_IGNORE), htonl(SPI_IGNORE),
+			htonl(SPI_IGNORE),
 			c->spd.this.client.ipproto,
 			c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ?
 			ET_ESP : ET_UNSPEC,
@@ -2821,8 +2786,9 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_REPLACE_OUTBOUND, c, sr,
-							RT_ROUTED_PROSPECTIVE,
+			eroute_installed = shunt_policy(KP_REPLACE_OUTBOUND,
+							THIS_IS_NOT_INBOUND,
+							c, sr, RT_ROUTED_PROSPECTIVE,
 							"route_and_eroute() replace shunt",
 							logger);
 		} else {
@@ -2845,8 +2811,9 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_ADD_OUTBOUND, c, sr,
-							RT_ROUTED_PROSPECTIVE,
+			eroute_installed = shunt_policy(KP_ADD_OUTBOUND,
+							REPORT_NO_INBOUND,
+							c, sr, RT_ROUTED_PROSPECTIVE,
 							"route_and_eroute() add",
 							logger);
 		} else {
@@ -3009,13 +2976,12 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 				ip_address dst = selector_type(&bs->our_client)->address.any;
-				if (!raw_policy(KP_REPLACE_OUTBOUND,
+				if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 						&dst,        /* should be useless */
 						&bs->our_client,
 						&dst,        /* should be useless */
 						&bs->peer_client,
-						shunt_policy_spi(bs->shunt_policy),	/* unused? network order */
-						shunt_policy_spi(bs->shunt_policy),	/* network order */
+						htonl(shunt_policy_spi(bs->shunt_policy)),	/* network order */
 						/*transport_proto*/sr->this.client.ipproto,
 						ET_INT,
 						esp_transport_proto_info,
@@ -3035,6 +3001,7 @@ bool route_and_eroute(struct connection *c,
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
 					if (!shunt_policy(KP_REPLACE_OUTBOUND,
+							  THIS_IS_NOT_INBOUND,
 							  ero, esr, esr->routing,
 							  "route_and_eroute() restore",
 							  logger)) {
@@ -3065,8 +3032,9 @@ bool route_and_eroute(struct connection *c,
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!shunt_policy(KP_DELETE_OUTBOUND, c, sr,
-							  sr->routing,
+					if (!shunt_policy(KP_DELETE_OUTBOUND,
+							  REPORT_NO_INBOUND,
+							  c, sr, sr->routing,
 							  "route_and_eroute() delete",
 							  logger)) {
 						llog(RC_LOG, logger,
@@ -3212,106 +3180,104 @@ bool migrate_ipsec_sa(struct state *st)
 
 /*
  * Delete an IPSEC SA.
- * we may not succeed, but we bull ahead anyway because
- * we cannot do anything better by recognizing failure
- * This used to have a parameter bool inbound_only, but
- * the saref code changed to always install inbound before
- * outbound so this it was always false, and thus removed
  *
+ * We may not succeed, but we bull ahead anyway because we cannot do
+ * anything better by recognizing failure.  This used to have a
+ * parameter bool inbound_only, but the saref code changed to always
+ * install inbound before outbound so this it was always false, and
+ * thus removed.
+ *
+ * But this means that while there's now always an outbound policy,
+ * there may not yet be an inbound policy!  For instance, IKEv2 IKE
+ * AUTH initiator gets rejected.  So what is there, and should this
+ * even be called?  WHAT_ABOUT_INBOUND is trying to help sort this
+ * out.
  */
-void delete_ipsec_sa(struct state *st)
+
+static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_about_inbound)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
-	if (IS_CHILD_SA(st)) {
-		if (st->st_esp.present || st->st_ah.present) {
-			/* ESP or AH means this was an established IPsec SA */
-			linux_audit_conn(st, LAK_CHILD_DESTROY);
-		}
-	} else {
-		log_state(RC_LOG, st,
-			  "delete_ipsec_sa() called with (wrong?) parent state %s",
-			  st->st_state->name);
+	if (!pexpect(IS_CHILD_SA(st))) {
+		return;
 	}
 
-	switch (kernel_ops->type) {
-	case USE_XFRM:
-		{
+	if (st->st_esp.present || st->st_ah.present) {
+		/* ESP or AH means this was an established IPsec SA */
+		linux_audit_conn(st, LAK_CHILD_DESTROY);
+	}
+
+	/*
+	 * If the state is the eroute owner, we must adjust the
+	 * routing for the connection.
+	 */
+	struct connection *c = st->st_connection;
+
+	for (struct spd_route *sr = &c->spd; sr; sr = sr->spd_next) {
+		if (sr->eroute_owner == st->st_serialno &&
+		    sr->routing == RT_ROUTED_TUNNEL) {
+			sr->eroute_owner = SOS_NOBODY;
+
 			/*
-			 * If the state is the eroute owner, we must adjust
-			 * the routing for the connection.
+			 * Routing should become RT_ROUTED_FAILURE,
+			 * but if POLICY_FAIL_NONE, then we just go
+			 * right back to RT_ROUTED_PROSPECTIVE as if
+			 * no failure happened.
 			 */
-			struct connection *c = st->st_connection;
-			struct spd_route *sr;
+			sr->routing =
+				(c->config->failure_shunt == SHUNT_NONE ?
+				 RT_ROUTED_PROSPECTIVE :
+				 RT_ROUTED_FAILURE);
 
-			for (sr = &c->spd; sr; sr = sr->spd_next) {
-				if (sr->eroute_owner == st->st_serialno &&
-					sr->routing == RT_ROUTED_TUNNEL) {
-					sr->eroute_owner = SOS_NOBODY;
+			if (sr == &c->spd &&
+			    c->remotepeertype == CISCO)
+				continue;
 
-					/*
-					 * Routing should become
-					 * RT_ROUTED_FAILURE,
-					 * but if POLICY_FAIL_NONE, then we
-					 * just go right back to
-					 * RT_ROUTED_PROSPECTIVE as if no
-					 * failure happened.
-					 */
-					sr->routing =
-						(c->config->failure_shunt == SHUNT_NONE ?
-						 RT_ROUTED_PROSPECTIVE :
-						 RT_ROUTED_FAILURE);
-
-					if (sr == &c->spd &&
-						c->remotepeertype == CISCO)
-						continue;
-
-					(void) do_command(c, sr, "down", st, st->st_logger);
-					if ((c->policy & POLICY_OPPORTUNISTIC) &&
-							c->kind == CK_INSTANCE) {
-						/*
-						 * in this case we get rid of
-						 * the IPSEC SA
-						 */
-						unroute_connection(c);
-					} else if ((c->policy & POLICY_DONT_REKEY) &&
-						c->kind == CK_INSTANCE) {
-						/*
-						 * in this special case,
-						 * even if the connection
-						 * is still alive (due to
-						 * an ISAKMP SA),
-						 * we get rid of routing.
-						 * Even though there is still
-						 * an eroute, the c->routing
-						 * setting will convince
-						 * unroute_connection to
-						 * delete it.
-						 * unroute_connection
-						 * would be upset
-						 * if c->routing ==
-						 * RT_ROUTED_TUNNEL
-						 */
-						unroute_connection(c);
-					} else {
-						if (!shunt_policy(KP_REPLACE_OUTBOUND,
-								  c, sr, sr->routing,
-								  "delete_ipsec_sa() replace with shunt",
-								  st->st_logger)) {
-							log_state(RC_LOG, st,
-								  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
-						}
-					}
+			(void) do_command(c, sr, "down", st, st->st_logger);
+			if ((c->policy & POLICY_OPPORTUNISTIC) &&
+			    c->kind == CK_INSTANCE) {
+				/*
+				 * in this case we get rid of the
+				 * IPSEC SA
+				 */
+				unroute_connection(c);
+			} else if ((c->policy & POLICY_DONT_REKEY) &&
+				   c->kind == CK_INSTANCE) {
+				/*
+				 * in this special case, even if the
+				 * connection is still alive (due to
+				 * an ISAKMP SA), we get rid of
+				 * routing.  Even though there is
+				 * still an eroute, the c->routing
+				 * setting will convince
+				 * unroute_connection to delete it.
+				 * unroute_connection would be upset
+				 * if c->routing == RT_ROUTED_TUNNEL
+				 */
+				unroute_connection(c);
+			} else {
+				if (!shunt_policy(KP_REPLACE_OUTBOUND,
+						  THIS_IS_NOT_INBOUND,
+						  c, sr, sr->routing,
+						  "delete_ipsec_sa() replace with shunt",
+						  st->st_logger)) {
+					log_state(RC_LOG, st,
+						  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
 				}
 			}
-			(void) teardown_half_ipsec_sa(st, false);
 		}
-		(void) teardown_half_ipsec_sa(st, true);
+	}
+	teardown_half_ipsec_sa(st, /*inbound?*/false, THIS_IS_NOT_INBOUND);
+	teardown_half_ipsec_sa(st, /*inbound*/true, what_about_inbound);
+}
 
-		break;
-	default:
-		dbg("kernel: unknown kernel stack in delete_ipsec_sa");
-		break;
-	} /* switch kernel_ops->type */
+void delete_ipsec_sa(struct state *st)
+{
+	teardown_ipsec_sa(st, REPORT_NO_INBOUND);
+}
+
+void delete_larval_ipsec_sa(struct state *st)
+{
+	teardown_ipsec_sa(st, EXPECT_NO_INBOUND);
 }
 
 bool was_eroute_idle(struct state *st, deltatime_t since_when)
@@ -3531,9 +3497,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 */
 
 			const ip_address null_host = afi->address.any;
-			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
+			bool ok = raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					     &null_host, &src, &null_host, &dst,
-					     /*from*/htonl(shunt_policy_spi(negotiation_shunt)),
 					     /*to*/htonl(shunt_policy_spi(failure_shunt)),
 					     sr->this.client.ipproto, ET_INT,
 					     esp_transport_proto_info,
@@ -3613,7 +3578,9 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (co_serial_is_set(bsp->from_serialno)) {
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
-					if (!shunt_policy(KP_ADD_OUTBOUND, c, &c->spd,
+					if (!shunt_policy(KP_ADD_OUTBOUND,
+							  REPORT_NO_INBOUND,
+							  c, &c->spd,
 							  RT_ROUTED_PROSPECTIVE,
 							  "expire_bare_shunts() add",
 							  logger)) {

@@ -26,11 +26,11 @@
  */
 
 bool raw_policy(enum kernel_policy_op op,
+		enum what_about_inbound what_about_inbound,
 		const ip_address *src_host,
 		const ip_selector *src_client,
 		const ip_address *dst_host,
 		const ip_selector *dst_client,
-		ipsec_spi_t cur_spi,
 		ipsec_spi_t new_spi,
 		unsigned int transport_proto,
 		enum eroute_type esatype,
@@ -52,6 +52,9 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 
+		jam_string(buf, " ");
+		jam_string(buf, what_about_inbound_name(what_about_inbound));
+
 		jam(buf, " ");
 		va_list ap;
 		va_start(ap, fmt);
@@ -68,7 +71,7 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_selector_subnet_port(buf, dst_client);
 
 		/*
-		 * Dump the {old,new}_spi.
+		 * Dump the new_spi.
 		 *
 		 * XXX: this needs to deal with a bug.
 		 *
@@ -82,7 +85,8 @@ bool raw_policy(enum kernel_policy_op op,
 		 * like to enforce the byte order).
 		 */
 		const char *spin = " ";
-		FOR_EACH_THING(nspi, cur_spi, new_spi) {
+		{
+			ipsec_spi_t nspi = new_spi;
 			const char *name = NULL;
 			bool spi_backwards = false;
 			/*
@@ -173,6 +177,19 @@ bool raw_policy(enum kernel_policy_op op,
 
 	}
 
+	switch (op) {
+	case KP_ADD_INBOUND:
+	case KP_DELETE_INBOUND:
+	case KP_REPLACE_INBOUND:
+		pexpect(what_about_inbound != THIS_IS_NOT_INBOUND);
+		break;
+	case KP_ADD_OUTBOUND:
+	case KP_DELETE_OUTBOUND:
+	case KP_REPLACE_OUTBOUND:
+		pexpect(what_about_inbound == THIS_IS_NOT_INBOUND);
+		break;
+	}
+
 	if (esatype == ET_INT) {
 		switch(ntohl(new_spi)) {
 		case SPI_HOLD:
@@ -188,10 +205,10 @@ bool raw_policy(enum kernel_policy_op op,
 		}
 	}
 
-	bool result = kernel_ops->raw_policy(op,
+	bool result = kernel_ops->raw_policy(op, what_about_inbound,
 					     src_host, src_client,
 					     dst_host, dst_client,
-					     cur_spi, new_spi,
+					     new_spi,
 					     transport_proto,
 					     esatype, encap,
 					     use_lifetime, sa_priority, sa_marks,
@@ -246,4 +263,55 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		}
 	}
 	return kernel_ops->add_sa(sa, replace, logger);
+}
+
+/*
+ * Add/replace/delete a shunt eroute.
+ *
+ * Such an eroute determines the fate of packets without the use
+ * of any SAs.  These are defaults, in effect.
+ * If a negotiation has not been attempted, use %trap.
+ * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
+ * is specified in the policy of connection c.
+ */
+
+bool shunt_policy(enum kernel_policy_op op,
+		  enum what_about_inbound what_about_inbound,
+		  const struct connection *c,
+		  const struct spd_route *sr,
+		  enum routing_t rt_kind,
+		  const char *what,
+		  struct logger *logger)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "kernel: %s() ", __func__);
+		jam_enum_short(buf, &kernel_policy_op_names, op);
+
+		jam_string(buf, " ");
+		jam_string(buf, what_about_inbound_name(what_about_inbound));
+
+		jam(buf, " %s", what);
+		jam(buf, " ");
+		jam_connection(buf, c);
+
+		jam(buf, " for rt_kind '%s' using",
+		    enum_name(&routing_story, rt_kind));
+
+		jam(buf, " ");
+		jam_selector_subnet_port(buf, &sr->this.client);
+		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
+		jam_selector_subnet_port(buf, &sr->that.client);
+
+		jam(buf, " (config)sec_label=");
+		if (c->config->sec_label.len > 0) {
+			jam_sanitized_hunk(buf, c->config->sec_label);
+		}
+	}
+
+	bool ok = kernel_ops->shunt_policy(op, what_about_inbound,
+					   c, sr, rt_kind,
+					   HUNK_AS_SHUNK(c->config->sec_label),
+					   what, logger);
+	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
+	return ok;
 }

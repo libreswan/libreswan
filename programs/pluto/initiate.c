@@ -575,9 +575,8 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 								 b->transport_proto);
 		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
 								 b->transport_proto);
-		if (!raw_policy(KP_REPLACE_OUTBOUND,
+		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&null_host, &src, &null_host, &dst,
-				/*from*/htonl(shunt_policy_spi(b->negotiation_shunt)),
 				/*to*/htonl(shunt_policy_spi(b->failure_shunt)),
 				b->transport_proto->ipproto,
 				ET_INT, esp_transport_proto_info,
@@ -918,10 +917,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_policy()?
 	 */
 
-	if (raw_policy(KP_ADD_OUTBOUND,
+	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &b->local.host_addr, &local_shunt,
 		       &b->remote.host_addr, &remote_shunt,
-		       htonl(SPI_HOLD), /* kernel induced; likely ignored */
 		       htonl(shunt_policy_spi(b->negotiation_shunt)),
 		       shunt_protocol->ipproto,
 		       ET_INT, esp_transport_proto_info,

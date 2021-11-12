@@ -20,11 +20,11 @@
 
 /*kernel_ops_policy() kernel_ops_spd()? */
 extern bool raw_policy(enum kernel_policy_op op,
+		       enum what_about_inbound what_about_inbound,
 		       const ip_address *this_host,
 		       const ip_selector *this_client,
 		       const ip_address *that_host,
 		       const ip_selector *that_client,
-		       ipsec_spi_t cur_spi,
 		       ipsec_spi_t new_spi,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
