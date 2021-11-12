@@ -477,7 +477,6 @@ extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      const struct ip_protocol *transport_proto,
-			      enum shunt_policy cur_shunt,
 			      bool skip_xfrm_policy_delete,
 			      const char *why, struct logger *logger);
 

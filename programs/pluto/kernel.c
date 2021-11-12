@@ -91,7 +91,6 @@ static bool route_and_eroute(struct connection *c,
 
 static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      const struct spd_route *sr,
-			      ipsec_spi_t cur_spi,
 			      ipsec_spi_t new_spi,
 			      const struct kernel_route *route,
 			      enum eroute_type esatype,
@@ -1216,7 +1215,7 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(op, why, sr, ntohl(SPI_IGNORE), ntohl(SPI_IGNORE),
+	return eroute_connection(op, why, sr, ntohl(SPI_IGNORE),
 				 &route, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, false), &c->sa_marks,
 				 xfrm_if_id,
@@ -1403,7 +1402,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 			ip_address our_addr = selector_prefix(p->our_client);
 			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       transport_proto, SHUNT_HOLD,
+					       transport_proto,
 					       /*skip_xfrm_policy_delete?*/false,
 					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
@@ -1436,7 +1435,6 @@ static void clear_narrow_holds(const ip_selector *our_client,
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       const struct ip_protocol *transport_proto,
-		       enum shunt_policy cur_shunt UNUSED,
 		       bool skip_xfrm_policy_delete,
 		       const char *why, struct logger *logger)
 {
@@ -1627,7 +1625,6 @@ bool install_se_connection_policies(struct connection *c, struct logger *logger)
 
 bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct spd_route *sr,
-		       ipsec_spi_t cur_spi UNUSED,
 		       ipsec_spi_t new_spi,
 		       const struct kernel_route *route,
 		       enum eroute_type esatype,
@@ -1765,7 +1762,6 @@ bool assign_holdpass(const struct connection *c,
 
 			if (eroute_connection(op, reason,
 					      sr,
-					      htonl(SPI_HOLD), /* kernel induced */
 					      htonl(shunt_policy_spi(negotiation_shunt)),
 					      &route, ET_INT,
 					      esp_transport_proto_info,
@@ -1783,7 +1779,6 @@ bool assign_holdpass(const struct connection *c,
 		}
 
 		if (!delete_bare_shunt(src, dst, transport_proto,
-				       c->config->negotiation_shunt,
 				       /*skip_xfrm_policy_delete?*/false,
 				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),
@@ -3594,7 +3589,6 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			bool skip_xfrm_policy_delete = co_serial_is_set(bsp->from_serialno);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
-					       bsp->shunt_policy,
 					       skip_xfrm_policy_delete,
 					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,

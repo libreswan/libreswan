@@ -2511,7 +2511,6 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 					if (!delete_bare_shunt(&c->spd.this.host_addr,
 							       &c->spd.that.host_addr,
 							       protocol_by_ipproto(c->spd.this.client.ipproto),
-							       SHUNT_PASS /* else its not bare */,
 							       /*skip_xfrm_policy_delete?*/true,
 							       "installed IPsec SA replaced old bare shunt",
 							       st->st_logger)) {
