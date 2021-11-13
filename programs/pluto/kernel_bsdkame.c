@@ -270,7 +270,7 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
  *
  */
 static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
-			       enum no_entry no_entry UNUSED,
+			       enum what_about_inbound what_about_inbound UNUSED,
 			       const ip_address *src_host,
 			       const ip_selector *src_client,
 			       const ip_address *dst_host,
@@ -437,7 +437,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
  * is specified in the policy of connection c.
  */
 static bool bsdkame_shunt_policy(enum kernel_policy_op op,
-				 enum no_entry no_inbound_entry UNUSED,
+				 enum what_about_inbound what_about_bound UNUSED,
 				 const struct connection *c,
 				 const struct spd_route *sr,
 				 enum routing_t rt_kind,
@@ -525,9 +525,10 @@ static bool bsdkame_shunt_policy(enum kernel_policy_op op,
 		if (ue != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
 			return bsdkame_shunt_policy(KP_REPLACE_OUTBOUND,
-						    THERE_IS_NO_INBOUND,
+						    THIS_IS_NOT_INBOUND,
 						    ue, esr,
 						    RT_ROUTED_PROSPECTIVE,
+						    sec_label,
 						    "restoring eclipsed",
 						    logger);
 		}
