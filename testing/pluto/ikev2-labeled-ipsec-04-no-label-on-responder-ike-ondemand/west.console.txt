@@ -35,12 +35,12 @@ XFRM state:
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir in priority 2080702 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32
 	security context system_u:object_r:ipsec_spd_t:s0
-	dir out priority 2080702 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

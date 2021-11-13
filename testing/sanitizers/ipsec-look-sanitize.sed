@@ -17,6 +17,9 @@ b end
   # 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254
   s/\(eth[0-9]\)  proto kernel  scope link  src/\1 proto kernel scope link src/g
 
+  # dir fwd priority 2080718 ptype main
+  s/ priority [1-9][0-9]* ptype / priority PRIORITY ptype /
+
   # due to a kernel difference? Just ignore the error code in the routing table
   s/metric 1024 error -[0-9][0-9]*/metric 1024 error -XXXX/g
   s/metric 1024 error [0-9][0-9]*/metric 1024 error -XXXX/g

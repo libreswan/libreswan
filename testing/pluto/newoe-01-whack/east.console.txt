@@ -38,43 +38,43 @@ src 192.1.2.23 dst 192.1.2.45
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 127.0.0.1/32 dst 192.1.2.23/32
-	dir fwd priority 3129279 ptype main
+	dir fwd priority PRIORITY ptype main
 src 127.0.0.1/32 dst 192.1.2.23/32
-	dir in priority 3129279 ptype main
+	dir in priority PRIORITY ptype main
 src 192.1.2.23/32 dst 127.0.0.1/32
-	dir out priority 3129279 ptype main
+	dir out priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.253/32
-	dir out priority 3129279 ptype main
+	dir out priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.254/32
-	dir out priority 3129279 ptype main
+	dir out priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.3.253/32
-	dir out priority 3129279 ptype main
+	dir out priority PRIORITY ptype main
 src 192.1.2.253/32 dst 192.1.2.23/32
-	dir fwd priority 3129279 ptype main
+	dir fwd priority PRIORITY ptype main
 src 192.1.2.253/32 dst 192.1.2.23/32
-	dir in priority 3129279 ptype main
+	dir in priority PRIORITY ptype main
 src 192.1.2.254/32 dst 192.1.2.23/32
-	dir fwd priority 3129279 ptype main
+	dir fwd priority PRIORITY ptype main
 src 192.1.2.254/32 dst 192.1.2.23/32
-	dir in priority 3129279 ptype main
+	dir in priority PRIORITY ptype main
 src 192.1.3.253/32 dst 192.1.2.23/32
-	dir fwd priority 3129279 ptype main
+	dir fwd priority PRIORITY ptype main
 src 192.1.3.253/32 dst 192.1.2.23/32
-	dir in priority 3129279 ptype main
+	dir in priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir out priority 4177855 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir fwd priority 4177855 ptype main
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir in priority 4177855 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.0/24
-	dir out priority 4177870 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 XFRM done

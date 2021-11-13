@@ -55,27 +55,27 @@ src 192.1.2.23 dst 192.1.2.45
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp sport 666 dport 666
-	dir fwd priority 1429454 ptype main
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp sport 666 dport 666
-	dir in priority 1429454 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp sport 667 dport 667
-	dir fwd priority 1429454 ptype main
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp sport 667 dport 667
-	dir in priority 1429454 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 666 dport 666
-	dir out priority 1429454 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 667 dport 667
-	dir out priority 1429454 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 XFRM done

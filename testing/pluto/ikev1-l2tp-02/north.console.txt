@@ -101,11 +101,11 @@ src 192.1.3.33 dst 192.1.2.23
 	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701
-	dir in priority 1425342 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
-	dir out priority 1425342 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

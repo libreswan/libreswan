@@ -73,29 +73,29 @@ src 192.1.2.23 dst 192.1.3.33
 north #
  ip xfrm policy
 src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir out priority 375423 ptype main 
+	dir out priority PRIORITY ptype main 
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp spi 0xSPISPI reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir fwd priority 375423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir in priority 375423 ptype main 
+	dir in priority PRIORITY ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
 src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir fwd priority 175423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir in priority 175423 ptype main 
+	dir in priority PRIORITY ptype main 
 src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir out priority 175423 ptype main 
+	dir out priority PRIORITY ptype main 
 src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir fwd priority 175423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir in priority 175423 ptype main 
+	dir in priority PRIORITY ptype main 
 src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir out priority 175423 ptype main 
+	dir out priority PRIORITY ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -160,27 +160,27 @@ src 192.1.2.23 dst 192.1.3.34
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.3.0/24 dst 192.0.3.0/24
-	dir fwd priority 175423 ptype main
+	dir fwd priority PRIORITY ptype main
 src 192.0.3.0/24 dst 192.0.3.0/24
-	dir in priority 175423 ptype main
+	dir in priority PRIORITY ptype main
 src 192.0.3.0/24 dst 192.0.3.0/24
-	dir out priority 175423 ptype main
+	dir out priority PRIORITY ptype main
 src 192.1.3.0/24 dst 192.1.3.0/24
-	dir fwd priority 175423 ptype main
+	dir fwd priority PRIORITY ptype main
 src 192.1.3.0/24 dst 192.1.3.0/24
-	dir in priority 175423 ptype main
+	dir in priority PRIORITY ptype main
 src 192.1.3.0/24 dst 192.1.3.0/24
-	dir out priority 175423 ptype main
+	dir out priority PRIORITY ptype main
 src 192.0.2.0/24 dst 192.0.3.0/24
-	dir fwd priority 375423 ptype main
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.34
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.3.0/24
-	dir in priority 375423 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.34
 		proto esp reqid REQID mode tunnel
 src 192.0.3.0/24 dst 192.0.2.0/24
-	dir out priority 375423 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.34 dst 192.1.2.23
 		proto esp spi 0xSPISPI reqid REQID mode tunnel
 XFRM done

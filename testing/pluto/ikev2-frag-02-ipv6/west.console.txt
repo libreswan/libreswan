@@ -54,29 +54,29 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 2001:111:1111::/48 dst 2001:2222:222:2200::/56
-	dir out priority 2072462 ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 src 2001:2222:222:2200::/56 dst 2001:111:1111::/48
-	dir fwd priority 2072462 ptype main
+	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 src 2001:2222:222:2200::/56 dst 2001:111:1111::/48
-	dir in priority 2072462 ptype main
+	dir in priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir fwd priority 1 ptype main
+	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir in priority 1 ptype main
+	dir in priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir out priority 1 ptype main
+	dir out priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir fwd priority 1 ptype main
+	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir in priority 1 ptype main
+	dir in priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir out priority 1 ptype main
+	dir out priority PRIORITY ptype main
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

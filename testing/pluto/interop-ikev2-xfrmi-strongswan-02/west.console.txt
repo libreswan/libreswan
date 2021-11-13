@@ -49,29 +49,29 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 west #
  ip xfrm policy
 src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 375423 ptype main 
+	dir out priority PRIORITY ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 	if_id 0x2
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 375423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 	if_id 0x2
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 375423 ptype main 
+	dir in priority PRIORITY ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 	if_id 0x2
 src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir fwd priority 175423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir in priority 175423 ptype main 
+	dir in priority PRIORITY ptype main 
 src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir out priority 175423 ptype main 
+	dir out priority PRIORITY ptype main 
 src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir fwd priority 175423 ptype main 
+	dir fwd priority PRIORITY ptype main 
 src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir in priority 175423 ptype main 
+	dir in priority PRIORITY ptype main 
 src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir out priority 175423 ptype main 
+	dir out priority PRIORITY ptype main 
 west #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
