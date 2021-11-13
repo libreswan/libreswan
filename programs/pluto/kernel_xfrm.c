@@ -1,5 +1,4 @@
-/*
- * netlink interface to the kernel's IPsec mechanism
+/* xfrm interface to the kernel's IPsec mechanism, for libreswan
  *
  * Copyright (C) 2003-2008 Herbert Xu
  * Copyright (C) 2006-2008 Michael Richardson <mcr@xelerance.com>
@@ -853,15 +852,6 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	 */
 	switch (op) {
 	case KP_DELETE_INBOUND:
-#if 0
-		/*
-		 * XXX: does sec_label need a forward?  Lets assume
-		 * not.
-		 */
-		if (sec_label.len > 0) {
-			break;
-		}
-#endif
 		/*
 		 * ??? we will call netlink_policy even if !ok.
 		 *
@@ -877,15 +867,6 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 					   policy_name, "(fwd)", logger);
 		break;
 	case KP_ADD_INBOUND:
-#if 0
-		/*
-		 * XXX: does sec_label need a forward?  Lets assume
-		 * not.
-		 */
-		if (sec_label.len > 0) {
-			break;
-		}
-#endif
 		if (!ok) {
 			break;
 		}
