@@ -451,15 +451,17 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 }
 
 /*
- * netlink_policy -
+ * sendrecv_xfrm_policy -
  *
  * @param hdr - Data to check
  * @param enoent_ok - Boolean - OK or not OK.
  * @param story - String
  * @return boolean
  */
-static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
-			   const char *story, struct logger *logger)
+static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
+				 bool enoent_ok,
+				 const char *story, const char *adstory,
+				 struct logger *logger)
 {
 	struct nlm_resp rsp;
 
@@ -480,9 +482,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 		return true;
 
 	log_errno(logger, error,
-		  "ERROR: netlink %s response for flow %s",
+		  "kernel: xfrm %s%s response for flow %s",
 		  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
-		  story);
+		  story, adstory);
 	return false;
 }
 
@@ -554,6 +556,10 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	const char *policy_name;
 	switch (esatype) {
 	case ET_UNSPEC:
+		policy = IPSEC_POLICY_IPSEC;
+		policy_name = "all(ipsec)";
+		break;
+
 	case ET_AH:
 	case ET_ESP:
 	case ET_IPCOMP:
@@ -833,7 +839,9 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	bool enoent_ok = (op == KP_DELETE_INBOUND ||
 			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
 
-	bool ok = netlink_policy(&req.n, enoent_ok, policy_name, logger);
+	bool ok = sendrecv_xfrm_policy(&req.n, enoent_ok, policy_name,
+				       ((op & KERNEL_POLICY_DIR_OUT) ? "(out)" : "(in)"),
+				       logger);
 
 	/*
 	 * ??? deal with any forwarding policy.
@@ -865,7 +873,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
 		    __func__);
 		req.u.id.dir = XFRM_POLICY_FWD;
-		ok &= netlink_policy(&req.n, enoent_ok, policy_name, logger);
+		ok &= sendrecv_xfrm_policy(&req.n, enoent_ok,
+					   policy_name, "(fwd)", logger);
 		break;
 	case KP_ADD_INBOUND:
 #if 0
@@ -886,7 +895,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		}
 		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
 		req.u.p.dir = XFRM_POLICY_FWD;
-		ok &= netlink_policy(&req.n, enoent_ok, policy_name, logger);
+		ok &= sendrecv_xfrm_policy(&req.n, enoent_ok,
+					   policy_name, "(fwd)", logger);
 		break;
 	default:
 		break; /*no-op*/
@@ -2555,23 +2565,23 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.dport = htons(icmp_code);
 		req.u.p.sel.sport_mask = 0xffff;
 
-		if (!netlink_policy(&req.n, 1, text, logger))
+		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(in)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_FWD;
 
-		if (!netlink_policy(&req.n, 1, text, logger))
+		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(fwd)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
 
-		if (!netlink_policy(&req.n, 1, text, logger))
+		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(out)", logger))
 			return false;
 	} else {
 		req.u.p.sel.dport = htons(port);
 		req.u.p.sel.dport_mask = 0xffff;
 
-		if (!netlink_policy(&req.n, 1, text, logger))
+		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(in)", logger))
 			return false;
 
 		req.u.p.dir = XFRM_POLICY_OUT;
@@ -2581,7 +2591,7 @@ static bool netlink_bypass_policy(int family, int proto, int port,
 		req.u.p.sel.dport = 0;
 		req.u.p.sel.dport_mask = 0;
 
-		if (!netlink_policy(&req.n, 1, text, logger))
+		if (!sendrecv_xfrm_policy(&req.n, 1, text, "(out)", logger))
 			return false;
 	}
 
