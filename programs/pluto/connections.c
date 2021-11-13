@@ -4875,58 +4875,69 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	/* XXX: assume unsigned >= 32-bits */
 	passert(sizeof(unsigned) >= sizeof(uint32_t));
 
-	unsigned portsw = /* max 2 (2 bits) */
-		(c->spd.this.client.hport == 0 ? 0 : 1) +
-		(c->spd.that.client.hport == 0 ? 0 : 1);
+	/*
+	 * Accumulate the priority.
+	 *
+	 * Add things most-important to least-important. Before ORing
+	 * in the new bits, left-shift PRIO to make space.
+	 */
+	unsigned prio = 0;
 
-	unsigned protow = c->spd.this.client.ipproto == 0 ? 0 : 1;	/* (1 bit) */
+	/* Determine the base priority (2 bits) (0 is manual by user). */
+	unsigned base;
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->policy)) {
+			base = 3; /* opportunistic anonymous */
+		} else {
+			base = 2; /* opportunistic */
+		}
+	} else {
+		base = 1; /* static connection */
+	}
 
+	/* XXX: yes the shift is pointless (but it is consistent) */
+	prio = (prio << 2) | base;
+
+	/* Penalize wildcard ports (2 bits). */
+	unsigned portsw =
+		((c->spd.this.client.hport == 0 ? 1 : 0) +
+		 (c->spd.that.client.hport == 0 ? 1 : 0));
+	prio = (prio << 2) | portsw;
+
+	/* Penalize wildcard protocol (1 bit). */
+	unsigned protow = c->spd.this.client.ipproto == 0 ? 1 : 0;
+	prio = (prio << 1) | protow;
 
 	/*
 	 * For transport mode or /32 to /32, the client mask bits are
 	 * set based on the host_addr parameters.
+	 *
+	 * A longer prefix wins over a shorter prefix, hence the
+	 * reversal.  Value needs to fit 0-128, hence 8 bits.
 	 */
-	unsigned srcw, dstw;	/* each max 128 (8 bits) */
-	srcw = c->spd.this.client.maskbits;
-	dstw = c->spd.that.client.maskbits;
-	/* if opportunistic, override the template destination mask with /32 or /128 */
+	unsigned srcw = 128 - c->spd.this.client.maskbits;
+	prio = (prio << 8) | srcw;
+
+	/* if opportunistic, dial up dstw TO THE MAX aka 0 */
+	unsigned dstw = 128 - c->spd.that.client.maskbits;
 	if (oe_shunt) {
-		dstw = (addrtypeof(&c->spd.that.host_addr) == AF_INET) ? 32 : 128;
+		dstw = 0;
 	}
+	prio = (prio << 8) | dstw;
 
 	/*
-	 * "Ensure an instance of a template/OE-group always has
-	 * preference."
+	 * Penalize template (1 bit).
 	 *
-	 * Except, at this point, the polarity is reversed so the
-	 * below gives CK_INSTANCE lower priority.  Get around this
-	 * for sec-labels by making the decrement bigger (except that
-	 * is overflowing into the DSTW bits).
-	 *
-	 * Should fix the math, but that affects all tests.
+	 * "Ensure an instance always has preference over it's
+	 * template/OE-group always has preference."
 	 */
-	unsigned instw = (c->kind == CK_INSTANCE && c->spd.this.sec_label.len > 0 ? 2u :
-			  c->kind == CK_INSTANCE ? 0u :
-			  1u);
+	unsigned instw = (c->kind == CK_INSTANCE ? 0 : 1);
+	prio = (prio << 1) | instw;
 
-	unsigned pmax;
-	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
-		if (LIN(POLICY_AUTH_NULL, c->policy)) {
-			pmax = PLUTO_SPD_OPPO_ANON_MAX;
-		} else {
-			pmax = PLUTO_SPD_OPPO_MAX;
-		}
-	} else {
-		pmax = PLUTO_SPD_STATIC_MAX;
-	}
-
-	unsigned prio_hi = (portsw << 18 | protow << 17 | srcw << 9 | dstw << 1 | instw);
-	unsigned prio_lo = pmax - prio_hi;
-
-	dbg("priority calculation of connection "PRI_CONNECTION" is %u-%u=%u (%#x) portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
-	    pri_connection(c, &cib), pmax, prio_hi, prio_lo, prio_lo,
-	    portsw, protow, srcw, dstw, instw);
-	return prio_lo;
+	dbg("priority calculation of connection "PRI_CONNECTION" is %u (%#x) base=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	    pri_connection(c, &cib), prio, prio,
+	    base, portsw, protow, srcw, dstw, instw);
+	return prio;
 }
 
 /*
