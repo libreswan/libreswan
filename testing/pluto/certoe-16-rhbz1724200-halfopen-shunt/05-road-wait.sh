@@ -4,9 +4,9 @@ sleep 30
 ipsec status |grep STATE_
 # confirm it didn't create a shunt and did not nuke out policy
 ipsec shuntstatus
-ip xfrm pol
+ip xfrm policy
 sleep 30
 sleep 30
 # show shuntlife= was reached - it should not have slaughtered the IPsec SA
 ipsec shuntstatus
-ip xfrm pol
+ip xfrm policy

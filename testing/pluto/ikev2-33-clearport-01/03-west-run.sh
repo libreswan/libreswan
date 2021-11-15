@@ -2,7 +2,7 @@
 ipsec auto --route west-east
 # poke a hole to port 7, those packets will be allowed cleartext
 ipsec auto --route pass-7
-ip xfrm pol
+ip xfrm policy
 # send packet over the clear exception - should return connection refused
 echo 'test' | nc -v -w 5 192.1.2.23 7
 # send packet over the 'tunnel' that's negotiating - shoudl get blocked

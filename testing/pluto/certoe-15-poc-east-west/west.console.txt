@@ -71,7 +71,7 @@ west #
 west #
  ip xfrm state
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.2.45/32 dst 192.1.2.23/32 
 	dir out priority 3129278 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -153,19 +153,19 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.2.45/32 dst 192.1.2.23/32 
 	dir out priority 3129279 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32 
 	dir fwd priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32 
 	dir in priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.2.45/32 
 	dir fwd priority 3129279 ptype main 
 src 192.1.2.253/32 dst 192.1.2.45/32 

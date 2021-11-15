@@ -18,5 +18,5 @@ sleep 45
 # idle tunnels should not re-estaliblish, so should be no IPsec SA.
 # Template (dir out) for %trap to 192.1.2.23/32 should be there
 ipsec whack --trafficstatus
-ip xfrm pol
+ip xfrm policy
 echo done

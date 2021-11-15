@@ -22,7 +22,7 @@ west #
 west #
  ipsec auto --route pass-7
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
 	dir fwd priority 1687486 ptype main 
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 

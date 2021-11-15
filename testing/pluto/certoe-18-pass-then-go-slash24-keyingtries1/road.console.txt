@@ -207,19 +207,19 @@ road #
 road #
  # we should see one of each in/fwd/out (confirming %pass shunt delete didn't take out dir out tunnel policy
 road #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 3129279 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir fwd priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir in priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16441 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 3129294 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0

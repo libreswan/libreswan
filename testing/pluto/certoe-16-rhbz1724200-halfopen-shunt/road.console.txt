@@ -49,19 +49,19 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 3129279 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir fwd priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir in priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.3.209/32 
 	dir fwd priority 3129279 ptype main 
 src 192.1.2.253/32 dst 192.1.3.209/32 
@@ -113,19 +113,19 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.3.209/32 dst 192.1.2.23/32 
 	dir out priority 3129279 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir fwd priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.3.209/32 
 	dir in priority 3129279 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid 16417 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.253/32 dst 192.1.3.209/32 
 	dir fwd priority 3129279 ptype main 
 src 192.1.2.253/32 dst 192.1.3.209/32 

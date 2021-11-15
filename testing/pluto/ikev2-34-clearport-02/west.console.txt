@@ -25,7 +25,7 @@ west #
 west #
  ipsec auto --route pass-7
 west #
- ip xfrm pol
+ ip xfrm policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
 	dir fwd priority 1687486 ptype main 
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
@@ -35,15 +35,15 @@ src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 7
 src 192.1.2.45/32 dst 192.1.2.23/32 
 	dir out priority 2080702 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid 16389 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32 
 	dir fwd priority 2080702 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16389 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32 
 	dir in priority 2080702 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid 16389 mode tunnel
+		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
