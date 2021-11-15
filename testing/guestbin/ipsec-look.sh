@@ -8,13 +8,16 @@ hostname | grep "nic" > /dev/null && exit
 # <<ipsec-look.sh 2>/devnull|grep foo>>.  Internally, "ipsec look"
 # uses that same output to produce its dump.
 
-echo ==== cut ====	   				 1>&2
-echo "start raw xfrm state:"				 1>&2
-ip -o xfrm state     					 1>&2
-echo "end raw xfrm state:"				 1>&2
-echo "start raw xfrm policy:"				 1>&2
-ip -o xfrm policy    					 1>&2
-echo "end raw xfrm policy:"				 1>&2
-echo ==== tuc ==== 					 1>&2
+f=OUTPUT/$(hostname).ipsec-look.$$.log
+echo ==== cut ====	   				1>&2
+echo DUMP IN: $f   				 	1>&2
+echo ==== tuc ====	   				1>&2
+
+(
+    echo "IP XFRM STATE:"
+    ip -o xfrm state
+    echo "IP XFRM POLICY:"
+    ip -o xfrm policy
+) > $f
 
 exec ipsec look "$@"
