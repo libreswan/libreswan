@@ -23,7 +23,7 @@ me="ipsec look"
 
 case "$1" in
     --help)
-	echo "Usage: ipsec look"
+	echo "Usage: ${me}"
 	exit 0
 	;;
     --version)
@@ -32,87 +32,142 @@ case "$1" in
 	;;
 esac
 
+# The ability to select what is displayed is internal, but is used for
+# testing.
+
+default()
+{
+    look_state=$1
+    look_policy=$1
+    look_iptables=$1
+    look_route=$1
+    look_nss=$1
+}
+
+if test $# -eq 0 ; then
+    default true
+else
+    default false
+    while test $# -gt 0 ; do
+	case "$1" in
+     	    state) look_state=true ;;
+     	    policy) look_policy=true ;;
+	    iptables) look_iptables=true ;;
+	    route ) look_route=true ;;
+	    nss ) look_nss=true ;;
+	    * ) echo Usage: ${me} ; exit 1 ;;
+	esac
+	shift
+    done
+fi
+
 # label it just to be sure
 echo "$(hostname) $(date)"
 
 # xfrm
-if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
-    echo "XFRM state:"
-    ip xfrm state
-    echo "XFRM policy:"
-    # Force the order by feeding sort with lines prefixed by '[46]
-    # TYPE PRIORITY |'.
-    ip -o xfrm policy | {
-	# clean up the input: drop socket lines; strip trailing white
-	# space (either end of line or before \\); strip double \\s
-	sed -e '/socket/d' \
-	    -e 's/\s*\\/\\/g' \
-	    -e 's/\\\\/\\/g' \
-	    -e 's/[\\]*\s*$//g'
-    } | {
-	# Build the '<[46]> <type> <priority> |' prefix ready for
-	# sorting.  For each field, start with the assumption that the
-	# value is unknown (setting it to a default), and then adjust
-	# it as necessary.  For instance, for the protocol, start out
-	# assuming it is '4' (IPv4) and then if the line contains a
-	# ':' switch the prefix to '6' (IPv6).
-	sed -e 's/^/| /' \
-	    \
-	    -e 's/^/0 /' \
-	    -e 's/^0 \(.* priority \([0-9][0-9]*\)\)/\2 \1/' \
-	    \
-	    -e 's/^/0 /' \
-	    -e 's/^0 \(.*:.* type \([0-9][0-9]*\)\)/\2 \1/' \
-	    \
-	    -e 's/^/4 /' \
-	    -e 's/^4 \(.*:\)/6 \1/'
-    } | {
-	# sort by each of the prefixes individually, and then by the
-	# rest of the line.  Shorter forms like -n and -k1,3n don't do
-	# what is wanted.  XXX: Should add 'V' so .24. is before
-	# .200.?
-	sort -b -k1,1n -k2,2n -k3,3n -k5
-    } | {
-	# strip the sort prefixes
-	sed -e 's/^.* | //'
-    } | {
-	# convert \ into line breaks
-	tr '\\' '\012'
-    }
-    echo "XFRM done"
+
+if ${look_state} ; then
+    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
+	echo "XFRM state:"
+	ip xfrm state
+    fi
 fi
 
-echo IPSEC mangle TABLES
-if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
-    iptables -n -t mangle -L IPSEC
-fi
-if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
-    ip6tables -n -t mangle -L IPSEC
+if ${look_policy} ; then
+    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
+	echo "XFRM policy:"
+	# Force the order by feeding sort with lines prefixed by '[46]
+	# TYPE PRIORITY |'.
+	#
+	# XXX: should this also sort the direction?
+	ip -o xfrm policy | {
+	    # clean up the input: drop socket lines; strip trailing
+	    # white space (either end of line or before \\); strip
+	    # double \\s
+	    sed -e '/socket/d' \
+		-e 's/\s*\\/\\/g' \
+		-e 's/\\\\/\\/g' \
+		-e 's/[\\]*\s*$//g'
+	} | {
+	    # Build the '<[46]> <type> <priority> |' prefix ready for
+	    # sorting.  For each field, start with the assumption that
+	    # the value is unknown (setting it to the default), and
+	    # then adjust it as necessary.  For instance, for the
+	    # protocol, start out assuming it is '4' (IPv4) and then
+	    # if the line contains a ':' switch the prefix to '6'
+	    # (IPv6).
+	    sed -e 's/^/| /' \
+		\
+		-e 's/^/0 /' \
+		-e 's/^0 \(.* priority \([0-9][0-9]*\)\)/\2 \1/' \
+		\
+		-e 's/^/0 /' \
+		-e 's/^0 \(.*:.* type \([0-9][0-9]*\)\)/\2 \1/' \
+		\
+		-e 's/^/4 /' \
+		-e 's/^4 \(.*:\)/6 \1/'
+	} | {
+	    # sort by each of the prefixes individually, and then by
+	    # the rest of the line.  Shorter forms like -n and -k1,3n
+	    # don't do what is wanted.
+	    #
+	    # XXX: Should add 'V' so .24. is before .200.?
+	    sort -b -k1,1n -k2,2n -k3,3n -k5
+	} | {
+	    # strip the sort prefixes
+	    sed -e 's/^.* | //'
+	} | {
+	    # convert \ into line breaks
+	    tr '\\' '\012'
+	}
+    fi
 fi
 
-echo NEW_IPSEC_CONN mangle TABLES
-if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
+if ${look_state} || ${look_policy} l then
+    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
+	echo "XFRM done"
+    fi
+fi
+
+
+if ${look_iptables} ; then
+    echo IPSEC mangle TABLES
+    if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
+	iptables -n -t mangle -L IPSEC
+    fi
+    if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
+	ip6tables -n -t mangle -L IPSEC
+    fi
+
+    echo NEW_IPSEC_CONN mangle TABLES
+    if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
 	iptables -n -t mangle -L NEW_IPSEC_CONN
-fi
-if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
+    fi
+    if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 	ip6tables -n -t mangle -L NEW_IPSEC_CONN
+    fi
 fi
 
-echo ROUTING TABLES
-# The IP command includes extra and evoling white space
-{
-    ip -4 route
-    ip -6 route
-} | sed -e 's/  / /g' -e 's/ $//'
-
-if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
-    echo NSS_CERTIFICATES
-    certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
-    certutil -L -d sql:@IPSEC_NSSDIR@ | \
-	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
-elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
-    echo NSS_CERTIFICATES
-    certutil -L -d @IPSEC_NSSDIR@ | head -4
-    certutil -L -d @IPSEC_NSSDIR@ | \
-	grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+if ${look_route} ; then
+    echo ROUTING TABLES
+    # The IP command includes extra and evoling white space
+    {
+	ip -4 route
+	ip -6 route
+    } | sed -e 's/  / /g' -e 's/ $//'
 fi
+
+if ${look_nss} ; then
+    if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
+	echo NSS_CERTIFICATES
+	certutil -L -d sql:@IPSEC_NSSDIR@ | head -4
+	certutil -L -d sql:@IPSEC_NSSDIR@ | \
+	    grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+    elif [ -f @IPSEC_NSSDIR@/cert8.db ]; then
+	echo NSS_CERTIFICATES
+	certutil -L -d @IPSEC_NSSDIR@ | head -4
+	certutil -L -d @IPSEC_NSSDIR@ | \
+	    grep -E -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
+    fi
+fi
+
