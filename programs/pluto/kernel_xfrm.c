@@ -97,6 +97,7 @@
 #include "initiate.h"		/* for initiate_ondemand() */
 #include "labeled_ipsec.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
+#include "ip_packet.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -1688,34 +1689,37 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
  * @param dst ip_address formatted destination
  * @return err_t NULL if okay, otherwise an error
  */
+
+static struct ip_bytes bytes_from_xfrm_address(const struct ip_info *afi,
+					       const xfrm_address_t *xaddr)
+{
+	struct ip_bytes bytes = unset_bytes; /* "zero" it & set type */
+	memcpy(&bytes, xaddr, afi->ip_size);
+	return bytes;
+}
+
 static ip_address address_from_xfrm(const struct ip_info *afi,
 				    const xfrm_address_t *xaddr)
 {
-	/* .len == ipv6 size */
-	shunk_t x = THING_AS_SHUNK(*xaddr);
-
-	ip_address addr = afi->address.any; /* "zero" it & set type */
-	chunk_t a = address_as_chunk(&addr);
-
-	/* a = x */
-	passert(a.len <= x.len);
-	memcpy(a.ptr, x.ptr, a.len);
-
-	return addr;
+	struct ip_bytes bytes = bytes_from_xfrm_address(afi, xaddr);
+	return address_from_raw(HERE, afi->ip_version, bytes);
 }
 
 /*
  * Create the client's ip_endpoint from xfrm_address_t:NPORT.
  */
 
-static ip_endpoint endpoint_from_xfrm(const struct ip_info *afi,
-				      const ip_protocol *protocol,
-				      const xfrm_address_t *src,
-				      uint16_t nport)
+static ip_packet packet_from_xfrm_selector(const struct ip_info *afi,
+					   const struct xfrm_selector *sel)
 {
-	ip_address address = address_from_xfrm(afi, src);
-	ip_port port = ip_nport(nport);
-	return endpoint_from_address_protocol_port(address, protocol, port);
+	const ip_protocol *protocol = protocol_by_ipproto(sel->proto);
+	passert(protocol != NULL); /* sel.proto is a byte, right? */
+
+	struct ip_bytes src_bytes = bytes_from_xfrm_address(afi, &sel->saddr);
+	struct ip_bytes dst_bytes = bytes_from_xfrm_address(afi, &sel->daddr);
+	return packet_from_raw(HERE, afi, protocol,
+			       &src_bytes, ip_nport(sel->sport),
+			       &dst_bytes, ip_nport(sel->dport));
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
@@ -1758,19 +1762,22 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		     acquire->policy.sel.family);
 		return;
 	}
-	const ip_protocol *protocol = protocol_by_ipproto(acquire->sel.proto);
-	if (protocol == NULL) {
+
+	if (acquire->sel.prefixlen_s != afi->mask_cnt) {
 		llog(RC_LOG, logger,
-		     "XFRM_MSG_ACQUIRE message from kernel malformed: protocol %u unknown",
-		     acquire->policy.sel.proto);
+		     "XFRM_MSG_ACQUIRE message from kernel malformed: prefixlen_s %u invalid",
+		     acquire->sel.prefixlen_s);
 		return;
 	}
-	ip_endpoint local = endpoint_from_xfrm(afi, protocol,
-					      &acquire->sel.saddr,
-					      acquire->sel.sport);
-	ip_endpoint remote = endpoint_from_xfrm(afi, protocol,
-						&acquire->sel.daddr,
-						acquire->sel.dport);
+
+	if (acquire->sel.prefixlen_d != afi->mask_cnt) {
+		llog(RC_LOG, logger,
+		     "XFRM_MSG_ACQUIRE message from kernel malformed: prefixlen_d %u invalid",
+		     acquire->sel.prefixlen_d);
+		return;
+	}
+
+	ip_packet packet = packet_from_xfrm_selector(afi, &acquire->sel);
 
 	/*
 	 * Run through rtattributes looking for XFRMA_SEC_CTX
@@ -1849,7 +1856,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-	initiate_ondemand(&local, &remote,
+	initiate_ondemand(&packet,
 			  /*by_acquire*/true,
 			  /*background?*/true/*no whack so doesn't matter*/,
 			  sec_label, logger);

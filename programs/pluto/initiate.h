@@ -17,6 +17,8 @@
 #ifndef INITIATE_H
 #define INITIATE_H
 
+#include "ip_packet.h"
+
 bool initiate_connection(struct connection *c, const char *remote_host, bool background);
 void initiate_connections_by_name(const char *name, const char *remote_host,
 				  bool background, struct logger *logger);
@@ -28,8 +30,7 @@ void ipsecdoi_initiate(struct connection *c,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger);
 
-extern void initiate_ondemand(const ip_endpoint *our_client,
-			      const ip_endpoint *peer_client,
+extern void initiate_ondemand(const ip_packet *packet,
 			      bool by_acquire, bool background,
 			      const shunk_t sec_label,
 			      struct logger *logger);

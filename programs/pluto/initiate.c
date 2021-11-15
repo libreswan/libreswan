@@ -510,6 +510,8 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 
 struct find_oppo_bundle {
 	const char *want;
+	ip_packet packet; /* that triggered the opportunistic exchange */
+	/* redundant */
 	struct {
 		/* traffic that triggered the opportunistic exchange */
 		ip_endpoint client;
@@ -966,23 +968,20 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			  b->background, b->logger);
 }
 
-void initiate_ondemand(const ip_endpoint *local_client,
-		       const ip_endpoint *remote_client,
+void initiate_ondemand(const ip_packet *packet,
 		       bool by_acquire, bool background,
 		       const shunk_t sec_label,
 		       struct logger *logger)
 {
 	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/
-	const struct ip_protocol *transport_proto = endpoint_protocol(*local_client);
-	pexpect(transport_proto != NULL);
-	pexpect(transport_proto == endpoint_protocol(*remote_client));
 	struct find_oppo_bundle b = {
 		.want = why,   /* fudge */
-		.local.client = *local_client,
-		.remote.client = *remote_client,
-		.local.host_addr = endpoint_address(*local_client),
-		.remote.host_addr = endpoint_address(*remote_client),
-		.transport_proto = transport_proto,
+		.packet = *packet,
+		.local.client = packet_src_endpoint(*packet),
+		.remote.client = packet_dst_endpoint(*packet),
+		.local.host_addr = packet_src_address(*packet),
+		.remote.host_addr = packet_dst_address(*packet),
+		.transport_proto = packet->protocol,
 		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
