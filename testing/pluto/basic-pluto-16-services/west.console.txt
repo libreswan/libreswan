@@ -107,12 +107,12 @@ west #
  # test for rhbz#1127313 (IPsec holes for IPv6 neighbour discovery)
 west #
  ip -o xfrm pol |grep ipv6-icmp
-src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir out priority PRIORITY ptype main \
-src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir fwd priority PRIORITY ptype main \
-src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir in priority PRIORITY ptype main \
-src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir out priority PRIORITY ptype main \
-src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir fwd priority PRIORITY ptype main \
-src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir in priority PRIORITY ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir out priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir fwd priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 135 \	dir in priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir out priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir fwd priority 1 ptype main \
+src ::/0 dst ::/0 proto ipv6-icmp type 136 \	dir in priority 1 ptype main \
 west #
  # test for rhbz#1572620
 west #

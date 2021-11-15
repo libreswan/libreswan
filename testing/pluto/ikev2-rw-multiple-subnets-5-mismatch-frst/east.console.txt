@@ -57,18 +57,6 @@ src 192.1.2.23 dst 0.0.0.0
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.3.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 0.0.0.0
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.0.20.0/24 dst 192.0.3.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
@@ -80,6 +68,18 @@ src 192.0.3.0/24 dst 192.0.20.0/24
 src 192.0.3.0/24 dst 192.0.20.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 0.0.0.0
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
