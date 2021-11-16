@@ -123,7 +123,7 @@ if ${look_policy} ; then
     fi
 fi
 
-if ${look_state} || ${look_policy} l then
+if ${look_state} || ${look_policy} ; then
     if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
 	echo "XFRM done"
     fi
