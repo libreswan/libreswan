@@ -413,14 +413,14 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
 	const struct ip_info *afi = address_type(&this->host_addr);
 	if (afi == NULL) {
-		dbg("  %s.host_addr's address family is unknown; skipping default_end()",
-		    this->config->leftright);
+		dbg("  %s.host_addr's address family is unknown; skipping %s()",
+		    this->config->leftright, __func__);
 		return;
 	}
 
 	if (address_is_any(this->host_addr)) {
-		dbg("  %s.host_addr's is %%any; skipping default_end()",
-		    this->config->leftright);
+		dbg("  %s.host_addr's is %%any; skipping %s()",
+		    this->config->leftright, __func__);
 		return;
 	}
 
@@ -1115,12 +1115,9 @@ static int extract_end(struct connection *c,
 	} else if (src->protoport.is_set) {
 		/*
 		 * XXX: if there's no client _yet_ there's a
-		 * protoport, then there _is_ a client.
-		 * But the code doesn't yet believe this.
-		 *
-		 * Should really be figuring out the address family
-		 * and combining that with %any.  As things stand this
-		 * is a bogus client.
+		 * protoport, then there _is_ a client.  But the code
+		 * doesn't yet believe this (.has_client is not
+		 * updated).
 		 */
 		dst->client = selector_from_subnet_protoport(client_afi->subnet.all,
 							     src->protoport);
