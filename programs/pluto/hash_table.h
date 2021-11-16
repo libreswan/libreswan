@@ -38,11 +38,16 @@ struct hash_table {
 
 #define HASH_TABLE(STRUCT, NAME, FIELD, NR_BUCKETS)			\
 									\
+	LIST_INFO(STRUCT, hash_table_entries.NAME,			\
+		  STRUCT##_##NAME##_hash_info, jam_##STRUCT##_##NAME);	\
+									\
 	static hash_t hash_table_hash_##STRUCT##_##NAME(const void *data) \
 	{								\
 		const struct STRUCT *s = data;				\
 		return hash_##STRUCT##_##NAME(&(*s)FIELD);		\
 	}								\
+									\
+	static struct list_head STRUCT##_##NAME##_buckets[NR_BUCKETS];	\
 									\
 	static struct list_entry *hash_table_entry_##STRUCT##_##NAME(void *data) \
 	{								\
@@ -50,19 +55,6 @@ struct hash_table {
 		return &s->hash_table_entries.NAME;			\
 	}								\
 									\
-	static void hash_table_jam_##STRUCT##_##NAME(struct jambuf *buf, \
-						     const void *data)	\
-	{								\
-		const struct STRUCT *s = data;				\
-		jam_##STRUCT##_##NAME(buf, s);				\
-	}								\
-									\
-	static const struct list_info STRUCT##_##NAME##_hash_info = {	\
-		.name = #STRUCT"."#NAME,				\
-		.jam = hash_table_jam_##STRUCT##_##NAME,		\
-	};								\
-									\
-	static struct list_head STRUCT##_##NAME##_buckets[NR_BUCKETS];	\
 	struct hash_table STRUCT##_##NAME##_hash_table = {		\
 		.hasher = hash_table_hash_##STRUCT##_##NAME,		\
 		.entry = hash_table_entry_##STRUCT##_##NAME,		\
@@ -104,17 +96,8 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 
 #define HASH_DB(STRUCT, TABLE, ...)					\
 									\
-	static void STRUCT##_db_jam_##STRUCT(struct jambuf *buf,	\
-					     const void *data)		\
-	{								\
-		const struct STRUCT *s = data;				\
-		jam_##STRUCT(buf, s);					\
-	}								\
-									\
-	static const struct list_info STRUCT##_db_list_info = {		\
-		.name = #STRUCT " list",				\
-		.jam = STRUCT##_db_jam_##STRUCT,			\
-	};								\
+	LIST_INFO(STRUCT, hash_table_entries.list,			\
+		  STRUCT##_db_list_info, jam_##STRUCT);			\
 									\
 	static struct list_head STRUCT##_db_list_head =			\
 		INIT_LIST_HEAD(&STRUCT##_db_list_head,			\

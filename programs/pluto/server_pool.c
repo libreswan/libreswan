@@ -121,10 +121,7 @@ static void jam_backlog(struct jambuf *buf, const void *data)
 	}
 }
 
-static const struct list_info backlog_info = {
-	.name = "backlog",
-	.jam = jam_backlog,
-};
+LIST_INFO(job, backlog, backlog_info, jam_backlog);
 
 static pthread_mutex_t backlog_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;

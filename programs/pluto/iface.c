@@ -49,18 +49,15 @@ struct iface_endpoint *interfaces = NULL;  /* public interfaces */
  * The interfaces - eth0 ...
  */
 
-static void jam_iface_dev(struct jambuf *buf, const void *data)
+static void jam_iface_dev(struct jambuf *buf, const struct iface_dev *ifd)
 {
-	const struct iface_dev *ifd = data;
 	jam_string(buf, ifd->id_rname);
 }
 
-static const struct list_info iface_dev_info = {
-	.name = "interface_dev",
-	.jam = jam_iface_dev,
-};
+LIST_INFO(iface_dev, ifd_entry, iface_dev_info, jam_iface_dev);
 
-static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev, &iface_dev_info);
+static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
+						       &iface_dev_info);
 
 static void free_iface_dev(void *obj, where_t where UNUSED)
 {

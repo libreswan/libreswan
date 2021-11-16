@@ -421,16 +421,12 @@ struct replay_entry {
 	unsigned long nr;
 };
 
-static void jam_replay_entry(struct jambuf *buf, const void *data)
+static void jam_replay_entry(struct jambuf *buf, const struct replay_entry *r)
 {
-	const struct replay_entry *r = data;
 	jam(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
 }
 
-static const struct list_info replay_info = {
-	.name = "replay list",
-	.jam = jam_replay_entry,
-};
+LIST_INFO(replay_entry, entry, replay_info, jam_replay_entry);
 
 static struct list_head replay_packets = INIT_LIST_HEAD(&replay_packets, &replay_info);
 

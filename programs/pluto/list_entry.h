@@ -24,7 +24,22 @@
 struct list_info {
 	const char *name;
 	void (*jam)(struct jambuf *buf, const void *data);
+	ptrdiff_t offset;
 };
+
+#define LIST_INFO(STRUCT, FIELD, INFO, JAM)				\
+									\
+	static void jam_##INFO(struct jambuf *buf, const void *data)	\
+	{								\
+		const struct STRUCT *s = data;				\
+		JAM(buf, s);						\
+	}								\
+									\
+	static const struct list_info INFO = {				\
+		.name = #STRUCT " " #FIELD,				\
+		.jam = jam_##INFO,					\
+		.offset = offsetof(struct STRUCT, FIELD),		\
+	}
 
 /*
  * Double linked list entry.
