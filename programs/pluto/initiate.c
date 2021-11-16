@@ -518,8 +518,6 @@ struct find_oppo_bundle {
 		/* host addresses for traffic (redundant, but convenient) */
 		ip_address host_addr;
 	} local, remote;
-	/* redundant - prococol involved */
-	const struct ip_protocol *transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
 	enum shunt_policy negotiation_shunt;
@@ -541,7 +539,7 @@ static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 	jam_address(buf, &b->remote.host_addr);
 	jam(buf, ":%d", endpoint_hport(b->remote.client));
 
-	jam(buf, " proto=%s", b->transport_proto->name);
+	jam(buf, " proto=%s", b->packet.protocol->name);
 
 	if (b->sec_label.len > 0) {
 		jam(buf, " label=");
@@ -574,13 +572,13 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		const ip_address null_host = afi->address.any;
 		/* ports? assumed wide? */
 		ip_selector src = selector_from_address_protocol(b->local.host_addr,
-								 b->transport_proto);
+								 b->packet.protocol);
 		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
-								 b->transport_proto);
+								 b->packet.protocol);
 		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&null_host, &src, &null_host, &dst,
 				/*to*/htonl(shunt_policy_spi(b->failure_shunt)),
-				b->transport_proto->ipproto,
+				b->packet.protocol->ipproto,
 				ET_INT, esp_transport_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
@@ -811,7 +809,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       SHUNT_HOLD, UNSET_CO_SERIAL,
 				       b->want, b->logger);
 
-			if (assign_holdpass(c, sr, b->transport_proto,
+			if (assign_holdpass(c, sr, b->packet.protocol,
 					    b->negotiation_shunt,
 					    &b->local.host_addr,
 					    &b->remote.host_addr)) {
@@ -953,7 +951,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
-				    b->transport_proto,
+				    b->packet.protocol,
 				    b->negotiation_shunt,
 				    &b->local.host_addr,
 				    &b->remote.host_addr)) {
@@ -981,7 +979,6 @@ void initiate_ondemand(const ip_packet *packet,
 		.remote.client = packet_dst_endpoint(*packet),
 		.local.host_addr = packet_src_address(*packet),
 		.remote.host_addr = packet_dst_address(*packet),
-		.transport_proto = packet->protocol,
 		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
