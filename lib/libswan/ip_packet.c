@@ -45,9 +45,9 @@ ip_packet packet_from_raw(where_t where,
 	return packet;
 }
 
-static const char *unspecified(const ip_packet *packet)
+static const char *unset(const ip_packet *packet)
 {
-	return IP_UNSPECIFIED(packet);
+	return IP_INFO_PROTOCOL_UNSET(packet);
 }
 
 ip_address packet_src_address(const ip_packet packet)
@@ -128,9 +128,9 @@ ip_selector packet_dst_selector(const ip_packet packet)
 
 size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 {
-	const char *u = unspecified(packet);
+	const char *u = unset(packet);
 	if (u != NULL) {
-		return jam(buf, "<%s-packet>", u);
+		return jam(buf, "<packet-%s>", u);
 	}
 
 	const struct ip_info *afi = packet->info;

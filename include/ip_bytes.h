@@ -90,10 +90,17 @@ int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 
 bool bytes_is_zero(const struct ip_bytes *bytes);
 
-#define IP_UNSPECIFIED(IP)			\
+#define IP_INFO_UNSET(IP)			\
 	(IP == NULL ? "null" :			\
 	 !IP->is_set ? "unset" :		\
-	 IP->info == NULL ? "unknown" :		\
+	 IP->info == NULL ? "family-unset" :	\
+	 NULL)
+
+#define IP_INFO_PROTOCOL_UNSET(IP)			\
+	(IP == NULL ? "null" :				\
+	 !IP->is_set ? "unset" :			\
+	 IP->info == NULL ? "family-unset" :		\
+	 IP->protocol == NULL ? "protocol-unset" :	\
 	 NULL)
 
 #endif
