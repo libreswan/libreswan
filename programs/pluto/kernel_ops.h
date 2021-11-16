@@ -26,7 +26,6 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const ip_address *that_host,
 		       const ip_selector *that_client,
 		       ipsec_spi_t new_spi,
-		       unsigned int transport_proto,
 		       enum eroute_type esatype,
 		       const struct kernel_encap *encap,
 		       deltatime_t use_lifetime,
@@ -35,7 +34,7 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const uint32_t xfrm_if_id,
 		       const shunk_t sec_label,
 		       struct logger *logger,
-		       const char *fmt, ...) PRINTF_LIKE(17);
+		       const char *fmt, ...) PRINTF_LIKE(16);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
 extern bool kernel_ops_add_sa(const struct kernel_sa *sa,

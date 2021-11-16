@@ -343,7 +343,6 @@ struct kernel_ops {
 			   const ip_address *that_host,
 			   const ip_selector *that_client,
 			   ipsec_spi_t new_spi,
-			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct kernel_encap *encap,
 			   deltatime_t use_lifetime,

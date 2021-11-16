@@ -32,7 +32,6 @@ bool raw_policy(enum kernel_policy_op op,
 		const ip_address *dst_host,
 		const ip_selector *dst_client,
 		ipsec_spi_t new_spi,
-		unsigned int transport_proto,
 		enum eroute_type esatype,
 		const struct kernel_encap *encap,
 		deltatime_t use_lifetime,
@@ -46,7 +45,6 @@ bool raw_policy(enum kernel_policy_op op,
 	const ip_protocol *src_client_proto = selector_protocol(*src_client);
 	const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
 	const ip_protocol *esa_proto = protocol_by_ipproto(esatype);
-	const ip_protocol *transport_protocol = protocol_by_ipproto(transport_proto);
 
 	LSWDBGP(DBG_BASE, buf) {
 
@@ -117,13 +115,8 @@ bool raw_policy(enum kernel_policy_op op,
 		 * TRANSPORT_PROTO is for the client, so presumably it
 		 * matches the client's protoco?
 		 */
-		jam(buf, " transport_proto=%s", transport_protocol->name);
-		if (!(transport_protocol == src_client_proto)) {
-			jam(buf, "!=SRC");
-		}
-		if (!(transport_protocol == dst_client_proto)) {
-			jam(buf, "!=DST");
-		}
+		jam(buf, " src_client_proto=%s dst_client_proto=%s",
+		    src_client_proto->name, dst_client_proto->name);
 
 		/*
 		 * SA_PROTO, ESATYPE, and PROTO_INFO all describe the
@@ -178,8 +171,6 @@ bool raw_policy(enum kernel_policy_op op,
 	}
 
 	pexpect(src_client_proto == dst_client_proto);
-	passert(transport_protocol == src_client_proto);
-	passert(transport_protocol == dst_client_proto);
 
 	switch (op) {
 	case KP_ADD_INBOUND:
@@ -213,7 +204,6 @@ bool raw_policy(enum kernel_policy_op op,
 					     src_host, src_client,
 					     dst_host, dst_client,
 					     new_spi,
-					     transport_proto,
 					     esatype, encap,
 					     use_lifetime, sa_priority, sa_marks,
 					     xfrm_if_id,

@@ -276,7 +276,6 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const ip_address *dst_host,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t new_spi,
-			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
@@ -286,6 +285,9 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {
+	unsigned int transport_proto = src_client->ipproto;
+	pexoect(dst_client->ipproto == transport_proto);
+
 	ip_sockaddr saddr = sockaddr_from_address(selector_prefix(*src_client));
 	ip_sockaddr daddr = sockaddr_from_address(selector_prefix(*dst_client));
 	char pbuf[512];

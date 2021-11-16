@@ -536,7 +536,6 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const ip_address *dst_host,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t new_spi,	/* new SPI */
-			       unsigned int transport_proto,
 			       enum eroute_type esatype,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
@@ -546,6 +545,9 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const shunk_t sec_label,
 			       struct logger *logger)
 {
+	unsigned int transport_proto = src_client->ipproto;
+	pexpect(dst_client->ipproto == transport_proto);
+
 	struct {
 		struct nlmsghdr n;
 		union {
@@ -2316,7 +2318,6 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			&sr->this.host_addr, &sr->this.client,
 			&sr->that.host_addr, &sr->that.client,
 			/*to*/htonl(shunt_policy_spi(shunt_policy)),
-			sr->this.client.ipproto,
 			ET_INT,
 			esp_transport_proto_info,
 			deltatime(0),
@@ -2355,7 +2356,6 @@ static bool netlink_shunt_policy(enum kernel_policy_op op,
 			  &sr->that.host_addr, &sr->that.client,
 			  &sr->this.host_addr, &sr->this.client,
 			  /*to*/htonl(shunt_policy_spi(shunt_policy)),
-			  sr->this.client.ipproto,
 			  ET_INT,
 			  esp_transport_proto_info,
 			  deltatime(0),
