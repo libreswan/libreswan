@@ -72,43 +72,36 @@ bool raw_policy(enum kernel_policy_op op,
 		/*
 		 * Dump the new_spi.
 		 *
-		 * XXX: this needs to deal with a bug.
+		 * XXX: this needs to deal with a bug:
 		 *
-		 * At this point the {cur,new}_spi contains either the
-		 * Child SPI in network order, or the enum policy_spi
-		 * converted to network order (at other points in the
-		 * code the SPI is passed in _host_ order, UGH!).
+		 * The new_spi should contain either the Child SPI in
+		 * network order, or the host ordered enum policy_spi
+		 * converted to network order.  The problem is that
+		 * some times the latter isn't converted (mumble
+		 * something about making it hunk like to enforce the
+		 * byte order).
 		 *
-		 * Except some code is forgetting to do the network
-		 * conversion (mumble something about making it hunk
-		 * like to enforce the byte order).
+		 * Look for this by looking up the NEW_SPI with, and
+		 * without the reverse conversion applied.  Only the
+		 * reversed conversion should work.
 		 */
-		const char *spin = " ";
-		{
-			ipsec_spi_t nspi = new_spi;
-			const char *name = NULL;
-			bool spi_backwards = false;
-			/*
-			 * The NSPI converted back to host order
-			 * should work; but if it doesn't ...
-			 */
-			FOR_EACH_THING(spi, ntohl(nspi), nspi) {
-				/* includes %, can return NULL */
-				name = enum_name(&policy_spi_names, spi);
-				if (name != NULL) {
-					break;
-				}
-				spi_backwards = true;
+		bool spi_backwards = false;
+		const char *name;
+		FOR_EACH_THING(spi, ntohl(new_spi), new_spi) {
+			/* includes %, can return NULL */
+			name = enum_name(&policy_spi_names, spi);
+			if (name != NULL) {
+				break;
 			}
-			jam(buf, "%s", spin);
-			if (name == NULL) {
-				jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(nspi));
-			} else if (!(!spi_backwards)) {
-				jam(buf, "htonl(%s)", name);
-			} else {
-				jam(buf, "%s", name);
-			}
-			spin = "->";
+			spi_backwards = true;
+		}
+		jam(buf, " ");
+		if (name == NULL) {
+			jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(new_spi));
+		} else if (spi_backwards) {
+			jam(buf, "BACKWARDS(%s)", name);
+		} else {
+			jam(buf, "htonl(%s)", name);
 		}
 
 		/*
@@ -133,13 +126,15 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "%s,inner=%s",
 			    encap_mode_name(encap->mode),
 			    (encap->inner_proto == NULL ? "<null>" : encap->inner_proto->name));
+			jam_string(buf, "{");
+			const char *sep = "";
 			for (int i = 0; i <= encap->outer; i++) {
-				jam(buf, ",");
 				const struct encap_rule *rule = &encap->rule[i];
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
-				jam(buf, "%s", rule_proto->name);
-				if (i == 0 && !(esa_proto == rule_proto)) {
-					jam(buf, "!=ESATYPE");
+				jam_string(buf, sep); sep = ",";
+				jam_string(buf, rule_proto->name);
+				if (i == 0 && esa_proto != rule_proto) {
+					jam(buf, "!=ESATYPE(%s)", esa_proto->name);
 				}
 				jam(buf, "/%d", rule->reqid);
 			}
