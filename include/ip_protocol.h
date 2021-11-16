@@ -73,6 +73,7 @@ extern const struct ip_protocol ip_protocols[256];
 
 #define ip_protocol_all ip_protocols[0]				/* "the SA can carry all protocols" */
 #define ip_protocol_icmp ip_protocols[IPPROTO_ICMP]		/* Internet Control Message */
+#define ip_protocol_icmpv6 ip_protocols[IPPROTO_ICMPV6]		/* Internet Control Message */
 #define ip_protocol_ipip ip_protocols[IPPROTO_IPIP]		/* IPv4 encapsulation */
 #define ip_protocol_tcp ip_protocols[IPPROTO_TCP]		/* any host internal protocol */
 #define ip_protocol_udp ip_protocols[IPPROTO_UDP]		/* any host internal protocol */
