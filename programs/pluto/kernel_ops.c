@@ -43,11 +43,12 @@ bool raw_policy(enum kernel_policy_op op,
 		struct logger *logger,
 		const char *fmt, ...)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	const ip_protocol *src_client_proto = selector_protocol(*src_client);
+	const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
+	const ip_protocol *esa_proto = protocol_by_ipproto(esatype);
+	const ip_protocol *transport_protocol = protocol_by_ipproto(transport_proto);
 
-		const ip_protocol *src_client_proto = selector_protocol(*src_client);
-		const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
-		const ip_protocol *esa_proto = protocol_by_ipproto(esatype);
+	LSWDBGP(DBG_BASE, buf) {
 
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
@@ -116,7 +117,6 @@ bool raw_policy(enum kernel_policy_op op,
 		 * TRANSPORT_PROTO is for the client, so presumably it
 		 * matches the client's protoco?
 		 */
-		const ip_protocol *transport_protocol = protocol_by_ipproto(transport_proto);
 		jam(buf, " transport_proto=%s", transport_protocol->name);
 		if (!(transport_protocol == src_client_proto)) {
 			jam(buf, "!=SRC");
@@ -176,6 +176,10 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_sanitized_hunk(buf, sec_label);
 
 	}
+
+	pexpect(src_client_proto == dst_client_proto);
+	passert(transport_protocol == src_client_proto);
+	passert(transport_protocol == dst_client_proto);
 
 	switch (op) {
 	case KP_ADD_INBOUND:
