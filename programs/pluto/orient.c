@@ -96,9 +96,8 @@ static void swap_ends(struct connection *c)
 	}
 }
 
-static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, bool this)
+static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 {
-	struct end *end = (this ? &c->spd.this : &c->spd.that);
 	if (end->config->host.ikeport == 0) {
 		return false;
 	}
@@ -110,33 +109,58 @@ static bool orient_new_iface_endpoint(struct connection *c, struct fd *whackfd, 
 		return false;
 	}
 	/*
-	 * assume UDP for now
-	 *
 	 * A custom IKEPORT should not float away to port 4500.
 	 * Assume a custom port always has the prefix (like 4500 and
 	 * not 500).  Perhaps it doesn't belong in iface?
 	 *
-	 * XXX: should this log globally, or against the connection,
-	 * or against the state?
+	 * Log against the connection that is causing the interface's
+	 * port to be opened.
+	 *
+	 * XXX: what happens if a second connection is also interested
+	 * in the interface?
+	 *
+	 * XXX: what about IPv4 vs IPv6, host_addr would have pinned
+	 * that down?
 	 */
-	struct logger logger[1] = { GLOBAL_LOGGER(whackfd), };
-	struct iface_endpoint *ifp = bind_iface_endpoint(dev, &udp_iface_io,
-							 ip_hport(end->config->host.ikeport),
-							 true/*esp_encapsulation_enabled*/,
-							 false/*float_nat_initiator*/,
-							 logger);
-	if (ifp == NULL) {
-		dbg("could not create new interface");
+	const bool esp_encapsulation_enabled = true;
+	const bool float_nat_initiator = false;
+
+	struct iface_endpoint *ifp = NULL;
+	switch (c->iketcp) {
+	case IKE_TCP_NO:
+		if (pluto_listen_udp) {
+			ifp = bind_iface_endpoint(dev, &udp_iface_io,
+						  ip_hport(end->config->host.ikeport),
+						  esp_encapsulation_enabled,
+						  float_nat_initiator,
+						  c->logger);
+			if (ifp == NULL) {
+				dbg("could not create new UDP interface");
+				return false;
+			}
+		}
+		break;
+	case IKE_TCP_ONLY:
+		if (pluto_listen_tcp) {
+			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
+						  ip_hport(end->config->host.ikeport),
+						  esp_encapsulation_enabled,
+						  float_nat_initiator,
+						  c->logger);
+			if (ifp == NULL) {
+				dbg("could not create new TCP interface");
+				return false;
+			}
+		}
+		break;
+	case IKE_TCP_FALLBACK:
 		return false;
 	}
+
 	/* already logged */
 	c->interface = ifp;
-	if (!this) {
-		dbg("swapping to that; new interface");
-		swap_ends(c);
-	}
 	if (listening) {
-		listen_on_iface_endpoint(ifp, logger);
+		listen_on_iface_endpoint(ifp, c->logger);
 	}
 	return true;
 }
@@ -266,12 +290,16 @@ bool orient(struct connection *c, struct logger *logger)
 		return true;
 	}
 
-	/* No existing interface worked, should a new one be created? */
+	/*
+	 * No existing interface worked, create a new one?
+	 */
 
-	if (orient_new_iface_endpoint(c, logger->global_whackfd, true)) {
+	if (orient_new_iface_endpoint(c, &c->spd.this)) {
 		return true;
 	}
-	if (orient_new_iface_endpoint(c, logger->global_whackfd, false)) {
+	if (orient_new_iface_endpoint(c, &c->spd.that)) {
+		dbg("swapping to that; new interface");
+		swap_ends(c);
 		return true;
 	}
 	return false;
