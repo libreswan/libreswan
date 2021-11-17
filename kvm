@@ -44,6 +44,8 @@ modified=
 baseline=
 __baseline=$(sed -n -e 's/^KVM_BASELINE[ ]*=[ ]*/--baseline /p' ${topdir}/Makefile.inc.local)
 prefix=$(sed -n -e 's/^KVM_PREFIXES[ ]*=[ ]*\([^ ]*\).*/\1/p' ${topdir}/Makefile.inc.local)
+# without the eval quotes get quotes get quotes; anyone know why?
+__test_flags=$(eval echo $(sed -n -e 's/^KVM_TEST_FLAGS[ ]*=[ ]*//p' ${topdir}/Makefile.inc.local))
 
 while test $# -gt 0 ; do
     case " ${pass2} " in
@@ -127,11 +129,11 @@ fi
 results_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__baseline} "$@" \
+	./testing/utils/kvmresults.py ${__test_flags} ${__baseline} "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py "$@"
+	./testing/utils/kvmresults.py ${__test_flags} "$@"
 	status=$?
     fi
 }
@@ -139,14 +141,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
+	./testing/utils/kvmresults.py ${__test_flags} ${__baseline} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
 	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
 	done
     else
-	./testing/utils/kvmresults.py --stats none --print diffs "$@"
+	./testing/utils/kvmresults.py ${__test_flags} --stats none --print diffs "$@"
 	status=$?
     fi
 }
