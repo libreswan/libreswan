@@ -202,7 +202,8 @@ void free_any_iface_endpoint(struct iface_endpoint **ifp)
 	*ifp = NULL;
 }
 
-struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct iface_io *io,
+struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
+					   const struct iface_io *io,
 					   ip_port port,
 					   bool esp_encapsulation_enabled,
 					   bool float_nat_initiator,
@@ -214,10 +215,10 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 	    io->protocol->encap_esp->encap_type == 0) {
 		endpoint_buf b;
 		llog(RC_LOG, logger,
-			    "%s encapsulation on %s interface %s %s is not configured (problem with kernel headers?)",
-			    io->protocol->encap_esp->name,
-			    io->protocol->name,
-			    ifd->id_rname, str_endpoint(&local_endpoint, &b));
+		     "%s encapsulation on %s interface %s %s is not configured (problem with kernel headers?)",
+		     io->protocol->encap_esp->name,
+		     io->protocol->name,
+		     ifd->id_rname, str_endpoint(&local_endpoint, &b));
 		return NULL;
 	}
 
@@ -228,7 +229,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 	}
 
 	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
-					     "struct iface_endpoint");
+						 "struct iface_endpoint");
 	ifp->fd = fd;
 	ifp->ip_dev = addref(ifd, HERE);
 	ifp->io = io;
@@ -243,9 +244,9 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct i
 
 	endpoint_buf b;
 	llog(RC_LOG, logger,
-		    "adding %s interface %s %s",
-		    io->protocol->name, ifp->ip_dev->id_rname,
-		    str_endpoint(&ifp->local_endpoint, &b));
+	     "adding %s interface %s %s",
+	     io->protocol->name, ifp->ip_dev->id_rname,
+	     str_endpoint(&ifp->local_endpoint, &b));
 	return ifp;
 }
 
@@ -265,9 +266,9 @@ static void add_new_ifaces(struct logger *logger)
 		 * And, when NAT is detected, float away.
 		 */
 
-		if (pluto_listen_udp)
-		{
-			if (bind_iface_endpoint(ifd, &udp_iface_io, ip_hport(IKE_UDP_PORT),
+		if (pluto_listen_udp) {
+			if (bind_iface_endpoint(ifd, &udp_iface_io,
+						ip_hport(IKE_UDP_PORT),
 						false /*esp_encapsulation_enabled*/,
 						true /*float_nat_initiator*/,
 						logger) == NULL) {
@@ -284,13 +285,14 @@ static void add_new_ifaces(struct logger *logger)
 			 * on IPv6, because the kernel did not support it, and
 			 * gave an error it one tried to turn it on.
 			 *
-			 * Who should we believe?
+			 * XXX: Who should we believe?
 			 *
 			 * Port 4500 can add the ESP encapsulation prefix.
 			 * Let it float to itself - code might rely on it?
 			 */
 			if (address_type(&ifd->id_address) == &ipv4_info) {
-				bind_iface_endpoint(ifd, &udp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+				bind_iface_endpoint(ifd, &udp_iface_io,
+						    ip_hport(NAT_IKE_UDP_PORT),
 						    true /*esp_encapsulation_enabled*/,
 						    true /*float_nat_initiator*/,
 						    logger);
@@ -309,7 +311,8 @@ static void add_new_ifaces(struct logger *logger)
 		 * See comments in iface.h.
 		 */
 		if (pluto_listen_tcp) {
-			bind_iface_endpoint(ifd, &iketcp_iface_io, ip_hport(NAT_IKE_UDP_PORT),
+			bind_iface_endpoint(ifd, &iketcp_iface_io,
+					    ip_hport(NAT_IKE_UDP_PORT),
 					    true /*esp_encapsulation_enabled*/,
 					    false /*float_nat_initiator*/,
 					    logger);
