@@ -95,13 +95,21 @@ bool raw_policy(enum kernel_policy_op op,
 			}
 			spi_backwards = true;
 		}
-		jam(buf, " ");
+		jam_string(buf, " new_spi=");
 		if (name == NULL) {
 			jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(new_spi));
-		} else if (spi_backwards) {
-			jam(buf, "BACKWARDS(%s)", name);
+			if (esa_proto == &ip_protocol_internal) {
+				jam(buf, ",ESATYPE==INT");
+			}
 		} else {
-			jam(buf, "htonl(%s)", name);
+			if (spi_backwards) {
+				jam(buf, "BACKWARDS(%s)", name);
+			} else {
+				jam(buf, "htonl(%s)", name);
+			}
+			if (esa_proto == &ip_protocol_internal) {
+				jam(buf, ",ESATYPE!=INT");
+			}
 		}
 
 		/*
@@ -126,6 +134,9 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "%s,inner=%s",
 			    encap_mode_name(encap->mode),
 			    (encap->inner_proto == NULL ? "<null>" : encap->inner_proto->name));
+			if (encap->inner_proto != esa_proto && esa_proto != &ip_protocol_internal) {
+				jam(buf, "!=ESATYPE(%s)", esa_proto->name);
+			}
 			jam_string(buf, "{");
 			const char *sep = "";
 			for (int i = 0; i <= encap->outer; i++) {
@@ -133,7 +144,9 @@ bool raw_policy(enum kernel_policy_op op,
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
 				jam_string(buf, sep); sep = ",";
 				jam_string(buf, rule_proto->name);
-				if (i == 0 && esa_proto != rule_proto) {
+				if (i == 0 &&
+				    esa_proto != rule_proto &&
+				    esa_proto != &ip_protocol_internal) {
 					jam(buf, "!=ESATYPE(%s)", esa_proto->name);
 				}
 				jam(buf, "/%d", rule->reqid);
@@ -252,55 +265,4 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		}
 	}
 	return kernel_ops->add_sa(sa, replace, logger);
-}
-
-/*
- * Add/replace/delete a shunt eroute.
- *
- * Such an eroute determines the fate of packets without the use
- * of any SAs.  These are defaults, in effect.
- * If a negotiation has not been attempted, use %trap.
- * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
- * is specified in the policy of connection c.
- */
-
-bool shunt_policy(enum kernel_policy_op op,
-		  enum what_about_inbound what_about_inbound,
-		  const struct connection *c,
-		  const struct spd_route *sr,
-		  enum routing_t rt_kind,
-		  const char *what,
-		  struct logger *logger)
-{
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_op_names, op);
-
-		jam_string(buf, " ");
-		jam_string(buf, what_about_inbound_name(what_about_inbound));
-
-		jam(buf, " %s", what);
-		jam(buf, " ");
-		jam_connection(buf, c);
-
-		jam(buf, " for rt_kind '%s' using",
-		    enum_name(&routing_story, rt_kind));
-
-		jam(buf, " ");
-		jam_selector_subnet_port(buf, &sr->this.client);
-		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
-		jam_selector_subnet_port(buf, &sr->that.client);
-
-		jam(buf, " (config)sec_label=");
-		if (c->config->sec_label.len > 0) {
-			jam_sanitized_hunk(buf, c->config->sec_label);
-		}
-	}
-
-	bool ok = kernel_ops->shunt_policy(op, what_about_inbound,
-					   c, sr, rt_kind,
-					   HUNK_AS_SHUNK(c->config->sec_label),
-					   what, logger);
-	dbg("kernel: %s() returned %s", __func__, bool_str(ok));
-	return ok;
 }

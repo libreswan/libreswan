@@ -107,6 +107,208 @@ static global_timer_cb kernel_scan_shunts;
 static bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd, struct logger *logger);
 
+/*
+ * Add/replace/delete a shunt eroute.
+ *
+ * Such an eroute determines the fate of packets without the use
+ * of any SAs.  These are defaults, in effect.
+ * If a negotiation has not been attempted, use %trap.
+ * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
+ * is specified in the policy of connection c.
+ *
+ * The kernel policy is bare (naked, global) it is not paired with a
+ * kernel state.
+ */
+
+static bool bare_policy_op(enum kernel_policy_op op,
+			   enum what_about_inbound what_about_inbound,
+			   const struct connection *c,
+			   const struct spd_route *sr,
+			   enum routing_t rt_kind,
+			   const char *opname,
+			   struct logger *logger)
+{
+	shunk_t sec_label = HUNK_AS_SHUNK(c->config->sec_label);
+
+	/*
+	 * We are constructing a special SAID for the policy.
+	 *
+	 * The destination doesn't seem to matter, but the family
+	 * does.  The protocol is &ip_protocol_internal -- mark this
+	 * as shunt.  The satype has no meaning, but is required for
+	 * PF_KEY header!  The SPI signifies the kind of shunt.
+	 */
+	enum shunt_policy shunt_policy =
+		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
+		 c->config->failure_shunt);
+
+	LSWDBGP(DBG_BASE, buf) {
+		jam(buf, "kernel: %s() ", __func__);
+		jam_enum_short(buf, &kernel_policy_op_names, op);
+
+		jam_string(buf, " ");
+		jam_string(buf, what_about_inbound_name(what_about_inbound));
+
+		jam(buf, " %s", opname);
+		jam(buf, " ");
+		jam_connection(buf, c);
+
+		enum_buf rtb;
+		jam(buf, " rt_kind '%s'",
+		    str_enum_short(&routing_story, rt_kind, &rtb));
+
+		enum_buf spb;
+		jam(buf, " shunt_policy=%s",
+		    str_enum_short(&shunt_policy_names, shunt_policy, &spb));
+
+		jam(buf, " ");
+		jam_selector_subnet_port(buf, &sr->this.client);
+		jam(buf, "-%s->", selector_protocol(sr->this.client)->name);
+		jam_selector_subnet_port(buf, &sr->that.client);
+
+		jam(buf, " (config)sec_label=");
+		if (c->config->sec_label.len > 0) {
+			jam_sanitized_hunk(buf, sec_label);
+		}
+	}
+
+	if (shunt_policy == SHUNT_NONE) {
+		/*
+		 * We're supposed to end up with no policy: rejig op
+		 * and opname.
+		 */
+		switch (op) {
+		case KP_REPLACE_OUTBOUND:
+			/* replace with nothing == delete */
+			op = KP_DELETE_OUTBOUND;
+			opname = "delete";
+			break;
+		case KP_ADD_OUTBOUND:
+			/* add nothing == do nothing */
+			return true;
+
+		case KP_DELETE_OUTBOUND:
+			/* delete remains delete */
+			break;
+
+		case KP_ADD_INBOUND:
+		case KP_REPLACE_INBOUND:
+		case KP_DELETE_INBOUND:
+			/* never inbound */
+			bad_case(op);
+		}
+	}
+
+	if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE) {
+		/*
+		 * We think that we have an eroute, but we don't.
+		 * Adjust the request and account for eclipses.
+		 */
+		passert(eclipsable(sr));
+		switch (op) {
+		case KP_REPLACE_OUTBOUND:
+			/* really an add */
+			op = KP_ADD_OUTBOUND;
+			opname = "replace eclipsed";
+			eclipse_count--;
+			break;
+		case KP_DELETE_OUTBOUND:
+			/*
+			 * delete unnecessary:
+			 * we don't actually have an eroute
+			 */
+			eclipse_count--;
+			return true;
+
+		case KP_ADD_OUTBOUND: /*never eclipsed add*/
+		case KP_ADD_INBOUND:
+		case KP_REPLACE_INBOUND:
+		case KP_DELETE_INBOUND:
+			/* never inbound */
+			bad_case(op);
+		}
+	} else if (eclipse_count > 0 && op == KP_DELETE_OUTBOUND && eclipsable(sr)) {
+		/* maybe we are uneclipsing something */
+		struct spd_route *esr;
+		struct connection *ue = eclipsed(c, &esr);
+
+		if (ue != NULL) {
+			esr->routing = RT_ROUTED_PROSPECTIVE;
+			return bare_policy_op(KP_REPLACE_OUTBOUND,
+					      THIS_IS_NOT_INBOUND,
+					      ue, esr,
+					      RT_ROUTED_PROSPECTIVE,
+					      "restoring eclipsed",
+					      logger);
+		}
+	}
+
+	/*
+	 * XXX: the two calls below to raw_policy() seems to be the
+	 * only place where SA_PROTO and ESATYPE disagree - when
+	 * ENCAPSULATION_MODE_TRANSPORT SA_PROTO==&ip_protocol_esp and
+	 * ESATYPE==ET_INT!?!  Looking in the function there's a weird
+	 * test involving both SA_PROTO and ESATYPE.
+	 *
+	 * XXX: suspect sa_proto should be dropped (when is SPI not
+	 * internal) and instead esatype (encapsulated sa type) should
+	 * receive &ip_protocol ...
+	 *
+	 * Use raw_policy() as it gives a better log result.
+	 */
+
+	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
+			&sr->this.host_addr, &sr->this.client,
+			&sr->that.host_addr, &sr->that.client,
+			/*to*/htonl(shunt_policy_spi(shunt_policy)),
+			ET_INT,
+			esp_transport_proto_info,
+			deltatime(0),
+			calculate_sa_prio(c, false),
+			&c->sa_marks,
+			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
+			sec_label, logger,
+			"%s() outbound shunt for %s", __func__, opname))
+		return false;
+
+	switch (op) {
+	case KP_ADD_OUTBOUND:
+		op = KP_ADD_INBOUND;
+		break;
+	case KP_DELETE_OUTBOUND:
+		op = KP_DELETE_INBOUND;
+		break;
+	case KP_REPLACE_OUTBOUND:
+	case KP_ADD_INBOUND:
+	case KP_REPLACE_INBOUND:
+	case KP_DELETE_INBOUND:
+		return true;
+	}
+
+	pexpect(what_about_inbound != THIS_IS_NOT_INBOUND);
+
+	/*
+	 * Note the crossed streams since inbound.
+	 *
+	 * Note the NO_INBOUND_ENTRY.  It's a hack to get around a
+	 * connection being unrouted, deleting both inbound and
+	 * outbound policies when there's only the basic outbound
+	 * policy installed.
+	 */
+	return raw_policy(op, what_about_inbound,
+			  &sr->that.host_addr, &sr->that.client,
+			  &sr->this.host_addr, &sr->this.client,
+			  /*to*/htonl(shunt_policy_spi(shunt_policy)),
+			  ET_INT,
+			  esp_transport_proto_info,
+			  deltatime(0),
+			  calculate_sa_prio(c, false),
+			  &c->sa_marks,
+			  0, /* xfrm_if_id needed for shunt? */
+			  sec_label, logger,
+			  "%s() inbound shunt for %s", __func__, opname);
+}
+
 /* test if the routes required for two different connections agree
  * It is assumed that the destination subnets agree; we are only
  * testing that the interfaces and nexthops match.
@@ -1277,11 +1479,11 @@ void unroute_connection(struct connection *c)
 			 * in fact the connection shouldn't even have
 			 * inbound policies, just the state.
 			 */
-			shunt_policy(KP_DELETE_OUTBOUND,
-				     EXPECT_NO_INBOUND,
-				     c, sr, RT_UNROUTED,
-				     "unrouting connection",
-				     c->logger);
+			bare_policy_op(KP_DELETE_OUTBOUND,
+				       EXPECT_NO_INBOUND,
+				       c, sr, RT_UNROUTED,
+				       "unrouting connection",
+				       c->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -2773,11 +2975,11 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_REPLACE_OUTBOUND,
-							THIS_IS_NOT_INBOUND,
-							c, sr, RT_ROUTED_PROSPECTIVE,
-							"route_and_eroute() replace shunt",
-							logger);
+			eroute_installed = bare_policy_op(KP_REPLACE_OUTBOUND,
+							  THIS_IS_NOT_INBOUND,
+							  c, sr, RT_ROUTED_PROSPECTIVE,
+							  "route_and_eroute() replace shunt",
+							  logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, KP_REPLACE_OUTBOUND,
 						      "route_and_eroute() replace sag");
@@ -2798,11 +3000,11 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = shunt_policy(KP_ADD_OUTBOUND,
-							REPORT_NO_INBOUND,
-							c, sr, RT_ROUTED_PROSPECTIVE,
-							"route_and_eroute() add",
-							logger);
+			eroute_installed = bare_policy_op(KP_ADD_OUTBOUND,
+							  REPORT_NO_INBOUND,
+							  c, sr, RT_ROUTED_PROSPECTIVE,
+							  "route_and_eroute() add",
+							  logger);
 		} else {
 			eroute_installed = sag_eroute(st, sr, KP_ADD_OUTBOUND, "add");
 		}
@@ -2986,11 +3188,11 @@ bool route_and_eroute(struct connection *c,
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					if (!shunt_policy(KP_REPLACE_OUTBOUND,
-							  THIS_IS_NOT_INBOUND,
-							  ero, esr, esr->routing,
-							  "route_and_eroute() restore",
-							  logger)) {
+					if (!bare_policy_op(KP_REPLACE_OUTBOUND,
+							    THIS_IS_NOT_INBOUND,
+							    ero, esr, esr->routing,
+							    "route_and_eroute() restore",
+							    logger)) {
 						llog(RC_LOG, logger,
 						     "shunt_policy() in route_and_eroute() failed restore/replace");
 					}
@@ -3018,11 +3220,11 @@ bool route_and_eroute(struct connection *c,
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!shunt_policy(KP_DELETE_OUTBOUND,
-							  REPORT_NO_INBOUND,
-							  c, sr, sr->routing,
-							  "route_and_eroute() delete",
-							  logger)) {
+					if (!bare_policy_op(KP_DELETE_OUTBOUND,
+							    REPORT_NO_INBOUND,
+							    c, sr, sr->routing,
+							    "route_and_eroute() delete",
+							    logger)) {
 						llog(RC_LOG, logger,
 						     "shunt_policy() in route_and_eroute() failed in !st case");
 					}
@@ -3241,11 +3443,11 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 				 */
 				unroute_connection(c);
 			} else {
-				if (!shunt_policy(KP_REPLACE_OUTBOUND,
-						  THIS_IS_NOT_INBOUND,
-						  c, sr, sr->routing,
-						  "delete_ipsec_sa() replace with shunt",
-						  st->st_logger)) {
+				if (!bare_policy_op(KP_REPLACE_OUTBOUND,
+						    THIS_IS_NOT_INBOUND,
+						    c, sr, sr->routing,
+						    "delete_ipsec_sa() replace with shunt",
+						    st->st_logger)) {
 					log_state(RC_LOG, st,
 						  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
 				}
@@ -3564,12 +3766,12 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			if (co_serial_is_set(bsp->from_serialno)) {
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
-					if (!shunt_policy(KP_ADD_OUTBOUND,
-							  REPORT_NO_INBOUND,
-							  c, &c->spd,
-							  RT_ROUTED_PROSPECTIVE,
-							  "expire_bare_shunts() add",
-							  logger)) {
+					if (!bare_policy_op(KP_ADD_OUTBOUND,
+							    REPORT_NO_INBOUND,
+							    c, &c->spd,
+							    RT_ROUTED_PROSPECTIVE,
+							    "expire_bare_shunts() add",
+							    logger)) {
 						llog(RC_LOG, logger,
 						     "trap shunt install failed ");
 					}

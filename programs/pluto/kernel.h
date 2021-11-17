@@ -351,14 +351,6 @@ struct kernel_ops {
 			   const uint32_t xfrm_if_id,
 			   const shunk_t sec_label,
 			   struct logger *logger);
-	bool (*shunt_policy)(enum kernel_policy_op op,
-			     enum what_about_inbound what_about_inbound_entry,
-			     const struct connection *c,
-			     const struct spd_route *sr,
-			     enum routing_t rt_kind,
-			     shunk_t sec_label,
-			     const char *opname,
-			     struct logger *logger);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
@@ -536,14 +528,6 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   const char *why, struct logger *logger);
 
 bool install_se_connection_policies(struct connection *c, struct logger *logger);
-
-bool shunt_policy(enum kernel_policy_op op,
-		  enum what_about_inbound what_about_inbound,
-		  const struct connection *c,
-		  const struct spd_route *sr,
-		  enum routing_t rt_kind,
-		  const char *what,
-		  struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
 
