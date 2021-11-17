@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east-ikev2
-002 adding UDP interface eth1 192.1.2.45:2500
+002 "west-east-ikev2": adding UDP interface eth1 192.1.2.45:2500
 002 "west-east-ikev2": added IKEv2 connection
 west #
  ipsec auto --status | grep west-east-ikev2
