@@ -540,9 +540,9 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    ike->sa.st_serialno, c->remote_tcpport);
 		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(c->remote_tcpport));
-		struct iface_endpoint *ret = create_tcp_interface(ike->sa.st_interface->ip_dev,
-								  ike->sa.st_remote_endpoint,
-								  ike->sa.st_logger);
+		struct iface_endpoint *ret = open_tcp_endpoint(ike->sa.st_interface->ip_dev,
+							       ike->sa.st_remote_endpoint,
+							       ike->sa.st_logger);
 		if (ret == NULL) {
 			/* TCP: already logged? */
 			delete_state(&ike->sa);

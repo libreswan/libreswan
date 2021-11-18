@@ -626,8 +626,8 @@ const struct iface_io iketcp_iface_io = {
  * opend the socket, this end sends the IKE-in-TCP magic word.
  */
 
-struct iface_endpoint *create_tcp_interface(struct iface_dev *local_dev, ip_endpoint remote_endpoint,
-					    struct logger *logger)
+struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev, ip_endpoint remote_endpoint,
+					 struct logger *logger)
 {
 	dbg("TCP: opening socket");
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
