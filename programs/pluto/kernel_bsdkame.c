@@ -267,9 +267,7 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
  */
 static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       enum what_about_inbound what_about_inbound UNUSED,
-			       const ip_address *src_host,
 			       const ip_selector *src_client,
-			       const ip_address *dst_host,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t new_spi,
 			       enum eroute_type esatype UNUSED,
@@ -368,8 +366,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	policylen = sizeof(*policy_struct);
 
 	if (policy == IPSEC_POLICY_IPSEC && encap != NULL) {
-		ip_sockaddr local_sa = sockaddr_from_address(*src_host);
-		ip_sockaddr remote_sa = sockaddr_from_address(*dst_host);
+		ip_sockaddr local_sa = sockaddr_from_address(encap->host.src);
+		ip_sockaddr remote_sa = sockaddr_from_address(encap->host.dst);
 
 		ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 

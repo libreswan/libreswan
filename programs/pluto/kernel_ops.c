@@ -27,9 +27,7 @@
 
 bool raw_policy(enum kernel_policy_op op,
 		enum what_about_inbound what_about_inbound,
-		const ip_address *src_host,
 		const ip_selector *src_client,
-		const ip_address *dst_host,
 		const ip_selector *dst_client,
 		ipsec_spi_t new_spi,
 		enum eroute_type esatype,
@@ -66,11 +64,17 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam(buf, " ");
 		jam_selector_subnet_port(buf, src_client);
-		jam(buf, "-%s-", src_client_proto->name);
-		jam_address(buf, src_host);
-		jam(buf, "==");
-		jam_address(buf, dst_host);
-		jam(buf, "-%s-", dst_client_proto->name);
+		jam(buf, "-%s", src_client_proto->name);
+		if (encap == NULL) {
+			jam(buf, "-");
+		} else {
+			jam(buf, "-");
+			jam_address(buf, &encap->host.src);
+			jam(buf, "==");
+			jam_address(buf, &encap->host.dst);
+			jam(buf, "-");
+		}
+		jam(buf, "%s-", dst_client_proto->name);
 		jam_selector_subnet_port(buf, dst_client);
 
 		/*
@@ -160,7 +164,10 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "<null>");
 		} else {
 			jam(buf, "%s", encap_mode_name(encap->mode));
-
+			jam(buf, ",");
+			jam_address(buf, &encap->host.src);
+			jam(buf, "=>");
+			jam_address(buf, &encap->host.dst);
 			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
 					       encap->inner_proto->name));
 			if (esa_proto != &ip_protocol_internal) {
@@ -257,8 +264,7 @@ bool raw_policy(enum kernel_policy_op op,
 	}
 
 	bool result = kernel_ops->raw_policy(op, what_about_inbound,
-					     src_host, src_client,
-					     dst_host, dst_client,
+					     src_client, dst_client,
 					     new_spi,
 					     esatype, encap,
 					     use_lifetime, sa_priority, sa_marks,

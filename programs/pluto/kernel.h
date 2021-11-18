@@ -151,14 +151,23 @@ struct encap_rule {
 };
 
 struct kernel_encap {
+	/*
+	 * The src/dst addresses of the encapsulated packets.
+	 *
+	 * XXX: should this include port/proto, or is that eimplied by
+	 * other fields?
+	 */
+	struct {
+		ip_address src;
+		ip_address dst;
+	} host;
 	const struct ip_protocol *inner_proto;	/*IPIP or ESP|AH */
 	enum encap_mode mode;
 	int outer; /* -1 when no rules; XXX: good idea? */
 	struct encap_rule rule[4]; /* AH+ESP+COMP+0 */
 };
 
-extern const struct kernel_encap esp_transport_kernel_encap;
-#define esp_transport_proto_info &esp_transport_kernel_encap /* XXX: TBD */
+extern const struct kernel_encap proto_encap_transport_esp;
 
 /*
  * How a packet flows through the kernel.
@@ -339,9 +348,7 @@ struct kernel_ops {
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
 			   enum what_about_inbound what_about_inbound,
-			   const ip_address *this_host,
 			   const ip_selector *this_client,
-			   const ip_address *that_host,
 			   const ip_selector *that_client,
 			   ipsec_spi_t new_spi,
 			   enum eroute_type satype,

@@ -531,9 +531,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  */
 static bool netlink_raw_policy(enum kernel_policy_op op,
 			       enum what_about_inbound what_about_inbound,
-			       const ip_address *src_host,
 			       const ip_selector *src_client,
-			       const ip_address *dst_host,
 			       const ip_selector *dst_client,
 			       ipsec_spi_t new_spi,	/* new SPI */
 			       enum eroute_type esatype,
@@ -748,13 +746,13 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			tmpl[i].id.proto = encap->rule[i].proto;
 			tmpl[i].optional = (encap->rule[i].proto == ENCAP_PROTO_IPCOMP && dir != XFRM_POLICY_OUT);
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-			tmpl[i].family = addrtypeof(dst_host);
+			tmpl[i].family = addrtypeof(&encap->host.dst);
 			/* only the inner-most rule gets the worm; er tunnel flag */
 			if (i == 0 && encap->mode == ENCAP_MODE_TUNNEL) {
 				tmpl[i].mode = XFRM_MODE_TUNNEL;
 				/* tunnel mode needs addresses */
-				tmpl[i].saddr = xfrm_from_address(src_host);
-				tmpl[i].id.daddr = xfrm_from_address(dst_host);
+				tmpl[i].saddr = xfrm_from_address(&encap->host.src);
+				tmpl[i].id.daddr = xfrm_from_address(&encap->host.dst);
 			} else {
 				tmpl[i].mode = XFRM_MODE_TRANSPORT;
 			}
@@ -767,8 +765,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			    tmpl[i].optional,
 			    tmpl[i].family,
 			    tmpl[i].mode,
-			    str_address(tmpl[i].mode ? src_host : &unset_address, &sb),
-			    str_address(tmpl[i].mode ? dst_host : &unset_address, &db));
+			    str_address(tmpl[i].mode ? &encap->host.src : &unset_address, &sb),
+			    str_address(tmpl[i].mode ? &encap->host.dst : &unset_address, &db));
 		}
 
 		/* append  */
