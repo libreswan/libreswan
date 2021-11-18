@@ -1409,7 +1409,7 @@ static bool sag_eroute(const struct state *st,
 
 	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
-	pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+	pexpect(op & KERNEL_POLICY_OUTBOUND);
 	struct kernel_route route = kernel_route_from_spd(sr, encap.mode,
 							  ENCAP_DIRECTION_OUTBOUND);
 
@@ -1943,7 +1943,7 @@ bool assign_holdpass(const struct connection *c,
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
-			pexpect((op & KERNEL_POLICY_DIR_MASK) == KERNEL_POLICY_DIR_OUT);
+			pexpect(op & KERNEL_POLICY_OUTBOUND);
 			struct kernel_route route = kernel_route_from_spd(sr,
 									  ENCAP_MODE_TRANSPORT,
 									  ENCAP_DIRECTION_OUTBOUND);

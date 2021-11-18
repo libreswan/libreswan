@@ -867,7 +867,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	}
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       ((op & KERNEL_POLICY_DIR_OUT) ? "(out)" : "(in)"),
+				       ((op & KERNEL_POLICY_OUTBOUND) ? "(out)" : "(in)"),
 				       logger);
 
 	/*
