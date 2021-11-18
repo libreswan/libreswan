@@ -527,7 +527,7 @@ extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
 			   co_serial_t from_serialno,
 			   const char *why, struct logger *logger);
 
-bool install_se_connection_policies(struct connection *c, struct logger *logger);
+bool install_sec_label_connection_policies(struct connection *c, struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
 

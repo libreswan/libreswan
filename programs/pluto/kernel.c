@@ -1362,7 +1362,7 @@ bool trap_connection(struct connection *c)
 			 * does not (and who knows what else it does).
 			 */
 			dbg("kernel: installing SE trap policy");
-			return install_se_connection_policies(c, c->logger);
+			return install_sec_label_connection_policies(c, c->logger);
 		} else if (c->spd.routing >= RT_ROUTED_TUNNEL) {
 			/*
 			 * RT_ROUTED_TUNNEL is treated specially: we
@@ -1700,7 +1700,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 	return ok;
 }
 
-bool install_se_connection_policies(struct connection *c, struct logger *logger)
+bool install_sec_label_connection_policies(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
 	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
