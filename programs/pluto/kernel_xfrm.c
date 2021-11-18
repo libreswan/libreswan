@@ -737,7 +737,8 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	if (encap != NULL &&
 	    /* XXX: see comment above, and {else} below */
 	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) &&
-	    op != KP_DELETE_OUTBOUND) {
+	    op != KP_DELETE_OUTBOUND &&
+	    op != KP_DELETE_INBOUND) {
 		struct xfrm_user_tmpl tmpl[4] = {0};
 
 		int i;
@@ -778,18 +779,22 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 
-	} else if (DBGP(DBG_BASE) && encap != NULL) {
-		/*
-		 * Dump ignored proto_info[].
-		 */
-		for (unsigned i = 0; encap->rule[i].proto; i++) {
-			DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because policy=%d op=%d",
-				__func__, encap->rule[i].reqid,
-				protocol_by_ipproto(encap->rule[i].proto)->name,
-				encap_mode_name(encap->mode),
-				policy, op);
+	} else if (DBGP(DBG_BASE)) {
+		if (encap == NULL) {
+			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, policy=%d op=%d",
+				__func__, policy, op);
+		} else {
+			/*
+			 * Dump ignored proto_info[].
+			 */
+			for (unsigned i = 0; encap->rule[i].proto; i++) {
+				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because policy=%d op=%d",
+					__func__, encap->rule[i].reqid,
+					protocol_by_ipproto(encap->rule[i].proto)->name,
+					encap_mode_name(encap->mode),
+					policy, op);
+			}
 		}
-
 	}
 
 	/*
