@@ -13,13 +13,13 @@ struct ike_sa;
 
 void process_v2_IKE_SA_INIT(struct msg_digest *md);
 
-extern void ikev2_out_IKE_SA_INIT_I(struct connection *c,
-				    struct state *predecessor,
-				    lset_t policy,
-				    unsigned long try,
-				    const threadtime_t *inception,
-				    shunk_t sec_label,
-				    bool background, struct logger *logger);
+extern void initiate_v2_IKE_SA_INIT_request(struct connection *c,
+					    struct state *predecessor,
+					    lset_t policy,
+					    unsigned long try,
+					    const threadtime_t *inception,
+					    shunk_t sec_label,
+					    bool background, struct logger *logger);
 
 extern void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md);
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;

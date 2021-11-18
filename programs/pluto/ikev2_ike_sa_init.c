@@ -57,6 +57,7 @@
 #include "pluto_stats.h"
 #include "ikev2_proposals.h"
 
+static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 
@@ -505,15 +506,14 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
  * Note: this is not called from demux.c, but from ipsecdoi_initiate().
  *
  */
-static ke_and_nonce_cb ikev2_parent_outI1_continue;
 
-void ikev2_out_IKE_SA_INIT_I(struct connection *c,
-			     struct state *predecessor,
-			     lset_t policy,
-			     unsigned long try,
-			     const threadtime_t *inception,
-			     shunk_t sec_label,
-			     bool background, struct logger *logger)
+void initiate_v2_IKE_SA_INIT_request(struct connection *c,
+				     struct state *predecessor,
+				     lset_t policy,
+				     unsigned long try,
+				     const threadtime_t *inception,
+				     shunk_t sec_label,
+				     bool background, struct logger *logger)
 {
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
@@ -644,15 +644,15 @@ void ikev2_out_IKE_SA_INIT_I(struct connection *c,
 	 * Calculate KE and Nonce.
 	 */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    ikev2_parent_outI1_continue,
-			    "ikev2_outI1 KE");
+			    initiate_v2_IKE_SA_INIT_request_continue,
+			    "initiate_v2_IKE_SA_INIT_request_continue KE");
 	statetime_stop(&start, "%s()", __func__);
 }
 
-stf_status ikev2_parent_outI1_continue(struct state *ike_st,
-				       struct msg_digest *unused_md,
-				       struct dh_local_secret *local_secret,
-				       chunk_t *nonce)
+stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
+						    struct msg_digest *unused_md,
+						    struct dh_local_secret *local_secret,
+						    chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
@@ -1158,7 +1158,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 {
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    ikev2_parent_outI1_continue,
+			    initiate_v2_IKE_SA_INIT_request_continue,
 			    "rekey outI");
 	return STF_SUSPEND;
 }
