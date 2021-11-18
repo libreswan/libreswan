@@ -49,8 +49,8 @@ const struct ip_protocol ip_protocols[256] = {
 	},
 #else
 	[0] = {
-		.description = "unknown",
-		.name = "UNKNOWN",
+		.description = "all",
+		.name = "ALL",
 		.prefix = "unk",
 		.ipproto = 0,
 	},
