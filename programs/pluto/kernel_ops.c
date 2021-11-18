@@ -85,7 +85,7 @@ bool raw_policy(enum kernel_policy_op op,
 		 * without the reverse conversion applied.  Only the
 		 * reversed conversion should work.
 		 */
-		bool spi_backwards = false;
+		bool htonl_spi = true; /* be hopeful */
 		const char *name;
 		FOR_EACH_THING(spi, ntohl(new_spi), new_spi) {
 			/* includes %, can return NULL */
@@ -93,22 +93,45 @@ bool raw_policy(enum kernel_policy_op op,
 			if (name != NULL) {
 				break;
 			}
-			spi_backwards = true;
+			htonl_spi = false; /* oops */
 		}
 		jam_string(buf, " new_spi=");
 		if (name == NULL) {
 			jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(new_spi));
-			if (esa_proto == &ip_protocol_internal) {
-				jam(buf, ",ESATYPE==INT");
+		} else if (pexpect(htonl_spi)) {
+			jam(buf, "htonl(%s)", name);
+		} else {
+			jam(buf, "BACKWARDS(%s)", name);
+		}
+		if (esa_proto == &ip_protocol_internal) {
+			/*
+			 * This is operating on a bare policy (no
+			 * state) or a policy that's becoming bare?
+			 *
+			 * ESATYPE is the magical INT flag and NEW_SPI
+			 * contains the encoded SHUNT_POLICY.
+			 */
+			if (name == NULL) {
+				jam(buf, ",ESATYPE=INT");
+			} else if (new_spi == htonl(SPI_IGNORE) ||
+				   new_spi == htonl(SPI_TRAPSUBNET)) {
+				jam(buf, ",ESATYPE=CRASH");
 			}
 		} else {
-			if (spi_backwards) {
-				jam(buf, "BACKWARDS(%s)", name);
-			} else {
-				jam(buf, "htonl(%s)", name);
-			}
-			if (esa_proto == &ip_protocol_internal) {
-				jam(buf, ",ESATYPE!=INT");
+			/*
+			 * This is operating on an IPSEC policy.
+			 *
+			 * Expect NEW_SPI to contain either SPI_IGNORE
+			 * or a real SPI (either way it is ignored).
+			 *
+			 * When SPI is real this is presumably part of
+			 * installing both policy and state (while
+			 * this code ignores the SPI the state code
+			 * does not).
+			 */
+			if (name != NULL &&
+			    new_spi != htonl(SPI_IGNORE)) {
+				jam(buf, ",ESATYPE!=INT(%s)", esa_proto->name);
 			}
 		}
 
@@ -128,15 +151,26 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " esatype=%s", esa_proto->name);
 
 		jam(buf, " encap=");
-		if (encap == NULL) {
-			jam(buf, "<null>");
-		} else {
-			jam(buf, "%s,inner=%s",
-			    encap_mode_name(encap->mode),
-			    (encap->inner_proto == NULL ? "<null>" : encap->inner_proto->name));
-			if (encap->inner_proto != esa_proto && esa_proto != &ip_protocol_internal) {
-				jam(buf, "!=ESATYPE(%s)", esa_proto->name);
+		if (pexpect(encap != NULL)) {
+			jam(buf, "%s", encap_mode_name(encap->mode));
+
+			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
+					       encap->inner_proto->name));
+			if (esa_proto != &ip_protocol_internal) {
+				switch (encap->mode) {
+				case ENCAP_MODE_TUNNEL:
+					if (encap->inner_proto != esa_proto) {
+						jam(buf, "!=ESATYPE(%s,TUNNEL)", esa_proto->name);
+					}
+					break;
+				case ENCAP_MODE_TRANSPORT:
+					if (encap->inner_proto != esa_proto) {
+						jam(buf, "!=ESATYPE(%s,TRANSPORT)", esa_proto->name);
+					}
+					break;
+				}
 			}
+
 			jam_string(buf, "{");
 			const char *sep = "";
 			for (int i = 0; i <= encap->outer; i++) {
@@ -144,10 +178,17 @@ bool raw_policy(enum kernel_policy_op op,
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
 				jam_string(buf, sep); sep = ",";
 				jam_string(buf, rule_proto->name);
-				if (i == 0 &&
-				    esa_proto != rule_proto &&
-				    esa_proto != &ip_protocol_internal) {
-					jam(buf, "!=ESATYPE(%s)", esa_proto->name);
+				if (i == 0 && esa_proto != &ip_protocol_internal) {
+					switch (encap->mode) {
+					case ENCAP_MODE_TUNNEL:
+						/* should have matched encap->inner_proto */
+						break;
+					case ENCAP_MODE_TRANSPORT:
+						if (esa_proto != rule_proto) {
+							jam(buf, "!=ESATYPE(%s,TRANSPORT)", esa_proto->name);
+						}
+						break;
+					}
 				}
 				jam(buf, "/%d", rule->reqid);
 			}
