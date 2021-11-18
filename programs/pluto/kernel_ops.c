@@ -50,6 +50,10 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
+		if (encap != NULL && (op == KP_DELETE_OUTBOUND ||
+				      op == KP_DELETE_INBOUND)) {
+			jam(buf, ",ENCAP!=NULL");
+		}
 
 		jam_string(buf, " ");
 		jam_string(buf, what_about_inbound_name(what_about_inbound));
@@ -86,32 +90,33 @@ bool raw_policy(enum kernel_policy_op op,
 		 * reversed conversion should work.
 		 */
 		bool htonl_spi = true; /* be hopeful */
-		const char *name;
+		const char *spi_name;
 		FOR_EACH_THING(spi, ntohl(new_spi), new_spi) {
 			/* includes %, can return NULL */
-			name = enum_name(&policy_spi_names, spi);
-			if (name != NULL) {
+			spi_name = enum_name(&policy_spi_names, spi);
+			if (spi_name != NULL) {
 				break;
 			}
 			htonl_spi = false; /* oops */
 		}
 		jam_string(buf, " new_spi=");
-		if (name == NULL) {
+		if (spi_name == NULL) {
 			jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(new_spi));
 		} else if (pexpect(htonl_spi)) {
-			jam(buf, "htonl(%s)", name);
+			jam(buf, "htonl(%s)", spi_name);
 		} else {
-			jam(buf, "BACKWARDS(%s)", name);
+			jam(buf, "BACKWARDS(%s)", spi_name);
 		}
 		if (esa_proto == &ip_protocol_internal) {
 			/*
 			 * This is operating on a bare policy (no
-			 * state) or a policy that's becoming bare?
+			 * state) or a state-policy that's being
+			 * stripped?
 			 *
 			 * ESATYPE is the magical INT flag and NEW_SPI
 			 * contains the encoded SHUNT_POLICY.
 			 */
-			if (name == NULL) {
+			if (spi_name == NULL) {
 				jam(buf, ",ESATYPE=INT");
 			} else if (new_spi == htonl(SPI_IGNORE) ||
 				   new_spi == htonl(SPI_TRAPSUBNET)) {
@@ -129,7 +134,7 @@ bool raw_policy(enum kernel_policy_op op,
 			 * this code ignores the SPI the state code
 			 * does not).
 			 */
-			if (name != NULL &&
+			if (spi_name != NULL &&
 			    new_spi != htonl(SPI_IGNORE)) {
 				jam(buf, ",ESATYPE!=INT(%s)", esa_proto->name);
 			}
@@ -151,7 +156,9 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " esatype=%s", esa_proto->name);
 
 		jam(buf, " encap=");
-		if (pexpect(encap != NULL)) {
+		if (encap == NULL) {
+			jam(buf, "<null>");
+		} else {
 			jam(buf, "%s", encap_mode_name(encap->mode));
 
 			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
