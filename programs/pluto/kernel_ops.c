@@ -29,7 +29,7 @@ bool raw_policy(enum kernel_policy_op op,
 		enum what_about_inbound what_about_inbound,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
-		ipsec_spi_t new_spi,
+		enum shunt_policy shunt_policy,
 		enum eroute_type esatype,
 		const struct kernel_encap *encap,
 		deltatime_t use_lifetime,
@@ -77,79 +77,33 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "%s-", dst_client_proto->name);
 		jam_selector_subnet_port(buf, dst_client);
 
-		/*
-		 * Dump the new_spi.
-		 *
-		 * XXX: this needs to deal with a bug:
-		 *
-		 * The new_spi should contain either the Child SPI in
-		 * network order, or the host ordered enum policy_spi
-		 * converted to network order.  The problem is that
-		 * some times the latter isn't converted (mumble
-		 * something about making it hunk like to enforce the
-		 * byte order).
-		 *
-		 * Look for this by looking up the NEW_SPI with, and
-		 * without the reverse conversion applied.  Only the
-		 * reversed conversion should work.
-		 */
-		bool htonl_spi = true; /* be hopeful */
-		const char *spi_name;
-		FOR_EACH_THING(spi, ntohl(new_spi), new_spi) {
-			/* includes %, can return NULL */
-			spi_name = enum_name(&policy_spi_names, spi);
-			if (spi_name != NULL) {
-				break;
-			}
-			htonl_spi = false; /* oops */
-		}
-		jam_string(buf, " new_spi=");
-		if (spi_name == NULL) {
-			jam(buf, PRI_IPSEC_SPI, pri_ipsec_spi(new_spi));
-		} else if (pexpect(htonl_spi)) {
-			jam(buf, "htonl(%s)", spi_name);
-		} else {
-			jam(buf, "BACKWARDS(%s)", spi_name);
-		}
+		jam_string(buf, " shunt_policy=");
+		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
 		if (esa_proto == &ip_protocol_internal) {
 			/*
 			 * This is operating on a bare policy (no
 			 * state) or a state-policy that's being
 			 * stripped?
 			 *
-			 * ESATYPE is the magical INT flag and NEW_SPI
-			 * contains the encoded SHUNT_POLICY.
+			 * ESATYPE is the magical INT flag and
+			 * SHUNT_POLICY should be valid.
+			 *
+			 * TBD: ENCAP may or may not be NULL.
 			 */
-			if (spi_name == NULL) {
+			if (shunt_policy == SHUNT_DEFAULT) {
 				jam(buf, ",ESATYPE=INT");
-			} else if (new_spi == htonl(SPI_IGNORE) ||
-				   new_spi == htonl(SPI_TRAPSUBNET)) {
-				jam(buf, ",ESATYPE=CRASH");
 			}
 		} else {
 			/*
 			 * This is operating on an IPSEC policy.
 			 *
-			 * Expect NEW_SPI to contain either SPI_IGNORE
-			 * or a real SPI (either way it is ignored).
-			 *
-			 * When SPI is real this is presumably part of
-			 * installing both policy and state (while
-			 * this code ignores the SPI the state code
-			 * does not).
+			 * Expect SHUNT_POLICY to be invalid(DEFAULT)
+			 * as it is being ignored.
 			 */
-			if (spi_name != NULL &&
-			    new_spi != htonl(SPI_IGNORE)) {
-				jam(buf, ",ESATYPE!=INT(%s)", esa_proto->name);
+			if (shunt_policy != SHUNT_DEFAULT) {
+				jam(buf, ",ESATYPE=%s", esa_proto->name);
 			}
 		}
-
-		/*
-		 * TRANSPORT_PROTO is for the client, so presumably it
-		 * matches the client's protoco?
-		 */
-		jam(buf, " src_client_proto=%s dst_client_proto=%s",
-		    src_client_proto->name, dst_client_proto->name);
 
 		/*
 		 * SA_PROTO, ESATYPE, and PROTO_INFO all describe the
@@ -249,23 +203,25 @@ bool raw_policy(enum kernel_policy_op op,
 	}
 
 	if (esatype == ET_INT) {
-		switch(ntohl(new_spi)) {
-		case SPI_HOLD:
+		switch(shunt_policy) {
+		case SHUNT_HOLD:
 			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 			return true;
-		case SPI_TRAP:
+		case SHUNT_TRAP:
 			if (op == KP_ADD_INBOUND ||
 			    op == KP_DELETE_INBOUND) {
 				dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
 				return true;
 			}
 			break;
+		default:
+			break;
 		}
 	}
 
 	bool result = kernel_ops->raw_policy(op, what_about_inbound,
 					     src_client, dst_client,
-					     new_spi,
+					     shunt_policy,
 					     esatype, encap,
 					     use_lifetime, sa_priority, sa_marks,
 					     xfrm_if_id,

@@ -350,7 +350,7 @@ struct kernel_ops {
 			   enum what_about_inbound what_about_inbound,
 			   const ip_selector *this_client,
 			   const ip_selector *that_client,
-			   ipsec_spi_t new_spi,
+			   enum shunt_policy shunt_policy,
 			   enum eroute_type satype,
 			   const struct kernel_encap *encap,
 			   deltatime_t use_lifetime,

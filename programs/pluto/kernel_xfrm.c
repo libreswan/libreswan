@@ -533,7 +533,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       enum what_about_inbound what_about_inbound,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
-			       ipsec_spi_t new_spi,	/* new SPI */
+			       enum shunt_policy shunt_policy,
 			       enum eroute_type esatype,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
@@ -593,12 +593,12 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 
 	case ET_INT:
 		/* shunt route */
-		switch (ntohl(new_spi)) {
-		case SPI_PASS:
+		switch (shunt_policy) {
+		case SHUNT_PASS:
 			policy = IPSEC_POLICY_NONE;
 			policy_name = "%pass(none)";
 			break;
-		case SPI_HOLD:
+		case SHUNT_HOLD:
 			/*
 			 * We don't know how to implement %hold, but it is okay.
 			 * When we need a hold, the kernel XFRM acquire state
@@ -607,35 +607,34 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("%s() SPI_HOLD implemented as no-op", __func__);
+			dbg("%s() SHUNT_HOLD implemented as no-op", __func__);
 			return true; /* yes really */
-		case SPI_DROP:
-			/* used with type=passthrough - can it not use SPI_PASS ?? */
+		case SHUNT_DROP:
+			/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			policy_name = "%drop(discard)";
 			break;
-		case SPI_REJECT:
-			/* used with type=passthrough - can it not use SPI_PASS ?? */
+		case SHUNT_REJECT:
+			/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			policy_name = "%reject(discard)";
 			break;
-		case 0:
+		case SHUNT_NONE:
 			/* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			policy_name = "%discard(discard)";
 			break;
-		case SPI_TRAP:
+		case SHUNT_TRAP:
 			if (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) {
-				dbg("%s() inbound SPI_TRAP implemented as no-op", __func__);
+				dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 				return true;
 			}
 			policy = IPSEC_POLICY_IPSEC;
 			policy_name = "%trap(ipsec)";
 			break;
-		case SPI_IGNORE:
-		case SPI_TRAPSUBNET: /* unused in our code */
+		case SHUNT_DEFAULT:
 		default:
-			bad_case(ntohl(new_spi));
+			bad_case(shunt_policy);
 		}
 		break;
 

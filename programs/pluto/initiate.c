@@ -579,7 +579,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		encap.host.dst = afi->address.any;
 		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&src, &dst,
-				/*new_spi*/htonl(shunt_policy_spi(b->failure_shunt)),
+				b->failure_shunt,
 				/*esatype*/ET_INT,
 				/*encap*/&encap,
 				deltatime(SHUNT_PATIENCE),
@@ -925,7 +925,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &local_shunt, &remote_shunt,
-		       /*new_spi*/htonl(shunt_policy_spi(b->negotiation_shunt)),
+		       b->negotiation_shunt,
 		       /*esatype*/ET_INT,
 		       /*encap*/&encap,
 		       deltatime(SHUNT_PATIENCE),

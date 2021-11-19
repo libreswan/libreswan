@@ -269,7 +269,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       enum what_about_inbound what_about_inbound UNUSED,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
-			       ipsec_spi_t new_spi,
+			       enum shunt_policy shunt_policy,
 			       enum eroute_type esatype UNUSED,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
@@ -302,12 +302,12 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 
 	case ET_INT:
 		/* shunt route */
-		switch (ntohl(new_spi)) {
-		case SPI_PASS:
-			dbg("netlink_raw_policy: SPI_PASS");
+		switch (shunt_policy) {
+		case SHUNT_PASS:
+			dbg("netlink_raw_policy: SHUNT_PASS");
 			policy = IPSEC_POLICY_NONE;
 			break;
-		case SPI_HOLD:
+		case SHUNT_HOLD:
 			/*
 			 * We don't know how to implement %hold, but it is okay.
 			 * When we need a hold, the kernel XFRM acquire state
@@ -316,21 +316,20 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			dbg("netlink_raw_policy: SPI_HOLD implemented as no-op");
+			dbg("netlink_raw_policy: SHUNT_HOLD implemented as no-op");
 			return true; /* yes really */
-		case SPI_DROP:
-		case SPI_REJECT:
-		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
+		case SHUNT_DROP:
+		case SHUNT_REJECT:
+		case SHUNT_NONE:
 			policy = IPSEC_POLICY_DISCARD;
 			break;
-		case SPI_TRAP:
+		case SHUNT_TRAP:
 			if (sadb_op == KP_ADD_INBOUND ||
 				sadb_op == KP_DELETE_INBOUND)
 				return true;
 
 			break;
-		case SPI_IGNORE:
-		case SPI_TRAPSUBNET: /* unused in our code */
+		case SHUNT_DEFAULT:
 		default:
 			bad_case(ntohl(new_spi));
 		}
