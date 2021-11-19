@@ -632,7 +632,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			policy = IPSEC_POLICY_IPSEC;
 			policy_name = "%trap(ipsec)";
 			break;
-		case SHUNT_DEFAULT:
+		case SHUNT_UNSET:
 		default:
 			bad_case(shunt_policy);
 		}

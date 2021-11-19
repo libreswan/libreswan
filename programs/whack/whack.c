@@ -2580,7 +2580,7 @@ int main(int argc, char **argv)
 
 		if (msg.policy & POLICY_AUTH_NEVER) {
 			if (msg.prospective_shunt == SHUNT_TRAP ||
-			    msg.prospective_shunt == SHUNT_DEFAULT) {
+			    msg.prospective_shunt == SHUNT_UNSET) {
 				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 			}
 		} else {

@@ -184,9 +184,9 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO | POLICY_ESN_YES; /* esn=either */
 
-	d->prospective_shunt = SHUNT_DEFAULT;
-	d->negotiation_shunt = SHUNT_DEFAULT;
-	d->failure_shunt = SHUNT_DEFAULT;
+	d->prospective_shunt = SHUNT_UNSET;
+	d->negotiation_shunt = SHUNT_UNSET;
+	d->failure_shunt = SHUNT_UNSET;
 
 	d->sighash_policy =
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;

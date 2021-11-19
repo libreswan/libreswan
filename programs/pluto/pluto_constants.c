@@ -357,7 +357,7 @@ enum_names perspective_names = {
 
 static const char *const shunt_policy_name[] = {
 #define A(S) [S] = #S
-	A(SHUNT_DEFAULT),
+	A(SHUNT_UNSET),
 	A(SHUNT_HOLD),
 	A(SHUNT_NONE),
 	A(SHUNT_PASS),
@@ -368,7 +368,7 @@ static const char *const shunt_policy_name[] = {
 };
 
 enum_names shunt_policy_names = {
-	SHUNT_DEFAULT, SHUNT_POLICY_ROOF-1,
+	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
 	ARRAY_REF(shunt_policy_name),
 	"SHUNT_", /* prefix */
 	NULL,

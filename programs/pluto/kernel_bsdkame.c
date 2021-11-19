@@ -329,7 +329,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 				return true;
 
 			break;
-		case SHUNT_DEFAULT:
+		case SHUNT_UNSET:
 		default:
 			bad_case(ntohl(new_spi));
 		}

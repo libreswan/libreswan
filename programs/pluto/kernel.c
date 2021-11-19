@@ -1431,7 +1431,7 @@ static bool sag_eroute(const struct state *st,
 	encap.host.src = route.src.host_addr;
 	encap.host.dst = route.dst.host_addr;
 
-	return eroute_connection(op, why, sr, SHUNT_DEFAULT,
+	return eroute_connection(op, why, sr, SHUNT_UNSET,
 				 &route, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, false), &c->sa_marks,
 				 xfrm_if_id,
@@ -1758,7 +1758,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
 				inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				&src->client, &dst->client,
-				SHUNT_DEFAULT,
+				SHUNT_UNSET,
 				/*esatype*/encap.inner_proto->ipproto,
 				/*encap*/&encap,
 				/*use_lifetime*/deltatime(0),
@@ -1782,7 +1782,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				pexpect(i > 0);
 				raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					   &c->spd.this.client, &c->spd.that.client,
-					   SHUNT_DEFAULT,
+					   SHUNT_UNSET,
 					   /*esatype*/encap.inner_proto->ipproto,
 					   /*encap*/NULL/*no-policy-template*/,
 					   /*use_lifetime*/deltatime(0),
@@ -2012,7 +2012,7 @@ bool assign_holdpass(const struct connection *c,
 enum policy_spi shunt_policy_spi(enum shunt_policy sp)
 {
 	/* note: these are in host order :-( */
-	if (!pexpect(sp != SHUNT_DEFAULT)) {
+	if (!pexpect(sp != SHUNT_UNSET)) {
 		return SPI_NONE;
 	}
 
@@ -2530,7 +2530,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (!raw_policy(KP_ADD_INBOUND, REPORT_NO_INBOUND,
 				&route.src.client,	/* src_client */
 				&route.dst.client,	/* dst_client */
-				SHUNT_DEFAULT,
+				SHUNT_UNSET,
 				encap.inner_proto->ipproto,	/* esatype */
 				&encap,			/* " */
 				deltatime(0),		/* lifetime */
@@ -2666,7 +2666,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	    !raw_policy(KP_DELETE_INBOUND, what_about_inbound,
 			&c->spd.that.client,
 			&c->spd.this.client,
-			SHUNT_DEFAULT,
+			SHUNT_UNSET,
 			/*esatype*/c->ipsec_mode == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
 			/*encap*/NULL/*no-policy-template*/,
 			deltatime(0),

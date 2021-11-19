@@ -90,7 +90,7 @@ bool raw_policy(enum kernel_policy_op op,
 			 *
 			 * TBD: ENCAP may or may not be NULL.
 			 */
-			if (shunt_policy == SHUNT_DEFAULT) {
+			if (shunt_policy == SHUNT_UNSET) {
 				jam(buf, ",ESATYPE=INT");
 			}
 		} else {
@@ -100,7 +100,7 @@ bool raw_policy(enum kernel_policy_op op,
 			 * Expect SHUNT_POLICY to be invalid(DEFAULT)
 			 * as it is being ignored.
 			 */
-			if (shunt_policy != SHUNT_DEFAULT) {
+			if (shunt_policy != SHUNT_UNSET) {
 				jam(buf, ",ESATYPE=%s", esa_proto->name);
 			}
 		}

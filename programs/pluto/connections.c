@@ -1425,14 +1425,14 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
-		if (wm->prospective_shunt == SHUNT_DEFAULT ||
+		if (wm->prospective_shunt == SHUNT_UNSET ||
 		    wm->prospective_shunt == SHUNT_TRAP) {
 			llog(RC_FATAL, c->logger,
 			     "failed to add connection: connection with authby=never must specify shunt type via type=");
 			return false;
 		}
 	}
-	if (wm->prospective_shunt != SHUNT_DEFAULT && wm->prospective_shunt != SHUNT_TRAP) {
+	if (wm->prospective_shunt != SHUNT_UNSET && wm->prospective_shunt != SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			llog(RC_FATAL, c->logger,
 				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
@@ -1660,7 +1660,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->policy = wm->policy;
 
 	switch (wm->prospective_shunt) {
-	case SHUNT_DEFAULT:
+	case SHUNT_UNSET:
 		config->prospective_shunt = SHUNT_TRAP;
 		break;
 	case SHUNT_TRAP:
@@ -1680,7 +1680,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	switch (wm->negotiation_shunt) {
-	case SHUNT_DEFAULT:
+	case SHUNT_UNSET:
 		config->negotiation_shunt = SHUNT_HOLD;
 		break;
 	case SHUNT_PASS:
@@ -1707,7 +1707,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	switch (wm->failure_shunt) {
-	case SHUNT_DEFAULT:
+	case SHUNT_UNSET:
 		config->failure_shunt = SHUNT_NONE;
 		break;
 	case SHUNT_NONE:
@@ -2332,7 +2332,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 	/* slightly different names compared to pluto_constants.c */
 	static const char *const policy_shunt_names[SHUNT_POLICY_ROOF] = {
-		[SHUNT_DEFAULT] = "[should not happen]",
+		[SHUNT_UNSET] = "[should not happen]",
 		[SHUNT_TRAP] = "trap[should not happen]",
 		[SHUNT_NONE] = "none",
 		[SHUNT_PASS] = "passthrough",

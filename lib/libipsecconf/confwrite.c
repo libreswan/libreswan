@@ -458,7 +458,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	}
 
 	if (conn->policy != LEMPTY ||
-	    conn->prospective_shunt != SHUNT_DEFAULT) {
+	    conn->prospective_shunt != SHUNT_UNSET) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
@@ -473,7 +473,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 #		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 
 		switch (shunt_policy) {
-		case SHUNT_DEFAULT:
+		case SHUNT_UNSET:
 		case SHUNT_TRAP:
 			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
 
