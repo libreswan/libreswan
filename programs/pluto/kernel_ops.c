@@ -77,33 +77,20 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "%s-", dst_client_proto->name);
 		jam_selector_subnet_port(buf, dst_client);
 
+		/*
+		 * Either:
+		 *
+		 * - ESATYPE is the magical INT flag and SHUNT_POLICY
+		 *   has been set.
+		 *
+		 * - ESATYPE isn't INT, and SHUNT_POLICY is "unset"
+		 *   (it will be ignored).
+		 */
 		jam_string(buf, " shunt_policy=");
 		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
-		if (esa_proto == &ip_protocol_internal) {
-			/*
-			 * This is operating on a bare policy (no
-			 * state) or a state-policy that's being
-			 * stripped?
-			 *
-			 * ESATYPE is the magical INT flag and
-			 * SHUNT_POLICY should be valid.
-			 *
-			 * TBD: ENCAP may or may not be NULL.
-			 */
-			if (shunt_policy == SHUNT_UNSET) {
-				jam(buf, ",ESATYPE=INT");
-			}
-		} else {
-			/*
-			 * This is operating on an IPSEC policy.
-			 *
-			 * Expect SHUNT_POLICY to be invalid(DEFAULT)
-			 * as it is being ignored.
-			 */
-			if (shunt_policy != SHUNT_UNSET) {
-				jam(buf, ",ESATYPE=%s", esa_proto->name);
-			}
-		}
+		pexpect(esa_proto == &ip_protocol_internal
+			? shunt_policy != SHUNT_UNSET
+			: shunt_policy == SHUNT_UNSET);
 
 		/*
 		 * SA_PROTO, ESATYPE, and PROTO_INFO all describe the
@@ -116,6 +103,8 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " encap=");
 		if (encap == NULL) {
 			jam(buf, "<null>");
+			pexpect(esatype == ET_INT ||
+				(op & KERNEL_POLICY_DELETE));
 		} else {
 			jam(buf, "%s", encap_mode_name(encap->mode));
 			jam(buf, ",");
@@ -124,41 +113,24 @@ bool raw_policy(enum kernel_policy_op op,
 			jam_address(buf, &encap->host.dst);
 			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
 					       encap->inner_proto->name));
-			if (esa_proto != &ip_protocol_internal) {
-				switch (encap->mode) {
-				case ENCAP_MODE_TUNNEL:
-					if (encap->inner_proto != esa_proto) {
-						jam(buf, "!=ESATYPE(%s,TUNNEL)", esa_proto->name);
-					}
-					break;
-				case ENCAP_MODE_TRANSPORT:
-					if (encap->inner_proto != esa_proto) {
-						jam(buf, "!=ESATYPE(%s,TRANSPORT)", esa_proto->name);
-					}
-					break;
-				}
-			}
+			pexpect(encap->inner_proto != NULL);
+			pexpect(esa_proto == &ip_protocol_internal ||
+				esa_proto == encap->inner_proto);
 
 			jam_string(buf, "{");
 			const char *sep = "";
 			for (int i = 0; i <= encap->outer; i++) {
 				const struct encap_rule *rule = &encap->rule[i];
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
-				jam_string(buf, sep); sep = ",";
+				jam_string(buf, sep); sep = ";";
 				jam_string(buf, rule_proto->name);
-				if (i == 0 && esa_proto != &ip_protocol_internal) {
-					switch (encap->mode) {
-					case ENCAP_MODE_TUNNEL:
-						/* should have matched encap->inner_proto */
-						break;
-					case ENCAP_MODE_TRANSPORT:
-						if (esa_proto != rule_proto) {
-							jam(buf, "!=ESATYPE(%s,TRANSPORT)", esa_proto->name);
-						}
-						break;
-					}
+				if (i == 0) {
+					/* inner-most */
+					pexpect(esa_proto == &ip_protocol_internal ||
+						encap->mode == ENCAP_MODE_TUNNEL ||
+						esa_proto == rule_proto);
 				}
-				jam(buf, "/%d", rule->reqid);
+				jam(buf, ",%d", rule->reqid);
 			}
 			jam(buf, "}");
 		}
