@@ -514,6 +514,8 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 /*
  * netlink_raw_policy
  *
+ * XXX: much of this is bogus
+ *
  * @param kernel_policy_op op (operation - ie: KP_DELETE)
  * @param src_host ip_address
  * @param src_client ip_subnet
@@ -534,7 +536,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
-			       enum eroute_type esatype,
+			       enum eroute_type esatype UNUSED,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority,
@@ -569,78 +571,72 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 	 * The names should be made more appropriate and concise
 	 * for this very local and specific context.
 	 * Yet another meaning overloaded onto the word "policy".
+	 *
+	 * XXX: Another way to describe what to do with packets when
+	 * they arrive - DISCARD, tunnel through IPSEC, and what ever
+	 * NONE is.
 	 */
 	enum {
+		IPSEC_POLICY_UNSET,
 		IPSEC_POLICY_DISCARD,
 		IPSEC_POLICY_NONE,
 		IPSEC_POLICY_IPSEC,
 	} policy;
 
 	const char *policy_name;
-	switch (esatype) {
-	case ET_UNSPEC:
+	/* shunt route */
+	switch (shunt_policy) {
+	case SHUNT_UNSET:
 		policy = IPSEC_POLICY_IPSEC;
-		policy_name = "all(ipsec)";
-		break;
-
-	case ET_AH:
-	case ET_ESP:
-	case ET_IPCOMP:
-	case ET_IPIP:
-		policy = IPSEC_POLICY_IPSEC;
-		policy_name = protocol_by_ipproto(esatype)->name;
-		break;
-
-	case ET_INT:
-		/* shunt route */
-		switch (shunt_policy) {
-		case SHUNT_PASS:
-			policy = IPSEC_POLICY_NONE;
-			policy_name = "%pass(none)";
-			break;
-		case SHUNT_HOLD:
-			/*
-			 * We don't know how to implement %hold, but it is okay.
-			 * When we need a hold, the kernel XFRM acquire state
-			 * will do the job (by dropping or holding the packet)
-			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
-			 * After expiration, the underlying policy causing the original acquire
-			 * will fire again, dropping further packets.
-			 */
-			dbg("%s() SHUNT_HOLD implemented as no-op", __func__);
-			return true; /* yes really */
-		case SHUNT_DROP:
-			/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%drop(discard)";
-			break;
-		case SHUNT_REJECT:
-			/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%reject(discard)";
-			break;
-		case SHUNT_NONE:
-			/* used with type=passthrough - can it not use SPI_PASS ?? */
-			policy = IPSEC_POLICY_DISCARD;
-			policy_name = "%discard(discard)";
-			break;
-		case SHUNT_TRAP:
-			if (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) {
-				dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
-				return true;
-			}
-			policy = IPSEC_POLICY_IPSEC;
-			policy_name = "%trap(ipsec)";
-			break;
-		case SHUNT_UNSET:
-		default:
-			bad_case(shunt_policy);
+		if (encap != NULL) {
+			policy_name = encap->inner_proto->name;
+		} else {
+			/* MUST BE DELETE! */
+			policy_name = "delete(UNUSED)";
 		}
 		break;
-
+	case SHUNT_PASS:
+		policy = IPSEC_POLICY_NONE;
+		policy_name = "%pass(none)";
+		break;
+	case SHUNT_HOLD:
+		/*
+		 * We don't know how to implement %hold, but it is okay.
+		 * When we need a hold, the kernel XFRM acquire state
+		 * will do the job (by dropping or holding the packet)
+		 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
+		 * After expiration, the underlying policy causing the original acquire
+		 * will fire again, dropping further packets.
+		 */
+		dbg("%s() SHUNT_HOLD implemented as no-op", __func__);
+		return true; /* yes really */
+	case SHUNT_DROP:
+		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
+		policy = IPSEC_POLICY_DISCARD;
+		policy_name = "%drop(discard)";
+		break;
+	case SHUNT_REJECT:
+		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
+		policy = IPSEC_POLICY_DISCARD;
+		policy_name = "%reject(discard)";
+		break;
+	case SHUNT_NONE:
+		/* used with type=passthrough - can it not use SPI_PASS ?? */
+		policy = IPSEC_POLICY_DISCARD;
+		policy_name = "%discard(discard)";
+		break;
+	case SHUNT_TRAP:
+		if (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) {
+			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
+			return true;
+		}
+		policy = IPSEC_POLICY_IPSEC;
+		policy_name = "%trap(ipsec)";
+		break;
 	default:
-		bad_case(esatype);
+		bad_case(shunt_policy);
 	}
+
 	const int dir = (op == KP_ADD_INBOUND ||
 			 op == KP_DELETE_INBOUND) ?
 		XFRM_POLICY_IN : XFRM_POLICY_OUT;
@@ -895,7 +891,7 @@ static bool netlink_raw_policy(enum kernel_policy_op op,
 		if (!ok) {
 			break;
 		}
-		if (esatype != ET_INT &&
+		if (shunt_policy == SHUNT_UNSET &&
 		    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
 			break;
 		}
