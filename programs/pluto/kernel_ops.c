@@ -30,7 +30,6 @@ bool raw_policy(enum kernel_policy_op op,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
 		enum shunt_policy shunt_policy,
-		enum eroute_type esatype,
 		const struct kernel_encap *encap,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
@@ -42,7 +41,6 @@ bool raw_policy(enum kernel_policy_op op,
 {
 	const ip_protocol *src_client_proto = selector_protocol(*src_client);
 	const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
-	const ip_protocol *esa_proto = protocol_by_ipproto(esatype);
 
 	LSWDBGP(DBG_BASE, buf) {
 
@@ -77,34 +75,12 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "%s-", dst_client_proto->name);
 		jam_selector_subnet_port(buf, dst_client);
 
-		/*
-		 * Either:
-		 *
-		 * - ESATYPE is the magical INT flag and SHUNT_POLICY
-		 *   has been set.
-		 *
-		 * - ESATYPE isn't INT, and SHUNT_POLICY is "unset"
-		 *   (it will be ignored).
-		 */
 		jam_string(buf, " shunt_policy=");
 		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
-		pexpect(esa_proto == &ip_protocol_internal
-			? shunt_policy != SHUNT_UNSET
-			: shunt_policy == SHUNT_UNSET);
-
-		/*
-		 * SA_PROTO, ESATYPE, and PROTO_INFO all describe the
-		 * encapsulation (PROTO_INFO is the most detailed as
-		 * it can describe both [ESP|AH] and compression).
-		 * How redundant is that?
-		 */
-		jam(buf, " esatype=%s", esa_proto->name);
 
 		jam(buf, " encap=");
 		if (encap == NULL) {
 			jam(buf, "<null>");
-			pexpect(esatype == ET_INT ||
-				(op & KERNEL_POLICY_DELETE));
 		} else {
 			jam(buf, "%s", encap_mode_name(encap->mode));
 			jam(buf, ",");
@@ -114,8 +90,6 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
 					       encap->inner_proto->name));
 			pexpect(encap->inner_proto != NULL);
-			pexpect(esa_proto == &ip_protocol_internal ||
-				esa_proto == encap->inner_proto);
 
 			jam_string(buf, "{");
 			const char *sep = "";
@@ -124,12 +98,6 @@ bool raw_policy(enum kernel_policy_op op,
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
 				jam_string(buf, sep); sep = ";";
 				jam_string(buf, rule_proto->name);
-				if (i == 0) {
-					/* inner-most */
-					pexpect(esa_proto == &ip_protocol_internal ||
-						encap->mode == ENCAP_MODE_TUNNEL ||
-						esa_proto == rule_proto);
-				}
 				jam(buf, ",%d", rule->reqid);
 			}
 			jam(buf, "}");
@@ -174,27 +142,25 @@ bool raw_policy(enum kernel_policy_op op,
 		break;
 	}
 
-	if (esatype == ET_INT) {
-		switch(shunt_policy) {
-		case SHUNT_HOLD:
-			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
+	switch(shunt_policy) {
+	case SHUNT_HOLD:
+		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
+		return true;
+	case SHUNT_TRAP:
+		if (op == KP_ADD_INBOUND ||
+		    op == KP_DELETE_INBOUND) {
+			dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
 			return true;
-		case SHUNT_TRAP:
-			if (op == KP_ADD_INBOUND ||
-			    op == KP_DELETE_INBOUND) {
-				dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
-				return true;
-			}
-			break;
-		default:
-			break;
 		}
+		break;
+	default:
+		break;
 	}
 
 	bool result = kernel_ops->raw_policy(op, what_about_inbound,
 					     src_client, dst_client,
 					     shunt_policy,
-					     esatype, encap,
+					     encap,
 					     use_lifetime, sa_priority, sa_marks,
 					     xfrm_if_id,
 					     sec_label,

@@ -512,7 +512,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 }
 
 /*
- * netlink_raw_policy
+ * xfrm_raw_policy
  *
  * XXX: much of this is bogus
  *
@@ -531,19 +531,18 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @param story char *
  * @return boolean True if successful
  */
-static bool netlink_raw_policy(enum kernel_policy_op op,
-			       enum what_about_inbound what_about_inbound,
-			       const ip_selector *src_client,
-			       const ip_selector *dst_client,
-			       enum shunt_policy shunt_policy,
-			       enum eroute_type esatype UNUSED,
-			       const struct kernel_encap *encap,
-			       deltatime_t use_lifetime UNUSED,
-			       uint32_t sa_priority,
-			       const struct sa_marks *sa_marks,
-			       const uint32_t xfrm_if_id,
-			       const shunk_t sec_label,
-			       struct logger *logger)
+static bool xfrm_raw_policy(enum kernel_policy_op op,
+			    enum what_about_inbound what_about_inbound,
+			    const ip_selector *src_client,
+			    const ip_selector *dst_client,
+			    enum shunt_policy shunt_policy,
+			    const struct kernel_encap *encap,
+			    deltatime_t use_lifetime UNUSED,
+			    uint32_t sa_priority,
+			    const struct sa_marks *sa_marks,
+			    const uint32_t xfrm_if_id,
+			    const shunk_t sec_label,
+			    struct logger *logger)
 {
 	unsigned int transport_proto = src_client->ipproto;
 	pexpect(dst_client->ipproto == transport_proto);
@@ -2671,7 +2670,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.shutdown = NULL,
 #endif
 	.process_msg = netlink_process_msg,
-	.raw_policy = netlink_raw_policy,
+	.raw_policy = xfrm_raw_policy,
 	.add_sa = netlink_add_sa,
 	.del_sa = netlink_del_sa,
 	.get_sa = netlink_get_sa,

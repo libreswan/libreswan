@@ -580,7 +580,6 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&src, &dst,
 				b->failure_shunt,
-				/*esatype*/ET_INT,
 				/*encap*/&encap,
 				deltatime(SHUNT_PATIENCE),
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
@@ -926,7 +925,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &local_shunt, &remote_shunt,
 		       b->negotiation_shunt,
-		       /*esatype*/ET_INT,
 		       /*encap*/&encap,
 		       deltatime(SHUNT_PATIENCE),
 		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),

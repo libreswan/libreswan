@@ -270,7 +270,6 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
-			       enum eroute_type esatype UNUSED,
 			       const struct kernel_encap *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
@@ -279,8 +278,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {
+	pexpect(src_client->ipproto == dst_client->ipproto);
 	unsigned int transport_proto = src_client->ipproto;
-	pexoect(dst_client->ipproto == transport_proto);
 
 	ip_sockaddr saddr = sockaddr_from_address(selector_prefix(*src_client));
 	ip_sockaddr daddr = sockaddr_from_address(selector_prefix(*dst_client));
@@ -290,53 +289,43 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	int policylen;
 	int ret;
 
-	int policy = IPSEC_POLICY_IPSEC;
+	int policy;
 
-	switch (esatype) {
-	case ET_UNSPEC:
-	case ET_AH:
-	case ET_ESP:
-	case ET_IPCOMP:
-	case ET_IPIP:
+	/* shunt route */
+	switch (shunt_policy) {
+	case SHUNT_PASS:
+		dbg("netlink_raw_policy: SHUNT_PASS");
+		policy = IPSEC_POLICY_NONE;
 		break;
-
-	case ET_INT:
-		/* shunt route */
-		switch (shunt_policy) {
-		case SHUNT_PASS:
-			dbg("netlink_raw_policy: SHUNT_PASS");
-			policy = IPSEC_POLICY_NONE;
-			break;
-		case SHUNT_HOLD:
-			/*
-			 * We don't know how to implement %hold, but it is okay.
-			 * When we need a hold, the kernel XFRM acquire state
-			 * will do the job (by dropping or holding the packet)
-			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
-			 * After expiration, the underlying policy causing the original acquire
-			 * will fire again, dropping further packets.
-			 */
-			dbg("netlink_raw_policy: SHUNT_HOLD implemented as no-op");
-			return true; /* yes really */
-		case SHUNT_DROP:
-		case SHUNT_REJECT:
-		case SHUNT_NONE:
-			policy = IPSEC_POLICY_DISCARD;
-			break;
-		case SHUNT_TRAP:
-			if (sadb_op == KP_ADD_INBOUND ||
-				sadb_op == KP_DELETE_INBOUND)
-				return true;
-
-			break;
-		case SHUNT_UNSET:
-		default:
-			bad_case(ntohl(new_spi));
-		}
+	case SHUNT_HOLD:
+		/*
+		 * We don't know how to implement %hold, but it is
+		 * okay.  When we need a hold, the kernel XFRM acquire
+		 * state will do the job (by dropping or holding the
+		 * packet) until this entry expires. See
+		 * /proc/sys/net/core/xfrm_acq_expires After
+		 * expiration, the underlying policy causing the
+		 * original acquire will fire again, dropping further
+		 * packets.
+		 */
+		dbg("netlink_raw_policy: SHUNT_HOLD implemented as no-op");
+		return true; /* yes really */
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+	case SHUNT_NONE:
+		policy = IPSEC_POLICY_DISCARD;
 		break;
-
+	case SHUNT_TRAP:
+		if (sadb_op == KP_ADD_INBOUND ||
+		    sadb_op == KP_DELETE_INBOUND)
+			return true;
+		policy = IPSEC_POLICY_IPSEC;
+		break;
+	case SHUNT_UNSET:
+		policy = IPSEC_POLICY_IPSEC;
+		break;
 	default:
-		bad_case(esatype);
+		bad_case(shunt_policy);
 	}
 
 	const int dir = ((sadb_op == KP_ADD_INBOUND || sadb_op == KP_DELETE_INBOUND) ?
@@ -348,8 +337,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	 */
 	if (dir == IPSEC_DIR_INBOUND &&
 	    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
-		dbg("%s() ignoring inbound non-tunnel %d eroute entry",
-		    __func__, esatype);
+		dbg("%s() ignoring inbound non-tunnel %s policy entry",
+		    __func__, encap->inner_proto->name);
 		return true;
 	}
 

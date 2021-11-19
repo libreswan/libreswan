@@ -351,7 +351,6 @@ struct kernel_ops {
 			   const ip_selector *this_client,
 			   const ip_selector *that_client,
 			   enum shunt_policy shunt_policy,
-			   enum eroute_type satype,
 			   const struct kernel_encap *encap,
 			   deltatime_t use_lifetime,
 			   uint32_t sa_priority,
