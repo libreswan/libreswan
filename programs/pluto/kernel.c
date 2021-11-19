@@ -91,7 +91,7 @@ static bool route_and_eroute(struct connection *c,
 
 static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      const struct spd_route *sr,
-			      ipsec_spi_t new_spi,
+			      enum shunt_policy shunt_policy,
 			      const struct kernel_route *route,
 			      enum eroute_type esatype,
 			      const struct kernel_encap *encap,
@@ -1431,7 +1431,7 @@ static bool sag_eroute(const struct state *st,
 	encap.host.src = route.src.host_addr;
 	encap.host.dst = route.dst.host_addr;
 
-	return eroute_connection(op, why, sr, ntohl(SPI_IGNORE),
+	return eroute_connection(op, why, sr, SHUNT_DEFAULT,
 				 &route, encap.inner_proto->ipproto, &encap,
 				 calculate_sa_prio(c, false), &c->sa_marks,
 				 xfrm_if_id,
@@ -1838,7 +1838,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 
 bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct spd_route *sr,
-		       ipsec_spi_t new_spi,
+		       enum shunt_policy shunt_policy,
 		       const struct kernel_route *route,
 		       enum eroute_type esatype,
 		       const struct kernel_encap *encap,
@@ -1852,7 +1852,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		ip_selector client = selector_from_address(sr->this.host_addr);
 		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
 				    &client, &route->dst.client,
-				    new_spi,
+				    htonl(shunt_policy_spi(shunt_policy)),
 				    esatype,
 				    encap,
 				    deltatime(0),
@@ -1871,7 +1871,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 
 	return raw_policy(op, THIS_IS_NOT_INBOUND,
 			  &route->src.client, &route->dst.client,
-			  new_spi,
+			  htonl(shunt_policy_spi(shunt_policy)),
 			  esatype,
 			  encap,
 			  deltatime(0),
@@ -1974,9 +1974,7 @@ bool assign_holdpass(const struct connection *c,
 			encap.host.src = route.src.host_addr;
 			encap.host.dst = route.dst.host_addr;
 
-			if (eroute_connection(op, reason,
-					      sr,
-					      htonl(shunt_policy_spi(negotiation_shunt)),
+			if (eroute_connection(op, reason, sr, negotiation_shunt,
 					      &route,
 					      /*esatype*/ET_INT,
 					      /*encap*/&encap,
