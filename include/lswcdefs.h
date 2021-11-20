@@ -62,12 +62,10 @@
  * otherwise unavoidable -Wcast-qual warnings.  USE WITH CAUTION and
  * only when you know it's safe to discard the const.
  */
-#ifdef __GNUC__
-#define DISCARD_CONST(vartype, \
-		      varname) (__extension__({ const vartype tmp = (varname); \
-						(vartype)(uintptr_t)tmp; }))
-#else
-#define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
-#endif
+#define DISCARD_CONST(VARTYPE, VARNAME)					\
+	({								\
+		const VARTYPE tmp = (VARNAME);				\
+		(VARTYPE)tmp;						\
+	})
 
 #endif
