@@ -2808,7 +2808,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	dbg("%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,
 	    __func__, str_packet(&packet, &pb), pri_shunk(sec_label));
 
-	const ip_endpoint packet_src = packet_src_endpoint(packet);
+	const ip_selector packet_src = packet_src_selector(packet);
 	const ip_endpoint packet_dst = packet_dst_endpoint(packet);
 
 	struct connection *best_connection = NULL;
@@ -2891,17 +2891,27 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			}
 
 			/*
-			 * The triggering traffic needs to be within
+			 * The triggering packet needs to be within
 			 * the client.
+			 *
+			 * SRC is a selector, and not endpoint.  When
+			 * the source port passed into the kernel is
+			 * ephemeral (i.e., passed in as zero) that
+			 * same ephemeral (zero) port is passed on to
+			 * pluto, and a zero (unknown) port is not
+			 * valid for an endpoint.
+			 *
+			 * DST, OTOH, is a proper endpoint.
 			 */
-			if (!endpoint_in_selector(packet_src, sr->this.client)) {
+
+			if (!selector_in_selector(packet_src, sr->this.client)) {
 				connection_buf cb;
 				selectors_buf sb;
-				endpoint_buf eb;
+				selector_buf psb;
 				dbg("    skipping "PRI_CONNECTION" %s; packet src %s not in range",
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
-				    str_endpoint(&packet_src, &eb));
+				    str_selector(&packet_src, &psb));
 				continue;
 			}
 
