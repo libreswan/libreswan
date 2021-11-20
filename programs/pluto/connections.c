@@ -3181,24 +3181,6 @@ struct connection *oppo_instantiate(struct connection *c,
 
 struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 {
-	const ip_endpoint local_client[] = { packet_src_endpoint(packet), };
-	const ip_endpoint remote_client[] = { packet_dst_endpoint(packet), };
-
-	/*
-	 * Did the caller do their job?
-	 *
-	 * Where the protocol includes a port, the endpoint ports
-	 * don't need to match but they do need to be defined.
-	 *
-	 * Unfortunately rcv_whack.c calls this function with a very
-	 * flimsy looking local/remote endpoints - both the protocol
-	 * and the port are missing.  Hence some of the fuzzy checks
-	 * below.
-	 */
-	pendpoint(local_client);
-	pendpoint(remote_client);
-	pexpect(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
-
 	/*
 	 * Go through all the "half" oriented connections (remote
 	 * address is unset) looking for client that matches the
@@ -3252,10 +3234,24 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				if (!routed(sr->routing)) {
 					continue;
 				}
-				if (!endpoint_in_selector(*local_client, sr->this.client)) {
-					continue;
-				}
-				if (!endpoint_in_selector(*remote_client, sr->that.client)) {
+
+				/*
+				 * The triggering packet needs to be
+				 * within the client.
+				 *
+				 * SRC is a selector, and not
+				 * endpoint, as the port can be zero
+				 * (aka wild-card).  For instance, a
+				 * connect where the src port is
+				 * ephemeral is passed to the kernel
+				 * as zero and on to pluto as zero.
+				 *
+				 * DST, OTOH, is a proper endpoint.
+				 */
+				ip_selector src = packet_src_selector(packet);
+				ip_endpoint dst = packet_dst_endpoint(packet);
+				if (!selector_in_selector(src, sr->this.client) ||
+				    !endpoint_in_selector(dst, sr->that.client)) {
 					continue;
 				}
 
