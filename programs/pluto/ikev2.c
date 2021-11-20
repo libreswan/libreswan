@@ -2805,6 +2805,29 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 	}
 
 	/*
+	 * Need to re-open TCP.
+	 */
+	if (ike->sa.st_interface != NULL &&
+	    ike->sa.st_interface->protocol == &ip_protocol_tcp) {
+		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
+		/*
+		 * XXX: The state and the event loop are sharing EVP.
+		 * This deletes both.
+		 */
+		struct iface_endpoint *p = DISCARD_CONST(struct iface_endpoint *, ike->sa.st_interface);
+		/* TCP: this is a blocking call */
+		ike->sa.st_interface = open_tcp_endpoint(ike->sa.st_interface->ip_dev,
+							 ike->sa.st_remote_endpoint,
+							 ike->sa.st_logger);
+		/* note uses in above call */
+		free_any_iface_endpoint(&p);
+		if (ike->sa.st_interface == NULL) {
+			/* already logged */
+			complete_v2_state_transition(st, NULL, STF_FATAL);
+		}
+	}
+
+	/*
 	 * Need to wind back the Message ID counters so that the send
 	 * code things it is creating Message 0.
 	 */
