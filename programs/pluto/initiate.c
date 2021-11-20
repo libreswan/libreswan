@@ -510,11 +510,6 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 
 struct find_oppo_bundle {
 	ip_packet packet; /* that triggered the opportunistic exchange */
-	/* redundant */
-	struct {
-		/* traffic that triggered the opportunistic exchange */
-		ip_endpoint client;
-	} local, remote;
 	bool by_acquire;	/* acquire? whack? */
 	policy_prio_t policy_prio;
 	enum shunt_policy negotiation_shunt;
@@ -1001,8 +996,6 @@ void initiate_ondemand(const ip_packet *packet,
 {
 	struct find_oppo_bundle b = {
 		.packet = *packet,
-		.local.client = packet_src_endpoint(*packet),
-		.remote.client = packet_dst_endpoint(*packet),
 		.by_acquire = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
