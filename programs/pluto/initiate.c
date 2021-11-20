@@ -567,20 +567,13 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
 		    enum_name_short(&shunt_policy_names, b->failure_shunt));
-		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
-		const struct ip_info *afi = address_type(&b->local.host_addr);
-		/* ports? assumed wide? */
-		ip_selector src = selector_from_address_protocol(b->local.host_addr,
-								 b->packet.protocol);
-		ip_selector dst = selector_from_address_protocol(b->remote.host_addr,
-								 b->packet.protocol);
-		struct kernel_encap encap = proto_encap_transport_esp;
-		encap.host.src = afi->address.any;
-		encap.host.dst = afi->address.any;
+		pexpect(b->failure_shunt != SHUNT_UNSET); /* set to something */
+		ip_selector src = packet_src_selector(b->packet);
+		ip_selector dst = packet_dst_selector(b->packet);
 		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&src, &dst,
 				b->failure_shunt,
-				/*encap*/&encap,
+				/*encap*/NULL/*no-policy-template*/,
 				deltatime(SHUNT_PATIENCE),
 				BOTTOM_PRIO, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
