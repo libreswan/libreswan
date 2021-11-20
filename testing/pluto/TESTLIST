@@ -1229,24 +1229,26 @@ kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 kvmplutotest	bad-nexthop-01		wip
 
 # TCP tests and UDP encap tests
-kvmplutotest	ikev2-tcp-00-yes				good
-kvmplutotest	ikev2-tcp-00-fallback				good
-kvmplutotest	ikev2-tcp-01-eof				good
-kvmplutotest	ikev2-tcp-02-timeout				wip
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking		good
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking		good
-kvmplutotest	ikev2-tcp-04-ikeport				good
-kvmplutotest	ikev2-tcp-05-transport-mode			wip
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie		wip
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke	good
-kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect		skiptest
-kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication-failed	wip
-kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect		wip
-kvmplutotest	ikev2-tcp-10-rekey-child			good
-kvmplutotest	ikev2-tcp-10-rekey-ike				good
-kvmplutotest	ikev2-tcp-25-rw-nat				good
-kvmplutotest	ikev2-tcp-26-rw-nat-keepalive			good
-kvmplutotest	ikev2-udp-05-transport-mode 			good
+
+kvmplutotest	ikev2-tcp-00-yes					good
+kvmplutotest	ikev2-tcp-00-fallback					good
+kvmplutotest	ikev2-tcp-01-eof					good
+kvmplutotest	ikev2-tcp-02-timeout					wip
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			good
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			good
+kvmplutotest	ikev2-tcp-04-ikeport					good
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie			skiptest
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
+kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect			skiptest
+kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication-failed	good
+kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect			good
+kvmplutotest	ikev2-tcp-10-rekey-child				good
+kvmplutotest	ikev2-tcp-10-rekey-ike					good
+kvmplutotest	ikev2-tcp-25-rw-nat					good
+kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
+
+kvmplutotest	ikev2-tcp-05-transport-mode				skiptest
+kvmplutotest	ikev2-udp-05-transport-mode 				good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01-iked-responder	good

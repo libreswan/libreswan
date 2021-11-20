@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
-ip route del 192.0.1.0/24
+# we can't test the packetflow as we are going to redirect
+ip route del 192.0.2.0/24
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-ipsec status |grep redirect
 echo "initdone"
