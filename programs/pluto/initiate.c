@@ -632,16 +632,13 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * explicitly handles the clients.
 	 */
 
-	if (!endpoint_is_specified(b->local.client) &&
-	    !endpoint_is_specified(b->remote.client)) {
+	if (!b->packet.is_set) {
 		cannot_ondemand(RC_OPPOFAILURE, b, "impossible IP address");
 		return;
 	}
 
 	/* XXX: shouldn't this have happened earlier? */
-	ip_address src_host_addr = packet_src_address(b->packet);
-	ip_address dst_host_addr = packet_dst_address(b->packet);
-	if (address_eq_address(src_host_addr, dst_host_addr)) {
+	if (thingeq(b->packet.src.bytes, b->packet.dst.bytes)) {
 		/*
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
@@ -802,9 +799,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			 * to figigure out what to do with the shunt
 			 * functions.
 			 */
-			ip_selector our_client[] = { selector_from_endpoint(b->local.client), };
-			ip_selector peer_client[] = { selector_from_endpoint(b->remote.client), };
-			add_bare_shunt(our_client, peer_client,
+			ip_selector src_client = packet_src_selector(b->packet);
+			ip_selector dst_client = packet_dst_selector(b->packet);
+			add_bare_shunt(&src_client, &dst_client,
 				       SHUNT_HOLD, UNSET_CO_SERIAL,
 				       b->want, b->logger);
 
