@@ -1872,12 +1872,11 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			  "%s() %s", __func__, opname);
 }
 
-/* assign a bare hold or pass to a connection */
+/* install a bare hold or pass policy to a connection */
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
-		     const struct ip_protocol *transport_proto,
 		     enum shunt_policy negotiation_shunt,
-		     const ip_address *src, const ip_address *dst)
+		     const ip_packet *packet)
 {
 	/*
 	 * either the automatically installed %hold eroute is broad enough
@@ -1979,7 +1978,11 @@ bool assign_holdpass(const struct connection *c,
 			}
 		}
 
-		if (!delete_bare_shunt(src, dst, transport_proto,
+		ip_address src_host_addr = packet_src_address(*packet);
+		ip_address dst_host_addr = packet_dst_address(*packet);
+
+		if (!delete_bare_shunt(&src_host_addr, &dst_host_addr,
+				       packet->protocol,
 				       /*skip_xfrm_policy_delete?*/false,
 				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),

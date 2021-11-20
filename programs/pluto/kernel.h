@@ -29,6 +29,7 @@
 #include "reqid.h"
 #include "connections.h"	/* for policy_prio_t et.al. */
 #include "ip_said.h"		/* for SA_AH et.al. */
+#include "ip_packet.h"
 
 struct sa_marks;
 struct spd_route;
@@ -478,11 +479,10 @@ extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      bool skip_xfrm_policy_delete,
 			      const char *why, struct logger *logger);
 
-extern bool assign_holdpass(const struct connection *c,
-			    struct spd_route *sr,
-			    const struct ip_protocol *transport_proto,
-			    enum shunt_policy negotiation_shunt,
-			    const ip_address *src, const ip_address *dst);
+bool assign_holdpass(const struct connection *c,
+		     struct spd_route *sr,
+		     enum shunt_policy negotiation_shunt,
+		     const ip_packet *packet);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			    enum shunt_policy failure_shunt, struct logger *logger);

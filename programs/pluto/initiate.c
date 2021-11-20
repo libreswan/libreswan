@@ -515,8 +515,6 @@ struct find_oppo_bundle {
 	struct {
 		/* traffic that triggered the opportunistic exchange */
 		ip_endpoint client;
-		/* host addresses for traffic (redundant, but convenient) */
-		ip_address host_addr;
 	} local, remote;
 	bool held;
 	policy_prio_t policy_prio;
@@ -531,12 +529,15 @@ static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 {
 	jam(buf, "initiate on demand by %s from ", b->want);
 
-	jam_address(buf, &b->local.host_addr);
+	ip_address src_host_addr = packet_src_address(b->packet);
+	ip_address dst_host_addr = packet_dst_address(b->packet);
+
+	jam_address(buf, &src_host_addr);
 	jam(buf, ":%d", endpoint_hport(b->local.client));
 
 	jam(buf, " to ");
 
-	jam_address(buf, &b->remote.host_addr);
+	jam_address(buf, &dst_host_addr);
 	jam(buf, ":%d", endpoint_hport(b->remote.client));
 
 	jam(buf, " proto=%s", b->packet.protocol->name);
@@ -636,7 +637,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		return;
 	}
 
-	if (address_eq_address(b->local.host_addr, b->remote.host_addr)) {
+	/* XXX: shouldn't this have happened earlier? */
+	ip_address src_host_addr = packet_src_address(b->packet);
+	ip_address dst_host_addr = packet_dst_address(b->packet);
+	if (address_eq_address(src_host_addr, dst_host_addr)) {
 		/*
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
@@ -803,10 +807,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       SHUNT_HOLD, UNSET_CO_SERIAL,
 				       b->want, b->logger);
 
-			if (assign_holdpass(c, sr, b->packet.protocol,
+			if (assign_holdpass(c, sr,
 					    b->negotiation_shunt,
-					    &b->local.host_addr,
-					    &b->remote.host_addr)) {
+					    &b->packet)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				llog(RC_LOG, b->logger,
@@ -912,8 +915,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 
 	struct kernel_encap encap = proto_encap_transport_esp;
-	encap.host.src = b->local.host_addr;
-	encap.host.dst = b->remote.host_addr;
+	encap.host.src = packet_src_address(b->packet);
+	encap.host.dst = packet_dst_address(b->packet);
 
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &local_shunt, &remote_shunt,
@@ -947,10 +950,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	if (b->held) {
 		if (assign_holdpass(c, &c->spd,
-				    b->packet.protocol,
 				    b->negotiation_shunt,
-				    &b->local.host_addr,
-				    &b->remote.host_addr)) {
+				    &b->packet)) {
 			dbg("assign_holdpass succeeded");
 		} else {
 			llog(RC_LOG, b->logger, "assign_holdpass failed!");
@@ -973,8 +974,6 @@ void initiate_ondemand(const ip_packet *packet,
 		.packet = *packet,
 		.local.client = packet_src_endpoint(*packet),
 		.remote.client = packet_dst_endpoint(*packet),
-		.local.host_addr = packet_src_address(*packet),
-		.remote.host_addr = packet_dst_address(*packet),
 		.held = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
