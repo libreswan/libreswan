@@ -509,14 +509,13 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
  */
 
 struct find_oppo_bundle {
-	const char *want;
 	ip_packet packet; /* that triggered the opportunistic exchange */
 	/* redundant */
 	struct {
 		/* traffic that triggered the opportunistic exchange */
 		ip_endpoint client;
 	} local, remote;
-	bool held;
+	bool by_acquire;	/* acquire? whack? */
 	policy_prio_t policy_prio;
 	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
@@ -527,23 +526,13 @@ struct find_oppo_bundle {
 
 static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 {
-	jam(buf, "initiate on demand by %s from ", b->want);
-
-	ip_address src_host_addr = packet_src_address(b->packet);
-	ip_address dst_host_addr = packet_dst_address(b->packet);
-
-	jam_address(buf, &src_host_addr);
-	jam(buf, ":%d", endpoint_hport(b->local.client));
-
-	jam(buf, " to ");
-
-	jam_address(buf, &dst_host_addr);
-	jam(buf, ":%d", endpoint_hport(b->remote.client));
-
-	jam(buf, " proto=%s", b->packet.protocol->name);
-
+	jam(buf, "initiate on-demand for packet ");
+	jam_packet(buf, &b->packet);
+	if (!b->by_acquire) {
+		jam(buf, " by whack");
+	}
 	if (b->sec_label.len > 0) {
-		jam(buf, " label=");
+		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, b->sec_label);
 	}
 }
@@ -556,15 +545,18 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		jam(buf, ": %s", ughmsg);
 	}
 
-	if (b->held) {
+	if (b->by_acquire) {
 		/*
-		 * This was filled in for us based on packet trigger
-		 * and not whack --oppo trigger.  Hence, there really
-		 * is something in the kernel that needs updating.
+		 * A kernel policy was created for us based on the
+		 * packet trigger and not whack --oppo trigger.
+		 * Hence, there really is something in the kernel that
+		 * needs updating.
 		 *
 		 * Replace negotiationshunt (hold or pass) with
 		 * failureshunt (hold or pass).  If no failure_shunt
 		 * specified, use SHUNT_PASS -- THIS MAY CHANGE.
+		 *
+		 * Should SHUNT_PASS instead call with a delete?
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
 		    enum_name_short(&shunt_policy_names, b->failure_shunt));
@@ -707,12 +699,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
 				  b->background, b->logger);
 
-		endpoint_buf b1;
-		endpoint_buf b2;
-		dbg("initiated on demand using security label and %s from %s to %s",
+		packet_buf pb;
+		dbg("initiated on demand using security label and %s %s",
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-		    str_endpoint(&b->local.client, &b1),
-		    str_endpoint(&b->remote.client, &b2));
+		    str_packet(&b->packet, &pb));
 
 		return;
 	}
@@ -783,10 +773,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * Otherwise, there is some kind of static conn that
 		 * can handle this connection, so we initiate it.
-		 * Only needed if we this was triggered by a packet,
-		 * not by whack
+		 *
+		 * Only needed if we this was triggered by a packet
+		 * and acquire not by whack.
 		 */
-		if (b->held) {
+		if (b->by_acquire) {
 			/*
 			 * Add the kernel shunt to the pluto bare
 			 * shunt list.
@@ -803,7 +794,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 			ip_selector dst_client = packet_dst_selector(b->packet);
 			add_bare_shunt(&src_client, &dst_client,
 				       SHUNT_HOLD, UNSET_CO_SERIAL,
-				       b->want, b->logger);
+				       b->by_acquire ? "acquire" : "whack",
+				       b->logger);
 
 			if (assign_holdpass(c, sr,
 					    b->negotiation_shunt,
@@ -823,12 +815,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
 				  b->background, b->logger);
 
-		endpoint_buf b1;
-		endpoint_buf b2;
-		dbg("initiated on demand using %s from %s to %s",
+		packet_buf pb;
+		dbg("initiated on demand using %s %s",
 		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
-		    str_endpoint(&b->local.client, &b1),
-		    str_endpoint(&b->remote.client, &b2));
+		    str_packet(&b->packet, &pb));
 
 		return;
 	}
@@ -986,7 +976,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	c->spd.that.client = remote_shunt;
 	rehash_db_spd_route_remote_client(&c->spd);
 
-	if (b->held) {
+	if (b->by_acquire) {
+		/*
+		 * XXX: updating the policy inserted by the kernel.
+		 */
 		if (assign_holdpass(c, &c->spd,
 				    b->negotiation_shunt,
 				    &b->packet)) {
@@ -1006,13 +999,11 @@ void initiate_ondemand(const ip_packet *packet,
 		       const shunk_t sec_label,
 		       struct logger *logger)
 {
-	const char *why = by_acquire ? "acquire" : "whack"; /*enum?*/
 	struct find_oppo_bundle b = {
-		.want = why,   /* fudge */
 		.packet = *packet,
 		.local.client = packet_src_endpoint(*packet),
 		.remote.client = packet_dst_endpoint(*packet),
-		.held = by_acquire,
+		.by_acquire = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
 		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
 		.failure_shunt = SHUNT_HOLD, /* until we found connection policy */
