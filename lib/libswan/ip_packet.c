@@ -75,19 +75,6 @@ ip_address packet_dst_address(const ip_packet packet)
 	}
 }
 
-ip_endpoint packet_src_endpoint(const ip_packet packet)
-{
-	if (packet.is_set) {
-		return endpoint_from_raw(HERE,
-					 packet.info->ip_version,
-					 packet.src.bytes,
-					 packet.protocol,
-					 ip_hport(packet.src.hport));
-	} else {
-		return unset_endpoint;
-	}
-}
-
 ip_endpoint packet_dst_endpoint(const ip_packet packet)
 {
 	if (packet.is_set) {

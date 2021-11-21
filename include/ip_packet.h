@@ -90,7 +90,7 @@ extern const ip_packet unset_packet;
 ip_address packet_src_address(const ip_packet packet);
 ip_address packet_dst_address(const ip_packet packet);
 
-ip_endpoint packet_src_endpoint(const ip_packet packet); /* XXX: can have 0 port so bogus */
+/* packet_src_endpoint() N/A as as src port can be zero */
 ip_endpoint packet_dst_endpoint(const ip_packet packet);
 
 ip_selector packet_src_selector(const ip_packet packet);
