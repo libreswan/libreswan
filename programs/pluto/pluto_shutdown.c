@@ -46,7 +46,7 @@
 #include "connections.h"	/* for delete_every_connection() */
 #include "fetch.h"		/* for stop_crl_fetch_helper() et.al. */
 #include "crl_queue.h"		/* for free_crl_queue() */
-#include "iface.h"		/* for free_ifaces() */
+#include "iface.h"		/* for shutdown_ifaces() */
 #include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
@@ -163,7 +163,7 @@ void exit_epilogue(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_ifaces(logger);	/* free interface list from memory */
+	shutdown_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
 	lsw_nss_shutdown();
 	delete_lock();	/* delete any lock files */

@@ -737,18 +737,18 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev, ip_endpoin
 #endif
 	}
 
-	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface initiator");
-	ifp->io = &iketcp_iface_io;
-	ifp->fd = fd;
-	ifp->local_endpoint = local_endpoint;
-	ifp->esp_encapsulation_enabled = true;
-	ifp->float_nat_initiator = false;
-	ifp->ip_dev = addref(local_dev, HERE);
+	struct iface_endpoint *ifp =
+		alloc_iface_endpoint(fd, local_dev, &iketcp_iface_io,
+				     /*esp_encapsulation_enabled*/true,
+				     /*float_nat_initiator*/false,
+				     local_endpoint,
+				     HERE);
 	ifp->iketcp_remote_endpoint = remote_endpoint;
 	ifp->iketcp_state = IKETCP_ENABLED;
 	ifp->iketcp_server = false;
 
 #if 0
+	/* private */
 	ifp->next = interfaces;
 	interfaces = q;
 #endif
@@ -786,14 +786,13 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 									      &ip_protocol_tcp,
 									      remote_tcp_port);
 
-	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint, "TCP iface responder");
-	ifp->fd = accepted_fd;
-	ifp->io = &iketcp_iface_io;
-	ifp->esp_encapsulation_enabled = true;
-	ifp->float_nat_initiator = false;
-	ifp->ip_dev = addref(bind_ifp->ip_dev, HERE); /*TCP: refcnt */
+	struct iface_endpoint *ifp =
+		alloc_iface_endpoint(accepted_fd, bind_ifp->ip_dev, &iketcp_iface_io,
+				     /*esp_encapsulation_enabled*/true,
+				     /*float_nat_initiator*/false,
+				     bind_ifp->local_endpoint,
+				     HERE);
 	ifp->iketcp_remote_endpoint = remote_tcp_endpoint;
-	ifp->local_endpoint = bind_ifp->local_endpoint;
 	ifp->iketcp_state = IKETCP_ACCEPTED;
 	ifp->iketcp_server = true;
 

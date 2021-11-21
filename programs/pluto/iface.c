@@ -45,6 +45,15 @@
 
 struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
+static void jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
+{
+	jam(buf, "%d", ifp->fd);
+}
+
+LIST_INFO(iface_endpoint, entry, iface_endpoint_info, jam_iface_endpoint);
+static struct list_head iface_endpoints = INIT_LIST_HEAD(&iface_endpoints,
+							 &iface_endpoint_info);
+
 /*
  * The interfaces - eth0 ...
  */
@@ -155,7 +164,8 @@ static void free_dead_ifaces(struct logger *logger)
 		delete_states_dead_interfaces(logger);
 		for (struct iface_endpoint **pp = &interfaces; (p = *pp) != NULL; ) {
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
-				*pp = p->next; /* advance *pp */
+				*pp = p->next; /* advance *pp (skip p) */
+				p->next = NULL;
 				free_any_iface_endpoint(&p);
 			} else {
 				pp = &p->next; /* advance pp */
@@ -184,22 +194,41 @@ static void free_dead_ifaces(struct logger *logger)
 	}
 }
 
-void free_ifaces(struct logger *logger)
+void free_any_iface_endpoint(struct iface_endpoint **ifpp)
 {
-	mark_ifaces_dead();
-	free_dead_ifaces(logger);
+	struct iface_endpoint *ifp = *ifpp;
+	*ifpp = NULL;
+	/* drop any lists */
+	pexpect(ifp->next == NULL);
+	remove_list_entry(&ifp->entry);
+	/* generic stuff */
+	ifp->io->cleanup(ifp);
+	release_iface_dev(&ifp->ip_dev);
+	/* XXX: after cleanup so code can log FD */
+	close(ifp->fd);
+	ifp->fd = -1;
+	pfree(ifp);
 }
 
-void free_any_iface_endpoint(struct iface_endpoint **ifp)
+struct iface_endpoint *alloc_iface_endpoint(int fd,
+					    struct iface_dev *ifd,
+					    const struct iface_io *io,
+					    bool esp_encapsulation_enabled,
+					    bool float_nat_initiator,
+					    ip_endpoint local_endpoint,
+					    where_t where)
 {
-	/* generic stuff */
-	(*ifp)->io->cleanup(*ifp);
-	release_iface_dev(&(*ifp)->ip_dev);
-	/* XXX: after cleanup so code can log FD */
-	close((*ifp)->fd);
-	(*ifp)->fd = -1;
-	pfree((*ifp));
-	*ifp = NULL;
+	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
+						 "iface endpoint");
+	ifp->fd = fd;
+	ifp->ip_dev = addref(ifd, where);
+	ifp->io = io;
+	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
+	ifp->float_nat_initiator = float_nat_initiator;
+	ifp->local_endpoint = local_endpoint;
+	init_list_entry(&iface_endpoint_info, ifp, &ifp->entry);
+	insert_list_entry(&iface_endpoints, &ifp->entry);
+	return ifp;
 }
 
 struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
@@ -228,16 +257,14 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
-						 "struct iface_endpoint");
-	ifp->fd = fd;
-	ifp->ip_dev = addref(ifd, HERE);
-	ifp->io = io;
-	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
-	ifp->float_nat_initiator = float_nat_initiator;
-	ifp->local_endpoint = local_endpoint;
+	struct iface_endpoint *ifp =
+		alloc_iface_endpoint(fd, ifd, io,
+				     esp_encapsulation_enabled,
+				     float_nat_initiator,
+				     local_endpoint,
+				     HERE);
 
-	/* insert */
+	/* insert into public interface list */
 	ifp->next = interfaces;
 	interfaces = ifp;
 
@@ -508,5 +535,17 @@ void show_ifaces_status(struct show *s)
 			     p->ip_dev->id_rname,
 			     p->io->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));
+	}
+}
+
+void shutdown_ifaces(struct logger *logger)
+{
+	/* clean up public interfaces */
+	mark_ifaces_dead();
+	free_dead_ifaces(logger);
+	/* clean up remaining hidden interfaces */
+	struct iface_endpoint *ifp;
+	FOR_EACH_LIST_ENTRY_NEW2OLD(&iface_endpoints, ifp) {
+		free_any_iface_endpoint(&ifp);
 	}
 }

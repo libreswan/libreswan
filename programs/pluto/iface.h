@@ -100,6 +100,7 @@ struct iface_endpoint {
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_endpoint *next;
+	struct list_entry entry;
 	/*
 	 * Here's what the RFC has to say:
 	 *
@@ -182,12 +183,22 @@ extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint 
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
-extern void free_ifaces(struct logger *logger);
 void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);
 struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd, const struct iface_io *io,
 					   ip_port port,
 					   bool esp_encapsulation_enabled,
 					   bool float_nat_initiator,
 					   struct logger *logger);
+
+/* internal */
+struct iface_endpoint *alloc_iface_endpoint(int fd,
+					    struct iface_dev *ifd,
+					    const struct iface_io *io,
+					    bool esp_encapsulation_enabled,
+					    bool float_nat_initiator,
+					    ip_endpoint local_endpoint,
+					    where_t where);
+
+extern void shutdown_ifaces(struct logger *logger);
 
 #endif
