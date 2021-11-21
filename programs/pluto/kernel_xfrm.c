@@ -937,7 +937,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	const struct connection *const c = st->st_connection;
 
 	const struct ip_encap *encap_type =
-		(st->st_interface->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
+		(st->st_interface->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
 		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? &ip_encap_esp_in_udp :
 		NULL;
 	dbg("TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));

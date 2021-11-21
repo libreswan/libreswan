@@ -180,7 +180,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	 */
 	ip_port port = end_host_port(end, other_end);
 	ip_endpoint host_end = endpoint_from_address_protocol_port(host_addr,
-								   ifp->protocol,
+								   ifp->io->protocol,
 								   port);
 	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }

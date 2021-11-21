@@ -313,7 +313,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	 */
 	ip_port port = endpoint_port(st->st_interface->local_endpoint);
 	st->st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
-									   st->st_interface->protocol,
+									   st->st_interface->io->protocol,
 									   port);
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_endpoint *o_iface = st->st_interface;
@@ -347,7 +347,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 	pexpect_st_local_endpoint(st);
 	ip_port port = endpoint_port(st->st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
-									 st->st_interface->protocol,
+									 st->st_interface->io->protocol,
 									 port);
 	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {

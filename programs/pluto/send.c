@@ -159,7 +159,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 			    interface->ip_dev->id_rname,
 			    str_endpoint(&interface->local_endpoint, &lb),
 			    str_endpoint(&remote_endpoint, &rb),
-			    interface->protocol->name,
+			    interface->io->protocol->name,
 			    serialno);
 		DBG_dump(NULL, ptr, len);
 	}
@@ -176,7 +176,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 					  interface->ip_dev->id_rname,
 					  str_endpoint(&interface->local_endpoint, &lb),
 					  str_endpoint_sensitive(&remote_endpoint, &rb),
-					  interface->protocol->name,
+					  interface->io->protocol->name,
 					  where);
 			}
 			return false;

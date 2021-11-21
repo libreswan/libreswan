@@ -100,7 +100,6 @@ struct iface_endpoint {
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
 	struct iface_endpoint *next;
-	const struct ip_protocol *protocol;
 	/*
 	 * Here's what the RFC has to say:
 	 *

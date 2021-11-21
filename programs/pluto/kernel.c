@@ -2199,8 +2199,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-		    st->st_interface->protocol == &ip_protocol_tcp) {
-			encap_type = st->st_interface->protocol->encap_esp;
+		    st->st_interface->io->protocol == &ip_protocol_tcp) {
+			encap_type = st->st_interface->io->protocol->encap_esp;
 			if (inbound) {
 				encap_sport = endpoint_hport(st->st_remote_endpoint);
 				encap_dport = endpoint_hport(st->st_interface->local_endpoint);

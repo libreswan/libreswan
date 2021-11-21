@@ -1114,7 +1114,7 @@ void delete_state_tail(struct state *st)
 		 * ownership.  However, do delete a TCP IKE SA when it
 		 * looks like it is getting ready for a replace.
 		 */
-		if (st->st_interface->protocol == &ip_protocol_tcp) {
+		if (st->st_interface->io->protocol == &ip_protocol_tcp) {
 			dbg("TCP: freeing interface; release instead?");
 			struct iface_endpoint **p = (void*)&st->st_interface; /* hack const */
 			/*
@@ -2046,7 +2046,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		jam(buf, "#%lu: ", st->st_serialno);
 		jam_connection(buf, c);
 		jam(buf, ":%u", endpoint_hport(st->st_remote_endpoint));
-		if (st->st_interface->protocol == &ip_protocol_tcp) {
+		if (st->st_interface->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
 		jam(buf, " %s (%s)", st->st_state->name, st->st_state->story);

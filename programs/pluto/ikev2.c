@@ -2808,7 +2808,7 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 	 * Need to re-open TCP.
 	 */
 	if (ike->sa.st_interface != NULL &&
-	    ike->sa.st_interface->protocol == &ip_protocol_tcp) {
+	    ike->sa.st_interface->io->protocol == &ip_protocol_tcp) {
 		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
 		/*
 		 * XXX: The state and the event loop are sharing EVP.

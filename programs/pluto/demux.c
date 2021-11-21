@@ -118,7 +118,7 @@ static enum iface_read_status read_message(struct iface_endpoint *ifp,
 	    str_endpoint(&md->sender, &sb),
 	    ifp->ip_dev->id_rname,
 	    str_endpoint(&ifp->local_endpoint, &lb),
-	    ifp->protocol->name);
+	    ifp->io->protocol->name);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));

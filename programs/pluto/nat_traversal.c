@@ -202,7 +202,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 	/* XXX: .st_interface, not c.interface - can be different */
 	if (!st->st_interface->io->send_keepalive) {
 		dbg("skipping NAT-T KEEP-ALIVE: #%lu does not need it for %s protocol",
-		    st->st_serialno, st->st_interface->protocol->name);
+		    st->st_serialno, st->st_interface->io->protocol->name);
 		return;
 	}
 	if (c->newest_ike_sa != st->st_serialno) {
@@ -362,8 +362,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (st == NULL)
 		return;
 
-	if (st->st_interface->protocol == &ip_protocol_tcp ||
-	    (md != NULL && md->iface->protocol == &ip_protocol_tcp)) {
+	if (st->st_interface->io->protocol == &ip_protocol_tcp ||
+	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
 		/* XXX: when is MD NULL? */
 		return;
 	}

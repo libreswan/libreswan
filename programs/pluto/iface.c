@@ -235,7 +235,6 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 	ifp->io = io;
 	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
 	ifp->float_nat_initiator = float_nat_initiator;
-	ifp->protocol = io->protocol;
 	ifp->local_endpoint = local_endpoint;
 
 	/* insert */
@@ -327,7 +326,7 @@ void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
 	dbg("setup callback for interface %s %s fd %d on %s",
 	    ifp->ip_dev->id_rname,
 	    str_endpoint(&ifp->local_endpoint, &b),
-	    ifp->fd, ifp->protocol->name);
+	    ifp->fd, ifp->io->protocol->name);
 }
 
 static struct raw_iface *find_raw_ifaces4(struct logger *logger)
@@ -507,7 +506,7 @@ void show_ifaces_status(struct show *s)
 		endpoint_buf b;
 		show_comment(s, "interface %s %s %s",
 			     p->ip_dev->id_rname,
-			     p->protocol->name,
+			     p->io->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));
 	}
 }
