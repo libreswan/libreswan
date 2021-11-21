@@ -2796,10 +2796,13 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
  * See also build_outgoing_opportunistic_connection.
  */
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_endpoint *local_client,
-					       const ip_endpoint *remote_client,
+					       const ip_packet packet,
 					       shunk_t sec_label, struct logger *logger)
 {
+
+	const ip_endpoint local_client[] = { packet_src_endpoint(packet), };
+	const ip_endpoint remote_client[] = { packet_dst_endpoint(packet), };
+
 	passert(!endpoint_is_unset(local_client));
 	passert(!endpoint_is_unset(remote_client));
 	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));

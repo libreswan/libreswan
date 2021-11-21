@@ -37,6 +37,7 @@
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "ip_protoport.h"
+#include "ip_packet.h"
 
 #include "defs.h"
 #include "proposals.h"
@@ -519,8 +520,7 @@ struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
 					     const ip_selector *remote_client);
 struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_endpoint *our_client,
-					       const ip_endpoint *peer_client,
+					       const ip_packet packet,
 					       shunk_t sec_label,
 					       struct logger *logger);
 
