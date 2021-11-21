@@ -34,7 +34,7 @@ struct fd {
 struct fd *fd_addref_where(struct fd *fd, const struct where *where)
 {
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	return addref(fd, where);
+	return addref_where(fd, where);
 }
 
 static void free_fd(void *obj, where_t where)
@@ -57,7 +57,7 @@ static void free_fd(void *obj, where_t where)
 
 void fd_delref_where(struct fd **fd, where_t where)
 {
-	delref(fd, where);
+	delref_where(fd, where);
 }
 
 void fd_leak(struct fd *fd, where_t where)

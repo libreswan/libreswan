@@ -41,7 +41,7 @@ struct root_certs *root_certs_addref(where_t where)
 	/* extend or set cert cache lifetime */
 	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	if (root_cert_db != NULL) {
-		return addref(root_cert_db, where);
+		return addref_where(root_cert_db, where);
 	}
 
 	dbg("loading root certificate cache");
@@ -57,7 +57,7 @@ struct root_certs *root_certs_addref(where_t where)
 	 * Start with two references: the ROOT_CERT_DB; and the result
 	 * of this function.
 	 */
-	struct root_certs *root_certs = addref(root_cert_db, where); /* function result */
+	struct root_certs *root_certs = addref_where(root_cert_db, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 
 	struct logger logger = GLOBAL_LOGGER(null_fd);
@@ -108,7 +108,7 @@ struct root_certs *root_certs_addref(where_t where)
 void root_certs_delref(struct root_certs **root_certs,
 			where_t where)
 {
-	delref(root_certs, where);
+	delref_where(root_certs, where);
 }
 
 bool root_certs_empty(const struct root_certs *root_certs)

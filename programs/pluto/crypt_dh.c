@@ -115,12 +115,12 @@ const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
-	return addref(secret, where);
+	return addref_where(secret, where);
 }
 
 void dh_local_secret_delref(struct dh_local_secret **secret, where_t where)
 {
-	delref(secret, where);
+	delref_where(secret, where);
 }
 
 struct task {
