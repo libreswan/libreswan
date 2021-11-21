@@ -1,2 +1,1 @@
 ipsec look
-ipsec stop

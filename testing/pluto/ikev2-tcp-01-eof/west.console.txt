@@ -108,7 +108,4 @@ Certificate Nickname                                         Trust Attributes
 west #
  grep '^connection from' /tmp/pluto.log
 west #
- ipsec stop
-Redirecting to: [initsystem]
-west #
  

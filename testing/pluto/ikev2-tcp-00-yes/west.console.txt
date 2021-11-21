@@ -115,6 +115,4 @@ west #
  echo "done"
 done
 west #
- ipsec whack --shutdown
-west #
  

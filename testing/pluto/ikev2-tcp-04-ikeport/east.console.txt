@@ -23,6 +23,4 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec whack --shutdown
-east #
  

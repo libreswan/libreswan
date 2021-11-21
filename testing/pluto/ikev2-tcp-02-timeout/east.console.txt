@@ -51,7 +51,4 @@ connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: timeout out
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
 connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: timeout out before first message received
 east #
- ipsec stop
-Redirecting to: [initsystem]
-east #
  
