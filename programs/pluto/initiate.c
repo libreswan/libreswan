@@ -909,18 +909,46 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 
 	/* XXX: re-use c */
-	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
-	c = build_outgoing_opportunistic_connection(&b->local.client,
-						    &b->remote.client);
-	if (c == NULL) {
-		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable connection between endpoints");
+	/*
+	 * XXX Shouldn't this pass b->sec_label too in theory?  But we
+	 * don't support OE with labels.
+	 *
+	 * XXX: why is this looking for a new connection.  Isn't C
+	 * good enough, at least as a template?
+	 */
+	struct connection *t = find_outgoing_opportunistic_template(b->packet);
+
+	if (t == NULL) {
+		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable template between endpoints");
 		return;
 	}
+
+	if (t == c) {
+		dbg("opportunistic and matching templates match");
+	} else {
+		connection_buf cb, tb;
+		llog_pexpect(b->logger, HERE,
+			     "need to switch from matching template "PRI_CONNECTION" to opportunistic template "PRI_CONNECTION,
+			     pri_connection(c, &cb), pri_connection(t, &tb));
+	}
+
+	/*
+	 * XXX we might not yet know the ID!
+	 *
+	 * XXX: what about the shunts computed above, and then stored
+	 * later.
+	 */
+	ip_address src_address = packet_src_address(b->packet);
+	ip_address dst_address = packet_dst_address(b->packet);
+	c = oppo_instantiate(t, NULL, &src_address, &dst_address);
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
 	    enum_name_short(&shunt_policy_names, b->negotiation_shunt));
+
+	pexpect(selector_eq_selector(c->spd.this.client, local_shunt));
+	pexpect(selector_eq_selector(c->spd.that.client, remote_shunt));
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API

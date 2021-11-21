@@ -541,8 +541,7 @@ extern struct connection *instantiate(struct connection *c,
 				      const struct id *peer_id,
 				      shunk_t sec_label);
 
-struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *our_client,
-							   const ip_endpoint *peer_client);
+struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
 
 /* publicly useful? */
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);

@@ -2793,7 +2793,7 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
  * If there are several with that priority, we give preference to the
  * first one that is an instance.
  *
- * See also build_outgoing_opportunistic_connection.
+ * See also find_outgoing_opportunistic_template().
  */
 struct connection *find_connection_for_clients(struct spd_route **srp,
 					       const ip_packet packet,
@@ -3106,9 +3106,12 @@ struct connection *oppo_instantiate(struct connection *c,
  * find_connection_for_clients. In this case, we know the gateways
  * that we need to instantiate an opportunistic connection.
  */
-struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *local_client,
-							   const ip_endpoint *remote_client)
+
+struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 {
+	const ip_endpoint local_client[] = { packet_src_endpoint(packet), };
+	const ip_endpoint remote_client[] = { packet_dst_endpoint(packet), };
+
 	/*
 	 * Did the caller do their job?
 	 *
@@ -3239,10 +3242,7 @@ struct connection *build_outgoing_opportunistic_connection(const ip_endpoint *lo
 		return NULL;
 	}
 
-	/* XXX we might not yet know the ID! */
-	ip_address local_address = endpoint_address(*local_client);
-	ip_address remote_address = endpoint_address(*remote_client);
-	return oppo_instantiate(best, NULL, &local_address, &remote_address);
+	return best;
 }
 
 /*
