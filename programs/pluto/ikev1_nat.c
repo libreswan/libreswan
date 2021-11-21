@@ -486,7 +486,8 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
 			    st->st_serialno, i->ip_dev->id_rname,
 			    str_endpoint(&i->local_endpoint, &b));
-			st->st_interface = i;
+			iface_endpoint_delref(&st->st_interface);
+			st->st_interface = iface_endpoint_addref(i);
 		}
 	}
 	pexpect_st_local_endpoint(st);

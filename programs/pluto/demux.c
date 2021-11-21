@@ -362,7 +362,7 @@ void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *if
 		 * XXX: this assumes that IFP is not being shared.
 		 */
 		pexpect(md == NULL);
-		free_any_iface_endpoint(&ifp);
+		iface_endpoint_delref(&ifp);
 		break;
 	}
 

@@ -400,7 +400,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			    st->st_serialno,
 			    str_endpoint(&st->st_interface->local_endpoint, &b1),
 			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
-			st->st_interface = md->iface;
+			iface_endpoint_delref(&st->st_interface);
+			st->st_interface = iface_endpoint_addref(md->iface);
 		}
 	}
 	pexpect_st_local_endpoint(st);

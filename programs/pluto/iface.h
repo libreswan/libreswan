@@ -95,6 +95,7 @@ void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger);
 struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
 struct iface_endpoint {
+	refcnt_t refcnt;
 	struct iface_dev *ip_dev;
 	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
@@ -175,7 +176,12 @@ struct iface_endpoint {
 };
 
 void stop_iketcp_iface_endpoint(struct iface_endpoint **ifp);
-void free_any_iface_endpoint(struct iface_endpoint **ifp);
+
+struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where);
+#define iface_endpoint_addref(IFP) iface_endpoint_addref_where(IFP, HERE)
+
+void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where);
+#define iface_endpoint_delref(IFP) iface_endpoint_delref_where(IFP, HERE)
 
 extern struct iface_endpoint *interfaces;   /* public interfaces */
 

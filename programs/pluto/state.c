@@ -1105,25 +1105,7 @@ void delete_state_tail(struct state *st)
 	 */
 	binlog_fake_state(st, STATE_UNDEFINED);
 
-	/* XXX: hack to avoid reference counting iface_port. */
-	if (st->st_interface != NULL && IS_IKE_SA(st) &&
-	    st->st_serialno >= st->st_connection->newest_ike_sa) {
-		/*
-		 * XXX: don't try to delete the iface port of an old
-		 * TCP IKE SA.  Its replacement will have taken
-		 * ownership.  However, do delete a TCP IKE SA when it
-		 * looks like it is getting ready for a replace.
-		 */
-		if (st->st_interface->io->protocol == &ip_protocol_tcp) {
-			dbg("TCP: freeing interface; release instead?");
-			struct iface_endpoint **p = (void*)&st->st_interface; /* hack const */
-			/*
-			 * XXX: The state and the event loop are
-			 * sharing EVP.  This deletes both.
-			 */
-			free_any_iface_endpoint(p);
-		}
-	}
+	iface_endpoint_delref(&st->st_interface);
 
 	/*
 	 * Release stored IKE fragments. This is a union in st so only
@@ -1167,7 +1149,6 @@ void delete_state_tail(struct state *st)
 				  st->st_logger->global_whackfd);
 
 	pexpect(st->st_connection == NULL);
-	st->st_interface = NULL;
 
 	v2_msgid_free(st);
 
@@ -1585,7 +1566,7 @@ static struct state *duplicate_state(struct connection *c,
 	    nst->st_serialno,
 	    str_endpoint(&st->st_interface->local_endpoint, &eb),
 	    st->st_serialno,pri_where(HERE));
-	nst->st_interface = st->st_interface;
+	nst->st_interface = iface_endpoint_addref(st->st_interface);
 	pexpect_st_local_endpoint(nst);
 	nst->st_clonedfrom = st->st_serialno;
 	passert(nst->st_ike_version == st->st_ike_version);
@@ -2559,7 +2540,8 @@ void update_ike_endpoints(struct ike_sa *ike,
 	    ike->sa.st_interface != NULL ? str_endpoint(&ike->sa.st_interface->local_endpoint, &eb1) : "<none>",
 	    str_endpoint(&md->iface->local_endpoint, &eb2),
 	    pri_where(HERE));
-	ike->sa.st_interface = md->iface;
+	iface_endpoint_delref(&ike->sa.st_interface);
+	ike->sa.st_interface = iface_endpoint_addref(md->iface);
 	pexpect_st_local_endpoint(&ike->sa);
 }
 
@@ -2655,8 +2637,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		    c->spd.this.host_port, endpoint_hport(child->sa.st_mobike_local_endpoint));
 		c->spd.this.host_port = endpoint_hport(child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop = child->sa.st_mobike_host_nexthop;
-
-		ike->sa.st_interface = child->sa.st_interface = md->iface;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
@@ -2667,11 +2647,14 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;
-		child->sa.st_interface = ike->sa.st_interface = md->iface;
 		break;
 	default:
 		bad_case(md_role);
 	}
+	iface_endpoint_delref(&ike->sa.st_interface);
+	iface_endpoint_delref(&child->sa.st_interface);
+	ike->sa.st_interface = iface_endpoint_addref(md->iface);
+	child->sa.st_interface = iface_endpoint_addref(md->iface);
 	pexpect_st_local_endpoint(&ike->sa);
 	pexpect_st_local_endpoint(&child->sa);
 

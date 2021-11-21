@@ -194,7 +194,8 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		    str_endpoint(&ike->sa.st_interface->local_endpoint, &b1),
 		    str_endpoint(&new_local_endpoint, &b2),
 		    pri_where(where));
-		ike->sa.st_interface = i;
+		iface_endpoint_delref(&ike->sa.st_interface);
+		ike->sa.st_interface = iface_endpoint_addref(i);
 	} else {
 		endpoint_buf b1;
 		log_state(RC_LOG/*fatal!*/, &ike->sa,

@@ -536,29 +536,21 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
 
-	if ((c->iketcp == IKE_TCP_ONLY) || (try > 1 && c->iketcp != IKE_TCP_NO)) {
+	if ((c->iketcp == IKE_TCP_ONLY) ||
+	    (try > 1 && c->iketcp != IKE_TCP_NO)) {
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    ike->sa.st_serialno, c->remote_tcpport);
 		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(c->remote_tcpport));
-		struct iface_endpoint *ret = open_tcp_endpoint(ike->sa.st_interface->ip_dev,
-							       ike->sa.st_remote_endpoint,
-							       ike->sa.st_logger);
-		if (ret == NULL) {
+		struct iface_endpoint *p = open_tcp_endpoint(ike->sa.st_interface->ip_dev,
+							     ike->sa.st_remote_endpoint,
+							     ike->sa.st_logger);
+		if (p == NULL) {
 			/* TCP: already logged? */
 			delete_state(&ike->sa);
 			return;
 		}
-		/*
-		 * TCP: leaks old st_interface?
-		 *
-		 * XXX: perhaps; first time through .st_interface
-		 * points at the packet interface (ex UDP) which is
-		 * shared between states; but once that is replaced by
-		 * a per-state interface it could well leak?
-		 *
-		 * Fix by always refcnting struct iface_endpoint?
-		 */
-		ike->sa.st_interface = ret;
+		iface_endpoint_delref(&ike->sa.st_interface);
+		ike->sa.st_interface = p;
 	}
 
 	if (c->config->sec_label.len > 0 && sec_label.len == 0) {

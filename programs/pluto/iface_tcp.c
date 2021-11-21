@@ -443,7 +443,7 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 	struct logger *logger = &from_logger;
 	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
-	free_any_iface_endpoint(&ifp);
+	iface_endpoint_delref(&ifp);
 }
 
 static void iketcp_listen(struct iface_endpoint *ifp,
@@ -622,11 +622,14 @@ const struct iface_io iketcp_iface_io = {
 };
 
 /*
- * Open a TCP socket connected to st_remote_endpoint.  Since this end
- * opend the socket, this end sends the IKE-in-TCP magic word.
+ * Open a TCP socket connected to st_remote_endpoint.
+ *
+ * Since this end is opening the socket, this end is responsible for
+ * sending the IKE-in-TCP magic word.
  */
 
-struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev, ip_endpoint remote_endpoint,
+struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
+					 ip_endpoint remote_endpoint,
 					 struct logger *logger)
 {
 	dbg("TCP: opening socket");
@@ -746,7 +749,6 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev, ip_endpoin
 	ifp->iketcp_remote_endpoint = remote_endpoint;
 	ifp->iketcp_state = IKETCP_ENABLED;
 	ifp->iketcp_server = false;
-
 #if 0
 	/* private */
 	ifp->next = interfaces;
@@ -800,7 +802,10 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	logger = &from_logger;
 	llog_iketcp(RC_LOG, logger, ifp,  /*no-error*/0, "accepted connection");
 
-	/* set up a timeout to kill the socket when nothing happens */
+	/*
+	 * Set up a timeout to kill the socket when nothing happens.
+	 * The timeout has a reference so unless it is deleted.
+	 */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
 	attach_fd_read_sensor(&ifp->iketcp_message_listener, ifp->fd,

@@ -166,7 +166,7 @@ static void free_dead_ifaces(struct logger *logger)
 			if (p->ip_dev->ifd_change == IFD_DELETE) {
 				*pp = p->next; /* advance *pp (skip p) */
 				p->next = NULL;
-				free_any_iface_endpoint(&p);
+				iface_endpoint_delref(&p);
 			} else {
 				pp = &p->next; /* advance pp */
 			}
@@ -194,10 +194,10 @@ static void free_dead_ifaces(struct logger *logger)
 	}
 }
 
-void free_any_iface_endpoint(struct iface_endpoint **ifpp)
+
+static void free_iface_endpoint(void *o, where_t where UNUSED)
 {
-	struct iface_endpoint *ifp = *ifpp;
-	*ifpp = NULL;
+	struct iface_endpoint *ifp = o;
 	/* drop any lists */
 	pexpect(ifp->next == NULL);
 	remove_list_entry(&ifp->entry);
@@ -218,8 +218,9 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    ip_endpoint local_endpoint,
 					    where_t where)
 {
-	struct iface_endpoint *ifp = alloc_thing(struct iface_endpoint,
-						 "iface endpoint");
+	struct iface_endpoint *ifp = refcnt_alloc(struct iface_endpoint,
+						  free_iface_endpoint,
+						  where);
 	ifp->fd = fd;
 	ifp->ip_dev = addref_where(ifd, where);
 	ifp->io = io;
@@ -229,6 +230,16 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 	init_list_entry(&iface_endpoint_info, ifp, &ifp->entry);
 	insert_list_entry(&iface_endpoints, &ifp->entry);
 	return ifp;
+}
+
+void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where)
+{
+	delref_where(ifp, where);
+}
+
+struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where)
+{
+	return addref_where(ifp, where);
 }
 
 struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
@@ -546,6 +557,6 @@ void shutdown_ifaces(struct logger *logger)
 	/* clean up remaining hidden interfaces */
 	struct iface_endpoint *ifp;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(&iface_endpoints, ifp) {
-		free_any_iface_endpoint(&ifp);
+		iface_endpoint_delref(&ifp);
 	}
 }

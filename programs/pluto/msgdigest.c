@@ -26,10 +26,12 @@ static void free_md(void *obj, where_t where)
 	free_chunk_content(&md->raw_packet);
 	free_logger(&md->md_logger, where);
 	pfreeany(md->packet_pbs.start);
+	iface_endpoint_delref_where(&md->iface, where);
 	pfree(md);
 }
 
-struct msg_digest *alloc_md(const struct iface_endpoint *ifp, const ip_endpoint *sender, where_t where)
+struct msg_digest *alloc_md(struct iface_endpoint *ifp, const ip_endpoint *sender,
+			    where_t where)
 {
 	/* convenient initializer:
 	 * - all pointers NULL
@@ -37,7 +39,7 @@ struct msg_digest *alloc_md(const struct iface_endpoint *ifp, const ip_endpoint 
 	 * - .encrypted = FALSE
 	 */
 	struct msg_digest *md = refcnt_alloc(struct msg_digest, free_md, where);
-	md->iface = ifp;
+	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec, where);
 	return md;

@@ -364,7 +364,7 @@ struct state {
 	 * local endpoint.  pexpect_st_local_endpoint() is a place
 	 * holder as that idear gets explored.
 	 */
-	const struct iface_endpoint *st_interface;  /* where to send from */
+	struct iface_endpoint *st_interface;  /* where to send from */
 #define pexpect_st_local_endpoint(ST) /* see above */
 
 	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */

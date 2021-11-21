@@ -182,12 +182,12 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 	if (mobike_check_established(&ike->sa) &&
 	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    !endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
-		/* remember the established/old address and interface */
-		ip_endpoint remote = ike->sa.st_remote_endpoint;
-		const struct iface_endpoint *interface = ike->sa.st_interface;
-		/* set temp one and after the message sent reset it */
-		ike->sa.st_remote_endpoint = md->sender;
-		ike->sa.st_interface = md->iface;
+		/* swap out the remote-endpoint; restored below */
+		ip_endpoint old_remote = ike->sa.st_remote_endpoint;
+		ike->sa.st_remote_endpoint = md->sender; /* tmp */
+		/* swap out the interface; restored below */
+		struct iface_endpoint *old_interface = ike->sa.st_interface;
+		ike->sa.st_interface = md->iface; /* tmp */
 		/*
 		 * XXX: hopefully this call doesn't muddle the IKE
 		 * Message IDs.
@@ -195,9 +195,8 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
 					 MESSAGE_RESPONSE);
 		/* restore established address and interface */
-		ike->sa.st_remote_endpoint = remote;
-		ike->sa.st_interface = interface;
-		pexpect_st_local_endpoint(st);
+		ike->sa.st_remote_endpoint = old_remote;
+		ike->sa.st_interface = old_interface;
 	}
 }
 
@@ -290,7 +289,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 
 #ifdef XFRM_SUPPORT
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
-				  const struct iface_endpoint *iface)
+				  struct iface_endpoint *new_iface)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	/*
@@ -316,9 +315,9 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 									   st->st_interface->io->protocol,
 									   port);
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
-	const struct iface_endpoint *o_iface = st->st_interface;
 	/* notice how it gets set back below */
-	st->st_interface = iface;
+	struct iface_endpoint *old_iface = st->st_interface;
+	st->st_interface = new_iface; /* tmp */
 
 	stf_status e = record_v2_informational_request("mobike informational request",
 						       ike, st/*sender*/,
@@ -334,14 +333,13 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
-	st->st_interface = o_iface;
-	pexpect_st_local_endpoint(st);
+	st->st_interface = old_iface;
 }
 #endif
 
 #ifdef XFRM_SUPPORT
-static const struct iface_endpoint *ikev2_src_iface(struct state *st,
-						    struct starter_end *this)
+static struct iface_endpoint *ikev2_src_iface(struct state *st,
+					      struct starter_end *this)
 {
 	/* success found a new source address */
 	pexpect_st_local_endpoint(st);
@@ -349,7 +347,7 @@ static const struct iface_endpoint *ikev2_src_iface(struct state *st,
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
 									 st->st_interface->io->protocol,
 									 port);
-	const struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
+	struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
 		dbg("#%lu no interface for %s try to initialize",
@@ -430,7 +428,7 @@ void ikev2_addr_change(struct state *st)
 
 		case RESOLVE_SUCCESS:
 		{
-			const struct iface_endpoint *iface = ikev2_src_iface(st, &this);
+			struct iface_endpoint *iface = ikev2_src_iface(st, &this);
 			if (iface != NULL)
 				initiate_mobike_probe(st, &this, iface);
 			break;

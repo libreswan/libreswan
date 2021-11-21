@@ -205,7 +205,7 @@ bool orient(struct connection *c, struct logger *logger)
 	    c->remote->host.ikeport, bool_str(c->spd.that.host_encap));
 	set_policy_prio(c); /* for updates */
 	bool swap = false;
-	for (const struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
 		bool this = end_matches_iface_endpoint(&c->spd.this, &c->spd.that, ifp);
