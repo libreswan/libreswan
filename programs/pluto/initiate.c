@@ -588,33 +588,34 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 	}
 }
 
-static ip_selector shunt_from_traffic_end(const char *what,
-					  const ip_endpoint traffic_endpoint,
-					  const struct end *end)
+/*
+ * Widen (narrow) the shunt?
+ *
+ * If we have protoport= set, narrow to it.  Zero the
+ * ephemeral port.
+ *
+ * XXX: should local/remote shunts be computed independently?
+	*/
+static ip_selector shunt_from_address_and_selector(const char *what,
+						   const ip_address packet_address,
+						   ip_selector end_selector)
 {
-	ip_address shunt_address = endpoint_address(traffic_endpoint);
-	const ip_protocol *shunt_protocol;
-	ip_port shunt_port;
-	if (end->client.ipproto == 0) {
+	const struct ip_protocol *end_protocol = selector_protocol(end_selector);
+	ip_port end_port = selector_port(end_selector);
+	/* log and cross check */
+	if (end_protocol == &ip_protocol_all) {
 		dbg("widening %s shunt to all protocols + all ports", what);
-		pexpect(end->client.hport == 0);
-		shunt_protocol = &ip_protocol_all;
-		shunt_port = unset_port;
-	} else if (end->client.hport == 0) {
-		dbg("widening %s shunt to all ports", what);
-		shunt_protocol = selector_protocol(end->client);
-		shunt_port = unset_port;
-		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
+		pexpect(end_port.hport == 0);
+	} else if (end_port.hport == 0) {
+		dbg("widening %s shunt %s protocol to all ports",
+		    what, end_protocol->name);
 	} else {
-		dbg("leaving %s shunt alone", what);
-		shunt_protocol = selector_protocol(end->client);
-		shunt_port = endpoint_port(traffic_endpoint);
-		pexpect(end->client.hport == (int)hport(shunt_port));
-		pexpect(endpoint_protocol(traffic_endpoint) == shunt_protocol);
+		dbg("leaving %s shunt %s protocol %d port alone",
+		    what, end_protocol->name, end_port.hport);
 	}
-	return selector_from_address_protocol_port(shunt_address,
-						   shunt_protocol,
-						   shunt_port);
+	return selector_from_address_protocol_port(packet_address,
+						   end_protocol,
+						   end_port);
 }
 
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
@@ -880,20 +881,32 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	const char *const addwidemsg = "oe-negotiating";
 
 	/*
-	 * Widen the shunt?
+	 * Widen the packet shunt to something based on the
+	 * connection?
 	 *
 	 * If we have protoport= set, narrow to it.  Zero the
 	 * ephemeral port.
 	 *
 	 * XXX: should local/remote shunts be computed independently?
 	 */
-	pexpect(selector_protocol(c->spd.this.client) ==
-		selector_protocol(c->spd.that.client));
-	ip_selector local_shunt = shunt_from_traffic_end("local", b->local.client, &c->spd.this);
-	ip_selector remote_shunt = shunt_from_traffic_end("remote", b->remote.client, &c->spd.that);
+	pexpect(selector_protocol(c->spd.this.client) == selector_protocol(c->spd.that.client));
+	ip_selector local_shunt = shunt_from_address_and_selector("local",
+								  packet_src_address(b->packet),
+								  c->spd.this.client);
+	ip_selector remote_shunt = shunt_from_address_and_selector("remote",
+								   packet_dst_address(b->packet),
+								   c->spd.that.client);
+	pexpect(selector_protocol(local_shunt) == selector_protocol(remote_shunt));
+	selector_buf ls, rs;
+	packet_buf pb;
+	selector_buf lc, rc;
+	dbg("packet %s + %s->%s = %s+%s",
+	    str_packet(&b->packet, &pb),
+	    str_selector(&c->spd.this.client, &lc),
+	    str_selector(&c->spd.that.client, &rc),
+	    str_selector(&local_shunt, &ls),
+	    str_selector(&remote_shunt, &rs));
 
-	const ip_protocol *shunt_protocol = selector_protocol(local_shunt);
-	pexpect(shunt_protocol == selector_protocol(remote_shunt));
 
 	/* XXX: re-use c */
 	/* XXX Shouldn't this pass b->sec_label too in theory?  But we don't support OE with labels. */
