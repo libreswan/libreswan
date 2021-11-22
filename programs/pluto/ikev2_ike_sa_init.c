@@ -541,7 +541,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		dbg("TCP: forcing #%lu remote endpoint port to %d",
 		    ike->sa.st_serialno, c->remote_tcpport);
 		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(c->remote_tcpport));
-		/* create new-from-old first */
+		/* create new-from-old first; must addref */
 		struct iface_endpoint *p = open_tcp_endpoint(ike->sa.st_interface->ip_dev,
 							     ike->sa.st_remote_endpoint,
 							     ike->sa.st_logger);
@@ -551,7 +551,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 			return;
 		}
 		iface_endpoint_delref(&ike->sa.st_interface);
-		ike->sa.st_interface = p;
+		ike->sa.st_interface = iface_endpoint_addref(p);
 	}
 
 	if (c->config->sec_label.len > 0 && sec_label.len == 0) {
