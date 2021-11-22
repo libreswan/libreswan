@@ -63,6 +63,6 @@ Certificate Nickname                                         Trust Attributes
 east #
  # should not show any hits because block prevents trigger
 east #
- grep "initiate on demand" /tmp/pluto.log
+ grep "initiate on-demand" /tmp/pluto.log
 east #
  

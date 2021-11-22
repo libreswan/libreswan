@@ -108,6 +108,6 @@ done
 road #
  # should not show any hits
 road #
- grep "initiate on demand" /tmp/pluto.log
+ grep "initiate on-demand" /tmp/pluto.log
 road #
  

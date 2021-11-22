@@ -19,6 +19,6 @@ initdone
 east #
  # should not show any hits
 east #
- grep "initiate on demand" /tmp/pluto.log
+ grep "initiate on-demand" /tmp/pluto.log
 east #
  
