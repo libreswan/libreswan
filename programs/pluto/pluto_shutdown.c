@@ -163,6 +163,7 @@ void exit_epilogue(void)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
+	shutdown_demux();
 	shutdown_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
 	lsw_nss_shutdown();
@@ -177,7 +178,6 @@ void exit_epilogue(void)
 	free_server();
 
 	free_virtual_ip();	/* virtual_private= */
-	free_demux();
 	free_pluto_main();	/* our static chars */
 	free_impair_message(logger);
 

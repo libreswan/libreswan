@@ -250,6 +250,6 @@ extern void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
  */
 #define release_any_md(MDP) md_delref(MDP, HERE) /* XXX: TBD */
 
-void free_demux(void);
+void shutdown_demux(void);
 
 #endif /* _DEMUX_H */
