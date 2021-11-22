@@ -1124,6 +1124,27 @@ struct ikev2_cp_attribute {
 
 extern struct_desc ikev2_cp_attribute_desc;
 
+/* RFC 4306, section 3.16 */
+extern struct_desc ikev2_eap_desc;
+
+/* RFC 3748, section 4 */
+struct eap_termination {
+	uint8_t eap_code;
+	uint8_t eap_identifier;
+	uint16_t eap_length;
+};
+extern struct_desc eap_termination_desc;
+
+/* RFC 5216, section 3.1 */
+struct eap_tls {
+	uint8_t eap_code;
+	uint8_t eap_identifier;
+	uint16_t eap_length;
+	uint8_t eap_type;
+	uint8_t eaptls_flags;
+};
+extern struct_desc eap_tls_desc;
+
 /*
  * Fragment Message. RFC 7383 section 2.5
  */

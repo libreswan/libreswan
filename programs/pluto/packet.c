@@ -1506,6 +1506,76 @@ struct_desc ikev2_sk_desc = {
 	.pt = ISAKMP_NEXT_v2SK,
 };
 
+/* 3.16.  EAP
+ *
+ * Use the generic IKEv2 headers only as the struct here. Several different EAP
+ * message types can be as the payload and the encoding depends on EAP header.
+ * The EAP messages are encoded/decoded as nested structs, and the message types
+ * supported are defined below.
+ */
+struct_desc ikev2_eap_desc = {
+	.name = "EAP Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_generic),
+	.pt = ISAKMP_NEXT_v2EAP,
+};
+
+/*
+ * RFC 3748 4.2. Success and Failure
+ *
+ *    0                   1                   2                   3
+ *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |     Code      |  Identifier   |            Length             |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+static field_desc eap_termination_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "code", &eap_code_names },
+	{ ft_nat, 8 / BITS_PER_BYTE, "identifier", NULL },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_end, 0, NULL, NULL }
+};
+
+struct_desc eap_termination_desc = {
+	.name = "EAP Success/Failure",
+	.fields = eap_termination_fields,
+	.size = sizeof(struct eap_termination),
+};
+
+/*
+ * RFC 5216 3.1.  EAP-TLS
+ *
+ *   0                   1                   2                   3
+ *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |     Code      |   Identifier  |            Length             |
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |     Type      |     Flags     |      TLS Message Length
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *   |     TLS Message Length        |       TLS Data...
+ *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ *  TLS Message Length is included only if 'L' flag is set.
+ *
+ * Since presence of 'TLS Message Length' depends on flags, it's not part of
+ * the field/struct descriptor, but explicitly encoded/decoded in code together
+ * with the 'TLS data' as the payload.
+ */
+static field_desc eap_tls_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "code", &eap_code_names },
+	{ ft_nat, 8 / BITS_PER_BYTE, "identifier", NULL },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "type", &eap_type_names },
+	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &eaptls_flag_names },
+	{ ft_end, 0, NULL, NULL }
+};
+
+struct_desc eap_tls_desc = {
+	.name = "EAP TLS header",
+	.fields = eap_tls_fields,
+	.size = sizeof(struct eap_tls),
+};
+
 /*
  * RFC 7383 2.5.  Fragmenting Message
  *
@@ -1702,7 +1772,7 @@ struct_desc *v2_payload_desc(unsigned p)
 		&ikev2_ts_r_desc,		/* 45 ISAKMP_NEXT_v2TSr */
 		&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
 		&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
-		NULL,				/* 48 */
+		&ikev2_eap_desc,		/* 48 ISAKMP_NEXT_v2EAP */
 		NULL,				/* 49 */
 		NULL,				/* 50 */
 		NULL,				/* 51 */
