@@ -1,4 +1,4 @@
-IKEv2 REDIRECT mechanism with redirection in IKE_AUTH
+IKEv2 TCP REDIRECT mechanism with redirection in IKE_AUTH
 
 west wants to connect to east but is redirected to north instead.
 

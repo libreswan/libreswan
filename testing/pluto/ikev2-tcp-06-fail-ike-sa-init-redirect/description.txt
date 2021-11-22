@@ -1,4 +1,4 @@
-IKEv2 REDIRECT mechanism with redirection is IKE_INIT
+IKEv2 TCP REDIRECT mechanism with redirection is IKE_SA_INIT
 
 west wants to connect to east but is redirected to north instead.
 
