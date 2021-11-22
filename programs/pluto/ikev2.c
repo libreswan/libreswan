@@ -85,6 +85,7 @@
 #include "ikev2_ike_auth.h"
 #include "ikev2_delete.h"		/* for record_v2_delete() */
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
+#include "ikev2_eap.h"
 
 static callback_cb reinitiate_ike_sa_init;	/* type assertion */
 
@@ -372,6 +373,41 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_enc_payloads = P(IDi) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Responder: process IKE_AUTH request, initiate EAP",
+	  .state      = STATE_V2_PARENT_R1,
+	  .next_state = STATE_V2_PARENT_R_EAP,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(IDi),
+	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_DISCARD, },
+
+	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
+	  .state      = STATE_V2_PARENT_R_EAP,
+	  .next_state = STATE_V2_PARENT_R_EAP,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(EAP),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .timeout_event = EVENT_SA_DISCARD, },
+
+	{ .story      = "Responder: process final IKE_AUTH/EAP",
+	  .state      = STATE_V2_PARENT_R_EAP,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .send       = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(AUTH),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },

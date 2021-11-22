@@ -84,8 +84,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 * Figure out the authentication, use both what the initiator
 	 * suggested and what the current connection contains.
 	 */
-	uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	enum keyword_authby authby = AUTHBY_NEVER;
+	uint16_t auth = IKEv2_AUTH_NONE;
+	if (md->chain[ISAKMP_NEXT_v2AUTH])
+		auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 
 	switch (auth) {
 	case IKEv2_AUTH_RSA:

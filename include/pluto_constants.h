@@ -527,6 +527,7 @@ enum state_kind {
 
 	STATE_V2_PARENT_R0,	/* just starting */
 	STATE_V2_PARENT_R1,	/* IKE_SA_INIT: sent response */
+	STATE_V2_PARENT_R_EAP,  /* IKE_AUTH EAP negotiation */
 
 	/* IKE exchange can also create a child */
 

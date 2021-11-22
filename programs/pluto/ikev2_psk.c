@@ -64,7 +64,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 {
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
-	passert(authby == AUTHBY_PSK || authby == AUTHBY_NULL);
+	passert(authby == AUTHBY_EAPONLY || authby == AUTHBY_PSK || authby == AUTHBY_NULL);
 
 	dbg("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 	    ike->sa.st_state->name,
@@ -266,7 +266,7 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 {
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
-	passert(authby == AUTHBY_PSK || authby == AUTHBY_NULL);
+	passert(authby == AUTHBY_EAPONLY || authby == AUTHBY_PSK || authby == AUTHBY_NULL);
 
 	size_t hash_len = ike->sa.st_oakley.ta_prf->prf_output_size;
 	if (sig.len != hash_len) {

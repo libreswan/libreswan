@@ -63,6 +63,7 @@ struct v2_state_transition;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
+struct eap_state;
 
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
@@ -658,6 +659,9 @@ struct state {
 
 	PK11SymKey *st_skey_pi_nss;	/* v2 PPK for initiator */
 	PK11SymKey *st_skey_pr_nss;	/* v2 PPK for responder */
+
+	struct eap_state  *st_eap;	/* v2 EAP */
+	struct msg_digest *st_eap_sa_md; /* v2 EAP initial message with SA request */
 
 	chunk_t st_skey_initiator_salt;	/* v2 */
 	chunk_t st_skey_responder_salt;	/* v2 */
