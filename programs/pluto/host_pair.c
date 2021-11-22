@@ -340,7 +340,7 @@ void release_dead_interfaces(struct logger *logger)
 		 */
 		pexpect(c->host_pair != NULL);
 		delete_oriented_hp(c);
-		c->interface = NULL;
+		iface_endpoint_delref(&c->interface);
 		c->hp_next = unoriented_connections;
 		unoriented_connections = c;
 		pexpect(c->host_pair == NULL);
@@ -527,7 +527,7 @@ void check_orientations(struct logger *logger)
 					while (c != NULL) {
 						struct connection *nxt =
 							c->hp_next;
-						c->interface = NULL;
+						iface_endpoint_delref(&c->interface);
 						c->host_pair = NULL;
 						c->hp_next = NULL;
 						orient(c, logger);

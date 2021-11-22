@@ -160,7 +160,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	/* already logged */
 	pexpect(ifp != NULL);
 	pexpect(c->interface == NULL);
-	c->interface = ifp; /* from bind */
+	c->interface = iface_endpoint_addref(ifp); /* from bind */
 	if (listening) {
 		listen_on_iface_endpoint(ifp, c->logger);
 	}
@@ -296,7 +296,7 @@ bool orient(struct connection *c, struct logger *logger)
 
 	if (matching_ifp != NULL) {
 		pexpect(c->interface == NULL); /* wasn't updated */
-		c->interface = matching_ifp;
+		c->interface = iface_endpoint_addref(matching_ifp);
 		if (matching_swaps_end) {
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
 			    c->spd.that.config->leftright);

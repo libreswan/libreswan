@@ -1566,6 +1566,7 @@ static struct state *duplicate_state(struct connection *c,
 	    nst->st_serialno,
 	    str_endpoint(&st->st_interface->local_endpoint, &eb),
 	    st->st_serialno,pri_where(HERE));
+	pexpect(nst->st_interface == NULL);
 	nst->st_interface = iface_endpoint_addref(st->st_interface);
 	pexpect_st_local_endpoint(nst);
 	nst->st_clonedfrom = st->st_serialno;
