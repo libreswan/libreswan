@@ -158,7 +158,9 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	}
 
 	/* already logged */
-	c->interface = ifp;
+	pexpect(ifp != NULL);
+	pexpect(c->interface == NULL);
+	c->interface = ifp; /* from bind */
 	if (listening) {
 		listen_on_iface_endpoint(ifp, c->logger);
 	}
@@ -204,7 +206,16 @@ bool orient(struct connection *c, struct logger *logger)
 	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
 	    c->remote->host.ikeport, bool_str(c->spd.that.host_encap));
 	set_policy_prio(c); /* for updates */
-	bool swap = false;
+
+	/*
+	 * Save match; don't update the connection until all the
+	 * interfaces have been checked.  More than one could match,
+	 * oops!
+	 */
+	pexpect(c->interface == NULL); /* aka not oriented */
+	bool matching_swaps_end = false;
+	struct iface_endpoint *matching_ifp = NULL;
+
 	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
@@ -219,7 +230,6 @@ bool orient(struct connection *c, struct logger *logger)
 			     pri_connection(c, &cib),
 			     ifp->ip_dev->id_rname);
 			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
-			c->interface = NULL; /* withdraw orientation */
 			return false;
 		}
 
@@ -230,11 +240,15 @@ bool orient(struct connection *c, struct logger *logger)
 			    c->spd.this.config->leftright, c->spd.that.config->leftright);
 			continue;
 		}
+
 		pexpect(this != that); /* only one */
 
-		if (oriented(c)) {
-			/* oops, second match */
-			if (c->interface->ip_dev == ifp->ip_dev) {
+		if (matching_ifp != NULL) {
+			/*
+			 * Oops there's already a MATCHING_IFP.  Try
+			 * to be helpful with the log line.
+			 */
+			if (matching_ifp->ip_dev == ifp->ip_dev) {
 				connection_buf cib;
 				llog(RC_LOG_SERIOUS, logger,
 				     "both sides of "PRI_CONNECTION" are our interface %s!",
@@ -250,39 +264,40 @@ bool orient(struct connection *c, struct logger *logger)
 				connection_buf cib;
 				address_buf cb, ifpb;
 				llog(RC_LOG_SERIOUS, logger,
-				     "two interfaces match \"%s\"%s (%s %s, %s %s)",
+				     "two interfaces match "PRI_CONNECTION" (%s %s, %s %s)",
 				     pri_connection(c, &cib),
-				     c->interface->ip_dev->id_rname,
-				     str_address(&c->interface->ip_dev->id_address, &cb),
+				     matching_ifp->ip_dev->id_rname,
+				     str_address(&matching_ifp->ip_dev->id_address, &cb),
 				     ifp->ip_dev->id_rname,
 				     str_address(&ifp->ip_dev->id_address, &ifpb));
 			}
 			terminate_connections_by_name(c->name, /*quiet?*/false, logger);
-			c->interface = NULL; /* withdraw orientation */
 			return false;
 		}
 
-		/* orient then continue search */
+		/* save match, and then continue search */
+		matching_ifp = ifp;
 		passert(this != that); /* only one */
 		if (this) {
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THIS); orienting",
 			    str_endpoint(&ifp->local_endpoint, &eb),
 			    c->spd.this.config->leftright);
-			swap = false;
+			matching_swaps_end = false;
 		}
 		if (that) {
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
 			    str_endpoint(&ifp->local_endpoint, &eb),
 			    c->spd.that.config->leftright);
-			swap = true;
+			matching_swaps_end = true;
 		}
-		c->interface = ifp;
-		passert(oriented(c));
 	}
-	if (oriented(c)) {
-		if (swap) {
+
+	if (matching_ifp != NULL) {
+		pexpect(c->interface == NULL); /* wasn't updated */
+		c->interface = matching_ifp;
+		if (matching_swaps_end) {
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
 			    c->spd.that.config->leftright);
 			swap_ends(c);
@@ -297,10 +312,12 @@ bool orient(struct connection *c, struct logger *logger)
 	if (orient_new_iface_endpoint(c, &c->spd.this)) {
 		return true;
 	}
+
 	if (orient_new_iface_endpoint(c, &c->spd.that)) {
-		dbg("swapping to that; new interface");
+		dbg("  swapping to that; new interface");
 		swap_ends(c);
 		return true;
 	}
+
 	return false;
 }
