@@ -53,7 +53,8 @@ extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
 				const struct ike_sa *ike,
 				const struct crypt_mac *idhash,
-				pb_stream *a_pbs);
+				pb_stream *a_pbs,
+				const chunk_t pss);
 
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct ike_sa *ike,

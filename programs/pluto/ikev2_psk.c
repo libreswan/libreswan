@@ -55,6 +55,7 @@
 #include "ikev2_psk.h"
 
 static diag_t ikev2_calculate_psk_sighash(bool verify,
+					  const chunk_t *pss,
 					  const struct ike_sa *ike,
 					  enum keyword_authby authby,
 					  const struct crypt_mac *idhash,
@@ -143,9 +144,9 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 
 	/* pick pss */
 
-	const chunk_t *pss;
-
-	if (authby != AUTHBY_NULL) {
+	if (pss->len) {
+		;
+	} else if (authby != AUTHBY_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
 		 * so peer doesn't apply?
@@ -206,10 +207,12 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 bool ikev2_emit_psk_auth(enum keyword_authby authby,
 			 const struct ike_sa *ike,
 			 const struct crypt_mac *idhash,
-			 pb_stream *a_pbs)
+			 pb_stream *a_pbs,
+			 const chunk_t pss)
 {
 	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(false, ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(false, &pss,
+					       ike, authby, idhash,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
@@ -232,7 +235,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 {
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(false, ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(false, &empty_chunk, ike, authby, idhash,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
@@ -258,7 +261,8 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 				    const struct ike_sa *ike,
 				    const struct crypt_mac *idhash,
-				    struct pbs_in *sig_pbs)
+				    struct pbs_in *sig_pbs,
+				    const chunk_t pss)
 {
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
@@ -276,7 +280,8 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 	}
 
 	struct crypt_mac calc_hash = empty_mac;
-	diag_t d = ikev2_calculate_psk_sighash(true, ike, authby, idhash,
+	diag_t d = ikev2_calculate_psk_sighash(true, &pss,
+					       ike, authby, idhash,
 					       ike->sa.st_firstpacket_peer,
 					       &calc_hash);
 	if (d != NULL) {
