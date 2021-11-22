@@ -34,7 +34,7 @@ ip_packet packet_from_raw(where_t where,
 		.protocol = protocol,
 		.src = {
 			.bytes = *src_bytes,
-			.hport = src_port.hport,
+			.hport = src_port.hport, /* can be zero */
 		},
 		.dst = {
 			.bytes = *dst_bytes,
@@ -136,7 +136,13 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 	const struct ip_info *afi = packet->info;
 
 	size_t s = 0;
-	s += afi->endpoint.jam(buf, afi, &packet->src.bytes, packet->src.hport);
+	/* src port can be zero aka wildcard */
+	if (packet->src.hport == 0 && packet->protocol->endpoint_requires_non_zero_port) {
+		s += afi->address.jam(buf, afi, &packet->src.bytes);
+	} else {
+		s += afi->endpoint.jam(buf, afi, &packet->src.bytes, packet->src.hport);
+	}
+	/* dst port is always valid */
 	s += jam(buf, "-%s->", packet->protocol->name);
 	s += afi->endpoint.jam(buf, afi, &packet->dst.bytes, packet->dst.hport);
 	return s;
