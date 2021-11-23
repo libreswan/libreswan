@@ -230,8 +230,10 @@ enum message_role v2_msg_role(const struct msg_digest *md);
 extern struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 				   const ip_endpoint *sender,
 				   where_t where);
-struct msg_digest *md_addref(struct msg_digest *md, where_t where);
-void md_delref(struct msg_digest **mdp, where_t where);
+struct msg_digest *md_addref_where(struct msg_digest *md, where_t where);
+#define md_addref(MD) md_addref_where(MD, HERE)
+void md_delref_where(struct msg_digest **mdp, where_t where);
+#define md_delref(MDP) md_delref_where(MDP, HERE)
 
 /* only the buffer */
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
@@ -244,11 +246,6 @@ extern char *cisco_stringify(pb_stream *pbs, const char *attr_name,
 			     bool keep, struct logger *logger);
 
 extern void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
-
-/*
- * old stuff.
- */
-#define release_any_md(MDP) md_delref(MDP, HERE) /* XXX: TBD */
 
 void shutdown_demux(void);
 

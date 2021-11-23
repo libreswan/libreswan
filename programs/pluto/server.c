@@ -666,7 +666,7 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 			}
 			complete_state_transition(st, md, status);
 		}
-		release_any_md(&md);
+		md_delref(&md);
 		statetime_stop(&start, "resume %s", e->name);
 	}
 	passert(e->event != NULL);

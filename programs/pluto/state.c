@@ -1013,7 +1013,7 @@ void delete_state_tail(struct state *st)
 	struct msg_digest *md = unsuspend_any_md(st);
 	if (md != NULL) {
 		dbg("disconnecting state #%lu from md", st->st_serialno);
-		md_delref(&md, HERE);
+		md_delref(&md);
 	}
 
 	if (should_send_delete(st)) {
@@ -2844,7 +2844,7 @@ void suspend_any_md_where(struct state *st, struct msg_digest *md, where_t where
 		dbg("suspend: saving MD@%p in state "PRI_SO" "PRI_WHERE,
 		    md, (st)->st_serialno, pri_where(where));
 		passert(st->st_suspended_md == NULL);
-		st->st_suspended_md = md_addref(md, where);
+		st->st_suspended_md = md_addref_where(md, where);
 		passert(state_is_busy(st));
 	} else {
 		dbg("suspend: no MD to save in state "PRI_SO" "PRI_WHERE,

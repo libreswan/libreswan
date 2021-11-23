@@ -80,7 +80,7 @@ static callback_cb handle_md_event;		/* type assertion */
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
  *
- * This routine will not release_any_md(mdp).  It is expected that its
+ * This routine will not md_delref(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it
  * thinks **mdp should not be freed.  So the caller should be prepared
  * for *mdp being set to NULL.
@@ -168,7 +168,7 @@ void process_packet(struct msg_digest **mdp)
 		    enum_name(&isakmp_xchg_type_names, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg);
 		process_v1_packet(md);
-		/* our caller will release_any_md(mdp) */
+		/* our caller will md_delref(mdp) */
 #endif
 		break;
 
@@ -303,7 +303,7 @@ void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *if
 			 */
 			process_md(&md);
 		}
-		md_delref(&md, HERE);
+		md_delref(&md);
 		pexpect(md == NULL);
 	}
 
@@ -350,7 +350,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		va_end(ap);
 	}
 
-	md_delref(&md, HERE);
+	md_delref(&md);
 	pexpect(md == NULL);
 }
 
@@ -425,7 +425,7 @@ static void handle_md_event(const char *story UNUSED, struct state *st, void *co
 	pexpect(st == NULL);
 	struct msg_digest *md = context;
 	process_md(&md);
-	md_delref(&md, HERE);
+	md_delref(&md);
 	pexpect(md == NULL);
 }
 
@@ -596,7 +596,7 @@ void shutdown_demux(void)
 {
 	struct replay_entry *e = NULL;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-		md_delref(&e->md, HERE);
+		md_delref(&e->md);
 		remove_list_entry(&e->entry);
 		pfreeany(e);
 	}

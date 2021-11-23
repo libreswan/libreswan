@@ -551,7 +551,7 @@ void free_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 			struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 			free_chunk_content(&frag->text);
 		}
-		md_delref(&(*frags)->md, HERE);
+		md_delref(&(*frags)->md);
 		pfree(*frags);
 		*frags = NULL;
 	}

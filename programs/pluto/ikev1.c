@@ -1240,7 +1240,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
  *
- * This routine will not release_any_md(mdp).  It is expected that its
+ * This routine will not md_delref(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
@@ -1711,7 +1711,7 @@ void process_v1_packet(struct msg_digest *md)
 		    (fraghdr.isafrag_flags == 1) ? "(last)" : "");
 
 		struct v1_ike_rfrag *ike_frag = alloc_thing(struct v1_ike_rfrag, "ike_frag");
-		ike_frag->md = md_addref(md, HERE);
+		ike_frag->md = md_addref(md);
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
 		ike_frag->size = pbs_left(&frag_pbs);
@@ -1734,7 +1734,7 @@ void process_v1_packet(struct msg_digest *md)
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					pexpect(old->md != NULL);
-					release_any_md(&old->md);
+					md_delref(&old->md);
 					pfree(old);
 					ike_frag = NULL;
 				}
@@ -1783,7 +1783,7 @@ void process_v1_packet(struct msg_digest *md)
 						 "packet");
 
 					process_packet(&whole_md);
-					release_any_md(&whole_md);
+					md_delref(&whole_md);
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_v1_seen_fragments = true;
@@ -1883,18 +1883,18 @@ void process_v1_packet(struct msg_digest *md)
 			dbg("suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
 			    st->st_serialno, st->st_suspended_md,
 			    pri_where(HERE));
-			md_delref(&st->st_suspended_md, HERE);
+			md_delref(&st->st_suspended_md);
 		}
 		suspend_any_md(st, md);
 		return;
 	}
 
 	process_packet_tail(md);
-	/* our caller will release_any_md(mdp); */
+	/* our caller will md_delref(mdp); */
 }
 
 /*
- * This routine will not release_any_md(mdp).  It is expected that its
+ * This routine will not md_delref(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
@@ -2426,7 +2426,7 @@ void process_packet_tail(struct msg_digest *md)
 	stf_status e = smc->processor(st, md);
 	complete_v1_state_transition(md->v1_st, md, e);
 	statetime_stop(&start, "%s()", __func__);
-	/* our caller will release_any_md(mdp); */
+	/* our caller will md_delref(mdp); */
 }
 
 /*
@@ -2470,7 +2470,7 @@ static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
 
 /* complete job started by the state-specific state transition function
  *
- * This routine will not release_any_md(mdp).  It is expected that its
+ * This routine will not md_delref(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.

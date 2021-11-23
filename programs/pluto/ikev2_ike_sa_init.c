@@ -1514,7 +1514,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		}
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
-		(*frags)->md = md_addref(md, HERE);
+		(*frags)->md = md_addref(md);
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		switch (collect_v2_incoming_fragment(ike, md)) {
 		case FRAGMENT_IGNORED:
@@ -1588,7 +1588,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 			free_v2_incoming_fragments(frags);
 			return STF_SKIP_COMPLETE_STATE_TRANSITION;
 		}
-		md = md_addref((*frags)->md, HERE);
+		md = md_addref((*frags)->md);
 		free_v2_incoming_fragments(frags);
 	} else {
 		if (!decrypt_v2_incoming_fragments(ike, frags)) {
@@ -1599,6 +1599,6 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	}
 
 	process_protected_v2_message(ike, &ike->sa, md);
-	md_delref(&md, HERE);
+	md_delref(&md);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }

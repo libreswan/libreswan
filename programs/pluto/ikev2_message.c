@@ -1029,7 +1029,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		(*frags)->total = skf_hdr->isaskf_total;
 		(*frags)->xchg = md->hdr.isa_xchg;
 		/* may not be fragment 1; will replace when it arrives */
-		(*frags)->md = md_addref(md, HERE);
+		(*frags)->md = md_addref(md);
 	}
 
 	/* save the fragment */
@@ -1081,8 +1081,8 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	 */
 	if (skf_hdr->isaskf_number == 1) {
 		(*frags)->first_np = skf_hdr->isaskf_np;
-		md_delref(&(*frags)->md, HERE);
-		(*frags)->md = md_addref(md, HERE);
+		md_delref(&(*frags)->md);
+		(*frags)->md = md_addref(md);
 	}
 
 	return (*frags)->count == (*frags)->total ? FRAGMENTS_COMPLETE : FRAGMENTS_MISSING;
@@ -1147,7 +1147,7 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags)
 {
 	dbg("reassembling incoming fragments");
-	struct msg_digest *md = md_addref((*frags)->md, HERE);
+	struct msg_digest *md = md_addref((*frags)->md);
 	passert(md->chain[ISAKMP_NEXT_v2SK] == NULL);
 	passert(md->chain[ISAKMP_NEXT_v2SKF] != NULL);
 	pexpect(md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);

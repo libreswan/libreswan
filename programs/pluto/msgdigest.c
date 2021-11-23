@@ -57,12 +57,12 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 	return clone;
 }
 
-struct msg_digest *md_addref(struct msg_digest *md, where_t where)
+struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 {
 	return addref_where(md, where);
 }
 
-void md_delref(struct msg_digest **mdp, where_t where)
+void md_delref_where(struct msg_digest **mdp, where_t where)
 {
 	delref_where(mdp, where);
 }

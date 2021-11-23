@@ -37,7 +37,7 @@
 #include "hash_table.h"
 #include "log.h"
 #include "state.h"		/* for unsuspend_md() */
-#include "demux.h"		/* for release_any_md() */
+#include "demux.h"		/* for md_delref() */
 #include "pluto_timing.h"
 #include "show.h"
 #include "connections.h"
@@ -241,7 +241,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 				} else {
 					complete_state_transition(st, md, ret);
 				}
-				release_any_md(&md);
+				md_delref(&md);
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
 			}

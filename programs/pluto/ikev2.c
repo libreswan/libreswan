@@ -1499,7 +1499,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
  *
- * This routine will not release_any_md(mdp).
+ * This routine will not md_delref(mdp).
  *
  * Start by looking for (or creating) the IKE SA responsible for the
  * IKE SPIs group .....
@@ -1922,7 +1922,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 			/* Secure exchange: NEVER EVER RESPOND */
 			return;
 		}
-		protected_md = md_addref(md, HERE);
+		protected_md = md_addref(md);
 		break;
 	default:
 		/* packet decode should have rejected this */
@@ -1932,7 +1932,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	}
 
 	process_protected_v2_message(ike, st, protected_md);
-	md_delref(&protected_md, HERE);
+	md_delref(&protected_md);
 }
 
 void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)
@@ -2069,7 +2069,7 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	}
 
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
-	/* our caller with release_any_md(mdp) */
+	/* our caller with md_delref(mdp) */
 }
 
 /*
@@ -2560,7 +2560,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
  * if a state is busy really really easy - if there's a
  * state-transition then it must be.
  *
- * This routine does not free (*MDP) (using release_any_md(mdp)).
+ * This routine does not free (*MDP) (using md_delref(mdp)).
  * However, when suspending a state transition, it will save it in ST
  * and zap (*MDP) so that the caller can't free it.  Hence, the caller
  * must be prepared for (*MDP) being set to NULL.
@@ -2847,7 +2847,7 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 		complete_v2_state_transition(st, NULL, e);
 	}
 	statetime_stop(&start, "processing: %s in %s()", story, __func__);
-	/* our caller with release_any_md(mdp) */
+	/* our caller with md_delref(mdp) */
 }
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,

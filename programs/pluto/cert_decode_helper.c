@@ -78,7 +78,7 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 {
 	struct task task = {
 		.root_certs = root_certs_addref(HERE),
-		.md = md_addref(md, HERE),
+		.md = md_addref(md),
 		.cert_payloads = cert_payloads,
 		.cb = cb,
 		.ike_version = ike->sa.st_ike_version,
@@ -190,7 +190,7 @@ static void cert_decode_cleanup(struct task **task)
 {
 	release_certs(&(*task)->verified.cert_chain);	/* may be NULL */
 	free_public_keys(&(*task)->verified.pubkey_db);	/* may be NULL */
-	release_any_md(&(*task)->md);
+	md_delref(&(*task)->md);
 	root_certs_delref(&(*task)->root_certs, HERE);
 	pfreeany((*task));
 }

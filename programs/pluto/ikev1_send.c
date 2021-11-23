@@ -251,7 +251,7 @@ void free_v1_message_queues(struct state *st)
 
 		frag = this->next;
 		pexpect(this->md != NULL);
-		release_any_md(&this->md);
+		md_delref(&this->md);
 		pfree(this);
 	}
 
