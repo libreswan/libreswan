@@ -638,8 +638,10 @@ struct connection_filter {
 	const struct id *that_id_eq; /* strict; not same_id() */
 	/* current result (can be safely deleted) */
 	struct connection *c;
-	/* internal (handle on next entry) */
+	/* internal: handle on next entry */
 	struct list_entry *internal;
+	/* internal: total matches so far */
+	unsigned count;
 	/* .where MUST BE LAST (See GCC bug 102288) */
 	where_t where;
 };
@@ -664,8 +666,10 @@ struct spd_route_filter {
 	const ip_selector *remote_client_range;
 	/* current result (can be safely deleted) */
 	struct spd_route *spd;
-	/* internal (handle on next entry) */
+	/* internal: handle on next entry */
 	struct list_entry *internal;
+	/* internal: total matches so far */
+	unsigned count;
 	/* .where MUST BE LAST (See GCC bug 102288) */
 	where_t where;
 };

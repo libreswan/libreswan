@@ -392,13 +392,16 @@ static bool next_state(enum chrono adv, struct state_filter *filter)
 		if (matches_filter(st, filter)) {
 			/* save state; but step off current entry */
 			filter->internal = entry->next[adv];
-			dbg("found "PRI_SO" for "PRI_WHERE,
-			    pri_so(st->st_serialno), pri_where(filter->where));
+			filter->count++;
+			LSWDBGP(DBG_BASE, buf) {
+				jam_string(buf, "  found ");
+				jam_state(buf, st);
+			}
 			filter->st = st;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
+	dbg("  matches: %d", filter->count);
 	return false;
 }
 

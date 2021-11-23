@@ -2821,7 +2821,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 		if (c->kind == CK_GROUP) {
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION"; a food group",
+			dbg("    skipping "PRI_CONNECTION"; a food group",
 			    pri_connection(c, &cb));
 			continue;
 		}
@@ -2833,7 +2833,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		 */
 		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION"; %s have a sec_label",
+			dbg("    skipping "PRI_CONNECTION"; %s have a sec_label",
 			    pri_connection(c, &cb),
 			    (sec_label.len > 0 ? "must" : "must not"));
 			continue;
@@ -2850,7 +2850,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		    c->kind != CK_TEMPLATE) {
 			pexpect(c->kind == CK_INSTANCE);
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION"; IKEv2 sec_label connection is not a template",
+			dbg("    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is not a template",
 			    pri_connection(c, &cb));
 			continue;
 		}
@@ -2863,7 +2863,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		    !sec_label_within_range("acquire", sec_label,
 					    c->config->sec_label, logger)) {
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
+			dbg("    skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
 			    pri_connection(c, &cb), pri_shunk(sec_label),
 			    pri_shunk(c->config->sec_label));
 			continue;
@@ -2884,7 +2884,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			    c->config->sec_label.len == 0) {
 				connection_buf cb;
 				selectors_buf sb;
-				dbg("  skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
+				dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb));
 				continue;
@@ -2898,7 +2898,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				connection_buf cb;
 				selectors_buf sb;
 				endpoint_buf eb;
-				dbg("  skipping "PRI_CONNECTION" %s; packet src %s not in range",
+				dbg("    skipping "PRI_CONNECTION" %s; packet src %s not in range",
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 				    str_endpoint(&packet_src, &eb));
@@ -2909,7 +2909,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				connection_buf cb;
 				selectors_buf sb;
 				endpoint_buf eb;
-				dbg("  skipping "PRI_CONNECTION" %s; packet dst %s not in range",
+				dbg("    skipping "PRI_CONNECTION" %s; packet dst %s not in range",
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 				    str_endpoint(&packet_dst, &eb));
@@ -2932,7 +2932,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			    priority <= best_priority) {
 				connection_buf cb, bcb;
 				selectors_buf sb, bsb;
-				dbg("  skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
+				dbg("    skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 				    priority,
@@ -2946,7 +2946,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			if (best_connection == NULL) {
 				connection_buf cb;
 				selectors_buf sb;
-				dbg("  choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as first best",
+				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as first best",
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 				    priority,
@@ -2954,7 +2954,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			} else {
 				connection_buf cb, bcb;
 				selectors_buf sb, bsb;
-				dbg("  choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as bests "PRI_CONNECTION" %s priority %"PRIu32,
+				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as bests "PRI_CONNECTION" %s priority %"PRIu32,
 				    pri_connection(c, &cb),
 				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
 				    priority,

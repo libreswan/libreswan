@@ -912,8 +912,10 @@ struct state_filter {
 	co_serial_t connection_serialno;
 	/* current result (can be safely deleted) */
 	struct state *st;
-	/* internal (handle on next entry) */
+	/* internal: handle on next entry */
 	struct list_entry *internal;
+	/* internal: total matches so far */
+	unsigned count;
 	/* .where MUST BE LAST (See GCC bug 102288) */
 	where_t where;
 };

@@ -92,7 +92,8 @@ void rehash_db_connection_that_id(struct connection *c)
 
 static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
-	jam(buf, PRI_CO".", pri_co(sr->connection->serialno));
+	jam_connection(buf, sr->connection);
+	jam_string(buf, " ");
 	jam_selectors(buf, &sr->this.client, &sr->that.client);
 }
 
@@ -160,13 +161,16 @@ bool next_spd_route(enum chrono order, struct spd_route_filter *filter)
 		if (matches_spd_route_filter(spd, filter)) {
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[order];
-			dbg("found "PRI_CO" SPD_ROUTE for "PRI_WHERE,
-			    pri_co(spd->connection->serialno), pri_where(filter->where));
+			filter->count++;
+			LSWDBGP(DBG_BASE, buf) {
+				jam_string(buf, "  found ");
+				jam_spd_route(buf, spd);
+			}
 			filter->spd = spd;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
+	dbg("  matches: %d", filter->count);
 	return false;
 }
 
@@ -305,13 +309,16 @@ static bool next_connection(enum chrono adv, struct connection_filter *filter)
 		if (matches_connection_filter(c, filter)) {
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[adv];
-			dbg("found "PRI_CO" for "PRI_WHERE,
-			    pri_co(c->serialno), pri_where(filter->where));
+			filter->count++;
+			LSWDBGP(DBG_BASE, buf) {
+				jam_string(buf, "  found ");
+				jam_connection(buf, c);
+			}
 			filter->c = c;
 			return true;
 		}
 	}
-	dbg("no match for "PRI_WHERE, pri_where(filter->where));
+	dbg("  matches: %d", filter->count);
 	return false;
 }
 
