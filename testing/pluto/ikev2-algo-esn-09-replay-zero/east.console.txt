@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+002 "east": added IKEv2 connection
+east #
+ ipsec auto --status | grep replay_window
+000 "east":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 0; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+east #
+ echo "initdone"
+initdone
+east #
+ # to make sure SADB is flushed by the kernel
+east #
+ sleep 2
+east #
+ # should be empty as the test is supposed to fail
+east #
+ ip xfrm state |grep replay
+	replay-window 0 
+east #
+ grep "netlink response" OUTPUT/$(hostname).pluto.log
+"east" #2: ERROR: netlink response for Add SA esp.ESPSPIi@192.1.2.45 included errno 22: Invalid argument
+east #
+ 

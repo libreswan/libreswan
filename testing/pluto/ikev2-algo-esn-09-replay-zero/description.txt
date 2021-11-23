@@ -1,0 +1,16 @@
+ESN test esn=yes replay-window=0. The IKE negotiation should fail.
+
+RFC 4303: #section-3.3.3
+   Note: If a receiver chooses to not enable anti-replay for an SA, then
+   the receiver SHOULD NOT negotiate ESN in an SA management protocol.
+   Use of ESN creates a need for the receiver to manage the anti-replay
+   window (in order to determine the correct value for the high-order
+   bits of the ESN, which are employed in the ICV computation), which is
+   generally contrary to the notion of disabling anti-replay for an SA.
+
+This test has replay_window=0 on the east, on the IKE initiator. If we set
+replay-window=0. on the IKE initiator it will be testing the xfrm stack!
+since east has non zero replay window east will succeed and west will fail.
+
+May be west should not initiate an IKE negotiation with ESN_YES?
+Or even better do not load a connection with esn=yes and replay-window=0
