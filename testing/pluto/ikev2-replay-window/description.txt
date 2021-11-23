@@ -1,4 +1,11 @@
 Test setting of a replay-window to non-default (default is 128) value 0 and 256 for ikev2
 
-Note there seems to be a bug in XFRM that replay-window=0 plus esn=yes causes netlink_add_sa() failure,
-so for now there is a workaround for esn=no
+Note that ESN is disabled when replay-window=0 because  RFC 4304 (and Linux XFRM) say so:
+
+    Note: If a receiver chooses to not enable anti-replay for an SA, then
+    the receiver SHOULD NOT negotiate ESN in an SA management protocol.
+    Use of ESN creates a need for the receiver to manage the anti-replay
+    window (in order to determine the correct value for the high-order
+    bits of the ESN, which are employed in the ICV computation), which is
+    generally contrary to the notion of disabling anti-replay for an SA.
+

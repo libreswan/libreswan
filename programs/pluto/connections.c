@@ -1939,7 +1939,24 @@ static bool extract_connection(const struct whack_message *wm,
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
+
 		c->sa_replay_window = wm->sa_replay_window;
+		/*
+		 * RFC 4303 states:
+		 *
+		 * Note: If a receiver chooses to not enable anti-replay for an SA, then
+		 * the receiver SHOULD NOT negotiate ESN in an SA management protocol.
+		 * Use of ESN creates a need for the receiver to manage the anti-replay
+		 * window (in order to determine the correct value for the high-order
+		 * bits of the ESN, which are employed in the ICV computation), which is
+		 * generally contrary to the notion of disabling anti-replay for an SA.
+		 */
+
+		if (c->sa_replay_window == 0 && LIN(POLICY_ESN_YES, c->policy)) {
+			dbg("replay-window=0 so disabling esn");
+			c->policy &= ~POLICY_ESN_YES;
+		}
+
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;
 
