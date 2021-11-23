@@ -1,1 +1,4 @@
-Test setting of a replay-window to non-default (default is 128) value 0 and 256 for ikev2 (requires *.secrets, why?)
+Test setting of a replay-window to non-default (default is 128) value 0 and 256 for ikev2
+
+Note there seems to be a bug in XFRM that replay-window=0 plus esn=yes causes netlink_add_sa() failure,
+so for now there is a workaround for esn=no
