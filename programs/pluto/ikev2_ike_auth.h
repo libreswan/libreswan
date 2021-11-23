@@ -18,6 +18,8 @@
 
 stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md);
 
+stf_status process_v2_IKE_AUTH_standard_payloads(struct ike_sa *ike, struct msg_digest *md);
+
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
