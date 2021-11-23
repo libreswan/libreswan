@@ -247,6 +247,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
+	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {
@@ -775,7 +776,7 @@ void unshare_connection_end(struct end *e)
  * up after the event is a guaranteed way to create use-after-free
  * problems.
  */
-static void unshare_connection(struct connection *c)
+static void unshare_connection(struct connection *c, struct connection *t/*emplate*/)
 {
 	c->root_config = NULL;
 
@@ -798,6 +799,8 @@ static void unshare_connection(struct connection *c)
 					"connection redirect_to");
 	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
 					"connection accept_redirect_to");
+
+	c->interface = iface_endpoint_addref(t->interface);
 
 	/*
 	 * XXX: this doesn't unshare .spd_next.
@@ -2187,7 +2190,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	/* set internal fields */
 	c->instance_serial = 0;
-	c->interface = NULL;
+	c->interface = NULL; /* initializing */
 	c->spd.routing = RT_UNROUTED;
 	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
@@ -2411,7 +2414,7 @@ struct connection *add_group_instance(struct connection *group,
 		virtual_ip_delref(&t->spd.that.virt, HERE);
 	}
 
-	unshare_connection(t);
+	unshare_connection(t, group);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
 	t->spd.that.client = *target;	/* hashed below */
@@ -2526,7 +2529,7 @@ struct connection *instantiate(struct connection *c,
 		d->spd.that.id = *peer_id;
 		d->spd.that.has_id_wildcards = false;
 	}
-	unshare_connection(d);
+	unshare_connection(d, c);
 	d->kind = kind;
 	passert(oriented(d));
 	if (peer_addr != NULL) {

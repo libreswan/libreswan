@@ -187,7 +187,7 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 		ike->sa.st_remote_endpoint = md->sender; /* tmp */
 		/* swap out the interface; restored below */
 		struct iface_endpoint *old_interface = ike->sa.st_interface;
-		ike->sa.st_interface = md->iface; /* tmp */
+		ike->sa.st_interface = md->iface; /* tmp-new */
 		/*
 		 * XXX: hopefully this call doesn't muddle the IKE
 		 * Message IDs.
@@ -196,7 +196,7 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 					 MESSAGE_RESPONSE);
 		/* restore established address and interface */
 		ike->sa.st_remote_endpoint = old_remote;
-		ike->sa.st_interface = old_interface;
+		ike->sa.st_interface = old_interface; /* restore-old */
 	}
 }
 
@@ -317,7 +317,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	/* notice how it gets set back below */
 	struct iface_endpoint *old_iface = st->st_interface;
-	st->st_interface = new_iface; /* tmp */
+	st->st_interface = new_iface; /* tmp-new */
 
 	stf_status e = record_v2_informational_request("mobike informational request",
 						       ike, st/*sender*/,
@@ -333,7 +333,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 			     __func__);
 		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
 	}
-	st->st_interface = old_iface;
+	st->st_interface = old_iface; /* restore-old */
 }
 #endif
 

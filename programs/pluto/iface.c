@@ -275,7 +275,12 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 				     local_endpoint,
 				     HERE);
 
-	/* insert into public interface list */
+	/*
+	 * Insert into public interface list.
+	 *
+	 * This is the first reference, caller, if it wants to save
+	 * IFP must addref.
+	 */
 	ifp->next = interfaces;
 	interfaces = ifp;
 

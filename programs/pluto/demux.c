@@ -75,62 +75,6 @@
 static callback_cb handle_md_event;		/* type assertion */
 
 /*
- * read the message.
- *
- * Since we don't know its size, we read it into an overly large
- * buffer and then copy it to a new, properly sized buffer.
- */
-
-static enum iface_read_status read_message(struct iface_endpoint *ifp,
-					   struct msg_digest **mdp,
-					   struct logger *logger)
-{
-	pexpect(*mdp == NULL);
-
-	/* ??? this buffer seems *way* too big */
-	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
-	struct iface_packet packet = {
-		.ptr = bigbuffer,
-		.len = sizeof(bigbuffer),
-		.logger = logger,
-	};
-
-	enum iface_read_status status = ifp->io->read_packet(ifp, &packet, logger);
-	if (status != IFACE_READ_OK) {
-		/* already logged */
-		return status;
-	}
-
-	/*
-	 * Create the real message digest; and set up md->packet_pbs
-	 * to describe it.
-	 */
-	struct msg_digest *md = alloc_md(ifp, &packet.sender, HERE);
-	init_pbs(&md->packet_pbs,
-		 clone_bytes(packet.ptr, packet.len,
-			     "message buffer in read_packet()"),
-		 packet.len, "packet");
-
-	endpoint_buf sb;
-	endpoint_buf lb;
-	dbg("*received %d bytes from %s on %s %s using %s",
-	    (int) pbs_room(&md->packet_pbs),
-	    str_endpoint(&md->sender, &sb),
-	    ifp->ip_dev->id_rname,
-	    str_endpoint(&ifp->local_endpoint, &lb),
-	    ifp->io->protocol->name);
-
-	if (DBGP(DBG_BASE)) {
-		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
-	}
-
-	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
-
-	*mdp = md;
-	return IFACE_READ_OK;
-}
-
-/*
  * process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific
@@ -298,16 +242,12 @@ static void process_md(struct msg_digest **mdp)
 }
 
 /*
- * wrapper for read_packet and process_packet
+ * wrapper for read_message() and process_md()
  *
  * The main purpose of this wrapper is to factor out teardown code
- * from the many return points in process_packet.  This amounts to
- * releasing the msg_digest and resetting global variables.
- *
- * When processing of a packet is suspended (STF_SUSPEND),
- * process_packet sets md to NULL to prevent the msg_digest being
- * freed.  Someone else must ensure that msg_digest is freed
- * eventually.
+ * from the many return points in process_md().  This amounts to
+ * releasing the msg_digest (if MD needs to be kept around the code
+ * requiring it will have taken a reference).
  *
  * read_packet is broken out to minimize the lifetime of the enormous
  * input packet buffer, an auto.
@@ -319,51 +259,52 @@ void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *if
 {
 	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	struct iface_endpoint *ifp = ifp_arg;
+	ifp_arg = NULL; /* can no longer be trusted */
 
 	/* on the same page^D^D^D fd? */
 	pexpect(ifp->fd == fd);
 
 	threadtime_t md_start = threadtime_start();
-	struct msg_digest *md = NULL;
-	enum iface_read_status status = read_message(ifp, &md, logger);
-	switch (status) {
-	case IFACE_READ_OK:
-		/*
-		 * XXX: Danger
-		 *
-		 * process_md() passes the message along to the state
-		 * machine and the state machine can then pass the
-		 * message along to the state processor.
-		 *
-		 * Unfortunately, part way through all this, the state
-		 * processor may decide to delete the state, and
-		 * deleting the state can delete IFP.
-		 *
-		 * To play it safe, KILL IFP.
-		 *
-		 * Can we please just stop calling delete_state() mid
-		 * transition?
-		 */
-		ifp = ifp_arg = NULL;
+
+	/*
+	 *
+	 * Read the message into a message digest.
+	 *
+	 * XXX: Danger
+	 *
+	 * The read_message() call can invalidate (*IFP).  For
+	 * instance when there's a non-recoverable error IFP may be
+	 * zapped.
+	 */
+	struct msg_digest *md = ifp->io->read_packet(&ifp, logger);
+
+	if (md != NULL) {
+
+		if (DBGP(DBG_BASE)) {
+			endpoint_buf sb;
+			endpoint_buf lb;
+			DBG_log("*received %d bytes from %s on %s %s using %s",
+				(int) pbs_room(&md->packet_pbs),
+				str_endpoint(&md->sender, &sb),
+				md->iface->ip_dev->id_rname,
+				str_endpoint(&md->iface->local_endpoint, &lb),
+				md->iface->io->protocol->name);
+			DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
+		}
+
+		pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
+
 		md->md_inception = md_start;
 		if (!impair_incoming(md)) {
+			/*
+			 * If this needs to hang onto MD it will save
+			 * a reference (aka addref), and the below
+			 * won't delete MD.
+			 */
 			process_md(&md);
 		}
 		md_delref(&md, HERE);
 		pexpect(md == NULL);
-		break;
-	case IFACE_READ_IGNORE:
-	case IFACE_READ_EOF:
-	case IFACE_READ_ERROR:
-		pexpect(md == NULL);
-		break;
-	case IFACE_READ_ABORT:
-		/*
-		 * XXX: this assumes that IFP is not being shared.
-		 */
-		pexpect(md == NULL);
-		iface_endpoint_delref(&ifp);
-		break;
 	}
 
 	threadtime_stop(&md_start, SOS_NOBODY,

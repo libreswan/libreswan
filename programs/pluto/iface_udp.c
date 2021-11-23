@@ -237,10 +237,10 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp,
 			       struct logger *logger);
 #endif
 
-static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
-					      struct iface_packet *packet,
-					      struct logger *logger)
+static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
+					   struct logger *logger)
 {
+	struct iface_endpoint *ifp = *ifpp; /*never closed? */
 #ifdef MSG_ERRQUEUE
 	/*
 	 * Even though select(2) says that there is a message, it
@@ -255,11 +255,11 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 	if (pluto_sock_errqueue) {
 		threadtime_t errqueue_start = threadtime_start();
 		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__,
-						      packet->logger);
+						      logger);
 		threadtime_stop(&errqueue_start, SOS_NOBODY,
 				"%s() calling check_incoming_msg_errqueue()", __func__);
 		if (!errqueue_ok) {
-			return IFACE_READ_IGNORE; /* no normal message to read */
+			return false; /* no normal message to read */
 		}
 	}
 #endif
@@ -273,8 +273,10 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 	ip_sockaddr from = {
 		.len = sizeof(from.sa),
 	};
-	packet->len = recvfrom(ifp->fd, packet->ptr, packet->len, /*flags*/ 0,
-			       &from.sa.sa, &from.len);
+	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE]; /* ??? this buffer seems *way* too big */
+	ssize_t packet_len = recvfrom(ifp->fd, bigbuffer, sizeof(bigbuffer),
+				      /*flags*/ 0, &from.sa.sa, &from.len);
+	uint8_t *packet_ptr = bigbuffer;
 	int packet_errno = errno; /* save!!! */
 
 	/*
@@ -287,9 +289,9 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 	ip_port sender_udp_port;
 	const char *from_ugh = sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port);
 	if (from_ugh != NULL) {
-		if (packet->len >= 0) {
+		if (packet_len >= 0) {
 			/* technically it worked, but returned value was useless */
-			llog(RC_LOG, packet->logger,
+			llog(RC_LOG, logger,
 			     "recvfrom on %s returned malformed source sockaddr: %s",
 			     ifp->ip_dev->id_rname, from_ugh);
 		} else if (from.len == sizeof(from) &&
@@ -301,71 +303,74 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 			 * some datagram we sent, but we cannot tell
 			 * which one.
 			 */
-			llog(RC_LOG, packet->logger,
+			llog(RC_LOG, logger,
 			     "recvfrom on %s failed; some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)",
 			     ifp->ip_dev->id_rname);
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
-			llog_errno(RC_LOG, packet->logger, packet_errno,
+			llog_errno(RC_LOG, logger, packet_errno,
 				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s"/*: */,
-				    ifp->ip_dev->id_rname, from_ugh);
+				   ifp->ip_dev->id_rname, from_ugh);
 		}
-		return IFACE_READ_IGNORE;
+		return false;
 	}
 
-	packet->sender = endpoint_from_address_protocol_port(sender_udp_address,
-							     &ip_protocol_udp,
-							     sender_udp_port);
-
+	ip_endpoint sender = endpoint_from_address_protocol_port(sender_udp_address,
+								 &ip_protocol_udp,
+								 sender_udp_port);
 
 	/*
-	 * Managed to decode the from address; switch to a "from"
-	 * logger so that it be used as log context prefix.
+	 * Managed to decode the from address; change LOGGER to an
+	 * on-stack "from" logger so that messages can include more
+	 * context.
 	 */
-	struct logger from_logger = logger_from(logger, &packet->sender);
+	struct logger from_logger = logger_from(logger, &sender);
 	logger = &from_logger;
 
-	if (packet->len < 0) {
+	if (packet_len < 0) {
 		llog_errno(RC_LOG, logger, packet_errno,
 			   "recvfrom on %s failed"/*: */, ifp->ip_dev->id_rname);
-		return IFACE_READ_IGNORE;
+		return NULL;
 	}
 
+	/*
+	 * If the socket is in encapsulation mode (where each packet
+	 * is prefixed either by 0 (IKE) or non-zero (ESP/AH SPI)
+	 * marker.  Check for and strip away the marker.
+	 */
 	if (ifp->esp_encapsulation_enabled) {
 		uint32_t non_esp;
 
-		if (packet->len < (int)sizeof(uint32_t)) {
+		if (packet_len < (int)sizeof(uint32_t)) {
 			llog(RC_LOG, logger, "too small packet (%zd)",
-				    packet->len);
-			return IFACE_READ_IGNORE;
+			     packet_len);
+			return NULL;
 		}
-		memcpy(&non_esp, packet->ptr, sizeof(uint32_t));
+		memcpy(&non_esp, packet_ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
 			llog(RC_LOG, logger, "has no Non-ESP marker");
-			return IFACE_READ_IGNORE;
+			return NULL;
 		}
-		packet->ptr += sizeof(uint32_t);
-		packet->len -= sizeof(uint32_t);
+		packet_ptr += sizeof(uint32_t);
+		packet_len -= sizeof(uint32_t);
 	}
 
-	/* We think that in 2013 Feb, Apple iOS Racoon
-	 * sometimes generates an extra useless buggy confusing
-	 * Non ESP Marker
+	/*
+	 * We think that in 2013 Feb, Apple iOS Racoon sometimes
+	 * generates an extra useless buggy confusing Non ESP Marker.
 	 */
 	{
-		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-			{ 0x00, };
+		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
 		if (ifp->esp_encapsulation_enabled &&
-		    packet->len >= NON_ESP_MARKER_SIZE &&
-		    memeq(packet->ptr, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE)) {
+		    packet_len >= NON_ESP_MARKER_SIZE &&
+		    memeq(packet_ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
 			llog(RC_LOG, logger,
-				    "mangled with potential spurious non-esp marker");
-			return IFACE_READ_IGNORE;
+			     "mangled with potential spurious non-esp marker");
+			return NULL;
 		}
 	}
 
-	if (packet->len == 1 && packet->ptr[0] == 0xff) {
+	if (packet_len == 1 && packet_ptr[0] == 0xff) {
 		/**
 		 * NAT-T Keep-alive packets should be discarded by kernel ESPinUDP
 		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
@@ -374,11 +379,16 @@ static enum iface_read_status udp_read_packet(struct iface_endpoint *ifp,
 		 */
 		endpoint_buf eb;
 		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
-		    str_endpoint(&packet->sender, &eb)); /* sensitive? */
-		return IFACE_READ_IGNORE;
+		    str_endpoint(&sender, &eb)); /* sensitive? */
+		return NULL;
 	}
 
-	return IFACE_READ_OK;
+	struct msg_digest *md = alloc_md(ifp, &sender, HERE);
+	init_pbs(&md->packet_pbs,
+		 clone_bytes(packet_ptr, packet_len,
+			     "message buffer in udp_read_packet()"),
+		 packet_len, "packet");
+	return md;
 }
 
 static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
