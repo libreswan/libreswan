@@ -907,23 +907,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
-static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
-							  struct msg_digest *md,
-							  bool pam_status)
+stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md, v2_auth_signature_cb auth_cb)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	struct connection *const c = ike->sa.st_connection;
-
-	if (!pam_status) {
-		/*
-		 * TBD: send this notification encrypted because the
-		 * AUTH payload succeed
-		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	}
 
 	/*
 	 * Construct the IDr payload and store it in state so that it
@@ -962,8 +948,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 						     hash_algo, LOCAL_PERSPECTIVE);
 			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      authby, auth_method,
-						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
+						      authby, auth_method, auth_cb)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -986,8 +971,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 						     hash_algo, LOCAL_PERSPECTIVE);
 			ike->sa.st_v2_ike_intermediate_used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      authby, auth_method,
-						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
+						      authby, auth_method, auth_cb)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1000,7 +984,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 		case IKEv2_AUTH_NULL:
 		{
 			struct hash_signature sig = { .len = 0, };
-			return process_v2_IKE_AUTH_request_auth_signature_continue(ike, md, &sig);
+			return auth_cb(ike, md, &sig);
 		}
 		default:
 			log_state(RC_LOG, &ike->sa,
@@ -1011,9 +995,29 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	}
 }
 
-stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
-							       struct msg_digest *md,
-							       const struct hash_signature *auth_sig)
+static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
+							  struct msg_digest *md,
+							  bool pam_status)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+
+	if (!pam_status) {
+		/*
+		 * TBD: send this notification encrypted because the
+		 * AUTH payload succeed
+		 */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	return generate_v2_responder_auth(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
+}
+
+static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
+								      struct msg_digest *md,
+								      const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
 
