@@ -1233,7 +1233,7 @@ kvmplutotest	bad-nexthop-01		wip
 kvmplutotest	ikev2-tcp-00-yes					good
 kvmplutotest	ikev2-tcp-00-fallback					good
 kvmplutotest	ikev2-tcp-01-eof					good
-kvmplutotest	ikev2-tcp-02-timeout					wip
+kvmplutotest	ikev2-tcp-02-timeout					good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			good
 kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			good
 kvmplutotest	ikev2-tcp-04-ikeport					good
@@ -1247,7 +1247,7 @@ kvmplutotest	ikev2-tcp-10-rekey-ike					good
 kvmplutotest	ikev2-tcp-25-rw-nat					good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
 
-kvmplutotest	ikev2-tcp-05-transport-mode				skiptest
+kvmplutotest	ikev2-tcp-05-transport-mode				good
 kvmplutotest	ikev2-udp-05-transport-mode 				good
 
 # OpenBSD interop
