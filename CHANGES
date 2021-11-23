@@ -8,6 +8,7 @@ v4.6 (unreleased)
 * IKEv2: when PFS, don't repeatedly log all proposals
 * pluto: Change default replay-window from 32 to 128 [Paul]
 * pluto: Change default esn= to "either" and prefer "yes" [Paul]
+* pluto: Disable esn when replay-window=0 [Paul]
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
