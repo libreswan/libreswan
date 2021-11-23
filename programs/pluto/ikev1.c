@@ -2675,7 +2675,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (smc->flags & SMF_REPLY) {
 			endpoint_buf b;
 			endpoint_buf b2;
-			pexpect_st_local_endpoint(st);
 			dbg("sending reply packet to %s (from %s)",
 			    str_endpoint(&st->st_remote_endpoint, &b),
 			    str_endpoint(&st->st_interface->local_endpoint, &b2));

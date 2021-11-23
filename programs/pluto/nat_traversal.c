@@ -357,7 +357,6 @@ static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
-	pexpect_st_local_endpoint(st);
 
 	if (st == NULL)
 		return;
@@ -404,7 +403,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			st->st_interface = iface_endpoint_addref(md->iface);
 		}
 	}
-	pexpect_st_local_endpoint(st);
 }
 
 void show_setup_natt(struct show *s)

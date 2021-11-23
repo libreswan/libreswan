@@ -355,17 +355,17 @@ struct state {
 	 * connection->interface
 	 *
 	 * XXX: It seems that .st_interface starts out the same as the
-	 * connection's interface but then be changed by NAT.  For
-	 * instance, when the initial request is sent on :500 but the
-	 * response comes back on :4500, .st_interface will switch.
+	 * connection's interface but then be changed by NAT and/or
+	 * TCP.  For instance, when the initial request is sent on
+	 * :500 but the response comes back on :4500, and when
+	 * negotiation falls back to TCP, .st_interface will switch.
 	 *
-	 * XXX: It looks like there's redundancy, or at least there
-	 * should be consistency between this.{addr,port} and the
-	 * local endpoint.  pexpect_st_local_endpoint() is a place
-	 * holder as that idear gets explored.
+	 * XXX: both .st_interface and iface_endpoint are misleading
+	 * names: a network interface can have more than one port but
+	 * this for just one; and iface_endpoint isn't really like a
+	 * simple ip_endpoint.
 	 */
 	struct iface_endpoint *st_interface;  /* where to send from */
-#define pexpect_st_local_endpoint(ST) /* see above */
 
 	bool st_mobike_del_src_ip;		/* for mobike migrate unroute */
 	/* IKEv2 MOBIKE probe copies */

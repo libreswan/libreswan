@@ -210,7 +210,6 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 	dbg("sending NAT-D payloads");
 
 	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
-	pexpect_st_local_endpoint(st);
 	unsigned short local_port = endpoint_hport(st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
@@ -422,7 +421,6 @@ static void v1_natify_initiator_endpoints(struct state *st, where_t where);
 
 void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 {
-	pexpect_st_local_endpoint(st);
 	/*
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
@@ -447,7 +445,6 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 		 */
 		update_pending(pexpect_ike_sa(st), pexpect_ike_sa(st));
 	}
-	pexpect_st_local_endpoint(st);
 }
 
 /*
@@ -462,7 +459,6 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 * and then re-bind the interface so that all further
 	 * exchanges use that port.
 	 */
-	pexpect_st_local_endpoint(st);
 	endpoint_buf b1, b2;
 	ip_endpoint new_local_endpoint = set_endpoint_port(st->st_interface->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
 	dbg("NAT: #%lu floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
@@ -490,7 +486,6 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 			st->st_interface = iface_endpoint_addref(i);
 		}
 	}
-	pexpect_st_local_endpoint(st);
 
 	/*
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)

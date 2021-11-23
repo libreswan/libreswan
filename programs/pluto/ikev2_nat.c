@@ -57,7 +57,6 @@ bool ikev2_out_nat_v2n(pb_stream *outs, struct state *st,
 	};
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
-	pexpect_st_local_endpoint(st);
 	uint16_t lport = endpoint_hport(st->st_interface->local_endpoint);
 	if (st->st_connection->encaps == yna_yes) {
 		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");

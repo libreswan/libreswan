@@ -264,7 +264,6 @@ void record_deladdr(ip_address *ip, char *a_type)
 		if (!mobike_check_established(st))
 			continue;
 
-		pexpect_st_local_endpoint(st);
 		ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
 		/* ignore port */
 		if (sameaddr(ip, &local_address)) {
@@ -303,7 +302,6 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	    st->st_serialno, ipstr(&this->addr, &s),
 	    str_endpoint(&st->st_remote_endpoint, &b),
 	    ipstr(&this->nexthop, &g));
-	pexpect_st_local_endpoint(st);
 	/*
 	 * XXX: why not local_endpoint or is this redundant?
 	 *
@@ -342,7 +340,6 @@ static struct iface_endpoint *ikev2_src_iface(struct state *st,
 					      struct starter_end *this)
 {
 	/* success found a new source address */
-	pexpect_st_local_endpoint(st);
 	ip_port port = endpoint_port(st->st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
 									 st->st_interface->io->protocol,

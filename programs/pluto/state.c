@@ -1560,7 +1560,6 @@ static struct state *duplicate_state(struct connection *c,
 	nst->quirks = st->quirks;
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remote_endpoint = st->st_remote_endpoint;
-	pexpect_st_local_endpoint(st);
 	endpoint_buf eb;
 	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
 	    nst->st_serialno,
@@ -1568,7 +1567,6 @@ static struct state *duplicate_state(struct connection *c,
 	    st->st_serialno,pri_where(HERE));
 	pexpect(nst->st_interface == NULL);
 	nst->st_interface = iface_endpoint_addref(st->st_interface);
-	pexpect_st_local_endpoint(nst);
 	nst->st_clonedfrom = st->st_serialno;
 	passert(nst->st_ike_version == st->st_ike_version);
 	nst->st_ikev2_anon = st->st_ikev2_anon;
@@ -2543,7 +2541,6 @@ void update_ike_endpoints(struct ike_sa *ike,
 	    pri_where(HERE));
 	iface_endpoint_delref(&ike->sa.st_interface);
 	ike->sa.st_interface = iface_endpoint_addref(md->iface);
-	pexpect_st_local_endpoint(&ike->sa);
 }
 
 /*
@@ -2579,7 +2576,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE inititor processing response */
-		pexpect_st_local_endpoint(&ike->sa);
 		old_endpoint = ike->sa.st_interface->local_endpoint;
 
 		child->sa.st_mobike_local_endpoint = ike->sa.st_mobike_local_endpoint;
@@ -2656,8 +2652,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	iface_endpoint_delref(&child->sa.st_interface);
 	ike->sa.st_interface = iface_endpoint_addref(md->iface);
 	child->sa.st_interface = iface_endpoint_addref(md->iface);
-	pexpect_st_local_endpoint(&ike->sa);
-	pexpect_st_local_endpoint(&child->sa);
 
 	/* reset liveness */
 	ike->sa.st_v2_last_liveness = monotime_epoch;
