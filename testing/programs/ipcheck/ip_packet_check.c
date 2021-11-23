@@ -29,15 +29,19 @@ void ip_packet_check(void)
 	static const struct test {
 		int line;
 		int family;
-		const struct ip_protocol *proto;
+		const struct ip_protocol *protocol;
 		const char *sa;
 		int sp;
 		const char *da;
 		int dp;
 		const char *str;
 	} tests[] = {
-		/* anything else? */
+		/* normal */
 		{ LN, 4, &ip_protocol_tcp, "1.2.3.4", 1, "1.2.3.4", 65535, "1.2.3.4:1-TCP->1.2.3.4:65535", },
+		{ LN, 6, &ip_protocol_tcp, "::1", 1, "::2", 65535, "[::1]:1-TCP->[::2]:65535", },
+		/* ephemeral source port */
+		{ LN, 4, &ip_protocol_tcp, "1.2.3.4", 0, "1.2.3.4", 65535, "1.2.3.4-TCP->1.2.3.4:65535", },
+		{ LN, 6, &ip_protocol_tcp, "::1", 0, "::2", 65535, "[::1]-TCP->[::2]:65535", },
 	};
 
 	const char *oops;
@@ -45,32 +49,59 @@ void ip_packet_check(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("[%s]:%d %s [%s]:%d => %s",
-		      t->sa, t->sp, t->proto->name, t->da, t->dp, t->str);
+		      t->sa, t->sp, t->protocol->name, t->da, t->dp, t->str);
 
 		const struct ip_info *afi = IP_TYPE(t->family);
 
-		ip_address sa;
-		oops = ttoaddress_num(shunk1(t->sa), afi, &sa);
+		ip_port src_port = ip_hport(t->sp);
+		ip_port dst_port = ip_hport(t->dp);
+
+		ip_address src_address;
+		oops = ttoaddress_num(shunk1(t->sa), afi, &src_address);
+		if (oops != NULL) {
+			/* Error occurred, but we didn't expect one */
+			FAIL("ttoaddress failed: %s", oops);
+		}
+
+		ip_address dst_address;
+		oops = ttoaddress_num(shunk1(t->da), afi, &dst_address);
 		if (oops != NULL) {
 			/* Error occurred, but we didn't expect one */
 			FAIL("ttoendpoint failed: %s", oops);
 		}
 
-		ip_address da;
-		oops = ttoaddress_num(shunk1(t->da), afi, &da);
-		if (oops != NULL) {
-			/* Error occurred, but we didn't expect one */
-			FAIL("ttoendpoint failed: %s", oops);
-		}
-
-		ip_packet packet = packet_from_raw(HERE, afi, t->proto,
-						   &sa.bytes, ip_hport(t->sp),
-						   &da.bytes, ip_hport(t->dp));
+		ip_packet packet = packet_from_raw(HERE,
+						   afi, &src_address.bytes, &dst_address.bytes,
+						   t->protocol, src_port, dst_port);
 
 		packet_buf tb;
 		const char *str = str_packet(&packet, &tb);
 		if (!streq(str, t->str)) {
 			FAIL("str_packet() returned %s, expecting %s", str, t->str);
+		}
+
+		/* src is a selector */
+		ip_selector packet_src = packet_src_selector(packet);
+		ip_selector src_selector = selector_from_raw(HERE,
+							     afi->ip_version, src_address.bytes, afi->mask_cnt,
+							     t->protocol, src_port);
+		if (!selector_eq_selector(packet_src, src_selector)) {
+			selector_buf psb, sb;
+			FAIL("packet_src_selector failed: returned %s, expecting %s",
+			     str_selector(&packet_src, &psb),
+			     str_selector(&src_selector, &sb));
+		}
+
+		/* dst is an endpoint */
+		ip_endpoint packet_dst = packet_dst_endpoint(packet);
+		ip_endpoint dst_endpoint = endpoint_from_raw(HERE,
+							     afi->ip_version, dst_address.bytes,
+							     t->protocol, dst_port);
+		if (!endpoint_eq_endpoint(packet_dst, dst_endpoint)) {
+			endpoint_buf pdb, db;
+			FAIL("packet_dst_endpoint failed: returned %s, expecting %s",
+			     str_endpoint(&packet_dst, &pdb),
+			     str_endpoint(&dst_endpoint, &db));
 		}
 	}
 }

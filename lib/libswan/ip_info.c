@@ -109,14 +109,21 @@ static size_t jam_ipv6_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
+static size_t jam_ipv6_address_wrapped(struct jambuf *buf, const struct ip_info *afi, const struct ip_bytes *bytes)
+{
+	size_t s = 0;
+	s += jam_string(buf, "[");
+	s += jam_ipv6_address(buf, afi, bytes);
+	s += jam_string(buf, "]");
+	return s;
+}
+
 static size_t jam_ipv6_endpoint(struct jambuf *buf, const struct ip_info *afi,
 				const struct ip_bytes *bytes, unsigned hport)
 {
 	size_t s = 0;
 	/* [N:..:N]:PORT */
-	s += jam(buf, "[");
-	s += afi->address.jam(buf, afi, bytes);
-	s += jam(buf, "]");
+	s += jam_ipv6_address_wrapped(buf, afi, bytes);
 	s += jam(buf, ":%u", hport);
 	return s;
 }
@@ -162,6 +169,7 @@ const struct ip_info ipv4_info = {
 	.address.any = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
 	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
 	.address.jam = jam_ipv4_address,
+	.address.jam_wrapped = jam_ipv4_address,
 
 	/* ip_endpoint - */
 	.endpoint.jam = jam_ipv4_endpoint,
@@ -211,6 +219,7 @@ const struct ip_info ipv6_info = {
 	.address.any = { .is_set = true, .version = IPv6, }, /* :: */
 	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
 	.address.jam = jam_ipv6_address,
+	.address.jam_wrapped = jam_ipv6_address_wrapped,
 
 	/* ip_endpoint - */
 	.endpoint.jam = jam_ipv6_endpoint,

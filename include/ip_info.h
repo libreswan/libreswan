@@ -26,6 +26,8 @@ struct ip_info {
 		const ip_address any;		/* 0.0.0.0 or :: */
 		const ip_address loopback;	/* 127.0.0.1 or ::1 */
 		size_t (*jam)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
+		/* N.N.N.N or [MM:MM:MM...] */
+		size_t (*jam_wrapped)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 	} address;
 
 	/*

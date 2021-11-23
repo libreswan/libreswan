@@ -1716,9 +1716,9 @@ static ip_packet packet_from_xfrm_selector(const struct ip_info *afi,
 
 	struct ip_bytes src_bytes = bytes_from_xfrm_address(afi, &sel->saddr);
 	struct ip_bytes dst_bytes = bytes_from_xfrm_address(afi, &sel->daddr);
-	return packet_from_raw(HERE, afi, protocol,
-			       &src_bytes, ip_nport(sel->sport),
-			       &dst_bytes, ip_nport(sel->dport));
+	return packet_from_raw(HERE,
+			       afi, &src_bytes, &dst_bytes,
+			       protocol, ip_nport(sel->sport), ip_nport(sel->dport));
 }
 
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)

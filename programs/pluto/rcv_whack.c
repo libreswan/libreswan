@@ -842,10 +842,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			const ip_protocol *protocol = protocol_by_ipproto(m->oppo.ipproto);
 			ip_packet packet = packet_from_raw(HERE,
 							   address_type(&m->oppo.local.address),
-							   protocol,
 							   &m->oppo.local.address.bytes,
-							   m->oppo.local.port,
 							   &m->oppo.remote.address.bytes,
+							   protocol,
+							   m->oppo.local.port,
 							   m->oppo.remote.port);
 			initiate_ondemand(&packet,
 					  /*by_acquire*/false,

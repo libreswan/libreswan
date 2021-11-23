@@ -23,10 +23,13 @@
 const ip_packet unset_packet;
 
 ip_packet packet_from_raw(where_t where,
+			  /* INFO determines meaning of BYTES */
 			  const struct ip_info *info,
+			  const struct ip_bytes *src_bytes,
+			  const struct ip_bytes *dst_bytes,
+			  /* PROTOCOL determines meaning of PORTs */
 			  const struct ip_protocol *protocol,
-			  const struct ip_bytes *src_bytes, ip_port src_port,
-			  const struct ip_bytes *dst_bytes, ip_port dst_port)
+			  ip_port src_port, ip_port dst_port)
 {
 	ip_packet packet = {
 		.is_set = true,
@@ -103,10 +106,10 @@ ip_selector packet_src_selector(const ip_packet packet)
 	if (packet.is_set) {
 		return selector_from_raw(HERE,
 					 packet.info->ip_version,
-					 packet.dst.bytes,
+					 packet.src.bytes,
 					 packet.info->mask_cnt,
 					 packet.protocol,
-					 ip_hport(packet.dst.hport));
+					 ip_hport(packet.src.hport));
 	} else {
 		return unset_selector;
 	}
@@ -138,7 +141,8 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 	size_t s = 0;
 	/* src port can be zero aka wildcard */
 	if (packet->src.hport == 0 && packet->protocol->endpoint_requires_non_zero_port) {
-		s += afi->address.jam(buf, afi, &packet->src.bytes);
+		/* For IPv6 includes [] */
+		s += afi->address.jam_wrapped(buf, afi, &packet->src.bytes);
 	} else {
 		s += afi->endpoint.jam(buf, afi, &packet->src.bytes, packet->src.hport);
 	}

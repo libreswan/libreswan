@@ -43,27 +43,34 @@ typedef struct {
 		 */
 		int hport;
 	} src, dst;
+	/*XXX sec_label?*/
 } ip_packet;
 
-#define PRI_PACKET "%s is_set=%s info=%s protocol=%s src.bytes="PRI_BYTES" src.hport=%d dst.bytes="PRI_BYTES" dst.hport=%d"
+#define PRI_PACKET "%s is_set=%s info=%s src.bytes="PRI_BYTES" dst.bytes="PRI_BYTES" protocol=%s src.hport=%d dst.hport=%d"
 #define pri_packet(S,B)							\
 	str_packet(S, B),						\
 		bool_str((S)->is_set),					\
 		(S)->info != NULL ? (S)->info->ip_name : "<null>",	\
-		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\
 		pri_bytes((S)->src.bytes),				\
-		(S)->src.hport,						\
 		pri_bytes((S)->dst.bytes),				\
+		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\
+		(S)->src.hport,						\
 		(S)->dst.hport
 
 void pexpect_packet(const ip_packet *s, where_t where);
 #define ppacket(S) pexpect_packet(S, HERE)
 
 ip_packet packet_from_raw(where_t where,
-			  const struct ip_info *info,
+			  /* AFI determines meaning of ... */
+			  const struct ip_info *afi,
+			  /* ... BYTES */
+			  const struct ip_bytes *src_bytes,
+			  const struct ip_bytes *dst_bytes,
+			  /* PROTOCOL determines meaning of ... */
 			  const struct ip_protocol *protocol,
-			  const struct ip_bytes *src_bytes, const ip_port src_port,
-			  const struct ip_bytes *dst_bytes, const ip_port dst_port);
+			  /* ... PORTs */
+			  const ip_port src_port,
+			  const ip_port dst_port);
 
 /*
  * Magic values.
