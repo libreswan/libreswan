@@ -1,0 +1,50 @@
+/testing/guestbin/swan-prep
+west #
+ setenforce 1
+west #
+ echo '@psk-west @psk-east: PSK "ThisIsHereToMisMatchABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
+west #
+ echo ': PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev2-failtest
+002 "ikev2-failtest": added IKEv2 connection
+west #
+ #ipsec whack --impair delete-on-retransmit
+west #
+ echo "initdone"
+initdone
+west #
+ # IKEv1 fail tests
+west #
+ # IKEv2 fail tests
+west #
+ ipsec whack --impair revival
+west #
+ ipsec auto --up ikev2-failtest # sanitize-retransmits
+1v2 "ikev2-failtest" #1: initiating IKEv2 connection
+1v2 "ikev2-failtest" #1: sent IKE_SA_INIT request
+1v2 "ikev2-failtest" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "ikev2-failtest" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "ikev2-failtest" #1: encountered fatal error in state STATE_V2_PARENT_I2
+002 "ikev2-failtest" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
+002 "ikev2-failtest" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+west #
+ ipsec auto --delete ikev2-failtest
+002 "ikev2-failtest": terminating SAs using this connection
+west #
+ echo done
+done
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2-failtest" connstate=2, satype=ipsec-policy samode=tunnel cipher=none ksize=0 integ=none in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2-failtest" connstate=1 ike-version=2.0 auth=PRESHARED_KEY cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+west #
+ 

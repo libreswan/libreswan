@@ -67,11 +67,15 @@ kvmplutotest    basic-pluto-08-misc		good
 kvmplutotest    basic-pluto-09-orienting	good
 kvmplutotest    basic-pluto-10-nm-configured	good
 
-kvmplutotest	linux-audit-01-ok		good
-kvmplutotest	linux-audit-02-ike-fail		good
-kvmplutotest	linux-audit-03-ipsec-fail	good
-# this test should still be written once we can whack trigger rekeys
-#kvmplutotest	linux-audit-04-rekey 		wip
+kvmplutotest	linux-audit-01-ok-ikev1		good
+kvmplutotest	linux-audit-01-ok-ikev2		good
+kvmplutotest	linux-audit-02-ike-fail-ikev1	good
+kvmplutotest	linux-audit-02-ike-fail-ikev2	good
+kvmplutotest	linux-audit-03-ipsec-fail-ikev1	good
+kvmplutotest	linux-audit-03-ipsec-fail-ikev2	good
+# this test should be written once we can whack trigger rekeys
+#kvmplutotest	linux-audit-04-rekey-ikev1	wip
+#kvmplutotest	linux-audit-04-rekey-ikev2	wip
 
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-02-fuzzer	good

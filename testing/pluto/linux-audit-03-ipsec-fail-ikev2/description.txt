@@ -1,0 +1,20 @@
+NETKEY based test to verify AUDIT messages are logged by the kernel
+for service startup and shutdown and IKE SA's and IPSEC SA's events.
+
+This test MUST run with selinux enabled or else the selinux labels in
+the audit log are different (eg unconfined). Since some have configured
+test VMs with /etc/sysconfig/selinux disabled, force it in this test.
+
+This test is for failure cases only. Note that IKEv1 does not perform
+proper state changes on IKEv1 failures - so LAK_PARENT_FAIL calls
+cannot be placed inside complete_v1_state_transition()
+
+IKEv1 retransmits for QUICK MODE with keyingtries=1 do this more then
+1 time, so more then one CRYPTO_IPSEC op=start res=failed is logged
+per connection.
+
+IKEv2 causes a simultanious failure of IKE SA and IPsec SA, because
+we don't properly support childless SA and we don't keep the IKE SA
+when the IPsec SA fails, which we should. So logging for these is
+a bit inconsistent. Once we properly keep the IKE SA on Child SA
+failures, logging should be fixed as well.

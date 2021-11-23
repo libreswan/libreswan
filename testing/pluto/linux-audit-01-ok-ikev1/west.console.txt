@@ -17,9 +17,6 @@ west #
  ipsec auto --add ikev1-aggr
 002 "ikev1-aggr": added IKEv1 connection
 west #
- ipsec auto --add ikev2
-002 "ikev2": added IKEv2 connection
-west #
  echo "initdone"
 initdone
 west #
@@ -60,18 +57,6 @@ west #
 005 "ikev1-aggr" #4: IPCOMP traffic information: in=0B out=0B
 002 "ikev1-aggr" #3: deleting state (STATE_AGGR_I2) and sending notification
 west #
- ipsec auto --up ikev2
-1v2 "ikev2" #5: initiating IKEv2 connection
-1v2 "ikev2" #5: sent IKE_SA_INIT request
-1v2 "ikev2" #5: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2" #5: established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east-v2'
-004 "ikev2" #6: established Child SA using #5; IPsec tunnel [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-west #
- ipsec auto --delete ikev2
-002 "ikev2": terminating SAs using this connection
-002 "ikev2" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
-005 "ikev2" #6: ESP traffic information: in=0B out=0B
-west #
  echo done
 done
 west #
@@ -87,9 +72,5 @@ type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1-aggr" connstate=4, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev1-aggr" connstate=4, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev1-aggr" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev2" connstate=5 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2" connstate=6, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=initiator conn-name="ikev2" connstate=5 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
-type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev2" connstate=6, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'^]UID="root" AUID="unset"
 west #
  
