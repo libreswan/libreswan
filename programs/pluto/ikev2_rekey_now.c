@@ -35,8 +35,8 @@ static void rekey_state(struct state *st, bool background, struct logger *logger
 {
 	if (!background) {
 		/* XXX: something better? */
-		close_any(&st->st_logger->object_whackfd);
-		st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+		fd_delref(&st->st_logger->object_whackfd);
+		st->st_logger->global_whackfd = fd_addref(logger->global_whackfd);
 	}
 	event_force(EVENT_v2_REKEY, st);
 }

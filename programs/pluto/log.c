@@ -575,8 +575,8 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	}
 	/* construct the clone */
 	struct logger heap = {
-		.global_whackfd = fd_dup(stack->global_whackfd, where),
-		.object_whackfd = fd_dup(stack->object_whackfd, where),
+		.global_whackfd = fd_addref_where(stack->global_whackfd, where),
+		.object_whackfd = fd_addref_where(stack->object_whackfd, where),
 		.where = stack->where,
 		.object_vec = object_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
@@ -604,7 +604,7 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	}
 	/* construct the clone */
 	struct logger logger = {
-		.global_whackfd = fd_dup(whackfd, where),
+		.global_whackfd = fd_addref_where(whackfd, where),
 		.object_whackfd = null_fd,
 		.where = where,
 		.object_vec = &logger_string_vec,

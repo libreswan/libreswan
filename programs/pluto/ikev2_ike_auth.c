@@ -387,7 +387,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 							    SA_INITIATOR,
 							    STATE_V2_IKE_AUTH_CHILD_I0,
 							    child_whackfd);
-		close_any(&child_whackfd);
+		fd_delref(&child_whackfd);
 		ike->sa.st_v2_larval_initiator_sa = child;
 
 		/*

@@ -86,7 +86,7 @@ static void add_pending(struct fd *whack_sock,
 	}
 
 	struct pending *p = alloc_thing(struct pending, "struct pending");
-	p->whack_sock = fd_dup(whack_sock, HERE); /*on heap*/
+	p->whack_sock = fd_addref(whack_sock); /*on heap*/
 	p->ike = ike;
 	p->connection = c;
 	p->policy = policy;
@@ -235,7 +235,7 @@ void release_pending_whacks(struct state *st, err_t story)
 					    /* "IPsec SA" or "CHILD SA" */
 					    enum_enum_name(&sa_type_names, p->connection->config->ike_version, IPSEC_SA));
 			}
-			close_any(&p->whack_sock);/*on-heap*/
+			fd_delref(&p->whack_sock);/*on-heap*/
 		}
 	}
 	release_any_whack(st, HERE, "releasing child");
@@ -280,7 +280,7 @@ static void delete_pending(struct pending **pp)
 						  /*old-state*/NULL,
 						  null_fd/*XXX: p->whack_sock?*/);
 	}
-	close_any(&p->whack_sock); /*on-heap*/
+	fd_delref(&p->whack_sock); /*on-heap*/
 
 	pfree(p);
 }
@@ -364,8 +364,8 @@ struct connection *first_pending(const struct ike_sa *ike,
 	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
 	     pp != NULL && (p = *pp) != NULL; pp = &p->next) {
 		if (p->ike == ike) {
-			close_any(p_whack_sock); /*on-heap*/
-			*p_whack_sock = fd_dup(p->whack_sock, HERE); /*on-heap*/
+			fd_delref(p_whack_sock); /*on-heap*/
+			*p_whack_sock = fd_addref(p->whack_sock); /*on-heap*/
 			*policy = p->policy;
 			return p->connection;
 		}

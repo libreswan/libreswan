@@ -63,8 +63,8 @@
 static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED, struct logger *logger)
 {
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	llog(RC_LOG, c->logger,
 	     "terminating SAs using this connection");
@@ -78,8 +78,8 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 		if (c->newest_ipsec_sa != SOS_NOBODY) {
 			struct state *st = state_by_serialno(c->newest_ipsec_sa);
 			/* XXX: something better? */
-			close_any(&st->st_logger->global_whackfd);
-			st->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+			fd_delref(&st->st_logger->global_whackfd);
+			st->st_logger->global_whackfd = fd_addref(logger->global_whackfd);
 			delete_state(st);
 		}
 	} else {
@@ -93,7 +93,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 
 	if (c != NULL) {
 		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
+		fd_delref(&c->logger->global_whackfd);
 	}
 
 	return 1;

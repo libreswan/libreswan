@@ -444,7 +444,7 @@ static struct state *new_state(struct connection *c,
 	/* Create the logger ASAP; needs real ST */
 	st->st_logger = alloc_logger(st, &logger_state_vec, where);
 	/* XXX: something better? */
-	st->st_logger->object_whackfd = fd_dup(whackfd, where);
+	st->st_logger->object_whackfd = fd_addref_where(whackfd, where);
 
 	/* Determine the serialno.  */
 	static so_serial_t state_serialno;
@@ -796,14 +796,14 @@ static void send_delete(struct state *st)
 
 		/* XXX: something better? */
 		struct fd *ike_whack = ike->sa.st_logger->global_whackfd;
-		ike->sa.st_logger->global_whackfd = fd_dup(st->st_logger->global_whackfd, HERE);
+		ike->sa.st_logger->global_whackfd = fd_addref(st->st_logger->global_whackfd);
 
 		record_v2_delete(ike, st);
 		send_recorded_v2_message(ike, "delete notification",
 					 MESSAGE_REQUEST);
 
 		/* XXX: something better? */
-		close_any(&ike->sa.st_logger->global_whackfd);
+		fd_delref(&ike->sa.st_logger->global_whackfd);
 		ike->sa.st_logger->global_whackfd = ike_whack;
 
 		/*
@@ -1288,8 +1288,8 @@ void delete_states_dead_interfaces(struct logger *logger)
 				    "deleting lasting state #%lu on interface (%s) which is shutting down",
 				    this->st_serialno, id_vname);
 			/* XXX: better? */
-			close_any(&this->st_logger->global_whackfd);
-			this->st_logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+			fd_delref(&this->st_logger->global_whackfd);
+			this->st_logger->global_whackfd = fd_addref(logger->global_whackfd);
 			delete_state(this);
 			/* note: no md->v1_st to clear */
 		}
@@ -1339,7 +1339,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			dbg("pass 0: delete "PRI_SO" which is a sibling",
 			    st->st_serialno);
 			/* XXX: something better? */
-			close_any(&st->st_logger->global_whackfd);
+			fd_delref(&st->st_logger->global_whackfd);
 			st->st_logger->global_whackfd = fd_addref(whackfd);
 			delete_state(st);
 		}
@@ -1369,7 +1369,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			    pass, this->st_serialno);
 			pexpect(this->st_connection == (*cp));
 			/* XXX: something better? */
-			close_any(&this->st_logger->global_whackfd);
+			fd_delref(&this->st_logger->global_whackfd);
 			this->st_logger->global_whackfd = fd_addref(whackfd);
 			delete_state(this);
 		}
@@ -1416,7 +1416,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	if (sa != NULL) {
 		pexpect(sa->st_connection == (*cp));
 		/* XXX: something better? */
-		close_any(&sa->st_logger->global_whackfd);
+		fd_delref(&sa->st_logger->global_whackfd);
 		sa->st_logger->global_whackfd = fd_addref(whackfd);
 		delete_state(sa);
 	}
@@ -1432,7 +1432,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 		struct state *st = sf.st;
 		pexpect(st->st_connection == (*cp));
 		/* XXX: something better? */
-		close_any(&st->st_logger->global_whackfd);
+		fd_delref(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = fd_addref(whackfd);
 		delete_state(st);
 	}
@@ -2766,8 +2766,8 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	 * child can also log its demise; better abstraction?
 	 */
 	if (fd_p(ike->sa.st_logger->global_whackfd)) {
-		close_any(&st->st_logger->global_whackfd);
-		st->st_logger->global_whackfd = fd_dup(ike->sa.st_logger->global_whackfd, HERE);
+		fd_delref(&st->st_logger->global_whackfd);
+		st->st_logger->global_whackfd = fd_addref(ike->sa.st_logger->global_whackfd);
 	}
 	switch (st->st_ike_version) {
 

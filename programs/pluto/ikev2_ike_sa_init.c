@@ -604,8 +604,8 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * been logged.  Better to do that in the caller?
 	 */
 	if (background) {
-		close_any(&ike->sa.st_logger->object_whackfd);
-		close_any(&ike->sa.st_logger->global_whackfd);
+		fd_delref(&ike->sa.st_logger->object_whackfd);
+		fd_delref(&ike->sa.st_logger->global_whackfd);
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {

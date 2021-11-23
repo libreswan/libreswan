@@ -293,8 +293,8 @@ void release_dead_interfaces(struct logger *logger)
 		    pri_connection(c, &cb));
 
 		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
-		c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+		fd_delref(&c->logger->global_whackfd);
+		c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 		/*
 		 * This connection instance's interface is going away.
@@ -346,7 +346,7 @@ void release_dead_interfaces(struct logger *logger)
 		pexpect(c->host_pair == NULL);
 
 		/* XXX: something better? */
-		close_any(&c->logger->global_whackfd);
+		fd_delref(&c->logger->global_whackfd);
 	}
 }
 

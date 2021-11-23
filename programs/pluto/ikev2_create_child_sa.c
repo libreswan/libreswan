@@ -568,8 +568,8 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	larval_child->sa.st_try = try;
 
 	/* share the love; XXX: something better? */
-	close_any(&ike->sa.st_logger->object_whackfd);
-	ike->sa.st_logger->object_whackfd = fd_dup(whackfd, HERE);
+	fd_delref(&ike->sa.st_logger->object_whackfd);
+	ike->sa.st_logger->object_whackfd = fd_addref(whackfd);
 	larval_child->sa.st_policy = policy;
 
 	llog_sa(RC_LOG, larval_child,

@@ -381,12 +381,12 @@ void load_groups(struct logger *logger)
 				if (r >= 0) {
 					struct connection *g = np->group->connection;
 					/* XXX: something better? */
-					close_any(&g->logger->global_whackfd);
-					g->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+					fd_delref(&g->logger->global_whackfd);
+					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
 					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
 										   np->sport, np->dport);
 					/* XXX: something better? */
-					close_any(&g->logger->global_whackfd);
+					fd_delref(&g->logger->global_whackfd);
 					if (ng != NULL) {
 						passert(np->name == NULL);
 						np->name = clone_str(ng->name, "group instance name");

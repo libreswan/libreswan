@@ -1013,7 +1013,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* Saving connection name and whack sock id */
 				const char *tmp_name = st->st_connection->name;
-				struct fd *tmp_whack_sock = fd_dup(st->st_logger->object_whackfd, HERE);
+				struct fd *tmp_whack_sock = fd_addref(st->st_logger->object_whackfd);
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
@@ -1127,7 +1127,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 				initiate_connections_by_name(tmp_name, /*remote-name*/NULL,
 							     /*background?*/tmp_whack_sock == NULL/*guess*/,
 							     logger);
-				close_any(&tmp_whack_sock);
+				fd_delref(&tmp_whack_sock);
 			}
 			return STF_IGNORE;
 		default:

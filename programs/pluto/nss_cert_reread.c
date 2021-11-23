@@ -58,8 +58,8 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	struct end *dst;
 
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	dst = &c->spd.this;
 	reread_end_cert(dst, c->logger);
@@ -68,7 +68,7 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	reread_end_cert(dst, c->logger);
 
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
+	fd_delref(&c->logger->global_whackfd);
 }
 
 

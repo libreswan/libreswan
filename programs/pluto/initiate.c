@@ -71,8 +71,8 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 
 		struct connection *d = instantiate(c, &remote_ip, NULL, null_shunk);
 		/* XXX: something better? */
-		close_any(&d->logger->global_whackfd);
-		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
+		fd_delref(&d->logger->global_whackfd);
+		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
 
 		/* XXX: why not write to the log file? */
 		llog(WHACK_STREAM|RC_LOG, d->logger,
@@ -84,7 +84,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 			delete_connection(&d);
 		} else {
 			/* XXX: something better? */
-			close_any(&d->logger->global_whackfd);
+			fd_delref(&d->logger->global_whackfd);
 		}
 	} else {
 		/* now proceed as normal */
@@ -164,8 +164,8 @@ bool initiate_connection_2(struct connection *c,
 	    c->kind == CK_TEMPLATE) {
 		struct connection *d = instantiate(c, NULL, NULL, null_shunk);
 		/* XXX: something better? */
-		close_any(&d->logger->global_whackfd);
-		d->logger->global_whackfd = fd_dup(c->logger->global_whackfd, HERE);
+		fd_delref(&d->logger->global_whackfd);
+		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -177,7 +177,7 @@ bool initiate_connection_2(struct connection *c,
 			delete_connection(&d);
 		} else {
 			/* XXX: something better? */
-			close_any(&d->logger->global_whackfd);
+			fd_delref(&d->logger->global_whackfd);
 		}
 	} else {
 		ok = initiate_connection_3(c, background, inception);
@@ -376,14 +376,14 @@ static int initiate_a_connection(struct connection *c, void *arg, struct logger 
 {
 	const struct initiate_stuff *is = arg;
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
 	if (!result && is->log_failure) {
 		llog(RC_FATAL, c->logger, "failed to initiate connection");
 	}
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
+	fd_delref(&c->logger->global_whackfd);
 	return result;
 }
 

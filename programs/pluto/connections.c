@@ -347,8 +347,8 @@ int foreach_concrete_connection_by_name(const char *name,
 static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
 {
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE); /* freed by discard_conection() */
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd); /* freed by discard_conection() */
 
 	delete_connection(&c);
 	return 1;
@@ -2339,8 +2339,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(logger->global_whackfd, HERE);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
@@ -2378,7 +2378,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
+	fd_delref(&c->logger->global_whackfd);
 }
 
 /*
@@ -2467,14 +2467,14 @@ struct connection *add_group_instance(struct connection *group,
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
 		/* XXX: something better? */
-		close_any(&t->logger->global_whackfd);
-		t->logger->global_whackfd = fd_dup(group->logger->global_whackfd, HERE);
+		fd_delref(&t->logger->global_whackfd);
+		t->logger->global_whackfd = fd_addref(group->logger->global_whackfd);
 		if (!trap_connection(t)) {
 			llog(WHACK_STREAM|RC_ROUTE, group->logger,
 			     "could not route");
 		}
 		/* XXX: something better? */
-		close_any(&t->logger->global_whackfd);
+		fd_delref(&t->logger->global_whackfd);
 	}
 	return t;
 }
@@ -4801,8 +4801,8 @@ void connection_delete_unused_instance(struct connection **cp,
 
 	dbg("connection instance %s is not being used, deleting", c->name);
 	/* XXX: something better? */
-	close_any(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_dup(whackfd, HERE);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(whackfd);
 	delete_connection(&c);
 }
 

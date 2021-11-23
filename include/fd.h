@@ -48,9 +48,6 @@ void fd_delref_where(struct fd **fd, const struct where *where);
 #define fd_addref(FD) fd_addref_where(FD, HERE)
 #define fd_delref(FD) fd_delref_where(FD, HERE)
 
-#define fd_dup fd_addref_where		/* XXX: TBD */
-#define close_any fd_delref		/* XXX: TBD */
-
 void fd_leak(struct fd *fd, const struct where *where);
 
 /* return nr-bytes, or -ERRNO */
