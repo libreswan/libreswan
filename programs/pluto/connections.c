@@ -2798,34 +2798,31 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
  *
  * See also find_outgoing_opportunistic_template().
  */
-struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_packet packet,
-					       shunk_t sec_label, struct logger *logger)
+
+struct connection *find_connection_for_packet(struct spd_route **srp,
+					      const ip_packet packet,
+					      shunk_t sec_label,
+					      struct logger *logger)
 {
+	packet_buf pb;
+	dbg("%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,
+	    __func__, str_packet(&packet, &pb), pri_shunk(sec_label));
 
-	const ip_endpoint local_client[] = { packet_src_endpoint(packet), };
-	const ip_endpoint remote_client[] = { packet_dst_endpoint(packet), };
+	const ip_endpoint packet_src = packet_src_endpoint(packet);
+	const ip_endpoint packet_dst = packet_dst_endpoint(packet);
 
-	passert(!endpoint_is_unset(local_client));
-	passert(!endpoint_is_unset(remote_client));
-	passert(endpoint_protocol(*local_client) == endpoint_protocol(*remote_client));
-
-	int local_port = endpoint_hport(*local_client);
-	int remote_port = endpoint_hport(*remote_client);
-
-	struct connection *best = NULL;
-	policy_prio_t best_prio = BOTTOM_PRIO;
+	struct connection *best_connection = NULL;
+	policy_prio_t best_priority = BOTTOM_PRIO;
 	struct spd_route *best_sr = NULL;
-
-	endpoints_buf eb;
-	dbg("find_connection: looking for policy for connection: %s",
-	    str_endpoints(local_client, remote_client, &eb));
 
 	struct connection_filter cq = { .where = HERE, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 
 		if (c->kind == CK_GROUP) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION"; a food group",
+			    pri_connection(c, &cb));
 			continue;
 		}
 
@@ -2835,6 +2832,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		 * non-sec_label connection.
 		 */
 		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION"; %s have a sec_label",
+			    pri_connection(c, &cb),
+			    (sec_label.len > 0 ? "must" : "must not"));
 			continue;
 		}
 
@@ -2849,7 +2850,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		    c->kind != CK_TEMPLATE) {
 			pexpect(c->kind == CK_INSTANCE);
 			connection_buf cb;
-			dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
+			dbg("  skipping "PRI_CONNECTION"; IKEv2 sec_label connection is not a template",
 			    pri_connection(c, &cb));
 			continue;
 		}
@@ -2858,15 +2859,20 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		 * When there is a sec_label, it needs to be within
 		 * the configuration's range.
 		 */
-		if (sec_label.len > 0 /*implies c->config->sec_label*/ &&
+		if (sec_label.len > 0 /*implies c->config->sec_label > 0 */ &&
 		    !sec_label_within_range("acquire", sec_label,
 					    c->config->sec_label, logger)) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
+			    pri_connection(c, &cb), pri_shunk(sec_label),
+			    pri_shunk(c->config->sec_label));
 			continue;
 		}
 
-		struct spd_route *sr;
-
-		for (sr = &c->spd; best != c && sr; sr = sr->spd_next) {
+		for (struct spd_route *sr = &c->spd;
+		     /* bail if below sets BEST_CONECTION to C */
+		     best_connection != c && sr != NULL;
+		     sr = sr->spd_next) {
 
 			/*
 			 * XXX: is the !sec_label an IKEv1 thing?  An
@@ -2876,6 +2882,11 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			if (!routed(sr->routing) &&
 			    !c->instance_initiation_ok &&
 			    c->config->sec_label.len == 0) {
+				connection_buf cb;
+				selectors_buf sb;
+				dbg("  skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb));
 				continue;
 			}
 
@@ -2883,76 +2894,106 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			 * The triggering traffic needs to be within
 			 * the client.
 			 */
-			if (!endpoint_in_selector(*local_client, sr->this.client) ||
-			    !endpoint_in_selector(*remote_client, sr->that.client)) {
+			if (!endpoint_in_selector(packet_src, sr->this.client)) {
+				connection_buf cb;
+				selectors_buf sb;
+				endpoint_buf eb;
+				dbg("  skipping "PRI_CONNECTION" %s; packet src %s not in range",
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+				    str_endpoint(&packet_src, &eb));
 				continue;
 			}
 
-			unsigned ipproto = endpoint_protocol(*local_client)->ipproto;
-			policy_prio_t prio =
-				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
-				 2 * (sr->this.client.hport == local_port) +
-				 2 * (sr->that.client.hport == remote_port) +
-				 1 * (sr->this.client.ipproto == ipproto));
-
-			if (DBGP(DBG_BASE)) {
-				connection_buf cib_c;
+			if (!endpoint_in_selector(packet_dst, sr->that.client)) {
+				connection_buf cb;
 				selectors_buf sb;
-				DBG_log("find_connection: conn "PRI_CONNECTION" has compatible peers: %s [pri: %" PRIu32 "]",
-					pri_connection(c, &cib_c),
-					str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
-					prio);
-				if (best == NULL) {
-					DBG_log("find_connection: first OK "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-						pri_connection(c, &cib_c),
-						prio, c,
-						c->policy_next ?
-						c->policy_next->name :
-						"none");
-				} else {
-					connection_buf cib_best;
-					DBG_log("find_connection: comparing best "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s) to "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} (child %s)",
-						pri_connection(best, &cib_best),
-						best_prio,
-						best,
-						best->policy_next ?
-						best->policy_next->name :
-						"none",
-						pri_connection(c, &cib_c),
-						prio, c,
-						c->policy_next ?
-						c->policy_next->name :
-						"none");
-				}
+				endpoint_buf eb;
+				dbg("  skipping "PRI_CONNECTION" %s; packet dst %s not in range",
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+				    str_endpoint(&packet_dst, &eb));
+				continue;
 			}
 
-			if (best == NULL || prio > best_prio) {
-				best = c;
-				best_sr = sr;
-				best_prio = prio;
+			/*
+			 * More exact is better and bigger
+			 *
+			 * For instance, exact protocol or exact port
+			 * gets more points.
+			 */
+			policy_prio_t priority =
+				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+				 2 * (sr->this.client.hport == packet.src.hport) +
+				 2 * (sr->that.client.hport == packet.dst.hport) +
+				 1 * (sr->this.client.ipproto == packet.protocol->ipproto));
+
+			if (best_connection != NULL &&
+			    priority <= best_priority) {
+				connection_buf cb, bcb;
+				selectors_buf sb, bsb;
+				dbg("  skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+				    priority,
+				    pri_connection(best_connection, &bcb),
+				    str_selectors(&best_sr->this.client, &best_sr->that.client, &bsb),
+				    best_priority);
+				continue;
 			}
+
+			/* current is best; log why */
+			if (best_connection == NULL) {
+				connection_buf cb;
+				selectors_buf sb;
+				dbg("  choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as first best",
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+				    priority,
+				    (c->policy_next != NULL ? c->policy_next->name : "none"));
+			} else {
+				connection_buf cb, bcb;
+				selectors_buf sb, bsb;
+				dbg("  choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as bests "PRI_CONNECTION" %s priority %"PRIu32,
+				    pri_connection(c, &cb),
+				    str_selectors(&c->spd.this.client, &c->spd.that.client, &sb),
+				    priority,
+				    (c->policy_next != NULL ? c->policy_next->name : "none"),
+				    pri_connection(best_connection, &bcb),
+				    str_selectors(&best_sr->this.client, &best_sr->that.client, &bsb),
+				    best_priority);
+			}
+
+			best_connection = c;
+			best_sr = sr;
+			best_priority = priority;
 		}
 	}
 
-	if (best != NULL && NEVER_NEGOTIATE(best->policy))
-		best = NULL;
+	/*
+	 * XXX: So that the best connection can prevent negotiation?
+	 */
+	if (best_connection != NULL && NEVER_NEGOTIATE(best_connection->policy)) {
+		best_connection = NULL;
+	}
 
-	if (srp != NULL && best != NULL)
+	if (best_connection != NULL) {
+		connection_buf cib;
+		selectors_buf sb;
+		enum_buf kb;
+		dbg("  concluding with "PRI_CONNECTION" %s priority %" PRIu32 " kind=%s",
+		    pri_connection(best_connection, &cib),
+		    str_selectors(&best_sr->this.client, &best_sr->that.client, &sb),
+		    best_priority,
+		    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
+	} else {
+		dbg("  concluding with empty");
+	}
+
+	if (srp != NULL && best_connection != NULL) {
 		*srp = best_sr;
-
-	if (DBGP(DBG_BASE)) {
-		if (best != NULL) {
-			connection_buf cib;
-			DBG_log("find_connection: concluding with "PRI_CONNECTION" [pri:%" PRIu32 "]{%p} kind=%s",
-				pri_connection(best, &cib),
-				best_prio, best,
-				enum_name(&connection_kind_names, best->kind));
-		} else {
-			DBG_log("find_connection: concluding with empty");
-		}
 	}
-
-	return best;
+	return best_connection;
 }
 
 struct connection *oppo_instantiate(struct connection *c,

@@ -635,9 +635,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	}
 
 	struct spd_route *sr = NULL;
-	struct connection *c = find_connection_for_clients(&sr, b->packet,
-							   b->sec_label,
-							   b->logger);
+	struct connection *c = find_connection_for_packet(&sr, b->packet,
+							  b->sec_label,
+							  b->logger);
 	if (c == NULL) {
 		/*
 		 * No connection explicitly handles the clients and

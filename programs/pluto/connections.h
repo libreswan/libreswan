@@ -519,10 +519,10 @@ extern struct connection *refine_host_connection_on_responder(const struct state
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
 					     const ip_selector *remote_client);
-struct connection *find_connection_for_clients(struct spd_route **srp,
-					       const ip_packet packet,
-					       shunk_t sec_label,
-					       struct logger *logger);
+struct connection *find_connection_for_packet(struct spd_route **srp,
+					      const ip_packet packet,
+					      shunk_t sec_label,
+					      struct logger *logger);
 
 /* instantiating routines */
 
