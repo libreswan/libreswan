@@ -702,6 +702,8 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
 	char *subnets = *psubnets;
 	err_t e;
 
+	 *sn=unset_subnet;
+
 	if (subnets == NULL)
 		return false;
 
@@ -755,7 +757,7 @@ static int starter_permutate_conns(int
 	int lc, rc;
 	char *leftnets, *rightnets;
 	char tmpconnname[256];
-	ip_subnet lnet, rnet;
+	ip_subnet lnet = unset_subnet, rnet = unset_subnet;
 
 	leftnets = "";
 	if (conn->left.strings_set[KSCF_SUBNETS])
