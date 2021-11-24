@@ -692,44 +692,81 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	return 0;
 }
 
-static bool one_subnet_from_string(const struct starter_conn *conn,
-				   char **psubnets,
-				   const struct ip_info *afi,
-				   ip_subnet *sn,
-				   char *lr, struct logger *logger)
+/*
+ * When false, should also check error.
+ */
+
+struct subnets {
+	const char *leftright;
+	const struct starter_end *end;
+	const struct starter_conn *conn;
+	struct logger *logger;
+	/* keep track */
+	const char *subnets;
+	int count;
+	/* results */
+	ip_subnet subnet;
+	err_t error;
+};
+
+static bool next_subnet(struct subnets *sn);
+
+static bool first_subnet(struct subnets *sn)
 {
-	char *eln;
-	char *subnets = *psubnets;
-	err_t e;
-
-	 *sn=unset_subnet;
-
-	if (subnets == NULL)
-		return false;
-
-	/* find first non-space item */
-	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ','))
-		subnets++;
-
-	/* did we find something? */
-	if (*subnets == '\0')
-		return false;	/* no */
-
-	eln = subnets;
-
-	/* find end of this item */
-	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ','))
-		subnets++;
-
-	e = ttosubnet(shunk2(eln, subnets - eln), afi, '6', sn, logger);
-	if (e != NULL) {
-		starter_log(LOG_LEVEL_ERR,
-			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
-			conn->name,
-			eln, lr);
+	sn->subnets = (sn->end->strings_set[KSCF_SUBNETS]) ? sn->end->strings[KSCF_SUBNETS] : "";
+	sn->count = 0;
+	sn->subnet = unset_subnet;
+	if (sn->end->strings_set[KSCF_SUBNET]) {
+		sn->subnet = sn->end->subnet;
+		/* .count == 0 */
+		return true;
 	}
 
-	*psubnets = subnets;
+	/* advances .count to 1 */
+	return next_subnet(sn);
+}
+
+static bool next_subnet(struct subnets *sn)
+{
+	sn->subnet = unset_subnet; /* always */
+
+	const char *subnets = sn->subnets;
+	if (subnets == NULL) {
+		/* XXX: never happens */
+		return false;
+	}
+
+	/* find first non-space item */
+	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ',')) {
+		subnets++;
+	}
+
+	/* did we find something? */
+	if (*subnets == '\0') {
+		return false;	/* no more input */
+	}
+
+	const char *eln = subnets;	/* save start */
+
+	/* find end of this item */
+	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ',')) {
+		subnets++;
+	}
+
+	sn->error = ttosubnet(shunk2(eln, subnets - eln),
+			      sn->end->host_family,
+			      '6', &sn->subnet, sn->logger);
+	if (sn->error != NULL) {
+		starter_log(LOG_LEVEL_ERR,
+			    "conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets): %s",
+			    sn->conn->name,
+			    eln, sn->leftright,
+			    sn->error);
+		return false;
+	}
+
+	sn->subnets = subnets;
+	sn->count++;
 	return true;
 }
 
@@ -746,6 +783,7 @@ static bool one_subnet_from_string(const struct starter_conn *conn,
  * (which is usually add/delete/route/etc.)
  *
  */
+
 static int starter_permutate_conns(int
 				   (*operation)(struct starter_config *cfg,
 						const struct starter_conn *conn),
@@ -753,109 +791,90 @@ static int starter_permutate_conns(int
 				   const struct starter_conn *conn,
 				   struct logger *logger)
 {
-	struct starter_conn sc;
-	int lc, rc;
-	char *leftnets, *rightnets;
-	char tmpconnname[256];
-	ip_subnet lnet = unset_subnet, rnet = unset_subnet;
-
-	leftnets = "";
-	if (conn->left.strings_set[KSCF_SUBNETS])
-		leftnets = conn->left.strings[KSCF_SUBNETS];
-
-	rightnets = "";
-	if (conn->right.strings_set[KSCF_SUBNETS])
-		rightnets = conn->right.strings[KSCF_SUBNETS];
-
 	/*
-	 * the first combination is the current leftsubnet/rightsubnet
+	 * The first combination is the current leftsubnet/rightsubnet
 	 * value, and then each iteration of rightsubnets, and then
 	 * each permutation of leftsubnets X rightsubnets.
 	 *
-	 * If both subnet= is set and subnets=, then it is as if an extra
-	 * element of subnets= has been added, so subnets= for only one
-	 * side will do the right thing, as will some combinations of also=
+	 * If both subnet= is set and subnets=, then it is as if an
+	 * extra element of subnets= has been added, so subnets= for
+	 * only one side will do the right thing, as will some
+	 * combinations of also=
 	 *
 	 */
 
-	if (conn->left.strings_set[KSCF_SUBNET]) {
-		lnet = conn->left.subnet;
-		lc = 0;
-	} else {
-		one_subnet_from_string(conn, &leftnets,
-				       conn->left.host_family,
-				       &lnet, "left", logger);
-		lc = 1;
+	struct subnets left = {
+		.logger = logger,
+		.conn = conn,
+		.end = &conn->left,
+		.leftright = "left",
+	};
+	if (!first_subnet(&left)) {
+		/* no subnets at all!?! */
+		return 1;
 	}
+	pexpect(left.count >= 0);
 
-	if (conn->right.strings_set[KSCF_SUBNET]) {
-		rnet = conn->right.subnet;
-		rc = 0;
-	} else {
-		one_subnet_from_string(conn, &rightnets,
-				       conn->right.host_family,
-				       &rnet, "right", logger);
-		rc = 1;
+	struct subnets right = {
+		.logger = logger,
+		.conn = conn,
+		.end = &conn->right,
+		.leftright = "right",
+	};
+	if (!first_subnet(&right)) {
+		/* no subnets at all!?! */
+		return 1;
 	}
+	pexpect(right.count >= 0);
 
 	for (;;) {
-		int success;
-
 		/* copy conn  --- we can borrow all pointers, since this
 		 * is a temporary copy */
-		sc = *conn;
+		struct starter_conn sc = *conn;
 
 		/* fix up leftsubnet/rightsubnet properly, make sure
 		 * that has_client is set.
 		 */
-		sc.left.subnet = lnet;
+		sc.left.subnet = left.subnet;
 		sc.left.has_client = true;
 
-		sc.right.subnet = rnet;
+		sc.right.subnet = right.subnet;
 		sc.right.has_client = true;
 
+		char tmpconnname[256];
 		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
-			conn->name, lc, rc);
+			 conn->name, left.count, right.count);
 		sc.name = tmpconnname;
 
 		sc.connalias = conn->name;
 
-		success = (*operation)(cfg, &sc);
-		if (success != 0) {
+		int fail = (*operation)(cfg, &sc);
+		if (fail != 0) {
 			/* Fail at first failure?  I think so. */
-			return success;
+			return fail;
 		}
 
 		/*
-		 * okay, advance right first, and if it is out, then do
-		 * left.
+		 * Okay, advance right first, and if it is out, rewind
+		 * and do left instead.
 		 */
-		rc++;
-		if (!one_subnet_from_string(conn, &rightnets,
-					    conn->right.host_family,
-					    &rnet, "right", logger)) {
-			/* reset right, and advance left! */
-			rightnets = "";
-			if (conn->right.strings_set[KSCF_SUBNETS])
-				rightnets = conn->right.strings[KSCF_SUBNETS];
-
-			/* should rightsubnet= be the first item ? */
-			if (conn->right.strings_set[KSCF_SUBNET]) {
-				rnet = conn->right.subnet;
-				rc = 0;
-			} else {
-				one_subnet_from_string(conn, &rightnets,
-						       conn->right.host_family,
-						       &rnet, "right", logger);
-				rc = 1;
+		if (!next_subnet(&right)) {
+			if (right.error != NULL) {
+				/* really bad */
+				return 1;
 			}
-
+			/* reset right, and advance left! */
+			if (!first_subnet(&right)) {
+				return 1;
+			}
 			/* left */
-			lc++;
-			if (!one_subnet_from_string(conn, &leftnets,
-						    conn->left.host_family,
-						    &lnet, "left", logger))
+			if (!next_subnet(&left)) {
+				if (left.error != NULL) {
+					/* really bad */
+					return 1;
+				}
 				break;
+			}
 		}
 	}
 
