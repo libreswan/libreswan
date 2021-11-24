@@ -2403,10 +2403,20 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 	if (present) {
 		dead->protocol = proto->protocol;
 		if (inbound) {
+			if (proto->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
+				dbg("kernel expired SPI 0x%x skip deleting",
+				    ntohl(proto->our_spi));
+				return 0;
+			}
 			dead->spi = proto->our_spi; /* incoming */
 			dead->src = effective_remote_address;
 			dead->dst = host_addr;
 		} else {
+			if (proto->our_kernel_sa_expired & SA_HARD_EXPIRED) {
+				dbg("kernel hard expired SPI 0x%x skip deleting",
+				    ntohl(proto->attrs.spi));
+				return 0;
+			}
 			dead->spi = proto->attrs.spi; /* outgoing */
 			dead->src = host_addr;
 			dead->dst = effective_remote_address;
@@ -3365,12 +3375,12 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	if (inbound) {
 		if (p2->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
 			dbg("kernel expired peer SA SPI 0x%x skip get_sa_info()", ntohl(p2->attrs.spi));
-			return true; /* all is well the use our_bytes */
+			return true; /* all is well use the last known info */
 		}
 	} else {
 		if (p2->our_kernel_sa_expired & SA_HARD_EXPIRED) {
 			dbg("kernel expired our SA SPI 0x%x get_sa_info()", ntohl(p2->our_spi));
-			return true; /* all is well the use peer_bytes */
+			return true; /* all is well use last known info */
 		}
 	}
 
