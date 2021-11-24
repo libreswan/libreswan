@@ -29,6 +29,7 @@
 KVM_GUEST_OS ?= f32
 include testing/libvirt/$(KVM_GUEST_OS).mk
 include testing/libvirt/openbsd/openbsd67.mk
+include testing/libvirt/netbsd/netbsd.mk
 include testing/libvirt/debian.mk
 
 #
@@ -243,6 +244,8 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 #
 # Domains
 #
+
+KVM_NETBSD_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd-base)
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
@@ -1211,6 +1214,43 @@ $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_TESTINGDIR
 		--network=network:$(KVM_GATEWAY),model=virtio \
 		--graphics none --serial pty --check path_in_use=off"
 	touch $@
+
+#
+# NetBSD
+#
+# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
+# (NetBSD-*.iso).  Give the former a more meaningful name.
+
+KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
+KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
+$(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	mv $@.tmp $@
+$(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	mv $@.tmp $@
+
+KVM_NETBSD_INSTALL ?= testing/libvirt/netbsd/install.py
+VIRT_NETBSD_VARIANT ?= netbsd
+$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_NETBSD_ISO) $(KVM_NETBSD_INSTALL)
+	$(call destroy-kvm-domain,$(KVM_NETBSD_BASE_DOMAIN))
+	$(KVM_PYTHON) $(KVM_NETBSD_INSTALL) \
+		$(KVM_NETBSD_BASE_DOMAIN) \
+		$(VIRT_INSTALL_COMMAND) \
+			--arch i686 \
+			--os-variant netbsd8.0 \
+			--memory 1024 \
+			--name=$(KVM_NETBSD_BASE_DOMAIN) \
+			--cdrom=$(KVM_NETBSD_BOOT_ISO) \
+			--disk path=$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
+			--disk path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom \
+			--console pty,target_type=serial
+#	touch $@
+
+.PHONY: kvm-netbsd
+kvm-netbsd:
+	rm -f $(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml
+	$(MAKE) $(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml
 
 #
 # kvmsh-HOST
