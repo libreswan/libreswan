@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#!/usr/bin/env python3
-
 # pexpect script to Install NetBSD base Domain
 #
 # Copyright (C) 2021 Andrew Cagney
@@ -24,11 +22,13 @@ import sys
 import time
 
 domain = sys.argv[1]
-virtinstall = " ".join(str(arg) for arg in sys.argv[2:])
+command = sys.argv[2]
+args = sys.argv[3:]
 print("domain", domain)
-print("virtinstall", virtinstall)
+print("command", command)
+print("args", args)
 
-child = pexpect.spawn(virtinstall, logfile=sys.stdout.buffer, echo=False)
+child = pexpect.spawn(command, args, logfile=sys.stdout.buffer, echo=False)
 
 def i():
     '''go interactive then quit'''
@@ -150,6 +150,7 @@ c('echo PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All 
 
 c('poweroff')
 
+sys.exit(child.wait())
 i()
 
 

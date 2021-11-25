@@ -21,11 +21,12 @@ import sys
 import time
 import os
 
-KVM_BSD_BASE_NAME = str(sys.argv[1])
-
-virtinstall = " ".join(str(arg) for arg in sys.argv[2:])
-print("domain", KVM_BSD_BASE_NAME)
-print("virtinstall", virtinstall)
+domain = sys.argv[1]
+command = sys.argv[2]
+args = sys.argv[3:]
+print("domain", domain)
+print("command", command)
+print("args", args)
 
 def es(child,expect,send,t=30):
 	try:
@@ -36,7 +37,7 @@ def es(child,expect,send,t=30):
 		print("==> Error <==\n"+child.before+"\n ==========")
 
 try:
-    child = pexpect.spawn(virtinstall, logfile=sys.stdout.buffer, echo=False)
+    child = pexpect.spawn(command, args, logfile=sys.stdout.buffer, echo=False)
     child.expect('boot>')
 except:
     print("==> Error Creating the OpenBSD-base machine <==")
@@ -73,4 +74,4 @@ print("Waiting 10 seconds to shutdown...")
 time.sleep(10)
 child.close()
 #To force shutdown the base domain via virt manager
-os.system('sudo virsh destroy '+KVM_BSD_BASE_NAME+' > /dev/null')
+os.system('sudo virsh destroy ' + domain + ' > /dev/null')

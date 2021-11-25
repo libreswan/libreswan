@@ -1,8 +1,8 @@
 #KVM_LINUX_ISO_URL = https://muug.ca/mirror/fedora/linux/releases/32/Server/x86_64/iso/Fedora-Server-dvd-x86_64-32-1.6.iso
-KVM_LINUX_ISO_URL = https://ftp.nluug.nl/pub/os/Linux/distr/fedora/linux/releases/32/Server/x86_64/iso/Fedora-Server-dvd-x86_64-32-1.6.iso
+KVM_FEDORA_ISO_URL = https://ftp.nluug.nl/pub/os/Linux/distr/fedora/linux/releases/32/Server/x86_64/iso/Fedora-Server-dvd-x86_64-32-1.6.iso
+
 KVM_KICKSTART_FILE = testing/libvirt/$(KVM_GUEST_OS).ks
 # LIE! bit older version to be more complaint with older hosts
-KVM_LINUX_VIRT_INSTALL_VARIANT ?= fedora30
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_PACKAGE_UPGRADE = dnf upgrade -y
 KVM_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y

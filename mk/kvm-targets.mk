@@ -18,8 +18,8 @@
 # as .PHONY.  Sigh!
 
 # Note: for pattern targets, the value of % can be found in the make
-# variable '$*'.  It is used to extract the DOMAIN from targets like
-# kvm-install-DOMAIN.
+# variable '$*' (why not $%!?!?!).  It is used to extract the DOMAIN
+# from targets like kvm-install-DOMAIN.
 
 #
 # The guest operating system.
@@ -61,7 +61,7 @@ KVM_GID ?= $(shell id -g $(KVM_GROUP))
 
 KVM_CONNECTION ?= qemu:///system
 
-VIRSH = sudo virsh --connect $(KVM_CONNECTION)
+VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 
 
 #
@@ -183,18 +183,18 @@ SNAPSHOT_TAKE ?=								\
 #
 # XXX: Ignore KVM_PREFIXES, it is probably going away.
 
-VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
-VIRT_CPU ?= --cpu host-passthrough
+VIRT_INSTALL ?= sudo virt-install --connect=$(KVM_CONNECTION)
+VIRT_CPU ?= --cpu=host-passthrough
 VIRT_DISK_SIZE_GB ?=8
-VIRT_RND ?= --rng type=random,device=/dev/random
-VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
+VIRT_RND ?= --rng=type=random,device=/dev/random
+VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
-VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
-VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
+VIRT_SOURCEDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
+VIRT_TESTINGDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
+VIRT_POOLDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
 
-VIRT_INSTALL_BASE_FLAGS ?= --memory 1024 --vcpus $(KVM_WORKERS)
-VIRT_INSTALL_BUILD_FLAGS ?= --memory $(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus $(KVM_WORKERS)
+VIRT_INSTALL_BASE_FLAGS ?= --memory=1024 --vcpus=$(KVM_WORKERS)
+VIRT_INSTALL_BUILD_FLAGS ?= --memory=$(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus=$(KVM_WORKERS)
 
 VIRT_INSTALL_FLAGS = \
 	--check=path_in_use=off \
@@ -244,8 +244,28 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 # Domains
 #
 
-KVM_NETBSD_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd-base)
-KVM_OPENBSD_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),openbsd-base)
+fedora = FEDORA
+debian = DEBIAN
+netbsd = NETBSD
+openbsd = OPENBSD
+
+KVM_NETBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd)
+KVM_OPENBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),openbsd)
+KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
+KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
+
+kvm-debian:
+	rm -f $(KVM_DEBIAN_BASE_DOMAIN)
+	$(MAKE) $(KVM_DEBIAN_BASE_DOMAIN)
+kvm-fedora:
+	rm -f $(KVM_FEDORA_BASE_DOMAIN)
+	$(MAKE) $(KVM_FEDORA_BASE_DOMAIN)
+kvm-netbsd:
+	rm -f $(KVM_NETBSD_BASE_DOMAIN)
+	$(MAKE) $(KVM_NETBSD_BASE_DOMAIN)
+kvm-openbsd:
+	rm -f $(KVM_OPENBSD_BASE_DOMAIN)
+	$(MAKE) $(KVM_OPENBSD_BASE_DOMAIN)
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
@@ -755,9 +775,10 @@ define destroy-kvm-domain
 	fi
 endef
 
-
+##
 ##
 ## Download all required ISOs
+##
 ##
 
 # NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
@@ -770,11 +791,11 @@ endef
 
 .PHONY: kvm-iso
 
-KVM_LINUX_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_LINUX_ISO_URL))
-kvm-iso: $(KVM_LINUX_ISO)
+KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
+kvm-iso: $(KVM_FEDORA_ISO)
 
-$(KVM_LINUX_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL)
+$(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
 	mv $@.tmp $@
 
 KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_ISO_URL))
@@ -795,6 +816,81 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
 	mv $@.tmp $@
 
+##
+##
+## Build the base domains
+##
+##
+
+.PHONY: kvm-base
+
+$(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)%-base: | \
+		testing/libvirt/%/base.py $(KVM_POOLDIR) $(KVM_HOST_OK)  $(KVM_GATEWAY_FILE)
+	: Confirm that there is a tty - else virt-install fails mysteriously
+	tty
+	: clean up old domains
+	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-base)
+	rm -f $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*-base*
+	: use script to drive build of new domain
+	$(KVM_PYTHON) testing/libvirt/$*/base.py \
+		$(KVM_FIRST_PREFIX)$*-base \
+		$(VIRT_INSTALL_BASE) \
+			--name=$(KVM_FIRST_PREFIX)$*-base \
+			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
+			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
+	touch $@
+
+# Fedora
+
+KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_FEDORA_DOMAIN)-base
+KVM_FEDORA_VIRT_INSTALL_OS_VARIANT ?= fedora30
+KVM_FEDORA_VIRT_INSTALL_FLAGS = \
+	--location=$(KVM_FEDORA_ISO) \
+	--initrd-inject=$(KVM_KICKSTART_FILE) \
+	--extra-args="ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_KICKSTART_FILE)
+
+kvm-base: $(KVM_FEDORA_BASE_DOMAIN)
+
+# NetBSD
+
+KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_NETBSD_DOMAIN)-base
+KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= netbsd8.0
+KVM_NETBSD_VIRT_INSTALL_FLAGS = \
+	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
+	--disk=path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom
+
+$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO)
+
+kvm-base: $(KVM_NETBSD_BASE_DOMAIN)
+
+# OpenBSD needs to mangle the ISO
+
+KVM_OPENBSD_RC_FIRSTTIME = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN).rc.firsttime
+$(KVM_OPENBSD_RC_FIRSTTIME): testing/libvirt/openbsd/rc.firsttime
+	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
+		testing/libvirt/openbsd/rc.firsttime \
+		> $@.tmp
+	mv $@.tmp $@
+
+KVM_OPENBSD_INSTALL_ISO = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN).iso
+$(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) $(KVM_OPENBSD_RC_FIRSTTIME)
+	cp $(KVM_OPENBSD_ISO) $@.tmp
+	growisofs -M $@.tmp -l -R -input-charset utf-8 \
+		-graft-points \
+		/install.conf="testing/libvirt/openbsd/install.conf" \
+		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
+		/rc.firsttime="$(KVM_OPENBSD_RC_FIRSTTIME)"
+	mv $@.tmp $@
+
+KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN)-base
+KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= openbsd6.5
+KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_INSTALL_ISO)
+
+$(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
+kvm-base: $(KVM_OPENBSD_BASE_DOMAIN)
 
 #
 # Create + package install + package upgrade the base domain
@@ -829,7 +925,7 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		| \
 		$(KVM_HOST_OK) \
-		$(KVM_LINUX_ISO) \
+		$(KVM_FEDORA_ISO) \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
 		$(KVM_POOLDIR)
@@ -841,9 +937,9 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	rm -f '$(basename $@).qcow2'
 	$(VIRT_INSTALL_BASE) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--os-variant=$(KVM_LINUX_VIRT_INSTALL_VARIANT) \
+		--os-variant=$(KVM_FEDORA_VIRT_INSTALL_OS_VARIANT) \
 		--disk=size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
-		--location=$(KVM_LINUX_ISO) \
+		--location=$(KVM_FEDORA_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
@@ -971,10 +1067,10 @@ $(KVM_BUILD_DISK_CLONES): \
 KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_OPENBSD_DOMAIN_CLONES)))
 $(KVM_OPENBSD_DISK_CLONES): \
 		| \
-		$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml \
+		$(KVM_OPENBSD_BASE_DOMAIN) \
 		$(KVM_LOCALDIR)
 	: copy-build-disk $@
-	$(call shadow-kvm-disk,$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,$@.tmp)
+	$(call shadow-kvm-disk,$(KVM_OPENBSD_BASE_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
 
 #
@@ -1006,7 +1102,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(VIRT_INSTALL_BUILD) \
 		--name=$(KVM_BUILD_DOMAIN) \
-		--os-variant=$(KVM_LINUX_VIRT_INSTALL_VARIANT) \
+		--os-variant=$(KVM_FEDORA_VIRT_INSTALL_OS_VARIANT) \
 		--import \
 		--disk=cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		--noautoconsole
@@ -1069,7 +1165,7 @@ define uninstall-kvm-domain-DOMAIN
 	rm -f $(2)/$(1).img
 endef
 
-$(foreach domain, $(KVM_BASE_DOMAIN) $(KVM_OPENBSD_BASE_DOMAIN), \
+$(foreach domain, $(KVM_BASE_DOMAIN) $(notdir $(KVM_OPENBSD_BASE_DOMAIN)), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
 $(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
@@ -1203,63 +1299,6 @@ kvm-bisect:
 	: 125 is git bisect magic for 'skip'
 	$(MAKE) kvm-install || exit 125
 	$(MAKE) kvm-test kvm-diffs $(if $(KVM_TESTS),KVM_TESTS="$(KVM_TESTS)")
-
-#
-# OpenBSD
-#
-
-$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
-	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
-		$(KVM_TESTINGDIR)/libvirt/openbsd/rc.firsttime \
-		> $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).rc.firsttime
-	cp $(KVM_TESTINGDIR)/libvirt/openbsd/*.conf $(KVM_POOLDIR)/
-	cp $(KVM_OPENBSD_ISO) $@.tmp
-	growisofs -M $@.tmp -l -R -graft-points \
-		/install.conf="$(KVM_POOLDIR)/install.conf" \
-		/etc/boot.conf="$(KVM_POOLDIR)/boot.conf" \
-		/rc.firsttime="$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).rc.firsttime"
-	mv $@.tmp $@
-
-# XXX: broken when the script dies
-KVM_OPENBSD_INSTALL_BASE = $(KVM_PYTHON) testing/libvirt/openbsd/base.py
-$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_OPENBSD_INSTALL_BASE) $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso
-	$(call destroy-kvm-domain,$(KVM_OPENBSD_BASE_DOMAIN))
-	$(KVM_OPENBSD_INSTALL_BASE) \
-		$(KVM_OPENBSD_BASE_DOMAIN) \
-		$(VIRT_INSTALL_BASE) \
-			--name=$(KVM_OPENBSD_BASE_DOMAIN) \
-			--os-variant=$(KVM_OPENBSD_VIRT_INSTALL_VARIANT) \
-			--cdrom=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso \
-			--disk=path=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2
-	touch $@
-
-# for testing
-.PHONY: kvm-openbsd
-kvm-openbsd:
-	rm -f $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
-	$(MAKE) $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
-
-#
-# NetBSD
-#
-
-KVM_NETBSD_INSTALL_BASE ?= $(KVM_PYTHON) testing/libvirt/netbsd/base.py
-$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_BASE)
-	$(call destroy-kvm-domain,$(KVM_NETBSD_BASE_DOMAIN))
-	$(KVM_NETBSD_INSTALL_BASE) \
-		$(KVM_NETBSD_BASE_DOMAIN) \
-		$(VIRT_INSTALL_BASE) \
-			--name=$(KVM_NETBSD_BASE_DOMAIN) \
-			--os-variant=$(KVM_NETBSD_VIRT_INSTALL_VARIANT) \
-			--cdrom=$(KVM_NETBSD_BOOT_ISO) \
-			--disk=path=$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
-			--disk=path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom
-	touch $@
-
-.PHONY: kvm-netbsd
-kvm-netbsd:
-	rm -f $(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml
-	$(MAKE) $(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml
 
 #
 # kvmsh-HOST
