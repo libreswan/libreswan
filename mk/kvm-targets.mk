@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2020 Andrew Cagney
+# Copyright (C) 2015-2021 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -166,19 +166,6 @@ SNAPSHOT_TAKE ?=								\
 	} ;									\
 	snapshot_take
 
-
-VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION) --check path_in_use=off
-VIRT_CPU ?= --cpu host-passthrough
-VIRT_DISK_SIZE_GB ?=8
-VIRT_RND ?= --rng type=random,device=/dev/random
-VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
-VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
-VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
-VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
-KVM_OS_VARIANT ?= $(KVM_GUEST_OS)
-VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
-
 # Fine-tune the BASE and BUILD machines.
 #
 # BASE is kept small.
@@ -196,23 +183,35 @@ VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 #
 # XXX: Ignore KVM_PREFIXES, it is probably going away.
 
-VIRT_INSTALL_BASE_FLAGS = --memory 1024
-VIRT_INSTALL_BUILD_FLAGS = --memory $(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus $(KVM_WORKERS)
+VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
+VIRT_CPU ?= --cpu host-passthrough
+VIRT_DISK_SIZE_GB ?=8
+VIRT_RND ?= --rng type=random,device=/dev/random
+VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
+VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
+VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
+VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
+VIRT_POOLDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
 
-VIRT_INSTALL_COMMAND = \
-	$(VIRT_INSTALL) \
-	$(VIRT_OS_VARIANT) \
-	--vcpus=1 \
-	--nographics \
+VIRT_INSTALL_BASE_FLAGS ?= --memory 1024 --vcpus $(KVM_WORKERS)
+VIRT_INSTALL_BUILD_FLAGS ?= --memory $(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus $(KVM_WORKERS)
+
+VIRT_INSTALL_FLAGS = \
+	--check=path_in_use=off \
+	--graphics=none \
+	--virt-type=kvm \
+	--noreboot \
+	--console=pty,target_type=serial \
 	$(VIRT_CPU) \
 	$(VIRT_GATEWAY) \
 	$(VIRT_RND) \
 	$(VIRT_SECURITY) \
 	$(VIRT_SOURCEDIR) \
 	$(VIRT_TESTINGDIR) \
-	$(VIRT_POOLDIR) \
-	--noreboot
+	$(VIRT_POOLDIR)
 
+VIRT_INSTALL_BASE = $(VIRT_INSTALL) $(VIRT_INSTALL_FLAGS) $(VIRT_INSTALL_BASE_FLAGS)
+VIRT_INSTALL_BUILD = $(VIRT_INSTALL) $(VIRT_INSTALL_FLAGS) $(VIRT_INSTALL_BUILD_FLAGS)
 
 # To avoid the problem where the host has no "default" KVM network
 # (there's a rumour that libreswan's main testing machine has this
@@ -246,6 +245,7 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 #
 
 KVM_NETBSD_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd-base)
+KVM_OPENBSD_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),openbsd-base)
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
@@ -812,10 +812,10 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
-	$(VIRT_INSTALL_COMMAND) \
-		$(VIRT_INSTALL_BASE_FLAGS) \
+	$(VIRT_INSTALL_BASE) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
+		--os-variant=$(KVM_LINUX_VIRT_INSTALL_VARIANT) \
+		--disk=size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
 		--location=$(KVM_POOLDIR)/$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
@@ -977,11 +977,11 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
-	$(VIRT_INSTALL_COMMAND) \
-		$(VIRT_INSTALL_BUILD_FLAGS) \
-		--name $(KVM_BUILD_DOMAIN) \
+	$(VIRT_INSTALL_BUILD) \
+		--name=$(KVM_BUILD_DOMAIN) \
+		--os-variant=$(KVM_LINUX_VIRT_INSTALL_VARIANT) \
 		--import \
-		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
+		--disk=cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		--noautoconsole
 	$(VIRSH) dumpxml $(KVM_BUILD_DOMAIN) > $@.tmp
 	mv $@.tmp $@
@@ -1198,22 +1198,24 @@ $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_POOLDIR)/$(KVM_OPENBSD_ISO)
 		/rc.firsttime="$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).rc.firsttime"
 	mv $@.tmp $@
 
-# for testing
-.PHONY: kvm-uninstall-openbsd kvm-openbsd
-kvm-uninstall-openbsd: $(foreach domain, $(KVM_OPENBSD_BASE_DOMAIN) $(KVM_OPENBSD_DOMAIN_CLONES), uninstall-kvm-domain-${domain})
-kvm-openbsd: $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
-
 # XXX: broken when the script dies
-$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso
+KVM_OPENBSD_INSTALL_BASE = $(KVM_PYTHON) testing/libvirt/openbsd/base.py
+$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_OPENBSD_INSTALL_BASE) $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso
 	$(call destroy-kvm-domain,$(KVM_OPENBSD_BASE_DOMAIN))
-	$(KVM_PYTHON) $(KVM_TESTINGDIR)/utils/openbsdinstall.py $(KVM_OPENBSD_BASE_DOMAIN) \
-		"sudo virt-install --name=$(KVM_OPENBSD_BASE_DOMAIN) --virt-type=kvm --memory=2048,maxmemory=2048 \
-		--vcpus=1,maxvcpus=1 --cpu host --os-variant=$(VIRT_OPENBSD_VARIANT) \
-		--cdrom=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso \
-		--disk path=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
-		--network=network:$(KVM_GATEWAY),model=virtio \
-		--graphics none --serial pty --check path_in_use=off"
+	$(KVM_OPENBSD_INSTALL_BASE) \
+		$(KVM_OPENBSD_BASE_DOMAIN) \
+		$(VIRT_INSTALL_BASE) \
+			--name=$(KVM_OPENBSD_BASE_DOMAIN) \
+			--os-variant=$(KVM_OPENBSD_VIRT_INSTALL_VARIANT) \
+			--cdrom=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso \
+			--disk=path=$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2
 	touch $@
+
+# for testing
+.PHONY: kvm-openbsd
+kvm-openbsd:
+	rm -f $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
+	$(MAKE) $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).xml
 
 #
 # NetBSD
@@ -1232,22 +1234,18 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
 	mv $@.tmp $@
 
-KVM_NETBSD_INSTALL ?= testing/libvirt/netbsd/install.py
-VIRT_NETBSD_VARIANT ?= netbsd
-$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL)
+KVM_NETBSD_INSTALL_BASE ?= $(KVM_PYTHON) testing/libvirt/netbsd/base.py
+$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_BASE)
 	$(call destroy-kvm-domain,$(KVM_NETBSD_BASE_DOMAIN))
-	$(KVM_PYTHON) $(KVM_NETBSD_INSTALL) \
+	$(KVM_NETBSD_INSTALL_BASE) \
 		$(KVM_NETBSD_BASE_DOMAIN) \
-		$(VIRT_INSTALL_COMMAND) \
-			--arch i686 \
-			--os-variant netbsd8.0 \
-			--memory 1024 \
+		$(VIRT_INSTALL_BASE) \
 			--name=$(KVM_NETBSD_BASE_DOMAIN) \
+			--os-variant=$(KVM_NETBSD_VIRT_INSTALL_VARIANT) \
 			--cdrom=$(KVM_NETBSD_BOOT_ISO) \
-			--disk path=$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
-			--disk path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom \
-			--console pty,target_type=serial
-#	touch $@
+			--disk=path=$(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).qcow2,size=4,bus=virtio,format=qcow2 \
+			--disk=path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom
+	touch $@
 
 .PHONY: kvm-netbsd
 kvm-netbsd:

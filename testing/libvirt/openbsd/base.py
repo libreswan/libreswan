@@ -3,6 +3,7 @@
 # pexpect script to Install OpenBSD base Domain
 #
 # Copyright (C) 2020 Ravi Teja <hello@rtcms.dev>
+# Copyright (C) 2021 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -19,7 +20,13 @@ import pexpect
 import sys
 import time
 import os
+
 KVM_BSD_BASE_NAME = str(sys.argv[1])
+
+virtinstall = " ".join(str(arg) for arg in sys.argv[2:])
+print("domain", KVM_BSD_BASE_NAME)
+print("virtinstall", virtinstall)
+
 def es(child,expect,send,t=30):
 	try:
 		child.expect(expect,timeout=t)
@@ -29,14 +36,14 @@ def es(child,expect,send,t=30):
 		print("==> Error <==\n"+child.before+"\n ==========")
 
 try:
-    child = pexpect.spawnu(str(sys.argv[2]),encoding='utf-8')
+    child = pexpect.spawn(virtinstall, logfile=sys.stdout.buffer, echo=False)
     child.expect('boot>')
 except:
     print("==> Error Creating the OpenBSD-base machine <==")
     print(child.before)
     print('==> Exiting the program...!')
     sys.exit(0)
-child.logfile = sys.stdout
+
 #sleep for 10 seconds so that all those initial boot log loads
 time.sleep(10)
 #REGx for Installation prompt
