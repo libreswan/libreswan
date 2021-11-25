@@ -745,18 +745,6 @@ kvm-uninstall-test-networks: kvm-uninstall-test-domains
 		rm -f $(network_file)$(crlf))
 
 
-#
-# Build KVM domains from scratch
-#
-
-KVM_ISO = $(notdir $(KVM_ISO_URL))
-
-.PHONY: kvm-iso
-kvm-iso: $(KVM_ISO)
-$(KVM_POOLDIR)/$(KVM_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL)
-	mv $@.tmp $@
-
 define destroy-kvm-domain
 	: destroy-kvm-domain domain=$(1)
 	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
@@ -767,6 +755,45 @@ define destroy-kvm-domain
 	fi
 endef
 
+
+##
+## Download all required ISOs
+##
+
+# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
+# (NetBSD-*.iso).
+#
+# Try to give the OpenBSD and NetBSD ISOs meaningful names.
+#
+# Note: Remember, $(basename) is counter intuitive - unlike UNIX
+# basename it doesn't strip the directory.
+
+.PHONY: kvm-iso
+
+KVM_LINUX_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_LINUX_ISO_URL))
+kvm-iso: $(KVM_LINUX_ISO)
+
+$(KVM_LINUX_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_ISO_URL)
+	mv $@.tmp $@
+
+KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_ISO_URL))
+kvm-iso: $(KVM_OPENBSD_ISO)
+
+$(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
+	mv $@.tmp $@
+
+KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
+KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
+kvm-iso: $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_ISO)
+
+$(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	mv $@.tmp $@
+$(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	mv $@.tmp $@
 
 
 #
@@ -802,7 +829,7 @@ endef
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		| \
 		$(KVM_HOST_OK) \
-		$(KVM_POOLDIR)/$(KVM_ISO) \
+		$(KVM_LINUX_ISO) \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
 		$(KVM_POOLDIR)
@@ -816,7 +843,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		--name=$(KVM_BASE_DOMAIN) \
 		--os-variant=$(KVM_LINUX_VIRT_INSTALL_VARIANT) \
 		--disk=size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
-		--location=$(KVM_POOLDIR)/$(KVM_ISO) \
+		--location=$(KVM_LINUX_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored
@@ -1181,17 +1208,12 @@ kvm-bisect:
 # OpenBSD
 #
 
-KVM_OPENBSD_ISO = $(notdir $(KVM_OPENBSD_ISO_URL))
-$(KVM_POOLDIR)/$(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
-	mv $@.tmp $@
-
-$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_POOLDIR)/$(KVM_OPENBSD_ISO)
+$(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
 	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
 		$(KVM_TESTINGDIR)/libvirt/openbsd/rc.firsttime \
 		> $(KVM_POOLDIR)/$(KVM_OPENBSD_BASE_DOMAIN).rc.firsttime
 	cp $(KVM_TESTINGDIR)/libvirt/openbsd/*.conf $(KVM_POOLDIR)/
-	cp $(KVM_POOLDIR)/$(KVM_OPENBSD_ISO) $@.tmp
+	cp $(KVM_OPENBSD_ISO) $@.tmp
 	growisofs -M $@.tmp -l -R -graft-points \
 		/install.conf="$(KVM_POOLDIR)/install.conf" \
 		/etc/boot.conf="$(KVM_POOLDIR)/boot.conf" \
@@ -1220,19 +1242,6 @@ kvm-openbsd:
 #
 # NetBSD
 #
-# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
-# (NetBSD-*.iso).  Give the former a more meaningful name.
-
-KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
-KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
-kvm-iso: $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_ISO)
-
-$(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
-	mv $@.tmp $@
-$(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
-	mv $@.tmp $@
 
 KVM_NETBSD_INSTALL_BASE ?= $(KVM_PYTHON) testing/libvirt/netbsd/base.py
 $(KVM_POOLDIR)/$(KVM_NETBSD_BASE_DOMAIN).xml: | $(KVM_HOST_OK) $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_BASE)
