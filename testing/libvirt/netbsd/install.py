@@ -13,18 +13,18 @@ print("domain", domain)
 print("virtinstall", virtinstall)
 
 def i():
+    '''go interactive then quit'''
     child.logfile = None
     child.interact()
     sys.exit(0)
 
 def rs(r, s):
     child.expect(r)
-    time.sleep(1)
     for c in s:
         child.send(c)
 
-def io(r, s):
-    child.expect(r)
+def c(s):
+    child.expect('\n# ')
     time.sleep(1)
     for c in s:
         child.send(c)
@@ -32,81 +32,107 @@ def io(r, s):
 
 child = pexpect.spawn(virtinstall, logfile=sys.stdout.buffer, echo=False)
 
-# how to skip this part and go directly to the console?
-io('seconds', '')
+# boot in single user mode (/ is RO)
 
-io('Terminal type.*: ', 'vt100')
-io('a: Installation messages in English', 'a')
+rs('seconds', '2')
+rs('Enter pathname of shell or RETURN for /bin/sh:', '\n')
+# the above has only 4 seconds
+#io('Terminal type.*: ', 'vt100')
+#io('a: Installation messages in English', 'a')
+#io('x: Exit Install System', 'x')
 
-# use the console directly
+# tmp writeable
 
-io('x: Exit Install System', 'x')
+c('mount -t tmpfs tmpfs /tmp')
+c('touch /tmp/foo')
 
-# install the DOS partition, make certain that the disk is invalid.
+# Initialize the disk creating a single DOS NetBSD partition.
 
-io('# ', 'dd count=2 if=/dev/zero of=/dev/ld0')
-io('# ', 'fdisk -f -i ld0')
-io('# ', 'fdisk -f -c /usr/mdec/mbr_com0_9600 ld0')
-io('# ', 'fdisk -f -0 -a -s 169 -u ld0')
-io('# ', 'fdisk ld0')
+c('dd count=2 if=/dev/zero of=/dev/ld0')
+c('fdisk -f -i ld0')
+c('fdisk -f -0 -a -s 169 -u ld0')
+c('fdisk ld0')
 
-# Create the NetBSD partition.  By default NetBSD generates a label
-# with everything in e:, switch it to a:.
+# Now create the NetBSD partitions within that.
+#
+# By default NetBSD generates a label with everything in e:, switch it
+# to a:.  And use that as the root file system.  Don't bother with
+# swap.
 
-io('# ', 'disklabel ld0 > /tmp/ld0.label')
-io('# ', 'sed -i -e "s/ e:/ a:/" /tmp/ld0.label')
-io('# ', 'disklabel -R -r ld0 /tmp/ld0.label')
+c('disklabel ld0 > /tmp/ld0.label')
+c('sed -i -e "s/ e:/ a:/" /tmp/ld0.label')
+c('disklabel -R -r ld0 /tmp/ld0.label')
+c('newfs /dev/ld0a')
 
-# Format/mount the disk
+# Enable booting of the first (0) partition.
+#
+# The MBR is installed into front of the disk; the NetBSD partition is
+# made active; and finally install secondary boot and boot-blocks are
+# installed into the just built root file system.
+#
+# Should (can) speed be changed, 9600 is so retro?
 
-io('# ', 'newfs /dev/ld0a')
+c('fdisk -f -0 -a ld0')
+c('fdisk -f -c /usr/mdec/mbr_com0 ld0')
+c('mount /dev/ld0a /targetroot')
+c('cp /usr/mdec/boot /targetroot/boot') # to / not /boot/
+c('umount /targetroot')
+c('dumpfs /dev/ld0a | grep format') # expect FFSv1
+c('installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_ffsv1')
 
-# Set up the boot for serial port
+# Unpack the files into the root file system.
 
-io('# ', 'mount /dev/ld0a /targetroot')
-io('# ', 'cp /usr/mdec/boot /targetroot/boot') # to / not /boot/
-io('# ', 'umount /targetroot')
-io('# ', 'dumpfs /dev/ld0a | grep format') # expect FFSv1
-io('# ', 'installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_ffsv1')
-
-# Unpack the disks
-
-io('# ', 'mount /dev/ld0a /targetroot')
-io('# ', 'cd /targetroot')
-io('# ', 'mount -rt cd9660 /dev/cd1 /mnt')
-io('# ', 'for f in /mnt/i386/binary/sets/[a-jl-z]*.tgz ; do echo $f ; tar xpf $f ; done')
-io('# ', 'tar xpf /mnt/i386/binary/sets/kern-GENERIC.tgz')
-io('# ', 'cd /')
+c('mount /dev/ld0a /targetroot')
+c('touch /targetroot/.')
+c('cd /targetroot')
+c('mount -rt cd9660 /dev/cd1 /mnt')
+c('for f in /mnt/i386/binary/sets/[a-jl-z]*.tgz ; do echo $f ; tar xpf $f || break ; done')
+c('tar xpf /mnt/i386/binary/sets/kern-GENERIC.tgz')
+c('cd /')
 
 # Configure the system
 
-io('# ', 'chroot /targetroot')
+c('chroot /targetroot')
 
 # also blank out TOOR's password as backup
-# io('# ', "echo swan | pwhash |sed -e 's/[\$\/\\]/\\\$/g' | tee /tmp/pwd")
-# io('# ', 'sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd')
-# io('# ', 'sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd')
+# c("echo swan | pwhash |sed -e 's/[\$\/\\]/\\\$/g' | tee /tmp/pwd")
+# c('sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd')
+# c('sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd')
 
-io('# ', 'echo PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All > /etc/pkg_install.conf')
+c('mkdir -p /kern /proc')
+c('echo "ROOT.a          /               ffs     rw,noatime      1 1" >> /etc/fstab')
+c('echo "kernfs          /kern           kernfs  rw"                  >> /etc/fstab')
+c('echo "ptyfs           /dev/pts        ptyfs   rw"                  >> /etc/fstab')
+c('echo "procfs          /proc           procfs  rw"                  >> /etc/fstab')
+c('echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
+c('echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
 
-io('# ', 'mkdir -p /kern /proc')
-io('# ', 'echo "ROOT.a          /               ffs     rw,noatime      1 1" >> /etc/fstab')
-io('# ', 'echo "kernfs          /kern           kernfs  rw"                  >> /etc/fstab')
-io('# ', 'echo "ptyfs           /dev/pts        ptyfs   rw"                  >> /etc/fstab')
-io('# ', 'echo "procfs          /proc           procfs  rw"                  >> /etc/fstab')
-io('# ', 'echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
-io('# ', 'echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
-io('# ', 'mount -a')
+# booting
 
-io('# ', 'echo rc_configured=YES >> /etc/rc.conf')
-io('# ', 'echo hostname=netbsd   >> /etc/rc.conf')
-io('# ', 'echo no_swap=YES       >> /etc/rc.conf')
-io('# ', 'echo savecore=NO       >> /etc/rc.conf')
-io('# ', 'echo dhcpcd=YES        >> /etc/rc.conf')
+c('echo rc_configured=YES >> /etc/rc.conf')
+c('echo hostname=netbsd   >> /etc/rc.conf')
+c('echo no_swap=YES       >> /etc/rc.conf')
+c('echo savecore=NO       >> /etc/rc.conf')
+c('echo dhcpcd=YES        >> /etc/rc.conf')
+
+# packages
+
+c('echo PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All > /etc/pkg_install.conf')
+
+# TODO:
+#
+# - install needed packages:
+#   https://libreswan.org/wiki/Building_and_installing_from_source
+#
+# - configure NFS mounts
+#   host is exporting testing/ need to export root/
+#   need to specify ipaddress and path
+#
+# - ?
 
 # all done
 
-# io('# ', 'poweroff')
+c('poweroff')
 
 i()
 
