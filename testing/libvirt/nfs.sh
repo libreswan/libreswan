@@ -3,7 +3,7 @@
 set -e
 
 # chop everything off after testing; assume this is run from topdir?
-testing=$(realpath $0 | sed "s;testing/.*;testing;")
+topdir=$(realpath $0 | sed "s;testing/.*;;")
 
 # check NFS is installed and start it (no need to enable it).
 if test -f /lib/systemd/system/nfs-server.service ; then
@@ -16,12 +16,12 @@ else
 fi
 
 # export the testing directory
-if sudo exportfs | grep ${testing} ; then
-    echo ${testing} already exported
+if sudo exportfs | grep ${topdir} ; then
+    echo ${topdir} already exported
 else
-    echo "exporting ${testing} ..."
+    echo "exporting ${topdir} ..."
     #sudo exportfs -r
-    sudo exportfs -o rw,no_root_squash 192.168.234.0/24:${testing}
+    sudo exportfs -o rw,no_root_squash 192.168.234.0/24:${topdir}
 fi
 
 # poke a hole in the firewall; see systemctl EXIT CODE 0 indicates it is running
