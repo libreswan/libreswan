@@ -15,18 +15,23 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-
 import pexpect
 import sys
 import time
 import os
 
+#argv[0]
 domain = sys.argv[1]
-command = sys.argv[2]
-args = sys.argv[3:]
+gateway = sys.argv[2]
+topdir = sys.argv[3]
+command = sys.argv[4:]
+
 print("domain", domain)
+print("gateway", gateway)
+print("topdir", topdir)
 print("command", command)
-print("args", args)
+
+testing = gateway + ":" + topdir + "/testing"
 
 def es(child,expect,send,t=30):
 	try:
@@ -37,7 +42,7 @@ def es(child,expect,send,t=30):
 		print("==> Error <==\n"+child.before+"\n ==========")
 
 try:
-    child = pexpect.spawn(command, args, logfile=sys.stdout.buffer, echo=False)
+    child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
     child.expect('boot>')
 except:
     print("==> Error Creating the OpenBSD-base machine <==")

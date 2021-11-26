@@ -834,6 +834,7 @@ $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)%-base: | \
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
+		192.168.234.1 $(abs_top_srcdir) \
 		$(VIRT_INSTALL_BASE) \
 			--name=$(KVM_FIRST_PREFIX)$*-base \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \

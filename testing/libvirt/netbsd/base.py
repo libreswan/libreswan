@@ -21,14 +21,18 @@ import pexpect
 import sys
 import time
 
+#argv[0]
 domain = sys.argv[1]
-command = sys.argv[2]
-args = sys.argv[3:]
-print("domain", domain)
-print("command", command)
-print("args", args)
+gateway = sys.argv[2]
+topdir = sys.argv[3]
+command = sys.argv[4:]
 
-child = pexpect.spawn(command, args, logfile=sys.stdout.buffer, echo=False)
+print("domain", domain)
+print("gateway", gateway)
+print("topdir", topdir)
+print("command", command)
+
+child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
 
 def i():
     '''go interactive then quit'''
@@ -90,7 +94,7 @@ c('newfs /dev/ld0a')
 
 c('fdisk -f -0 -a ld0')
 c('fdisk -f -c /usr/mdec/mbr_com0 ld0')
-c('mount /dev/ld0a /targetroot')
+c('mount -o async /dev/ld0a /targetroot')
 c('cp /usr/mdec/boot /targetroot/boot') # to / not /boot/
 c('umount /targetroot')
 c('dumpfs /dev/ld0a | grep format') # expect FFSv1
@@ -98,7 +102,7 @@ c('installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/boot
 
 # Unpack the files into the root file system.
 
-c('mount /dev/ld0a /targetroot')
+c('mount -o async /dev/ld0a /targetroot')
 c('touch /targetroot/.')
 c('cd /targetroot')
 c('mount -rt cd9660 /dev/cd1 /mnt')
@@ -115,13 +119,19 @@ c('chroot /targetroot')
 # c('sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd')
 # c('sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd')
 
-c('mkdir -p /kern /proc')
+c('mkdir -p /kern /proc /source /testing')
 c('echo "ROOT.a          /               ffs     rw,noatime      1 1" >> /etc/fstab')
 c('echo "kernfs          /kern           kernfs  rw"                  >> /etc/fstab')
 c('echo "ptyfs           /dev/pts        ptyfs   rw"                  >> /etc/fstab')
 c('echo "procfs          /proc           procfs  rw"                  >> /etc/fstab')
 c('echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
 c('echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
+
+source = gateway + ":" + topdir
+testing = gateway + ":" + topdir + "/testing"
+
+c('echo "'+source+'      /source         nfs     rw"                  >> /etc/fstab')
+c('echo "'+testing+'     /testing        nfs     rw"                  >> /etc/fstab')
 
 # booting
 
@@ -148,6 +158,8 @@ c('echo PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All 
 
 # all done
 
+c('exit')
+c('umount /targetroot')
 c('poweroff')
 
 sys.exit(child.wait())
