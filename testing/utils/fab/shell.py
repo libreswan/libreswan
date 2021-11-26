@@ -56,14 +56,22 @@ def compile_prompt(logger, username=None, hostname=None):
             dollar = "#"
         else:
             dollar = "$"
-    prompt = (r'\[' +
-              r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
-              r'@' +
-              r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or HOSTNAME_PATTERN) + r')' +
-              r' ' +
-              r'(?P<' + BASENAME_GROUP + r'>' + (BASENAME_PATTERN) + r')' +
-              r'(?P<' + STATUS_GROUP + r'>'   + (STATUS_PATTERN) + r')' +
-              r'\]' +
+    prompt = (r'(' +
+              (
+                  (hostname or HOSTNAME_PATTERN)
+              ) +
+              r'|' +
+              (
+                  r'\[' +
+                  r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
+                  r'@' +
+                  r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or HOSTNAME_PATTERN) + r')' +
+                  r' ' +
+                  r'(?P<' + BASENAME_GROUP + r'>' + (BASENAME_PATTERN) + r')' +
+                  r'(?P<' + STATUS_GROUP + r'>'   + (STATUS_PATTERN) + r')' +
+                  r'\]'
+              ) +
+              r')' +
               r'(?P<' + DOLLAR_GROUP + r'>'   + (dollar or DOLLAR_PATTERN)  + r')' +
               r' ')
     logger.debug("prompt '%s'", prompt)
@@ -170,8 +178,8 @@ class Remote:
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
-        # Fix the prompt
-        self.run("PS1='" + PS1 + "'")
+        # Fix the prompt (if the shell is bash)
+        self.run("expr $SHELL : '.*/bash' > /dev/null && PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
