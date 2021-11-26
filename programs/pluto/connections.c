@@ -1955,6 +1955,7 @@ static bool extract_connection(const struct whack_message *wm,
 		if (c->sa_replay_window == 0 && LIN(POLICY_ESN_YES, c->policy)) {
 			dbg("replay-window=0 so disabling esn");
 			c->policy &= ~POLICY_ESN_YES;
+			c->policy |= POLICY_ESN_NO;
 		}
 
 		config->retransmit_timeout = wm->retransmit_timeout;
