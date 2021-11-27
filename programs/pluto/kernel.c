@@ -3340,6 +3340,31 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 	return deltatime_cmp(idle_time, >=, since_when);
 }
 
+static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
+			 uint64_t add_time, bool inbound, deltatime_t *ago)
+{
+	if (p2->add_time == 0 && add_time != 0)
+		p2->add_time = add_time; /* this should happen exactly once */
+
+	pexpect(p2->add_time == add_time);
+
+	if (inbound) {
+		if (bytes > p2->our_bytes) {
+			p2->our_bytes = bytes;
+			p2->our_lastused = mononow();
+		}
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), p2->our_lastused);
+	} else {
+		if (bytes > p2->peer_bytes) {
+			p2->peer_bytes = bytes;
+			p2->peer_lastused = mononow();
+		}
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), p2->peer_lastused);
+	}
+}
+
 /*
  * get information about a given SA bundle
  *
@@ -3373,13 +3398,13 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	}
 
 	if (inbound) {
-		if (p2->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired peer SA SPI 0x%x skip get_sa_info()", ntohl(p2->attrs.spi));
+		if (pi->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired peer SA SPI 0x%x skip get_sa_info()", ntohl(pi->attrs.spi));
 			return true; /* all is well use the last known info */
 		}
 	} else {
-		if (p2->our_kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired our SA SPI 0x%x get_sa_info()", ntohl(p2->our_spi));
+		if (pi->our_kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired our SA SPI 0x%x get_sa_info()", ntohl(pi->our_spi));
 			return true; /* all is well use last known info */
 		}
 	}
@@ -3426,7 +3451,6 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 
 	uint64_t bytes;
 	uint64_t add_time;
-
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time, st->st_logger))
 		return false;
 
