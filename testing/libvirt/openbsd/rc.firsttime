@@ -35,10 +35,6 @@ echo 'dhcp' > /etc/hostname.vio2
 pkill dhclient
 #Restarting to apply network changes
 sh /etc/netstart
-#Changing the prompt
-echo "PS1='[\u@\h \W$(x=$? ; test $x -ne 0 && echo " $x")]\$ '" >> /etc/profile
-echo "export PS1" >> /etc/profile
-echo "==> Prompt Updated <=="
 #NFS stuff
 echo "==> Writing NFS entires to /etc/fstab <=="
 mkdir /testing

@@ -180,6 +180,7 @@ class Remote:
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
         # Fix the prompt (if the shell is bash)
         self.run("expr $SHELL : '.*/bash' > /dev/null && PS1='" + PS1 + "'")
+        self.run("expr $SHELL : '.*/ksh' > /dev/null && PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
