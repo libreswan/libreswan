@@ -18,8 +18,9 @@
 # as .PHONY.  Sigh!
 
 # Note: for pattern targets, the value of % can be found in the make
-# variable '$*' (why not $%!?!?!).  It is used to extract the DOMAIN
-# from targets like kvm-install-DOMAIN.
+# variable '$*' (why not $%!?!?!, because that was used for archives).
+# It is used to extract the DOMAIN from targets like
+# kvm-install-DOMAIN.
 
 #
 # The guest operating system.
@@ -244,28 +245,31 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 # Domains
 #
 
+# so that $($*) conversts % to upper case
 fedora = FEDORA
 debian = DEBIAN
 netbsd = NETBSD
 openbsd = OPENBSD
+
+KVM_PLATFORMS = debian fedora netbsd openbsd
 
 KVM_NETBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd)
 KVM_OPENBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),openbsd)
 KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
 KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
 
-kvm-debian:
-	rm -f $(KVM_DEBIAN_BASE_DOMAIN)
-	$(MAKE) $(KVM_DEBIAN_BASE_DOMAIN)
-kvm-fedora:
-	rm -f $(KVM_FEDORA_BASE_DOMAIN)
-	$(MAKE) $(KVM_FEDORA_BASE_DOMAIN)
-kvm-netbsd:
-	rm -f $(KVM_NETBSD_BASE_DOMAIN)
-	$(MAKE) $(KVM_NETBSD_BASE_DOMAIN)
-kvm-openbsd:
-	rm -f $(KVM_OPENBSD_BASE_DOMAIN)
-	$(MAKE) $(KVM_OPENBSD_BASE_DOMAIN)
+KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
+KVM_LOCALDIR_PREFIX = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)
+
+$(patsubst %, kvm-%, $(KVM_PLATFORMS)): \
+kvm-%:
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)*
+	$(MAKE) \
+		$(KVM_$($(*))_BASE_DOMAIN) \
+		$(KVM_$($(*))_UPDATE_DOMAIN) \
+		$(KVM_$($(*))_TRANSMOGRIFY_DOMAIN)
+
+# Older stuff
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
@@ -822,15 +826,20 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 ##
 ##
 
-.PHONY: kvm-base
+$(patsubst %, kvm-%-base, $(KVM_PLATFORMS)): \
+kvm-%-base:
+	test -n "$(KVM_$($*)_BASE_DOMAIN)"
+	rm -f $(KVM_$($*)_BASE_DOMAIN)
+	$(MAKE) $(KVM_$($*)_BASE_DOMAIN)
 
-$(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)%-base: | \
-		testing/libvirt/%/base.py $(KVM_POOLDIR) $(KVM_HOST_OK)  $(KVM_GATEWAY_FILE)
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-base: | \
+		testing/libvirt/%/base.py $(KVM_POOLDIR) $(KVM_HOST_OK) $(KVM_GATEWAY_FILE)
 	: Confirm that there is a tty - else virt-install fails mysteriously
 	tty
 	: clean up old domains
 	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-base)
-	rm -f $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*-base*
+	rm -f $(KVM_POOLDIR_PREFIX)$*-base*
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
@@ -844,7 +853,7 @@ $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)%-base: | \
 
 # Fedora
 
-KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_FEDORA_DOMAIN)-base
+KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)fedora-base
 KVM_FEDORA_VIRT_INSTALL_OS_VARIANT ?= fedora30
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
@@ -853,19 +862,15 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_KICKSTART_FILE)
 
-kvm-base: $(KVM_FEDORA_BASE_DOMAIN)
-
 # NetBSD
 
-KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_NETBSD_DOMAIN)-base
+KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
 KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= netbsd8.0
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
 	--disk=path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom
 
 $(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO)
-
-kvm-base: $(KVM_NETBSD_BASE_DOMAIN)
 
 # OpenBSD needs to mangle the ISO
 
@@ -886,12 +891,86 @@ $(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) $(KVM_OPENBSD_RC_FIRSTTIME)
 		/rc.firsttime="$(KVM_OPENBSD_RC_FIRSTTIME)"
 	mv $@.tmp $@
 
-KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN)-base
+KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= openbsd6.5
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_INSTALL_ISO)
 
 $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
-kvm-base: $(KVM_OPENBSD_BASE_DOMAIN)
+
+
+##
+## Update, installing missing packages.
+##
+
+$(patsubst %, kvm-%-update, $(KVM_PLATFORMS)): \
+kvm-%-update:
+	test -n "$(KVM_$($*)_UPDATE_DOMAIN)"
+	rm -f $(KVM_$($*)_UPDATE_DOMAIN)
+	$(MAKE) $(KVM_$($*)_UPDATE_DOMAIN)
+
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-update, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-update: | \
+		$(KVM_POOLDIR_PREFIX)%-base \
+		testing/libvirt/%/update.sh \
+		$(KVM_HOST_OK)
+	: $* $($*) $@ $<
+	: clean up old domains
+	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-update)
+	rm -f $(KVM_$($*)_UPDATE_DOMAIN)*
+	: create disk
+	sudo qemu-img create -f qcow2 -F qcow2 \
+		-b $(KVM_$($*)_BASE_DOMAIN).qcow2 \
+		$(KVM_$($*)_UPDATE_DOMAIN).qcow2
+	: build VM
+	$(VIRT_INSTALL_BASE) \
+		--name=$(KVM_FIRST_PREFIX)$*-update \
+		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$(KVM_POOLDIR_PREFIX)$*-update.qcow2 \
+		--import \
+		--noautoconsole
+	: update
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*-update \
+		-- /source/testing/libvirt/$*/update.sh
+	touch $@
+
+KVM_NETBSD_UPDATE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-update
+
+##
+## Transmogrify the domain ready for build/testing.
+##
+
+$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
+kvm-%-transmogrify:
+	test -n "$(KVM_$($*)_TRANSMOGRIFY_DOMAIN)"
+	rm -f $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)
+	$(MAKE) $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)
+
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-transmogrify, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-transmogrify: | \
+		$(KVM_POOLDIR_PREFIX)%-update \
+		testing/libvirt/%/transmogrify.sh \
+		$(KVM_HOST_OK)
+	: $* $($*) $@ $<
+	: clean up old domains
+	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-transmogrify)
+	rm -f $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)*
+	: create disk
+	sudo qemu-img create -f qcow2 -F qcow2 \
+		-b $(KVM_$($*)_BASE_DOMAIN).qcow2 \
+		$(KVM_$($*)_TRANSMOGRIFY_DOMAIN).qcow2
+	: build VM
+	$(VIRT_INSTALL_BASE) \
+		--name=$(KVM_FIRST_PREFIX)$*-transmogrify \
+		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$(KVM_POOLDIR_PREFIX)$*-transmogrify.qcow2 \
+		--import \
+		--noautoconsole
+	: transmogrify
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*-transmogrify \
+		-- /source/testing/libvirt/$*/transmogrify.sh
+	touch $@
+
+KVM_NETBSD_TRANSMOGRIFY_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-transmogrify
 
 #
 # Create + package install + package upgrade the base domain
