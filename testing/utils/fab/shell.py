@@ -22,10 +22,11 @@ from fab import timing
 
 TIMEOUT = 10
 
-# The following prompt is assumed.  It only displays status when it is
-# non-zero:
-PS1='[\\u@\\h \\W$(x=$? ; test $x -ne 0 && echo " $x")]\\$ '
-#PS1='[\\u@\\h \\W $?]\\$ '
+# The following prompt is assumed.
+# - it only displays status when it is non-zero
+# - \h \u \W don't work on NetBSD
+# - OpenBSD doesn't define ${HOST} or ${HOSTNAME}
+PS1='[$USER@$(hostname) \\$(s=\\$?;p=\\${PWD##*/};echo \\${p:-/} \\${s#0})]# '
 
 # Named groups for each part of the above
 USERNAME_GROUP = "username"
@@ -178,9 +179,11 @@ class Remote:
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
-        # Fix the prompt (if the shell is bash)
-        self.run("expr $SHELL : '.*/bash' > /dev/null && PS1='" + PS1 + "'")
-        self.run("expr $SHELL : '.*/ksh' > /dev/null && PS1='" + PS1 + "'")
+
+        # Fix the prompt
+        self.run("expr $SHELL : '.*/sh' > /dev/null && set -o promptcmds")
+        self.run("PS1=\"" + PS1 + "\"")
+
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
