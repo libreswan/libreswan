@@ -72,18 +72,18 @@ while(child.expect([".*install has been successfully completed!", pexpect.EOF, p
         continue
 
 #Copy rc.firsttime file to the right directory
-es(child,'.*bsd-base# ','mv rc.firsttime /mnt/etc/',100)
+es(child,'openbsd# ','mv rc.firsttime /mnt/etc/',100)
 
 #Start iked daemon by default on boot
-es(child,'.*bsd-base# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
+es(child,'openbsd# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
 
 # fix powerdown; works for /mnt, not for /, ulgh!
-es(child,'.*bsd-base# ','echo powerdown=YES >>     /etc/rc.powerdown')
-es(child,'.*bsd-base# ','echo powerdown=YES >> /mnt/etc/rc.powerdown')
+es(child,'openbsd# ','echo powerdown=YES >>     /etc/rc.powerdown')
+es(child,'openbsd# ','echo powerdown=YES >> /mnt/etc/rc.powerdown')
 
 print('====> Shutting Down Base Domain <====')
 #To shutdown the base domain
-es(child,'.*bsd-base# ','halt -p\n')
+es(child,'openbsd# ','halt -p\n')
 
 print("Waiting 10 seconds to shutdown...")
 time.sleep(10)
