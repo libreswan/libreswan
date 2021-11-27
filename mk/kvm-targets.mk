@@ -386,7 +386,7 @@ KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).qemudir.ok
 #
 
 $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).nfs.ok: $(KVM_FRESH_BOOT_FILE) $(KVM_TESTINGDIR)/libvirt/nfs.sh | $(KVM_LOCALDIR)
-	sh $(KVM_TESTINGDIR)/libvirt/nfs.sh
+	sh $(KVM_TESTINGDIR)/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR)
 	touch $@
 
 KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).nfs.ok
@@ -834,7 +834,7 @@ $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)%-base: | \
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
-		192.168.234.1 $(abs_top_srcdir) \
+		192.168.234.1 $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR) \
 		$(VIRT_INSTALL_BASE) \
 			--name=$(KVM_FIRST_PREFIX)$*-base \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \

@@ -24,12 +24,16 @@ import time
 #argv[0]
 domain = sys.argv[1]
 gateway = sys.argv[2]
-topdir = sys.argv[3]
-command = sys.argv[4:]
+pooldir = sys.argv[3]
+sourcedir = sys.argv[4]
+testingdir = sys.argv[5]
+command = sys.argv[6:]
 
 print("domain", domain)
 print("gateway", gateway)
-print("topdir", topdir)
+print("pooldir", pooldir)
+print("sourcedir", sourcedir)
+print("testingdir", testingdir)
 print("command", command)
 
 child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
@@ -119,7 +123,7 @@ c('chroot /targetroot')
 # c('sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd')
 # c('sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd')
 
-c('mkdir -p /kern /proc /source /testing')
+c('mkdir -p /kern /proc')
 c('echo "ROOT.a          /               ffs     rw,noatime      1 1" >> /etc/fstab')
 c('echo "kernfs          /kern           kernfs  rw"                  >> /etc/fstab')
 c('echo "ptyfs           /dev/pts        ptyfs   rw"                  >> /etc/fstab')
@@ -127,9 +131,15 @@ c('echo "procfs          /proc           procfs  rw"                  >> /etc/fs
 c('echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
 c('echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
 
-source = gateway + ":" + topdir
-testing = gateway + ":" + topdir + "/testing"
+# I see a loop
 
+pool = gateway + ":" + pooldir
+source = gateway + ":" + sourcedir
+testing = gateway + ":" + testingdir
+
+c('mkdir /pool /source /testing')
+
+c('echo "'+pool+'        /pool           nfs     rw"                  >> /etc/fstab')
 c('echo "'+source+'      /source         nfs     rw"                  >> /etc/fstab')
 c('echo "'+testing+'     /testing        nfs     rw"                  >> /etc/fstab')
 

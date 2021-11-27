@@ -23,12 +23,16 @@ import os
 #argv[0]
 domain = sys.argv[1]
 gateway = sys.argv[2]
-topdir = sys.argv[3]
-command = sys.argv[4:]
+pooldir = sys.argv[3]
+sourcedir = sys.argv[4]
+testingdir = sys.argv[5]
+command = sys.argv[6:]
 
 print("domain", domain)
 print("gateway", gateway)
-print("topdir", topdir)
+print("pooldir", pooldir)
+print("sourcedir", sourcedir)
+print("testingdir", testingdir)
 print("command", command)
 
 # expects ARG0
