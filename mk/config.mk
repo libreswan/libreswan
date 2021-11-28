@@ -29,9 +29,7 @@ config.mk = true
 if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
 
 
-#
-#
-# TODO: Some creative ifeq ($(BUILDENV,xxx) to automatically determine
+# TODO: Some creative ifeq ($(OSDEP,xxx) to automatically determine
 # where we are building on and disable things
 
 #  Doc:		man make
@@ -42,20 +40,20 @@ if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
 include ${LIBRESWANSRCDIR}/mk/local.mk
 
 # Pull in the target/build/host description and get a definition of
-# OBJDIR, BUILDENV, et.al.
+# OBJDIR, OSDEP, et.al.
 include ${LIBRESWANSRCDIR}/mk/objdir.mk
 
 # Pull in OSDEP specific makefile stub.
 #
 # Don't try to deal with OS family variants (debian vs fedora vs ...)
 # needing different build options (e.g., auditing, fips).  Instead,
-# put all that code in the OS family ${BUILDENV}.mk file - the logic
-# ends up being a horrible mess so that hopefully keeps it a little
-# contained.
+# put all that code in the OS family $(OSDEP).mk file - the logic ends
+# up being a horrible mess so hopefully that helps to keep the mess
+# within the family.
 #
 # Using the "build" machine to select "target" configuration options
 # is, to say the least, a little weird.  It's "historic".
-include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
+include ${LIBRESWANSRCDIR}/mk/defaults/${OSDEP}.mk
 
 # "Final" and "finally" refer to where the files will end up on the
 # running IPsec system, as opposed to where they get installed by our
@@ -476,7 +474,7 @@ WHACKLIB = ${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB = ${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
-export LIBSWANDIR LIBRESWANSRCDIR ARCH
+export LIBSWANDIR LIBRESWANSRCDIR
 export LIBRESWANLIB LSWTOOLLIB
 export WHACKLIB IPSECCONFLIB
 

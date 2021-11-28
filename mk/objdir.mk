@@ -26,8 +26,7 @@
 #   $(CC) -dumpmachine
 #
 # but this assumes CC has already been set (currently CC can be set
-# later, via Makefile.inc, by packaging/defaults/$(BUILDENV) and/or
-# packaging/defaults/$(BUILDENV).$(ARCH)
+# later, via Makefile.inc, by mk/defaults/$(OSDEP).mk.
 #
 # Trying to query the build environment with tricks like:
 #
@@ -36,24 +35,17 @@
 #
 # have a similar result.
 
-# supply kernel-configuration ARCH defaults
-ifeq ($(ARCH),)
-ARCH:=$(shell uname -m)
-endif
-# always sanitize $(ARCH)
-ARCH:=$(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-
 # OSDEP=linux,bsd,cygwin,darwin
 ifeq ($(OSDEP),)
 OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
 endif
 export OSDEP
 
-# BUILDENV could already be set by Makefile.inc.local to
-# mingw32-linux, darwin, or mingw32, etc..
-ifeq ($(BUILDENV),)
-BUILDENV:=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
-endif
-export BUILDENV
+ifndef OBJDIR
+# let Makefile.inc.local override them?
+ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
+HOST ?= $(shell hostname | sed -e 's/\..*//')
+OBJDIR:=OBJ.${OSDEP}.${ARCH}.$(HOST)
+export OBJDIR
 
-OBJDIR?=OBJ.${BUILDENV}.${ARCH}
+endif
