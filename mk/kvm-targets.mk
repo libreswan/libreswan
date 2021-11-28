@@ -28,10 +28,13 @@
 # Pull in all its defaults so that they override everything below.
 
 KVM_GUEST_OS ?= f32
+
 include testing/libvirt/$(KVM_GUEST_OS).mk
-include testing/libvirt/openbsd/openbsd67.mk
-include testing/libvirt/netbsd/netbsd.mk
 include testing/libvirt/debian.mk
+
+include testing/libvirt/fedora/fedora.mk
+include testing/libvirt/netbsd/netbsd.mk
+include testing/libvirt/openbsd/openbsd67.mk
 
 #
 # where things live and what gets created
@@ -792,16 +795,20 @@ endef
 
 .PHONY: kvm-iso
 
+KVM_LINUX_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_LINUX_ISO_URL))
+kvm-iso: $(KVM_LINUX_ISO)
+$(KVM_LINUX_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_LINUX_ISO_URL)
+	mv $@.tmp $@
+
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
-
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
 	mv $@.tmp $@
 
 KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_ISO_URL))
 kvm-iso: $(KVM_OPENBSD_ISO)
-
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
 	mv $@.tmp $@
@@ -809,7 +816,6 @@ $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
 KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 kvm-iso: $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_ISO)
-
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
 	mv $@.tmp $@
@@ -866,8 +872,8 @@ endef
 $(patsubst %, kvm-%-base, $(KVM_PLATFORMS)): \
 kvm-%-base:
 	test -n "$(KVM_$($*)_BASE_DOMAIN)"
-	rm -f $(KVM_$($*)_BASE_DOMAIN)
-	$(MAKE) $(KVM_$($*)_BASE_DOMAIN)
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base*
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-base: | \
@@ -893,10 +899,10 @@ KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)fedora-base
 KVM_FEDORA_VIRT_INSTALL_OS_VARIANT ?= fedora30
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
-	--initrd-inject=$(KVM_KICKSTART_FILE) \
-	--extra-args="ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
+	--initrd-inject=$(KVM_FEDORA_KICKSTART_FILE) \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
-$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_KICKSTART_FILE)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_FEDORA_KICKSTART_FILE)
 
 # NetBSD
 
@@ -953,20 +959,20 @@ kvm-%-upgrade:
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
-		| \
-		$(KVM_HOST_OK)
+		| $(KVM_HOST_OK)
 	: result is called ...-upgrade, not -upgrade.vm
 	$(call destroy-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
+	$(if $(KVM_$($*)_PACKAGE_INSTALL), $(KVMSH) $(basename $(notdir $@)) $(KVM_$(*)_PACKAGE_INSTALL))
+	$(if $(KVM_$($*)_DEBUGINFO_INSTALL), $(KVMSH) $(notdir $@) $(KVM_$(*)_DEBUGINFO_INSTALL))
 	touch $@
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
-		| \
-		testing/libvirt/%/update.sh \
-		$(KVM_HOST_OK)
-	$(KVMSH) --shutdown $(notdir $@) -- /source/testing/libvirt/$*/update.sh
+		| $(KVM_HOST_OK)
+	: upgrade $($*) ...
+	$(if $(KVM_$($*)_PACKAGE_UPGRADE), $(KVMSH) $(notdir $@) $(KVM_$($*)_PACKAGE_UPGRADE))
 	touch $@
 
 ##
@@ -1037,7 +1043,7 @@ kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
 $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		| \
 		$(KVM_HOST_OK) \
-		$(KVM_FEDORA_ISO) \
+		$(KVM_LINUX_ISO) \
 		$(KVM_KICKSTART_FILE) \
 		$(KVM_GATEWAY_FILE) \
 		$(KVM_POOLDIR)
@@ -1051,7 +1057,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).kickstarted: \
 		--name=$(KVM_BASE_DOMAIN) \
 		--os-variant=$(KVM_FEDORA_VIRT_INSTALL_OS_VARIANT) \
 		--disk=size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
-		--location=$(KVM_FEDORA_ISO) \
+		--location=$(KVM_LINUX_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 	: the reboot message from virt-install can be ignored

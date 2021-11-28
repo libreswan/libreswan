@@ -1,12 +1,10 @@
-#KVM_LINUX_ISO_URL = https://muug.ca/mirror/fedora/linux/releases/32/Server/x86_64/iso/Fedora-Server-dvd-x86_64-32-1.6.iso
-KVM_LINUX_ISO_URL = https://ftp.nluug.nl/pub/os/Linux/distr/fedora/linux/releases/32/Server/x86_64/iso/Fedora-Server-dvd-x86_64-32-1.6.iso
+KVM_FEDORA_ISO_URL = https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/x86_64/iso/Fedora-Server-dvd-x86_64-35-1.2.iso
+KVM_FEDORA_KICKSTART_FILE = testing/libvirt/fedora/fedora.ks
 
-KVM_KICKSTART_FILE = testing/libvirt/$(KVM_GUEST_OS).ks
 # LIE! bit older version to be more complaint with older hosts
-KVM_PACKAGE_INSTALL = dnf install -y
-KVM_PACKAGE_UPGRADE = dnf upgrade -y
-KVM_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y
-KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
+KVM_FEDORA_PACKAGE_INSTALL = dnf install -y $(KVM_FEDORA_INSTALL_PACKAGES)
+KVM_FEDORA_PACKAGE_UPGRADE = dnf upgrade -y $(KVM_FEDORA_UPGRADE_PACKAGES
+KVM_FEDORA_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y $(KVM_FEDORA_DEBUGINFO_PACKAGES)
 
 #
 # NSS+NSPR
@@ -17,23 +15,23 @@ KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 # DB; version 3.59 and 3.60 both dumped core while computing
 # appendix-b keymat.
 #
-# KVM_NSS_RPMDIR = /pool/nss/x866_64/
-# KVM_NSS_VERSION = -3.36.0-1.0.fc28.x86_64
+# KVM_FEDORA_NSS_RPMDIR = /pool/nss/x866_64/
+# KVM_FEDORA_NSS_VERSION = -3.36.0-1.0.fc28.x86_64
 
-KVM_NSS_RPMDIR ?=
-KVM_NSS_VERSION ?=
+KVM_FEDORA_NSS_RPMDIR ?=
+KVM_FEDORA_NSS_VERSION ?=
 
-KVM_NSS_DEBUGINFO_NAMES ?= \
+KVM_FEDORA_NSS_DEBUGINFO_NAMES ?= \
 	nss-debugsource \
 	nss-debuginfo \
 	nss-softokn-debuginfo \
 	nss-softokn-freebl-debuginfo \
 	nss-util-debuginfo \
 	$(NULL)
-KVM_NSS_DEBUGINFO ?= \
-	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_DEBUGINFO_NAMES)))
+KVM_FEDORA_NSS_DEBUGINFO ?= \
+	$(addprefix $(KVM_FEDORA_NSS_RPMDIR), $(addsuffix $(KVM_FEDORA_NSS_VERSION), $(KVM_FEDORA_NSS_DEBUGINFO_NAMES)))
 
-KVM_NSS_PACKAGE_NAMES ?= \
+KVM_FEDORA_NSS_PACKAGE_NAMES ?= \
 	nss \
 	nss-devel \
 	nss-softokn \
@@ -45,26 +43,26 @@ KVM_NSS_PACKAGE_NAMES ?= \
 	nss-util \
 	nss-util-devel \
 	$(NULL)
-KVM_NSS_PACKAGES ?= \
-	$(addprefix $(KVM_NSS_RPMDIR), $(addsuffix $(KVM_NSS_VERSION), $(KVM_NSS_PACKAGE_NAMES)))
+KVM_FEDORA_NSS_PACKAGES ?= \
+	$(addprefix $(KVM_FEDORA_NSS_RPMDIR), $(addsuffix $(KVM_FEDORA_NSS_VERSION), $(KVM_FEDORA_NSS_PACKAGE_NAMES)))
 
-KVM_NSPR_RPMDIR ?=
-KVM_NSPR_VERSION ?=
+KVM_FEDORA_NSPR_RPMDIR ?=
+KVM_FEDORA_NSPR_VERSION ?=
 
-KVM_NSPR_DEBUGINFO_NAMES ?= nspr-debuginfo
-KVM_NSPR_DEBUGINFO ?= $(addprefix $(KVM_NSPR_RPMDIR), $(addsuffix $(KVM_NSPR_VERSION), $(KVM_NSPR_DEBUGINFO_NAMES)))
-KVM_NSPR_PACKAGE_NAMES ?= nspr nspr-devel
-KVM_NSPR_PACKAGES ?= \
-	$(addprefix $(KVM_NSPR_RPMDIR), $(addsuffix $(KVM_NSPR_VERSION), $(KVM_NSPR_PACKAGE_NAMES)))
+KVM_FEDORA_NSPR_DEBUGINFO_NAMES ?= nspr-debuginfo
+KVM_FEDORA_NSPR_DEBUGINFO ?= $(addprefix $(KVM_FEDORA_NSPR_RPMDIR), $(addsuffix $(KVM_FEDORA_NSPR_VERSION), $(KVM_FEDORA_NSPR_DEBUGINFO_NAMES)))
+KVM_FEDORA_NSPR_PACKAGE_NAMES ?= nspr nspr-devel
+KVM_FEDORA_NSPR_PACKAGES ?= \
+	$(addprefix $(KVM_FEDORA_NSPR_RPMDIR), $(addsuffix $(KVM_FEDORA_NSPR_VERSION), $(KVM_FEDORA_NSPR_PACKAGE_NAMES)))
 
-.PHONY: nss-rpms
-nss-rpms:
-	@for rpm in $(KVM_NSS_DEBUGINFO) ; do echo $$rpm ; done
-	@for rpm in $(KVM_NSS_PACKAGES) ; do echo $$rpm ; done
-.PHONY: nspr-rpms
-nspr-rpms:
-	@for rpm in $(KVM_NSPR_DEBUGINFO) ; do echo $$rpm ; done
-	@for rpm in $(KVM_NSPR_PACKAGES) ; do echo $$rpm ; done
+.PHONY: kvm-fedora-nss-rpms
+kvm-fedora-nss-rpms:
+	@for rpm in $(KVM_FEDORA_NSS_DEBUGINFO) ; do echo $$rpm ; done
+	@for rpm in $(KVM_FEDORA_NSS_PACKAGES) ; do echo $$rpm ; done
+.PHONY: kvm-fedora-nspr-rpms
+kvm-fedora-nspr-rpms:
+	@for rpm in $(KVM_FEDORA_NSPR_DEBUGINFO) ; do echo $$rpm ; done
+	@for rpm in $(KVM_FEDORA_NSPR_PACKAGES) ; do echo $$rpm ; done
 
 #
 # KERNEL:
@@ -75,14 +73,14 @@ nspr-rpms:
 # empty.  XL2TPD sucks in the latest kernel so is included in the
 # list.
 #
-# KVM_KERNEL_RPMDIR ?= /source/kernel
-# KVM_KERNEL_ARCH ? = x86_64
-# KVM_KERNEL_VERSION ?= 5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
+# KVM_FEDORA_KERNEL_RPMDIR ?= /source/kernel
+# KVM_FEDORA_KERNEL_ARCH ? = x86_64
+# KVM_FEDORA_KERNEL_VERSION ?= 5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
 
-KVM_KERNEL_RPMDIR ?=
-KVM_KERNEL_VERSION ?=
+KVM_FEDORA_KERNEL_RPMDIR ?=
+KVM_FEDORA_KERNEL_VERSION ?=
 
-KVM_KERNEL_PACKAGE_NAMES ?= \
+KVM_FEDORA_KERNEL_PACKAGE_NAMES ?= \
 	kernel \
 	kernel-core \
 	kernel-devel \
@@ -91,13 +89,13 @@ KVM_KERNEL_PACKAGE_NAMES ?= \
 	kernel-modules-extra \
 	$(NULL)
 
-KVM_KERNEL_PACKAGES ?= \
-	$(addprefix $(KVM_KERNEL_RPMDIR), $(addsuffix $(KVM_KERNEL_VERSION), $(KVM_KERNEL_PACKAGE_NAMES))) \
+KVM_FEDORA_KERNEL_PACKAGES ?= \
+	$(addprefix $(KVM_FEDORA_KERNEL_RPMDIR), $(addsuffix $(KVM_FEDORA_KERNEL_VERSION), $(KVM_FEDORA_KERNEL_PACKAGE_NAMES))) \
 	xl2tpd
 
 .PHONY: kernel-rpms
-kernel-prms:
-	@for rpm in $(KVM_KERNEL_PACKAGES) ; do echo $$rpm ; done
+kvm-fedora-kernel-prms:
+	@for rpm in $(KVM_FEDORA_KERNEL_PACKAGES) ; do echo $$rpm ; done
 
 
 #    kernel-debuginfo-$(RPM_KERNEL_VERSION)
@@ -115,18 +113,18 @@ kernel-prms:
 # trying to describe that using RPM's .spec file (%buildrequires
 # libgcrypt-devel isn't sufficient).
 
-# KVM_STRONGSWAN_PACKAGES = \
+# KVM_FEDORA_STRONGSWAN_PACKAGES = \
 #   https://nohats.ca/ftp/strongswan/strongswan-5.8.4-2.fc30.x86_64.rpm \
 #   libgcrypt
 
-KVM_STRONGSWAN_PACKAGES = strongswan libgcrypt
+KVM_FEDORA_STRONGSWAN_PACKAGES = strongswan libgcrypt
 
 
-KVM_INSTALL_PACKAGES += \
-    $(KVM_KERNEL_PACKAGES) \
+KVM_FEDORA_INSTALL_PACKAGES += \
+    $(KVM_FEDORA_KERNEL_PACKAGES) \
     $(KVM_UPGRADE_PACKAGES)
 
-KVM_UPGRADE_PACKAGES += \
+KVM_FEDORA_UPGRADE_PACKAGES += \
     ElectricFence \
     audit-libs-devel \
     bind-utils \
@@ -166,8 +164,8 @@ KVM_UPGRADE_PACKAGES += \
     net-tools \
     nmap \
     nsd \
-    $(KVM_NSPR_PACKAGES) \
-    $(KVM_NSS_PACKAGES) \
+    $(KVM_FEDORA_NSPR_PACKAGES) \
+    $(KVM_FEDORA_NSS_PACKAGES) \
     ocspd \
     openldap-devel \
     p11-kit-trust \
@@ -198,10 +196,10 @@ KVM_UPGRADE_PACKAGES += \
     wget \
     wireshark-cli \
     xmlto \
-    $(KVM_STRONGSWAN_PACKAGES) \
+    $(KVM_FEDORA_STRONGSWAN_PACKAGES) \
 
 
-KVM_DEBUGINFO += \
+KVM_FEDORA_DEBUGINFO += \
 	ElectricFence-debuginfo \
 	audit-libs-debuginfo \
 	conntrack-tools-debuginfo \
@@ -230,8 +228,8 @@ KVM_DEBUGINFO += \
 	libunistring-debuginfo \
 	libxcrypt-debuginfo \
 	lz4-libs-debuginfo \
-	$(KVM_NSPR_DEBUGINFO) \
-	$(KVM_NSS_DEBUGINFO) \
+	$(KVM_FEDORA_NSPR_DEBUGINFO) \
+	$(KVM_FEDORA_NSS_DEBUGINFO) \
 	ocspd-debuginfo \
 	openldap-debuginfo \
 	openssl-libs-debuginfo \
