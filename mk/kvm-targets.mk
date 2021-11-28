@@ -194,15 +194,15 @@ VIRT_SOURCEDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_SOURCED
 VIRT_TESTINGDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 VIRT_POOLDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
 
-VIRT_INSTALL_BASE_FLAGS ?= --memory=1024 --vcpus=$(KVM_WORKERS)
-VIRT_INSTALL_BUILD_FLAGS ?= --memory=$(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) --vcpus=$(KVM_WORKERS)
-
 VIRT_INSTALL_FLAGS = \
 	--check=path_in_use=off \
 	--graphics=none \
 	--virt-type=kvm \
 	--noreboot \
 	--console=pty,target_type=serial \
+	--vcpus=$(KVM_WORKERS) \
+	--memory=$(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) \
+	$(VIRT_CPUS) \
 	$(VIRT_CPU) \
 	$(VIRT_GATEWAY) \
 	$(VIRT_RND) \
@@ -264,10 +264,7 @@ KVM_LOCALDIR_PREFIX = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)
 $(patsubst %, kvm-%, $(KVM_PLATFORMS)): \
 kvm-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)*
-	$(MAKE) \
-		$(KVM_$($(*))_BASE_DOMAIN) \
-		$(KVM_$($(*))_UPDATE_DOMAIN) \
-		$(KVM_$($(*))_TRANSMOGRIFY_DOMAIN)
+	$(MAKE) kvm-$(*)-install
 
 # Older stuff
 
@@ -822,6 +819,46 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 
 ##
 ##
+## Utilities
+##
+##
+
+define destroy-os-domain
+	: destroy-os-domain
+	:    path=$(strip $(1))
+	:    domain=$(notdir $(1))
+	case "$$($(VIRSH) domstate $(notdir $(1)))" in \
+	"running" ) $(VIRSH) destroy $(notdir $(1)) ; $(VIRSH) undefine $(notdir $(1)) ;; \
+	"shut off" ) $(VIRSH) undefine $(notdir $(1)) ;; \
+	"" ) ;; \
+	esac
+	rm -f $(1)*
+endef
+
+define clone-os-disk
+	: clone-os-disk
+	:    in=$(strip $(1))
+	:    out=$(strip $(2))
+	sudo qemu-img create -f qcow2 -F qcow2 -b $(1) $(2)
+endef
+
+define define-os-domain
+	: define-os-domain
+	:    os=$(strip $(1))
+	:    OS=$($(strip $(1)))
+	:    os-variant=$(KVM_$($(strip $(2)))_VIRT_INSTALL_OS_VARIANT)
+	:    domain=$(notdir $(2))
+	:    disk=$(strip $(2)).qcow2
+	$(VIRT_INSTALL_BASE) \
+		--name=$(notdir $(2)) \
+		--os-variant=$(KVM_$($(strip $(1)))_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$(strip $(2)).qcow2 \
+		--import \
+		--noautoconsole
+endef
+
+##
+##
 ## Build the base domains
 ##
 ##
@@ -838,8 +875,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	: Confirm that there is a tty - else virt-install fails mysteriously
 	tty
 	: clean up old domains
-	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-base)
-	rm -f $(KVM_POOLDIR_PREFIX)$*-base*
+	$(call destroy-os-domain, $@)
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
@@ -899,78 +935,74 @@ $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
 
 
 ##
-## Update, installing missing packages.
+## Create and update the base domain, installing missing packages.
+##
+## Repeated kvm-$(OS)-upgrade calls upgrade (not fresh install) the
+## domain.  Use kvm-$(OS)-downgrade to force this.
 ##
 
-$(patsubst %, kvm-%-update, $(KVM_PLATFORMS)): \
-kvm-%-update:
-	test -n "$(KVM_$($*)_UPDATE_DOMAIN)"
-	rm -f $(KVM_$($*)_UPDATE_DOMAIN)
-	$(MAKE) $(KVM_$($*)_UPDATE_DOMAIN)
+$(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS)): \
+kvm-%-downgrade:
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade*
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade.vm
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-update, $(KVM_PLATFORMS)): \
-$(KVM_POOLDIR_PREFIX)%-update: | \
-		$(KVM_POOLDIR_PREFIX)%-base \
+$(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS)): \
+kvm-%-upgrade:
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
+		| \
+		$(KVM_HOST_OK)
+	: result is called ...-upgrade, not -upgrade.vm
+	$(call destroy-os-domain, $(basename $@))
+	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
+	$(call define-os-domain, $*, $(basename $@))
+	touch $@
+
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
+		| \
 		testing/libvirt/%/update.sh \
 		$(KVM_HOST_OK)
-	: $* $($*) $@ $<
-	: clean up old domains
-	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-update)
-	rm -f $(KVM_$($*)_UPDATE_DOMAIN)*
-	: create disk
-	sudo qemu-img create -f qcow2 -F qcow2 \
-		-b $(KVM_$($*)_BASE_DOMAIN).qcow2 \
-		$(KVM_$($*)_UPDATE_DOMAIN).qcow2
-	: build VM
-	$(VIRT_INSTALL_BASE) \
-		--name=$(KVM_FIRST_PREFIX)$*-update \
-		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
-		--disk=cache=writeback,path=$(KVM_POOLDIR_PREFIX)$*-update.qcow2 \
-		--import \
-		--noautoconsole
-	: update
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*-update \
-		-- /source/testing/libvirt/$*/update.sh
+	$(KVMSH) --shutdown $(notdir $@) -- /source/testing/libvirt/$*/update.sh
 	touch $@
 
-KVM_NETBSD_UPDATE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-update
-
 ##
-## Transmogrify the domain ready for build/testing.
+## Create the build domain by transmogrifying the updated domain.
 ##
 
-$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
-kvm-%-transmogrify:
-	test -n "$(KVM_$($*)_TRANSMOGRIFY_DOMAIN)"
-	rm -f $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)
-	$(MAKE) $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)
+$(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
+kvm-%-build:
+	test -n "$(KVM_$($*)_BUILD_DOMAIN)"
+	rm -f $(KVM_$($*)_BUILD_DOMAIN)
+	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-transmogrify, $(KVM_PLATFORMS)): \
-$(KVM_POOLDIR_PREFIX)%-transmogrify: | \
-		$(KVM_POOLDIR_PREFIX)%-update \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-build, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
+		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
-	: $* $($*) $@ $<
-	: clean up old domains
-	$(call destroy-kvm-domain,$(KVM_FIRST_PREFIX)$*-transmogrify)
-	rm -f $(KVM_$($*)_TRANSMOGRIFY_DOMAIN)*
-	: create disk
-	sudo qemu-img create -f qcow2 -F qcow2 \
-		-b $(KVM_$($*)_BASE_DOMAIN).qcow2 \
-		$(KVM_$($*)_TRANSMOGRIFY_DOMAIN).qcow2
-	: build VM
-	$(VIRT_INSTALL_BASE) \
-		--name=$(KVM_FIRST_PREFIX)$*-transmogrify \
-		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
-		--disk=cache=writeback,path=$(KVM_POOLDIR_PREFIX)$*-transmogrify.qcow2 \
-		--import \
-		--noautoconsole
-	: transmogrify
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*-transmogrify \
-		-- /source/testing/libvirt/$*/transmogrify.sh
+	$(call destroy-os-domain, $@)
+	$(call clone-os-disk, $<.qcow2, $@.qcow2)
+	$(call define-os-domain, $*, $@)
+	$(KVMSH) --shutdown $(notdir $@) -- /source/testing/libvirt/$*/transmogrify.sh
 	touch $@
 
-KVM_NETBSD_TRANSMOGRIFY_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-transmogrify
+KVM_NETBSD_BUILD_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-build
+
+##
+## Install libreswan into the build.
+##
+
+$(patsubst %, kvm-%-install, $(KVM_PLATFORMS)): \
+kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
+	$(KVMSH) $(KVMSH_FLAGS) \
+		--chdir . \
+		$(notdir $<) \
+		-- \
+		'gmake install-base'
 
 #
 # Create + package install + package upgrade the base domain
