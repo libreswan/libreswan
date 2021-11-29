@@ -6,7 +6,7 @@
 # Everything interesting, such as installing packages, configuring and
 # transmogrifying, happens after the domain is rebooted.
 
-text
+cmdline
 reboot
 lang en_US.UTF-8
 keyboard us
@@ -43,8 +43,8 @@ part / --asprimary --grow
 
 # don't confuse things
 -libreswan
-# only one network config
--NetworkManager
+# Temporary; will install systemd-networkd after reboot
+NetworkManager
 -network-scripts
 # misc
 -firewalld
@@ -75,7 +75,8 @@ part / --asprimary --grow
 selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
-# Add a default network configuration for swanbase.
+
+# Provide a default network configuration for "fedora".
 
 # Since systemd-networkd matches .network files in lexographical
 # order, this zzz.*.network file is only matched when all else fails.
@@ -88,7 +89,7 @@ selinux --permissive
 cat > /etc/systemd/network/zzz.eth0.network << EOF
 [Match]
 Name=eth0
-Host=swanbase
+Host=fedora
 [Network]
 Description=fallback for when no other interface matches
 DHCP=yes
@@ -98,22 +99,7 @@ systemctl enable systemd-networkd.servide
 systemctl enable systemd-networkd-wait-online.service
 systemctl disable systemd-resolved
 
-# F28-F31 dracut leaves network config files there. remove it to be safe
-# Drcut cannot use systemd-networkd or create an initial configuration yet.
-# https://github.com/dracutdevs/dracut/issues/670
-rm -fr /etc/sysconfig/network-scripts/i*
-
-# Danger: the transmogrify scripts use the presence of this file as an
-# indicator that systemd-networkd is being used.
-
-cat > /etc/sysconfig/network-scripts/README.libreswan << EOF
-Do not add files here.  networkig is handled by systemd-networkd
-/etc/systemd/network
-networkctl
-EOF
-
 cat << EOD >> /etc/issue
-
 The root password is "swan"
 EOD
 
@@ -141,8 +127,6 @@ EOF
     mkdir /${mount}
 done
 
-systemctl enable systemd-networkd
-systemctl enable systemd-networkd-wait-online
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
