@@ -45,6 +45,7 @@ west #
 	replay-window 0 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
+| replay-window=0 so disabling esn
 | kernel: setting IPsec SA replay-window to 128
 | xfrm: setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
 | kernel: setting IPsec SA replay-window to 128
@@ -65,7 +66,7 @@ west #
 002 "westnet-eastnet-zero" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-zero" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-zero" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-zero" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+002 "westnet-eastnet-zero" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
 1v1 "westnet-eastnet-zero" #2: sent Quick Mode request
 004 "westnet-eastnet-zero" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -74,6 +75,7 @@ west #
 	replay-window 0 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
+| replay-window=0 so disabling esn
 | kernel: setting IPsec SA replay-window to 0
 | xfrm: setting IPsec SA replay-window to 0 using old-style req
 | kernel: setting IPsec SA replay-window to 0
@@ -105,6 +107,7 @@ west #
 	replay-window 0 flag af-unspec
 west #
  grep replay-window /tmp/pluto.log
+| replay-window=0 so disabling esn
 | kernel: setting IPsec SA replay-window to 64
 | xfrm: setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
 | kernel: setting IPsec SA replay-window to 64
