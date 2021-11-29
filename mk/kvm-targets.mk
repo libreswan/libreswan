@@ -86,7 +86,6 @@ KVM_NSS_LDFLAGS ?=
 
 KVM_MAKEFLAGS ?= \
 	-j$(shell expr $(KVM_WORKERS) + 1) \
-	OBJDIR=$(KVM_OBJDIR) \
 	USE_EFENCE=$(KVM_USE_EFENCE) \
 	ALL_ALGS=$(KVM_ALL_ALGS) \
 	USE_SECCOMP=$(KVM_USE_SECCOMP) \
@@ -294,8 +293,6 @@ KVMSH ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmrunner.py
 KVMRESULTS ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmresults.py
 KVMTEST ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmtest.py
-
-KVM_OBJDIR = OBJ.kvm
 
 RPM_VERSION = $(shell make showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
@@ -1367,7 +1364,7 @@ kvm-clean: kvm-uninstall
 kvm-clean: kvm-keys-clean
 kvm-clean: kvm-test-clean
 kvm-clean:
-	rm -rf $(KVM_OBJDIR)
+	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS) swanbase)
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
@@ -1401,7 +1398,7 @@ ifeq ($(KVM_INSTALL_RPM), true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/RPMS/x86_64/libreswan*rpm /source/'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/SRPMS/libreswan*rpm /source/'
 else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'export OBJDIR=$(KVM_OBJDIR) ; make $(KVM_MAKEFLAGS) install-base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) install-base'
 ifeq ($(KVM_USE_FIPSCHECK),true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) install-fipshmac'
 endif
