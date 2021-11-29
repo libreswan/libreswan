@@ -57,7 +57,17 @@ def compile_prompt(logger, username=None, hostname=None):
             dollar = "#"
         else:
             dollar = "$"
-    prompt = (r'(' +
+
+    # XXX:
+    #
+    # There's this new fangled thing called "bracketed paste mode"
+    # which throws magic escape characters into the output stream.
+    # The below will match them letting KVMSH login.  This doesn't do
+    # anything for *.console.verbose.txt that will likely also be full
+    # of it.
+
+    prompt = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
+              r'(' +
               (
                   (hostname or HOSTNAME_PATTERN)
               ) +
@@ -66,7 +76,7 @@ def compile_prompt(logger, username=None, hostname=None):
                   r'\[' +
                   r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
                   r'@' +
-                  r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or HOSTNAME_PATTERN) + r')' +
+                  r'(?P<' + HOSTNAME_GROUP + r'>' + HOSTNAME_PATTERN + r')' +
                   r' ' +
                   r'(?P<' + BASENAME_GROUP + r'>' + (BASENAME_PATTERN) + r')' +
                   r'(?P<' + STATUS_GROUP + r'>'   + (STATUS_PATTERN) + r')' +
