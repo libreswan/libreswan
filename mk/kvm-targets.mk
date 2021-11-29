@@ -960,16 +960,18 @@ $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 	$(call destroy-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
-	$(KVMSH) --shutdown $(basename $(notdir $@)) -- \
-		/testing/libvirt/$*/install.sh $(KVM_$($*)_INSTALL_PACKAGES)
+	$(KVMSH) $(basename $(notdir $@)) -- /testing/libvirt/$*/install.sh $(KVM_$($*)_INSTALL_PACKAGES)
+	: only shutdown when install works
+	$(KVMSH) --shutdown $(basename $(notdir $@))
 	touch $@
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 		| $(KVM_HOST_OK)
 	: upgrade $($*) ...
-	$(KVMSH) --shutdown $(notdir $@) -- \
-		/testing/libvirt/$*/upgrade.sh $(KVM_$($*)_UPGRADE_PACKAGES)
+	$(KVMSH) $(notdir $@) -- /testing/libvirt/$*/upgrade.sh $(KVM_$($*)_UPGRADE_PACKAGES)
+	: only shutdown when upgrade works
+	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
 ##
@@ -989,8 +991,9 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(call destroy-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
 	$(call define-os-domain, $*, $@, $(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS))
-	$(KVMSH) --shutdown $(notdir $@) -- \
-		/source/testing/libvirt/$*/transmogrify.sh
+	$(KVMSH) $(notdir $@) -- /source/testing/libvirt/$*/transmogrify.sh
+	: shutdown needed after transmogrify but only shutdown when transmogrify works
+	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
 KVM_NETBSD_BUILD_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-build
@@ -1006,7 +1009,9 @@ kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
 		--chdir . \
 		$(notdir $<) \
 		-- \
-		'gmake install-base'
+		gmake install-base
+	$(KVMSH) --shutdown $(notdir $<)
+
 
 #
 # Create + package install + package upgrade the base domain
