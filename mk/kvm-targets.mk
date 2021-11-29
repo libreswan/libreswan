@@ -30,7 +30,6 @@
 KVM_GUEST_OS ?= f32
 
 include testing/libvirt/$(KVM_GUEST_OS).mk
-include testing/libvirt/debian.mk
 
 include testing/libvirt/fedora/fedora.mk
 include testing/libvirt/netbsd/netbsd.mk

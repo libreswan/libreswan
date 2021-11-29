@@ -12,6 +12,12 @@
 DOCKER_CMD ?= sudo podman
 D ?= testing/docker
 
+TESTING_DEB_PACKAGES ?= \
+	bind9utils \
+	python3-pexpect \
+	python3-openssl \
+	python3-distutils
+
 DI_T ?= swanbase	#docker image tag
 
 W1 = $(firstword $(subst -, ,$1))
