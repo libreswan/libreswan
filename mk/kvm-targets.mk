@@ -964,8 +964,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 	$(call destroy-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
-	$(if $(KVM_$($*)_PACKAGE_INSTALL), $(KVMSH) $(basename $(notdir $@)) $(KVM_$(*)_PACKAGE_INSTALL))
-	$(if $(KVM_$($*)_DEBUGINFO_INSTALL), $(KVMSH) $(notdir $@) $(KVM_$(*)_DEBUGINFO_INSTALL))
+	$(if $(KVM_$($*)_PACKAGE_INSTALL),   $(KVMSH) $(basename $(notdir $@)) $(KVM_$($*)_PACKAGE_INSTALL))
+	$(if $(KVM_$($*)_DEBUGINFO_INSTALL), $(KVMSH) $(basename $(notdir $@)) $(KVM_$($*)_DEBUGINFO_INSTALL))
 	touch $@
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
