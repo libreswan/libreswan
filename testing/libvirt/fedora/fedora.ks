@@ -15,9 +15,10 @@ rootpw swan
 timezone --utc America/New_York
 # firstboot --disable
 
-# Don't enable the network.  That's handled in %post when
-# systemd-networkd is configured (the machine only needs to come
-# online after a reboot).
+# Don't configure the network (allow NetworkManager)
+#
+# That is handled by transmogrify after systemd-networkd has been
+# installed.
 
 network --hostname fedora
 
@@ -76,28 +77,7 @@ selinux --permissive
 /usr/bin/sed -i -e 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
 
 
-# Provide a default network configuration for "fedora".
-
-# Since systemd-networkd matches .network files in lexographical
-# order, this zzz.*.network file is only matched when all else fails.
-
-# During transmogrification, more specific .network files are
-# installed.  The kernel boot parameters net.ifnames=0 and
-# biosdevname=0 (set way above) force the eth0 names (keeping test
-# output happy).
-
-cat > /etc/systemd/network/zzz.eth0.network << EOF
-[Match]
-Name=eth0
-Host=fedora
-[Network]
-Description=fallback for when no other interface matches
-DHCP=yes
-EOF
-
-systemctl enable systemd-networkd.servide
-systemctl enable systemd-networkd-wait-online.service
-systemctl disable systemd-resolved
+# Keep the root password secret
 
 cat << EOD >> /etc/issue
 The root password is "swan"

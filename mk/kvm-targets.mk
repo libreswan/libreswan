@@ -960,19 +960,20 @@ kvm-%-upgrade:
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 		| $(KVM_HOST_OK)
-	: result is called ...-upgrade, not -upgrade.vm
+	: creating domain ...-upgrade, not -upgrade.vm, hence basename
 	$(call destroy-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
-	$(if $(KVM_$($*)_PACKAGE_INSTALL),   $(KVMSH) $(basename $(notdir $@)) $(KVM_$($*)_PACKAGE_INSTALL))
-	$(if $(KVM_$($*)_DEBUGINFO_INSTALL), $(KVMSH) $(basename $(notdir $@)) $(KVM_$($*)_DEBUGINFO_INSTALL))
+	$(KVMSH) --shutdown $(basename $(notdir $@)) -- \
+		/testing/libvirt/$*/install.sh $(KVM_$($*)_INSTALL_PACKAGES)
 	touch $@
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 		| $(KVM_HOST_OK)
 	: upgrade $($*) ...
-	$(if $(KVM_$($*)_PACKAGE_UPGRADE), $(KVMSH) $(notdir $@) $(KVM_$($*)_PACKAGE_UPGRADE))
+	$(KVMSH) --shutdown $(notdir $@) -- \
+		/testing/libvirt/$*/upgrade.sh $(KVM_$($*)_UPGRADE_PACKAGES)
 	touch $@
 
 ##
@@ -981,9 +982,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 
 $(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
 kvm-%-build:
-	test -n "$(KVM_$($*)_BUILD_DOMAIN)"
-	rm -f $(KVM_$($*)_BUILD_DOMAIN)
-	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-build*
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-build
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-build, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
@@ -993,7 +993,8 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(call destroy-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
 	$(call define-os-domain, $*, $@)
-	$(KVMSH) --shutdown $(notdir $@) -- /source/testing/libvirt/$*/transmogrify.sh
+	$(KVMSH) --shutdown $(notdir $@) -- \
+		/source/testing/libvirt/$*/transmogrify.sh
 	touch $@
 
 KVM_NETBSD_BUILD_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-build

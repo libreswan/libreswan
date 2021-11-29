@@ -1,11 +1,6 @@
 KVM_FEDORA_ISO_URL = https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/x86_64/iso/Fedora-Server-dvd-x86_64-35-1.2.iso
 KVM_FEDORA_KICKSTART_FILE = testing/libvirt/fedora/fedora.ks
 
-# LIE! bit older version to be more complaint with older hosts
-KVM_FEDORA_PACKAGE_INSTALL = dnf install -y $(KVM_FEDORA_INSTALL_PACKAGES)
-KVM_FEDORA_PACKAGE_UPGRADE = dnf upgrade -y $(KVM_FEDORA_UPGRADE_PACKAGES
-KVM_FEDORA_DEBUGINFO_INSTALL = dnf install --enablerepo=*-debuginfo -y $(KVM_FEDORA_DEBUGINFO_PACKAGES)
-
 #
 # NSS+NSPR
 #
@@ -122,7 +117,8 @@ KVM_FEDORA_STRONGSWAN_PACKAGES = strongswan libgcrypt
 
 KVM_FEDORA_INSTALL_PACKAGES += \
     $(KVM_FEDORA_KERNEL_PACKAGES) \
-    $(KVM_UPGRADE_PACKAGES)
+    $(KVM_FEDORA_UPGRADE_PACKAGES) \
+    $(KVM_FEDORA_DEBUGINFO_PACKAGES)
 
 KVM_FEDORA_UPGRADE_PACKAGES += \
     ElectricFence \
@@ -185,6 +181,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     softhsm \
     strace \
     systemd-devel \
+    systemd-networkd \
     tar \
     tcpdump \
     telnet \
@@ -199,7 +196,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     $(KVM_FEDORA_STRONGSWAN_PACKAGES) \
 
 
-KVM_FEDORA_DEBUGINFO += \
+KVM_FEDORA_DEBUGINFO_PACKAGES += \
 	ElectricFence-debuginfo \
 	audit-libs-debuginfo \
 	conntrack-tools-debuginfo \
