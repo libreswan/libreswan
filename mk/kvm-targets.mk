@@ -727,14 +727,9 @@ uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
 # are stored in $(KVM_POOLDIR) and not $(KVM_LOCALDIR).
 #
 
-KVM_TEST_SUBNETS = \
-	$(notdir $(wildcard testing/libvirt/net/192_*))
-
-KVM_TEST_NETWORKS = \
-	$(call add-kvm-prefixes, $(KVM_TEST_SUBNETS))
-
-KVM_TEST_NETWORK_FILES = \
-	$(addsuffix .net, $(addprefix $(KVM_POOLDIR)/, $(KVM_TEST_NETWORKS)))
+KVM_TEST_NETWORK_FILES = $(wildcard testing/libvirt/net/192_*)
+KVM_TEST_SUBNETS = $(notdir $(KVM_TEST_NETWORK_FILES))
+KVM_TEST_NETWORKS = $(call add-kvm-prefixes, $(KVM_TEST_SUBNETS))
 
 .PRECIOUS: $(KVM_TEST_NETWORK_FILES)
 
@@ -854,12 +849,14 @@ define define-os-domain
 	:    os-variant=$(KVM_$($(strip $(2)))_VIRT_INSTALL_OS_VARIANT)
 	:    domain=$(notdir $(2))
 	:    disk=$(strip $(2)).qcow2
+	:    extra=$(3)
 	$(VIRT_INSTALL_BASE) \
 		--name=$(notdir $(2)) \
 		--os-variant=$(KVM_$($(strip $(1)))_VIRT_INSTALL_OS_VARIANT) \
 		--disk=cache=writeback,path=$(strip $(2)).qcow2 \
 		--import \
-		--noautoconsole
+		--noautoconsole \
+		$(3)
 endef
 
 ##
@@ -991,12 +988,13 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		$(KVM_HOST_OK)
 	$(call destroy-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
-	$(call define-os-domain, $*, $@)
+	$(call define-os-domain, $*, $@, $(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS))
 	$(KVMSH) --shutdown $(notdir $@) -- \
 		/source/testing/libvirt/$*/transmogrify.sh
 	touch $@
 
 KVM_NETBSD_BUILD_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-build
+KVM_NETBSD_BUILD_VIRT_INSTALL_FLAGS = $(foreach subnet, $(KVM_TEST_SUBNETS), --network=network:$(KVM_FIRST_PREFIX)$(subnet),model=virtio)
 
 ##
 ## Install libreswan into the build.
