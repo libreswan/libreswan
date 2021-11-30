@@ -6,7 +6,6 @@ import os
 import sys
 import socket
 import shutil
-import distutils.dir_util
 import subprocess
 import pexpect
 import glob
@@ -411,11 +410,9 @@ if hostname != "nic":
     if args.userland in ("libreswan", "openswan"):
 
         # this brings in the nss *.db files that are path-specific -
-        # they have pathnames hardcoded inside the file
-        # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
-        # "/etc/").  This default database contains a default key-pair
-        # for basic testing.
-        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir)
+        # they have pathnames hardcoded inside the file.  This default
+        # database contains a default key-pair for basic testing.
+        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
         # fill in any missing dirs
         for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
             if not os.path.isdir(dir):
