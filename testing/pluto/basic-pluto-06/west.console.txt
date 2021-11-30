@@ -18,8 +18,6 @@ down
 west #
  # ipsec start
 west #
- ipsec _stackmanager start
-west #
  # disable selinux as we are running stuff from /tmp
 west #
  setenforce 0

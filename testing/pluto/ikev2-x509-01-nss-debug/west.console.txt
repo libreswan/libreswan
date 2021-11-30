@@ -19,8 +19,6 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ipsec _stackmanager start
-west #
  mkdir /tmp/tmpnss-west
 west #
  export NSS_DISABLE_UNLOAD=no

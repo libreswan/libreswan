@@ -12,8 +12,6 @@ east #
 east #
  ifconfig eth1:6 192.1.2.29 netmask 255.255.255.0
 east #
- ipsec _stackmanager start
-east #
  #export PLUTO_CRYPTO_HELPER_DELAY=10
 east #
  export EF_DISABLE_BANNER=1

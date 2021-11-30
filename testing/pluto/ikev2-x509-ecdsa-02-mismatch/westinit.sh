@@ -10,7 +10,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # Tuomo: why doesn't ipsec checknss --settrust work here?
 certutil -M -d sql:/etc/ipsec.d -n "strongSwan CA - strongSwan" -t CT,,
 #ipsec start
-ipsec _stackmanager start
 ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2

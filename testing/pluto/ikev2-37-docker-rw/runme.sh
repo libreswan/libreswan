@@ -1,6 +1,5 @@
 #!/bin/bash
 # on the host
-# ipsec _stackmanager start
 # ipsec start
 # ipsec status should show stack is xfrm
 #

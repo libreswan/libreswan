@@ -5,8 +5,6 @@ west #
  ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- ipsec _stackmanager start
-west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
  ../../guestbin/wait-until-pluto-started

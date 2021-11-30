@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 # prepare to run many plutos
 setenforce 0
-ipsec _stackmanager start
 # keep num= in roadinit.sh and roadrun.sh in sync
 num=99
 sysctl -w net.ipv4.ip_forward=1

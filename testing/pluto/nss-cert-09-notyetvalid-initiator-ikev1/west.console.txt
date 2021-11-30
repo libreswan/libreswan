@@ -3,8 +3,6 @@ Preparing X.509 files
 west #
  certutil -d sql:/etc/ipsec.d -D -n east
 west #
- ipsec _stackmanager start
-west #
  mkdir -p /var/run/pluto
 west #
  # Set a time in the future so notyetvalid and east certs are valid

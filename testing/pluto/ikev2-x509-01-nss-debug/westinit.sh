@@ -7,7 +7,6 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-ipsec _stackmanager start
 mkdir /tmp/tmpnss-west
 export NSS_DISABLE_UNLOAD=no
 export NSS_SDB_USE_CACHE=yes

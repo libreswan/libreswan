@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- ipsec _stackmanager start
-west #
  service auditd stop > /dev/null 2> /dev/null
 west #
  rm  -f /var/log/audit/audit.log
