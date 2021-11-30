@@ -84,8 +84,8 @@ KVM_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
 KVM_NSS_CFLAGS ?=
 KVM_NSS_LDFLAGS ?=
 
-KVM_MAKEFLAGS ?= \
-	-j$(shell expr $(KVM_WORKERS) + 1) \
+KVM_MAKEFLAGS ?= -j$(shell expr $(KVM_WORKERS) + 1)
+KVM_FEDORA_MAKEFLAGS = \
 	USE_EFENCE=$(KVM_USE_EFENCE) \
 	ALL_ALGS=$(KVM_ALL_ALGS) \
 	USE_SECCOMP=$(KVM_USE_SECCOMP) \
@@ -1000,8 +1000,9 @@ kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
 		--chdir . \
 		$(notdir $<) \
 		-- \
-		gmake install-base
+		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
 	$(KVMSH) --shutdown $(notdir $<)
+
 
 
 #
@@ -1392,9 +1393,9 @@ ifeq ($(KVM_INSTALL_RPM), true)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/RPMS/x86_64/libreswan*rpm /source/'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'cp -f ~/rpmbuild/SRPMS/libreswan*rpm /source/'
 else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) install-base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) $(KVM_FEDORA_MAKEFLAGS) install-base'
 ifeq ($(KVM_USE_FIPSCHECK),true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) install-fipshmac'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'make $(KVM_MAKEFLAGS) $(KVM_FEDORA_MAKEFLAGS) install-fipshmac'
 endif
 endif
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
@@ -1531,7 +1532,6 @@ Configuration:
     $(call kvm-var-value,KVM_GID)
     $(call kvm-var-value,KVM_CONNECTION)
     $(call kvm-var-value,KVM_VIRSH)
-    $(call kvm-var-value,KVM_MAKEFLAGS)
     $(call kvm-var-value,KVM_GATEWAY)
 	the shared NATting gateway;
 	used by the base domain along with any local domains
@@ -1539,11 +1539,17 @@ Configuration:
     $(call kvm-var-value,KVM_GUEST_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
 
+    $(call kvm-var-value,KVM_LINUX_MAKEFLAGS)
+    $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
+    $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
+    $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
+    $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
+
     $(call kvm-var-value,KVM_BASIC_HOSTS)
     $(call kvm-var-value,KVM_DEBIAN_HOSTS)
     $(call kvm-var-value,KVM_FEDORA_HOSTS)
-    $(call kvm-var-value,KVM_OPENBSD_HOSTS)
     $(call kvm-var-value,KVM_NETBSD_HOSTS)
+    $(call kvm-var-value,KVM_OPENBSD_HOSTS)
 
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
