@@ -165,6 +165,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     $(KVM_FEDORA_NSS_PACKAGES) \
     ocspd \
     openldap-devel \
+    openssl \
     p11-kit-trust \
     pam-devel \
     patch \
