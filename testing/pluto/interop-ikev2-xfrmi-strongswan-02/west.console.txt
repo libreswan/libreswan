@@ -38,7 +38,7 @@ west #
 [IKE] IKE_SA west[1] established between 192.1.2.45[west]...192.1.2.23[east]
 [IKE] scheduling rekeying in XXXs
 [IKE] maximum IKE_SA lifetime XXXs
-[CFG] selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
+[CFG] selected proposal: ESP:AES_GCM_16_128
 [IKE] CHILD_SA westnet-eastnet{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 initiate completed successfully
 west #
