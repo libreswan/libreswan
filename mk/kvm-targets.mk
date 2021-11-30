@@ -249,12 +249,19 @@ openbsd = OPENBSD
 
 KVM_PLATFORMS = debian fedora netbsd openbsd
 
+KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
+KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
 KVM_NETBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),netbsd)
 KVM_OPENBSD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),openbsd)
-KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
-KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
+KVM_LOCALDIR_PREFIXES = \
+	$(call strip-prefix, \
+		$(foreach prefix, $(KVM_PREFIXES), \
+			$(addprefix $(KVM_LOCALDIR)/, $(prefix))))
+add-kvm-localdir-prefixes = \
+	$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
+		$(patsubst %, $(prefix)%, $(1)))
 
 $(patsubst %, kvm-%, $(KVM_PLATFORMS)): \
 kvm-%:
@@ -269,8 +276,18 @@ KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
 KVM_BASIC_DOMAINS = $(call add-kvm-prefixes, $(KVM_BASIC_HOSTS))
 
 KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
-KVM_FEDORA_CLONES = $(call add-kvm-prefixes, $(KVM_FEDORA_HOSTS))
-KVM_OPENBSD_CLONES = $(call add-kvm-prefixes, $(KVM_OPENBSD_HOSTS))
+
+# just domain names
+KVM_DEBIAN_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_DEBIAN_HOSTS))
+KVM_FEDORA_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_FEDORA_HOSTS))
+KVM_NETBSD_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_NETBSD_HOSTS))
+KVM_OPENBSD_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_OPENBSD_HOSTS))
+
+# full path
+KVM_DEBIAN_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_DEBIAN_HOSTS))
+KVM_FEDORA_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FEDORA_HOSTS))
+KVM_OPENBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_OPENBSD_HOSTS))
+KVM_NETBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_NETBSD_HOSTS))
 
 KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
@@ -1168,8 +1185,8 @@ $(KVM_BASE_DISK_CLONES): \
 	$(call shadow-kvm-disk,$(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
 
-KVM_BUILD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_FEDORA_CLONES)))
-$(KVM_BUILD_DISK_CLONES): \
+KVM_FEDORA_DISK_CLONES = $(addsuffix .qcow2, $(KVM_FEDORA_CLONES))
+$(KVM_FEDORA_DISK_CLONES): \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
 		$(KVM_LOCALDIR)
@@ -1177,7 +1194,7 @@ $(KVM_BUILD_DISK_CLONES): \
 	$(call shadow-kvm-disk,$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
 
-KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_OPENBSD_CLONES)))
+KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(KVM_OPENBSD_CLONES))
 $(KVM_OPENBSD_DISK_CLONES): \
 		| \
 		$(KVM_OPENBSD_BASE_DOMAIN) \
@@ -1290,7 +1307,7 @@ $(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
 # out-of-order destruction.
 
 $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_FEDORA_CLONES))
+	$(addprefix uninstall-kvm-domain-, $(KVM_FEDORA_DOMAIN_CLONES))
 
 $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN_CLONES))
@@ -1314,7 +1331,7 @@ define kvm-hosts-domains
   kvm-$(1)-basic-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_BASIC_DOMAINS))
 
   .PHONY: kvm-$(1)-install-domains
-  kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_FEDORA_CLONES))
+  kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_FEDORA_DOMAIN_CLONES))
 
   .PHONY: kvm-$(1)-test-domains
   kvm-$(1)-test-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_TEST_DOMAINS))
@@ -1345,7 +1362,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # After kvm-clean, kvm-install should rebuild/install pluto.
 #
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
-# $(KVM_FEDORA_CLONES), delete both $(KVM_FEDORA_CLONES) and
+# $(KVM_FEDORA_DOMAIN_CLONES), delete both $(KVM_FEDORA_DOMAIN_CLONES) and
 # $(KVM_BUILD_DOMAIN) the install domains were cloned from.  This way,
 # in addition to giving kvm-install a 100% fresh start (no dependence
 # on 'make uninstall') the next test run also gets entirely new
@@ -1402,9 +1419,10 @@ endif
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
 
 .PHONY: kvm-install
-kvm-install: $(foreach domain, $(KVM_FEDORA_CLONES), uninstall-kvm-domain-$(domain))
+kvm-install: $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_FEDORA_CLONES) $(KVM_BASIC_DOMAINS) $(KVM_OPENBSD_CLONES), install-kvm-domain-$(domain))
+	$(MAKE) $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
+	$(MAKE) $(addsuffix .xml, $(KVM_OPENBSD_CLONES))
 	$(MAKE) kvm-keys
 
 .PHONY: kvm-bisect
@@ -1475,7 +1493,7 @@ $(foreach domain, $(KVM_DOMAINS), \
 kvm-shutdown: $(addprefix shutdown-kvm-domain-,$(KVM_DOMAINS))
 
 .PHONY: kvm-shutdown-install-domains
-kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_FEDORA_CLONES))
+kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_FEDORA_DOMAIN_CLONES))
 
 .PHONY: kvm-shutdown-test-domains
 kvm-shutdown-test-domains: $(addprefix shutdown-kvm-domain-,$(KVM_TEST_DOMAINS))
@@ -1518,14 +1536,22 @@ Configuration:
 
     $(call kvm-var-value,KVM_SOURCEDIR)
     $(call kvm-var-value,KVM_TESTINGDIR)
-    $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
+
+    $(call kvm-var-value,KVM_POOLDIR)
 	directory for storing the shared base VM;
 	should be relatively permanent storage
-    $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
+    $(call kvm-var-value,KVM_LOCALDIR)
 	directory for storing the VMs local to this build tree;
 	can be temporary storage (for instance /tmp)
+
     $(call kvm-var-value,KVM_PREFIXES)
+    $(call kvm-var-value,KVM_FIRST_PREFIX)
+    $(call kvm-var-value,KVM_PREFIX)
+    $(call kvm-var-value,KVM_POOLDIR_PREFIX)
+    $(call kvm-var-value,KVM_LOCALDIR_PREFIXES)
+
     $(call kvm-var-value,KVM_WORKERS)
+
     $(call kvm-var-value,KVM_GROUP)
     $(call kvm-var-value,KVM_PIDFILE)
     $(call kvm-var-value,KVM_UID)
@@ -1539,25 +1565,33 @@ Configuration:
     $(call kvm-var-value,KVM_GUEST_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
 
+    $(call kvm-var-value,KVM_BUILD_HOST)
+    $(call kvm-var-value,KVM_BUILD_DOMAIN)
+
+    $(call kvm-var-value,KVM_BASE_HOST)
+    $(call kvm-var-value,KVM_BASE_DOMAIN)
+    $(call kvm-var-value,KVM_BASE_DOMAIN_CLONES)
+
     $(call kvm-var-value,KVM_LINUX_MAKEFLAGS)
+
     $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
     $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
 
     $(call kvm-var-value,KVM_BASIC_HOSTS)
+
     $(call kvm-var-value,KVM_DEBIAN_HOSTS)
     $(call kvm-var-value,KVM_FEDORA_HOSTS)
     $(call kvm-var-value,KVM_NETBSD_HOSTS)
     $(call kvm-var-value,KVM_OPENBSD_HOSTS)
 
-    $(call kvm-var-value,KVM_BASE_HOST)
-    $(call kvm-var-value,KVM_BASE_DOMAIN)
-    $(call kvm-var-value,KVM_BASE_DOMAIN_CLONES)
+    $(call kvm-var-value,KVM_BASIC_CLONES)
 
-    $(call kvm-var-value,KVM_BUILD_HOST)
-    $(call kvm-var-value,KVM_FEDORA_HOSTS)
-    $(call kvm-var-value,KVM_BUILD_DOMAIN)
+    $(call kvm-var-value,KVM_DEBIAN_DOMAIN_CLONES)
+    $(call kvm-var-value,KVM_FEDORA_DOMAIN_CLONES)
+    $(call kvm-var-value,KVM_NETBSD_DOMAIN_CLONES)
+    $(call kvm-var-value,KVM_OPENBSD_DOMAIN_CLONES)
 
     $(call kvm-var-value,KVM_DEBIAN_CLONES)
     $(call kvm-var-value,KVM_FEDORA_CLONES)
