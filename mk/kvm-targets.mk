@@ -255,7 +255,6 @@ KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
 KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
-KVM_LOCALDIR_PREFIX = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX)
 
 $(patsubst %, kvm-%, $(KVM_PLATFORMS)): \
 kvm-%:
@@ -309,13 +308,14 @@ endef
 
 
 #
-# Detect a fresh boot the host machine.  Use this as a dependency for
-# actions that should only be run once after each boot.
+# Detect a fresh boot of the host machine.  Use this as a dependency
+# for actions that should only be run once after each boot.
 #
-# This file is updated during boot then left unchanged.
+# The first time $(MAKE) is run after a boot, this file is touched,
+# any further rules leave the file alone.
 #
 
-KVM_FRESH_BOOT_FILE = $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).boot.ok
+KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR_PREFIX).boot.ok
 $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log)) | $(KVM_LOCALDIR)
 	touch $@
 
@@ -327,7 +327,7 @@ $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log
 
 KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 
-$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).entropy.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
+$(KVM_POOLDIR_PREFIX).entropy.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	@if test ! -r $(KVM_ENTROPY_FILE); then				\
 		echo no entropy to check ;				\
 	elif test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 ; then		\
@@ -346,7 +346,7 @@ $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).entropy.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_L
 	fi
 	touch $@
 
-KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).entropy.ok
+KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).entropy.ok
 
 #
 # Check that the QEMUDIR is writeable by us.
@@ -357,7 +357,7 @@ KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).entropy.ok
 
 KVM_QEMUDIR ?= /var/lib/libvirt/qemu
 
-$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
+$(KVM_POOLDIR_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	@if ! test -w $(KVM_QEMUDIR) ; then				\
 		echo ;							\
 		echo "  The directory:" ;				\
@@ -373,17 +373,17 @@ $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_L
 	fi
 	touch $@
 
-KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).qemudir.ok
+KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).qemudir.ok
 
 #
 # ensure that NFS is running
 #
 
-$(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).nfs.ok: $(KVM_FRESH_BOOT_FILE) $(KVM_TESTINGDIR)/libvirt/nfs.sh | $(KVM_LOCALDIR)
+$(KVM_POOLDIR_PREFIX).nfs.ok: testing/libvirt/nfs.sh $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	sh $(KVM_TESTINGDIR)/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR)
 	touch $@
 
-KVM_HOST_OK += $(KVM_LOCALDIR)/$(KVM_FIRST_PREFIX).nfs.ok
+KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).nfs.ok
 
 #
 # Don't create $(KVM_POOLDIR) - let the user do that as it lives
