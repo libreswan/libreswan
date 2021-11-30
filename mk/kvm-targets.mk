@@ -230,11 +230,12 @@ KVM_BASE_HOST = swan$(KVM_GUEST_OS)base
 
 KVM_BUILD_HOST = build
 
-KVM_BASIC_HOSTS = nic
+KVM_DEBIAN_HOSTS =
+KVM_FEDORA_HOSTS = east west north road nic
+KVM_NETBSD_HOSTS =
 KVM_OPENBSD_HOSTS = openbsde openbsdw
-KVM_FEDORA_HOSTS = east west north road
 
-KVM_TEST_HOSTS ?= $(KVM_BASIC_HOSTS) $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
+KVM_TEST_HOSTS ?= $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
 KVM_HOSTS = $(sort $(KVM_BASE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
 #
@@ -271,9 +272,7 @@ kvm-%:
 # Older stuff
 
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
-KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN) $(KVM_BASIC_DOMAINS)
-
-KVM_BASIC_DOMAINS = $(call add-kvm-prefixes, $(KVM_BASIC_HOSTS))
+KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN)
 
 KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
 
@@ -1327,9 +1326,6 @@ define kvm-hosts-domains
   .PHONY: kvm-$(1)-build-domain
   kvm-$(1)-build-domain: $$(addprefix $(1)-kvm-domain-, $$(KVM_BUILD_DOMAIN))
 
-  .PHONY: kvm-$(1)-basic-domains
-  kvm-$(1)-basic-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_BASIC_DOMAINS))
-
   .PHONY: kvm-$(1)-install-domains
   kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_FEDORA_DOMAIN_CLONES))
 
@@ -1421,7 +1417,7 @@ endif
 .PHONY: kvm-install
 kvm-install: $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES) $(KVM_BASIC_DOMAINS), install-kvm-domain-$(domain))
+	$(MAKE) $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), install-kvm-domain-$(domain))
 	$(MAKE) $(addsuffix .xml, $(KVM_OPENBSD_CLONES))
 	$(MAKE) kvm-keys
 
@@ -1579,8 +1575,6 @@ Configuration:
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
 
-    $(call kvm-var-value,KVM_BASIC_HOSTS)
-
     $(call kvm-var-value,KVM_DEBIAN_HOSTS)
     $(call kvm-var-value,KVM_FEDORA_HOSTS)
     $(call kvm-var-value,KVM_NETBSD_HOSTS)
@@ -1617,9 +1611,6 @@ Configuration:
 $(foreach prefix,$(KVM_PREFIXES), \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| test group $(prefix) \
-  $(crlf)$(sp)$(sp)$(sp) +----- \
-  $(foreach basic,$(KVM_BASIC_HOSTS),$(call strip-prefix,$(prefix))$(basic)) \
-  \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp) +-- \
   $(foreach install,$(KVM_FEDORA_HOSTS),$(call strip-prefix,$(prefix))$(install)) \
   \
