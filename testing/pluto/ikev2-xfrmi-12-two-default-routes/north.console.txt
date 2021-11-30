@@ -28,7 +28,7 @@ north #
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped overrun mcast   
+    RX: bytes  packets  errors  dropped missed  mcast   
     0          0        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
     0          0        0       0       0       0       
@@ -43,7 +43,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped overrun mcast   
+    RX: bytes  packets  errors  dropped missed  mcast   
     336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
     336        4        0       0       0       0       
@@ -62,7 +62,7 @@ north #
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped overrun mcast   
+    RX: bytes  packets  errors  dropped missed  mcast   
     336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
     336        4        0       0       0       0       
@@ -77,7 +77,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ip -s link show ipsec3
 X: ipsec3@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped overrun mcast   
+    RX: bytes  packets  errors  dropped missed  mcast   
     336        4        0       0       0       0       
     TX: bytes  packets  errors  dropped carrier collsns 
     336        4        0       0       0       0       
