@@ -71,8 +71,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 west #
  # send packet over the clear exception - should return connection refused
 west #
- echo 'test' | nc -v -w 5 192.1.2.23 7
-Ncat: Version 7.80 ( https://nmap.org/ncat )
+ echo 'test' | nc -w 5 192.1.2.23 7
 Ncat: Connection refused.
 west #
  # counters should be zero
@@ -82,8 +81,7 @@ west #
 west #
  # send packet over the 'tunnel' should get encrypted
 west #
- echo 'test' | nc -v -w 5 192.1.2.23 80
-Ncat: Version 7.80 ( https://nmap.org/ncat )
+ echo 'test' | nc -w 5 192.1.2.23 80
 Ncat: Connection refused.
 west #
  ipsec trafficstatus

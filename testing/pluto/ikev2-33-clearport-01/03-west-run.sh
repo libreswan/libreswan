@@ -4,7 +4,7 @@ ipsec auto --route west-east
 ipsec auto --route pass-7
 ip xfrm policy
 # send packet over the clear exception - should return connection refused
-echo 'test' | nc -v -w 5 192.1.2.23 7
+echo 'test' | nc -w 5 192.1.2.23 7
 # send packet over the 'tunnel' that's negotiating - shoudl get blocked
-echo 'test' | nc -v -w 5 192.1.2.23 80
+echo 'test' | nc -w 5 192.1.2.23 80
 echo done

@@ -3,11 +3,11 @@ ipsec auto --up west-east
 ipsec auto --route pass-7
 ip xfrm policy
 # send packet over the clear exception - should return connection refused
-echo 'test' | nc -v -w 5 192.1.2.23 7
+echo 'test' | nc -w 5 192.1.2.23 7
 # counters should be zero
 ipsec trafficstatus
 # send packet over the 'tunnel' should get encrypted
-echo 'test' | nc -v -w 5 192.1.2.23 80
+echo 'test' | nc -w 5 192.1.2.23 80
 ipsec trafficstatus
 # counters should be zero
 echo done
