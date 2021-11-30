@@ -242,13 +242,16 @@ KVM_HOSTS = $(sort $(KVM_BASE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 # Domains
 #
 
-# so that $($*) conversts % to upper case
+# so that $($*) conversts % to upper case; should this be UPPER->lower?
 fedora = FEDORA
 debian = DEBIAN
 netbsd = NETBSD
 openbsd = OPENBSD
 
-KVM_PLATFORMS = debian fedora netbsd openbsd
+#KVM_PLATFORMS += debian
+KVM_PLATFORMS += fedora
+KVM_PLATFORMS += netbsd
+KVM_PLATFORMS += openbsd
 
 KVM_DEBIAN_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),debian)
 KVM_FEDORA_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX),fedora)
@@ -723,8 +726,8 @@ $(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_POOLDIR)
 
 # zap dependent domains
 
-uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY):
+uninstall-kvm-network-$(KVM_GATEWAY):
 
 
 #
@@ -764,7 +767,7 @@ $(KVM_POOLDIR)/%.net: | $(KVM_POOLDIR)
 .PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(KVM_TEST_NETWORK_FILES)
 .PHONY: kvm-uninstall-test-networks
-kvm-uninstall-test-networks: kvm-uninstall-test-domains
+kvm-uninstall-test-networks: kvm-uninstall
 	$(foreach network_file, $(KVM_TEST_NETWORK_FILES), \
 		$(call destroy-kvm-network,$(notdir $(basename $(network_file))))$(crlf) \
 		rm -f $(network_file)$(crlf))
@@ -1003,7 +1006,6 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
-KVM_NETBSD_BUILD_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-build
 KVM_NETBSD_BUILD_VIRT_INSTALL_FLAGS = $(foreach subnet, $(KVM_TEST_SUBNETS), --network=network:$(KVM_FIRST_PREFIX)$(subnet),model=virtio)
 
 ##
@@ -1128,7 +1130,7 @@ $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).transmogrified: \
 
 .PHONY: kvm-transmogrify
 kvm-transmogrify: $(KVM_HOST_OK)
-	$(MAKE) kvm-uninstall-local-domains kvm-shutdown-base-domain
+	$(MAKE) kvm-uninstall kvm-shutdown-base-domain
 	: to back to the upgrade snapshot - looses transmogrify
 	$(SNAPSHOT_DELETE) transmogrified $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
 	$(SNAPSHOT_REVERT) upgraded $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).qcow2
@@ -1277,42 +1279,6 @@ $(foreach prefix, $(KVM_PREFIXES), \
 
 
 #
-# Rules to uninstall individual domains
-#
-
-define uninstall-kvm-domain-DOMAIN
-  #(info uninstall-kvm-domain-DOMAIN domain=$(1) dir=$(2))
-  .PHONY: uninstall-kvm-domain-$(1)
-  uninstall-kvm-domain-$(1):
-	: uninstall-kvm-domain domain=$(1) dir=$(2)
-	$$(call destroy-kvm-domain,$(1))
-	rm -f $(2)/$(1).xml
-	rm -f $(2)/$(1).upgraded
-	rm -f $(2)/$(1).transmogrified
-	rm -f $(2)/$(1).kickstarted
-	rm -f $(2)/$(1).qcow2
-	rm -f $(2)/$(1).img
-endef
-
-$(foreach domain, $(KVM_BASE_DOMAIN) $(notdir $(KVM_OPENBSD_BASE_DOMAIN)), \
-	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_POOLDIR))))
-$(foreach domain, $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
-
-# Direct dependencies.  This is so that a primitive like
-# uninstall-kvm-domain-clone isn't run until all its dependencies,
-# such as uninstall-kvm-domain-build, have been run.  Using
-# kvm-uninstall-* rules leads to indirect dependencies and
-# out-of-order destruction.
-
-$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_FEDORA_DOMAIN_CLONES))
-
-$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN_CLONES))
-
-
-#
 # Generic kvm-* rules, point at the *-kvm-* primitives defined
 # elsewhere.
 #
@@ -1339,8 +1305,6 @@ endef
 
 $(eval $(call kvm-hosts-domains,install))
 
-$(eval $(call kvm-hosts-domains,uninstall))
-
 $(eval $(call kvm-hosts-domains,shutdown))
 
 #
@@ -1365,25 +1329,31 @@ $(eval $(call kvm-hosts-domains,shutdown))
 # domains.
 
 .PHONY: kvm-uninstall
-kvm-uninstall: kvm-uninstall-local-domains
+kvm-uninstall:
+	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call destroy-os-domain, $(clone))))
+	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
+	$(call destroy-os-domain, $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN))
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-keys-clean
 kvm-clean: kvm-test-clean
 kvm-clean:
-	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS) swanbase)
+	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS))
+	rm -rf OBJ.*.swanbase
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
-kvm-purge: kvm-uninstall-local-domains
 kvm-purge: kvm-uninstall-test-networks
+	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
+	: not base
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge
-kvm-demolish: kvm-uninstall-base-domain
 kvm-demolish: kvm-uninstall-base-network
+	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
+	$(call destroy-os-domain, $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN))
 
 #
 # kvm-install target
@@ -1415,7 +1385,8 @@ endif
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
 
 .PHONY: kvm-install
-kvm-install: $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), uninstall-kvm-domain-$(domain))
+kvm-install:
+	$(foreach clone, $(KVM_FEDORA_CLONES), $(call undefine-os-domain, $(clone)))
 	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
 	$(MAKE) $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), install-kvm-domain-$(domain))
 	$(MAKE) $(addsuffix .xml, $(KVM_OPENBSD_CLONES))
@@ -1634,10 +1605,7 @@ Domains and networks:
     kvm-install-build-domain (kvm-uninstall-build-domain)
         - (un)install this directory's build domain
         - install dependencies: local gateway; test networks
-    kvm-install-test-domains (kvm-uninstall-test-domains)
-        - (un)install this directory's test domains
-        - install dependencies: build domain; test networks
-    kvm-install-local-domains (kvm-uninstall-local-domains)
+    kvm-install (kvm-uninstall)
         - (un)install this directory's  build and test domains
         - install dependencies: see above
 
@@ -1687,11 +1655,6 @@ Manually building and modifying the base domain and network:
       during boot
 
   also:
-
-    kvm-install-base-domain
-    kvm-uninstall-base-domain
-
-      all the above
 
     kvm-install-gateway
     kvm-uninstall-gateway
