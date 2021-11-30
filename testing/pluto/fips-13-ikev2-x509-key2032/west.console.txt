@@ -1,10 +1,6 @@
 /testing/guestbin/swan-prep --x509 --x509name key2032
 Preparing X.509 files
 west #
- fipscheck
-usage: fipscheck [-s <hmac-suffix>] <paths-to-files>
-fips mode is off
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #

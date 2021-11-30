@@ -10,10 +10,6 @@ east #
  modutil -dbdir sql:/etc/ipsec.d -chkfips true
 FIPS mode enabled.
 east #
- fipscheck
-usage: fipscheck [-s <hmac-suffix>] <paths-to-files>
-fips mode is on
-east #
  ipsec start
 Redirecting to: [initsystem]
 east #
