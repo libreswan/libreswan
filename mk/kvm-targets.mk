@@ -833,8 +833,8 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 ##
 ##
 
-define destroy-os-domain
-	: destroy-os-domain
+define undefine-os-domain
+	: undefine-os-domain
 	:    path=$(strip $(1))
 	:    domain=$(notdir $(1))
 	case "$$($(VIRSH) domstate $(notdir $(1)))" in \
@@ -887,7 +887,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	: Confirm that there is a tty - else virt-install fails mysteriously
 	tty
 	: clean up old domains
-	$(call destroy-os-domain, $@)
+	$(call undefine-os-domain, $@)
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
@@ -967,7 +967,7 @@ $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 		| $(KVM_HOST_OK)
 	: creating domain ...-upgrade, not -upgrade.vm, hence basename
-	$(call destroy-os-domain, $(basename $@))
+	$(call undefine-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
 	$(KVMSH) $(basename $(notdir $@)) -- /testing/libvirt/$*/install.sh $(KVM_$($*)_INSTALL_PACKAGES)
@@ -998,7 +998,7 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
-	$(call destroy-os-domain, $@)
+	$(call undefine-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
 	$(call define-os-domain, $*, $@, $(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS))
 	$(KVMSH) $(notdir $@) -- /source/testing/libvirt/$*/transmogrify.sh
@@ -1330,9 +1330,9 @@ $(eval $(call kvm-hosts-domains,shutdown))
 
 .PHONY: kvm-uninstall
 kvm-uninstall:
-	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call destroy-os-domain, $(clone))))
-	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
-	$(call destroy-os-domain, $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN))
+	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call undefine-os-domain, $(clone))))
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
+	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN))
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
@@ -1345,15 +1345,15 @@ kvm-clean:
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
 kvm-purge: kvm-uninstall-test-networks
-	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
 	: not base
 	rm -f $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN).upgraded
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge
 kvm-demolish: kvm-uninstall-base-network
-	$(foreach platform, $(KVM_PLATFORMS), $(call destroy-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
-	$(call destroy-os-domain, $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN))
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
+	$(call undefine-os-domain, $(KVM_POOLDIR)/$(KVM_BASE_DOMAIN))
 
 #
 # kvm-install target
