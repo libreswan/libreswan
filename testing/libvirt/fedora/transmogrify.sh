@@ -181,7 +181,12 @@ sysctl -q -p
 restorecon -R /etc/sysctl.conf
 
 
-# clobber some anoying services
+title run unbound-keygen once
+
+systemctl start unbound-keygen.service
+
+
+title Clobber some anoying services
 
 # System Security Services Daemon (i.e., real PAM)
 run systemctl disable sssd.service
