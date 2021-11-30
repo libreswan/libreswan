@@ -179,11 +179,17 @@ CHECK selinux audit records
 
 if test -f /sbin/ausearch ; then
     log=OUTPUT/post-mortem.$(hostname).ausearch.log
-    # ignore status
-    ausearch -r -m avc -ts boot 2>&1 | tee ${log}
+    # ignore status, save to file as might contain key=(null), ulgh!
+    ausearch -r -m avc -ts boot > ${log} 2>&1 || true
     # some warnings are OK, some are not :-(
-    if test -s ${log} && grep -v \
-	    -e '^type=AVC .* avc:  denied  { remount } ' \
+    if test -s ${log} && \
+	    grep -v \
+		 -e '^type=AVC .* avc:  denied  { remount } ' \
+		 -e '^type=AVC .*systemd-network' \
+		 -e '^type=SYSCALL .*systemd-network' \
+		 -e '^type=CWD ' \
+		 -e '^type=PATH .*dbus' \
+		 -e '^type=PROCTITLE.*systemd-networkd' \
 	    ${log} ; then
 	FAIL
 
