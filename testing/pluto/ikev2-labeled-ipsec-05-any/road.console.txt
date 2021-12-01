@@ -57,8 +57,8 @@ Certificate Nickname                                         Trust Attributes
 road #
  # trigger traffic
 road #
- echo "quit" | runcon -t netutils_t timeout 15 nc  -p 4301 -vvv 192.0.2.254 4300 2>&1 | sed "s/received in .*$/received .../"
-Ncat: Version 7.80 ( https://nmap.org/ncat )
+ echo "quit" | runcon -t netutils_t timeout 15 nc  -p 4301 -vv 192.0.2.254 4300 2>&1 | sed -e 's/received in .*$/received .../' -e 's/Version .*/Version .../'
+Ncat: Version ...
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
 NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
 libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
