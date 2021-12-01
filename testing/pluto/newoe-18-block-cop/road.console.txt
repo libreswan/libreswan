@@ -24,16 +24,12 @@ road #
  echo "initdone"
 initdone
 road #
- # use -w due to local block policy
+ # blocked
 road #
- ping -n -w 2 -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-ping: sendmsg: Operation not permitted
-ping: sendmsg: Operation not permitted
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
 road #
- # wait on OE retransmits and rekeying
+ # (pointlessly) wait on OE retransmits and rekeying
 road #
  sleep 5
 road #
@@ -99,12 +95,8 @@ road #
 road #
  # ping should fail on outgoing block rule
 road #
- ping -n -w 2 -c 2 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-ping: sendmsg: Operation not permitted
-ping: sendmsg: Operation not permitted
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
 road #
  echo done
 done

@@ -1,6 +1,6 @@
-# block policy causing ping to hang
-ping -n -w 2 -c 1 -I 192.1.3.209 192.1.2.23
-# wait on OE retransmits and rekeying
+# block policy will cause ping to fail
+../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+# (pointlessly?) wait on OE retransmits and rekeying
 sleep 5
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
