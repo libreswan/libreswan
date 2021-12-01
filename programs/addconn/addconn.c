@@ -137,6 +137,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 	LSW_SECCOMP_ADD(lseek);
 	LSW_SECCOMP_ADD(munmap);
 	LSW_SECCOMP_ADD(mprotect);
+	LSW_SECCOMP_ADD(newfstatat);
 	LSW_SECCOMP_ADD(open);
 	LSW_SECCOMP_ADD(openat);
 	LSW_SECCOMP_ADD(pipe2);
