@@ -236,7 +236,10 @@ KVM_NETBSD_HOSTS =
 KVM_OPENBSD_HOSTS = openbsde openbsdw
 
 KVM_TEST_HOSTS ?= $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
-KVM_HOSTS = $(sort $(KVM_BASE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
+KVM_HOSTS =
+KVM_HOSTS += $(KVM_BASE_HOST)
+KVM_HOSTS += $(KVM_BUILD_HOST)
+KVM_HOSTS += $(KVM_TEST_HOSTS))
 
 #
 # Domains
@@ -277,7 +280,7 @@ kvm-%:
 KVM_BASE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BASE_HOST))
 KVM_BASE_DOMAIN_CLONES = $(KVM_BUILD_DOMAIN)
 
-KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
+KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora-build)
 
 # just domain names
 KVM_DEBIAN_DOMAIN_CLONES = $(call add-kvm-prefixes, $(KVM_DEBIAN_HOSTS))
@@ -583,7 +586,7 @@ $(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
 		$(KVM_HOST_OK)
 	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
-	$(MAKE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+	$(MAKE) kvm-fedora-build
 	$(MAKE) kvm-keys-clean
 	:
 	: disable FIPS
@@ -1189,10 +1192,10 @@ $(KVM_BASE_DISK_CLONES): \
 KVM_FEDORA_DISK_CLONES = $(addsuffix .qcow2, $(KVM_FEDORA_CLONES))
 $(KVM_FEDORA_DISK_CLONES): \
 		| \
-		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2 \
+		$(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)fedora-build \
 		$(KVM_LOCALDIR)
 	: copy-build-disk $@
-	$(call shadow-kvm-disk,$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2,$@.tmp)
+	$(call clone-os-disk,$(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)fedora-build.qcow2,$@.tmp)
 	mv $@.tmp $@
 
 KVM_OPENBSD_DISK_CLONES = $(addsuffix .qcow2, $(KVM_OPENBSD_CLONES))
@@ -1201,7 +1204,7 @@ $(KVM_OPENBSD_DISK_CLONES): \
 		$(KVM_OPENBSD_BASE_DOMAIN) \
 		$(KVM_LOCALDIR)
 	: copy-build-disk $@
-	$(call shadow-kvm-disk,$(KVM_OPENBSD_BASE_DOMAIN).qcow2,$@.tmp)
+	$(call clone-os-disk,$(KVM_OPENBSD_BASE_DOMAIN).qcow2,$@.tmp)
 	mv $@.tmp $@
 
 #
@@ -1224,6 +1227,7 @@ $(KVM_OPENBSD_DISK_CLONES): \
 # $(KVM_BASE_DOMAIN)'s disk is already in use.
 #
 
+ifdef NDEF
 $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 		| \
 		$(KVM_BASE_GATEWAY_FILE) \
@@ -1241,6 +1245,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
 install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+endif
 
 #
 # Create the test domains
@@ -1366,6 +1371,7 @@ kvm-demolish: kvm-uninstall-base-network
 # is booted, this is done using a series of sub-makes (without this,
 # things barf because the build domain things its disk is in use).
 
+ifdef NOTDEF
 .PHONY: kvm-$(KVM_BUILD_DOMAIN)-install
 kvm-$(KVM_BUILD_DOMAIN)-install: | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 ifeq ($(KVM_INSTALL_RPM), true)
@@ -1383,12 +1389,13 @@ endif
 endif
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_BUILD_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
+endif
 
 .PHONY: kvm-install
 kvm-install:
 	$(foreach clone, $(KVM_FEDORA_CLONES), $(call undefine-os-domain, $(clone)))
-	$(MAKE) kvm-$(KVM_BUILD_DOMAIN)-install
-	$(MAKE) $(foreach domain, $(KVM_FEDORA_DOMAIN_CLONES), install-kvm-domain-$(domain))
+	$(MAKE) kvm-fedora-install
+	$(MAKE) $(addsuffix .xml, $(KVM_FEDORA_CLONES))
 	$(MAKE) $(addsuffix .xml, $(KVM_OPENBSD_CLONES))
 	$(MAKE) kvm-keys
 
