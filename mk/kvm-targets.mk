@@ -361,7 +361,7 @@ endif
 # yet passed?  Since each alternative has merit, let the user decide
 # by providing both kvm-test and kvm-retest.
 
-KVM_TESTS ?= testing/pluto
+KVM_TESTS ?= $(KVM_TESTINGDIR)/pluto
 
 # Given a make command like:
 #
