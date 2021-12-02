@@ -21,7 +21,8 @@ fi
 # export the testing directory
 
 for d in "$@" ; do
-    if sudo exportfs | grep ${d} ; then
+    # this exports both $(srcdir) and $(srcdir)/testing; oops
+    if sudo exportfs -s | grep "^${d} " ; then
 	echo ${d} already exported
     else
 	echo "exporting ${d} ..."
