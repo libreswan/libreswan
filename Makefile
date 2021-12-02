@@ -111,7 +111,7 @@ local-clean-base:
 # $(OBJDIR) only to then delete it.
 
 .PHONY: distclean
-distclean: clean-kvm-keys
+distclean: kvm-clean-keys
 	rm -f $(RPMTMPDIR) $(RPMDEST) out.*
 	rm -rf testing/pluto/*/OUTPUT*
 	rm -rf OBJ.* $(OBJDIR)

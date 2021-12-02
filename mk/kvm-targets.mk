@@ -514,8 +514,8 @@ $(KVM_KEYS):	$(KVM_TESTINGDIR)/x509/dist_certs.py \
 	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
 	touch $@
 
-.PHONY: kvm-clean-keys
-kvm-clean-keys:
+.PHONY: kvm-clean-keys kvm-keys-clean
+kvm-clean-keys kvm-keys-clean:
 	: careful output mixed with repo files
 	rm -rf $(KVM_TESTINGDIR)/x509/*/
 	rm -f $(KVM_TESTINGDIR)/x509/nss-pw
