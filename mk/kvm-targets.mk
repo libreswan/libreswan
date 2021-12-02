@@ -421,9 +421,7 @@ $(eval $(call kvm-test,kvm-check kvm-test, --test-status "good"))
 $(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passed))
 
 # clean up; accept pretty much everything
-KVM_TEST_CLEAN_TARGETS = \
-	clean-kvm-check kvm-check-clean \
-	clean-kvm-test kvm-test-clean
+KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
 .PHONY: $(KVM_TEST_CLEAN_TARGETS)
 $(KVM_TEST_CLEAN_TARGETS):
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
@@ -755,6 +753,9 @@ endef
 ##
 ##
 
+.PHONY: kvm-base
+kvm-base: $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS))
+
 $(patsubst %, kvm-%-base, $(KVM_PLATFORMS)): \
 kvm-%-base:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
@@ -851,6 +852,9 @@ kvm-%-upgrade:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade  # not .*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
+.PHONY: kvm-upgrade
+kvm-upgrade: $(KVM_POOLDIR_PREFIX)fedora-upgrade
+
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/install.sh \
@@ -880,6 +884,9 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 ##
 ## Create the build domain by transmogrifying the updated domain.
 ##
+
+.PHONY: kvm-transmogrify
+kvm-transmogrify: $(KVM_POOLDIR_PREFIX)fedora-build
 
 $(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
 kvm-%-build:
@@ -967,16 +974,12 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 #
 # Get rid of (almost) everything
 #
-# XXX: don't depend on targets that trigger a KVM build.
+# After running the operation, kvm-install will:
 #
-# After kvm-purge, kvm-install should perform an upgrade and
-# transmogrify.  Force this by deleting the .upgraded file.
-#
-# After kvm-uninstall, kvm-install should rebuild the local domains
-# (but not do anything requiring network access or taking lots of
-# time; hence no upgrade or transmogrify).
-#
-# After kvm-clean, kvm-install should rebuild/install pluto.
+# kvm-uninstall:            transmogrify,              install
+# kvm-clean-keys:                                keys, install
+# kvm-clean:                transmogrify, build, keys, install
+# kvm-purge:       upgrade, transmogrify, build, keys, install
 #
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
 # build domain, delete both the clones and the build domain and
@@ -999,16 +1002,16 @@ kvm-shutdown:
 		$(foreach variant, base upgrade build, \
 			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-$(variant))))
 
-.PHONY: kvm-uninstall
-kvm-uninstall:
+.PHONY: kvm-uninstall kvm-clean-install
+kvm-uninstall kvm-clean-install:
 	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call undefine-os-domain, $(clone))))
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
 	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN))
 
 .PHONY: kvm-clean
-kvm-clean: kvm-uninstall
+kvm-clean: kvm-clean-install
 kvm-clean: kvm-clean-keys
-kvm-clean: kvm-test-clean
+kvm-clean: kvm-clean-check
 kvm-clean:
 	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS))
 	rm -rf OBJ.*.swanbase
