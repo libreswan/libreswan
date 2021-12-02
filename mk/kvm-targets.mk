@@ -48,8 +48,10 @@ include testing/libvirt/openbsd/openbsd67.mk
 # where things live and what gets created
 #
 
+# can be a separate directories
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
@@ -147,9 +149,9 @@ VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng=type=random,device=/dev/random
 VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
-VIRT_SOURCEDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=source
-VIRT_TESTINGDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-VIRT_POOLDIR ?= --filesystem=type=mount,accessmode=squash,source=$(KVM_POOLDIR),target=pool
+VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
+VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
+VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
 	--check=path_in_use=off \
@@ -167,10 +169,6 @@ VIRT_INSTALL_FLAGS = \
 	$(VIRT_SOURCEDIR) \
 	$(VIRT_TESTINGDIR) \
 	$(VIRT_POOLDIR)
-
-VIRT_INSTALL_BASE = $(VIRT_INSTALL) $(VIRT_INSTALL_FLAGS) $(VIRT_INSTALL_BASE_FLAGS)
-VIRT_INSTALL_BUILD = $(VIRT_INSTALL) $(VIRT_INSTALL_FLAGS) $(VIRT_INSTALL_BUILD_FLAGS)
-
 
 #
 # Hosts
@@ -210,10 +208,6 @@ add-kvm-localdir-prefixes = \
 	$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 		$(patsubst %, $(prefix)%, $(1)))
 
-# Older stuff
-
-KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora-build)
-
 # full path
 KVM_DEBIAN_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_DEBIAN_HOSTS))
 KVM_FEDORA_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FEDORA_HOSTS))
@@ -224,23 +218,20 @@ KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
 KVM_LOCAL_DOMAINS = $(sort $(KVM_TEST_DOMAINS))
 
-KVM_DOMAINS =  $(sort $(KVM_KEYS_DOMAIN) $(KVM_LOCAL_DOMAINS) $(XXX_WHAT_ABOUT_NEW_DOMAINS))
+KVM_DOMAINS =  $(sort $(KVM_LOCAL_DOMAINS) $(XXX_WHAT_ABOUT_NEW_DOMAINS))
 
 #
 # Other utilities and directories
 #
 
-KVMSH ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVMRUNNER ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmrunner.py
-KVMRESULTS ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmresults.py
-KVMTEST ?= $(KVM_PYTHON) $(abs_top_srcdir)/testing/utils/kvmtest.py
+KVMSH ?= $(KVM_PYTHON) testing/utils/kvmsh.py
+KVMRUNNER ?= $(KVM_PYTHON) testing/utils/kvmrunner.py
+KVMRESULTS ?= $(KVM_PYTHON) testing/utils/kvmresults.py
+KVMTEST ?= $(KVM_PYTHON) testing/utils/kvmtest.py
 
 RPM_VERSION = $(shell make showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
 RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
-
-# file to mark keys are up-to-date
-KVM_KEYS = testing/x509/keys/up-to-date
 
 
 #
@@ -312,11 +303,11 @@ $(KVM_POOLDIR_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).qemudir.ok
 
 #
-# ensure that NFS is running
+# ensure that NFS is running and everything is exported
 #
 
 $(KVM_POOLDIR_PREFIX).nfs.ok: testing/libvirt/nfs.sh $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
-	sh $(KVM_TESTINGDIR)/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR)
+	sh testing/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
 	touch $@
 
 KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).nfs.ok
@@ -390,8 +381,8 @@ web-pages-disabled:
 
 # Run the testsuite.
 #
-# - depends on kvm-keys and not $(KVM_KEYS) so that the check that the
-#   keys are up-to-date is run.
+# - depends on kvm-keys-ok and not kvm-keys or $(KVM_KEYS) so that the
+#   check that the keys are up-to-date is run.
 #
 # - need local domains shutdown as, otherwise, test domains can refuse
 #   to boot because the domain they were cloned from is still running.
@@ -467,68 +458,72 @@ kvm-diffs:
 # "dist_certs.py" always writes its certificates to $(dirname $0).
 # Get around this by running a copy of dist_certs.py placed in /tmp.
 
+# file to mark keys are up-to-date
+KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find testing/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
+KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora-build)
 
 .PHONY: kvm-keys
 kvm-keys:
 	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown
-	$(MAKE) $(KVM_POOLDIR_PREFIX)fedora-build
-	$(MAKE) kvm-keys-clean
+	$(MAKE) kvm-clean-keys
 	$(MAKE) $(KVM_KEYS)
 
-$(KVM_KEYS):	$(top_srcdir)/testing/x509/dist_certs.py \
-		$(top_srcdir)/testing/x509/openssl.cnf \
-		$(top_srcdir)/testing/x509/strongswan-ec-gen.sh \
-		$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh \
+$(KVM_KEYS):	$(KVM_TESTINGDIR)/x509/dist_certs.py \
+		$(KVM_TESTINGDIR)/x509/openssl.cnf \
+		$(KVM_TESTINGDIR)/x509/strongswan-ec-gen.sh \
+		$(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh \
+		| \
+		$(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN) \
 		$(KVM_HOST_OK)
 	:
 	: disable FIPS
 	:
-	$(KVMSH) $(KVM_KEYS_DOMAIN) rm -f /etc/system-fips
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) ./testing/guestbin/fipsoff
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) rm -f /etc/system-fips
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) guestbin/fipsoff
 	:
-	: create the empty /tmp/x509 directory ready for the keys
+	: Copy the scripts to the empty /tmp/x509 directory
 	:
-	$(KVMSH) $(KVM_KEYS_DOMAIN) rm -rf /tmp/x509
-	$(KVMSH) $(KVM_KEYS_DOMAIN) mkdir /tmp/x509
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) rm -rf /tmp/x509
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) mkdir /tmp/x509
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/dist_certs.py /tmp/x509
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/openssl.cnf /tmp/x509
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/strongswan-ec-gen.sh /tmp/x509
 	:
-	: per comments, generate everything in /tmp/x509
+	: run key scripts in /tmp/x509
 	:
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) cp -f ./testing/x509/dist_certs.py /tmp/x509
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) cp -f ./testing/x509/openssl.cnf /tmp/x509
 	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) ./dist_certs.py
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) cp -f ./testing/x509/strongswan-ec-gen.sh /tmp/x509
 	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) ./strongswan-ec-gen.sh
 	:
 	: copy the certs from guest to host in a tar ball to avoid 9fs bug
 	:
-	rm -f testing/x509/kvm-keys.tar
+	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) tar cf kvm-keys.tar '*/' nss-pw
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) cp /tmp/x509/kvm-keys.tar testing/x509
-	cd testing/x509 && tar xf kvm-keys.tar
-	rm -f testing/x509/kvm-keys.tar
+	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) cp kvm-keys.tar /pool/$(KVM_FIRST_PREFIX)kvm-keys.tar
+	cd $(KVM_TESTINGDIR)/x509 && tar xf $(KVM_POOLDIR_PREFIX)kvm-keys.tar
+	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 	:
 	: Also regenerate the DNSSEC keys
 	:
-	$(KVMSH) --chdir . $(KVM_KEYS_DOMAIN) ./testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) ./baseconfigs/all/etc/bind/generate-dnssec.sh
 	:
 	: All done.
 	:
 	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
 	touch $@
 
-KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
-.PHONY: $(KVM_KEYS_CLEAN_TARGETS)
-$(KVM_KEYS_CLEAN_TARGETS):
-	rm -rf testing/x509/*/
-	rm -f testing/x509/nss-pw
-	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
-	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
-	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
-	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
-	rm -f testing/x509/kvm-keys.tar
+.PHONY: kvm-clean-keys
+kvm-clean-keys:
+	: careful output mixed with repo files
+	rm -rf $(KVM_TESTINGDIR)/x509/*/
+	rm -f $(KVM_TESTINGDIR)/x509/nss-pw
+	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/signed/*.signed
+	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.key
+	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.private
+	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/dsset/dsset-*
+	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-ok
@@ -743,8 +738,9 @@ define define-os-domain
 	:    os-variant=$(KVM_$($(strip $(2)))_VIRT_INSTALL_OS_VARIANT)
 	:    domain=$(notdir $(2))
 	:    disk=$(strip $(2)).qcow2
-	:    extra=$(3)
-	$(VIRT_INSTALL_BASE) \
+	:    extra=$(strip $(3))
+	$(VIRT_INSTALL) \
+		$(VIRT_INSTALL_FLAGS) \
 		--name=$(notdir $(2)) \
 		--os-variant=$(KVM_$($(strip $(1)))_VIRT_INSTALL_OS_VARIANT) \
 		--disk=cache=writeback,path=$(strip $(2)).qcow2 \
@@ -778,8 +774,12 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(KVM_FIRST_PREFIX)$*-base \
-		192.168.234.1 $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR) \
-		$(VIRT_INSTALL_BASE) \
+		192.168.234.1 \
+		$(KVM_POOLDIR) \
+		$(KVM_SOURCEDIR) \
+		$(KVM_TESTINGDIR) \
+		$(VIRT_INSTALL) \
+			$(VIRT_INSTALL_FLAGS) \
 			--name=$(KVM_FIRST_PREFIX)$*-base \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
@@ -853,21 +853,26 @@ kvm-%-upgrade:
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
+		testing/libvirt/%/install.sh \
 		| $(KVM_HOST_OK)
 	: creating domain ...-upgrade, not -upgrade.vm, hence basename
 	$(call undefine-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(call define-os-domain, $*, $(basename $@))
-	$(KVMSH) $(basename $(notdir $@)) -- /testing/libvirt/$*/install.sh $(KVM_$($*)_INSTALL_PACKAGES)
+	: install $(notdir $(basename $@)) using install.sh from $(srcdir) and not $(KVM_SOURCEDIR)
+	cp testing/libvirt/$*/install.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).install.sh
+	$(KVMSH) $(notdir $(basename $@)) -- /pool/$(notdir $(basename $@)).install.sh $(KVM_$($*)_INSTALL_FLAGS)
 	: only shutdown when install works
 	$(KVMSH) --shutdown $(basename $(notdir $@))
 	touch $@
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
+		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
-	: upgrade $($*) ...
-	$(KVMSH) $(notdir $@) -- /testing/libvirt/$*/upgrade.sh $(KVM_$($*)_UPGRADE_PACKAGES)
+	: upgrade $($*) using upgrade.sh from $(srcdir) and not $(KVM_SOURCEDIR)
+	cp testing/libvirt/$*/upgrade.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).upgrade.sh
+	$(KVMSH) $(notdir $@) -- /pool/$(notdir $(basename $@)).upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown when upgrade works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -890,7 +895,9 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(call undefine-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
 	$(call define-os-domain, $*, $@, $(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS))
-	$(KVMSH) $(notdir $@) -- /source/testing/libvirt/$*/transmogrify.sh
+	: transmogrify $($*) using transmogrify.sh from $(srcdir) and not $(KVM_SOURCEDIR)
+	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
+	$(KVMSH) $(notdir $@) -- /pool/$(notdir $(basename $@)).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
 	: shutdown needed after transmogrify but only shutdown when transmogrify works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -904,7 +911,7 @@ KVM_NETBSD_BUILD_VIRT_INSTALL_FLAGS = $(foreach subnet, $(KVM_TEST_SUBNETS), --n
 $(patsubst %, kvm-%-install, $(KVM_PLATFORMS)): \
 kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
 	$(KVMSH) $(KVMSH_FLAGS) \
-		--chdir . \
+		--chdir /source \
 		$(notdir $<) \
 		-- \
 		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
@@ -1000,7 +1007,7 @@ kvm-uninstall:
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
-kvm-clean: kvm-keys-clean
+kvm-clean: kvm-clean-keys
 kvm-clean: kvm-test-clean
 kvm-clean:
 	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS))
@@ -1011,6 +1018,7 @@ kvm-purge: kvm-clean
 kvm-purge: kvm-purge-networks
 kvm-purge:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
+	rm -f $(KVM_HOST_OK)
 	: legacy
 	$(call undefine-os-domain, $(KVM_LOCALDIR_PREFIX)build)
 	$(call undefine-os-domain, $(KVM_POOLDIR)/swanf32base)
