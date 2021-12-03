@@ -732,6 +732,7 @@ kvmplutotest	ikev2-connswitch-01		good
 kvmplutotest	ikev2-connswitch-02		good
 kvmplutotest	ikev2-connswitch-02-real-mismatch	good
 kvmplutotest	ikev2-connswitch-03		good
+kvmplutotest	ikev2-connswitch-04-subnet=all	wip
 
 #
 # a test of using X.509 keys
