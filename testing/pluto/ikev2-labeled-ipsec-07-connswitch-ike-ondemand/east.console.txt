@@ -1,12 +1,26 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+east #
+ # build install se module
+east #
+ ../../guestbin/semodule.sh ipsecspd-full-perm.te
+Compiling targeted ipsecspd-full-perm module
+Creating targeted ipsecspd-full-perm.pp policy package
+rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
+ipsecspd-full-perm.pp installed
+east #
+ setenforce 0
+east #
+ # get pluto going
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- # note order; it seems to matter
+ # note order; it seems to matter (but shouldn't)
 east #
  ipsec auto --add west-to-east
 002 "west-to-east": added IKEv2 connection
@@ -17,18 +31,36 @@ east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	security context system_u:system_r:ping_t:s0:c1.c256 
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32
+src 0.0.0.0/0 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32
+src 192.1.2.45/32 dst 0.0.0.0/0
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32
+src 192.1.2.45/32 dst 0.0.0.0/0
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

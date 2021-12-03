@@ -1,0 +1,33 @@
+test connection selection when subnet=0.0.0.0/ vs subnet=<unset> and childless
+
+(not technically connection swiching but related)
+
+This is a sec_label connection where the single "policy" is inserted
+during IKE_AUTH and before any (optional) Child SA traffic selectors
+are examined, hence the decision has to be made without that
+additional knowledge.
+
+Here, being childless, there are no traffic selectors full-stop.
+
+East loads two connections:
+
+      conn distraction
+      	   ...
+      	   policy-label=system_u:object_r:ipsec_spd_t:s0
+      conn west-to-east
+      	   also=distraction
+	   [east]subnet=0.0.0.0/0
+
+bug #1 the connection choice seems random:
+
+- since there's no child included in IKE_AUTH the responder never sees
+  a TS containing [east]subnet=0.0.0.0/0 so that can't be used when
+  selecting a connection
+
+- however, because it is sec_label, which is kind-of-sort-of
+  on-demand, it may be possible to use that to improve the selection.
+
+bug #2 the Child SA doesn't establish
+
+- this is more straight forward, the code rejects the TS when they
+  should be allowed as a narrowing
