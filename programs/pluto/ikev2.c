@@ -72,7 +72,6 @@
 #include "ikev2_redirect.h"
 #include "ikev2_states.h"
 #include "ip_endpoint.h"
-#include "host_pair.h"		/* for find_v2_host_connection() */
 #include "kernel.h"
 #include "iface.h"
 #include "ikev2_notify.h"
