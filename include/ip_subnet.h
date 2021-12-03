@@ -52,13 +52,12 @@ typedef struct {
 	unsigned maskbits;
 } ip_subnet;
 
-#define PRI_SUBNET "%s is_set=%s version=%d bytes="PRI_BYTES" maskbits=%u"
-#define pri_subnet(S, B)						\
-		str_subnet(S, B),					\
-			bool_str((S)->is_set),				\
-			(S)->version,					\
-			pri_bytes((S)->bytes),				\
-			(S)->maskbits
+#define PRI_SUBNET "<subnet: %s IPv%d bytes="PRI_BYTES" maskbits=%u>"
+#define pri_subnet(S)					\
+		((S)->is_set ? "set" : "unset"),	\
+		(S)->version,				\
+		pri_bytes((S)->bytes),			\
+		(S)->maskbits
 
 void pexpect_subnet(const ip_subnet *s, where_t where);
 #define psubnet(S) pexpect_subnet(S, HERE)

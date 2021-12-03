@@ -176,14 +176,10 @@ void pexpect_packet(const ip_packet *packet, where_t where)
 	     */
 	    (packet->protocol->endpoint_requires_non_zero_port && packet->dst.hport == 0)) {
 		if (packet->is_set) {
-			packet_buf b;
-			log_pexpect(where, "invalid packet: "PRI_PACKET,
-				    pri_packet(packet, &b));
+			log_pexpect(where, "invalid packet: "PRI_PACKET, pri_packet(packet));
 
 		}
 	} else if (!packet->is_set) {
-		packet_buf b;
-		log_pexpect(where, "invalid packet: "PRI_PACKET,
-			    pri_packet(packet, &b));
+		log_pexpect(where, "invalid packet: "PRI_PACKET, pri_packet(packet));
 	}
 }

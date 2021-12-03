@@ -46,11 +46,10 @@ typedef struct {
 	/*XXX sec_label?*/
 } ip_packet;
 
-#define PRI_PACKET "%s is_set=%s info=%s src.bytes="PRI_BYTES" dst.bytes="PRI_BYTES" protocol=%s src.hport=%d dst.hport=%d"
-#define pri_packet(S,B)							\
-	str_packet(S, B),						\
-		bool_str((S)->is_set),					\
-		(S)->info != NULL ? (S)->info->ip_name : "<null>",	\
+#define PRI_PACKET "<packet: %s %s src.bytes="PRI_BYTES" dst.bytes="PRI_BYTES" protocol=%s src.hport=%d dst.hport=%d>"
+#define pri_packet(S)							\
+		((S)->is_set ? "set" : "unset"),			\
+		(S)->info != NULL ? (S)->info->ip_name : "IPv?",	\
 		pri_bytes((S)->src.bytes),				\
 		pri_bytes((S)->dst.bytes),				\
 		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\

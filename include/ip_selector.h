@@ -65,13 +65,13 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "<%s-selector is_set=%s version=%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d>"
-#define pri_selector(R,S) R,			\
-		bool_str((S)->is_set),		\
-		(S)->version,			\
-		pri_bytes((S)->bytes),		\
-		(S)->maskbits,			\
-		(S)->ipproto,			\
+#define PRI_SELECTOR "<selector: %s IPv%d bytes="PRI_BYTES" maskbits=%d ipproto=%d hport=%d>"
+#define pri_selector(S)					\
+		((S)->is_set ? "set" : "unset"),	\
+		(S)->version,				\
+		pri_bytes((S)->bytes),			\
+		(S)->maskbits,				\
+		(S)->ipproto,				\
 		(S)->hport
 
 void pexpect_selector(const ip_selector *s, where_t where);

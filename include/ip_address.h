@@ -57,11 +57,10 @@ typedef struct {
 	struct ip_bytes bytes;
 } ip_address;
 
-#define PRI_ADDRESS "%s is_set=%s version=%d bytes="PRI_BYTES
-#define pri_address(A, B)						\
-	str_address(A, B),						\
-		bool_str((A)->is_set),					\
-		(A)->version,						\
+#define PRI_ADDRESS "<address: %sIPv%d bytes="PRI_BYTES">"
+#define pri_address(A)					\
+		((A)->is_set ? "set" : "unset"),	\
+		(A)->version,				\
 		pri_bytes((A)->bytes)
 
 void pexpect_address(const ip_address *a, where_t where);

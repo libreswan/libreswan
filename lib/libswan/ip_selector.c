@@ -72,16 +72,16 @@ bool selector_contains_one_address(const ip_selector selector)
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector == NULL) {
-		return jam_string(buf, "<null-selector");
+		return jam_string(buf, "<selector:null>");
 	}
 
 	if (!selector->is_set) {
-		return jam(buf, PRI_SELECTOR, pri_selector("unset", selector));
+		return jam(buf, PRI_SELECTOR, pri_selector(selector));
 	}
 
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-selector>");
+		return jam(buf, PRI_SELECTOR, pri_selector(selector));
 	}
 
 	size_t s = 0;
@@ -110,7 +110,7 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
+		return jam(buf, PRI_SELECTOR, pri_selector(selector));
 	}
 
 	ip_address address = selector_prefix(*selector);
@@ -536,7 +536,7 @@ void pexpect_selector(const ip_selector *s, where_t where)
 
 	if (s->is_set == false ||
 	    s->version == 0) {
-		log_pexpect(where, PRI_SELECTOR, pri_selector("invalid", s));
+		log_pexpect(where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
 	}
 }
 

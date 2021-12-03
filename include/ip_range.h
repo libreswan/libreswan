@@ -31,12 +31,11 @@ typedef struct {
 	struct ip_bytes end;
 } ip_range;
 
-#define PRI_RANGE "%s is_set=%s version=%d start="PRI_BYTES" end="PRI_BYTES
-#define pri_range(R, B)				\
-	str_range(R, B),			\
-		bool_str((R)->is_set),		\
-		(R)->version,			\
-		pri_bytes((R)->start),		\
+#define PRI_RANGE "<range: %s IPv%d start="PRI_BYTES" end="PRI_BYTES">"
+#define pri_range(R)					\
+		((R)->is_set ? "set" : "unset"),	\
+		(R)->version,				\
+		pri_bytes((R)->start),			\
 		pri_bytes((R)->end)
 
 void pexpect_range(const ip_range *r, where_t where);

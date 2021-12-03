@@ -210,9 +210,7 @@ void pexpect_subnet(const ip_subnet *s, where_t where)
 
 	if (s->is_set == false ||
 	    s->version == 0) {
-		subnet_buf b;
-		log_pexpect(where, "invalid subnet: "PRI_SUBNET,
-			    pri_subnet(s, &b));
+		log_pexpect(where, "invalid subnet: "PRI_SUBNET, pri_subnet(s));
 	}
 }
 
