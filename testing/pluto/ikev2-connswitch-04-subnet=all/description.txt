@@ -1,0 +1,27 @@
+test connection selection when subnet=0.0.0.0/
+
+(not technically connection swiching but related)
+
+East loads two connections:
+
+      conn distraction
+      	   policy-label=system_u:object_r:ipsec_spd_t:s0
+      	   auto=add
+      conn west-to-east
+      	   also=distraction
+
+when west connects, east should choose west-to-east.
+It instead chooses distraction.
+
+Some additional distractions:
+
+    policy-label=system_u:object_r:ipsec_spd_t:s0
+
+         this prevents the child exchange which, through, traffic
+         selectors, would let the responder (east) figure out its
+         mistake
+
+    the add order on east matters
+
+	 adding west-to-east then distraction shows the problem yet
+	 distraction then west-to-east does not
