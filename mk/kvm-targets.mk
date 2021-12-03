@@ -166,8 +166,6 @@ VIRT_INSTALL_FLAGS = \
 	$(VIRT_GATEWAY) \
 	$(VIRT_RND) \
 	$(VIRT_SECURITY) \
-	$(VIRT_SOURCEDIR) \
-	$(VIRT_TESTINGDIR) \
 	$(VIRT_POOLDIR)
 
 #
@@ -729,24 +727,6 @@ define clone-os-disk
 	sudo qemu-img create -f qcow2 -F qcow2 -b $(1) $(2)
 endef
 
-define define-os-domain
-	: define-os-domain
-	:    os=$(strip $(1))
-	:    OS=$($(strip $(1)))
-	:    os-variant=$(KVM_$($(strip $(2)))_VIRT_INSTALL_OS_VARIANT)
-	:    domain=$(notdir $(2))
-	:    disk=$(strip $(2)).qcow2
-	:    extra=$(strip $(3))
-	$(VIRT_INSTALL) \
-		$(VIRT_INSTALL_FLAGS) \
-		--name=$(notdir $(2)) \
-		--os-variant=$(KVM_$($(strip $(1)))_VIRT_INSTALL_OS_VARIANT) \
-		--disk=cache=writeback,path=$(strip $(2)).qcow2 \
-		--import \
-		--noautoconsole \
-		$(3)
-endef
-
 ##
 ##
 ## Build the base domains
@@ -840,12 +820,16 @@ $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
 ## Repeated kvm-$(OS)-upgrade calls upgrade (not fresh install) the
 ## domain.  Use kvm-$(OS)-downgrade to force this.
 ##
+## At this point only /pool is accessable (/source and /testing are
+## not, see below).
 
 $(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS)): \
 kvm-%-downgrade:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
-	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade.vm
+
+.PHONY: kvm-downgrade
+kvm-downgrade: $(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS)): \
 kvm-%-upgrade:
@@ -862,7 +846,13 @@ $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 	: creating domain ...-upgrade, not -upgrade.vm, hence basename
 	$(call undefine-os-domain, $(basename $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
-	$(call define-os-domain, $*, $(basename $@))
+	$(VIRT_INSTALL) \
+		$(VIRT_INSTALL_FLAGS) \
+		--name=$(notdir $(basename $@)) \
+		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$(basename $@).qcow2 \
+		--import \
+		--noautoconsole
 	: install $(notdir $(basename $@)) using install.sh from $(srcdir) and not $(KVM_SOURCEDIR)
 	cp testing/libvirt/$*/install.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).install.sh
 	$(KVMSH) $(notdir $(basename $@)) -- /pool/$(notdir $(basename $@)).install.sh $(KVM_$($*)_INSTALL_FLAGS)
@@ -884,6 +874,10 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 ##
 ## Create the build domain by transmogrifying the updated domain.
 ##
+## Also make /source (KVM_SOURCEDIR) and /testing (KVM_TESTINGDIR)
+## available to the VM.  Setting these during transmogrify means
+## changing them only requires a re-transmogrify and not a full domain
+## rebuild.
 
 .PHONY: kvm-transmogrify
 kvm-transmogrify: $(KVM_POOLDIR_PREFIX)fedora-build
@@ -901,7 +895,16 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		$(KVM_HOST_OK)
 	$(call undefine-os-domain, $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
-	$(call define-os-domain, $*, $@, $(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS))
+	$(VIRT_INSTALL) \
+		$(VIRT_INSTALL_FLAGS) \
+		$(VIRT_SOURCEDIR) \
+		$(VIRT_TESTINGDIR) \
+		--name=$(notdir $@) \
+		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$@.qcow2 \
+		--import \
+		--noautoconsole \
+		$(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS)
 	: transmogrify $($*) using transmogrify.sh from $(srcdir) and not $(KVM_SOURCEDIR)
 	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- /pool/$(notdir $(basename $@)).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
