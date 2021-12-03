@@ -23,7 +23,7 @@ title systemd-networkd
 # Provide a default network configuration for "fedora".
 
 # Since systemd-networkd matches .network files in lexographical
-# order, this zzz.*.network file is only matched when all else fails.  This should a default config but that might confuse 
+# order, this zzz.*.network file is only matched when all else fails.
 
 cat > /etc/systemd/network/zzz.eth0.network << EOF
 [Match]
@@ -157,12 +157,22 @@ echo "MaxAuthTries 32" >> /etc/ssh/sshd_config
 restorecon -R /root/.ssh /etc/ssh
 
 
-title get rid of rm, cp, mv shell aliases
+title replace root/.bashrc
 
-sed -i 's/^alias rm/# alias rm/g' /root/.bashrc
-sed -i 's/^alias cp/# alias cp/g' /root/.bashrc
-sed -i 's/^alias mv/# alias mv/g' /root/.bashrc
-
+cat <<EOF > /root/.bashrc
+# don't flood output with bracket characters
+bind 'set enable-bracketed-paste off'
+# simple path
+PATH=/bin:/sbin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
+# editor
+export EDITOR=vim
+# git stuff
+export GIT_PS1_SHOWDIRTYSTATE=true
+alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
+# stop systemd adding control characters
+export LC_CTYPE=C
+export SYSTEMD_COLOURS=false
+EOF
 
 title files mysteriously needed for systemd-networkd too
 
