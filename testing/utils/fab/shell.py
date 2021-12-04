@@ -181,11 +181,12 @@ class Remote:
         self.hostname = hostname
         self.username = username
         self.prompt = compile_prompt(self.logger, hostname=self.hostname, username=self.username)
+
         # Sync with the remote end by matching a known and unique
         # pattern.  Strictly match PATTERN+PROMPT so that earlier
         # prompts that might also be lurking in the output are
         # discarded.
-        number = str(random.randrange(1000000, 100000000))
+        number = str(random.randrange(10000, 1000000))
         sync = "sync=" + number + "=cnyc"
         self.sendline("echo " + sync)
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
@@ -193,6 +194,13 @@ class Remote:
         # Fix the prompt
         self.run("expr $SHELL : '.*/sh' > /dev/null && set -o promptcmds")
         self.run("PS1=\"" + PS1 + "\"")
+
+        # Re-sync with the prompt; the string setting the prompt
+        # confuses the prompt match code.  OOPS.
+        number = str(random.randrange(10000, 1000000))
+        sync = "sync=" + number + "=cnyc"
+        self.sendline("echo " + sync)
+        self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
 
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
