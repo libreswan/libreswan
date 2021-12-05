@@ -64,6 +64,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(brk);
 		LSW_SECCOMP_ADD(chdir);
 		LSW_SECCOMP_ADD(clone);
+		LSW_SECCOMP_ADD(clone3);
 		LSW_SECCOMP_ADD(connect);
 		LSW_SECCOMP_ADD(dup);
 		LSW_SECCOMP_ADD(dup2);
@@ -71,10 +72,11 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(epoll_create);
 		LSW_SECCOMP_ADD(epoll_create1);
 		LSW_SECCOMP_ADD(epoll_ctl);
-		LSW_SECCOMP_ADD(epoll_wait);
 		LSW_SECCOMP_ADD(epoll_pwait);
+		LSW_SECCOMP_ADD(epoll_wait);
 		LSW_SECCOMP_ADD(execve);
 		LSW_SECCOMP_ADD(faccessat);
+		LSW_SECCOMP_ADD(faccessat2);
 		LSW_SECCOMP_ADD(fadvise64);
 		LSW_SECCOMP_ADD(getcwd);
 		LSW_SECCOMP_ADD(getdents);
@@ -83,8 +85,8 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(geteuid);
 		LSW_SECCOMP_ADD(getgid);
 		LSW_SECCOMP_ADD(getgroups);
-		LSW_SECCOMP_ADD(getpgrp);
 		LSW_SECCOMP_ADD(getpgid);
+		LSW_SECCOMP_ADD(getpgrp);
 		LSW_SECCOMP_ADD(getppid);
 		LSW_SECCOMP_ADD(getrandom); /* for unbound */
 		LSW_SECCOMP_ADD(getrlimit);
@@ -103,6 +105,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(ppoll);
 		LSW_SECCOMP_ADD(prctl);
 		LSW_SECCOMP_ADD(prlimit64);
+		LSW_SECCOMP_ADD(pselect6);
 		LSW_SECCOMP_ADD(readlink);
 		LSW_SECCOMP_ADD(readlinkat);
 		LSW_SECCOMP_ADD(recvfrom);
@@ -123,15 +126,16 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	/* common to pluto and helpers */
 
 	LSW_SECCOMP_ADD(arch_prctl);
+	LSW_SECCOMP_ADD(clock_gettime);
 	LSW_SECCOMP_ADD(close);
-	LSW_SECCOMP_ADD(exit_group);
 	LSW_SECCOMP_ADD(exit);
-	LSW_SECCOMP_ADD(getpid);
-	LSW_SECCOMP_ADD(gettid);
-	LSW_SECCOMP_ADD(gettimeofday);
+	LSW_SECCOMP_ADD(exit_group);
 	LSW_SECCOMP_ADD(fcntl);
 	LSW_SECCOMP_ADD(fstat);
 	LSW_SECCOMP_ADD(futex);
+	LSW_SECCOMP_ADD(getpid);
+	LSW_SECCOMP_ADD(gettid);
+	LSW_SECCOMP_ADD(gettimeofday);
 	LSW_SECCOMP_ADD(lseek);
 	LSW_SECCOMP_ADD(madvise);
 	LSW_SECCOMP_ADD(mmap);
@@ -150,7 +154,6 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	LSW_SECCOMP_ADD(sigreturn);
 	LSW_SECCOMP_ADD(stat);
 	LSW_SECCOMP_ADD(statfs);
-	LSW_SECCOMP_ADD(clock_gettime);
 	LSW_SECCOMP_ADD(waitpid);
 	LSW_SECCOMP_ADD(write);
 
