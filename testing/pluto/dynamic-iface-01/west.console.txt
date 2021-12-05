@@ -32,7 +32,7 @@ west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
  arping -c 1 -U -I eth1 192.1.2.66
-ARPING 192.1.2.66 from 192.1.2.45 eth1
+ARPING 192.1.2.66 from 192.1.2.66 eth1
 Sent 1 probes (1 broadcast(s))
 Received 0 response(s)
 west #
