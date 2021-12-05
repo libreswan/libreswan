@@ -700,7 +700,7 @@ kvmplutotest	ikev2-child-rekey-05		wip # it exists, wasnt in thelist?
 kvmplutotest	ikev2-child-rekey-06-deadlock	good
 kvmplutotest	ikev2-child-rekey-07-deadlock	good
 kvmplutotest	ikev2-child-rekey-08-deadlock	wip
-kvmplutotest	ikev2-child-rekey-09-windows	good
+kvmplutotest	ikev2-child-rekey-09-windows	wip	github:576
 kvmplutotest	ikev2-child-rekey-10-impair-rekey-initiate-subnet	good
 kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-supernet	good
 kvmplutotest	ikev2-child-rekey-10-impair-rekey-respond-subnet	good
