@@ -139,7 +139,6 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     git \
     glibc-devel \
     gnutls-utils \
-    hping3 \
     htop \
     iftop \
     ike-scan \

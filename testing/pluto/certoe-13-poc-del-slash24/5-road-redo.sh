@@ -4,7 +4,7 @@ ipsec whack --trafficstatus
 ip xfrm state
 ip xfrm policy
 # we use a different trigger so we do not hit original left over larval state
-hping -c 1 --udp  192.1.2.23
+echo hi | socat - UDP4:192.1.2.23:1
 # wait on OE to re-establish IPsec SA; should show established tunnel and no bare shunts
 ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
 ipsec whack --shuntstatus
