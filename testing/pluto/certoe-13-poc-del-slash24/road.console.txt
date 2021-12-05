@@ -114,8 +114,9 @@ road #
 road #
  hping -c 1 --udp  192.1.2.23
 HPING 192.1.2.23 (eth0 192.1.2.23): udp mode set, 28 headers + 0 data bytes
+ICMP Port Unreachable from ip=192.1.2.23 get hostname...               name=east
 --- 192.1.2.23 hping statistic ---
-1 packets transmitted, 0 packets received, 100% packet loss
+1 packets transmitted, 1 packets received, 0% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
 road #
  # wait on OE to re-establish IPsec SA; should show established tunnel and no bare shunts
