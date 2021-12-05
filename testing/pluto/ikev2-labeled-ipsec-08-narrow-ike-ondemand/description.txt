@@ -1,0 +1,11 @@
+test sec_label narrowing subnet=0.0.0.0/ and ondemand
+
+When creating the child, the code needs to instantiate and narrow the
+IKE SA's hybrid sec_label template-instance connection.
+
+Because narrowing was required, the code was instead rejecting the
+connection.
+
+(as an aside I suspect all the effort to find a better connection
+matching the traffic selectors is pointless here - it can't switch and
+instead should always instantiate the IKE SA's connection)
