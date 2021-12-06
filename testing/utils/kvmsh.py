@@ -75,7 +75,7 @@ def main():
     parser.add_argument("--host-name", default=None,
                         help="The virtual machine's host name")
 
-    parser.add_argument("domain", action="store", metavar="DOMAIN",
+    parser.add_argument("domain_name", action="store", metavar="DOMAIN",
                         help="virtual machine (domain) to connect to")
 
     parser.add_argument("command", nargs=argparse.REMAINDER, metavar="COMMAND",
@@ -86,10 +86,10 @@ def main():
     # These three calls go together
     args = parser.parse_args()
     logutil.config(args, sys.stderr)
-    logger = logutil.getLogger("kvmsh")
+    logger = logutil.getLogger("kvmsh", args.domain_name)
 
     # Get things started
-    domain = virsh.Domain(domain_name=args.domain, host_name=args.host_name)
+    domain = virsh.Domain(logger, domain_name=args.domain_name, host_name=args.host_name)
 
     # Find a reason to log-in and interact with the console.
     batch = args.mode == "batch" or args.command

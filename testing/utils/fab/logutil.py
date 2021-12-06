@@ -86,25 +86,19 @@ def __init__():
     logging.basicConfig(level=logging.NOTSET, handlers=[_DEFAULT_HANDLER])
 
 
-def getLogger(prefix, name=None, *suffixes):
-    """Return the logger identified by <PREFIX><NAME> and SUFFIXES
-
-    To, hopefully, make the logger's name more friendly, any module
-    prefixes are stripped, and qualifying suffixes are appended.  For
-    instance, "fab.shell" becomes "shell east" in log messages.
-
-    XXX: An alternative construct might be: "fab.shell,east" becomes
-    "fab.shell.east"; but "shell,east" becomes "shell east".
-
-    """
+def getLogger(*names, module=None, group=""):
 
     # name == __name__ == a.b.c == [0]="a.b" [1]="." [2]="c"
-    logname = prefix
-    if name:
-        logname += name.rpartition(".")[2]
-    for suffix in suffixes:
-        if suffix:
-            logname += " " + suffix
+    sep = ""
+    logname = ""
+    for name in names:
+        if name:
+            logname += sep
+            logname += name
+            sep = " "
+    if module:
+        logname += " "
+        logname += module.rpartition(".")[2]
     logger = logging.getLogger(logname)
 
     # Log messages are first filtered by logger-level and then
@@ -116,7 +110,7 @@ def getLogger(prefix, name=None, *suffixes):
     # loggers, dependent on --log-level and --debug.
     logger.setLevel(logging.NOTSET + 1)
 
-    return CustomMessageAdapter(logger, prefix)
+    return CustomMessageAdapter(logger, group)
 
 
 def add_arguments(parser):

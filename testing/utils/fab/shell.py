@@ -84,7 +84,7 @@ def compile_prompt(logger, username=None, hostname=None):
               ) +
               r')' +
               r'(?P<' + DOLLAR_GROUP + r'>'   + (dollar or DOLLAR_PATTERN)  + r')' +
-              r' ')
+              r' $')
     logger.debug("prompt '%s'", prompt)
     # byte regex
     return re.compile(prompt.encode())
@@ -141,9 +141,9 @@ class Debug:
 
 class Remote:
 
-    def __init__(self, command, hostname=None, username=None, prefix=""):
+    def __init__(self, command, logger, hostname=None, username=None):
         # Need access to HOSTNAME.
-        self.logger = logutil.getLogger(prefix, __name__, hostname)
+        self.logger = logger
         self.unicode_output_file = None
         self.basename = None
         self.hostname = hostname

@@ -570,7 +570,7 @@ class TestResult:
 def mortem(test, args, domain_prefix="",
            baseline=None, output_directory=None, quick=False):
 
-    logger = logutil.getLogger(domain_prefix, __name__, test.name)
+    logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
 
     test_result = TestResult(logger, test, quick,
                              output_directory=output_directory)

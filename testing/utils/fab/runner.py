@@ -76,13 +76,14 @@ class TestDomain:
     def __init__(self, domain_prefix, host_name, test):
         self.test = test
         # Get the domain
-        self.domain = virsh.Domain(host_name=host_name, domain_prefix=domain_prefix)
-        self.logger = logutil.getLogger(domain_prefix, __name__, test.name, host_name)
+        domain_name = (domain_prefix + host_name)
+        self.logger = logutil.getLogger(test.name, domain_name, group=domain_prefix)
+        self.domain = virsh.Domain(self.logger, host_name=host_name, domain_name=domain_name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
 
     def __str__(self):
-        return self.domain.name
+        return self.domain.domain_name
 
     def crash(self):
         # The objective here is to cause any further operations (on
@@ -256,7 +257,7 @@ def _boot_test_domains(logger, test, domain_prefix, executor):
 
 def _process_test(domain_prefix, test, args, result_stats, test_count, tests_count, boot_executor):
 
-    logger = logutil.getLogger(domain_prefix, __name__, test.name)
+    logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
 
     prefix = "******"
     suffix = "******"
@@ -569,7 +570,7 @@ class Task:
 
 
 def _process_test_queue(domain_prefix, test_queue, args, done, result_stats, boot_executor):
-    logger = logutil.getLogger(domain_prefix, __name__)
+    logger = logutil.getLogger(group=domain_prefix)
     try:
         while True:
             task = test_queue.get(block=False)

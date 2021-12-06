@@ -28,7 +28,6 @@ class Test:
                  saved_test_output_directory=None,
                  testsuite_output_directory=None,
                  kind="kvmplutotest", status="good"):
-        self.logger = logutil.getLogger(__name__)
         # basics
         self.kind = kind
         self.status = status
@@ -41,6 +40,8 @@ class Test:
         # The test's name is the same as the directory's basename.
         self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
+
+        self.logger = logutil.getLogger(self.name)
 
         # Construct the test's relative directory path such that it
         # always contains the test directory name (i.e., the test

@@ -40,21 +40,19 @@ _VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
 
 class Domain:
 
-    def __init__(self, host_name, domain_prefix="", domain_name=None):
+    def __init__(self, logger, host_name=None, domain_name=None):
         # Use the term "domain" just like virsh
-        self.prefix = domain_prefix
-        self.name = domain_name or (domain_prefix + host_name)
+        self.domain_name = domain_name
         self.host_name = host_name
         self.virsh_console = None
-        # Logger?
-        self.logger = logutil.getLogger(domain_prefix, __name__, host_name)
+        self.logger = logger
         self.debug_handler = None
         self.logger.debug("domain created")
         self._mounts = None
         self._xml = None
 
     def __str__(self):
-        return "domain " + self.name
+        return "domain " + self.domain_name
 
     def run_status_output(self, command):
         self.logger.debug("running: %s", command)
@@ -74,54 +72,53 @@ class Domain:
         return status, output
 
     def state(self):
-        status, output = self.run_status_output(_VIRSH + ["domstate", self.name])
+        status, output = self.run_status_output(_VIRSH + ["domstate", self.domain_name])
         if status:
             return None
         else:
             return output
 
     def shutdown(self):
-        return self.run_status_output(_VIRSH + ["shutdown", self.name])
+        return self.run_status_output(_VIRSH + ["shutdown", self.domain_name])
 
     def reboot(self):
-        return self.run_status_output(_VIRSH + ["reboot", self.name])
+        return self.run_status_output(_VIRSH + ["reboot", self.domain_name])
 
     def reset(self):
-        return self.run_status_output(_VIRSH + ["reset", self.name])
+        return self.run_status_output(_VIRSH + ["reset", self.domain_name])
 
     def destroy(self):
-        return self.run_status_output(_VIRSH + ["destroy", self.name])
+        return self.run_status_output(_VIRSH + ["destroy", self.domain_name])
 
     def start(self):
-        return self.run_status_output(_VIRSH + ["start", self.name])
+        return self.run_status_output(_VIRSH + ["start", self.domain_name])
 
     def suspend(self):
-        return self.run_status_output(_VIRSH + ["suspend", self.name])
+        return self.run_status_output(_VIRSH + ["suspend", self.domain_name])
 
     def resume(self):
-        return self.run_status_output(_VIRSH + ["resume", self.name])
+        return self.run_status_output(_VIRSH + ["resume", self.domain_name])
 
     def dumpxml(self):
         if self._xml == None:
-            status, self._xml = self.run_status_output(_VIRSH + ["dumpxml", self.name])
+            status, self._xml = self.run_status_output(_VIRSH + ["dumpxml", self.domain_name])
             if status:
                 raise AssertionError("dumpxml failed: %s" % (output))
         return self._xml
 
     def console(self, timeout=CONSOLE_TIMEOUT):
-        command = " ".join(_VIRSH + ["console", "--force", self.name])
+        command = " ".join(_VIRSH + ["console", "--force", self.domain_name])
         self.logger.debug("opening console with: %s", command)
-        console = shell.Remote(command, hostname=self.host_name,
-                               prefix=self.prefix)
+        console = shell.Remote(command, self.logger, hostname=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
         # will get an EOF.
         if console.expect([pexpect.EOF,
                            # earlier
-                           "Connected to domain %s\r\nEscape character is \\^]" % self.name,
+                           "Connected to domain %s\r\nEscape character is \\^]" % self.domain_name,
                            # libvirt >= 7.0
-                           "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.name
+                           "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
                            ],
                           timeout=timeout) == 0:
             self.logger.debug("got EOF from console")

@@ -3089,8 +3089,7 @@ def ns_run_script_subprocess(console, host, script, timeout=120, testname=None):
 def localhost_sudo(args, testname):
     cmd = "%s /bin/bash -i" % DEF.sudo_c
     logger.debug("host sudo command : %s", cmd)
-    s = shell.Remote(cmd, hostname=args.node,
-                     username="root")
+    s = shell.Remote(cmd, logger, hostname=args.node, username="root")
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
         s.sendline('export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS')
@@ -3541,7 +3540,7 @@ class Namespace:
         ns = "%s-%s" % (host, test.name)
         cmd = self.nsenter_cmd(ns) + ' /bin/bash'
         logger.debug("nsenter full command : %s", cmd)
-        s = shell.Remote(cmd, hostname=host, username="root")
+        s = shell.Remote(cmd, logger, hostname=host, username="root")
         if s:
             logger.debug("Got console %s lets sanitize" % ns)
             # next few lines are bit hackery to get the local prompt behave
