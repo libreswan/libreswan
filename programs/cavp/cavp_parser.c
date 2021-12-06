@@ -212,6 +212,10 @@ void cavp_parser(const struct cavp *cavp, struct logger *logger)
 			next_state(cavp, CONFIG, logger);
 			/* "[" <key> [ " "* "=" " "* <value> ] "]" */
 			char *rparen = strchr(line, ']');
+			if (rparen == NULL) {
+				fprintf(stderr, "unmatched \"[\" in line %d\n", line_nr);
+				exit(1);
+			}
 			*rparen = '\0';
 			struct fields fields = parse_fields(line + 1);
 			const struct cavp_entry *entry = cavp_entry_by_key(cavp->config, fields.key);
