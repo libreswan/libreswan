@@ -531,35 +531,40 @@ class TestResult:
     def start_time(self):
         if not self._start_time:
             # starting debug log at 2018-08-15 13:00:12.275358
-            self._start_time = self.grub("debug.log", r"starting debug log at (.*)$",
+            self._start_time = self.grub("debug.log",
+                                         r"starting debug log at (.*)$",
                                          cast=jsonutil.ptime)
         return self._start_time
 
     def stop_time(self):
         if not self._stop_time:
             # ending debug log at 2018-08-15 13:01:31.602533
-            self._stop_time = self.grub("debug.log", r"ending debug log at (.*)$",
+            self._stop_time = self.grub("debug.log",
+                                        r"ending debug log at (.*)$",
                                         cast=jsonutil.ptime)
         return self._stop_time
 
     def runtime(self):
         if not self._runtime:
             # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
-            self._runtime = self.grub("debug.log", r": stop testing .* after (.*) second",
+            self._runtime = self.grub("debug.log",
+                                      r": stop testing .* after ([0-9].*) second",
                                       cast=float)
         return self._runtime
 
     def boot_time(self):
         if not self._boot_time:
             # stop booting domains after 56.9 seconds
-            self._boot_time = self.grub("debug.log", r": stop booting domains after (.*) second",
+            self._boot_time = self.grub("debug.log",
+                                        r": stop booting domains after ([0-9].*) second",
                                         cast=float)
         return self._boot_time
 
     def script_time(self):
         if not self._script_time:
             # stop running scripts east:eastinit.sh ... after 22.4 seconds
-            self._script_time = self.grub("debug.log", r": stop running scripts .* after (.*) second",
+            self._script_time = self.grub("debug.log",
+                                          r": stop running scripts .* after ([0-9].*) second",
                                           cast=float)
         return self._script_time
 
