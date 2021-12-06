@@ -191,6 +191,11 @@ int main(int argc, char *argv[])
 	 */
 	if (argv[optind] == NULL) {
 		/* default keysize: a multiple of 16 in [3072,4096) */
+		/*
+		 * coverity scan:
+		 * "dont_call: rand should not be used for security-related applications, because linear congruential algorithms are too easy to break."
+		 * This randomizing of keysize doesn't seem to have security issues.
+		 */
 		srand(time(NULL));
 		nbits = 3072 + 16 * (rand() % (1024 / 16));
 	} else {
