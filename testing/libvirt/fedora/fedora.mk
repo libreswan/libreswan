@@ -188,6 +188,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     tar \
     tcpdump \
     telnet \
+    tpm2-abrmd \
     unbound \
     unbound-devel \
     unbound-libs \
