@@ -150,12 +150,11 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	if (strchr(short_name, '(') != NULL) {
-		char *trunc_short_name = clone_str(short_name, "trunc_short_name");
-		*strchr(trunc_short_name, '(') = '\0';
-		printf(PREFIX "match %s [short+trunc]: ", trunc_short_name);
-		int e = enum_match(enum_test, shunk1(trunc_short_name));
-		pfree(trunc_short_name);
+	const char *bra = strchr(short_name, '(');
+	if (bra != NULL) {
+		int tsl = bra - short_name;
+		printf(PREFIX "match %.*s [short+trunc]: ", tsl, short_name);
+		int e = enum_match(enum_test, shunk2(short_name, tsl));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
