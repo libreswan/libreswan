@@ -152,110 +152,43 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
 def executor_qsize_hack(executor):
     return executor._work_queue.qsize()
 
-def _boot_test_domains(logger, test, domain_prefix, executor):
+def _boot_test_domains(logger, test, domain_prefix):
 
-    try:
+    # There's a tradeoff here between speed and reliability.
+    #
+    # In theory, the boot process is mostly I/O bound.
+    # Consequently, having lots of domains boot in parallel should
+    # be harmless.
+    #
+    # In reality, the [fedora] boot process is very much CPU bound
+    # (a rule of thumb is two cores per domain).  Consequently, it
+    # is best to serialize the boot/login process.
 
-        # There's a tradeoff here between speed and reliability.
-        #
-        # In theory, the boot process is mostly I/O bound.
-        # Consequently, having lots of domains boot in parallel should
-        # be harmless.
-        #
-        # In reality, the [fedora] boot process is very much CPU bound
-        # (a rule of thumb is two cores per domain).  Consequently, it
-        # is best to serialize the boot/login process.  This is done
-        # using a futures pool shared across test runners.
+    test_domains = {}
+    unused_domains = set()
+    for host_name in testsuite.HOST_NAMES:
+        # Test domains have the method "crash()" used below.
+        test_domain = TestDomain(domain_prefix, host_name, test)
+        if host_name in test.host_names:
+            test_domains[host_name] = test_domain
+        else:
+            unused_domains.add(test_domain)
 
-        # Python doesn't have an easy way to obtain the jobs submitted
-        # for the current test so track them locally using the JOBS
-        # map.
-        #
-        # If there's a crash, any remaining members of JOBS are
-        # canceled or killed in the finally block below.
+    logger.info("shutdown domains: %s",
+                " ".join(str(e) for e in unused_domains))
+    for test_domain in unused_domains:
+        test_domain.shutdown()
 
-        jobs = {}
+    logger.info("boot-and-login domains: %s",
+                " ".join(str(e) for e in test_domains.values()))
+    for test_domain in test_domains.values():
+        test_domain.boot_and_login()
 
-        # Hack to get at the work queue.
-        logger.info("%d shutdown/reboot jobs ahead of us in the queue", executor_qsize_hack(executor))
-
-        test_domains = {}
-        unused_domains = set()
-        for host_name in testsuite.HOST_NAMES:
-            # Test domains have the method "crash()" used below.
-            test_domain = TestDomain(domain_prefix, host_name, test)
-            if host_name in test.host_names:
-                test_domains[host_name] = test_domain
-            else:
-                unused_domains.add(test_domain)
-
-        logger.info("submitting shutdown jobs for unused domains: %s",
-                    " ".join(str(e) for e in unused_domains))
-        for test_domain in unused_domains:
-            submit_job_for_domain(executor, jobs, logger, test_domain,
-                                  TestDomain.shutdown)
-
-        logger.info("submitting boot-and-login jobs for test domains: %s",
-                    " ".join(str(e) for e in test_domains.values()))
-        for test_domain in test_domains.values():
-            submit_job_for_domain(executor, jobs, logger, test_domain,
-                                  TestDomain.boot_and_login)
-
-        # Hack to get at the work queue.
-        logger.info("submitted %d jobs; currently %d jobs pending",
-                    len(jobs), executor_qsize_hack(executor))
-
-        # Wait for the jobs to finish.  If one crashes, propagate the
-        # exception - will force things into the finally block.
-
-        logger.debug("submitted jobs: %s", jobs)
-        for job in futures.as_completed(jobs):
-            logger.debug("job %s on %s completed", job, jobs[job])
-            # propagate any exception
-            job.result()
-
-        return test_domains
-
-    finally:
-
-        # Control-c, timeouts, along with any other crash, and even a
-        # normal exit, all end up here!
-
-        # Start with a list of jobs still in the queue; one or more of
-        # them may be running.
-
-        done, not_done = futures.wait(jobs, timeout=0)
-        logger.debug("jobs done %s not done %s", done, not_done)
-
-        # First: cancel all outstanding jobs (otherwise killing one
-        # job would just result in the next job starting).  Calling
-        # cancel() on running jobs has no effect so need to stop them
-        # some other way; ulgh!
-
-        not_canceled = set()
-        for job in not_done:
-            logger.info("trying to cancel job %s on %s", job, jobs[job])
-            if job.cancel():
-                logger.info("job %s on %s canceled", job, jobs[job])
-            else:
-                logger.info("job %s on %s did not cancel", job, jobs[job])
-                not_canceled.add(job)
-
-        # Second: cause any un-canceled jobs (presumably they are
-        # running) to crash.  The crash() call, effectively, pulls the
-        # rug out from under the code interacting with the domain.
-
-        for job in not_canceled:
-            logger.info("trying to crash job %s on %s", job, jobs[job])
-            jobs[job].crash()
-
-        # Finally wait again, but this time infinitely as all jobs
-        # should already be done.
-
-        futures.wait(jobs)
+    return test_domains
 
 
-def _process_test(domain_prefix, test, args, result_stats, test_count, tests_count, boot_executor):
+
+def _process_test(domain_prefix, test, args, result_stats, test_count, tests_count):
 
     logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
 
@@ -380,7 +313,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
                     try:
-                        test_domains = _boot_test_domains(logger, test, domain_prefix, boot_executor)
+                        test_domains = _boot_test_domains(logger, test, domain_prefix)
                     except pexpect.TIMEOUT:
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
@@ -553,13 +486,13 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
             result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _serial_test_processor(domain_prefix, tests, args, result_stats, boot_executor, logger):
+def _serial_test_processor(domain_prefix, tests, args, result_stats, logger):
 
     test_count = 0
     tests_count = len(tests)
     for test in tests:
         test_count += 1
-        _process_test(domain_prefix, test, args, result_stats, test_count, tests_count, boot_executor)
+        _process_test(domain_prefix, test, args, result_stats, test_count, tests_count)
 
 
 class Task:
@@ -569,19 +502,19 @@ class Task:
         self.test = test
 
 
-def _process_test_queue(domain_prefix, test_queue, args, done, result_stats, boot_executor):
+def _process_test_queue(domain_prefix, test_queue, args, done, result_stats):
     logger = logutil.getLogger(group=domain_prefix)
     try:
         while True:
             task = test_queue.get(block=False)
-            _process_test(domain_prefix, task.test, args, result_stats, task.count, task.total, boot_executor)
+            _process_test(domain_prefix, task.test, args, result_stats, task.count, task.total)
     except queue.Empty:
         None
     finally:
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_executor, logger):
+def _parallel_test_processor(domain_prefixes, tests, args, result_stats, logger):
 
     # Convert the test list into a queue.
     #
@@ -601,8 +534,7 @@ def _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_ex
                                         daemon=True,
                                         args=(domain_prefix, test_queue,
                                               args, done,
-                                              result_stats,
-                                              boot_executor)))
+                                              result_stats)))
     for thread in threads:
         thread.start()
 
@@ -627,17 +559,12 @@ def _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_ex
 
 
 def run_tests(logger, args, tests, result_stats):
-    if args.workers == 1:
-        logger.info("using 1 worker thread to reboot domains")
+    domain_prefixes = args.prefix or [""]
+    if args.parallel or len(domain_prefixes) > 1:
+        logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
+        _parallel_test_processor(domain_prefixes, tests, args, result_stats, logger)
     else:
-        logger.info("using a pool of %s worker threads to reboot domains", args.workers)
-    with futures.ThreadPoolExecutor(max_workers=args.workers) as boot_executor:
-        domain_prefixes = args.prefix or [""]
-        if args.parallel or len(domain_prefixes) > 1:
-            logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
-            _parallel_test_processor(domain_prefixes, tests, args, result_stats, boot_executor, logger)
-        else:
-            domain_prefix = domain_prefixes[0]
-            logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-            _serial_test_processor(domain_prefix, tests, args, result_stats, boot_executor, logger)
+        domain_prefix = domain_prefixes[0]
+        logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
+        _serial_test_processor(domain_prefix, tests, args, result_stats, logger)
     publish.json_status(logger, args, "finished")
