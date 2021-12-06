@@ -108,6 +108,11 @@ static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 
 	CESO(CURLOPT_URL, url);
 	CESO(CURLOPT_WRITEFUNCTION, write_buffer);
+	/*
+	 * coverity scan:
+	 * "bad_sizeof: Taking the size of &response, which is the address of an object, is suspicious."
+	 * In fact, this code is correct.
+	 */
 	CESO(CURLOPT_WRITEDATA, (void *)&response);
 	CESO(CURLOPT_ERRORBUFFER, errorbuffer);
 	CESO(CURLOPT_CONNECTTIMEOUT, timeout);
