@@ -188,8 +188,9 @@ def _boot_test_domains(logger, test, domain_prefix):
 
 
 
-def _process_test(domain_prefix, test, args, result_stats, test_count, tests_count):
+def _process_test(domain_prefix, args, result_stats, task, logger):
 
+    test = task.test
     logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
 
     prefix = "******"
@@ -200,7 +201,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
     backup_directory = os.path.join(args.backup_directory, test.name)
 
     # Would the number of tests to be [re]run be better?
-    test_prefix = "%s (test %d of %d)" % (test.name, test_count, tests_count)
+    test_prefix = "%s (test %d of %d)" % (test.name, task.test_nr, task.total_tests)
     publish.json_status(logger, args, "processing %s" % test_prefix)
     with logger.time("processing test %s", test_prefix):
 
@@ -485,45 +486,27 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
             result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
 
 
-def _serial_test_processor(domain_prefix, tests, args, result_stats, logger):
-
-    test_count = 0
-    tests_count = len(tests)
-    for test in tests:
-        test_count += 1
-        _process_test(domain_prefix, test, args, result_stats, test_count, tests_count)
-
-
 class Task:
-    def __init__(self, test, count, total):
-        self.count = count
-        self.total = total
+    def __init__(self, test, test_nr, total_tests):
+        self.test_nr = test_nr
+        self.total_tests = total_tests
         self.test = test
 
 
 def _process_test_queue(domain_prefix, test_queue, args, done, result_stats):
+    # New (per-thread/process) logger!
     logger = logutil.getLogger(group=domain_prefix)
     try:
         while True:
             task = test_queue.get(block=False)
-            _process_test(domain_prefix, task.test, args, result_stats, task.count, task.total)
+            _process_test(domain_prefix, args, result_stats, task, logger)
     except queue.Empty:
         None
     finally:
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, tests, args, result_stats, logger):
-
-    # Convert the test list into a queue.
-    #
-    # Since the queue is "infinite", .put() should never block. Assert
-    # this.
-    count = 0
-    test_queue = queue.Queue()
-    for test in tests:
-        count += 1
-        test_queue.put(Task(test, count, len(tests)), block=False)
+def _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, logger):
 
     done = threading.Semaphore(value=0) # block
     threads = []
@@ -558,12 +541,23 @@ def _parallel_test_processor(domain_prefixes, tests, args, result_stats, logger)
 
 
 def run_tests(logger, args, tests, result_stats):
+
+    # Convert the test list into a queue of test_task[s].
+    #
+    # Since the queue is "infinite", .put() should never block, assert
+    # this by passing block=false?
+    test_nr = 0
+    test_queue = queue.Queue()
+    for test in tests:
+        test_nr += 1
+        test_queue.put(Task(test, test_nr, len(tests)), block=False)
+
     domain_prefixes = args.prefix or [""]
     if args.parallel or len(domain_prefixes) > 1:
         logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
-        _parallel_test_processor(domain_prefixes, tests, args, result_stats, logger)
+        _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, logger)
     else:
         domain_prefix = domain_prefixes[0]
         logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-        _serial_test_processor(domain_prefix, tests, args, result_stats, logger)
+        _process_test_queue(domain_prefix, test_queue, args, result_stats)
     publish.json_status(logger, args, "finished")
