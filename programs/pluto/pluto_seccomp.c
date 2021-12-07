@@ -76,7 +76,9 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(epoll_wait);
 		LSW_SECCOMP_ADD(execve);
 		LSW_SECCOMP_ADD(faccessat);
+#if SCMP_SYS(faccessat2)
 		LSW_SECCOMP_ADD(faccessat2);
+#endif
 		LSW_SECCOMP_ADD(fadvise64);
 		LSW_SECCOMP_ADD(getcwd);
 		LSW_SECCOMP_ADD(getdents);
