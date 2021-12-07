@@ -64,7 +64,9 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(brk);
 		LSW_SECCOMP_ADD(chdir);
 		LSW_SECCOMP_ADD(clone);
+#if SCMP_SYS(clone3)
 		LSW_SECCOMP_ADD(clone3);
+#endif
 		LSW_SECCOMP_ADD(connect);
 		LSW_SECCOMP_ADD(dup);
 		LSW_SECCOMP_ADD(dup2);
