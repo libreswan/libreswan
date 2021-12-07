@@ -220,7 +220,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                 os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
                 os.rename(test.output_directory, backup_directory)
             result_stats.add_ignored(test, ignored)
-            publish.everything(logger, args, post.mortem(test, args, quick=True))
+            publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
             logger.info("%s %s ignored (%s) %s",
                         prefix, test_prefix, details, suffix)
             return
@@ -241,7 +241,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
         # - modifying the expected output so that it matches the last
         #   result is a pass
 
-        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=False)
+        old_result = post.mortem(test, args, logger)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
@@ -443,7 +443,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
             with logger.time("post-mortem %s", test_prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
-                result = post.mortem(test, args, domain_prefix=domain_prefix)
+                result = post.mortem(test, args, logger)
                 logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                             result.issues and " ", result.issues, suffix)
 

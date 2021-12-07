@@ -572,10 +572,7 @@ class TestResult:
 # XXX: given that most of args are passed in unchagned, this should
 # change to some type of result factory.
 
-def mortem(test, args, domain_prefix="",
-           baseline=None, output_directory=None, quick=False):
-
-    logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
+def mortem(test, args, logger, baseline=None, output_directory=None, quick=False):
 
     test_result = TestResult(logger, test, quick,
                              output_directory=output_directory)
