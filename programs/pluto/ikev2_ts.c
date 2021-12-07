@@ -1439,7 +1439,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				}
 				break;
 			default:
-				// bad_case(c->policy); /* not quite true */
+				bad_case(c->policy); /* not quite true */
 			}
 
 			/* require initiator's subnet <= T; why? */
