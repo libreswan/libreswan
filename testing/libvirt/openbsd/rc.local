@@ -35,10 +35,5 @@ echo 'dhcp' > /etc/hostname.vio2
 pkill dhclient
 #Restarting to apply network changes
 sh /etc/netstart
-#NFS stuff
-echo "==> Writing NFS entires to /etc/fstab <=="
-mkdir /testing
-echo "192.168.234.1:@@TESTINGDIR@@ /testing nfs rw,tcp 0 0" >> /etc/fstab
-echo "==> Mounting /testing directory <=="
 mount /testing
 echo "==> rc.firsttime ran succesfully <=="

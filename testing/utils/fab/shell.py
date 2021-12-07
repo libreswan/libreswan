@@ -26,7 +26,7 @@ TIMEOUT = 10
 # - it only displays status when it is non-zero
 # - \h \u \W don't work on NetBSD
 # - OpenBSD doesn't define ${HOST} or ${HOSTNAME}
-PS1='[$USER@$(hostname) \\$(s=\\$?;p=\\${PWD##*/};echo \\${p:-/} \\${s#0})]# '
+PS1='[$USER@$(hostname|sed -e s/\\\\..*//) \\$(s=\\$?;p=\\${PWD##*/};echo \\${p:-/} \\${s#0})]# '
 
 # Named groups for each part of the above
 USERNAME_GROUP = "username"
@@ -65,6 +65,9 @@ def compile_prompt(logger, username=None, hostname=None):
     # The below will match them letting KVMSH login.  This doesn't do
     # anything for *.console.verbose.txt that will likely also be full
     # of it.
+    #
+    # Can't anchor this pattern to the end-of-buffer using $ as other
+    # random output may appear.
 
     prompt = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
               r'(' +
@@ -84,7 +87,7 @@ def compile_prompt(logger, username=None, hostname=None):
               ) +
               r')' +
               r'(?P<' + DOLLAR_GROUP + r'>'   + (dollar or DOLLAR_PATTERN)  + r')' +
-              r' $')
+              r' ')
     logger.debug("prompt '%s'", prompt)
     # byte regex
     return re.compile(prompt.encode())

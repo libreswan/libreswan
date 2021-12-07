@@ -603,6 +603,7 @@ endef
 # problem) define a dedicated swandefault gateway.
 
 KVM_GATEWAY ?= swandefault
+KVM_GATEWAY_ADDRESS ?= 192.168.234.1
 
 KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
 
@@ -754,17 +755,21 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(call undefine-os-domain, $@)
 	: use script to drive build of new domain
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
-		$(KVM_FIRST_PREFIX)$*-base \
-		192.168.234.1 \
+		$(notdir $@) \
+		$(KVM_GATEWAY_ADDRESS) \
 		$(KVM_POOLDIR) \
 		$(KVM_SOURCEDIR) \
 		$(KVM_TESTINGDIR) \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
-			--name=$(KVM_FIRST_PREFIX)$*-base \
+			--name=$(notdir $@) \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
+	: check that the prompt is working
+	$(KVMSH) $(notdir $@) -- true
+	! $(KVMSH) $(notdir $@) -- false
+	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
 # Fedora
@@ -790,29 +795,20 @@ $(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO)
 
 # OpenBSD needs to mangle the ISO
 
-KVM_OPENBSD_RC_FIRSTTIME = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN).rc.firsttime
-$(KVM_OPENBSD_RC_FIRSTTIME): testing/libvirt/openbsd/rc.firsttime
-	sed -e "s:@@TESTINGDIR@@:$(KVM_TESTINGDIR):" \
-		testing/libvirt/openbsd/rc.firsttime \
-		> $@.tmp
-	mv $@.tmp $@
-
-KVM_OPENBSD_INSTALL_ISO = $(KVM_POOLDIR)/$(KVM_OPENBSD_DOMAIN).iso
-$(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) $(KVM_OPENBSD_RC_FIRSTTIME)
-	cp $(KVM_OPENBSD_ISO) $@.tmp
-	growisofs -M $@.tmp -l -R -input-charset utf-8 \
-		-graft-points \
-		/install.conf="testing/libvirt/openbsd/install.conf" \
-		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
-		/rc.firsttime="$(KVM_OPENBSD_RC_FIRSTTIME)"
-	mv $@.tmp $@
-
 KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= openbsd6.5
+KVM_OPENBSD_INSTALL_ISO = $(KVM_POOLDIR_PREFIX)openbsd.iso
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_INSTALL_ISO)
 
 $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
 
+$(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) testing/libvirt/openbsd/install.conf testing/libvirt/openbsd/boot.conf
+	cp $(KVM_OPENBSD_ISO) $@.tmp
+	growisofs -M $@.tmp -l -R -input-charset utf-8 \
+		-graft-points \
+		/install.conf="testing/libvirt/openbsd/install.conf" \
+		/etc/boot.conf="testing/libvirt/openbsd/boot.conf"
+	mv $@.tmp $@
 
 ##
 ## Create and update the base domain, installing missing packages.
@@ -882,6 +878,9 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 .PHONY: kvm-transmogrify
 kvm-transmogrify: $(KVM_POOLDIR_PREFIX)fedora-build
 
+$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
+kvm-%-transmogrify: kvm-%-build
+
 $(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
 kvm-%-build:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-build
@@ -907,7 +906,12 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		$(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS)
 	: transmogrify $($*) using transmogrify.sh from $(srcdir) and not $(KVM_SOURCEDIR)
 	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
-	$(KVMSH) $(notdir $@) -- /pool/$(notdir $(basename $@)).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
+	$(KVMSH) $(notdir $@) -- \
+		GATEWAY=$(KVM_GATEWAY_ADDRESS) \
+		POOLDIR=$(KVM_POOLDIR) \
+		SOURCEDIR=$(KVM_SOURCEDIR) \
+		TESTINGDIR=$(KVM_TESTINGDIR) \
+		/pool/$(notdir $(basename $@)).transmogrify.sh
 	: shutdown needed after transmogrify but only shutdown when transmogrify works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -962,7 +966,7 @@ define define-clone-domain
 	mv $$@.tmp $$@
 endef
 
-KVM_OPENBSD_TEMPLATE = openbsd-base
+KVM_OPENBSD_TEMPLATE = openbsd-build
 KVM_FEDORA_TEMPLATE = fedora-build
 
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
@@ -1025,9 +1029,6 @@ kvm-purge: kvm-purge-networks
 kvm-purge:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
 	rm -f $(KVM_HOST_OK)
-	: legacy
-	$(call undefine-os-domain, $(KVM_LOCALDIR_PREFIX)build)
-	$(call undefine-os-domain, $(KVM_POOLDIR)/swanf32base)
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge

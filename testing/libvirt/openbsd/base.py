@@ -24,15 +24,11 @@ import os
 domain = sys.argv[1]
 gateway = sys.argv[2]
 pooldir = sys.argv[3]
-sourcedir = sys.argv[4]
-testingdir = sys.argv[5]
 command = sys.argv[6:]
 
 print("domain", domain)
 print("gateway", gateway)
 print("pooldir", pooldir)
-print("sourcedir", sourcedir)
-print("testingdir", testingdir)
 print("command", command)
 
 def es(child,expect,send,t=30):
@@ -61,8 +57,6 @@ es(child,'.*hell?','S')
 es(child,'# ','mount /dev/cd0c /mnt')
 #Copying of install.conf file
 es(child,'# ','cp /mnt/install.conf /')
-#Copying of rc.firsttime file
-es(child,'#','cp /mnt/rc.firsttime /')
 #Unmounting the drive
 es(child,'# ','umount /mnt')
 #Installing by taking answers from install.conf file
@@ -71,9 +65,6 @@ es(child,'# ','install -af /install.conf')
 while(child.expect([".*install has been successfully completed!", pexpect.EOF, pexpect.TIMEOUT],timeout=10)!=0):
         continue
 
-#Copy rc.firsttime file to the right directory
-es(child,'openbsd# ','mv rc.firsttime /mnt/etc/',100)
-
 #Start iked daemon by default on boot
 es(child,'openbsd# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
 
@@ -81,8 +72,13 @@ es(child,'openbsd# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
 es(child,'openbsd# ','echo powerdown=YES >>     /etc/rc.powerdown')
 es(child,'openbsd# ','echo powerdown=YES >> /mnt/etc/rc.powerdown')
 
+print('====> Mounting /pool <====')
+es(child,'openbsd# ','mkdir -p /mnt/pool')
+es(child,'openbsd# ','echo '+gateway+':'+pooldir+' /pool nfs rw,tcp 0 0 >> /mnt/etc/fstab')
+
 print('====> Shutting Down Base Domain <====')
 #To shutdown the base domain
+es(child,'openbsd# ','sync ; sync ; sync\n')
 es(child,'openbsd# ','halt -p\n')
 
 print("Waiting 10 seconds to shutdown...")

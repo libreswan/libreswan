@@ -25,15 +25,11 @@ import time
 domain = sys.argv[1]
 gateway = sys.argv[2]
 pooldir = sys.argv[3]
-sourcedir = sys.argv[4]
-testingdir = sys.argv[5]
 command = sys.argv[6:]
 
 print("domain", domain)
 print("gateway", gateway)
 print("pooldir", pooldir)
-print("sourcedir", sourcedir)
-print("testingdir", testingdir)
 print("command", command)
 
 child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
@@ -131,17 +127,9 @@ c('echo "procfs          /proc           procfs  rw"                  >> /etc/fs
 c('echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
 c('echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
 
-# I see a loop
-
 pool = gateway + ":" + pooldir
-source = gateway + ":" + sourcedir
-testing = gateway + ":" + testingdir
-
-c('mkdir /pool /source /testing')
-
+c('mkdir /pool')
 c('echo "'+pool+'        /pool           nfs     rw"                  >> /etc/fstab')
-c('echo "'+source+'      /source         nfs     rw"                  >> /etc/fstab')
-c('echo "'+testing+'     /testing        nfs     rw"                  >> /etc/fstab')
 
 # booting
 

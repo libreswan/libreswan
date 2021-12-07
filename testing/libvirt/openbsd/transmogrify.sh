@@ -13,8 +13,12 @@ echo TESTINGDIR=${TESTINGDIR}
 mkdir -p /pool /source /testing
 sed -i -e '/source/d' -e '/testing/d' /etc/fstab
 cat <<EOF | tee -a /etc/fstab
-${GATEWAY}:${SOURCEDIR}   /source         nfs     rw
-${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw
+${GATEWAY}:${SOURCEDIR}   /source   nfs  rw,tcp
+${GATEWAY}:${TESTINGDIR}  /testing  nfs  rw,tcp
 EOF
+
+mount /testing
+cp /testing/libvirt/openbsd/rc.local /etc/rc.local
+chmod a+x /etc/rc.local
 
 exit 0
