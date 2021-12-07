@@ -183,16 +183,13 @@ class DebugHandler(logging.Handler):
         for stream_handler in self.stream_handlers:
             stream_handler.flush()
 
+class LogTimeWithContext:
+    """Push a new timer onto the log_timer stack"""
 
-class LogTime:
-    """Log/time a with statement"""
-
-    def __init__(self, logger_adapter, loglevel, action, timer):
-        # XXX: Can logger argument be eliminated - log direct to
-        # handler?
+    def __init__(self, logger_adapter, loglevel, action):
         self.logger_adapter = logger_adapter
         self.action = action
-        self.timer = timer
+        self.timer = timing.Lapsed()
         self.loglevel = loglevel
 
     def __enter__(self):
@@ -201,19 +198,18 @@ class LogTime:
                                 self.action, timer.start)
         return timer
 
-    def __exit__(self, type, value, traceback):
-        self.timer.__exit__(type, value, traceback)
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.timer.__exit__(exception_type, exception_value, exception_traceback)
         self.logger_adapter.log(self.loglevel, "stop %s after %s",
                                 self.action, self.timer)
 
 
-class DebugTime(LogTime):
-    """Push a new timer onto the timer stack, possibly sending output to DEBUGFILE"""
+class DebugTimeWithContext(LogTimeWithContext):
+    """Push a new timer onto the debug_timer stack, possibly sending output to DEBUGFILE"""
 
-    def __init__(self, logger_adapter, logfile, loglevel, action, timer):
+    def __init__(self, logger_adapter, logfile, loglevel, action):
         super().__init__(logger_adapter=logger_adapter,
-                         loglevel=loglevel, action=action,
-                         timer=timer)
+                         loglevel=loglevel, action=action)
         self.logfile = logfile
         self.debug_stream = None
 
@@ -222,61 +218,45 @@ class DebugTime(LogTime):
             self.logger_adapter.debug("opening debug logfile '%s' at %s",
                                       self.logfile, datetime.now())
             self.debug_stream = open(self.logfile, "a")
-            self.logger_adapter.pool.debug_handler.push(self.debug_stream)
+            self.logger_adapter.debug_handler.push(self.debug_stream)
             self.logger_adapter.debug("starting debug log at %s",
                                       datetime.now())
         timer = super().__enter__()
-        self.logger_adapter.pool.runtimes.append(timer)
+        self.logger_adapter.runtimes.append(timer)
         return timer
 
-    def __exit__(self, type, value, traceback):
-        self.logger_adapter.pool.runtimes.pop()
-        super().__exit__(type, value, traceback)
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.logger_adapter.runtimes.pop()
+        super().__exit__(exception_type, exception_value, exception_traceback)
         if self.logfile:
             # Restore debug logging before closing the logfile.
             self.logger_adapter.debug("ending debug log at %s",
                                       datetime.now())
-            self.logger_adapter.pool.debug_handler.pop()
+            self.logger_adapter.debug_handler.pop()
             self.debug_stream.close()
             self.logger_adapter.debug("closed debug logfile '%s' at %s",
                                       self.logfile, datetime.now())
-
-
-_LOG_POOL = {}
-
-class LogPool:
-    def __init__(self, prefix):
-        self.name = prefix
-        self.runtimes = [timing.Lapsed(timing.START_TIME)]
-        self.debug_handler = DebugHandler()
-
 
 class CustomMessageAdapter(logging.LoggerAdapter):
 
     def __init__(self, logger, prefix):
         logging.LoggerAdapter.__init__(self, logger, {prefix: prefix})
-        if not prefix in _LOG_POOL:
-            _LOG_POOL[prefix] = LogPool(prefix)
-        self.pool = _LOG_POOL[prefix]
-        self.logger.addHandler(self.pool.debug_handler)
+        self.debug_handler = DebugHandler()
+        self.logger.addHandler(self.debug_handler)
+        self.runtimes = list([timing.Lapsed()])
 
     def process(self, msg, kwargs):
-        runtimes = ""
         now = datetime.now()
-        for runtime in self.pool.runtimes:
-            if runtimes:
-                runtimes += "/"
-            runtimes += runtime.format(now)
+        runtimes = '/'.join(r.format(now) for r in self.runtimes)
         msg = "%s %s: %s" % (self.logger.name, runtimes, msg)
         return msg, kwargs
 
-    def time(self, fmt, *args, loglevel=INFO, timer=None):
-        return LogTime(self, loglevel=loglevel, action=(fmt % args),
-                       timer=(timer or timing.Lapsed()))
+    def time(self, fmt, *args, loglevel=INFO):
+        return LogTimeWithContext(logger_adapter=self, loglevel=loglevel,
+                                  action=(fmt % args))
 
-    def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG, timer=None):
-        return DebugTime(logger_adapter=self, logfile=logfile,
-                         loglevel=loglevel, action=(fmt % args),
-                         timer=(timer or timing.Lapsed()))
+    def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG):
+        return DebugTimeWithContext(logger_adapter=self, logfile=logfile,
+                                    loglevel=loglevel, action=(fmt % args))
 
 __init__()

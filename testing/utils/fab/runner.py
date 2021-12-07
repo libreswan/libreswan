@@ -306,8 +306,7 @@ def _process_test(domain_prefix, test, args, result_stats, test_count, tests_cou
             # test run.
 
             with logger.debug_time("testing %s", test_prefix,
-                                   logfile=os.path.join(test.output_directory,
-                                                        "debug.log"),
+                                   logfile=os.path.join(test.output_directory, "debug.log"),
                                    loglevel=logutil.INFO) as test_runtime:
 
                 # boot the domains

@@ -3806,7 +3806,8 @@ class Test():
                 "abort %s failed to create OUTPUT directory ", self.name)
             return True
 
-        with logger.debug_time("testing %s", self.name, logfile="OUTPUT/debug.log",
+        with logger.debug_time("testing %s", self.name,
+                               logfile="OUTPUT/debug.log",
                                loglevel=logutil.INFO) as test_runtime:
 
             self.script_start = time.time()
