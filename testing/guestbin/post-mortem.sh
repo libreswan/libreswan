@@ -190,6 +190,7 @@ if test -f /sbin/ausearch ; then
 		 -e '^type=CWD ' \
 		 -e '^type=PATH .*dbus' \
 		 -e '^type=PROCTITLE.*systemd-networkd' \
+		 -e '^type=PATH .* name="/run"' \
 	    ${log} ; then
 	FAIL
 
