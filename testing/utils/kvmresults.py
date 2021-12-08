@@ -209,7 +209,7 @@ def results(logger, tests, baseline, args, result_stats):
             # This is noticeable when printing static test value such
             # as the test's name takes far longer than one would
             # expect.
-            result = post.mortem(test, args,
+            result = post.mortem(test, args, logger,
                                  baseline=baseline,
                                  output_directory=test.saved_output_directory,
                                  quick=args.quick)
