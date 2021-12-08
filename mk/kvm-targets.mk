@@ -143,7 +143,7 @@ print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
 #
 # XXX: Ignore KVM_PREFIXES, it is probably going away.
 
-VIRT_INSTALL ?= sudo virt-install --connect=$(KVM_CONNECTION)
+VIRT_INSTALL ?= sudo virt-install
 VIRT_CPU ?= --cpu=host-passthrough
 VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng=type=random,device=/dev/random
@@ -154,6 +154,7 @@ VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source
 VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
+	--connect=$(KVM_CONNECTION) \
 	--check=path_in_use=off \
 	--graphics=none \
 	--virt-type=kvm \
@@ -754,19 +755,17 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	: clean up old domains
 	$(call undefine-os-domain, $@)
 	: use script to drive build of new domain
+	DOMAIN=$(notdir $@) \
+	GATEWAY=$(KVM_GATEWAY_ADDRESS) \
+	POOLDIR=$(KVM_POOLDIR) \
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
-		$(notdir $@) \
-		$(KVM_GATEWAY_ADDRESS) \
-		$(KVM_POOLDIR) \
-		$(KVM_SOURCEDIR) \
-		$(KVM_TESTINGDIR) \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
 			--name=$(notdir $@) \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
-	: check that the prompt is working
+	: things are working: true is true and false is !true
 	$(KVMSH) $(notdir $@) -- true
 	! $(KVMSH) $(notdir $@) -- false
 	$(KVMSH) --shutdown $(notdir $@)
