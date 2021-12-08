@@ -86,7 +86,7 @@ def __init__():
     logging.basicConfig(level=logging.NOTSET, handlers=[_DEFAULT_HANDLER])
 
 
-def getLogger(*names, module=None, group=""):
+def getLogger(*names, module=None):
 
     # name == __name__ == a.b.c == [0]="a.b" [1]="." [2]="c"
     sep = ""
@@ -110,7 +110,7 @@ def getLogger(*names, module=None, group=""):
     # loggers, dependent on --log-level and --debug.
     logger.setLevel(logging.NOTSET + 1)
 
-    return CustomMessageAdapter(logger, group)
+    return CustomMessageAdapter(logger, logname)
 
 
 def add_arguments(parser):
@@ -239,16 +239,17 @@ class DebugTimeWithContext(LogTimeWithContext):
 
 class CustomMessageAdapter(logging.LoggerAdapter):
 
-    def __init__(self, logger, prefix):
+    def __init__(self, logger, prefix, runtimes=None):
         logging.LoggerAdapter.__init__(self, logger, {prefix: prefix})
         self.debug_handler = DebugHandler()
         self.logger.addHandler(self.debug_handler)
-        self.runtimes = list([timing.Lapsed()])
+        self.runtimes = runtimes or [timing.Lapsed()]
+        self.prefix = prefix
 
     def process(self, msg, kwargs):
         now = datetime.now()
         runtimes = '/'.join(r.format(now) for r in self.runtimes)
-        msg = "%s %s: %s" % (self.logger.name, runtimes, msg)
+        msg = "%s %s: %s" % (self.prefix, runtimes, msg)
         return msg, kwargs
 
     def time(self, fmt, *args, loglevel=INFO):
@@ -258,5 +259,8 @@ class CustomMessageAdapter(logging.LoggerAdapter):
     def debug_time(self, fmt, *args, logfile=None, loglevel=DEBUG):
         return DebugTimeWithContext(logger_adapter=self, logfile=logfile,
                                     loglevel=loglevel, action=(fmt % args))
+
+    def nest(self, prefix):
+        return CustomMessageAdapter(self.logger, prefix, self.runtimes)
 
 __init__()

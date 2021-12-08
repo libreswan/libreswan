@@ -73,11 +73,11 @@ TEST_TIMEOUT = 120
 
 class TestDomain:
 
-    def __init__(self, domain_prefix, host_name, test):
+    def __init__(self, domain_prefix, host_name, test, logger):
         self.test = test
         # Get the domain
         domain_name = (domain_prefix + host_name)
-        self.logger = logutil.getLogger(test.name, domain_name, group=domain_prefix)
+        self.logger = logger.nest(test.name + " " + domain_name)
         self.domain = virsh.Domain(self.logger, host_name=host_name, domain_name=domain_name)
         # A valid console indicates that the domain is up.
         self.console = self.domain.console()
@@ -168,7 +168,7 @@ def _boot_test_domains(logger, test, domain_prefix):
     unused_domains = set()
     for host_name in testsuite.HOST_NAMES:
         # Test domains have the method "crash()" used below.
-        test_domain = TestDomain(domain_prefix, host_name, test)
+        test_domain = TestDomain(domain_prefix, host_name, test, logger)
         if host_name in test.host_names:
             test_domains[host_name] = test_domain
         else:
@@ -191,8 +191,6 @@ def _boot_test_domains(logger, test, domain_prefix):
 def _process_test(domain_prefix, args, result_stats, task, logger):
 
     test = task.test
-    logger = logutil.getLogger(test.name, domain_prefix, group=domain_prefix)
-
     prefix = "******"
     suffix = "******"
 
@@ -495,11 +493,13 @@ class Task:
 
 def _process_test_queue(domain_prefix, test_queue, args, done, result_stats):
     # New (per-thread/process) logger!
-    logger = logutil.getLogger(group=domain_prefix)
+    logger = logutil.getLogger(domain_prefix and domain_prefix or "kvmrunner")
+    logger.info("processing test queue") 
     try:
         while True:
             task = test_queue.get(block=False)
-            _process_test(domain_prefix, args, result_stats, task, logger)
+            task_logger = logger.nest(task.test.name + " " + domain_prefix)
+            _process_test(domain_prefix, args, result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:
