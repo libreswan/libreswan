@@ -1,0 +1,3 @@
+Test keyword with percentage with unexpected prefixes.
+
+no console output committed because the output include ephemeral values

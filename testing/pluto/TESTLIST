@@ -106,6 +106,9 @@ kvmplutotest	libipsecconf-05-empty_option		wip
 kvmplutotest	libipsecconf-06-ikev2-hash-algo		good
 kvmplutotest	libipsecconf-07				good
 kvmplutotest	libipsecconf-08-system-crypto-policies	good
+kvmplutotest	libipsecconf-09-time-prefix		wip
+kvmplutotest	libipsecconf-10-percentage-prefix	wip
+
 
 #################################################################
 # Whack UI tests
