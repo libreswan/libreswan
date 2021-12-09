@@ -2029,7 +2029,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		if (st->st_interface->io->protocol == &ip_protocol_tcp) {
 			jam(buf, "(tcp)");
 		}
-		jam(buf, " %s (%s)", st->st_state->name, st->st_state->story);
+		jam(buf, " %s (%s);", st->st_state->name, st->st_state->story);
 
 		/*
 		 * Hunt and peck for events (needs fixing).
@@ -2044,41 +2044,42 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		FOR_EACH_THING(liveness, st->st_retransmit_event, NULL) {
 			/* show all */
 			if (liveness != NULL) {
-				jam(buf, "; ");
+				jam_string(buf, " ");
 				jam_enum_short(buf, &event_type_names, liveness->ev_type);
 				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
-				jam(buf, " in %jds", delta);
+				jam(buf, " in %jds;", delta);
 			}
 		}
 		FOR_EACH_THING(liveness, st->st_event, st->st_v2_refresh_event, st->st_v2_lifetime_event) {
 			/* show first */
 			if (liveness != NULL) {
-				jam(buf, "; ");
+				jam_string(buf, " ");
 				jam_enum_short(buf, &event_type_names, liveness->ev_type);
 				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
-				jam(buf, " in %jds", delta);
+				jam(buf, " in %jds;", delta);
 				break;
 			}
 		}
 
 		if (c->newest_ike_sa == st->st_serialno) {
-			jam(buf, "; newest ISAKMP");
+			jam(buf, " newest ISAKMP;");
 		}
 
 		if (c->newest_ipsec_sa == st->st_serialno) {
-			jam(buf, "; newest IPSEC");
+			jam(buf, " newest IPSEC;");
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
 		if (c->spd.eroute_owner == st->st_serialno) {
-			jam(buf, "; eroute owner");
+			jam(buf, " eroute owner;");
 		}
 
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
-			jam(buf, "; isakmp#%lu", st->st_clonedfrom);
+			jam(buf, " isakmp#%lu;", st->st_clonedfrom);
 		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
-			jam(buf, "; lastdpd=%jds(seq in:%u out:%u)",
+			/* XXX: because config uses -1 for disabled? */
+			jam(buf, " lastdpd=%jds(seq in:%u out:%u);",
 			    !is_monotime_epoch(st->st_last_dpd) ?
 			    deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
 			    st->st_dpd_seqno,
@@ -2088,25 +2089,24 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			if (IS_CHILD_SA(st)) {
 				struct state *pst = state_by_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
-					jam(buf, "; lastlive=%jds",
+					jam(buf, " lastlive=%jds;",
 					    !is_monotime_epoch(pst->st_v2_last_liveness) ?
 					    deltasecs(monotimediff(mononow(), pst->st_v2_last_liveness)) :
 					    0);
 				}
 			}
 		} else if (st->st_ike_version == IKEv1) {
-			jam(buf, "; nodpd");
+			jam(buf, " nodpd;");
 		}
 
 		if (st->st_offloaded_task != NULL &&
 		    !st->st_offloaded_task_in_background) {
-			jam(buf, "; crypto_calculating");
+			jam(buf, " crypto_calculating;");
 		} else if (st->st_suspended_md != NULL) {
-			jam(buf, "; crypto/dns-lookup");
+			jam(buf, " crypto/dns-lookup;");
 		} else {
-			jam(buf, "; idle");
+			jam(buf, " idle;");
 		}
-		jam(buf, ";");
 	}
 }
 
