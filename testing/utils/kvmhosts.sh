@@ -10,4 +10,4 @@ cd $(dirname $(readlink -f $0))/../libvirt/vm
 # might be lying around.  List all the hosts - don't try to filter out
 # "nic".
 
-ls --indicator-style=file-type | grep -E -e '^[a-z]+$'
+ls --indicator-style=file-type *.xml | sed -n -e 's/\.xml$//p'

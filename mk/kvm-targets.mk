@@ -940,7 +940,7 @@ define define-clone-domain
   $(addprefix $(1), $(2)): $(3) | \
 		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
 			$(addprefix $(1), $$(subnet).net)) \
-		$(addprefix testing/libvirt/vm/, $(2))
+		testing/libvirt/vm/$(strip $(2)).xml
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
 	$$(call undefine-os-domain, $$@)
 	$(call clone-os-disk, $(addprefix $(3), .qcow2), $$@.qcow2)
@@ -953,7 +953,7 @@ define define-clone-domain
 		-e "s:@@USER@@:$$(KVM_UID):" \
 		-e "s:@@GROUP@@:$$(KVM_GID):" \
 		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
-		< $(addprefix testing/libvirt/vm/, $(2)) \
+		< testing/libvirt/vm/$(strip $(2)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
