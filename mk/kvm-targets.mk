@@ -750,8 +750,6 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY_FILE)
-	: Confirm that there is a tty - else virt-install fails mysteriously
-	tty
 	: clean up old domains
 	$(call undefine-os-domain, $@)
 	: use script to drive build of new domain

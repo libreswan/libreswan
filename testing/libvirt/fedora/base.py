@@ -19,6 +19,8 @@
 
 import sys
 import os
+import sys
+import pexpect
 
 domain = os.getenv("DOMAIN")
 gateway = os.getenv("GATEWAY")
@@ -30,5 +32,8 @@ print("gateway", gateway)
 print("pooldir", pooldir)
 print("command", command)
 
-# expects ARG0
-os.execvp(command[0], command)
+child = pexpect.spawn(command[0], command[1:],
+                      logfile=sys.stdout.buffer,
+                      echo=False)
+child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
+sys.exit(child.wait())

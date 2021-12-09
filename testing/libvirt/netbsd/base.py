@@ -161,38 +161,3 @@ c('umount /targetroot')
 c('poweroff')
 
 sys.exit(child.wait())
-i()
-
-
-# OTHER STUFF
-
-io('a: Install NetBSD to hard disk', 'a')
-
-io('You have chosen to install NetBSD on your hard disk', 'b')
-
-io('partition>', 'a')
-io('Filesystem type', '4.4BSD')
-io('Start offset', '0c')
-io('Partition size', '$')
-io('partition>', 'P')
-io('partition>', 'W')
-io('Label disk', '')
-io('partition>', 'Q')
-
-io('a: ld0', 'a')
-io('a: This is the correct geometry', 'a')
-io('a: Use existing GPT partitions', 'a')
-io('x: Partition sizes ok', 'x')
-
-io('Ok, we are now ready to install NetBSD on your hard disk', 'b')
-io('Hit enter to continue', '')
-
-io('Selected bootblock: Serial port com0 at 9600 baud', 'x')
-io('a: Full installation', 'a')
-
-io('f: Unmounted fs', 'f')
-io('a: Device', 'acd1')
-io('b: File system', 'bcd9660')
-io('x: Continue', 'x')
-
-i()
