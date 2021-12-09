@@ -107,11 +107,9 @@ static void add_pending(struct fd *whack_sock,
 		log_pending(only | RC_COMMENT, p,
 			    "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
 			    /* "Child SA" or "IPsec SA" */
-			    enum_enum_name(&sa_type_names, p->connection->config->ike_version,
-					   IPSEC_SA),
+			    enum_name(&ike_version_child_sa_names, p->connection->config->ike_version),
 			    /* "IKE SA" or "ISAKMP SA" */
-			    enum_enum_name(&sa_type_names, p->connection->config->ike_version,
-					   IKE_SA),
+			    enum_name(&ike_version_parent_sa_names, p->connection->config->ike_version),
 			    pri_state(&ike->sa, &sab),
 			    ipstr(&c->spd.that.host_addr, &b));
 	}
@@ -233,7 +231,8 @@ void release_pending_whacks(struct state *st, err_t story)
 					    "%s for IKE SA, but releasing whack for pending %s",
 					    story,
 					    /* "IPsec SA" or "CHILD SA" */
-					    enum_enum_name(&sa_type_names, p->connection->config->ike_version, IPSEC_SA));
+					    enum_name(&ike_version_child_sa_names,
+						      p->connection->config->ike_version));
 			}
 			fd_delref(&p->whack_sock);/*on-heap*/
 		}
