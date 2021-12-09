@@ -62,6 +62,7 @@ rm -f /etc/hostname # hostnamectl set-hostname ""
 cat <<EOF > /etc/systemd/system/hostnamer.service
 [Unit]
   Description=Figure out who we are
+  #not-file-not-empty == file empty
   ConditionFileNotEmpty=|!/etc/hostname
   # need interfaces configured
   After=systemd-networkd-wait-online.service
@@ -74,11 +75,19 @@ cat <<EOF > /etc/systemd/system/hostnamer.service
 EOF
 cat <<EOF > /usr/local/sbin/hostnamer.sh
 #!/bin/sh
-ip=\$(ip address show dev eth0 | awk '\$1 == "inet" { print gensub("/[0-9]*", "", 1, \$2)}')
-echo ip: \${ip} | tee /dev/console
-hostname=\$(awk '\$1 == IP { host=\$2; } END { print host; }' IP=\${ip} /etc/hosts)
+mac=\$(ip address show dev eth0 | awk '\$1 == "link/ether" { print \$2 }')
+echo mac: \${mac} | tee /dev/console
+case \${mac} in
+     #   eth0                 eth1               eth2
+     12:00:00:1d:9c:19 | 12:00:00:de:ad:ba | 12:00:00:32:64:ba ) hostname=nic ;;
+     12:00:00:dc:bc:ff | 12:00:00:64:64:23                     ) hostname=east ;;
+     12:00:00:ab:cd:ff | 12:00:00:64:64:45                     ) hostname=west ;;
+     12:00:00:ab:cd:02                                         ) hostname=road ;;
+     12:00:00:de:cd:49 | 12:00:00:96:96:49                     ) hostname=north ;;
+     *) echo ${nic} unknown | tee /dev/console ; exit 0 ;;
+esac
 echo hostname: \${hostname} | tee /dev/console
-test -n "\${hostname}" && hostnamectl set-hostname \${hostname}
+hostnamectl set-hostname \${hostname}
 EOF
 chmod a+x /usr/local/sbin/hostnamer.sh
 restorecon -R /etc/systemd/system
