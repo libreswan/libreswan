@@ -36,10 +36,6 @@ endef
 #
 # Pull in all its defaults so that they override everything below.
 
-KVM_GUEST_OS ?= f32
-
-include testing/libvirt/$(KVM_GUEST_OS).mk
-
 include testing/libvirt/fedora/fedora.mk
 include testing/libvirt/netbsd/netbsd.mk
 include testing/libvirt/openbsd/openbsd67.mk
@@ -1170,8 +1166,6 @@ Configuration:
 	the shared NATting gateway;
 	used by the base domain along with any local domains
 	when internet access is required
-    $(call kvm-var-value,KVM_GUEST_OS)
-    $(call kvm-var-value,KVM_KICKSTART_FILE)
 
     $(call kvm-var-value,KVM_KEYS_DOMAIN)
 
