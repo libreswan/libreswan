@@ -2075,7 +2075,10 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
-			jam(buf, " isakmp#%lu;", st->st_clonedfrom);
+			enum_buf eb;
+			jam(buf, " %s "PRI_SO";",
+			    str_enum(&ike_version_parent_sa_names, st->st_ike_version, &eb),
+			    pri_so(st->st_clonedfrom));
 		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
 			/* XXX: because config uses -1 for disabled? */
