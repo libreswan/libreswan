@@ -160,7 +160,7 @@ west #
  # The IKE SA should be associated with the template connection
 west #
  ipsec status |grep STATE_
-000 #2: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #3: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; isakmp#2; idle;
+000 #2: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest; idle;
+000 #3: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest; IKE SA #2; idle;
 west #
  

@@ -62,7 +62,7 @@ west #
 006 #4: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  ipsec status |grep STATE_
-000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest; eroute owner; IKE SA #1; idle;
 west #
  

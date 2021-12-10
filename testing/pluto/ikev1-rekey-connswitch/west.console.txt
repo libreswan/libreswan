@@ -87,7 +87,7 @@ west #
 000 "TUNNEL-A":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-B":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $3;
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
-000 #1: "TUNNEL-A":500 STATE_MAIN_I4 (IKE SA established); EXPIRE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #1: "TUNNEL-A":500 STATE_MAIN_I4 (IKE SA established); EXPIRE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  sleep 60
 west #
@@ -97,7 +97,7 @@ west #
 000 "TUNNEL-A":   newest ISAKMP SA: #0; newest IPsec SA: #2; conn serial: $2;
 000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #3; conn serial: $3;
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
-000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (IKE SA established); EXPIRE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
+000 #5: "TUNNEL-B":500 STATE_MAIN_R3 (IKE SA established); EXPIRE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
  ipsec auto --down TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
@@ -158,9 +158,9 @@ west #
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
-000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
 west #
  ipsec auto --delete TUNNEL-B
@@ -203,9 +203,9 @@ west #
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
-000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
-000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
 west #
  echo done

@@ -52,10 +52,10 @@ west #
  # confirm rekey
 west #
  ipsec whack --showstates
-000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; isakmp#1; idle;
+000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=4194303B 
-000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #3; idle;
 000 #4: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=4194303B 
 west #
  # ready for shutdown test in final.sh

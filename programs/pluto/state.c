@@ -2061,12 +2061,9 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			}
 		}
 
-		if (c->newest_ike_sa == st->st_serialno) {
-			jam(buf, " newest ISAKMP;");
-		}
-
-		if (c->newest_ipsec_sa == st->st_serialno) {
-			jam(buf, " newest IPSEC;");
+		if (c->newest_ike_sa == st->st_serialno ||
+		    c->newest_ipsec_sa == st->st_serialno) {
+			jam(buf, " newest;");
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
@@ -2075,7 +2072,10 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
-			jam(buf, " isakmp#%lu;", st->st_clonedfrom);
+			enum_buf eb;
+			jam(buf, " %s "PRI_SO";",
+			    str_enum(&ike_version_parent_sa_names, st->st_ike_version, &eb),
+			    pri_so(st->st_clonedfrom));
 		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
 			/* XXX: because config uses -1 for disabled? */

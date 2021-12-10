@@ -42,8 +42,8 @@ road #
  # parent state must be #3 and the latest ISAKMP
 road #
  ipsec status | grep STATE_
-000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
-000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
+000 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest; eroute owner; IKE SA #3; idle;
+000 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest; idle;
 road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'

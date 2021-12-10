@@ -18,8 +18,8 @@ east #
 000 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
 000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
 000 #5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; idle;
-000 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#7; idle;
+000 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest; idle;
+000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest; eroute owner; IKE SA #7; idle;
 east #
  ip xfrm policy
 src 192.1.2.23/32 dst 192.0.2.1/32 
