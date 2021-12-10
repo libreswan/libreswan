@@ -45,7 +45,7 @@ road #
 road #
  ipsec status |grep STATE
 000 #1: "xauth-road-eastnet-psk":500 STATE_AGGR_I2 (IKE SA established); REPLACE in XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle;
-000 #2: "xauth-road-eastnet-psk":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "xauth-road-eastnet-psk":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest IPSEC; eroute owner; ISAKMP SA #1; idle;
 road #
  echo done
 done

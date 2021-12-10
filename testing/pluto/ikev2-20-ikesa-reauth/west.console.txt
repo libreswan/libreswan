@@ -46,6 +46,6 @@ west #
 west #
  ipsec status | grep "STATE_"
 000 #3: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest ISAKMP; idle;
-000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#3; idle;
+000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; IKE SA #3; idle;
 west #
  

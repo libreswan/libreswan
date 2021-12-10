@@ -43,7 +43,7 @@ up
 west #
  ipsec auto --status | grep STATE_
 000 #1: "west-east-delete1":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; newest ISAKMP; idle;
-000 #2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; isakmp#1; idle;
+000 #2: "west-east-delete1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; newest IPSEC; eroute owner; IKE SA #1; idle;
 west #
  echo "sleeping a bit.. 2"
 sleeping a bit.. 2
