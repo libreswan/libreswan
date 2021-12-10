@@ -47,18 +47,21 @@ You can load this machine definition into libvirt using:
       <target dir='tmp'/>
     </filesystem>
     <interface type='network'>
+      <!-- eth0 -->
+      <mac address='12:00:00:1d:9c:19'/>
+      <source network='swandefault'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='network'>
+      <!-- eth1 -->
       <mac address='12:00:00:de:ad:ba'/>
       <source network='192_1_2'/>
       <model type='virtio'/>
     </interface>
     <interface type='network'>
+      <!-- eth2 -->
       <mac address='12:00:00:32:64:ba'/>
       <source network='192_1_3'/>
-      <model type='virtio'/>
-    </interface>
-    <interface type='network'>
-      <mac address='12:00:00:1d:9c:19'/>
-      <source network='swandefault'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

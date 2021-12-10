@@ -1,7 +1,7 @@
 iptables -t nat -F
 iptables -F
 # NAT
-iptables -t nat -p udp -A POSTROUTING --source 192.1.3.0/24  -o eth0 -j MASQUERADE --to-port 40000-60000
+iptables -t nat -p udp -A POSTROUTING --source 192.1.3.0/24  -o eth1 -j MASQUERADE --to-port 40000-60000
 # make sure that we never acidentially let ESP or unencrypted through.
 iptables -I FORWARD 1 --proto 50 -j DROP
 iptables -I FORWARD 2 --destination 192.0.2.0/24 -j DROP
