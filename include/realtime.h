@@ -72,8 +72,8 @@ realtime_t realtimesum(realtime_t t, deltatime_t d);
 bool is_realtime_epoch(realtime_t t);
 
 /* sign(a - b); see timercmp() for hacks origin */
-int realtime_sub_sign(realtime_t a, realtime_t b);
-#define realtime_cmp(A, OP, B) (realtime_sub_sign(A, B) OP 0)
+int realtime_sub_sign(realtime_t l, realtime_t r);
+#define realtime_cmp(L, OP, R) (realtime_sub_sign(L, R) OP 0)
 
 deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);

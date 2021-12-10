@@ -61,8 +61,8 @@ deltatime_t deltatime_ms(intmax_t milliseconds);
 deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 
 /* sign(a - b); see timercmp() for hacks origin */
-int deltatime_sub_sign(deltatime_t a, deltatime_t b);
-#define deltatime_cmp(A, OP, B) (deltatime_sub_sign(A, B) OP 0)
+int deltatime_sub_sign(deltatime_t l, deltatime_t r);
+#define deltatime_cmp(L, OP, R) (deltatime_sub_sign(L, R) OP 0)
 
 /* max(a, b) */
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b);

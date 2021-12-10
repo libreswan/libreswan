@@ -62,8 +62,8 @@ monotime_t monotime_add(monotime_t t, deltatime_t d);
 monotime_t monotime_sub(monotime_t t, deltatime_t d);
 
 /* sign(a - b); see timercmp() for hacks origin */
-int monotime_sub_sign(monotime_t a, monotime_t b);
-#define monotime_cmp(A, OP, B) (monotime_sub_sign(A, B) OP 0)
+int monotime_sub_sign(monotime_t l, monotime_t r);
+#define monotime_cmp(L, OP, R) (monotime_sub_sign(L, R) OP 0)
 
 bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
