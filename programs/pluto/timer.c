@@ -9,7 +9,7 @@
  * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2017-2020 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2021 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -69,6 +69,24 @@
 #include "ikev2_liveness.h"
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
+
+static int state_event_cmp(const void *lp, const void *rp)
+{
+	const struct state_event *const *le = lp;
+	const struct state_event *const *re = rp;
+	monotime_t l = (*le)->ev_time;
+	monotime_t r = (*re)->ev_time;
+	int sign = monotime_sub_sign(l, r);
+	monotime_buf lb, rb;
+	dbg("%s - %s = %d", str_monotime(l, &lb), str_monotime(r, &rb), sign);
+	return sign;
+}
+
+void state_event_sort(const struct state_event **events, unsigned nr_events)
+{
+	qsort(events, nr_events, sizeof(*events), state_event_cmp);
+}
+
 
 struct state_event **state_event_slot(struct state *st, enum event_type type)
 {

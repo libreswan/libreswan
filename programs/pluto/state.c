@@ -2037,28 +2037,32 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		 * XXX: use two loops as a hack to avoid short term
 		 * output churn.  This entire function needs an
 		 * update, start listing all events then.
-		 *
-		 * Should sort the events in time order.
-		 *
 		 */
-		FOR_EACH_THING(liveness, st->st_retransmit_event, NULL) {
-			/* show all */
-			if (liveness != NULL) {
-				jam_string(buf, " ");
-				jam_enum_short(buf, &event_type_names, liveness->ev_type);
-				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
-				jam(buf, " in %jds;", delta);
+		const struct state_event *events[] = {
+			st->st_event,
+			st->st_retransmit_event,
+			st->st_v1_send_xauth_event,
+			st->st_v2_liveness_event,
+			st->st_v2_addr_change_event,
+			st->st_v2_refresh_event,
+			st->st_v2_lifetime_event,
+		};
+		/* remove NULLs */
+		unsigned nr_events = 0;
+		FOR_EACH_ELEMENT(events, event) {
+			if (*event != NULL) {
+				events[nr_events] = *event;
+				nr_events++;
 			}
 		}
-		FOR_EACH_THING(liveness, st->st_event, st->st_v2_refresh_event, st->st_v2_lifetime_event) {
-			/* show first */
-			if (liveness != NULL) {
-				jam_string(buf, " ");
-				jam_enum_short(buf, &event_type_names, liveness->ev_type);
-				intmax_t delta = deltasecs(monotimediff(liveness->ev_time, now));
-				jam(buf, " in %jds;", delta);
-				break;
-			}
+		/* sort */
+		state_event_sort(events, nr_events);
+		/* and log */
+		for (const struct state_event **event = events; event < events+nr_events; event++) {
+			jam_string(buf, " ");
+			jam_enum_short(buf, &event_type_names, (*event)->ev_type);
+			intmax_t delta = deltasecs(monotimediff((*event)->ev_time, now));
+			jam(buf, " in %jds;", delta);
 		}
 
 		if (c->newest_ike_sa == st->st_serialno ||
