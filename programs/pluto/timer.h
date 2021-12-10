@@ -38,6 +38,8 @@ struct state_event {
 	monotime_t ev_time;		/* ... so should happen after ...*/
 };
 
+void state_event_sort(const struct state_event **events, unsigned nr_events);
+
 extern void event_schedule_where(enum event_type type, deltatime_t delay,
 				 struct state *st, where_t where);
 #define event_schedule(TYPE, DELAY, ST) event_schedule_where(TYPE, DELAY, ST, HERE)
