@@ -2061,12 +2061,9 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			}
 		}
 
-		if (c->newest_ike_sa == st->st_serialno) {
-			jam(buf, " newest ISAKMP;");
-		}
-
-		if (c->newest_ipsec_sa == st->st_serialno) {
-			jam(buf, " newest IPSEC;");
+		if (c->newest_ike_sa == st->st_serialno ||
+		    c->newest_ipsec_sa == st->st_serialno) {
+			jam(buf, " newest;");
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
