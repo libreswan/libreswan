@@ -2600,82 +2600,102 @@ class NS_GuestNetwork():
         self.testname = testname
 
         self.tcsum = str(binascii.crc_hqx(str.encode(self.testname), 0))
-        self.eth0 = NS_IF(hostname, self.tcsum, '0')
-        self.eth1 = None
-        if hostname != "road":
-            self.eth1 = NS_IF(hostname, self.tcsum, '1')
         self.lo = NS_IF(hostname, self.tcsum, None)
+        self.eth = []
 
         if hostname == "east":
-            self.eth0.ipv4 = "192.0.2.254/24"
-            self.eth0.ipv6 = "2001:db8:0:2::254/64"
-            if eth0_bridge:
-                self.eth0.br = "brswan02-" + self.tcsum
 
-            self.eth1.ipv4 = "192.1.2.23/24"
-            self.eth1.gwv4 = "192.1.2.254"
-            self.eth1.ipv6 = "2001:db8:1:2::23/64"
-            self.eth1.gwv6 = "2001:db8:1:2::254"
-            self.eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
-                                'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45']
-            self.eth1.br = "brswan12-" + self.tcsum
-            self.eth0.macaddress = "12:00:00:dc:bc:ff"
-            self.eth1.macaddress = "12:00:00:dc:bc:ff"
+            eth0 = NS_IF(hostname, self.tcsum, '0')
+            eth0.macaddress = "12:00:00:dc:bc:ff"
+            eth0.ipv4 = "192.0.2.254/24"
+            eth0.ipv6 = "2001:db8:0:2::254/64"
+            if eth0_bridge:
+                eth0.br = "brswan02-" + self.tcsum
+            self.eth.append(eth0)
+
+            eth1 = NS_IF(hostname, self.tcsum, '1')
+            eth1.macaddress = "12:00:00:dc:bc:ff"
+            eth1.ipv4 = "192.1.2.23/24"
+            eth1.gwv4 = "192.1.2.254"
+            eth1.ipv6 = "2001:db8:1:2::23/64"
+            eth1.gwv6 = "2001:db8:1:2::254"
+            eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
+                           'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45']
+            eth1.br = "brswan12-" + self.tcsum
+            self.eth.append(eth1)
 
         elif hostname == "west":
-            self.eth0.ipv4 = "192.0.1.254/24"
-            self.eth0.ipv6 = "2001:db8:0:1::254/64"
-            if eth0_bridge:
-                self.eth0.br = "brswan01-" + self.tcsum
 
-            self.eth1.ipv4 = "192.1.2.45/24"
-            self.eth1.gwv4 = "192.1.2.254"
-            self.eth1.ipv6 = "2001:db8:1:2::45/64"
-            self.eth1.gwv6 = "2001:db8:1:2::254"
-            self.eth1.routes = ['route add 192.0.2.0/24 via 192.1.2.23',
-                                'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
-            self.eth1.br = "brswan12-" + self.tcsum
-            self.eth0.macaddress = "12:00:00:ab:cd:ff"
-            self.eth1.macaddress = "12:00:00:64:64:45"
+            eth0 = NS_IF(hostname, self.tcsum, '0')
+            eth0.macaddress = "12:00:00:ab:cd:ff"
+            eth0.ipv4 = "192.0.1.254/24"
+            eth0.ipv6 = "2001:db8:0:1::254/64"
+            if eth0_bridge:
+                eth0.br = "brswan01-" + self.tcsum
+            self.eth.append(eth0)
+
+            eth1 = NS_IF(hostname, self.tcsum, '1')
+            eth1.macaddress = "12:00:00:64:64:45"
+            eth1.ipv4 = "192.1.2.45/24"
+            eth1.gwv4 = "192.1.2.254"
+            eth1.ipv6 = "2001:db8:1:2::45/64"
+            eth1.gwv6 = "2001:db8:1:2::254"
+            eth1.routes = ['route add 192.0.2.0/24 via 192.1.2.23',
+                           'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
+            eth1.br = "brswan12-" + self.tcsum
+            self.eth.append(eth1)
 
         elif hostname == "road":
-            self.eth0.ipv4 = "192.1.3.209/24"
-            self.eth0.gwv4 = "192.1.3.254"
-            self.eth0.ipv6 = "2001:db8:1:3::209/64"
-            self.eth0.gwv6 = "2001:db8:1:3::254"
-            self.eth0.br = "brswan13-" + self.tcsum
-            self.eth0.macaddress = "12:00:00:ab:cd:02"
+
+            eth0 = NS_IF(hostname, self.tcsum, '0')
+            eth0.ipv4 = "192.1.3.209/24"
+            eth0.gwv4 = "192.1.3.254"
+            eth0.ipv6 = "2001:db8:1:3::209/64"
+            eth0.gwv6 = "2001:db8:1:3::254"
+            eth0.br = "brswan13-" + self.tcsum
+            eth0.macaddress = "12:00:00:ab:cd:02"
+            self.eth.append(eth0)
 
         elif hostname == "north":
-            self.eth0.ipv4 = "192.0.3.254/24"
-            self.eth0.ipv6 = "2001:db8:0:3::254/64"
-            if eth0_bridge:
-                self.eth0.br = "brswan03-" + self.tcsum
 
-            self.eth1.ipv4 = "192.1.3.33/24"
-            self.eth1.gwv4 = "192.1.3.254"
-            self.eth1.ipv6 = "2001:db8:1:3::33/64"
-            self.eth1.gwv6 = "2001:db8:1:3::254"
-            self.eth1.br = "brswan13-" + self.tcsum
-            self.eth0.macaddress = "12:00:00:de:cd:49"
-            self.eth1.macaddress = "12:00:00:96:96:49"
+            eth0 = NS_IF(hostname, self.tcsum, '0')
+            eth0.macaddress = "12:00:00:de:cd:49"
+            eth0.ipv4 = "192.0.3.254/24"
+            eth0.ipv6 = "2001:db8:0:3::254/64"
+            if eth0_bridge:
+                eth0.br = "brswan03-" + self.tcsum
+            self.eth.append(eth0)
+
+            eth1 = NS_IF(hostname, self.tcsum, '1')
+            eth1.macaddress = "12:00:00:96:96:49"
+            eth1.ipv4 = "192.1.3.33/24"
+            eth1.gwv4 = "192.1.3.254"
+            eth1.ipv6 = "2001:db8:1:3::33/64"
+            eth1.gwv6 = "2001:db8:1:3::254"
+            eth1.br = "brswan13-" + self.tcsum
+            self.eth.append(eth1)
 
         elif hostname == "nic":
-            self.eth0.ipv4 = "192.1.2.254/24"
-            self.eth0.ipv6 = "2001:db8:1:2::254/64"
-            self.eth0.br = "brswan12-" + self.tcsum
-            self.eth0.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
-                                'route add 192.0.2.0/24 via 192.1.2.23',
-                                'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45',
-                                'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
 
-            self.eth1.ipv4 = "192.1.3.254/24"
-            self.eth1.ipv6 = "2001:db8:1:3::254/64"
-            self.eth1.br = "brswan13-" + self.tcsum
-            self.eth1.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
-                                'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
-            self.eth0.macaddress = "12:00:00:de:ad:ba"
-            self.eth1.macaddress = "12:00:00:32:64:ba"
+            eth1 = NS_IF(hostname, self.tcsum, '1')
+            eth1.macaddress = "12:00:00:de:ad:ba"
+            eth1.ipv4 = "192.1.2.254/24"
+            eth1.ipv6 = "2001:db8:1:2::254/64"
+            eth1.br = "brswan12-" + self.tcsum
+            eth1.routes = ['route add 192.0.1.0/24 via 192.1.2.45',
+                           'route add 192.0.2.0/24 via 192.1.2.23',
+                           'route add 2001:db8:0:1::/64 via 2001:db8:1:2::45',
+                           'route add 2001:db8:0:2::/64 via 2001:db8:1:2::23']
+            self.eth.append(eth1)
+
+            eth2 = NS_IF(hostname, self.tcsum, '2')
+            eth2.macaddress = "12:00:00:32:64:ba"
+            eth2.ipv4 = "192.1.3.254/24"
+            eth2.ipv6 = "2001:db8:1:3::254/64"
+            eth2.br = "brswan13-" + self.tcsum
+            eth2.routes = ['route add 192.0.3.0/24 via 192.1.3.33',
+                           'route add 2001:db8:0:3::/64 via 2001:db8:1:3::33']
+            self.eth.append(eth2)
 
         else:
             raise Exception("ERROR: unknown host name: '%s'" % hostname)
@@ -3440,12 +3460,9 @@ class Docker:
 
     def docker_add_network(self, test, shell):
         net = NS_GuestNetwork(test.name, test.sudo, guest=shell, eth0_bridge=True)
-        if net.docker_add_link(net.eth0,  "%s-%s" % (shell.hostname, test.name)):
-            logger.error("ERROR: failed add networking eth0")
-            return True
-        if net.eth1:
-            if net.docker_add_link(net.eth1,  "%s-%s" % (shell.hostname, test.name)):
-                logger.error("ERROR: failed add networking eth1")
+        for eth in net.eth:
+            if net.docker_add_link(eth,  "%s-%s" % (shell.hostname, test.name)):
+                logger.error("ERROR: failed add networking %s" % eth.name)
                 return True
 
     def docker_add(self, test):
@@ -3479,9 +3496,8 @@ class Docker:
                 logger.error("ERROR: '%s' non zero exit status" % cmd)
 
             net = NS_GuestNetwork(test.name, test.sudo, hostname=host, eth0_bridge=True)
-            net.link_del_veth(net.eth0, "%s-%s" % (host, test.name))
-            if net.eth1:
-                net.link_del_veth(net.eth1, "%s-%s" % (host, test.name))
+            for eth in net.eth:
+                net.link_del_veth(eth, "%s-%s" % (host, test.name))
 
     def docker_restart(self, test):
 
@@ -3574,9 +3590,8 @@ class Namespace:
 
     def ns_add_network(self, test, shell):
         net = NS_GuestNetwork(test.name, test.sudo, guest=shell)
-        net.link_add_veth(net.eth0, "%s-%s" % (shell.hostname, test.name))
-        if net.eth1:
-            net.link_add_veth(net.eth1, "%s-%s" % (shell.hostname, test.name))
+        for eth in net.eth:
+            net.link_add_veth(eth, "%s-%s" % (shell.hostname, test.name))
 
     def ns_add_testing_dir(self, testingdir, shell):
         d = "/testing"
@@ -3678,9 +3693,8 @@ class Namespace:
                     "no more previous instance of '%s-%s'", host, test.name)
 
             net = NS_GuestNetwork(test.name, test.sudo, hostname=host)
-            net.link_del_veth(net.eth0, "%s-%s" % (host, test.name))
-            if net.eth1:
-                net.link_del_veth(net.eth1, "%s-%s" % (host, test.name))
+            for eth in net.eth:
+                net.link_del_veth(eth, "%s-%s" % (host, test.name))
 
             logger.debug("ns_del cleaned test '%s'", test.name)
 
