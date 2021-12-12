@@ -794,7 +794,12 @@ void add_fd_read_event_handler(evutil_socket_t fd,
 	 * running, there can't be a race between the event being
 	 * added and the event firing.
 	 */
-	attach_fd_read_sensor(&e->ev, fd, cb, arg);
+	passert(e->ev == NULL);
+	e->ev = event_new(get_pluto_event_base(), fd,
+			  EV_READ|EV_PERSIST, cb, arg);
+	passert(e->ev != NULL);
+	/* note call */
+	passert(event_add(e->ev, NULL) >= 0);
 }
 
 /*
