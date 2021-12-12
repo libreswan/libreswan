@@ -2700,8 +2700,6 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	return result;
 }
 
-static event_callback_routine kernel_process_msg_cb;
-
 static void kernel_process_msg_cb(evutil_socket_t fd,
 				  const short event UNUSED,
 				  void *arg)

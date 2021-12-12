@@ -177,7 +177,6 @@ void delete_state_event(struct state_event **evp, where_t where)
 
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay);
-static event_callback_routine timer_event_cb;
 
 static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 			   const short unused_event UNUSED,

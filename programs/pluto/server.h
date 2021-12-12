@@ -74,8 +74,6 @@ extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
 extern void stop_server(server_stopped_cb cb);
 
-typedef void event_callback_routine(evutil_socket_t, const short, void *);
-
 void fire_timer_photon_torpedo(struct event **evp,
 			       event_callback_fn cb, void *arg,
 			       const deltatime_t delay);
