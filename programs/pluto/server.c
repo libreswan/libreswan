@@ -104,7 +104,7 @@ char *pluto_vendorid;
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 
-static struct fd_event *pluto_events_head = NULL;
+static struct fd_read_listener *pluto_events_head = NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -463,16 +463,16 @@ static void list_signal_handlers(struct show *s)
  * Global FD events.
  */
 
-struct fd_event {
+struct fd_read_listener {
 	const char *ev_name;		/* Name or enum_name(ev_type) */
 	struct event *ev;               /* libevent data structure */
-	struct fd_event *next;
+	struct fd_read_listener *next;
 };
 
-static struct fd_event *free_event_entry(struct fd_event **evp)
+static struct fd_read_listener *free_event_entry(struct fd_read_listener **evp)
 {
-	struct fd_event *e = *evp;
-	struct fd_event *next = e->next;
+	struct fd_read_listener *e = *evp;
+	struct fd_read_listener *next = e->next;
 
 	/* unlink this pluto_event from the list */
 	if (e->ev != NULL) {
@@ -498,7 +498,7 @@ void free_server(void)
 		return;
 	}
 
-	struct fd_event **head = &pluto_events_head;
+	struct fd_read_listener **head = &pluto_events_head;
 	while (*head != NULL)
 		*head = free_event_entry(head);
 	free_global_timers();
@@ -528,7 +528,7 @@ void free_server(void)
 #endif
 }
 
-static void link_pluto_event_list(struct fd_event *e) {
+static void link_pluto_event_list(struct fd_read_listener *e) {
 	e->next = pluto_events_head;
 	pluto_events_head = e;
 }
@@ -785,7 +785,7 @@ void add_fd_read_event_handler(evutil_socket_t fd,
 {
 	passert(in_main_thread());
 	pexpect(fd >= 0);
-	struct fd_event *e = alloc_thing(struct fd_event, name);
+	struct fd_read_listener *e = alloc_thing(struct fd_read_listener, name);
 	dbg_alloc("pe", e, HERE);
 	e->ev_name = name;
 	link_pluto_event_list(e);
@@ -813,7 +813,7 @@ void list_timers(struct show *s, monotime_t now)
 	list_global_timers(s, now);
 	list_signal_handlers(s);
 
-	for (struct fd_event *ev = pluto_events_head;
+	for (struct fd_read_listener *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			show_comment(s, "event %s is not timer based", ev->ev_name);
