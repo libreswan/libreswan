@@ -471,23 +471,6 @@ struct fd_read_listener {
 	struct fd_read_listener *next;
 };
 
-static struct fd_read_listener *free_event_entry(struct fd_read_listener **evp)
-{
-	struct fd_read_listener *e = *evp;
-	struct fd_read_listener *next = e->next;
-
-	/* unlink this pluto_event from the list */
-	if (e->ev != NULL) {
-		event_free(e->ev);
-		e->ev = NULL;
-	}
-
-	dbg_free("pe", e, HERE);
-	pfree(e);
-	*evp = NULL;
-	return next;
-}
-
 void free_server(void)
 {
 	if (pluto_eb == NULL) {
@@ -500,9 +483,12 @@ void free_server(void)
 		return;
 	}
 
-	struct fd_read_listener **head = &pluto_events_head;
-	while (*head != NULL)
-		*head = free_event_entry(head);
+	while (pluto_events_head != NULL) {
+		struct fd_read_listener *tbd = pluto_events_head;
+		pluto_events_head = tbd->next;
+		tbd->next = NULL;
+		detach_fd_read_listener(&tbd);
+	}
 	free_global_timers();
 	free_signal_handlers();
 
@@ -808,27 +794,13 @@ void detach_fd_read_listener(struct fd_read_listener **fdl)
 	}
 }
 
-void add_fd_read_event_handler(evutil_socket_t fd,
-			       event_callback_fn cb, void *arg,
-			       const char *name)
+void add_fd_read_listener(int fd, const char *name,
+			  fd_read_listener_cb *cb, void *arg)
 {
 	passert(in_main_thread());
-	pexpect(fd >= 0);
-	struct fd_read_listener *e = alloc_thing(struct fd_read_listener, name);
-	dbg_alloc("pe", e, HERE);
-	e->ev_name = name;
-	link_pluto_event_list(e);
-	/*
-	 * Since this is on the main thread, and the event loop isn't
-	 * running, there can't be a race between the event being
-	 * added and the event firing.
-	 */
-	passert(e->ev == NULL);
-	e->ev = event_new(get_pluto_event_base(), fd,
-			  EV_READ|EV_PERSIST, cb, arg);
-	passert(e->ev != NULL);
-	/* note call */
-	passert(event_add(e->ev, NULL) >= 0);
+	struct fd_read_listener *fdl = NULL;
+	attach_fd_read_listener(&fdl, fd, name, cb, arg);
+	link_pluto_event_list(fdl);
 }
 
 /*
@@ -981,7 +953,7 @@ void run_server(char *conffile, struct logger *logger)
 
 	dbg("Setting up events, loop start");
 
-	add_fd_read_event_handler(ctl_fd, whack_handle_cb, NULL, "PLUTO_CTL_FD");
+	add_fd_read_listener(ctl_fd, "PLUTO_CTL_FD", whack_handle_cb, NULL);
 
 	install_signal_handlers();
 

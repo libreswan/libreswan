@@ -2700,11 +2700,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	return result;
 }
 
-static void kernel_process_msg_cb(evutil_socket_t fd,
-				  const short event UNUSED,
-				  void *arg)
+static void kernel_process_msg_cb(int fd, void *arg, struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	const struct kernel_ops *kernel_ops = arg;
 
 	dbg("kernel: %s process netlink message", __func__);
@@ -2764,12 +2761,12 @@ void init_kernel(struct logger *logger)
 
 	if (kernel_ops->async_fdp != NULL)
 		/* Note: kernel_ops is const but pluto_event_add cannot know that */
-		add_fd_read_event_handler(*kernel_ops->async_fdp, kernel_process_msg_cb,
-				  (void *)kernel_ops, "KERNEL_XRM_FD");
+		add_fd_read_listener(*kernel_ops->async_fdp, "KERNEL_XRM_FD",
+				     kernel_process_msg_cb, (void*)kernel_ops);
 
 	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp > NULL_FD) {
-		add_fd_read_event_handler(*kernel_ops->route_fdp, kernel_process_msg_cb,
-					  (void *)kernel_ops, "KERNEL_ROUTE_FD");
+		add_fd_read_listener(*kernel_ops->route_fdp, "KERNEL_ROUTE_FD",
+				     kernel_process_msg_cb, (void*)kernel_ops);
 	}
 
 	if (kernel_ops->process_queue != NULL) {

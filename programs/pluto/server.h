@@ -86,9 +86,8 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 			     fd_read_listener_cb *cb, void *arg);
 void detach_fd_read_listener(struct fd_read_listener **fdl);
 
-void add_fd_read_event_handler(evutil_socket_t fd,
-			       event_callback_fn cb, void *arg,
-			       const char *name);
+void add_fd_read_listener(int fd, const char *name,
+			  fd_read_listener_cb *cb, void *arg);
 
 extern void set_pluto_busy(bool busy);
 extern void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger);

@@ -1000,12 +1000,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
 
-void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
-		     void *arg UNUSED)
+void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 {
 	threadtime_t start = threadtime_start();
 	{
-		struct logger global_logger[1] = { GLOBAL_LOGGER(null_fd), }; /*event-handler*/
 		struct fd *whackfd = fd_accept(fd, HERE, global_logger);
 		if (whackfd == NULL) {
 			/* already logged */

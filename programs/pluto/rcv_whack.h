@@ -23,7 +23,6 @@
 #include "lswcdefs.h"
 #include "fd.h"
 
-extern void whack_handle_cb(evutil_socket_t fd,
-		const short event UNUSED, void *arg UNUSED);
+extern void whack_handle_cb(int fd, void *arg, struct logger *logger);
 
 #endif
