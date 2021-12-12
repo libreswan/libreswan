@@ -36,6 +36,7 @@ struct bufferevent;
 struct iface_endpoint;
 struct iface_dev;
 struct show;
+struct fd_read_listener;
 
 extern char *pluto_vendorid;
 
@@ -77,8 +78,14 @@ extern void stop_server(server_stopped_cb cb);
 void fire_timer_photon_torpedo(struct event **evp,
 			       event_callback_fn cb, void *arg,
 			       const deltatime_t delay);
-void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
-			   event_callback_fn cb, void *arg);
+
+typedef void (fd_read_listener_cb)(int fd, void *arg, struct logger *logger);
+
+void attach_fd_read_listener(struct fd_read_listener **fdl,
+			     int fd, const char *name,
+			     fd_read_listener_cb *cb, void *arg);
+void detach_fd_read_listener(struct fd_read_listener **fdl);
+
 void add_fd_read_event_handler(evutil_socket_t fd,
 			       event_callback_fn cb, void *arg,
 			       const char *name);

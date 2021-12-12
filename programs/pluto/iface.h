@@ -149,11 +149,15 @@ struct iface_endpoint {
 	 */
 	bool float_nat_initiator;
 	/* udp only */
-	struct event *udp_message_listener;
+	struct {
+		struct fd_read_listener *read_listener;
+	} udp;
 	/* tcp port only */
 	struct evconnlistener *tcp_accept_listener;
 	/* tcp stream only */
-	struct event *iketcp_read_event;
+	struct {
+		struct fd_read_listener *read_listener;
+	} iketcp;
 	ip_endpoint iketcp_remote_endpoint;
 	bool iketcp_server;
 	enum iketcp_state {

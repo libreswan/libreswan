@@ -464,6 +464,8 @@ static void list_signal_handlers(struct show *s)
  */
 
 struct fd_read_listener {
+	fd_read_listener_cb *cb;
+	void *arg;
 	const char *ev_name;		/* Name or enum_name(ev_type) */
 	struct event *ev;               /* libevent data structure */
 	struct fd_read_listener *next;
@@ -768,15 +770,42 @@ extern void schedule_callback(const char *story, so_serial_t serialno,
 				  deltatime(0)/*now*/);
 }
 
-void attach_fd_read_sensor(struct event **ev, evutil_socket_t fd,
-			   event_callback_fn cb, void *arg)
+static void fd_read_listener_event_handler(evutil_socket_t fd,
+					   short events UNUSED,
+					   void *arg)
 {
-	passert(*ev == NULL);
-	*ev = event_new(get_pluto_event_base(), fd,
-			EV_READ|EV_PERSIST, cb, arg);
-	passert(*ev != NULL);
-	/* note call */
-	passert(event_add(*ev, NULL) >= 0);
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct fd_read_listener *fdl = arg;
+	fdl->cb(fd, fdl->arg, logger);
+}
+
+void attach_fd_read_listener(struct fd_read_listener **fdl,
+			     int fd, const char *name,
+			     fd_read_listener_cb *cb, void *arg)
+{
+	passert(*fdl == NULL);
+	passert(fd >= 0);
+	/* create the listener */
+	*fdl = alloc_thing(struct fd_read_listener, name);
+	dbg_alloc("fdl", *fdl, HERE);
+	(*fdl)->ev_name = name;
+	(*fdl)->arg = arg;
+	(*fdl)->cb = cb;
+	(*fdl)->ev = event_new(get_pluto_event_base(), fd,
+			       EV_READ|EV_PERSIST,
+			       fd_read_listener_event_handler, *fdl);
+	passert((*fdl)->ev != NULL);
+	passert(event_add((*fdl)->ev, NULL) >= 0);
+}
+
+void detach_fd_read_listener(struct fd_read_listener **fdl)
+{
+	if (*fdl != NULL) {
+		event_free((*fdl)->ev);
+		dbg_free("fdl", *fdl, HERE);
+		pfree(*fdl);
+		*fdl = NULL;
+	}
 }
 
 void add_fd_read_event_handler(evutil_socket_t fd,

@@ -33,12 +33,13 @@
 
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
+struct logger;
 
 /*
  * Used by UDP and TCP to inject packets.
  */
 
-void process_iface_packet(/*evutil_socket_t*/int fd, const short event, void *ifp_arg);
+void process_iface_packet(int fd, void *ifp_arg, struct logger *logger);
 
 /* State transition function infrastructure
  *

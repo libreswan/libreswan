@@ -409,9 +409,9 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 static void udp_listen(struct iface_endpoint *ifp,
 		       struct logger *unused_logger UNUSED)
 {
-	if (ifp->udp_message_listener == NULL) {
-		attach_fd_read_sensor(&ifp->udp_message_listener, ifp->fd,
-				      process_iface_packet, ifp);
+	if (ifp->udp.read_listener == NULL) {
+		attach_fd_read_listener(&ifp->udp.read_listener, ifp->fd,
+					"udp", process_iface_packet, ifp);
 	}
 }
 
@@ -432,8 +432,7 @@ static int udp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
 
 static void udp_cleanup(struct iface_endpoint *ifp)
 {
-	event_free(ifp->udp_message_listener);
-	ifp->udp_message_listener = NULL;
+	detach_fd_read_listener(&ifp->udp.read_listener);
 }
 
 const struct iface_io udp_iface_io = {

@@ -255,9 +255,8 @@ static void process_md(struct msg_digest **mdp)
 
 static bool impair_incoming(struct msg_digest *md);
 
-void process_iface_packet(evutil_socket_t fd, const short event UNUSED, void *ifp_arg)
+void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
 	struct iface_endpoint *ifp = ifp_arg;
 	ifp_arg = NULL; /* can no longer be trusted */
 

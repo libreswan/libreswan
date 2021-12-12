@@ -137,11 +137,10 @@ static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 
 static void stop_iketcp_read(const char *why, struct iface_endpoint *ifp)
 {
-	if (ifp->iketcp_read_event != NULL) {
+	if (ifp->iketcp.read_listener != NULL) {
 		dbg_iketcp(ifp, "%s; stopping read event %p",
-			   why, ifp->iketcp_read_event);
-		event_free(ifp->iketcp_read_event);
-		ifp->iketcp_read_event = NULL;
+			   why, ifp->iketcp.read_listener);
+		detach_fd_read_listener(&ifp->iketcp.read_listener);
 	}
 }
 
@@ -782,8 +781,9 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 	interfaces = q;
 #endif
 
-	attach_fd_read_sensor(&ifp->iketcp_read_event,
-			      fd, process_iface_packet, ifp);
+	attach_fd_read_listener(&ifp->iketcp.read_listener,
+				fd, "IKETCP",
+				process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
 	/*
@@ -839,8 +839,8 @@ void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
 	 */
 	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
 				  ifp, deltatime(5)); /* TCP: how much? */
-	attach_fd_read_sensor(&ifp->iketcp_read_event, ifp->fd,
-			      process_iface_packet, ifp);
+	attach_fd_read_listener(&ifp->iketcp.read_listener, ifp->fd,
+				"IKETCP", process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
 }
