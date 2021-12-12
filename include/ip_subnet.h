@@ -52,7 +52,7 @@ typedef struct {
 	unsigned maskbits;
 } ip_subnet;
 
-#define PRI_SUBNET "<subnet: %s IPv%d bytes="PRI_BYTES" maskbits=%u>"
+#define PRI_SUBNET "<subnet-%s:IPv%d["PRI_BYTES"]/%u>"
 #define pri_subnet(S)					\
 		((S)->is_set ? "set" : "unset"),	\
 		(S)->version,				\

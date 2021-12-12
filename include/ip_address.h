@@ -57,7 +57,7 @@ typedef struct {
 	struct ip_bytes bytes;
 } ip_address;
 
-#define PRI_ADDRESS "<address: %sIPv%d bytes="PRI_BYTES">"
+#define PRI_ADDRESS "<address-%s:IPv%d["PRI_BYTES"]>"
 #define pri_address(A)					\
 		((A)->is_set ? "set" : "unset"),	\
 		(A)->version,				\

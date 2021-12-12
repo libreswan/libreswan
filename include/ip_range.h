@@ -31,7 +31,7 @@ typedef struct {
 	struct ip_bytes end;
 } ip_range;
 
-#define PRI_RANGE "<range: %s IPv%d start="PRI_BYTES" end="PRI_BYTES">"
+#define PRI_RANGE "<range-%s:IPv%d["PRI_BYTES"]->["PRI_BYTES"]>"
 #define pri_range(R)					\
 		((R)->is_set ? "set" : "unset"),	\
 		(R)->version,				\

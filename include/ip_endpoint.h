@@ -52,12 +52,13 @@ typedef struct {
 	int hport;
 } ip_endpoint;
 
-#define PRI_ENDPOINT "<endpoint: %s IPv%d bytes="PRI_BYTES" ipproto=%u hport=%u>"
+#define PRI_ENDPOINT "<endpoint-%s:IPv%d,%s["PRI_BYTES"]:%u>"
 #define pri_endpoint(A)						\
 		((A)->is_set ? "set" : "unset"),		\
 		(A)->version,					\
+		((A)->ipproto > 255 ? "PROTO>255" :		\
+		 protocol_by_ipproto((A)->ipproto)->name),	\
 		pri_bytes((A)->bytes),				\
-		(A)->ipproto,					\
 		(A)->hport
 
 void pexpect_endpoint(const ip_endpoint *e, where_t where);
