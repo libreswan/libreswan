@@ -1147,10 +1147,10 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			 * now.  It provides an anchor when looking at
 			 * test changes.
 			 */
-			esb_buf esb;
+			enum_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"IKE_AUTH response rejected Child SA with %s",
-				enum_show_short(&v2_notification_names, n, &esb));
+				str_enum_short(&v2_notification_names, n, &esb));
 			connection_buf cb;
 			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
 			    ike->sa.st_serialno, child->sa.st_serialno,

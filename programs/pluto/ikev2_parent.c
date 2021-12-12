@@ -210,11 +210,11 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		return true;
 	}
 
-	esb_buf ke_esb;
+	enum_buf ke_esb;
 	llog(RC_LOG, st->st_logger,
-		    "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-		    enum_show_short(&oakley_group_names, ke_group, &ke_esb),
-		    accepted_dh->common.fqn);
+	     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+	     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
+	     accepted_dh->common.fqn);
 	pstats(invalidke_sent_u, ke_group);
 	pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 	/* convert group to a raw buffer */

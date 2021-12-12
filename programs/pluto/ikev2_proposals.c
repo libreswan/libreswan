@@ -1475,7 +1475,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			unsigned transform_id = (type_id & 0xffff);
 			enum_buf typeb, idb;
 			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
-			     enum_show_short(&ikev2_trans_type_names, transform_type, &typeb),
+			     str_enum_short(&ikev2_trans_type_names, transform_type, &typeb),
 			     transform_type,
 			     str_enum_enum(&v2_transform_ID_enums, transform_type, transform_id, &idb),
 			     transform_id);

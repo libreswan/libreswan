@@ -243,7 +243,6 @@ extern const char *str_enum(enum_names *ed, unsigned long val, enum_buf *);
 extern const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *);
 
 #define enum_show str_enum /* XXX: TBD */
-#define enum_show_short str_enum_short /* XXX: TBD */
 
 /*
  * iterator

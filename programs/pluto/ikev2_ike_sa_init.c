@@ -1196,12 +1196,12 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
-		esb_buf esb;
-		log_state(RC_LOG, &ike->sa,
-			  "Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
-			  ike->sa.st_oakley.ta_dh->common.fqn,
-			  enum_show_short(&oakley_group_names,
-					  sg.sg_group, &esb));
+		enum_buf esb;
+		llog_sa(RC_LOG, ike,
+			"Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
+			ike->sa.st_oakley.ta_dh->common.fqn,
+			str_enum_short(&oakley_group_names,
+				       sg.sg_group, &esb));
 		return STF_IGNORE;
 	}
 

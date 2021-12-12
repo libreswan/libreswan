@@ -1503,14 +1503,14 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		     ntfy != NULL; ntfy = ntfy->next) {
 			v2_notification_t n = ntfy->payload.v2n.isan_type;
 			/* same scope */
-			esb_buf esb;
-			const char *name = enum_show_short(&v2_notification_names, n, &esb);
+			enum_buf esb;
+			const char *name = str_enum_short(&v2_notification_names, n, &esb);
 
 			if (ntfy->payload.v2n.isan_spisize != 0) {
 				/* invalid-syntax, but can't do anything about it */
-				log_state(RC_LOG_SERIOUS, &ike->sa,
-					  "received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
-					  name);
+				llog_sa(RC_LOG_SERIOUS, ike,
+					"received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+					name);
 				logged_something_serious = true;
 				break;
 			}
@@ -1518,8 +1518,9 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			if (n >= v2N_STATUS_FLOOR) {
 				/* just log */
 				pstat(ikev2_recv_notifies_s, n);
-				log_state(RC_LOG, &ike->sa,
-					  "IKE_AUTH response contained the status notification %s", name);
+				llog_sa(RC_LOG, ike,
+					"IKE_AUTH response contained the status notification %s",
+					name);
 			} else {
 				pstat(ikev2_recv_notifies_e, n);
 				logged_something_serious = true;
@@ -1539,16 +1540,18 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 				case v2N_TS_UNACCEPTABLE:
 				case v2N_INVALID_SELECTORS:
 					if (child == NULL) {
-						log_state(RC_LOG_SERIOUS, &ike->sa,
-							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child", name);
+						llog_sa(RC_LOG_SERIOUS, ike,
+							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child",
+							name);
 					} else {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "IKE_AUTH response contained the error notification %s", name);
+						llog_sa(RC_LOG_SERIOUS, child,
+							"IKE_AUTH response contained the error notification %s", name);
 					}
 					break;
 				default:
-					log_state(RC_LOG_SERIOUS, &ike->sa,
-						  "IKE_AUTH response contained the error notification %s", name);
+					llog_sa(RC_LOG_SERIOUS, ike,
+						"IKE_AUTH response contained the error notification %s",
+						name);
 					break;
 				}
 				/* first is enough */

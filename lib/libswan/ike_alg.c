@@ -584,11 +584,11 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
 	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
-		esb_buf esb;
+		enum_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
-				      enum_show_short(&auth_alg_names,
-						      integ->common.id[IKEv1_ESP_ID],
-						      &esb));
+				      str_enum_short(&auth_alg_names,
+						     integ->common.id[IKEv1_ESP_ID],
+						     &esb));
 	}
 	if (integ->prf != NULL) {
 		pexpect_ike_alg(logger, alg, integ->integ_keymat_size == integ->prf->prf_key_size);
@@ -703,11 +703,11 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	}
 	pexpect_ike_alg_has_name(logger, HERE, alg, encrypt->encrypt_kernel_audit_name, ".encrypt_kernel_audit_name");
 	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
-		esb_buf esb;
+		enum_buf esb;
 		pexpect_ike_alg_streq(logger, alg, encrypt->encrypt_kernel_audit_name,
-				      enum_show_short(&esp_transformid_names,
-						      encrypt->common.id[IKEv1_ESP_ID],
-						      &esb));
+				      str_enum_short(&esp_transformid_names,
+						     encrypt->common.id[IKEv1_ESP_ID],
+						     &esb));
 	}
 
 	/*

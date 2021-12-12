@@ -1586,9 +1586,9 @@ void ikev2_process_packet(struct msg_digest *md)
 	struct ike_sa *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
 					    expected_local_ike_role);
 	if (ike == NULL) {
-		esb_buf ixb;
+		enum_buf ixb;
 		rate_log(md, "%s %s has no corresponding IKE SA; message dropped",
-			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
+			 str_enum_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
@@ -1616,11 +1616,11 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * path.
 	 */
 	if (!ike->sa.st_state->v2.secured) {
-		esb_buf ixb;
+		enum_buf ixb;
 		/* there's no rate_llog() */
 		rate_log(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
 			 ike->sa.st_serialno,
-			 enum_show_short(&ikev2_exchange_names, ix, &ixb),
+			 str_enum_short(&ikev2_exchange_names, ix, &ixb),
 			 v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}

@@ -1512,15 +1512,12 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
-		/* same scope */
-		esb_buf esb;
-		const char *name = enum_show_short(&v2_notification_names, n, &esb);
-
 		if (n < v2N_ERROR_PSTATS_ROOF) {
 			pstat(ikev2_recv_notifies_e, n);
+			enum_buf esb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"CREATE_CHILD_SA failed with error notification %s",
-				name);
+				str_enum_short(&v2_notification_names, n, &esb));
 			dbg("re-add child to pending queue with exponential back-off?");
 			break;
 		}

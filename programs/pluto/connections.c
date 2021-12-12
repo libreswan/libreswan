@@ -4432,15 +4432,14 @@ static void show_one_sr(struct show *s,
 		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
 		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
 
-	esb_buf auth1, auth2;
-
+	enum_buf auth1, auth2;
 	show_comment(s,
-		"\"%s\"%s:   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
-		c->name, instance,
-		enum_show_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
-		enum_show_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
-		sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
-		sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
+		     PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
+		     c->name, instance,
+		     str_enum_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
+		     str_enum_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
+		     sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
+		     sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
 	);
 
 	show_comment(s,
