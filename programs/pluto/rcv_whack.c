@@ -1010,8 +1010,13 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 			return;
 		}
 
-		struct logger whack_logger[1] = { GLOBAL_LOGGER(whackfd), }; /*event-handler*/
-		whack_handle(whackfd, whack_logger);
+		/* XXX: something better? */
+		struct logger whack_logger = *global_logger;
+		whack_logger.global_whackfd = whackfd;
+		whack_logger.where = HERE;
+
+		whack_handle(whackfd, &whack_logger);
+
 		fd_delref(&whackfd);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
