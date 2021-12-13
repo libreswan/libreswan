@@ -32,7 +32,7 @@ struct show;
 struct state_event {
 	enum event_type ev_type;        /* Event type if time based */
 	struct state *ev_state;     	/* Pointer to relevant state (if any) */
-	struct event *ev;               /* libevent data structure */
+	struct timeout *timeout;	/* Underlying timer */
 	monotime_t ev_epoch;		/* it was scheduled ... */
 	deltatime_t ev_delay;		/* ... with the delay ... */
 	monotime_t ev_time;		/* ... so should happen after ...*/

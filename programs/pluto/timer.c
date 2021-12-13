@@ -159,8 +159,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 	    enum_name(&event_type_names, e->ev_type));
 
 	/* first the event */
-	event_free(e->ev);
-	e->ev = NULL;
+	destroy_timeout(&e->timeout);
 	/* then the structure */
 	dbg_free("state-event", e, where);
 	pfree(e);
@@ -178,9 +177,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay);
 
-static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
-			   const short unused_event UNUSED,
-			   void *arg)
+static void timer_event_cb(void *arg, struct logger *logger)
 {
 	/*
 	 * Start billing before state is found.
@@ -206,21 +203,21 @@ static void timer_event_cb(evutil_socket_t unused_fd UNUSED,
 		passert(st != NULL);
 		passert(event_name != NULL);
 
-		dbg("%s: processing %s-event@%p for %s SA #%lu in state %s",
-		    __func__, event_name, ev,
-		    IS_IKE_SA(st) ? "IKE" : "CHILD",
-		    st->st_serialno, st->st_state->short_name);
+		ldbg(logger, "%s: processing %s-event@%p for %s SA #%lu in state %s",
+		     __func__, event_name, ev,
+		     IS_IKE_SA(st) ? "IKE" : "CHILD",
+		     st->st_serialno, st->st_state->short_name);
 
 		struct state_event **evp = state_event_slot(st, event_type);
 		if (evp == NULL) {
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "#%lu has no .st_event field for %s",
 				     st->st_serialno, event_name);
 			return;
 		}
 
 		if (*evp != ev) {
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "#%lu .st_event is %p but should be %s-pe@%p",
 				     st->st_serialno, *evp, event_name, ev);
 			return;
@@ -555,7 +552,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	    __func__, event_name, ev, str_deltatime(delay, &buf),
 	    ev->ev_state->st_serialno);
 
-	fire_timer_photon_torpedo(&ev->ev, timer_event_cb, ev, delay);
+	schedule_timeout(event_name, &ev->timeout, delay, timer_event_cb, ev);
 }
 
 /*

@@ -156,6 +156,7 @@ struct iface_endpoint {
 		/* tcp port only */
 		struct fd_accept_listener *accept_listener;
 		/* tcp stream only */
+		struct timeout *prefix_timeout;
 		struct fd_read_listener *read_listener;
 	} iketcp;
 	ip_endpoint iketcp_remote_endpoint;
@@ -166,7 +167,6 @@ struct iface_endpoint {
 		IKETCP_ENABLED, /* received at least one packet */
 		IKETCP_STOPPED, /* waiting on state to close */
 	} iketcp_state;
-	struct event *iketcp_timeout;
 };
 
 void stop_iketcp_iface_endpoint(struct iface_endpoint **ifp);

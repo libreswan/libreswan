@@ -39,6 +39,7 @@ struct iface_dev;
 struct show;
 struct fd_read_listener;
 struct fd_accept_listener;
+struct timeout;
 
 extern char *pluto_vendorid;
 
@@ -77,15 +78,18 @@ extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
 extern void stop_server(server_stopped_cb cb);
 
-void fire_timer_photon_torpedo(struct event **evp,
-			       event_callback_fn cb, void *arg,
-			       const deltatime_t delay);
+typedef void timeout_cb(void *arg, struct logger *logger);
+
+void schedule_timeout(const char *name,
+		      struct timeout **to, const deltatime_t delay,
+		      timeout_cb *cb, void *arg);
+void destroy_timeout(struct timeout **to);
 
 typedef void (fd_accept_listener_cb)(int fd, ip_sockaddr *sa,
 				     void *arg, struct logger *logger);
 void attach_fd_accept_listener(const char *name,
-			       struct fd_accept_listener **fdl,
-			       int fd, fd_accept_listener_cb *cb, void *arg);
+			       struct fd_accept_listener **fdl, int fd,
+			       fd_accept_listener_cb *cb, void *arg);
 void detach_fd_accept_listener(struct fd_accept_listener **fdl);
 
 typedef void (fd_read_listener_cb)(int fd, void *arg, struct logger *logger);

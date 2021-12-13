@@ -150,10 +150,10 @@ static void iketcp_shutdown(struct iface_endpoint **ifp)
 
 static void stop_iketcp_timeout(const char *why, struct iface_endpoint *ifp)
 {
-	if (ifp->iketcp_timeout != NULL) {
-		dbg_iketcp(ifp, "%s; stopping timeout %p", why, ifp->iketcp_timeout);
-		event_free(ifp->iketcp_timeout);
-		ifp->iketcp_timeout = NULL;
+	if (ifp->iketcp.prefix_timeout != NULL) {
+		dbg_iketcp(ifp, "%s; stopping timeout %p", why,
+			   ifp->iketcp.prefix_timeout);
+		destroy_timeout(&ifp->iketcp.prefix_timeout);
 	}
 }
 
@@ -455,14 +455,11 @@ static void iketcp_cleanup(struct iface_endpoint *ifp)
 	stop_iketcp_timeout("cleaning up", ifp);
 }
 
-static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
-				  const short unused_event UNUSED,
-				  void *arg UNUSED)
+static void iketcp_server_timeout(void *arg, struct logger *global_logger)
 {
 	struct iface_endpoint *ifp = arg;
 	/* build up the logger using the stack */
-	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
-	struct logger from_logger = logger_from(&global_logger, &ifp->iketcp_remote_endpoint);
+	struct logger from_logger = logger_from(global_logger, &ifp->iketcp_remote_endpoint);
 	struct logger *logger = &from_logger;
 	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
@@ -823,8 +820,9 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 	 * Set up a timeout to kill the socket when nothing happens.
 	 * The timeout has a reference so unless it is deleted.
 	 */
-	fire_timer_photon_torpedo(&ifp->iketcp_timeout, iketcp_server_timeout,
-				  ifp, deltatime(5)); /* TCP: how much? */
+	schedule_timeout("IKETCP", &ifp->iketcp.prefix_timeout,
+			 deltatime(5) /* TCP: how much? */,
+			 iketcp_server_timeout, ifp);
 	attach_fd_read_listener(&ifp->iketcp.read_listener, ifp->fd,
 				"IKETCP", process_iface_packet, ifp);
 

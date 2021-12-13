@@ -10,7 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2021 Andrew Cagney
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
@@ -209,6 +209,15 @@ bool pluto_sock_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
  * Embedded events.
  *
  * Adding:
+ *
+ * Because this code can run on the non-main thread, the EV must be
+ * saved in its final destination before the event is enabled.
+ *
+ * Otherwise the event on the main thread will try to use EV before it
+ * has been saved by the helper thread.
+ *
+ * For instance, a timer with delay 0 will likely start running in the
+ * main thread before this macro has finished.
  *
  * Deleting:
  *
@@ -535,24 +544,48 @@ static void link_pluto_event_list(struct fd_read_listener *e) {
  * can fire before setting it up has finished.
  */
 
-void fire_timer_photon_torpedo(struct event **evp,
-			       event_callback_fn cb, void *arg,
-			       const deltatime_t delay)
+struct timeout {
+	const char *name;
+	timeout_cb *cb;
+	void *arg;
+	struct event ev;
+};
+
+static void timeout(evutil_socket_t fd UNUSED,
+		    const short event UNUSED, void *arg)
 {
-	struct event *ev = event_new(pluto_eb, (evutil_socket_t)-1,
-				     EV_TIMEOUT, cb, arg);
-	passert(ev != NULL);
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct timeout *tt = arg;
+	tt->cb(tt->arg, logger);
+}
+
+void schedule_timeout(const char *name,
+		      struct timeout **tt, const deltatime_t delay,
+		      timeout_cb *cb, void *arg)
+{
+	*tt = alloc_thing(struct timeout, name);
+	dbg_alloc("tt", *tt, HERE);
+	(*tt)->name = name;
+	(*tt)->cb = cb;
+	(*tt)->arg = arg;
 	/*
-	 * Because this code can run on the non-main thread, the EV
-	 * timer-event must be saved in its final destination before
-	 * the event is enabled.
-	 *
-	 * Otherwise the event on the main thread will try to use EV
-	 * before it has been saved by the helper thread.
+	 * When DELAY is zero, the photon torpedo may have hit its
+	 * target before this function even returns.  Hence TT is a
+	 * parameter and is stored before the timer.
 	 */
-	*evp = ev;
 	struct timeval t = timeval_from_deltatime(delay);
-	passert(event_add(ev, &t) >= 0);
+	EVENT_ADD(*tt, EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout);
+}
+
+void destroy_timeout(struct timeout **tt)
+{
+	passert(in_main_thread());
+	if (*tt != NULL) {
+		EVENT_DEL(*tt);
+		dbg_free("tt", *tt, HERE);
+		pfree(*tt);
+		*tt = NULL;
+	}
 }
 
 /*
@@ -571,7 +604,7 @@ struct resume_event {
 	resume_cb *callback;
 	void *context;
 	const char *name;
-	struct event *event;
+	struct timeout *timer;
 };
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status)
@@ -590,8 +623,7 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 	}
 }
 
-static void resume_handler(evutil_socket_t fd UNUSED,
-			   short events UNUSED, void *arg)
+static void resume_handler(void *arg, struct logger *logger)
 {
 	struct resume_event *e = (struct resume_event *)arg;
 	/*
@@ -601,8 +633,8 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 	 * pexpect() followed by the passert() demonstrated this - the
 	 * pexpect() failed yet the passert() passed.
 	 */
-	pexpect(e->event != NULL);
-	dbg("processing resume %s for #%lu", e->name, e->serialno);
+	pexpect(e->timer != NULL);
+	ldbg(logger, "processing resume %s for #%lu", e->name, e->serialno);
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
 	 * This unsuspends MD, "callback" does not.
@@ -631,11 +663,11 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
-			dbg("resume %s for #%lu suppresed complete_v%d_state_transition()%s",
-			    e->name, e->serialno, ike_version,
-			    (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
-			     old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
-			     ""));
+			ldbg(logger, "resume %s for #%lu suppresed complete_v%d_state_transition()%s",
+			     e->name, e->serialno, ike_version,
+			     (old_md_st != SOS_NOBODY && md->v1_st == NULL ? "; MD.ST disappeared" :
+			      old_md_st != SOS_NOBODY && md->v1_st != st ? "; MD.ST was switched" :
+			      ""));
 		} else {
 			/* XXX: mumble something about struct ike_version */
 			switch (ike_version) {
@@ -664,8 +696,8 @@ static void resume_handler(evutil_socket_t fd UNUSED,
 		md_delref(&md);
 		statetime_stop(&start, "resume %s", e->name);
 	}
-	passert(e->event != NULL);
-	event_free(e->event);
+	passert(e->timer != NULL);
+	destroy_timeout(&e->timer);
 	pfree(e);
 }
 
@@ -688,8 +720,7 @@ void schedule_resume(const char *name, so_serial_t serialno,
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	fire_timer_photon_torpedo(&e->event, resume_handler, e,
-				  deltatime(0)/*now*/);
+	schedule_timeout(name, &e->timer, deltatime(0), resume_handler, e);
 }
 
 /*
@@ -701,11 +732,10 @@ struct callback_event {
 	callback_cb *callback;
 	void *context;
 	const char *story;
-	struct event *event;
+	struct timeout *timer;
 };
 
-static void callback_handler(evutil_socket_t fd UNUSED,
-			     short events UNUSED, void *arg)
+static void callback_handler(void *arg, struct logger *logger)
 {
 	/*
 	 * Save all fields so that all event-loop memory can be freed
@@ -720,21 +750,20 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 	 * ran and was deleted .event was valid.  Oops!
 	 */
 	struct callback_event e = *(struct callback_event *)arg;
-	passert(e.event != NULL);
-	event_free(e.event);
-	e.event = NULL;
+	passert(e.timer != NULL);
+	destroy_timeout(&e.timer);
 	pfree(arg);
 
 	struct state *st;
 	if (e.serialno == SOS_NOBODY) {
-		dbg("processing callback %s", e.story);
+		ldbg(logger, "processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		dbg("processing callback %s for #%lu", e.story, e.serialno);
+		ldbg(logger, "processing callback %s for #%lu", e.story, e.serialno);
 		st = state_by_serialno(e.serialno);
 	}
 
@@ -743,8 +772,8 @@ static void callback_handler(evutil_socket_t fd UNUSED,
 	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
 }
 
-extern void schedule_callback(const char *story, so_serial_t serialno,
-			      callback_cb *callback, void *context)
+void schedule_callback(const char *story, so_serial_t serialno,
+		       callback_cb *callback, void *context)
 {
 	struct callback_event tmp = {
 		.serialno = serialno,
@@ -759,8 +788,7 @@ extern void schedule_callback(const char *story, so_serial_t serialno,
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	fire_timer_photon_torpedo(&e->event, callback_handler, e,
-				  deltatime(0)/*now*/);
+	schedule_timeout(story, &e->timer, deltatime(0), callback_handler, e);
 }
 
 static void fd_read_listener_event_handler(evutil_socket_t fd,
