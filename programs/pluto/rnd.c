@@ -69,12 +69,7 @@
 
 void get_rnd_bytes(void *buffer, size_t length)
 {
-	SECStatus rv = PK11_GenerateRandom(buffer, length);
-	if (rv != SECSuccess) {
-		/* XXX: hack */
-		struct logger logger = GLOBAL_LOGGER(null_fd);
-		passert_nss_error(&logger, HERE, "RNG failed");
-	}
+	passert(PK11_GenerateRandom(buffer, length) == SECSuccess);
 }
 
 void fill_rnd_chunk(chunk_t chunk)
