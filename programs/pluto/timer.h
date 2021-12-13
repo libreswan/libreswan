@@ -50,7 +50,6 @@ void delete_state_event(struct state_event **evp, where_t where);
 
 struct state_event **state_event_slot(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
-bool state_event_before(struct state_event *pev, deltatime_t delay);
 
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);

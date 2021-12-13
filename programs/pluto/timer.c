@@ -628,14 +628,3 @@ void call_state_event_handler(struct logger *logger, struct state *st,
 	llog(RC_COMMENT, logger, "calling %s event handler", event_name);
 	dispatch_event(st, event_type, event_delay);
 }
-
-bool state_event_before(struct state_event *pev, deltatime_t delay)
-{
-	/* Get "the time when the event’s timeout will expire". */
-	struct timeval timeout;
-	if (!(event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT)) {
-		return false;
-	}
-	/* ... XXX: making this comparison meanless?!? */
-	return deltatime_cmp(deltatime_from_timeval(timeout), <, delay);
-}

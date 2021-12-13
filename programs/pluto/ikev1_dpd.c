@@ -216,7 +216,9 @@ stf_status dpd_init(struct state *st)
 		}
 
 		if (st->st_v1_dpd_event == NULL ||
-		    state_event_before(st->st_v1_dpd_event, st->st_connection->dpd_delay)) {
+		    deltatime_cmp(monotimediff(st->st_v1_dpd_event->ev_time, mononow()),
+				  <,
+				  st->st_connection->dpd_delay)) {
 			event_delete(EVENT_v1_DPD, st);
 			event_schedule(EVENT_v1_DPD, st->st_connection->dpd_delay, st);
 		}
