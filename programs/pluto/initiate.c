@@ -50,8 +50,8 @@ static bool initiate_connection_3(struct connection *c, bool background, const t
 bool initiate_connection(struct connection *c, const char *remote_host, bool background)
 {
 	connection_buf cb;
-	dbg("initiating connection to "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    pri_connection(c, &cb), background ? "background" : "forground",
+	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
 	    pri_logger(c->logger));
 	threadtime_t inception = threadtime_start();
 	bool ok;
@@ -98,6 +98,11 @@ bool initiate_connection_2(struct connection *c,
 			   bool background,
 			   const threadtime_t inception)
 {
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
+	    pri_logger(c->logger));
+
 	if (!oriented(c)) {
 		ipstr_buf a;
 		ipstr_buf b;
@@ -187,6 +192,11 @@ bool initiate_connection_2(struct connection *c,
 
 bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception)
 {
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
+	    pri_logger(c->logger));
+
 	/* We will only request an IPsec SA if policy isn't empty
 	 * (ignoring Main Mode items).
 	 * This is a fudge, but not yet important.
@@ -374,6 +384,8 @@ struct initiate_stuff {
 
 static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
 {
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb))
 	const struct initiate_stuff *is = arg;
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
@@ -390,6 +402,7 @@ static int initiate_a_connection(struct connection *c, void *arg, struct logger 
 void initiate_connections_by_name(const char *name, const char *remote_host,
 				  bool background, struct logger *logger)
 {
+	dbg("%s() for %s", __func__, name);
 	passert(name != NULL);
 	struct connection *c = conn_by_name(name, /*strict-match?*/false);
 	if (c != NULL) {
