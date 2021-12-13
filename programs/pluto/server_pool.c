@@ -146,14 +146,16 @@ static void message_helpers(struct job *job)
  */
 
 struct helper_thread {
+	struct logger *logger;
 	helper_id_t helper_id;
 	pthread_t pid;
 };
 
 /* may be NULL if we are to do all the work ourselves */
-static struct helper_thread *helper_threads = NULL;
 
-static int nr_helper_threads = 0;
+static struct helper_thread *helper_threads = NULL;
+static unsigned helper_threads_started = 0;
+static unsigned helper_threads_stopped = 0;
 
 /*
  * If there are any helper threads, this code is always executed IN A HELPER
@@ -188,22 +190,19 @@ static void do_job(struct job *job, helper_id_t helper_id)
 /* IN A HELPER THREAD */
 static void *helper_thread(void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
 	const struct helper_thread *w = arg;
-
-	dbg("helper %u: starting thread", w->helper_id);
+	ldbg(w->logger, "starting thread");
 
 #ifdef HAVE_SECCOMP
-	init_seccomp_cryptohelper(w->helper_id, logger);
+	init_seccomp_cryptohelper(w->helper_id, w->logger);
 #else
-	llog(RC_LOG, logger, "seccomp security for helper not supported");
+	llog(RC_LOG, w->logger, "seccomp security for helper not supported");
 #endif
 
 	/* OS X does not have pthread_setschedprio */
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
-	dbg("helper %u: status value returned by setting the priority of this thread: %d",
-	    w->helper_id, status);
+	ldbg(w->logger, "status value returned by setting the priority of this thread: %d", status);
 #endif
 
 	while (true) {
@@ -478,8 +477,10 @@ static void init_helper_thread_delay(struct logger *logger)
  */
 void start_server_helpers(int nhelpers, struct logger *logger)
 {
+	/* redundant */
 	helper_threads = NULL;
-	nr_helper_threads = 0;
+	helper_threads_started = 0;
+	helper_threads_stopped = 0;
 
 	init_helper_thread_delay(logger);
 
@@ -518,6 +519,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		for (int n = 0; n < nhelpers; n++) {
 			struct helper_thread *w = &helper_threads[n];
 			w->helper_id = n + 1; /* i.e., not 0 */
+			w->logger = string_logger(null_fd, HERE, "helper(%d) ", w->helper_id);
 			int thread_status = pthread_create(&w->pid, NULL,
 							   helper_thread, (void *)w);
 			if (thread_status != 0) {
@@ -528,7 +530,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 				llog(RC_LOG, logger, "started thread for helper %d", n);
 			}
 		}
-		nr_helper_threads = nhelpers;
+		helper_threads_started = nhelpers;
 	} else {
 		llog(RC_LOG, logger,
 			    "no helpers will be started; all cryptographic operations will be done inline");
@@ -549,17 +551,25 @@ static void helper_thread_stopped_callback(const char *story UNUSED,
 					   struct state *st UNUSED,
 					   void *context UNUSED)
 {
-	nr_helper_threads--;
-	dbg("one helper thread exited, %u remaining", nr_helper_threads);
+	helper_threads_stopped++;
+	dbg("one helper thread exited, %u remaining",
+	    helper_threads_started-helper_threads_stopped);
 
 	/* wait for more? */
-	if (nr_helper_threads > 0) {
+	if (helper_threads_started > helper_threads_stopped) {
 		/* poke threads waiting for work */
 		message_helpers(NULL);
 		return;
 	}
 
-	pfreeany(helper_threads); helper_threads = NULL;
+	/* all done; cleanup */
+	for (unsigned h = 0; h < helper_threads_started; h++) {
+		struct helper_thread *w = &helper_threads[h];
+		free_logger(&w->logger, HERE);
+	}
+
+	pfreeany(helper_threads);
+	helper_threads = NULL;
 	server_helpers_stopped_callback();
 }
 
@@ -573,7 +583,7 @@ static void call_server_helpers_stopped_callback(const char *story UNUSED,
 void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 {
 	server_helpers_stopped_callback = server_helpers_stopped_cb;
-	if (nr_helper_threads > 0) {
+	if (helper_threads_started > 0) {
 		/* poke threads waiting for work */
 		message_helpers(NULL);
 	} else {
@@ -590,7 +600,7 @@ void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 
 void free_server_helper_jobs(void)
 {
-	passert(nr_helper_threads == 0); /* all stopped */
+	passert(helper_threads_started == helper_threads_stopped); /* all stopped */
 	passert(helper_threads == NULL);
 
 	struct job *job = NULL;
