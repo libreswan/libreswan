@@ -206,23 +206,37 @@ unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
 bool pluto_sock_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
 
 /*
- * Static events.
+ * Embedded events.
+ *
+ * Adding:
+ *
+ * Deleting:
+ *
+ * "If the event has already executed or has never been added the
+ * [event_del()] call will have no effect."
+ *
+ * "When debugging mode is enabled, [event_debug_unasign()] informs
+ * Libevent that an event should no longer be considered as assigned."
  */
 
-static void free_static_event(struct event *ev)
-{
-	/*
-	 * "If the event has already executed or has never been added
-	 * the [event_del()] call will have no effect.
-	 */
-	passert(event_del(ev) >= 0);
-	/*
-	 * "When debugging mode is enabled, informs Libevent that an
-	 * event should no longer be considered as assigned."
-	 */
-	event_debug_unassign(ev);
-	zero(ev);
-}
+#define EVENT_ADD(EVP, EVENTS, FD, TIME, CB)				\
+	{								\
+		struct event *ev = &(EVP)->ev;				\
+		short events = EVENTS;					\
+		passert(!event_initialized(ev));			\
+		event_assign(ev, pluto_eb, FD, events, CB, EVP);	\
+		passert(event_get_events(ev) == events);		\
+		passert(event_add(ev, TIME) >= 0);			\
+	}
+
+#define EVENT_DEL(EVP)							\
+	{								\
+		struct event *ev = &(EVP)->ev;				\
+		passert(event_initialized(ev));				\
+		passert(event_del(ev) >= 0);				\
+		event_debug_unassign(ev);				\
+		zero(ev);						\
+	}
 
 /*
  * Global timer events.
@@ -293,17 +307,12 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 	passert(in_main_thread());
 	passert(type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	/* initialize */
 	passert(gt->name != NULL);
-	passert(!event_initialized(&gt->ev));
-	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
-		     EV_TIMEOUT|EV_PERSIST,
-		     global_timer_event_cb, gt/*arg*/);
 	gt->cb = cb;
-	passert(event_get_events(&gt->ev) == (EV_TIMEOUT|EV_PERSIST));
-	/* enable */
 	struct timeval t = timeval_from_deltatime(period);
-	passert(event_add(&gt->ev, &t) >= 0);
+	EVENT_ADD(gt, EV_TIMEOUT|EV_PERSIST,
+		  (evutil_socket_t)-1, &t,
+		  global_timer_event_cb);
 	/* log */
 	deltatime_buf buf;
 	dbg("global periodic timer %s enabled with interval of %s seconds",
@@ -354,7 +363,7 @@ static void free_global_timers(void)
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
-			free_static_event(&gt->ev);
+			EVENT_DEL(gt);
 			dbg("global timer %s uninitialized", gt->name);
 		}
 	}
@@ -429,11 +438,10 @@ static void install_signal_handlers(void)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		passert(!event_initialized(&se->ev));
-		event_assign(&se->ev, pluto_eb, (evutil_socket_t)se->signal,
-			     EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
-			     signal_handler_handler, se);
-		passert(event_add(&se->ev, NULL) >= 0);
+		EVENT_ADD(se, EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
+			  (evutil_socket_t)se->signal,
+			  (struct timeval*)NULL,
+			  signal_handler_handler);
 		dbg("signal event handler %s installed", se->name);
 	}
 }
@@ -442,8 +450,7 @@ static void free_signal_handlers(void)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		passert(event_initialized(&se->ev));
-		free_static_event(&se->ev);
+		EVENT_DEL(se);
 		dbg("signal event handler %s uninstalled", se->name);
 	}
 }
@@ -466,8 +473,8 @@ static void list_signal_handlers(struct show *s)
 struct fd_read_listener {
 	fd_read_listener_cb *cb;
 	void *arg;
-	const char *ev_name;		/* Name or enum_name(ev_type) */
-	struct event *ev;               /* libevent data structure */
+	const char *name;
+	struct event ev;		/* libevent data structure */
 	struct fd_read_listener *next;
 };
 
@@ -774,20 +781,19 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 	/* create the listener */
 	*fdl = alloc_thing(struct fd_read_listener, name);
 	dbg_alloc("fdl", *fdl, HERE);
-	(*fdl)->ev_name = name;
+	(*fdl)->name = name;
 	(*fdl)->arg = arg;
 	(*fdl)->cb = cb;
-	(*fdl)->ev = event_new(get_pluto_event_base(), fd,
-			       EV_READ|EV_PERSIST,
-			       fd_read_listener_event_handler, *fdl);
-	passert((*fdl)->ev != NULL);
-	passert(event_add((*fdl)->ev, NULL) >= 0);
+	EVENT_ADD(*fdl, EV_READ|EV_PERSIST,
+		  (evutil_socket_t)fd,
+		  (struct timeval*)NULL,
+		  fd_read_listener_event_handler);
 }
 
 void detach_fd_read_listener(struct fd_read_listener **fdl)
 {
 	if (*fdl != NULL) {
-		event_free((*fdl)->ev);
+		EVENT_DEL(*fdl);
 		dbg_free("fdl", *fdl, HERE);
 		pfree(*fdl);
 		*fdl = NULL;
@@ -817,7 +823,7 @@ void list_timers(struct show *s, monotime_t now)
 	for (struct fd_read_listener *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			show_comment(s, "event %s is not timer based", ev->ev_name);
+			show_comment(s, "event %s is not timer based", ev->name);
 		}
 	}
 }
