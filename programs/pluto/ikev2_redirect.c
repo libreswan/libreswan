@@ -535,16 +535,18 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 	/* XXX: only makes sense when IKE_SA_INIT / IKE_AUTH redirect? */
 	flush_pending_by_state(ike);
 
-	/*
-	 * XXX: switch object whackfd to global whackfd; the
-	 * connection code should instead add all the logger's
-	 * whackfds to the connection.
-	 */
-	struct logger logger[] = { GLOBAL_LOGGER(ike->sa.st_logger->object_whackfd), }; /*placeholder*/
-	/* XXX: why not just call initiate_connection()? */
-	initiate_connections_by_name(c->name, /*remote-host*/NULL,
-				     /*background?*/false /* try to keep it in the forground */,
-				     logger);
+	/* XXX: something better? */
+	/* XXX: OBJECT->GLOBAL */
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(ike->sa.st_logger->object_whackfd);
+
+	if (!initiate_connection(c, /*remote_host*/NULL,
+				 /*background?*/false /* try to keep it in the forground */)) {
+		llog(RC_FATAL, c->logger, "failed to initiate connection");
+	}
+
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
 }
 
 /* helper function for send_v2_informational_request() */
