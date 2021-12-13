@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.6 (unreleased)
+* IKEv1: support for  ISAKMP_N_CISCO_LOAD_BALANCE removed [Andrew]
 * IKEv2: agressively check incoming fragments [Andrew]
 * packaging: replace old SUSE packaging with pointer to upstream [Andrew]
 * IKEv2: when rekeying and PFS, only propose/allow original crypt-suite [Andrew]

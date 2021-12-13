@@ -977,159 +977,6 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 			return STF_IGNORE;
 
-		case ISAKMP_N_CISCO_LOAD_BALANCE:
-			/*
-			 * ??? what the heck is in the payload?
-			 * We take the peer's new IP address from the last 4 octets.
-			 * Is anything else possible?  Expected?  Documented?
-			 */
-			if (st == NULL || !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-				llog(RC_LOG, md->md_logger,
-				     "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
-			} else if (pbs_left(n_pbs) < 4) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
-			} else {
-				/*
-				 * Copy (not cast) the last 4 bytes
-				 * (size of an IPv4) address from the
-				 * end of the notification into IN
-				 * (can't cast as can't assume that
-				 * ->roof-4 is correctly aligned).
-				 */
-				struct in_addr in;
-				memcpy(&in, n_pbs->roof - sizeof(in), sizeof(in));
-				ip_address new_peer = address_from_in_addr(&in);
-
-				/* is all zeros? */
-				if (address_is_any(new_peer)) {
-					ipstr_buf b;
-
-					log_state(RC_LOG_SERIOUS, st,
-						  "ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
-						  ipstr(&new_peer, &b));
-					return false; /* XXX: STF_*? */
-				}
-
-				/* Saving connection name and whack sock id */
-				const char *tmp_name = st->st_connection->name;
-				struct fd *tmp_whack_sock = fd_addref(st->st_logger->object_whackfd);
-
-				/* deleting ISAKMP SA with the current remote peer */
-				delete_state(st);
-				md->v1_st = st = NULL;
-
-				/* to find and store the connection associated with tmp_name */
-				/* ??? how do we know that tmp_name hasn't been freed? */
-				struct connection *tmp_c = conn_by_name(tmp_name, false/*!strict*/);
-
-				if (tmp_c == NULL)
-					return STF_IGNORE;
-
-				if (DBGP(DBG_BASE)) {
-					address_buf npb;
-					DBG_log("new peer address: %s",
-						str_address(&new_peer, &npb));
-
-					/* Current remote peer info */
-					int count_spd = 1;
-					for (const struct spd_route *tmp_spd = &tmp_c->spd;
-					     tmp_spd != NULL; tmp_spd = tmp_spd->spd_next) {
-						address_buf b;
-
-						DBG_log("spd route number: %d",
-							count_spd++);
-
-						/**that info**/
-						DBG_log("that id kind: %d",
-							tmp_spd->that.id.kind);
-						DBG_log("that id ipaddr: %s",
-							str_address(&tmp_spd->that.id.ip_addr, &b));
-						if (tmp_spd->that.id.name.ptr != NULL) {
-							DBG_dump_hunk("that id name",
-								      tmp_spd->that.id. name);
-						}
-						DBG_log("that host_addr: %s",
-							str_address(&tmp_spd->that.host_addr, &b));
-						DBG_log("that nexthop: %s",
-							str_address(&tmp_spd->that.host_nexthop, &b));
-						DBG_log("that srcip: %s",
-							str_address(&tmp_spd->that.host_srcip, &b));
-						selector_buf sb;
-						DBG_log("that client: %s",
-							str_selector_subnet_port(&tmp_spd->that.client, &sb));
-						DBG_log("that has_client: %d",
-							tmp_spd->that.has_client);
-						DBG_log("that has_id_wildcards: %d",
-							tmp_spd->that.has_id_wildcards);
-					}
-
-					if (tmp_c->interface != NULL) {
-						endpoint_buf b;
-						DBG_log("Current interface_addr: %s",
-							str_endpoint(&tmp_c->interface->local_endpoint, &b));
-					}
-				}
-
-				/* save peer's old address for comparison purposes */
-				ip_address old_addr = tmp_c->spd.that.host_addr;
-
-				/* update peer's address */
-				tmp_c->spd.that.host_addr = new_peer;
-
-				/* Modifying connection info to store the redirected remote peer info */
-				dbg("Old host_addr_name : %s", tmp_c->spd.that.host_addr_name);
-				tmp_c->spd.that.host_addr_name = NULL;
-
-				/* ??? do we know the id.kind has an ip_addr? */
-				tmp_c->spd.that.id.ip_addr = new_peer;
-				rehash_db_connection_that_id(tmp_c);
-
-				/* update things that were the old peer */
-				if (address_eq_address(tmp_c->spd.this.host_nexthop, old_addr)) {
-					address_buf ob, nb;
-					dbg("local next hop %s is the same as the old remote addr, changing local next hop to %s",
-					    str_address(&old_addr, &ob),
-					    str_address(&new_peer, &nb));
-					tmp_c->spd.this.host_nexthop = new_peer;
-				}
-
-				if (address_eq_address(tmp_c->spd.that.host_srcip, old_addr)) {
-					address_buf ob, nb;
-					dbg("remote host's srcip %s is the same as the old remote addr, changing remote host's srcip to %s",
-					    str_address(&old_addr, &ob),
-					    str_address(&new_peer, &nb));
-					tmp_c->spd.that.host_srcip = new_peer;
-				}
-
-				/*
-				 * XXX: should this also check that
-				 * the client is a single address?
-				 */
-				ip_address client_prefix = selector_prefix(tmp_c->spd.that.client);
-				if (address_eq_address(client_prefix, old_addr)) {
-					address_buf ob, nb;
-					dbg("old remote client's ip %s is the same as the old remote address, changing remote client ip to %s",
-					    str_address(&old_addr, &ob),
-					    str_address(&new_peer, &nb));
-					tmp_c->spd.that.client = selector_from_address(new_peer);
-					rehash_db_spd_route_remote_client(&tmp_c->spd);
-				}
-
-				/*
-				 * ??? is this wise?  This may changes
-				 * a lot of other connections.
-				 */
-				tmp_c->host_pair->remote = new_peer;
-
-				/* Initiating connection to the redirected peer */
-				struct logger logger[] = { GLOBAL_LOGGER(tmp_whack_sock), }; /*placeholder*/
-				initiate_connections_by_name(tmp_name, /*remote-name*/NULL,
-							     /*background?*/tmp_whack_sock == NULL/*guess*/,
-							     logger);
-				fd_delref(&tmp_whack_sock);
-			}
-			return STF_IGNORE;
 		default:
 		{
 			struct logger *logger = st != NULL ? st->st_logger :
@@ -2350,7 +2197,6 @@ void process_packet_tail(struct msg_digest *md)
 			switch (p->payload.notification.isan_type) {
 			case R_U_THERE:
 			case R_U_THERE_ACK:
-			case ISAKMP_N_CISCO_LOAD_BALANCE:
 			case PAYLOAD_MALFORMED:
 			case INVALID_MESSAGE_ID:
 			case IPSEC_RESPONDER_LIFETIME:
@@ -2361,17 +2207,17 @@ void process_packet_tail(struct msg_digest *md)
 				/* FALL THROUGH */
 			default:
 				if (st == NULL) {
-					esb_buf b;
+					enum_buf b;
 					dbg("ignoring informational payload %s, no corresponding state",
-					    enum_show(& ikev1_notify_names,
-						      p->payload.notification.isan_type, &b));
+					    str_enum(& ikev1_notify_names,
+						     p->payload.notification.isan_type, &b));
 				} else {
-					esb_buf b;
+					enum_buf b;
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
-						   enum_show(&ikev1_notify_names,
-							     p->payload.notification.isan_type,
-							     &b),
+						   str_enum(&ikev1_notify_names,
+							    p->payload.notification.isan_type,
+							    &b),
 						   st->st_v1_msgid.id,
 						   p->payload.notification.isan_length);
 					if (DBGP(DBG_BASE)) {
