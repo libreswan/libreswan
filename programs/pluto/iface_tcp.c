@@ -62,6 +62,9 @@
 # endif
 #endif
 
+static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,
+				 void *arg, struct logger *logger);
+
 /*
  * IKETCP or TCP?
  *
@@ -129,11 +132,6 @@ void llog_iketcp(lset_t rc_flags, struct logger *logger,
 		}
 	}
 }
-
-static void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
-				 int accepted_fd,
-				 struct sockaddr *sockaddr, int sockaddr_len,
-				 void *arg);
 
 static void stop_iketcp_read(const char *why, struct iface_endpoint *ifp)
 {
@@ -449,11 +447,10 @@ static void iketcp_cleanup(struct iface_endpoint *ifp)
 		break;
 	}
 	stop_iketcp_read("cleaning up", ifp);
-	if (ifp->tcp_accept_listener != NULL) {
+	if (ifp->iketcp.accept_listener != NULL) {
 		dbg_iketcp(ifp, "cleaning up accept listener %p",
-			   ifp->tcp_accept_listener);
-		evconnlistener_free(ifp->tcp_accept_listener);
-		ifp->tcp_accept_listener = NULL;
+			   ifp->iketcp.accept_listener);
+		detach_fd_accept_listener(&ifp->iketcp.accept_listener);
 	}
 	stop_iketcp_timeout("cleaning up", ifp);
 }
@@ -475,12 +472,10 @@ static void iketcp_server_timeout(evutil_socket_t unused_fd UNUSED,
 static void iketcp_listen(struct iface_endpoint *ifp,
 			  struct logger *logger)
 {
-	if (ifp->tcp_accept_listener == NULL) {
-		ifp->tcp_accept_listener = evconnlistener_new(get_pluto_event_base(),
-							      accept_ike_in_tcp_cb,
-							      ifp, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
-							      -1, ifp->fd);
-		if (ifp->tcp_accept_listener == NULL) {
+	if (ifp->iketcp.accept_listener == NULL) {
+		attach_fd_accept_listener("IKETCP", &ifp->iketcp.accept_listener,
+					  ifp->fd, accept_ike_in_tcp_cb, ifp);
+		if (ifp->iketcp.accept_listener == NULL) {
 			llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 				    "failed to create IKE-in-TCP listener event");
 		}
@@ -793,28 +788,19 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 	return ifp;
 }
 
-void accept_ike_in_tcp_cb(struct evconnlistener *evcon UNUSED,
-			  int accepted_fd,
-			  struct sockaddr *sockaddr, int sockaddr_len,
-			  void *arg)
+void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
+			  void *arg, struct logger *logger)
 {
 	struct iface_endpoint *bind_ifp = arg;
-
-	struct logger global_logger = GLOBAL_LOGGER(null_fd); /* event-handler */
-	struct logger *logger = &global_logger;
-
-	ip_sockaddr sa = {
-		.len = sockaddr_len,
-		.sa.sa = *sockaddr,
-	};
 	ip_address remote_tcp_address;
 	ip_port remote_tcp_port;
-	err_t err = sockaddr_to_address_port(sa, &remote_tcp_address, &remote_tcp_port);
+	err_t err = sockaddr_to_address_port(*sa, &remote_tcp_address, &remote_tcp_port);
 	if (err != NULL) {
 		llog(RC_LOG, logger, "TCP: invalid remote address: %s", err);
 		close(accepted_fd);
 		return;
 	}
+
 	ip_endpoint remote_tcp_endpoint = endpoint_from_address_protocol_port(remote_tcp_address,
 									      &ip_protocol_tcp,
 									      remote_tcp_port);

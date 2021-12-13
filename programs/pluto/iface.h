@@ -152,10 +152,10 @@ struct iface_endpoint {
 	struct {
 		struct fd_read_listener *read_listener;
 	} udp;
-	/* tcp port only */
-	struct evconnlistener *tcp_accept_listener;
-	/* tcp stream only */
 	struct {
+		/* tcp port only */
+		struct fd_accept_listener *accept_listener;
+		/* tcp stream only */
 		struct fd_read_listener *read_listener;
 	} iketcp;
 	ip_endpoint iketcp_remote_endpoint;

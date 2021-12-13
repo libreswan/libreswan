@@ -809,6 +809,53 @@ void add_fd_read_listener(int fd, const char *name,
 	link_pluto_event_list(fdl);
 }
 
+struct fd_accept_listener {
+	fd_accept_listener_cb *cb;
+	void *arg;
+	const char *name;
+	struct evconnlistener *ev;
+};
+
+static void fd_accept_listener(struct evconnlistener *efc UNUSED,
+			       evutil_socket_t fd, struct sockaddr *sockaddr, int sockaddr_len,
+			       void *arg)
+{
+	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct fd_accept_listener *fdl = arg;
+	ip_sockaddr sa = {
+		.len = sockaddr_len,
+		.sa.sa = *sockaddr,
+	};
+	fdl->cb(fd, &sa, fdl->arg, logger);
+}
+
+void attach_fd_accept_listener(const char *name,
+			       struct fd_accept_listener **fdl,
+			       int fd, fd_accept_listener_cb *cb, void *arg)
+{
+	passert(*fdl == NULL);
+	passert(fd >= 0);
+	*fdl = alloc_thing(struct fd_accept_listener, name);
+	dbg_alloc("fdl", *fdl, HERE);
+	(*fdl)->cb = cb;
+	(*fdl)->arg = arg;
+	(*fdl)->name = name;
+	(*fdl)->ev = evconnlistener_new(pluto_eb, fd_accept_listener, *fdl,
+					LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC,
+					/*backlog*/-1, fd);
+}
+
+void detach_fd_accept_listener(struct fd_accept_listener **fdl)
+{
+	if (*fdl != NULL) {
+		evconnlistener_free((*fdl)->ev);
+		(*fdl)->ev = NULL;
+		dbg_free("fdl", *fdl, HERE);
+		pfree(*fdl);
+		*fdl = NULL;
+	}
+}
+
 /*
  * dump list of events to whacklog
  */
