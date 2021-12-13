@@ -60,7 +60,7 @@ struct root_certs *root_certs_addref(where_t where)
 	struct root_certs *root_certs = addref_where(root_cert_db, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 
-	struct logger logger = GLOBAL_LOGGER(null_fd);
+	struct logger logger = global_logger;
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(&logger);
 	if (slot == NULL) {
 		/* already logged */

@@ -227,9 +227,9 @@ bool suppress_object_log_false(const void *object);
 bool suppress_object_log_true(const void *object);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
-#ifndef FAILSAFE_LOGGER
-extern const struct logger failsafe_logger;
-#define FAILSAFE_LOGGER
+#ifndef GLOBAL_LOGGER
+extern const struct logger global_logger;
+#define GLOBAL_LOGGER
 #endif
 
 struct logger {
@@ -436,8 +436,8 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
  * older: message does not reach whack
  */
 
-#define pexpect(ASSERTION)  PEXPECT(&failsafe_logger, ASSERTION)
-#define log_pexpect(WHERE, FMT, ...) llog_pexpect(&failsafe_logger, WHERE, FMT,##__VA_ARGS__)
+#define pexpect(ASSERTION)  PEXPECT(&global_logger, ASSERTION)
+#define log_pexpect(WHERE, FMT, ...) llog_pexpect(&global_logger, WHERE, FMT,##__VA_ARGS__)
 #define pexpect_fail llog_pexpect
 #define llog_pexpect_fail llog_pexpect
 

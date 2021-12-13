@@ -29,6 +29,6 @@ void DBG_log(const char *message, ...)
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_logger(buf, &failsafe_logger, DEBUG_STREAM);
+		jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
 	}
 }

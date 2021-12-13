@@ -54,14 +54,14 @@ extern void llog_passert(const struct logger *logger, where_t where,
  * older: message does not reach whack
  */
 
-#ifndef FAILSAFE_LOGGER
-extern const struct logger failsafe_logger;
-#define FAILSAFE_LOGGER
+#ifndef GLOBAL_LOGGER
+extern const struct logger global_logger;
+#define GLOBAL_LOGGER
 #endif
 
-#define PASSERT_FAIL(FMT, ...) llog_passert(&failsafe_logger, HERE, FMT,##__VA_ARGS__)
-#define passert(ASSERTION)     PASSERT(&failsafe_logger, ASSERTION)
-#define lsw_passert_fail(WHERE, FMT, ...) llog_passert(&failsafe_logger, WHERE, FMT,##__VA_ARGS__)
+#define PASSERT_FAIL(FMT, ...) llog_passert(&global_logger, HERE, FMT,##__VA_ARGS__)
+#define passert(ASSERTION)     PASSERT(&global_logger, ASSERTION)
+#define lsw_passert_fail(WHERE, FMT, ...) llog_passert(&global_logger, WHERE, FMT,##__VA_ARGS__)
 #define passert_fail llog_passert
 
 /* evaluate x exactly once; assert that err_t result is NULL; */

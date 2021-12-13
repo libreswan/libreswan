@@ -67,7 +67,6 @@ extern void binlog_state(struct state *st, enum state_kind state);
 
 extern void set_debugging(lset_t deb);
 
-extern const struct logger_object_vec logger_global_vec;
 extern const struct logger_object_vec logger_from_vec;
 extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
@@ -76,13 +75,6 @@ extern const struct logger_object_vec logger_state_vec;
 struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt, ...)
 	PRINTF_LIKE(3) MUST_USE_RESULT; /* must free */
 
-#define GLOBAL_LOGGER(WHACKFD) (struct logger)			\
-	{							\
-		.where = HERE,					\
-		.global_whackfd = WHACKFD,			\
-		.object = NULL,					\
-		.object_vec = &logger_global_vec,		\
-	}
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
 struct logger *clone_logger(const struct logger *stack, where_t where);
@@ -193,13 +185,13 @@ extern void linux_audit_init(int do_audit, struct logger *logger);
 	JAMBUF(BUF)						\
 		/* no-prefix */					\
 		for (; BUF != NULL;				\
-		     jambuf_to_logger(BUF, &failsafe_logger, DEBUG_STREAM), BUF = NULL)
+		     jambuf_to_logger(BUF, &global_logger, DEBUG_STREAM), BUF = NULL)
 
 #define LSWDBGP(DEBUG, BUF)						\
 	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
 		JAMBUF(BUF)						\
 			/* no-prefix */					\
 			for (; BUF != NULL;				\
-			     jambuf_to_logger(BUF, &failsafe_logger, DEBUG_STREAM), BUF = NULL)
+			     jambuf_to_logger(BUF, &global_logger, DEBUG_STREAM), BUF = NULL)
 
 #endif /* _PLUTO_LOG_H */

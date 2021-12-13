@@ -22,6 +22,6 @@ void DBG_va_list(const char *message, va_list ap)
 {
 	JAMBUF(buf) {
 		jam_va_list(buf, message, ap);
-		jambuf_to_logger(buf, &failsafe_logger, DEBUG_STREAM);
+		jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
 	}
 }

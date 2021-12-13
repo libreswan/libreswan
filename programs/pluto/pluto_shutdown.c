@@ -99,7 +99,7 @@ static void exit_prologue(enum pluto_exit_code exit_code)
 
 void exit_epilogue(void)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), };
+	struct logger logger[1] = { global_logger, };
 
 	if (pluto_exit_code == PLUTO_EXIT_LEAVE_STATE) {
 		lsw_nss_shutdown();

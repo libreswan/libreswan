@@ -43,7 +43,7 @@ static void free_fd(void *obj, where_t where)
 	pexpect(fd->magic == FD_MAGIC);
 	if (close(fd->fd) != 0) {
 		if (DBGP(DBG_BASE)) {
-			llog_errno(DEBUG_STREAM, &failsafe_logger, errno,
+			llog_errno(DEBUG_STREAM, &global_logger, errno,
 				   "freeref "PRI_FD" close() failed "PRI_WHERE/*: */,
 				   pri_fd(fd), pri_where(where));
 		}

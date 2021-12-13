@@ -859,7 +859,7 @@ void proposal_next_token(struct proposal_tokenizer *tokens)
 			} else {
 				jam(buf, "''");
 			}
-			jambuf_to_logger(buf, &failsafe_logger, DEBUG_STREAM);
+			jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
 		}
 	}
 }

@@ -140,7 +140,7 @@ OBJS += libreswan_bad_case.o
 
 OBJS += lswglob.o
 
-OBJS += failsafe_logger.o
+OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_bytes.o
 OBJS += log_message.o

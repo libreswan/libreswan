@@ -1569,14 +1569,14 @@ int main(int argc, char **argv)
 	 * Initialize logging then switch to the real logger.
 	 */
 	pluto_init_log(log_param);
-	struct logger global_logger = GLOBAL_LOGGER(null_fd);
 	/*
 	 * The string_logger() dbg_alloc() message went down a rabit
 	 * hole (aka the console) so fake one up here.
 	 */
 	dbg_alloc("logger", logger, HERE);
 	free_logger(&logger, HERE);
-	logger = &global_logger;
+	struct logger local_logger = global_logger;
+	logger = &local_logger;
 
 	init_constants();
 	init_pluto_constants();

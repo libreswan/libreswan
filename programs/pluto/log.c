@@ -307,7 +307,7 @@ void rate_log(const struct msg_digest *md,
 		rate_log_raw("", md->md_logger, message, ap);
 	} else if (nr_rate_limited_logs == limit) {
 		rate_log_raw("", md->md_logger, message, ap);
-		llog(LOG_STREAM, &failsafe_logger,
+		llog(LOG_STREAM, &global_logger,
 		     "rate limited log reached limit of %u entries", limit);
 	} else if (DBGP(DBG_BASE)) {
 		rate_log_raw(DEBUG_PREFIX, md->md_logger, message, ap);
@@ -669,7 +669,7 @@ void log_state(lset_t rc_flags, const struct state *st,
 		llog_va_list(rc_flags, st->st_logger, msg, ap);
 	} else {
 		/* still get the message out */
-		llog_va_list(rc_flags, &failsafe_logger, msg, ap);
+		llog_va_list(rc_flags, &global_logger, msg, ap);
 
 	}
 	va_end(ap);

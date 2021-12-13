@@ -276,7 +276,7 @@ static struct global_timer_desc global_timers[] = {
 static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 				  const short event, void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct logger logger[1] = { global_logger, }; /* event-handler */
 	passert(in_main_thread());
 	struct global_timer_desc *gt = arg;
 	passert(event & EV_TIMEOUT);
@@ -435,7 +435,7 @@ static void signal_handler_handler(evutil_socket_t fd UNUSED,
 {
 	passert(in_main_thread());
 	passert(event & EV_SIGNAL);
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct signal_handler *se = arg;
 	dbg("processing signal %s", se->name);
 	threadtime_t start = threadtime_start();
@@ -554,7 +554,7 @@ struct timeout {
 static void timeout(evutil_socket_t fd UNUSED,
 		    const short event UNUSED, void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct timeout *tt = arg;
 	tt->cb(tt->arg, logger);
 }
@@ -795,7 +795,7 @@ static void fd_read_listener_event_handler(evutil_socket_t fd,
 					   short events UNUSED,
 					   void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct fd_read_listener *fdl = arg;
 	fdl->cb(fd, fdl->arg, logger);
 }
@@ -848,7 +848,7 @@ static void fd_accept_listener(struct evconnlistener *efc UNUSED,
 			       evutil_socket_t fd, struct sockaddr *sockaddr, int sockaddr_len,
 			       void *arg)
 {
-	struct logger logger[1] = { GLOBAL_LOGGER(null_fd), }; /* event-handler */
+	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct fd_accept_listener *fdl = arg;
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
