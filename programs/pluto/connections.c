@@ -883,6 +883,7 @@ static int extract_end(struct connection *c,
 		       struct config_end *config_end,
 		       const struct whack_end *src,
 		       struct end *other_end,
+		       const struct ip_info *host_afi,
 		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
 {
@@ -1129,6 +1130,11 @@ static int extract_end(struct connection *c,
 		 */
 		dst->client = selector_from_subnet_protoport(client_afi->subnet.all,
 							     src->protoport);
+	} else if (host_afi != client_afi) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "failed to add connection: host protocol %s conflicts with client protocol %s",
+		     host_afi->ip_name, client_afi->ip_name);
+		return -1;
 	}
 
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
@@ -2144,13 +2150,13 @@ static bool extract_connection(const struct whack_message *wm,
 	right->config = c->remote = &config->end[RIGHT_END];
 
 	int same_leftca = extract_end(c, left, &config->end[LEFT_END], &wm->left,
-				      /*other_end*/right, client_afi, c->logger);
+				      /*other_end*/right, host_afi, client_afi, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
 
 	int same_rightca = extract_end(c, right, &config->end[RIGHT_END], &wm->right,
-				       /*other_end*/left, client_afi, c->logger);
+				       /*other_end*/left, host_afi, client_afi, c->logger);
 	if (same_rightca < 0) {
 		return false;
 	}
