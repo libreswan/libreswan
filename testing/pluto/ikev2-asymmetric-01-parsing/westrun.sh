@@ -16,6 +16,8 @@ ipsec auto --add test6
 ipsec auto --add test7
 ipsec auto --add test8
 ipsec auto --add test9
+ipsec auto --add test10
+ipsec auto --add test11
 echo "all remaining tests should fail"
 # whack testing
 ipsec whack --name failtestmanual1 --ikev2 --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
@@ -31,6 +33,7 @@ ipsec auto --add failtest7
 ipsec auto --add failtest8
 ipsec auto --add failtest9
 ipsec auto --add failtest10
+ipsec auto --add failtest11
 echo "Showing policies of all loaded connections"
 ipsec status | grep -E 'policy: |our auth:'
 echo done
