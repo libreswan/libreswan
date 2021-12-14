@@ -162,7 +162,10 @@ static const struct keyword_enum_value kw_authby_lr_values[] = {
 	{ "never",     AUTHBY_NEVER },
 	{ "secret",    AUTHBY_PSK },
 	{ "rsasig",    AUTHBY_RSASIG },
+	{ "rsa",       AUTHBY_RSASIG }, /* alias */
+	{ "ecdsa",     AUTHBY_ECDSA },
 	{ "null",      AUTHBY_NULL },
+	{ "eaponly",   AUTHBY_EAPONLY },
  };
 
 static const struct keyword_enum_values kw_authby_lr_list = VALUES_INITIALIZER(kw_authby_lr_values);

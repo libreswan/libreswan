@@ -246,10 +246,11 @@ static const char *const keyword_authby_name[] = {
 	"rsasig",
 	"ecdsa",
 	"null",
+	"eaponly",
 };
 
 enum_names keyword_authby_names = {
-	AUTHBY_UNSET, AUTHBY_NULL,
+	AUTHBY_UNSET, AUTHBY_EAPONLY,
 	ARRAY_REF(keyword_authby_name),
 	NULL, /* prefix */
 	NULL

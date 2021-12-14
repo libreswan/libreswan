@@ -103,6 +103,7 @@ enum keyword_authby {
 	AUTHBY_RSASIG,
 	AUTHBY_ECDSA,
 	AUTHBY_NULL,
+	AUTHBY_EAPONLY,
 };
 
 enum keyword_xauthby {

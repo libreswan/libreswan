@@ -1093,6 +1093,12 @@ static int extract_end(struct connection *c,
 
 	config_end->host.authby = src->authby;
 
+	if (src->eap == IKE_EAP_NONE && src->authby == AUTHBY_EAPONLY) {
+		llog(RC_LOG_SERIOUS, logger, "failed to add connection: leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
+		return -1;
+	}
+
+
 	/* save some defaults */
 	config_end->client.subnet = src->client;
 	config_end->client.protoport = src->protoport;
@@ -1592,6 +1598,9 @@ static bool extract_connection(const struct whack_message *wm,
 				case AUTHBY_RSASIG:
 				case AUTHBY_ECDSA:
 					/* will be fixed later below */
+					break;
+				case AUTHBY_EAPONLY:
+					/* no conflict possible with symmetric POLICY flags */
 					break;
 				default:
 					bad_case(wm->left.authby);
