@@ -578,34 +578,39 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, enum left_right left_right)
 {
-	/* [CLIENT===] or [===CLIENT] */
+	/* left: [CLIENT===] or right: [===CLIENT] */
+
 	if (!this->has_client) {
 		return;
 	}
-	if (selector_is_unset(&this->client)) {
+
+	if (!this->client.is_set) {
 		return;
 	}
-	bool boring = (selector_is_all(this->client) &&
-		       (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)));
 
-	if (!boring && left_right == RIGHT_END) {
+	if (selector_is_all(this->client) &&
+	    (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
+		/* booring */
+		return;
+	}
+
+	if (left_right == RIGHT_END) {
 		jam_string(buf, "===");
 	}
 
-	if (boring) {
-		/* boring case */
-	} else if (is_virtual_end(this)) {
+	if (is_virtual_end(this)) {
 		if (is_virtual_vhost(this))
 			jam_string(buf, "vhost:?");
 		else
 			jam_string(buf,  "vnet:?");
-	} else if (selector_is_zero(this->client)) {
-		jam_string(buf, "?");
 	} else {
 		jam_selector_subnet(buf, &this->client);
+		if (selector_is_zero(this->client)) {
+			jam_string(buf, "?");
+		}
 	}
 
-	if (!boring && left_right == LEFT_END) {
+	if (left_right == LEFT_END) {
 		jam_string(buf, "===");
 	}
 }
@@ -2696,12 +2701,13 @@ static size_t jam_connection_client(struct jambuf *b,
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (selector_is_unset(&client)) {
-			s += jam_string(b, "?");
-		} else if (selector_is_zero(client)) {
-			s += jam_string(b, "?"); /* unknown */
-		} else {
+		if (client.is_set) {
 			s += jam_selector_subnet(b, &client);
+			if (selector_is_zero(client)) {
+				s += jam_string(b, "?");
+			}
+		} else {
+			s += jam_string(b, "?");
 		}
 		s += jam_string(b, suffix);
 	}
