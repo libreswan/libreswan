@@ -2,15 +2,24 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
-# These should load
-ipsec auto --add base
-ipsec auto --add subnet4
-ipsec auto --add subnet6-good
-#ipsec auto --add subnet6-better
-ipsec auto --add subnet6-best
+ipsec auto --add 4in4-base
+ipsec auto --add 4in4-good
+ipsec auto --add 4in4-bad
+ipsec auto --add 4in4-protoport
 
-# this one should fail to load
-ipsec auto --add subnet6-bad
+ipsec auto --add 6in6-base
+ipsec auto --add 6in6-good
+ipsec auto --add 6in6-bad
+ipsec auto --add 6in6-protoport
 
-ipsec status
+ipsec auto --add 4in6-base # also bad
+ipsec auto --add 4in6-good
+ipsec auto --add 4in6-bad
+ipsec auto --add 4in6-protoport
 
+ipsec auto --add 6in4-base # also bad
+ipsec auto --add 6in4-good
+ipsec auto --add 6in4-bad
+ipsec auto --add 6in4-protoport
+
+ipsec status | grep unrouted

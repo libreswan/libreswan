@@ -1,1 +1,4 @@
 Test for ensuring we don't load a conn with left/rightsubnet of a different family
+
+- if a <end>subnet it not specified it is set to <end>'s host addr
+- but if a protoport is specified, it is set to all
