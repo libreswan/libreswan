@@ -826,7 +826,7 @@ kvm-%-upgrade:
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 .PHONY: kvm-upgrade
-kvm-upgrade: $(KVM_POOLDIR_PREFIX)fedora-upgrade
+kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS))
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
@@ -868,11 +868,11 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 ## changing them only requires a re-transmogrify and not a full domain
 ## rebuild.
 
-.PHONY: kvm-transmogrify
-kvm-transmogrify: $(KVM_POOLDIR_PREFIX)fedora-build
-
 $(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
 kvm-%-transmogrify: kvm-%-build
+
+.PHONY: kvm-transmogrify
+kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
 kvm-%-build:
