@@ -516,16 +516,12 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t policy)
 {
 	/* HOST */
-	bool dohost_name;
-	bool dohost_port;
 	if (address_is_unset(&this->host_addr) ||
 	    address_is_any(this->host_addr)) {
-		dohost_port = false;
 		if (this->config->host.type == KH_IPHOSTNAME) {
-			dohost_name = true;
 			jam_string(buf, "%dns");
+			jam(buf, "<%s>", this->host_addr_name);
 		} else {
-			dohost_name = false;
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
 				jam_string(buf, "%group");
@@ -541,42 +537,50 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 				break;
 			}
 		}
-	} else if (is_virtual_end(this)) {
-		dohost_name = false;
-		dohost_port = false;
-		jam_string(buf, "%virtual");
-	} else {
-		dohost_name = true;
-		dohost_port = true;
-		jam_address_sensitive(buf, &this->host_addr);
-	}
-
-	/* <NAME> */
-	if (this->config->host.type == KH_IPHOSTNAME) {
-		jam(buf, "<%s>", this->host_addr_name);
-	} else if (dohost_name && this->host_addr_name != NULL) {
-		address_buf ab;
-		if (!streq(str_address(&this->host_addr, &ab), this->host_addr_name)) {
-			jam(buf, "<%s>", this->host_addr_name);
-		}
-	}
-
-	/*
-	 * XXX: only print anomalies: when the host address is
-	 * "non-zero", a non-IKE_UDP_PORT; and when zero, any non-zero
-	 * port.
-	 */
-	if (dohost_port ? (this->config->host.ikeport != 0 || this->host_port != IKE_UDP_PORT) :
-	    this->host_port != 0) {
 		/*
-		 * XXX: Part of the problem is that code is stomping
-		 * on the HOST_ADDR's port setting it to the CLIENT's
-		 * port.
-		 *
-		 * XXX: Format this as ADDRESS:PORT<name> not
-		 * ADDRESS<name>:PORT?  Or always emit the PORT?
+		 * XXX: only print anomalies: since the host address
+		 * is zero, so too should be the port.
 		 */
-		jam(buf, ":%u", this->host_port);
+		if (this->host_port != 0) {
+			jam(buf, ":%u", this->host_port);
+		}
+	} else if (is_virtual_end(this)) {
+		jam_string(buf, "%virtual");
+		/*
+		 * XXX: only print anomalies: the host is %virtual
+		 * (what ever that means), so too should be the port.
+		 */
+		if (this->host_port != 0) {
+			jam(buf, ":%u", this->host_port);
+		}
+	} else {
+		/* ADDRESS[:PORT][<HOSTNAME>] */
+		/*
+		 * XXX: only print anomalies: when the host address is
+		 * valid, any hardwired IKEPORT or a port other than
+		 * IKE_UDP_PORT.
+		 */
+		bool include_port = (this->config->host.ikeport != 0 ||
+				     this->host_port != IKE_UDP_PORT);
+		if (!log_ip) {
+			/* ADDRESS(SENSITIVE) */
+			jam_string(buf, "<address>");
+		} else if (include_port) {
+			/* ADDRESS:PORT */
+			const struct ip_info *afi = address_type(&this->host_addr);
+			/* XXX: jam_address_wrapped()? */
+			afi->address.jam_wrapped(buf, afi, &this->host_addr.bytes);
+			jam(buf, ":%u", this->host_port);
+		} else {
+			/* ADDRESS */
+			jam_address(buf, &this->host_addr);
+		}
+		/* [<HOSTNAME>] */
+		address_buf ab;
+		if (this->host_addr_name != NULL &&
+		    !streq(str_address(&this->host_addr, &ab), this->host_addr_name)) {
+				jam(buf, "<%s>", this->host_addr_name);
+		}
 	}
 }
 
