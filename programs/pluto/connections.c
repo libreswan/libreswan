@@ -1089,18 +1089,6 @@ static int extract_end(struct connection *c,
 	config_end->client.subnet = src->client;
 	config_end->client.protoport = src->protoport;
 
-	/*
-	 * .has_client means that src.client (a subnet) contains a
-	 * value and dst.client (a selector) should be filled in using
-	 * that value+protoport.
-	 *
-	 * XXX: should just use src.client.is_set, but whack's a mess.
-	 *
-	 * If there isn't a valid client then dst.client is filled in
-	 * later (for instance by instantiate() calling default_end()
-	 * which merges the (now known) host_addr and protoport).
-	 */
-
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
 		llog(RC_LOG_SERIOUS, logger,
 		     "failed to add connection: %sprotoport cannot specify non-zero port %d for prototcol 0",
@@ -1108,25 +1096,46 @@ static int extract_end(struct connection *c,
 		return -1;
 	}
 
-
 	if (src->client.is_set) {
+		/*
+		 * end.has_client seems to mean that the .client
+		 * selector is pinned (when false .client can be
+		 * refined).
+		 *
+		 * Of course if NARROWING is allowed, this can be
+		 * refined regardless of .has_client.
+		 */
 		dst->has_client = true;
 		dst->client = selector_from_subnet_protoport(src->client,
 							     src->protoport);
-	} else if (src->protoport.is_set) {
-		/*
-		 * XXX: if there's no client _yet_ there's a
-		 * protoport, then there _is_ a client.  But the code
-		 * doesn't yet believe this (.has_client is not
-		 * updated).
-		 */
-		dst->client = selector_from_subnet_protoport(client_afi->subnet.all,
-							     src->protoport);
 	} else if (host_afi != client_afi) {
+		/*
+		 * If {left,right}subnet isn't specified in the
+		 * configuration file then it defaults to the HOST's
+		 * address.
+		 *
+		 * Except at this point the host's address may not be
+		 * known (DNS, %any).  This is "fixed" by
+		 * update_ends().  Fortunately (if nothing else, by
+		 * forcing it), at least the host address family is
+		 * known.
+		 */
 		llog(RC_LOG_SERIOUS, logger,
 		     "failed to add connection: host protocol %s conflicts with client protocol %s",
 		     host_afi->ip_name, client_afi->ip_name);
 		return -1;
+	} else if (src->protoport.is_set) {
+		/*
+		 * There's no client subnet _yet_ there is a client
+		 * protoport.  There must be a client.
+		 *
+		 * Per above, the client will be formed from
+		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
+		 * yet known, use host family's .all as a stand in.
+		 * Calling update_ends*() will then try to fix it.
+		 */
+		dst->client = selector_from_subnet_protoport(host_afi->subnet.all,
+							     src->protoport);
 	}
 
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
