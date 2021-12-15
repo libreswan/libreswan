@@ -94,7 +94,8 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
  */
 
 typedef struct {
-	char buf[(4+1)*8/*0000:...*/ + 1/*\0*/ + 1/*CANARY*/];
+	/* sizeof(string) includes NUL, add 1 for canary */
+	char buf[sizeof("[1111:2222:3333:4444:5555:6666:7777:8888]") + 1/*CANARY*/];
 } address_buf;
 
 size_t jam_address(struct jambuf *buf, const ip_address *src);
@@ -104,15 +105,15 @@ const char *str_address(const ip_address *src, address_buf *dst);
  * sensitive: don't print address when !log_ip
  *
  * reversed: in-addr format.
-
+ *
  * raw: This is not the format function you are looking for. For IPv6
  * include all zeros, vis :0:..:0:; when SEPC != '\0' use it as the
  * separator instead of '.' (IPv4) or ':' (IPv6).
  */
 
 typedef struct {
-	/* string includes NUL, add 1 for canary */
-	char buf[sizeof("4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA.") + 1];
+	/* sizeof(string) includes NUL, add 1 for canary */
+	char buf[sizeof("4.0.0.0.3.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.2.0.0.0.1.0.0.0.IP6.ARPA.") + 1/*CANARY*/];
 }  address_reversed_buf;
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *src);
