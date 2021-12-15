@@ -2,7 +2,7 @@
 nic #
  iptables -F
 nic #
- ( tcpdump -l -A & echo $? > /tmp/nic.tcpdump.pid ) > /tmp/nic.tcpdump.log 2>&1
+ ( tcpdump -i eth1 -l -A & echo $? > /tmp/nic.tcpdump.pid ) > /tmp/nic.tcpdump.log 2>&1
 nic #
  # expect two lines of plain text - there and back
 nic #
