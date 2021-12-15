@@ -558,6 +558,7 @@ def run_tests(logger, args, tests, result_stats):
         _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, logger)
     else:
         domain_prefix = domain_prefixes[0]
+        done = threading.Semaphore(value=0) # block
         logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-        _process_test_queue(domain_prefix, test_queue, args, result_stats)
+        _process_test_queue(domain_prefix, test_queue, args, done, result_stats)
     publish.json_status(logger, args, "finished")
