@@ -895,8 +895,7 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
-		--noautoconsole \
-		$(KVM_$($*)_BUILD_VIRT_INSTALL_FLAGS)
+		--noautoconsole
 	: transmogrify $($*) using transmogrify.sh from $(srcdir) and not $(KVM_SOURCEDIR)
 	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -908,8 +907,6 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: shutdown needed after transmogrify but only shutdown when transmogrify works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
-
-KVM_NETBSD_BUILD_VIRT_INSTALL_FLAGS = $(foreach subnet, $(KVM_TEST_SUBNETS), --network=network:$(KVM_FIRST_PREFIX)$(subnet),model=virtio)
 
 ##
 ## Install libreswan into the build.
