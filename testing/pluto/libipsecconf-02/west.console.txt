@@ -39,7 +39,7 @@ west #
 036 "4in6-bad": failed to add connection: client address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
 west #
  ipsec auto --add 4in6-protoport
-002 "4in6-protoport": added IKEv2 connection
+003 "4in6-protoport": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
 west #
  ipsec auto --add 6in4-base # also bad
 003 "6in4-base": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
@@ -51,16 +51,14 @@ west #
 036 "6in4-bad": failed to add connection: client address family IPv6 from leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0.0/0
 west #
  ipsec auto --add 6in4-protoport
-002 "6in4-protoport": added IKEv2 connection
+003 "6in4-protoport": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
 west #
  ipsec status | grep unrouted
 000 "4in4-base": 1.2.3.0/24===10.11.12.13<10.11.12.13>...20.21.22.23<20.21.22.23>; unrouted; eroute owner: #0
 000 "4in4-good": 1.2.3.0/24===10.11.12.13<10.11.12.13>...20.21.22.23<20.21.22.23>===0.0.0.0/0; unrouted; eroute owner: #0
 000 "4in4-protoport": 1.2.3.0/24===10.11.12.13<10.11.12.13>...20.21.22.23<20.21.22.23>===20.21.22.23/32:TCP/22; unrouted; eroute owner: #0
 000 "4in6-good": 1.2.3.0/24===10:11:12:13::<10:11:12:13::>...20:21:22:23::<20:21:22:23::>===0.0.0.0/0; unrouted; eroute owner: #0
-000 "4in6-protoport": 1.2.3.0/24===10:11:12:13::<10:11:12:13::>...20:21:22:23::<20:21:22:23::>===20:21:22:23::/128:TCP/22; unrouted; eroute owner: #0
 000 "6in4-good": 1:2:3::/64===10.11.12.13<10.11.12.13>...20.21.22.23<20.21.22.23>===::/0; unrouted; eroute owner: #0
-000 "6in4-protoport": 1:2:3::/64===10.11.12.13<10.11.12.13>...20.21.22.23<20.21.22.23>===20.21.22.23/32:TCP/22; unrouted; eroute owner: #0
 000 "6in6-base": 1:2:3::/64===10:11:12:13::<10:11:12:13::>...20:21:22:23::<20:21:22:23::>; unrouted; eroute owner: #0
 000 "6in6-good": 1:2:3::/64===10:11:12:13::<10:11:12:13::>...20:21:22:23::<20:21:22:23::>===::/0; unrouted; eroute owner: #0
 000 "6in6-protoport": 1:2:3::/64===10:11:12:13::<10:11:12:13::>...20:21:22:23::<20:21:22:23::>===20:21:22:23::/128:TCP/22; unrouted; eroute owner: #0
