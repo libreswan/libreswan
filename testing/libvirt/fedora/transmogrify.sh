@@ -61,7 +61,7 @@ title hostnamer
 rm -f /etc/hostname # hostnamectl set-hostname ""
 cat <<EOF > /etc/systemd/system/hostnamer.service
 [Unit]
-  Description=Figure out who we are
+  Description=hostnamer: who-am-i
   #not-file-not-empty == file empty
   ConditionFileNotEmpty=|!/etc/hostname
   # need interfaces configured
@@ -75,19 +75,25 @@ cat <<EOF > /etc/systemd/system/hostnamer.service
 EOF
 cat <<EOF > /usr/local/sbin/hostnamer.sh
 #!/bin/sh
-mac=\$(ip address show dev eth0 | awk '\$1 == "link/ether" { print \$2 }')
-echo mac: \${mac} | tee /dev/console
-case \${mac} in
-     #   eth0                 eth1               eth2
-     12:00:00:1d:9c:19 | 12:00:00:de:ad:ba | 12:00:00:32:64:ba ) hostname=nic ;;
-     12:00:00:dc:bc:ff | 12:00:00:64:64:23                     ) hostname=east ;;
-     12:00:00:ab:cd:ff | 12:00:00:64:64:45                     ) hostname=west ;;
-     12:00:00:ab:cd:02                                         ) hostname=road ;;
-     12:00:00:de:cd:49 | 12:00:00:96:96:49                     ) hostname=north ;;
-     *) echo ${nic} unknown | tee /dev/console ; exit 0 ;;
-esac
-echo hostname: \${hostname} | tee /dev/console
-hostnamectl set-hostname \${hostname}
+# per hostnamer.service, only run when /etc/hostname is empty
+echo hostnamer: determining hostname | tee /dev/console
+host()
+{
+	echo hostnamer hostname: \$1 | tee /dev/console
+	hostnamectl set-hostname \$1
+	exit 0
+}
+for mac in \$(ip address show | awk '\$1 == "link/ether" { print \$2 }') ; do
+    echo hostnamer mac: \${mac} | tee /dev/console
+    case \${mac} in
+    	 #   eth0                 eth1               eth2
+	                     12:00:00:de:ad:ba | 12:00:00:32:64:ba ) host nic ;;
+	 12:00:00:dc:bc:ff | 12:00:00:64:64:23                     ) host east ;;
+	 12:00:00:ab:cd:ff | 12:00:00:64:64:45                     ) host west ;;
+	 12:00:00:ab:cd:02                                         ) host road ;;
+	 12:00:00:de:cd:49 | 12:00:00:96:96:49                     ) host north ;;
+     esac
+done
 EOF
 chmod a+x /usr/local/sbin/hostnamer.sh
 restorecon -R /etc/systemd/system
