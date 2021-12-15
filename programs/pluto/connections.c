@@ -578,13 +578,13 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 static void jam_end_client(struct jambuf *buf, const struct end *this,
 			   lset_t policy, enum left_right left_right)
 {
-	/* left: [CLIENT===] or right: [===CLIENT] */
+	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
 
-	if (!this->has_client) {
+	if (!this->client.is_set) {
 		return;
 	}
 
-	if (!this->client.is_set) {
+	if (selector_eq_address(this->client, this->host_addr)) {
 		return;
 	}
 
@@ -604,7 +604,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 		else
 			jam_string(buf,  "vnet:?");
 	} else {
-		jam_selector_subnet(buf, &this->client);
+		jam_selector(buf, &this->client);
 		if (selector_is_zero(this->client)) {
 			jam_string(buf, "?");
 		}
@@ -612,16 +612,6 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 
 	if (left_right == LEFT_END) {
 		jam_string(buf, "===");
-	}
-}
-
-static void jam_end_protoport(struct jambuf *buf, const struct end *this)
-{
-	/* payload portocol and port */
-	if (this->config->client.protoport.has_port_wildcard) {
-		jam(buf, ":%u/%%any", this->client.ipproto);
-	} else if (this->client.hport || this->client.ipproto) {
-		jam(buf, ":%u/%u", this->client.ipproto, this->client.hport);
 	}
 }
 
@@ -702,14 +692,12 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 {
 	switch (left_right) {
 	case LEFT_END:
-		/* CLIENT=== */
+		/* CLIENT/PROTOCOL:PORT=== */
 		jam_end_client(buf, this, policy, left_right);
 		/* HOST */
 		jam_end_host(buf, this, policy);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
-		/* /PROTOCOL:PORT */
-		jam_end_protoport(buf, this);
 		/* ---NEXTHOP */
 		jam_end_nexthop(buf, this, that, filter_rnh, left_right);
 		break;
@@ -720,9 +708,7 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 		jam_end_host(buf, this, policy);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
-		/* /PROTOCOL:PORT */
-		jam_end_protoport(buf, this);
-		/* ===CLIENT */
+		/* ===CLIENT/PROTOCOL:PORT */
 		jam_end_client(buf, this, policy, left_right);
 		break;
 	}
