@@ -60,7 +60,7 @@ extern void send_v1_delete(struct state *st);
  * But only if we are a Main Mode Responder.
  */
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
-			   bool aggrmode);
+				 bool aggrmode, unsigned depth);
 
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,

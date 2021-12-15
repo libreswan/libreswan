@@ -1269,7 +1269,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * But only if we are a Main Mode Responder.
 	 */
 	if (!st->st_v1_peer_alt_id) {
-		if (!ikev1_decode_peer_id(md, initiator, aggrmode)) {
+		if (!ikev1_decode_peer_id(md, initiator, aggrmode, 0/*depth*/)) {
 			dbg("Peer ID failed to decode");
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}

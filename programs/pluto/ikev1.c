@@ -2920,12 +2920,20 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
  * note: may change which connection is referenced by md->v1_st->st_connection.
  * But only if we are a Main Mode Responder.
  */
-bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
+bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
+			  bool aggrmode, unsigned depth)
 {
 	struct state *const st = md->v1_st;
 	struct connection *c = st->st_connection;
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
+
+	if (depth > 10) {
+		/* should not happen, but it would be nice to survive */
+		llog(RC_LOG_SERIOUS, st->st_logger,
+		     "decoding IKEv2 peer ID failed due to confusion");
+		return false;
+	}
 
 	/*
 	 * I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
@@ -3106,7 +3114,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ike_decode_peer_id() with new conn");
 			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id(md, false, false);
+			return ikev1_decode_peer_id(md, false, false, depth+1);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
 			rehash_db_connection_that_id(c);
