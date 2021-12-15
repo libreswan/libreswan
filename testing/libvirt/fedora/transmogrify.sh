@@ -181,6 +181,8 @@ alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
 # stop systemd adding control characters
 export LC_CTYPE=C
 export SYSTEMD_COLOURS=false
+# don't wander into the weeds looking for debug info
+unset DEBUGINFOD_URLS
 EOF
 
 title files mysteriously needed for systemd-networkd too
