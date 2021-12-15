@@ -2931,7 +2931,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
 		llog(RC_LOG_SERIOUS, st->st_logger,
-		     "decoding IKEv2 peer ID failed due to confusion");
+		     "decoding IKEv1 peer ID failed due to confusion");
 		return false;
 	}
 
