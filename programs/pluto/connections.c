@@ -3668,8 +3668,8 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				pri_connection(d, &b2), pri_connection(c, &b1));
 			indent = 3;
 
-			int wildcards;
-			bool matching_peer_id = (c->connalias != NULL && d->connalias != NULL && 
+			int wildcards = 0;
+			bool matching_peer_id = (c->connalias != NULL && d->connalias != NULL &&
 						streq(c->connalias, d->connalias)) ||
 						match_id(peer_id,
 							&d->spd.that.id,
