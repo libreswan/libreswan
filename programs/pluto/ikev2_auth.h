@@ -73,4 +73,6 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			  struct pbs_in *signature_pbs,
 			  const enum keyword_authby that_authby);
 
+bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike);
+
 #endif

@@ -31,12 +31,14 @@
 #include "state.h"
 #include "log.h"
 #include "connections.h"
+#include "nat_traversal.h"
 #include "keys.h"
 #include "secrets.h"
 #include "ikev2_message.h"
 #include "ikev2.h"
 #include "keys.h"
 #include "ikev2_psk.h"
+#include "kernel.h"
 
 static const uint8_t rsa_sha1_der_header[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -523,4 +525,97 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		return diag("authentication failed: method %s not supported",
 			    enum_name(&ikev2_auth_names, recv_auth));
 	}
+}
+
+bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	/*
+	 * Update the parent state to make sure that it knows we have
+	 * authenticated properly.
+	 */
+	v2_ike_sa_established(ike);
+
+	/*
+	 * Wipes any connections that were using an old version of
+	 * this SA?  Is this too early or too late?
+	 */
+	wipe_old_v2_connections(ike);
+
+	if (ike->sa.st_ike_seen_v2n_initial_contact && c->newest_ipsec_sa != SOS_NOBODY) {
+		/*
+		 * XXX: This is for the first child only.
+		 *
+		 * The IKE SA should be cleaned up after all children
+		 * have been replaced (or it expires).
+		 *
+		 * CREATE_CHILD_SA children should also be cleaned up.
+		 */
+		if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+			/*
+			 * If we are a server and use PSK, all clients
+			 * use the same group ID.
+			 *
+			 * Note that "xauth_server" also refers to
+			 * IKEv2 CP
+			 */
+			dbg("ignoring initial contact: we are a server using PSK and clients are using a group ID");
+		} else if (!uniqueIDs) {
+			dbg("ignoring initial contact: uniqueIDs disabled");
+		} else {
+			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+				dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
+				    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
+				old_p2->st_send_delete = DONT_SEND_DELETE;
+				event_force(EVENT_SA_DISCARD, old_p2);
+			}
+		}
+	}
+
+	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+		/* ensure we run keepalives if needed */
+		if (c->nat_keepalive) {
+			/* XXX: just trigger this event? */
+			nat_traversal_ka_event(ike->sa.st_logger);
+		}
+	}
+
+	/* send response */
+	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
+		if (c->spd.that.config->host.type == KH_ANY) {
+			/* only allow %any connection to mobike */
+			ike->sa.st_ike_sent_v2n_mobike_supported = true;
+		} else {
+			log_state(RC_LOG, &ike->sa,
+				  "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
+		}
+	}
+
+	bool send_redirect = false;
+
+	if (ike->sa.st_seen_redirect_sup &&
+	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
+	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
+	      require_ddos_cookies()))) {
+		if (c->redirect_to == NULL) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "redirect-to is not specified, can't redirect requests");
+		} else {
+			send_redirect = true;
+		}
+	}
+
+	if (c->config->sec_label.len > 0) {
+		pexpect(c->kind == CK_TEMPLATE);
+		pexpect(c->spd.this.sec_label.len == 0);
+		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
+			return STF_FATAL;
+		}
+	}
+
+	return send_redirect;
 }
