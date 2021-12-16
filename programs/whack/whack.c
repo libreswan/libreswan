@@ -78,7 +78,7 @@ static void help(void)
 		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
 		"	[--vtiip <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
-		"	[--authby <psk | rsasig | ecdsa | null>] \\\n"
+		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
 		"	[--autheap <none | tls>] \\\n"
 		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
@@ -1727,7 +1727,7 @@ int main(int argc, char **argv)
 			continue;
 
 		/*
-		 * --authby secret | rsasig | null
+		 * --authby secret | rsasig | rsa | ecdsa | null | eaponly
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTHBY:
@@ -1736,11 +1736,13 @@ int main(int argc, char **argv)
 				msg.right.authby = AUTHBY_PSK;
 			else if (streq(optarg, "null"))
 				msg.right.authby = AUTHBY_NULL;
-			else if (streq(optarg, "rsasig"))
+			else if (streq(optarg, "rsasig") || streq(optarg, "rsa"))
 				msg.right.authby = AUTHBY_RSASIG;
 			else if (streq(optarg, "ecdsa"))
 				msg.right.authby = AUTHBY_ECDSA;
-			else diag("authby option is not one of psk, ecdsa, rsasig or null");
+			else if (streq(optarg, "eaponly"))
+				msg.right.authby = AUTHBY_EAPONLY;
+			else diag("authby option is not one of psk, ecdsa, rsasig, rsa, null or eaponly");
 			continue;
 
 		case END_AUTHEAP:
