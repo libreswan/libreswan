@@ -42,8 +42,8 @@ bool v1_verify_certs(struct msg_digest *md);
 
 diag_t match_end_cert_id(const struct certs *certs, struct id *peer_id /*ID_FROMCERT => updated*/);
 
-extern void ikev1_decode_cr(struct msg_digest *md, struct logger *logger);
-extern void ikev2_decode_cr(struct msg_digest *md, struct logger *logger);
+extern void decode_v1_certificate_requests(struct state *st, struct msg_digest *md);
+extern void decode_v2_certificate_requests(struct state *st, struct msg_digest *md);
 
 extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 

@@ -78,7 +78,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	}
 
 	/* process any CERTREQ payloads */
-	ikev2_decode_cr(md, ike->sa.st_logger);
+	decode_v2_certificate_requests(&ike->sa, md);
 
 	/*
 	 * Figure out the authentication, use both what the initiator
@@ -290,7 +290,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	}
 
 	/* process any CERTREQ payloads */
-	ikev2_decode_cr(md, ike->sa.st_logger);
+	decode_v2_certificate_requests(&ike->sa, md);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we

@@ -785,7 +785,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process CERTREQ payload */
 	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
 		dbg("received CERTREQ payload; going to decode it");
-		ikev2_decode_cr(md, ike->sa.st_logger);
+		decode_v2_certificate_requests(&ike->sa, md);
 	}
 
 	/* process AUTH payload */

@@ -794,7 +794,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, st->st_logger);
+	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = true;
@@ -1033,7 +1033,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 
 	/* decode certificate requests */
-	ikev1_decode_cr(md, st->st_logger);
+	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = true;

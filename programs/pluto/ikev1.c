@@ -3007,7 +3007,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 	}
 
 	/* check for certificate requests */
-	ikev1_decode_cr(md, st->st_logger);
+	decode_v1_certificate_requests(st, md);
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we

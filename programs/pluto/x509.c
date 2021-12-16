@@ -865,97 +865,70 @@ bool v1_verify_certs(struct msg_digest *md)
  *  treat such payloads as synonymous with "X.509 Certificate -
  *  Signature".
  */
-void ikev1_decode_cr(struct msg_digest *md, struct logger *logger)
+
+static void decode_certificate_request(struct state *st, enum ike_cert_type cert_type,
+				       const struct pbs_in *pbs)
 {
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_CR];
-	     p != NULL; p = p->next) {
+	switch (cert_type) {
+	case CERT_X509_SIGNATURE:
+	{
+#if 0
+		shunk_t ca_name = pbs_in_left_as_shunk(pbs);
+#else
 		chunk_t ca_name = {
-			.len = pbs_left(&p->pbs),
-			.ptr = pbs_left(&p->pbs) > 0 ? p->pbs.cur : NULL
+			.len = pbs_left(pbs),
+			.ptr = pbs_left(pbs) > 0 ? pbs->cur : NULL
 		};
+#endif
 
 		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("CR", ca_name);
 		}
 
-		const struct isakmp_cr *const cr = &p->payload.cr;
-
-		if (cr->isacr_type == CERT_X509_SIGNATURE) {
-			if (ca_name.len > 0) {
-				if (!is_asn1(ca_name))
-					continue;
-
-				generalName_t *gn = alloc_thing(generalName_t, "generalName");
-
-				gn->name = clone_hunk(ca_name, "ca name");
-				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = md->v1_st->st_requested_ca;
-				md->v1_st->st_requested_ca = gn;
+		if (ca_name.len > 0) {
+			if (!is_asn1(ca_name)) {
+				llog(RC_LOG_SERIOUS, st->st_logger,
+				     "ignoring CERTREQ payload that is not ASN1");
+				return;
 			}
 
-			if (DBGP(DBG_BASE)) {
-				dn_buf buf;
-				DBG_log("requested CA: '%s'",
-					str_dn_or_null(ca_name, "%any", &buf));
-			}
-		} else {
-			esb_buf b;
-			llog(RC_LOG_SERIOUS, logger,
-			     "ignoring %s certificate request payload",
-			     enum_show(&ike_cert_type_names, cr->isacr_type, &b));
+			generalName_t *gn = alloc_thing(generalName_t, "generalName");
+			gn->name = clone_hunk(ca_name, "ca name");
+			gn->kind = GN_DIRECTORY_NAME;
+			gn->next = st->st_requested_ca;
+			st->st_requested_ca = gn;
 		}
+
+		if (DBGP(DBG_BASE)) {
+			dn_buf buf;
+			DBG_log("requested CA: '%s'",
+				str_dn_or_null(ca_name, "%any", &buf));
+		}
+		break;
+	}
+	default:
+	{
+		enum_buf b;
+		llog(RC_LOG_SERIOUS, st->st_logger,
+		     "ignoring CERTREQ payload of unsupported type %s",
+		     str_enum(&ikev2_cert_type_names, cert_type, &b));
+	}
 	}
 }
 
-/*
- * Decode the IKEv2 CR payload of Phase 1.
- *
- * This needs to handle the SHA-1 hashes instead. However, receiving CRs
- * does nothing ATM.
- */
-void ikev2_decode_cr(struct msg_digest *md, struct logger *logger)
+void decode_v1_certificate_requests(struct state *st, struct msg_digest *md)
 {
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ];
-	     p != NULL; p = p->next) {
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next) {
+		const struct isakmp_cr *const cr = &p->payload.cr;
+		decode_certificate_request(st, cr->isacr_type, &p->pbs);
+	}
+}
+
+void decode_v2_certificate_requests(struct state *st, struct msg_digest *md)
+{
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next) {
 		const struct ikev2_certreq *const cr = &p->payload.v2certreq;
-		switch (cr->isacertreq_enc) {
-		case CERT_X509_SIGNATURE:
-		{
-			chunk_t ca_name = {
-				.len = pbs_left(&p->pbs),
-				.ptr = pbs_left(&p->pbs) > 0 ? p->pbs.cur : NULL
-			};
-			if (DBGP(DBG_BASE)) {
-				DBG_dump_hunk("CERT_X509_SIGNATURE CR:", ca_name);
-			}
-
-			if (ca_name.len > 0) {
-				if (!is_asn1(ca_name))
-					continue;
-
-				generalName_t *gn =
-					alloc_thing(generalName_t, "generalName");
-				gn->name = clone_hunk(ca_name, "ca name");
-				gn->kind = GN_DIRECTORY_NAME;
-				gn->next = md->v1_st->st_requested_ca;
-				md->v1_st->st_requested_ca = gn;
-			}
-
-			if (DBGP(DBG_BASE)) {
-				dn_buf buf;
-				DBG_log("requested CA: '%s'",
-					str_dn_or_null(ca_name, "%any", &buf));
-			}
-			break;
-		}
-		default:
-		{
-			esb_buf b;
-			llog(RC_LOG_SERIOUS, logger,
-			     "ignoring CERTREQ payload of unsupported type %s",
-			     enum_show(&ikev2_cert_type_names, cr->isacertreq_enc, &b));
-		}
-		}
+		decode_certificate_request(st, cr->isacertreq_enc, &p->pbs);
 	}
 }
 
