@@ -3763,12 +3763,9 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 */
 
 			int wildcards = 0;
-			bool matching_peer_id = ((c->connalias != NULL &&
-						  d->connalias != NULL &&
-						  streq(c->connalias, d->connalias)) ||
-						 match_id(peer_id,
-							  &d->spd.that.id,
-							  &wildcards));
+			bool matching_peer_id = match_id(peer_id,
+							 &d->spd.that.id,
+							 &wildcards);
 			dbg_rhc("matching_peer_id=%s, wildcards=%d",
 				bool_str(matching_peer_id), wildcards);
 			indent++;
