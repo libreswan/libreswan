@@ -3042,14 +3042,20 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 	} else if (!aggrmode) {
 		/* Main Mode Responder */
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
-		lset_t auth_policy;
 
+		/*
+		 * Translate the IKEv1 policy onto IKEv2(?) auth enum.
+		 * Saves duplicating the checks for v1 and v2, and the
+		 * v1 policy is a subset of the v2 policy.
+		 */
+
+		enum keyword_authby this_authby;
 		switch (auth) {
 		case OAKLEY_PRESHARED_KEY:
-			auth_policy = POLICY_PSK;
+			this_authby = AUTHBY_PSK;
 			break;
 		case OAKLEY_RSA_SIG:
-			auth_policy = POLICY_RSASIG;
+			this_authby = AUTHBY_RSASIG;
 			break;
 		/* Not implemented */
 		case OAKLEY_DSS_SIG:
@@ -3063,13 +3069,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			return false;
 		}
 
-		bool fromcert;
+		bool get_id_from_cert;
 		struct connection *r =
 			refine_host_connection_on_responder(st, &peer,
 							    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
-							    auth_policy,
-							    AUTHBY_UNSET,	/* ikev2 only */
-							    &fromcert);
+							    this_authby,
+							    &get_id_from_cert);
 
 		if (r == NULL) {
 			id_buf buf;
@@ -3119,8 +3124,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			duplicate_id(&c->spd.that.id, &peer);
 			rehash_db_connection_that_id(c);
 			c->spd.that.has_id_wildcards = false;
-		} else if (fromcert) {
-			dbg("copying ID for fromcert");
+		} else if (get_id_from_cert) {
+			dbg("copying ID for get_id_from_cert");
 			duplicate_id(&c->spd.that.id, &peer);
 			rehash_db_connection_that_id(c);
 		}

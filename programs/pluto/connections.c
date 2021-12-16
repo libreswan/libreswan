@@ -3538,9 +3538,8 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 struct connection *refine_host_connection_on_responder(const struct state *st,
 						       const struct id *peer_id,
 						       const struct id *tarzan_id,
-						       lset_t auth_policy /* used by ikev1 */,
-						       enum keyword_authby this_authby /* used by ikev2 */,
-						       bool *fromcert)
+						       enum keyword_authby this_authby,
+						       bool *get_id_from_cert)
 {
 #define dbg_rhc(FORMAT, ...) dbg("refine_host_connection:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
@@ -3554,30 +3553,11 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	indent = 1;
 
 	const generalName_t *requested_ca = st->st_requested_ca;
-	/* Ensure the caller and we know the IKE version we are looking for */
-	bool ikev1 = auth_policy != LEMPTY;
-	bool ikev2 = this_authby != AUTHBY_UNSET;
 
-	*fromcert = false;
+	*get_id_from_cert = false;
 
-	passert(ikev1 != ikev2 && ikev2 == (st->st_ike_version == IKEv2));
 	passert(this_authby != AUTHBY_NEVER);
-
-	/*
-	 * Translate the IKEv1 policy onto an IKEv2 policy.
-	 * Saves duplicating the checks for v1 and v2, and the
-	 * v1 policy is a subset of the v2 policy. Use the ikev2
-	 * bool for IKEv2-only feature checks.
-	 */
-	if (ikev1) {
-		/* ??? are these cases mutually exclusive? */
-		if (LIN(POLICY_RSASIG, auth_policy))
-			this_authby = AUTHBY_RSASIG;
-		if (LIN(POLICY_PSK, auth_policy))
-			this_authby = AUTHBY_PSK;
-		passert(this_authby != AUTHBY_UNSET);
-	}
-	/* from here on, auth_policy must only be used to check POLICY_AGGRESSIVE */
+	passert(this_authby != AUTHBY_UNSET);
 
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
@@ -3644,21 +3624,23 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	struct connection *best_found = NULL;
 	int best_wildcards = 0;
 
-	/* wcpip stands for: wildcard Peer IP? */
-	for (unsigned wcpip = 1; wcpip <= 2; wcpip++) {
-		/*
-		 * When starting second time around we're willing to
-		 * settle for a connection that needs Peer IP
-		 * instantiated: Road Warrior or Opportunistic.  Look
-		 * on list of connections for host pair with wildcard
-		 * Peer IP.
-		 */
-		ip_address local = c->interface->ip_dev->id_address;
-		ip_address remote = wcpip == 2 ? unset_address : endpoint_address(st->st_remote_endpoint);
-		address_buf lb, rb;
+	/*
+	 * PASS 1: Match anything with the exact same SRC->DST. This
+	 * list contains instantiated templates and oriented permenant
+	 * connections.
+	 *
+	 * PASS 2: Match matching SRC->%any.  This list contains
+	 * oriented template connections (since the remote address is
+	 * %any).
+	 */
+
+	ip_address local = c->interface->ip_dev->id_address;
+	FOR_EACH_THING(remote, endpoint_address(st->st_remote_endpoint), unset_address) {
+
 		indent = 1;
-		dbg_rhc("pass %d: %s->%s", wcpip, str_address(&local, &lb), str_address(&remote, &rb));
-		indent = 2;
+		address_buf lb, rb;
+		dbg_rhc("trying connections matching %s->%s",
+			str_address(&local, &lb), str_address(&remote, &rb));
 
 		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
@@ -3666,31 +3648,29 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			indent = 2;
 			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
 				pri_connection(d, &b2), pri_connection(c, &b1));
-			indent = 3;
+			indent++;
 
-			int wildcards = 0;
-			bool matching_peer_id = (c->connalias != NULL && d->connalias != NULL &&
-						streq(c->connalias, d->connalias)) ||
-						match_id(peer_id,
-							&d->spd.that.id,
-							&wildcards);
+			/*
+			 * First all the "easy" skips.
+			 */
 
-			int peer_pathlen;
-			bool matching_peer_ca = trusted_ca_nss(peer_ca,
-							d->spd.that.ca,
-							&peer_pathlen);
+			/* only consider sec_label+template */
+			if (d->config->sec_label.len > 0 && d->kind != CK_TEMPLATE) {
+				dbg_rhc("skipping because sec_label requires template");
+				continue;
+			}
 
-			int our_pathlen;
-			bool matching_requested_ca = match_requested_ca(requested_ca,
-							d->spd.this.ca,
-							&our_pathlen);
+			/* ignore group connections */
+			if (d->policy & POLICY_GROUP) {
+				dbg_rhc("skipping because group connection");
+				continue;
+			}
 
-			dbg_rhc("best=%s with match=%d(id=%d(%d)/ca=%d(%d)/reqca=%d(%d))",
-				best_found != NULL ? best_found->name : "(none)",
-				matching_peer_id && matching_peer_ca && matching_requested_ca,
-				matching_peer_id, wildcards,
-				matching_peer_ca, peer_pathlen,
-				matching_requested_ca, our_pathlen);
+			/* IKE version has to match */
+			if (d->config->ike_version != st->st_ike_version) {
+				dbg_rhc("skipping because mismatching IKE version");
+				continue;
+			}
 
 			/*
 			 * 'You Tarzan, me Jane' check based on
@@ -3717,60 +3697,23 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				dbg_rhc("no IDr payload received from peer");
 			}
 
-			/* only consider sec_label+template */
-			if (d->config->sec_label.len > 0 && d->kind != CK_TEMPLATE) {
-				dbg_rhc("skipping because sec_label requires template");
-				continue;
-			}
-
-			/* ignore group connections */
-			if (d->policy & POLICY_GROUP) {
-				dbg_rhc("skipping because group connection");
-				continue;
-			}
-
-			/* matching_peer_ca and matching_requested_ca are required */
-			if (!matching_peer_ca || !matching_requested_ca) {
-				dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
-				continue;
-			}
-			/*
-			 * Check if peer_id matches, exactly or after
-			 * instantiation.
-			 * Check for the match but also check to see if it's
-			 * the %fromcert + peer id match result. - matt
-			 */
-			bool d_fromcert = false;
-			if (!matching_peer_id) {
-				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
-				if (!d_fromcert) {
-					dbg_rhc("skipping because peer_id does not match");
-					continue;
-				}
-			}
-
-			if (d->config->ike_version != st->st_ike_version) {
-				/* IKE version has to match */
-				dbg_rhc("skipping because mismatching IKE version");
-				continue;
-			}
-
 			/*
 			 * Authentication used must fit policy of this
 			 * connection.
 			 */
-			if (ikev1) {
-				if ((auth_policy ^ d->policy) & POLICY_AGGRESSIVE) {
+			switch (st->st_ike_version) {
+			case IKEv1:
+				if ((d->policy ^ (POLICY_RSASIG|POLICY_PSK)) & POLICY_AGGRESSIVE) {
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
 				}
-
-				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
+				if ((d->policy & (POLICY_RSASIG|POLICY_PSK) & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
 					dbg_rhc("skipping because AUTH isn't right");
 					continue;
 				}
-			} else {
+				break;
+			case IKEv2:
 				/*
 				 * We need to check if leftauth and rightauth match, but we only know
 				 * what the remote end will send IKE_AUTH message..
@@ -3783,64 +3726,168 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
+				break;
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauthserver");
+				dbg_rhc("skipping because mismatched xauth_server");
 				continue;
 			}
 
 			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauthclient");
+				dbg_rhc("skipping because mismatched xauth_client");
 				continue;
 			}
 
-			connection_buf bb1, bb2;
-			dbg_rhc("checked "PRI_CONNECTION" against "PRI_CONNECTION", now for see if best",
-			    pri_connection(c, &bb1), pri_connection(d, &bb2));
+			/*
+			 * Does the ID match?
+			 *
+			 * WILDCARDS gives the match a score (smaller
+			 * is better): 0 for a perfect match, non-zero
+			 * when things like certificate wild cards
+			 * were used.
+			 *
+			 * XXX: What's with the .connalias test?
+			 *
+			 * It gives a perfect score to a connection
+			 * that is a connalias of original connection
+			 * (at one point a bug ment it got a random
+			 * score).
+			 */
 
-			if (this_authby == AUTHBY_PSK) {
-				/* secret must match the one we already used */
-				const chunk_t *dpsk = get_connection_psk(d);
+			int wildcards = 0;
+			bool matching_peer_id = ((c->connalias != NULL &&
+						  d->connalias != NULL &&
+						  streq(c->connalias, d->connalias)) ||
+						 match_id(peer_id,
+							  &d->spd.that.id,
+							  &wildcards));
+			dbg_rhc("matching_peer_id=%s, wildcards=%d",
+				bool_str(matching_peer_id), wildcards);
+			indent++;
 
-				/*
-				 * We can change PSK mid-way in IKEv2 or aggressive mode.
-				 * If we initiated, the key we used and the key
-				 * we would have used with d must match.
-				 */
-				if (!((st->st_ike_version == IKEv2) || (auth_policy & POLICY_AGGRESSIVE))) {
-					if (dpsk == NULL)
-						continue; /* no secret */
+			/*
+			 * Check if peer_id matches, exactly or after
+			 * instantiation.
+			 *
+			 * Check for the match but also check to see
+			 * if it's the %fromcert + peer id match
+			 * result. - matt
+			 */
+			if (!matching_peer_id) {
+				/* must be checking certs */
+				if (d->spd.that.id.kind != ID_FROMCERT) {
+					dbg_rhc("skipping because peer_id does not match and that.id.kind is not a cert");
+					continue;
 				}
 			}
 
-			if (this_authby == AUTHBY_RSASIG) {
+			/*
+			 * XXX: When there are no certificates at all
+			 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
+			 * is NULL), these lookups return TRUE and
+			 * *_pathlen==0 - a perfect match.
+			 */
+			int peer_pathlen;
+			bool matching_peer_ca = trusted_ca_nss(peer_ca,
+							       d->spd.that.ca,
+							       &peer_pathlen);
+			int our_pathlen;
+			bool matching_requested_ca = match_requested_ca(requested_ca,
+									d->spd.this.ca,
+									&our_pathlen);
+			dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
+				bool_str(matching_peer_ca), peer_pathlen,
+				bool_str(matching_requested_ca), our_pathlen);
+			indent++;
+
+			/*
+			 * Both matching_peer_ca and
+			 * matching_requested_ca are required.
+			 *
+			 * XXX: Remember, when there are no
+			 * certificates, both are forced to TRUE.
+			 */
+			if (!matching_peer_ca || !matching_requested_ca) {
+				dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
+				continue;
+			}
+
+			switch (this_authby) {
+			case AUTHBY_PSK:
 				/*
-				 * We must at least be able to find our private key.
-				 * If we initiated, it must match the one we used in
-				 * the IKEv1 SIG_I payload or IKEv2 AUTH payload that
-				 * we sent previously.
+				 * We can change PSK mid-way in IKEv2
+				 * or aggressive mode.
+				 *
+				 * XXX: but for IKEv1, this only
+				 * called in main mode, ignore comment
+				 * about agressive mode.
+				 *
+				 * If we initiated, the key we used
+				 * and the key we would have used with
+				 * d must match.
+				 *
+				 * XXX: but this is the responder;
+				 * ignore comment about initiator.
+				 *
+				 * XXX: so why not always require PSK?
+				 * Is there some expectation that the
+				 * connection will change yet again?
 				 */
-				const struct pubkey_type *type = &pubkey_type_rsa;
-				const struct private_key_stuff *pks = get_connection_private_key(d, type, st->st_logger);
-				if (pks == NULL)
+				if (st->st_ike_version != IKEv2 &&
+				    get_connection_psk(d) == NULL) {
+					/* secret must match the one we already used */
+					dbg_rhc("skipping because PSK and no secret");
+					continue; /* no secret */
+				}
+				break;
+			case AUTHBY_RSASIG:
+				/*
+				 * We must at least be able to find
+				 * our private key.
+				 *
+				 * If we initiated, it must match the
+				 * one we used in the IKEv1 SIG_I
+				 * payload or IKEv2 AUTH payload that
+				 * we sent previously.
+				 *
+				 * XXX: but this is the responder;
+				 * ignore comment about initiator.
+				 */
+				if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+					dbg_rhc("skipping because RSASIG and no private key");
 					continue;	/* no key */
+				}
+				break;
+			default:
+			{
+				enum_buf eb;
+				dbg_rhc("%s so no authby checks performed; what about ECDSA?",
+					str_enum(&keyword_authby_names, this_authby, &eb));
+				break;
+			}
 			}
 
 			/*
-			 * Paul: We need to check all the other relevant
-			 * policy bits, like compression, pfs, etc
+			 * Paul: We need to check all the other
+			 * relevant policy bits, like compression,
+			 * pfs, etc
 			 */
 
 			/*
-			 * d has passed all the tests.
-			 * We'll go with it if the Peer ID was an exact match.
+			 * D has passed all the tests.
+			 *
+			 * We'll go with it if the Peer ID was an
+			 * exact match (this includes an ID only
+			 * match).
 			 */
-			if (matching_peer_id && wildcards == 0 &&
-			    peer_pathlen == 0 && our_pathlen == 0) {
-				*fromcert = d_fromcert;
+			if (matching_peer_id &&
+			    wildcards == 0 &&
+			    peer_pathlen == 0 &&
+			    our_pathlen == 0) {
+				*get_id_from_cert = false; /* since exact match */
 				connection_buf dcb;
 				dbg_rhc("returning "PRI_CONNECTION" because exact peer id match",
 					pri_connection(d, &dcb));
@@ -3848,23 +3895,24 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			}
 
 			/*
-			 * If it was a non-exact (wildcard) match, we'll
-			 * remember it as best_found in case an exact match
-			 * doesn't come along.
+			 * If it was a non-exact (wildcard) match,
+			 * we'll remember it as best_found in case an
+			 * exact match doesn't come along.
+			 *
 			 * ??? the logic involving *_pathlen looks wrong.
 			 * ??? which matters more peer_pathlen or our_pathlen minimization?
 			 */
-			if (best_found == NULL || wildcards < best_wildcards ||
-				((wildcards == best_wildcards &&
-				  peer_pathlen < best_peer_pathlen) ||
-				 (peer_pathlen == best_peer_pathlen &&
-				  our_pathlen < best_our_pathlen))) {
+			if (best_found == NULL ||
+			    (wildcards < best_wildcards) ||
+			    (wildcards == best_wildcards && peer_pathlen < best_peer_pathlen) ||
+			    (wildcards == best_wildcards && peer_pathlen == best_peer_pathlen && our_pathlen < best_our_pathlen)) {
 				connection_buf cib;
 				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
 					wildcards, peer_pathlen,
 					our_pathlen);
-				*fromcert = d_fromcert;
+				/* if inexact match; suspect always the case */
+				*get_id_from_cert = !matching_peer_id;
 				best_found = d;
 				best_wildcards = wildcards;
 				best_peer_pathlen = peer_pathlen;
@@ -3881,7 +3929,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 		dbg_rhc("returning NULL because no best");
 	}
 	return best_found;
-#undef RHC
+#undef dbg_rhc
 }
 
 /*

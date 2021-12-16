@@ -123,12 +123,11 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	if (authby != AUTHBY_NEVER) {
 		struct connection *r = NULL;
 		id_buf peer_str;
-		bool fromcert = peer_id.kind == ID_DER_ASN1_DN;
+		bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
 
 		if (authby != AUTHBY_NULL) {
 			r = refine_host_connection_on_responder(&ike->sa, &peer_id, tarzan_id,
-								LEMPTY /* auth_policy */,
-								authby, &fromcert);
+								authby, &get_id_from_cert);
 		}
 
 		if (r == NULL) {
@@ -193,8 +192,8 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			duplicate_id(&c->spd.that.id, &peer_id);
 			rehash_db_connection_that_id(c);
 			c->spd.that.has_id_wildcards = false;
-		} else if (fromcert) {
-			dbg("copying ID for fromcert");
+		} else if (get_id_from_cert) {
+			dbg("copying ID for get_id_from_cert");
 			duplicate_id(&c->spd.that.id, &peer_id);
 			rehash_db_connection_that_id(c);
 		}
