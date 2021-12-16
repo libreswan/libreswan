@@ -455,7 +455,7 @@ kvm-diffs:
 KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find testing/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
-KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora-build)
+KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), fedora)
 
 .PHONY: kvm-keys
 kvm-keys:
@@ -861,27 +861,24 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 	touch $@
 
 ##
-## Create the build domain by transmogrifying the updated domain.
+## Create the platform domain by transmogrifying the updated domain.
 ##
-## Also make /source (KVM_SOURCEDIR) and /testing (KVM_TESTINGDIR)
-## available to the VM.  Setting these during transmogrify means
-## changing them only requires a re-transmogrify and not a full domain
-## rebuild.
-
-$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
-kvm-%-transmogrify: kvm-%-build
+## This also makes /source $(KVM_SOURCEDIR) and /testing
+## $(KVM_TESTINGDIR) available to the VM.  Setting these during
+## transmogrify means changing them only requires a re-transmogrify
+## and not a full domain rebuild.
 
 .PHONY: kvm-transmogrify
 kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS))
 
-$(patsubst %, kvm-%-build, $(KVM_PLATFORMS)): \
-kvm-%-build:
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-build
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-build.*
-	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-build
+$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
+kvm-%-transmogrify:
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)
+	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-build, $(KVM_PLATFORMS)): \
-$(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORMS)): \
+$(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
@@ -896,7 +893,7 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-	: transmogrify $($*) using transmogrify.sh from $(srcdir) and not $(KVM_SOURCEDIR)
+	: transmogrify $($*) using transmogrify.sh from srcdir=$(srcdir) and not KVM_SOURCEDIR=$(KVM_SOURCEDIR)
 	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		GATEWAY=$(KVM_GATEWAY_ADDRESS) \
@@ -913,7 +910,7 @@ $(KVM_POOLDIR_PREFIX)%-build: $(KVM_POOLDIR_PREFIX)%-upgrade \
 ##
 
 $(patsubst %, kvm-%-install, $(KVM_PLATFORMS)): \
-kvm-%-install: $(KVM_POOLDIR_PREFIX)%-build
+kvm-%-install: $(KVM_POOLDIR_PREFIX)%
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
@@ -956,16 +953,13 @@ define define-clone-domain
 	mv $$@.tmp $$@
 endef
 
-KVM_OPENBSD_TEMPLATE = openbsd-build
-KVM_FEDORA_TEMPLATE = fedora-build
-
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
 		$(foreach host, $(KVM_$($(platform))_HOSTS), \
 			$(eval $(call define-clone-domain, \
 				$(prefix), \
 				$(host), \
-				$(addprefix $(KVM_POOLDIR_PREFIX), $(KVM_$($(platform))_TEMPLATE)))))))
+				$(KVM_POOLDIR_PREFIX)$(platform))))))
 
 
 #
@@ -1002,7 +996,7 @@ kvm-shutdown:
 .PHONY: kvm-uninstall kvm-clean-install
 kvm-uninstall kvm-clean-install:
 	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call undefine-os-domain, $(clone))))
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
 	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN))
 
 .PHONY: kvm-clean
@@ -1018,6 +1012,8 @@ kvm-purge: kvm-clean
 kvm-purge: kvm-purge-networks
 kvm-purge:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
+	: legacy
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
 	rm -f $(KVM_HOST_OK)
 
 .PHONY: kvm-demolish
@@ -1109,7 +1105,7 @@ $(foreach variant, base upgrade build, \
 kvmsh-base: kvmsh-$(KVM_FIRST_PREFIX)fedora-base
 
 .PHONY: kvmsh-build
-kvmsh-build: kvmsh-$(KVM_FIRST_PREFIX)fedora-build
+kvmsh-build: kvmsh-$(KVM_FIRST_PREFIX)fedora
 
 
 #
