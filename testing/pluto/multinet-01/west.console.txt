@@ -28,7 +28,7 @@ west #
 002 "westnet-eastnet-subnets/2x2": added IKEv1 connection
 west #
  ipsec status | grep westnet-eastnet
-000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; unrouted; eroute owner: #0
+000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.16/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/1x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -44,7 +44,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; unrouted; eroute owner: #0
+000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -60,7 +60,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; unrouted; eroute owner: #0
+000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.16/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -76,7 +76,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; unrouted; eroute owner: #0
+000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -148,7 +148,7 @@ west #
 000 terminated 4 connections from aliased connection "westnet-eastnet-subnets"
 west #
  ipsec status | grep westnet
-000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/1x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -164,7 +164,7 @@ west #
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-subnets/1x2": 192.0.1.0/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/1x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -180,7 +180,7 @@ west #
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-subnets/2x1": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x1":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -196,7 +196,7 @@ west #
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
-000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
+000 "westnet-eastnet-subnets/2x2": 192.0.1.128/28===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.64/30; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;

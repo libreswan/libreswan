@@ -552,8 +552,13 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	}
 
 	/* <NAME> */
-	if (dohost_name && this->host_addr_name != NULL) {
+	if (this->config->host.type == KH_IPHOSTNAME) {
 		jam(buf, "<%s>", this->host_addr_name);
+	} else if (dohost_name && this->host_addr_name != NULL) {
+		address_buf ab;
+		if (!streq(str_address(&this->host_addr, &ab), this->host_addr_name)) {
+			jam(buf, "<%s>", this->host_addr_name);
+		}
 	}
 
 	/*
