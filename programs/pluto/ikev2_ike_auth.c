@@ -782,12 +782,6 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 						same_pbs_in_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
-	/* process CERTREQ payload */
-	if (md->chain[ISAKMP_NEXT_v2CERTREQ] != NULL) {
-		dbg("received CERTREQ payload; going to decode it");
-		decode_v2_certificate_requests(&ike->sa, md);
-	}
-
 	/* process AUTH payload */
 
 	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.config->host.authby;

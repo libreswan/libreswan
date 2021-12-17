@@ -77,9 +77,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	/* process any CERTREQ payloads */
-	decode_v2_certificate_requests(&ike->sa, md);
-
 	/*
 	 * Figure out the authentication, use both what the initiator
 	 * suggested and what the current connection contains.
@@ -252,6 +249,14 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 			tip = &tarzan_id;
 		}
 	}
+
+	/*
+	 * Process any CERTREQ payloads.
+	 *
+	 * These are used as hints when selecting a better connection
+	 * based on ID.
+	 */
+	decode_v2_certificate_requests(&ike->sa, md);
 
 	return responder_match_initiator_id_counted(ike, initiator_id, tip, md, 0);
 }
