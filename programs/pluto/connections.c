@@ -3719,34 +3719,40 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			}
 
 			/*
-			 * Authentication used must fit policy of this
-			 * connection.
+			 * The proposed authentication must match the
+			 * policy of this connection.
 			 */
 			switch (st->st_ike_version) {
 			case IKEv1:
-				if ((d->policy ^ (POLICY_RSASIG|POLICY_PSK)) & POLICY_AGGRESSIVE) {
+				if (d->policy & POLICY_AGGRESSIVE) {
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
 				}
-				if ((d->policy & (POLICY_RSASIG|POLICY_PSK) & ~POLICY_AGGRESSIVE) == LEMPTY) {
-					/* Our auth isn't OK for this connection. */
-					dbg_rhc("skipping because AUTH isn't right");
-					continue;
+				if (LHAS(this_authbys, AUTHBY_PSK)) {
+					if (!(d->policy & POLICY_PSK)) {
+						/* there needs to be a key */
+						dbg_rhc("skipping because no PSK in POLICY");
+						continue;
+					}
+					if (get_connection_psk(d) == NULL) {
+						/* there needs to be a key */
+						dbg_rhc("skipping because PSK and no secret");
+						continue; /* no secret */
+					}
 				}
-				if (LHAS(this_authbys, AUTHBY_PSK) &&
-				    get_connection_psk(d) == NULL) {
-					/* there needs to be a key */
-					dbg_rhc("skipping because PSK and no secret");
-					continue; /* no secret */
-				}
-				if (LHAS(this_authbys, AUTHBY_RSASIG) &&
-				    get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
-					/*
-					 * We must at least be able to find
-					 * our private key.
-					 */
-					dbg_rhc("skipping because RSASIG and no private key");
-					continue;	/* no key */
+				if (LHAS(this_authbys, AUTHBY_RSASIG)) {
+					if (!(d->policy & POLICY_RSASIG)) {
+						dbg_rhc("skipping because not RSASIG in POLICY");
+						continue;	/* no key */
+					}
+					if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+						/*
+						 * We must at least be able to find
+						 * our private key.
+						 */
+						dbg_rhc("skipping because RSASIG and no private key");
+						continue;	/* no key */
+					}
 				}
 				break;
 			case IKEv2:
@@ -3766,7 +3772,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 					/*
 					 * XXX: This tries to find the
 					 * PSK for what is potentially
-					 * a template!.
+					 * a template!
 					 */
 					if (get_connection_psk(d) == NULL) {
 						/* need a key */
