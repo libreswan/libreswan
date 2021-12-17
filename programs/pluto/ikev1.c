@@ -1107,16 +1107,10 @@ void process_v1_packet(struct msg_digest *md)
 			send_notification_from_md(md, t);		\
 	}
 
-#define LOG_PACKET(RC, ...)					\
-	{							\
-		if (st != NULL) {				\
-			log_state(RC, st, __VA_ARGS__);		\
-		} else {					\
-			llog(RC, md->md_logger, __VA_ARGS__);	\
-		}						\
-	}
-#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF)				\
-	LLOG_JAMBUF(RC_FLAGS, (st != NULL ? st->st_logger : md->md_logger), BUF)
+#define LOGGER (st != NULL ? st->st_logger : md->md_logger)
+
+#define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
+#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
 
 	switch (md->hdr.isa_xchg) {
 	case ISAKMP_XCHG_AGGR:
@@ -1540,7 +1534,7 @@ void process_v1_packet(struct msg_digest *md)
 		diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ikefrag_desc,
 					 &fraghdr, sizeof(fraghdr), &frag_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+			llog_diag(RC_LOG, LOGGER, &d, "%s", "");
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
@@ -1952,7 +1946,7 @@ void process_packet_tail(struct msg_digest *md)
 					diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ignore_desc,
 								 &pd->payload, sizeof(pd->payload), &pd->pbs);
 					if (d != NULL) {
-						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+						llog_diag(RC_LOG, LOGGER, &d, "%s", "");
 						LOG_PACKET(RC_LOG_SERIOUS,
 							   "%smalformed payload in packet",
 							   excuse);
@@ -2021,7 +2015,7 @@ void process_packet_tail(struct msg_digest *md)
 						 &pd->payload, sizeof(pd->payload),
 						 &pd->pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+				llog_diag(RC_LOG, LOGGER, &d, "%s", "");
 				LOG_PACKET(RC_LOG_SERIOUS,
 					   "%smalformed payload in packet",
 					   excuse);
@@ -2972,7 +2966,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 
 	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		llog_diag(RC_LOG, LOGGER, &d, "%s", "");
 		return false;
 	}
 
