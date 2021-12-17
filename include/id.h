@@ -96,10 +96,4 @@ extern int id_count_wildcards(const struct id *id);
 /* returns ID Type; and points body at Identification Data */
 enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body);
 
-/*
- * Old stuff.
- */
-
-void duplicate_id(struct id *dst, const struct id *src); /* use free_id_content; clone_id() */
-
 #endif

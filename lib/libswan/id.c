@@ -431,13 +431,6 @@ int id_count_wildcards(const struct id *id)
 	return count;
 }
 
-void duplicate_id(struct id *dst, const struct id *src)
-{
-	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
-	free_id_content(dst);
-	*dst = clone_id(src, "copy of id");
-}
-
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)
 {
 	if (rdn_a == NULL || rdn_b == NULL)
