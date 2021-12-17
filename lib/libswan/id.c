@@ -43,6 +43,10 @@
 #include "certs.h"
 #include "ip_info.h"
 
+const struct id empty_id = {
+	.kind = ID_NONE,
+};
+
 /*
  * Convert textual form of id into a struct id.
  */

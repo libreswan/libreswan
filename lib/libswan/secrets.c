@@ -94,9 +94,6 @@ static err_t builddiag(const char *fmt, ...)
 	return mydiag_space;
 }
 
-/* this does not belong here, but leave it here for now */
-const struct id empty_id;	/* ID_NONE */
-
 struct fld {
 	const char *name;
 	ssize_t offset;
