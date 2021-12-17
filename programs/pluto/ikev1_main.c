@@ -797,7 +797,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = true;
+		st->hidden_variables.st_v1_got_certrequest = true;
 
 	ikev1_natd_init(st, md);
 
@@ -1036,7 +1036,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = true;
+		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
@@ -1046,7 +1046,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
 			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_got_certrequest) ||
+			    st->hidden_variables.st_v1_got_certrequest) ||
 			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
@@ -1069,7 +1069,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
 			      c->spd.this.sendcert,
-			      st->hidden_variables.st_got_certrequest,
+			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
 	/*
@@ -1396,7 +1396,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
 			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_got_certrequest) ||
+			    st->hidden_variables.st_v1_got_certrequest) ||
 			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
@@ -1419,7 +1419,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
 			      c->spd.this.sendcert,
-			      st->hidden_variables.st_got_certrequest,
+			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
 	/*

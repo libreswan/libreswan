@@ -199,7 +199,12 @@ struct hidden_variables {
 	int st_xauth_client_attempt;
 	bool st_modecfg_server_done;
 	bool st_modecfg_vars_set;
-	bool st_got_certrequest;
+	/*
+	 * XXX: suspect this is redundant and instead .st_requested_ca
+	 * ca be chedk.  One possible got-ya is if IKEv1 sets this in
+	 * the ISAKMP SA but tests it in a cloned IPsec SA.
+	 */
+	bool st_v1_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
 	bool st_peer_supports_dpd;              /* Peer supports DPD/IKEv2 Liveness

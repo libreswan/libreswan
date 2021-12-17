@@ -297,7 +297,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = true;
+		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
@@ -307,7 +307,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
 			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_got_certrequest) ||
+			    st->hidden_variables.st_v1_got_certrequest) ||
 			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
@@ -330,7 +330,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
 			      c->spd.this.sendcert,
-			      st->hidden_variables.st_got_certrequest,
+			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
@@ -624,7 +624,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	decode_v1_certificate_requests(st, md);
 
 	if (st->st_requested_ca != NULL)
-		st->hidden_variables.st_got_certrequest = true;
+		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
@@ -634,7 +634,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
 			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_got_certrequest) ||
+			    st->hidden_variables.st_v1_got_certrequest) ||
 			   c->spd.this.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
@@ -657,7 +657,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
 			      c->spd.this.sendcert,
-			      st->hidden_variables.st_got_certrequest,
+			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
