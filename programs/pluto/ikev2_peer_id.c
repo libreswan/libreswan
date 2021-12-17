@@ -39,6 +39,7 @@
 #include "pluto_x509.h"
 
 static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
+						   lset_t authbys,
 						   struct id peer_id,
 						   struct id *tarzan_id,
 						   struct msg_digest *md, int depth)
@@ -78,47 +79,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	}
 
 	/*
-	 * Figure out the authentication, use both what the initiator
-	 * suggested, and what the current connection contains.
-	 *
-	 * XXX: If this is called recursively then C will have
-	 * changed.
-	 *
-	 * XXX: Note how, for DIGSIG, it sets it to RSASIG^ECDSA which
-	 * means refine_host_connection_on_responder(), can't allow
-	 * either RSASIG or ECDSA.
-	 */
-
-	enum ikev2_auth_method atype =
-		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	enum keyword_authby authby;
-	switch (atype) {
-	case IKEv2_AUTH_RSA:
-		authby = AUTHBY_RSASIG;
-		break;
-	case IKEv2_AUTH_PSK:
-		authby = AUTHBY_PSK;
-		break;
-	case IKEv2_AUTH_NULL:
-		authby = AUTHBY_NULL;
-		break;
-	case IKEv2_AUTH_DIGSIG:
-		if (c->policy & POLICY_RSASIG) {
-			authby = AUTHBY_RSASIG;
-			break;
-		}
-		if (c->policy & POLICY_ECDSA) {
-			authby = AUTHBY_ECDSA;
-			break;
-		}
-		dbg("ikev2 skipping refine_host_connection due to unknown AUTH_DIGSIG policy");
-		return NULL;
-	default:
-		dbg("ikev2 skipping refine_host_connection due to unknown policy");
-		return NULL;
-	}
-
-	/*
 	 * Now that we've decoded the ID payload, let's see if we need
 	 * to switch connections.
 	 *
@@ -131,9 +91,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	id_buf peer_str;
 	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
 
-	if (authby != AUTHBY_NULL) {
-		r = refine_host_connection_on_responder(&ike->sa, &peer_id, tarzan_id,
-							authby, &get_id_from_cert);
+	if (!LHAS(authbys, AUTHBY_NULL)) {
+		r = refine_host_connection_on_responder(&ike->sa, authbys,
+							&peer_id, tarzan_id,
+							&get_id_from_cert);
 	}
 
 	if (r == NULL) {
@@ -186,7 +147,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		update_state_connection(&ike->sa, r);
 		/* redo from scratch so we read and check CERT payload */
 		dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
-		return responder_match_initiator_id_counted(ike, peer_id, tarzan_id, md, depth + 1);
+		return responder_match_initiator_id_counted(ike, authbys, peer_id, tarzan_id, md, depth + 1);
 	} else if (must_switch) {
 		id_buf peer_str;
 		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
@@ -266,7 +227,36 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 */
 	decode_v2_certificate_requests(&ike->sa, md);
 
-	return responder_match_initiator_id_counted(ike, initiator_id, tip, md, 0);
+	/*
+	 * Convert the proposed connections into something this
+	 * responder might accept.
+	 *
+	 * DIGSIG seems a bit of a dodge, should this be looking
+	 * inside the auth proposal?
+	 */
+
+	enum ikev2_auth_method atype =
+		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	enum keyword_authby authbys;
+	switch (atype) {
+	case IKEv2_AUTH_RSA:
+		authbys = LELEM(AUTHBY_RSASIG);
+		break;
+	case IKEv2_AUTH_PSK:
+		authbys = LELEM(AUTHBY_PSK);
+		break;
+	case IKEv2_AUTH_NULL:
+		authbys = LELEM(AUTHBY_NULL);
+		break;
+	case IKEv2_AUTH_DIGSIG:
+		authbys = LELEM(AUTHBY_RSASIG) | LELEM(AUTHBY_ECDSA);
+		break;
+	default:
+		dbg("ikev2 skipping refine_host_connection due to unknown policy");
+		return NULL;
+	}
+
+	return responder_match_initiator_id_counted(ike, authbys, initiator_id, tip, md, 0);
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)

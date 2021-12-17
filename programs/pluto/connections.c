@@ -3545,9 +3545,9 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  * nothing already used is changed.
  */
 struct connection *refine_host_connection_on_responder(const struct state *st,
+						       lset_t this_authbys,
 						       const struct id *peer_id,
 						       const struct id *tarzan_id,
-						       enum keyword_authby this_authby,
 						       bool *get_id_from_cert)
 {
 #define dbg_rhc(FORMAT, ...) dbg("refine_host_connection:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
@@ -3565,8 +3565,8 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 
 	*get_id_from_cert = false;
 
-	passert(this_authby != AUTHBY_NEVER);
-	passert(this_authby != AUTHBY_UNSET);
+	passert(!LHAS(this_authbys, AUTHBY_NEVER));
+	passert(!LHAS(this_authbys, AUTHBY_UNSET));
 
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
@@ -3681,6 +3681,18 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				continue;
 			}
 
+			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
+				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				dbg_rhc("skipping because mismatched xauth_server");
+				continue;
+			}
+
+			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
+				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				dbg_rhc("skipping because mismatched xauth_client");
+				continue;
+			}
+
 			/*
 			 * 'You Tarzan, me Jane' check based on
 			 * received IDr (remember, this is the
@@ -3721,33 +3733,72 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 					dbg_rhc("skipping because AUTH isn't right");
 					continue;
 				}
+				if (LHAS(this_authbys, AUTHBY_PSK) &&
+				    get_connection_psk(d) == NULL) {
+					/* there needs to be a key */
+					dbg_rhc("skipping because PSK and no secret");
+					continue; /* no secret */
+				}
+				if (LHAS(this_authbys, AUTHBY_RSASIG) &&
+				    get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+					/*
+					 * We must at least be able to find
+					 * our private key.
+					 */
+					dbg_rhc("skipping because RSASIG and no private key");
+					continue;	/* no key */
+				}
 				break;
 			case IKEv2:
 				/*
-				 * We need to check if leftauth and rightauth match, but we only know
-				 * what the remote end will send IKE_AUTH message..
-				 * Note with IKEv2 we are guaranteed to be a RESPONDER
-				 * this_authby is the received AUTH payload type in IKE_AUTH reply.
-				 * This also means, we have already sent out AUTH payload, so we cannot
-				 * switch away from previously used this.authby.
+				 * We need to check if leftauth and
+				 * rightauth match, but we only know
+				 * what the remote end has sent in the
+				 * IKE_AUTH request.
 				 */
-				if (this_authby != d->spd.that.config->host.authby) {
+				if (!LHAS(this_authbys, d->spd.that.config->host.authby)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
+				/* check that the chosen one has a key */
+				switch (d->spd.that.config->host.authby) {
+				case AUTHBY_PSK:
+					/*
+					 * XXX: This tries to find the
+					 * PSK for what is potentially
+					 * a template!.
+					 */
+					if (get_connection_psk(d) == NULL) {
+						/* need a key */
+#if 0
+						dbg_rhc("skipping because PSK and no secret");
+						continue; /* no secret */
+#else
+						dbg_rhc("has no PSK; why?");
+					}
+#endif
+					break;
+				case AUTHBY_RSASIG:
+					if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+						dbg_rhc("skipping because RSASIG and no private key");
+						continue;	/* no key */
+					}
+					break;
+				case AUTHBY_ECDSA:
+					if (get_connection_private_key(d, &pubkey_type_ecdsa, st->st_logger) == NULL) {
+						dbg_rhc("skipping because ECDSA and no private key");
+						continue;	/* no key */
+					}
+					break;
+				default:
+				{
+					lset_buf eb;
+					dbg_rhc("%s so no authby checks performed",
+						str_lset_short(&keyword_authby_names, "+", this_authbys, &eb));
+					break;
+				}
+				}
 				break;
-			}
-
-			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
-				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauth_server");
-				continue;
-			}
-
-			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
-				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauth_client");
-				continue;
 			}
 
 			/*
@@ -3819,61 +3870,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			if (!matching_peer_ca || !matching_requested_ca) {
 				dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
 				continue;
-			}
-
-			switch (this_authby) {
-			case AUTHBY_PSK:
-				/*
-				 * We can change PSK mid-way in IKEv2
-				 * or aggressive mode.
-				 *
-				 * XXX: but for IKEv1, this only
-				 * called in main mode, ignore comment
-				 * about agressive mode.
-				 *
-				 * If we initiated, the key we used
-				 * and the key we would have used with
-				 * d must match.
-				 *
-				 * XXX: but this is the responder;
-				 * ignore comment about initiator.
-				 *
-				 * XXX: so why not always require PSK?
-				 * Is there some expectation that the
-				 * connection will change yet again?
-				 */
-				if (st->st_ike_version != IKEv2 &&
-				    get_connection_psk(d) == NULL) {
-					/* secret must match the one we already used */
-					dbg_rhc("skipping because PSK and no secret");
-					continue; /* no secret */
-				}
-				break;
-			case AUTHBY_RSASIG:
-				/*
-				 * We must at least be able to find
-				 * our private key.
-				 *
-				 * If we initiated, it must match the
-				 * one we used in the IKEv1 SIG_I
-				 * payload or IKEv2 AUTH payload that
-				 * we sent previously.
-				 *
-				 * XXX: but this is the responder;
-				 * ignore comment about initiator.
-				 */
-				if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
-					dbg_rhc("skipping because RSASIG and no private key");
-					continue;	/* no key */
-				}
-				break;
-			default:
-			{
-				enum_buf eb;
-				dbg_rhc("%s so no authby checks performed; what about ECDSA?",
-					str_enum(&keyword_authby_names, this_authby, &eb));
-				break;
-			}
 			}
 
 			/*

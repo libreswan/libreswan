@@ -512,9 +512,9 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection *conn_by_name(const char *nm, bool strict);
 
 extern struct connection *refine_host_connection_on_responder(const struct state *st,
+							      lset_t authbys,
 							      const struct id *peer_id,
 							      const struct id *tarzan_id,
-							      enum keyword_authby,
 							      bool *get_id_fromcert);
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,

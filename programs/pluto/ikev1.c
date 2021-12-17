@@ -3043,13 +3043,13 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 		 * v1 policy is a subset of the v2 policy.
 		 */
 
-		enum keyword_authby this_authby;
+		lset_t this_authbys;
 		switch (auth) {
 		case OAKLEY_PRESHARED_KEY:
-			this_authby = AUTHBY_PSK;
+			this_authbys = LELEM(AUTHBY_PSK);
 			break;
 		case OAKLEY_RSA_SIG:
-			this_authby = AUTHBY_RSASIG;
+			this_authbys = LELEM(AUTHBY_RSASIG);
 			break;
 		/* Not implemented */
 		case OAKLEY_DSS_SIG:
@@ -3065,9 +3065,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 
 		bool get_id_from_cert;
 		struct connection *r =
-			refine_host_connection_on_responder(st, &peer,
+			refine_host_connection_on_responder(st, this_authbys, &peer,
 							    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
-							    this_authby,
 							    &get_id_from_cert);
 
 		if (r == NULL) {
