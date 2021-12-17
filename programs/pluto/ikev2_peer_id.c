@@ -79,17 +79,15 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	}
 
 	/*
-	 * Now that we've decoded the ID payload, let's see if we need
-	 * to switch connections.
+	 * Now that we've decoded the ID, CERT, and CERTREQ payloads,
+	 * let's see if we need to switch connections.
 	 *
-	 * We must not switch horses if we initiated:
-	 * - if the initiation was explicit, we'd be ignoring user's intent
-	 * - if opportunistic, we'll lose our HOLD info
+	 * For AUTHBY_NULL, refuse to switch.
 	 */
 
-	struct connection *r = NULL;
 	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
 
+	struct connection *r = NULL;
 	if (!LHAS(authbys, AUTHBY_NULL)) {
 		r = refine_host_connection_on_responder(&ike->sa, authbys,
 							&peer_id, tarzan_id,
@@ -158,13 +156,11 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 
 	if (c->spd.that.has_id_wildcards) {
 		dbg("setting wildcard ID");
-		duplicate_id(&c->spd.that.id, &peer_id);
-		rehash_db_connection_that_id(c);
+		replace_connection_that_id(c, &peer_id);
 		c->spd.that.has_id_wildcards = false;
 	} else if (get_id_from_cert) {
 		dbg("copying ID for get_id_from_cert");
-		duplicate_id(&c->spd.that.id, &peer_id);
-		rehash_db_connection_that_id(c);
+		replace_connection_that_id(c, &peer_id);
 	}
 
 	dn_buf dnb;
@@ -317,8 +313,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 		if (responder_id.kind != ID_DER_ASN1_DN) {
 			return diag("peer ID is not a certificate type");
 		}
-		duplicate_id(&c->spd.that.id, &responder_id);
-		rehash_db_connection_that_id(c);
+		replace_connection_that_id(c, &responder_id);
 	}
 
 	dn_buf dnb;

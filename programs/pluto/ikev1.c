@@ -2972,8 +2972,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
-		duplicate_id(&c->spd.that.id, &peer);
-		rehash_db_connection_that_id(c);
+		replace_connection_that_id(c, &peer);
 	}
 
 	/*
@@ -3030,8 +3029,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 					  "peer ID is not a certificate type");
 				return false;
 			}
-			duplicate_id(&c->spd.that.id, &peer);
-			rehash_db_connection_that_id(c);
+			replace_connection_that_id(c, &peer);
 		}
 	} else if (!aggrmode) {
 		/* Main Mode Responder */
@@ -3114,13 +3112,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			passert(!initiator && !aggrmode);
 			return ikev1_decode_peer_id(md, false, false, depth+1);
 		} else if (c->spd.that.has_id_wildcards) {
-			duplicate_id(&c->spd.that.id, &peer);
-			rehash_db_connection_that_id(c);
+			replace_connection_that_id(c, &peer);
 			c->spd.that.has_id_wildcards = false;
 		} else if (get_id_from_cert) {
 			dbg("copying ID for get_id_from_cert");
-			duplicate_id(&c->spd.that.id, &peer);
-			rehash_db_connection_that_id(c);
+			replace_connection_that_id(c, &peer);
 		}
 	}
 

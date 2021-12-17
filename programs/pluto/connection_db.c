@@ -86,6 +86,15 @@ void rehash_db_connection_that_id(struct connection *c)
 	rehash_table_entry(&connection_that_id_hash_table, c);
 }
 
+void replace_connection_that_id(struct connection *c, const struct id *src)
+{
+	struct id *dst = &c->spd.that.id;
+	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
+	free_id_content(dst);
+	*dst = clone_id(src, "replaing connection id");
+	rehash_db_connection_that_id(c);
+}
+
 /*
  * SPD_ROUTE database.
  */
