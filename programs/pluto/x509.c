@@ -575,7 +575,8 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
  */
 
 diag_t match_end_cert_id(const struct certs *certs,
-			 struct id *peer_id /*ID_FROMCERT => updated*/)
+			 const struct id *peer_id,
+			 struct id *cert_id)
 {
 	CERTCertificate *end_cert = certs->cert;
 
@@ -604,13 +605,12 @@ diag_t match_end_cert_id(const struct certs *certs,
 			DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
 				str_id(peer_id, &idb), str_dn(end_cert_der_subject, &dnb));
 		}
-		/* replace peer_id */
-		struct id id = {
+		/* provide replacement */
+		*cert_id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
 			/* safe as duplicate_id() will clone this */
 			.name = end_cert_der_subject,
 		};
-		duplicate_id(peer_id, &id);
 		return NULL;
 	}
 
@@ -832,9 +832,12 @@ bool v1_verify_certs(struct msg_digest *md)
 	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
 	} else {
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id/*ID_FROMCERT=>updated*/);
+		struct id cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &cert_id);
 		if (d != NULL) {
-			rehash_db_connection_that_id(c); /*ID_FROMCERT=>updated*/
+			if (cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &cert_id);
+			}
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
 		}

@@ -40,7 +40,9 @@ struct cert;
 bool v1_decode_certs(struct msg_digest *md);
 bool v1_verify_certs(struct msg_digest *md);
 
-diag_t match_end_cert_id(const struct certs *certs, struct id *peer_id /*ID_FROMCERT => updated*/);
+diag_t match_end_cert_id(const struct certs *certs,
+			 const struct id *peer_id,
+			 struct id *cert_id);
 
 extern void decode_v1_certificate_requests(struct state *st, struct msg_digest *md);
 extern void decode_v2_certificate_requests(struct state *st, struct msg_digest *md);
