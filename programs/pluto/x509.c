@@ -1119,7 +1119,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 	} else if (this->cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
-		   ike->sa.hidden_variables.st_got_certrequest) {
+		   ike->sa.st_requested_ca != NULL) {
 		dbg("IKEv2 CERT: OK to send requested certificate");
 		sendit = true;
 	} else if (this->sendcert == CERT_ALWAYSSEND) {
