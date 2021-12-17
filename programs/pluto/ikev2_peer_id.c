@@ -73,7 +73,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 				must_switch = true;
 			} else {
-				log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
+				llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
 			}
 		}
 	}
@@ -88,7 +88,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 */
 
 	struct connection *r = NULL;
-	id_buf peer_str;
 	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
 
 	if (!LHAS(authbys, AUTHBY_NULL)) {
@@ -100,33 +99,36 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	if (r == NULL) {
 		/* no "improvement" on c found */
 		if (DBGP(DBG_BASE)) {
-			id_buf peer_str;
+			id_buf peer_idb;
 			DBG_log("no suitable connection for peer '%s'",
-				str_id(&peer_id, &peer_str));
+				str_id(&peer_id, &peer_idb));
 		}
 		/* can we continue with what we had? */
 		if (must_switch) {
+			id_buf peer_idb;
 			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-				    str_id(&peer_id, &peer_str));
+				    str_id(&peer_id, &peer_idb));
 		}
 		/* if X.509, we should have valid peer/san */
 		if (ike->sa.st_remote_certs.verified != NULL && !remote_cert_matches_id) {
+			id_buf peer_idb;
 			return diag("`Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-				    str_id(&peer_id, &peer_str));
+				    str_id(&peer_id, &peer_idb));
 		}
 		if (!remote_cert_matches_id &&
 		    !same_id(&c->spd.that.id, &peer_id) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			if (LIN(POLICY_AUTH_NULL, c->policy) &&
 			    tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
-				log_state(RC_LOG, &ike->sa,
-					  "Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
-					  str_id(&peer_id, &peer_str));
+				id_buf peer_idb;
+				llog_sa(RC_LOG, ike,
+					"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
+					str_id(&peer_id, &peer_idb));
 				ike->sa.st_peer_wants_null = true;
 			} else {
-				id_buf peer_str;
+				id_buf peer_idb;
 				return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
-					    str_id(&peer_id, &peer_str));
+					    str_id(&peer_id, &peer_idb));
 			}
 		} else {
 			dbg("peer ID matches and no better connection found - continuing with existing connection");
@@ -134,10 +136,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	} else if (r != c) {
 		/* r is an improvement on c -- replace */
 		connection_buf cb, rb;
-		log_state(RC_LOG, &ike->sa,
-			  "switched from "PRI_CONNECTION" to "PRI_CONNECTION,
-			  pri_connection(c, &cb),
-			  pri_connection(r, &rb));
+		llog_sa(RC_LOG, ike,
+			"switched from "PRI_CONNECTION" to "PRI_CONNECTION,
+			pri_connection(c, &cb),
+			pri_connection(r, &rb));
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 			/* instantiate it, filling in peer's ID */
 			r = rw_instantiate(r, &c->spd.that.host_addr,
@@ -149,9 +151,9 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
 		return responder_match_initiator_id_counted(ike, authbys, peer_id, tarzan_id, md, depth + 1);
 	} else if (must_switch) {
-		id_buf peer_str;
+		id_buf peer_idb;
 		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
-			    str_id(&peer_id, &peer_str));
+			    str_id(&peer_id, &peer_idb));
 	}
 
 	if (c->spd.that.has_id_wildcards) {
