@@ -37,6 +37,8 @@
 #include "ike_alg_hash.h"
 #include "secrets.h"
 
+static bool v1_verify_certs(struct msg_digest *md);
+
 /*
  * note: may change which connection is referenced by md->v1_st->st_connection.
  * But only if we are a Main Mode Responder.
@@ -359,4 +361,55 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	if (r == STF_OK)
 		dbg("authentication succeeded");
 	return r;
+}
+
+bool v1_verify_certs(struct msg_digest *md)
+{
+	struct state *st = md->v1_st;
+	struct ike_sa *ike = ike_sa(st, HERE);
+	struct connection *c = st->st_connection;
+	passert(st->st_ike_version == IKEv1);
+
+	/* if we already verified ID, no need to do it again */
+	if (st->st_v1_peer_alt_id) {
+		dbg("Peer ID was already confirmed");
+		return true;
+	}
+
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
+	if (cert_payloads == NULL) {
+		return true;
+	}
+
+	struct certs *certs = ike->sa.st_remote_certs.verified;
+	if (certs == NULL) {
+		return true;
+	}
+
+	/* end cert is at the front */
+	CERTCertificate *end_cert = certs->cert;
+	log_state(RC_LOG, st,
+		  "certificate verified OK: %s", end_cert->subjectName);
+
+	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
+	} else {
+		struct id cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &cert_id);
+		if (d != NULL) {
+			if (cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &cert_id);
+			}
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			return false;
+		}
+		dbg("SAN ID matched, updating that.cert");
+	}
+
+	st->st_v1_peer_alt_id = true;
+	if (c->spd.that.cert.nss_cert != NULL) {
+		CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+	}
+	c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+	return true;
 }

@@ -38,7 +38,6 @@ struct ike_sa;
 struct cert;
 
 bool v1_decode_certs(struct msg_digest *md);
-bool v1_verify_certs(struct msg_digest *md);
 
 diag_t match_end_cert_id(const struct certs *certs,
 			 const struct id *peer_id,
