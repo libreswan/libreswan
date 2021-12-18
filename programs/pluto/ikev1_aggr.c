@@ -53,6 +53,7 @@
 #endif
 #include "unpack.h"
 #include "ikev1_host_pair.h"
+#include "ikev1_peer_id.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R

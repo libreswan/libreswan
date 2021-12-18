@@ -97,6 +97,7 @@
 #endif
 #include "unpack.h"
 #include "ikev1_host_pair.h"
+#include "ikev1_peer_id.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

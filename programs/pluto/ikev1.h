@@ -54,14 +54,6 @@ extern void aggr_outI1(struct fd *whack_sock,
 
 extern void send_v1_delete(struct state *st);
 
-/*
- * note: ikev1_decode_peer_id may change which connection is referenced by
- * md->st->st_connection.
- * But only if we are a Main Mode Responder.
- */
-extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
-				 bool aggrmode, unsigned depth);
-
 struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,
 				       struct logger *logger);
