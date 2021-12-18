@@ -41,34 +41,41 @@
 static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 						   lset_t authbys,
 						   struct id peer_id,
-						   struct id *tarzan_id,
-						   struct msg_digest *md, int depth)
+						   struct id *tarzan_id)
 {
-	if (depth > 10) {
-		/* should not happen, but it would be nice to survive */
-		return diag("decoding IKEv2 peer ID failed due to confusion");
-	}
-
-	bool must_switch = false;
-
-	/* start considering connection */
-
-	struct connection *c = ike->sa.st_connection;
+	/* c = ike->sa.st_connection; <- not yet known */
 
 	/*
-	 * If there are certs, try re-running the id check.
+	 * XXX: Why skip refine_host_connection*() when AUTHBY_NULL?
+	 *
+	 * For instance, IKE_SA_INIT chooses a permenant connection
+	 * but then IKE_AUTH proposes AUTHBY_NULL.
+	 */
+
+	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
+	struct connection *r = NULL;
+	if (!LHAS(authbys, AUTHBY_NULL)) {
+		r = refine_host_connection_on_responder(&ike->sa, authbys,
+							&peer_id, tarzan_id,
+							&get_id_from_cert);
+	}
+
+	/*
+	 * If there are certs, run the ID check on the proposed
+	 * selection.
+	 *
+	 * XXX: Does this overlap with GET_ID_FROM_CERT?  Possibly,
+	 * but for AUTHBY_NULL, that check isn't really made.
 	 */
 	bool remote_cert_matches_id = false;
+	bool must_switch = false;
+	struct id remote_cert_id = empty_id;
 	if (ike->sa.st_remote_certs.verified != NULL) {
-		struct id cert_id = empty_id;
+		struct connection *c = (r == NULL ? ike->sa.st_connection : r);
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id, &cert_id);
+					     &c->spd.that.id, &remote_cert_id);
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
-			if (cert_id.kind != ID_NONE) {
-				/*ID_FROMCERT=>updated*/
-				replace_connection_that_id(c, &cert_id);
-			}
 			remote_cert_matches_id = true;
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
@@ -82,24 +89,27 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	/*
-	 * Now that we've decoded the ID, CERT, and CERTREQ payloads,
-	 * let's see if we need to switch connections.
-	 *
-	 * For AUTHBY_NULL, refuse to switch.
-	 */
-
-	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
-
-	struct connection *r = NULL;
-	if (!LHAS(authbys, AUTHBY_NULL)) {
-		r = refine_host_connection_on_responder(&ike->sa, authbys,
-							&peer_id, tarzan_id,
-							&get_id_from_cert);
-	}
-
 	if (r == NULL) {
-		/* no "improvement" on c found */
+		/*
+		 * no "improvement" on c found.
+		 *
+		 * XXX: not really:
+		 *
+		 * - the other end proposed AUTHBY_NULL so no attempt
+                 *   was made to improve the connection improve was
+                 *   made
+		 *
+		 *   this seems weird; what happens if IKE_SA_INIT
+		 *   chooses something more permenant but the IKE_AUTH
+		 *   message proposes NULL?
+		 *
+		 * - refine_host_connection() returned NULL so,
+		 *   presumably, not even C was acceptable
+		 *
+		 *   here, it looks like the code is trying to propose
+		 *   a more helpful message which while convolted is
+		 *   useful
+		 */
 		if (DBGP(DBG_BASE)) {
 			id_buf peer_idb;
 			DBG_log("no suitable connection for peer '%s'",
@@ -117,6 +127,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			return diag("`Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
 				    str_id(&peer_id, &peer_idb));
 		}
+		struct connection *c = ike->sa.st_connection;
 		if (!remote_cert_matches_id &&
 		    !same_id(&c->spd.that.id, &peer_id) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
@@ -135,29 +146,55 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		} else {
 			dbg("peer ID matches and no better connection found - continuing with existing connection");
 		}
-	} else if (r != c) {
+	} else if (r != ike->sa.st_connection) {
 		/* r is an improvement on c -- replace */
 		connection_buf cb, rb;
+		struct connection *c = ike->sa.st_connection;
+		/* XXX: move to after instantiate! */
 		llog_sa(RC_LOG, ike,
 			"switched from "PRI_CONNECTION" to "PRI_CONNECTION,
 			pri_connection(c, &cb),
 			pri_connection(r, &rb));
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+			/*
+			 * XXX: is r->kind == CK_GROUP ever true?
+			 * refine_host_connection*() skips
+			 * POLICY_GROUP so presumably this is testing
+			 * for a GROUP instance.
+			 */
 			/* instantiate it, filling in peer's ID */
 			r = rw_instantiate(r, &c->spd.that.host_addr,
 					   NULL, &peer_id);
 		}
-
 		update_state_connection(&ike->sa, r);
-		/* redo from scratch so we read and check CERT payload */
-		dbg("retrying ikev2_decode_peer_id_and_certs() with new conn");
-		return responder_match_initiator_id_counted(ike, authbys, peer_id, tarzan_id, md, depth + 1);
 	} else if (must_switch) {
 		id_buf peer_idb;
 		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
 			    str_id(&peer_id, &peer_idb));
 	}
 
+	/*
+	 * XXX: this is it!
+	 */
+	struct connection *c = ike->sa.st_connection;
+
+	/*
+	 * XXX: is this redundant?  Almost.
+	 *
+	 * Problem is that AUTHBY_NULL doesn't call
+	 * refine_host_connection*(), but does run this test, hence
+	 * this code is needed.
+	 */
+	if (remote_cert_matches_id &&
+	    remote_cert_id.kind != ID_NONE) {
+		/*ID_FROMCERT=>updated*/
+		replace_connection_that_id(c, &remote_cert_id);
+	}
+
+	/*
+	 * XXX: presumably PEER_ID was already extracted from a cert?
+	 * Is this making the above redundant?
+	 */
 	if (c->spd.that.has_id_wildcards) {
 		dbg("setting wildcard ID");
 		replace_connection_that_id(c, &peer_id);
@@ -258,7 +295,7 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 		return NULL;
 	}
 
-	return responder_match_initiator_id_counted(ike, authbys, initiator_id, tip, md, 0);
+	return responder_match_initiator_id_counted(ike, authbys, initiator_id, tip);
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)
