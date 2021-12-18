@@ -39,7 +39,7 @@ extern stf_status oakley_id_and_auth(struct msg_digest *md,
  * md->st->st_connection.
  * But only if we are a Main Mode Responder.
  */
-extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
-				 bool aggrmode, unsigned depth);
+extern bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
+				 bool initiator, bool aggrmode);
 
 #endif

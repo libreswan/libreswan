@@ -41,11 +41,9 @@
  * note: may change which connection is referenced by md->v1_st->st_connection.
  * But only if we are a Main Mode Responder.
  */
-bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
-			  bool aggrmode, unsigned depth)
+static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md,
+					 bool initiator, bool aggrmode, unsigned depth)
 {
-	struct state *const st = md->v1_st;
-	struct connection *c = st->st_connection;
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
 
@@ -97,6 +95,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 		return false;
 	}
 
+	struct connection *c = st->st_connection;
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		replace_connection_that_id(c, &peer);
@@ -237,7 +236,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ike_decode_peer_id() with new conn");
 			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id(md, false, false, depth+1);
+			return ikev1_decode_peer_id_counted(st, md, false, false, depth+1);
 		} else if (c->spd.that.has_id_wildcards) {
 			replace_connection_that_id(c, &peer);
 			c->spd.that.has_id_wildcards = false;
@@ -248,6 +247,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 	}
 
 	return true;
+}
+
+bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
+			  bool initiator, bool aggrmode)
+{
+	return ikev1_decode_peer_id_counted(st, md, initiator, aggrmode, 0);
 }
 
 /*
@@ -269,7 +274,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 * But only if we are a Main Mode Responder.
 	 */
 	if (!st->st_v1_peer_alt_id) {
-		if (!ikev1_decode_peer_id(md, initiator, aggrmode, 0/*depth*/)) {
+		if (!ikev1_decode_peer_id(st, md, initiator, aggrmode)) {
 			dbg("Peer ID failed to decode");
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}

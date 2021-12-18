@@ -202,7 +202,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	 * referenced by md->v1_st->st_connection.  But not in this
 	 * case because we are Aggressive Mode
 	 */
-	if (!ikev1_decode_peer_id(md, false, true, 0/*depth*/)) {
+	if (!ikev1_decode_peer_id(st, md, /*initiator?*/false, /*aggrmode?*/true)) {
 		id_buf buf;
 		endpoint_buf b;
 		log_state(RC_LOG_SERIOUS, st,
@@ -536,7 +536,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * referenced by md->v1_st->st_connection.  But not in this
 	 * case because we are Aggressive Mode
 	 */
-	if (!ikev1_decode_peer_id(md, true, true, 0/*depth*/)) {
+	if (!ikev1_decode_peer_id(st, md, /*initiator?*/true, /*aggrmode?*/true)) {
 		id_buf buf;
 		endpoint_buf b;
 
