@@ -44,11 +44,9 @@ static bool v1_verify_certs(struct msg_digest *md);
  * But only if we are a Main Mode Responder.
  */
 static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md,
+					 const struct id *peer,
 					 bool initiator, bool aggrmode, unsigned depth)
 {
-	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
-	const struct isakmp_id *const id = &id_pld->payload.id;
-
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
 		llog(RC_LOG_SERIOUS, st->st_logger,
@@ -56,66 +54,10 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 		return false;
 	}
 
-	/*
-	 * I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
-	 * It talks about the protocol ID and Port fields of the ID
-	 * Payload, but they don't exist as such in Phase 1.
-	 * We use more appropriate names.
-	 * isaid_doi_specific_a is in place of Protocol ID.
-	 * isaid_doi_specific_b is in place of Port.
-	 * Besides, there is no good reason for allowing these to be
-	 * other than 0 in Phase 1.
-	 */
-	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
-	    id->isaid_doi_specific_a == IPPROTO_UDP &&
-	    (id->isaid_doi_specific_b == 0 ||
-	     id->isaid_doi_specific_b == NAT_IKE_UDP_PORT)) {
-		dbg("protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
-		    id->isaid_doi_specific_a, id->isaid_doi_specific_b);
-	} else if (!(id->isaid_doi_specific_a == 0 &&
-		     id->isaid_doi_specific_b == 0) &&
-		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
-		     id->isaid_doi_specific_b == IKE_UDP_PORT))
-	{
-		log_state(RC_LOG_SERIOUS, st,
-			  "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
-			  IPPROTO_UDP, IKE_UDP_PORT,
-			  id->isaid_doi_specific_a,
-			  id->isaid_doi_specific_b);
-		/*
-		 * We have turned this into a warning because of bugs in other
-		 * vendors' products. Specifically CISCO VPN3000.
-		 */
-		/* return false; */
-	}
-
-	struct id peer;
-
-	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return false;
-	}
-
 	struct connection *c = st->st_connection;
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
-		replace_connection_that_id(c, &peer);
-	}
-
-	/*
-	 * For interop with SoftRemote/aggressive mode we need to remember some
-	 * things for checking the hash
-	 */
-	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
-	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
-
-	{
-		id_buf buf;
-		esb_buf b;
-		log_state(RC_LOG, st, "Peer ID is %s: '%s'",
-			  enum_show(&ike_id_type_names, id->isaid_idtype, &b),
-			  str_id(&peer, &buf));
+		replace_connection_that_id(c, peer);
 	}
 
 	/* check for certificates */
@@ -141,7 +83,7 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 
 	if (initiator) {
 		if (!st->st_v1_peer_alt_id &&
-		    !same_id(&c->spd.that.id, &peer) &&
+		    !same_id(&c->spd.that.id, peer) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			id_buf expect;
 			id_buf found;
@@ -149,15 +91,15 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 			log_state(RC_LOG_SERIOUS, st,
 				  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 				  str_id(&c->spd.that.id, &expect),
-				  str_id(&peer, &found));
+				  str_id(peer, &found));
 			return false;
 		} else if (c->spd.that.id.kind == ID_FROMCERT) {
-			if (peer.kind != ID_DER_ASN1_DN) {
+			if (peer->kind != ID_DER_ASN1_DN) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "peer ID is not a certificate type");
 				return false;
 			}
-			replace_connection_that_id(c, &peer);
+			replace_connection_that_id(c, peer);
 		}
 	} else if (!aggrmode) {
 		/* Main Mode Responder */
@@ -191,17 +133,17 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 
 		bool get_id_from_cert;
 		struct connection *r =
-			refine_host_connection_on_responder(st, this_authbys, &peer,
+			refine_host_connection_on_responder(st, this_authbys, peer,
 							    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
 							    &get_id_from_cert);
 
 		if (r == NULL) {
 			id_buf buf;
 			dbg("no more suitable connection for peer '%s'",
-			    str_id(&peer, &buf));
+			    str_id(peer, &buf));
 			/* can we continue with what we had? */
 			if (!md->v1_st->st_v1_peer_alt_id &&
-			    !same_id(&c->spd.that.id, &peer) &&
+			    !same_id(&c->spd.that.id, peer) &&
 			    c->spd.that.id.kind != ID_FROMCERT) {
 				log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
 				return false;
@@ -230,7 +172,7 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
 						   NULL,
-						   &peer);
+						   peer);
 			}
 
 			update_state_connection(st, r);
@@ -238,13 +180,14 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 			/* redo from scratch so we read and check CERT payload */
 			dbg("retrying ike_decode_peer_id() with new conn");
 			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id_counted(st, md, false, false, depth+1);
+			return ikev1_decode_peer_id_counted(st, md, peer,
+							    false, false, depth+1);
 		} else if (c->spd.that.has_id_wildcards) {
-			replace_connection_that_id(c, &peer);
+			replace_connection_that_id(c, peer);
 			c->spd.that.has_id_wildcards = false;
 		} else if (get_id_from_cert) {
 			dbg("copying ID for get_id_from_cert");
-			replace_connection_that_id(c, &peer);
+			replace_connection_that_id(c, peer);
 		}
 	}
 
@@ -254,7 +197,63 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 			  bool initiator, bool aggrmode)
 {
-	return ikev1_decode_peer_id_counted(st, md, initiator, aggrmode, 0);
+	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const struct isakmp_id *const id = &id_pld->payload.id;
+
+	/*
+	 * I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
+	 * It talks about the protocol ID and Port fields of the ID
+	 * Payload, but they don't exist as such in Phase 1.
+	 * We use more appropriate names.
+	 * isaid_doi_specific_a is in place of Protocol ID.
+	 * isaid_doi_specific_b is in place of Port.
+	 * Besides, there is no good reason for allowing these to be
+	 * other than 0 in Phase 1.
+	 */
+	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	    id->isaid_doi_specific_a == IPPROTO_UDP &&
+	    (id->isaid_doi_specific_b == 0 ||
+	     id->isaid_doi_specific_b == NAT_IKE_UDP_PORT)) {
+		dbg("protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
+		    id->isaid_doi_specific_a, id->isaid_doi_specific_b);
+	} else if (!(id->isaid_doi_specific_a == 0 &&
+		     id->isaid_doi_specific_b == 0) &&
+		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
+		     id->isaid_doi_specific_b == IKE_UDP_PORT)) {
+		log_state(RC_LOG_SERIOUS, st,
+			  "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
+			  IPPROTO_UDP, IKE_UDP_PORT,
+			  id->isaid_doi_specific_a,
+			  id->isaid_doi_specific_b);
+		/*
+		 * We have turned this into a warning because of bugs
+		 * in other vendors' products. Specifically CISCO
+		 * VPN3000.
+		 */
+		/* return false; */
+	}
+
+	struct id peer;
+	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
+	if (d != NULL) {
+		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
+		return false;
+	}
+
+	/*
+	 * For interop with SoftRemote/aggressive mode we need to remember some
+	 * things for checking the hash
+	 */
+	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
+	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
+
+	id_buf buf;
+	enum_buf b;
+	log_state(RC_LOG, st, "Peer ID is %s: '%s'",
+		  str_enum(&ike_id_type_names, id->isaid_idtype, &b),
+		  str_id(&peer, &buf));
+
+	return ikev1_decode_peer_id_counted(st, md, &peer, initiator, aggrmode, 0);
 }
 
 /*
