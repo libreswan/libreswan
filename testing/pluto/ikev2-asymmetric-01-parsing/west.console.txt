@@ -119,6 +119,22 @@ addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasi
 ikev1 connection must use authby= of rsasig, secret or never
 002 "test9": added IKEv2 connection
 west #
+ ipsec auto --add test10
+while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
+while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+002 "test10": added IKEv2 connection
+west #
+ ipsec auto --add test11
+while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
+while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+002 "test11": added IKEv2 connection
+west #
  echo "all remaining tests should fail"
 all remaining tests should fail
 west #
@@ -212,6 +228,14 @@ addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasi
 ikev1 connection must use authby= of rsasig, secret or never
 conn failtest10 did not load properly
 west #
+ ipsec auto --add failtest11
+while loading 'failtest4': ikev1 connection must use authby= of rsasig, secret or never
+while loading 'failtest10': ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+addconn, in config '/etc/ipsec.conf', ikev1 connection must use authby= of rsasig, secret or never
+ikev1 connection must use authby= of rsasig, secret or never
+003 "failtest11": failed to add connection: leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'
+west #
  echo "Showing policies of all loaded connections"
 Showing policies of all loaded connections
 west #
@@ -226,6 +250,12 @@ west #
 000 "test1":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "test1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "test1":   v2-auth-hash-policy: none;
+000 "test10":   our auth:eaponly, their auth:eaponly, our autheap:tls, their autheap:tls;
+000 "test10":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "test10":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+000 "test11":   our auth:eaponly, their auth:rsasig, our autheap:tls, their autheap:none;
+000 "test11":   policy: IKEv2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "test11":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "test2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "test2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
 000 "test2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
