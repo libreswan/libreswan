@@ -33,6 +33,9 @@
 #include "unpack.h"
 #include "pluto_x509.h"
 #include "ikev1_xauth.h"
+#include "keys.h"
+#include "ike_alg_hash.h"
+#include "secrets.h"
 
 /*
  * note: may change which connection is referenced by md->v1_st->st_connection.
@@ -245,4 +248,110 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 	}
 
 	return true;
+}
+
+/*
+ * Process the Main Mode ID Payload and the Authenticator
+ * (Hash or Signature Payload).
+ * Note: oakley_id_and_auth may switch the connection being used!
+ * But only if we are a Main Mode Responder.
+ * XXX: This is used by aggressive mode too, move to ikev1.c ???
+ */
+stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
+			      bool aggrmode)
+{
+	struct state *st = md->v1_st;
+	stf_status r = STF_OK;
+
+	/*
+	 * ID Payload in.
+	 * Note: ikev1_decode_peer_id may switch the connection being used!
+	 * But only if we are a Main Mode Responder.
+	 */
+	if (!st->st_v1_peer_alt_id) {
+		if (!ikev1_decode_peer_id(md, initiator, aggrmode, 0/*depth*/)) {
+			dbg("Peer ID failed to decode");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+	}
+
+	/*
+	 * process any CERT payloads if aggrmode
+	 */
+	if (!st->st_v1_peer_alt_id) {
+		if (!v1_verify_certs(md)) {
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+	}
+
+	/*
+	 * Hash the ID Payload.
+	 * main_mode_hash requires idpl->cur to be at end of payload
+	 * so we temporarily set if so.
+	 */
+	struct crypt_mac hash;
+	{
+		pb_stream *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
+		uint8_t *old_cur = idpl->cur;
+
+		idpl->cur = idpl->roof;
+		/* authenticating other end, flip role! */
+		hash = main_mode_hash(st, initiator ? SA_RESPONDER : SA_INITIATOR, idpl);
+		idpl->cur = old_cur;
+	}
+
+	switch (st->st_oakley.auth) {
+	case OAKLEY_PRESHARED_KEY:
+	{
+		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
+
+		/*
+		 * XXX: looks a lot like the hack CHECK_QUICK_HASH(),
+		 * except this one doesn't return.  Strong indicator
+		 * that CHECK_QUICK_HASH should be changed to a
+		 * function and also not magically force caller to
+		 * return.
+		 */
+		if (pbs_left(hash_pbs) != hash.len ||
+			!memeq(hash_pbs->cur, hash.ptr, hash.len)) {
+			if (DBGP(DBG_CRYPT)) {
+				DBG_dump("received HASH:",
+					 hash_pbs->cur, pbs_left(hash_pbs));
+			}
+			log_state(RC_LOG_SERIOUS, st,
+				  "received Hash Payload does not match computed value");
+			/* XXX Could send notification back */
+			r = STF_FAIL + INVALID_HASH_INFORMATION;
+		} else {
+			dbg("received '%s' message HASH_%s data ok",
+			    aggrmode ? "Aggr" : "Main",
+			    initiator ? "R" : "I" /*reverse*/);
+		}
+		break;
+	}
+
+	case OAKLEY_RSA_SIG:
+	{
+		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
+		diag_t d = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
+							&ike_alg_hash_sha1, /*always*/
+							&pubkey_type_rsa,
+							authsig_using_RSA_pubkey);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			dbg("received '%s' message SIG_%s data did not match computed value",
+			    aggrmode ? "Aggr" : "Main",
+			    initiator ? "R" : "I" /*reverse*/);
+			r = STF_FAIL + INVALID_KEY_INFORMATION;
+		}
+		break;
+	}
+	/* These are the only IKEv1 AUTH methods we support */
+	default:
+		bad_case(st->st_oakley.auth);
+	}
+
+	if (r == STF_OK)
+		dbg("authentication succeeded");
+	return r;
 }

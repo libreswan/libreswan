@@ -32,6 +32,7 @@
 #include "dnssec.h"    /* includes unbound.h */
 #include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
+#include "secrets.h"
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
@@ -130,8 +131,6 @@ static char *next_rr_field(char **stringp)
 			return r;
 	}
 }
-
-extern const struct pubkey_type pubkey_type_rsa;
 
 static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t ttl, struct dns_pubkey **dns_pubkeys)
 {

@@ -61,14 +61,6 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
 				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
 
-/*
- * Note: oakley_id_and_auth may switch the connection being used!
- * But only if we are a Main Mode Responder.
- */
-extern stf_status oakley_id_and_auth(struct msg_digest *md,
-				     bool initiator,                    /* are we the Initiator? */
-				     bool aggrmode);                     /* aggressive mode? */
-
 extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 			     uint8_t type);
 
