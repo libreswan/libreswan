@@ -39,13 +39,90 @@
 
 static bool v1_verify_certs(struct msg_digest *md);
 
+static bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md,
+					   const struct id *peer)
+{
+	struct connection *c = st->st_connection;
+
+	/*
+	 * XXX: this logic seems to overlap a tighter check for
+	 * ID_FROMCERT below.
+	 */
+	if (c->spd.that.id.kind == ID_FROMCERT) {
+		/* breaks API, connection modified by %fromcert */
+		replace_connection_that_id(c, peer);
+	}
+
+	/* check for certificates */
+	if (!v1_verify_certs(md)) {
+		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
+		/* cannot switch connection so fail */
+		return false;
+	}
+
+	/*
+	 * Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * Aggressive mode cannot switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+
+	if (!st->st_v1_peer_alt_id &&
+	    !same_id(&c->spd.that.id, peer) &&
+	    c->spd.that.id.kind != ID_FROMCERT) {
+		id_buf expect;
+		id_buf found;
+
+		log_state(RC_LOG_SERIOUS, st,
+			  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
+			  str_id(&c->spd.that.id, &expect),
+			  str_id(peer, &found));
+		return false;
+	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+		/*
+		 * XXX: this logic seems to overlap a weaker check for
+		 * ID_FROMCERT above.
+		 */
+		if (peer->kind != ID_DER_ASN1_DN) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "peer ID is not a certificate type");
+			return false;
+		}
+		replace_connection_that_id(c, peer);
+	}
+
+	return true;
+}
+
+static bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
+						     struct msg_digest *md,
+						     const struct id *peer)
+{
+	struct connection *c = st->st_connection;
+	if (c->spd.that.id.kind == ID_FROMCERT) {
+		/* breaks API, connection modified by %fromcert */
+		replace_connection_that_id(c, peer);
+	}
+
+	/* check for certificates */
+	if (!v1_verify_certs(md)) {
+		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
+		/* cannot switch connection so fail */
+		return false;
+	}
+
+	return true;
+}
+
 /*
  * note: may change which connection is referenced by md->v1_st->st_connection.
  * But only if we are a Main Mode Responder.
  */
-static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md,
-					 const struct id *peer,
-					 bool initiator, bool aggrmode, unsigned depth)
+
+static bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md,
+						     const struct id *peer, unsigned depth)
 {
 	if (depth > 10) {
 		/* should not happen, but it would be nice to survive */
@@ -63,10 +140,6 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 	/* check for certificates */
 	if (!v1_verify_certs(md)) {
 		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
-		if (initiator || aggrmode) {
-			/* cannot switch connection so fail */
-			return false;
-		}
 	}
 
 	/*
@@ -78,114 +151,90 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 
-	if (initiator) {
-		if (!st->st_v1_peer_alt_id &&
+	/* Main Mode Responder */
+	uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
+
+	/*
+	 * Translate the IKEv1 policy onto IKEv2(?) auth enum.
+	 * Saves duplicating the checks for v1 and v2, and the
+	 * v1 policy is a subset of the v2 policy.
+	 */
+
+	lset_t this_authbys;
+	switch (auth) {
+	case OAKLEY_PRESHARED_KEY:
+		this_authbys = LELEM(AUTHBY_PSK);
+		break;
+	case OAKLEY_RSA_SIG:
+		this_authbys = LELEM(AUTHBY_RSASIG);
+		break;
+		/* Not implemented */
+	case OAKLEY_DSS_SIG:
+	case OAKLEY_RSA_ENC:
+	case OAKLEY_RSA_REVISED_MODE:
+	case OAKLEY_ECDSA_P256:
+	case OAKLEY_ECDSA_P384:
+	case OAKLEY_ECDSA_P521:
+	default:
+		dbg("ikev1 ike_decode_peer_id bad_case due to not supported policy");
+		return false;
+	}
+
+	bool get_id_from_cert;
+	struct connection *r =
+		refine_host_connection_on_responder(st, this_authbys, peer,
+						    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
+						    &get_id_from_cert);
+
+	if (r == NULL) {
+		id_buf buf;
+		dbg("no more suitable connection for peer '%s'",
+		    str_id(peer, &buf));
+		/* can we continue with what we had? */
+		if (!md->v1_st->st_v1_peer_alt_id &&
 		    !same_id(&c->spd.that.id, peer) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
-			id_buf expect;
-			id_buf found;
-
-			log_state(RC_LOG_SERIOUS, st,
-				  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
-				  str_id(&c->spd.that.id, &expect),
-				  str_id(peer, &found));
+			log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
 			return false;
-		} else if (c->spd.that.id.kind == ID_FROMCERT) {
-			if (peer->kind != ID_DER_ASN1_DN) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "peer ID is not a certificate type");
-				return false;
-			}
-			replace_connection_that_id(c, peer);
+		} else {
+			dbg("Peer ID matches and no better connection found - continuing with existing connection");
+			r = c;
 		}
-	} else if (!aggrmode) {
-		/* Main Mode Responder */
-		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
+	}
 
+	dn_buf buf;
+	dbg("offered CA: '%s'",
+	    str_dn_or_null(r->spd.this.ca, "%none", &buf));
+
+	if (r != c) {
 		/*
-		 * Translate the IKEv1 policy onto IKEv2(?) auth enum.
-		 * Saves duplicating the checks for v1 and v2, and the
-		 * v1 policy is a subset of the v2 policy.
+		 * We are changing st->st_connection!
+		 * Our caller might be surprised!
 		 */
+		connection_buf b1, b2;
 
-		lset_t this_authbys;
-		switch (auth) {
-		case OAKLEY_PRESHARED_KEY:
-			this_authbys = LELEM(AUTHBY_PSK);
-			break;
-		case OAKLEY_RSA_SIG:
-			this_authbys = LELEM(AUTHBY_RSASIG);
-			break;
-		/* Not implemented */
-		case OAKLEY_DSS_SIG:
-		case OAKLEY_RSA_ENC:
-		case OAKLEY_RSA_REVISED_MODE:
-		case OAKLEY_ECDSA_P256:
-		case OAKLEY_ECDSA_P384:
-		case OAKLEY_ECDSA_P521:
-		default:
-			dbg("ikev1 ike_decode_peer_id bad_case due to not supported policy");
-			return false;
+		/* apparently, r is an improvement on c -- replace */
+		log_state(RC_LOG, st, "switched from "PRI_CONNECTION" to "PRI_CONNECTION"",
+			  pri_connection(c, &b1), pri_connection(r, &b2));
+
+		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+			/* instantiate it, filling in peer's ID */
+			r = rw_instantiate(r, &c->spd.that.host_addr,
+					   NULL,
+					   peer);
 		}
 
-		bool get_id_from_cert;
-		struct connection *r =
-			refine_host_connection_on_responder(st, this_authbys, peer,
-							    NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
-							    &get_id_from_cert);
-
-		if (r == NULL) {
-			id_buf buf;
-			dbg("no more suitable connection for peer '%s'",
-			    str_id(peer, &buf));
-			/* can we continue with what we had? */
-			if (!md->v1_st->st_v1_peer_alt_id &&
-			    !same_id(&c->spd.that.id, peer) &&
-			    c->spd.that.id.kind != ID_FROMCERT) {
-				log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
-				return false;
-			} else {
-				dbg("Peer ID matches and no better connection found - continuing with existing connection");
-				r = c;
-			}
-		}
-
-		dn_buf buf;
-		dbg("offered CA: '%s'",
-		    str_dn_or_null(r->spd.this.ca, "%none", &buf));
-
-		if (r != c) {
-			/*
-			 * We are changing st->st_connection!
-			 * Our caller might be surprised!
-			 */
-			connection_buf b1, b2;
-
-			/* apparently, r is an improvement on c -- replace */
-			log_state(RC_LOG, st, "switched from "PRI_CONNECTION" to "PRI_CONNECTION"",
-				  pri_connection(c, &b1), pri_connection(r, &b2));
-
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-				/* instantiate it, filling in peer's ID */
-				r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL,
-						   peer);
-			}
-
-			update_state_connection(st, r);
-			c = r;	/* c not subsequently used */
+		update_state_connection(st, r);
+		c = r;	/* c not subsequently used */
 			/* redo from scratch so we read and check CERT payload */
-			dbg("retrying ike_decode_peer_id() with new conn");
-			passert(!initiator && !aggrmode);
-			return ikev1_decode_peer_id_counted(st, md, peer,
-							    false, false, depth+1);
-		} else if (c->spd.that.has_id_wildcards) {
-			replace_connection_that_id(c, peer);
-			c->spd.that.has_id_wildcards = false;
-		} else if (get_id_from_cert) {
-			dbg("copying ID for get_id_from_cert");
-			replace_connection_that_id(c, peer);
-		}
+		dbg("retrying ike_decode_peer_id() with new conn");
+		return ikev1_decode_peer_id_main_mode_responder(st, md, peer, depth+1);
+	} else if (c->spd.that.has_id_wildcards) {
+		replace_connection_that_id(c, peer);
+		c->spd.that.has_id_wildcards = false;
+	} else if (get_id_from_cert) {
+		dbg("copying ID for get_id_from_cert");
+		replace_connection_that_id(c, peer);
 	}
 
 	return true;
@@ -253,7 +302,13 @@ bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 		  str_enum(&ike_id_type_names, id->isaid_idtype, &b),
 		  str_id(&peer, &buf));
 
-	return ikev1_decode_peer_id_counted(st, md, &peer, initiator, aggrmode, 0);
+	if (initiator) {
+		return ikev1_decode_peer_id_initiator(st, md, &peer);
+	} else if (aggrmode) {
+		return ikev1_decode_peer_id_aggr_mode_responder(st, md, &peer);
+	} else {
+		return ikev1_decode_peer_id_main_mode_responder(st, md, &peer, 0);
+	}
 }
 
 /*
