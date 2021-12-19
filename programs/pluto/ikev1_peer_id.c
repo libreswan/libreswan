@@ -69,9 +69,6 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 		}
 	}
 
-	/* check for certificate requests */
-	decode_v1_certificate_requests(st, md);
-
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
@@ -197,6 +194,9 @@ static bool ikev1_decode_peer_id_counted(struct state *st, struct msg_digest *md
 bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 			  bool initiator, bool aggrmode)
 {
+	/* check for certificate requests */
+	decode_v1_certificate_requests(st, md);
+
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
 
