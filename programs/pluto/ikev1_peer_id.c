@@ -368,15 +368,6 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	}
 
 	/*
-	 * process any CERT payloads if aggrmode
-	 */
-	if (!st->st_v1_peer_alt_id) {
-		if (!v1_verify_certs(md)) {
-			return STF_FAIL + INVALID_ID_INFORMATION;
-		}
-	}
-
-	/*
 	 * Hash the ID Payload.
 	 * main_mode_hash requires idpl->cur to be at end of payload
 	 * so we temporarily set if so.
