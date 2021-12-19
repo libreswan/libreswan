@@ -653,7 +653,7 @@ static void resume_handler(void *arg, struct logger *logger)
 		/* trust nothing; so save everything */
 		so_serial_t old_st = st->st_serialno;
 		so_serial_t old_md_st = md != NULL && md->v1_st != NULL ? md->v1_st->st_serialno : SOS_NOBODY;
-		enum ike_version ike_version = st->st_ike_version;
+		const enum ike_version ike_version = st->st_ike_version;
 		/* when MD.ST it matches ST */
 		pexpect(old_md_st == SOS_NOBODY || old_md_st == old_st);
 

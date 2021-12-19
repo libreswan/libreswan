@@ -32,7 +32,7 @@ struct connection *find_next_v1_host_connection(struct connection *c,
 						lset_t req_policy, lset_t policy_exact_mask,
 						const struct id *peer_id)
 {
-	enum ike_version ike_version = IKEv1;
+	const enum ike_version ike_version = IKEv1;
 	policy_buf pb;
 	dbg("find_next_host_connection policy=%s",
 	    str_policy(req_policy, &pb));
@@ -140,7 +140,7 @@ struct connection *find_v1_host_connection(const ip_address local_address,
 					   lset_t req_policy, lset_t policy_exact_mask,
 					   const struct id *peer_id)
 {
-	enum ike_version ike_version = IKEv1;
+	const enum ike_version ike_version = IKEv1;
 	address_buf lb;
 	address_buf rb;
 	policy_buf pb;

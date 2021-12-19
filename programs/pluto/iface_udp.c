@@ -533,7 +533,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		return NULL;
 	}
 
-	enum ike_version ike_version = hdr_ike_version(&hdr);
+	const enum ike_version ike_version = hdr_ike_version(&hdr);
 	struct state *st;
 	switch (ike_version) {
 	case IKEv1:

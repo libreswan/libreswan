@@ -1790,7 +1790,7 @@ int main(int argc, char **argv)
 		case CD_IKEv1:
 		case CD_IKEv2:
 		{
-			enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
+			const enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
 			if (msg.ike_version != 0 && msg.ike_version != ike_version) {
 				diag("connection can no longer have --ikev1 and --ikev2");
 			}

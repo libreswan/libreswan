@@ -230,7 +230,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						pid_entry->name);
 				}
 				statetime_t start = statetime_start(st);
-				enum ike_version ike_version = st->st_ike_version;
+				const enum ike_version ike_version = st->st_ike_version;
 				stf_status ret = pid_entry->callback(st, md, status,
 								     pid_entry->context,
 								     pid_entry->logger);
