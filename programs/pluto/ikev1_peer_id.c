@@ -138,8 +138,46 @@ static bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct ms
 	}
 
 	/* check for certificates */
-	if (!v1_verify_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
+
+	if (st->st_v1_peer_alt_id) {
+		/* if we already verified ID, no need to do it again */
+		dbg("Peer ID was already confirmed");
+	} else if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
+		dbg("Peer ID has no certs");
+	} else if (st->st_remote_certs.verified == NULL) {
+		dbg("Peer ID has no verified certs");
+	} else {
+		/* end cert is at the front */
+		struct certs *certs = st->st_remote_certs.verified;
+		CERTCertificate *end_cert = certs->cert;
+		log_state(RC_LOG, st, "certificate verified OK: %s",
+			  end_cert->subjectName);
+
+		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
+			st->st_v1_peer_alt_id = true;
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+		} else {
+			struct id cert_id = empty_id;
+			diag_t d = match_end_cert_id(certs, &c->spd.that.id, &cert_id);
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+				/* XXX: RETURN FALSE; */
+			} else {
+				dbg("SAN ID matched, updating that.cert");
+				if (cert_id.kind != ID_NONE) {
+					replace_connection_that_id(c, &cert_id);
+				}
+				st->st_v1_peer_alt_id = true;
+				if (c->spd.that.cert.nss_cert != NULL) {
+					CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+				}
+				c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			}
+		}
 	}
 
 	/*
@@ -451,11 +489,11 @@ bool v1_verify_certs(struct msg_digest *md)
 		struct id cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &cert_id);
 		if (d != NULL) {
-			if (cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &cert_id);
-			}
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
+		}
+		if (cert_id.kind != ID_NONE) {
+			replace_connection_that_id(c, &cert_id);
 		}
 		dbg("SAN ID matched, updating that.cert");
 	}
