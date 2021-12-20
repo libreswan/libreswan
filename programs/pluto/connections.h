@@ -576,7 +576,6 @@ const char *str_connection_instance(const struct connection *c,
 #define pri_connection(C,B) (C)->name, str_connection_instance(C, B)
 
 extern void connection_delete_unused_instance(struct connection **cp, struct state *old_state, struct fd *whackfd);
-extern void update_state_connection(struct state *st, struct connection *c);
 
 /* A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
