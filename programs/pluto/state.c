@@ -3151,3 +3151,31 @@ void check_state(struct state *st, where_t where)
 	check_db_state(st, st->st_logger, where);
 	check_connection(st->st_connection, where);
 }
+
+/*
+ * Every time a state's connection is changed, the following need to happen:
+ *
+ * - update the connection->state hash table
+ *
+ * - discard the old connection when not in use
+ */
+
+void connswitch_state_and_log(struct state *st, struct connection *new)
+{
+	struct connection *old = st->st_connection;
+	passert(old != NULL);
+	passert(new != NULL);
+
+	passert(old != new);
+	passert(old != NULL);
+
+	connection_buf nb;
+	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
+		  pri_connection(new, &nb));
+	st->st_connection = new;
+	st->st_v1_peer_alt_id = false; /* must be rechecked against new 'that' */
+	rehash_state_connection(st);
+	connection_delete_unused_instance(&old, st,
+					  st->st_logger->global_whackfd);
+}
+

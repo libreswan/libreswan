@@ -1565,13 +1565,15 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	}
 
 	/*
-	 * This both replaces the child's connection.
+	 * If needed, replace the child's connection.
 	 *
-	 * update_state_connection(), if the connection changes,
+	 * switch_state_connection(), if the connection changes,
 	 * de-references the old connection; which is what really
 	 * matters
 	 */
-	update_state_connection(&child->sa, best_connection);
+	if (best_connection != child->sa.st_connection) {
+		connswitch_state_and_log(&child->sa, best_connection);
+	}
 
 	return true;
 }

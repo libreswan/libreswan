@@ -896,6 +896,10 @@ void suppress_delete_notify(const struct ike_sa *ike,
 
 void list_state_events(struct show *s, monotime_t now);
 
+void check_state(struct state *st, where_t where);
+
+void connswitch_state_and_log(struct state *st, struct connection *c);
+
 /*
  * For iterating over the state DB.
  *
@@ -927,7 +931,5 @@ struct state_filter {
 
 bool next_state_new2old(struct state_filter *query);
 bool next_state_old2new(struct state_filter *query);
-
-void check_state(struct state *st, where_t where);
 
 #endif /* _STATE_H */

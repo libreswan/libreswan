@@ -147,14 +147,11 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			dbg("peer ID matches and no better connection found - continuing with existing connection");
 		}
 	} else if (r != ike->sa.st_connection) {
-		/* r is an improvement on c -- replace */
-		connection_buf cb, rb;
+		/*
+		 * We are changing st->st_connection!
+		 * Our caller might be surprised!
+		 */
 		struct connection *c = ike->sa.st_connection;
-		/* XXX: move to after instantiate! */
-		llog_sa(RC_LOG, ike,
-			"switched from "PRI_CONNECTION" to "PRI_CONNECTION,
-			pri_connection(c, &cb),
-			pri_connection(r, &rb));
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 			/*
 			 * XXX: is r->kind == CK_GROUP ever true?
@@ -166,7 +163,8 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			r = rw_instantiate(r, &c->spd.that.host_addr,
 					   NULL, &peer_id);
 		}
-		update_state_connection(&ike->sa, r);
+		/* r is an improvement on c -- replace */
+		connswitch_state_and_log(&ike->sa, r);
 	} else if (must_switch) {
 		id_buf peer_idb;
 		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",

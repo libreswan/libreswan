@@ -253,21 +253,13 @@ static bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct ms
 		 * We are changing st->st_connection!
 		 * Our caller might be surprised!
 		 */
-		connection_buf b1, b2;
-
-		/* apparently, r is an improvement on c -- replace */
 		struct connection *c = st->st_connection;
-		log_state(RC_LOG, st, "switched from "PRI_CONNECTION" to "PRI_CONNECTION"",
-			  pri_connection(c, &b1), pri_connection(r, &b2));
-
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 			/* instantiate it, filling in peer's ID */
 			r = rw_instantiate(r, &c->spd.that.host_addr,
-					   NULL,
-					   peer);
+					   NULL, peer);
 		}
-
-		update_state_connection(st, r);
+		connswitch_state_and_log(st, r);
 	} else if (r->spd.that.has_id_wildcards) {
 		replace_connection_that_id(r, peer);
 		r->spd.that.has_id_wildcards = false;

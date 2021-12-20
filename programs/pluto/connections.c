@@ -4882,30 +4882,6 @@ void connection_delete_unused_instance(struct connection **cp,
 }
 
 /*
- * Every time a state's connection is changed, the following need to happen:
- *
- * - update the connection->state hash table
- *
- * - discard the old connection when not in use
- */
-void update_state_connection(struct state *st, struct connection *new)
-{
-	struct connection *old = st->st_connection;
-	passert(old != NULL);
-	passert(new != NULL);
-
-	if (old != new) {
-		st->st_connection = new;
-		st->st_v1_peer_alt_id = false; /* must be rechecked against new 'that' */
-		rehash_state_connection(st);
-		if (old != NULL) {
-			connection_delete_unused_instance(&old, st,
-							  st->st_logger->global_whackfd);
-		}
-	}
-}
-
-/*
  * A template connection's eroute can be eclipsed by
  * either a %hold or an eroute for an instance iff
  * the template is a /32 -> /32. This requires some special casing.
