@@ -31,6 +31,6 @@ east #
 east #
  hostname | grep east && grep '^[^|].* switched ' /tmp/pluto.log
 east
-"main-north"[1] 192.1.2.45 #1: switched from "main-north"[1] 192.1.2.45 to "main-east"
+"main-north"[1] 192.1.2.45 #1: switched to "main-east"[1] 192.1.2.45
 east #
  
