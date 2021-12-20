@@ -3928,11 +3928,11 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			}
 		}
 	}
-	indent = 1;
+	indent = 2;
 	if (best_found != NULL) {
 		connection_buf bfb;
-		dbg_rhc("returning "PRI_CONNECTION" because best",
-			pri_connection(best_found, &bfb));
+		dbg_rhc("returning "PRI_CONNECTION" because best get_id_from_cert=%s",
+			pri_connection(best_found, &bfb), bool_str(*get_id_from_cert));
 	} else {
 		dbg_rhc("returning NULL because no best");
 	}
