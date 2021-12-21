@@ -148,29 +148,11 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_host_connection(md->iface->ip_dev->id_address,
-						       endpoint_address(md->sender),
-						       policy, policy_exact_mask, ppeer_id);
-
+	struct connection *c = find_v1_aggr_mode_connection(md, policy, policy_exact_mask, ppeer_id);
 	if (c == NULL) {
-		c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
-					    policy, policy_exact_mask, ppeer_id);
-		if (c == NULL) {
-			endpoint_buf b;
-			policy_buf pb;
-			llog(RC_LOG_SERIOUS, md->md_logger,
-			     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
-			     str_endpoint(&md->sender, &b),
-			     str_policy(policy, &pb));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		}
-		passert(LIN(policy, c->policy));
-		/* Create a temporary connection that is a copy of this one.
-		 * Peers ID isn't declared yet.
-		 */
-		ip_address sender_address = endpoint_address(md->sender);
-		c = rw_instantiate(c, &sender_address, NULL, NULL);
+		/* XXX: already logged */
+		/* XXX notification is in order! */
+		return STF_IGNORE;
 	}
 
 	/* Set up state */

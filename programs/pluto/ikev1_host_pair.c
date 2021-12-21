@@ -27,10 +27,12 @@
 #include "log.h"
 #include "connections.h"
 #include "demux.h"
+#include "iface.h"
+#include "ikev1_spdb.h"
 
-struct connection *find_next_v1_host_connection(struct connection *c,
-						lset_t req_policy, lset_t policy_exact_mask,
-						const struct id *peer_id)
+static struct connection *find_next_v1_host_connection(struct connection *c,
+						       lset_t req_policy, lset_t policy_exact_mask,
+						       const struct id *peer_id)
 {
 	const enum ike_version ike_version = IKEv1;
 	policy_buf pb;
@@ -135,10 +137,10 @@ struct connection *find_next_v1_host_connection(struct connection *c,
  * the exact value and has included it in req_policy.
  */
 
-struct connection *find_v1_host_connection(const ip_address local_address,
-					   const ip_address remote_address,
-					   lset_t req_policy, lset_t policy_exact_mask,
-					   const struct id *peer_id)
+static struct connection *find_v1_host_connection(const ip_address local_address,
+						  const ip_address remote_address,
+						  lset_t req_policy, lset_t policy_exact_mask,
+						  const struct id *peer_id)
 {
 	const enum ike_version ike_version = IKEv1;
 	address_buf lb;
@@ -175,4 +177,145 @@ struct connection *find_v1_host_connection(const ip_address local_address,
 	}
 
 	return c;
+}
+
+
+struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
+						lset_t req_policy,
+						lset_t policy_exact_mask,
+						const struct id *peer_id)
+{
+	struct connection *c;
+
+	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+				    endpoint_address(md->sender),
+				    req_policy, policy_exact_mask, peer_id);
+	if (c != NULL) {
+		return c;
+	}
+
+	c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
+				    req_policy, policy_exact_mask, peer_id);
+	if (c != NULL) {
+		passert(LIN(req_policy, c->policy));
+		/* Create a temporary connection that is a copy of this one.
+		 * Peers ID isn't declared yet.
+		 */
+		ip_address sender_address = endpoint_address(md->sender);
+		return rw_instantiate(c, &sender_address, NULL, NULL);
+	}
+
+	endpoint_buf b;
+	policy_buf pb;
+	llog(RC_LOG_SERIOUS, md->md_logger,
+	     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+	     str_endpoint(&md->sender, &b),
+	     str_policy(req_policy, &pb));
+
+	return NULL;
+}
+
+
+struct connection *find_v1_main_mode_connection(struct msg_digest *md)
+{
+	struct connection *c;
+
+	/* random source ports are handled by find_host_connection */
+	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+				    endpoint_address(md->sender),
+				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
+	if (c != NULL) {
+		/*
+		 * we found a non %any conn. double check if it needs
+		 * instantiation anyway (eg vnet=)
+		 */
+		if (c->kind == CK_TEMPLATE) {
+			ldbg(md->md_logger,
+			     "local endpoint needs instantiation");
+			ip_address sender_address = endpoint_address(md->sender);
+			return rw_instantiate(c, &sender_address, NULL, NULL);
+		}
+
+		return c;
+	}
+
+	/*
+	 * Other IKE clients, such as strongswan, send the XAUTH VID
+	 * even for connections they do not want to run XAUTH on.  We
+	 * need to depend on the policy negotiation, not the VID.  So
+	 * we ignore md->quirks.xauth_vid
+	 */
+
+	/*
+	 * See if a wildcarded connection can be found.  We cannot
+	 * pick the right connection, so we're making a guess.  All
+	 * Road Warrior connections are fair game: we pick the first
+	 * we come across (if any).  If we don't find any, we pick the
+	 * first opportunistic with the smallest subnet that includes
+	 * the peer.  There is, of course, no necessary relationship
+	 * between an Initiator's address and that of its client, but
+	 * Food Groups kind of assumes one.
+	 */
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+	lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
+	struct connection *d = find_v1_host_connection(md->iface->ip_dev->id_address,
+						       unset_address, policy,
+						       POLICY_XAUTH | POLICY_AGGRESSIVE,
+						       NULL /* peer ID not known yet */);
+	while (d != NULL) {
+		if (d->kind == CK_GROUP) {
+			/* ignore */
+		} else {
+			if (d->kind == CK_TEMPLATE) {
+				/*
+				 * must be Road Warrior: we have a
+				 * winner
+				 */
+				c = d;
+				break;
+			}
+
+			/*
+			 * Opportunistic or Shunt:
+			 * pick tightest match
+			 */
+			if (endpoint_in_selector(md->sender, d->spd.that.client) &&
+			    (c == NULL || selector_in_selector(c->spd.that.client,
+							       d->spd.that.client))) {
+				c = d;
+			}
+		}
+		d = find_next_v1_host_connection(d->hp_next,
+						 policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
+						 NULL /* peer ID not known yet */);
+	}
+
+	if (c == NULL) {
+		policy_buf pb;
+		llog(RC_LOG_SERIOUS, md->md_logger,
+		     "initial Main Mode message received but no connection has been authorized with policy %s",
+		     str_policy(policy, &pb));
+		/* XXX notification is in order! */
+		return NULL;
+	}
+
+	if (c->kind != CK_TEMPLATE) {
+		connection_buf cib;
+		llog(RC_LOG_SERIOUS, md->md_logger,
+		     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
+		     pri_connection(c, &cib));
+		/* XXX notification is in order! */
+		return NULL;
+	}
+
+	/*
+	 * Create a temporary connection that is a copy of this one.
+	 *
+	 * Their ID isn't declared yet.
+	 */
+	connection_buf cib;
+	ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
+	     pri_connection(c, &cib));
+	ip_address sender_address = endpoint_address(md->sender);
+	return rw_instantiate(c, &sender_address, NULL, NULL);
 }

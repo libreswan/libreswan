@@ -446,115 +446,17 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 {
 	/* ??? this code looks a lot like the middle of ikev2_parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct connection *c;
 	pb_stream r_sa_pbs;
-
 
 	if (drop_new_exchanges()) {
 		return STF_IGNORE;
 	}
 
-	/* random source ports are handled by find_host_connection */
-	c = find_v1_host_connection(md->iface->ip_dev->id_address,
-				    endpoint_address(md->sender),
-				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
-
+	struct connection *c = find_v1_main_mode_connection(md);
 	if (c == NULL) {
-		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
-
-		/*
-		 * Other IKE clients, such as strongswan, send the XAUTH
-		 * VID even for connections they do not want to run XAUTH on.
-		 * We need to depend on the policy negotiation, not the VID.
-		 * So we ignore md->quirks.xauth_vid
-		 */
-
-		/*
-		 * See if a wildcarded connection can be found.
-		 * We cannot pick the right connection, so we're making a guess.
-		 * All Road Warrior connections are fair game:
-		 * we pick the first we come across (if any).
-		 * If we don't find any, we pick the first opportunistic
-		 * with the smallest subnet that includes the peer.
-		 * There is, of course, no necessary relationship between
-		 * an Initiator's address and that of its client,
-		 * but Food Groups kind of assumes one.
-		 */
-		{
-			struct connection *d = find_v1_host_connection(md->iface->ip_dev->id_address,
-								       unset_address, policy,
-								       POLICY_XAUTH | POLICY_AGGRESSIVE,
-								       NULL /* peer ID not known yet */);
-
-			while (d != NULL) {
-				if (d->kind == CK_GROUP) {
-					/* ignore */
-				} else {
-					if (d->kind == CK_TEMPLATE) {
-						/*
-						 * must be Road Warrior:
-						 * we have a winner
-						 */
-						c = d;
-						break;
-					}
-
-					/*
-					 * Opportunistic or Shunt:
-					 * pick tightest match
-					 */
-					if (endpoint_in_selector(md->sender, d->spd.that.client) &&
-					    (c == NULL || selector_in_selector(c->spd.that.client,
-									       d->spd.that.client))) {
-						c = d;
-					}
-				}
-				d = find_next_v1_host_connection(d->hp_next,
-								 policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
-								 NULL /* peer ID not known yet */);
-			}
-		}
-
-		if (c == NULL) {
-			policy_buf pb;
-			llog(RC_LOG_SERIOUS, md->md_logger,
-			     "initial Main Mode message received but no connection has been authorized with policy %s",
-			     str_policy(policy, &pb));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		}
-
-		if (c->kind != CK_TEMPLATE) {
-			connection_buf cib;
-			llog(RC_LOG_SERIOUS, md->md_logger,
-			     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-			     pri_connection(c, &cib));
-			/* XXX notification is in order! */
-			return STF_IGNORE;
-		}
-
-		/*
-		 * Create a temporary connection that is a copy of
-		 * this one.
-		 *
-		 * Their ID isn't declared yet.
-		 */
-		connection_buf cib;
-		ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
-		     pri_connection(c, &cib));
-		ip_address sender_address = endpoint_address(md->sender);
-		c = rw_instantiate(c, &sender_address, NULL, NULL);
-	} else {
-		/*
-		 * we found a non %any conn. double check if it needs
-		 * instantiation anyway (eg vnet=)
-		 */
-		if (c->kind == CK_TEMPLATE) {
-			ldbg(md->md_logger,
-			     "local endpoint needs instantiation");
-			ip_address sender_address = endpoint_address(md->sender);
-			c = rw_instantiate(c, &sender_address, NULL, NULL);
-		}
+		/* XXX: already logged */
+		/* XXX notification is in order! */
+		return STF_IGNORE;
 	}
 
 	/* Set up state */
