@@ -6,3 +6,6 @@ These packets are IKEv1 I1 packets of "west" being sent to "east"
 libreswan-3.8 up to 3.12 would crash on these packets. This issue is
 known as CVE-2015-3204
 
+
+myozcam.py is an issue affecting libreswan 4.2 - 4.5, where it tries
+to log with state information that is not available (st == NULL)
