@@ -1220,6 +1220,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				continue;
 			}
 
+			if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+				connection_buf cb;
+				dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+				    pri_connection(d, &cb));
+				continue;
+			}
+
 			/*
 			 * For labeled IPsec, always start with the
 			 * template.  Who are we to argue if the

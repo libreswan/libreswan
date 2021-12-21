@@ -287,6 +287,16 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 	generalName_t *top = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
+#if 0
+		/* REMOTE==%any so d can never be an instance */
+		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			connection_buf cb;
+			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+			    pri_connection(d, &cb));
+			continue;
+		}
+#endif
+
 		if (NEVER_NEGOTIATE(d->policy)) {
 			continue;
 		}

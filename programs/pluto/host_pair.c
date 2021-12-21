@@ -114,6 +114,47 @@ struct pending **host_pair_first_pending(const struct connection *c)
  * REMOTE can either be a valid address or UNSET_ADDRESS.
  */
 
+static bool host_pair_matches_addresses(const struct host_pair *hp,
+					const ip_address local,
+					const ip_address remote)
+{
+	if (!address_eq_address(hp->local, local)) {
+		address_buf lb;
+		connection_buf cb;
+		dbg("  host_pair: skipping %s->%s, local(RHS) does not match "PRI_CONNECTION,
+		    str_address(&remote, &lb), str_address(&local, &lb),
+		    pri_connection(hp->connections, &cb));
+		return false;
+	}
+
+	/*
+	 * XXX: don't assume unset==unset and/or unset==%any, but can
+	 * assume IP!={unset,%any).
+	 */
+
+	if (address_is_specified(remote) &&
+	    !address_eq_address(remote, hp->remote)) {
+		connection_buf cb;
+		address_buf lb, rb;
+		dbg("  host_pair: skipping %s->%s, specified remote(RHS) does not match "PRI_CONNECTION,
+		    str_address(&remote, &lb), str_address(&local, &rb),
+		    pri_connection(hp->connections, &cb));
+		return false;
+	}
+
+	if (!address_is_specified(remote) &&
+	    address_is_specified(hp->remote)) {
+		connection_buf cb;
+		address_buf lb, rb;
+		dbg("  host_pair: skipping %s->%s, unspecified remote(RHS) does not match "PRI_CONNECTION,
+		    str_address(&local, &lb), str_address(&remote, &rb),
+		    pri_connection(hp->connections, &cb));
+		return false;
+	}
+
+	return true;
+}
+
 struct host_pair *find_host_pair(const ip_address local,
 				 const ip_address remote)
 {
@@ -127,51 +168,39 @@ struct host_pair *find_host_pair(const ip_address local,
 		/*
 		 * Skip when the first connection is an instance;
 		 * why????
+		 *
+		 * XXX: It is trying to exclude unauthenticated
+		 * template instances from the search.
+		 *
+		 * - while switching from an unauthenticated
+		 *   connection instance to an authenticated
+		 *   connection is strongly encouraged, ...
+		 *
+		 * - switching to (or choosing) an unauthenticated
+                 *   connection instance is never allowed
+		 *
+		 * The problem is this excludes all connections
+		 * matching the pair, not just unauthenticated ones
 		 */
 		if (hp->connections != NULL && (hp->connections->kind == CK_INSTANCE) &&
 		    (hp->connections->spd.that.id.kind == ID_NULL)) {
 			connection_buf ci;
-			dbg("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:"PRI_CONNECTION,
+			dbg("  host_pair: skipping %s->%s, CK_INSTANCE with ID_NULL "PRI_CONNECTION,
+			    str_address(&local, &lb), str_address(&remote, &rb),
 			    pri_connection(hp->connections, &ci));
 			continue;
 		}
 
-		if (!address_eq_address(hp->local, local)) {
-			address_buf lb;
-			connection_buf cb;
-			if (hp->connections == NULL) {
-				/* ??? what should we report? */
-				dbg("host_pair: local %s does not match connection=<NULL>",
-				    str_address(&local, &lb));
-			} else {
-				dbg("host_pair: local %s does not match connection="PRI_CONNECTION,
-				    str_address(&local, &lb),
-				    pri_connection(hp->connections, &cb));
-			}
+		if (!host_pair_matches_addresses(hp, local, remote)) {
 			continue;
 		}
 
-		/* now try to match */
-
-		if (address_is_specified(remote) &&
-		    address_eq_address(remote, hp->remote)) {
-			connection_buf cb;
-			address_buf lb, rb;
-			dbg("host_pair: %s->%s exactly matches connection "PRI_CONNECTION,
-			    str_address(&local, &lb), str_address(&remote, &rb),
-			    pri_connection(hp->connections, &cb));
-			return hp;
-		}
-
-		if (!address_is_specified(remote) &&
-		    !address_is_specified(hp->remote)) {
-			connection_buf cb;
-			address_buf lb, rb;
-			dbg("host_pair: %s->%s any matched connection="PRI_CONNECTION,
-			    str_address(&local, &lb), str_address(&remote, &rb),
-			    pri_connection(hp->connections, &cb));
-			return hp;
-		}
+		connection_buf cb;
+		address_buf lb, rb;
+		dbg("host_pair: %s->%s matches "PRI_CONNECTION,
+		    str_address(&local, &lb), str_address(&remote, &rb),
+		    pri_connection(hp->connections, &cb));
+		return hp;
 	}
 	return NULL;
 }
@@ -209,14 +238,29 @@ struct connection *next_host_pair_connection(const ip_address local,
 					     bool first,
 					     where_t where)
 {
-	/* for moment just wrap above; should merge */
 	struct connection *c;
 	if (first) {
 		address_buf lb, rb;
 		dbg("FOR_EACH_HOST_PAIR_CONNECTION(%s->%s) in "PRI_WHERE,
-		    str_address(&local, &lb), str_address(&remote, &rb),
+		    str_address(&remote, &lb), str_address(&local, &rb),
 		    pri_where(where));
-		struct host_pair *hp = find_host_pair(local, remote);
+		/*
+		 * Find the host-pair list that contains all
+		 * connections matching REMOTE->LOCAL.
+		 */
+		hash_t hash = hp_hasher(local, remote);
+		struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
+		struct host_pair *hp = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+			if (host_pair_matches_addresses(hp, local, remote)) {
+				connection_buf cb;
+				address_buf lb, rb;
+				dbg("  host_pair: %s->%s matches "PRI_CONNECTION,
+				    str_address(&local, &lb), str_address(&remote, &rb),
+				    pri_connection(hp->connections, &cb));
+				break;
+			}
+		}
 		c = (hp != NULL) ? hp->connections : NULL;
 	} else {
 		c = *next;

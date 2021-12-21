@@ -410,6 +410,17 @@ struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *p
 	 * Did we overlook a type=passthrough foodgroup?
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, tmp) {
+
+#if 0
+		/* REMOTE==%any so d can never be an instance */
+		if (tmp->kind == CK_INSTANCE && tmp->spd.that.id.kind == ID_NULL) {
+			connection_buf cb;
+			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+			    pri_connection(tmp, &cb));
+			continue;
+		}
+#endif
+
 		if (tmp->config->prospective_shunt == SHUNT_TRAP) {
 			continue;
 		}

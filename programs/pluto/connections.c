@@ -3255,6 +3255,17 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 		FOR_EACH_HOST_PAIR_CONNECTION(p->ip_dev->id_address, unset_address, c) {
 
 			dbg("checking %s", c->name);
+
+#if 0
+			/* REMOTE==%any so d can never be an instance */
+			if (c->kind == CK_INSTANCE && c->spd.that.id.kind == ID_NULL) {
+				connection_buf cb;
+				dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+				    pri_connection(c, &cb));
+				continue;
+			}
+#endif
+
 			if (c->kind == CK_GROUP)
 				continue;
 
@@ -3658,6 +3669,13 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
 				pri_connection(d, &b2), pri_connection(c, &b1));
 			indent++;
+
+			if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+				connection_buf cb;
+				dbg_rhc("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+					pri_connection(d, &cb));
+				continue;
+			}
 
 			/*
 			 * First all the "easy" skips.
