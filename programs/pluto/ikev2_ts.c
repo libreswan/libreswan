@@ -1134,74 +1134,30 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		return false;
 	}
 
-	/* best so far; start with state's connection */
-	struct best_score best_score = NO_SCORE;
-	const struct spd_route *best_spd_route = NULL;
+
 	struct connection *const c = child->sa.st_connection;
-	struct connection *best_connection = c;
-	shunk_t best_sec_label = null_shunk;
-
-	/* find best spd in c */
-
-	connection_buf ccb;
-	dbg("responder looking for best SPD in current connection "PRI_CONNECTION" "PRI_CO,
-	    pri_connection(c, &ccb), pri_co(c->serialno));
-
-	for (const struct spd_route *sra = &c->spd; sra != NULL; sra = sra->spd_next) {
-
-		/* responder */
-		const struct ends ends = {
-			.i = &sra->that,
-			.r = &sra->this,
-		};
-
-		shunk_t selected_sec_label = null_shunk;
-		if (!score_tsp_sec_label(&tsp, c->config->sec_label,
-					 &selected_sec_label,
-					 child->sa.st_logger)) {
-			/*
-			 * Either:
-			 *  - Security label required, but not found.
-			 *    OR
-			 *  - Security label *not* required, but found.
-			 */
-			continue;
-		}
-
-		enum fit responder_fit =
-			(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
-			? END_NARROWER_THAN_TS
-			: END_EQUALS_TS;
-		struct best_score score = score_ends_iprange(responder_fit, c, &ends, &tsp);
-		if (!score.ok) {
-			continue;
-		}
-
-		if (score_gt(&score, &best_score)) {
-			dbg("    found better spd route for TSi[%td],TSr[%td]",
-			    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
-			best_score = score;
-			best_spd_route = sra;
-			best_sec_label = selected_sec_label;
-			/* better SPD still within current connection */
-			passert(best_connection == c);
-		}
-	}
 
 	/*
-	 * ??? the use of hp looks nonsensical.
+	 * Start with nothing.  The loop then evaulates each
+	 * connection, including C.
 	 *
-	 * Either the first non-empty host_pair should be used (like
-	 * the current code) and the following should be broken into
-	 * two loops: first find the non-empty host_pair list, second
-	 * look through the host_pair list.
-	 *
-	 * OR
-	 *
-	 * what's really meant is look at the host_pair for each sra,
-	 * something that matches the current nested loop structure
-	 * but not what it actually does.
-	 *
+	 * Note in particular the code that allows C to be evaluated
+	 * when it is an ID_NULL OE instance (normally these are
+	 * excluded).
+	 */
+	struct best {
+		struct best_score score;
+		const struct spd_route *spd_route;
+		struct connection *connection;
+		shunk_t selected_sec_label;
+	} best = {
+		.score = NO_SCORE,
+		.spd_route = NULL,
+		.connection = NULL,
+		.selected_sec_label = null_shunk,
+	};
+
+	/*
 	 * XXX: It's performing two searches:
 	 *
 	 * - look for any matching local<->remote address: aka INSTANCE
@@ -1215,35 +1171,68 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 		FOR_EACH_HOST_PAIR_CONNECTION(local, remote, d) {
 
-			/* groups are templates instantiated as GROUPINSTANCE */
-			if (d->policy & POLICY_GROUP) {
+			connection_buf cb;
+			dbg("  investigating connection "PRI_CONNECTION" "PRI_CO" as a better match",
+			    pri_connection(d, &cb), pri_co(d->serialno));
+
+			if (d->config->ike_version != IKEv2) {
+				connection_buf cb;
+				dbg("    skipping "PRI_CONNECTION", not IKEv2",
+				    pri_connection(d, &cb));
 				continue;
 			}
 
-			if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			/* groups are templates instantiated as GROUPINSTANCE */
+			if (d->policy & POLICY_GROUP) {
 				connection_buf cb;
-				dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+				dbg("    skipping "PRI_CONNECTION", group policy",
+				    pri_connection(d, &cb));
+				continue;
+			}
+
+			/*
+			 * Normally OE instances are never considered
+			 * when switching.  The execption being the
+			 * current connection - it needs a score.
+			 */
+			if (d->kind == CK_INSTANCE &&
+			    d->spd.that.id.kind == ID_NULL &&
+			    d != child->sa.st_connection) {
+				connection_buf cb;
+				dbg("    skipping "PRI_CONNECTION", ID_NULL instance (and not original)",
 				    pri_connection(d, &cb));
 				continue;
 			}
 
 			/*
 			 * For labeled IPsec, always start with the
-			 * template.  Who are we to argue if the
-			 * kernel asks for a new SA with, seemingly, a
-			 * security label that matches an existing
-			 * connection instance.
+			 * hybrid sec_label template instance.
+			 *
+			 * Who are we to argue if the kernel asks for
+			 * a new SA with, seemingly, a security label
+			 * that matches an existing connection
+			 * instance.
 			 */
-			if (d->config->ike_version == IKEv2 &&
-			    d->config->sec_label.len > 0 &&
+			if (d->config->sec_label.len > 0 &&
 			    d->kind != CK_TEMPLATE) {
 				connection_buf cb;
-				dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
+				dbg("    skipping "PRI_CONNECTION",  non-template IKEv2 with a security label",
 				    pri_connection(d, &cb));
 				continue;
 			}
 
-			dbg("  investigating connection \"%s\" as a better match", d->name);
+			shunk_t selected_sec_label = null_shunk;
+			if (!score_tsp_sec_label(&tsp, d->config->sec_label,
+						 &selected_sec_label,
+						 child->sa.st_logger)) {
+				/*
+				 * Either:
+				 *  - Security label required, but not found.
+				 *    OR
+				 *  - Security label *not* required, but found.
+				 */
+				continue;
+			}
 
 			/*
 			 * ??? same_id && match_id seems redundant.
@@ -1263,18 +1252,16 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			/* conns created as aliases from the same source have identical ID/CA */
 			if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
 				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-					match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
-					trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
-				{
-					dbg("    connection \"%s\" does not match IDs or CA of current connection \"%s\"",
-						d->name, c->name);
+				      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+				      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen))) {
+					connection_buf cb;
+					dbg("    skipping "PRI_CONNECTION" does not match IDs or CA of current connection \"%s\"",
+					    pri_connection(d, &cb), c->name);
 					continue;
 				}
 			}
 
-			const struct spd_route *sr;
-
-			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
+			for (const struct spd_route *sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 
 				/* responder */
 				const struct ends ends = {
@@ -1287,40 +1274,29 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 					? END_NARROWER_THAN_TS
 					: END_EQUALS_TS;
 
-				/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
-				shunk_t selected_sec_label = null_shunk;
-				if (!score_tsp_sec_label(&tsp, d->config->sec_label,
-							 &selected_sec_label, child->sa.st_logger)) {
-					/*
-					 * Either:
-					 *  - Security label required, but not found.
-					 *    OR
-					 *  - Security label *not* required, but found.
-					 */
-					continue;
-				}
-
 				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
 									     &ends, &tsp);
 				if (!score.ok) {
 					continue;
 				}
-				if (score_gt(&score, &best_score)) {
+				if (score_gt(&score, &best.score)) {
 					dbg("    protocol fitness found better match d %s, TSi[%td],TSr[%td]",
 					    d->name,
 					    score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
-					best_connection = d;
-					best_score = score;
-					best_spd_route = sr;
-					best_sec_label = selected_sec_label;
+					best = (struct best) {
+						.connection = d,
+						.score = score,
+						.spd_route = sr,
+						.selected_sec_label = selected_sec_label,
+					};
 				}
 			}
 		}
 	}
 
-	if (best_connection == c) {
+	if (best.connection == NULL) {
 		connection_buf cb;
-		dbg("  did not find a better connection to "PRI_CONNECTION" "PRI_CO" using host pair; instantiate new?",
+		dbg("  did not find a connection to best "PRI_CONNECTION" "PRI_CO" using host pair; instantiate new?",
 		    pri_connection(c, &cb), pri_so(c->serialno));
 	}
 
@@ -1338,11 +1314,12 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			     POLICY_IKEV2_ALLOW_NARROWING)
 
 	/*
-	 * Try instantiating something better.
+	 * Can something better be instantiated?
 	 */
-	if (best_spd_route == NULL &&
-	    c->config->sec_label.len == 0 &&
+	if (best.connection == NULL &&
 	    c->kind != CK_INSTANCE) {
+		pexpect((c->kind == CK_PERMANENT) ||
+			(c->kind == CK_TEMPLATE && c->config->sec_label.len > 0));
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is
@@ -1363,7 +1340,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * values - something that should not be done to a
 		 * permanent connection.
 		 */
-		dbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
+		dbg("  no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		    enum_name(&connection_kind_names, c->kind), c->name);
 		llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
 		return false;
@@ -1372,9 +1349,11 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	/*
 	 * C is either a true CK_INSTANCE, or a hybrid sec_label
 	 * template-instance (see instantiate()).
+	 *
+	 * XXX: why does this require a second loop?
 	 */
 
-	if (best_spd_route == NULL &&
+	if (best.connection == NULL &&
 	    c->config->sec_label.len == 0 &&
 	    ((c->policy & POLICY_GROUPINSTANCE) ||
 	     (c->policy & POLICY_IKEV2_ALLOW_NARROWING))) {
@@ -1390,8 +1369,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 *
 		 * If the connection seems to be shared, this happens.
 		 */
-		/* since an SPD_ROUTE wasn't found */
-		passert(best_connection == c);
 		dbg("no best spd route; looking for a better template connection to instantiate");
 
 		struct connection_filter cf = {
@@ -1462,17 +1439,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				continue;
 			}
 
-			/*
-			 * A hybrid template-instance with %any filled in but
-			 * no sec_label.  Find out what it is from the TSP.
-			 */
-			shunk_t selected_sec_label;
-			if (!score_tsp_sec_label(&tsp, c->config->sec_label, &selected_sec_label,
-						 child->sa.st_logger)) {
-				dbg("    skipping; sec_label conflict");
-				continue;
-			}
-
 			/* require a valid narrowed port? */
 			enum fit fit;
 			switch (c->policy & (POLICY_GROUPINSTANCE |
@@ -1490,8 +1456,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				bad_case(c->policy);
 			}
 
-			passert(best_connection == c); /* aka st->st_connection, no leak */
-			pexpect(best_connection == child->sa.st_connection);
 			struct narrowed_ts n = narrow_request_ts(t, &tsp, fit);
 			if (!n.ok) {
 				continue;
@@ -1500,73 +1464,73 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			struct connection *s;
 			if (v2_child_connection_probably_shared(child)) {
 				/* instantiate it, filling in peer's ID */
-				/* XXX: is best_sec_label ever non-NULL? */
-				pexpect(best_sec_label.len == 0);
 				s = instantiate(t, &child->sa.st_connection->spd.that.host_addr,
-						NULL, best_sec_label);
+						NULL, /*sec_label*/null_shunk);
 			} else {
 				s = child->sa.st_connection;
 			}
 			scribble_request_ts_on_connection(child, s, n);
 
 			/* switch */
-			best_connection = s;
-			best_spd_route = &best_connection->spd;
+			best = (struct best) {
+				.connection = s,
+				.spd_route = &s->spd,
+				/*.score*/
+			};
 			break;
 		}
 
 	}
 
 	/*
-	 * Is C a hybrid template-instance sec_label connection?
+	 * Is best.connection a hybrid template-instance sec_label
+	 * connection?
 	 *
 	 * XXX: If it is then, most likely all the above achieved
 	 * nothing (other than check that this isn't already
 	 * instantiated???, and set best_sec_label).  All that's
 	 * needed here is for the hybrid template-instance to be
 	 * instantiated.
+	 *
+	 * The best was the one that we started with (big circle).
 	 */
 
-	if (best_connection == c &&
-	    c->kind == CK_TEMPLATE && c->config->sec_label.len > 0) {
+	if (best.connection != NULL &&
+	    best.connection->kind == CK_TEMPLATE &&
+	    best.connection->config->sec_label.len > 0 &&
+	    best.selected_sec_label.len > 0) {
+		pexpect(c == best.connection); /* big circle */
 		dbg("  instantiating a hybrid sec_label template-instance connection");
-
-		/*
-		 * Make certain that the TS is consistent with the
-		 * requirement for a sec label.
-		 */
-		shunk_t selected_sec_label;
-		if (!score_tsp_sec_label(&tsp, c->config->sec_label,
-					 &selected_sec_label,
-					 child->sa.st_logger)) {
-			llog_sa(RC_LOG_SERIOUS, child, "No IKEv2 connection found with compatible Traffic Selectors");
-			return false;
-		}
 
 		/*
 		 * Narrow down the connection so that it matches
 		 * traffic selector packet.
 		 */
-		struct narrowed_ts n = narrow_request_ts(c, &tsp, END_WIDER_THAN_TS);
+		struct narrowed_ts n = narrow_request_ts(best.connection, &tsp,
+							 END_WIDER_THAN_TS);
 		if (!n.ok) {
+			llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
 			return false;
 		}
 
 		/*
-		 * Conver the hybrid sec_label template-instance into
-		 * a proper instance, and then updat its selectors.
+		 * Convert the hybrid sec_label template-instance into
+		 * a proper instance, and then update its selectors.
 		 */
-		struct connection *s = instantiate(c,
+		struct connection *s = instantiate(best.connection,
 						   &child->sa.st_connection->spd.that.host_addr,
-						   NULL, selected_sec_label);
+						   NULL, best.selected_sec_label);
 		scribble_request_ts_on_connection(child, s, n);
 
 		/* switch */
-		best_connection = s;
-		best_spd_route = &best_connection->spd;
+		best = (struct best) {
+			.connection = s,
+			.spd_route = &s->spd,
+			.selected_sec_label = best.selected_sec_label,
+		};
 	}
 
-	if (best_spd_route == NULL) {
+	if (best.connection == NULL) {
 		dbg("giving up");
 		return false;
 	}
@@ -1578,8 +1542,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 * de-references the old connection; which is what really
 	 * matters
 	 */
-	if (best_connection != child->sa.st_connection) {
-		connswitch_state_and_log(&child->sa, best_connection);
+	if (best.connection != child->sa.st_connection) {
+		connswitch_state_and_log(&child->sa, best.connection);
 	}
 
 	return true;
