@@ -30,83 +30,98 @@
 #include "iface.h"
 #include "ikev1_spdb.h"
 
-static struct connection *find_next_v1_host_connection(struct connection *c,
-						       lset_t req_policy, lset_t policy_exact_mask,
-						       const struct id *peer_id)
+static bool match_v1_connection(struct connection *c,
+				lset_t req_policy,
+				lset_t policy_exact_mask,
+				const struct id *peer_id)
 {
-	const enum ike_version ike_version = IKEv1;
-	policy_buf pb;
-	dbg("find_next_host_connection policy=%s",
-	    str_policy(req_policy, &pb));
+	if (c->config->ike_version != IKEv1) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", wrong IKE version",
+		    pri_connection(c, &cb));
+		return false;
+	}
 
-	for (; c != NULL; c = c->hp_next) {
-		policy_buf fb;
-		dbg("found policy = %s (%s)",
-		    str_connection_policies(c, &fb),
-		    c->name);
+	if (c->kind == CK_INSTANCE && c->spd.that.id.kind == ID_NULL) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
+		    pri_connection(c, &cb));
+		return false;
+	}
 
-		if (NEVER_NEGOTIATE(c->policy)) {
-			/* are we a block or clear connection? */
-			enum shunt_policy shunt = c->config->prospective_shunt;
-			if (shunt != SHUNT_TRAP) {
-				/*
-				 * We need to match block/clear so we can send back
-				 * NO_PROPOSAL_CHOSEN, otherwise not match so we
-				 * can hit packetdefault to do real IKE.
-				 * clear and block do not have POLICY_OPPORTUNISTIC,
-				 * but clear-or-private and private-or-clear do, but
-				 * they don't do IKE themselves but allow packetdefault
-				 * to be hit and do the work.
-				 * if not policy_oppo -> we hit clear/block so this is right c
-				 */
-				if ((c->policy & POLICY_OPPORTUNISTIC))
-					continue;
-
-				/* shunt match - stop the search for another conn if we are groupinstance*/
-				if (c->policy & POLICY_GROUPINSTANCE)
-					break;
+	if (NEVER_NEGOTIATE(c->policy)) {
+		/* are we a block or clear connection? */
+		enum shunt_policy shunt = c->config->prospective_shunt;
+		if (shunt != SHUNT_TRAP) {
+			/*
+			 * We need to match block/clear so we can send
+			 * back NO_PROPOSAL_CHOSEN, otherwise not
+			 * match so we can hit packetdefault to do
+			 * real IKE.  clear and block do not have
+			 * POLICY_OPPORTUNISTIC, but clear-or-private
+			 * and private-or-clear do, but they don't do
+			 * IKE themselves but allow packetdefault to
+			 * be hit and do the work.  if not policy_oppo
+			 * -> we hit clear/block so this is right c
+			 */
+			if ((c->policy & POLICY_OPPORTUNISTIC)) {
+				connection_buf cb;
+				dbg("  skipping "PRI_CONNECTION", never negotiate + opportunistic",
+				    pri_connection(c, &cb));
+				return false;
 			}
-			continue;
+
+			/* shunt match - stop the search for another conn if we are groupinstance*/
+			if (c->policy & POLICY_GROUPINSTANCE) {
+				connection_buf cb;
+				dbg("  skipping "PRI_CONNECTION", never negotiate + group instance",
+				    pri_connection(c, &cb));
+				return true;
+			}
 		}
-
-		/*
-		 * Success may require exact match of:
-		 * (1) XAUTH (POLICY_XAUTH)
-		 * (2) kind of IKEV1 (POLICY_AGGRESSIVE)
-		 * (3) IKE_VERSION
-		 * So if any bits are on in the exclusive OR, we fail.
-		 * Each of our callers knows what is known so specifies
-		 * the policy_exact_mask.
-		 */
-		if (c->config->ike_version != ike_version)
-			continue;
-		if ((req_policy ^ c->policy) & policy_exact_mask)
-			continue;
-
-		if (peer_id != NULL && !same_id(peer_id, &c->spd.that.id) &&
-		    (c->spd.that.id.kind != ID_FROMCERT && !id_is_any(&c->spd.that.id))) {
-				continue; /* incompatible ID */
-		}
-
-		/*
-		 * Success if all specified policy bits are in candidate's policy.
-		 * It works even when the exact-match bits are included.
-		 */
-		if ((req_policy & ~c->policy) == LEMPTY)
-			break;
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", never negotiate",
+		    pri_connection(c, &cb));
+		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		if (c == NULL) {
-			DBG_log("find_next_host_connection returns <empty>");
-		} else {
-			connection_buf ci;
-			DBG_log("find_next_host_connection returns "PRI_CONNECTION"",
-				pri_connection(c, &ci));
-		}
+	/*
+	 * Success may require exact match of:
+	 * (1) XAUTH (POLICY_XAUTH)
+	 * (2) kind of IKEV1 (POLICY_AGGRESSIVE)
+	 * (3) IKE_VERSION
+	 * So if any bits are on in the exclusive OR, we fail.
+	 * Each of our callers knows what is known so specifies
+	 * the policy_exact_mask.
+	 */
+	if ((req_policy ^ c->policy) & policy_exact_mask) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", req policy exact failed",
+		    pri_connection(c, &cb));
+		return false;
 	}
 
-	return c;
+	if (peer_id != NULL && !same_id(peer_id, &c->spd.that.id) &&
+	    (c->spd.that.id.kind != ID_FROMCERT && !id_is_any(&c->spd.that.id))) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", peer_id failed",
+		    pri_connection(c, &cb));
+		return false; /* incompatible ID */
+	}
+
+	/*
+	 * Success if all specified policy bits are in candidate's
+	 * policy.  It works even when the exact-match bits are
+	 * included.
+	 */
+	if ((req_policy & ~c->policy) != LEMPTY) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", req policy missing",
+		    pri_connection(c, &cb));
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -142,43 +157,38 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 						  lset_t req_policy, lset_t policy_exact_mask,
 						  const struct id *peer_id)
 {
-	const enum ike_version ike_version = IKEv1;
 	address_buf lb;
 	address_buf rb;
 	policy_buf pb;
-	dbg("find_host_connection %s local=%s remote=%s policy=%s but ignoring ports",
-	    enum_name(&ike_version_names, ike_version),
-	    str_address(&local_address, &lb),
+	dbg("%s() %s->%s policy=%s but ignoring ports",
+	    __func__,
 	    str_address(&remote_address, &rb),
+	    str_address(&local_address, &lb),
 	    str_policy(req_policy, &pb));
 
-	struct host_pair *hp = find_host_pair(local_address, remote_address);
-	if (hp == NULL) {
-		return NULL;
-	}
+	struct connection *c = NULL;
+	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+		if (!match_v1_connection(d, req_policy, policy_exact_mask, peer_id)) {
+			continue;
+		}
 
-	/* XXX: don't be fooled by "next", the search includes hp->connections */
-	struct connection *c = find_next_v1_host_connection(hp->connections,
-							    req_policy, policy_exact_mask, peer_id);
-	/*
-	 * This could be a shared IKE SA connection, in which case
-	 * we prefer to find the connection that has the IKE SA
-	 *
-	 * XXX: need to advance candidate before calling
-	 * find_next_host_connection() as otherwise it returns the
-	 * same connection, ARGH!
-	 */
-	for (struct connection *candidate = c;
-	     candidate != NULL;
-	     candidate = find_next_v1_host_connection(candidate->hp_next,
-						      req_policy, policy_exact_mask, peer_id)) {
-		if (candidate->newest_ike_sa != SOS_NOBODY)
-			return candidate;
+		/*
+		 * This could be a shared IKE SA connection, in which
+		 * case we prefer to find the connection that has the
+		 * IKE SA.
+		 */
+		if (d->newest_ike_sa != SOS_NOBODY) {
+			/* instant winner */
+			c = d;
+			break;
+		}
+		if (c == NULL) {
+			c = d;
+		}
 	}
 
 	return c;
 }
-
 
 struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 						lset_t req_policy,
@@ -258,36 +268,36 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
-	struct connection *d = find_v1_host_connection(md->iface->ip_dev->id_address,
-						       unset_address, policy,
-						       POLICY_XAUTH | POLICY_AGGRESSIVE,
-						       NULL /* peer ID not known yet */);
-	while (d != NULL) {
-		if (d->kind == CK_GROUP) {
-			/* ignore */
-		} else {
-			if (d->kind == CK_TEMPLATE) {
-				/*
-				 * must be Road Warrior: we have a
-				 * winner
-				 */
-				c = d;
-				break;
-			}
+	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
-			/*
-			 * Opportunistic or Shunt:
-			 * pick tightest match
-			 */
-			if (endpoint_in_selector(md->sender, d->spd.that.client) &&
-			    (c == NULL || selector_in_selector(c->spd.that.client,
-							       d->spd.that.client))) {
-				c = d;
-			}
+		if (!match_v1_connection(d, policy,
+					 POLICY_XAUTH | POLICY_AGGRESSIVE,
+					 NULL /* peer ID not known yet */)) {
+			continue;
 		}
-		d = find_next_v1_host_connection(d->hp_next,
-						 policy, POLICY_XAUTH | POLICY_AGGRESSIVE,
-						 NULL /* peer ID not known yet */);
+
+		if (d->kind == CK_GROUP) {
+			continue;
+		}
+
+		if (d->kind == CK_TEMPLATE) {
+			/*
+			 * must be Road Warrior: we have a
+			 * winner
+			 */
+			c = d;
+			break;
+		}
+
+		/*
+		 * Opportunistic or Shunt:
+		 * pick tightest match
+		 */
+		if (endpoint_in_selector(md->sender, d->spd.that.client) &&
+		    (c == NULL || selector_in_selector(c->spd.that.client,
+						       d->spd.that.client))) {
+			c = d;
+		}
 	}
 
 	if (c == NULL) {
