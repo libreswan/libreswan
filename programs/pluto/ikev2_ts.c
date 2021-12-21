@@ -1227,12 +1227,12 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * security label that matches an existing
 			 * connection instance.
 			 */
-			if (c->config->ike_version == IKEv2 &&
-			    c->config->sec_label.len > 0 &&
-			    c->kind != CK_TEMPLATE) {
+			if (d->config->ike_version == IKEv2 &&
+			    d->config->sec_label.len > 0 &&
+			    d->kind != CK_TEMPLATE) {
 				connection_buf cb;
 				dbg("skipping non-template IKEv2 "PRI_CONNECTION" with a security label",
-				    pri_connection(c, &cb));
+				    pri_connection(d, &cb));
 				continue;
 			}
 
