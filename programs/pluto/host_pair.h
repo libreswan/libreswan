@@ -53,8 +53,6 @@ struct pending **host_pair_first_pending(const struct connection *c);
 
 extern void connect_to_host_pair(struct connection *c);
 
-extern struct host_pair *find_host_pair(const ip_address local, const ip_address remote);
-
 void delete_oriented_hp(struct connection *c);
 void host_pair_remove_connection(struct connection *c, bool connection_valid);
 

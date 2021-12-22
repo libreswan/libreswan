@@ -155,56 +155,6 @@ static bool host_pair_matches_addresses(const struct host_pair *hp,
 	return true;
 }
 
-struct host_pair *find_host_pair(const ip_address local,
-				 const ip_address remote)
-{
-	address_buf lb, rb;
-	dbg("looking for host pair matching %s->%s",
-	    str_address(&local, &lb), str_address(&remote, &rb));
-	hash_t hash = hp_hasher(local, remote);
-	struct host_pair *hp = NULL;
-	struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
-		/*
-		 * Skip when the first connection is an instance;
-		 * why????
-		 *
-		 * XXX: It is trying to exclude unauthenticated
-		 * template instances from the search.
-		 *
-		 * - while switching from an unauthenticated
-		 *   connection instance to an authenticated
-		 *   connection is strongly encouraged, ...
-		 *
-		 * - switching to (or choosing) an unauthenticated
-                 *   connection instance is never allowed
-		 *
-		 * The problem is this excludes all connections
-		 * matching the pair, not just unauthenticated ones
-		 */
-		if (hp->connections != NULL && (hp->connections->kind == CK_INSTANCE) &&
-		    (hp->connections->spd.that.id.kind == ID_NULL)) {
-			connection_buf ci;
-			dbg("  host_pair: skipping %s->%s, CK_INSTANCE with ID_NULL "PRI_CONNECTION,
-			    str_address(&local, &lb), str_address(&remote, &rb),
-			    pri_connection(hp->connections, &ci));
-			continue;
-		}
-
-		if (!host_pair_matches_addresses(hp, local, remote)) {
-			continue;
-		}
-
-		connection_buf cb;
-		address_buf lb, rb;
-		dbg("host_pair: %s->%s matches "PRI_CONNECTION,
-		    str_address(&local, &lb), str_address(&remote, &rb),
-		    pri_connection(hp->connections, &cb));
-		return hp;
-	}
-	return NULL;
-}
-
 static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, where_t where)
 {
 	struct host_pair *hp = alloc_thing(struct host_pair, "host pair");
@@ -272,16 +222,20 @@ struct connection *next_host_pair_connection(const ip_address local,
 void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(c)) {
-		struct host_pair *hp = find_host_pair(c->spd.this.host_addr,
-						      /* remote could be unset OR any */
-						      c->spd.that.host_addr);
-
-		address_buf b1, b2;
-		dbg("connect_to_host_pair: %s->%s -> hp@%p: %s",
-		    str_address(&c->spd.this.host_addr, &b1),
-		    str_address(&c->spd.that.host_addr, &b2),
-		    hp, (hp != NULL && hp->connections != NULL) ? hp->connections->name : "none");
-
+		ip_address local = c->spd.this.host_addr;
+		/* remote could be unset OR any */
+		ip_address remote = c->spd.that.host_addr;
+		address_buf lb, rb;
+		dbg("looking for host pair matching %s->%s",
+		    str_address(&remote, &rb), str_address(&local, &lb));
+		hash_t hash = hp_hasher(local, remote);
+		struct host_pair *hp = NULL;
+		struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+			if (host_pair_matches_addresses(hp, local, remote)) {
+				break;
+			}
+		}
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
 			ip_address local = c->spd.this.host_addr;
