@@ -15,23 +15,36 @@
 
 #include "passert.h"
 #include "jambuf.h"
+#include "lswlog.h"
 
 #include "ip_cidr.h"
 #include "ip_info.h"
 
 const ip_cidr unset_cidr;
 
-bool cidr_is_unset(const ip_cidr *cidr)
+ip_cidr cidr_from_raw(where_t where, enum ip_version version,
+		      const struct ip_bytes bytes,
+		      unsigned prefix_bits)
 {
-	if (cidr == NULL) {
-		return false;
-	}
-	return thingeq(*cidr, unset_cidr);
+
+ 	/* combine */
+	ip_cidr cidr = {
+		.is_set = true,
+		.version = version,
+		.bytes = bytes,
+		.prefix_bits = prefix_bits,
+	};
+	pexpect_cidr(cidr, where);
+	return cidr;
 }
 
 const struct ip_info *cidr_type(const ip_cidr *cidr)
 {
-	if (cidr_is_unset(cidr)) {
+	if (cidr == NULL) {
+		return NULL;
+	}
+
+	if (!cidr->is_set) {
 		return NULL;
 	}
 
@@ -41,10 +54,6 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 
 ip_address cidr_address(const ip_cidr cidr)
 {
-	if (cidr_is_unset(&cidr)) {
-		return unset_address;
-	}
-
 	const struct ip_info *afi = cidr_type(&cidr);
 	if (afi == NULL) {
 		return unset_address;
@@ -55,7 +64,7 @@ ip_address cidr_address(const ip_cidr cidr)
 
 err_t cidr_specified(const ip_cidr cidr)
 {
-	if (cidr_is_unset(&cidr)) {
+	if (!cidr.is_set) {
 		return "unset";
 	}
 
@@ -84,6 +93,7 @@ bool cidr_is_specified(const ip_cidr cidr)
 
 err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 {
+	*cidr = unset_cidr;
 	err_t err;
 
 	/* split CIDR into ADDRESS/MASK. */
@@ -121,17 +131,17 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 	}
 
 	/* combine */
-	*cidr = (ip_cidr) {
-		.version = addr.version,
-		.bytes = addr.bytes,
-		.prefix_bits = maskbits,
-	};
+	*cidr = cidr_from_raw(HERE, addr.version, addr.bytes, maskbits);
 	return NULL;
 }
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
-	if (cidr_is_unset(cidr)) {
+	if (cidr == NULL) {
+		return jam_string(buf, "<null-cidr>");
+	}
+
+	if (!cidr->is_set) {
 		return jam_string(buf, "<unset-cidr>");
 	}
 
@@ -147,4 +157,12 @@ const char *str_cidr(const ip_cidr *cidr, cidr_buf *out)
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_cidr(&buf, cidr);
 	return out->buf;
+}
+
+void pexpect_cidr(const ip_cidr cidr, where_t where)
+{
+	if (cidr.is_set == false ||
+	    cidr.version == 0) {
+		log_pexpect(where, "invalid "PRI_CIDR, pri_cidr(cidr));
+	}
 }
