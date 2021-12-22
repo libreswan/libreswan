@@ -1860,7 +1860,8 @@ static bool is_virtual_net_used(struct connection *c,
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
-				 const struct host_pair *hp,
+				 const ip_address local_address,
+				 const ip_address remote_address,
 				 const ip_selector *local_client,
 				 const ip_selector *remote_client)
 {
@@ -1870,7 +1871,19 @@ static struct connection *fc_try(const struct connection *c,
 							c->spd.that.host_addr);
 
 	err_t virtualwhy = NULL;
-	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
+	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+
+		if (d->config->ike_version != IKEv1) {
+			continue;
+		}
+
+		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			connection_buf cb;
+			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+			    pri_connection(d, &cb));
+			continue;
+		}
+
 		if (d->policy & POLICY_GROUP)
 			continue;
 
@@ -2020,22 +2033,33 @@ static struct connection *fc_try(const struct connection *c,
 }
 
 static struct connection *fc_try_oppo(const struct connection *c,
-				      const struct host_pair *hp,
+				      ip_address local_address,
 				      const ip_selector *local_client,
 				      const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 
-	for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
+	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
+
+		if (d->config->ike_version != IKEv1) {
+			continue;
+		}
+
+		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			connection_buf cb;
+			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+			    pri_connection(d, &cb));
+			continue;
+		}
+
 		if (d->policy & POLICY_GROUP)
 			continue;
 
 		int wildcards, pathlen;
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
-		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
-		{
+		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen))) {
 			continue;
 		}
 
@@ -2175,11 +2199,15 @@ struct connection *find_v1_client_connection(struct connection *const c,
 
 		/* exact match? */
 		/*
-		 * clang 3.4 says: warning: Access to field 'host_pair' results in a dereference of a null pointer (loaded from variable 'c')
+		 * clang 3.4 says: warning: Access to field
+		 * 'host_pair' results in a dereference of a null
+		 * pointer (loaded from variable 'c')
+		 *
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->host_pair, local_client, remote_client);
+		d = fc_try(c, c->spd.this.host_addr, c->spd.that.host_addr,
+			   local_client, remote_client);
 
 		dbg("  fc_try %s gives %s", c->name, (d ? d->name : "none"));
 
@@ -2191,23 +2219,26 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		/*
 		 * look for an abstract connection to match
 		 */
-		const struct host_pair *hp = NULL;
+		ip_address local_address = unset_address;
 		for (const struct spd_route *sra = &c->spd;
-		     sra != NULL && hp == NULL; sra = sra->spd_next) {
-			hp = find_host_pair(sra->this.host_addr, unset_address);
-			if (DBGP(DBG_BASE)) {
+		     sra != NULL && !address_is_specified(local_address);
+		     sra = sra->spd_next) {
+			FOR_EACH_HOST_PAIR_CONNECTION(sra->this.host_addr,
+						      unset_address, ignore) {
+				local_address = sra->this.host_addr;
 				selector_buf s2;
 				selector_buf d2;
-				DBG_log("  checking hostpair %s -> %s is %s",
+				DBG_log("  checking hostpair %s -> %s",
 					str_selector_subnet_port(&sra->this.client, &s2),
-					str_selector_subnet_port(&sra->that.client, &d2),
-					(hp ? "found" : "not found"));
+					str_selector_subnet_port(&sra->that.client, &d2));
+				break;
 			}
 		}
 
-		if (hp != NULL) {
+		if (address_is_specified(local_address)) {
 			/* RW match with actual remote_id or abstract remote_id? */
-			d = fc_try(c, hp, local_client, remote_client);
+			d = fc_try(c, local_address, unset_address,
+				   local_client, remote_client);
 
 			if (d == NULL &&
 			    selector_contains_one_address(*local_client) &&
@@ -2218,7 +2249,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				 * Note that later instantiation will result
 				 * in the same remote_id.
 				 */
-				d = fc_try_oppo(c, hp, local_client, remote_client);
+				d = fc_try_oppo(c, local_address, local_client, remote_client);
 			}
 		}
 	}
