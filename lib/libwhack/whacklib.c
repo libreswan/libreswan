@@ -38,6 +38,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "lswlog.h"
+#include "ip_info.h"
 
 /*
  * Pack and unpack bytes
@@ -189,6 +190,46 @@ static bool unpack_string(struct whackpacker *wp, char **p, const char *what)
 }
 
 /*
+ * IP pointers.
+ */
+
+static bool pack_ip_info(struct whackpacker *wp UNUSED,
+			 const struct ip_info **info,
+			 const char *what UNUSED)
+{
+	/* spell out conversions */
+	*info = (const void*)(uintptr_t)(unsigned)(*info)->ip_version;
+	return true;
+}
+
+static bool unpack_ip_info(struct whackpacker *wp UNUSED,
+			   const struct ip_info **info,
+			   const char *what UNUSED)
+{
+	/* spell out conversions */
+	*info = ip_version_info((unsigned)(uintptr_t)(const void*)*info);
+	return *info != NULL;
+}
+
+static bool pack_ip_protocol(struct whackpacker *wp UNUSED,
+			     const struct ip_protocol **protocol,
+			     const char *what UNUSED)
+{
+	/* spell out conversions */
+	*protocol = (const void*)(uintptr_t)(unsigned)(*protocol)->ipproto;
+	return true;
+}
+
+static bool unpack_ip_protocol(struct whackpacker *wp UNUSED,
+			       const struct ip_protocol **protocol,
+			       const char *what UNUSED)
+{
+	/* spell out conversions */
+	*protocol = protocol_by_ipproto((unsigned)(uintptr_t)(const void*)*protocol);
+	return *protocol != NULL;
+}
+
+/*
  * in and out/
  */
 struct pickler {
@@ -196,6 +237,8 @@ struct pickler {
 	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what);
 	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what);
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what);
+	bool (*ip_info)(struct whackpacker *wp, const struct ip_info **info, const char *what);
+	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what);
 };
 
 const struct pickler pickle_packer = {
@@ -203,6 +246,8 @@ const struct pickler pickle_packer = {
 	.shunk = pack_shunk,
 	.chunk = pack_chunk,
 	.raw = pack_raw,
+	.ip_info = pack_ip_info,
+	.ip_protocol = pack_ip_protocol,
 };
 
 const struct pickler pickle_unpacker = {
@@ -210,12 +255,21 @@ const struct pickler pickle_unpacker = {
 	.shunk = unpack_shunk,
 	.chunk = unpack_chunk,
 	.raw = unpack_raw,
+	.ip_info = unpack_ip_info,
+	.ip_protocol = unpack_ip_protocol,
 };
 
 #define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD)
 #define PICKLE_CHUNK(FIELD) pickle->chunk(wp, FIELD, #FIELD)
 #define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD)
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS)
+
+#if 0
+#define PICKLE_CIDR(CIDR) \
+	((CIDR)->is_set ? pickle->ip_info(wp, &((CIDR)->info), #CIDR) : true)
+#else
+#define PICKLE_CIDR(CIDR) true
+#endif
 
 static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 			     const struct pickler *pickle)
@@ -231,6 +285,8 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 		PICKLE_STRING(&end->virt) &&
 		PICKLE_STRING(&end->xauth_username) &&
 		PICKLE_STRING(&end->host_addr_name) &&
+		PICKLE_CIDR(&end->host_vtiip) &&
+		PICKLE_CIDR(&end->ifaceip) &&
 		true);
 }
 
@@ -369,4 +425,3 @@ size_t whack_get_secret(char *buf, size_t bufsize)
 	memset(secret, 0, len);	/* scrub secret from RAM */
 	return trunc_len;
 }
-
