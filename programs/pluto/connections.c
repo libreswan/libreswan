@@ -3589,41 +3589,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
 	}
 
-	{
-		int opl;
-		int ppl;
-
-		if (same_id(&c->spd.that.id, peer_id) &&
-		    peer_ca.ptr != NULL &&
-		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
-		    ppl == 0 &&
-		    match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
-		    opl == 0) {
-
-			connection_buf cib;
-			dbg_rhc("happy with starting point: "PRI_CONNECTION"",
-			    pri_connection(c, &cib));
-
-			/*
-			 * Peer ID matches current connection -- check
-			 * for "you Tarzan, me Jane" (remember this is
-			 * the responder).
-			 */
-			if (tarzan_id != NULL) {
-				/* ??? pexpect(c->spd.spd_next == NULL); */
-				if (idr_wildmatch(&c->spd.this, tarzan_id, st->st_logger)) {
-					dbg_rhc("the remote specified our ID in its IDr payload");
-					return c;
-				} else {
-					dbg_rhc("the remote specified an IDr that is not our ID for this connection");
-				}
-			} else {
-				dbg_rhc("the remote did not specify an IDr and our current connection is good enough");
-				return c;
-			}
-		}
-	}
-
 	/*
 	 * The current connection won't do: search for one that will.
 	 * First search for one with the same pair of hosts.
