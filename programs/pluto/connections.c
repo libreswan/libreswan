@@ -3635,26 +3635,58 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				pri_connection(d, &b2), pri_connection(c, &b1));
 			indent++;
 
-			if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			/*
+			 * First all the "easy" skips.
+			 */
+
+			/*
+			 * An instantiated connection with ID_NULL is
+			 * never better.  (it's identity was never
+			 * authenticated).
+			 *
+			 * The exception being the current connection
+			 * instance which is allowed to have no
+			 * authentication.
+			 */
+			if (c != d && d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
 				connection_buf cb;
-				dbg_rhc("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+				dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
 					pri_connection(d, &cb));
 				continue;
 			}
 
 			/*
-			 * First all the "easy" skips.
+			 * An Opportunistic connection is never
+			 * better.
+			 *
+			 * The exception being the current connection
+			 * instance which is allowed to be
+			 * opportunistic.
 			 */
 
-			/* only consider sec_label+template */
-			if (d->config->sec_label.len > 0 && d->kind != CK_TEMPLATE) {
-				dbg_rhc("skipping because sec_label requires template");
+			if (c != d && (d->policy & POLICY_OPPORTUNISTIC)) {
+				connection_buf cb;
+				dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
+					pri_connection(d, &cb));
+				continue;
+			}
+
+			/*
+			 * Only consider template sec_label
+			 * connections.
+			 */
+			if (d->kind == CK_INSTANCE && d->config->sec_label.len > 0) {
+				connection_buf cb;
+				dbg_rhc("skipping sec_label instance "PRI_CONNECTION,
+					pri_connection(d, &cb));
 				continue;
 			}
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP) {
-				dbg_rhc("skipping because group connection");
+				connection_buf cb;
+				dbg_rhc("skipping group connection "PRI_CONNECTION,
+					pri_connection(d, &cb));
 				continue;
 			}
 
@@ -3663,6 +3695,13 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				dbg_rhc("skipping because mismatching IKE version");
 				continue;
 			}
+
+			/*
+			 * XXX: are these two bogus?  C was chosen
+			 * when only the address was known so there's
+			 * no reason to think that XAUTH_SERVER is
+			 * correct.
+			 */
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
