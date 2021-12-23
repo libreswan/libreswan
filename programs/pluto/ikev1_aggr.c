@@ -180,11 +180,10 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is
-	 * referenced by md->v1_st->st_connection.  But not in this
-	 * case because we are Aggressive Mode
+	 * Note: Aggressive mode so this cannot change the connection.
 	 */
-	if (!ikev1_decode_peer_id(st, md, /*initiator?*/false, /*aggrmode?*/true)) {
+
+	if (!ikev1_decode_peer_id_aggr_mode_responder(st, md)) {
 		id_buf buf;
 		endpoint_buf b;
 		log_state(RC_LOG_SERIOUS, st,
@@ -195,7 +194,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	passert(c == st->st_connection);
+	passert(c == st->st_connection); /* no switch */
 
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
@@ -496,10 +495,12 @@ static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and 
 
 stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	/* With Aggressive Mode, we get an ID payload in this, the second
-	 * message, so we can use it to index the preshared-secrets
-	 * when the IP address would not be meaningful (i.e. Road
-	 * Warrior).  So our first task is to unravel the ID payload.
+	/*
+	 * With Aggressive Mode, we get an ID payload in this, the
+	 * second message (first response), so we can use it to index
+	 * the preshared-secrets when the IP address would not be
+	 * meaningful (i.e. Road Warrior).  So our first task is to
+	 * unravel the ID payload.
 	 */
 	if (impair.drop_i2) {
 		dbg("dropping Aggressive Mode I2 packet as per impair");
@@ -514,14 +515,14 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * note: ikev1_decode_peer_id may change which connection is
-	 * referenced by md->v1_st->st_connection.  But not in this
-	 * case because we are Aggressive Mode
+	 * Note: Initiator (and Agressive Mode) so this cannot change
+	 * the connection.
 	 */
-	if (!ikev1_decode_peer_id(st, md, /*initiator?*/true, /*aggrmode?*/true)) {
+
+	struct connection *c = st->st_connection;
+	if (!ikev1_decode_peer_id_initiator(st, md)) {
 		id_buf buf;
 		endpoint_buf b;
-
 		log_state(RC_LOG_SERIOUS, st,
 			  "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
 			  str_id(&st->st_connection->spd.that.id, &buf),
@@ -529,6 +530,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
+
+	passert(c == st->st_connection); /* no switch */
 
 	/* verify echoed SA */
 	{
