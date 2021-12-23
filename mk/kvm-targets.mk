@@ -1054,9 +1054,9 @@ kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
 kvm-install: | $(KVM_OPENBSD_CLONES)
 	$(foreach clone, $(KVM_FEDORA_CLONES), $(call undefine-os-domain, $(clone)))
 ifeq ($(KVM_INSTALL_RPM), true)
-	$(MAKE) kvm-fedora-install
-else
 	$(MAKE) kvm-rpm-install
+else
+	$(MAKE) kvm-fedora-install
 endif
 	$(MAKE) $(KVM_KEYS)
 	$(MAKE) $(KVM_FEDORA_CLONES)
