@@ -1190,7 +1190,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* HASH_I or SIG_I */
 
-	stf_status r = oakley_id_and_auth(md, false, false);
+	stf_status r = oakley_auth(md, false);
 	if (r != STF_OK) {
 		return r;
 	}
@@ -1411,7 +1411,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 
 	/* HASH_R or SIG_R */
 
-	stf_status r = oakley_id_and_auth(md, true, false);
+	stf_status r = oakley_auth(md, true);
 	if (r != STF_OK) {
 		return r;
 	}

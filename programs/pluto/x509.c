@@ -706,7 +706,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	 * once.
 	 *
 	 * The way this code is called is broken (see functions
-	 * ikev1_decode_peer_id() and oakley_id_and_auth()):
+	 * ikev1_decode_peer_id*() and oakley_auth()):
 	 *
 	 * - it is repeatedly called to decode the same cert payload
 	 * (causing a cert payload the be decoded multiple times)

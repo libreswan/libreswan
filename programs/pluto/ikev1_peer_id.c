@@ -364,12 +364,9 @@ bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 /*
  * Process the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
- * Note: oakley_id_and_auth may switch the connection being used!
- * But only if we are a Main Mode Responder.
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
-stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
-			      bool aggrmode)
+stf_status oakley_auth(struct msg_digest *md, bool initiator)
 {
 	struct state *st = md->v1_st;
 	stf_status r = STF_OK;
@@ -413,8 +410,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			/* XXX Could send notification back */
 			r = STF_FAIL + INVALID_HASH_INFORMATION;
 		} else {
-			dbg("received '%s' message HASH_%s data ok",
-			    aggrmode ? "Aggr" : "Main",
+			dbg("received message HASH_%s data ok",
 			    initiator ? "R" : "I" /*reverse*/);
 		}
 		break;
@@ -429,8 +425,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 							authsig_using_RSA_pubkey);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			dbg("received '%s' message SIG_%s data did not match computed value",
-			    aggrmode ? "Aggr" : "Main",
+			dbg("received message SIG_%s data did not match computed value",
 			    initiator ? "R" : "I" /*reverse*/);
 			r = STF_FAIL + INVALID_KEY_INFORMATION;
 		}

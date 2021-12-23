@@ -607,7 +607,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	/* HASH_R or SIG_R in */
 
-	stf_status r = oakley_id_and_auth(md, true, true);
+	stf_status r = oakley_auth(md, true);
 	if (r != STF_OK) {
 		return r;
 	}
@@ -868,7 +868,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 * ??? this looks like a really rude assignment
 	 *
 	 * - we are rewriting the input.  Sheesh!
-	 * - at least we undo the damage after calling oakley_id_and_auth.
+	 * - at least we undo the damage after calling oakley_auth().
 	 */
 	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
@@ -896,7 +896,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* HASH_I or SIG_I in */
 
-	stf_status r = oakley_id_and_auth(md, false, true);
+	stf_status r = oakley_auth(md, false);
 	if (r != STF_OK) {
 		return r;
 	}

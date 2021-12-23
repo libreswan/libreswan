@@ -383,7 +383,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(ID) | P(HASH), P(VID) | P(CR),
 	  EVENT_SA_REPLACE,
 	  FM(main_inI3_outR3),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.2 Phase 1 Authenticated With Public Key Encryption
 	     HASH_I = prf(SKEYID, g^xi | g^xr | CKY-I | CKY-R | SAi_b | IDii_b ) */
 	  .hash_type = V1_HASH_NONE, },
@@ -394,7 +394,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT),
 	  EVENT_SA_REPLACE,
 	  FM(main_inI3_outR3),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.1 IKE Phase 1 Authenticated With Signatures
 	     HASH_I = prf(SKEYID, g^xi | g^xr | CKY-I | CKY-R | SAi_b | IDii_b )
 	     SIG_I = SIGN(HASH_I) *",
@@ -422,7 +422,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(ID) | P(HASH), P(VID) | P(CR),
 	  EVENT_SA_REPLACE,
 	  FM(main_inR3),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.2 Phase 1 Authenticated With Public Key Encryption
 	     HASH_R = prf(SKEYID, g^xr | g^xi | CKY-R | CKY-I | SAi_b | IDir_b ) */
 	  .hash_type = V1_HASH_NONE, },
@@ -433,7 +433,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT),
 	  EVENT_SA_REPLACE,
 	  FM(main_inR3),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.1 IKE Phase 1 Authenticated With Signatures
 	     HASH_R = prf(SKEYID, g^xr | g^xi | CKY-R | CKY-I | SAi_b | IDir_b )
 	     SIG_R = SIGN(HASH_R) */
@@ -500,7 +500,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC),
 	  EVENT_SA_REPLACE,
 	  FM(aggr_inR1_outI2),
-	  /* after DH calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* after DH calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.2 Phase 1 Authenticated With Public Key Encryption
 	     HASH_R = prf(SKEYID, g^xr | g^xi | CKY-R | CKY-I | SAi_b | IDir_b ) */
 	  .hash_type = V1_HASH_NONE, },
@@ -511,7 +511,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC),
 	  EVENT_SA_REPLACE,
 	  FM(aggr_inR1_outI2),
-	  /* after DH calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* after DH calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.1 IKE Phase 1 Authenticated With Signatures
 	     HASH_R = prf(SKEYID, g^xr | g^xi | CKY-R | CKY-I | SAi_b | IDir_b )
 	     SIG_R = SIGN(HASH_R) */
@@ -528,7 +528,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(HASH), P(VID) | P(NATD_RFC),
 	  EVENT_SA_REPLACE,
 	  FM(aggr_inI2),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.2 Phase 1 Authenticated With Public Key Encryption
 	     HASH_I = prf(SKEYID, g^xi | g^xr | CKY-I | CKY-R | SAi_b | IDii_b ) */
 	  .hash_type = V1_HASH_NONE, },
@@ -540,7 +540,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(SIG), P(VID) | P(NATD_RFC),
 	  EVENT_SA_REPLACE,
 	  FM(aggr_inI2),
-	  /* calls oakley_id_and_auth() which calls main_mode_hash() */
+	  /* calls oakley_auth() which calls main_mode_hash() */
 	  /* RFC 2409: 5. Exchanges & 5.1 IKE Phase 1 Authenticated With Signatures
 	     HASH_I = prf(SKEYID, g^xi | g^xr | CKY-I | CKY-R | SAi_b | IDii_b )
 	     SIG_I = SIGN(HASH_I) */
