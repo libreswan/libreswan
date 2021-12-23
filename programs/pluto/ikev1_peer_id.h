@@ -29,14 +29,6 @@
 extern stf_status oakley_auth(struct msg_digest *md,
 			      bool initiator); /* are we the Initiator? */
 
-/*
- * note: ikev1_decode_peer_id may change which connection is referenced by
- * md->st->st_connection.
- * But only if we are a Main Mode Responder.
- */
-extern bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
-				 bool initiator, bool aggrmode);
-
 bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md);
 
 bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md);

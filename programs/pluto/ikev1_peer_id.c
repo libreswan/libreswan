@@ -349,18 +349,6 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 	return true;
 }
 
-bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
-			  bool initiator, bool aggrmode)
-{
-	if (initiator) {
-		return ikev1_decode_peer_id_initiator(st, md);
-	} else if (aggrmode) {
-		return ikev1_decode_peer_id_aggr_mode_responder(st, md);
-	} else {
-		return ikev1_decode_peer_id_main_mode_responder(st, md);
-	}
-}
-
 /*
  * Process the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
