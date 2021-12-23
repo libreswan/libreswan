@@ -20,7 +20,6 @@ road #
 003 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 1v1 "modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
 002 "modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-002 "modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "modecfg-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
 040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:

@@ -42,7 +42,6 @@ road #
 003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 1v1 "road-eastnet-psk" #1: sent Aggressive Mode request
 002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-002 "road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value
 223 "road-eastnet-psk" #1: sending notification INVALID_HASH_INFORMATION to 192.1.2.23:500
 002 "road-eastnet-psk" #1: deleting state (STATE_AGGR_I1) and NOT sending notification
