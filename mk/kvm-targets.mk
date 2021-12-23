@@ -540,22 +540,31 @@ kvm-keys-ok:
 #
 
 .PHONY: kvm-rpm
-kvm-rpm:
+kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
 	@echo building rpm for libreswan testing
-	mkdir -p ~/rpmbuild/SPECS/
+	mkdir -p rpmbuild/SPECS/
 	sed -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
 		-e "s/^Version:.*/Version: $(RPM_VERSION)/g" \
 		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
 		testing/packaging/fedora/libreswan-testing.spec \
-		> ~/rpmbuild/SPECS/libreswan-testing.spec
-	mkdir -p ~/rpmbuild/SOURCES
-	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
-		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar HEAD
+		> rpmbuild/SPECS/libreswan-testing.spec
+	mkdir -p rpmbuild/SOURCES
+	git archive \
+		--format=tar \
+		--prefix=$(RPM_PREFIX)/ \
+		-o rpmbuild/SOURCES/$(RPM_PREFIX).tar \
+		HEAD
+	: add Makefile.in.local?
 	if [ -a Makefile.inc.local ] ; then \
-		tar --transform "s|^|$(RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local ; \
-	fi;
-	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
-	rpmbuild -ba $(RPM_BUILD_CLEAN) ~/rpmbuild/SPECS/libreswan-testing.spec
+		tar --transform "s|^|$(RPM_PREFIX)/|" \
+			-rf rpmbuild/SOURCES/$(RPM_PREFIX).tar \
+			Makefile.inc.local ; \
+	fi
+	gzip -f rpmbuild/SOURCES/$(RPM_PREFIX).tar
+	$(KVMSH) --chdir /source $(notdir $<) -- \
+		rpmbuild -D_topdir\\ /source/rpmbuild \
+			-ba $(RPM_BUILD_CLEAN) \
+			rpmbuild/SPECS/libreswan-testing.spec
 
 #
 # Build a pool of networks from scratch
