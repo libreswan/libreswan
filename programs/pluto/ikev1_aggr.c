@@ -574,6 +574,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 {
 	dbg("aggr inR1_outI2: calculated DH, sending I2");
 
+	struct connection *c = st->st_connection;
+
 	passert(st != NULL);
 	passert(md != NULL);
 	passert(md->v1_st == st);
@@ -582,28 +584,6 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		return STF_FAIL + INVALID_KEY_INFORMATION;
 	}
 	calc_v1_skeyid_and_iv(st);
-
-	if (!v1_decode_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
-		return STF_FAIL + INVALID_ID_INFORMATION;
-	}
-
-	/*
-	 * ID Payload in.
-	 *
-	 * Note: won't switch connections because we are the initiator
-	 * (in Aggressive Mode).
-	 */
-
-	struct connection *c = st->st_connection;
-	if (!st->st_v1_peer_alt_id) {
-		if (!ikev1_decode_peer_id_initiator(st, md)) {
-			dbg("Peer ID failed to decode");
-			return STF_FAIL + INVALID_ID_INFORMATION;
-		}
-	}
-
-	passert(c == st->st_connection); /* no switch */
 
 	/* HASH_R or SIG_R in */
 
