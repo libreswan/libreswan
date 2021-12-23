@@ -587,19 +587,31 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
-	/* HASH_R or SIG_R in */
-	{
-		/*
-		 * Note: oakley_id_and_auth won't switch connections
-		 * because we are Aggressive Mode.
-		 */
-		stf_status r = oakley_id_and_auth(md, true, true);
 
-		if (r != STF_OK)
-			return r;
-	}
+	/*
+	 * ID Payload in.
+	 *
+	 * Note: won't switch connections because we are the initiator
+	 * (in Aggressive Mode).
+	 */
 
 	struct connection *c = st->st_connection;
+	if (!st->st_v1_peer_alt_id) {
+		if (!ikev1_decode_peer_id_initiator(st, md)) {
+			dbg("Peer ID failed to decode");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+	}
+
+	passert(c == st->st_connection); /* no switch */
+
+	/* HASH_R or SIG_R in */
+
+	stf_status r = oakley_id_and_auth(md, true, true);
+	if (r != STF_OK) {
+		return r;
+	}
+
 	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
 
 	enum next_payload_types_ikev1 auth_payload =
@@ -866,15 +878,27 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
+	/*
+	 * ID Payload in.
+	 *
+	 * Note: won't switch connections because we are in Aggressive
+	 * Mode (responder).
+	 */
+
+	if (!st->st_v1_peer_alt_id) {
+		if (!ikev1_decode_peer_id_aggr_mode_responder(st, md)) {
+			dbg("Peer ID failed to decode");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+	}
+
+	passert(c == st->st_connection); /* no switch */
+
 	/* HASH_I or SIG_I in */
-	{
-		/*
-		 * Note: oakley_id_and_auth won't switch connections
-		 * because we are Aggressive Mode.
-		 */
-		stf_status r = oakley_id_and_auth(md, false, true);
-		if (r != STF_OK)
-			return r;
+
+	stf_status r = oakley_id_and_auth(md, false, true);
+	if (r != STF_OK) {
+		return r;
 	}
 
 	/* And reset the md to not leave stale pointers to our private id payload */

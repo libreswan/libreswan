@@ -1175,16 +1175,27 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * ID and HASH_I or SIG_I in
-	 * Note: oakley_id_and_auth may switch the connection being used
-	 * since we are a Main Mode Responder.
+	 * ID Payload in.
+	 *
+	 * Note: may switch the connection being used!  We are a Main
+	 * Mode Responder.
 	 */
-	{
-		stf_status r = oakley_id_and_auth(md, false, false);
-		if (r != STF_OK)
-			return r;
+
+	if (!st->st_v1_peer_alt_id) {
+		if (!ikev1_decode_peer_id_main_mode_responder(st, md)) {
+			dbg("Peer ID failed to decode");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
 	}
-	struct connection *c = st->st_connection;
+
+	/* HASH_I or SIG_I */
+
+	stf_status r = oakley_id_and_auth(md, false, false);
+	if (r != STF_OK) {
+		return r;
+	}
+
+	struct connection *c = st->st_connection; /* may have changed */
 
 	/* send certificate if we have one and auth is RSA */
 	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
@@ -1382,16 +1393,28 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * ID and HASH_R or SIG_R in
-	 * Note: oakley_id_and_auth will not switch the connection being used
-	 * because we are the Responder.
+	 * ID Payload in.
+	 *
+	 * Note: will not switch the connection being used because we
+	 * are the initiator.
 	 */
-	{
-		stf_status r = oakley_id_and_auth(md, true, false);
-		if (r != STF_OK)
-			return r;
-	}
+
 	struct connection *c = st->st_connection;
+	if (!st->st_v1_peer_alt_id) {
+		if (!ikev1_decode_peer_id_initiator(st, md)) {
+			dbg("Peer ID failed to decode");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
+	}
+
+	passert(c == st->st_connection); /* no switch */
+
+	/* HASH_R or SIG_R */
+
+	stf_status r = oakley_id_and_auth(md, true, false);
+	if (r != STF_OK) {
+		return r;
+	}
 
 	/* Done input */
 
