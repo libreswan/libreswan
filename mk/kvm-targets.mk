@@ -224,7 +224,7 @@ KVMRUNNER ?= $(KVM_PYTHON) testing/utils/kvmrunner.py
 KVMRESULTS ?= $(KVM_PYTHON) testing/utils/kvmresults.py
 KVMTEST ?= $(KVM_PYTHON) testing/utils/kvmtest.py
 
-RPM_VERSION = $(shell make showrpmversion)
+RPM_VERSION = $(shell make --no-print-directory showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
 RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 
@@ -534,37 +534,6 @@ kvm-keys-ok:
 		echo "" ;								\
 		exit 1 ;								\
 	fi
-
-#
-# Create an RPM for the test domains
-#
-
-.PHONY: kvm-rpm
-kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
-	@echo building rpm for libreswan testing
-	mkdir -p rpmbuild/SPECS/
-	sed -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
-		-e "s/^Version:.*/Version: $(RPM_VERSION)/g" \
-		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
-		testing/packaging/fedora/libreswan-testing.spec \
-		> rpmbuild/SPECS/libreswan-testing.spec
-	mkdir -p rpmbuild/SOURCES
-	git archive \
-		--format=tar \
-		--prefix=$(RPM_PREFIX)/ \
-		-o rpmbuild/SOURCES/$(RPM_PREFIX).tar \
-		HEAD
-	: add Makefile.in.local?
-	if [ -a Makefile.inc.local ] ; then \
-		tar --transform "s|^|$(RPM_PREFIX)/|" \
-			-rf rpmbuild/SOURCES/$(RPM_PREFIX).tar \
-			Makefile.inc.local ; \
-	fi
-	gzip -f rpmbuild/SOURCES/$(RPM_PREFIX).tar
-	$(KVMSH) --chdir /source $(notdir $<) -- \
-		rpmbuild -D_topdir\\ /source/rpmbuild \
-			-ba $(RPM_BUILD_CLEAN) \
-			rpmbuild/SPECS/libreswan-testing.spec
 
 #
 # Build a pool of networks from scratch
@@ -1031,40 +1000,64 @@ kvm-demolish:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
 
 #
+# Create an RPM for the test domains
+#
+
+.PHONY: kvm-rpm
+kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
+	@echo building rpm for libreswan testing
+	mkdir -p rpmbuild/SPECS/
+	: NOTE: testing/packaging/// and NOT packaging/...
+	sed -e "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" \
+		-e "s/^Version:.*/Version: $(RPM_VERSION)/g" \
+		-e "s/@INITSYSTEM@/$(INITSYSTEM)/g" \
+		testing/packaging/fedora/libreswan-testing.spec \
+		> rpmbuild/SPECS/libreswan-testing.spec
+	mkdir -p rpmbuild/SOURCES
+	git archive \
+		--format=tar \
+		--prefix=$(RPM_PREFIX)/ \
+		-o rpmbuild/SOURCES/$(RPM_PREFIX).tar \
+		HEAD
+	: add Makefile.in.local?
+	if [ -a Makefile.inc.local ] ; then \
+		tar --transform "s|^|$(RPM_PREFIX)/|" \
+			-rf rpmbuild/SOURCES/$(RPM_PREFIX).tar \
+			Makefile.inc.local ; \
+	fi
+	gzip -f rpmbuild/SOURCES/$(RPM_PREFIX).tar
+	$(KVMSH) --chdir /source $(notdir $<) -- \
+		rpmbuild -D_topdir\\ /source/rpmbuild \
+			-ba $(RPM_BUILD_CLEAN) \
+			rpmbuild/SPECS/libreswan-testing.spec
+
+.PHONY: kvm-rpm-install
+kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
+	rm -fr rpmbuild/*RPMS
+	$(MAKE) kvm-rpm
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -i /source/rpmbuild/RPMS/x86_64/libreswan*rpm'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
+	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
+
+#
 # kvm-install target
 #
 # First delete all of the build domain's clones.  The build domain
 # won't boot when its clones are running.
 #
-#
 # So that all the INSTALL domains are deleted before the build domain
 # is booted, this is done using a series of sub-makes (without this,
 # things barf because the build domain things its disk is in use).
 
-ifdef NOTDEF
-.PHONY: kvm-$(KVM_KEYS_DOMAIN)-install
-kvm-$(KVM_KEYS_DOMAIN)-install: | $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN)
-ifeq ($(KVM_INSTALL_RPM), true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'rm -fr ~/rpmbuild/*RPMS'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'make kvm-rpm'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'rpm -i ~/rpmbuild/RPMS/x86_64/libreswan*rpm'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'cp -f ~/rpmbuild/RPMS/x86_64/libreswan*rpm /source/'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'cp -f ~/rpmbuild/SRPMS/libreswan*rpm /source/'
-else
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'make $(KVM_MAKEFLAGS) $(KVM_FEDORA_MAKEFLAGS) install-base'
-ifeq ($(KVM_USE_FIPSCHECK),true)
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'make $(KVM_MAKEFLAGS) $(KVM_FEDORA_MAKEFLAGS) install-fipshmac'
-endif
-endif
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_KEYS_DOMAIN) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
-	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
-endif
-
 .PHONY: kvm-install
 kvm-install: | $(KVM_OPENBSD_CLONES)
 	$(foreach clone, $(KVM_FEDORA_CLONES), $(call undefine-os-domain, $(clone)))
+ifeq ($(KVM_INSTALL_RPM), true)
 	$(MAKE) kvm-fedora-install
+else
+	$(MAKE) kvm-rpm-install
+endif
 	$(MAKE) $(KVM_KEYS)
 	$(MAKE) $(KVM_FEDORA_CLONES)
 

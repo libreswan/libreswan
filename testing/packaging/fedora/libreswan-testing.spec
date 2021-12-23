@@ -165,6 +165,7 @@ export NSS_DISABLE_HW_GCM=1
 %doc CHANGES COPYING CREDITS README* LICENSE
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
