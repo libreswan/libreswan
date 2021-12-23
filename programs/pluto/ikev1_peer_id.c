@@ -38,10 +38,16 @@
 #include "secrets.h"
 
 static bool v1_verify_certs(struct msg_digest *md);
+static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer);
 
-static bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md,
-					   const struct id *peer)
+bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 {
+	struct id peer[1]; /* hack for pointer */
+	if (!decode_peer_id(st, md, peer)) {
+		/* already logged */
+		return false;
+	}
+
 	struct connection *c = st->st_connection;
 
 	/*
@@ -96,14 +102,19 @@ static bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *
 	return true;
 }
 
-static bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
-						     struct msg_digest *md,
-						     const struct id *peer)
+bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
+					      struct msg_digest *md)
 {
+	struct id peer;
+	if (!decode_peer_id(st, md, &peer)) {
+		/* already logged */
+		return false;
+	}
+
 	struct connection *c = st->st_connection;
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
-		replace_connection_that_id(c, peer);
+		replace_connection_that_id(c, &peer);
 	}
 
 	/* check for certificates */
@@ -121,9 +132,13 @@ static bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
  * But only if we are a Main Mode Responder.
  */
 
-static bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md,
-						     const struct id *peer)
+bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md)
 {
+	struct id peer[1]; /* pointer hack */
+	if (!decode_peer_id(st, md, peer)) {
+		/* already logged */
+		return false;
+	}
 
 	/*
 	 * Now that we've decoded the ID payload, let's see if we
@@ -271,8 +286,7 @@ static bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct ms
 	return true;
 }
 
-bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
-			  bool initiator, bool aggrmode)
+static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer)
 {
 	/* check for certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -313,8 +327,7 @@ bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 		/* return false; */
 	}
 
-	struct id peer;
-	diag_t d = unpack_peer_id(id->isaid_idtype, &peer, &id_pld->pbs);
+	diag_t d = unpack_peer_id(id->isaid_idtype, peer, &id_pld->pbs);
 	if (d != NULL) {
 		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 		return false;
@@ -331,14 +344,20 @@ bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 	enum_buf b;
 	log_state(RC_LOG, st, "Peer ID is %s: '%s'",
 		  str_enum(&ike_id_type_names, id->isaid_idtype, &b),
-		  str_id(&peer, &buf));
+		  str_id(peer, &buf));
 
+	return true;
+}
+
+bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
+			  bool initiator, bool aggrmode)
+{
 	if (initiator) {
-		return ikev1_decode_peer_id_initiator(st, md, &peer);
+		return ikev1_decode_peer_id_initiator(st, md);
 	} else if (aggrmode) {
-		return ikev1_decode_peer_id_aggr_mode_responder(st, md, &peer);
+		return ikev1_decode_peer_id_aggr_mode_responder(st, md);
 	} else {
-		return ikev1_decode_peer_id_main_mode_responder(st, md, &peer);
+		return ikev1_decode_peer_id_main_mode_responder(st, md);
 	}
 }
 

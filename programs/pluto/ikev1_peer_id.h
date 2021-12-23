@@ -42,4 +42,10 @@ extern stf_status oakley_id_and_auth(struct msg_digest *md,
 extern bool ikev1_decode_peer_id(struct state *st, struct msg_digest *md,
 				 bool initiator, bool aggrmode);
 
+bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md);
+
+bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md);
+
+bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st, struct msg_digest *md);
+
 #endif
