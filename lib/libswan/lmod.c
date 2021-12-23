@@ -75,11 +75,7 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	const char *delim = "+, \t";
 	for (char *tmp = list, *elem = strsep(&tmp, delim);
 	     elem != NULL; elem = strsep(&tmp, delim)) {
-		if (enable && streq(elem, "all")) {
-			/* excludes --no-... all */
-			mod->clr = LEMPTY;
-			mod->set = info->all;
-		} else if (enable && streq(elem, "none")) {
+		if (enable && streq(elem, "none")) {
 			/* excludes --no-... none */
 			mod->clr = info->mask;
 			mod->set = LEMPTY;
@@ -88,29 +84,36 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 			const char *arg = elem;
 			/* excludes --no-... no-... */
 			bool no = enable ? eat(arg, "no-") : true;
-			int ix = enum_match(info->names, shunk1(arg));
-			lset_t bit = LEMPTY;
-			if (ix >= 0) {
-				bit = LELEM(ix);
-			} else if (info->compat != NULL) {
-				for (struct lmod_compat *c = info->compat;
+			lset_t bits = LEMPTY;
+			/* try aliases first */
+			if (info->aliases != NULL) {
+				for (struct lmod_alias *c = info->aliases;
 				     c->name != NULL; c++) {
 					if (streq(c->name, arg)) {
-						bit = c->bit;
+						bits = c->bits;
 						break;
 					}
 				}
 			}
-			if (bit == LEMPTY) {
+			/* try bit mask second */
+			if (bits == LEMPTY) {
+				int ix = enum_match(info->names, shunk1(arg));
+				if (ix >= 0) {
+					bits = LELEM(ix);
+				}
+			}
+			/* some sort of success */
+			if (bits == LEMPTY) {
 				ok = false;
 				break;
 			}
+			/* update masks */
 			if (no) {
-				mod->clr |= bit;
-				mod->set &= ~bit;
+				mod->clr |= bits;
+				mod->set &= ~bits;
 			} else {
-				mod->set |= bit;
-				mod->clr &= ~bit;
+				mod->set |= bits;
+				mod->clr &= ~bits;
 			}
 		} /* else ignore empty ... */
 	}

@@ -42,16 +42,15 @@ bool lmod_is_clr(lmod_t lhs, lset_t set);
 bool lmod_empty(lmod_t mod);
 void lmod_merge(lmod_t *lhs, lmod_t rhs);
 
-struct lmod_compat {
+struct lmod_alias {
 	const char *name;
-	lset_t bit;
+	lset_t bits;
 };
 
 struct lmod_info {
 	const enum_names *names;
-	lset_t all;
 	lset_t mask;
-	struct lmod_compat *compat;
+	struct lmod_alias *aliases;
 };
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,

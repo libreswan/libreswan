@@ -10,6 +10,7 @@ v4.6 (unreleased)
 * pluto: Change default replay-window from 32 to 128 [Paul]
 * pluto: Change default esn= to "either" and prefer "yes" [Paul]
 * pluto: Disable esn when replay-window=0 [Paul]
+* pluto: Drop obsolete debug options such as crypto-low [Andrew]
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]

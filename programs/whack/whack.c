@@ -2434,15 +2434,21 @@ int main(int argc, char **argv)
 		{
 			bool enable = (c == DBGOPT_DEBUG);
 			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
-				fprintf(stderr, "debug options (* included in 'all'):\n");
+				fprintf(stderr, "aliases:\n");
+				for (struct lmod_alias *a = debug_lmod_info.aliases;
+				     a->name != NULL; a++) {
+					JAMBUF(buf) {
+						jam(buf, "  %s: ", a->name);
+						jam_lset_short(buf, debug_lmod_info.names, "+", a->bits);
+						fprintf(stderr, PRI_SHUNK"\n",
+							pri_shunk(jambuf_as_shunk(buf)));
+					}
+				}
+				fprintf(stderr, "bits:\n");
 				for (long e = next_enum(&debug_names, -1);
 				     e != -1; e = next_enum(&debug_names, e)) {
 					JAMBUF(buf) {
-						if (LELEM(e) & DBG_ALL) {
-							jam(buf, " *");
-						} else {
-							jam(buf, "  ");
-						}
+						jam(buf, "  ");
 						jam_enum_short(buf, &debug_names, e);
 						const char *help = enum_name(&debug_help, e);
 						if (help != NULL) {

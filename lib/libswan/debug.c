@@ -65,36 +65,16 @@ const enum_names debug_names = {
 	NULL,
 };
 
-struct lmod_compat debug_compat[] = {
-	{ "klips", DBG_BASE },
-	{ "netkey", DBG_BASE },
-	{ "control", DBG_BASE, },
-	{ "controlmore", DBG_BASE, },
-	{ "dns", DBG_BASE, },
-	{ "dpd", DBG_BASE, },
-	{ "emitting", DBG_BASE, },
-	{ "kernel", DBG_BASE, },
-	{ "lifecycle", DBG_BASE, },
-	{ "nattraversal", DBG_BASE, },
-	{ "oppo", DBG_BASE, },
-	{ "oppoinfo", DBG_BASE, },
-	{ "parsing", DBG_BASE, },
-	{ "proposal-parser", DBG_BASE, },
-	{ "raw", DBG_BASE, },
-	{ "retransmits", DBG_BASE, },
-	{ "x509", DBG_BASE, },
-	{ "xauth", DBG_BASE, },
-
-	{ "crypt-low", DBG_CRYPT, },
-
+struct lmod_alias debug_aliases[] = {
+	{ "all", DBG_ALL, },
+	{ "tmi", DBG_ALL|DBG_TMI, },
 	{ NULL, LEMPTY, },
 };
 
 const struct lmod_info debug_lmod_info = {
 	.names = &debug_names,
-	.all = DBG_ALL,
 	.mask = DBG_MASK,
-	.compat = debug_compat,
+	.aliases = debug_aliases,
 };
 
 const struct enum_names debug_help = {
