@@ -1252,7 +1252,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			/* conns created as aliases from the same source have identical ID/CA */
 			if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
 				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+				      match_id("    ", &c->spd.that.id, &d->spd.that.id, &wildcards) &&
 				      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen))) {
 					connection_buf cb;
 					dbg("    skipping "PRI_CONNECTION" does not match IDs or CA of current connection \"%s\"",

@@ -381,31 +381,38 @@ bool same_id(const struct id *a, const struct id *b)
 
 /* compare two struct id values, DNs can contain wildcards */
 
-bool match_id(const struct id *a, const struct id *b, int *wildcards)
+bool match_id(const char *prefix, const struct id *a, const struct id *b,
+	      int *wildcards_out)
 {
 	bool match;
-
-	*wildcards = 0;
+	int wildcards;
 
 	if (b->kind == ID_NONE) {
-		*wildcards = MAX_WILDCARDS;
+		wildcards = MAX_WILDCARDS;
 		match = true;
 	} else if (a->kind != b->kind) {
 		/* should this allow SAN match of cert with right ID_DER_ASN1_DN? */
+		wildcards = MAX_WILDCARDS;
 		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
-		match = match_dn_any_order_wild(a->name, b->name, wildcards);
+		match = match_dn_any_order_wild(prefix, a->name, b->name, &wildcards);
+	} else if (same_id(a, b)) {
+		wildcards = 0;
+		match = true;
 	} else {
-		match = same_id(a, b);
+		wildcards = MAX_WILDCARDS;
+		match = false;
 	}
 
 	if (DBGP(DBG_BASE)) {
 		id_buf buf;
-		DBG_log("   match_id a=%s", str_id(a, &buf));
-		DBG_log("            b=%s", str_id(b, &buf));
-		DBG_log("   results  %s", match ? "matched" : "fail");
+		DBG_log("%smatch_id a=%s", prefix, str_id(a, &buf));
+		DBG_log("%s         b=%s", prefix, str_id(b, &buf));
+		DBG_log("%sresults  %s wildcards=%d",
+			prefix, match ? "matched" : "fail", wildcards);
 	}
 
+	*wildcards_out = wildcards;
 	return match;
 }
 
@@ -480,7 +487,7 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
  * match an equal number of RDNs, in any order
  * if wildcards != NULL, wildcard matches are enabled
  */
-static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wildcards)
+static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_t b, int *const wildcards)
 {
 	dn_buf a_dnbuf = { "", };
 	dn_buf b_dnbuf = { "", };
@@ -499,7 +506,7 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 	 * encoded string and that can contain UTF-8 (i.e.,
 	 * !isprint()).  Strip that out before logging.
 	 */
-	dbg("matching unordered DNs A: '%s' B: '%s'", abuf, bbuf);
+	dbg("%smatching unordered DNs A: '%s' B: '%s'", prefix, abuf, bbuf);
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);
@@ -536,22 +543,22 @@ static bool match_dn_unordered(const chunk_t a, const chunk_t b, int *const wild
 
 	CERT_DestroyName(a_name);
 	CERT_DestroyName(b_name);
-	dbg("%s matched: %d, rdn_num: %d, wc %d",
-	    __func__, matched, rdn_num, wildcards ? *wildcards : 0);
+	dbg("%s%s matched: %d, rdn_num: %d, wc %d",
+	    prefix, __func__, matched, rdn_num, wildcards ? *wildcards : 0);
 
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
 
-bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards)
+bool match_dn_any_order_wild(const char *prefix, chunk_t a, chunk_t b, int *wildcards)
 {
 	bool ret = match_dn(a, b, wildcards);
 
 	if (!ret) {
-		dbg("%s: not an exact match, now checking any RDN order with %d wildcards",
-		    __func__, *wildcards);
+		dbg("%s%s: not an exact match, now checking any RDN order with %d wildcards",
+		    prefix, __func__, *wildcards);
 		/* recount wildcards */
 		*wildcards = 0;
-		ret = match_dn_unordered(a, b, wildcards);
+		ret = match_dn_unordered(prefix, a, b, wildcards);
 	}
 	return ret;
 }

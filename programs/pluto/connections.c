@@ -2567,7 +2567,8 @@ struct connection *instantiate(struct connection *c,
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
-		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(peer_id, &d->spd.that.id, &wildcards));
+		passert(d->spd.that.id.kind == ID_FROMCERT ||
+			match_id("", peer_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *peer_id;
 		d->spd.that.has_id_wildcards = false;
 	}
@@ -3561,7 +3562,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 						       const struct id *tarzan_id,
 						       bool *get_id_from_cert)
 {
-#define dbg_rhc(FORMAT, ...) dbg("refine_host_connection:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
+#define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
 	struct connection *c = st->st_connection;
 
@@ -3633,7 +3634,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			indent = 2;
 			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
 				pri_connection(d, &b2), pri_connection(c, &b1));
-			indent++;
+			indent = 3;
 
 			/*
 			 * First all the "easy" skips.
@@ -3836,22 +3837,12 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 * is better): 0 for a perfect match, non-zero
 			 * when things like certificate wild cards
 			 * were used.
-			 *
-			 * XXX: What's with the .connalias test?
-			 *
-			 * It gives a perfect score to a connection
-			 * that is a connalias of original connection
-			 * (at one point a bug ment it got a random
-			 * score).
 			 */
 
 			int wildcards = 0;
-			bool matching_peer_id = match_id(peer_id,
-							 &d->spd.that.id,
-							 &wildcards);
-			dbg_rhc("matching_peer_id=%s, wildcards=%d",
-				bool_str(matching_peer_id), wildcards);
-			indent++;
+			bool matching_peer_id =
+				match_id("rhc:       ",
+					 peer_id, &d->spd.that.id, &wildcards);
 
 			/*
 			 * Check if peer_id matches, exactly or after

@@ -643,7 +643,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 		}
 
 		int wildcards;  /* value ignored */
-		bool m = match_dn_any_order_wild(end_cert_der_subject, peer_id->name, &wildcards);
+		bool m = match_dn_any_order_wild("", end_cert_der_subject, peer_id->name, &wildcards);
 		if (!m) {
 			/*
 			 * XXX: can these two errors be merged?  The

@@ -387,7 +387,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int wildcards; /* value ignored */
-		if (!match_id(&key->id, &s->remote->id, &wildcards)) {
+		if (!match_id("  ", &key->id, &s->remote->id, &wildcards)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));

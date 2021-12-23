@@ -184,7 +184,6 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 						    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL,
 						    &get_id_from_cert);
 
-
 	/* check for certificates */
 
 	if (st->st_v1_peer_alt_id) {

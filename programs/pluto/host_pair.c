@@ -206,7 +206,7 @@ struct connection *next_host_pair_connection(const ip_address local,
 				connection_buf cb;
 				address_buf lb, rb;
 				dbg("  host_pair: %s->%s matches "PRI_CONNECTION,
-				    str_address(&local, &lb), str_address(&remote, &rb),
+				    str_address(&remote, &rb), str_address(&local, &lb),
 				    pri_connection(hp->connections, &cb));
 				break;
 			}
