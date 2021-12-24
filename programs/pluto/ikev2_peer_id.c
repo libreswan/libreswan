@@ -66,26 +66,35 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 *
 	 * XXX: Does this overlap with GET_ID_FROM_CERT?  Possibly,
 	 * but for AUTHBY_NULL, that check isn't really made.
+	 *
+	 * XXX: must_switch should be handled in-situ, it isn't going
+	 * to switch.
 	 */
+
+	/* check for certificates; XXX: duplicate comment+code? */
+
 	bool remote_cert_matches_id = false;
 	bool must_switch = false;
 	struct id remote_cert_id = empty_id;
 	if (ike->sa.st_remote_certs.verified != NULL) {
 		struct connection *c = (r == NULL ? ike->sa.st_connection : r);
+
+		const struct id *remote_id = &c->spd.that.id;
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id, &remote_cert_id);
+					     remote_id, &remote_cert_id);
+
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
 			remote_cert_matches_id = true;
+		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-			if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-				diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
-				llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
-				must_switch = true;
-			} else {
-				llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-			}
+			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
+			llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+			must_switch = true;
 		}
 	}
 

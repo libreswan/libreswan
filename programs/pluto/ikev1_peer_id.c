@@ -58,44 +58,49 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 		replace_connection_that_id(c, peer);
 	}
 
-	/* check for certificates */
+	/* check for certificates; XXX: duplicate comment+code? */
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool peer_alt_id = false;
+	bool remote_cert_matches_id = false;
+	struct id remote_cert_id = empty_id;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");
 	} else if (st->st_remote_certs.verified == NULL) {
 		dbg("Peer ID has no verified certs");
 	} else {
+		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
-		/* end cert is at the front */
 		CERTCertificate *end_cert = certs->cert;
 		log_state(RC_LOG, st, "certificate verified OK: %s",
 			  end_cert->subjectName);
 
-		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
-			/* XXX: !main-mode-responder: that.ID unchanged */
-		} else {
-			struct id cert_id = empty_id;
-			/* XXX: !main-mode-responder: can't change ID */
-			const struct id remote_id = c->spd.that.id;
-			diag_t d = match_end_cert_id(certs, &remote_id, &cert_id);
-			if (d != NULL) {
-				/* cannot switch connection so fail */
-				dbg("SAN ID did not match");
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-				log_state(RC_LOG, st,
-					  "X509: CERT payload does not match connection ID");
-				return false;
-			}
-			dbg("SAN ID matched, updating that.ID");
+		/* XXX: initiator: can't change ID */
+		const struct id *remote_id = &c->spd.that.id;
+		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
+
+		if (d == NULL) {
+			dbg("SAN ID matched, updating that.cert");
 			/* XXX: !main-mode-responder: ???? */
-			if (cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &cert_id);
+			if (remote_cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &remote_cert_id);
 			}
+		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+#if 0
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+#else
+			pfree_diag(&d);
+#endif
+		} else {
+			/* cannot switch connection so fail */
+			dbg("SAN ID did not match");
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			log_state(RC_LOG, st,
+				  "X509: CERT payload does not match connection ID");
+			return false;
 		}
-		peer_alt_id = true;
+		remote_cert_matches_id = true;
 	}
 
 	/*
@@ -107,7 +112,7 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 
-	if (!peer_alt_id &&
+	if (!remote_cert_matches_id &&
 	    !same_id(&c->spd.that.id, peer) &&
 	    c->spd.that.id.kind != ID_FROMCERT) {
 		id_buf expect;
@@ -149,47 +154,52 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 		replace_connection_that_id(c, &peer);
 	}
 
-	/* check for certificates */
+	/* check for certificates; XXX: duplicate comment+code? */
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool peer_alt_id = false;
+	bool remote_cert_matches_id = false;
+	struct id remote_cert_id = empty_id;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");
 	} else if (st->st_remote_certs.verified == NULL) {
 		dbg("Peer ID has no verified certs");
 	} else {
+		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
-		/* end cert is at the front */
 		CERTCertificate *end_cert = certs->cert;
 		log_state(RC_LOG, st, "certificate verified OK: %s",
 			  end_cert->subjectName);
 
-		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
-			/* XXX: !main-mode-responder: that.ID unchanged */
-		} else {
-			struct id cert_id = empty_id;
-			/* XXX: !main-mode-responder: can't change ID */
-			const struct id remote_id = c->spd.that.id;
-			diag_t d = match_end_cert_id(certs, &remote_id, &cert_id);
-			if (d != NULL) {
-				/* cannot switch connection so fail */
-				dbg("SAN ID did not match");
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-				log_state(RC_LOG, st,
-					  "X509: CERT payload does not match connection ID");
-				return false;
-			}
-			dbg("SAN ID matched, updating that.ID");
+		/* XXX: aggr-mode-responder: can't change ID */
+		const struct id *remote_id = &c->spd.that.id;
+		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
+
+		if (d == NULL) {
+			dbg("SAN ID matched, updating that.cert");
 			/* XXX: !main-mode-responder: ???? */
-			if (cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &cert_id);
+			if (remote_cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &remote_cert_id);
 			}
+		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+#if 0
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+#else
+			pfree_diag(&d);
+#endif
+		} else {
+			/* cannot switch connection so fail */
+			dbg("SAN ID did not match");
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			log_state(RC_LOG, st,
+				  "X509: CERT payload does not match connection ID");
+			return false;
 		}
-		peer_alt_id = true;
+		remote_cert_matches_id = true;
 	}
 
-	st->st_v1_aggr_mode_responder_found_peer_id = peer_alt_id;
+	st->st_v1_aggr_mode_responder_found_peer_id = remote_cert_matches_id;
 	return true;
 }
 
@@ -250,16 +260,17 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 						    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL,
 						    &get_id_from_cert);
 
-	/* check for certificates */
+	/* check for certificates; XXX: duplicate comment+code? */
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool peer_alt_id = false;
+	bool remote_cert_matches_id = false;
+	struct id remote_cert_id = empty_id;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");
 	} else if (st->st_remote_certs.verified == NULL) {
 		dbg("Peer ID has no verified certs");
 	} else {
-		/* end cert is at the front */
+		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		log_state(RC_LOG, st, "certificate verified OK: %s",
@@ -267,29 +278,14 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 		/* going to switch? */
 		struct connection *c = r != NULL ? r : st->st_connection;
+		/* XXX: main-mode-responder: can change ID */
+		const struct id *remote_id = (c->spd.that.id.kind == ID_FROMCERT ||
+					      get_id_from_cert ||
+					      c->spd.that.has_id_wildcards) ? peer : &c->spd.that.id;
+		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
 
-		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
-			/* XXX: main-mode-responder: that.ID updated */
-			if (c->spd.that.id.kind == ID_FROMCERT) {
-				/* breaks API, connection modified by %fromcert */
-				replace_connection_that_id(c, peer);
-			}
-		} else {
-			struct id remote_cert_id = empty_id;
-			/* XXX: presumably PEER contain's the cert's ID */
-			/* XXX: main-mode-responder: can change ID */
-			const struct id *remote_id = (c->spd.that.id.kind == ID_FROMCERT ||
-						      get_id_from_cert ||
-						      c->spd.that.has_id_wildcards) ? peer : &c->spd.that.id;
-			diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
-			if (d != NULL) {
-				dbg("SAN ID did not match");
-				/* already switched connection so fail */
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-				return false;
-			}
-			dbg("SAN ID matched, updating that.ID");
+		if (d == NULL) {
+			dbg("SAN ID matched, updating that.cert");
 			/* XXX: main-mode-responder: update that.ID */
 			if (remote_cert_id.kind != ID_NONE) {
 				replace_connection_that_id(c, &remote_cert_id);
@@ -297,8 +293,26 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 				/* breaks API, connection modified by %fromcert */
 				replace_connection_that_id(c, peer);
 			}
+		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+#if 0
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+#else
+			pfree_diag(&d);
+#endif
+			/* XXX: main-mode-responder: that.ID updated */
+			if (c->spd.that.id.kind == ID_FROMCERT) {
+				/* breaks API, connection modified by %fromcert */
+				replace_connection_that_id(c, peer);
+			}
+		} else {
+			dbg("SAN ID did not match");
+			/* already switched connection so fail */
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			return false;
 		}
-		peer_alt_id = true;
+		remote_cert_matches_id = true;
 	}
 
 	if (r == NULL) {
@@ -307,7 +321,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		    str_id(peer, &buf));
 		/* can we continue with what we had? */
 		struct connection *c = st->st_connection;
-		if (!peer_alt_id &&
+		if (!remote_cert_matches_id &&
 		    !same_id(&c->spd.that.id, peer) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
