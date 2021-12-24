@@ -86,12 +86,8 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-#if 0
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-#else
-			pfree_diag(&d);
-#endif
+			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
 		} else {
 			/* cannot switch connection so fail */
 			dbg("SAN ID did not match");
@@ -182,12 +178,8 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-#if 0
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-#else
-			pfree_diag(&d);
-#endif
+			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
 		} else {
 			/* cannot switch connection so fail */
 			dbg("SAN ID did not match");
@@ -295,12 +287,8 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-#if 0
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-#else
-			pfree_diag(&d);
-#endif
+			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
 			/* XXX: main-mode-responder: that.ID updated */
 			if (c->spd.that.id.kind == ID_FROMCERT) {
 				/* breaks API, connection modified by %fromcert */
