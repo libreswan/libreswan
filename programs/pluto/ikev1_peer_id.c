@@ -37,7 +37,6 @@
 #include "ike_alg_hash.h"
 #include "secrets.h"
 
-static bool v1_verify_certs(struct msg_digest *md);
 static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer);
 
 bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
@@ -60,10 +59,53 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 	}
 
 	/* check for certificates */
-	if (!v1_verify_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
-		/* cannot switch connection so fail */
-		return false;
+
+	if (st->st_v1_peer_alt_id) {
+		/* if we already verified ID, no need to do it again */
+		dbg("Peer ID was already confirmed");
+	} else if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
+		dbg("Peer ID has no certs");
+	} else if (st->st_remote_certs.verified == NULL) {
+		dbg("Peer ID has no verified certs");
+	} else {
+		struct certs *certs = st->st_remote_certs.verified;
+		/* end cert is at the front */
+		CERTCertificate *end_cert = certs->cert;
+		log_state(RC_LOG, st, "certificate verified OK: %s",
+			  end_cert->subjectName);
+
+		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
+			st->st_v1_peer_alt_id = true;
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: !main-mode-responder: that.ID unchanged */
+		} else {
+			struct id cert_id = empty_id;
+			/* XXX: !main-mode-responder: can't change ID */
+			const struct id remote_id = c->spd.that.id;
+			diag_t d = match_end_cert_id(certs, &remote_id, &cert_id);
+			if (d != NULL) {
+				/* cannot switch connection so fail */
+				dbg("SAN ID did not match");
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+				log_state(RC_LOG, st,
+					  "X509: CERT payload does not match connection ID");
+				return false;
+			}
+			st->st_v1_peer_alt_id = true;
+			dbg("SAN ID matched, updating that.cert");
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: !main-mode-responder: ???? */
+			if (cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &cert_id);
+			}
+		}
 	}
 
 	/*
@@ -118,10 +160,53 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 	}
 
 	/* check for certificates */
-	if (!v1_verify_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload does not match connection ID");
-		/* cannot switch connection so fail */
-		return false;
+
+	if (st->st_v1_peer_alt_id) {
+		/* if we already verified ID, no need to do it again */
+		dbg("Peer ID was already confirmed");
+	} else if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
+		dbg("Peer ID has no certs");
+	} else if (st->st_remote_certs.verified == NULL) {
+		dbg("Peer ID has no verified certs");
+	} else {
+		struct certs *certs = st->st_remote_certs.verified;
+		/* end cert is at the front */
+		CERTCertificate *end_cert = certs->cert;
+		log_state(RC_LOG, st, "certificate verified OK: %s",
+			  end_cert->subjectName);
+
+		if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
+			st->st_v1_peer_alt_id = true;
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: !main-mode-responder: that.ID unchanged */
+		} else {
+			struct id cert_id = empty_id;
+			/* XXX: !main-mode-responder: can't change ID */
+			const struct id remote_id = c->spd.that.id;
+			diag_t d = match_end_cert_id(certs, &remote_id, &cert_id);
+			if (d != NULL) {
+				/* cannot switch connection so fail */
+				dbg("SAN ID did not match");
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+				log_state(RC_LOG, st,
+					  "X509: CERT payload does not match connection ID");
+				return false;
+			}
+			st->st_v1_peer_alt_id = true;
+			dbg("SAN ID matched, updating that.cert");
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: !main-mode-responder: ???? */
+			if (cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &cert_id);
+			}
+		}
 	}
 
 	return true;
@@ -210,6 +295,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
 			}
 			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: main-mode-responder: that.ID updated */
 			if (c->spd.that.id.kind == ID_FROMCERT) {
 				/* breaks API, connection modified by %fromcert */
 				replace_connection_that_id(c, peer);
@@ -217,27 +303,30 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		} else {
 			struct id remote_cert_id = empty_id;
 			/* XXX: presumably PEER contain's the cert's ID */
+			/* XXX: main-mode-responder: can change ID */
 			const struct id *remote_id = (c->spd.that.id.kind == ID_FROMCERT ||
 						      get_id_from_cert ||
 						      c->spd.that.has_id_wildcards) ? peer : &c->spd.that.id;
 			diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
 			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 				dbg("SAN ID did not match");
+				/* already switched connection so fail */
+				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 				return false;
 			}
+			st->st_v1_peer_alt_id = true;
 			dbg("SAN ID matched, updating that.cert");
+			if (c->spd.that.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
+			}
+			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
+			/* XXX: main-mode-responder: update that.ID */
 			if (remote_cert_id.kind != ID_NONE) {
 				replace_connection_that_id(c, &remote_cert_id);
 			} else if (c->spd.that.id.kind == ID_FROMCERT) {
 				/* breaks API, connection modified by %fromcert */
 				replace_connection_that_id(c, peer);
 			}
-			st->st_v1_peer_alt_id = true;
-			if (c->spd.that.cert.nss_cert != NULL) {
-				CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
-			}
-			c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 		}
 	}
 
@@ -426,55 +515,4 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 	if (r == STF_OK)
 		dbg("authentication succeeded");
 	return r;
-}
-
-bool v1_verify_certs(struct msg_digest *md)
-{
-	struct state *st = md->v1_st;
-	struct ike_sa *ike = ike_sa(st, HERE);
-	struct connection *c = st->st_connection;
-	passert(st->st_ike_version == IKEv1);
-
-	/* if we already verified ID, no need to do it again */
-	if (st->st_v1_peer_alt_id) {
-		dbg("Peer ID was already confirmed");
-		return true;
-	}
-
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
-	if (cert_payloads == NULL) {
-		return true;
-	}
-
-	struct certs *certs = ike->sa.st_remote_certs.verified;
-	if (certs == NULL) {
-		return true;
-	}
-
-	/* end cert is at the front */
-	CERTCertificate *end_cert = certs->cert;
-	log_state(RC_LOG, st,
-		  "certificate verified OK: %s", end_cert->subjectName);
-
-	if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-		dbg("SAN ID matching skipped due to policy (require-id-on-certificate=no)");
-	} else {
-		struct id cert_id = empty_id;
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &cert_id);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			return false;
-		}
-		if (cert_id.kind != ID_NONE) {
-			replace_connection_that_id(c, &cert_id);
-		}
-		dbg("SAN ID matched, updating that.cert");
-	}
-
-	st->st_v1_peer_alt_id = true;
-	if (c->spd.that.cert.nss_cert != NULL) {
-		CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
-	}
-	c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
-	return true;
 }
