@@ -89,17 +89,13 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 					  "X509: CERT payload does not match connection ID");
 				return false;
 			}
-			dbg("SAN ID matched, updating that.cert");
+			dbg("SAN ID matched, updating that.ID");
 			/* XXX: !main-mode-responder: ???? */
 			if (cert_id.kind != ID_NONE) {
 				replace_connection_that_id(c, &cert_id);
 			}
 		}
 		peer_alt_id = true;
-		if (c->spd.that.cert.nss_cert != NULL) {
-			CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
-		}
-		c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	}
 
 	/*
@@ -184,17 +180,13 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 					  "X509: CERT payload does not match connection ID");
 				return false;
 			}
-			dbg("SAN ID matched, updating that.cert");
+			dbg("SAN ID matched, updating that.ID");
 			/* XXX: !main-mode-responder: ???? */
 			if (cert_id.kind != ID_NONE) {
 				replace_connection_that_id(c, &cert_id);
 			}
 		}
 		peer_alt_id = true;
-		if (c->spd.that.cert.nss_cert != NULL) {
-			CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
-		}
-		c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	}
 
 	st->st_v1_aggr_mode_responder_found_peer_id = peer_alt_id;
@@ -297,7 +289,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 				return false;
 			}
-			dbg("SAN ID matched, updating that.cert");
+			dbg("SAN ID matched, updating that.ID");
 			/* XXX: main-mode-responder: update that.ID */
 			if (remote_cert_id.kind != ID_NONE) {
 				replace_connection_that_id(c, &remote_cert_id);
@@ -307,10 +299,6 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			}
 		}
 		peer_alt_id = true;
-		if (c->spd.that.cert.nss_cert != NULL) {
-			CERT_DestroyCertificate(c->spd.that.cert.nss_cert);
-		}
-		c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	}
 
 	if (r == NULL) {
