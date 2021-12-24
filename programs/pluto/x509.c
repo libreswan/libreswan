@@ -716,12 +716,6 @@ bool v1_decode_certs(struct msg_digest *md)
 	 */
 	st->st_remote_certs.processed = true;
 
-	/* if we already verified ID, no need to do it again */
-	if (st->st_v1_peer_alt_id) {
-		dbg("Peer ID was already confirmed");
-		return true;
-	}
-
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_CERT];
 	if (cert_payloads == NULL) {
 		return true;

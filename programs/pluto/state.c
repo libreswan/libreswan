@@ -3173,7 +3173,6 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
 		  pri_connection(new, &nb));
 	st->st_connection = new;
-	st->st_v1_peer_alt_id = false; /* must be rechecked against new 'that' */
 	rehash_state_connection(st);
 	connection_delete_unused_instance(&old, st,
 					  st->st_logger->global_whackfd);

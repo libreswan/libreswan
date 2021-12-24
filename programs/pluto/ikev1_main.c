@@ -1181,11 +1181,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * Mode Responder.
 	 */
 
-	if (!st->st_v1_peer_alt_id) {
-		if (!ikev1_decode_peer_id_main_mode_responder(st, md)) {
-			dbg("Peer ID failed to decode");
-			return STF_FAIL + INVALID_ID_INFORMATION;
-		}
+	if (!ikev1_decode_peer_id_main_mode_responder(st, md)) {
+		dbg("Peer ID failed to decode");
+		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
 	/* HASH_I or SIG_I */
@@ -1400,11 +1398,10 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 */
 
 	struct connection *c = st->st_connection;
-	if (!st->st_v1_peer_alt_id) {
-		if (!ikev1_decode_peer_id_initiator(st, md)) {
-			dbg("Peer ID failed to decode");
-			return STF_FAIL + INVALID_ID_INFORMATION;
-		}
+
+	if (!ikev1_decode_peer_id_initiator(st, md)) {
+		dbg("Peer ID failed to decode");
+		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
 	passert(c == st->st_connection); /* no switch */

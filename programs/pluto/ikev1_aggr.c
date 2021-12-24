@@ -853,9 +853,11 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
-	if (!v1_decode_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
-		return STF_FAIL + INVALID_ID_INFORMATION;
+	if (!st->st_v1_peer_alt_id) {
+		if (!v1_decode_certs(md)) {
+			log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
+			return STF_FAIL + INVALID_ID_INFORMATION;
+		}
 	}
 
 	/*
