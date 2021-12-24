@@ -60,7 +60,7 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 
 	/* check for certificates */
 
-	pexpect(st->st_v1_peer_alt_id == false);
+	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool peer_alt_id = false;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");
@@ -155,7 +155,7 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 	/* check for certificates */
 
-	pexpect(st->st_v1_peer_alt_id == false);
+	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool peer_alt_id = false;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");
@@ -197,7 +197,7 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 		c->spd.that.cert.nss_cert = CERT_DupCertificate(certs->cert);
 	}
 
-	st->st_v1_peer_alt_id = peer_alt_id;
+	st->st_v1_aggr_mode_responder_found_peer_id = peer_alt_id;
 	return true;
 }
 
@@ -260,7 +260,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 	/* check for certificates */
 
-	pexpect(st->st_v1_peer_alt_id == false);
+	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool peer_alt_id = false;
 	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
 		dbg("Peer ID has no certs");

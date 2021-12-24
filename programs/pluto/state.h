@@ -497,12 +497,13 @@ struct state {
 	/*
 	 * Handle on all the certs extracted from the cert payload and
 	 * then verified using the CAs in the NSS Certificate DB.
-	 * When the state is deleted do they get released.  We suspect
-	 * that they need to lurk in the NSS DB so that the CRL code
-	 * can find them.  The first cert in the list is always the
-	 * end or EE cert.
+	 * When the state is deleted they get released.
+	 *
+	 * We suspect that they continue to lurk in NSS so that the
+	 * CRL code can find them.  The first cert in the list is
+	 * always the end or EE cert.
 	 */
-	bool st_v1_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
+	bool st_v1_aggr_mode_responder_found_peer_id;	/* scratchpad for writing we found alt peer id in CERT */
 	struct {
 		bool processed;		/* do this once, may not be any */
 		bool harmless;		/* something nasty */
