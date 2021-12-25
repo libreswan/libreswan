@@ -74,12 +74,38 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	bool remote_cert_matches_id = false;
-	bool must_switch = false;
 	struct id remote_cert_id = empty_id;
 	if (ike->sa.st_remote_certs.verified != NULL) {
 		struct connection *c = (r == NULL ? ike->sa.st_connection : r);
 
-		const struct id *remote_id = &c->spd.that.id;
+		/* end cert is at the front; move to where? */
+		struct certs *certs = ike->sa.st_remote_certs.verified;
+		CERTCertificate *end_cert = certs->cert;
+		dbg("rhc: comparing certifcate: %s", end_cert->subjectName);
+
+		/*
+		 * XXX: If this is going to be instantiated using
+		 * rw_instantiate() further down then need to use an
+		 * ID that will match.
+		 */
+		const struct id *remote_id;
+		const char *id_from;
+		if (r != NULL &&
+		    r != ike->sa.st_connection &&
+		    (r->kind == CK_TEMPLATE || r->kind == CK_GROUP)) {
+			/* XXX: pexpect() from  instantiate() */
+			int wildcards; /* value ignored */
+			pexpect(r->spd.that.id.kind == ID_FROMCERT ||
+				match_id("", &peer_id, &r->spd.that.id, &wildcards));
+			remote_id = &peer_id;
+			id_from = "peer";
+		} else {
+			remote_id = &c->spd.that.id;
+			id_from = "connection";
+		}
+		id_buf idb;
+		dbg("rhc: to %s id: %s", id_from, str_id(remote_id, &idb));
+
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
 					     remote_id, &remote_cert_id);
 
@@ -94,7 +120,9 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
 			llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
-			must_switch = true;
+			id_buf peer_idb;
+			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+				    str_id(&peer_id, &peer_idb));
 		}
 	}
 
@@ -123,12 +151,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			id_buf peer_idb;
 			DBG_log("no suitable connection for peer '%s'",
 				str_id(&peer_id, &peer_idb));
-		}
-		/* can we continue with what we had? */
-		if (must_switch) {
-			id_buf peer_idb;
-			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-				    str_id(&peer_id, &peer_idb));
 		}
 		/* if X.509, we should have valid peer/san */
 		if (ike->sa.st_remote_certs.verified != NULL && !remote_cert_matches_id) {
@@ -174,10 +196,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 		/* r is an improvement on c -- replace */
 		connswitch_state_and_log(&ike->sa, r);
-	} else if (must_switch) {
-		id_buf peer_idb;
-		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
-			    str_id(&peer_id, &peer_idb));
 	}
 
 	/*
