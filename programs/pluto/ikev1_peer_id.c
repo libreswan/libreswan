@@ -202,8 +202,8 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md)
 {
-	struct id peer[1]; /* pointer hack */
-	if (!decode_peer_id(st, md, peer)) {
+	struct id peer_id; /* pointer hack */
+	if (!decode_peer_id(st, md, &peer_id)) {
 		/* already logged */
 		return false;
 	}
@@ -248,7 +248,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 	bool get_id_from_cert;
 	struct connection *r =
-		refine_host_connection_on_responder(st, this_authbys, peer,
+		refine_host_connection_on_responder(st, this_authbys, &peer_id,
 						    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL,
 						    &get_id_from_cert);
 
@@ -270,10 +270,30 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 		/* going to switch? */
 		struct connection *c = r != NULL ? r : st->st_connection;
-		/* XXX: main-mode-responder: can change ID */
-		const struct id *remote_id = (c->spd.that.id.kind == ID_FROMCERT ||
-					      get_id_from_cert ||
-					      c->spd.that.has_id_wildcards) ? peer : &c->spd.that.id;
+
+		/*
+		 * XXX: If this is going to be instantiated using
+		 * rw_instantiate() further down then need to use an
+		 * ID that will match.
+		 */
+		const struct id *remote_id;
+		const char *id_from;
+		if (r != NULL &&
+		    r != st->st_connection &&
+		    (r->kind == CK_TEMPLATE || r->kind == CK_GROUP)) {
+			/* XXX: pexpect() from  instantiate() */
+			int wildcards; /* value ignored */
+			pexpect(r->spd.that.id.kind == ID_FROMCERT ||
+				match_id("", &peer_id, &r->spd.that.id, &wildcards));
+			remote_id = &peer_id;
+			id_from = "peer";
+		} else {
+			remote_id = &c->spd.that.id;
+			id_from = "connection";
+		}
+		id_buf idb;
+		dbg("rhc: to %s id: %s", id_from, str_id(remote_id, &idb));
+
 		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
 
 		if (d == NULL) {
@@ -283,7 +303,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 				replace_connection_that_id(c, &remote_cert_id);
 			} else if (c->spd.that.id.kind == ID_FROMCERT) {
 				/* breaks API, connection modified by %fromcert */
-				replace_connection_that_id(c, peer);
+				replace_connection_that_id(c, &peer_id);
 			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
@@ -292,7 +312,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			/* XXX: main-mode-responder: that.ID updated */
 			if (c->spd.that.id.kind == ID_FROMCERT) {
 				/* breaks API, connection modified by %fromcert */
-				replace_connection_that_id(c, peer);
+				replace_connection_that_id(c, &peer_id);
 			}
 		} else {
 			dbg("SAN ID did not match");
@@ -306,11 +326,11 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	if (r == NULL) {
 		id_buf buf;
 		dbg("no more suitable connection for peer '%s'",
-		    str_id(peer, &buf));
+		    str_id(&peer_id, &buf));
 		/* can we continue with what we had? */
 		struct connection *c = st->st_connection;
 		if (!remote_cert_matches_id &&
-		    !same_id(&c->spd.that.id, peer) &&
+		    !same_id(&c->spd.that.id, &peer_id) &&
 		    c->spd.that.id.kind != ID_FROMCERT) {
 			log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
 			return false;
@@ -333,15 +353,15 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 			/* instantiate it, filling in peer's ID */
 			r = rw_instantiate(r, &c->spd.that.host_addr,
-					   NULL, peer);
+					   NULL, &peer_id);
 		}
 		connswitch_state_and_log(st, r);
 	} else if (r->spd.that.has_id_wildcards) {
-		replace_connection_that_id(r, peer);
+		replace_connection_that_id(r, &peer_id);
 		r->spd.that.has_id_wildcards = false;
 	} else if (get_id_from_cert) {
 		dbg("copying ID for get_id_from_cert");
-		replace_connection_that_id(r, peer);
+		replace_connection_that_id(r, &peer_id);
 	}
 
 	return true;
