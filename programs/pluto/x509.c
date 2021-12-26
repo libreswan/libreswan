@@ -1074,11 +1074,11 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 	} else if (this->config->host.cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
-	} else if (this->sendcert == CERT_SENDIFASKED &&
+	} else if (c->local->host.sendcert == CERT_SENDIFASKED &&
 		   ike->sa.st_requested_ca != NULL) {
 		dbg("IKEv2 CERT: OK to send requested certificate");
 		sendit = true;
-	} else if (this->sendcert == CERT_ALWAYSSEND) {
+	} else if (c->local->host.sendcert == CERT_ALWAYSSEND) {
 		dbg("IKEv2 CERT: OK to send a certificate (always)");
 		sendit = true;
 	} else {

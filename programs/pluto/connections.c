@@ -482,15 +482,6 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		    this->config->leftright,
 		    str_selector_subnet_port(&this->client, &sb));
 	}
-
-	if (this->sendcert == 0) {
-		/* uninitialized (ugly hack) */
-		this->sendcert = CERT_SENDIFASKED;
-		enum_buf eb;
-		dbg("  updated %s.sendsert to %s",
-		    this->config->leftright,
-		    str_enum_short(&certpolicy_type_names, this->sendcert, &eb));
-	}
 }
 
 /*
@@ -637,7 +628,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 
 	if (this->modecfg_server || this->modecfg_client ||
 	    this->xauth_server || this->xauth_client ||
-	    this->sendcert != cert_defaultcertpolicy) {
+	    this->config->host.sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -657,7 +648,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 		if (this->xauth_client)
 			jam_string(buf, "+XC");
 
-		switch (this->sendcert) {
+		switch (this->config->host.sendcert) {
 		case CERT_NEVERSEND:
 			jam(buf, "+S-C");
 			break;
@@ -1144,8 +1135,7 @@ static int extract_end(struct connection *c,
 
 	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
-	dst->sendcert =  src->sendcert;
-
+	config_end->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 	config_end->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		llog(RC_BADID, logger,

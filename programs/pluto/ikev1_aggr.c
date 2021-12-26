@@ -288,9 +288,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->spd.this.sendcert == CERT_ALWAYSSEND));
+			   c->local->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -311,7 +311,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->spd.this.sendcert,
+			      c->local->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
@@ -611,9 +611,9 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->spd.this.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->spd.this.sendcert == CERT_ALWAYSSEND));
+			   c->local->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -634,7 +634,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->spd.this.sendcert,
+			      c->local->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
@@ -1042,8 +1042,8 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!has_preloaded_public_key(st) &&
-			(c->spd.this.sendcert == CERT_SENDIFASKED ||
-			 c->spd.this.sendcert == CERT_ALWAYSSEND));
+			(c->local->host.sendcert == CERT_SENDIFASKED ||
+			 c->local->host.sendcert == CERT_ALWAYSSEND));
 
 	dbg("aggr_outI1_tail for #%lu", st->st_serialno);
 

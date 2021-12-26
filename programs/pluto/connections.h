@@ -80,6 +80,7 @@ struct config_end {
 		enum keyword_host type;
 		enum keyword_authby authby;
 		cert_t cert;			/* end certificate */
+		enum certpolicy sendcert;	/* whether or not to send the certificate */
 	} host;
 };
 
@@ -255,7 +256,6 @@ struct end {
 	bool has_client;
 	bool has_id_wildcards;
 
-	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 	ckaid_t *ckaid;
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
