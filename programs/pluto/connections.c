@@ -144,7 +144,6 @@ static void delete_end(struct end *e)
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
-	pfreeany(e->ckaid);
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt, HERE);
 }
@@ -258,6 +257,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
 			}
 			free_chunk_content(&end->host.ca);
+			pfreeany(end->host.ckaid);
 		}
 		pfree(c->root_config);
 	}
@@ -740,9 +740,6 @@ void unshare_connection_end(struct end *e)
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
 	e->virt = virtual_ip_addref(e->virt, HERE);
-	if (e->ckaid != NULL) {
-		e->ckaid = clone_thing(*e->ckaid, "ckaid");
-	}
 	pexpect(e->sec_label.ptr == NULL);
 }
 
@@ -986,7 +983,7 @@ static int extract_end(struct connection *c,
 		ckaid_buf ckb;
 		dbg("saving %s CKAID %s extracted from raw %s public key",
 		    leftright, str_ckaid(&ckaid, &ckb), type->name);
-		dst->ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
+		config_end->host.ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
 		type->free_pubkey_content(&pkc);
 		/* try to pre-load the private key */
 		bool load_needed;
@@ -994,12 +991,12 @@ static int extract_end(struct connection *c,
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",
-			    leftright, str_ckaid(dst->ckaid, &ckb), err);
+			    leftright, str_ckaid(config_end->host.ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				    "loaded private key matching %s CKAID %s",
-				    leftright, str_ckaid(dst->ckaid, &ckb));
+				    leftright, str_ckaid(config_end->host.ckaid, &ckb));
 		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
@@ -1016,7 +1013,7 @@ static int extract_end(struct connection *c,
 		 * Always save the CKAID so lazy load of the private
 		 * key will work.
 		 */
-		dst->ckaid = clone_thing(ckaid, "end ckaid");
+		config_end->host.ckaid = clone_thing(ckaid, "end ckaid");
 		/*
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
@@ -1041,12 +1038,14 @@ static int extract_end(struct connection *c,
 			if (err != NULL) {
 				ckaid_buf ckb;
 				dbg("no private key matching %s CKAID %s: %s",
-				    leftright, str_ckaid(dst->ckaid, &ckb), err);
+				    leftright,
+				    str_ckaid(config_end->host.ckaid, &ckb), err);
 			} else {
 				ckaid_buf ckb;
 				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
-					    "loaded private key matching %s CKAID %s",
-					    leftright, str_ckaid(dst->ckaid, &ckb));
+				     "loaded private key matching %s CKAID %s",
+				     leftright,
+				     str_ckaid(config_end->host.ckaid, &ckb));
 			}
 		}
 	}

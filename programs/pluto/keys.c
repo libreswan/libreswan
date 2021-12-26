@@ -763,24 +763,24 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 	}
 
 	/* is there a CKAID assigned to this connection? */
-	if (c->spd.this.ckaid != NULL) {
+	if (c->local->host.ckaid != NULL) {
 		ckaid_buf ckb;
 		id_buf this_buf, that_buf;
 		dbg("%s() using CKAID %s to find private key for %s->%s of kind %s",
-		    __func__, str_ckaid(c->spd.this.ckaid, &ckb),
+		    __func__, str_ckaid(c->local->host.ckaid, &ckb),
 		    str_id(&c->spd.this.id, &this_buf),
 		    str_id(&c->spd.that.id, &that_buf),
 		    type->name);
 
 		const struct private_key_stuff *pks;
 		bool load_needed;
-		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->spd.this.ckaid,
+		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->host.ckaid,
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			llog(RC_LOG_SERIOUS, logger,
 				    "private key matching CKAID '%s' not found: %s",
-				    str_ckaid(c->spd.this.ckaid, &ckb), err);
+				    str_ckaid(c->local->host.ckaid, &ckb), err);
 			return NULL;
 		} else if (load_needed) {
 			/*
@@ -795,7 +795,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
-				    c->spd.this.config->leftright, str_ckaid(c->spd.this.ckaid, &ckb));
+				    c->spd.this.config->leftright, str_ckaid(c->local->host.ckaid, &ckb));
 		}
 
 

@@ -85,6 +85,7 @@ struct config_end {
 		cert_t cert;			/* end certificate */
 		enum certpolicy sendcert;	/* whether or not to send the certificate */
 		chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
+		ckaid_t *ckaid;
 	} host;
 };
 
@@ -261,7 +262,6 @@ struct end {
 	bool has_id_wildcards;
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
-	ckaid_t *ckaid;
 
 	struct virtual_ip *virt;
 
