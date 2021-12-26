@@ -141,10 +141,6 @@ void release_connection(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-
-	if (e->cert.nss_cert != NULL)
-		CERT_DestroyCertificate(e->cert.nss_cert);
-
 	free_chunk_content(&e->ca);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
@@ -259,6 +255,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		FOR_EACH_ELEMENT(config->end, end) {
 			pfreeany(end->client.updown);
+			if (end->host.cert.nss_cert != NULL) {
+				CERT_DestroyCertificate(end->host.cert.nss_cert);
+			}
 		}
 		pfree(c->root_config);
 	}
@@ -746,12 +745,6 @@ static char *format_connection(char *buf, size_t buf_len,
 void unshare_connection_end(struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
-
-	if (e->cert.nss_cert != NULL) {
-		e->cert.nss_cert = CERT_DupCertificate(e->cert.nss_cert);
-		passert(e->cert.nss_cert != NULL);
-	}
-
 	e->ca = clone_hunk(e->ca, "ca string");
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
@@ -960,7 +953,8 @@ static int extract_end(struct connection *c,
 				    leftright, src->cert);
 			return -1; /* fatal */
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+		diag_t diag = add_end_cert_and_preload_private_key(cert,
+								   dst, config_end,
 								   same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1040,7 +1034,8 @@ static int extract_end(struct connection *c,
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, dst,
+			diag_t diag = add_end_cert_and_preload_private_key(cert,
+									   dst, config_end,
 									   same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1255,14 +1250,14 @@ static diag_t check_connection_end(const struct whack_end *this,
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
-					    struct end *dst_end,
+					    struct end *end,
+					    struct config_end *config_end,
 					    bool preserve_ca,
 					    struct logger *logger)
 {
 	passert(cert != NULL);
-	dst_end->cert.nss_cert = NULL;
 	const char *nickname = cert->nickname;
-	const char *leftright = dst_end->config->leftright;
+	const char *leftright = config_end->leftright;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -1287,7 +1282,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	/* XXX: should this be after validity check? */
-	select_nss_cert_id(cert, &dst_end->id);
+	select_nss_cert_id(cert, &end->id);
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
@@ -1297,23 +1292,23 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &dst_end->id, cert, logger)) {
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &end->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
 			    leftright, nickname);
 	}
 
-	dst_end->cert.nss_cert = cert;
+	config_end->host.cert.nss_cert = cert;
 
 	/*
 	 * If no CA is defined, use issuer as default; but only when
 	 * update is ok.
 	 *
 	 */
-	if (preserve_ca || dst_end->ca.ptr != NULL) {
+	if (preserve_ca || end->ca.ptr != NULL) {
 		dbg("preserving existing %s ca", leftright);
 	} else {
-		dst_end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
+		end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
 	/*
@@ -1329,7 +1324,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
 	bool load_needed;
-	err_t ugh = preload_private_key_by_cert(&dst_end->cert, &load_needed, logger);
+	err_t ugh = preload_private_key_by_cert(&config_end->host.cert, &load_needed, logger);
 	if (ugh != NULL) {
 		dbg("no private key matching %s certificate %s: %s",
 		    leftright, nickname, ugh);
@@ -4011,8 +4006,8 @@ static void show_one_sr(struct show *s,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(c->spd.this.host_srcip, thisipb),
 		     OPT_HOST(c->spd.that.host_srcip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&sr->that.cert)),
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.cert)),
 		     ((sr->this.config->client.updown == NULL ||
 		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
 		      : sr->this.config->client.updown));
@@ -4466,9 +4461,9 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->cert.nss_cert != NULL &&
+	if (this->config->host.cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name(this->config->host.cert.nss_cert, idr);
 		if (d == NULL) {
 			return true;
 		}

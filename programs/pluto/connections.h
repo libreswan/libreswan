@@ -79,6 +79,7 @@ struct config_end {
 		unsigned ikeport;
 		enum keyword_host type;
 		enum keyword_authby authby;
+		cert_t cert;			/* end certificate */
 	} host;
 };
 
@@ -256,7 +257,6 @@ struct end {
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
-	cert_t cert;			/* end certificate */
 	ckaid_t *ckaid;
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 
@@ -612,8 +612,11 @@ extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
-diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert, struct end *dst_end,
-					    bool preserve_ca, struct logger *logger);
+diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
+					    struct end *end,
+					    struct config_end *config_end,
+					    bool preserve_ca,
+					    struct logger *logger);
 
 ip_port end_host_port(const struct end *end, const struct end *other);
 

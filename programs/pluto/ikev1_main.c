@@ -933,7 +933,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 				       rbody, st->st_logger);
 
 	const struct connection *c = st->st_connection;
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -1196,7 +1196,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection; /* may have changed */
 
 	/* send certificate if we have one and auth is RSA */
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&

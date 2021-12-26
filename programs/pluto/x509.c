@@ -561,8 +561,8 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 		return true;
 	}
 
-	if (c->spd.that.cert.nss_cert != NULL) {
-		*issuer_dn = same_secitem_as_chunk(c->spd.that.cert.nss_cert->derIssuer);
+	if (c->remote->host.cert.nss_cert != NULL) {
+		*issuer_dn = same_secitem_as_chunk(c->remote->host.cert.nss_cert->derIssuer);
 		return true;
 	}
 
@@ -1072,7 +1072,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		policy_buf pb;
 		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
 		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
-	} else if (this->cert.nss_cert == NULL) {
+	} else if (this->config->host.cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (this->sendcert == CERT_SENDIFASKED &&
 		   ike->sa.st_requested_ca != NULL) {
@@ -1159,7 +1159,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
 stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 	bool send_authcerts = c->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 

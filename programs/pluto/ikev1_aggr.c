@@ -264,7 +264,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 
 	/* parse_isakmp_sa also spits out a winning SA into our reply,
 	 * so we have to build our reply_stream and emit HDR before calling it.
@@ -592,7 +592,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		return r;
 	}
 
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 
 	enum next_payload_types_ikev1 auth_payload =
 		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
@@ -1039,7 +1039,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 {
 	passert(unused_md == NULL); /* no packet */
 	struct connection *c = st->st_connection;
-	const struct cert *mycert = c->spd.this.cert.nss_cert != NULL ? &c->spd.this.cert : NULL;
+	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!has_preloaded_public_key(st) &&
 			(c->spd.this.sendcert == CERT_SENDIFASKED ||

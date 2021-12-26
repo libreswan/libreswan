@@ -720,8 +720,8 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 							   struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
-	if (c->spd.this.cert.nss_cert != NULL) {
-		const char *nickname = cert_nickname(&c->spd.this.cert);
+	if (c->local->host.cert.nss_cert != NULL) {
+		const char *nickname = cert_nickname(&c->local->host.cert);
 
 		id_buf this_buf, that_buf;
 		dbg("%s() using certificate %s to find private key for %s->%s of kind %s",
@@ -732,7 +732,7 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 
 		const struct private_key_stuff *pks = NULL;
 		bool load_needed;
-		err_t err = find_or_load_private_key_by_cert(&pluto_secrets, &c->spd.this.cert,
+		err_t err = find_or_load_private_key_by_cert(&pluto_secrets, &c->local->host.cert,
 							     &pks, &load_needed, logger);
 		if (err != NULL) {
 			dbg("private key for certificate %s not found in NSS DB",
