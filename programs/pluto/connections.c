@@ -141,7 +141,6 @@ void release_connection(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	pfreeany(e->host_addr_name);
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt, HERE);
 }
@@ -257,6 +256,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
+			pfreeany(end->host.addr_name);
 		}
 		pfree(c->root_config);
 	}
@@ -509,7 +509,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	    address_is_any(this->host_addr)) {
 		if (this->config->host.type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", this->host_addr_name);
+			jam(buf, "<%s>", this->config->host.addr_name);
 		} else {
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
@@ -566,9 +566,10 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
-		if (this->host_addr_name != NULL &&
-		    !streq(str_address(&this->host_addr, &ab), this->host_addr_name)) {
-				jam(buf, "<%s>", this->host_addr_name);
+		if (this->config->host.addr_name != NULL &&
+		    !streq(str_address(&this->host_addr, &ab),
+			   this->config->host.addr_name)) {
+			jam(buf, "<%s>", this->config->host.addr_name);
 		}
 	}
 }
@@ -737,7 +738,6 @@ static char *format_connection(char *buf, size_t buf_len,
 void unshare_connection_end(struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
-	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
 }
@@ -1055,7 +1055,7 @@ static int extract_end(struct connection *c,
 	/* the rest is simple copying of corresponding fields */
 	config_end->host.type = src->host_type;
 	dst->host_addr = src->host_addr;
-	dst->host_addr_name = clone_str(src->host_addr_name, "host ip");
+	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host_nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
@@ -1148,13 +1148,13 @@ static int extract_end(struct connection *c,
 	switch (dst->config->host.type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = ttoaddress_dns(shunk1(dst->host_addr_name),
-					     address_type(&dst->host_addr),
-					     &dst->host_addr);
+		err_t er = ttoaddress_dns(shunk1(config_end->host.addr_name),
+					  address_type(&dst->host_addr),
+					  &dst->host_addr);
 		if (er != NULL) {
 			llog(RC_COMMENT, logger,
-				    "failed to convert '%s' at load time: %s",
-				    dst->host_addr_name, er);
+			     "failed to convert '%s' at load time: %s",
+			     config_end->host.addr_name, er);
 		}
 		break;
 	}

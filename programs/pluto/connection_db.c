@@ -190,7 +190,6 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->spd_next = NULL;
 	pexpect(sr->connection == c);
 	/* unshare pointers */
-	sr->this.host_addr_name = NULL;
 	sr->this.id.name = EMPTY_CHUNK;
 	sr->that.id.name = EMPTY_CHUNK;
 	sr->this.virt = NULL;
