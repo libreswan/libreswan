@@ -78,9 +78,13 @@ struct config_end {
 	struct {
 		unsigned ikeport;
 		enum keyword_host type;
+		/*
+		 * Proof of identity.
+		 */
 		enum keyword_authby authby;
 		cert_t cert;			/* end certificate */
 		enum certpolicy sendcert;	/* whether or not to send the certificate */
+		chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 	} host;
 };
 
@@ -258,7 +262,6 @@ struct end {
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 	ckaid_t *ckaid;
-	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 
 	struct virtual_ip *virt;
 

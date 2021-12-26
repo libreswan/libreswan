@@ -395,7 +395,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int pl;	/* value ignored */
-		if (!trusted_ca_nss(key->issuer, s->remote->ca, &pl)) {
+		if (!trusted_ca_nss(key->issuer, s->remote->config->host.ca, &pl)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",
@@ -490,7 +490,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	dn_buf buf;
 	dbg("required %s CA is '%s'", type->name,
-	    str_dn_or_null(c->spd.that.ca, "%any", &buf));
+	    str_dn_or_null(c->remote->host.ca, "%any", &buf));
 
 	passert(ike->sa.st_remote_certs.processed);
 

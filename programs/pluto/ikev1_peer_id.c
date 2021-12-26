@@ -342,7 +342,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	passert(r != NULL);
 	dn_buf buf;
 	dbg("offered CA: '%s'",
-	    str_dn_or_null(r->spd.this.ca, "%none", &buf));
+	    str_dn_or_null(r->local->host.ca, "%none", &buf));
 
 	if (r != st->st_connection) {
 		/*

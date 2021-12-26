@@ -230,7 +230,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	}
 
 	dn_buf dnb;
-	dbg("offered CA: '%s'", str_dn_or_null(c->spd.this.ca, "%none", &dnb));
+	dbg("offered CA: '%s'", str_dn_or_null(c->local->host.ca, "%none", &dnb));
 
 	return NULL;
 }
@@ -386,7 +386,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	}
 
 	dn_buf dnb;
-	dbg("offered CA: '%s'", str_dn_or_null(c->spd.this.ca, "%none", &dnb));
+	dbg("offered CA: '%s'", str_dn_or_null(c->local->host.ca, "%none", &dnb));
 
 	return NULL;
 }

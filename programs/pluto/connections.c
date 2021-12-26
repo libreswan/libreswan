@@ -141,7 +141,6 @@ void release_connection(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	free_chunk_content(&e->ca);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_username);
@@ -258,6 +257,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
 			}
+			free_chunk_content(&end->host.ca);
 		}
 		pfree(c->root_config);
 	}
@@ -736,7 +736,6 @@ static char *format_connection(char *buf, size_t buf_len,
 void unshare_connection_end(struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
-	e->ca = clone_hunk(e->ca, "ca string");
 	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
@@ -888,7 +887,7 @@ static int extract_end(struct connection *c,
 	}
 
 	/* decode CA distinguished name, if any */
-	dst->ca = EMPTY_CHUNK;
+	config_end->host.ca = empty_chunk;
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
 			same_ca = 1;
@@ -896,20 +895,19 @@ static int extract_end(struct connection *c,
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			free_chunk_content(&dst->ca);
-			ugh = atodn(src->ca, &dst->ca);
+			ugh = atodn(src->ca, &config_end->host.ca);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 				     "bad %s CA string '%s': %s (ignored)",
 				     leftright, src->ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
-				ugh = parse_dn(dst->ca);
+				ugh = parse_dn(config_end->host.ca);
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
 					     "error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					DBG_dump_hunk(NULL, dst->ca);
+					DBG_dump_hunk(NULL, config_end->host.ca);
 				}
 			}
 
@@ -1295,10 +1293,10 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 * update is ok.
 	 *
 	 */
-	if (preserve_ca || end->ca.ptr != NULL) {
+	if (preserve_ca || config_end->host.ca.ptr != NULL) {
 		dbg("preserving existing %s ca", leftright);
 	} else {
-		end->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
+		config_end->host.ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
 	/*
@@ -2142,27 +2140,31 @@ static bool extract_connection(const struct whack_message *wm,
 		passert(end->leftright != NULL);
 	}
 
-	struct end *left = &c->spd.this;
-	struct end *right = &c->spd.that;
-	left->config = c->local = &config->end[LEFT_END];
-	right->config = c->remote = &config->end[RIGHT_END];
+	struct end *left_end = &c->spd.this; /* local */
+	struct end *right_end = &c->spd.that; /* remote */
+	struct config_end *left_config = &config->end[LEFT_END];
+	struct config_end *right_config = &config->end[RIGHT_END];
+	left_end->config = c->local = left_config;
+	right_end->config = c->remote = right_config;
 
-	int same_leftca = extract_end(c, left, &config->end[LEFT_END], &wm->left,
-				      /*other_end*/right, host_afi, client_afi, c->logger);
+	int same_leftca = extract_end(c, left_end, left_config, &wm->left,
+				      /*other-end*/right_end, host_afi,
+				      client_afi, c->logger);
 	if (same_leftca < 0) {
 		return false;
 	}
 
-	int same_rightca = extract_end(c, right, &config->end[RIGHT_END], &wm->right,
-				       /*other_end*/left, host_afi, client_afi, c->logger);
+	int same_rightca = extract_end(c, right_end, right_config, &wm->right,
+				       /*other-end*/left_end, host_afi,
+				       client_afi, c->logger);
 	if (same_rightca < 0) {
 		return false;
 	}
 
 	if (same_rightca == 1) {
-		c->spd.that.ca = clone_hunk(c->spd.this.ca, "same rightca");
+		right_config->host.ca = clone_hunk(left_config->host.ca, "same rightca");
 	} else if (same_leftca == 1) {
-		c->spd.this.ca = clone_hunk(c->spd.that.ca, "same leftca");
+		left_config->host.ca = clone_hunk(right_config->host.ca, "same leftca");
 	}
 
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
@@ -3853,11 +3855,11 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 */
 			int peer_pathlen;
 			bool matching_peer_ca = trusted_ca_nss(peer_ca,
-							       d->spd.that.ca,
+							       d->remote->host.ca,
 							       &peer_pathlen);
 			int our_pathlen;
 			bool matching_requested_ca = match_requested_ca(requested_ca,
-									d->spd.this.ca,
+									d->local->host.ca,
 									&our_pathlen);
 			dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
 				bool_str(matching_peer_ca), peer_pathlen,
@@ -4126,14 +4128,14 @@ void show_one_connection(struct show *s,
 	}
 
 	/* Show CAs */
-	if (c->spd.this.ca.ptr != NULL || c->spd.that.ca.ptr != NULL) {
+	if (c->local->host.ca.ptr != NULL || c->remote->host.ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
 		show_comment(s,
 			  "\"%s\"%s:   CAs: '%s'...'%s'",
 			  c->name,
 			  instance,
-			  str_dn_or_null(c->spd.this.ca, "%any", &this_ca),
-			  str_dn_or_null(c->spd.that.ca, "%any", &that_ca));
+			  str_dn_or_null(c->local->host.ca, "%any", &this_ca),
+			  str_dn_or_null(c->remote->host.ca, "%any", &that_ca));
 	}
 
 	show_comment(s,

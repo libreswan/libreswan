@@ -304,7 +304,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 		/* we require a road warrior connection */
 		if (d->kind != CK_TEMPLATE ||
 		    (d->policy & POLICY_OPPORTUNISTIC) ||
-		    d->spd.that.ca.ptr == NULL) {
+		    d->remote->host.ca.ptr == NULL) {
 			continue;
 		}
 
@@ -313,12 +313,12 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 				/* prepend a new gn for D */
 				gn = alloc_thing(generalName_t, "generalName");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = d->spd.that.ca;
+				gn->name = d->remote->host.ca;
 				gn->next = top;
 				top = gn;
 				break;
 			}
-			if (same_dn(gn->name, d->spd.that.ca)) {
+			if (same_dn(gn->name, d->remote->host.ca)) {
 				/* D's CA already in list */
 				break;
 			}
@@ -556,8 +556,8 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
  */
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 {
-	if (c->spd.that.ca.ptr != NULL && c->spd.that.ca.len > 0) {
-		*issuer_dn = c->spd.that.ca;
+	if (c->remote->host.ca.ptr != NULL && c->remote->host.ca.len > 0) {
+		*issuer_dn = c->remote->host.ca;
 		return true;
 	}
 
@@ -566,8 +566,8 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 		return true;
 	}
 
-	if (c->spd.this.ca.ptr != NULL && c->spd.this.ca.len > 0) {
-		*issuer_dn = c->spd.this.ca;
+	if (c->local->host.ca.ptr != NULL && c->local->host.ca.len > 0) {
+		*issuer_dn = c->local->host.ca;
 		return true;
 	}
 
@@ -1094,7 +1094,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 		dbg("connection->kind is CK_PERMANENT so send CERTREQ");
 
 		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-					     st->st_connection->spd.that.ca,
+					     st->st_connection->remote->host.ca,
 					     outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
@@ -1146,7 +1146,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 		return false;
 	}
 
-	if (c->spd.that.ca.ptr == NULL || c->spd.that.ca.len < 1) {
+	if (c->remote->host.ca.ptr == NULL || c->remote->host.ca.len < 1) {
 		dbg("IKEv2 CERTREQ: no CA DN known to send");
 		return false;
 	}

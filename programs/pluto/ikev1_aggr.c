@@ -430,7 +430,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->spd.that.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1108,7 +1108,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->spd.that.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 

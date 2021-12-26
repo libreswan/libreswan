@@ -772,7 +772,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	send_cr = (st->st_oakley.auth == OAKLEY_RSA_SIG) &&
 		!has_preloaded_public_key(st) &&
-		st->st_connection->spd.that.ca.ptr != NULL;
+		st->st_connection->remote->host.ca.ptr != NULL;
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -805,7 +805,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
 			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-						     st->st_connection->spd.that.ca,
+						     st->st_connection->remote->host.ca,
 						     &rbody))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -1085,7 +1085,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert),
-					     c->spd.that.ca,
+					     c->remote->host.ca,
 					     rbody))
 			return STF_INTERNAL_ERROR;
 	}
