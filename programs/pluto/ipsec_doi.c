@@ -238,9 +238,11 @@ void initialize_new_state(struct state *st,
 
 	for (const struct spd_route *sr = &c->spd;
 	     sr != NULL; sr = sr->spd_next) {
-		if (sr->this.xauth_client) {
-			if (sr->this.xauth_username != NULL) {
-				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_username);
+		if (sr->this.config->host.xauth.client) {
+			if (sr->this.config->host.xauth.username != NULL) {
+				jam_str(st->st_xauth_username,
+					sizeof(st->st_xauth_username),
+					sr->this.config->host.xauth.username);
 				break;
 			}
 		}

@@ -670,7 +670,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
 			 c->spd.that.config->host.authby == AUTHBY_NULL);
 
-	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+	if (c->spd.this.config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
 		/*
 		 * If we are a server and use PSK, all clients use the same group ID
 		 * Note that "xauth_server" also refers to IKEv2 CP

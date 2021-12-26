@@ -1021,7 +1021,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 		 *
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
-		if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		if (c->local->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
 			/*
 			 * If we are a server and use PSK, all clients
 			 * use the same group ID.

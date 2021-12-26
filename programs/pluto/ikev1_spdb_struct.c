@@ -1632,15 +1632,15 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			 * this is the initiator, we have proposed, they have answered,
 			 * and we must decide if they proposed what we wanted.
 			 */
-			xauth_init |= spd->this.xauth_client;
-			xauth_resp |= spd->this.xauth_server;
+			xauth_init |= spd->this.config->host.xauth.client;
+			xauth_resp |= spd->this.config->host.xauth.server;
 		} else {
 			/*
 			 * this is the responder, they have proposed to us, what
 			 * are we willing to be?
 			 */
-			xauth_init |= spd->this.xauth_server;
-			xauth_resp |= spd->this.xauth_client;
+			xauth_init |= spd->this.config->host.xauth.server;
+			xauth_resp |= spd->this.config->host.xauth.client;
 		}
 	}
 

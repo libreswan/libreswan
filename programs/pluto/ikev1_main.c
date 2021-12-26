@@ -1355,7 +1355,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	if (c->remotepeertype == CISCO &&
 	    c->newest_ike_sa != SOS_NOBODY &&
-	    c->spd.this.xauth_client) {
+	    c->spd.this.config->host.xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
@@ -1421,7 +1421,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 */
 	if (c->remotepeertype == CISCO &&
 		c->newest_ike_sa != SOS_NOBODY &&
-		c->spd.this.xauth_client) {
+		c->spd.this.config->host.xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;

@@ -86,6 +86,11 @@ struct config_end {
 		enum certpolicy sendcert;	/* whether or not to send the certificate */
 		chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 		ckaid_t *ckaid;
+		struct {
+			bool server;
+			bool client;
+			char *username;
+		} xauth;
 	} host;
 };
 
@@ -265,10 +270,6 @@ struct end {
 
 	struct virtual_ip *virt;
 
-	bool xauth_server;
-	bool xauth_client;
-	char *xauth_username;
-	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
 
 	/*

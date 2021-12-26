@@ -142,8 +142,6 @@ static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
 	pfreeany(e->host_addr_name);
-	pfreeany(e->xauth_password);
-	pfreeany(e->xauth_username);
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt, HERE);
 }
@@ -258,6 +256,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			}
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
+			pfreeany(end->host.xauth.username);
 		}
 		pfree(c->root_config);
 	}
@@ -626,8 +625,10 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 		jam_id_bytes(buf, &this->id, jam_sanitized_bytes);
 	}
 
-	if (this->modecfg_server || this->modecfg_client ||
-	    this->xauth_server || this->xauth_client ||
+	if (this->modecfg_server ||
+	    this->modecfg_client ||
+	    this->config->host.xauth.server ||
+	    this->config->host.xauth.client ||
 	    this->config->host.sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
@@ -643,9 +644,9 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "+MC");
 		if (this->cat)
 			jam_string(buf, "+CAT");
-		if (this->xauth_server)
+		if (this->config->host.xauth.server)
 			jam_string(buf, "+XS");
-		if (this->xauth_client)
+		if (this->config->host.xauth.client)
 			jam_string(buf, "+XC");
 
 		switch (this->config->host.sendcert) {
@@ -736,8 +737,6 @@ static char *format_connection(char *buf, size_t buf_len,
 void unshare_connection_end(struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
-	e->xauth_username = clone_str(e->xauth_username, "xauth username");
-	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
@@ -1064,9 +1063,9 @@ static int extract_end(struct connection *c,
 	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;
 
-	dst->xauth_server = src->xauth_server;
-	dst->xauth_client = src->xauth_client;
-	dst->xauth_username = clone_str(src->xauth_username, "xauth username");
+	config_end->host.xauth.server = src->xauth_server;
+	config_end->host.xauth.client = src->xauth_client;
+	config_end->host.xauth.username = clone_str(src->xauth_username, "xauth username");
 	dst->eap = src->eap;
 
 	config_end->host.authby = src->authby;
@@ -2166,7 +2165,7 @@ static bool extract_connection(const struct whack_message *wm,
 		left_config->host.ca = clone_hunk(right_config->host.ca, "same leftca");
 	}
 
-	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
+	if (c->local->host.xauth.server || c->remote->host.xauth.server)
 		c->policy |= POLICY_XAUTH;
 
 	update_ends_from_this_host_addr(&c->spd.this, &c->spd.that);
@@ -3690,13 +3689,13 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			 * correct.
 			 */
 
-			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
+			if (d->local->host.xauth.server != c->local->host.xauth.server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_server");
 				continue;
 			}
 
-			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
+			if (d->local->host.xauth.client != c->local->host.xauth.client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_client");
 				continue;
@@ -4022,18 +4021,20 @@ static void show_one_sr(struct show *s,
 		 * Both should not be set, but if they are, we want to
 		 * know
 		 */
-		COMBO(sr->this, xauth_server, xauth_client),
-		COMBO(sr->that, xauth_server, xauth_client),
-		/* should really be an enum name */
-		sr->this.xauth_server ?
-			c->xauthby == XAUTHBY_FILE ?
-				"xauthby:file;" :
-			c->xauthby == XAUTHBY_PAM ?
-				"xauthby:pam;" :
-				"xauthby:alwaysok;" :
-			"",
-		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
-		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
+		     COMBO(sr->this, config->host.xauth.server, config->host.xauth.client),
+		     COMBO(sr->that, config->host.xauth.server, config->host.xauth.client),
+		     /* should really be an enum name */
+		     (sr->this.config->host.xauth.server ?
+		      c->xauthby == XAUTHBY_FILE ?
+		      "xauthby:file;" :
+		      c->xauthby == XAUTHBY_PAM ?
+		      "xauthby:pam;" :
+		      "xauthby:alwaysok;" :
+		      ""),
+		     (sr->this.config->host.xauth.username == NULL ? "[any]" :
+		      sr->this.config->host.xauth.username),
+		     (sr->that.config->host.xauth.username == NULL ? "[any]" :
+		      sr->that.config->host.xauth.username));
 
 	enum_buf auth1, auth2;
 	show_comment(s,
