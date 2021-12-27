@@ -784,7 +784,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.config->host.authby;
+	enum keyword_authby that_authby = ike->sa.st_connection->spd.that.host->config->authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 
@@ -802,7 +802,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 					      ike, &idhash_in, &pbs_no_ppk_auth,
-					      ike->sa.st_connection->spd.that.config->host.authby);
+					      ike->sa.st_connection->spd.that.host->config->authby);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
@@ -846,7 +846,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			dbg("responder verifying AUTH payload");
 			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						      ike->sa.st_connection->spd.that.config->host.authby);
+						      ike->sa.st_connection->spd.that.host->config->authby);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
@@ -1055,7 +1055,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 
 	/* send response */
 	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->spd.that.config->host.type == KH_ANY) {
+		if (c->spd.that.host->config->type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
@@ -1265,7 +1265,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_authby that_authby = c->spd.that.config->host.authby;
+	enum keyword_authby that_authby = c->spd.that.host->config->authby;
 
 	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
 

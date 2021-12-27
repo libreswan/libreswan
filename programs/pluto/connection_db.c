@@ -198,8 +198,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
 	init_db_spd_route(sr);
 
-	unshare_connection_end(&sr->this);
-	unshare_connection_end(&sr->that);
+	unshare_connection_end(c, &sr->this);
+	unshare_connection_end(c, &sr->that);
 
 	add_db_spd_route(sr);
 	return sr;

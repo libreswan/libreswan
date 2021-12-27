@@ -66,34 +66,39 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  */
 
 enum left_right { LEFT_END, RIGHT_END, };
+#define LEFT_RIGHT_ROOF 2
+
+struct config_host_end {
+	char *addr_name;	/* string version from whack */
+
+	unsigned ikeport;
+	enum keyword_host type;
+	/*
+	 * Proof of identity.
+	 */
+	enum keyword_authby authby;
+	cert_t cert;			/* end certificate */
+	enum certpolicy sendcert;	/* whether or not to send the certificate */
+	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
+	ckaid_t *ckaid;
+	struct {
+		bool server;
+		bool client;
+		char *username;
+	} xauth;
+};
+
+struct config_client_end {
+	ip_subnet subnet;
+	ip_protoport protoport;
+	char *updown;
+};
 
 struct config_end {
 	const char *leftright;
 	enum left_right end_index;
-	struct {
-		ip_subnet subnet;
-		ip_protoport protoport;
-		char *updown;
-	} client;
-	struct {
-		char *addr_name;	/* string version from whack */
-
-		unsigned ikeport;
-		enum keyword_host type;
-		/*
-		 * Proof of identity.
-		 */
-		enum keyword_authby authby;
-		cert_t cert;			/* end certificate */
-		enum certpolicy sendcert;	/* whether or not to send the certificate */
-		chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
-		ckaid_t *ckaid;
-		struct {
-			bool server;
-			bool client;
-			char *username;
-		} xauth;
-	} host;
+	struct config_host_end host;
+	struct config_client_end client;
 };
 
 struct config {
@@ -129,7 +134,7 @@ struct config {
 
 	enum yna_options nic_offload;
 
-	struct config_end end[2];
+	struct config_end end[LEFT_RIGHT_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -239,7 +244,11 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 
 struct host_pair;	/* opaque type */
 
-struct end {
+struct host_end {
+	const struct config_host_end *config;
+};
+
+struct /*client_*/end {
 	struct id id;
 
 	ip_address host_addr;
@@ -261,6 +270,7 @@ struct end {
 	 * parent connection.
 	 */
 	const struct config_end *config;
+	struct host_end *host;
 
 	chunk_t sec_label;
 	bool key_from_DNS_on_demand;
@@ -465,6 +475,8 @@ struct connection {
 	const struct config *config;
 	const struct config_end *local;
 	const struct config_end *remote;
+
+	struct host_end host[LEFT_RIGHT_ROOF];
 };
 
 extern bool same_peer_ids(const struct connection *c,
@@ -611,7 +623,7 @@ extern int foreach_concrete_connection_by_name(const char *name,
 							void *arg, struct logger *logger),
 					       void *arg, struct logger *logger);
 
-extern void unshare_connection_end(struct end *e);
+extern void unshare_connection_end(struct connection *c, struct end *e);
 
 extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
 

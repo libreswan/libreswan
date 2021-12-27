@@ -381,13 +381,13 @@ void delete_every_connection(void)
 ip_port end_host_port(const struct end *end, const struct end *other)
 {
 	unsigned port;
-	if (end->config->host.ikeport != 0) {
+	if (end->host->config->ikeport != 0) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
-		port = end->config->host.ikeport;
-	} else if (other->config->host.ikeport != 0) {
+		port = end->host->config->ikeport;
+	} else if (other->host->config->ikeport != 0) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -507,9 +507,9 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	/* HOST */
 	if (address_is_unset(&this->host_addr) ||
 	    address_is_any(this->host_addr)) {
-		if (this->config->host.type == KH_IPHOSTNAME) {
+		if (this->host->config->type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", this->config->host.addr_name);
+			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
@@ -549,7 +549,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * valid, any hardwired IKEPORT or a port other than
 		 * IKE_UDP_PORT.
 		 */
-		bool include_port = (this->config->host.ikeport != 0 ||
+		bool include_port = (this->host->config->ikeport != 0 ||
 				     this->host_port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
@@ -566,10 +566,10 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
-		if (this->config->host.addr_name != NULL &&
+		if (this->host->config->addr_name != NULL &&
 		    !streq(str_address(&this->host_addr, &ab),
-			   this->config->host.addr_name)) {
-			jam(buf, "<%s>", this->config->host.addr_name);
+			   this->host->config->addr_name)) {
+			jam(buf, "<%s>", this->host->config->addr_name);
 		}
 	}
 }
@@ -628,9 +628,9 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 
 	if (this->modecfg_server ||
 	    this->modecfg_client ||
-	    this->config->host.xauth.server ||
-	    this->config->host.xauth.client ||
-	    this->config->host.sendcert != cert_defaultcertpolicy) {
+	    this->host->config->xauth.server ||
+	    this->host->config->xauth.client ||
+	    this->host->config->sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -645,12 +645,12 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "+MC");
 		if (this->cat)
 			jam_string(buf, "+CAT");
-		if (this->config->host.xauth.server)
+		if (this->host->config->xauth.server)
 			jam_string(buf, "+XS");
-		if (this->config->host.xauth.client)
+		if (this->host->config->xauth.client)
 			jam_string(buf, "+XC");
 
-		switch (this->config->host.sendcert) {
+		switch (this->host->config->sendcert) {
 		case CERT_NEVERSEND:
 			jam(buf, "+S-C");
 			break;
@@ -735,11 +735,12 @@ static char *format_connection(char *buf, size_t buf_len,
 }
 
 /* spd_route's with end's get copied in xauth.c */
-void unshare_connection_end(struct end *e)
+void unshare_connection_end(struct connection *c, struct end *e)
 {
 	e->id = clone_id(&e->id, "unshare connection id");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
+	e->host = &c->host[e->config->end_index];
 }
 
 /*
@@ -781,13 +782,9 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 
 	c->interface = iface_endpoint_addref(t->interface);
 
-	/*
-	 * XXX: this doesn't unshare .spd_next.
-	 */
-
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		unshare_connection_end(&sr->this);
-		unshare_connection_end(&sr->that);
+		unshare_connection_end(c, &sr->this);
+		unshare_connection_end(c, &sr->that);
 		sr->connection = c;
 		if (sr->spd_next != NULL) {
 			sr->spd_next = clone_thing(*sr->spd_next, "spd clone");
@@ -1145,7 +1142,7 @@ static int extract_end(struct connection *c,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
-	switch (dst->config->host.type) {
+	switch (dst->host->config->type) {
 	case KH_IPHOSTNAME:
 	{
 		err_t er = ttoaddress_dns(shunk1(config_end->host.addr_name),
@@ -2130,39 +2127,55 @@ static bool extract_connection(const struct whack_message *wm,
 	 *    RIGHT == REMOTE / THAT
 	 */
 
-	FOR_EACH_ELEMENT(config->end, end) {
-		end->end_index = end - config->end;
-		end->leftright = (end->end_index == LEFT_END ? "left" :
-				  end->end_index == RIGHT_END ? "right" :
-				  NULL);
-		passert(end->leftright != NULL);
+	c->local = &config->end[LEFT_END]; /* this */
+	c->remote = &config->end[RIGHT_END]; /* that */
+	struct end *client_ends[] = {
+		[LEFT_END] = &c->spd.this,
+		[RIGHT_END] = &c->spd.that,
+	};
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		/* "left" or "right" */
+		const char *leftright =
+			(lr == LEFT_END ? "left" :
+			 lr == RIGHT_END ? "right" :
+			 NULL);
+		passert(leftright != NULL);
+		config->end[lr].leftright = leftright;
+		config->end[lr].end_index = lr;
+		client_ends[lr]->host = &c->host[lr]; /*clone must update*/
+		client_ends[lr]->config = &config->end[lr];
+		c->host[lr].config = &config->end[lr].host;
 	}
 
-	struct end *left_end = &c->spd.this; /* local */
-	struct end *right_end = &c->spd.that; /* remote */
-	struct config_end *left_config = &config->end[LEFT_END];
-	struct config_end *right_config = &config->end[RIGHT_END];
-	left_end->config = c->local = left_config;
-	right_end->config = c->remote = right_config;
+	const struct whack_end *whack_ends[] = {
+		[LEFT_END] = &wm->left,
+		[RIGHT_END] = &wm->right,
+	};
 
-	int same_leftca = extract_end(c, left_end, left_config, &wm->left,
-				      /*other-end*/right_end, host_afi,
-				      client_afi, c->logger);
-	if (same_leftca < 0) {
-		return false;
+	int same_ca[LEFT_RIGHT_ROOF] = { 0, };
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		int opp = (lr + 1) % LEFT_RIGHT_ROOF;
+		same_ca[lr] = extract_end(c,
+					  client_ends[lr],
+					  &config->end[lr],
+					  whack_ends[lr],
+					  client_ends[opp],
+					  host_afi, client_afi,
+					  c->logger);
+		if (same_ca[lr] < 0) {
+			return false;
+		}
 	}
 
-	int same_rightca = extract_end(c, right_end, right_config, &wm->right,
-				       /*other-end*/left_end, host_afi,
-				       client_afi, c->logger);
-	if (same_rightca < 0) {
-		return false;
-	}
-
-	if (same_rightca == 1) {
-		right_config->host.ca = clone_hunk(left_config->host.ca, "same rightca");
-	} else if (same_leftca == 1) {
-		left_config->host.ca = clone_hunk(right_config->host.ca, "same leftca");
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		int opp = (lr + 1) % LEFT_RIGHT_ROOF;
+		if (same_ca[opp] == 1) {
+			config->end[opp].host.ca = clone_hunk(config->end[lr].host.ca,
+							     "same ca");
+			break;
+		}
 	}
 
 	if (c->local->host.xauth.server || c->remote->host.xauth.server)
@@ -3770,12 +3783,12 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
 				 */
-				if (!LHAS(this_authbys, d->spd.that.config->host.authby)) {
+				if (!LHAS(this_authbys, d->spd.that.host->config->authby)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
 				/* check that the chosen one has a key */
-				switch (d->spd.that.config->host.authby) {
+				switch (d->spd.that.host->config->authby) {
 				case AUTHBY_PSK:
 					/*
 					 * XXX: This tries to find the
@@ -4021,27 +4034,27 @@ static void show_one_sr(struct show *s,
 		 * Both should not be set, but if they are, we want to
 		 * know
 		 */
-		     COMBO(sr->this, config->host.xauth.server, config->host.xauth.client),
-		     COMBO(sr->that, config->host.xauth.server, config->host.xauth.client),
+		     COMBO(sr->this, host->config->xauth.server, host->config->xauth.client),
+		     COMBO(sr->that, host->config->xauth.server, host->config->xauth.client),
 		     /* should really be an enum name */
-		     (sr->this.config->host.xauth.server ?
+		     (sr->this.host->config->xauth.server ?
 		      c->xauthby == XAUTHBY_FILE ?
 		      "xauthby:file;" :
 		      c->xauthby == XAUTHBY_PAM ?
 		      "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (sr->this.config->host.xauth.username == NULL ? "[any]" :
-		      sr->this.config->host.xauth.username),
-		     (sr->that.config->host.xauth.username == NULL ? "[any]" :
-		      sr->that.config->host.xauth.username));
+		     (sr->this.host->config->xauth.username == NULL ? "[any]" :
+		      sr->this.host->config->xauth.username),
+		     (sr->that.host->config->xauth.username == NULL ? "[any]" :
+		      sr->that.host->config->xauth.username));
 
 	enum_buf auth1, auth2;
 	show_comment(s,
 		     PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		     c->name, instance,
-		     str_enum_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
-		     str_enum_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
+		     str_enum_short(&keyword_authby_names, sr->this.host->config->authby, &auth1),
+		     str_enum_short(&keyword_authby_names, sr->that.host->config->authby, &auth2),
 		     sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
 		     sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
 	);
@@ -4453,9 +4466,9 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->config->host.cert.nss_cert != NULL &&
+	if (this->host->config->cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->config->host.cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name(this->host->config->cert.nss_cert, idr);
 		if (d == NULL) {
 			return true;
 		}
