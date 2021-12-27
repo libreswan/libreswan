@@ -475,7 +475,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * specified protoport; merge that.
 		 */
 		this->client = selector_from_address_protoport(this->host_addr,
-							       this->config->client.protoport);
+							       this->config->protoport);
 		selector_buf sb;
 		dbg("  updated %s.client to %s",
 		    this->config->leftright,
@@ -740,7 +740,7 @@ void unshare_connection_end(struct connection *c, struct end *e)
 	e->id = clone_id(&e->id, "unshare connection id");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
-	e->host = &c->host[e->config->end_index];
+	e->host = &c->host[e->config->index];
 }
 
 /*
@@ -858,7 +858,7 @@ static int extract_end(struct connection *c,
 		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
 {
-	passert(dst->config == config_end);
+	passert(dst->config == &config_end->client);
 	const char *leftright = dst->config->leftright;
 	bool same_ca = 0;
 
@@ -1240,7 +1240,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 {
 	passert(cert != NULL);
 	const char *nickname = cert->nickname;
-	const char *leftright = config_end->leftright;
+	const char *leftright = end->config->leftright;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -2141,10 +2141,10 @@ static bool extract_connection(const struct whack_message *wm,
 			 lr == RIGHT_END ? "right" :
 			 NULL);
 		passert(leftright != NULL);
-		config->end[lr].leftright = leftright;
-		config->end[lr].end_index = lr;
+		config->end[lr].client.leftright = leftright;
+		config->end[lr].client.index = lr;
 		client_ends[lr]->host = &c->host[lr]; /*clone must update*/
-		client_ends[lr]->config = &config->end[lr];
+		client_ends[lr]->config = &config->end[lr].client;
 		c->host[lr].config = &config->end[lr].host;
 	}
 
@@ -2251,7 +2251,7 @@ static bool extract_connection(const struct whack_message *wm,
 	struct end *wild_side =
 		(address_is_unset(&c->spd.this.host_addr) ||
 		 address_is_any(c->spd.this.host_addr) ||
-		 c->spd.this.config->client.protoport.has_port_wildcard ||
+		 c->spd.this.config->protoport.has_port_wildcard ||
 		 c->spd.this.has_id_wildcards) ? &c->spd.this : &c->spd.that;
 
 	/* force all oppo connections to have a client */
@@ -2280,7 +2280,7 @@ static bool extract_connection(const struct whack_message *wm,
 						   address_is_any(wild_side->host_addr))) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
-	} else if (wild_side->config->client.protoport.has_port_wildcard) {
+	} else if (wild_side->config->protoport.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
 	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
@@ -4011,9 +4011,9 @@ static void show_one_sr(struct show *s,
 		     OPT_HOST(c->spd.that.host_srcip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.cert)),
-		     ((sr->this.config->client.updown == NULL ||
-		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
-		      : sr->this.config->client.updown));
+		     ((sr->this.config->updown == NULL ||
+		       streq(sr->this.config->updown, "%disabled")) ? "<disabled>"
+		      : sr->this.config->updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR

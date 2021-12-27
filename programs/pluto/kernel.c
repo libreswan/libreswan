@@ -855,7 +855,7 @@ bool do_command(const struct connection *c,
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
 	 */
-	const char *updown = sr->this.config->client.updown;
+	const char *updown = sr->this.config->updown;
 	if (updown == NULL || streq(updown, "%disabled")) {
 		dbg("kernel: skipped updown %s command - disabled per policy", verb);
 		return true;

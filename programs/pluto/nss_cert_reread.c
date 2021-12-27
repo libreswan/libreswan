@@ -14,7 +14,7 @@ static void reread_end_cert(struct end *end,
 {
 	if (config_end->host.cert.nss_cert == NULL) {
 		dbg("no cert exists for %s; nothing to do",
-		    config_end->leftright);
+		    end->config->leftright);
 		return;
 	}
 
@@ -22,7 +22,7 @@ static void reread_end_cert(struct end *end,
 	if (nickname == NULL) {
 		llog(RC_BADID, logger,
 		     "reloading %scert failed: cannot be reread due to unknown nickname",
-		     config_end->leftright);
+		     end->config->leftright);
 		return;
 	}
 
@@ -30,7 +30,7 @@ static void reread_end_cert(struct end *end,
 	if (new_cert == NULL) {
 		llog(RC_LOG, logger,
 		     "reloading %scert='%s' failed: not found in the NSS database",
-		     config_end->leftright, nickname);
+		     end->config->leftright, nickname);
 		return;
 	}
 
@@ -44,7 +44,7 @@ static void reread_end_cert(struct end *end,
 	if (diag != NULL) {
 		llog_diag(RC_BADID, logger, &diag,
 			 "reloading %scert='%s' failed: ",
-			  config_end->leftright, nickname);
+			  end->config->leftright, nickname);
 		CERT_DestroyCertificate(new_cert);
 		config_end->host.cert.nss_cert = old_cert;
 		return;
@@ -55,7 +55,7 @@ static void reread_end_cert(struct end *end,
 
 	llog(RC_COMMENT, logger,
 	     "reloaded %scert='%s'",
-	     config_end->leftright, cert_nickname(&config_end->host.cert));
+	     end->config->leftright, cert_nickname(&config_end->host.cert));
 }
 
 static void reread_cert(struct connection *c, struct logger *logger)
@@ -67,7 +67,7 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	FOR_EACH_THING(end, &c->spd.this, &c->spd.that) {
-		struct config_end *config_end = &c->root_config->end[end->config->end_index];
+		struct config_end *config_end = &c->root_config->end[end->config->index];
 		reread_end_cert(end, config_end, c->logger);
 	}
 

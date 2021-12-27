@@ -1132,11 +1132,11 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		/* fill in the client's true ip address/subnet */
 		dbg("client: %s  port wildcard: %s  virtual: %s",
 		    bool_str(c->spd.that.has_client),
-		    bool_str(c->spd.that.config->client.protoport.has_port_wildcard),
+		    bool_str(c->spd.that.config->protoport.has_port_wildcard),
 		    bool_str(is_virtual_connection(c)));
 
 		/* fill in the client's true port */
-		if (c->spd.that.config->client.protoport.has_port_wildcard) {
+		if (c->spd.that.config->protoport.has_port_wildcard) {
 			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd.that.client, port);
 		}
@@ -1910,7 +1910,7 @@ static struct connection *fc_try(const struct connection *c,
 		      d->spd.that.client.ipproto == remote_protocol &&
 		      (d->spd.this.client.hport == 0 ||
 		       d->spd.this.client.hport == local_port) &&
-		      (d->spd.that.config->client.protoport.has_port_wildcard ||
+		      (d->spd.that.config->protoport.has_port_wildcard ||
 		       d->spd.that.client.hport == remote_port))) {
 			continue;
 		}
@@ -2073,7 +2073,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 d->spd.this.client.hport != local_port) ||
 			d->spd.that.client.ipproto != remote_protocol ||
 			(d->spd.that.client.hport != remote_port &&
-			 !d->spd.that.config->client.protoport.has_port_wildcard))
+			 !d->spd.that.config->protoport.has_port_wildcard))
 			continue;
 
 		/*
