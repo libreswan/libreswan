@@ -208,6 +208,7 @@ KVM_DEBIAN_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_DEBIAN_HOSTS))
 KVM_FEDORA_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FEDORA_HOSTS))
 KVM_OPENBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_OPENBSD_HOSTS))
 KVM_NETBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_NETBSD_HOSTS))
+KVM_CLONES = $(strip $(foreach os, $(KVM_PLATFORMS), $(KVM_$($(os))_CLONES)))
 
 KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
 
@@ -964,16 +965,14 @@ endef
 
 .PHONY: kvm-shutdown
 kvm-shutdown:
-	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach clone, $(KVM_$($(platform))_CLONES), \
-			$(call shutdown-os-domain, $(clone))))
+	$(foreach clone, $(KVM_CLONES), $(call shutdown-os-domain, $(clone)))
 	$(foreach platform, $(KVM_PLATFORMS), \
 		$(foreach variant, base upgrade build, \
 			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-$(variant))))
 
 .PHONY: kvm-uninstall kvm-clean-install
 kvm-uninstall kvm-clean-install:
-	$(foreach platform, $(KVM_PLATFORMS), $(foreach clone, $(KVM_$($(platform))_CLONES), $(call undefine-os-domain, $(clone))))
+	$(foreach clone, $(KVM_CLONES), $(call undefine-os-domain, $(clone)))
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
 	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN))
 
@@ -1051,15 +1050,15 @@ kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
 # things barf because the build domain things its disk is in use).
 
 .PHONY: kvm-install
-kvm-install: | $(KVM_OPENBSD_CLONES)
-	$(foreach clone, $(KVM_FEDORA_CLONES), $(call undefine-os-domain, $(clone)))
+kvm-install:
+	$(foreach clone, $(KVM_CLONES), $(call undefine-os-domain, $(clone)))
 ifeq ($(KVM_INSTALL_RPM), true)
 	$(MAKE) kvm-rpm-install
 else
 	$(MAKE) kvm-fedora-install
 endif
 	$(MAKE) $(KVM_KEYS)
-	$(MAKE) $(KVM_FEDORA_CLONES)
+	$(MAKE) $(KVM_CLONES)
 
 .PHONY: kvm-bisect
 kvm-bisect:
@@ -1178,6 +1177,7 @@ Configuration:
     $(call kvm-var-value,KVM_FEDORA_CLONES)
     $(call kvm-var-value,KVM_NETBSD_CLONES)
     $(call kvm-var-value,KVM_OPENBSD_CLONES)
+    $(call kvm-var-value,KVM_CLONES)
 
     $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_GATEWAY_FILE)
