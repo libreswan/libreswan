@@ -1287,3 +1287,5 @@ kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
 kvmplutotest	ikev2-crossing-streams-01		wip	github:557
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
+
+kvmplutotest	interop-netbsd-01-pluto-initiator-ikev2	netbsd
