@@ -680,7 +680,7 @@ if args.nsd or args.dnssec:
             if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
                 sys.exit(1)
 
-            dst ="/run/unbouund"
+            dst ="/run/unbound"
             src = "%s%s" % (nsbasepath, dst)
             if mount_bind(src, dst, mkdir_src=True, wipe_old_dst=True):
                 sys.exit(1)
