@@ -51,7 +51,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
+	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
 	    pri_logger(c->logger));
 	threadtime_t inception = threadtime_start();
 	bool ok;
@@ -100,7 +100,7 @@ bool initiate_connection_2(struct connection *c,
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
+	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
 	if (!oriented(c)) {
@@ -194,7 +194,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "forground",
+	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
 	/* We will only request an IPsec SA if policy isn't empty

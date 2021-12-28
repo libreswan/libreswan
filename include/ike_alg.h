@@ -372,7 +372,7 @@ struct encrypt_desc {
 	/*
 	 * The default key length.
 	 *
-	 * XXX: this is not the _prefered_ key length.  IKEv2 IKE
+	 * XXX: this is not the _preferred_ key length.  IKEv2 IKE
 	 * prefers key_bit_lengths[0], while IKEv2 ESP/AH prefer
 	 * KEYDEFLEN.  Weird.
 	 */

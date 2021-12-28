@@ -194,7 +194,7 @@ while read commits ; do
     # missed.
     #
     # The POINT_COUNT is used to bias the untested run length that
-    # earlier shorter runs are prefered.
+    # earlier shorter runs are preferred.
 
     case "${interesting}" in
 	*:* )

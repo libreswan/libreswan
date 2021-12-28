@@ -3,11 +3,11 @@
   <listitem>
 <para>IKE encryption/authentication algorithm to be used
 for the connection (phase 1 aka ISAKMP SA or IKE SA). If this option is not
-set, the builtin defaults will be used. This is the prefered method, and allows
+set, the builtin defaults will be used. This is the preferred method, and allows
 for gradual automatic updates using the same configuration. Some distributions,
 such as Fedora and RHEL/CentOS, use a System Wide Crypto Policy that sets the
 default ike= (and esp=) lines. Specifying your own ike= line means overriding
-all these system or software recommended defaults, but can be neccessary at
+all these system or software recommended defaults, but can be necessary at
 times. Note that libreswan does not support using a PRF algorithm that is
 different from the INTEGRITY (hash) algorithm by design.</para>
 <para> 
@@ -30,7 +30,7 @@ IKEv2 allows combining elements into a single proposal. These can be specified b
 symbol. An example is:
 <emphasis remap='B'>ike=aes_gcm+chacha20_poly1305;dh14+dh19,aes+3des-sha2+sha1;dh14</emphasis>.
 Note that AEAD algorithms (aes_gcm, aes_ccm, chacha20_poly1305) and non-AEAD algorithms (aes, 3des)
-cannot be combined into a single proposal. To support aes and aes_gcm, two proposals seperated by
+cannot be combined into a single proposal. To support aes and aes_gcm, two proposals separated by
 a comma must be used.</para>
 
 <para>

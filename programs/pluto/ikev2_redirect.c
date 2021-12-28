@@ -541,7 +541,7 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 	c->logger->global_whackfd = fd_addref(ike->sa.st_logger->object_whackfd);
 
 	if (!initiate_connection(c, /*remote_host*/NULL,
-				 /*background?*/false /* try to keep it in the forground */)) {
+				 /*background?*/false /* try to keep it in the foreground */)) {
 		llog(RC_FATAL, c->logger, "failed to initiate connection");
 	}
 

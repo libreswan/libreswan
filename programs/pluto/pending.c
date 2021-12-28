@@ -262,9 +262,9 @@ static void delete_pending(struct pending **pp)
 			 *
 			 * Look for p->connection=NULL below.  When
 			 * unpend()ing, the pending connection's
-			 * ownership is transfered to the state.
+			 * ownership is transferred to the state.
 			 */
-			DBG_log("removing pending policy {%p}; connection ownership transfered", p);
+			DBG_log("removing pending policy {%p}; connection ownership transferred", p);
 		} else {
 			connection_buf cib;
 			DBG_log("removing pending policy {%p} with connection "PRI_CONNECTION"",
