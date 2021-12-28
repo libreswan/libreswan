@@ -1,6 +1,6 @@
 Basic Client Address Translation (CAT) proof of concept test
-using OE/IDNULL using two servers, east and west, assigning the same 
-IPv4 address to the client road. 
+using OE/IDNULL using two servers, east and west, assigning the same
+IPv4 address to the client road.
 
 east and and west is able to reach without CP since there is no NAT
 using the same connection, ikev2-oe.conf.
