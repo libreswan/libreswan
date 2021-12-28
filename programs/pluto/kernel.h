@@ -138,7 +138,7 @@ enum encap_direction {
  * encapsulated (processed).  The rules are ordered inner-most to
  * outer-most (there's an implied -1 rule matching the actual packet).
  *
- * setkey(8) uses the term "rule" when refering to the tupple
+ * setkey(8) uses the term "rule" when referring to the tuple
  * protocol/mode/src-dst/level while ip-xfrm(8) uses TMPL to describe
  * something far more complex.
  *

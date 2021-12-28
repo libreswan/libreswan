@@ -193,7 +193,7 @@ static err_t trydotted(shunk_t src, ip_address *dst)
 		 *   127.1     -> 127.0.0.1
 		 *   127.65534 -> 127.0.255.254
 		 *
-		 * A bizare hangover from address classes:
+		 * A bizarre hangover from address classes:
 		 * https://en.wikipedia.org/wiki/IPv4#Address_representations
 		 *
 		 * Now while it is arguable that:
@@ -385,7 +385,7 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		 * gai_strerror(eai)?
 		 *
 		 * XXX: what is with "(no validation performed)"?
-		 * Perhaps it is refering to DNSSEC.
+		 * Perhaps it is referring to DNSSEC.
 		 */
 		pfree(name);
 		/* RES is not defined */

@@ -697,7 +697,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		b->negotiation_shunt = c->config->negotiation_shunt;
 
 		/*
-		 * Annouce this to the world.  Use c->logger instead?
+		 * Announce this to the world.  Use c->logger instead?
 		 */
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_oppo_bundle(buf, b);

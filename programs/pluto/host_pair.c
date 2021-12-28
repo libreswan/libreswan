@@ -314,7 +314,7 @@ void release_dead_interfaces(struct logger *logger)
 		}
 
 		/*
-		 * The somewhat permenant connection is going away;
+		 * The somewhat permanent connection is going away;
 		 * release it ...
 		 *
 		 * XXX: this code was passing relations=true to

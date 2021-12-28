@@ -101,7 +101,7 @@ bool range_overlaps_range(const ip_range l, const ip_range r);
  * floor(log2(|high-low| + 1)).
  *
  * If RANGE is CIDR then this returns the number of HOST IDENTIFIER
- * bits, otherwize it returns something slightly higher.
+ * bits, otherwise it returns something slightly higher.
  */
 int range_host_bits(const ip_range range);
 

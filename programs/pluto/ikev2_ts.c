@@ -1138,7 +1138,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	struct connection *const c = child->sa.st_connection;
 
 	/*
-	 * Start with nothing.  The loop then evaulates each
+	 * Start with nothing.  The loop then evaluates each
 	 * connection, including C.
 	 *
 	 * Note in particular the code that allows C to be evaluated
@@ -1192,7 +1192,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 			/*
 			 * Normally OE instances are never considered
-			 * when switching.  The execption being the
+			 * when switching.  The exception being the
 			 * current connection - it needs a score.
 			 */
 			if (d->kind == CK_INSTANCE &&

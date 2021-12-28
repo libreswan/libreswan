@@ -265,7 +265,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		}
 
 		/*
-		 * Sniff test; is there at least one plausable payload
+		 * Sniff test; is there at least one plausible payload
 		 * without looking at the SK payload?
 		 */
 		if (!check_secured_payloads) {

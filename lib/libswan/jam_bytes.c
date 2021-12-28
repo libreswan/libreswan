@@ -85,7 +85,7 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 		 * - NUL is always represented as '\0'.
 		 *
 		 * - octal format can use up-to 3 digts but can't be
-		 *   ambigious, so only use when next character isn't
+		 *   ambiguous, so only use when next character isn't
 		 *   numeric
 		 */
 

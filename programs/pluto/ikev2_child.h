@@ -41,7 +41,7 @@ v2_notification_t process_v2_childs_sa_payload(const char *what, struct ike_sa *
  * established.
  *
  * XXX: some, but not all the code lies here - there's still random
- * snipets scattered across IKE_AUTH and CREATE_CHILD_SA, sigh.
+ * snippets scattered across IKE_AUTH and CREATE_CHILD_SA, sigh.
  */
 
 bool prep_v2_child_for_request(struct child_sa *larval_child);
