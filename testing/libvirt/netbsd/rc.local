@@ -1,0 +1,50 @@
+#!/bin/sh
+
+if test -r /etc/ifconfig.vioif1 ; then
+    echo '==> Hostnames already configured'
+else
+    echo '==> Changing hostnames'
+    mac=$(ifconfig vioif1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+    case "$mac" in
+	'12:00:00:64:64:23' ) # For East machine
+	    if1v4=192.1.2.23
+	    if1v6=2001:db8:1:2::23
+	    if2v4=192.0.2.254
+	    hostname=netbsde
+	    ;;
+	'12:00:00:64:64:45') # For West machine
+	    if1v4=192.1.2.45
+	    if1v6=2001:db8:1:2::45
+	    if2v4=192.0.1.254
+	    hostname=netbsdw
+	    ;;
+	* )
+	    ;;
+    esac
+    if test -n "${hostname}" ; then
+	echo hostname=${hostname}
+	echo if1v4=${if1v4}
+	echo if1v6=${if1v6}
+	echo if2v4=${if2v4}
+	cat <<EOF > /etc/ifconfig.vioif1
+inet ${if1v4} netmask 255.255.255.0
+inet6 ${if1v6} prefixlen 64 alias
+up
+EOF
+	cat <<EOF > /etc/ifconfig.vioif2
+inet ${if2v4} netmask 255.255.255.0
+EOF
+	echo nameserver 192.1.2.254		>> /etc/resolv.conf
+	echo 192.1.2.254			> /etc/mygate
+	echo ${hostname}			> /etc/myname
+	chmod u=rw,g=r /etc/ifconfig.*
+	echo "==> Forcing network configuration"
+	hostname ${hostname}
+	for if in vioif1 vioif2 ; do
+	    while read line ; do
+		( set -x ; ifconfig ${if} ${line} )
+	    done < /etc/ifconfig.${if}
+	done
+	echo "==> Done changing hostnames"
+    fi
+fi

@@ -133,11 +133,11 @@ c('echo "'+pool+'        /pool           nfs     rw"                  >> /etc/fs
 
 # booting
 
-c('echo rc_configured=YES >> /etc/rc.conf')
-c('echo hostname=netbsd   >> /etc/rc.conf')
-c('echo no_swap=YES       >> /etc/rc.conf')
-c('echo savecore=NO       >> /etc/rc.conf')
-c('echo dhcpcd=YES        >> /etc/rc.conf')
+c('echo rc_configured=YES    >> /etc/rc.conf')
+c('echo no_swap=YES          >> /etc/rc.conf')
+c('echo savecore=NO          >> /etc/rc.conf')
+c('echo dhcp                 > /etc/ifconfig.vioif0')
+c('echo netbsd		     > /etc/myname')
 
 # packages
 

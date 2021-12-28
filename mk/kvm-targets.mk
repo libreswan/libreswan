@@ -171,7 +171,9 @@ VIRT_INSTALL_FLAGS = \
 
 KVM_DEBIAN_HOSTS =
 KVM_FEDORA_HOSTS = east west north road nic
-KVM_NETBSD_HOSTS =
+ifdef KVM_NETBSD
+KVM_NETBSD_HOSTS = netbsde netbsdw
+endif
 KVM_OPENBSD_HOSTS = openbsde openbsdw
 
 KVM_TEST_HOSTS = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
@@ -410,11 +412,12 @@ kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
 # "test" and "check" just runs the entire testsuite.
-$(eval $(call kvm-test,kvm-check kvm-test, --test-status "good"))
+KVM_TEST_STATUS = good$(if KVM_NETBSD,|netbsd)
+$(eval $(call kvm-test,kvm-check kvm-test, --test-status "$(KVM_TEST_STATUS)"))
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
-$(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passed))
+$(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "$(KVM_TEST_STATUS)" --skip passed))
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
@@ -1056,6 +1059,10 @@ ifeq ($(KVM_INSTALL_RPM), true)
 	$(MAKE) kvm-rpm-install
 else
 	$(MAKE) kvm-fedora-install
+endif
+ifdef KVM_NETBSD
+	$(foreach clone, $(KVM_NETBSD_CLONES), $(call undefine-os-domain, $(clone)))
+	$(MAKE) kvm-netbsd-install
 endif
 	$(MAKE) $(KVM_KEYS)
 	$(MAKE) $(KVM_CLONES)

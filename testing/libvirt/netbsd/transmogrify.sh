@@ -17,4 +17,7 @@ ${GATEWAY}:${SOURCEDIR}   /source         nfs     rw
 ${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw
 EOF
 
+mount /testing
+cp /testing/libvirt/netbsd/rc.local /etc/
+
 exit 0
