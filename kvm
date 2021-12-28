@@ -28,7 +28,7 @@ if test "$1" == $0 -a "$#" -eq 3 ; then
 	compgen -W "${pass1} ${pass2}" "${word}" | sort
     elif test "${previous}" == "sh" ; then
 	# pass 1 command
-	compgen -W "east west north south road build base nic" "${word}"
+	compgen -W "$(./testing/utils/kvmhosts.sh)" "${word}"
     else
 	# either <command> or <directory>
 	compgen -o plusdirs -W "${pass2}" "${word}"
