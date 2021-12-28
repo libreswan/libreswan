@@ -4,6 +4,6 @@ IKEv2 Message ID queue test.
 - west rekeys child #2->#3 in foreground
 - west rekeys child #3->#4 in background
   will fail as message id dropped using an iptable rule
-- west rekeys child #3->5 in forground
+- west rekeys child #3->5 in foreground
   blocks waiting on rekey #3->3 to finish; and then
   fails when IKE family is deleted

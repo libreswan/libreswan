@@ -667,7 +667,7 @@ static void check_shunk_to_uintmax(void)
 			if (!t_ok) {
 				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly succeeded", t->s);
 			} else {
-				PRINT("shunk_to_uintmax(%s,NULL) succeded with %ju", t->s, u);
+				PRINT("shunk_to_uintmax(%s,NULL) succeeded with %ju", t->s, u);
 			}
 		}
 		if (u != (t_ok ? t->u : 0)) {
