@@ -6,7 +6,7 @@ table.summary {
     width: 100%;
 }
 
-/* Be careful to only appy the 35% to the summary table (and not
+/* Be careful to only apply the 35% to the summary table (and not
    tables nested within) */
 table.summary > tbody > tr > td:first-child {
     width: 35%;

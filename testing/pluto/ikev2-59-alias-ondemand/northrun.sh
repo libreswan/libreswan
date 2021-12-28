@@ -6,5 +6,5 @@ ipsec auto --add north-eastnets
 ipsec auto --up north-eastnets
 sleep 16
 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
-# should end up traffic flowing wheather tehre are 2 or more tunnels
+# should end up traffic flowing whether there are 2 or more tunnels
 echo done

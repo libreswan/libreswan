@@ -67,7 +67,7 @@ def main():
     parser.add_argument("--print", action="store",
                         default=printer.Print(printer.Print.PATH, printer.Print.RESULT, printer.Print.ISSUES),
                         type=printer.Print, metavar=str(printer.Print),
-                        help="comman separate list of attributes to print for each test; default: '%(default)s'")
+                        help="comma separated list of attributes to print for each test; default: '%(default)s'")
 
     parser.add_argument("--stats", action="store", default=Stats.summary, type=Stats,
                         choices=[c for c in Stats],
@@ -122,7 +122,7 @@ def main():
     # Try to find a baseline.  If present, pre-load it.
     baseline = None
     if args.baseline:
-        # An explict baseline testsuite, can be more forgiving in how
+        # An explicit baseline testsuite, can be more forgiving in how
         # it is loaded.
         baseline = testsuite.load(logger, logutil.DEBUG, args,
                                   testsuite_directory=args.baseline,

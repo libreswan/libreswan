@@ -60,7 +60,7 @@ class JsonBuilder:
     def add(self, *keyval, string=None):
         keys = [key.replace("-","_") for key in keyval[0:-1]]
         value = keyval[-1]
-        # Only suppress non-existant values.
+        # Only suppress non-existent values.
         if value is None:
             return
         table = self.table

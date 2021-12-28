@@ -24,7 +24,7 @@
 #include "timecheck.h"
 
 const struct time_cmp time_cmp[] = {
-	/* Miliseconds */
+	/* Milliseconds */
 	{ 1, 1, .eq = true, .le = true, .ge = true, },
 	{ 1, 2, .ne = true, .le = true, .lt = true, },
 	{ 2, 1, .ne = true, .ge = true, .gt = true, },

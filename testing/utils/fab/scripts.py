@@ -67,7 +67,7 @@ def host_scripts(directory, logger):
     host_names = sorted(host_names)
     logger.debug("script sorted host names: %s", host_names)
 
-    # Compatiblity hack: form a list of scripts matching <host>init.sh
+    # Compatibility hack: form a list of scripts matching <host>init.sh
     # and within that force "nic" then "east" to be on the front of
     # the list.  These will be run first.
     init_scripts = Scripts()
@@ -77,14 +77,14 @@ def host_scripts(directory, logger):
         _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
     logger.debug("init scripts: %s", init_scripts)
 
-    # Compatiblity hack: form a list of scripts matching <host>run.sh.
+    # Compatibility hack: form a list of scripts matching <host>run.sh.
     # These will be run second.
     run_scripts = Scripts()
     for host_name in host_names:
         _add_script(run_scripts, scripts, host_name + "run.sh", [host_name])
     logger.debug("run scripts: %s", run_scripts)
 
-    # Part compatiblity hack, part new behaviour: form a list of
+    # Part compatibility hack, part new behaviour: form a list of
     # scripts matching <host>final.sh.  These will be run last.
     final_scripts = Scripts()
     _add_script(final_scripts, scripts, "final.sh", host_names)

@@ -16,7 +16,7 @@ df=10
 	grep "[^a-z0-9]$t[^-a-z0-9]" testing/pluto/TESTLIST > /dev/null || echo $t
     done
 } | {
-    # agument each test with author et.al.
+    # augment each test with author et.al.
     while read t ; do
 	h=$(git log --format="%h" testing/pluto/$t | tail -1)
 	d=$(git log --date=short --format="%ad" $h -- testing/pluto/$t)

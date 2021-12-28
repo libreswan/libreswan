@@ -78,7 +78,7 @@ road #
 006 #15: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 006 #18: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
- # go for broke, let IKE sa estabish
+ # go for broke, let IKE sa establish
 road #
  ../../guestbin/wait-for.sh --match '#26:.*established IKE SA' -- ipsec status
 000 #26: "private#192.1.2.0/24"[1] ...192.1.2.23:500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;

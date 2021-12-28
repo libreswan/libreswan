@@ -87,7 +87,7 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- # Remove the null route; things should recover witout a trigger
+ # Remove the null route; things should recover without a trigger
 west #
  ip route del unreachable 192.1.2.23
 west #

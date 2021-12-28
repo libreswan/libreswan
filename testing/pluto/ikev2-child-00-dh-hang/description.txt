@@ -2,7 +2,7 @@ ikev2: two CHILD SA connections, first should fail, but second should not hang
 
 - an IKE SA with CHILD is established
 
-- then the first CHILD_SA, with a bad proposal, is attemted
+- then the first CHILD_SA, with a bad proposal, is attempted
 
   Because the CHILD SA initiator state doesn't expect the NO PROPOSAL
   CHOSEN response it drops the packet:

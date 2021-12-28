@@ -202,7 +202,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // current as its results are meaningless.
     //
     // Since this follows parent (older) links and appends entries,
-    // the result is in reverse cronological order.
+    // the result is in reverse chronological order.
 
     let good_first_parent_test_runs = []
     for (let commit = newest_test_run && newest_test_run.commit;
@@ -217,7 +217,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // Identify the right-most side of the "full" plot.
     //
     // Things like keys are positioned based on this.  Remember,
-    // good_first_parent_test_runs[] is in reverse cronological order
+    // good_first_parent_test_runs[] is in reverse chronological order
     // so "last" is at the front.
 
     let newest_first_parent_test_run = good_first_parent_test_runs[0]

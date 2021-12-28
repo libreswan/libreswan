@@ -169,7 +169,7 @@ while true ; do
     # This list should match results.html.  Should a table be
     # generated?
     #
-    # ${kvm_setup} starts out as kvm-purge but then filps to
+    # ${kvm_setup} starts out as kvm-purge but then flips to
     # kvm-shutdown.  For kvm-purge, since it is only invoked when the
     # script is first changing and the REPO is at HEAD, the upgrade /
     # transmogrify it triggers will always be for the latest changes.

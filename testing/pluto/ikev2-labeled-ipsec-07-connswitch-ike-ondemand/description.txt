@@ -1,6 +1,6 @@
 test connection selection when subnet=0.0.0.0/ and ondemand
 
-(not technically connection swiching but related)
+(not technically connection switching but related)
 
 This is a sec_label connection where the single "policy" is inserted
 during IKE_AUTH and before any (optional) Child SA traffic selectors

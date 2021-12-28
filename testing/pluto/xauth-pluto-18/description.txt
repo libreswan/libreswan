@@ -8,5 +8,5 @@ this test also uses NAT.
 libreswan < 3.6 crashes on this test, see lsbz#148
 
 It also seems libreswan does not act the same as a Cisco peer, so this connection
-ends up without a proper IPsec SA installed if a workarund for lsbz#148 is used,
+ends up without a proper IPsec SA installed if a workaround for lsbz#148 is used,
 regardless of IPsec stack used - it happens on KLIPS as well as NETKEY.

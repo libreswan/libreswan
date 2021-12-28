@@ -22,7 +22,7 @@ STDOUT.
 <console.verbose.txt>.  Typically required when the output file
 <console.verbose.txt> is not under OUTPUT/ in the build tree.
 
-<fixup.directory> ... is a list of directories containg the fixup
+<fixup.directory> ... is a list of directories containing the fixup
 scripts.  By default:
   $fixupdir
 is used.

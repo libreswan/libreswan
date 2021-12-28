@@ -24,8 +24,8 @@ west #
 west #
  recv_nonce="$(expr $(grep -A 3 '***parse IKEv2 Nonce Payload:' /tmp/pluto.log | grep 'length:' | sed 's/^.*length: \([^ ]\+\) .*$/\1/' | head -n 1) - 4)"
 west #
- echo "emited nonce length (${emit_nonce}) should be >= minimum accepted nonce length for SHA2_512 (${MIN_IKEV2_NONCE_SHA2_512})"
-emited nonce length (32) should be >= minimum accepted nonce length for SHA2_512 (32)
+ echo "emitted nonce length (${emit_nonce}) should be >= minimum accepted nonce length for SHA2_512 (${MIN_IKEV2_NONCE_SHA2_512})"
+emitted nonce length (32) should be >= minimum accepted nonce length for SHA2_512 (32)
 west #
  test ${emit_nonce} -ge ${MIN_IKEV2_NONCE_SHA2_512} || echo failed
 west #

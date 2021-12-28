@@ -98,7 +98,7 @@ def login(domain, console, login=LOGIN, password=PASSWORD):
                   lapsed_time=lapsed_time, timeout=timeout)
 
 
-# Get a domain running with an attatched console.  Should be really
+# Get a domain running with an attached console.  Should be really
 # quick.
 
 def _start(domain, timeout):

@@ -32,7 +32,7 @@ north #
 1v1 "north" #2: sent Quick Mode request
 004 "north" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 north #
- # comments bellow are to understand/explore the basics : what is going on
+ # comments below are to understand/explore the basics : what is going on
 north #
  # ip link add ipsec1 type xfrm if_id 1 dev eth0
 north #

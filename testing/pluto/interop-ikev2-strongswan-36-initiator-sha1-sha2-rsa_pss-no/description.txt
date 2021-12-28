@@ -3,7 +3,7 @@ the initiator (west).
 
 This tests libreswan as server accepting rsa-sha1 (v1.5) and rsa-sha2 (PSS)
 
-unfortunately, strongswan witout rsa_pss = true in strongswan.conf will response
+unfortunately, strongswan without rsa_pss = true in strongswan.conf will response
 with rsa-sha2 (v1.5)
 
 However, it indicates an unfixable problem. How to migrate strongswan rsa-sha1 clients
@@ -13,5 +13,5 @@ methods as dictated by RFC 8247.
 
 We might be biased, but believe strongswan should fix their code :)
 
-This test therefor fails and is marked wip (maybe should be marked bug)
+This test therefore fails and is marked wip (maybe should be marked bug)
 

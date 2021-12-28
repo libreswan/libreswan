@@ -69,7 +69,7 @@ while read kind test expectation junk ; do
     for run in ${runs} ; do
 	result=${run}/${test}/OUTPUT/RESULT
 	if test ! -r ${result} ; then
-	    # mising is treated like a fail; probably when the test
+	    # missing is treated like a fail; probably when the test
 	    # was added.
 	    continue
 	fi
@@ -92,7 +92,7 @@ while read kind test expectation junk ; do
     if test "${runs_since_fail}" = ""; then
 	runs_since_fail=${total_runs}
     fi
-    # ouput in a format that is friendly to commands like 'sort -n -r'
+    # output in a format that is friendly to commands like 'sort -n -r'
     # and 'sort -k 1n -k 3nr'
     echo ${expectation} ${nr_passed} ${nr_failed} ${runs_since_pass} ${runs_since_fail} ${total_runs} ${test}
 done < ${TESTLIST}

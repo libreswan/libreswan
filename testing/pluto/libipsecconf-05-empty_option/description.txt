@@ -17,6 +17,6 @@ However, that is "fixed" in that this rule:
 
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 
-which is part of the grammer is able to always accept an empty option.
+which is part of the grammar is able to always accept an empty option.
 
 Question now is, is that valid?

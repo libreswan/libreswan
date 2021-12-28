@@ -38,4 +38,4 @@ else
     echo "==>> Done changing hostnames"
 fi
 
-echo "==> rc.local ran succesfully <=="
+echo "==> rc.local ran successfully <=="

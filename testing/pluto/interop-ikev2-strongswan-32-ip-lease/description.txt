@@ -7,4 +7,4 @@ The crash required ID using IP, being behind NAT and getting a lease IP
 strongswan as of 5.7.2+ or so started mishandling DNS server installation.
 We ignore that and put the strongswan errors in as the "good" output.
 
-we igore "resolv.conf" errors in strongswan output as it differs in namespaces
+we ignore "resolv.conf" errors in strongswan output as it differs in namespaces

@@ -1,8 +1,8 @@
 IKEv2 mobike initiator support. road is the initiator and migrates sa.
 
-Road has one IP addresses at start. Remove the ip adddress
+Road has one IP addresses at start. Remove the ip address
 after the IPsec connection is established. Pluto will detect address change
-and, fail to find an alternative source adddress.
+and, fail to find an alternative source address.
 
 Later on a new address is added. Pluto will detect new address and
 send MOBIKE probe.  When the mobike response arrive migrate the SA.

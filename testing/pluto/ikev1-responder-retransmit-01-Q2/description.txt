@@ -20,4 +20,4 @@ west:
   packets are simply dropped; replay-encrypted (injected after crypto
   is working) and replay-corrupt should be implemented in IKEv1 :-)
 
-Howver, it still seems a few short.
+However, it still seems a few short.

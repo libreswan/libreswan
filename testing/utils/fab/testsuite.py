@@ -194,7 +194,7 @@ def add_arguments(parser):
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
                        default=utilsdir.relpath(".."),
-                       help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
+                       help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
     group.add_argument("--testsuite-output", metavar="OUTPUT-DIRECTORY",

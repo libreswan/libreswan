@@ -147,7 +147,7 @@ function lsw_summary_table(table_id, summary) {
 	data: summary.test_runs,
 	sort: {
 	    column: columns[0], // Commits
-	    assending: false,
+	    ascending: false,
 	},
 	columns: columns,
 	select: {

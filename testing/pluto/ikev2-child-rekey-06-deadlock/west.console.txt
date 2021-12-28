@@ -88,7 +88,7 @@ west #
 002 "west" #5: initiating rekey to replace Child SA #3
 005 "west" #3: ESP traffic information: in=0B out=0B
 west #
- # above whack commans leave much to be desired when it comes to
+ # above whack commands leave much to be desired when it comes to
 west #
  # logging; get around it by grepping for the expected outcome.
 west #

@@ -9,7 +9,7 @@ road has dpd triggers cleanup of OE
 road triggers OE to east but it is still down, installs %pass shunt
 east is started back up
 
-but since east is in clear-or-private, it wont trigger OE and road
+but since east is in clear-or-private, it won't trigger OE and road
 has a pass, so until shunt expires, no OE will happen and it all goes
 in the clear.
 

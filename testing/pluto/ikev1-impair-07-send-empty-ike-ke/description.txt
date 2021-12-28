@@ -8,7 +8,7 @@ Interop #2:
 - responder sends back empty KE, which is dropped
 
 Note: both the initiator and responder have their retransmits
-supressed - in IKEv1 the responder is free to retransmit without
+suppressed - in IKEv1 the responder is free to retransmit without
 prompting.
 
 regardless should not dump core

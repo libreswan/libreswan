@@ -26,7 +26,7 @@
 # form THIS-LINE\nNEXT-LINE
 $ ! N
 
-# if  THIS-LINE != NEXT-LINE; print upto \n (THIS-LINE) and re-start
+# if  THIS-LINE != NEXT-LINE; print up to \n (THIS-LINE) and re-start
 /^\(\(east\|west\|road\|north\|nic\) #\)\n\1$/ ! P
 
 # delete up to \n (THIS-LINE)

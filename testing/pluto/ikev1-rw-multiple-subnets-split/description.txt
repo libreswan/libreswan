@@ -1,2 +1,2 @@
-IKEv1 RW with multiple subnets. Road uses two seperate conns, and east
+IKEv1 RW with multiple subnets. Road uses two separate conns, and east
 uses one conn with subnetS= to express the same scenario.

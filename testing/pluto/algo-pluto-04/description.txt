@@ -4,7 +4,7 @@ Basic pluto test:
 
 Two connections are defined, with different phase2 auth algorithm. Ideally, both connections
 should not be allowed to get loaded. Less ideally, they should still both work by pluto picking
-the right one. Curently, one of these will fail when it hits the 'other' connection.
+the right one. Currently, one of these will fail when it hits the 'other' connection.
 
 Hugh: as long as IKE is identical, we could allow both. just that coding of this is hard
 

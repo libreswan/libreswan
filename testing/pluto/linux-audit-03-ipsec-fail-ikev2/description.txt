@@ -13,7 +13,7 @@ IKEv1 retransmits for QUICK MODE with keyingtries=1 do this more then
 1 time, so more then one CRYPTO_IPSEC op=start res=failed is logged
 per connection.
 
-IKEv2 causes a simultanious failure of IKE SA and IPsec SA, because
+IKEv2 causes a simultaneous failure of IKE SA and IPsec SA, because
 we don't properly support childless SA and we don't keep the IKE SA
 when the IPsec SA fails, which we should. So logging for these is
 a bit inconsistent. Once we properly keep the IKE SA on Child SA

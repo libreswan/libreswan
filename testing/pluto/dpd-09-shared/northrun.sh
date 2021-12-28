@@ -12,6 +12,6 @@ ipsec status | grep north-
 ip route del unreachable 192.1.2.23
 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
 ping -n -q -c 2 -I 192.0.3.254 192.0.22.254
-# state number shuld be higher than the previous one
+# state number should be higher than the previous one
 ipsec whack --trafficstatus
 echo done

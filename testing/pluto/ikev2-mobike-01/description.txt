@@ -2,7 +2,7 @@ IKEv2 mobike initiator support. north is the initiator and migrates sa.
 
 North has two IP addresses when it start. One of them is removed, after
 IPsec connection is established. Pluto will detect this and,
-find a second adddress, send MOBIKE probe, when response arrive migrate the
+find a second address, send MOBIKE probe, when response arrive migrate the
 SA.
 
 limitations to keep in mind:
@@ -10,7 +10,7 @@ Initiator and Responder:
 NAT support need Linux Kernel 4.13 or xfrm migration patches from it.
 CONFIG_XFRM_MIGRATE=y should be enabled in the kernel
 
-We explicitely avoid testing aes_gcm for esp since there is a known
+We explicitly avoid testing aes_gcm for esp since there is a known
 linux bug in v4.14 that forgets to copy some of the AEAD key material
 in XFRM_MIGRATE. That is tested in ikev2-mobike-05-gcm
 

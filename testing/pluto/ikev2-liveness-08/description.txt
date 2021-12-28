@@ -1,10 +1,10 @@
 This tests the IKE2 liveness with two RW clients behind the same nat gateway.
 The dpdaction=clear, on east. Also on north and, road - this not significant.
 
-Additionallly on east the following are set.
+Additionally on east the following are set.
 shuntlifetime=45s
 
-failureshunt=dorp
+failureshunt=drop
 negotiationshunt=drop
 
 After setting up the tunnel north blocks all traffic to east, east will clear tunnel to north. Will it affect road? Because shunt will block all traffic to the gateway nic?

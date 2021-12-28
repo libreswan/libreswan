@@ -105,7 +105,7 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 up
 north #
- # state number shuld be higher than the previous one
+ # state number should be higher than the previous one
 north #
  ipsec whack --trafficstatus
 006 #6: "north-dpd/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'

@@ -19,7 +19,7 @@ ipsec whack --trafficstatus
 ../../guestbin/wait-for.sh --match '#18:' -- ipsec whack --trafficstatus
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
-# go for broke, let IKE sa estabish
+# go for broke, let IKE sa establish
 ../../guestbin/wait-for.sh --match '#26:.*established IKE SA' -- ipsec status
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus

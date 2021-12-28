@@ -867,7 +867,7 @@ def run_dist_certs():
     mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
                         'west-eku-clientAuth', 'east-eku-clientAuth', # should be enough to validate
                         'west-eku-serverAuth', 'east-eku-serverAuth', # should be enough to validate
-                        'west-bcOmit', 'eastbcOmit', # Basic Contraints should not be needed
+                        'west-bcOmit', 'eastbcOmit', # Basic Constraints should not be needed
                         'west-kuOmit', 'east-kuOmit', # Key Usage should not be needed
                         'west-ekuOmit', 'east-ekuOmit', # Extended Key Usage should not be needed
                         # openssl refuses to generate these
@@ -875,7 +875,7 @@ def run_dist_certs():
                         # 'west-ekuEmpty', 'east-ekuEmpty', # Extended Key Usage may be empty
                         'west-nosan', 'east-nosan', # No Subject Alt Names
                         'west-sanCritical', 'east-sanCritical', # should work
-                        'west-bcCritical', 'east-bcCritical', # Basic Contraints critical flag should be ignored
+                        'west-bcCritical', 'east-bcCritical', # Basic Constraints critical flag should be ignored
                         'west-kuCritical', 'east-kuCritical', # Key Usage critical flag should be ignored
                         'west-ekuCritical', 'east-ekuCritical', # Extended Key Usage critical flag should be ignored ??
                         # openssl refuses to generate these

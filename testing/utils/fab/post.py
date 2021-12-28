@@ -74,7 +74,7 @@ class Resolution:
 #   contains a list (set?) of hosts
 #
 #   This is so that code can easily determine if a specific issue,
-#   regardless of the HOST, has occurred.  All the programatic
+#   regardless of the HOST, has occurred.  All the programmatic
 #   operators, such as __contains__(), are implemented based on this
 #   model.
 #
@@ -147,7 +147,7 @@ class Issues:
     def json(self):
         return self._host_issues
 
-    # Programatic collections like interface.  This is indexed by
+    # Programmatic collections like interface.  This is indexed by
     # ISSUE so that it is easy to query Issues to see if an ISSUE
     # occurred on any host.
 
