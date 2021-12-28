@@ -2,7 +2,7 @@ pluto RSA test with east in FIPS mode using default IKE parameters and IKEv1
 
 East is in FIPS mode, west makes a default proposal.
 
-This test uses NSS modutil to put NSS explicitely in FIPS mode
+This test uses NSS modutil to put NSS explicitly in FIPS mode
 
 This test also uses plutodebug=all,private to test that private does not
 break things (we cannot access key material to log via private calls)

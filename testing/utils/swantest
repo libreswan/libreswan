@@ -1619,7 +1619,7 @@ def cmdline():
     parser = argparse.ArgumentParser(description='swantest arguments.')
     exclusive_grp = parser.add_mutually_exclusive_group()
 
-    # the add_argument lines bellow is sorted.
+    # the add_argument lines below are sorted.
 
     parser.add_argument("--bootwait", default=DEFAULTCONFIG['bootwait'],
                         type=int, help="seconds to reboot guest. Default %s seconds" % DEFAULTCONFIG['bootwait'])
@@ -1711,7 +1711,7 @@ def cmdline():
                         help="stop tests now. call from testing/pluto directory")
 
     parser.add_argument("--stoponerror", default=DEFAULTCONFIG['stoponerror'],
-                        action="store_true", help="Stop on kvm errors. Default coninues")
+                        action="store_true", help="Stop on kvm errors. Default continues")
 
     parser.add_argument("--tcpdump", default=DEFAULTCONFIG['tcpdump'],
                         help="tcpdump . The actual command is made of three parts, this one + -w <file> -i <interface> + tcpdumpfilter. Default %s" % DEFAULTCONFIG['tcpdump'])
@@ -1997,7 +1997,7 @@ def docker_add_net_bridges(args, test):
     pcap_file_ext = '.pcap'
     pcap_file = None
 
-    prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
+    prefix = "192.0.2.1/24"  # rfc 5737. leave to network restart
 
     tcpdump_cmds = dict()
     brlist = dict()
@@ -2117,7 +2117,7 @@ def docker_run_script(host, testname, script, timer=90):
     dname = "%s-%s" % (host, testname)
     if not os.path.exists(script):
         logging.info(
-            "mssing file %s for host  %s testname %s", script, host, testname)
+            "missing file %s for host  %s testname %s", script, host, testname)
         return
     logging.debug("%s execute commands from file %s", host, script)
 
@@ -2666,7 +2666,7 @@ def do_test_list(args, start, tried, output_dir):
 
         return (odir, True, 0)
 
-    # in every retry check if directry need to be  created
+    # in every retry check if directory need to be  created
     if not os.path.isdir(st["odir"]):
         if not makedirs_log(st["odir"], 0o775):
             logging.error(

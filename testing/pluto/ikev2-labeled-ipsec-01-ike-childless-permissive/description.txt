@@ -1,6 +1,6 @@
 IKEv2 labeled IPsec using XFRM, using auto=start (--up) to trigger
 a childless IKE SA (since we have no ACQUIREd label to negotiate
-a new SPD state) with installed policy that causes AQUIRES to
+a new SPD state) with installed policy that causes ACQUIRES to
 negotiate IPsec SA's later on.
 
 A test on port 4300 using netcat and getpeercon_server to confirm traffic

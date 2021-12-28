@@ -1,5 +1,5 @@
 This is a test of pre-shared mode from an unknown IP address.
-It uses main mode, and nat-t support is explicitely disabled.
+It uses main mode, and nat-t support is explicitly disabled.
 
 road connects to east in this test.
 

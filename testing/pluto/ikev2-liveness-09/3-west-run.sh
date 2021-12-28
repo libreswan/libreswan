@@ -18,7 +18,7 @@ ipsec whack --shuntstatus
 ipsec status | grep westnet-eastnet-ikev2
 # ping should be caught ip route unreachable
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-# Remove the null route; things should recover witout a trigger
+# Remove the null route; things should recover without a trigger
 ip route del unreachable 192.1.2.23
 ../../guestbin/wait-until-alive 192.1.2.23
 ../../guestbin/wait-for.sh --match ':' -- ipsec trafficstatus

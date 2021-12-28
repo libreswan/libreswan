@@ -25,7 +25,7 @@ set_output_file()
 hit_double_sa ()
 {
 	i=$1
-	M="=== Attempt $i hit multiple SA collecting dignostics  ==="
+	M="=== Attempt $i hit multiple SA collecting diagnostics  ==="
 	set_output_file("multiple")
 	echo "$M" >>  $DIAG_SUM_FILE
 	echo "$M" >>  $DIAG_OUT_FILE
@@ -35,7 +35,7 @@ hit_double_sa ()
 hit_bug ()
 {
 	i=$1
-	M="=== Attempt $i hit the but collecting dignostics for analaysis ==="
+	M="=== Attempt $i hit the but collecting diagnostics for analaysis ==="
 	set_output_file("bug")
 	echo "$M" >>  $DIAG_OUT_FILE
 	echo "$M" >>  $DIAG_SUM_FILE

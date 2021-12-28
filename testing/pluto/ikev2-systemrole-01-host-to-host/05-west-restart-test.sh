@@ -2,7 +2,7 @@
 ipsec restart
 ../../guestbin/wait-until-pluto-started
 ipsec status
-# this assumes conection loaded with auto=ondemand
+# this assumes connection loaded with auto=ondemand
 # trigger tunnel - the first trigger ping packet is lost
 ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 sleep 2

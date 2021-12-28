@@ -4,7 +4,7 @@ West initiates a series of SAs where all but the very first have the
 integrity hash of one of the exchanges corrupted.  When east receives
 the corrupt message it is expected to either discard or ignore packet.
 
-In the case of a delete or notify, the corrupt exchange only occures
+In the case of a delete or notify, the corrupt exchange only occurs
 after the SA has established (so don't use the SA establishing as an
 indicator that things are broken).
 

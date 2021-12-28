@@ -1334,7 +1334,7 @@ def send_virsh_cmd(args, hosts, c='shutdown'):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logger.info(
-            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -1877,7 +1877,7 @@ def cmdline():
     exclusive_grp_trun = parser.add_mutually_exclusive_group()
     exclusive_grp_test_type = parser.add_mutually_exclusive_group()
 
-    # the add_argument lines bellow is sorted.
+    # the add_argument lines below are sorted.
 
     parser.add_argument("--bootwait", default=DEFAULTCONFIG['bootwait'],
                         type=int, help="seconds to reboot guest. Default %s seconds" % DEFAULTCONFIG['bootwait'])
@@ -1983,7 +1983,7 @@ def cmdline():
                         help="stop tests now. call from testing/pluto directory")
 
     parser.add_argument("--stoponerror", default=DEFAULTCONFIG['stoponerror'],
-                        action="store_true", help="Stop on kvm errors. Default coninues")
+                        action="store_true", help="Stop on kvm errors. Default continues")
 
     parser.add_argument("--tcpdump", default=DEFAULTCONFIG['tcpdump'],
                         help="tcpdump . The actual command is made of three parts, this one + -w <file> -i <interface> + tcpdumpfilter. Default %s" % DEFAULTCONFIG['tcpdump'])
@@ -2284,7 +2284,7 @@ def docker_add_net_bridges(args, test):
     pcap_file_ext = '.pcap'
     pcap_file = None
 
-    prefix = "192.0.2.1/24"  # rfc 5737. leave to netwrork restart
+    prefix = "192.0.2.1/24"  # rfc 5737. leave to network restart
 
     tcpdump_cmds = dict()
     brlist = dict()
@@ -2403,7 +2403,7 @@ def docker_run_script(host, testname, script, timer=90):
     dname = "%s-%s" % (host, testname)
     if not os.path.exists(script):
         logger.info(
-            "mssing file %s for host  %s testname %s", script, host, testname)
+            "missing file %s for host  %s testname %s", script, host, testname)
         return
     logger.debug("%s execute commands from file %s", host, script)
 
@@ -2988,7 +2988,7 @@ def ns_files_exist(nsname):
         err += " not found %s" % ns
 
     if not r:
-        logger.debug("%s no old namesapce directries %s", nsname, err)
+        logger.debug("%s no old namesapce directories %s", nsname, err)
     else:
         logger.debug("%s found namespace directories %s", nsname, err)
 
@@ -3428,7 +3428,7 @@ class Docker:
         self.test_start_banner_pre = "***** DOCKER PLUTO RUNNING TEST"
         self.test_start_banner_suf = " *******"
 
-        # wrapers within class bellow
+        # wrapers within class below
         self.restart = self.docker_restart
         self.stop_inst = self.docker_del
         self.start_new_inst = self.docker_add
@@ -3515,7 +3515,7 @@ class Namespace:
         self.test_start_banner_pre = "***** NS PLUTO RUNNING TEST"
         self.test_start_banner_suf = " *******"
 
-        # wrapers within class bellow
+        # wrapers within class below
         self.restart = self.ns_restart
         self.stop_inst = self.ns_del
         self.start_new_inst = self.ns_add
@@ -3560,7 +3560,7 @@ class Namespace:
         if s:
             logger.debug("Got console %s lets sanitize" % ns)
             # next few lines are bit hackery to get the local prompt behave
-            # carefull changing the order
+            # careful changing the order
             # s.child.delaybeforesend = 0.1
             s.sendline(' export HISTFILE=/dev/null; TERM=dumb; export TERM; unset LS_COLORS')
             s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
@@ -3787,7 +3787,7 @@ class Test():
         elif cwd:
             self.name = os.path.basename(cwd)
         else:
-            logger.error("ABORT cannot figure test directoy")
+            logger.error("ABORT cannot figure test directory")
             return
 
 
@@ -4071,7 +4071,7 @@ class TestListRun():
                         self.args.testlist, (self.dnottorun + self.knottorun + self.nsnottorun))
             return (odir, True, 0)
 
-        # in every retry check if directry need to be  created
+        # in every retry check if directory need to be  created
         if not os.path.isdir(self.odir):
             if not makedirs_log(self.odir, 0o775):
                 logger.error("failed to create directory %s. no results will be copied",
@@ -4204,7 +4204,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logger.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logger.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
+        logger.debug("IPSECVERSION %s was set in environment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion

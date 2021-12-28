@@ -96,8 +96,8 @@ function lsw_table(table) {
     if (table.sort.column === undefined) {
 	table.sort.column = table.headers[table.headers.length - 1][0]
     }
-    if (table.sort.assending === undefined) {
-	table.sort.assending = false
+    if (table.sort.ascending === undefined) {
+	table.sort.ascending = false
     }
 
     // Fudge up select inheritance
@@ -175,10 +175,10 @@ function lsw_table(table) {
 	    }
 	    // clear any existing sort
 	    if (table.sort.column == column) {
-		table.sort.assending = !table.sort.assending
+		table.sort.ascending = !table.sort.ascending
 	    } else {
 		table.sort.column = column
-		table.sort.assending = false
+		table.sort.ascending = false
 	    }
 	    lsw_table_body(table)
 	})
@@ -191,7 +191,7 @@ function lsw_table_body(table) {
     // always sort
 
     table.rows.sort(function (left_row, right_row) {
-	if (table.sort.assending) {
+	if (table.sort.ascending) {
 	    return table.sort.column.sort(left_row.data, right_row.data)
 	} else {
 	    return table.sort.column.sort(right_row.data, left_row.data)

@@ -6,4 +6,4 @@ the connection as strongswan soft fails on this.
 
 EAP is used successfully on both ends.
 
-There is an issue with strongswan's output not being fully santized
+There is an issue with strongswan's output not being fully sanitized

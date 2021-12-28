@@ -63,7 +63,7 @@ west #
  echo 'test' | nc -w 5 192.1.2.23 7
 Ncat: Connection refused.
 west #
- # send packet over the 'tunnel' that's negotiating - shoudl get blocked
+ # send packet over the 'tunnel' that's negotiating - should get blocked
 west #
  echo 'test' | nc -w 5 192.1.2.23 80
 Ncat: TIMEOUT.

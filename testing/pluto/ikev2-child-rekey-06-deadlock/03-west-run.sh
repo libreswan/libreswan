@@ -14,7 +14,7 @@ ipsec whack --rekey-ipsec --name west --async
 # #3->#4) and then die.
 ipsec whack --rekey-ipsec --name west
 
-# above whack commans leave much to be desired when it comes to
+# above whack commands leave much to be desired when it comes to
 # logging; get around it by grepping for the expected outcome.
 #
 # Note: need to strip of "MONTH(1) DATE(2) TIME(3): "; look for real

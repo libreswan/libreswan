@@ -19,7 +19,7 @@ we didn't sent and key length (and we took that ourselves as to mean 128)
 
 Future behaviour should be to send 2 proposals instead of one,
 so this specification becomes symmetrial and will not break when
-initiator/responder roles switch during rekey when only one end specfies
+initiator/responder roles switch during rekey when only one end specifies
 a specific key length.
 
 NOTE: we support aes192, but it is not part of our default proposal. This

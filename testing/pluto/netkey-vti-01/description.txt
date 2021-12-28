@@ -11,4 +11,4 @@ marks could be used to separate incoming and outgoing traffic. In
 that case, the ip tunnel command uses okey and ikey instead of key.
 
 Because of the asymmetry, it can cause some stray packets hitting the
-XFRM without a poicy.
+XFRM without a policy.

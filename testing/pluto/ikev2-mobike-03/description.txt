@@ -2,7 +2,7 @@ IKEv2 mobike initiator support. road is the initiator and migrates sa.
 
 Road has two IP addresses when it start. One of them is removed, after
 IPsec connection is established. Pluto will detect address deleted and
-find the second adddress as new source address. Initiate MOBIKE probe
+find the second address as new source address. Initiate MOBIKE probe
 , when response arrive migrate the SA.
 
 Initiator:

@@ -1,7 +1,7 @@
 This test has a road warrior, ("road":initiator) connecting to east(responder).
-East is configued with multiple addresspool.
+East is configured with multiple addresspool.
 East gives out an address from the addresspool INTERNAL_IP4_ADDRESS.
-road wll get it as:
+road will get it as:
 ISAKMP ModeCfg attribute:
 "ModeCfg attr type: INTERNAL_IP4_ADDRESS"
 authby=X509 CERT

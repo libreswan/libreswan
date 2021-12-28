@@ -1,7 +1,7 @@
 lsw#299 test
 
 Two road warriors, north and road connect to east, IKEv1, xauth authby=secret.
-East use addresspool and xauth passwd file for IPv4 address asignment.
+East use addresspool and xauth passwd file for IPv4 address assignment.
 
 note: Sometimes a retransmit causes this test to fail. While the tunnels are
 setup, retranmissions trigger a failure and tunnels are brought down despite

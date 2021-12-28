@@ -145,7 +145,7 @@ def choose_config_file(hostname, testpath, config_path, strict):
     # extension contains the dot
     (config_base, extension) = os.path.splitext(config_file)
 
-    # pass 1: look in the test directory, reject ambigious files.
+    # pass 1: look in the test directory, reject ambiguous files.
     # When exact, don't match HOSTNAME.EXTENSION.
     paths = []
     paths.append((False, os.path.join(testpath, hostname + "." + config_file)))
@@ -159,7 +159,7 @@ def choose_config_file(hostname, testpath, config_path, strict):
                 continue
             if strict is False and fuzzy is False:
                 # non-strict should not match HOSTNAME.CONFIG_FILE
-                sys.exit("config file %s conficts with %s" % (p, hostname + extension))
+                sys.exit("config file %s conflicts with %s" % (p, hostname + extension))
             if path:
                 sys.exit("conflicting files %s %s in test directory" % (p, path))
             path = p
@@ -277,7 +277,7 @@ if not args.no_eth0:
         print("cannot find eht0. test guest expect eth0. --no-eth0 to disable this check\n%s\n%s" % i (o.output, o.stderr))
         sys.exit(1)
 
-# nsrun set magic string SWAN_PLUTOTEST=YES in the enviroment
+# nsrun set magic string SWAN_PLUTOTEST=YES in the environment
 # to identify namespace
 # echo $SWAN_PLUTOTEST
 if "SWAN_PLUTOTEST" in os.environ:
@@ -474,7 +474,7 @@ if hostname != "nic":
     else:
         resolv = "/testing/baseconfigs/all/etc/resolv.conf"
     dst = resolve_conf
-    if not args.namespace and os.path.islink(dst): # on fedora 22 it is link frist remove the link
+    if not args.namespace and os.path.islink(dst): # on fedora 22 it is link first remove the link
         os.unlink(dst)
     lsw_cp_file(resolv, "/etc/resolv.conf", nsbasepath=nsbasepath)
 
@@ -709,7 +709,7 @@ subprocess.getoutput("iptables -X");
 
 if not args.namespace and hostname != "nic": # inside namespace this would kill pluto from other ns
     # shouldn't happen early on? now wiped run time files pid etc.
-    # this is probably a last resort? may be a more gentle attempt at the begining.
+    # this is probably a last resort? may be a more gentle attempt at the beginning.
     #
     # final prep - this kills any running userland
     subprocess.call(["systemctl", "stop", "ipsec"])
@@ -719,7 +719,7 @@ if not args.namespace and hostname != "nic": # inside namespace this would kill 
     for dname in ( "pluto", "charon", "starter", "iked" ):
         try:
             if args.verbose:
-                print ("INFO found daemon runing stop it %s" % dname)
+                print ("INFO found daemon running stop it %s" % dname)
             subprocess.check_output(["killall", "-9", dname], stderr=subprocess.STDOUT)
         except:
             pass

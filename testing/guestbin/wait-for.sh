@@ -18,7 +18,7 @@ Options:
 
    --timeout <seconds>
 
-         Set the timeout (nr attempts * 1 second); defaut is
+         Set the timeout (nr attempts * 1 second); default is
          ${timeout} attempts which is roughly ${timeout} seconds.
 
    --match <regex>

@@ -194,7 +194,7 @@ class Domain:
         if self._mounts is None:
             self._mounts = self._get_mounts(console)
         # Note that REMOTE_MOUNTS is sorted in reverse order so that
-        # /source/testing comes before /source.  This way the loger
+        # /source/testing comes before /source.  This way the logger
         # path is matched first.
         self.logger.debug("ordered mounts %s", self._mounts);
         host_path = os.path.realpath(host_path)

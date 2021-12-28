@@ -8,7 +8,7 @@ ipsec start
 ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
 # check no oe
 ipsec whack --trafficstatus
-# triger oe; expect zero byte count on up connection
+# trigger oe; expect zero byte count on up connection
 ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
 ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23

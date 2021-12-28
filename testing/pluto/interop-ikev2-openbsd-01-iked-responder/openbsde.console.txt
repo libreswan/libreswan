@@ -5,7 +5,7 @@ openbsde #
 openbsde #
  set +o gmacs
 openbsde #
- # note swan-prep does not yet supprt iked
+ # note swan-prep does not yet support iked
 openbsde #
  #/testing/guestbin/swan-prep
 openbsde #

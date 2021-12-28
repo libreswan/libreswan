@@ -3,7 +3,7 @@ Send KEY_LEGTH attribute for ESP ENCR for 3DES. This is invalid and should
 be rejected or ignored on the remote side. It requires starting with
 --impair-check-keysize which allows specifying bad key sizes.
 
-curently: this is rejected by the other end, but west then sends another
+currently: this is rejected by the other end, but west then sends another
 packet which seems to contain garbage:
 
 | *received 300 bytes from 192.1.2.45:500 on eth1 (port=500)

@@ -188,7 +188,7 @@ function lsw_summary_cleanup(status, commits, summaries, current) {
 	return true
     })
 
-    // Sort the test run by committer.date in assending order.
+    // Sort the test run by committer.date in ascending order.
 
     summary.test_runs.sort(function(l, r) {
 	return l.commit.committer.date - r.commit.committer.date

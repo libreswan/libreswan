@@ -1,8 +1,8 @@
 IKEv2 mobike initiator support. north is the initiator and migrates sa.
 
-The north has one IP addresses at the start. It remove this ip adddress
+The north has one IP addresses at the start. It remove this ip address
 after the IPsec connection is established. Pluto will detect this and,
-fail to find an alternative source adddress.
+fail to find an alternative source address.
 
 Later on a new address is added. Pluto will detect this and send MOBIKE probe.
 When the mobike response arrive migrate the SA.

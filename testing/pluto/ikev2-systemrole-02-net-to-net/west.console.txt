@@ -160,7 +160,7 @@ west #
 000 Bare Shunt list:
 000  
 west #
- # this assumes conection loaded with auto=ondemand
+ # this assumes connection loaded with auto=ondemand
 west #
  # trigger tunnel - the first trigger ping packet is lost
 west #

@@ -36,7 +36,7 @@ road #
 002 "xauth-road-eastnet" #1: XAUTH: aborting entire IKE Exchange
 036 "xauth-road-eastnet" #1: encountered fatal error in state STATE_XAUTH_I1
 road #
- # next one should succed and ping pass throguh
+ # next one should succeed and ping pass throguh
 road #
  # prevent false positive on deleting I1 or I2 by redirecting to /dev/null
 road #

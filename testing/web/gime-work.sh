@@ -122,7 +122,7 @@ while read commits ; do
 
     # Always test HEAD (even when it isn't interesting).
     #
-    # Hopefuly this is less confusing then having tester.sh ignore new
+    # Hopefully this is less confusing then having tester.sh ignore new
     # commits.  These results will get pruned early.
     #
     # Use index=1 as a flag to indicate that the test wasn't tested.

@@ -8,4 +8,4 @@ Because this test is subnet-to-subnet and the other end is not inside the
 Just add route to the subnet via dev ipsec0
 
 Also note output marks are not necessary, there will not be any routing loop,
-becuase that end IP address is outside the extruded subnet.
+because that end IP address is outside the extruded subnet.

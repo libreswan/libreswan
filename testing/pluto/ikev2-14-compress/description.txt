@@ -4,7 +4,7 @@ The IPCOMP ip xfrm output is a little odd. It contains proto esp, proto comp
 and proto 4 (ipip) entries. It also changes the outer ESP as transport mode,
 even if it is really tunnel mode.
 
-We test with compressable pings to see the counter on the ipcomp SA increase,
+We test with compressible pings to see the counter on the ipcomp SA increase,
 but one the counters always increases even if packets were not compressed.
 
 [root@west ~]# ip xfrm state

@@ -213,7 +213,7 @@ title run unbound-keygen once
 systemctl start unbound-keygen.service
 
 
-title Clobber some anoying services
+title Clobber some annoying services
 
 # System Security Services Daemon (i.e., real PAM)
 run systemctl disable sssd.service

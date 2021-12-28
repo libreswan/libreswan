@@ -64,7 +64,7 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- # Now immitate a second indepdent client to east to show this 2nd
+ # Now imitate a second independent client to east to show this 2nd
 road #
  # client doesn't kill 1st client
 road #

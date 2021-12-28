@@ -20,7 +20,7 @@ west #
 west #
  ipsec whack --trafficstatus
 west #
- # triger oe; expect zero byte count on up connection
+ # trigger oe; expect zero byte count on up connection
 west #
  ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
 down

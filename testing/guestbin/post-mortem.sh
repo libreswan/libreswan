@@ -94,7 +94,7 @@ fi
 
 CHECK memory leaks
 
-# The absense of 'leak detective found no leaks' in the log file isn't
+# The absence of 'leak detective found no leaks' in the log file isn't
 # sufficient.  For instance a pluto self-test (in check-01) doesn't
 # leave any log line.  Hence check for 'NNN leaks'
 
@@ -117,7 +117,7 @@ CHECK reference leaks
 # useful.
 #
 # Skip this when there's a core dump (little point as refcnt failure
-# is guarenteed).
+# is guaranteed).
 
 if ! ${pluto} ; then
     SKIP as pluto was not running

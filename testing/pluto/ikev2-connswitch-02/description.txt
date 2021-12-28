@@ -3,6 +3,6 @@ with different IDs and different authby policy
 
 This is https://bugs.libreswan.org/show_bug.cgi?id=301
 
-This shows connection swiching bug if authby= values of two conns are different.
+This shows connection switching bug if authby= values of two conns are different.
 It should switch but doesn't.
 
