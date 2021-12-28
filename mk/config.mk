@@ -192,6 +192,12 @@ MANDIR ?= $(DESTDIR)$(FINALMANDIR)
 # where configuration files go
 FINALSYSCONFDIR ?= /etc
 
+# where INITSYSTEM files go
+FINALINITSYSTEMDIR ?= $(FINALSYSCONFIGDIR)/$(INITSYSTEM)
+INITSYSTEMDIR ?= $(DESTDIR)$(FINALINITSYSTEMDIR)
+FINALINITSYSTEMEXAMPLESDIR ?= $(PREFIX)/share/examples/$(INITSYSTEM)
+INITSYSTEMEXAMPLESDIR ?= $(DESTDIR)$(FINALINITSYSTEMEXAMPLESDIR)
+
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
 FINALRUNDIR ?= /run/pluto
@@ -256,6 +262,7 @@ FINALINITDDIR ?= $(shell for d in $(INITDDIRS) ; \
 		do if test -d $(DESTDIR)/$$d ; \
 		then echo $$d ; exit 0 ; \
 		fi ; done ; echo $(INITDDIR_DEFAULT) )
+# XXX: overlaps FINALINITSYSTEMDIR
 INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 
 # PYTHON_BINARY is used for python scripts shebang
@@ -481,42 +488,46 @@ export WHACKLIB IPSECCONFLIB
 IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
 
 # how to do variable substitution in sed-transformed files
-TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
+TRANSFORM_VARIABLES = sed \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
-			-e "s:@OSDEP@:${OSDEP}:g" \
+			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
+			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
+			-e "s:@FINALINITSYSTEMDIR@:$(FINALINITSYSTEMDIR):g" \
+			-e "s:@FINALINITSYSTEMEXAMPLESDIR@:$(FINALINITSYSTEMEXAMPLESDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@FINALLOGDIR@:$(FINALLOGDIR):g" \
 			-e "s:@FINALLOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g" \
-			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
 			-e "s:@FINALSBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
+			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
+			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
-			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
+			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
-			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
-			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
+			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@IPSEC_SECRETS_FILE@:$(IPSEC_SECRETS_FILE):g" \
-			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
+			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
+			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
+			-e "s:@OSDEP@:${OSDEP}:g" \
 			-e "s:@PYTHON_BINARY@:$(PYTHON_BINARY):g" \
+			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
+			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
+			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
+			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
-			-e "s:@SD_TYPE@:$(SD_TYPE):g" \
-			-e "s:@SD_RESTART_TYPE@:$(SD_RESTART_TYPE):g" \
-			-e "s:@SD_PLUTO_OPTIONS@:$(SD_PLUTO_OPTIONS):g" \
-			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
-			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
-			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
+			$(NULL)
 
 # For KVM testing setup
 #POOL ?= ${LIBRESWANSRCDIR}/pool

@@ -73,8 +73,8 @@ case "$1" in
 		exec /etc/init.d/ipsec start
 		;;
 	    rc.d )
-		echo "Redirecting to: /etc/rc.d/pluto onestart"
-		exec /etc/rc.d/pluto onestart
+		echo "Redirecting to: @FINALINITSYSTEMDIR@/pluto onestart"
+		exec @FINALINITSYSTEMDIR@/pluto onestart
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
@@ -123,8 +123,8 @@ case "$1" in
 		exec /etc/init.d/ipsec stop
 		;;
 	    rc.d )
-		echo "Redirecting to: /etc/rc.d/pluto onestop"
-		/etc/rc.d/pluto onestop
+		echo "Redirecting to: @FINALINITSYSTEMDIR@/pluto onestop"
+		@FINALINITSYSTEMDIR@/pluto onestop
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct stop via ipsec whack --shutdown"
@@ -185,8 +185,8 @@ case "$1" in
 		exec /etc/init.d/ipsec status
 		;;
 	    rc.d )
-		echo "Redirecting to: /etc/rc.d/pluto onestatus"
-		exec /etc/rc.d/pluto onestatus
+		echo "Redirecting to: @FINALINITSYSTEMDIR@/pluto onestatus"
+		exec @FINALINITSYSTEMDIR@/pluto onestatus
 		;;
 	    * )
 		echo "Unknown init system ${initsystem} in use - aborted"
@@ -225,8 +225,8 @@ case "$1" in
 		exec /etc/init.d/ipsec restart
 		;;
 	    rc.d )
-		echo "Redirecting to: /etc/rc.d/pluto onerestart"
-		exec /etc/rc.d/pluto onerestart
+		echo "Redirecting to: @FINALINITSYSTEMDIR@/pluto onerestart"
+		exec @FINALINITSYSTEMDIR@/pluto onerestart
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces"
