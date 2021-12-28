@@ -821,8 +821,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 		--import \
 		--noautoconsole
 	: install $(notdir $(basename $@)) using install.sh from $(srcdir) and not $(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/install.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).install.sh
-	$(KVMSH) $(notdir $(basename $@)) -- /pool/$(notdir $(basename $@)).install.sh $(KVM_$($*)_INSTALL_FLAGS)
+	cp testing/libvirt/$*/install.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.install.sh
+	$(KVMSH) $(notdir $(basename $@)) -- /pool/$(KVM_FIRST_PREFIX)$*.install.sh $(KVM_$($*)_INSTALL_FLAGS)
 	: only shutdown when install works
 	$(KVMSH) --shutdown $(basename $(notdir $@))
 	touch $@
@@ -832,8 +832,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
 	: upgrade $($*) using upgrade.sh from $(srcdir) and not $(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/upgrade.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).upgrade.sh
-	$(KVMSH) $(notdir $@) -- /pool/$(notdir $(basename $@)).upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
+	cp testing/libvirt/$*/upgrade.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.upgrade.sh
+	$(KVMSH) $(notdir $@) -- /pool/$(KVM_FIRST_PREFIX)$*.upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown when upgrade works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -872,13 +872,13 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--import \
 		--noautoconsole
 	: transmogrify $($*) using transmogrify.sh from srcdir=$(srcdir) and not KVM_SOURCEDIR=$(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(notdir $(basename $@)).transmogrify.sh
+	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		GATEWAY=$(KVM_GATEWAY_ADDRESS) \
 		POOLDIR=$(KVM_POOLDIR) \
 		SOURCEDIR=$(KVM_SOURCEDIR) \
 		TESTINGDIR=$(KVM_TESTINGDIR) \
-		/pool/$(notdir $(basename $@)).transmogrify.sh
+		/pool/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
 	: shutdown needed after transmogrify but only shutdown when transmogrify works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
