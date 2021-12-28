@@ -48,7 +48,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	/*
 	 * XXX: Why skip refine_host_connection*() when AUTHBY_NULL?
 	 *
-	 * For instance, IKE_SA_INIT chooses a permenant connection
+	 * For instance, IKE_SA_INIT chooses a permanent connection
 	 * but then IKE_AUTH proposes AUTHBY_NULL.
 	 */
 
@@ -81,7 +81,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		/* end cert is at the front; move to where? */
 		struct certs *certs = ike->sa.st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
-		dbg("rhc: comparing certifcate: %s", end_cert->subjectName);
+		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
 		/*
 		 * XXX: If this is going to be instantiated using
@@ -137,7 +137,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
                  *   made
 		 *
 		 *   this seems weird; what happens if IKE_SA_INIT
-		 *   chooses something more permenant but the IKE_AUTH
+		 *   chooses something more permanent but the IKE_AUTH
 		 *   message proposes NULL?
 		 *
 		 * - refine_host_connection() returned NULL so,

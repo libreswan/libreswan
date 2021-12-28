@@ -255,7 +255,7 @@ struct end {
 	bool has_id_wildcards;
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	enum eap_options eap;		/* wether to require/do EAP auth (eg EAPTLS) */
+	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 	cert_t cert;			/* end certificate */
 	ckaid_t *ckaid;
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */

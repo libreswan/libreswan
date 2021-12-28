@@ -860,7 +860,7 @@ static bool verify_and_decrypt_v2_payload(struct ike_sa *ike,
 }
 
 /*
- * Incomming IKEv2 fragments.
+ * Incoming IKEv2 fragments.
  */
 
 static const char *ignore_v2_incoming_fragment(struct v2_incoming_fragments *frags,

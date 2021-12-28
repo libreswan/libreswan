@@ -22,7 +22,7 @@
 /*
  * Setup an IPsec route entry.
  *
- * There's lots of redundency here, see debug log lines below.
+ * There's lots of redundancy here, see debug log lines below.
  */
 
 bool raw_policy(enum kernel_policy_op op,

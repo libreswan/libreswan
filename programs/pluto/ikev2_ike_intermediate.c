@@ -109,7 +109,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 {
 	/*
 	 * The function below always schedules a dh calculation - even
-	 * when it's been peformed earlier (there's something in the
+	 * when it's been performed earlier (there's something in the
 	 * intermediate echange about this?).
 	 *
 	 * So that things don't pexpect, blow away the old shared secret.

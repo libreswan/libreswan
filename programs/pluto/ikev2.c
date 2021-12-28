@@ -1177,7 +1177,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 
 		/*
 		 * Does the message only contain an SKF payload?  (no
-		 * exchange is defiend that contains more than just
+		 * exchange is defined that contains more than just
 		 * that payload).
 		 *
 		 * The RFC 7383, in:
@@ -1645,7 +1645,7 @@ void ikev2_process_packet(struct msg_digest *md)
  * be fatal, killing the IKE SA.  Oops.
  *
  * Since there's no state transition to complete, find one vaguely
- * plausable, and then complete it with a fatal error, triggering the
+ * plausible, and then complete it with a fatal error, triggering the
  * delete of the IKE family.
  *
  * This is largely astetic.  It could use the first transition but
@@ -1804,7 +1804,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * (i.e., does it have an SK or SKF payload).
 	 *
 	 * Because there can be other payloads before SK or SKF, the
-	 * only way to truely confirm this is to unpack the all the
+	 * only way to truly confirm this is to unpack the all the
 	 * payload headers.
 	 *
 	 * Remember, the unprotected IKE_SA_INIT exchange was excluded
@@ -1834,7 +1834,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	/*
 	 * Using the (in theory) protected but not encrypted parts of
 	 * the message, weed out anything that isn't at least vaguely
-	 * plausable:
+	 * plausible:
 	 *
 	 * - if the IKE SA isn't protecting exchanges then this will
          *   reject everything
@@ -1843,7 +1843,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 *   are protected.
 	 *
 	 * - if the IKE SA is protecting exchanges then this will
-         *   reject any message that doesn't contan an SK or SKF
+         *   reject any message that doesn't contain an SK or SKF
          *   payload
 	 *
 	 *   Any transition from a secured state must invole a
@@ -1876,7 +1876,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * If the SKEYSEED is missing, compute it now (unless, of
 	 * course, it is already being computed in the background).
 	 *
-	 * If necessary, this code will also acumulate unvalidated
+	 * If necessary, this code will also accumulate unvalidated
 	 * fragments / messages.
 	 */
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {

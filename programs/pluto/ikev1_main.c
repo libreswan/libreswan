@@ -2178,7 +2178,7 @@ bool accept_delete(struct msg_digest *md,
 						 *
 						 * XXX: because there
 						 * could also be
-						 * larval or dieing
+						 * larval or dying
 						 * states tied to the
 						 * connection?
 						 */

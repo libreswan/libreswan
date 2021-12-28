@@ -70,7 +70,7 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 #define addref_where(OBJ, WHERE)					\
 	({								\
-		typeof(OBJ) o_ = OBJ; /* evalutate once */		\
+		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
 		refcnt_addref_where(#OBJ, o_, o_ == NULL ? NULL : &o_->refcnt, WHERE); \
 		o_; /* result */					\
 	})

@@ -787,7 +787,7 @@ $(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) testing/libvirt/openbsd/install.c
 ## Repeated kvm-$(OS)-upgrade calls upgrade (not fresh install) the
 ## domain.  Use kvm-$(OS)-downgrade to force this.
 ##
-## At this point only /pool is accessable (/source and /testing are
+## At this point only /pool is accessible (/source and /testing are
 ## not, see below).
 
 $(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS)): \

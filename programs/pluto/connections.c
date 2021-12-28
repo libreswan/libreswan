@@ -2352,7 +2352,7 @@ static bool extract_connection(const struct whack_message *wm,
 void add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/*
-	 * Check for duplicate before allocating; otherwize the lookup
+	 * Check for duplicate before allocating; otherwise the lookup
 	 * will return the just allocated connection missing the
 	 * original.
 	 */
@@ -2533,7 +2533,7 @@ struct connection *instantiate(struct connection *c,
          *   address; creating a new template T.IKE (since the
          *   negotiated sec_label isn't known it is still a template)
 	 *
-	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantate T.IKE
+	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantiate T.IKE
 	 *   with the Child SA's negotiated SEC_LABEL creating the
 	 *   connection instance C.CHILD
 	 */
@@ -3612,7 +3612,7 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 
 	/*
 	 * PASS 1: Match anything with the exact same SRC->DST. This
-	 * list contains instantiated templates and oriented permenant
+	 * list contains instantiated templates and oriented permanent
 	 * connections.
 	 *
 	 * PASS 2: Match matching SRC->%any.  This list contains

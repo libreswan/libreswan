@@ -183,7 +183,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		/*
 		 * Record 'n' send the message inline.  Should be
 		 * handling this better.  Perhaps signaling the death
-		 * by returning STF_ZOMBIFY?  Tthe IKE SA should
+		 * by returning STF_ZOMBIFY?  The IKE SA should
 		 * linger so that it can sink retransmits.
 		 *
 		 * Since the IKE SA is about to disappear the update

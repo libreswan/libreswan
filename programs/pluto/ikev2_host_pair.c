@@ -99,7 +99,7 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 
-	/* just the adddress */
+	/* just the address */
 	ip_address local_address = endpoint_address(*local_endpoint);
 	ip_address remote_address = endpoint_address(*remote_endpoint);
 

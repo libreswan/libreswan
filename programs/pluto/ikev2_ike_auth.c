@@ -1329,7 +1329,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	/*
-	 * AUTH succeeed
+	 * AUTH succeeded
 	 *
 	 * Update the parent state to make sure that it knows we have
 	 * authenticated properly.

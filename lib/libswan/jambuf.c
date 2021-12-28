@@ -84,7 +84,7 @@ struct jambuf array_as_jambuf(char *array, size_t sizeof_array)
 struct dest {
 	/*
 	 * Position in the buffer to store the next string (always
-	 * points at the trailing '\n' charater of the string so far).
+	 * points at the trailing '\n' character of the string so far).
 	 */
 	char *cursor;
 	/*
@@ -256,7 +256,7 @@ size_t jam_errno(struct jambuf *buf, int error)
 	}
 
 	/*
-	 * strerror_r() will store upto d.size-1 characters plus a
+	 * strerror_r() will store up to d.size-1 characters plus a
 	 * trailing NUL.
 	 */
 	int e = strerror_r(error, d.cursor, d.size);

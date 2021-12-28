@@ -515,7 +515,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/*
-	 * Note: Initiator (and Agressive Mode) so this cannot change
+	 * Note: Initiator (and Aggressive Mode) so this cannot change
 	 * the connection.
 	 */
 

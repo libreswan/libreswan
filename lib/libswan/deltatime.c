@@ -25,7 +25,7 @@ const deltatime_t deltatime_zero;
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code
- * convers everything into +ve timevals.
+ * converts everything into +ve timevals.
  */
 
 static struct timeval negate_timeval(struct timeval tv)

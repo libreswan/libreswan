@@ -404,7 +404,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 * - the old Child SA rekey timer expires trigging a
 		 *   replace
 		 *
-		 *   Certainly plausable; assuming nothing else
+		 *   Certainly plausible; assuming nothing else
 		 *   happens earlier.
 		 *
 		 * - the IKE SA is deleted causing the old child to
@@ -1403,8 +1403,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 
 	/*
-	 * Parse the proposal determing what was accepted, and confirm
-	 * that it matches the rekey proposal originaly sent.
+	 * Parse the proposal, determining what was accepted, and confirm
+	 * that it matches the rekey proposal originally sent.
 	 */
 	struct payload_digest *const sa_pd = response_md->chain[ISAKMP_NEXT_v2SA];
 	n = ikev2_process_sa_payload("IKE initiator (accepting)",

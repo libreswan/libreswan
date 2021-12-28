@@ -189,7 +189,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	}
 	if (!test_cbc_op(encrypt_desc, test->description, 0,
 			 sym_key, test->iv,
-			 "cipertext: ", test->ciphertext,
+			 "ciphertext: ", test->ciphertext,
 			 "plaintext: ", test->plaintext,
 			 logger)) {
 		ok = false;
