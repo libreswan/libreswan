@@ -970,13 +970,14 @@ endef
 kvm-shutdown:
 	$(foreach clone, $(KVM_CLONES), $(call shutdown-os-domain, $(clone)))
 	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach variant, base upgrade build, \
-			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-$(variant))))
+		$(foreach variant, $(platform)-base $(platform)-upgrade $(platform), \
+			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(variant))))
 
 .PHONY: kvm-uninstall kvm-clean-install
 kvm-uninstall kvm-clean-install:
 	$(foreach clone, $(KVM_CLONES), $(call undefine-os-domain, $(clone)))
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
+	: redundant?
 	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN))
 
 .PHONY: kvm-clean
@@ -992,8 +993,7 @@ kvm-purge: kvm-clean
 kvm-purge: kvm-purge-networks
 kvm-purge:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
-	: legacy
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-build))
+	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
 	rm -f $(KVM_HOST_OK)
 
 .PHONY: kvm-demolish
