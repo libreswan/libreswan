@@ -1,13 +1,25 @@
 # note swan-prep does not yet support BSD
 # note swan-prep does not yet support BSD
 netbsdw #
+ rm -rf PATH/etc/ipsec.*
+rm -rf PATH/etc/ipsec.*
+netbsdw #
+ mkdir -p PATH/etc/ipsec.d/
+mkdir -p PATH/etc/ipsec.d/
+netbsdw #
  cp ipsec.* PATH/etc/
 cp ipsec.* PATH/etc/
 netbsdw #
  ipsec start
 ipsec start
 Redirecting to: [initsystem]
+Initializing NSS database
 Starting pluto.
+netbsdw #
+ ipsec auto --add eastnet-westnet-ikev2
+ipsec auto --add eastnet-westnet-ikev2
+002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
+002 "eastnet-westnet-ikev2": added IKEv2 connection
 netbsdw #
  echo "initdone"
 echo "initdone"
@@ -18,14 +30,8 @@ netbsdw #
 unexpected status 2
 PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
 netbsdw #
- ipsec auto --add eastnet-westnet-ikev2
-ipsec auto --add eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": added IKEv2 connection
-netbsdw #
- ipsec auto --start eastnet-westnet-ikev2
-ipsec auto --start eastnet-westnet-ikev2
-002 "eastnet-westnet-ikev2": terminating SAs using this connection
-002 "eastnet-westnet-ikev2": added IKEv2 connection
+ ipsec auto --up eastnet-westnet-ikev2
+ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
