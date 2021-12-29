@@ -590,6 +590,7 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.kern_name = "bsdkame",
 	.async_fdp = &pfkeyfd,
 	.replay_window = 64,
+	.esn_supported = false,
 	.pfkey_register = bsdkame_pfkey_register,
 	.process_queue = bsdkame_dequeue,
 	.process_msg = bsdkame_process_msg,

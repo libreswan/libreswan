@@ -1463,9 +1463,6 @@ static bool extract_connection(const struct whack_message *wm,
 				    "failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections");
 			return false;
 		}
-		if (wm->policy & POLICY_ESN_YES) {
-			dbg("ignored esn= option for IKEv1 connection - not implemented");
-		}
 #else
 		llog(RC_FATAL, c->logger, "failed to add IKEv1 connection: IKEv1 support not compiled in");
 		return false;
@@ -1763,6 +1760,40 @@ static bool extract_connection(const struct whack_message *wm,
 		c->remote_tcpport = 0;
 	}
 
+	if ((c->policy & POLICY_ESN_YES) == LEMPTY) {
+		dbg("ESN: already disabled so so no confusion");
+#ifdef USE_IKEv1
+	} else if (wm->ike_version == IKEv1) {
+		dbg("ESN: ignored as IKEv1 connection which is not implemented");
+#endif
+	} else if (NEVER_NEGOTIATE(wm->policy) ||
+		   wm->esp == NULL ||
+		   (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)) == LEMPTY) {
+		dbg("ESN: never negotiate so no confusion");
+	} else if (!kernel_ops->esn_supported) {
+		llog(RC_LOG, c->logger,
+		     "kernel interface does not support ESN so disabling");
+		c->policy &= ~POLICY_ESN_YES;
+		c->policy |= POLICY_ESN_NO;
+	} else if (wm->sa_replay_window == 0) {
+		/*
+		 * RFC 4303 states:
+		 *
+		 * Note: If a receiver chooses to not enable
+		 * anti-replay for an SA, then the receiver SHOULD NOT
+		 * negotiate ESN in an SA management protocol.  Use of
+		 * ESN creates a need for the receiver to manage the
+		 * anti-replay window (in order to determine the
+		 * correct value for the high-order bits of the ESN,
+		 * which are employed in the ICV computation), which
+		 * is generally contrary to the notion of disabling
+		 * anti-replay for an SA.
+		 */
+		dbg("ESN: disabling as replay-window=0");
+		c->policy &= ~POLICY_ESN_YES;
+		c->policy |= POLICY_ESN_NO;
+	}
+
 	policy_buf pb;
 	dbg("added new %s connection %s with policy %s",
 	    enum_name(&ike_version_names, c->config->ike_version),
@@ -1943,22 +1974,6 @@ static bool extract_connection(const struct whack_message *wm,
 		c->sa_keying_tries = wm->sa_keying_tries;
 
 		c->sa_replay_window = wm->sa_replay_window;
-		/*
-		 * RFC 4303 states:
-		 *
-		 * Note: If a receiver chooses to not enable anti-replay for an SA, then
-		 * the receiver SHOULD NOT negotiate ESN in an SA management protocol.
-		 * Use of ESN creates a need for the receiver to manage the anti-replay
-		 * window (in order to determine the correct value for the high-order
-		 * bits of the ESN, which are employed in the ICV computation), which is
-		 * generally contrary to the notion of disabling anti-replay for an SA.
-		 */
-
-		if (c->sa_replay_window == 0 && LIN(POLICY_ESN_YES, c->policy)) {
-			dbg("replay-window=0 so disabling esn");
-			c->policy &= ~POLICY_ESN_YES;
-			c->policy |= POLICY_ESN_NO;
-		}
 
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;

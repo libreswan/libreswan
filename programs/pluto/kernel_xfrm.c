@@ -2662,6 +2662,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
+	.esn_supported = true,
 
 	.init = init_netlink,
 #ifdef USE_XFRM_INTERFACE

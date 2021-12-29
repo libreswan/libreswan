@@ -338,6 +338,7 @@ struct kernel_ops {
 	const char *kern_name;
 	bool overlap_supported;
 	bool sha2_truncbug_support;
+	bool esn_supported;
 	int replay_window;
 	int *async_fdp;
 	int *route_fdp;
