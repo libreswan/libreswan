@@ -53,11 +53,54 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 */
 
 	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
-	struct connection *r = NULL;
+	bool already_switched_id = false;
+	bool no_refinement = true;
+
 	if (!LHAS(authbys, AUTHBY_NULL)) {
+		struct connection *r = NULL;
 		r = refine_host_connection_on_responder(&ike->sa, authbys,
 							&peer_id, tarzan_id,
 							&get_id_from_cert);
+		no_refinement = (r == NULL);
+		if (r != NULL && r != ike->sa.st_connection) {
+			already_switched_id = true;
+			/*
+			 * We are changing st->st_connection!
+			 * Our caller might be surprised!
+			 *
+			 * XXX: Code was trying to avoid instantiating
+			 * the refined connection; it ran into
+			 * problems:
+			 *
+			 * - it made for convoluted code trying to
+			 *   figure out the cert/id
+			 *
+			 * - it resulted in wrong log lines (it was
+			 *   against the old connection).
+			 *
+			 * Should this be moved into above call, it is
+			 * identical between IKEv[12]?
+			 *
+			 * Should the ID be fully updated here?
+			 */
+			struct connection *c = ike->sa.st_connection;
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+				/*
+				 * XXX: is r->kind == CK_GROUP ever
+				 * true?  refine_host_connection*()
+				 * skips POLICY_GROUP so presumably
+				 * this is testing for a GROUP
+				 * instance.
+				 *
+				 * Instantiate it, filling in peer's
+				 * ID.
+				 */
+				r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL, &peer_id);
+			}
+			/* r is an improvement on c -- replace */
+			connswitch_state_and_log(&ike->sa, r);
+		}
 	}
 
 	/*
@@ -76,35 +119,16 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	bool remote_cert_matches_id = false;
 	struct id remote_cert_id = empty_id;
 	if (ike->sa.st_remote_certs.verified != NULL) {
-		struct connection *c = (r == NULL ? ike->sa.st_connection : r);
+		struct connection *c = ike->sa.st_connection;
 
 		/* end cert is at the front; move to where? */
 		struct certs *certs = ike->sa.st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
-		/*
-		 * XXX: If this is going to be instantiated using
-		 * rw_instantiate() further down then need to use an
-		 * ID that will match.
-		 */
-		const struct id *remote_id;
-		const char *id_from;
-		if (r != NULL &&
-		    r != ike->sa.st_connection &&
-		    (r->kind == CK_TEMPLATE || r->kind == CK_GROUP)) {
-			/* XXX: pexpect() from  instantiate() */
-			int wildcards; /* value ignored */
-			pexpect(r->spd.that.id.kind == ID_FROMCERT ||
-				match_id("", &peer_id, &r->spd.that.id, &wildcards));
-			remote_id = &peer_id;
-			id_from = "peer";
-		} else {
-			remote_id = &c->spd.that.id;
-			id_from = "connection";
-		}
+		const struct id *remote_id = &c->spd.that.id;
 		id_buf idb;
-		dbg("rhc: to %s id: %s", id_from, str_id(remote_id, &idb));
+		dbg("rhc: id: %s", str_id(remote_id, &idb));
 
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
 					     remote_id, &remote_cert_id);
@@ -126,7 +150,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	if (r == NULL) {
+	if (no_refinement) {
 		/*
 		 * no "improvement" on c found.
 		 *
@@ -177,25 +201,8 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		} else {
 			dbg("peer ID matches and no better connection found - continuing with existing connection");
 		}
-	} else if (r != ike->sa.st_connection) {
-		/*
-		 * We are changing st->st_connection!
-		 * Our caller might be surprised!
-		 */
-		struct connection *c = ike->sa.st_connection;
-		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-			/*
-			 * XXX: is r->kind == CK_GROUP ever true?
-			 * refine_host_connection*() skips
-			 * POLICY_GROUP so presumably this is testing
-			 * for a GROUP instance.
-			 */
-			/* instantiate it, filling in peer's ID */
-			r = rw_instantiate(r, &c->spd.that.host_addr,
-					   NULL, &peer_id);
-		}
-		/* r is an improvement on c -- replace */
-		connswitch_state_and_log(&ike->sa, r);
+	} else if (already_switched_id) {
+		dbg("rhc: already switched connection which updated ID");
 	}
 
 	/*

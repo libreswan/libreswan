@@ -247,52 +247,74 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	}
 
 	bool get_id_from_cert;
-	struct connection *r =
-		refine_host_connection_on_responder(st, this_authbys, &peer_id,
-						    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL,
-						    &get_id_from_cert);
+	bool already_switched_id = false;
+	bool no_refinement = true;
+	{
+		/* XXX: indent to match IKEv2 */
+		struct connection *r =
+			refine_host_connection_on_responder(st, this_authbys, &peer_id,
+							    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL,
+							    &get_id_from_cert);
+		no_refinement = (r == NULL);
+		if (r != NULL && r != st->st_connection) {
+			already_switched_id = true;
+			/*
+			 * We are changing st->st_connection!
+			 * Our caller might be surprised!
+			 *
+			 * XXX: Code was trying to avoid instantiating
+			 * the refined connection; it ran into
+			 * problems:
+			 *
+			 * - it made for convoluted code trying to
+			 *   figure out the cert/id
+			 *
+			 * - it resulted in wrong log lines (it was
+			 *   against the old connection).
+			 *
+			 * Should this be moved into above call, it is
+			 * identical between IKEv[12]?
+			 *
+			 * Should the ID be fully updated here?
+			 */
+			struct connection *c = st->st_connection;
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+				/*
+				 * XXX: is r->kind == CK_GROUP ever
+				 * true?  refine_host_connection*()
+				 * skips POLICY_GROUP so presumably
+				 * this is testing for a GROUP
+				 * instance.
+				 *
+				 * Instantiate it, filling in peer's
+				 * ID.
+				 */
+				r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL, &peer_id);
+			}
+			/* r is an improvement on c -- replace */
+			connswitch_state_and_log(st, r);
+		}
+	}
 
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool remote_cert_matches_id = false;
 	struct id remote_cert_id = empty_id;
-	if (md->chain[ISAKMP_NEXT_CERT] == NULL) {
-		dbg("Peer ID has no certs");
-	} else if (st->st_remote_certs.verified == NULL) {
-		dbg("Peer ID has no verified certs");
-	} else {
+	if (st->st_remote_certs.verified != NULL) {
+
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		log_state(RC_LOG, st, "certificate verified OK: %s",
 			  end_cert->subjectName);
 
-		/* going to switch? */
-		struct connection *c = r != NULL ? r : st->st_connection;
+		struct connection *c = st->st_connection;
 
-		/*
-		 * XXX: If this is going to be instantiated using
-		 * rw_instantiate() further down then need to use an
-		 * ID that will match.
-		 */
-		const struct id *remote_id;
-		const char *id_from;
-		if (r != NULL &&
-		    r != st->st_connection &&
-		    (r->kind == CK_TEMPLATE || r->kind == CK_GROUP)) {
-			/* XXX: pexpect() from  instantiate() */
-			int wildcards; /* value ignored */
-			pexpect(r->spd.that.id.kind == ID_FROMCERT ||
-				match_id("", &peer_id, &r->spd.that.id, &wildcards));
-			remote_id = &peer_id;
-			id_from = "peer";
-		} else {
-			remote_id = &c->spd.that.id;
-			id_from = "connection";
-		}
+		const struct id *remote_id = &c->spd.that.id;
 		id_buf idb;
-		dbg("rhc: to %s id: %s", id_from, str_id(remote_id, &idb));
+		dbg("rhc: id: %s", str_id(remote_id, &idb));
 
 		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
 
@@ -323,7 +345,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		remote_cert_matches_id = true;
 	}
 
-	if (r == NULL) {
+	if (no_refinement) {
 		id_buf buf;
 		dbg("no more suitable connection for peer '%s'",
 		    str_id(&peer_id, &buf));
@@ -336,32 +358,25 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			return false;
 		}
 		dbg("Peer ID matches and no better connection found - continuing with existing connection");
-		r = c;
 	}
 
-	passert(r != NULL);
+	/*
+	 * XXX: this is it!
+	 */
+	struct connection *c = st->st_connection;
+
 	dn_buf buf;
 	dbg("offered CA: '%s'",
-	    str_dn_or_null(r->local->host.ca, "%none", &buf));
+	    str_dn_or_null(c->local->host.ca, "%none", &buf));
 
-	if (r != st->st_connection) {
-		/*
-		 * We are changing st->st_connection!
-		 * Our caller might be surprised!
-		 */
-		struct connection *c = st->st_connection;
-		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-			/* instantiate it, filling in peer's ID */
-			r = rw_instantiate(r, &c->spd.that.host_addr,
-					   NULL, &peer_id);
-		}
-		connswitch_state_and_log(st, r);
-	} else if (r->spd.that.has_id_wildcards) {
-		replace_connection_that_id(r, &peer_id);
-		r->spd.that.has_id_wildcards = false;
+	if (already_switched_id) {
+		dbg("rhc: already switched which updated ID");
+	} else if (c->spd.that.has_id_wildcards) {
+		replace_connection_that_id(c, &peer_id);
+		c->spd.that.has_id_wildcards = false;
 	} else if (get_id_from_cert) {
 		dbg("copying ID for get_id_from_cert");
-		replace_connection_that_id(r, &peer_id);
+		replace_connection_that_id(c, &peer_id);
 	}
 
 	return true;
