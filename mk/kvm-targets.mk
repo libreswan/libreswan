@@ -412,7 +412,7 @@ kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
 # "test" and "check" just runs the entire testsuite.
-KVM_TEST_STATUS = good$(if KVM_NETBSD,|netbsd)
+KVM_TEST_STATUS ?= good$(if $(KVM_NETBSD),|netbsd)
 $(eval $(call kvm-test,kvm-check kvm-test, --test-status "$(KVM_TEST_STATUS)"))
 
 # "retest" and "recheck" re-run the testsuite updating things that
