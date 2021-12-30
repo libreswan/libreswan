@@ -52,18 +52,14 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 * but then IKE_AUTH proposes AUTHBY_NULL.
 	 */
 
-	bool get_id_from_cert = (peer_id.kind == ID_DER_ASN1_DN);
-	bool already_switched_id = false;
 	bool no_refinement = true;
 
 	if (!LHAS(authbys, AUTHBY_NULL)) {
 		struct connection *r = NULL;
 		r = refine_host_connection_on_responder(&ike->sa, authbys,
-							&peer_id, tarzan_id,
-							&get_id_from_cert);
+							&peer_id, tarzan_id);
 		no_refinement = (r == NULL);
 		if (r != NULL && r != ike->sa.st_connection) {
-			already_switched_id = true;
 			/*
 			 * We are changing st->st_connection!
 			 * Our caller might be surprised!
@@ -103,17 +99,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		}
 	}
 
-	/*
-	 * If there are certs, run the ID check on the proposed
-	 * selection.
-	 *
-	 * XXX: Does this overlap with GET_ID_FROM_CERT?  Possibly,
-	 * but for AUTHBY_NULL, that check isn't really made.
-	 *
-	 * XXX: must_switch should be handled in-situ, it isn't going
-	 * to switch.
-	 */
-
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	bool remote_cert_matches_id = false;
@@ -125,21 +110,19 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		struct certs *certs = ike->sa.st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
-
-		const struct id *remote_id = &c->spd.that.id;
-		id_buf idb;
-		dbg("rhc: id: %s", str_id(remote_id, &idb));
-
 		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     remote_id, &remote_cert_id);
+					     &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");
-			remote_cert_matches_id = true;
+			if (remote_cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &remote_cert_id);
+			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+			replace_connection_that_id(c, &peer_id);
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
@@ -148,6 +131,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
 				    str_id(&peer_id, &peer_idb));
 		}
+		remote_cert_matches_id = true;
 	}
 
 	if (no_refinement) {
@@ -201,43 +185,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		} else {
 			dbg("peer ID matches and no better connection found - continuing with existing connection");
 		}
-	} else if (already_switched_id) {
-		dbg("rhc: already switched connection which updated ID");
 	}
-
-	/*
-	 * XXX: this is it!
-	 */
-	struct connection *c = ike->sa.st_connection;
-
-	/*
-	 * XXX: is this redundant?  Almost.
-	 *
-	 * Problem is that AUTHBY_NULL doesn't call
-	 * refine_host_connection*(), but does run this test, hence
-	 * this code is needed.
-	 */
-	if (remote_cert_matches_id &&
-	    remote_cert_id.kind != ID_NONE) {
-		/*ID_FROMCERT=>updated*/
-		replace_connection_that_id(c, &remote_cert_id);
-	}
-
-	/*
-	 * XXX: presumably PEER_ID was already extracted from a cert?
-	 * Is this making the above redundant?
-	 */
-	if (c->spd.that.has_id_wildcards) {
-		dbg("setting wildcard ID");
-		replace_connection_that_id(c, &peer_id);
-		c->spd.that.has_id_wildcards = false;
-	} else if (get_id_from_cert) {
-		dbg("copying ID for get_id_from_cert");
-		replace_connection_that_id(c, &peer_id);
-	}
-
-	dn_buf dnb;
-	dbg("offered CA: '%s'", str_dn_or_null(c->local->host.ca, "%none", &dnb));
 
 	return NULL;
 }

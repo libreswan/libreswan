@@ -642,14 +642,11 @@ diag_t match_end_cert_id(const struct certs *certs,
 				end_cert->subjectName);
 		}
 
-		int wildcards;  /* value ignored */
-		bool m = match_dn_any_order_wild("", end_cert_der_subject, peer_id->name, &wildcards);
+		int wildcards;
+		bool m = match_dn_any_order_wild("", end_cert_der_subject,
+						 peer_id->name,
+						 &wildcards);
 		if (!m) {
-			/*
-			 * XXX: can these two errors be merged?  The
-			 * latter refers to a public key but this is
-			 * all about certificates.
-			 */
 			id_buf idb;
 			return diag("peer ID_DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
@@ -660,6 +657,14 @@ diag_t match_end_cert_id(const struct certs *certs,
 			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
 				end_cert->subjectName,
 				str_id(peer_id, &idb));
+		}
+		if (wildcards) {
+			/* provide replacement */
+			*cert_id = (struct id) {
+				.kind = ID_DER_ASN1_DN,
+				/* safe as duplicate_id() will clone this */
+				.name = end_cert_der_subject,
+			};
 		}
 		return NULL;
 	}

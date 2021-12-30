@@ -3583,8 +3583,7 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 struct connection *refine_host_connection_on_responder(const struct state *st,
 						       lset_t this_authbys,
 						       const struct id *peer_id,
-						       const struct id *tarzan_id,
-						       bool *get_id_from_cert)
+						       const struct id *tarzan_id)
 {
 #define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
@@ -3598,8 +3597,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	indent = 1;
 
 	const generalName_t *requested_ca = st->st_requested_ca;
-
-	*get_id_from_cert = false;
 
 	passert(!LHAS(this_authbys, AUTHBY_NEVER));
 	passert(!LHAS(this_authbys, AUTHBY_UNSET));
@@ -3932,7 +3929,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			    wildcards == 0 &&
 			    peer_pathlen == 0 &&
 			    our_pathlen == 0) {
-				*get_id_from_cert = false; /* since exact match */
 				connection_buf dcb;
 				dbg_rhc("returning "PRI_CONNECTION" because exact peer id match",
 					pri_connection(d, &dcb));
@@ -3956,8 +3952,6 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 					pri_connection(d, &cib),
 					wildcards, peer_pathlen,
 					our_pathlen);
-				/* if inexact match; suspect always the case */
-				*get_id_from_cert = !matching_peer_id;
 				best_found = d;
 				best_wildcards = wildcards;
 				best_peer_pathlen = peer_pathlen;
@@ -3968,8 +3962,8 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 	indent = 2;
 	if (best_found != NULL) {
 		connection_buf bfb;
-		dbg_rhc("returning "PRI_CONNECTION" because best get_id_from_cert=%s",
-			pri_connection(best_found, &bfb), bool_str(*get_id_from_cert));
+		dbg_rhc("returning "PRI_CONNECTION" because best",
+			pri_connection(best_found, &bfb));
 	} else {
 		dbg_rhc("returning NULL because no best");
 	}
