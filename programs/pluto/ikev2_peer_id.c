@@ -46,58 +46,30 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	/* c = ike->sa.st_connection; <- not yet known */
 
 	/*
-	 * XXX: Why skip refine_host_connection*() when AUTHBY_NULL?
+	 * IS_MOST_REFINED is subtle.
 	 *
-	 * For instance, IKE_SA_INIT chooses a permanent connection
-	 * but then IKE_AUTH proposes AUTHBY_NULL.
+	 * IS_MOST_REFINED: the state's (possibly updated) connection
+	 * is known to be the best there is (best can include the
+	 * current connection).
+	 *
+	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
+	 * didn't find a best; for IKEv2 it can additionally mean that
+	 * there was no search because the initiator proposed
+	 * AUTHBY_NULL.  AUTHBY_NULL never switches as it is assumed
+	 * that the perfect connection was chosen during IKE_SA_INIT.
+	 *
+	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
+	 * checks.
+	 *
+	 * This may change st->st_connection!
+	 * Our caller might be surprised!
 	 */
-
-	bool no_refinement = true;
-
-	if (!LHAS(authbys, AUTHBY_NULL)) {
-		struct connection *r = NULL;
-		r = refine_host_connection_on_responder(&ike->sa, authbys,
-							&peer_id, tarzan_id);
-		no_refinement = (r == NULL);
-		if (r != NULL && r != ike->sa.st_connection) {
-			/*
-			 * We are changing st->st_connection!
-			 * Our caller might be surprised!
-			 *
-			 * XXX: Code was trying to avoid instantiating
-			 * the refined connection; it ran into
-			 * problems:
-			 *
-			 * - it made for convoluted code trying to
-			 *   figure out the cert/id
-			 *
-			 * - it resulted in wrong log lines (it was
-			 *   against the old connection).
-			 *
-			 * Should this be moved into above call, it is
-			 * identical between IKEv[12]?
-			 *
-			 * Should the ID be fully updated here?
-			 */
-			struct connection *c = ike->sa.st_connection;
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-				/*
-				 * XXX: is r->kind == CK_GROUP ever
-				 * true?  refine_host_connection*()
-				 * skips POLICY_GROUP so presumably
-				 * this is testing for a GROUP
-				 * instance.
-				 *
-				 * Instantiate it, filling in peer's
-				 * ID.
-				 */
-				r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer_id);
-			}
-			/* r is an improvement on c -- replace */
-			connswitch_state_and_log(&ike->sa, r);
-		}
-	}
+	bool is_most_refined = false;
+       if (!LHAS(authbys, AUTHBY_NULL)) {
+	       is_most_refined =
+		       refine_host_connection_of_state_on_responder(&ike->sa, authbys,
+								    &peer_id, tarzan_id);
+       }
 
 	/* check for certificates; XXX: duplicate comment+code? */
 
@@ -134,7 +106,7 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 		remote_cert_matches_id = true;
 	}
 
-	if (no_refinement) {
+	if (!is_most_refined) {
 		/*
 		 * no "improvement" on c found.
 		 *

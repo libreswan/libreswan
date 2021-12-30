@@ -3540,10 +3540,22 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 }
 
 /*
- * ??? NOTE: THESE IMPORTANT COMMENTS DO NOT REFLECT ANY CHANGES MADE AFTER FreeS/WAN.
+ * During the IKE_SA_INIT exchange, the responder state's connection
+ * is chosen based on the initiator's address (perhaps with minor
+ * tweaks).
  *
- * Given an up-until-now satisfactory connection, find the best connection
- * now that we just got the Phase 1 Id Payload from the peer.
+ * Now, in the IKE_SA_INIT, with the ID and validated certificates
+ * known, it is posible to improve on this choice.
+ *
+ * XXX: since IKE_SA_INIT can be childless, the Child SA's Traffic
+ * Selectors should not be used.  They will be examined later when
+ * selecting a connection matching the Child SA.
+ *
+ * The IKEv1 Main Mode responder, described below, is essentially the
+ * same (hence it shares this code).
+
+ * ??? NOTE: THESE IMPORTANT COMMENTS DO NOT REFLECT ANY CHANGES MADE
+ * AFTER FreeS/WAN.
  *
  * Comments in the code describe the (tricky!) matching criteria.
  *
@@ -3577,23 +3589,21 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  *   + before using the Initiator's ID in HASH_I calculation
  *   + [DSig] before using the Initiator's public key to check SIG_I
  *
- * refine_host_connection can choose a different connection, as long as
- * nothing already used is changed.
+ * refine_host_connection can choose a different connection, as long
+ * as nothing already used is changed.
  */
-struct connection *refine_host_connection_on_responder(const struct state *st,
-						       lset_t this_authbys,
-						       const struct id *peer_id,
-						       const struct id *tarzan_id)
-{
+
 #define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
+
+static struct connection *refine_host_connection_on_responder(int indent,
+							      const struct state *st,
+							      lset_t this_authbys,
+							      const struct id *peer_id,
+							      const struct id *tarzan_id)
+{
 
 	struct connection *c = st->st_connection;
 
-	connection_buf cib;
-	int indent = 0;
-	dbg_rhc("starting with %s connection "PRI_CONNECTION"",
-	    enum_name(&ike_version_names, c->config->ike_version),
-	    pri_connection(c, &cib));
 	indent = 1;
 
 	const generalName_t *requested_ca = st->st_requested_ca;
@@ -3959,17 +3969,78 @@ struct connection *refine_host_connection_on_responder(const struct state *st,
 			}
 		}
 	}
-	indent = 2;
-	if (best_found != NULL) {
-		connection_buf bfb;
-		dbg_rhc("returning "PRI_CONNECTION" because best",
-			pri_connection(best_found, &bfb));
-	} else {
-		dbg_rhc("returning NULL because no best");
-	}
 	return best_found;
-#undef dbg_rhc
 }
+
+bool refine_host_connection_of_state_on_responder(struct state *st,
+						  lset_t this_authbys,
+						  const struct id *peer_id,
+						  const struct id *tarzan_id)
+{
+	int indent = 0;
+	connection_buf cib;
+	dbg_rhc("looking for an %s connection more refined than "PRI_CONNECTION"",
+	    enum_name(&ike_version_names, st->st_ike_version),
+	    pri_connection(st->st_connection, &cib));
+	indent = 1;
+
+	struct connection *r = refine_host_connection_on_responder(indent, st, this_authbys,
+								   peer_id, tarzan_id);
+	if (r == NULL) {
+		dbg_rhc("returning FALSE because nothing is sufficiently refined");
+		return false;
+	}
+
+	connection_buf bfb;
+	dbg_rhc("returning TRUE as "PRI_CONNECTION" is most refined",
+		pri_connection(r, &bfb));
+
+	if (r != st->st_connection) {
+		/*
+		 * We are changing st->st_connection!  Our caller
+		 * might be surprised!
+		 *
+		 * XXX: Code was trying to avoid instantiating the
+		 * refined connection; it ran into problems:
+		 *
+		 * - it made for convoluted code trying to figure out
+		 *   the cert/id
+		 *
+		 * - it resulted in wrong log lines (it was against
+		 *   the old connection).
+		 *
+		 * Should this be moved into above call, it is
+		 * identical between IKEv[12]?
+		 *
+		 * Should the ID be fully updated here?
+		 */
+		struct connection *c = st->st_connection;
+		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+			/*
+			 * XXX: is r->kind == CK_GROUP ever
+			 * true?  refine_host_connection*()
+			 * skips POLICY_GROUP so presumably
+			 * this is testing for a GROUP
+			 * instance.
+			 *
+			 * Instantiate it, filling in peer's
+			 * ID.
+			 */
+			r = rw_instantiate(r, &c->spd.that.host_addr,
+					   NULL, peer_id);
+		}
+		/*
+		 * R is an improvement on .st_connection -- replace.
+		 */
+		connswitch_state_and_log(st, r);
+	}
+	connection_buf bcb;
+	dbg_rhc("most refined is "PRI_CONNECTION,
+		pri_connection(r, &bcb));
+	return true;
+}
+
+#undef dbg_rhc
 
 /* signed result suitable for quicksort */
 int connection_compare(const struct connection *ca,

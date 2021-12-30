@@ -247,53 +247,28 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		return false;
 	}
 
-	bool no_refinement = true;
-
-	{
-		/* XXX: indent to match IKEv2 */
-		struct connection *r =
-			refine_host_connection_on_responder(st, this_authbys, &peer_id,
-							    /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
-		no_refinement = (r == NULL);
-		if (r != NULL && r != st->st_connection) {
-			/*
-			 * We are changing st->st_connection!
-			 * Our caller might be surprised!
-			 *
-			 * XXX: Code was trying to avoid instantiating
-			 * the refined connection; it ran into
-			 * problems:
-			 *
-			 * - it made for convoluted code trying to
-			 *   figure out the cert/id
-			 *
-			 * - it resulted in wrong log lines (it was
-			 *   against the old connection).
-			 *
-			 * Should this be moved into above call, it is
-			 * identical between IKEv[12]?
-			 *
-			 * Should the ID be fully updated here?
-			 */
-			struct connection *c = st->st_connection;
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-				/*
-				 * XXX: is r->kind == CK_GROUP ever
-				 * true?  refine_host_connection*()
-				 * skips POLICY_GROUP so presumably
-				 * this is testing for a GROUP
-				 * instance.
-				 *
-				 * Instantiate it, filling in peer's
-				 * ID.
-				 */
-				r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer_id);
-			}
-			/* r is an improvement on c -- replace */
-			connswitch_state_and_log(st, r);
-		}
-	}
+	/*
+	 * IS_MOST_REFINED is subtle.
+	 *
+	 * IS_MOST_REFINED: the state's (possibly updated) connection
+	 * is known to be the best there is (best can include the
+	 * current connection).
+	 *
+	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
+	 * didn't find a best; for IKEv2 it can additionally mean that
+	 * there was no search because the initiator proposed
+	 * AUTHBY_NULL.  AUTHBY_NULL never switches as it is assumed
+	 * that the perfect connection was chosen during IKE_SA_INIT.
+	 *
+	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
+	 * checks.
+	 *
+	 * This may change st->st_connection!
+	 * Our caller might be surprised!
+	 */
+	bool is_most_refined =
+		refine_host_connection_of_state_on_responder(st, this_authbys, &peer_id,
+							     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
 	/* check for certificates; XXX: duplicate comment+code? */
 
@@ -332,7 +307,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		remote_cert_matches_id = true;
 	}
 
-	if (no_refinement) {
+	if (!is_most_refined) {
 		id_buf buf;
 		dbg("no more suitable connection for peer '%s'",
 		    str_id(&peer_id, &buf));
