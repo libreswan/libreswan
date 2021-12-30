@@ -1760,21 +1760,17 @@ static bool extract_connection(const struct whack_message *wm,
 		c->remote_tcpport = 0;
 	}
 
-	if ((c->policy & POLICY_ESN_YES) == LEMPTY) {
-		dbg("ESN: already disabled so so no confusion");
-#ifdef USE_IKEv1
-	} else if (wm->ike_version == IKEv1) {
-		dbg("ESN: ignored as IKEv1 connection which is not implemented");
-#endif
-	} else if (NEVER_NEGOTIATE(wm->policy) ||
-		   wm->esp == NULL ||
-		   (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)) == LEMPTY) {
-		dbg("ESN: never negotiate so no confusion");
-	} else if (!kernel_ops->esn_supported) {
-		llog(RC_LOG, c->logger,
-		     "kernel interface does not support ESN so disabling");
-		c->policy &= ~POLICY_ESN_YES;
-		c->policy |= POLICY_ESN_NO;
+	/*
+	 * Should ESN be disabled?
+	 *
+	 * Order things so that a lack of kernel support is the last
+	 * resort (fixing the kernel will break less tests).
+	 */
+
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		dbg("ESN: never negotiating so ESN unchanged");
+	} else if ((c->policy & POLICY_ESN_YES) == LEMPTY) {
+		dbg("ESN: already disabled so nothing to do");
 	} else if (wm->sa_replay_window == 0) {
 		/*
 		 * RFC 4303 states:
@@ -1789,7 +1785,22 @@ static bool extract_connection(const struct whack_message *wm,
 		 * is generally contrary to the notion of disabling
 		 * anti-replay for an SA.
 		 */
-		dbg("ESN: disabling as replay-window=0");
+		dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
+		c->policy &= ~POLICY_ESN_YES;
+		c->policy |= POLICY_ESN_NO;
+#ifdef USE_IKEv1
+	} else if (wm->ike_version == IKEv1) {
+#if 0
+		dbg("ESN: disabled as not implemented with IKEv1");
+		c->policy &= ~POLICY_ESN_YES;
+		c->policy |= POLICY_ESN_NO;
+#else
+		dbg("ESN: ignored as not implemented with IKEv1");
+#endif
+#endif
+	} else if (!kernel_ops->esn_supported) {
+		llog(RC_LOG, c->logger,
+		     "kernel interface does not support ESN so disabling");
 		c->policy &= ~POLICY_ESN_YES;
 		c->policy |= POLICY_ESN_NO;
 	}
