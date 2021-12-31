@@ -38,12 +38,91 @@
 #include "unpack.h"
 #include "pluto_x509.h"
 
-static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
-						   lset_t authbys,
-						   struct id peer_id,
-						   struct id *tarzan_id)
+static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const id_peer, struct id *peer_id)
+{
+	if (id_peer == NULL) {
+		return diag("authentication failed: %s did not include ID payload", peer);
+	}
+
+	diag_t d = unpack_peer_id(id_peer->payload.v2id.isai_type /* Peers Id Kind */,
+				  peer_id, &id_peer->pbs);
+	if (d != NULL) {
+		return diag_diag(&d, "authentication failed: %s ID payload invalid: ", peer);
+	}
+
+	id_buf idb;
+	esb_buf esb;
+	dbg("%s ID is %s: '%s'", peer,
+	    enum_show(&ike_id_type_names, peer_id->kind, &esb),
+	    str_id(peer_id, &idb));
+
+	return NULL;
+}
+
+diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* c = ike->sa.st_connection; <- not yet known */
+	passert(ike->sa.st_sa_role == SA_RESPONDER);
+
+	struct id peer_id;
+	diag_t d = decode_v2_peer_id("initiator", md->chain[ISAKMP_NEXT_v2IDi], &peer_id);
+	if (d != NULL) {
+		return d;
+	}
+
+	/* You Tarzan, me Jane? */
+	struct id tarzan_id_val;	/* may be unset */
+	struct id *tarzan_id = NULL;	/* tarzan ID pointer (or NULL) */
+	{
+		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
+
+		if (tarzan_pld != NULL) {
+			dbg("received IDr payload - extracting our alleged ID");
+			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
+						  &tarzan_id_val, &tarzan_pld->pbs);
+			if (d != NULL) {
+				return diag_diag(&d, "IDr payload extraction failed: ");
+			}
+			tarzan_id = &tarzan_id_val;
+		}
+	}
+
+	/*
+	 * Process any CERTREQ payloads.
+	 *
+	 * These are used as hints when selecting a better connection
+	 * based on ID.
+	 */
+	decode_v2_certificate_requests(&ike->sa, md);
+
+	/*
+	 * Convert the proposed connections into something this
+	 * responder might accept.
+	 *
+	 * DIGSIG seems a bit of a dodge, should this be looking
+	 * inside the auth proposal?
+	 */
+
+	enum ikev2_auth_method atype =
+		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	enum keyword_authby proposed_authbys;
+	switch (atype) {
+	case IKEv2_AUTH_RSA:
+		proposed_authbys = LELEM(AUTHBY_RSASIG);
+		break;
+	case IKEv2_AUTH_PSK:
+		proposed_authbys = LELEM(AUTHBY_PSK);
+		break;
+	case IKEv2_AUTH_NULL:
+		proposed_authbys = LELEM(AUTHBY_NULL);
+		break;
+	case IKEv2_AUTH_DIGSIG:
+		proposed_authbys = LELEM(AUTHBY_RSASIG) | LELEM(AUTHBY_ECDSA);
+		break;
+	default:
+		dbg("ikev2 skipping refine_host_connection due to unknown policy");
+		return NULL;
+	}
 
 	/*
 	 * IS_MOST_REFINED is subtle.
@@ -65,9 +144,10 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	 * Our caller might be surprised!
 	 */
 	bool is_most_refined = false;
-       if (!LHAS(authbys, AUTHBY_NULL)) {
+       if (!LHAS(proposed_authbys, AUTHBY_NULL)) {
 	       is_most_refined =
-		       refine_host_connection_of_state_on_responder(&ike->sa, authbys,
+		       refine_host_connection_of_state_on_responder(&ike->sa,
+								    proposed_authbys,
 								    &peer_id, tarzan_id);
        }
 
@@ -160,94 +240,6 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	}
 
 	return NULL;
-}
-
-static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const id_peer, struct id *peer_id)
-{
-	if (id_peer == NULL) {
-		return diag("authentication failed: %s did not include ID payload", peer);
-	}
-
-	diag_t d = unpack_peer_id(id_peer->payload.v2id.isai_type /* Peers Id Kind */,
-				  peer_id, &id_peer->pbs);
-	if (d != NULL) {
-		return diag_diag(&d, "authentication failed: %s ID payload invalid: ", peer);
-	}
-
-	id_buf idb;
-	esb_buf esb;
-	dbg("%s ID is %s: '%s'", peer,
-	    enum_show(&ike_id_type_names, peer_id->kind, &esb),
-	    str_id(peer_id, &idb));
-
-	return NULL;
-}
-
-diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md)
-{
-	passert(ike->sa.st_sa_role == SA_RESPONDER);
-
-	struct id initiator_id;
-	diag_t d = decode_v2_peer_id("initiator", md->chain[ISAKMP_NEXT_v2IDi], &initiator_id);
-	if (d != NULL) {
-		return d;
-	}
-
-	/* You Tarzan, me Jane? */
-	struct id tarzan_id;	/* may be unset */
-	struct id *tip = NULL;	/* tarzan ID pointer (or NULL) */
-	{
-		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
-
-		if (tarzan_pld != NULL) {
-			dbg("received IDr payload - extracting our alleged ID");
-			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
-						  &tarzan_id, &tarzan_pld->pbs);
-			if (d != NULL) {
-				return diag_diag(&d, "IDr payload extraction failed: ");
-			}
-			tip = &tarzan_id;
-		}
-	}
-
-	/*
-	 * Process any CERTREQ payloads.
-	 *
-	 * These are used as hints when selecting a better connection
-	 * based on ID.
-	 */
-	decode_v2_certificate_requests(&ike->sa, md);
-
-	/*
-	 * Convert the proposed connections into something this
-	 * responder might accept.
-	 *
-	 * DIGSIG seems a bit of a dodge, should this be looking
-	 * inside the auth proposal?
-	 */
-
-	enum ikev2_auth_method atype =
-		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	enum keyword_authby authbys;
-	switch (atype) {
-	case IKEv2_AUTH_RSA:
-		authbys = LELEM(AUTHBY_RSASIG);
-		break;
-	case IKEv2_AUTH_PSK:
-		authbys = LELEM(AUTHBY_PSK);
-		break;
-	case IKEv2_AUTH_NULL:
-		authbys = LELEM(AUTHBY_NULL);
-		break;
-	case IKEv2_AUTH_DIGSIG:
-		authbys = LELEM(AUTHBY_RSASIG) | LELEM(AUTHBY_ECDSA);
-		break;
-	default:
-		dbg("ikev2 skipping refine_host_connection due to unknown policy");
-		return NULL;
-	}
-
-	return responder_match_initiator_id_counted(ike, authbys, initiator_id, tip);
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)
