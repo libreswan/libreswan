@@ -71,6 +71,9 @@ es(child,'openbsd# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
 es(child,'openbsd# ','echo powerdown=YES >>     /etc/rc.powerdown')
 es(child,'openbsd# ','echo powerdown=YES >> /mnt/etc/rc.powerdown')
 
+print('====> Zapping rc.firsttime <====')
+es(child,'openbsd# ','rm /mnt/etc/rc.firsttime')
+
 print('====> Mounting /pool <====')
 es(child,'openbsd# ','mkdir -p /mnt/pool')
 es(child,'openbsd# ','echo '+gateway+':'+pooldir+' /pool nfs rw,tcp 0 0 >> /mnt/etc/fstab')
