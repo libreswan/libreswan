@@ -529,7 +529,7 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection *conn_by_name(const char *nm, bool strict);
 
 bool refine_host_connection_of_state_on_responder(struct state *st,
-						  lset_t authbys,
+						  lset_t proposed_authbys,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id);
 struct connection *find_connection_for_packet(struct spd_route **srp,

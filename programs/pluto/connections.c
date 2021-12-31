@@ -3597,7 +3597,7 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 static struct connection *refine_host_connection_on_responder(int indent,
 							      const struct state *st,
-							      lset_t this_authbys,
+							      lset_t proposed_authbys,
 							      const struct id *peer_id,
 							      const struct id *tarzan_id)
 {
@@ -3608,8 +3608,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 
 	const generalName_t *requested_ca = st->st_requested_ca;
 
-	passert(!LHAS(this_authbys, AUTHBY_NEVER));
-	passert(!LHAS(this_authbys, AUTHBY_UNSET));
+	passert(!LHAS(proposed_authbys, AUTHBY_NEVER));
+	passert(!LHAS(proposed_authbys, AUTHBY_UNSET));
 
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
@@ -3782,7 +3782,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
 				}
-				if (LHAS(this_authbys, AUTHBY_PSK)) {
+				if (LHAS(proposed_authbys, AUTHBY_PSK)) {
 					if (!(d->policy & POLICY_PSK)) {
 						/* there needs to be a key */
 						dbg_rhc("skipping because no PSK in POLICY");
@@ -3794,7 +3794,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 						continue; /* no secret */
 					}
 				}
-				if (LHAS(this_authbys, AUTHBY_RSASIG)) {
+				if (LHAS(proposed_authbys, AUTHBY_RSASIG)) {
 					if (!(d->policy & POLICY_RSASIG)) {
 						dbg_rhc("skipping because not RSASIG in POLICY");
 						continue;	/* no key */
@@ -3816,7 +3816,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
 				 */
-				if (!LHAS(this_authbys, d->spd.that.host->config->authby)) {
+				if (!LHAS(proposed_authbys, d->spd.that.host->config->authby)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
@@ -3854,7 +3854,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				{
 					lset_buf eb;
 					dbg_rhc("%s so no authby checks performed",
-						str_lset_short(&keyword_authby_names, "+", this_authbys, &eb));
+						str_lset_short(&keyword_authby_names, "+",
+							       proposed_authbys, &eb));
 					break;
 				}
 				}
@@ -3973,7 +3974,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 }
 
 bool refine_host_connection_of_state_on_responder(struct state *st,
-						  lset_t this_authbys,
+						  lset_t proposed_authbys,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id)
 {
@@ -3984,7 +3985,8 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	    pri_connection(st->st_connection, &cib));
 	indent = 1;
 
-	struct connection *r = refine_host_connection_on_responder(indent, st, this_authbys,
+	struct connection *r = refine_host_connection_on_responder(indent, st,
+								   proposed_authbys,
 								   peer_id, tarzan_id);
 	if (r == NULL) {
 		dbg_rhc("returning FALSE because nothing is sufficiently refined");

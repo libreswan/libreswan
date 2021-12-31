@@ -195,13 +195,13 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 * v1 policy is a subset of the v2 policy.
 	 */
 
-	lset_t this_authbys;
+	lset_t proposed_authbys;
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		this_authbys = LELEM(AUTHBY_PSK);
+		proposed_authbys = LELEM(AUTHBY_PSK);
 		break;
 	case OAKLEY_RSA_SIG:
-		this_authbys = LELEM(AUTHBY_RSASIG);
+		proposed_authbys = LELEM(AUTHBY_RSASIG);
 		break;
 		/* Not implemented */
 	case OAKLEY_DSS_SIG:
@@ -235,7 +235,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 * Our caller might be surprised!
 	 */
 	bool is_most_refined =
-		refine_host_connection_of_state_on_responder(st, this_authbys, &peer_id,
+		refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
 							     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
 	/* check for certificates; XXX: duplicate comment+code? */
