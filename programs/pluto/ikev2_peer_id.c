@@ -74,16 +74,16 @@ static diag_t responder_match_initiator_id_counted(struct ike_sa *ike,
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	bool remote_cert_matches_id = false;
-	struct id remote_cert_id = empty_id;
 	if (ike->sa.st_remote_certs.verified != NULL) {
-		struct connection *c = ike->sa.st_connection;
 
 		/* end cert is at the front; move to where? */
 		struct certs *certs = ike->sa.st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
-		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id, &remote_cert_id);
+
+		struct connection *c = ike->sa.st_connection;
+		struct id remote_cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
 			dbg("X509: CERT and ID matches current connection");

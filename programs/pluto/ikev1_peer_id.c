@@ -64,7 +64,6 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool remote_cert_matches_id = false;
-	struct id remote_cert_id = empty_id;
 	if (st->st_remote_certs.verified != NULL) {
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
@@ -73,8 +72,9 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 			  end_cert->subjectName);
 
 		/* XXX: initiator: can't change ID */
-		const struct id *remote_id = &c->spd.that.id;
-		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
+		struct connection *c = st->st_connection;
+		struct id remote_cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
 			dbg("SAN ID matched, updating that.cert");
@@ -159,7 +159,6 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool remote_cert_matches_id = false;
-	struct id remote_cert_id = empty_id;
 	if (st->st_remote_certs.verified != NULL) {
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
@@ -168,8 +167,9 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 			  end_cert->subjectName);
 
 		/* XXX: aggr-mode-responder: can't change ID */
-		const struct id *remote_id = &c->spd.that.id;
-		diag_t d = match_end_cert_id(certs, remote_id, &remote_cert_id);
+		struct connection *c = st->st_connection;
+		struct id remote_cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
 			dbg("SAN ID matched, updating that.cert");
@@ -274,7 +274,6 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	bool remote_cert_matches_id = false;
-	struct id remote_cert_id = empty_id;
 	if (st->st_remote_certs.verified != NULL) {
 
 		/* end cert is at the front; move to where? */
@@ -284,6 +283,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			  end_cert->subjectName);
 
 		struct connection *c = st->st_connection;
+		struct id remote_cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
