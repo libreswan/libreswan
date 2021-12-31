@@ -47,38 +47,28 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 		return false;
 	}
 
-	struct connection *c = st->st_connection;
-
-	/*
-	 * XXX: this logic seems to overlap a tighter check for
-	 * ID_FROMCERT below.
-	 *
-	 * XXX: this logic seems to overlap match_end_cert_id().
-	 */
-	if (c->spd.that.id.kind == ID_FROMCERT) {
-		/* breaks API, connection modified by %fromcert */
-		replace_connection_that_id(c, peer);
-	}
-
-	/* check for certificates; XXX: duplicate comment+code? */
-
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool remote_cert_matches_id = false;
+	struct connection *const c = st->st_connection; /* initiator: can't change */
+
 	if (st->st_remote_certs.verified != NULL) {
+
+		/* check for certificates; XXX: duplicate comment+code? */
+
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		log_state(RC_LOG, st, "certificate verified OK: %s",
 			  end_cert->subjectName);
 
-		/* XXX: initiator: can't change ID */
-		struct connection *c = st->st_connection;
 		struct id remote_cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
 		if (d == NULL) {
 			dbg("SAN ID matched, updating that.cert");
 			/* XXX: !main-mode-responder: ???? */
+			if (remote_cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &remote_cert_id);
+			}
 		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
@@ -91,43 +81,21 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 				  "X509: CERT payload does not match connection ID");
 			return false;
 		}
-		if (remote_cert_id.kind != ID_NONE) {
-			replace_connection_that_id(c, &remote_cert_id);
-		}
-		remote_cert_matches_id = true;
-	}
-
-	/*
-	 * Now that we've decoded the ID payload, let's see if we
-	 * need to switch connections.
-	 * Aggressive mode cannot switch connections.
-	 * We must not switch horses if we initiated:
-	 * - if the initiation was explicit, we'd be ignoring user's intent
-	 * - if opportunistic, we'll lose our HOLD info
-	 */
-
-	if (!remote_cert_matches_id &&
-	    !same_id(&c->spd.that.id, peer) &&
-	    c->spd.that.id.kind != ID_FROMCERT) {
-		id_buf expect;
-		id_buf found;
-
-		log_state(RC_LOG_SERIOUS, st,
-			  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
-			  str_id(&c->spd.that.id, &expect),
-			  str_id(peer, &found));
-		return false;
 	} else if (c->spd.that.id.kind == ID_FROMCERT) {
-		/*
-		 * XXX: this logic seems to overlap a weaker check for
-		 * ID_FROMCERT above.
-		 */
 		if (peer->kind != ID_DER_ASN1_DN) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "peer ID is not a certificate type");
 			return false;
 		}
 		replace_connection_that_id(c, peer);
+	} else if (!same_id(&c->spd.that.id, peer)) {
+		id_buf expect;
+		id_buf found;
+		log_state(RC_LOG_SERIOUS, st,
+			  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
+			  str_id(&c->spd.that.id, &expect),
+			  str_id(peer, &found));
+		return false;
 	}
 
 	return true;
