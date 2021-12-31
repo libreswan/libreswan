@@ -234,15 +234,16 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 * This may change st->st_connection!
 	 * Our caller might be surprised!
 	 */
-	bool is_most_refined =
-		refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
-							     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
-
-	/* check for certificates; XXX: duplicate comment+code? */
+	refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
+						     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
 	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool remote_cert_matches_id = false;
+
+	struct connection *const c = st->st_connection; /* can't change any more */
+
 	if (st->st_remote_certs.verified != NULL) {
+
+		/* check for certificates; XXX: duplicate comment+code? */
 
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
@@ -250,7 +251,6 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 		log_state(RC_LOG, st, "certificate verified OK: %s",
 			  end_cert->subjectName);
 
-		struct connection *c = st->st_connection;
 		struct id remote_cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
@@ -264,30 +264,28 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
-			/* XXX: main-mode-responder: that.ID updated */
-			replace_connection_that_id(c, &remote_cert_id);
 		} else {
 			dbg("SAN ID did not match");
 			/* already switched connection so fail */
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return false;
 		}
-		remote_cert_matches_id = true;
-	}
-
-	if (!is_most_refined) {
-		id_buf buf;
-		dbg("no more suitable connection for peer '%s'",
-		    str_id(&peer_id, &buf));
-		/* can we continue with what we had? */
-		struct connection *c = st->st_connection;
-		if (!remote_cert_matches_id &&
-		    !same_id(&c->spd.that.id, &peer_id) &&
-		    c->spd.that.id.kind != ID_FROMCERT) {
-			log_state(RC_LOG, md->v1_st, "Peer mismatch on first found connection and no better connection found");
+	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+		/* %cert, but no certificates, must be in DB! */
+		if (peer_id.kind != ID_DER_ASN1_DN) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "peer ID is not a certificate type");
 			return false;
 		}
-		dbg("Peer ID matches and no better connection found - continuing with existing connection");
+		replace_connection_that_id(c, &peer_id);
+	} else if (!same_id(&c->spd.that.id, &peer_id)) {
+		id_buf expect;
+		id_buf found;
+		log_state(RC_LOG_SERIOUS, st,
+			  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
+			  str_id(&c->spd.that.id, &expect),
+			  str_id(&peer_id, &found));
+		return false;
 	}
 
 	return true;
