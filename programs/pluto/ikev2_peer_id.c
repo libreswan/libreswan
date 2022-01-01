@@ -77,13 +77,14 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
 
 		if (tarzan_pld != NULL) {
-			dbg("received IDr payload - extracting our alleged ID");
 			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
 						  &tarzan_id_val, &tarzan_pld->pbs);
 			if (d != NULL) {
 				return diag_diag(&d, "IDr payload extraction failed: ");
 			}
 			tarzan_id = &tarzan_id_val;
+			id_buf idb;
+			dbg("received IDr - our alleged ID '%s'", str_id(tarzan_id, &idb));
 		}
 	}
 
@@ -143,25 +144,23 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 * This may change st->st_connection!
 	 * Our caller might be surprised!
 	 */
-	bool is_most_refined = false;
        if (!LHAS(proposed_authbys, AUTHBY_NULL)) {
-	       is_most_refined =
-		       refine_host_connection_of_state_on_responder(&ike->sa,
-								    proposed_authbys,
-								    &peer_id, tarzan_id);
+	       refine_host_connection_of_state_on_responder(&ike->sa,
+							    proposed_authbys,
+							    &peer_id, tarzan_id);
        }
 
-	/* check for certificates; XXX: duplicate comment+code? */
+       struct connection *const c = ike->sa.st_connection; /* no longer changing */
 
-	bool remote_cert_matches_id = false;
 	if (ike->sa.st_remote_certs.verified != NULL) {
+
+		/* check for certificates; XXX: duplicate comment+code? */
 
 		/* end cert is at the front; move to where? */
 		struct certs *certs = ike->sa.st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
 		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
-		struct connection *c = ike->sa.st_connection;
 		struct id remote_cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
 
@@ -174,7 +173,6 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-			replace_connection_that_id(c, &peer_id);
 		} else {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
@@ -183,60 +181,30 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
 				    str_id(&peer_id, &peer_idb));
 		}
-		remote_cert_matches_id = true;
-	}
 
-	if (!is_most_refined) {
-		/*
-		 * no "improvement" on c found.
-		 *
-		 * XXX: not really:
-		 *
-		 * - the other end proposed AUTHBY_NULL so no attempt
-                 *   was made to improve the connection improve was
-                 *   made
-		 *
-		 *   this seems weird; what happens if IKE_SA_INIT
-		 *   chooses something more permanent but the IKE_AUTH
-		 *   message proposes NULL?
-		 *
-		 * - refine_host_connection() returned NULL so,
-		 *   presumably, not even C was acceptable
-		 *
-		 *   here, it looks like the code is trying to propose
-		 *   a more helpful message which while convolted is
-		 *   useful
-		 */
-		if (DBGP(DBG_BASE)) {
-			id_buf peer_idb;
-			DBG_log("no suitable connection for peer '%s'",
-				str_id(&peer_id, &peer_idb));
+	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+		if (peer_id.kind != ID_DER_ASN1_DN) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "peer ID is not a certificate type");
+			return false;
 		}
-		/* if X.509, we should have valid peer/san */
-		if (ike->sa.st_remote_certs.verified != NULL && !remote_cert_matches_id) {
-			id_buf peer_idb;
-			return diag("`Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-				    str_id(&peer_id, &peer_idb));
-		}
-		struct connection *c = ike->sa.st_connection;
-		if (!remote_cert_matches_id &&
-		    !same_id(&c->spd.that.id, &peer_id) &&
-		    c->spd.that.id.kind != ID_FROMCERT) {
-			if (LIN(POLICY_AUTH_NULL, c->policy) &&
-			    tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
-				id_buf peer_idb;
-				llog_sa(RC_LOG, ike,
-					"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
-					str_id(&peer_id, &peer_idb));
-				ike->sa.st_peer_wants_null = true;
-			} else {
-				id_buf peer_idb;
-				return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
-					    str_id(&peer_id, &peer_idb));
-			}
-		} else {
-			dbg("peer ID matches and no better connection found - continuing with existing connection");
-		}
+		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
+		replace_connection_that_id(c, &peer_id);
+	} else if (same_id(&c->spd.that.id, &peer_id)) {
+		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID");
+	} else if (LIN(POLICY_AUTH_NULL, c->policy) &&
+		   tarzan_id != NULL &&
+		   tarzan_id->kind == ID_NULL) {
+		id_buf peer_idb;
+		llog_sa(RC_LOG, ike,
+			"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
+			str_id(&peer_id, &peer_idb));
+		dbg("rhc: setting .st_peer_wants_null");
+		ike->sa.st_peer_wants_null = true;
+	} else {
+		id_buf peer_idb;
+		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
+			    str_id(&peer_id, &peer_idb));
 	}
 
 	return NULL;
