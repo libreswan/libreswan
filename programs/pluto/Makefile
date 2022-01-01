@@ -66,8 +66,11 @@ OBJS += ikev2_informational.o
 OBJS += ikev2_notify.o
 OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
+
 OBJS += ikev1_peer_id.o
 OBJS += ikev2_peer_id.o
+OBJS += peer_id.o
+
 OBJS += ikev2_mobike.o
 OBJS += ikev2_send.o
 OBJS += ikev2_message.o

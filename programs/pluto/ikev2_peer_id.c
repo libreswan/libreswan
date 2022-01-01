@@ -37,6 +37,7 @@
 #include "demux.h"
 #include "unpack.h"
 #include "pluto_x509.h"
+#include "peer_id.h"
 
 static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const id_peer, struct id *peer_id)
 {
