@@ -853,11 +853,23 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
-	if (!st->st_v1_aggr_mode_responder_found_peer_id) {
+	/*
+	 * If the first message contained verified certs then
+	 * .verified!=NULL; and when .verified!=NULL the certs either
+	 * passed muster or the exchange was rejected.
+	 *
+	 * The first message has already tried to unpack certs, hence
+	 * .st_remote_certs.processed is expected to be true.
+	 */
+
+	pexpect(st->st_remote_certs.processed); /* not our first time */
+	bool new_certs_to_verify = false;
+	if (st->st_remote_certs.verified == NULL) {
 		if (!v1_decode_certs(md)) {
 			log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
+		new_certs_to_verify = (st->st_remote_certs.verified != NULL);
 	}
 
 	/*
@@ -867,7 +879,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 * Mode (responder).
 	 */
 
-	if (!st->st_v1_aggr_mode_responder_found_peer_id) {
+	if (new_certs_to_verify) {
 		if (!ikev1_decode_peer_id_aggr_mode_responder(st, md)) {
 			dbg("Peer ID failed to decode");
 			return STF_FAIL + INVALID_ID_INFORMATION;

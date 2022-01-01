@@ -503,10 +503,9 @@ struct state {
 	 * CRL code can find them.  The first cert in the list is
 	 * always the end or EE cert.
 	 */
-	bool st_v1_aggr_mode_responder_found_peer_id;	/* scratchpad for writing we found alt peer id in CERT */
 	struct {
 		bool processed;		/* do this once, may not be any */
-		bool harmless;		/* something nasty */
+		bool harmless;		/* vs something nasty */
 		struct certs *verified;	/* list; first is EE */
 		struct pubkey_list *pubkey_db;
 	} st_remote_certs;

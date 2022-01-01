@@ -47,7 +47,6 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 		return false;
 	}
 
-	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 	struct connection *const c = st->st_connection; /* initiator: can't change */
 
 	if (st->st_remote_certs.verified != NULL) {
@@ -125,8 +124,6 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 	/* check for certificates; XXX: duplicate comment+code? */
 
-	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
-	bool remote_cert_matches_id = false;
 	if (st->st_remote_certs.verified != NULL) {
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
@@ -157,10 +154,8 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 				  "X509: CERT payload does not match connection ID");
 			return false;
 		}
-		remote_cert_matches_id = true;
 	}
 
-	st->st_v1_aggr_mode_responder_found_peer_id = remote_cert_matches_id;
 	return true;
 }
 
@@ -236,8 +231,6 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 */
 	refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
 						     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
-
-	pexpect(st->st_v1_aggr_mode_responder_found_peer_id == false);
 
 	struct connection *const c = st->st_connection; /* can't change any more */
 
