@@ -233,52 +233,9 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
 						     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
-	struct connection *const c = st->st_connection; /* can't change any more */
-
-	if (st->st_remote_certs.verified != NULL) {
-
-		/* check for certificates; XXX: duplicate comment+code? */
-
-		/* end cert is at the front; move to where? */
-		struct certs *certs = st->st_remote_certs.verified;
-		CERTCertificate *end_cert = certs->cert;
-		log_state(RC_LOG, st, "certificate verified OK: %s",
-			  end_cert->subjectName);
-
-		struct id remote_cert_id = empty_id;
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
-
-		if (d == NULL) {
-			dbg("SAN ID matched, updating that.cert");
-			/* XXX: main-mode-responder: update that.ID */
-			if (remote_cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &remote_cert_id);
-			}
-		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
-		} else {
-			dbg("SAN ID did not match");
-			/* already switched connection so fail */
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			return false;
-		}
-	} else if (c->spd.that.id.kind == ID_FROMCERT) {
-		/* %cert, but no certificates, must be in DB! */
-		if (peer_id.kind != ID_DER_ASN1_DN) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "peer ID is not a certificate type");
-			return false;
-		}
-		replace_connection_that_id(c, &peer_id);
-	} else if (!same_id(&c->spd.that.id, &peer_id)) {
-		id_buf expect;
-		id_buf found;
-		log_state(RC_LOG_SERIOUS, st,
-			  "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
-			  str_id(&c->spd.that.id, &expect),
-			  str_id(&peer_id, &found));
+	diag_t d = update_peer_id(pexpect_ike_sa(st), &peer_id, NULL/*tarzan*/);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
