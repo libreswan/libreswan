@@ -112,17 +112,6 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 
 	struct connection *c = st->st_connection;
 
-	/*
-	 * XXX: this logic seems to overlap a tighter check for
-	 * ID_FROMCERT below.
-	 *
-	 * XXX: this logic seems to overlap match_end_cert_id().
-	 */
-	if (c->spd.that.id.kind == ID_FROMCERT) {
-		/* breaks API, connection modified by %fromcert */
-		replace_connection_that_id(c, &peer);
-	}
-
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	if (st->st_remote_certs.verified != NULL) {
@@ -155,6 +144,14 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 				  "X509: CERT payload does not match connection ID");
 			return false;
 		}
+	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+		if (peer.kind != ID_DER_ASN1_DN) {
+			log_state(RC_LOG_SERIOUS, st,
+				  "peer ID is not a certificate type");
+			return false;
+		}
+		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
+		replace_connection_that_id(c, &peer);
 	}
 
 	return true;
