@@ -16,9 +16,20 @@
 #ifndef PEER_ID_H
 #define PEER_ID_H
 
+#include "lset.h"
+#include "diag.h"
+
+struct state;
+struct id;
+struct ike_sa;
+
 bool refine_host_connection_of_state_on_responder(struct state *st,
 						  lset_t proposed_authbys,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id);
+
+diag_t update_peer_id(struct ike_sa *ike,
+		      const struct id *peer_id,
+		      const struct id *tarzan_id);
 
 #endif

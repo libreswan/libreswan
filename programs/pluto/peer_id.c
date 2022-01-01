@@ -614,4 +614,64 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	return true;
 }
 
-#undef dbg_rhc
+diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct id *tarzan_id)
+{
+       struct connection *const c = ike->sa.st_connection; /* no longer changing */
+
+	if (ike->sa.st_remote_certs.verified != NULL) {
+
+		/* check for certificates; XXX: duplicate comment+code? */
+
+		/* end cert is at the front; move to where? */
+		struct certs *certs = ike->sa.st_remote_certs.verified;
+		CERTCertificate *end_cert = certs->cert;
+		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
+
+		struct id remote_cert_id = empty_id;
+		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
+
+		if (d == NULL) {
+			dbg("X509: CERT and ID matches current connection");
+			if (remote_cert_id.kind != ID_NONE) {
+				replace_connection_that_id(c, &remote_cert_id);
+			}
+		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+		} else {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
+			llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+			id_buf peer_idb;
+			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
+				    str_id(peer_id, &peer_idb));
+		}
+
+	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+		if (peer_id->kind != ID_DER_ASN1_DN) {
+			log_state(RC_LOG_SERIOUS, &ike->sa,
+				  "peer ID is not a certificate type");
+			return false;
+		}
+		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
+		replace_connection_that_id(c, peer_id);
+	} else if (same_id(&c->spd.that.id, peer_id)) {
+		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID");
+	} else if (LIN(POLICY_AUTH_NULL, c->policy) &&
+		   tarzan_id != NULL &&
+		   tarzan_id->kind == ID_NULL) {
+		id_buf peer_idb;
+		llog_sa(RC_LOG, ike,
+			"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
+			str_id(peer_id, &peer_idb));
+		dbg("rhc: setting .st_peer_wants_null");
+		ike->sa.st_peer_wants_null = true;
+	} else {
+		id_buf peer_idb;
+		return diag("Peer ID '%s' mismatched on first found connection and no better connection found",
+			    str_id(peer_id, &peer_idb));
+	}
+
+	return NULL;
+}
