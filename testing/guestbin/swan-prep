@@ -448,7 +448,10 @@ if hostname != "nic":
         subprocess.getoutput("setenforce 0")
 
         for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
-            os.mkdir(os.path.join("/etc/strongswan", directory))
+            dst = os.path.join("/etc/strongswan", directory)
+            if os.path.isdir(dst):
+                shutil.rmtree(dst)
+            os.mkdir(dst)
         copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
         copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
