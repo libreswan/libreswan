@@ -29,7 +29,6 @@ west #
 002 "ikev2-westnet-eastnet-x509-cr" #1: I am sending a certificate request
 1v1 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I3
 002 "ikev2-westnet-eastnet-x509-cr" #1: Peer ID is ID_FQDN: '@right'
-002 "ikev2-westnet-eastnet-x509-cr" #1: certificate verified OK: E=user-east-nosan@testing.libreswan.org,CN=east-nosan.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "ikev2-westnet-eastnet-x509-cr" #1: peer certificate contains no subjectAltName extension to match ID_FQDN '@right'
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: CERT payload does not match connection ID
 218 "ikev2-westnet-eastnet-x509-cr" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
