@@ -640,12 +640,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
 		} else {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-			diag_t d = diag("X509: connection failed due to unmatched IKE ID in certificate SAN");
-			llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
-			id_buf peer_idb;
-			return diag("Peer ID '%s' is not specified on the certificate SubjectAltName (SAN) and no better connection found",
-				    str_id(peer_id, &peer_idb));
+			return diag_diag(&d, "X509: authentication failed; ");
 		}
 
 	} else if (c->spd.that.id.kind == ID_FROMCERT) {
