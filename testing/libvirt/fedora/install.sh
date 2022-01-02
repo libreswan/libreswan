@@ -18,7 +18,8 @@ done
 
 # Point the cache at /pool
 dnf config-manager --save --setopt=keepcache=True
-dnf config-manager --save --setopt=cachedir=/pool/fedora.cache
+# not fedora.dnf which matches: rm -f /pool/fedora.*
+dnf config-manager --save --setopt=cachedir=/pool/dnf.fedora
 #dnf config-manager --save --setopt=makecache=0
 
 # make it explicit
