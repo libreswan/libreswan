@@ -57,8 +57,7 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
-		log_state(RC_LOG, st, "certificate verified OK: %s",
-			  end_cert->subjectName);
+		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
 		struct id remote_cert_id = empty_id;
 		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
@@ -115,11 +114,11 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 	/* check for certificates; XXX: duplicate comment+code? */
 
 	if (st->st_remote_certs.verified != NULL) {
+
 		/* end cert is at the front; move to where? */
 		struct certs *certs = st->st_remote_certs.verified;
 		CERTCertificate *end_cert = certs->cert;
-		log_state(RC_LOG, st, "certificate verified OK: %s",
-			  end_cert->subjectName);
+		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
 		/* XXX: aggr-mode-responder: can't change ID */
 		struct connection *c = st->st_connection;
