@@ -152,6 +152,14 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 		}
 		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
 		replace_connection_that_id(c, &peer);
+	} else if (same_id(&c->spd.that.id, &peer)) {
+		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID");
+	} else {
+		id_buf peer_idb;
+		log_state(RC_LOG_SERIOUS, st,
+			  "Peer ID '%s' mismatched on first found connection",
+			  str_id(&peer, &peer_idb));
+		return false;
 	}
 
 	return true;
