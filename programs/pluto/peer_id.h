@@ -32,4 +32,6 @@ diag_t update_peer_id(struct ike_sa *ike,
 		      const struct id *peer_id,
 		      const struct id *tarzan_id);
 
+diag_t update_peer_id_certs(struct ike_sa *ike);
+
 #endif

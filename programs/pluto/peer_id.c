@@ -614,36 +614,42 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	return true;
 }
 
-diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct id *tarzan_id)
+diag_t update_peer_id_certs(struct ike_sa *ike)
 {
        struct connection *const c = ike->sa.st_connection; /* no longer changing */
 
+       /* end cert is at the front; move to where? */
+       struct certs *certs = ike->sa.st_remote_certs.verified;
+       CERTCertificate *end_cert = certs->cert;
+       dbg("rhc: comparing certificate: %s", end_cert->subjectName);
+
+       struct id remote_cert_id = empty_id;
+       diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
+
+       if (d == NULL) {
+	       dbg("X509: CERT and ID matches current connection");
+	       if (remote_cert_id.kind != ID_NONE) {
+		       replace_connection_that_id(c, &remote_cert_id);
+	       }
+       } else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
+	       dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+	       llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
+       } else {
+	       return diag_diag(&d, "X509: authentication failed; ");
+       }
+       return NULL;
+}
+
+diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct id *tarzan_id)
+{
 	if (ike->sa.st_remote_certs.verified != NULL) {
+		return update_peer_id_certs(ike);
+	}
 
-		/* check for certificates; XXX: duplicate comment+code? */
+	struct connection *const c = ike->sa.st_connection; /* no longer changing */
 
-		/* end cert is at the front; move to where? */
-		struct certs *certs = ike->sa.st_remote_certs.verified;
-		CERTCertificate *end_cert = certs->cert;
-		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
-
-		struct id remote_cert_id = empty_id;
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
-
-		if (d == NULL) {
-			dbg("X509: CERT and ID matches current connection");
-			if (remote_cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &remote_cert_id);
-			}
-		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-			llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
-		} else {
-			return diag_diag(&d, "X509: authentication failed; ");
-		}
-
-	} else if (c->spd.that.id.kind == ID_FROMCERT) {
+	if (c->spd.that.id.kind == ID_FROMCERT) {
 		if (peer_id->kind != ID_DER_ASN1_DN) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "peer ID is not a certificate type");

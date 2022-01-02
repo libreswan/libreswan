@@ -54,6 +54,7 @@
 #include "unpack.h"
 #include "ikev1_host_pair.h"
 #include "ikev1_peer_id.h"
+#include "peer_id.h"	/* for update_peer_id_cert() */
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -880,8 +881,9 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 */
 
 	if (new_certs_to_verify) {
-		if (!ikev1_decode_peer_id_aggr_mode_responder(st, md)) {
-			dbg("Peer ID failed to decode");
+		diag_t d = update_peer_id_certs(pexpect_ike_sa(st));
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return STF_FAIL + INVALID_ID_INFORMATION;
 		}
 	}
