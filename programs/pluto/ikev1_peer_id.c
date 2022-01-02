@@ -75,9 +75,7 @@ bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
 		} else {
 			/* cannot switch connection so fail */
 			dbg("SAN ID did not match");
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			log_state(RC_LOG, st,
-				  "X509: CERT payload does not match connection ID");
+			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "X509: authentication failed; ");
 			return false;
 		}
 	} else if (c->spd.that.id.kind == ID_FROMCERT) {
