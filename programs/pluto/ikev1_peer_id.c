@@ -109,55 +109,9 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
 		return false;
 	}
 
-	struct connection *c = st->st_connection;
-
-	/* check for certificates; XXX: duplicate comment+code? */
-
-	if (st->st_remote_certs.verified != NULL) {
-
-		/* end cert is at the front; move to where? */
-		struct certs *certs = st->st_remote_certs.verified;
-		CERTCertificate *end_cert = certs->cert;
-		dbg("rhc: comparing certificate: %s", end_cert->subjectName);
-
-		/* XXX: aggr-mode-responder: can't change ID */
-		struct connection *c = st->st_connection;
-		struct id remote_cert_id = empty_id;
-		diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
-
-		if (d == NULL) {
-			dbg("SAN ID matched, updating that.cert");
-			/* XXX: !main-mode-responder: ???? */
-			if (remote_cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &remote_cert_id);
-			}
-		} else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			log_state(RC_LOG, st, "X509: connection allows unmatched IKE ID and certificate SAN");
-		} else {
-			/* cannot switch connection so fail */
-			dbg("SAN ID did not match");
-			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			log_state(RC_LOG, st,
-				  "X509: CERT payload does not match connection ID");
-			return false;
-		}
-	} else if (c->spd.that.id.kind == ID_FROMCERT) {
-		if (peer.kind != ID_DER_ASN1_DN) {
-			log_state(RC_LOG_SERIOUS, st,
-				  "peer ID is not a certificate type");
-			return false;
-		}
-		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
-		replace_connection_that_id(c, &peer);
-	} else if (same_id(&c->spd.that.id, &peer)) {
-		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID");
-	} else {
-		id_buf peer_idb;
-		log_state(RC_LOG_SERIOUS, st,
-			  "Peer ID '%s' mismatched on first found connection",
-			  str_id(&peer, &peer_idb));
+	diag_t d = update_peer_id(pexpect_ike_sa(st),  &peer, NULL/*tarzan*/);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 		return false;
 	}
 
