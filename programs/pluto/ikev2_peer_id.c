@@ -164,60 +164,10 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 		return d;
 	}
 
-	/* start considering connection */
-
-	struct connection *c = ike->sa.st_connection;
-
-	/*
-	 * If there are certs, try running the id check.
-	 */
-	bool remote_cert_matches_id = false;
-	if (ike->sa.st_remote_certs.verified != NULL) {
-		struct id cert_id = empty_id;
-		diag_t d = match_end_cert_id(ike->sa.st_remote_certs.verified,
-					     &c->spd.that.id, &cert_id);
-		if (d == NULL) {
-			dbg("X509: CERT and ID matches current connection");
-			if (cert_id.kind != ID_NONE) {
-				replace_connection_that_id(c, &cert_id);
-			}
-			remote_cert_matches_id = true;
-		} else if (!LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-			return diag_diag(&d, "X509: authentication failed; ");
-		} else {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-			log_state(RC_LOG, &ike->sa, "X509: connection allows unmatched IKE ID and certificate SAN");
-		}
-	}
-
 	/* process any CERTREQ payloads */
 	decode_v2_certificate_requests(&ike->sa, md);
 
-	/*
-	 * Now that we've decoded the ID payload, let's see if we
-	 * need to switch connections.
-	 * We must not switch horses if we initiated:
-	 * - if the initiation was explicit, we'd be ignoring user's intent
-	 * - if opportunistic, we'll lose our HOLD info
-	 */
-	if (!remote_cert_matches_id &&
-	    !same_id(&c->spd.that.id, &responder_id) &&
-	    c->spd.that.id.kind != ID_FROMCERT) {
-		id_buf expect, found;
-		return diag("we require IKEv2 peer to have ID '%s', but peer declares '%s'",
-			    str_id(&c->spd.that.id, &expect),
-			    str_id(&responder_id, &found));
-	}
+	/* start considering connection */
+	return update_peer_id(ike, &responder_id, NULL/*tarzan isn't interesting*/);
 
-	if (c->spd.that.id.kind == ID_FROMCERT) {
-		if (responder_id.kind != ID_DER_ASN1_DN) {
-			return diag("peer ID is not a certificate type");
-		}
-		replace_connection_that_id(c, &responder_id);
-	}
-
-	dn_buf dnb;
-	dbg("offered CA: '%s'", str_dn_or_null(c->local->host.ca, "%none", &dnb));
-
-	return NULL;
 }
