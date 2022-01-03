@@ -632,7 +632,9 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
 		       replace_connection_that_id(c, &remote_cert_id);
 	       }
        } else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
-	       dbg("X509: CERT and ID don't match but POLICY_ALLOW_NO_SAN");
+	       id_buf idb;
+	       dbg("X509: CERT '%s' and ID '%s' don't match but POLICY_ALLOW_NO_SAN",
+		   end_cert->subjectName, str_id(&c->spd.that.id, &idb));
 	       llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
        } else {
