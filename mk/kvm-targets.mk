@@ -240,7 +240,7 @@ RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 # any further rules leave the file alone.
 #
 
-KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR_PREFIX).boot.ok
+KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR_PREFIX)boot.ok
 $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log)) | $(KVM_LOCALDIR)
 	touch $@
 
@@ -250,18 +250,18 @@ $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log
 # Only do this once per boot.
 #
 
-KVM_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
-
-$(KVM_POOLDIR_PREFIX).entropy.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
-	@if test ! -r $(KVM_ENTROPY_FILE); then				\
+KVM_HOST_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
+KVM_HOST_ENTROPY_OK = $(KVM_POOLDIR_PREFIX)entropy.ok
+$(KVM_HOST_ENTROPY_OK): $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
+	@if test ! -r $(KVM_HOST_ENTROPY_FILE); then			\
 		echo no entropy to check ;				\
-	elif test $$(cat $(KVM_ENTROPY_FILE)) -gt 100 ; then		\
+	elif test $$(cat $(KVM_HOST_ENTROPY_FILE)) -gt 100 ; then	\
 		echo lots of entropy ;					\
 	else								\
 		echo ;							\
 		echo  According to:					\
 		echo ;							\
-		echo      $(KVM_ENTROPY_FILE) ;				\
+		echo      $(KVM_HOST_ENTROPY_FILE) ;			\
 		echo ;							\
 		echo  your computer does not have much entropy ;	\
 		echo ;							\
@@ -271,7 +271,7 @@ $(KVM_POOLDIR_PREFIX).entropy.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	fi
 	touch $@
 
-KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).entropy.ok
+KVM_HOST_OK += $(KVM_HOST_ENTROPY_OK)
 
 #
 # Check that the QEMUDIR is writeable by us.
@@ -280,14 +280,14 @@ KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).entropy.ok
 #
 
 
-KVM_QEMUDIR ?= /var/lib/libvirt/qemu
-
-$(KVM_POOLDIR_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
-	@if ! test -w $(KVM_QEMUDIR) ; then				\
+KVM_HOST_QEMUDIR ?= /var/lib/libvirt/qemu
+KVM_HOST_QEMUDIR_OK = $(KVM_POOLDIR_PREFIX)qemudir.ok
+$(KVM_HOST_QEMUDIR_OK): $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
+	@if ! test -w $(KVM_HOST_QEMUDIR) ; then			\
 		echo ;							\
 		echo "  The directory:" ;				\
 		echo ;							\
-		echo "     $(shell ls -ld $(KVM_QEMUDIR))" ;		\
+		echo "     $(shell ls -ld $(KVM_HOST_QEMUDIR))" ;	\
 		echo ;							\
 		echo "  is not writeable." ;				\
 		echo ;							\
@@ -298,17 +298,18 @@ $(KVM_POOLDIR_PREFIX).qemudir.ok: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	fi
 	touch $@
 
-KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).qemudir.ok
+KVM_HOST_OK += $(KVM_HOST_QEMUDIR_OK)
 
 #
 # ensure that NFS is running and everything is exported
 #
 
-$(KVM_POOLDIR_PREFIX).nfs.ok: testing/libvirt/nfs.sh $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
+KVM_HOST_NFS_OK = $(KVM_POOLDIR_PREFIX)nfs.ok
+$(KVM_HOST_NFS_OK): testing/libvirt/nfs.sh $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
 	sh testing/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
 	touch $@
 
-KVM_HOST_OK += $(KVM_POOLDIR_PREFIX).nfs.ok
+KVM_HOST_OK += $(KVM_HOST_NFS_OK)
 
 #
 # Don't create $(KVM_POOLDIR) - let the user do that as it lives
