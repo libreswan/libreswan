@@ -27,7 +27,7 @@ for d in "$@" ; do
     else
 	echo "exporting ${d} ..."
 	#sudo exportfs -r
-	sudo exportfs -o rw,no_root_squash 192.168.234.0/24:${d}
+	sudo exportfs -o rw,all_squash,anonuid=$(id -u),anongid=$(id -g) 192.168.234.0/24:${d}
     fi
 done
 
