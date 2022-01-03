@@ -1,0 +1,3 @@
+right has rightid=IP but left expects rightid=%fromcert
+
+with no certs being sent it should fail as ID isn't a DN
