@@ -652,15 +652,23 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 	struct connection *const c = ike->sa.st_connection; /* no longer changing */
 
 	if (c->spd.that.id.kind == ID_FROMCERT) {
+#if 0
 		if (peer_id->kind != ID_DER_ASN1_DN) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "peer ID is not a certificate type");
+			id_buf idb;
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"peer ID '%s' is not a certificate type",
+				str_id(peer_id, &idb));
 			return false;
 		}
-		dbg("rhc: %%fromcert and no certificate payload - continuing peer ID");
+#endif
+		id_buf idb;
+		dbg("rhc: %%fromcert and no certificate payload - continuing with peer ID %s",
+		    str_id(peer_id, &idb));
 		replace_connection_that_id(c, peer_id);
 	} else if (same_id(&c->spd.that.id, peer_id)) {
-		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID");
+		id_buf idb;
+		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
+		    str_id(peer_id, &idb));
 	} else if (LIN(POLICY_AUTH_NULL, c->policy) &&
 		   tarzan_id != NULL &&
 		   tarzan_id->kind == ID_NULL) {
