@@ -30,11 +30,11 @@ unsigned fails;
 
 #define PRINT(FMT, ...)							\
 	fprintf(stdout, "%s[%zu]:"FMT"\n",				\
-		__func__, ti,##__VA_ARGS__)
+		__func__, ti, ##__VA_ARGS__)
 
 #define PRINTF(FILE, FMT, ...)						\
 	fprintf(FILE, "%s[%zu]:"FMT"\n",				\
-		__func__, ti,##__VA_ARGS__)
+		__func__, ti, ##__VA_ARGS__)
 
 #define PRINT_LR(FILE, FMT, ...)					\
 	fprintf(FILE, "%s[%zu]: '%s' vs '%s'" FMT "\n",			\
@@ -46,7 +46,7 @@ unsigned fails;
 #define FAIL(FMT, ...)						\
 	{							\
 		fails++;					\
-		PRINTF(stderr, " "FMT,##__VA_ARGS__);		\
+		PRINTF(stderr, " "FMT, ##__VA_ARGS__);		\
 		continue;					\
 	}
 
@@ -342,30 +342,76 @@ static void check_shunk_clone(void)
 	}
 }
 
-static void check_hunk_char(void)
+static void check__hunk_char__hunk_byte(void)
 {
 	static const struct test {
 		const char *s;
 		size_t i;
-		const char *c;
+		char c;
+		int b;
 	} tests[] = {
 		/* empty always same */
-		{ "", 0, "\0", },
-		{ "a", 0, "a", },
-		{ "a", 1, "\0", },
-		{ "ab", 0, "a", },
-		{ "ab", 1, "b", },
-		{ "ab", 2, "\0", },
+		{ "", 0, '\0', -1, },
+		{ "a", 0, 'a', 'a', },
+		{ "a", 1, '\0', -1, },
+		{ "ab", 0, 'a', 'a', },
+		{ "ab", 1, 'b', 'b', },
+		{ "ab", 2, '\0', -1, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT_S(stdout, "[%zu]", t->i);
 		shunk_t s = shunk1(t->s);
-		char c[2] = { hunk_char(s, t->i), };
-		if (c[0] != t->c[0]) {
-			FAIL_S("hunk_char(%zu) returned '%s', expecting '%s'",
-			       t->i, c, t->c);
+		char c = hunk_char(s, t->i);
+		if (c != t->c) {
+			FAIL_S("hunk_char('%s', %zu) returned '%c', expecting '%c'",
+			       t->s, t->i, c, t->c);
+		}
+		int b = hunk_byte(s, t->i);
+		if (b != t->b) {
+			FAIL_S("hunk_byte('%s', %zu) returned '%x', expecting '%x'",
+			       t->s, t->i, b, t->b);
+		}
+	}
+}
+
+static void check__hunk_get__hunk_put(void)
+{
+	char src[] = "string"; /* includes NUL */
+	shunk_t s = shunk1(src); /* excludes NUL */
+	char dst[sizeof(src)]; /* includes NUL */
+	chunk_t d = chunk2(dst, sizeof(dst) - 1); /* excludes NUL */
+	for (size_t ti = 0; ti < sizeof(src); ti++) {
+		int c = src[ti];
+		char cc[] = { c, '\0', };
+		PRINT("%s%s%s",
+		      c > '\0' ? "'" : "",
+		      c > '\0' ? cc : "-1",
+		      c > '\0' ? "'" : "");
+		int b = hunk_getc(&s);
+		if (c == '\0') {
+			if (b >= 0) {
+				FAIL("hunk_get() returned '%c', should have returned end-of-hunk", b);
+			}
+		} else {
+			if (b != c) {
+				FAIL("hunk_put() returned '%c', should have returned '%c'", b, c);
+			}
+		}
+		bool ok = hunk_putc(&d, c);
+		if (c == '\0') {
+			if (ok) {
+				FAIL("hunk_put() should have overflowed");
+			}
+		} else {
+			if (!ok) {
+				FAIL("hunk_put() should not have overflowed");
+			}
+			if (dst[ti] != c) {
+				FAIL("hunk_put() stored '%c', should have stored '%c'",
+				     dst[ti], c);
+			}
 		}
 	}
 }
@@ -794,10 +840,11 @@ int main(int argc UNUSED, char *argv[])
 	check_shunk_token();
 	check_shunk_span();
 	check_shunk_clone();
-	check_hunk_char();
+	check__hunk_char__hunk_byte();
 	check_hunk_char_is();
 	check_shunk_to_uintmax();
 	check_ntoh_hton_hunk();
+	check__hunk_get__hunk_put();
 
 	if (report_leaks(logger)) {
 		fails++;

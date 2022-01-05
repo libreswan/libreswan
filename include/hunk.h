@@ -160,12 +160,56 @@ bool case_eq(const void *l_ptr, size_t l_len,
  */
 
 /* returns '\0' when out of range */
+
 #define hunk_char(HUNK, INDEX)						\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		size_t index_ = INDEX;/* evaluate once */		\
-		const char *string_ = hunk_.ptr;			\
-		index_ < hunk_.len ? string_[INDEX] : '\0';		\
+		const char *c_ = hunk_.ptr;				\
+		index_ < hunk_.len ? c_[INDEX] : '\0';			\
+	})
+
+/* returns the unsigned byte cast to int; or -1 when end-of-hunk */
+
+#define hunk_byte(HUNK, INDEX)						\
+	({								\
+		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		size_t index_ = INDEX;/* evaluate once */		\
+		const uint8_t *b_ = hunk_.ptr;				\
+		index_ < hunk_.len ? b_[INDEX] : -1;			\
+	})
+
+/* returns the unsigned byte cast to int; or -1 when end-of-hunk */
+
+#define hunk_getc(HUNK)							\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		int n_;							\
+		if (hunk_->len > 0) {					\
+			const uint8_t *b_ = hunk_->ptr;			\
+			n_ = *b_;					\
+			hunk_->len--;					\
+			hunk_->ptr++;					\
+		} else {						\
+			n_ = -1;					\
+		}							\
+		n_;							\
+	})
+
+/* returns false when end-of-hunk */
+
+#define hunk_putc(HUNK, BYTE)						\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		bool ok_ = hunk_->len > 0;				\
+		if (ok_) {						\
+			uint8_t *b_ = hunk_->ptr;			\
+			*b_ = BYTE;					\
+			hunk_->len--;					\
+			hunk_->ptr++;					\
+			ok_ = true;					\
+		}							\
+		ok_;							\
 	})
 
 /* see hunkcheck.c */
