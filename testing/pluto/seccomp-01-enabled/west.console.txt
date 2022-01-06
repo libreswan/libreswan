@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- service auditd stop > /dev/null 2> /dev/null
+ systemctl stop auditd > /dev/null 2> /dev/null
 west #
  rm -f /var/log/audit/audit.log
 west #
- systemctl start auditd.service
+ systemctl start auditd
 west #
  mkdir -p /var/run/pluto
 west #

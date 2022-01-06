@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
-service auditd stop > /dev/null 2> /dev/null
+systemctl stop auditd > /dev/null 2> /dev/null
 rm  -f /var/log/audit/audit.log
-systemctl start auditd.service
+systemctl start auditd
 mkdir -p /var/run/pluto
 ipsec pluto --config /etc/ipsec.conf
 ../../guestbin/wait-until-pluto-started
