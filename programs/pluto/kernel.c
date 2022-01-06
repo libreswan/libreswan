@@ -2174,8 +2174,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
-				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -2396,8 +2394,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
-				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
@@ -2477,8 +2473,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
 			new_ref_peer = said_next->ref;
-			if (kernel_ops->type != USE_XFRM && new_ref_peer == IPSEC_SAREF_NULL)
-				new_ref_peer = IPSEC_SAREF_NA;
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
