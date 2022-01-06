@@ -2258,23 +2258,11 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 					 * the same IP address "after" allows
 					 * us to avoid double reporting.
 					 */
-					/* XXX: isn't this always true? */
-					if (kernel_ops->type == USE_XFRM) {
-						if (after) {
-							bad = true;
-							break;
-						}
-						continue;
-					}
 					if (after) {
-						ipstr_buf b;
-
-						llog(RC_LOG_SERIOUS, logger,
-							    "IP interfaces %s and %s share address %s!",
-							    ifp->name, vfp->name,
-							    ipstr(&ifp->addr, &b));
+						bad = true;
+						break;
 					}
-					bad = true;
+					continue;
 				}
 			}
 		}
@@ -2282,10 +2270,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 		if (bad)
 			continue;
 
-		/* XXX: isn't this always true? */
-		if (kernel_ops->type == USE_XFRM) {
-			v = ifp;
-		}
+		v = ifp;
 
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
