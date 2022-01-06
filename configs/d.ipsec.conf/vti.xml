@@ -15,7 +15,7 @@ used on all cleartext pre-encrypt and post-decrypt traffic on the device.
 See the libreswan wiki for example configurations that use VTI.
 </para>
 <para>
-VTI interfaces are currently only supported on Linux with XFRM/NETKEY. The
+VTI interfaces are currently only supported on Linux with XFRM. The
 _updown script handles certain Linux specific interfaces settings
 required for proper functioning (disable_policy, rp_filter,
 forwarding, etc). Interface names are limited to 16 characters and

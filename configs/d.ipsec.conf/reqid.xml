@@ -3,7 +3,7 @@
   <listitem>
 <para>
 a unique identifier used to match IPsec SAs using iptables with
-NETKEY/XFRM. This identifier is normally automatically allocated in groups
+XFRM. This identifier is normally automatically allocated in groups
 of 4. It is exported to the _updown script as REQID. On Linux, reqids are
 supported with IP Connection Tracking and NAT (iptables). Automatically
 generated values use the range 16380 and higher. Manually specified
@@ -20,10 +20,6 @@ connections (those using %any wildcards) will all use the same reqid.
 If you use manual assigning you should make sure your connections
 only match single road warrior only or you break multiple road warriors
 behind same NAT router because this feature requires unique reqids to work.
-</para>
-<para>
-For KLIPS, when using the MAST variant, a different mechanism called
-SAref is in use. See overlapip and sareftrack.
 </para>
 </listitem>
   </varlistentry>

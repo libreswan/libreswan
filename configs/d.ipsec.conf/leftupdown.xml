@@ -7,10 +7,10 @@ firewalling when the status of the connection changes (default
 May include positional parameters separated by white space
 (although this requires enclosing the whole string in quotes);
 including shell metacharacters is unwise. An example to enable
-routing when using the NETKEY stack, one can use:</para>
+routing when using the XFRM stack, one can use:</para>
 <para>leftupdown="ipsec _updown --route yes"</para>
-<para>To disable calling an updown script, set it to the empty string, eg  leftupdown=""
-or leftupdown="%disabled".</para>
+<para>To disable calling an updown script, set it to the empty string, eg
+leftupdown="" or leftupdown="%disabled".</para>
 <para>See
 <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 for details.

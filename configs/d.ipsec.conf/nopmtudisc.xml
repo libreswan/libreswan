@@ -4,7 +4,7 @@
 <para>
 Disable Path MTU discovery for the IPsec SA. Acceptable values are
 <emphasis remap='B'>no</emphasis> (the default) or <emphasis remap='B'>yes</emphasis>.
-Currently this feature is only implemented for the Linux XFRM/NETKEY stack.
+Currently this feature is only implemented for the Linux XFRM stack.
 </para>
   </listitem>
   </varlistentry>

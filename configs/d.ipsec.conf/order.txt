@@ -107,7 +107,6 @@ d.ipsec.conf/negotiationshunt.xml
 d.ipsec.conf/connautoend.xml
 d.ipsec.conf/configsections.xml
 d.ipsec.conf/protostack.xml
-d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
 d.ipsec.conf/ike-socket.xml
 d.ipsec.conf/listen-udp.xml
