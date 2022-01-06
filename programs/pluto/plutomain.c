@@ -160,6 +160,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_IKEv1
 	" IKEv1"
 #endif
+#ifdef KERNEL_BSDKAME
+	" BSDKAME"
+#endif
 #ifdef XFRM_SUPPORT
 	" XFRM"
 #endif
@@ -917,7 +920,7 @@ int main(int argc, char **argv)
 		}
 
 		case 'F':	/* --use-bsdkame */
-#ifdef BSDKAME_SUPPORT
+#ifdef KERNEL_BSDKAME
 			kernel_ops = &bsdkame_kernel_ops;
 #else
 			llog(RC_LOG, logger, "--use-bsdkame not supported");
@@ -1354,7 +1357,7 @@ int main(int argc, char **argv)
 					   streq(protostack, "netkey")) {
 					kernel_ops = &xfrm_kernel_ops;
 #endif
-#ifdef BSD_KAME
+#ifdef KERNEL_BSDKAME
 				} else if (streq(protostack, "bsd") ||
 					   streq(protostack, "kame") ||
 					   streq(protostack, "bsdkame")) {

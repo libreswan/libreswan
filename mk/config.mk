@@ -576,8 +576,7 @@ endif
 endif
 
 ifeq ($(USE_BSDKAME),true)
-USE_XFRM ?= false
-USERLAND_CFLAGS += -DBSD_KAME
+USERLAND_CFLAGS += -DKERNEL_BSDKAME
 endif
 
 ifeq ($(USE_DNSSEC),true)

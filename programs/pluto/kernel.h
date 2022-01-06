@@ -404,7 +404,7 @@ extern const struct kernel_ops *kernel_ops;
 #ifdef XFRM_SUPPORT
 extern const struct kernel_ops xfrm_kernel_ops;
 #endif
-#ifdef BSD_KAME
+#ifdef KERNEL_BSDKAME
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
 
