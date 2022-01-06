@@ -174,7 +174,7 @@ KVM_FEDORA_HOSTS = east west north road nic
 ifdef KVM_NETBSD
 KVM_NETBSD_HOSTS = netbsde netbsdw
 endif
-KVM_OPENBSD_HOSTS = openbsde openbsdw
+KVM_OPENBSD_HOSTS ?= openbsde openbsdw
 
 KVM_TEST_HOSTS = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
 KVM_BUILD_HOSTS = $(foreach platform, $(KVM_PLATFORMS), $(foreach variant, base upgrade build, $(platform)-$(variant)))
