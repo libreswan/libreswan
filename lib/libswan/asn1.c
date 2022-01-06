@@ -125,72 +125,6 @@ size_t asn1_length(chunk_t *blob)
 	return len;
 }
 
-size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
-{
-	uint8_t n;
-	uint8_t type_r,type_s;
-	int len_r,len_s;
-
-	if (blob->len < 2) {
-		dbg("insufficient number of octets to parse DER Signature length");
-		return ASN1_INVALID_LENGTH;
-	}
-
-	/* advance from tag field on to length field */
-	blob->ptr++;
-	blob->len--;
-
-	/* read first octet of length field */
-	n = *blob->ptr++;
-	/* advance from length field to type field of integer r 0x02*/
-	type_r = *blob->ptr++;
-
-	if (type_r == 0x02) { /* single length octet */
-		/* find the length of integer r*/
-		len_r = *blob->ptr++;
-		if (len_r%2 != 0) {
-			len_r = len_r-1;
-			/* advance to the next octet as the current octet is 0 */
-			blob->ptr++;
-		}
-		sig_val->len = len_r;
-		/* XXX: need to check len_r and len_s fits in this */
-		sig_val->ptr = alloc_bytes(len_r * 2, "ec points");
-		dbg(" sig_val  len is %zu", sig_val->len);
-		/* copy the values of r into signature */
-		memcpy(sig_val->ptr,blob->ptr,len_r);
-
-		/* advance from length field of integer r to type field of integer s 0x02*/
-		blob->ptr += len_r;
-		type_s = *(blob->ptr);
-
-		dbg(" type_s is %d", type_s);
-		if (type_s == 0x02) {
-			/* find the length of integer r*/
-			blob->ptr++;
-			len_s = *blob->ptr++;
-			if (len_s%2 !=0) {
-				len_s = len_s-1;
-				/* advance to the next octet as the current octet is 0 */
-				blob->ptr++;
-			}
-			dbg("  len_s is %d",len_s);
-			sig_val->len += len_s;
-			dbg(" sig_val total len is %zu", sig_val->len);
-			/* copy the values of r into signature */
-			memcpy(sig_val->ptr+len_r,blob->ptr,len_s);
-		}
-	} else {
-		dbg("Invalid DER encoded signature");
-	}
-
-		if (n > blob->len) {
-			dbg("number of length octets is larger than ASN.1 object");
-			return ASN1_INVALID_LENGTH;
-		}
-
-	return (sig_val->len);
-}
 /*
  * codes ASN.1 lengths up to a size of 16'777'215 bytes
  */
@@ -287,25 +221,5 @@ bool is_asn1(chunk_t blob)
 		    blob.len, len);
 		return false;
 	}
-	return true;
-}
-
-bool is_asn1_der_encoded_signature(chunk_t blob, chunk_t *sig_val)
-{
-
-	if (blob.len < 1) {
-		dbg("  Signature is empty: not binary ASN.1 DER encoded Signature");
-		return false;
-	}
-
-	switch (blob.ptr[0]) {
-	case ASN1_SEQUENCE:
-		break;	/* looks OK */
-	default:
-		dbg("  Signature blob content is not binary ASN.1");
-		return false;
-	}
-
-	asn1_length_signature(&blob , sig_val);
 	return true;
 }
