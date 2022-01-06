@@ -643,14 +643,14 @@ err_t atodn(const char *src, chunk_t *dn)
 	*dn = empty_chunk;
 
 	/* stack of unfilled lengths */
-	uint8_t *(patchpoint[5]);	/* only 4 are actually needed */
-	uint8_t **ppp = patchpoint;
+	uint8_t *(patchpoints[5]);	/* only 4 are actually needed */
+	uint8_t **patchpointer = patchpoints;
 
 	uint8_t dn_buf[sizeof(id_buf)];	/* space for result */
 	uint8_t *dn_ptr = dn_buf;	/* growth point */
 	uint8_t *dn_redline = dn_buf + sizeof(dn_buf);
 
-#	define START_OBJ() { *ppp++ = dn_ptr; }
+#	define START_OBJ() { *patchpointer++ = dn_ptr; }
 
 	/* note: on buffer overflow this returns from atodn */
 	/* ??? all but one call has len==1 so we could simplify */
@@ -666,14 +666,14 @@ err_t atodn(const char *src, chunk_t *dn)
 	 * Note: on buffer overflow this returns from atodn
 	 */
 #	define END_OBJ(ty) { \
-		size_t len = dn_ptr - *--ppp; \
+		size_t len = dn_ptr - *--patchpointer; \
 		unsigned char len_buf[ASN1_MAX_LEN_LEN + 1] = { ty }; \
 		chunk_t obj_len = { len_buf + 1, 0 }; \
 		code_asn1_length(len, &obj_len); \
 		if (dn_redline - dn_ptr < (ptrdiff_t)obj_len.len + 1) \
 			return "DN overflow"; \
-		memmove(*ppp + obj_len.len + 1, *ppp, len); \
-		memcpy(*ppp, len_buf, obj_len.len + 1); \
+		memmove(*patchpointer + obj_len.len + 1, *patchpointer, len); \
+		memcpy(*patchpointer, len_buf, obj_len.len + 1); \
 		dn_ptr += obj_len.len + 1; \
 	}
 
@@ -825,7 +825,7 @@ err_t atodn(const char *src, chunk_t *dn)
 			while (dn_ptr > escape_stop && dn_ptr[-1] == ' ')
 				dn_ptr--;
 
-			unsigned char *ns = ppp[-1];	/* name operand start */
+			unsigned char *ns = patchpointer[-1];	/* name operand start */
 			asn1_t t = op->type == ASN1_PRINTABLESTRING &&
 				!is_printablestring(chunk2(ns, dn_ptr - ns)) ?
 				ASN1_T61STRING : op->type;
