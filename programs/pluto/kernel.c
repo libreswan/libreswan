@@ -1616,7 +1616,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto,
-					       /*skip_xfrm_policy_delete?*/false,
+					       /*skip_policy_delete?*/false,
 					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
@@ -1648,7 +1648,7 @@ static void clear_narrow_holds(const ip_selector *our_client,
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       const struct ip_protocol *transport_proto,
-		       bool skip_xfrm_policy_delete,
+		       bool skip_policy_delete,
 		       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
@@ -1658,7 +1658,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
 	bool ok;
-	if (kernel_ops->type == USE_XFRM && skip_xfrm_policy_delete) {
+	if (skip_policy_delete) {
 		selectors_buf sb;
 		llog(RC_LOG, logger, "deleting bare shunt %s from pluto shunt table",
 		     str_selectors_sensitive(&src, &dst, &sb));
@@ -1983,7 +1983,7 @@ bool assign_holdpass(const struct connection *c,
 
 		if (!delete_bare_shunt(&src_host_addr, &dst_host_addr,
 				       packet->protocol,
-				       /*skip_xfrm_policy_delete?*/false,
+				       /*skip_policy_delete?*/false,
 				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),
 				       c->logger)) {
@@ -3755,10 +3755,10 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 			}
 			ip_address our_addr = selector_prefix(bsp->our_client);
 			ip_address peer_addr = selector_prefix(bsp->peer_client);
-			bool skip_xfrm_policy_delete = co_serial_is_set(bsp->from_serialno);
+			bool skip_policy_delete = co_serial_is_set(bsp->from_serialno);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       bsp->transport_proto,
-					       skip_xfrm_policy_delete,
+					       skip_policy_delete,
 					       "expire_bare_shunts()", logger)) {
 				llog(RC_LOG_SERIOUS, logger,
 					    "failed to delete bare shunt");
