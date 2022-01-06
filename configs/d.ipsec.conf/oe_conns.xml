@@ -1,11 +1,7 @@
 
-<refsect1 id='implicit_conns'><title>IMPLICIT CONNS</title>
-<para>The system automatically defines several conns to implement
-default policy groups.  Each can be overridden by explicitly
-defining a new conn with the same name.  If the new conn has <emphasis remap='B'>auto=ignore</emphasis>,
-the definition is suppressed.</para>
-
-<para>Here are the automatically supplied definitions.</para>
+<refsect1 id='oe_conns'><title>OPPORTUNISTIC CONNS</title>
+<para>For Opportunistic connections, the system requires creating special named conns that are
+used to implement the default policy groups. Currently, these names cannot be changed. </para>
 
 <!-- .ne 8 -->
 <literallayout remap='.nf'>
@@ -61,30 +57,13 @@ conn block
 	right=%group
 	auto=route
 
-# default policy
-conn packetdefault
-	type=tunnel
-	left=%defaultroute
-	leftid=%myid
-	left=0.0.0.0/0
-	right=%opportunistic
-	failureshunt=passthrough
-	keyingtries=3
-	ikelifetime=1h
-	salifetime=1h
-	rekey=no
-	auto=route
 </emphasis>
 </literallayout> <!-- .fi -->
 
-<para>These conns are <emphasis remap='I'>not</emphasis> affected by anything in <emphasis remap='B'>conn %default</emphasis>.
-They will only work if <emphasis remap='B'>%defaultroute</emphasis> works.
-The <emphasis remap='B'>leftid</emphasis> will be the interfaces IP address; this
-requires that reverse DNS records be set up properly.</para>
+<para>These conns will only work if <emphasis remap='B'>%defaultroute</emphasis> works.
+The <emphasis remap='B'>leftid</emphasis> will be the interfaces IP address by default,
+but it can also be set to <emphasis remap='B'>%fromcert</emphasis> or use a DNS name.  </para>
 
-<para>The implicit conns are defined after all others.  It is
-appropriate and reasonable to use <emphasis remap='B'>also=private-or-clear</emphasis>
-(for example) in any other opportunistic conn.</para>
 </refsect1>
 
 <refsect1 id='policy_group_files'><title>POLICY GROUP FILES</title>
@@ -117,15 +96,10 @@ that has
 or
 <emphasis remap='B'>right=%opportunisticgroup</emphasis>
 is a policy group connection.
-When a policy group file of the same name is loaded, with</para>
-
-<para>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<emphasis remap='B'>ipsec auto --rereadgroups</emphasis></para>
-
-<para>or at system start, the connection is instantiated such that each
-CIDR block serves as an instance's
+When a policy group file of the same name is loaded at system start,
+the connection is instantiated such that each CIDR block serves as an instance's
 <emphasis remap='B'>right</emphasis>
-value. The system treats the
-resulting instances as normal connections.</para>
+value. The system treats the resulting instances as normal connections.</para>
 
 <para>For example, given a suitable connection definition
 <emphasis remap='B'>private</emphasis>,
@@ -151,9 +125,6 @@ which provide a way of classifying possible peers into IPsec security classes:
 <emphasis remap='B'>clear</emphasis>
 and
 <emphasis remap='B'>block</emphasis>.
-Implicit policy groups apply to the local host only,
-and are implemented by the
-<emphasis remap='B'>IMPLICIT CONNECTIONS</emphasis>
-described above.</para>
+</para>
 </refsect1>
 

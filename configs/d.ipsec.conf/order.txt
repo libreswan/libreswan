@@ -147,5 +147,5 @@ d.ipsec.conf/secretsfile.xml
 d.ipsec.conf/seccomp.xml
 d.ipsec.conf/dnssec.xml
 d.ipsec.conf/configsectionsend.xml
-d.ipsec.conf/implicitconns.xml
+d.ipsec.conf/oe_conns.xml
 d.ipsec.conf/tail.xml
