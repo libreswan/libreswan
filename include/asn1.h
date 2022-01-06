@@ -22,7 +22,7 @@
 
 /* Defines some primitive ASN1 types */
 
-typedef enum {
+enum asn1_type {
 	ASN1_EOC =                  0x00,
 	ASN1_BOOLEAN =              0x01,
 	ASN1_INTEGER =              0x02,
@@ -67,7 +67,7 @@ typedef enum {
 	ASN1_CONTEXT_C_3 =          0xA3,
 	ASN1_CONTEXT_C_4 =          0xA4,
 	ASN1_CONTEXT_C_5 =          0xA5
-} asn1_t;
+};
 
 #define ASN1_INVALID_LENGTH     (~(size_t) 0)   /* largest size_t */
 

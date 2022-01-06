@@ -36,7 +36,7 @@ typedef const struct {
 	const char *name;
 	const unsigned char *oid_ptr;
 	size_t oid_len;
-	asn1_t type;
+	enum asn1_type type;
 } x501rdn_t;
 
 /* X.501 acronyms for well known object identifiers (OIDs) */
@@ -123,7 +123,7 @@ static const x501rdn_t x501rdns[] = {
 
 #define RETURN_IF_ERR(f) { err_t ugh = (f); if (ugh != NULL) return ugh; }
 
-static err_t unwrap(asn1_t ty, chunk_t *container, chunk_t *contents)
+static err_t unwrap(enum asn1_type ty, chunk_t *container, chunk_t *contents)
 {
 	if (container->len == 0)
 		return "missing ASN1 type";
@@ -170,7 +170,7 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 			  chunk_t *attribute, /* input/output */
 			  chunk_t *oid /* output */,
 			  chunk_t *value_ber,		/* output */
-			  asn1_t *value_type,		/* output */
+			  enum asn1_type *value_type,	/* output */
 			  chunk_t *value_content,	/* output */
 			  bool *more) /* output */
 {
@@ -239,7 +239,7 @@ int dn_count_wildcards(chunk_t dn)
 	while (more) {
 		chunk_t oid;
 		chunk_t value_ber;
-		asn1_t value_type;
+		enum asn1_type value_type;
 		chunk_t value_content;
 		ugh = get_next_rdn(&rdn, &attribute, &oid,
 				   &value_ber, &value_type, &value_content,
@@ -298,7 +298,7 @@ static err_t format_dn(struct jambuf *buf, chunk_t dn,
 	for (bool first = true; more; first = false) {
 		chunk_t oid;
 		chunk_t value_ber;
-		asn1_t value_type;
+		enum asn1_type value_type;
 		chunk_t value_content;
 		RETURN_IF_ERR(get_next_rdn(&rdn, &attribute, &oid,
 					   &value_ber, &value_type, &value_content,
@@ -826,9 +826,9 @@ err_t atodn(const char *src, chunk_t *dn)
 				dn_ptr--;
 
 			unsigned char *ns = patchpointer[-1];	/* name operand start */
-			asn1_t t = op->type == ASN1_PRINTABLESTRING &&
-				!is_printablestring(chunk2(ns, dn_ptr - ns)) ?
-				ASN1_T61STRING : op->type;
+			enum asn1_type t = (op->type == ASN1_PRINTABLESTRING &&
+					    !is_printablestring(chunk2(ns, dn_ptr - ns)) ?
+					    ASN1_T61STRING : op->type);
 
 			END_OBJ(t);	/* 3 value */
 		}
@@ -909,7 +909,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		 */
 		chunk_t oid_a, oid_b;
 		chunk_t value_ber_a, value_ber_b;
-		asn1_t value_type_a, value_type_b;
+		enum asn1_type value_type_a, value_type_b;
 		chunk_t value_content_a, value_content_b;
 
 		{
