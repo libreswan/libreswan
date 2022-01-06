@@ -1125,8 +1125,16 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 	return r && rsp.u.e.error >= 0;
 }
 
-static bool netlink_migrate_sa(struct state *st)
+static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 {
+	/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
+	if (!child->sa.st_esp.present) {
+		llog_sa(RC_LOG, child, "mobike SA migration only support ESP SA");
+		return false;
+	}
+
+	struct state *st = &child->sa; /* clean up later */
+
 	struct kernel_sa sa;
 	story_buf story;	/* must live as long as sa */
 
@@ -2667,7 +2675,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.process_raw_ifaces = netlink_process_raw_ifaces,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
-	.migrate_sa = netlink_migrate_sa,
+	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,
 	.sha2_truncbug_support = true,
 	.v6holes = netlink_v6holes,

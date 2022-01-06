@@ -214,3 +214,13 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 	}
 	return kernel_ops->add_sa(sa, replace, logger);
 }
+
+bool migrate_ipsec_sa(struct child_sa *child)
+{
+	if (kernel_ops->migrate_ipsec_sa != NULL) {
+		return kernel_ops->migrate_ipsec_sa(child);
+	} else {
+		dbg("kernel: Unsupported kernel stack in migrate_ipsec_sa");
+		return false;
+	}
+}

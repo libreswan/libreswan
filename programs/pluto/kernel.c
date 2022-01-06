@@ -3345,27 +3345,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	return true;
 }
 
-bool migrate_ipsec_sa(struct state *st)
-{
-	switch (kernel_ops->type) {
-	case USE_XFRM:
-		/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
-		if (!st->st_esp.present) {
-			log_state(RC_LOG, st, "mobike SA migration only support ESP SA");
-			return false;
-		}
-
-		if (!kernel_ops->migrate_sa(st))
-			return false;
-
-		return true;
-
-	default:
-		dbg("kernel: Unsupported kernel stack in migrate_ipsec_sa");
-		return false;
-	}
-}
-
 /*
  * Delete an IPSEC SA.
  *

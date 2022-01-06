@@ -383,7 +383,7 @@ struct kernel_ops {
 	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
 	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
 	err_t (*migrate_sa_check)(struct logger *);
-	bool (*migrate_sa)(struct state *st);
+	bool (*migrate_ipsec_sa)(struct child_sa *child);
 	void (*v6holes)(struct logger *logger);
 	bool (*poke_ipsec_policy_hole)(const struct iface_dev *ifd, int fd, struct logger *logger);
 	bool (*detect_offload)(const struct raw_iface *ifp, struct logger *logger);
@@ -506,7 +506,7 @@ void delete_larval_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
-extern bool migrate_ipsec_sa(struct state *st);
+extern bool migrate_ipsec_sa(struct child_sa *child);
 extern bool del_spi(ipsec_spi_t spi,
 		    const struct ip_protocol *proto,
 		    const ip_address *src,
