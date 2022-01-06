@@ -335,6 +335,7 @@ extern char *pluto_listen;	/* from --listen flag */
 
 struct kernel_ops {
 	const char *kern_name;
+	const char **aliases;
 	bool overlap_supported;
 	bool sha2_truncbug_support;
 	bool esn_supported;
@@ -406,6 +407,7 @@ extern const struct kernel_ops xfrm_kernel_ops;
 #ifdef KERNEL_BSDKAME
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
+extern const struct kernel_ops *const kernel_stacks[];
 
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
 

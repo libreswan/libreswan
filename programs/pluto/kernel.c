@@ -2713,14 +2713,17 @@ static void kernel_process_queue_cb(struct logger *unused_logger UNUSED)
 	}
 }
 
-const struct kernel_ops *kernel_ops =
+const struct kernel_ops *const kernel_stacks[] = {
 #ifdef KERNEL_XFRM
-	&xfrm_kernel_ops
+	&xfrm_kernel_ops,
 #endif
 #ifdef KERNEL_BSDKAME
-	&bsdkame_kernel_ops
+	&bsdkame_kernel_ops,
 #endif
-	;
+	NULL,
+};
+
+const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 
 deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 

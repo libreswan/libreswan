@@ -2649,8 +2649,11 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, 
 	return true;
 }
 
+static const char *xfrm_aliases[] = { "netkey", NULL, };
+
 const struct kernel_ops xfrm_kernel_ops = {
 	.kern_name = "xfrm",
+	.aliases = xfrm_aliases,
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
