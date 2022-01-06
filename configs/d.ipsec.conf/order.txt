@@ -82,6 +82,8 @@ d.ipsec.conf/pfs.xml
 d.ipsec.conf/pfsgroup.xml
 d.ipsec.conf/aggressive.xml
 d.ipsec.conf/salifetime.xml
+d.ipsec.conf/ipsec-max-bytes.xml
+d.ipsec.conf/ipsec-max-packets.xml
 d.ipsec.conf/replay-window.xml
 d.ipsec.conf/rekey.xml
 d.ipsec.conf/rekeymargin.xml
