@@ -255,19 +255,6 @@ static const struct keyword_enum_value kw_rsasigkey_values[] = {
 static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(kw_rsasigkey_values);
 
 /*
- * Values for protostack=
- */
-static const struct keyword_enum_value kw_proto_stack_list[] = {
-	{ "netkey",       USE_XFRM }, /* alias */
-	{ "xfrm",         USE_XFRM },
-	{ "bsd",          USE_BSDKAME },
-	{ "kame",         USE_BSDKAME },
-	{ "bsdkame",      USE_BSDKAME },
-};
-
-static const struct keyword_enum_values kw_proto_stack = VALUES_INITIALIZER(kw_proto_stack_list);
-
-/*
  *  Cisco interop: remote peer type
  */
 
@@ -442,7 +429,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
-  { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  &kw_proto_stack, NULL, },
+  { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL, NULL, },
   { "nhelpers",  kv_config,  kt_number,  KBF_NHELPERS, NULL, NULL, },
   { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
 #ifdef HAVE_LABELED_IPSEC

@@ -71,11 +71,6 @@ enum ike_version {
 
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
-enum kernel_interface {
-	USE_XFRM,
-	USE_BSDKAME,
-};
-
 /* RFC 3706 Dead Peer Detection */
 enum dpd_action {
 	DPD_ACTION_DISABLED,	/* happens for type=passthrough */
