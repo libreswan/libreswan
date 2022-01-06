@@ -210,7 +210,7 @@ void show_status(struct show *s)
 	show_connections_status(s);
 	show_brief_status(s);
 	show_states(s);
-#if defined(XFRM_SUPPORT)
+#if defined(KERNEL_XFRM)
 	show_shunt_status(s);
 #endif
 }

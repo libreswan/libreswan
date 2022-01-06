@@ -2720,7 +2720,7 @@ static void kernel_process_queue_cb(struct logger *unused_logger UNUSED)
 }
 
 const struct kernel_ops *kernel_ops =
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 	&xfrm_kernel_ops
 #endif
 #ifdef KERNEL_BSDKAME

@@ -401,7 +401,7 @@ extern int useful_mastno;
 #endif
 
 extern const struct kernel_ops *kernel_ops;
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 extern const struct kernel_ops xfrm_kernel_ops;
 #endif
 #ifdef KERNEL_BSDKAME

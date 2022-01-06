@@ -10,7 +10,7 @@ extern enum_names kern_interface_names;
 
 extern enum_names sa_policy_bit_names;
 extern enum_names dpd_action_names;
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 extern enum_names netkey_sa_dir_names;
 #endif
 extern enum_names sd_action_names;

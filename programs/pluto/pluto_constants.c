@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <netinet/in.h>
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 #include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
 #include "passert.h"
@@ -75,7 +75,7 @@ enum_names dpd_action_names = {
 	NULL
 };
 
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 /* netkey SA direction names */
 static const char *const netkey_sa_dir_name[] = {
 	"XFRM_IN",
@@ -401,7 +401,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&natt_method_names,
 	&routing_story,
 	&stf_status_names,
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 	&netkey_sa_dir_names,
 #endif
 	&ike_version_parent_sa_names,

@@ -163,7 +163,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef KERNEL_BSDKAME
 	" BSDKAME"
 #endif
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 	" XFRM"
 #endif
 #ifdef USE_XFRM_INTERFACE
@@ -928,7 +928,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'K':	/* --use-netkey */
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 			kernel_ops = &xfrm_kernel_ops;
 #else
 			llog(RC_LOG, logger, "--use-xfrm not supported");

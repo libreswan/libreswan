@@ -212,7 +212,7 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 		(cookie2.len == 0 || emit_v2N_hunk(v2N_COOKIE2, cookie2, pbs)));
 }
 
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 static payload_emitter_fn add_mobike_payloads;
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
@@ -286,7 +286,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 	}
 }
 
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 				  struct iface_endpoint *new_iface)
 {
@@ -335,7 +335,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 }
 #endif
 
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 static struct iface_endpoint *ikev2_src_iface(struct state *st,
 					      struct starter_end *this)
 {
@@ -365,7 +365,7 @@ void ikev2_addr_change(struct state *st)
 	if (!mobike_check_established(st))
 		return;
 
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 
 	/* let's re-discover local address */
 
@@ -447,7 +447,7 @@ void ikev2_addr_change(struct state *st)
 		break;
 	}
 
-#else /* !defined(XFRM_SUPPORT) */
+#else /* !defined(KERNEL_XFRM) */
 
 	log_state(RC_LOG, st, "without NETKEY we cannot ikev2_addr_change()");
 

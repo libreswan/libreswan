@@ -2168,7 +2168,7 @@ static void show_established_child_details(struct show *s, struct state *st)
 				 &ip_protocol_comp,
 				 st->st_ipcomp.our_spi);
 		}
-#if defined(XFRM_SUPPORT)
+#if defined(KERNEL_XFRM)
 		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {

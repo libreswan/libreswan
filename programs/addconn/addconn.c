@@ -34,7 +34,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 #include "addr_lookup.h"
 #endif
 #ifdef USE_DNSSEC
@@ -68,7 +68,7 @@ static char *environlize(const char *str)
  */
 static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger *logger)
 {
-#ifdef XFRM_SUPPORT
+#ifdef KERNEL_XFRM
 	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose_rc_flags,
 				     logger) == RESOLVE_PLEASE_CALL_AGAIN) {
@@ -80,7 +80,7 @@ static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger
 		resolve_defaultroute_one(&conn->right, &conn->left,
 					 verbose_rc_flags, logger);
 	}
-#else /* !defined(XFRM_SUPPORT) */
+#else /* !defined(KERNEL_XFRM) */
 	/* What kind of result are we seeking? */
 	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
 			    conn->right.addrtype == KH_DEFAULTROUTE);

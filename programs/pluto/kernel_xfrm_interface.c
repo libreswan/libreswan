@@ -14,8 +14,8 @@
  * for more details.
  */
 
-#if !defined(linux) || !defined(USE_XFRM_INTERFACE) || !defined(XFRM_SUPPORT)
-# error this file should only compile on Linux when XFRM_SUPPORT & USE_XFRM_INTERFACE are defined
+#if !defined(linux) || !defined(USE_XFRM_INTERFACE) || !defined(KERNEL_XFRM)
+# error this file should only compile on Linux when KERNEL_XFRM & USE_XFRM_INTERFACE are defined
 #endif
 
 #include <errno.h>
