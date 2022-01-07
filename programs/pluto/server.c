@@ -183,12 +183,7 @@ bool pluto_listen_tcp = false;
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 
 enum global_ikev1_policy pluto_ikev1_pol =
-#ifdef USE_IKEv1
-	 GLOBAL_IKEv1_ACCEPT;
-#else
-	/* there is no IKEv1 code compiled in to send a REJECT */
 	GLOBAL_IKEv1_DROP;
-#endif
 
 #ifdef USE_SECCOMP
 enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;

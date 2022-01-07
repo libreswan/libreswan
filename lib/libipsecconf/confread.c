@@ -93,6 +93,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	/* Don't inflict BSI requirements on everyone */
 	SOPT(KBF_SEEDBITS, 0);
 	SOPT(KBF_DROP_OPPO_NULL, false);
+	SOPT(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
 
 #ifdef HAVE_LABELED_IPSEC
 	SOPT(KBF_SECCTX, SECCTX);
