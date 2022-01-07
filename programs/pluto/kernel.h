@@ -334,7 +334,6 @@ enum what_about_inbound {
 extern char *pluto_listen;	/* from --listen flag */
 
 struct kernel_ops {
-	enum kernel_interface type;
 	const char *kern_name;
 	bool overlap_supported;
 	bool sha2_truncbug_support;
