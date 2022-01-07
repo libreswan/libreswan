@@ -1,11 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- systemctl stop auditd > /dev/null 2> /dev/null
-west #
- rm -f /var/log/audit/audit.log
-west #
- systemctl start auditd
+ # why manually start?
 west #
  mkdir -p /var/run/pluto
 west #
@@ -54,7 +50,7 @@ west #
 west #
  # one entry of SECCOMP activating should show up in the log
 west #
- grep SECCOMP /var/log/audit/audit.log | sed "s/ip=.*/ip=XXX/"
+ ausearch -r -m seccomp -ts boot | sed "s/ip=.*/ip=XXX/"
 type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=XXX
 west #
  # don't leave post-mortem.sh thinking pluto is running

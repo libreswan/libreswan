@@ -7,6 +7,6 @@ ipsec whack --seccomp-crashtest & disown ; sleep 2
 # pluto should not be running anymore
 pidof pluto
 # one entry of SECCOMP activating should show up in the log
-grep SECCOMP /var/log/audit/audit.log | sed "s/ip=.*/ip=XXX/"
+ausearch -r -m seccomp -ts boot | sed "s/ip=.*/ip=XXX/"
 # don't leave post-mortem.sh thinking pluto is running
 rm /run/pluto/pluto.ctl
