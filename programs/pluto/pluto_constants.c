@@ -48,18 +48,6 @@
  * USE_3DES USE_AES USE_MD5 USE_SHA1 USE_SHA2
  */
 
-static const char *const kern_interface_name[] = {
-	[USE_XFRM] = "netkey",
-	[USE_BSDKAME] = "bsdkame",
-};
-
-enum_names kern_interface_names = {
-	USE_XFRM, USE_BSDKAME,
-	ARRAY_REF(kern_interface_name),
-	"USE_", /* prefix */
-	NULL
-};
-
 /* DPD actions */
 static const char *const dpd_action_name[] = {
 	"action:disabled",
@@ -395,7 +383,6 @@ const char *str_policy(lset_t policy, policy_buf *dst)
 }
 
 static const enum_names *pluto_enum_names_checklist[] = {
-	&kern_interface_names,
 	&dpd_action_names,
 	&sd_action_names,
 	&natt_method_names,
