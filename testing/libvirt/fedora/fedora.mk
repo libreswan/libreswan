@@ -142,7 +142,6 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     htop \
     iftop \
     ike-scan \
-    initscripts-service \
     iproute \
     iptables \
     iputils \
