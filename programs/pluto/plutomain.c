@@ -1198,7 +1198,7 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifndef USE_IKEv1
-			if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
+			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
 				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets are silently dropped");
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
