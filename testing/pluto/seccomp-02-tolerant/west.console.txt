@@ -1,11 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- service auditd stop > /dev/null 2> /dev/null
-west #
- rm  -f /var/log/audit/audit.log
-west #
- systemctl start auditd.service
+ # why start pluto directly?
 west #
  mkdir -p /var/run/pluto
 west #
@@ -46,7 +42,7 @@ west #
 west #
  # no log entries should appear
 west #
- grep SECCOMP /var/log/audit/audit.log
+ ausearch -r -m seccomp -ts boot
 west #
  echo done
 done
