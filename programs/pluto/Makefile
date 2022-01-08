@@ -52,6 +52,7 @@ OBJS += send.o
 
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_send.o
+OBJS += ikev1_peer_id.o
 endif
 
 OBJS += unpack.o
@@ -67,7 +68,6 @@ OBJS += ikev2_notify.o
 OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
 
-OBJS += ikev1_peer_id.o
 OBJS += ikev2_peer_id.o
 OBJS += peer_id.o
 
@@ -207,8 +207,7 @@ OBJS += iface_udp.o
 OBJS += iface_tcp.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
-OBJS += host_pair.o ikev1_host_pair.o ikev2_host_pair.o
-OBJS += ikev1_retry.o
+OBJS += host_pair.o ikev2_host_pair.o
 OBJS += ikev2_retry.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
@@ -218,6 +217,8 @@ ifeq ($(USE_IKEv1),true)
 OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o ikev1_nat.o
 OBJS += crypt_dh_v1.o
+OBJS += ikev1_retry.o ikev1_host_pair.o
+OBJS += ikev1_spdb.o
 endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o
 OBJS += ikev2_proposals.o
@@ -232,7 +233,6 @@ OBJS += demux.o msgdigest.o keys.o
 OBJS += crypt_ke.o crypt_dh.o
 OBJS += crypt_dh_v2.o
 OBJS += rnd.o
-OBJS += ikev1_spdb.o
 OBJS += vendor.o
 OBJS += nat_traversal.o
 OBJS += ikev2_nat.o
