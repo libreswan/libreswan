@@ -343,8 +343,6 @@ struct state {
 	struct ipsec_proto_info st_esp;
 	struct ipsec_proto_info st_ipcomp;
 
-	IPsecSAref_t st_ref;                    /* our kernel name for our incoming SA */
-	IPsecSAref_t st_ref_peer;                 /* our kernel name for our outgoing SA */
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */

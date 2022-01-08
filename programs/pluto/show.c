@@ -364,19 +364,6 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		st->st_state = save_state;
 	}
 
-	{
-		uint32_t sv = IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc);
-
-		if (conn->statsval == sv) {
-			dbg("log_state for connection %s state change signature (%d) matches last one - skip logging",
-			    conn->name, sv);
-			return;
-		}
-		conn->statsval = sv;
-		dbg("log_state set state change signature for connection %s to %d",
-		    conn->name, sv);
-	}
-
 	const char *tun;
 
 	switch (lc.tunnel) {
@@ -418,23 +405,14 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 "%s ipsec-tunnel-%s if_stats /proc/net/dev/%s \\; "
 		 "%s ipsec-tunnel-%s tunnel %s \\; "
 		 "%s ipsec-tunnel-%s phase1 %s \\; "
-		 "%s ipsec-tunnel-%s phase2 %s \\; "
-		 "%s ipsec-tunnel-%s nfmark-me/peer 0x%x/0x%x",
+		 "%s ipsec-tunnel-%s phase2 %s",
 
 		 pluto_stats_binary,
 		 conn->interface ? "push" : "drop", conn->name,
 		 (conn->xfrmi != NULL && conn->xfrmi->name != NULL) ? conn->xfrmi->name : "",
 		 tun ? "push" : "drop", conn->name, tun ? tun : "",
 		 p1  ? "push" : "drop", conn->name, p1  ? p1  : "",
-		 p2  ? "push" : "drop", conn->name, p2  ? p2  : "",
-		 (st->st_ref || st->st_ref_peer) ? "push" : "drop", conn->name,
-		 st->st_ref == IPSEC_SAREF_NA ? IPSEC_SAREF_NA :
-		 st->st_ref == IPSEC_SAREF_NULL ? 0u :
-		 IPsecSAref2NFmark(st->st_ref) | IPSEC_NFMARK_IS_SAREF_BIT
-		 ,
-		 st->st_ref_peer == IPSEC_SAREF_NA ? IPSEC_SAREF_NA :
-		 st->st_ref_peer == IPSEC_SAREF_NULL ? 0u :
-		 IPsecSAref2NFmark(st->st_ref_peer) | IPSEC_NFMARK_IS_SAREF_BIT);
+		 p2  ? "push" : "drop", conn->name, p2  ? p2  : "");
 	if (system(buf) == -1) {
 		log_state(RC_LOG_SERIOUS, st, "statsbin= failed to send status update notification");
 	}

@@ -273,9 +273,6 @@ struct kernel_sa {
 	unsigned enckeylen;
 	unsigned char *enckey;
 
-	IPsecSAref_t ref;
-	IPsecSAref_t ref_peer;
-
 	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *story;

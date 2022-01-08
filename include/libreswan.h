@@ -54,30 +54,6 @@ typedef uint32_t ipsec_spi_t;
 #define pri_ipsec_spi(SPI) htonl(SPI)
 
 /*
- * definitions for user space, taken linux/include/libreswan/ipsec_sa.h
- */
-typedef uint32_t IPsecSAref_t;
-
-/* Translation to/from nfmark.
- *
- * use bits 16-31. Leave bit 32 as a indicate that IPsec processing
- * has already been done.
- */
-#define IPSEC_SA_REF_TABLE_IDX_WIDTH 15
-#define IPSEC_SA_REF_TABLE_OFFSET    16
-#define IPSEC_SA_REF_MASK           ((1u << IPSEC_SA_REF_TABLE_IDX_WIDTH) - 1u)
-#define IPSEC_NFMARK_IS_SAREF_BIT 0x80000000u
-
-#define IPsecSAref2NFmark(x) \
-	(((x) & IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
-#define NFmark2IPsecSAref(x) \
-	(((x) >> IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
-
-#define IPSEC_SAREF_NULL ((IPsecSAref_t)0u)
-/* Not representable as an nfmark */
-#define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
-
-/*
  * new IPv6-compatible functions
  */
 

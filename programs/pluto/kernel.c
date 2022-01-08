@@ -2074,10 +2074,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	struct connection *c = st->st_connection;
 	bool replace = inbound && (kernel_ops->get_spi != NULL);
-	bool outgoing_ref_set = false;
-	bool incoming_ref_set = false;
-	IPsecSAref_t ref_peer = st->st_ref_peer;
-	IPsecSAref_t new_ref_peer = IPSEC_SAREF_NULL;
 	bool nic_offload_fallback = false;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
@@ -2149,34 +2145,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->story = said_str(route.dst.host_addr, &ip_protocol_comp,
 					    ipcomp_spi, &text_ipcomp);
 
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->ref_peer = ref_peer;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = ref_peer;
-			outgoing_ref_set  = true;
-		}
-
 		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
 			log_state(RC_LOG, st, "add_sa ipcomp failed");
 			goto fail;
-		}
-
-		/*
-		 * SA refs will have been allocated for this SA.
-		 * The inner most one is interesting for the outgoing SA,
-		 * since we refer to it in the policy that we instantiate.
-		 */
-		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
-			new_ref_peer = said_next->ref;
-		}
-		if (!incoming_ref_set && inbound) {
-			st->st_ref = said_next->ref;
-			incoming_ref_set = true;
 		}
 		said_next++;
 	}
@@ -2357,17 +2328,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 said_next->authkeylen);
 		}
 
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->ref_peer = ref_peer;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref = ref_peer;
-			outgoing_ref_set = true;
-		}
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
@@ -2386,18 +2346,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (!ret)
 			goto fail;
 
-		/*
-		 * SA refs will have been allocated for this SA.
-		 * The inner most one is interesting for the outgoing SA,
-		 * since we refer to it in the policy that we instantiate.
-		 */
-		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
-			new_ref_peer = said_next->ref;
-		}
-		if (!incoming_ref_set && inbound) {
-			st->st_ref = said_next->ref;
-			incoming_ref_set = true;
-		}
 		said_next++;
 	}
 
@@ -2445,18 +2393,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 said_next->authkeylen);
 		}
 
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->ref_peer = ref_peer;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref = ref_peer;
-			outgoing_ref_set = true;	/* outgoing_ref_set not subsequently used */
-		}
-
 		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
 			/* scrub key from memory */
 			memset(said_next->authkey, 0, said_next->authkeylen);
@@ -2465,18 +2401,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* scrub key from memory */
 		memset(said_next->authkey, 0, said_next->authkeylen);
 
-		/*
-		 * SA refs will have been allocated for this SA.
-		 * The inner most one is interesting for the outgoing SA,
-		 * since we refer to it in the policy that we instantiate.
-		 */
-		if (new_ref_peer == IPSEC_SAREF_NULL && !inbound) {
-			new_ref_peer = said_next->ref;
-		}
-		if (!incoming_ref_set && inbound) {
-			st->st_ref = said_next->ref;
-			incoming_ref_set = true;	/* incoming_ref_set not subsequently used */
-		}
 		said_next++;
 	}
 
@@ -2543,9 +2467,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * the grouping would be ipip:esp, esp:ah.
 		 */
 		for (s = said; s < said_next - 1; s++) {
-			dbg("kernel: grouping %s (ref=%u) and %s (ref=%u)",
-			    s[0].story, s[0].ref,
-			    s[1].story, s[1].ref);
+			dbg("kernel: grouping %s and %s",
+			    s[0].story, s[1].story);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
 				log_state(RC_LOG, st, "grp_sa failed");
 				goto fail;
@@ -2553,9 +2476,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		/* could update said, but it will not be used */
 	}
-
-	if (new_ref_peer != IPSEC_SAREF_NULL)
-		st->st_ref_peer = new_ref_peer;
 
 	/* if the impaired is set, pretend this fails */
 	if (impair.sa_creation) {
@@ -2787,34 +2707,6 @@ void show_kernel_interface(struct show *s)
 }
 
 /*
- * see if the attached connection refers to an older state.
- * if it does, then initiate this state with the appropriate outgoing
- * references, such that we won't break any userland applications
- * that are using the conn with REFINFO.
- */
-static void look_for_replacement_state(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	struct state *ost = state_by_serialno(c->newest_ipsec_sa);
-
-	if (DBGP(DBG_BASE)) {
-		DBG_log("checking if this is a replacement state");
-		DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu",
-			st, ost, st->st_serialno,
-			ost == NULL ? 0 : ost->st_serialno);
-	}
-
-	if (ost != NULL && ost != st && ost->st_serialno != st->st_serialno) {
-		/*
-		 * then there is an old state associated, and it is
-		 * different then the new one.
-		 */
-		dbg("kernel: keeping ref_peer=%" PRIu32 " during rekey", ost->st_ref_peer);
-		st->st_ref_peer = ost->st_ref_peer;
-	}
-}
-
-/*
  * Note: install_inbound_ipsec_sa is only used by the Responder.
  * The Responder will subsequently use install_ipsec_sa for the outbound.
  * The Initiator uses install_ipsec_sa to install both at once.
@@ -2895,23 +2787,19 @@ bool install_inbound_ipsec_sa(struct state *st)
 		return false;
 	}
 
-	look_for_replacement_state(st);
-
 	/*
 	 * we now have to set up the outgoing SA first, so that
 	 * we can refer to it in the incoming SA.
 	 */
-	if (st->st_ref_peer == IPSEC_SAREF_NULL && !st->st_outbound_done) {
-		dbg("kernel: installing outgoing SA now as ref_peer=%u", st->st_ref_peer);
+	if (!st->st_outbound_done) {
+		dbg("kernel: installing outgoing SA now");
 		if (!setup_half_ipsec_sa(st, false)) {
-			DBG_log("failed to install outgoing SA: %u",
-				st->st_ref_peer);
+			dbg("failed to install outgoing SA");
 			return false;
 		}
 
 		st->st_outbound_done = true;
 	}
-	dbg("kernel: outgoing SA has ref_peer=%u", st->st_ref_peer);
 
 	/* (attempt to) actually set up the SAs */
 
@@ -3264,18 +3152,16 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			return false;
 		}
 
-		dbg("kernel: set up outgoing SA, ref=%u/%u", st->st_ref,
-		    st->st_ref_peer);
+		dbg("kernel: set up outgoing SA");
 		st->st_outbound_done = true;
 	}
 
 	/* now setup inbound SA */
-	if (st->st_ref == IPSEC_SAREF_NULL && inbound_also) {
+	if (inbound_also) {
 		if (!setup_half_ipsec_sa(st, true))
 			return false;
 
-		dbg("kernel: set up incoming SA, ref=%u/%u", st->st_ref,
-		    st->st_ref_peer);
+		dbg("kernel: set up incoming SA");
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it is safe
