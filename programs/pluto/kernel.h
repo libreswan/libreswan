@@ -420,18 +420,6 @@ extern bool fmt_common_shell_out(char *buf, size_t blen,
 extern bool do_command(const struct connection *c, const struct spd_route *sr,
 		       const char *verb, struct state *st, struct logger *logger);
 
-/* information from /proc/net/ipsec_eroute */
-
-struct eroute_info {
-	unsigned long count;
-	ip_subnet ours;
-	ip_subnet peers;
-	ip_address dst;
-	ip_said said;
-	int transport_proto;
-	struct eroute_info *next;
-};
-
 /* bare (connectionless) shunt (eroute) table
  *
  * Bare shunts are those that don't "belong" to a connection.
