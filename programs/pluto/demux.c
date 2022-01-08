@@ -170,6 +170,7 @@ void process_packet(struct msg_digest **mdp)
 		process_v1_packet(md);
 		/* our caller will md_delref(mdp) */
 #endif
+		dbg("IKEv1 packet dropped"); /* dbg to prevent DoS */
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
