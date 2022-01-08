@@ -1001,6 +1001,8 @@ kvm-purge:
 kvm-demolish: kvm-purge
 kvm-demolish:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
+	: force a rebuild of the gateway, but don't delete it
+	rm -f $(KVM_GATEWAY_FILE)
 
 #
 # Create an RPM for the test domains
