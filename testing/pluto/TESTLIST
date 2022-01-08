@@ -840,7 +840,6 @@ kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-ondemand good
 kvmplutotest	basic-pluto-15-no-retransmit good
 
-kvmplutotest	basic-pluto-16-services	good
 kvmplutotest	basic-pluto-17-nssdir	good
 kvmplutotest	basic-pluto-18-secrets	good
 

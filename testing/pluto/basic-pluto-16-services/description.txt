@@ -1,3 +1,0 @@
-Test the system service functionality. Port of redhat downstream test.
-
-This test depends on systemd, so cannot be run as namespace based test
