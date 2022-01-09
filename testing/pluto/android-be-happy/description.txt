@@ -1,0 +1,33 @@
+Configure EAST so that it will interop with an android simulator using x509
+
+The android simulator needs to be given west.p12 (password foobar)
+found in (testing/x509/p12/mainca/west.p12).  See:
+   View > Tool Windows > Device File Explorer
+
+DO NOT SET KVM_PREFIXES: EAST needs to be directly accessable from the
+host.
+
+On the host:
+    ./kvm install check testing/pluto/android-be-happy
+    ./kvm sh east
+    east# tail -f /tmp/pluto.log
+On the android simulator, configure:
+    type: IKEv2/IPsec RSA
+    server: 192.1.2.23
+    identifier: west
+    IPsec user certificate: west (see above)
+    IPsec CA certificate: (don't verify server)
+    IPsec server certificate: (received from server)
+
+Known bugs:
+
+   Android's IKE crashes with aes-gcm+rsa
+   https://issuetracker.google.com/issues/203676760
+
+   Android proposes DIGSIG sha1+sha2 hashes; pluto accepts only sha2;
+   android ignores this and uses a sha1 hash when signing.
+   https://issuetracker.google.com/issues/213617220
+
+   Android shouldn't be sending a delete IKE SA request when it gets
+   back an AUTHENTICATION_FAILED IKE_AUTH response
+   https://issuetracker.google.com/issues/213599617
