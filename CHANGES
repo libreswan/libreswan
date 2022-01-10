@@ -13,7 +13,7 @@ v4.6 (unreleased)
 * pluto: Disable esn when replay-window=0 [Paul]
 * pluto: Drop obsolete debug options such as crypto-low [Andrew]
 * seccomp: Updated syscall allow-list [Paul]
-* packaging: replace old SUSE packaging with pointer to upstream [Andrew]
+* packaging: replace old SUSE packaging with pointer to downstream [Andrew]
 * NetBSD: Don't use ESN - not supported by kernel [Andrew]
 * letsencrypt: Fix bashisms in letsencrypt script [dkg]
 * libipsecconf: allow leftauth=ecdsa|rsa (match authby= values) [Paul]
