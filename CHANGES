@@ -2,15 +2,23 @@
 See also https://libreswan.org/
 
 v4.6 (unreleased)
-* IKEv1: support for  ISAKMP_N_CISCO_LOAD_BALANCE removed [Andrew]
 * IKEv2: aggressively check incoming fragments [Andrew]
-* packaging: replace old SUSE packaging with pointer to upstream [Andrew]
 * IKEv2: when rekeying and PFS, only propose/allow original crypt-suite [Andrew]
-* IKEv2: when PFS, don't repeatedly log all proposals
+* IKEv2: when PFS, don't repeatedly log all proposals [Andrew]
+* IKEv2: Labeled IPsec improvements [Andrew]
+* IKEv1: support for ISAKMP_N_CISCO_LOAD_BALANCE removed [Andrew]
+* pluto: Revamp the host connection lookup mechanism [Andrew]
 * pluto: Change default replay-window from 32 to 128 [Paul]
 * pluto: Change default esn= to "either" and prefer "yes" [Paul]
 * pluto: Disable esn when replay-window=0 [Paul]
 * pluto: Drop obsolete debug options such as crypto-low [Andrew]
+* seccomp: Updated syscall allow-list [Paul]
+* packaging: replace old SUSE packaging with pointer to upstream [Andrew]
+* NetBSD: Don't use ESN - not supported by kernel [Andrew]
+* letsencrypt: Fix bashisms in letsencrypt script [dkg]
+* libipsecconf: allow leftauth=ecdsa|rsa (match authby= values) [Paul]
+* testing: significantly improved testing [Andrew, Paul]
+
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
