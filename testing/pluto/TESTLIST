@@ -928,6 +928,9 @@ kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 
+# EAPTLS
+kvmplutotest	interop-ikev2-eaptls-strongswan-client			wip
+
 # IKEv1 Selinux / secure labeling tests
 kvmplutotest	ikev1-labeled-ipsec-01						wip
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch					wip
