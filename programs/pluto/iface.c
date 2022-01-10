@@ -513,10 +513,8 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 	 * or ADD.
 	 */
 	mark_ifaces_dead();
-	if (kernel_ops->process_raw_ifaces != NULL) {
-		kernel_ops->process_raw_ifaces(find_raw_ifaces4(logger), logger);
-		kernel_ops->process_raw_ifaces(find_raw_ifaces6(logger), logger);
-	}
+	process_raw_ifaces(find_raw_ifaces4(logger), logger);
+	process_raw_ifaces(find_raw_ifaces6(logger), logger);
 	add_new_ifaces(logger);
 
 	if (rm_dead)

@@ -87,54 +87,6 @@ static void bsdkame_init_pfkey(struct logger *logger)
 	}
 }
 
-static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces,
-				       struct logger *logger)
-{
-	struct raw_iface *ifp;
-
-	/*
-	 * There are no virtual interfaces, so all interfaces are valid
-	 */
-	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		bool after = false; /* has vfp passed ifp on the list? */
-		bool bad = false;
-		struct raw_iface *vfp;
-
-		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
-			if (vfp == ifp) {
-				after = true;
-			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
-				if (after) {
-					ipstr_buf b;
-
-					llog(RC_LOG_SERIOUS, logger,
-					            "IP interfaces %s and %s share address %s!",
-					       ifp->name, vfp->name,
-					       ipstr(&ifp->addr, &b));
-				}
-				bad = true;
-			}
-		}
-
-		if (bad)
-			continue;
-
-		/*
-		 * We've got all we need; see if this is a new thing:
-		 * search old interfaces list.
-		 */
-		add_or_keep_iface_dev(ifp, logger);
-	}
-
-	/* delete the raw interfaces list */
-	while (rifaces != NULL) {
-		struct raw_iface *t = rifaces;
-
-		rifaces = t->next;
-		pfree(t);
-	}
-}
-
 static void bsdkame_algregister(int satype, int supp_exttype,
 				struct sadb_alg *alg)
 {
@@ -605,7 +557,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,
-	.process_raw_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = false,
 	.sha2_truncbug_support = false,
 	.v6holes = NULL,

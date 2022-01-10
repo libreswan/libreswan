@@ -2203,118 +2203,6 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 		deltatime_cmp(idle_time, >=, idle_max);
 }
 
-static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
-{
-	struct raw_iface *ifp;
-	ip_address lip;	/* --listen filter option */
-
-	if (pluto_listen) {
-		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
-
-		if (e != NULL) {
-			DBG_log("invalid listen= option ignored: %s", e);
-			pluto_listen = NULL;
-		}
-		address_buf b;
-		dbg("Only looking to listen on %s", str_address(&lip, &b));
-	}
-
-	/*
-	 * Find all virtual/real interface pairs.
-	 * For each real interface...
-	 */
-	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		bool after = false;	/* has vfp passed ifp on the list? */
-		bool bad = false;
-		struct raw_iface *vfp;
-
-		/* ignore if virtual (ipsec*) interface */
-		if (startswith(ifp->name, IPSECDEVPREFIX))
-			continue;
-
-		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
-			if (vfp == ifp) {
-				after = true;
-			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
-				/*
-				 * Different entries with matching IP
-				 * addresses.
-				 *
-				 * Many interesting cases.
-				 */
-				if (startswith(vfp->name, IPSECDEVPREFIX)) {
-					if (v != NULL) {
-						ipstr_buf b;
-
-						llog(RC_LOG_SERIOUS, logger,
-							    "ipsec interfaces %s and %s share same address %s",
-							    v->name, vfp->name,
-							    ipstr(&ifp->addr, &b));
-						bad = true;
-					} else {
-						/* current winner */
-						v = vfp;
-					}
-				} else {
-					/*
-					 * ugh: a second real interface with
-					 * the same IP address "after" allows
-					 * us to avoid double reporting.
-					 */
-					if (after) {
-						bad = true;
-						break;
-					}
-					continue;
-				}
-			}
-		}
-
-		if (bad)
-			continue;
-
-		v = ifp;
-
-		/* what if we didn't find a virtual interface? */
-		if (v == NULL) {
-			address_buf b;
-			dbg("IP interface %s %s has no matching ipsec* interface -- ignored",
-			    ifp->name, str_address(&ifp->addr, &b));
-			continue;
-		}
-
-		/*
-		 * We've got all we need; see if this is a new thing:
-		 * search old interfaces list.
-		 */
-
-		/*
-		 * last check before we actually add the entry.
-		 *
-		 * ignore if --listen is specified and we do not match
-		 */
-		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
-			ipstr_buf b;
-
-			llog(RC_LOG, logger,
-				    "skipping interface %s with %s",
-				    ifp->name, ipstr(&ifp->addr, &b));
-			continue;
-		}
-
-		add_or_keep_iface_dev(ifp, logger);
-	}
-
-	/* delete the raw interfaces list */
-	while (rifaces != NULL) {
-		struct raw_iface *t = rifaces;
-
-		rifaces = t->next;
-		pfree(t);
-	}
-}
-
 /*
  * netlink_get_sa - Get SA information from the kernel
  *
@@ -2670,7 +2558,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.grp_sa = NULL,
 	.get_spi = netlink_get_spi,
 	.exceptsocket = NULL,
-	.process_raw_ifaces = netlink_process_raw_ifaces,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,

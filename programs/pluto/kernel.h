@@ -376,7 +376,6 @@ struct kernel_ops {
 			       uintmax_t min, uintmax_t max,
 			       const char *story,	/* often SAID string */
 			       struct logger *logger);
-	void (*process_raw_ifaces)(struct raw_iface *rifaces, struct logger *logger);
 	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
 	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
@@ -401,6 +400,7 @@ extern const struct kernel_ops bsdkame_kernel_ops;
 extern const struct kernel_ops *const kernel_stacks[];
 
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
+extern void process_raw_ifaces(struct raw_iface *ifaces, struct logger *logger);
 
 /* helper for invoking call outs */
 extern bool fmt_common_shell_out(char *buf, size_t blen,
