@@ -2233,10 +2233,6 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces, struct logger 
 		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
-		/* ignore if virtual (mast*) interface */
-		if (startswith(ifp->name, MASTDEVPREFIX))
-			continue;
-
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
 				after = true;
