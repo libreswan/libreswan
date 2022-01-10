@@ -19,6 +19,8 @@
 #ifndef KERNEL_ALG_H
 #define KERNEL_ALG_H
 
+#include <stdbool.h>
+
 /*
  * This is a database of algorithms supported by the kernel and,
  * hence, can be negotiated for ESP and AH.  For instance, using
