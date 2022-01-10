@@ -451,6 +451,10 @@ extern const struct kernel_ops xfrm_kernel_ops;
 #ifdef KERNEL_BSDKAME
 extern const struct kernel_ops bsdkame_kernel_ops;
 #endif
+#ifdef KERNEL_PFKEYV2
+extern const struct kernel_ops pfkeyv2_kernel_ops;
+#endif
+
 extern const struct kernel_ops *const kernel_stacks[];
 
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);

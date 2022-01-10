@@ -107,6 +107,10 @@ OBJS += kernel.o
 OBJS += kernel_ops.o
 OBJS += kernel_alg.o
 
+ifeq ($(filter true, $(sort $(USE_BSDKAME) $(USE_PFKEYV2))),true)
+OBJS += kernel_sadb.o
+endif
+
 ifeq ($(USE_XFRM),true)
 OBJS += kernel_xfrm.o
 ifeq ($(USE_XFRM_INTERFACE),true)
@@ -116,6 +120,10 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsdkame.o
+endif
+
+ifeq ($(USE_PFKEYV2),true)
+OBJS += kernel_pfkeyv2.o
 endif
 
 OBJS += x509.o

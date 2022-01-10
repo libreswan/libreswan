@@ -163,6 +163,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef KERNEL_BSDKAME
 	" BSDKAME"
 #endif
+#ifdef KERNEL_PFKEYV2
+	" PFKEYV2"
+#endif
 #ifdef KERNEL_XFRM
 	" XFRM"
 #endif
@@ -498,8 +501,15 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
-	{ "use-xfrm\0", no_argument, NULL, 'K' },
+#ifdef KERNEL_BSDKAME
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
+#endif
+#ifdef KERNEL_PFKEYV2
+	{ "use-pfkeyv2\0",   no_argument, NULL, 'P' },
+#endif
+#ifdef KERNEL_XFRM
+	{ "use-xfrm\0", no_argument, NULL, 'K' },
+#endif
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
@@ -927,6 +937,14 @@ int main(int argc, char **argv)
 			kernel_ops = &bsdkame_kernel_ops;
 #else
 			llog(RC_LOG, logger, "--use-bsdkame not supported");
+#endif
+			continue;
+
+		case 'P':	/* --use-pfkeyv2 */
+#ifdef KERNEL_PFKEYV2
+			kernel_ops = &pfkeyv2_kernel_ops;
+#else
+			llog(RC_LOG, logger, "--use-pfkeyv2 not supported");
 #endif
 			continue;
 

@@ -561,14 +561,16 @@ endif
 # KLIPS is no longer supported
 # These are really set in mk/defaults/*.mk
 #
+
 # support Linux kernel's XFRM (aka NETKEY)
 USE_XFRM ?= false
 # support BSD/KAME kernels (on *BSD and OSX)?
 USE_BSDKAME ?= false
-
-USE_XFRM_INTERFACE ?= true
+# support pfkey v2 (probably implemented using KAME derived code)
+USE_PFKEYV2 ?= false
 
 ifeq ($(USE_XFRM),true)
+USE_XFRM_INTERFACE ?= true
 USERLAND_CFLAGS += -DKERNEL_XFRM
 ifeq ($(USE_XFRM_INTERFACE), true)
 USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
@@ -577,6 +579,10 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 USERLAND_CFLAGS += -DKERNEL_BSDKAME
+endif
+
+ifeq ($(USE_PFKEYV2),true)
+USERLAND_CFLAGS += -DKERNEL_PFKEYV2
 endif
 
 ifeq ($(USE_DNSSEC),true)

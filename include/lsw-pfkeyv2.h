@@ -22,14 +22,23 @@
  * This header pulls in all the SADB_* and sadb_* declarations
  * described by RFC 2368 (along with any extensions which use the
  * prefix SADB_X_... or sadb_x_...).
+ *
+ * This header also tries to define macros that flag any divergence
+ * from the origin PF_KEY v2 spec.
  */
 
 #if defined(KERNEL_BSDKAME) || defined(KERNEL_PFKEYV2)
-#include <stdint.h>
 # ifdef linux
+#  include <stdint.h>
 #  include <linux/pfkeyv2.h>
+#  define sadb_x_policy_priority sadb_x_policy_priority
 # else
+#  include <sys/types.h>
 #  include <net/pfkeyv2.h>
+# endif
+# ifdef __FreeBSD__
+#  define sadb_x_policy_scope sadb_x_policy_scope
+#  define sadb_x_policy_priority sadb_x_policy_priority
 # endif
 #endif
 
