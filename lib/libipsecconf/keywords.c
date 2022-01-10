@@ -165,7 +165,9 @@ static const struct keyword_enum_value kw_authby_lr_values[] = {
 	{ "rsa",       AUTHBY_RSASIG }, /* alias */
 	{ "ecdsa",     AUTHBY_ECDSA },
 	{ "null",      AUTHBY_NULL },
+#ifdef EAPTLS
 	{ "eaponly",   AUTHBY_EAPONLY },
+#endif
  };
 
 static const struct keyword_enum_values kw_authby_lr_list = VALUES_INITIALIZER(kw_authby_lr_values);
@@ -356,12 +358,13 @@ static const struct keyword_enum_value kw_global_ikev1_values[] = {
 };
 static const struct keyword_enum_values kw_global_ikev1_list = VALUES_INITIALIZER(kw_global_ikev1_values);
 
+#ifdef EAPTLS
 static const struct keyword_enum_value kw_eap_values[] = {
 	{ "none", IKE_EAP_NONE }, /* default */
 	{ "tls", IKE_EAP_TLS },
 };
-
 static const struct keyword_enum_values kw_eap_list = VALUES_INITIALIZER(kw_eap_values);
+#endif
 
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
