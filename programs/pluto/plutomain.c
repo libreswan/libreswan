@@ -1202,7 +1202,7 @@ int main(int argc, char **argv)
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifndef USE_IKEv1
 			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
-				llog(RC_LOG_SERIOUS, logger, "PAUL:ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
+				llog(RC_LOG_SERIOUS, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
 #endif
