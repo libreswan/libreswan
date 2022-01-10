@@ -1,3 +1,4 @@
+BSD_VARIANT=netbsd
 # sketch out pkgsrc
 PKG_BASE ?= /usr/pkg
 PKG_DBDIR ?= /var/db/pkg

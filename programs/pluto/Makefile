@@ -171,10 +171,15 @@ USERLAND_LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 # Add RT_LDFLAGS for glibc < 2.17
 USERLAND_LDFLAGS += $(RT_LDFLAGS)
 
-ifeq ($(USE_BSDKAME),true)
-OBJS += kernel_bsd.o
-else
+# interface detection code
+OBJS += iface.o
+OBJS += iface_udp.o
+OBJS += iface_tcp.o
+ifneq ($(LINUX_VARIANT),)
 OBJS += kernel_linux.o
+endif
+ifneq ($(BSD_VARIANT),)
+OBJS += kernel_bsd.o
 endif
 
 ifneq ($(LD_LIBRARY_PATH),)
@@ -202,9 +207,6 @@ OBJS += orient.o
 OBJS += server.o
 OBJS += server_fork.o
 OBJS += server_pool.o
-OBJS += iface.o
-OBJS += iface_udp.o
-OBJS += iface_tcp.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
 OBJS += host_pair.o ikev2_host_pair.o
