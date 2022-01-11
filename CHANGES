@@ -1,7 +1,8 @@
 
 See also https://libreswan.org/
 
-v4.6 (unreleased)
+v4.6 (January 11, 2022)
+* SECURITY: Fixes CVE-2022-23094 https://libreswan.org/security/CVE-2022-23094
 * IKEv2: aggressively check incoming fragments [Andrew]
 * IKEv2: when rekeying and PFS, only propose/allow original crypt-suite [Andrew]
 * IKEv2: when PFS, don't repeatedly log all proposals [Andrew]
@@ -18,7 +19,6 @@ v4.6 (unreleased)
 * letsencrypt: Fix bashisms in letsencrypt script [dkg]
 * libipsecconf: allow leftauth=ecdsa|rsa (match authby= values) [Paul]
 * testing: significantly improved testing [Andrew, Paul]
-
 
 v4.5 (August 20, 2021)
 * IKEv1: multiple subnets could lead to crossed wires, failures [Paul/Andrew]
