@@ -3,6 +3,12 @@
 #ifndef _IKEV2_IPSECKEY_DNSR_H
 #define _IKEV2_IPSECKEY_DNSR_H
 
+typedef enum {
+	DNS_OK = STF_OK,
+	DNS_FATAL = STF_FATAL,
+	DNS_SUSPEND = STF_SUSPEND,
+} dns_status;
+
 struct p_dns_req;
 
 typedef void dnsr_cb_fn(struct p_dns_req *);
@@ -22,6 +28,8 @@ typedef void dnsr_pubkeys_cb_fn(struct p_dns_req *dnsr,
 
 typedef void dnsr_validate_address_cb_fn(struct p_dns_req *dnsr,
 					 unsigned char *addr);
+
+struct ike_sa;
 
 struct p_dns_req {
 	dns_status dns_status;

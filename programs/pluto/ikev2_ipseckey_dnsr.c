@@ -19,6 +19,12 @@
  * for more details.
  */
 
+/* This file has been split from ikev2_ipseckey.c to avoid macro
+ * conflicts between NSS headers and OpenSSL 3.0 headers (included
+ * through <ldns/ldns.h>. Therefore, this file should not include
+ * internal headers that depends on NSS headers.
+ */
+
 #ifndef USE_DNSSEC
 # error this file should only be compiled when DNSSEC is defined
 #endif
@@ -30,7 +36,6 @@
 #include <unbound.h>
 #include "unbound-event.h"
 #include "dnssec.h"    /* includes unbound.h */
-#include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 #include "secrets.h"
 

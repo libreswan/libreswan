@@ -1,4 +1,5 @@
 #include "state.h"
+#include "ikev2_ipseckey_dnsr.h" /* for dns_status */
 
 #ifndef _IKEV2_IPSECKEY_H
 #define _IKEV2_IPSECKEY_H
@@ -10,12 +11,6 @@
 #endif
 
 #define IS_LIBUNBOUND LSW_LIBUNBOUND_ENABLED
-
-typedef enum {
-	DNS_OK = STF_OK,
-	DNS_FATAL = STF_FATAL,
-	DNS_SUSPEND = STF_SUSPEND,
-} dns_status;
 
 dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 					stf_status (*callback)(struct ike_sa *ike,
