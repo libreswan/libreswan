@@ -1398,12 +1398,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	passert(c->name != NULL); /* see alloc_connection() */
 
-	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
-		llog(RC_FATAL, c->logger,
-		     "failed to add connection with compress because kernel is not configured to do IPCOMP");
-		return false;
-	}
-
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->sa_tfcpad != 0) {
 			llog(RC_FATAL, c->logger,

@@ -36,8 +36,6 @@ struct spd_route;
 struct iface_dev;
 struct show;
 
-extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
-
 /*
  * Declare policy things early enough for uses.
  * Some of these things, while they seem like they are KLIPS-only, the

@@ -3300,15 +3300,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			if (!can_do_IPcomp) {
-				ipstr_buf b;
-
-				log_state(RC_LOG, st,
-					  "compression proposed by %s, but kernel has no IPCOMP support",
-					  ipstr(&c->spd.that.host_addr, &b));
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
-			}
-
 			if (well_known_cpi != 0 && !ah_seen && !esp_seen) {
 				log_state(RC_LOG, st,
 					  "illegal proposal: bare IPCOMP used with well-known CPI");

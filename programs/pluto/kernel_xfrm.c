@@ -288,19 +288,6 @@ static void init_netlink(struct logger *logger)
 	init_netlink_route_fd(logger);
 
 	/*
-	 * pfkey_register_response() does not register an entry for
-	 * msg->sadb_msg_satype=10 to indicate IPCOMP, so we override
-	 * detection here. Seems the PF_KEY API in Linux with netkey
-	 * is a joke that should be abandoned for a "linux children"
-	 * native netlink query/response
-	 *
-	 * XXX: Given KLIPS defines K_SADB_X_SATYPE_COMP=9, and
-	 * IPIP=10 which conflicts with the aboe, that might be the
-	 * source of the problem?
-	 */
-	can_do_IPcomp = true;
-
-	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
 	 *
 	 * Kind of lame since pluto should query the kernel for what

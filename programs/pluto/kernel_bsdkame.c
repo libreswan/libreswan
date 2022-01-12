@@ -190,7 +190,6 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 		    alg->sadb_alg_ivlen,
 		    alg->sadb_alg_minbits,
 		    alg->sadb_alg_maxbits);
-		can_do_IPcomp = true;
 		break;
 
 	default:
@@ -208,7 +207,6 @@ static void bsdkame_pfkey_register(void)
 	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
 	pfkey_recv_register(pfkeyfd);
 
-	can_do_IPcomp = false; /* It can probably do it - we just need to check out how */
 	pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
 	pfkey_recv_register(pfkeyfd);
 

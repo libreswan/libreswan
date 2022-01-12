@@ -817,7 +817,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	{
 		lset_t pm = st->st_policy & (POLICY_ENCRYPT |
 					     POLICY_AUTHENTICATE |
-					     (can_do_IPcomp ? POLICY_COMPRESS : 0));
+					     POLICY_COMPRESS);
 		policy_buf pb;
 		dbg("emitting quick defaults using policy %s",
 		    str_policy(pm, &pb));

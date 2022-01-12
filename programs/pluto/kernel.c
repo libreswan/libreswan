@@ -100,8 +100,6 @@ static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      shunk_t sec_label,
 			      struct logger *logger);
 
-bool can_do_IPcomp = true;  /* can system actually perform IPCOMP? */
-
 static global_timer_cb kernel_scan_shunts;
 static bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd, struct logger *logger);
