@@ -544,8 +544,8 @@ static struct db_prop_conj IKEv1_oakley_props_rsasig_xauths[] =
 static struct db_prop_conj IKEv1_oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(IKEv1_oakley_pc_pskrsasig_xauths) } };
 
-/* the sadb entry, subscripted by IKEv1_sadb_index() */
-static struct db_sa IKEv1_oakley_sadb_table[] = {
+/* the sadb entry, subscripted by IKEv1_db_sa_index() */
+static struct db_sa IKEv1_oakley_main_mode_db_sa_table[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_props_psk) },             /* PSK */
 	{ AD_SAp(IKEv1_oakley_props_rsasig) },          /* RSASIG */
@@ -635,8 +635,8 @@ static struct db_prop_conj IKEv1_oakley_am_props_psk_xauths[] =
 static struct db_prop_conj IKEv1_oakley_am_props_rsasig_xauths[] =
 	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
-/* the sadb entry, subscripted by IKEv1_sadb_index() */
-static struct db_sa IKEv1_oakley_am_sadb_table[] = {
+/* the sadb entry, subscripted by IKEv1_db_sa_index() */
+static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_am_props_psk) },          /* PSK */
 	{ AD_SAp(IKEv1_oakley_am_props_rsasig) },       /* RSASIG */
@@ -660,25 +660,25 @@ static struct db_sa IKEv1_oakley_am_sadb_table[] = {
 
 /*
  * The oakley sadb is subscripted by a bitset computed by
- * IKEv1_sadb_index().
+ * IKEv1_db_sa_index().
  *
  * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (idiosyncratic).
  */
-static int IKEv1_sadb_index(lset_t x, const struct connection *c)
+static int IKEv1_db_sa_index(lset_t x, const struct connection *c)
 {
 	return (x & LRANGES(POLICY_PSK, POLICY_RSASIG)) |
 		((lset_t)c->spd.this.host->config->xauth.server << (POLICY_RSASIG_IX+1)) |
 		((lset_t)c->spd.this.host->config->xauth.client << (POLICY_RSASIG_IX+2));
 }
 
-struct db_sa *IKEv1_oakley_sadb(lset_t x, const struct connection *c)
+struct db_sa *IKEv1_oakley_main_mode_db_sa(lset_t x, const struct connection *c)
 {
-	return &IKEv1_oakley_sadb_table[IKEv1_sadb_index(x, c)];
+	return &IKEv1_oakley_main_mode_db_sa_table[IKEv1_db_sa_index(x, c)];
 }
 
-struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c)
+struct db_sa *IKEv1_oakley_aggr_mode_db_sa(lset_t x, const struct connection *c)
 {
-	return &IKEv1_oakley_am_sadb_table[IKEv1_sadb_index(x, c)];
+	return &IKEv1_oakley_aggr_mode_db_sa_table[IKEv1_db_sa_index(x, c)];
 }
 
 /**************** IPsec (quick mode) SA database ****************/
@@ -778,10 +778,11 @@ static struct db_prop_conj esp_compress_props[] =
 static struct db_prop_conj ah_esp_compress_props[] =
 	{ { AD_PC(ah_esp_compress_pc) } };
 
-/* The IPsec sadb is subscripted by a bitset (subset of policy)
+/* The IPsec SA DB is subscripted by a bitset (subset of policy)
  * with members from { POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS }
  * shifted right by POLICY_IPSEC_SHIFT.
  */
+
 const struct db_sa ipsec_sadb[1 << 3] = {
 	{ AD_NULL },                            /* none */
 	{ AD_SAc(esp_props) },                  /* POLICY_ENCRYPT */

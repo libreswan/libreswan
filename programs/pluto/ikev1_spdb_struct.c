@@ -2266,7 +2266,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	 */
 	struct db_sa *revised_sadb;
 	{
-		const struct db_sa *sadb = IKEv1_oakley_am_sadb(policy, c);
+		const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(policy, c);
 		const struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
 		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 		enum ikev1_auth_method auth_method = auth->val;

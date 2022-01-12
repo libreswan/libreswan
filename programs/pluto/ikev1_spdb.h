@@ -112,8 +112,8 @@ struct db_sa {
  *
  * am == aggressive mode
  */
-extern struct db_sa *IKEv1_oakley_sadb(lset_t x, const struct connection *c);
-extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c);
+extern struct db_sa *IKEv1_oakley_main_mode_db_sa(lset_t x, const struct connection *c);
+extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(lset_t x, const struct connection *c);
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
