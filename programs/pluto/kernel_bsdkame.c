@@ -49,9 +49,14 @@
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
 #include "kernel_alg.h"
-#include "kernel_sadb.h"
 #include "iface.h"
 #include "ip_sockaddr.h"
+
+/*
+ * Multiplier for converting .sadb_msg_len (in 64-bit words) to
+ * size_t.
+ */
+#define KERNEL_SADB_WORD_SIZE (64/8)
 
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
@@ -64,6 +69,72 @@ typedef struct pfkey_item {
 } pfkey_item;
 
 TAILQ_HEAD(, pfkey_item) pfkey_iq;
+
+/* used by kernel_netlink.c and kernel_bsdkame.c */
+static void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_alg)
+{
+	uint8_t alg_id = sadb_alg->sadb_alg_id;
+
+	const struct encrypt_desc *encrypt = NULL;
+	const struct integ_desc *integ = NULL;
+	bool combo_ok = false;
+	switch (exttype) {
+	case SADB_EXT_SUPPORTED_ENCRYPT:
+		switch (satype) {
+		case SADB_SATYPE_ESP:
+			encrypt = encrypt_desc_by_sadb_ealg_id(alg_id);
+			combo_ok = true;
+			break;
+		}
+		break;
+	case SADB_EXT_SUPPORTED_AUTH:
+		switch (satype) {
+		case SADB_SATYPE_ESP:
+		case SADB_SATYPE_AH:
+			integ = integ_desc_by_sadb_aalg_id(alg_id);
+			combo_ok = true;
+			break;
+		}
+		break;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		JAMBUF(buf) {
+			jam_string(buf, __func__);
+			jam_string(buf, ":");
+			jam(buf, " satype=%d(%s)", satype,
+			    satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
+			    : satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
+			    : "SADB_SATYPE_???");
+			jam(buf, " exttype=%d(%s)", exttype,
+			    exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
+			    : exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
+			    : "SADB_EXT_SUPPORTED_???");
+			DBG_log(" alg_id=%d(%s)", alg_id,
+				integ != NULL ? integ->common.fqn
+				: encrypt != NULL ? encrypt->common.fqn
+				: "???");
+			jam(buf, " alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+			    sadb_alg->sadb_alg_ivlen,
+			    sadb_alg->sadb_alg_minbits,
+			    sadb_alg->sadb_alg_maxbits);
+			if (integ == NULL && encrypt == NULL) {
+				jam_string(buf, ", not supported");
+			}
+			if (!combo_ok) {
+				jam_string(buf, ", invalid combo");
+			}
+			jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
+		}
+	}
+
+	if (encrypt != NULL) {
+		kernel_encrypt_add(encrypt);
+	}
+	if (integ != NULL) {
+		kernel_integ_add(integ);
+	}
+}
 
 static void bsdkame_init_pfkey(struct logger *logger)
 {
