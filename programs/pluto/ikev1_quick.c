@@ -822,8 +822,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		dbg("emitting quick defaults using policy %s",
 		    str_policy(pm, &pb));
 
-		if (!ikev1_out_sa(&rbody,
-				  &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT],
+		if (!ikev1_out_sa(&rbody, IKEv1_ipsec_db_sa(pm),
 				  st, false, false)) {
 			return STF_INTERNAL_ERROR;
 		}

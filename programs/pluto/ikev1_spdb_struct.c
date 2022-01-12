@@ -514,7 +514,7 @@ struct db_sa *v1_kernel_alg_makedb(lset_t policy,
 		    str_policy(pm, &pb));
 
 		/* make copy, to keep from freeing the static policies */
-		const struct db_sa *db = &ipsec_sadb[pm >> POLICY_IPSEC_SHIFT];
+		const struct db_sa *db = IKEv1_ipsec_db_sa(pm);
 		struct db_sa *sadb = sa_copy_sa(db, HERE);
 		sadb->parentSA = false;
 		return sadb;

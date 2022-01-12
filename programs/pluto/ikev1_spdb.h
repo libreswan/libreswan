@@ -96,7 +96,7 @@ struct db_prop_conj {
 /*
  * Security Association
  *
- * Heap memory is owned by one pointer, usually st->st_sadb.
+ * Heap memory is owned by one pointer.
  * Other pointers' lifetimes must nest within this allocation duration.
  * If "dynamic" is false, things are not on the heap and must not be mutated.
  */
@@ -109,16 +109,15 @@ struct db_sa {
 
 /*
  * IKE policies.
- *
- * am == aggressive mode
  */
 extern struct db_sa *IKEv1_oakley_main_mode_db_sa(lset_t x, const struct connection *c);
 extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(lset_t x, const struct connection *c);
 
-/* The ipsec sadb is subscripted by a bitset with members
- * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
+/*
+ * The ipsec sadb is subscripted by a bitset with members from
+ * POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS.
  */
-extern const struct db_sa ipsec_sadb[1 << 3];
+extern const struct db_sa *IKEv1_ipsec_db_sa(lset_t policy);
 
 /* for db_sa */
 #define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = true

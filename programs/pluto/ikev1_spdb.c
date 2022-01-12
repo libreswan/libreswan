@@ -783,7 +783,7 @@ static struct db_prop_conj ah_esp_compress_props[] =
  * shifted right by POLICY_IPSEC_SHIFT.
  */
 
-const struct db_sa ipsec_sadb[1 << 3] = {
+static const struct db_sa ipsec_db_sa[1 << 3] = {
 	{ AD_NULL },                            /* none */
 	{ AD_SAc(esp_props) },                  /* POLICY_ENCRYPT */
 	{ AD_SAc(ah_props) },                   /* POLICY_AUTHENTICATE */
@@ -793,6 +793,16 @@ const struct db_sa ipsec_sadb[1 << 3] = {
 	{ AD_SAc(ah_compress_props) },          /* POLICY_AUTHENTICATE+POLICY_COMPRESS */
 	{ AD_SAc(ah_esp_compress_props) },      /* POLICY_ENCRYPT+POLICY_AUTHENTICATE+POLICY_COMPRESS */
 };
+
+const struct db_sa *IKEv1_ipsec_db_sa(lset_t policy)
+{
+	passert((policy & ~(POLICY_ENCRYPT |
+			    POLICY_AUTHENTICATE |
+			    POLICY_COMPRESS)) == LEMPTY);
+	unsigned ix = (policy >> POLICY_ENCRYPT_IX);
+	passert(ix < elemsof(ipsec_db_sa));
+	return &ipsec_db_sa[ix];
+}
 
 #undef AD
 #undef AD_NULL

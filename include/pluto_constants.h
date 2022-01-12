@@ -874,7 +874,6 @@ enum sa_policy_bits {
 	POLICY_DNS_MATCH_ID_IX, /* perform reverse DNS lookup on IP to confirm ID */
 	POLICY_SHA2_TRUNCBUG_IX, /* workaround old Linux kernel (android 4.x) */
 
-#define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
 
 	/* connection policy
