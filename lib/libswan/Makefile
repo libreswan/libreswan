@@ -81,7 +81,6 @@ endif
 
 OBJS += log_ip.o
 OBJS += fd.o
-OBJS += kernel_alg.o
 OBJS += role.o
 
 OBJS += addrtypeof.o

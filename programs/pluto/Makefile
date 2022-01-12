@@ -101,6 +101,12 @@ ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
 USERLAND_CFLAGS += -DGLIBC_KERN_FLIP_HEADERS
 endif
 
+# kernel
+
+OBJS += kernel.o
+OBJS += kernel_ops.o
+OBJS += kernel_alg.o
+
 ifeq ($(USE_XFRM),true)
 OBJS += kernel_xfrm.o
 ifeq ($(USE_XFRM_INTERFACE),true)
@@ -228,8 +234,6 @@ OBJS += ikev2_states.o
 OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += ikev2_redirect.o
 OBJS += cert_decode_helper.o
-OBJS += kernel.o
-OBJS += kernel_ops.o
 OBJS += rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += crypt_ke.o crypt_dh.o
