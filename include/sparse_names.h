@@ -28,10 +28,11 @@
  * sparse_names is much like enum_names, except values are not known
  * to be contiguous or ordered.
  *
- * The array of names is ended with one with the name sparse_end (this
- * avoids having to reserve a value to signify the end).  Often
- * appropriate for enums and macros defined by others.
+ * The array is NULL terminated, as in .name==NULL; but suggest using
+ * SPARSE_NULL in case that needs to change.
  */
+
+#define SPARSE_NULL { 0, NULL, }
 
 struct sparse_name {
 	unsigned long val;
@@ -39,7 +40,6 @@ struct sparse_name {
 };
 
 typedef const struct sparse_name sparse_names[];
-extern const char sparse_end[];
 
 typedef struct {
 	char buf[16];/*how big?*/

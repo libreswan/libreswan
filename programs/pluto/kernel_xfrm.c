@@ -138,7 +138,7 @@ static sparse_names xfrm_type_names = {
 
 	NE(XFRM_MSG_MAX),
 
-	{ 0, sparse_end }
+	SPARSE_NULL
 };
 
 static sparse_names rtm_type_names = {
@@ -146,7 +146,7 @@ static sparse_names rtm_type_names = {
 	NE(RTM_NEWADDR),
 	NE(RTM_DELADDR),
 	NE(RTM_MAX),
-	{ 0, sparse_end }
+	SPARSE_NULL
 };
 #undef NE
 

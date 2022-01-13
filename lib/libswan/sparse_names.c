@@ -23,16 +23,14 @@
 
 #include "sparse_names.h"
 
-const char sparse_end[] = "end of sparse names";
-
 /* look up enum names in a sparse_names */
 const char *sparse_name(sparse_names sd, unsigned long val)
 {
-	const struct sparse_name *p;
-
-	for (p = sd; p->name != sparse_end; p++)
-		if (p->val == val)
+	for (const struct sparse_name *p = sd; p->name != NULL; p++) {
+		if (p->val == val) {
 			return p->name;
+		}
+	}
 
 	return NULL;
 }
