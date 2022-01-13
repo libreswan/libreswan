@@ -328,23 +328,6 @@ struct keyword_enum_values {
 	size_t valuesize;
 };
 
-/* sparse_names is much like enum_names, except values are
- * not known to be contiguous or ordered.
- * The array of names is ended with one with the name sparse_end
- * (this avoids having to reserve a value to signify the end).
- * Often appropriate for enums defined by others.
- */
-struct sparse_name {
-	unsigned long val;
-	const char *const name;
-};
-
-typedef const struct sparse_name sparse_names[];
-
-extern const char *sparse_name(sparse_names sd, unsigned long val);
-extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses static buffer -- NOT RE-ENTRANT */
-extern const char sparse_end[];
-
 extern void init_constants(void);
 
 #include "ietf_constants.h"

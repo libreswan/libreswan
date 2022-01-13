@@ -98,6 +98,7 @@
 #include "labeled_ipsec.h"	/* for vet_seclabel() */
 #include "ikev2_mobike.h"
 #include "ip_packet.h"
+#include "sparse_names.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC

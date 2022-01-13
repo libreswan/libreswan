@@ -2647,38 +2647,6 @@ size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
 	return jam_enum_short(buf, en, val);
 }
 
-const char sparse_end[] = "end of sparse names";
-
-/* look up enum names in a sparse_names */
-const char *sparse_name(sparse_names sd, unsigned long val)
-{
-	const struct sparse_name *p;
-
-	for (p = sd; p->name != sparse_end; p++)
-		if (p->val == val)
-			return p->name;
-
-	return NULL;
-}
-
-/*
- * find or construct a string to describe an sparse value
- *
- * Result may be in STATIC buffer -- NOT RE-ENTRANT!
- */
-const char *sparse_val_show(sparse_names sd, unsigned long val)
-{
-	const char *p = sparse_name(sd, val);
-
-	if (p == NULL) {
-		static esb_buf b;	/* STATIC!! */
-
-		snprintf(b.buf, sizeof(b.buf), "%lu??", val);
-		p = b.buf;
-	}
-	return p;
-}
-
 /* registry of enum_names: allows consistency checking at startup */
 static const enum_names *en_checklist[] = {
 	&version_names,

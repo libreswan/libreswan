@@ -56,6 +56,7 @@ OBJS += constants.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += sparse_names.o
 OBJS += ttoaddress.o
 OBJS += ttoprotocol.o
 OBJS += alloc.o
