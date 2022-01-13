@@ -111,7 +111,7 @@ static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
 static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
 
-#define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
+#define NE(x) { #x, x }	/* Name Entry -- shorthand for sparse_names */
 
 static sparse_names xfrm_type_names = {
 	NE(NLMSG_NOOP),

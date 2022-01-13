@@ -27,7 +27,7 @@
 const char *sparse_name(sparse_names sd, unsigned long val)
 {
 	for (const struct sparse_name *p = sd; p->name != NULL; p++) {
-		if (p->val == val) {
+		if (p->value == val) {
 			return p->name;
 		}
 	}
@@ -56,7 +56,7 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsigned long v2)
 {
 	while (ssd->names != NULL) {
-		if (ssd->val == v1) {
+		if (ssd->value == v1) {
 			return sparse_name(ssd->names, v2);
 		}
 		ssd++;

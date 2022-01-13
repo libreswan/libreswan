@@ -32,11 +32,12 @@
  * SPARSE_NULL in case that needs to change.
  */
 
-#define SPARSE_NULL { 0, NULL, }
+#define SPARSE_NULL { NULL, 0, }
 
 struct sparse_name {
-	unsigned long val;
+	/* field order (backwards?) dictated by started() */
 	const char *const name;
+	unsigned long value;
 };
 
 typedef const struct sparse_name sparse_names[];
@@ -56,7 +57,7 @@ extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses 
  */
 
 struct sparse_sparse_name {
-	unsigned long val;
+	unsigned long value;
 	const struct sparse_name *names;
 };
 
