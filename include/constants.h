@@ -345,8 +345,6 @@ extern const char *sparse_name(sparse_names sd, unsigned long val);
 extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses static buffer -- NOT RE-ENTRANT */
 extern const char sparse_end[];
 
-#define FULL_INET_ADDRESS_SIZE    6
-
 extern void init_constants(void);
 
 #include "ietf_constants.h"
