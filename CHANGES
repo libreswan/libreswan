@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
+* building: fix build on fedora rawhide
 
 v4.6 (January 11, 2022)
 * SECURITY: Fixes CVE-2022-23094 https://libreswan.org/security/CVE-2022-23094
