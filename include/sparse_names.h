@@ -48,4 +48,20 @@ typedef struct {
 extern const char *sparse_name(sparse_names sd, unsigned long val);
 extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses static buffer -- NOT RE-ENTRANT */
 
+/*
+ * sparse_sparse_names is much like enum_enum_names, except, again the
+ * values are neither assumed to be contingious or ordered.
+ *
+ * The array is terminated by a NULL entry.
+ */
+
+struct sparse_sparse_name {
+	unsigned long val;
+	const struct sparse_name *names;
+};
+
+typedef const struct sparse_sparse_name sparse_sparse_names[];
+
+extern const char *sparse_sparse_name(sparse_sparse_names sd, unsigned long v1, unsigned long v2);
+
 #endif

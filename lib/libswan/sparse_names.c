@@ -52,3 +52,14 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	}
 	return p;
 }
+
+const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsigned long v2)
+{
+	while (ssd->names != NULL) {
+		if (ssd->val == v1) {
+			return sparse_name(ssd->names, v2);
+		}
+		ssd++;
+	}
+	return NULL;
+}
