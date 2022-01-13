@@ -36,7 +36,7 @@
  */
 
 #ifdef linux
-#include "rfc2367-pfkeyv2.h"
+#include "pfkeyv2/rfc2367.h"
 /* Compression algorithms */
 #define SADB_X_CALG_NONE		0
 #define SADB_X_CALG_OUI			1
