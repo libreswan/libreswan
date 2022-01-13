@@ -32,7 +32,9 @@
 #include "dnssec.h"    /* includes unbound.h */
 #include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
-#include "secrets.h"
+
+/* Do not include secrets.h as it will cause conflicts via NSS/OPENSSL headers */
+extern const struct pubkey_type pubkey_type_rsa;
 
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 

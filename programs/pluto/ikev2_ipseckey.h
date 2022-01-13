@@ -1,5 +1,3 @@
-#include "state.h"
-
 #ifndef _IKEV2_IPSECKEY_H
 #define _IKEV2_IPSECKEY_H
 
@@ -10,6 +8,8 @@
 #endif
 
 #define IS_LIBUNBOUND LSW_LIBUNBOUND_ENABLED
+
+struct ike_sa;
 
 typedef enum {
 	DNS_OK = STF_OK,
