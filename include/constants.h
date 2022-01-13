@@ -309,24 +309,8 @@ size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 size_t jam_enum_enum_short(struct jambuf *log, enum_enum_names *een,
 			   unsigned long table, unsigned long val);
 
-/*
- * The sparser_name should be transformed into keyword_enum_value
- *
- * keyword_enum_value is used by starter()
- *
- */
-
+/* XXX: assumes enums are 8-bits!?! */
 #define LOOSE_ENUM_OTHER 255
-
-struct keyword_enum_value {
-	const char *name;
-	unsigned int value;
-};
-
-struct keyword_enum_values {
-	const struct keyword_enum_value *values;
-	size_t valuesize;
-};
 
 extern void init_constants(void);
 

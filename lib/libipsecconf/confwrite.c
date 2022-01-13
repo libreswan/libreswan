@@ -27,6 +27,7 @@
 #include "lswlog.h"
 #include "lmod.h"
 #include "ip_address.h"
+#include "sparse_names.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -37,16 +38,13 @@
 
 void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *k)
 {
-	const struct keyword_enum_values *kevs = k->validenum;
-	const struct keyword_enum_value  *kev  = kevs->values;
-	int i;
 	char *sep = "";
 
-	for (i = 0; i < (int)kevs->valuesize; i++) {
-		unsigned int mask = kev[i].value;
+	for (const struct sparse_name *kev  = k->validenum; kev->name != NULL; kev++) {
+		unsigned int mask = kev->value;
 
 		if (mask != 0 && (val & mask) == mask) {
-			fprintf(out, "%s%s%s", sep, prefix, kev[i].name);
+			fprintf(out, "%s%s%s", sep, prefix, kev->name);
 			sep = " ";
 		}
 	}
@@ -114,19 +112,12 @@ static void confwrite_int(FILE *out,
 					fprintf(out, "%s\n",
 						strings[k->field]);
 				} else {
-					const struct keyword_enum_values *kevs =
-						k->validenum;
-					const struct keyword_enum_value  *kev  =
-						kevs->values;
-					int i = 0;
-
-					while (i < (int)kevs->valuesize) {
-						if ((int)kev[i].value == val) {
-							fprintf(out, "%s",
-								kev[i].name);
+					for (const struct sparse_name *kev = k->validenum;
+					     kev->name != NULL; kev++) {
+						/* XXX: INT vs UNSIGNED magic? */
+						if ((int)kev->value == val) {
 							break;
 						}
-						i++;
 					}
 					fprintf(out, "\n");
 				}

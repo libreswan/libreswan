@@ -34,8 +34,8 @@ struct jambuf;
 /*
  * NAME<>VALUE map (but with bonus .details)
  *
- * We've already got enum_names, struct keyword_enum_values, and
- * sparse_name so why yet another another one?
+ * We've already got enum_names and sparse_name so why yet another
+ * another one?
  *
  * The two key differences are:
  *
@@ -50,9 +50,9 @@ struct jambuf;
  * Once the dust has settled, this code can be merged with the other
  * name tables.
  *
- * For keyword_enum_values and sparse_names while things are straight
- * forward, it will churn the code - trying to add the new field to
- * the existing code resulted in lots of uninitialized field errors.
+ * For sparse_names while things are straight forward, it will churn
+ * the code - trying to add the new field to the existing code
+ * resulted in lots of uninitialized field errors.
  *
  * For enum_names, things get more complex.  But again, there really
  * shouldn't be so many NAME<>VALUE maps.

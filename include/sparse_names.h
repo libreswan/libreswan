@@ -65,4 +65,4 @@ typedef const struct sparse_sparse_name sparse_sparse_names[];
 
 extern const char *sparse_sparse_name(sparse_sparse_names sd, unsigned long v1, unsigned long v2);
 
-#endif
+#endif /* _CONSTANTS_H_ */
