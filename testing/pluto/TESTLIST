@@ -636,7 +636,7 @@ kvmplutotest	mixoe-03-authanon-anon			good
 
 kvmplutotest	ikev2-initiate-template-01		good
 
-kvmplutotest	ikev2-asymmetric-01-parsing		good
+kvmplutotest	ikev2-asymmetric-01-parsing		wip	github:554
 kvmplutotest	ikev2-asymmetric-02-orienting		good
 kvmplutotest	ikev2-asymmetric-03-null-rsacert	good
 kvmplutotest	ikev2-asymmetric-04-null-rsaraw		good
