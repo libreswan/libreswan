@@ -22,29 +22,9 @@
  * This header pulls in all the SADB_* and sadb_* declarations
  * described by RFC 2368 (along with any extensions which use the
  * prefix SADB_X_... or sadb_x_...).
- *
- * Typically this just involves including <net/pfkeyv2.h>, but on
- * linux it needs to pull in the local hacked up version of the same
- * file.
- *
- * Why?
- *
- * the kernel_alg.[hc] code uses structures found in this header;
- * because the official version lacks some algorithm definitions (but
- * are they still needed); and linux kernel code is using the compress
- * macro values.
  */
 
-#ifdef linux
-#include "pfkeyv2/rfc2367.h"
-/* Compression algorithms */
-#define SADB_X_CALG_NONE		0
-#define SADB_X_CALG_OUI			1
-#define SADB_X_CALG_DEFLATE		2
-#define SADB_X_CALG_LZS			3
-#define SADB_X_CALG_LZJH		4
-#define SADB_X_CALG_MAX			4
-#else
+#if defined(KERNEL_BSDKAME)
 #include <net/pfkeyv2.h>
 #endif
 
