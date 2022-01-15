@@ -224,3 +224,31 @@ bool migrate_ipsec_sa(struct child_sa *child)
 		return false;
 	}
 }
+
+ipsec_spi_t kernel_ops_get_spi(const ip_address *src,
+			       const ip_address *dst,
+			       const struct ip_protocol *proto,
+			       bool tunnel_mode,
+			       reqid_t reqid,
+			       uintmax_t min, uintmax_t max,
+			       const char *story,	/* often SAID string */
+			       struct logger *logger)
+{
+	passert(kernel_ops->get_spi != NULL);
+	LDBG(logger, buf) {
+		jam_string(buf, "kernel: get_spi() ");
+		jam_address(buf, src);
+		jam_string(buf, "-");
+		jam(buf, "%s", proto->name);
+		jam_string(buf, "->");
+		jam_address(buf, dst);
+		jam_string(buf, (tunnel_mode ? " [tunnel]" : " [transport]"));
+		jam(buf, " reqid=%x", reqid);
+		jam(buf, " [%jx,%jx]", min, max);
+		jam(buf, " for %s ...", story);
+	}
+	ipsec_spi_t spi = kernel_ops->get_spi(src, dst, proto, tunnel_mode, reqid, min, max, story, logger);
+	ldbg(logger, "kernel: get_spi() ... allocated "PRI_IPSEC_SPI" for %s",
+	     pri_ipsec_spi(spi), story);
+	return spi;
+}

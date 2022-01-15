@@ -34,8 +34,17 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const char *fmt, ...) PRINTF_LIKE(13);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
-extern bool kernel_ops_add_sa(const struct kernel_sa *sa,
-			      bool replace,
-			      struct logger *logger);
+bool kernel_ops_add_sa(const struct kernel_sa *sa,
+		       bool replace,
+		       struct logger *logger);
+
+ipsec_spi_t kernel_ops_get_spi(const ip_address *src,
+			       const ip_address *dst,
+			       const struct ip_protocol *proto,
+			       bool tunnel_mode,
+			       reqid_t reqid,
+			       uintmax_t min, uintmax_t max,
+			       const char *story,	/* often SAID string */
+			       struct logger *logger);
 
 #endif

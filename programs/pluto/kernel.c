@@ -489,12 +489,12 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 	ipsec_spi_t network_spi;
 	if (kernel_ops->get_spi != NULL) {
 		said_buf sb;
-		network_spi = kernel_ops->get_spi(&sr->that.host_addr,
-						  &sr->this.host_addr, proto, tunnel,
-						  get_proto_reqid(sr->reqid, proto),
-						  IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
-						  said_str(sr->this.host_addr, proto, 0, &sb),
-						  logger);
+		network_spi = kernel_ops_get_spi(&sr->that.host_addr,
+						 &sr->this.host_addr, proto, tunnel,
+						 get_proto_reqid(sr->reqid, proto),
+						 IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
+						 said_str(sr->this.host_addr, proto, 0, &sb),
+						 logger);
 	} else {
 		static ipsec_spi_t host_spi; /* host order, so not returned directly! */
 		do {
@@ -525,14 +525,15 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
 {
 	if (kernel_ops->get_spi != NULL) {
 		said_buf sb;
-		return kernel_ops->get_spi(&sr->that.host_addr,
-					   &sr->this.host_addr, &ip_protocol_comp,
-					   tunnel,
-					   get_proto_reqid(sr->reqid, &ip_protocol_comp),
-					   IPCOMP_FIRST_NEGOTIATED,
-					   IPCOMP_LAST_NEGOTIATED,
-					   said_str(sr->this.host_addr, &ip_protocol_comp, 0, &sb),
-					   logger);
+		return kernel_ops_get_spi(&sr->that.host_addr,
+					  &sr->this.host_addr,
+					  &ip_protocol_comp,
+					  tunnel,
+					  get_proto_reqid(sr->reqid, &ip_protocol_comp),
+					  IPCOMP_FIRST_NEGOTIATED,
+					  IPCOMP_LAST_NEGOTIATED,
+					  said_str(sr->this.host_addr, &ip_protocol_comp, 0, &sb),
+					  logger);
 	} else {
 		static cpi_t first_busy_cpi = 0;
 		static cpi_t latest_cpi = 0;
