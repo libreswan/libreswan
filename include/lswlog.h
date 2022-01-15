@@ -349,6 +349,21 @@ extern lset_t cur_debugging;	/* current debugging level */
 		}					\
 	}
 
+#define LDBGP(LOGGER, COND, BUF)					\
+	/* allocate the buffer */					\
+	for (char buf_[LOG_WIDTH],					\
+		     *dbgp_ = (DBGP(COND) ? buf_ : NULL);		\
+	     dbgp_ != NULL;						\
+	     dbgp_ = NULL)						\
+		/* create the jambuf_; no prefix; use jambuf_ */	\
+		for (struct jambuf jambuf_ = ARRAY_AS_JAMBUF(buf_),	\
+			     *BUF = &jambuf_;				\
+		     BUF != NULL;					\
+		     BUF = NULL,					\
+			     jambuf_to_logger(&jambuf_, LOGGER, DEBUG_STREAM))
+
+#define LDBG(LOGGER, BUF) LDBGP(LOGGER, DBG_BASE, BUF)
+
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
 void DBG_va_list(const char *message, va_list ap) PRINTF_LIKE_VA(1);
