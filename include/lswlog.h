@@ -323,20 +323,30 @@ void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
 
 extern lset_t cur_debugging;	/* current debugging level */
 
-#define DBGP(cond)	(cur_debugging & (cond))
-
 #define DEBUG_PREFIX "| "
 
-#define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
-#define DBGF(COND, MESSAGE, ...) { if (DBGP(COND)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
-#define dbg(MESSAGE, ...) { if (DBGP(DBG_BASE)) { DBG_log(MESSAGE,##__VA_ARGS__); } }
+#define DBGP(cond)	(cur_debugging & (cond))
 
-#define ldbg(LOGGER, FMT, ...)					\
+#define DBGF(COND, MESSAGE, ...)				\
+	{							\
+		if (DBGP(COND)) {				\
+			DBG_log(MESSAGE, ##__VA_ARGS__);	\
+		}						\
+	}
+
+#define dbg(MESSAGE, ...)					\
 	{							\
 		if (DBGP(DBG_BASE)) {				\
-			llog(DEBUG_STREAM, (LOGGER),		\
-			     FMT, ##__VA_ARGS__);		\
+			DBG_log(MESSAGE, ##__VA_ARGS__);	\
 		}						\
+	}
+
+#define ldbg(LOGGER, MESSAGE, ...)			\
+	{						\
+		if (DBGP(DBG_BASE)) {			\
+			llog(DEBUG_STREAM, (LOGGER),	\
+			     MESSAGE, ##__VA_ARGS__);	\
+		}					\
 	}
 
 /* DBG_*() are unconditional */

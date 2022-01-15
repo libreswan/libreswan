@@ -458,7 +458,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 				  + unencrypted_payload_size
 				  + sk_header_size
 				  + inner_payloads_size);
-	DBG(DBG_CRYPT, DBG_log("adjusted length: %zu", adjusted_length));
+	dbg("adjusted length: %zu", adjusted_length);
 	uint8_t adjusted_length_bytes[ADJ_LENGTH_SIZE];
 	hton_bytes(adjusted_length, adjusted_length_bytes,
 		   sizeof(adjusted_length_bytes));
@@ -472,7 +472,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 			       sk_header_start, sk_header_size - ADJ_PAYLOAD_LENGTH_SIZE);
 	/* adjusted payload length, in network byte order */
 	size_t adjusted_payload_length = inner_payloads_size + SK_HEADER_SIZE;
-	DBG(DBG_CRYPT, DBG_log("adjusted payload length: %zu", adjusted_payload_length));
+	dbg("adjusted payload length: %zu", adjusted_payload_length);
 	uint8_t adjusted_payload_length_bytes[ADJ_PAYLOAD_LENGTH_SIZE];
 	hton_bytes(adjusted_payload_length, adjusted_payload_length_bytes,
 		   sizeof(adjusted_payload_length_bytes));
