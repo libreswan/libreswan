@@ -1150,6 +1150,20 @@ enum_names ip_protocol_id_names = {
 	NULL, /* next */
 };
 
+size_t jam_protocol(struct jambuf *buf, const struct ip_protocol *protocol)
+{
+	return jam_string(buf, str_protocol(protocol));
+}
+
+const char *str_protocol(const struct ip_protocol *protocol)
+{
+	if (protocol == NULL) {
+		return "<null-protocol>";
+	}
+
+	return protocol->name;
+}
+
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep, const ip_protocol *dst)
 {
 	size_t s = 0;

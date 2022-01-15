@@ -101,14 +101,19 @@ const struct ip_protocol *protocol_by_shunk(shunk_t protocol);
 
 err_t ttoprotocol(shunk_t text, const ip_protocol **ipproto);
 
+/* these are kind of pointless */
+
+typedef struct {
+	char buf[19];
+} protocol_buf;
+
+size_t jam_protocol(struct jambuf *, const struct ip_protocol *);
+const char *str_protocol(const struct ip_protocol *);
+
 /* ex: sep='=' gives '=TCP=>' */
 size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,
 		     const ip_protocol *dst);
 
 /* used to size other buffers */
-
-typedef struct {
-	char buf[19];
-} protocol_buf;
 
 #endif
