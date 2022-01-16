@@ -381,9 +381,11 @@ struct ike_sa *ike_sa(struct state *st, where_t where)
 	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
-			pexpect_fail(st->st_logger, where, "child state #%lu missing parent state #%lu",
-				     st->st_serialno, st->st_clonedfrom);
-			/* about to crash with an NPE */
+			llog_pexpect(st->st_logger, where,
+				     "child state missing parent state "PRI_SO,
+				     pri_so(st->st_clonedfrom));
+			/* about to crash with an NPE? */
+			return NULL;
 		}
 		return (struct ike_sa*) pst;
 	}

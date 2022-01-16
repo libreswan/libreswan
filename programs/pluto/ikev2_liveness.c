@@ -89,32 +89,27 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 /* note: this mutates *st by calling get_sa_info */
 void liveness_check(struct state *st)
 {
+	monotime_t now = mononow();
+
 	passert(st->st_ike_version == IKEv2);
-	struct state *pst = state_by_serialno(st->st_clonedfrom);
-	if (pst == NULL) {
-		/*
-		 * When the retransmits timeout the IKE SA gets
-		 * deleted, but not the child.
-		 *
-		 * XXX: might need to tone this down.
-		 */
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		/* already logged */
 		dbg("liveness: state #%lu has no IKE SA; deleting orphaned child",
 		    st->st_serialno);
 		event_delete(EVENT_SA_DISCARD, st);
 		event_schedule(EVENT_SA_DISCARD, deltatime(0), st);
 		return;
 	}
-	struct ike_sa *ike = pexpect_ike_sa(pst);
-
 	struct child_sa *child = pexpect_child_sa(st);
 	if (child == NULL) {
 		return;
 	}
+
 	struct connection *c = child->sa.st_connection;
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
 	/* if nothing else this is when the state was created */
 	pexpect(!is_monotime_epoch(our->last_contact));
-	monotime_t now = mononow();
 
 	/*
 	 * If the child is lingering (replaced but not yet deleted),
