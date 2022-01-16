@@ -1,0 +1,20 @@
+Basic pluto with IKEv2 using PSK with libreswan on the initiator (west), and openbsd on the responder.
+
+This is not meant (yet) to run automatically
+
+opnbsd must have the iked package installed (openiked)
+
+On openbsd, this will look like:
+
+openbsd# ipsecctl -s all
+FLOWS:
+flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type use
+flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+flow esp out from ::/0 to ::/0 type deny
+
+SAD:
+esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0x351977b3 auth hmac-sha2-256 enc aes-256
+esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0x531511aa auth hmac-sha2-256 enc aes-256
+
+
+note it seems openbsd does not properly support an ipv4 and ipv6 tunnel using the same IKE SA
