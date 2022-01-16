@@ -32,7 +32,7 @@ EOF
 
 ok=true
 
-for core in ${DIR}/core* ; do
+for core in ${DIR}/core* ${DIR}/*.core ; do
     test -r "${core}" || continue
 
     ok=false
@@ -44,10 +44,18 @@ for core in ${DIR}/core* ; do
     # Post-mortem scripts use the presence of the text "CORE FOUND" in
     # the console output as a marker indicating a test failing with a
     # core dump.
-    echo CORE FOUND: $core
+    echo CORE FOUND: ${core}
 
-    exe=$(echo $core | cut -d. -f3)
-    if test -r /usr/local/libexec/ipsec/${exe} ; then  # Upstream default
+    case $(basename ${core}) in
+	*.core ) exe=$(basename ${core} .core) ;;
+	core* ) exe=$(echo $core | cut -d. -f3) ;;
+	* ) exe=
+    esac
+
+    if test -z "${exe}" ; then
+	echo unknown core ${core}
+	continue
+    elif test -r /usr/local/libexec/ipsec/${exe} ; then  # Upstream default
 	prog=/usr/local/libexec/ipsec/${exe}
     elif test -r /usr/libexec/ipsec/${exe} ; then      # RPM
 	prog=/usr/sbin/ipsec/${exe}
