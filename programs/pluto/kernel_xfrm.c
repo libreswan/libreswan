@@ -2522,7 +2522,7 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, 
 	return true;
 }
 
-static const char *xfrm_aliases[] = { "netkey", NULL, };
+static const char *xfrm_aliases[] = { "xfrm", "netkey", NULL, };
 
 const struct kernel_ops xfrm_kernel_ops = {
 	.kern_name = "xfrm",

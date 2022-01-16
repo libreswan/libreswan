@@ -1358,10 +1358,6 @@ int main(int argc, char **argv)
 					for (const struct kernel_ops *const *stack = kernel_stacks;
 					     *stack != NULL; stack++) {
 						const struct kernel_ops *ops = *stack;
-						if (strcaseeq(ops->kern_name, protostack)) {
-							kernel_ops = ops;
-							break;
-						}
 						for (const char **alias =ops->aliases;
 						     *alias != NULL; alias++) {
 							if (strcaseeq((*alias), protostack)) {
