@@ -50,12 +50,13 @@ static void retransmit_timeout_action(struct ike_sa *ike)
 			"liveness action - clearing connection kind %s",
 			kind_name);
 		co_serial_t co = ike->sa.st_connection->serialno;
+		so_serial_t so = ike->sa.st_serialno;
 		/* remove any partial negotiations that are failing */
 		flush_pending_by_connection(ike->sa.st_connection);
 		delete_ike_family(&ike, DONT_SEND_DELETE);
 		pexpect(ike == NULL);
 		struct connection *c = connection_by_serialno(co);
-		if (c != NULL) {
+		if (c != NULL && c->newest_ike_sa == so) {
 			dbg("unrouting connection kind %s",
 			    kind_name);
 			unroute_connection(c); /* --unroute */
