@@ -1,0 +1,4 @@
+EAST is "clear"; ROAD dies then re-connects while east is checking liveness
+
+Because ROAD manages to re-restablish the connection, EAST should not
+clear.
