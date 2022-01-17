@@ -1647,8 +1647,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
  * @param sa Kernel SA to be deleted
  * @return bool True if successful
  */
-static bool netlink_del_sa(const struct kernel_sa *sa,
-			   struct logger *logger)
+static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
+			       const struct ip_protocol *proto,
+			       const ip_address *src_address,
+			       const ip_address *dst_address,
+			       const char *story,
+			       struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1660,19 +1664,17 @@ static bool netlink_del_sa(const struct kernel_sa *sa,
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_DELSA;
 
-	req.id.daddr = xfrm_from_address(sa->dst.address);
+	req.id.daddr = xfrm_from_address(dst_address);
 
-	req.id.spi = sa->spi;
-	req.id.family = addrtypeof(sa->src.address);
-	req.id.proto = sa->proto->ipproto;
+	req.id.spi = spi;
+	req.id.family = addrtypeof(src_address);
+	req.id.proto = proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	dbg("XFRM: deleting IPsec SA with reqid %d", sa->reqid);
-
 	int recv_errno;
 	return sendrecv_xfrm_msg(&req.n, NLMSG_NOOP, NULL,
-				 "Del SA", sa->story,
+				 "Del SA", story,
 				 &recv_errno, logger);
 }
 
@@ -2124,14 +2126,15 @@ static void netlink_process_msg(int fd, struct logger *logger)
 	do {} while (netlink_get(fd, logger));
 }
 
-static ipsec_spi_t netlink_get_spi(const ip_address *src,
-				   const ip_address *dst,
-				   const struct ip_protocol *proto,
-				   bool tunnel_mode,
-				   reqid_t reqid,
-				   uintmax_t min, uintmax_t max,
-				   const char *story,
-				   struct logger *logger)
+static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
+				      const ip_address *src,
+				      const ip_address *dst,
+				      const struct ip_protocol *proto,
+				      bool tunnel_mode,
+				      reqid_t reqid,
+				      uintmax_t min, uintmax_t max,
+				      const char *story,
+				      struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2164,14 +2167,12 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.sa))) {
 		llog(RC_LOG, logger,
-		     "kernel: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
+		     "xfrm: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
 		     (size_t) rsp.n.nlmsg_len,
 		     sizeof(rsp.u.sa));
 		return 0;
 	}
 
-	dbg("kernel: netlink_get_spi: allocated 0x%x for %s",
-	    ntohl(rsp.u.sa.id.spi), story);
 	return rsp.u.sa.id.spi;
 }
 
@@ -2540,11 +2541,11 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.process_msg = netlink_process_msg,
 	.raw_policy = xfrm_raw_policy,
 	.add_sa = netlink_add_sa,
-	.del_sa = netlink_del_sa,
 	.get_sa = netlink_get_sa,
 	.process_queue = NULL,
 	.grp_sa = NULL,
-	.get_spi = netlink_get_spi,
+	.get_ipsec_spi = xfrm_get_ipsec_spi,
+	.del_ipsec_spi = xfrm_del_ipsec_spi,
 	.exceptsocket = NULL,
 	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,

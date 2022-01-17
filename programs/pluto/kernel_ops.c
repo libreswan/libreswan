@@ -225,18 +225,18 @@ bool migrate_ipsec_sa(struct child_sa *child)
 	}
 }
 
-ipsec_spi_t kernel_ops_get_spi(const ip_address *src,
-			       const ip_address *dst,
-			       const struct ip_protocol *proto,
-			       bool tunnel_mode,
-			       reqid_t reqid,
-			       uintmax_t min, uintmax_t max,
-			       const char *story,	/* often SAID string */
-			       struct logger *logger)
+ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
+				     const ip_address *src,
+				     const ip_address *dst,
+				     const struct ip_protocol *proto,
+				     bool tunnel_mode,
+				     reqid_t reqid,
+				     uintmax_t min, uintmax_t max,
+				     const char *story,	/* often SAID string */
+				     struct logger *logger)
 {
-	passert(kernel_ops->get_spi != NULL);
 	LDBG(logger, buf) {
-		jam_string(buf, "kernel: get_spi() ");
+		jam_string(buf, "kernel: get_ipsec_spi() ");
 		jam_address(buf, src);
 		jam_string(buf, "-");
 		jam(buf, "%s", proto->name);
@@ -247,8 +247,35 @@ ipsec_spi_t kernel_ops_get_spi(const ip_address *src,
 		jam(buf, " [%jx,%jx]", min, max);
 		jam(buf, " for %s ...", story);
 	}
-	ipsec_spi_t spi = kernel_ops->get_spi(src, dst, proto, tunnel_mode, reqid, min, max, story, logger);
-	ldbg(logger, "kernel: get_spi() ... allocated "PRI_IPSEC_SPI" for %s",
+
+	passert(kernel_ops->get_ipsec_spi != NULL);
+	ipsec_spi_t spi = kernel_ops->get_ipsec_spi(avoid, src, dst, proto, tunnel_mode,
+						    reqid, min, max, story, logger);
+	ldbg(logger, "kernel: get_ipsec_spi() ... allocated "PRI_IPSEC_SPI" for %s",
 	     pri_ipsec_spi(spi), story);
+
 	return spi;
+}
+
+bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
+			      const ip_address *src, const ip_address *dst,
+			      struct logger *logger)
+{
+	ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
+	said_buf sbuf;
+	const char *said_story = str_said(&said, &sbuf);
+
+	address_buf sb, db;
+	dbg("kernel: del_ipsec_spi() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
+	    str_address(src, &sb),
+	    proto == NULL ? "<NULL>" : proto->name,
+	    pri_ipsec_spi(spi),
+	    str_address(dst, &db),
+	    said_story);
+
+	passert(kernel_ops->del_ipsec_spi != NULL);
+	bool ok =kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
+	ldbg(logger, "kernel: get_ipsec_spi() ... %s", ok ? "succeeded" : "failed");
+
+	return ok;
 }

@@ -30,7 +30,6 @@
 #include "ipsec_doi.h"
 #include "ikev2.h"
 #include "ikev2_send.h"
-#include "kernel.h"		/* needed for del_spi */
 #include "ip_info.h"
 #include "ikev2_redirect.h"
 #include "initiate.h"

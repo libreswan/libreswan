@@ -51,6 +51,7 @@
 #include "kernel_alg.h"
 #include "iface.h"
 #include "ip_sockaddr.h"
+#include "rnd.h"
 
 /*
  * Multiplier for converting .sadb_msg_len (in 64-bit words) to
@@ -541,8 +542,55 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	return true;
 }
 
-static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED,
-				   struct logger *logger UNUSED)
+static ipsec_spi_t bsdkame_get_ipsec_spi(ipsec_spi_t avoid,
+					 const ip_address *src UNUSED,
+					 const ip_address *dst UNUSED,
+					 const struct ip_protocol *proto UNUSED,
+					 bool tunnel_mode UNUSED,
+					 reqid_t reqid UNUSED,
+					 uintmax_t min UNUSED, uintmax_t max UNUSED,
+					 const char *story UNUSED,
+					 struct logger *logger UNUSED)
+{
+	if (proto == &ip_protocol_comp) {
+
+		static cpi_t first_busy_cpi = 0;
+		static cpi_t latest_cpi = 0;
+
+		while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi &&
+			 first_busy_cpi < IPCOMP_LAST_NEGOTIATED)) {
+			get_rnd_bytes((uint8_t *)&first_busy_cpi,
+				      sizeof(first_busy_cpi));
+			latest_cpi = first_busy_cpi;
+		}
+
+		latest_cpi++;
+
+		if (latest_cpi == first_busy_cpi)
+			find_my_cpi_gap(&latest_cpi, &first_busy_cpi);
+
+		if (latest_cpi > IPCOMP_LAST_NEGOTIATED)
+			latest_cpi = IPCOMP_FIRST_NEGOTIATED;
+
+		return htonl((ipsec_spi_t)latest_cpi);
+
+	} else {
+		ipsec_spi_t network_spi;
+		static ipsec_spi_t host_spi; /* host order, so not returned directly! */
+		do {
+			get_rnd_bytes(&host_spi, sizeof(host_spi));
+			network_spi = htonl(host_spi);
+		} while (host_spi < IPSEC_DOI_SPI_OUR_MIN || network_spi == avoid);
+		return network_spi;
+	}
+}
+
+static bool bsdkame_del_ipsec_spi(ipsec_spi_t spi UNUSED,
+				  const struct ip_protocol *proto UNUSED,
+				  const ip_address *src_address UNUSED,
+				  const ip_address *dst_address UNUSED,
+				  const char *story UNUSED,
+				  struct logger *logger UNUSED)
 {
 	return true;
 }
@@ -620,8 +668,8 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.raw_policy = bsdkame_raw_policy,
 	.add_sa = bsdkame_add_sa,
 	.grp_sa = NULL,
-	.del_sa = bsdkame_del_sa,
-	.get_spi = NULL,
+	.del_ipsec_spi = bsdkame_del_ipsec_spi,
+	.get_ipsec_spi = bsdkame_get_ipsec_spi,
 	.eroute_idle = bsdkame_was_eroute_idle,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,

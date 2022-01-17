@@ -38,13 +38,18 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa,
 		       bool replace,
 		       struct logger *logger);
 
-ipsec_spi_t kernel_ops_get_spi(const ip_address *src,
-			       const ip_address *dst,
-			       const struct ip_protocol *proto,
-			       bool tunnel_mode,
-			       reqid_t reqid,
-			       uintmax_t min, uintmax_t max,
-			       const char *story,	/* often SAID string */
-			       struct logger *logger);
+ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
+				     const ip_address *src,
+				     const ip_address *dst,
+				     const struct ip_protocol *proto,
+				     bool tunnel_mode,
+				     reqid_t reqid,
+				     uintmax_t min, uintmax_t max,
+				     const char *story,	/* often SAID string */
+				     struct logger *logger);
+
+bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
+			      const ip_address *src, const ip_address *dst,
+			      struct logger *logger);
 
 #endif

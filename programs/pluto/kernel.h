@@ -355,25 +355,50 @@ struct kernel_ops {
 			   const shunk_t sec_label,
 			   struct logger *logger);
 	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
+	/*
+	 * XXX: to delete an SA, delete it's SPI.
+	 */
 	bool (*add_sa)(const struct kernel_sa *sa,
 		       bool replace,
 		       struct logger *logger);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
-	bool (*del_sa)(const struct kernel_sa *sa,
-		       struct logger *logger);
 	bool (*get_sa)(const struct kernel_sa *sa,
 		       uint64_t *bytes,
 		       uint64_t *add_time,
 		       struct logger *logger);
-	ipsec_spi_t (*get_spi)(const ip_address *src,
-			       const ip_address *dst,
-			       const struct ip_protocol *proto,
-			       bool tunnel_mode,
-			       reqid_t reqid,
-			       uintmax_t min, uintmax_t max,
-			       const char *story,	/* often SAID string */
-			       struct logger *logger);
+
+	/*
+	 * Allocate and delete IPsec ESP/AH (IPCOMP) SPIs. (creating a
+	 * larval kernel state).
+	 *
+	 * Compression IDs are allocated using the same system call;
+	 * except the MIN/MAX is smaller and IPCOMP is specified as
+	 * the protocol.
+	 *
+	 * Typically the larval kernel state is matured by adding the
+	 * negotiated crypto, key, et.al.
+	 *
+	 *
+	 * When deleting the kernel state (larval, mature, ...) only
+	 * the SPI and addresses are needed.
+	 */
+	ipsec_spi_t (*get_ipsec_spi)(ipsec_spi_t avoid,
+				     const ip_address *src,
+				     const ip_address *dst,
+				     const struct ip_protocol *proto,
+				     bool tunnel_mode,
+				     reqid_t reqid,
+				     uintmax_t min, uintmax_t max,
+				     const char *story,	/* often SAID string */
+				     struct logger *logger);
+	bool (*del_ipsec_spi)(ipsec_spi_t spi,
+			      const struct ip_protocol *proto,
+			      const ip_address *src,
+			      const ip_address *dst,
+			      const char *story,	/* often SAID string */
+			      struct logger *logger);
+
 	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
 	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
@@ -485,11 +510,6 @@ void delete_larval_ipsec_sa(struct state *st);
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 extern bool migrate_ipsec_sa(struct child_sa *child);
-extern bool del_spi(ipsec_spi_t spi,
-		    const struct ip_protocol *proto,
-		    const ip_address *src,
-		    const ip_address *dest,
-		    struct logger *logger);
 
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
