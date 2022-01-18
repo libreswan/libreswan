@@ -2541,7 +2541,7 @@ static void kernel_process_msg_cb(int fd, void *arg, struct logger *logger)
 {
 	const struct kernel_ops *kernel_ops = arg;
 
-	dbg("kernel: %s process netlink message", __func__);
+	dbg("kernel: %s() process %s message", __func__, kernel_ops->kern_name);
 	threadtime_t start = threadtime_start();
 	kernel_ops->process_msg(fd, logger);
 	threadtime_stop(&start, SOS_NOBODY, "kernel message");
