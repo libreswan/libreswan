@@ -7,10 +7,10 @@ s/\(IPsec SA established .* mode\) \([^ ]*ESP[^>]*>\)0x[a-f0-9]* <0x[a-f0-9]* \(
 s/\(IPsec SA established .* mode\) \([^ ]*ESP[^=]*=>\)0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3/
 s/\(IPsec SA established .* mode\) \([^ ]*AH[^ ]*\)0x[a-f0-9]* \(.*\)0x[a-f0-9]* \(.*\)$/\1 \20xAHAH \30xAHAH \4/
 
-# IKEv2
-s/\(established Child SA.*\) \([^ ]*ESP[^>]*>\)0x[a-f0-9]* <0x[a-f0-9]* \(xfrm.[^ ]* IPCOMP.>0x\)[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3ESPESP <0xESPESP \4/
-s/\(established Child SA.*\) \([^ ]*ESP[^=]*=>\)0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3/
-s/\(established Child SA.*\) \([^ ]*AH[^ ]*\)0x[a-f0-9]* \(.*\)0x[a-f0-9]* \(.*\)$/\1 \20xAHAH \30xAHAH \4/
+# IKEv2; need to handle {ESP,AH}/TCP
+s/\(established Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
+s/\(established Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
+s/\(established Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
 
 s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
