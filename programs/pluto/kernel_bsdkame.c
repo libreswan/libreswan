@@ -268,7 +268,7 @@ static void bsdkame_process_msg(int i UNUSED, struct logger *unused_logger UNUSE
 	free(reply);	/* was malloced by pfkey_recv() */
 }
 
-static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
+static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq, struct logger *logger)
 {
 	struct sadb_msg *reply = pfkey_recv(pfkeyfd);
 
@@ -280,6 +280,11 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
 		TAILQ_INSERT_TAIL(&pfkey_iq, pi, list);
 
 		reply = pfkey_recv(pfkeyfd);
+	}
+
+	if (reply != NULL && reply->sadb_msg_errno != 0) {
+		llog_errno(DEBUG_STREAM, logger, reply->sadb_msg_errno,
+			   "pfkey result");
 	}
 }
 
@@ -420,7 +425,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 				pfkey_seq);
 
 	dbg("consuming pfkey from %s", __func__);
-	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
+	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq, logger);
 
 	if (ret < 0) {
 		selector_buf s, d;
@@ -530,7 +535,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace,
 	ret = pfkey_send_add2(&add_args);
 #endif
 
-	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq);
+	bsdkame_consume_pfkey(pfkeyfd, pfkey_seq, logger);
 
 	if (ret < 0) {
 		llog(RC_LOG, logger,
