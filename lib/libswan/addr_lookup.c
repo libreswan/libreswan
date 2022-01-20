@@ -71,12 +71,8 @@ static void resolve_point_to_point_peer(const char *interface,
 			continue;
 		}
 
-		ip_sockaddr isa = {
-			.len = sizeof(*sa),
-			.sa.sa = *sa,
-		};
-		err_t err = sockaddr_to_address_port(isa, peer,
-						     NULL/*ignore port*/);
+		err_t err = sockaddr_to_address_port(sa, afi->sockaddr_size,
+						     peer, NULL/*ignore port*/);
 		if (err != NULL) {
 			verbose("  interface %s had invalid sockaddr: %s",
 				interface, err);

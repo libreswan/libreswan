@@ -287,7 +287,8 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	 */
 	ip_address sender_udp_address;
 	ip_port sender_udp_port;
-	const char *from_ugh = sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port);
+	const char *from_ugh = sockaddr_to_address_port(&from.sa.sa, from.len,
+							&sender_udp_address, &sender_udp_port);
 	if (from_ugh != NULL) {
 		if (packet_len >= 0) {
 			/* technically it worked, but returned value was useless */
@@ -696,7 +697,8 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		if (afi != NULL && emh.msg_namelen == afi->sockaddr_size) {
 			ip_address sender_udp_address;
 			ip_port sender_udp_port;
-			if (sockaddr_to_address_port(from, &sender_udp_address, &sender_udp_port) == NULL) {
+			if (sockaddr_to_address_port(&from.sa.sa, from.len,
+						     &sender_udp_address, &sender_udp_port) == NULL) {
 				/* this is a udp socket so presumably the endpoint is udp */
 				endpoint_buf ab;
 				ip_endpoint endpoint = endpoint_from_address_protocol_port(sender_udp_address,

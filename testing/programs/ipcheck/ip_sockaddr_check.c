@@ -39,12 +39,15 @@ static void check_sockaddr_as_endpoint(void)
 		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), NULL, NULL, },
 		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), NULL, NULL, },
 		/* far too small */
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "truncated", "<unset-endpoint>", },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "truncated", "<unset-endpoint>", },
+		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "too small", "<unset-endpoint>", },
+		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "too small", "<unset-endpoint>", },
 		/* somewhat too small */
 #define SIZE (offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t))
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, SIZE, "wrong length", "<unset-endpoint>", },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, SIZE, "wrong length", "<unset-endpoint>", },
+		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
+		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
+		/* too big */
+		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in) + 1, NULL, NULL, },
+		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6) + 1, NULL, NULL, },
 	};
 #undef SIZE
 
@@ -54,24 +57,29 @@ static void check_sockaddr_as_endpoint(void)
 		PRINT("%s '%s' -> '%s' len=%zd", pri_family(t->family), t->in, expect_out, t->size);
 
 		/* construct a raw sockaddr */
-		ip_sockaddr sa = {	
-			.len = t->size,
+		struct {
+			ip_sockaddr sa;
+			char pad;
+		} raw = {
+			.sa = {
+				.len = t->size,
+			}
 		};
 		switch (t->family) {
 		case 4:
-			memcpy(&sa.sa.sin.sin_addr, t->addr, sizeof(sa.sa.sin.sin_addr));
-			sa.sa.sin.sin_family = AF_INET;
-			sa.sa.sin.sin_port = htons(t->port);
+			memcpy(&raw.sa.sa.sin.sin_addr, t->addr, sizeof(raw.sa.sa.sin.sin_addr));
+			raw.sa.sa.sin.sin_family = AF_INET;
+			raw.sa.sa.sin.sin_port = htons(t->port);
 #ifdef NEED_SIN_LEN
-                	sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
+                	raw.sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 			break;
 		case 6:
-			memcpy(&sa.sa.sin6.sin6_addr, t->addr, sizeof(sa.sa.sin6.sin6_addr));
-			sa.sa.sin6.sin6_family = AF_INET6;
-			sa.sa.sin6.sin6_port = htons(t->port);
+			memcpy(&raw.sa.sa.sin6.sin6_addr, t->addr, sizeof(raw.sa.sa.sin6.sin6_addr));
+			raw.sa.sa.sin6.sin6_family = AF_INET6;
+			raw.sa.sa.sin6.sin6_port = htons(t->port);
 #ifdef NEED_SIN_LEN
-                	sa.sa.sin6.sin6_len = sizeof(struct sockaddr_in6);
+                	raw.sa.sa.sin6.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 			break;
 		}
@@ -80,7 +88,8 @@ static void check_sockaddr_as_endpoint(void)
 		ip_address address[1];
 		ip_port port;
 		ip_endpoint endpoint = unset_endpoint;
-		err_t err = sockaddr_to_address_port(sa, address, &port);
+		err_t err = sockaddr_to_address_port(&raw.sa.sa.sa, raw.sa.len,
+						     address, &port);
 		if (err != NULL) {
 			if (t->err == NULL) {
 				FAIL("sockaddr_to_address_port() unexpectedly failed: %s", err);
@@ -112,10 +121,10 @@ static void check_sockaddr_as_endpoint(void)
 			} else if (esa.len > sizeof(esa.sa)) {
 				FAIL("endpoint_to_sockaddr() returned %d, expecting %zu or smaller",
 					esa.len, sizeof(esa.sa));
-			} else if (!memeq(&esa.sa, &sa.sa, sizeof(esa.sa))) {
+			} else if (!memeq(&esa.sa, &raw.sa.sa, sizeof(esa.sa))) {
 				/* compare the entire buffer, not just size */
 				DBG_dump_thing("esa.sa", esa.sa);
-				DBG_dump_thing("sa.sa", sa.sa);
+				DBG_dump_thing("sa.sa", raw.sa.sa);
 				FAIL("endpoint_to_sockaddr() returned a different value");
 			}
 		} else {

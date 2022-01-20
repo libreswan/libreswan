@@ -416,16 +416,10 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		}
 	}
 
-	/* ai_addrlen is probably shorter than (sa.sa) */
-	ip_sockaddr sa = {
-		.len = winner->ai_addrlen,
-	};
-	passert(winner->ai_addrlen <= sizeof(sa.sa));
-	memcpy(&sa.sa, winner->ai_addr, winner->ai_addrlen);
-	passert(sa.sa.sa.sa_family == winner->ai_family);
-
 	/* boneheaded getaddrinfo(3) leaves port field undefined */
-	err_t err = sockaddr_to_address_port(sa, dst, NULL/*ignore port*/);
+	err_t err = sockaddr_to_address_port(winner->ai_addr, winner->ai_addrlen,
+					     dst, NULL/*ignore port*/);
+	passert(address_type(dst)->af == winner->ai_family);
 
 	freeaddrinfo(res);
 	pfree(name);

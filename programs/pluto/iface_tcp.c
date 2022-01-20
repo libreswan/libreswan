@@ -688,7 +688,8 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 		}
 		ip_address local_address;
 		ip_port local_port;
-		err_t err = sockaddr_to_address_port(local_sockaddr, &local_address, &local_port);
+		err_t err = sockaddr_to_address_port(&local_sockaddr.sa.sa, local_sockaddr.len,
+						     &local_address, &local_port);
 		if (err != NULL) {
 			llog(RC_LOG, logger, "TCP: socket %d: failed to get local TCP address from socket, %s", fd, err);
 			close(fd);
@@ -791,7 +792,8 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 	struct iface_endpoint *bind_ifp = arg;
 	ip_address remote_tcp_address;
 	ip_port remote_tcp_port;
-	err_t err = sockaddr_to_address_port(*sa, &remote_tcp_address, &remote_tcp_port);
+	err_t err = sockaddr_to_address_port(&sa->sa.sa, sa->len,
+					     &remote_tcp_address, &remote_tcp_port);
 	if (err != NULL) {
 		llog(RC_LOG, logger, "TCP: invalid remote address: %s", err);
 		close(accepted_fd);

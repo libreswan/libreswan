@@ -72,13 +72,10 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	    (req.ifr_flags & IFF_POINTOPOINT) != 0x0 &&
 	    (ioctl(sock, SIOCGIFDSTADDR, &req) == 0)) {
 		if (req.ifr_addr.sa_family == family->af) {
-			const ip_sockaddr sa = {
-				.len = family->sockaddr_size,
-				.sa.sa = req.ifr_addr,
-			};
 			ip_address nh_address;
 			ip_port nh_port;
-			happy(sockaddr_to_address_port(sa, &nh_address, &nh_port));
+			happy(sockaddr_to_address_port(&req.ifr_addr, family->sockaddr_size,
+						       &nh_address, &nh_port));
 			pexpect(hport(nh_port) == 0);
 			*nh = nh_address;
 		}
@@ -88,13 +85,10 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	if (dst != NULL &&
 	    ioctl(sock, SIOCGIFADDR, &req) == 0) {
 		if (req.ifr_addr.sa_family == family->af) {
-			const ip_sockaddr sa = {
-				.len = family->sockaddr_size,
-				.sa.sa = req.ifr_addr,
-			};
 			ip_address dst_address;
 			ip_port dst_port;
-			happy(sockaddr_to_address_port(sa, &dst_address, &dst_port));
+			happy(sockaddr_to_address_port(&req.ifr_addr, family->sockaddr_size,
+						       &dst_address, &dst_port));
 			pexpect(hport(dst_port) == 0);
 			*dst = dst_address;
 		}
