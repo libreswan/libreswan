@@ -2522,11 +2522,12 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, 
 	return true;
 }
 
-static const char *xfrm_aliases[] = { "xfrm", "netkey", NULL, };
+static const char *xfrm_protostack_names[] = { "xfrm", "netkey", NULL, };
 
 const struct kernel_ops xfrm_kernel_ops = {
-	.kern_name = "xfrm",
-	.aliases = xfrm_aliases,
+	.protostack_names = xfrm_protostack_names,
+	.interface_name = "xfrm",
+	.updown_name = "xfrm",
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,

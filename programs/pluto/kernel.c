@@ -644,7 +644,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	}
 	jam_string(buf, "' ");
 
-	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->kern_name);
+	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->updown_name);
 
 	if (c->metric != 0) {
 		jam(buf, "PLUTO_METRIC=%d ", c->metric);
@@ -2200,7 +2200,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			} else {
 				log_state(RC_LOG_SERIOUS, st,
 					  "Error: %s stack does not support sha2_truncbug=yes",
-					  kernel_ops->kern_name);
+					  kernel_ops->interface_name);
 				goto fail;
 			}
 		}
@@ -2541,7 +2541,7 @@ static void kernel_process_msg_cb(int fd, void *arg, struct logger *logger)
 {
 	const struct kernel_ops *kernel_ops = arg;
 
-	dbg("kernel: %s() process %s message", __func__, kernel_ops->kern_name);
+	dbg("kernel: %s() process %s message", __func__, kernel_ops->interface_name);
 	threadtime_t start = threadtime_start();
 	kernel_ops->process_msg(fd, logger);
 	threadtime_stop(&start, SOS_NOBODY, "kernel message");
@@ -2577,8 +2577,8 @@ void init_kernel(struct logger *logger)
 	/* get kernel version */
 	uname(&un);
 	llog(RC_LOG, logger,
-		    "using %s %s kernel support code on %s",
-		    un.sysname, kernel_ops->kern_name, un.version);
+	     "using %s %s kernel support code on %s",
+	     un.sysname, kernel_ops->interface_name, un.version);
 
 	passert(kernel_ops->init != NULL);
 	kernel_ops->init(logger);
@@ -2626,7 +2626,7 @@ void show_kernel_interface(struct show *s)
 {
 	if (kernel_ops != NULL) {
 		show_comment(s, "using kernel interface: %s",
-			     kernel_ops->kern_name);
+			     kernel_ops->interface_name);
 	}
 }
 

@@ -1779,8 +1779,8 @@ static bool is_virtual_net_used(struct connection *c,
 
 				if (!kernel_ops->overlap_supported) {
 					llog(RC_LOG, c->logger,
-					     "Kernel method '%s' does not support overlapping IP ranges",
-					     kernel_ops->kern_name);
+					     "%s kernel interface does not support overlapping IP ranges",
+					     kernel_ops->interface_name);
 					return true;
 				}
 

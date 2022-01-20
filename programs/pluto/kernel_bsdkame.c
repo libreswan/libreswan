@@ -659,11 +659,12 @@ static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED,
 	return false;
 }
 
-static const char *bsdkame_aliases[] = { "bsdkame", "bsd", "kame", NULL, };
+static const char *bsdkame_protostack_names[] = { "bsdkame", "bsd", "kame", NULL, };
 
 const struct kernel_ops bsdkame_kernel_ops = {
-	.kern_name = "bsdkame",
-	.aliases = bsdkame_aliases,
+	.protostack_names = bsdkame_protostack_names,
+	.interface_name = "BSD Kame",
+	.updown_name = "bsdkame",
 	.async_fdp = &pfkeyfd,
 	.replay_window = 64,
 	.esn_supported = false,

@@ -1493,16 +1493,16 @@ static bool extract_connection(const struct whack_message *wm,
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_sa_check == NULL) {
 			llog(RC_FATAL, c->logger,
-				    "failed to add connection: MOBIKE not supported by %s interface",
-				    kernel_ops->kern_name);
+			     "failed to add connection: MOBIKE not supported by %s interface",
+			     kernel_ops->interface_name);
 			return false;
 		}
 		/* probe the interface */
 		err_t err = kernel_ops->migrate_sa_check(c->logger);
 		if (err != NULL) {
 			llog(RC_FATAL, c->logger,
-				    "failed to add connection: MOBIKE kernel support missing for %s interface: %s",
-				    kernel_ops->kern_name, err);
+			     "failed to add connection: MOBIKE kernel support missing for %s interface: %s",
+			     kernel_ops->interface_name, err);
 			return false;
 		}
 	}

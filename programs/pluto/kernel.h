@@ -328,8 +328,29 @@ enum what_about_inbound {
 extern char *pluto_listen;	/* from --listen flag */
 
 struct kernel_ops {
-	const char *kern_name;
-	const char **aliases;
+	/*
+	 * The names used to identify the interface.
+	 *
+	 * It's assumed that protostack=PROTOSTACK_NAMES[0] is
+	 * preferend.
+	 */
+	const char **protostack_names;
+	/*
+	 * This name is fed to updown using the environment variable
+	 * PLUTO_STACK.  It needs to match the _updown.* name that was
+	 * installed.
+	 *
+	 * Typically its the same as PROTOSTACK_NAMES[0].  But not
+	 * necessarially.  On BSD it's currently "bsdkame", but could
+	 * easily be renamed to "setkey" as it is the setkey command
+	 * that is used to manage the interface.
+	 */
+	const char *updown_name;
+	/*
+	 * The user friendly name to used when logging errors.
+	 */
+	const char *interface_name;
+
 	bool overlap_supported;
 	bool sha2_truncbug_support;
 	bool esn_supported;

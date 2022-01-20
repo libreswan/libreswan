@@ -1344,33 +1344,26 @@ int main(int argc, char **argv)
 			cur_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
-			passert(kernel_ops != NULL); /*default*/
+			passert(kernel_ops == kernel_stacks[0]); /*default*/
 
 			if (protostack != NULL && protostack[0] != '\0') {
-				if (streq(protostack, "auto") ||
-				    streq(protostack, "native") ||
-				    streq(protostack, "nokernel")) {
-					kernel_ops = kernel_stacks[0];
-					llog(RC_LOG, logger, "the option protostack=%s is obsoleted, falling back to protostack=%s",
-						    protostack, kernel_ops->kern_name);
-				} else {
-					kernel_ops = NULL;
-					for (const struct kernel_ops *const *stack = kernel_stacks;
-					     *stack != NULL; stack++) {
-						const struct kernel_ops *ops = *stack;
-						for (const char **alias =ops->aliases;
-						     *alias != NULL; alias++) {
-							if (strcaseeq((*alias), protostack)) {
-								kernel_ops = ops;
-								break;
-							}
+				kernel_ops = NULL;
+				for (const struct kernel_ops *const *stack = kernel_stacks;
+				     *stack != NULL; stack++) {
+					const struct kernel_ops *ops = *stack;
+					for (const char **name =ops->protostack_names;
+					     *name != NULL; name++) {
+						if (strcaseeq((*name), protostack)) {
+							kernel_ops = ops;
+							break;
 						}
 					}
-					if (kernel_ops == NULL) {
-						kernel_ops = kernel_stacks[0];
-						llog(RC_LOG, logger, "protostack=%s ignored, using default protostack=%s",
-						     protostack, kernel_ops->kern_name);
-					}
+				}
+				if (kernel_ops == NULL) {
+					kernel_ops = kernel_stacks[0];
+					llog(RC_LOG, logger,
+					     "protostack=%s ignored, using protostack=%s",
+					     protostack, kernel_ops->protostack_names[0]);
 				}
 			}
 
