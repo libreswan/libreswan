@@ -7,7 +7,7 @@ west #
 west #
  ./cve-2009-0790.py
 west #
- ./myozcam.py
+ ./cve-2022-23094.py
 west #
  echo done
 done
