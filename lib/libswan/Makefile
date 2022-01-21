@@ -155,6 +155,8 @@ OBJS += jam_nss_secitem.o
 
 OBJS += test_buffer.o
 OBJS += ike_alg.o
+OBJS += ike_alg_dh.o
+OBJS += ike_alg_ipcomp.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
 OBJS += ike_alg_dh_nss_modp_ops.o
@@ -183,8 +185,6 @@ endif
 ifeq ($(USE_CAMELLIA),true)
 OBJS += ike_alg_camellia.o
 endif
-
-OBJS += ike_alg_dh.o
 
 ifeq ($(USE_MD5),true)
 OBJS += ike_alg_md5.o

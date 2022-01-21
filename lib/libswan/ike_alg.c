@@ -46,6 +46,8 @@
 #include "ike_alg_hash_ops.h"
 #include "ike_alg_dh.h"
 #include "ike_alg_dh_ops.h"
+#include "ike_alg_ipcomp.h"
+#include "ike_alg_ipcomp_ops.h"
 
 #define FOR_EACH_IKE_ALGP(TYPE,A)					\
 	for (const struct ike_alg **(A) = (TYPE)->algorithms->start;	\
@@ -91,6 +93,7 @@ static const struct ike_alg_type *const ike_alg_types[] = {
 	&ike_alg_prf,
 	&ike_alg_integ,
 	&ike_alg_dh,
+	&ike_alg_ipcomp,
 };
 
 const char *ike_alg_key_name(enum ike_alg_key key)
@@ -142,6 +145,12 @@ const struct dh_desc **next_dh_desc(const struct dh_desc **last)
 {
 	return (const struct dh_desc**)next_alg(&ike_alg_dh,
 						(const struct ike_alg**)last);
+}
+
+const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last)
+{
+	return (const struct ipcomp_desc**)next_alg(&ike_alg_ipcomp,
+						    (const struct ike_alg**)last);
 }
 
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
@@ -252,6 +261,11 @@ const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
 }
 
+const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo id)
+{
+	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id));
+}
+
 const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo id)
 {
 	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_ESP_ID, id, DBG_CRYPT));
@@ -260,6 +274,11 @@ const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo 
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute id)
 {
 	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_ESP_ID, id, DBG_CRYPT));
+}
+
+const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id)
+{
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_ESP_ID, id, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
@@ -285,6 +304,11 @@ const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
 const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
 {
 	return dh_desc(ikev2_lookup(&ike_alg_dh, id));
+}
+
+const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo id)
+{
+	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id));
 }
 
 #define LOOKUP(TYPE, FIELD, VALUE)					\
@@ -860,6 +884,43 @@ const struct ike_alg_type ike_alg_dh = {
 };
 
 /*
+ * IPCOMP
+ */
+
+static const struct ipcomp_desc *ipcomp_descriptors[] = {
+	&ike_alg_ipcomp_deflate,
+	&ike_alg_ipcomp_lzs,
+	&ike_alg_ipcomp_lzjh,
+};
+
+static void ipcomp_desc_check(const struct ike_alg *alg, struct logger *logger)
+{
+	const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
+	pexpect_ike_alg(logger, alg, ipcomp != NULL);
+}
+
+static bool ipcomp_desc_is_ike(const struct ike_alg *alg)
+{
+	const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
+	return ipcomp->ipcomp_ops != NULL;
+}
+
+static struct algorithm_table ipcomp_algorithms = ALGORITHM_TABLE(ipcomp_descriptors);
+
+const struct ike_alg_type ike_alg_ipcomp = {
+	.name = "IPCOMP",
+	.Name = "IPCOMP",
+	.algorithms = &ipcomp_algorithms,
+	.enum_names = {
+		[IKEv1_OAKLEY_ID] = &ipsec_ipcomp_algo_names,
+		[IKEv1_ESP_ID] = &ipsec_ipcomp_algo_names,
+		[IKEv2_ALG_ID] = &ipsec_ipcomp_algo_names,
+	},
+	.desc_check = ipcomp_desc_check,
+	.desc_is_ike = ipcomp_desc_is_ike,
+};
+
+/*
  * Check mapping between enums and names.
  */
 static void check_enum_name(const char *what,
@@ -936,7 +997,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		    alg != &ike_alg_dh_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
-				pexpect_ike_alg(logger, alg, alg->id[key] != 0);
+				pexpect_ike_alg_key(logger, alg, key, alg->id[key] != 0);
 			}
 		}
 
@@ -952,7 +1013,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 			pexpect_ike_alg(logger, alg, alg->id[IKEv2_ALG_ID] != 0);
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
-				pexpect_ike_alg(logger, alg, alg->id[key] != 0);
+				pexpect_ike_alg_key(logger, alg, key, alg->id[key] != 0);
 			}
 		}
 
@@ -992,8 +1053,8 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
-			pexpect_ike_alg(logger, alg,
-					id < 0 || lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
+			pexpect_ike_alg_key(logger, alg, key,
+					    id < 0 || lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
 		}
 
 		/*
@@ -1036,6 +1097,11 @@ static const char *backend_name(const struct ike_alg *alg)
 		const struct dh_desc *dh = dh_desc(alg);
 		if (dh->dh_ops != NULL) {
 			return dh->dh_ops->backend;
+		}
+	} else if (alg->algo_type == &ike_alg_ipcomp) {
+		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
+		if (ipcomp->ipcomp_ops != NULL) {
+			return ipcomp->ipcomp_ops->backend;
 		}
 	} else {
 		bad_case(0);
@@ -1107,6 +1173,9 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 		/* NULL not allowed for AH */
 		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
 	} else if (alg->algo_type == &ike_alg_dh) {
+		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
+		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
+	} else if (alg->algo_type == &ike_alg_ipcomp) {
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {

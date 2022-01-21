@@ -737,7 +737,7 @@ const struct ip_protocol ip_protocols[256] = {
 		.ipproto = 107,
 		.reference = "[Bob_Braden]",
 	},
-	[COMP_IPPROTO] = {
+	[IPCOMP_IPPROTO] = {
 		.description = "IP Payload Compression Protocol",
 		.name = "IPComp",
 		.ipproto = 108,

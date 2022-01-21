@@ -436,7 +436,7 @@ void add_bare_shunt(const ip_selector *our_client,
 
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 {
-	if (proto == &ip_protocol_comp)
+	if (proto == &ip_protocol_ipcomp)
 		return reqid_ipcomp(base);
 
 	if (proto == &ip_protocol_esp)
@@ -485,9 +485,9 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
 	return kernel_ops_get_ipsec_spi(0,
 					&sr->that.host_addr,
 					&sr->this.host_addr,
-					&ip_protocol_comp,
+					&ip_protocol_ipcomp,
 					tunnel,
-					get_proto_reqid(sr->reqid, &ip_protocol_comp),
+					get_proto_reqid(sr->reqid, &ip_protocol_ipcomp),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					"CPI", logger);
@@ -2051,10 +2051,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
 
-		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
+		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
-		said_next->story = said_str(route.dst.host_addr, &ip_protocol_comp,
+		said_next->story = said_str(route.dst.host_addr,
+					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
 
 		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {

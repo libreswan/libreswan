@@ -1463,19 +1463,15 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 */
 	if (sa->esatype == ET_IPCOMP) {
 
-		/* Compress Algs */
-		static const char *calg_list[] = {
-			[IPCOMP_DEFLATE] = "deflate",
-			[IPCOMP_LZS] = "lzs",
-			[IPCOMP_LZJH] = "lzjh",
-		};
+		if (!pexpect(sa->ipcomp != NULL)) {
+			return false;
+		}
 
-		const char *calg_name = (sa->ipcomp_algo >= elemsof(calg_list) ? NULL :
-					 calg_list[sa->ipcomp_algo]);
+		const char *calg_name = sa->ipcomp->kernel.xfrm_name;
 		if (calg_name == NULL) {
 			llog(RC_LOG_SERIOUS, logger,
 			     "unsupported compression algorithm: %s",
-			     enum_name(&ipsec_ipcomp_algo_names, sa->ipcomp_algo));
+			     sa->ipcomp->common.fqn);
 			return false;
 		}
 

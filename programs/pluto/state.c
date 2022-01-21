@@ -465,7 +465,7 @@ static struct state *new_state(struct connection *c,
 	st->st_ike_spis.responder = ike_responder_spi;
 	st->st_ah.protocol = &ip_protocol_ah;
 	st->st_esp.protocol = &ip_protocol_esp;
-	st->st_ipcomp.protocol = &ip_protocol_comp;
+	st->st_ipcomp.protocol = &ip_protocol_ipcomp;
 	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
 	st->hidden_variables.st_natd = ipv4_info.address.any;
 
@@ -2164,10 +2164,10 @@ static void show_established_child_details(struct show *s, struct state *st)
 		}
 		if (st->st_ipcomp.present) {
 			add_said(c->spd.that.host_addr,
-				 &ip_protocol_comp,
+				 &ip_protocol_ipcomp,
 				 st->st_ipcomp.attrs.spi);
 			add_said(c->spd.this.host_addr,
-				 &ip_protocol_comp,
+				 &ip_protocol_ipcomp,
 				 st->st_ipcomp.our_spi);
 		}
 #if defined(KERNEL_XFRM)

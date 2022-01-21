@@ -265,8 +265,7 @@ struct kernel_sa {
 	unsigned authkeylen;
 	unsigned char *authkey;
 
-	enum ipsec_ipcomp_algo ipcomp_algo;
-
+	const struct ipcomp_desc *ipcomp;
 	const struct encrypt_desc *encrypt;
 	unsigned enckeylen;
 	unsigned char *enckey;

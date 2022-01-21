@@ -71,14 +71,6 @@ struct state;   /* forward declaration of tag */
  */
 struct trans_attrs {
 	/*
-	 * If IPCOMP, the compession algorithm.
-	 *
-	 * XXX: code likely still relies on .encrypt having the same
-	 * value.  See below.
-	 */
-	enum ipsec_ipcomp_algo ta_comp;
-
-	/*
 	 * Let me see, the IKEV1TA_ENCRYPT field, depending on which
 	 * balls are in the air at any one moment, is used for and
 	 * contains one of the following:
@@ -128,6 +120,7 @@ struct trans_attrs {
 	/* negotiated crypto-suite */
 	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
 	uint16_t enckeylen;			/* encryption key len (bits) */
+	const struct ipcomp_desc *ta_ipcomp;	/* package of ipcomp routines */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
 	const struct dh_desc *ta_dh;	/* Diffie-Helman-Merkel routines */

@@ -202,8 +202,8 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		if (sa->decap_dscp) jam(buf, " +decap_dscp");
 		if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
 
-		if (sa->ipcomp_algo != IPCOMP_NONE) {
-			jam(buf, " %s", enum_name_short(&ipsec_ipcomp_algo_names, sa->ipcomp_algo));
+		if (sa->ipcomp != NULL) {
+			jam(buf, " %s", sa->ipcomp->common.fqn);
 		}
 		if (sa->integ != NULL) {
 			jam(buf, " %s:%d", sa->integ->common.fqn, sa->authkeylen);

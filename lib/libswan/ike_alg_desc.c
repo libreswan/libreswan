@@ -54,3 +54,9 @@ const struct dh_desc *dh_desc(const struct ike_alg *alg)
 	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
 	return (const struct dh_desc *)alg;
 }
+
+const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->algo_type == IKE_ALG_IPCOMP);
+	return (const struct ipcomp_desc *)alg;
+}
