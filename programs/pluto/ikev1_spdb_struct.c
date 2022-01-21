@@ -47,6 +47,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
+#include "ike_alg_ipcomp.h"	/* for ike_alg_ipcomp_deflate */
 #include "ikev1_db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
@@ -2425,9 +2426,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	switch (proto) {
 	case PROTO_IPCOMP:
-		attrs->transattrs.ta_comp = trans->isat_transid;
+		/* could be NULL */
+		attrs->transattrs.ta_ipcomp = ikev1_get_kernel_ipcomp_desc(trans->isat_transid);
 		break;
 	case PROTO_IPSEC_ESP:
+		/* could be NULL */
 		attrs->transattrs.ta_encrypt = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
 		break;
 	case PROTO_IPSEC_AH:
@@ -2929,7 +2932,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			ipcomp_seen = false;
 		const ip_protocol *inner_proto = NULL;
 		bool tunnel_mode = false;
-		uint16_t well_known_cpi = 0;
+		const struct ipcomp_desc *well_known_cpi = NULL;
 
 		pb_stream
 			ah_trans_pbs,
@@ -3005,7 +3008,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 */
 				switch (ntohl(next_spi)) {
 				case IPCOMP_DEFLATE:
-					well_known_cpi = ntohl(next_spi);
+					well_known_cpi = &ike_alg_ipcomp_deflate;
 					next_spi = uniquify_peer_cpi(next_spi, st, 0);
 					if (next_spi == 0) {
 						log_state(RC_LOG_SERIOUS, st,
@@ -3300,48 +3303,51 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			if (well_known_cpi != 0 && !ah_seen && !esp_seen) {
+			if (well_known_cpi != NULL && !ah_seen && !esp_seen) {
 				log_state(RC_LOG, st,
-					  "illegal proposal: bare IPCOMP used with well-known CPI");
+					  "illegal proposal: bare IPCOMP used with well-known CPI %s",
+					  well_known_cpi->common.fqn);
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			for (tn = 0; tn != ipcomp_proposal.isap_notrans;
 			     tn++) {
-				if (!parse_ipsec_transform(
-				       &ipcomp_trans,
-				       &ipcomp_attrs,
-				       &ipcomp_prop_pbs,
-				       &ipcomp_trans_pbs,
-				       &isakmp_ipcomp_transform_desc,
-				       previous_transnum,
-				       selection,
-				       tn == ipcomp_proposal.isap_notrans - 1,
-				       PROTO_IPCOMP,
-				       st))
+				if (!parse_ipsec_transform(&ipcomp_trans,
+							   &ipcomp_attrs,
+							   &ipcomp_prop_pbs,
+							   &ipcomp_trans_pbs,
+							   &isakmp_ipcomp_transform_desc,
+							   previous_transnum,
+							   selection,
+							   tn == ipcomp_proposal.isap_notrans - 1,
+							   PROTO_IPCOMP,
+							   st)) {
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				}
 
 				previous_transnum = ipcomp_trans.isat_transnum;
 
-				if (well_known_cpi != 0 &&
-				    ipcomp_attrs.transattrs.ta_comp != well_known_cpi) {
+				if (ipcomp_attrs.transattrs.ta_ipcomp == NULL) {
+					dbg("ignoring IPCOMP proposal with NULL or unknown ID");
+					continue; /* try another */
+				}
+
+				if (well_known_cpi != NULL &&
+				    ipcomp_attrs.transattrs.ta_ipcomp != well_known_cpi) {
 					log_state(RC_LOG, st,
-						  "illegal proposal: IPCOMP well-known CPI disagrees with transform");
+						  "illegal proposal: IPCOMP well-known CPI %s disagrees with transform %s",
+						  well_known_cpi->common.fqn,
+						  ipcomp_attrs.transattrs.ta_ipcomp->common.fqn);
 					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 
-				switch (ipcomp_attrs.transattrs.ta_comp) {
-				case IPCOMP_DEFLATE: /* all we can handle! */
-					break;
-
-				default:
-				{
+				/* all we can handle! */
+				if (ipcomp_attrs.transattrs.ta_ipcomp != &ike_alg_ipcomp_deflate) {
 					address_buf b;
-					dbg("unsupported IPCOMP Transform %d from %s",
-					    ipcomp_attrs.transattrs.ta_comp,
+					dbg("unsupported IPCOMP Transform %s from %s",
+					    ipcomp_attrs.transattrs.ta_ipcomp->common.fqn,
 					    str_address(&c->spd.that.host_addr, &b));
 					continue; /* try another */
-				}
 				}
 
 				if (ah_seen &&

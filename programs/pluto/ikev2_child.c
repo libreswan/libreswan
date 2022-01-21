@@ -318,7 +318,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 			//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			larval_child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-			larval_child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 			larval_child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
 			larval_child->sa.st_ipcomp.present = true;
 			/* logic above decided to enable IPCOMP */
@@ -942,7 +942,8 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-		child->sa.st_ipcomp.attrs.transattrs.ta_comp = n_ipcomp.ikev2_notify_ipcomp_trans;
+		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
+			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 		child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
 		child->sa.st_ipcomp.present = true;
 	}

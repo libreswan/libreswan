@@ -2051,7 +2051,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
 
-		said_next->ipcomp_algo = st->st_ipcomp.attrs.transattrs.ta_comp;
+		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->story = said_str(route.dst.host_addr,

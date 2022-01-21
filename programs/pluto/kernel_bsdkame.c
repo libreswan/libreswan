@@ -557,7 +557,7 @@ static ipsec_spi_t bsdkame_get_ipsec_spi(ipsec_spi_t avoid,
 					 const char *story UNUSED,
 					 struct logger *logger UNUSED)
 {
-	if (proto == &ip_protocol_comp) {
+	if (proto == &ip_protocol_ipcomp) {
 
 		static cpi_t first_busy_cpi = 0;
 		static cpi_t latest_cpi = 0;
