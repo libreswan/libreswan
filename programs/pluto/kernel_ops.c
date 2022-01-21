@@ -60,20 +60,8 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 
-		jam(buf, " ");
-		jam_selector_subnet_port(buf, src_client);
-		jam(buf, "-%s", src_client_proto->name);
-		if (encap == NULL) {
-			jam(buf, "-");
-		} else {
-			jam(buf, "-");
-			jam_address(buf, &encap->host.src);
-			jam(buf, "==");
-			jam_address(buf, &encap->host.dst);
-			jam(buf, "-");
-		}
-		jam(buf, "%s-", dst_client_proto->name);
-		jam_selector_subnet_port(buf, dst_client);
+		jam(buf, " client=");
+		jam_selectors(buf, src_client, dst_client);
 
 		jam_string(buf, " shunt_policy=");
 		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
@@ -82,25 +70,23 @@ bool raw_policy(enum kernel_policy_op op,
 		if (encap == NULL) {
 			jam(buf, "<null>");
 		} else {
-			jam(buf, "%s", encap_mode_name(encap->mode));
-			jam(buf, ",");
 			jam_address(buf, &encap->host.src);
-			jam(buf, "=>");
+			jam(buf, "==>");
 			jam_address(buf, &encap->host.dst);
-			jam(buf, ",inner=%s", (encap->inner_proto == NULL ? "<null>" :
-					       encap->inner_proto->name));
+			jam(buf, ",encap_mode=%s", encap_mode_name(encap->mode));
+			jam(buf, ",inner_proto=%s", (encap->inner_proto == NULL ? "<null>" :
+						     encap->inner_proto->name));
 			pexpect(encap->inner_proto != NULL);
 
-			jam_string(buf, "{");
+			jam_string(buf, "rule=[(inner)");
 			const char *sep = "";
 			for (int i = 0; i <= encap->outer; i++) {
 				const struct encap_rule *rule = &encap->rule[i];
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
-				jam_string(buf, sep); sep = ";";
-				jam_string(buf, rule_proto->name);
-				jam(buf, ",%d", rule->reqid);
+				jam(buf, "%s%s(%d)", sep, rule_proto->name, rule->reqid);
+				sep = ",";
 			}
-			jam(buf, "}");
+			jam(buf, "(outer)]");
 		}
 
 		jam(buf, " lifetime=");
@@ -111,12 +97,12 @@ bool raw_policy(enum kernel_policy_op op,
 
 		if (sa_marks != NULL) {
 			jam(buf, " sa_marks=");
-			const char *dir = "o:";
+			const char *dir = "out:";
 			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
 				jam(buf, "%s%x/%x%s",
 				    dir, mark->val, mark->mask,
 				    mark->unique ? "/unique" : "");
-				dir = ",i:";
+				dir = ",in:";
 			}
 		}
 
