@@ -30,7 +30,7 @@ bool raw_policy(enum kernel_policy_op op,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
 		enum shunt_policy shunt_policy,
-		const struct kernel_encap *encap,
+		const struct kernel_policy *kernel_policy,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
@@ -46,8 +46,9 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
-		if (encap != NULL && (op == KP_DELETE_OUTBOUND ||
-				      op == KP_DELETE_INBOUND)) {
+		if (kernel_policy != NULL &&
+		    kernel_policy->last > 0 &&
+		    (op == KP_DELETE_OUTBOUND || op == KP_DELETE_INBOUND)) {
 			jam(buf, ",ENCAP!=NULL");
 		}
 
@@ -66,22 +67,22 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_string(buf, " shunt_policy=");
 		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
 
-		jam(buf, " encap=");
-		if (encap == NULL) {
+		jam(buf, " kernel_policy=");
+		if (kernel_policy == NULL) {
 			jam(buf, "<null>");
 		} else {
-			jam_address(buf, &encap->host.src);
+			jam_address(buf, &kernel_policy->host.src);
 			jam(buf, "==>");
-			jam_address(buf, &encap->host.dst);
-			jam(buf, ",encap_mode=%s", encap_mode_name(encap->mode));
-			jam(buf, ",inner_proto=%s", (encap->inner_proto == NULL ? "<null>" :
-						     encap->inner_proto->name));
-			pexpect(encap->inner_proto != NULL);
+			jam_address(buf, &kernel_policy->host.dst);
+			jam(buf, ",mode=%s", encap_mode_name(kernel_policy->mode));
+			jam(buf, ",inner_proto=%s", (kernel_policy->inner_proto == NULL ? "<null>" :
+						     kernel_policy->inner_proto->name));
+			pexpect(kernel_policy->inner_proto != NULL);
 
 			jam_string(buf, "rule=[(inner)");
 			const char *sep = "";
-			for (int i = 0; i <= encap->outer; i++) {
-				const struct encap_rule *rule = &encap->rule[i];
+			for (unsigned i = 1; i <= kernel_policy->last; i++) {
+				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
 				jam(buf, "%s%s(%d)", sep, rule_proto->name, rule->reqid);
 				sep = ",";
@@ -146,7 +147,7 @@ bool raw_policy(enum kernel_policy_op op,
 	bool result = kernel_ops->raw_policy(op, what_about_inbound,
 					     src_client, dst_client,
 					     shunt_policy,
-					     encap,
+					     kernel_policy,
 					     use_lifetime, sa_priority, sa_marks,
 					     xfrm_if_id,
 					     sec_label,

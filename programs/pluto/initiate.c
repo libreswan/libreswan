@@ -950,14 +950,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_policy()?
 	 */
 
-	struct kernel_encap encap = proto_encap_transport_esp;
-	encap.host.src = packet_src_address(b->packet);
-	encap.host.dst = packet_dst_address(b->packet);
+	struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
+	kernel_policy.host.src = packet_src_address(b->packet);
+	kernel_policy.host.dst = packet_dst_address(b->packet);
 
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &local_shunt, &remote_shunt,
 		       b->negotiation_shunt,
-		       /*encap*/&encap,
+		       &kernel_policy,
 		       deltatime(SHUNT_PATIENCE),
 		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 		       NULL, 0 /* xfrm-if-id */,

@@ -297,7 +297,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
-			       const struct kernel_encap *encap,
+			       const struct kernel_policy *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
@@ -392,7 +392,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		ir->sadb_x_ipsecrequest_mode = (encap->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
 						encap->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
 						0);
-		ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
+		ir->sadb_x_ipsecrequest_proto = encap->rule[1].proto;
 		dbg("%s() sadb mode %d proto %d",
 		    __func__, ir->sadb_x_ipsecrequest_mode, ir->sadb_x_ipsecrequest_proto);
 		ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
