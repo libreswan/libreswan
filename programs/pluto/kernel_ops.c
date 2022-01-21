@@ -161,10 +161,11 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		const ip_protocol *src_proto = selector_protocol(*sa->src.client);
 		const ip_protocol *dst_proto = selector_protocol(*sa->dst.client);
 		const ip_protocol *esa_proto = protocol_by_ipproto(sa->esatype);
+		const ip_protocol *transport_proto = protocol_by_ipproto(sa->transport_proto);
 
 		jam(buf, "kernel: add_sa()");
 
-		jam(buf, " %d", sa->level);
+		jam(buf, " level=%d", sa->level);
 		jam(buf, " %s", sa->inbound ? "inbound" : "outbound");
 		jam(buf, " %s", sa->tunnel ? "tunnel" : "transport");
 
@@ -172,12 +173,12 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		jam_selector_subnet_port(buf, sa->src.client);
 		jam(buf, "-%s->", src_proto->name);
 		jam_address(buf, sa->src.address);
-		jam(buf, "=%s", esa_proto->name);
-		jam(buf, "="PRI_IPSEC_SPI, pri_ipsec_spi(sa->spi));
+		jam(buf, "==%s", esa_proto->name);
+		jam(buf, "["PRI_IPSEC_SPI"]", pri_ipsec_spi(sa->spi));
 		if (sa->encap_type != NULL) {
 			jam(buf, "=%s", sa->encap_type->name);
 		}
-		jam(buf, "=>");
+		jam(buf, "==>");
 		jam_address(buf, sa->dst.address);
 		jam(buf, "-%s->", dst_proto->name);
 		jam_selector_subnet_port(buf, sa->dst.client);
@@ -185,6 +186,9 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		if (sa->esn) jam(buf, " +esn");
 		if (sa->decap_dscp) jam(buf, " +decap_dscp");
 		if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
+
+		jam(buf, " replay_window=%d", sa->replay_window);
+		jam(buf, " transport_proto=%s", transport_proto->name);
 
 		if (sa->ipcomp != NULL) {
 			jam(buf, " %s", sa->ipcomp->common.fqn);
