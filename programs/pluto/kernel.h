@@ -375,8 +375,8 @@ struct kernel_ops {
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
 			   enum what_about_inbound what_about_inbound,
-			   const ip_selector *this_client,
-			   const ip_selector *that_client,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
 			   enum shunt_policy shunt_policy,
 			   const struct kernel_policy *policy,
 			   deltatime_t use_lifetime,
