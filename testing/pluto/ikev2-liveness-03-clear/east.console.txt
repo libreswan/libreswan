@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # wait for the child to start a liveness probe; this is the first clue
+east #
+ ../../guestbin/wait-for.sh --match ': retransmission; will wait 1 second' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
+east #
+ ../../guestbin/wait-for.sh --match ' liveness action ' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #1: liveness action - clearing connection kind CK_PERMANENT
+east #
+ 

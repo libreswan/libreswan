@@ -37,42 +37,21 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # sleep for a bit to run a few liveness cycles
+ #pkill pluto
 west #
- sleep 20
+ ipsec whack --shutdown --leave-state
 west #
- ipsec whack --impair send-no-delete
+ ipsec start
+Redirecting to: [initsystem]
 west #
- ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
+ ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
- # sleep for more than timeout action - 60 seconds
-west #
- sleep 20
-west #
- sleep 20
-west #
- sleep 20
-west #
- sleep 20
-west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- echo done
-done
-west #
- # east should have brought down but NOT re-established the tunnel
-west #
  ipsec whack --trafficstatus
-west #
- # can be seen on east logs
-west #
- hostname | grep west > /dev/null || grep "IKEv2 liveness action:" /tmp/pluto.log
 west #
  
