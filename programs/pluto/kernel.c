@@ -93,7 +93,7 @@ static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      const struct spd_route *sr,
 			      enum shunt_policy shunt_policy,
 			      const struct kernel_route *route,
-			      const struct kernel_encap *encap,
+			      const struct kernel_policy *kernel_policy,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
 			      const uint32_t xfrm_if_id,
@@ -258,14 +258,14 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	bool delete = (op & KERNEL_POLICY_DELETE);
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
-	struct kernel_encap outbound_encap = proto_encap_transport_esp;
-	outbound_encap.host.src = sr->this.host_addr;
-	outbound_encap.host.dst = sr->that.host_addr;
+	struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
+	outbound_kernel_policy.host.src = sr->this.host_addr;
+	outbound_kernel_policy.host.dst = sr->that.host_addr;
 
 	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
 			&sr->this.client, &sr->that.client,
 			shunt_policy,
-			/*encap*/delete ? NULL : &outbound_encap,
+			(delete ? NULL : &outbound_kernel_policy),
 			deltatime(0),
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
@@ -298,14 +298,14 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * outbound policies when there's only the basic outbound
 	 * policy installed.
 	 */
-	struct kernel_encap inbound_encap = proto_encap_transport_esp;
-	inbound_encap.host.src = sr->that.host_addr; /* inbound src<>dst */
-	inbound_encap.host.dst = sr->this.host_addr; /* inbound src<>dst */
+	struct kernel_policy inbound_kernel_policy = proto_kernel_policy_transport_esp;
+	inbound_kernel_policy.host.src = sr->that.host_addr; /* inbound src<>dst */
+	inbound_kernel_policy.host.dst = sr->this.host_addr; /* inbound src<>dst */
 
 	return raw_policy(op, what_about_inbound,
 			  &sr->that.client, &sr->this.client,
 			  shunt_policy,
-			  /*encap*/delete ? NULL : &inbound_encap,
+			  (delete ? NULL : &inbound_kernel_policy),
 			  deltatime(0),
 			  calculate_sa_prio(c, false),
 			  &c->sa_marks,
@@ -322,11 +322,10 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
 	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
-const struct kernel_encap proto_encap_transport_esp = {
-	.outer = 0,
-	.inner_proto = &ip_protocol_esp,
+const struct kernel_policy proto_kernel_policy_transport_esp = {
 	.mode = ENCAP_MODE_TRANSPORT,
-	.rule[0] = {
+	.last = 1,
+	.rule[1] = {
 		.proto = ENCAP_PROTO_ESP,
 		.reqid = 0
 	},
@@ -972,58 +971,47 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
  * the wire.  A -1 entry of the packet to be encapsulated is implied.
  */
 
-static struct kernel_encap kernel_encap_from_spd(lset_t policy,
-						 const struct spd_route *spd,
-						 enum encap_mode mode)
+static struct kernel_policy kernel_policy_from_spd(lset_t policy,
+						   const struct spd_route *spd,
+						   enum encap_mode mode)
 {
-	struct kernel_encap encap = {
+	struct kernel_policy kernel_policy = {
 		.mode = mode,
 	};
 
 	/*
 	 * XXX: remember construct this inner-to-outer; which is the
 	 * same as the kernel_sa array.
+	 *
+	 * Note the fixed order: compress -> encrypt -> authenticate.
 	 */
 
-	struct encap_rule *outer = encap.rule - 1;
+	struct kernel_policy_rule *last = kernel_policy.rule; /* rule[0] is empty */
 	if (policy & POLICY_COMPRESS) {
-		outer++;
-		outer->reqid = reqid_ipcomp(spd->reqid);
-		outer->proto = ENCAP_PROTO_IPCOMP;
+		last++;
+		last->reqid = reqid_ipcomp(spd->reqid);
+		last->proto = ENCAP_PROTO_IPCOMP;
 	}
 	if (policy & POLICY_ENCRYPT) {
-		outer++;
-		outer->reqid = reqid_esp(spd->reqid);
-		outer->proto = ENCAP_PROTO_ESP;
+		last++;
+		last->reqid = reqid_esp(spd->reqid);
+		last->proto = ENCAP_PROTO_ESP;
 	}
 	if (policy & POLICY_AUTHENTICATE) {
-		outer++;
-		outer->reqid = reqid_ah(spd->reqid);
-		outer->proto = ENCAP_PROTO_AH;
+		last++;
+		last->reqid = reqid_ah(spd->reqid);
+		last->proto = ENCAP_PROTO_AH;
 	}
 
-	passert(outer < encap.rule + elemsof(encap.rule));
-	encap.outer = outer - encap.rule; /* could be -1 */
-	passert(encap.outer < (int)elemsof(encap.rule));
+	passert(last < kernel_policy.rule + elemsof(kernel_policy.rule));
+	kernel_policy.last = last - kernel_policy.rule;
+	passert(kernel_policy.last < elemsof(kernel_policy.rule));
 
-	/*
-	 * XXX: Inner here refers to the inner-most rule which, for a
-	 * tunnel, needs the tunnel bit set.  For transport, why it
-	 * uses outer remains a mystery (suspect it just needs to be
-	 * !INT !IPIP).
-	 */
-	if (outer >= encap.rule) {
-		encap.inner_proto = (mode == ENCAP_MODE_TUNNEL ? &ip_protocol_ipip :
-				     mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(outer->proto) :
-				     NULL);
-		pexpect(encap.inner_proto != NULL);
-	}
-
-	return encap;
+	return kernel_policy;
 }
 
-static struct kernel_encap kernel_encap_from_state(const struct state *st,
-						   const struct spd_route *spd)
+static struct kernel_policy kernel_policy_from_state(const struct state *st,
+						     const struct spd_route *spd)
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
@@ -1043,8 +1031,8 @@ static struct kernel_encap kernel_encap_from_state(const struct state *st,
 	}
 
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
-	struct kernel_encap encap = kernel_encap_from_spd(policy, spd, mode);
-	return encap;
+	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy, spd, mode);
+	return kernel_policy;
 }
 
 static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
@@ -1345,14 +1333,14 @@ static bool sag_eroute(const struct state *st,
 	 * outer transformation.
 	 */
 
-	struct kernel_encap encap = kernel_encap_from_state(st, sr);
+	struct kernel_policy kernel_policy = kernel_policy_from_state(st, sr);
 	/* check for no transform at all */
-	passert(encap.outer >= 0);
+	passert(kernel_policy.last > 0);
 
 	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
-	struct kernel_route route = kernel_route_from_spd(sr, encap.mode,
+	struct kernel_route route = kernel_route_from_spd(sr, kernel_policy.mode,
 							  ENCAP_DIRECTION_OUTBOUND);
 
 	/* hack */
@@ -1360,11 +1348,11 @@ static bool sag_eroute(const struct state *st,
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
 	/* XXX: merge with kernel_encap_from_state()? */
-	encap.host.src = route.src.host_addr;
-	encap.host.dst = route.dst.host_addr;
+	kernel_policy.host.src = route.src.host_addr;
+	kernel_policy.host.dst = route.dst.host_addr;
 
 	return eroute_connection(op, why, sr, SHUNT_UNSET,
-				 &route, &encap,
+				 &route, &kernel_policy,
 				 calculate_sa_prio(c, false), &c->sa_marks,
 				 xfrm_if_id,
 				 HUNK_AS_SHUNK(c->config->sec_label),
@@ -1606,7 +1594,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 		ok = raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 				&src, &dst,
 				SHUNT_PASS,
-				/*encap*/NULL/*no-policy-template*/,
+				/*kernel_policy*/NULL/*delete->no-policy-rules*/,
 				deltatime(SHUNT_PATIENCE),
 				0, /* we don't know connection for priority yet */
 				NULL, /* sa_marks */
@@ -1666,8 +1654,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	enum encap_mode mode = (c->policy & POLICY_TUNNEL) ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT;
-	const struct kernel_encap proto_encap = kernel_encap_from_spd(c->policy, &c->spd, mode);
-	if (proto_encap.outer < 0) {
+	const struct kernel_policy proto_policy = kernel_policy_from_spd(c->policy, &c->spd, mode);
+	if (proto_policy.last == 0) {
 		/* XXX: log? */
 		return false;
 	}
@@ -1682,15 +1670,15 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		bool inbound = (i == 1);
 		struct end *src = inbound ? &c->spd.that : &c->spd.this;
 		struct end *dst = inbound ? &c->spd.this : &c->spd.that;
-		/* XXX: merge into kernel_encap_from_spd() ? */
-		struct kernel_encap encap = proto_encap;
-		encap.host.src = src->host_addr;
-		encap.host.dst = dst->host_addr;
+		/* XXX: merge into kernel_policy_from_spd() ? */
+		struct kernel_policy kernel_policy = proto_policy;
+		kernel_policy.host.src = src->host_addr;
+		kernel_policy.host.dst = dst->host_addr;
 		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
 				inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				&src->client, &dst->client,
 				SHUNT_UNSET,
-				/*encap*/&encap,
+				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
 				/*sa_priority*/priority,
 				/*sa_marks*/NULL,
@@ -1713,7 +1701,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					   &c->spd.this.client, &c->spd.that.client,
 					   SHUNT_UNSET,
-					   /*encap*/NULL/*no-policy-template*/,
+					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 					   /*use_lifetime*/deltatime(0),
 					   /*sa_priority*/priority,
 					   /*sa_marks*/NULL,
@@ -1747,7 +1735,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				   inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				   &src->client, &dst->client,
 				   SHUNT_PASS,
-				   /*encap*/NULL/*no-policy-template*/,
+				   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 				   /*use_lifetime*/deltatime(0),
 				   /*sa_priority*/priority,
 				   /*sa_marks*/NULL,
@@ -1768,7 +1756,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct spd_route *sr,
 		       enum shunt_policy shunt_policy,
 		       const struct kernel_route *route,
-		       const struct kernel_encap *encap,
+		       const struct kernel_policy *kernel_policy,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const uint32_t xfrm_if_id,
@@ -1780,7 +1768,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
 				    &client, &route->dst.client,
 				    shunt_policy,
-				    encap,
+				    kernel_policy,
 				    deltatime(0),
 				    sa_priority, sa_marks,
 				    xfrm_if_id,
@@ -1798,7 +1786,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 	return raw_policy(op, THIS_IS_NOT_INBOUND,
 			  &route->src.client, &route->dst.client,
 			  shunt_policy,
-			  encap,
+			  kernel_policy,
 			  deltatime(0),
 			  sa_priority, sa_marks,
 			  xfrm_if_id,
@@ -1893,13 +1881,13 @@ bool assign_holdpass(const struct connection *c,
 			 */
 			route.dst.host_addr = address_type(&route.dst.host_addr)->address.any;
 
-			struct kernel_encap encap = proto_encap_transport_esp;
-			/* XXX: merge with kernel_encap_from_state()? */
-			encap.host.src = route.src.host_addr;
-			encap.host.dst = route.dst.host_addr;
+			struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
+			/* XXX: merge with kernel_policy_from_state()? */
+			kernel_policy.host.src = route.src.host_addr;
+			kernel_policy.host.dst = route.dst.host_addr;
 
 			if (eroute_connection(op, reason, sr, negotiation_shunt,
-					      &route, /*encap*/&encap,
+					      &route, &kernel_policy,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
 					      HUNK_AS_SHUNK(c->config->sec_label),
@@ -1998,16 +1986,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_buf text_ah;
 
 	/*
-	 * Construct the policy encapsulation rules; it determines
-	 * tunnel mode as a side effect.
+	 * Construct the policy policysulation rules; it determines
+	 * tunnel mode as a side effect.  There needs to be at least
+	 * one rule.
 	 */
-	struct kernel_encap proto_encap = kernel_encap_from_state(st, &c->spd);
-	if (!pexpect(proto_encap.outer >= 0)) {
+	struct kernel_policy proto_policy = kernel_policy_from_state(st, &c->spd);
+	if (!pexpect(proto_policy.last > 0)) {
 		return false;
 	}
 
-	struct kernel_route route = kernel_route_from_spd(&c->spd, proto_encap.mode,
-							  inbound ? ENCAP_DIRECTION_INBOUND : ENCAP_DIRECTION_OUTBOUND);
+	struct kernel_route route = kernel_route_from_spd(&c->spd, proto_policy.mode,
+							  (inbound ? ENCAP_DIRECTION_INBOUND :
+							   ENCAP_DIRECTION_OUTBOUND));
 
 	const struct kernel_sa said_boilerplate = {
 		.src.address = &route.src.host_addr,
@@ -2015,7 +2005,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.src.client = &route.src.client,
 		.dst.client = &route.dst.client,
 		.inbound = inbound,
-		.tunnel = (proto_encap.mode == ENCAP_MODE_TUNNEL),
+		.tunnel = (proto_policy.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.client.ipproto,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
@@ -2031,7 +2021,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_selector_subnet_port(said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_address(said_boilerplate.src.address, &sab),
-	    proto_encap.inner_proto->name,
+	    encap_mode_name(proto_policy.mode),
 	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_selector_subnet_port(said_boilerplate.dst.client, &dcb),
@@ -2327,7 +2317,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 */
 	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
 	    __func__, inbound, c->spd.eroute_owner,
-	    encap_mode_name(proto_encap.mode));
+	    encap_mode_name(proto_policy.mode));
 	if (inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
@@ -2345,14 +2335,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * already indicating that the parameters are going to
 		 * need reversing ...
 		 */
-		struct kernel_encap encap = proto_encap;
-		encap.host.src = route.src.host_addr;	/* src_host */
-		encap.host.dst = route.dst.host_addr;	/* dst_host */
+		struct kernel_policy policy = proto_policy;
+		policy.host.src = route.src.host_addr;	/* src_host */
+		policy.host.dst = route.dst.host_addr;	/* dst_host */
 		if (!raw_policy(KP_ADD_INBOUND, REPORT_NO_INBOUND,
 				&route.src.client,	/* src_client */
 				&route.dst.client,	/* dst_client */
 				SHUNT_UNSET,
-				&encap,			/* " */
+				&policy,			/* " */
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, false),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
@@ -2489,7 +2479,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 			&c->spd.that.client,
 			&c->spd.this.client,
 			SHUNT_UNSET,
-			/*encap*/NULL/*no-policy-template*/,
+			/*kernel_policy*/NULL/*no-policy-template*/,
 			deltatime(0),
 			calculate_sa_prio(c, false),
 			&c->sa_marks,
@@ -2973,15 +2963,15 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 				ip_address dst = selector_type(&bs->our_client)->address.any;
-				/* XXX: given [sic] src=dst, suspect encap ignored */
-				struct kernel_encap encap = proto_encap_transport_esp;
-				encap.host.src = dst; /* should be useless [XXX: sic] */
-				encap.host.dst = dst; /* should be useless */
+				/* XXX: given [sic] src=dst, suspect policy ignored */
+				struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
+				kernel_policy.host.src = dst; /* should be useless [XXX: sic] */
+				kernel_policy.host.dst = dst; /* should be useless */
 				if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 						&bs->our_client,
 						&bs->peer_client,
 						bs->shunt_policy,
-						/*encap*/&encap,
+						&kernel_policy,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, false),
 						NULL,
@@ -3470,15 +3460,15 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 * delete things.
 			 */
 
-			/* XXX: suspect encap ignored */
-			struct kernel_encap encap = proto_encap_transport_esp;
-			encap.host.src = afi->address.any;
-			encap.host.dst = afi->address.any;
+			/* XXX: suspect policy ignored */
+			struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
+			kernel_policy.host.src = afi->address.any;
+			kernel_policy.host.dst = afi->address.any;
 
 			bool ok = raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					     &src, &dst,
 					     failure_shunt,
-					     /*encap*/&encap,
+					     &kernel_policy,
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */
 					     NULL, /* sa_marks */

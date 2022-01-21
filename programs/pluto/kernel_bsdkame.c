@@ -297,7 +297,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
-			       const struct kernel_encap *encap,
+			       const struct kernel_policy *encap,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
@@ -359,13 +359,14 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			 IPSEC_DIR_INBOUND : IPSEC_DIR_OUTBOUND);
 
 	/*
-	 * XXX: Hack: don't install an inbound spdb entry when tunnel
-	 * mode?
+	 * XXX: Hack: don't install an inbound spdb entry when
+	 * transport mode?
 	 */
 	if (dir == IPSEC_DIR_INBOUND &&
-	    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
-		dbg("%s() ignoring inbound non-tunnel %s policy entry",
-		    __func__, encap->inner_proto->name);
+	    encap != NULL &&
+	    encap->mode == ENCAP_MODE_TRANSPORT) {
+		dbg("%s() ignoring inbound non-tunnel policy entry",
+		    __func__);
 		return true;
 	}
 
@@ -392,7 +393,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		ir->sadb_x_ipsecrequest_mode = (encap->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
 						encap->mode == ENCAP_MODE_TRANSPORT ? IPSEC_MODE_TRANSPORT :
 						0);
-		ir->sadb_x_ipsecrequest_proto = encap->rule[0].proto;
+		ir->sadb_x_ipsecrequest_proto = encap->rule[1].proto;
 		dbg("%s() sadb mode %d proto %d",
 		    __func__, ir->sadb_x_ipsecrequest_mode, ir->sadb_x_ipsecrequest_proto);
 		ir->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;

@@ -130,11 +130,12 @@ enum encap_direction {
 	})
 
 /*
- * Encapsulation.
+ * Kernel encapsulation policy.
  *
  * This determine how a packet matching a policy should be
- * encapsulated (processed).  The rules are ordered inner-most to
- * outer-most (there's an implied -1 rule matching the actual packet).
+ * encapsulated (processed).  For an outgoing packet, the rules are
+ * applied in the specified order (and for incoming, in the reverse
+ * order).
  *
  * setkey(8) uses the term "rule" when referring to the tuple
  * protocol/mode/src-dst/level while ip-xfrm(8) uses TMPL to describe
@@ -144,29 +145,39 @@ enum encap_direction {
  * addresses; spi; ...?
  */
 
-struct encap_rule {
+struct kernel_policy_rule {
 	enum encap_proto proto;
 	reqid_t reqid;
 };
 
-struct kernel_encap {
+struct kernel_policy {
+	enum encap_mode mode;
 	/*
 	 * The src/dst addresses of the encapsulated packets.
 	 *
-	 * XXX: should this include port/proto, or is that eimplied by
-	 * other fields?
+	 * All rules should use these values?
+	 *
+	 * With setkey and transport mode, they can be unset; but
+	 * libreswan doesn't do that.
 	 */
 	struct {
 		ip_address src;
 		ip_address dst;
 	} host;
-	const struct ip_protocol *inner_proto;	/*IPIP or ESP|AH */
-	enum encap_mode mode;
-	int outer; /* -1 when no rules; XXX: good idea? */
-	struct encap_rule rule[4]; /* AH+ESP+COMP+0 */
+	/*
+	 * Index from 1; RULE[0] is always empty; so last==0 implies
+	 * no rules.
+	 *
+	 * The rules are applied to an outgoing packet in order they
+	 * appear in the rule[] table.  Hence, the output from
+	 * rule[last] goes across the wire, and rule[1] specifies the
+	 * first transform.
+	 */
+	unsigned last;
+	struct kernel_policy_rule rule[5]; /* [0]+AH+ESP+COMP+0 */
 };
 
-extern const struct kernel_encap proto_encap_transport_esp;
+extern const struct kernel_policy proto_kernel_policy_transport_esp;
 
 /*
  * How a packet flows through the kernel.
@@ -367,7 +378,7 @@ struct kernel_ops {
 			   const ip_selector *this_client,
 			   const ip_selector *that_client,
 			   enum shunt_policy shunt_policy,
-			   const struct kernel_encap *encap,
+			   const struct kernel_policy *policy,
 			   deltatime_t use_lifetime,
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
