@@ -151,10 +151,6 @@ struct kernel_policy_rule {
 };
 
 struct kernel_policy {
-	/*
-	 * These should agree, but don't?
-	 */
-	const struct ip_protocol *inner_proto;	/*IPIP or ESP|AH */
 	enum encap_mode mode;
 	/*
 	 * The src/dst addresses of the encapsulated packets.

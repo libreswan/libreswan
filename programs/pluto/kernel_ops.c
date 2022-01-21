@@ -75,9 +75,6 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "==>");
 			jam_address(buf, &kernel_policy->host.dst);
 			jam(buf, ",mode=%s", encap_mode_name(kernel_policy->mode));
-			jam(buf, ",inner_proto=%s", (kernel_policy->inner_proto == NULL ? "<null>" :
-						     kernel_policy->inner_proto->name));
-			pexpect(kernel_policy->inner_proto != NULL);
 
 			jam_string(buf, "rule=[(inner)");
 			const char *sep = "";

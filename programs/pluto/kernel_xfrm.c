@@ -575,8 +575,11 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
 		policy = IPSEC_POLICY_IPSEC;
-		if (kernel_policy != NULL) {
-			policy_name = kernel_policy->inner_proto->name;
+		if (kernel_policy != NULL && kernel_policy->last > 0) {
+			policy_name =
+				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
+				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(kernel_policy->rule[kernel_policy->last].proto)->name :
+				 "UNKNOWN");
 		} else {
 			/* MUST BE DELETE! */
 			policy_name = "delete(UNUSED)";

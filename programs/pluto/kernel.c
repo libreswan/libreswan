@@ -323,7 +323,6 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
 
 const struct kernel_policy proto_kernel_policy_transport_esp = {
-	.inner_proto = &ip_protocol_esp,
 	.mode = ENCAP_MODE_TRANSPORT,
 	.last = 1,
 	.rule[1] = {
@@ -1007,26 +1006,6 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	passert(last < kernel_policy.rule + elemsof(kernel_policy.rule));
 	kernel_policy.last = last - kernel_policy.rule;
 	passert(kernel_policy.last < elemsof(kernel_policy.rule));
-
-	/*
-	 * XXX: Inner here refers to the first rule that will be
-	 * applied to an outgoing packet.
-	 *
-	 * For a tunnel, the first rule, in addition to rule[1].proto,
-	 * will need to set the tunnel bit.
-	 *
-	 * All other rules, unconditionally set the transport bit
-	 * (because they directly connect to the previous rule?).
-	 *
-	 * XXX: this should be redundant; mode also specifies this.
-	 */
-	if (last > kernel_policy.rule) {
-		kernel_policy.inner_proto =
-			(mode == ENCAP_MODE_TUNNEL ? &ip_protocol_ipip :
-			 mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(last->proto) :
-			 NULL);
-		pexpect(kernel_policy.inner_proto != NULL);
-	}
 
 	return kernel_policy;
 }
@@ -2042,7 +2021,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_selector_subnet_port(said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_address(said_boilerplate.src.address, &sab),
-	    proto_policy.inner_proto->name,
+	    encap_mode_name(proto_policy.mode),
 	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_selector_subnet_port(said_boilerplate.dst.client, &dcb),

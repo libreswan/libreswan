@@ -359,13 +359,14 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			 IPSEC_DIR_INBOUND : IPSEC_DIR_OUTBOUND);
 
 	/*
-	 * XXX: Hack: don't install an inbound spdb entry when tunnel
-	 * mode?
+	 * XXX: Hack: don't install an inbound spdb entry when
+	 * transport mode?
 	 */
 	if (dir == IPSEC_DIR_INBOUND &&
-	    encap != NULL && encap->mode == ENCAP_MODE_TRANSPORT) {
-		dbg("%s() ignoring inbound non-tunnel %s policy entry",
-		    __func__, encap->inner_proto->name);
+	    encap != NULL &&
+	    encap->mode == ENCAP_MODE_TRANSPORT) {
+		dbg("%s() ignoring inbound non-tunnel policy entry",
+		    __func__);
 		return true;
 	}
 
