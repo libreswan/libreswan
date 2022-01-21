@@ -50,6 +50,18 @@ struct logger;
 		}							\
 	}
 
+#define pexpect_ike_alg_key(LOGGER, ALG, KEY, ASSERTION)		\
+	{								\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			pexpect_fail(LOGGER, HERE,			\
+				     PRI_IKE_ALG" %s fails: "#ASSERTION, \
+				     pri_ike_alg(ALG),			\
+				     ike_alg_key_name(KEY));		\
+		}							\
+	}
+
 #define pexpect_ike_alg_streq(LOGGER, ALG, LHS, RHS)			\
 	{								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
@@ -88,6 +100,7 @@ extern const struct ike_alg_type ike_alg_hash;
 extern const struct ike_alg_type ike_alg_prf;
 extern const struct ike_alg_type ike_alg_integ;
 extern const struct ike_alg_type ike_alg_dh;
+extern const struct ike_alg_type ike_alg_ipcomp;
 
 /* keep old code working */
 #define IKE_ALG_ENCRYPT &ike_alg_encrypt
@@ -95,6 +108,7 @@ extern const struct ike_alg_type ike_alg_dh;
 #define IKE_ALG_PRF &ike_alg_prf
 #define IKE_ALG_INTEG &ike_alg_integ
 #define IKE_ALG_DH &ike_alg_dh
+#define IKE_ALG_IPCOMP &ike_alg_ipcomp
 
 /*
  * User frendly string representing the algorithm type (family).
@@ -110,10 +124,9 @@ enum ike_alg_key {
 	IKEv1_OAKLEY_ID,
 	IKEv1_ESP_ID,
 	IKEv2_ALG_ID,
-
-	IKE_ALG_KEY_ROOF,
-	IKE_ALG_KEY_FLOOR = IKEv1_OAKLEY_ID
 };
+#define IKE_ALG_KEY_ROOF (IKEv2_ALG_ID+1)
+#define IKE_ALG_KEY_FLOOR IKEv1_OAKLEY_ID
 
 /*
  * User friendly string representing the key (protocol family).
@@ -154,7 +167,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * PRF:      ikev2_trans_type_prf       ikev2_trans_type_prf_names    IKEv2_AUTH
  * INTEG:    ikev2_trans_type_integ     ikev2_trans_type_integ_names  IKEv2_INTEG
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
- *
+ * COMP:     ipsec_ipcomp_algo          ipsec_ipcomp_algo_names       ?
  *
  * id[IKEv1_OAKLEY_ID]:
  *
@@ -170,7 +183,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * PRF:      ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * INTEG:    ikev1_hash_attribute       oakley_hash_names             OAKLEY
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
- *
+ * IPCOMP:   N/A
  *
  * id[IKEv1_ESP_ID]:
  *
@@ -188,6 +201,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  *
  * ENCRYPT:  ipsec_cipher_algo          esp_transformid_names         ESP
  * INTEG:    ikev1_auth_attribute       auth_alg_names                AUTH_ALGORITHM
+ * IPCOMP:   ipsec_ipcomp_algo          ipsec_ipcomp_algo_names       ?
  *
  *
  * (not yet if ever) ikev[12]_ipsec_id:
@@ -251,6 +265,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * XXX: Still missing is a name/alias lookup letting some of alg_info
  * be eliminated.
  */
+
 struct ike_alg {
 	/*
 	 * Name to print when logging; FQN = fully-qualified-name.
@@ -294,6 +309,10 @@ struct ike_alg {
 	 */
 	const bool fips;
 };
+
+/*
+ * Encryption algorithm re-aranges the bits.
+ */
 
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
@@ -580,6 +599,7 @@ struct prf_desc {
  * However only IKE needs the PRF definition.  ESP/AH leave it to the
  * kernel.
  */
+
 struct integ_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	/*
@@ -658,57 +678,6 @@ struct integ_desc {
 };
 
 /*
- * Is the encryption algorithm AEAD (Authenticated Encryption with
- * Associated Data)?
- *
- * Since AEAD algorithms have integrity built in, separate integrity
- * is redundant.
- *
- * Note that the converse (non-AEAD algorithm always require
- * integrity) is not true.  For instance, with ESP, integrity is
- * optional.
- */
-
-extern bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc);
-
-void init_ike_alg(struct logger *logger);
-void test_ike_alg(struct logger *logger);
-
-/*
- * Iterate over all enabled algorithms.
- */
-const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
-const struct prf_desc **next_prf_desc(const struct prf_desc **last);
-const struct integ_desc **next_integ_desc(const struct integ_desc **last);
-const struct dh_desc **next_dh_desc(const struct dh_desc **last);
-
-/*
- * Is the algorithm suitable for IKE (i.e., native)?
- *
- * Code should also filter on ikev1_oakley_id and/or ikev2_id.
- */
-bool ike_alg_is_ike(const struct ike_alg *alg);
-
-/*
- * Is the algorithm valid (or did FIPS, say, disable it)?
- */
-
-bool ike_alg_is_valid(const struct ike_alg *alg);
-
-/*
- * Is the key valid for the encryption algorithm?
- *
- * For the case of null encryption, 0 is considered valid.
- */
-bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
-
-/*
- * The largest and smallest key bit length allowed.
- */
-unsigned encrypt_min_key_bit_length(const struct encrypt_desc *encrypt_desc);
-unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
-
-/*
  * DHMKE: Diffie–Hellman–Merkle key exchange.
  *
  * The naming follows Hellman's suggestion; besides "dh" is too short
@@ -738,6 +707,84 @@ struct dh_desc {
 extern const struct dh_desc unset_group;      /* magic signifier */
 
 /*
+ * IPCOMP, like encryption, re-aranges the bits.
+ */
+
+struct ipcomp_desc {
+	struct ike_alg common;		/* must be first */
+
+	struct {
+		/*
+		 * This encryption algorithm's NETLINK / XFRM name, if known.
+		 * NULL implies not supported.
+		 */
+		const char *xfrm_name;
+		/*
+		 * The algorithms's SADB (pfkeyv2) value (>0 when defined for
+		 * this OS).
+		 */
+		unsigned sadb_calg_id;
+	} kernel;
+
+	/*
+	 * Will IKE ever support IPCOMP?
+	 */
+	const struct ipcomp_ops *ipcomp_ops;
+};
+
+/*
+ * Is the encryption algorithm AEAD (Authenticated Encryption with
+ * Associated Data)?
+ *
+ * Since AEAD algorithms have integrity built in, separate integrity
+ * is redundant.
+ *
+ * Note that the converse (non-AEAD algorithm always require
+ * integrity) is not true.  For instance, with ESP, integrity is
+ * optional.
+ */
+
+extern bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc);
+
+void init_ike_alg(struct logger *logger);
+void test_ike_alg(struct logger *logger);
+
+/*
+ * Iterate over all enabled algorithms.
+ */
+const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
+const struct prf_desc **next_prf_desc(const struct prf_desc **last);
+const struct integ_desc **next_integ_desc(const struct integ_desc **last);
+const struct dh_desc **next_dh_desc(const struct dh_desc **last);
+const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last);
+
+/*
+ * Is the algorithm suitable for IKE (i.e., native)?
+ *
+ * Code should also filter on ikev1_oakley_id and/or ikev2_id.
+ */
+bool ike_alg_is_ike(const struct ike_alg *alg);
+
+/*
+ * Is the algorithm valid (or did FIPS, say, disable it)?
+ */
+
+bool ike_alg_is_valid(const struct ike_alg *alg);
+
+/*
+ * Is the key valid for the encryption algorithm?
+ *
+ * For the case of null encryption, 0 is considered valid.
+ */
+bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
+
+/*
+ * The largest and smallest key bit length allowed.
+ */
+unsigned encrypt_min_key_bit_length(const struct encrypt_desc *encrypt_desc);
+unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
+
+/*
  * Robustly cast struct ike_alg to underlying object.
  *
  * Could be reduced to a macro, but only if passert() returned
@@ -748,6 +795,7 @@ const struct prf_desc *prf_desc(const struct ike_alg *alg);
 const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
 const struct dh_desc *dh_desc(const struct ike_alg *alg);
+const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
 
 /*
  * Find the ENCRYPT / PRF / INTEG / DH algorithm using the IKEv2 wire
@@ -763,6 +811,7 @@ const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
 const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
+const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo);
 
 /*
  * Find the ENCRYPT / PRF / DH algorithm using IKEv1 IKE (aka OAKLEY)
@@ -776,6 +825,7 @@ const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
 const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
+const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo);
 
 /*
  * Find the IKEv1 ENCRYPT / INTEG algorithm that will be fed into the
@@ -784,6 +834,7 @@ const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
 
 const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo);
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
+const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo);
 
 /*
  * Find the ENCRYPT / INTEG algorithm using the SADB defined value.
@@ -794,5 +845,6 @@ const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
+const struct ipcomp_desc *ipcomp_desc_by_sadb_aalg_id(unsigned id);
 
 #endif /* _IKE_ALG_H */
