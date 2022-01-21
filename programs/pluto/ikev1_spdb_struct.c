@@ -3360,7 +3360,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			ipcomp_attrs.spi = ipcomp_cpi;
-			inner_proto = &ip_protocol_comp;
+			inner_proto = &ip_protocol_ipcomp;
 			if (ipcomp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = true;
 		}
@@ -3415,7 +3415,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					      &ipcomp_trans_pbs,
 					      &c->spd,
 					      tunnel_mode &&
-						inner_proto == &ip_protocol_comp,
+						inner_proto == &ip_protocol_ipcomp,
 					      st->st_logger);
 			}
 

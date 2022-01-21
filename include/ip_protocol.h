@@ -62,10 +62,10 @@ typedef struct ip_protocol {
 } ip_protocol;
 
 #ifdef IPPROTO_COMP
-#define COMP_IPPROTO IPPROTO_COMP /*linux*/
+#define IPCOMP_IPPROTO IPPROTO_COMP /*linux*/
 #endif
 #ifdef IPPROTO_IPCOMP
-#define COMP_IPPROTO IPPROTO_IPCOMP
+#define IPCOMP_IPPROTO IPPROTO_IPCOMP /*everything else*/
 #endif
 #define INTERNAL_IPPROTO 61
 
@@ -79,7 +79,7 @@ extern const struct ip_protocol ip_protocols[256];
 #define ip_protocol_udp ip_protocols[IPPROTO_UDP]		/* any host internal protocol */
 #define ip_protocol_esp ip_protocols[IPPROTO_ESP]		/* Encapsulated Security Payload */
 #define ip_protocol_ah ip_protocols[IPPROTO_AH]			/* Authentication Header */
-#define ip_protocol_comp ip_protocols[COMP_IPPROTO]		/* IP Payload Compression Protocol */
+#define ip_protocol_ipcomp ip_protocols[IPCOMP_IPPROTO]		/* IP Payload Compression Protocol */
 #define ip_protocol_internal ip_protocols[INTERNAL_IPPROTO]	/* any host internal protocol */
 
 #if 0
