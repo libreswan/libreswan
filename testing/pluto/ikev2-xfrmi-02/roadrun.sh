@@ -9,4 +9,9 @@ ip route show table 50
 ip route
 # check if_id and mark in ip xfrm state
 ip xfrm state
+ipsec trafficstatus
+# check if delete removes all policies without errors
+ipsec auto --delete road
+ip xfrm state
+ip xfrm policy
 echo done

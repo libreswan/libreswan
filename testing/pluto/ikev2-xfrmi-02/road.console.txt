@@ -76,10 +76,37 @@ src 192.1.3.209 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x4000
 road #
+ ipsec trafficstatus
+006 #2: "road", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+road #
+ # check if delete removes all policies without errors
+road #
+ ipsec auto --delete road
+002 "road": terminating SAs using this connection
+002 "road" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "road" #2: ESP traffic information: in=84B out=177B
+road #
+ ip xfrm state
+road #
+ ip xfrm policy
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+road #
  echo done
 done
-road #
- ipsec whack --trafficstatus
-006 #2: "road", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 road #
  

@@ -8,3 +8,7 @@ road will have device ipsec0
 ip rule show
 ip route show table 50
 ip -s link show ipsec0
+
+
+it also tests if delete works, as it needs to specify the if_id as well
+
