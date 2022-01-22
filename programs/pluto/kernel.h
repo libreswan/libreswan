@@ -371,7 +371,6 @@ struct kernel_ops {
 
 	void (*init)(struct logger *logger);
 	void (*shutdown)(struct logger *logger);
-	void (*pfkey_register)(void);
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,

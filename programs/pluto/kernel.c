@@ -2569,10 +2569,6 @@ void init_kernel(struct logger *logger)
 		kernel_ops->v6holes(logger);
 	}
 
-	/* register SA types that we can negotiate */
-	if (kernel_ops->pfkey_register != NULL)
-		kernel_ops->pfkey_register();
-
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);
 

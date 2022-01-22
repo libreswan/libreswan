@@ -53,6 +53,9 @@
 #include "ip_sockaddr.h"
 #include "rnd.h"
 
+static void bsdkame_algregister(int satype, int supp_exttype,
+				struct sadb_alg *alg);
+
 /*
  * Multiplier for converting .sadb_msg_len (in 64-bit words) to
  * size_t.
@@ -157,6 +160,19 @@ static void bsdkame_init_pfkey(struct logger *logger)
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
 			    "pfkey probe failed");
 	}
+
+	DBG_log("pfkey_register AH");
+	pfkey_send_register(pfkeyfd, SADB_SATYPE_AH);
+	pfkey_recv_register(pfkeyfd);
+
+	DBG_log("pfkey_register ESP");
+	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
+	pfkey_recv_register(pfkeyfd);
+
+	pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
+	pfkey_recv_register(pfkeyfd);
+
+	foreach_supported_alg(bsdkame_algregister);
 }
 
 static void bsdkame_algregister(int satype, int supp_exttype,
@@ -196,22 +212,6 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 	default:
 		break;
 	}
-}
-
-static void bsdkame_pfkey_register(void)
-{
-	DBG_log("pfkey_register AH");
-	pfkey_send_register(pfkeyfd, SADB_SATYPE_AH);
-	pfkey_recv_register(pfkeyfd);
-
-	DBG_log("pfkey_register ESP");
-	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
-	pfkey_recv_register(pfkeyfd);
-
-	pfkey_send_register(pfkeyfd, SADB_X_SATYPE_IPCOMP);
-	pfkey_recv_register(pfkeyfd);
-
-	foreach_supported_alg(bsdkame_algregister);
 }
 
 static void bsdkame_pfkey_register_response(struct sadb_msg *msg)
@@ -662,7 +662,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.async_fdp = &pfkeyfd,
 	.replay_window = 64,
 	.esn_supported = false,
-	.pfkey_register = bsdkame_pfkey_register,
 	.process_queue = bsdkame_dequeue,
 	.process_msg = bsdkame_process_msg,
 	.raw_policy = bsdkame_raw_policy,
