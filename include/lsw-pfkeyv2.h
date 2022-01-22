@@ -24,8 +24,13 @@
  * prefix SADB_X_... or sadb_x_...).
  */
 
-#if defined(KERNEL_BSDKAME)
-#include <net/pfkeyv2.h>
+#if defined(KERNEL_BSDKAME) || defined(KERNEL_PFKEYV2)
+#include <stdint.h>
+# ifdef linux
+#  include <linux/pfkeyv2.h>
+# else
+#  include <net/pfkeyv2.h>
+# endif
 #endif
 
 #endif
