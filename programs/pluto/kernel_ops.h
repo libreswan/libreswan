@@ -28,7 +28,7 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       deltatime_t use_lifetime,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
-		       const uint32_t xfrm_if_id,
+		       const struct pluto_xfrmi *xfrmi,
 		       const shunk_t sec_label,
 		       struct logger *logger,
 		       const char *fmt, ...) PRINTF_LIKE(13);

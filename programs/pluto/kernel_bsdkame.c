@@ -301,7 +301,7 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
-			       const uint32_t xfrm_if_id UNUSED,
+			       const struct pluto_xfrmi *xfrmi UNUSED,
 			       const shunk_t policy_label UNUSED,
 			       struct logger *logger)
 {

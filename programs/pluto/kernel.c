@@ -96,7 +96,7 @@ static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      const struct kernel_policy *kernel_policy,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
-			      const uint32_t xfrm_if_id,
+			      const struct pluto_xfrmi *xfrmi,
 			      shunk_t sec_label,
 			      struct logger *logger);
 
@@ -268,8 +268,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			(delete ? NULL : &outbound_kernel_policy),
 			deltatime(0),
 			calculate_sa_prio(c, false),
-			&c->sa_marks,
-			(c->xfrmi != NULL) ? c->xfrmi->if_id : 0,
+			&c->sa_marks, c->xfrmi,
 			sec_label, logger,
 			"%s() outbound shunt for %s", __func__, opname))
 		return false;
@@ -308,8 +307,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			  (delete ? NULL : &inbound_kernel_policy),
 			  deltatime(0),
 			  calculate_sa_prio(c, false),
-			  &c->sa_marks,
-			  0, /* xfrm_if_id needed for shunt? */
+			  &c->sa_marks, c->xfrmi,
 			  sec_label, logger,
 			  "%s() inbound shunt for %s", __func__, opname);
 }
@@ -1337,8 +1335,6 @@ static bool sag_eroute(const struct state *st,
 	/* check for no transform at all */
 	passert(kernel_policy.last > 0);
 
-	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
-
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
 	struct kernel_route route = kernel_route_from_spd(sr, kernel_policy.mode,
 							  ENCAP_DIRECTION_OUTBOUND);
@@ -1353,8 +1349,8 @@ static bool sag_eroute(const struct state *st,
 
 	return eroute_connection(op, why, sr, SHUNT_UNSET,
 				 &route, &kernel_policy,
-				 calculate_sa_prio(c, false), &c->sa_marks,
-				 xfrm_if_id,
+				 calculate_sa_prio(c, false),
+				 &c->sa_marks, c->xfrmi,
 				 HUNK_AS_SHUNK(c->config->sec_label),
 				 st->st_logger);
 }
@@ -1597,8 +1593,7 @@ bool delete_bare_shunt(const ip_address *src_address,
 				/*kernel_policy*/NULL/*delete->no-policy-rules*/,
 				deltatime(SHUNT_PATIENCE),
 				0, /* we don't know connection for priority yet */
-				NULL, /* sa_marks */
-				0 /* xfrm interface id */,
+				/*sa_marks+xfrmi*/NULL,NULL,
 				null_shunk, logger,
 				"%s() %s", __func__, why);
 		if (!ok) {
@@ -1681,8 +1676,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
 				/*sa_priority*/priority,
-				/*sa_marks*/NULL,
-				/*xfrm_if_id*/0,
+				/*sa_marks+xfrmi*/NULL,NULL,
 				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
@@ -1704,8 +1698,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 					   /*use_lifetime*/deltatime(0),
 					   /*sa_priority*/priority,
-					   /*sa_marks*/NULL,
-					   /*xfrm_if_id*/0,
+					   /*sa_marks+xfrmi*/NULL,NULL,
 					   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 					   /*logger*/logger,
 					   "%s() security label policy", __func__);
@@ -1738,8 +1731,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 				   /*use_lifetime*/deltatime(0),
 				   /*sa_priority*/priority,
-				   /*sa_marks*/NULL,
-				   /*xfrm_if_id*/0,
+				   /*sa_marks+xfrmi*/NULL,NULL,
 				   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				   /*logger*/logger,
 				   "%s() security label policy", __func__);
@@ -1759,7 +1751,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct kernel_policy *kernel_policy,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
-		       const uint32_t xfrm_if_id,
+		       const struct pluto_xfrmi *xfrmi,
 		       shunk_t sec_label,
 		       struct logger *logger)
 {
@@ -1770,8 +1762,8 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 				    shunt_policy,
 				    kernel_policy,
 				    deltatime(0),
-				    sa_priority, sa_marks,
-				    xfrm_if_id,
+				    sa_priority,
+				    sa_marks, xfrmi,
 				    sec_label,
 				    logger,
 				    "CAT: %s() %s", __func__, opname);
@@ -1788,8 +1780,8 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			  shunt_policy,
 			  kernel_policy,
 			  deltatime(0),
-			  sa_priority, sa_marks,
-			  xfrm_if_id,
+			  sa_priority,
+			  sa_marks, xfrmi,
 			  sec_label,
 			  logger,
 			  "%s() %s", __func__, opname);
@@ -2322,8 +2314,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    c->spd.eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
-		uint32_t xfrm_if_id = c->xfrmi != NULL ?
-			c->xfrmi->if_id : 0;
 
 		/*
 		 * MCR - should be passed a spd_eroute structure here.
@@ -2345,8 +2335,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				&policy,			/* " */
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, false),	/* priority */
-				&c->sa_marks,		/* IPsec SA marks */
-				xfrm_if_id,
+				&c->sa_marks, c->xfrmi,		/* IPsec SA marks */
 				HUNK_AS_SHUNK(c->config->sec_label),
 				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
@@ -2482,8 +2471,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 			/*kernel_policy*/NULL/*no-policy-template*/,
 			deltatime(0),
 			calculate_sa_prio(c, false),
-			&c->sa_marks,
-			0, /* xfrm_if_id. needed to tear down? */
+			&c->sa_marks, c->xfrmi,
 			/*sec_label:always-null*/null_shunk,
 			st->st_logger,
 			"%s() teardown inbound Child SA", __func__)) {
@@ -2974,8 +2962,7 @@ bool route_and_eroute(struct connection *c,
 						&kernel_policy,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, false),
-						NULL,
-						0,
+						/*sa_mars+xfrmi*/NULL,NULL,
 						/* bare shunt are not associated with any connection so no security label */
 						null_shunk, logger,
 						"%s() restore", __func__)) {
@@ -3471,8 +3458,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 					     &kernel_policy,
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */
-					     NULL, /* sa_marks */
-					     0 /* xfrm interface id */,
+					     /*sa_marks+xfrmi*/NULL,NULL,
 					     null_shunk, logger,
 					     "%s() %s", __func__, why);
 			if (!ok) {

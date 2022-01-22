@@ -66,7 +66,7 @@
 #include "ike_alg_dh.h"
 #include "pluto_stats.h"
 #include "pending.h"
-#include "kernel.h"			/* for raw_policy() hack */
+#include "kernel.h"			/* for get_my_cpi() hack */
 #include "ikev2_proposals.h"
 
 static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)

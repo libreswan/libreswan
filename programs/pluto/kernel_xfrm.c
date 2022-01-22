@@ -528,7 +528,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    deltatime_t use_lifetime UNUSED,
 			    uint32_t sa_priority,
 			    const struct sa_marks *sa_marks,
-			    const uint32_t xfrm_if_id,
+			    const struct pluto_xfrmi *xfrmi,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
@@ -791,7 +791,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	if (sa_marks != NULL &&
 	    /* XXX: see comment above and {else} below */
 	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD)) {
-		if (xfrm_if_id == 0) {
+		if (xfrmi == NULL) {
 			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
 			if (sa_mark.val != 0 && sa_mark.mask != 0) {
@@ -811,11 +811,11 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 #ifdef USE_XFRM_INTERFACE
 		} else {
 			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-			    __func__, xfrm_if_id, req.n.nlmsg_type);
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
+			    __func__, xfrmi->if_id, req.n.nlmsg_type);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrmi->if_id);
 			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
 				/* XFRMA_SET_MARK = XFRMA_IF_ID */
-				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrm_if_id);
+				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrmi->if_id);
 			} else {
 				/* manually configured mark-out=mark/mask */
 				nl_addattr32(&req.n, sizeof(req.data),

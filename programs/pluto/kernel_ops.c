@@ -18,6 +18,7 @@
 #include "kernel.h"
 #include "kernel_ops.h"
 #include "log.h"
+#include "kernel_xfrm_interface.h"
 
 /*
  * Setup an IPsec route entry.
@@ -34,7 +35,7 @@ bool raw_policy(enum kernel_policy_op op,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
-		const uint32_t xfrm_if_id,
+		const struct pluto_xfrmi *xfrmi,
 		const shunk_t sec_label,
 		struct logger *logger,
 		const char *fmt, ...)
@@ -104,7 +105,8 @@ bool raw_policy(enum kernel_policy_op op,
 			}
 		}
 
-		jam(buf, " xfrm_if_id=%d", xfrm_if_id);
+		jam(buf, " xfrm_if_id=%d",
+		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
 
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, sec_label);
@@ -145,8 +147,8 @@ bool raw_policy(enum kernel_policy_op op,
 					     src_client, dst_client,
 					     shunt_policy,
 					     kernel_policy,
-					     use_lifetime, sa_priority, sa_marks,
-					     xfrm_if_id,
+					     use_lifetime, sa_priority,
+					     sa_marks, xfrmi,
 					     sec_label,
 					     logger);
 	dbg("kernel: policy: result=%s", result ? "success" : "failed");

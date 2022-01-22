@@ -59,7 +59,7 @@
 #include "keys.h"
 #include "ike_alg_hash.h"
 #include "ikev2_cp.h"
-#include "kernel.h"			/* for raw_policy() */
+#include "kernel.h"			/* for install_sec_label_connection_policies() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
