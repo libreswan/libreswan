@@ -163,54 +163,78 @@ bool case_eq(const void *l_ptr, size_t l_len,
 
 #define hunk_char(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		size_t index_ = INDEX;/* evaluate once */		\
-		const char *c_ = hunk_.ptr;				\
-		index_ < hunk_.len ? c_[INDEX] : '\0';			\
+		const typeof(HUNK) hc_hunk_ = HUNK; /* evaluate once */	\
+		size_t hc_index_ = INDEX;/* evaluate once */		\
+		const char *hc_char_ = hc_hunk_.ptr;			\
+		hc_index_ < hc_hunk_.len ? hc_char_[INDEX] : '\0';	\
 	})
 
 /* returns the unsigned byte cast to int; or -1 when end-of-hunk */
 
 #define hunk_byte(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		size_t index_ = INDEX;/* evaluate once */		\
-		const uint8_t *b_ = hunk_.ptr;				\
-		index_ < hunk_.len ? b_[INDEX] : -1;			\
+		const typeof(HUNK) hb_hunk_ = HUNK; /* evaluate once */	\
+		size_t hb_index_ = INDEX;/* evaluate once */		\
+		const uint8_t *hb_byte_ = hb_hunk_.ptr;			\
+		hb_index_ < hb_hunk_.len ? hb_byte_[INDEX] : -1;	\
 	})
 
-/* returns the unsigned byte cast to int; or -1 when end-of-hunk */
+/*
+ * Macros to treat the HUNK like a data stream.
+ *
+ * - get/put advance the pointer and reduce the length
+ *
+ * - returns the get/put object as a pointer into the buffer
+ *
+ *   Caller is responsible for ensuring that pointer is aligned.
+ *   For instance, PF_KEY V2 structures are kept 8-byte aligned.
+ *
+ * - returns NULL when end-of-buffer is reached
+ */
 
-#define hunk_getc(HUNK)							\
+#define hunk_get(HUNK, LEN)						\
 	({								\
-		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
-		int n_;							\
-		if (hunk_->len > 0) {					\
-			const uint8_t *b_ = hunk_->ptr;			\
-			n_ = *b_;					\
-			hunk_->len--;					\
-			hunk_->ptr++;					\
-		} else {						\
-			n_ = -1;					\
+		size_t hg_len_ = LEN; /* evaluate once */		\
+		typeof(HUNK) hg_hunk_ = HUNK; /* evaluate once */	\
+		bool hg_ok_ = (hg_hunk_->len >= hg_len_);		\
+		const void *hg_ptr_ = NULL;				\
+		if (hg_ok_) {						\
+			hg_ptr_ = hg_hunk_->ptr;			\
+			hg_hunk_->ptr += hg_len_;			\
+			hg_hunk_->len -= hg_len_;			\
 		}							\
-		n_;							\
+		hg_ptr_;						\
 	})
 
-/* returns false when end-of-hunk */
+#define hunk_get_thing(HUNK, TYPE)			\
+	(TYPE *) hunk_get(HUNK, sizeof(TYPE))
 
-#define hunk_putc(HUNK, BYTE)						\
+/* returns POINTER to start of write; or NULL; see pfkey v2 code */
+
+#define hunk_put(HUNK, PTR, LEN)					\
 	({								\
-		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
-		bool ok_ = hunk_->len > 0;				\
-		if (ok_) {						\
-			uint8_t *b_ = hunk_->ptr;			\
-			*b_ = BYTE;					\
-			hunk_->len--;					\
-			hunk_->ptr++;					\
-			ok_ = true;					\
+		typeof(HUNK) hp_hunk_ = HUNK; /* evaluate once */	\
+		size_t hp_len_ = LEN; /* evaluate once */		\
+		const void *hp_src_ = PTR; /* evaluate once */		\
+		void *hp_dst_ = NULL;					\
+		if (hp_hunk_->len >= hp_len_) {				\
+			/* can't assume memory alignment */		\
+			hp_dst_ = hp_hunk_->ptr;			\
+			memcpy(hp_dst_, hp_src_, hp_len_);		\
+			hp_hunk_->len -= hp_len_;			\
+			hp_hunk_->ptr += hp_len_;			\
 		}							\
-		ok_;							\
+		hp_dst_;						\
 	})
+
+#define hunk_put_hunk(HUNK, DATA)					\
+	({								\
+		typeof(DATA) hph_hunk_ = DATA; /* evaluate once */	\
+		hunk_put(HUNK, hph_hunk_.ptr, hph_hunk_.len);		\
+	})
+
+#define hunk_put_thing(HUNK, THING)		\
+	(typeof(THING)*) hunk_put(HUNK, &(THING), sizeof(THING))
 
 /* see hunkcheck.c */
 bool char_isbdigit(char c);

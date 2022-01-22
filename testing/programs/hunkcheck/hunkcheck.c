@@ -379,39 +379,37 @@ static void check__hunk_char__hunk_byte(void)
 static void check__hunk_get__hunk_put(void)
 {
 	char src[] = "string"; /* includes NUL */
-	shunk_t s = shunk1(src); /* excludes NUL */
 	char dst[sizeof(src)]; /* includes NUL */
+	shunk_t s = shunk2(src, sizeof(dst) - 1); /* excludes NUL */
 	chunk_t d = chunk2(dst, sizeof(dst) - 1); /* excludes NUL */
 	for (size_t ti = 0; ti < sizeof(src); ti++) {
-		int c = src[ti];
+		char c = src[ti];
 		char cc[] = { c, '\0', };
 		PRINT("%s%s%s",
 		      c > '\0' ? "'" : "",
 		      c > '\0' ? cc : "-1",
 		      c > '\0' ? "'" : "");
-		int b = hunk_getc(&s);
-		if (c == '\0') {
-			if (b >= 0) {
-				FAIL("hunk_get() returned '%c', should have returned end-of-hunk", b);
+		char *sc = hunk_get_thing(&s, char);
+		if (sc != NULL) {
+			if (c == '\0') {
+				FAIL("hunk_get() returned '%c', expecting end-of-hunk", *sc);
+			} else if (*sc != c) {
+				FAIL("hunk_get() returned '%c', expecting '%c'", *sc, c);
 			}
-		} else {
-			if (b != c) {
-				FAIL("hunk_put() returned '%c', should have returned '%c'", b, c);
-			}
+		} else if (c != '\0') {
+			FAIL("hunk_get() returned end-of-hunk, expecting '%c'", c);
 		}
-		bool ok = hunk_putc(&d, c);
-		if (c == '\0') {
-			if (ok) {
-				FAIL("hunk_put() should have overflowed");
-			}
-		} else {
-			if (!ok) {
-				FAIL("hunk_put() should not have overflowed");
-			}
-			if (dst[ti] != c) {
+		/* danger, returns pointer */
+		char *sp = hunk_put_thing(&d, c);
+		if (sp != NULL) {
+			if (c == '\0') {
+				FAIL("hunk_put() should have returned end-of-hunk");
+			} else if (dst[ti] != c) {
 				FAIL("hunk_put() stored '%c', should have stored '%c'",
 				     dst[ti], c);
 			}
+		} else if (c != '\0') {
+			FAIL("hunk_put() returned end-of-hunk, expecting '%c'", c);
 		}
 	}
 }
