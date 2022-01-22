@@ -62,7 +62,6 @@
 #include "ikev2.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#include "ip_sockaddr.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_protocol.h"
