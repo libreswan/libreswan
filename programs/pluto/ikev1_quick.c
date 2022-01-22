@@ -618,7 +618,7 @@ void quick_outI1(struct fd *whack_sock,
 		 so_serial_t replacing,
 		 shunk_t sec_label)
 {
-	struct state *st = ikev1_duplicate_state(c, isakmp_sa, whack_sock);
+	struct state *st = ikev1_duplicate_state(c, isakmp_sa, SA_INITIATOR, whack_sock);
 	passert(c != NULL);
 
 	st->st_policy = policy;
@@ -1173,7 +1173,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	/* create our new state */
 	{
-		struct state *const st = ikev1_duplicate_state(c, p1st, null_fd);
+		struct state *const st = ikev1_duplicate_state(c, p1st, SA_RESPONDER, null_fd);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key

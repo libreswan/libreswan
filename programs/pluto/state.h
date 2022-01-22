@@ -776,7 +776,8 @@ extern bool states_use_connection(const struct connection *c);
 
 struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd);
 struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
-struct state *ikev1_duplicate_state(struct connection *c, struct state *st, struct fd *whackfd);
+struct state *ikev1_duplicate_state(struct connection *c, struct state *st,
+				    enum sa_role sa_role, struct fd *whackfd);
 
 struct ike_sa *new_v2_ike_state(struct connection *c,
 				const struct v2_state_transition *transition,

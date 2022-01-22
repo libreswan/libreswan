@@ -152,15 +152,12 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	case LAK_PARENT_DESTROY:
 	case LAK_PARENT_FAIL:
 	{
-		bool initiator = (st->st_ike_version == IKEv2 ? st->st_sa_role == SA_INITIATOR :
-#ifdef USE_IKEv1
-				  st->st_ike_version == IKEv1 ? IS_V1_PHASE1_INIT(st->st_state) :
-#endif
-				  pexpect(false));
 		/* head */
 		jam(&buf, "op=%s direction=%s %s connstate=%lu ike-version=%s",
 		    op == LAK_PARENT_DESTROY ? "destroy" : "start", /* fail to start logged under op=start */
-		    initiator ? "initiator" : "responder",
+		    (st->st_sa_role == SA_INITIATOR ? "initiator" :
+		     st->st_sa_role == SA_RESPONDER ? "responder" :
+		     "????"),
 		    conn_encode,
 		    st->st_serialno,
 		    (st->st_ike_version == IKEv2) ? "2.0" : "1");

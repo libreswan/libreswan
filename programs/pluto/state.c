@@ -430,6 +430,7 @@ static struct state *new_state(struct connection *c,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
 			       enum sa_type sa_type,
+			       enum sa_role sa_role,
 			       struct fd *whackfd,
 			       where_t where)
 {
@@ -460,6 +461,7 @@ static struct state *new_state(struct connection *c,
 
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
+	st->st_sa_role = sa_role;
 	st->st_establishing_sa = sa_type;
 	st->st_ike_spis.initiator = ike_initiator_spi;
 	st->st_ike_spis.responder = ike_responder_spi;
@@ -480,7 +482,7 @@ static struct state *new_state(struct connection *c,
 struct ike_sa *new_v1_istate(struct connection *c, struct fd *whackfd)
 {
 	struct state *st = new_state(c, ike_initiator_spi(), zero_ike_spi,
-				     IKE_SA, whackfd, HERE);
+				     IKE_SA, SA_INITIATOR, whackfd, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	return ike;
 }
@@ -489,7 +491,7 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 {
 	struct state *st = new_state(c, md->hdr.isa_ike_spis.initiator,
 				     ike_responder_spi(&md->sender, md->md_logger),
-				     IKE_SA, null_fd, HERE);
+				     IKE_SA, SA_RESPONDER, null_fd, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	update_ike_endpoints(ike, md);
 	return ike;
@@ -504,9 +506,8 @@ struct ike_sa *new_v2_ike_state(struct connection *c,
 				int try, struct fd *whack_sock)
 {
 	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
-				     IKE_SA, whack_sock, HERE);
+				     IKE_SA, sa_role, whack_sock, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	ike->sa.st_sa_role = sa_role;
 	const struct finite_state *fs = finite_states[transition->state];
 	change_state(&ike->sa, fs->kind);
 	set_v2_transition(&ike->sa, transition, HERE);
@@ -1535,6 +1536,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 static struct state *duplicate_state(struct connection *c,
 				     struct state *st,
 				     enum sa_type sa_type,
+				     enum sa_role sa_role,
 				     struct fd *whackfd)
 {
 	struct state *nst;
@@ -1548,7 +1550,7 @@ static struct state *duplicate_state(struct connection *c,
 	nst = new_state(c,
 			st->st_ike_spis.initiator,
 			st->st_ike_spis.responder,
-			sa_type, whackfd, HERE);
+			sa_type, sa_role, whackfd, HERE);
 
 	connection_buf cib;
 	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
@@ -1626,20 +1628,20 @@ static struct state *duplicate_state(struct connection *c,
 
 struct state *ikev1_duplicate_state(struct connection *c,
 				    struct state *st,
+				    enum sa_role sa_role,
 				    struct fd *whackfd)
 {
-	return duplicate_state(c, st, IPSEC_SA, whackfd);
+	return duplicate_state(c, st, IPSEC_SA, sa_role, whackfd);
 }
 
 struct child_sa *new_v2_child_state(struct connection *c,
 				    struct ike_sa *ike,
 				    enum sa_type sa_type,
-				    enum sa_role role,
+				    enum sa_role sa_role,
 				    enum state_kind kind,
 				    struct fd *whackfd)
 {
-	struct state *cst = duplicate_state(c, &ike->sa, sa_type, whackfd);
-	cst->st_sa_role = role;
+	struct state *cst = duplicate_state(c, &ike->sa, sa_type, sa_role, whackfd);
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
 	change_state(&child->sa, kind);

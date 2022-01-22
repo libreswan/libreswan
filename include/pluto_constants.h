@@ -610,9 +610,6 @@ extern struct keywords message_role_names;
  * the header by setting or clearing the I(Initiator) flag.
  *
  * The IKE or CHILD SA role is used when assigning keying material.
- *
- * The IKEv1 equivalent is the phase1 role.  It is identified by the
- * IKEv1 IS_PHASE1_INIT() macro.
  */
 
 enum sa_role {
@@ -632,8 +629,6 @@ extern struct keywords sa_role_names;
 				     LELEM(STATE_XAUTH_I0) |	\
 				     LELEM(STATE_XAUTH_I1) |	\
 				     LELEM(STATE_MODE_CFG_I1))
-
-#define IS_V1_PHASE1_INIT(ST) ((LELEM((ST)->kind) & V1_PHASE1_INITIATOR_STATES) != LEMPTY)
 
 #define IS_V1_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
 
