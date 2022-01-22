@@ -653,13 +653,6 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 	return true;
 }
 
-static bool bsdkame_detect_offload(const struct raw_iface *ifp UNUSED,
-				   struct logger *logger UNUSED)
-{
-	dbg("%s: nothing to do", __func__);
-	return false;
-}
-
 static const char *bsdkame_protostack_names[] = { "bsdkame", "bsd", "kame", NULL, };
 
 const struct kernel_ops bsdkame_kernel_ops = {
@@ -684,5 +677,4 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.overlap_supported = false,
 	.sha2_truncbug_support = false,
 	.v6holes = NULL,
-	.detect_offload = bsdkame_detect_offload,
 };

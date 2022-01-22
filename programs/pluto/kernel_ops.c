@@ -269,3 +269,21 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 
 	return ok;
 }
+
+bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger)
+{
+	static bool no_offload;
+	if (no_offload) {
+		ldbg(logger, "no offload already detected");
+		return false;
+	}
+
+	if (kernel_ops->detect_offload == NULL) {
+		ldbg(logger, "%s kernel interface does not support offload",
+		     kernel_ops->interface_name);
+		no_offload = true;
+		return false;
+	}
+
+	return kernel_ops->detect_offload(ifp, logger);
+}

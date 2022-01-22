@@ -21,7 +21,8 @@
  *
  */
 
-#ifndef _KERNEL_H_
+#ifndef KERNEL_H
+#define KERNEL_H
 
 #include <net/if.h>
 
@@ -568,5 +569,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 
 extern deltatime_t bare_shunt_interval;
 
-#define _KERNEL_H_
-#endif /* _KERNEL_H_ */
+extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger);
+
+#endif

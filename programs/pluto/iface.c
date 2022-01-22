@@ -81,7 +81,7 @@ static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 	where_t where = HERE;
 	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, free_iface_dev, where);
 	ifd->id_rname = clone_str(ifp->name, "real device name");
-	ifd->id_nic_offload = kernel_ops->detect_offload(ifp, logger);
+	ifd->id_nic_offload = kernel_ops_detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
 	init_list_entry(&iface_dev_info, ifd, &ifd->ifd_entry);

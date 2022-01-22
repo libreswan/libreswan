@@ -1231,7 +1231,7 @@ static void netlink_find_offload_feature(const char *ifname,
 	}
 }
 
-static bool netlink_detect_offload(const struct raw_iface *ifp, struct logger *logger)
+static bool xfrm_detect_offload(const struct raw_iface *ifp, struct logger *logger)
 {
 	const char *ifname = ifp->name;
 	/*
@@ -2557,5 +2557,5 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.sha2_truncbug_support = true,
 	.v6holes = netlink_v6holes,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
-	.detect_offload = netlink_detect_offload,
+	.detect_offload = xfrm_detect_offload,
 };
