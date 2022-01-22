@@ -1292,7 +1292,7 @@ kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
 
 # uses bsdkame; reference test
-kvmplutotest	interop-netbsd-01-pluto-initiator-ikev2		netbsd
+kvmplutotest	bsdkame-initiator-tunnel-esp-ikev2		netbsd
 # uses default interface
 kvmplutotest	pfkeyv2-initiator-transport-ah-comp-ikev2	netbsd
 kvmplutotest	pfkeyv2-initiator-transport-ah-ikev2		netbsd
@@ -1302,3 +1302,4 @@ kvmplutotest	pfkeyv2-initiator-tunnel-ah-comp-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-ah-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-comp-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-ikev2		netbsd
+kvmplutotest	pfkeyv2-ondemand				netbsd
