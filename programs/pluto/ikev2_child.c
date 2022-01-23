@@ -256,6 +256,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 
 	bool expecting_transport_mode = ((cc->policy & POLICY_TUNNEL) == LEMPTY);
+	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
 	if (request_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (!expecting_transport_mode) {
 			/*
@@ -267,11 +268,12 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		} else {
 			dbg("local policy is transport mode and received USE_TRANSPORT_MODE");
 			larval_child->sa.st_seen_and_use_transport_mode = true;
+			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
 			if (larval_child->sa.st_esp.present) {
-				larval_child->sa.st_esp.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+				larval_child->sa.st_esp.attrs.mode = encapsulation_mode;
 			}
 			if (larval_child->sa.st_ah.present) {
-				larval_child->sa.st_ah.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+				larval_child->sa.st_ah.attrs.mode = encapsulation_mode;
 			}
 		}
 	} else if (expecting_transport_mode) {
@@ -319,7 +321,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			larval_child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
-			larval_child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
+			larval_child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
 			larval_child->sa.st_ipcomp.present = true;
 			/* logic above decided to enable IPCOMP */
 			if (!compute_v2_child_ipcomp_cpi(larval_child)) {
@@ -888,6 +890,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	}
 
 	/* check for Child SA related NOTIFY payloads */
+	enum encapsulation_mode encapsulation_mode = ENCAPSULATION_MODE_TUNNEL;
 	if (md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		if (c->policy & POLICY_TUNNEL) {
 			/*
@@ -898,11 +901,12 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 			dbg("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it");
 		} else {
 			dbg("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode");
+			encapsulation_mode = ENCAPSULATION_MODE_TRANSPORT;
 			if (child->sa.st_esp.present) {
-				child->sa.st_esp.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+				child->sa.st_esp.attrs.mode = encapsulation_mode;
 			}
 			if (child->sa.st_ah.present) {
-				child->sa.st_ah.attrs.mode = ENCAPSULATION_MODE_TRANSPORT;
+				child->sa.st_ah.attrs.mode = encapsulation_mode;
 			}
 		}
 	}
@@ -944,7 +948,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
 			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
-		child->sa.st_ipcomp.attrs.mode = ENCAPSULATION_MODE_TUNNEL; /* always? */
+		child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
 		child->sa.st_ipcomp.present = true;
 	}
 
