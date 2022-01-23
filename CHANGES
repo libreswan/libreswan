@@ -2,6 +2,10 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
+* kernel: fix deleting policy when an XFRMi FD ID [Andrew]
+* kernel: general cleanups [Andrew]
+* IKEv2: fix interop when IPCOMP+transport-mode negotiated [Andrew]
+* IKEv2: fix race between new IKE SA and liveness [Andrew]
 * building: fix build on fedora rawhide
 
 v4.6 (January 11, 2022)
