@@ -1,9 +1,38 @@
 #!/bin/sh
 
-pass1="commit sh modified baseline baseline-passed baseline-failed --baseline --baseline-passed --baseline-failed"
+set -e
+
+hosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
+pass1="commit sh modified baseline baseline-passed baseline-failed --baseline --baseline-passed --baseline-failed ${hosts}"
 pass2="add check diffs results recheck upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status check-clean shutdown"
 
-if test $# = 0; then
+# translate ../../../kvm ... into ./kvm ...
+
+if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
+    if test $# -eq 0 ; then
+	set -- check ${PWD}
+    else
+	declare -a args
+	i=0
+	for arg in "$@" ; do
+	    if test -d "${arg}" ; then
+		dir=true
+		args[$i]=$(realpath ${arg})
+	    elif test "${arg}" = check ; then
+		check=true
+		args[$i]="${arg}"
+	    else
+		args[$i]="${arg}"
+	    fi
+	    i=$((i + 1))
+	done
+	set -- "${args[@]}"
+    fi
+    cd $(dirname $0)
+    echo "$@"
+fi
+
+if test $# -eq 0; then
     cat <<EOF
 Usage:
    <operation> <operation> ... <arg> <arg>
@@ -17,8 +46,10 @@ EOF
 fi
 
 # Invoked by completer with:
+#
 #   $0 <command==$0> <word> <previous>?
-if test "$1" == $0 -a "$#" -eq 3 ; then
+
+if test "$1" == $0 -a $# -eq 3 ; then
     command=$1
     word=$2
     previous=$3
@@ -26,9 +57,9 @@ if test "$1" == $0 -a "$#" -eq 3 ; then
     if test "${previous}" == "${command}" ; then
 	# first command
 	compgen -W "${pass1} ${pass2}" "${word}" | sort
-    elif test "${previous}" == "sh" ; then
+    elif test "${previous}" == sh ; then
 	# pass 1 command
-	compgen -W "$(./testing/utils/kvmhosts.sh)" "${word}"
+	compgen -W "${hosts}" "${word}"
     else
 	# either <command> or <directory>
 	compgen -o plusdirs -W "${pass2}" "${word}"
@@ -36,44 +67,48 @@ if test "$1" == $0 -a "$#" -eq 3 ; then
     exit 0
 fi
 
-# accumulate pass 2 commands; execute pass 1 commands
+# accumulate pass 2 commands; execute pass 1 commands immediately
 
-topdir=$(dirname $0)
-ops=
+declare -a ops
 modified=
 baseline=
-__baseline=$(sed -n -e 's/^KVM_BASELINE[ ]*=[ ]*/--baseline /p' ${topdir}/Makefile.inc.local)
-prefix=$(sed -n -e 's/^KVM_PREFIXES[ ]*=[ ]*\([^ ]*\).*/\1/p' ${topdir}/Makefile.inc.local)
+__baseline=$(sed -n -e 's/^KVM_BASELINE[ ]*=[ ]*/--baseline /p' Makefile.inc.local)
+prefix=$(sed -n -e 's/^KVM_PREFIXES[ ]*=[ ]*\([^ ]*\).*/\1/p' Makefile.inc.local)
 # without the eval quotes get quotes get quotes; anyone know why?
-__test_flags=$(eval echo $(sed -n -e 's/^KVM_TEST_FLAGS[ ]*=[ ]*//p' ${topdir}/Makefile.inc.local))
-testingdir=$(sed -n -e 's/^KVM_TESTINGDIR[ ]*=[ ]*\([^ ]*\).*/\1/p' ${topdir}/Makefile.inc.local)
+__test_flags=$(eval echo $(sed -n -e 's/^KVM_TEST_FLAGS[ ]*=[ ]*//p' Makefile.inc.local))
+testingdir=$(sed -n -e 's/^KVM_TESTINGDIR[ ]*=[ ]*\([^ ]*\).*/\1/p' Makefile.inc.local)
 
+i=0
 while test $# -gt 0 ; do
     case " ${pass2} " in
-	*" $1 "* ) ops="${ops} $1" ;;
+	*" $1 "* ) ops[$i]="$1" ; i=$((i + 1)) ;;
 	* )
 	    # must be a pass1 command
 	    case "$1" in
+
 		--baseline* )
 		    baseline=$(expr $1 : '--\(.*\)')
 		    shift
 		    __baseline="--baseline $1"
 		    ;;
+
 		# aliases for pass2 commands
-		diff ) ops="${ops} diffs" ;;
-		result ) ops="${ops} results" ;;
-		test ) ops="${ops} check" ;;
-		retest ) ops="${ops} recheck" ;;
-		test-clean ) ops="${ops} check-clean" ;;
+		diff ) ops[$i]=diffs ; i=$((i + 1)) ;;
+		result ) ops[$i]=results ; i=$((i + 1)) ;;
+		test ) ops[$i]=check ; i=$((i + 1) ;;
+		retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
+		test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
+
 		# git wrappers
 		commit ) shift ; exec git commit "$@" ;;
-		# invoke now
+
 		sh )
 		    shift
-		    host=${prefix}$1
+		    host=${prefix}$1 ; shift
 		    echo "Connecting to ${host}" 1>&2
-		    exec ${topdir}/testing/utils/kvmsh.py ${host}
+		    exec ${topdir}/testing/utils/kvmsh.py ${host} "$@"
 		    ;;
+
 		# wrappers
 		modified )
 		    modified=$(git status testing/pluto/ \
@@ -86,6 +121,7 @@ while test $# -gt 0 ; do
 			exit 1
 		    fi
 		    ;;
+
 		baseline | baseline-passed | baseline-failed )
 		    if test -z "${__baseline}" ; then
 			echo "no KVM_BASELINE" 1&2
@@ -93,16 +129,27 @@ while test $# -gt 0 ; do
 		    fi
 		    baseline=$1
 		    ;;
-		* ) # check first trailing argument is a directory
-		    if test ! -d "$1" ; then
-			if test -z "${ops}" ; then
-			    echo "unknown command: $1" 1>&2
-			else
-			    echo "not a directory: $1" 1>&2
-			fi
-			exit 1
-		    fi
-		    break
+
+		* ) # either a directory; or a hostname
+		    case " ${hosts} " in
+
+			*" $1 "* )
+			    host=${prefix}$1 ; shift
+			    echo "Connecting to ${host}" 1>&2
+			    exec ${topdir}/testing/utils/kvmsh.py ${host} "$@"
+			    ;;
+
+			* ) # check first trailing argument is a directory
+			    if test ! -d "$1" ; then
+				if test -z "${ops[*]}" ; then
+				    echo "unknown command: $1" 1>&2
+				else
+				    echo "not a directory: $1" 1>&2
+				fi
+				exit 1
+			    fi
+			    break
+		    esac
 	    esac
 	    ;;
     esac
@@ -110,7 +157,7 @@ while test $# -gt 0 ; do
 done
 
 if test -n "${modified}" ; then
-    if test -z "${ops}" ; then
+    if test -z "${ops[*]}" ; then
 	echo "${modified}"
 	exit 0
     elif test $# -ne 0 ; then
@@ -122,7 +169,7 @@ elif test $# -eq 0 ; then
     set ${testingdir:-testing}/pluto
 fi
 
-if test -z "${ops}" ; then
+if test -z "${ops[*]}" ; then
     echo "nothing to do!" 1>&2
     exit 1
 fi
@@ -156,7 +203,7 @@ diffs_command()
 
 # second pass
 status=0
-for op in ${ops} ; do
+for op in "${ops[@]}" ; do
     case ${op} in
 	add )
 	    git add "$@"
@@ -165,9 +212,11 @@ for op in ${ops} ; do
 	    gmake kvm-${op}
 	    ;;
 	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | check-clean | shutdown )
+	    echo gmake kvm-${op}
 	    gmake kvm-${op} || exit $?
 	    ;;
 	check | recheck )
+	    echo ${op}: "$@"
 	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
 	diffs )
