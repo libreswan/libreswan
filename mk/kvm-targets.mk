@@ -654,12 +654,6 @@ kvm-purge-gateway:
 
 .PHONY: kvm-iso
 
-KVM_LINUX_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_LINUX_ISO_URL))
-kvm-iso: $(KVM_LINUX_ISO)
-$(KVM_LINUX_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_LINUX_ISO_URL)
-	mv $@.tmp $@
-
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
