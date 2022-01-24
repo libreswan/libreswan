@@ -106,7 +106,7 @@ while test $# -gt 0 ; do
 		    shift
 		    host=${prefix}$1 ; shift
 		    echo "Connecting to ${host}" 1>&2
-		    exec ${topdir}/testing/utils/kvmsh.py ${host} "$@"
+		    exec testing/utils/kvmsh.py ${host} "$@"
 		    ;;
 
 		# wrappers
@@ -136,7 +136,7 @@ while test $# -gt 0 ; do
 			*" $1 "* )
 			    host=${prefix}$1 ; shift
 			    echo "Connecting to ${host}" 1>&2
-			    exec ${topdir}/testing/utils/kvmsh.py ${host} "$@"
+			    exec testing/utils/kvmsh.py ${host} "$@"
 			    ;;
 
 			* ) # check first trailing argument is a directory
