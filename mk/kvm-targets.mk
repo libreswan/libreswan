@@ -692,7 +692,7 @@ define undefine-os-domain
 	"" ) ;; \
 	esac
 	rm -f $(1)
-	rm -f $(1).*
+	rm -f $(1).qcow2
 endef
 
 define clone-os-disk
