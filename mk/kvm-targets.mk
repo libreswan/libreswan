@@ -38,7 +38,7 @@ endef
 
 include testing/libvirt/fedora/fedora.mk
 include testing/libvirt/netbsd/netbsd.mk
-include testing/libvirt/openbsd/openbsd67.mk
+include testing/libvirt/openbsd/openbsd.mk
 
 #
 # where things live and what gets created
@@ -644,8 +644,7 @@ kvm-purge-gateway:
 ##
 ##
 
-# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
-# (NetBSD-*.iso).
+
 #
 # Try to give the OpenBSD and NetBSD ISOs meaningful names.
 #
@@ -660,12 +659,8 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
 	mv $@.tmp $@
 
-KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_ISO_URL))
-kvm-iso: $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
-	mv $@.tmp $@
-
+# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
+# (NetBSD-*.iso).
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
 KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 kvm-iso: $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_ISO)
@@ -674,6 +669,13 @@ $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
 	mv $@.tmp $@
 $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	mv $@.tmp $@
+
+# Give the OpenBSD ISO a meaningful name.
+KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_ISO_URL))
+kvm-iso: $(KVM_OPENBSD_ISO)
+$(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
 	mv $@.tmp $@
 
 ##
@@ -767,16 +769,19 @@ $(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO)
 
 KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= openbsd6.5
-KVM_OPENBSD_INSTALL_ISO = $(KVM_POOLDIR_PREFIX)openbsd.iso
+KVM_OPENBSD_INSTALL_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_INSTALL_ISO)
 
 $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
 
-$(KVM_OPENBSD_INSTALL_ISO): $(KVM_OPENBSD_ISO) testing/libvirt/openbsd/install.conf testing/libvirt/openbsd/boot.conf
+$(KVM_OPENBSD_INSTALL_ISO): \
+		$(KVM_OPENBSD_ISO) \
+		testing/libvirt/openbsd/base.conf \
+		testing/libvirt/openbsd/boot.conf
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	growisofs -M $@.tmp -l -R -input-charset utf-8 \
 		-graft-points \
-		/install.conf="testing/libvirt/openbsd/install.conf" \
+		/install.conf="testing/libvirt/openbsd/base.conf" \
 		/etc/boot.conf="testing/libvirt/openbsd/boot.conf"
 	mv $@.tmp $@
 

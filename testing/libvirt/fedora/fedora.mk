@@ -1,5 +1,5 @@
 KVM_FEDORA_ISO_URL = https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/x86_64/iso/Fedora-Server-dvd-x86_64-35-1.2.iso
-KVM_FEDORA_KICKSTART_FILE = testing/libvirt/fedora/fedora.ks
+KVM_FEDORA_KICKSTART_FILE = testing/libvirt/fedora/base.ks
 
 #
 # NSS+NSPR
