@@ -22,14 +22,7 @@ import sys
 import time
 import os
 
-domain = os.getenv("DOMAIN")
-gateway = os.getenv("GATEWAY")
-pooldir = os.getenv("POOLDIR")
 command = sys.argv[1:]
-
-print("domain", domain)
-print("gateway", gateway)
-print("pooldir", pooldir)
 print("command", command)
 
 child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)

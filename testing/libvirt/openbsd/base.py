@@ -20,14 +20,7 @@ import sys
 import time
 import os
 
-domain = os.getenv("DOMAIN")
-gateway = os.getenv("GATEWAY")
-pooldir = os.getenv("POOLDIR")
 command = sys.argv[1:]
-
-print("domain", domain)
-print("gateway", gateway)
-print("pooldir", pooldir)
 print("command", command)
 
 def es(child,expect,send,t=30):

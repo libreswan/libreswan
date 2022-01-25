@@ -1,5 +1,10 @@
 #!/bin/sh
 
+GATEWAY=@@GATEWAY@@
+POOLDIR=@@POOLDIR@@
+SOURCEDIR=@@SOURCEDIR@@
+TESTINGDIR=@@TESTINGDIR@@
+
 title()
 {
     printf "\n\n$*\n\n"

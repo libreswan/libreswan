@@ -918,13 +918,15 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-	: transmogrify $($*) using transmogrify.sh from srcdir=$(srcdir) and not KVM_SOURCEDIR=$(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/transmogrify.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
+	: transmogrify $($*) using transmogrify.sh from
+	:   srcdir=$(srcdir)
+	: and not
+	:   KVM_SOURCEDIR=$(KVM_SOURCEDIR)
+	$(KVM_TRANSMOGRIFY) \
+		testing/libvirt/$*/transmogrify.sh \
+		> $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
-		GATEWAY=$(KVM_GATEWAY_ADDRESS) \
-		POOLDIR=$(KVM_POOLDIR) \
-		SOURCEDIR=$(KVM_SOURCEDIR) \
-		TESTINGDIR=$(KVM_TESTINGDIR) \
+		/bin/sh -x \
 		/pool/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
 	: only shutdown when transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
