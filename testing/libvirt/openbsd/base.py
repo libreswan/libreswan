@@ -52,33 +52,24 @@ time.sleep(10)
 #REGx for Installation prompt
 #To enter Shell mode
 es(child,'.*hell?','S')
+
 #Mounting of drive where install.conf file is located
 es(child,'# ','mount /dev/cd0c /mnt')
 #Copying of install.conf file
-es(child,'# ','cp /mnt/install.conf /')
+es(child,'# ','cp /mnt/base.conf /')
+es(child,'# ','cp /mnt/base.sh /')
 #Unmounting the drive
 es(child,'# ','umount /mnt')
+
 #Installing by taking answers from install.conf file
-es(child,'# ','install -af /install.conf')
+es(child,'# ','install -af /base.conf')
 #This is to check if all the installation files got copied(it's slow on some systems)
 while(child.expect([".*install has been successfully completed!", pexpect.EOF, pexpect.TIMEOUT],timeout=10)!=0):
         continue
 
-#Start iked daemon by default on boot
-es(child,'openbsd# ','echo \'iked_flags=\"\"\' >> /mnt/etc/rc.conf.local')
+# customize the install
+es(child,'# ','/bin/sh -x /base.sh')
 
-# fix powerdown; works for /mnt, not for /, ulgh!
-es(child,'openbsd# ','echo powerdown=YES >>     /etc/rc.powerdown')
-es(child,'openbsd# ','echo powerdown=YES >> /mnt/etc/rc.powerdown')
-
-print('====> Zapping rc.firsttime <====')
-es(child,'openbsd# ','rm /mnt/etc/rc.firsttime')
-
-print('====> Mounting /pool <====')
-es(child,'openbsd# ','mkdir -p /mnt/pool')
-es(child,'openbsd# ','echo '+gateway+':'+pooldir+' /pool nfs rw,tcp 0 0 >> /mnt/etc/fstab')
-
-print('====> Shutting Down Base Domain <====')
 #To shutdown the base domain
 es(child,'openbsd# ','sync ; sync ; sync\n')
 es(child,'openbsd# ','halt -p\n')

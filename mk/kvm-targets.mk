@@ -62,6 +62,18 @@ KVM_PIDFILE ?= kvmrunner.pid
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell id -g $(KVM_GROUP))
 
+KVM_TRANSMOGRIFY = \
+	sed \
+	-e 's;@@DOMAIN@@;$(KVM_DOMAIN);' \
+	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
+	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
+	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
+	-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
+	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
+	-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
+	-e 's;@@USER@@;$(KVM_UID);' \
+	-e 's;@@GROUP@@;$(KVM_GID);'
+
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
 # qemu://system. Finally, it comes with a warning: QEMU usermode
@@ -763,35 +775,57 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_FEDORA_KICKSTART_FILE)
 
-# NetBSD
+# NetBSD, uses a serial console boot iso
 
 KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
 KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= netbsd8.0
+KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
-	--disk=path=$(KVM_NETBSD_INSTALL_ISO),readonly=on,device=cdrom
+	--disk=path=$(KVM_NETBSD_BASE_ISO),readonly=on,device=cdrom
 
-$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_INSTALL_ISO) $(KVM_NETBSD_BOOT_ISO)
+$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_BASE_ISO)
+
+$(KVM_NETBSD_BASE_ISO): \
+		$(KVM_NETBSD_INSTALL_ISO) \
+		testing/libvirt/netbsd/base.sh
+	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
+	$(KVM_TRANSMOGRIFY) \
+		testing/libvirt/netbsd/base.sh \
+		> $(KVM_NETBSD_BASE_DOMAIN).base.sh
+	: this mangles file/directory names
+	growisofs -M $@.tmp -l \
+		-input-charset utf-8 \
+		-graft-points \
+		/base.sh=$(KVM_NETBSD_BASE_DOMAIN).base.sh
+	mv $@.tmp $@
 
 # OpenBSD needs to mangle the ISO
 
 KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= openbsd6.5
-KVM_OPENBSD_INSTALL_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
-KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_INSTALL_ISO)
+KVM_OPENBSD_BASE_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
+KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_BASE_ISO)
 
-$(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_INSTALL_ISO)
+$(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_BASE_ISO)
 
-$(KVM_OPENBSD_INSTALL_ISO): \
+$(KVM_OPENBSD_BASE_ISO): \
 		$(KVM_OPENBSD_ISO) \
 		testing/libvirt/openbsd/base.conf \
-		testing/libvirt/openbsd/boot.conf
+		testing/libvirt/openbsd/boot.conf \
+		testing/libvirt/openbsd/base.sh
 	cp $(KVM_OPENBSD_ISO) $@.tmp
-	growisofs -M $@.tmp -l -R -input-charset utf-8 \
+	$(KVM_TRANSMOGRIFY) \
+		testing/libvirt/openbsd/base.sh \
+		> $(KVM_OPENBSD_BASE_DOMAIN).base.sh
+	growisofs -M $@.tmp -l -R \
+		-input-charset utf-8 \
 		-graft-points \
-		/install.conf="testing/libvirt/openbsd/base.conf" \
-		/etc/boot.conf="testing/libvirt/openbsd/boot.conf"
+		/base.conf="testing/libvirt/openbsd/base.conf" \
+		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
+		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).base.sh
 	mv $@.tmp $@
+
 
 ##
 ## Create and update the base domain, installing missing packages.
@@ -849,6 +883,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 	: only shutdown when upgrade works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
+
 
 ##
 ## Create the platform domain by transmogrifying the updated domain.

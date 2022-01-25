@@ -57,107 +57,14 @@ def c(s):
 rs('seconds', '2')
 rs('Enter pathname of shell or RETURN for /bin/sh:', '\n')
 # the above has only 4 seconds
-#io('Terminal type.*: ', 'vt100')
-#io('a: Installation messages in English', 'a')
-#io('x: Exit Install System', 'x')
 
-# tmp writeable
+# Configure the created system using base.sh
 
-c('mount -t tmpfs tmpfs /tmp')
-c('touch /tmp/foo')
-
-# Initialize the disk creating a single DOS NetBSD partition.
-
-c('dd count=2 if=/dev/zero of=/dev/ld0')
-c('fdisk -f -i ld0')
-c('fdisk -f -0 -a -s 169 -u ld0')
-c('fdisk ld0')
-
-# Now create the NetBSD partitions within that.
-#
-# By default NetBSD generates a label with everything in e:, switch it
-# to a:.  And use that as the root file system.  Don't bother with
-# swap.
-
-c('disklabel ld0 > /tmp/ld0.label')
-c('sed -i -e "s/ e:/ a:/" /tmp/ld0.label')
-c('disklabel -R -r ld0 /tmp/ld0.label')
-c('newfs /dev/ld0a')
-
-# Enable booting of the first (0) partition.
-#
-# The MBR is installed into front of the disk; the NetBSD partition is
-# made active; and finally install secondary boot and boot-blocks are
-# installed into the just built root file system.
-#
-# Should (can) speed be changed, 9600 is so retro?
-
-c('fdisk -f -0 -a ld0')
-c('fdisk -f -c /usr/mdec/mbr_com0 ld0')
-c('mount -o async /dev/ld0a /targetroot')
-c('cp /usr/mdec/boot /targetroot/boot') # to / not /boot/
-c('umount /targetroot')
-c('dumpfs /dev/ld0a | grep format') # expect FFSv1
-c('installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_ffsv1')
-
-# Unpack the files into the root file system.
-
-c('mount -o async /dev/ld0a /targetroot')
-c('touch /targetroot/.')
-c('cd /targetroot')
 c('mount -rt cd9660 /dev/cd1 /mnt')
-c('for f in /mnt/i386/binary/sets/[a-jl-z]*.tgz ; do echo $f ; tar xpf $f || break ; done')
-c('tar xpf /mnt/i386/binary/sets/kern-GENERIC.tgz')
-c('cd /')
+c('/bin/sh -x /mnt/base.sh')
 
-# Configure the system
-
-c('chroot /targetroot')
-
-# also blank out TOOR's password as backup
-# c("echo swan | pwhash |sed -e 's/[\$\/\\]/\\\$/g' | tee /tmp/pwd")
-# c('sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd')
-# c('sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd')
-
-c('mkdir -p /kern /proc')
-c('echo "ROOT.a          /               ffs     rw,noatime      1 1" >> /etc/fstab')
-c('echo "kernfs          /kern           kernfs  rw"                  >> /etc/fstab')
-c('echo "ptyfs           /dev/pts        ptyfs   rw"                  >> /etc/fstab')
-c('echo "procfs          /proc           procfs  rw"                  >> /etc/fstab')
-c('echo "tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25"  >> /etc/fstab')
-c('echo "tmpfs           /tmp            tmpfs   rw"                  >> /etc/fstab')
-
-pool = gateway + ":" + pooldir
-c('mkdir /pool')
-c('echo "'+pool+'        /pool           nfs     rw"                  >> /etc/fstab')
-
-# booting
-
-c('echo rc_configured=YES    >> /etc/rc.conf')
-c('echo no_swap=YES          >> /etc/rc.conf')
-c('echo savecore=NO          >> /etc/rc.conf')
-c('echo dhcp                 > /etc/ifconfig.vioif0')
-c('echo netbsd		     > /etc/myname')
-
-# packages
-
-c('echo PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All > /etc/pkg_install.conf')
-
-# TODO:
-#
-# - install needed packages:
-#   https://libreswan.org/wiki/Building_and_installing_from_source
-#
-# - configure NFS mounts
-#   host is exporting testing/ need to export root/
-#   need to specify ipaddress and path
-#
-# - ?
-
-# all done
-
-c('exit')
 c('umount /targetroot')
-c('poweroff')
+c('umount /mnt')
+c('halt -p')
 
 sys.exit(child.wait())

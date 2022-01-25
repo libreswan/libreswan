@@ -91,7 +91,7 @@ cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 EOD
 
 
-# Mount points: /source /testing /pool
+# Mount /pool
 #
 # Full KVM snapshots (saves) don't work with NFS/9p mounts.  Hence use
 # automount so that things are only mounted after the VM has booted

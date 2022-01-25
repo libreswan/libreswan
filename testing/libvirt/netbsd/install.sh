@@ -2,6 +2,12 @@
 
 set -xe
 
+# packages
+
+cat <<EOF | tee /etc/pkg_install.conf
+PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All
+EOF
+
 : git crashes, do not know why
 pkg_add git || true
 pkg_add gmake
