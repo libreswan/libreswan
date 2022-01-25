@@ -41,7 +41,7 @@
  *
  * Use ub_ctx_create_event_ub_base() to create an unbound context that uses
  * the user provided event base API.  Then, use the ub_resolve_event call
- * to add DNS resolve queries to the context.  Those then run with the
+ * to add DNS resolve queries to the context.  Those then run whith the
  * provided event_base, and when they are done you get a function callback.
  *
  * This method does not fork another process or create a thread, the effort
@@ -170,7 +170,7 @@ struct ub_event {
 	struct ub_event_vmt* vmt;
 };
 
-typedef void (*ub_event_callback_t)(void*, int, void*, int, int, char*);
+typedef void (*ub_event_callback_type)(void*, int, void*, int, int, char*, int);
 
 /**
  * Create a resolving and validation context.
@@ -254,7 +254,8 @@ int ub_ctx_set_event(struct ub_ctx* ctx, struct event_base* base);
  * @return 0 if OK, else error.
  */
 int ub_resolve_event(struct ub_ctx* ctx, const char* name, int rrtype, 
-	int rrclass, void* mydata, ub_event_callback_t callback, int* async_id);
+	int rrclass, void* mydata, ub_event_callback_type callback,
+	int* async_id);
 
 #ifdef __cplusplus
 }
