@@ -738,9 +738,16 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
-	: things are working: true is true and false is !true
+	: Check that kvmsh can capture and return exit codes.
+	:   KVMSH expects the prompt to look something like:
+	:     [USER@HOST PWD EXIT_CODE]#
 	$(KVMSH) $(notdir $@) -- true
 	! $(KVMSH) $(notdir $@) -- false
+	: Check that /pool is mounted.
+	:   Shell scripts used to fine-tune the domain are run from the
+	:   /pool directory.
+	$(KVMSH) $(notdir $@) -- test -r /pool/$(notdir $@).qcow2
+	: everything seems to be working, shut down
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
@@ -883,7 +890,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		SOURCEDIR=$(KVM_SOURCEDIR) \
 		TESTINGDIR=$(KVM_TESTINGDIR) \
 		/pool/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
-	: shutdown needed after transmogrify but only shutdown when transmogrify works
+	: only shutdown when transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
