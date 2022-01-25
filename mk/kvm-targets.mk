@@ -34,9 +34,9 @@ endef
 #
 # The guest operating system.
 #
-# Pull in all its defaults so that they override everything below.
 
 include testing/libvirt/fedora/fedora.mk
+include testing/libvirt/freebsd/freebsd.mk
 include testing/libvirt/netbsd/netbsd.mk
 include testing/libvirt/openbsd/openbsd.mk
 
@@ -183,6 +183,9 @@ VIRT_INSTALL_FLAGS = \
 
 KVM_DEBIAN_HOSTS =
 KVM_FEDORA_HOSTS = east west north road nic
+ifdef KVM_FREEBSD
+KVM_FREEBSD_HOSTS = freebsde freebsdw
+endif
 ifdef KVM_NETBSD
 KVM_NETBSD_HOSTS = netbsde netbsdw
 endif
@@ -198,13 +201,15 @@ KVM_HOSTS = $(KVM_TEST_HOSTS) $(KVM_BUILD_HOSTS)
 #
 
 # so that $($*) conversts % to upper case
-fedora = FEDORA
 debian = DEBIAN
+fedora = FEDORA
+freebsd = FREEBSD
 netbsd = NETBSD
 openbsd = OPENBSD
 
 #KVM_PLATFORMS += debian
 KVM_PLATFORMS += fedora
+KVM_PLATFORMS += freebsd
 KVM_PLATFORMS += netbsd
 KVM_PLATFORMS += openbsd
 
@@ -220,8 +225,9 @@ add-kvm-localdir-prefixes = \
 # full path
 KVM_DEBIAN_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_DEBIAN_HOSTS))
 KVM_FEDORA_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FEDORA_HOSTS))
-KVM_OPENBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_OPENBSD_HOSTS))
+KVM_FREEBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FREEBSD_HOSTS))
 KVM_NETBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_NETBSD_HOSTS))
+KVM_OPENBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_OPENBSD_HOSTS))
 KVM_CLONES = $(strip $(foreach os, $(KVM_PLATFORMS), $(KVM_$($(os))_CLONES)))
 
 KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
@@ -425,7 +431,7 @@ kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
 # "test" and "check" just runs the entire testsuite.
-KVM_TEST_STATUS ?= good$(if $(KVM_NETBSD),|netbsd)
+KVM_TEST_STATUS ?= good$(if $(KVM_FREEBSD),|freebsd)$(if $(KVM_NETBSD),|netbsd)$(if $(KVM_OPENBSD),|openbsd)
 $(eval $(call kvm-test,kvm-check kvm-test, --test-status "$(KVM_TEST_STATUS)"))
 
 # "retest" and "recheck" re-run the testsuite updating things that
@@ -656,10 +662,6 @@ kvm-purge-gateway:
 ##
 ##
 
-
-#
-# Try to give the OpenBSD and NetBSD ISOs meaningful names.
-#
 # Note: Remember, $(basename) is counter intuitive - unlike UNIX
 # basename it doesn't strip the directory.
 
@@ -670,6 +672,13 @@ kvm-iso: $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
 	mv $@.tmp $@
+
+# For FreeBSD, download the compressed ISO
+KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
+kvm-iso: $(KVM_FREEBSD_ISO)
+$(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.xz --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+	xz --uncompress --keep $@.xz
 
 # NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
 # (NetBSD-*.iso).
@@ -774,6 +783,31 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_KICKSTART_FILE)) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_FEDORA_KICKSTART_FILE)
+
+# FreeBSD uses a modified install CD
+
+KVM_FREEBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)freebsd-base
+KVM_FREEBSD_VIRT_INSTALL_OS_VARIANT ?= freebsd10.0
+KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
+KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
+       --cdrom=$(KVM_FREEBSD_BASE_ISO)
+
+$(KVM_FREEBSD_BASE_DOMAIN): | $(KVM_FREEBSD_BASE_ISO)
+
+$(KVM_FREEBSD_BASE_ISO): \
+		$(KVM_FREEBSD_ISO) \
+		testing/libvirt/freebsd/loader.conf \
+		testing/libvirt/freebsd/base.conf
+	cp $(KVM_FREEBSD_ISO) $@.tmp
+	$(KVM_TRANSMOGRIFY) \
+		testing/libvirt/freebsd/base.conf \
+		> $(KVM_FREEBSD_BASE_DOMAIN).base.conf
+	growisofs -M $@.tmp -l -R \
+		-input-charset utf-8 \
+		-graft-points \
+		/boot/loader.conf=testing/libvirt/freebsd/loader.conf \
+		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).base.conf
+	mv $@.tmp $@
 
 # NetBSD, uses a serial console boot iso
 
@@ -1111,6 +1145,10 @@ ifdef KVM_NETBSD
 	$(foreach clone, $(KVM_NETBSD_CLONES), $(call undefine-os-domain, $(clone)))
 	$(MAKE) kvm-netbsd-install
 endif
+ifdef KVM_FREEBSD
+	$(foreach clone, $(KVM_FREEBSD_CLONES), $(call undefine-os-domain, $(clone)))
+	$(MAKE) kvm-freebsd-install
+endif
 	$(MAKE) $(KVM_KEYS)
 	$(MAKE) $(KVM_CLONES)
 
@@ -1219,16 +1257,19 @@ Configuration:
 
     $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
     $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
+    $(call kvm-var-value,KVM_FREEBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
 
     $(call kvm-var-value,KVM_DEBIAN_HOSTS)
     $(call kvm-var-value,KVM_FEDORA_HOSTS)
+    $(call kvm-var-value,KVM_FREEBSD_HOSTS)
     $(call kvm-var-value,KVM_NETBSD_HOSTS)
     $(call kvm-var-value,KVM_OPENBSD_HOSTS)
 
     $(call kvm-var-value,KVM_DEBIAN_CLONES)
     $(call kvm-var-value,KVM_FEDORA_CLONES)
+    $(call kvm-var-value,KVM_FREEBSD_CLONES)
     $(call kvm-var-value,KVM_NETBSD_CLONES)
     $(call kvm-var-value,KVM_OPENBSD_CLONES)
     $(call kvm-var-value,KVM_CLONES)
