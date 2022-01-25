@@ -250,7 +250,7 @@ void llog(lset_t rc_flags,
 	  const char *format, ...) PRINTF_LIKE(3);
 
 void llog_va_list(lset_t rc_flags, const struct logger *logger,
-		 const char *message, va_list ap) PRINTF_LIKE_VA(3);
+		  const char *message, va_list ap) VPRINTF_LIKE(3);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
@@ -366,7 +366,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
-void DBG_va_list(const char *message, va_list ap) PRINTF_LIKE_VA(1);
+void DBG_va_list(const char *message, va_list ap) VPRINTF_LIKE(1);
 void DBG_dump(const char *label, const void *p, size_t len);
 #define DBG_dump_hunk(LABEL, HUNK)				\
 	{							\

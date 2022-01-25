@@ -19,7 +19,9 @@
 
 #include "lswlog.h"
 
-static void jam_fatal(struct jambuf *buf, const struct logger *logger, const char *fmt, va_list ap)
+VPRINTF_LIKE(3)
+static void jam_fatal(struct jambuf *buf, const struct logger *logger,
+		      const char *fmt, va_list ap)
 {
 	/* XXX: The message format is:
 	 *   FATAL ERROR: <log-prefix><message...>

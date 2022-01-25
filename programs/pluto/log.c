@@ -230,8 +230,7 @@ void close_log(void)
  * - text is a human-readable annotation
  */
 
-static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
-			  const char *message, va_list args) PRINTF_LIKE_VA(3);
+VPRINTF_LIKE(3)
 static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
 			  const char *message, va_list args)
 {
@@ -283,7 +282,7 @@ static unsigned log_limit(void)
 	}
 }
 
-PRINTF_LIKE_VA(3)
+VPRINTF_LIKE(3)
 static void rate_log_raw(const char *prefix,
 			 struct logger *logger,
 			 const char *message,

@@ -123,6 +123,6 @@ void *uninitialized_realloc(void *ptr, size_t size, const char *name);
 
 /* can't use vaprintf() as it calls malloc() directly */
 char *alloc_printf(const char *fmt, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
-char *alloc_vprintf(const char *fmt, va_list ap)  PRINTF_LIKE_VA(1) MUST_USE_RESULT;
+char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESULT;
 
 #endif /* _LSW_ALLOC_H_ */

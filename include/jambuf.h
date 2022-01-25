@@ -147,7 +147,7 @@ void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos);
  * trying to pretty-print a table of values.
  */
 
-size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap) PRINTF_LIKE_VA(2);
+size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap) VPRINTF_LIKE(2);
 size_t jam_raw_bytes(struct jambuf *buf, const void *bytes, size_t nr_bytes);
 
 /* wrap above */
