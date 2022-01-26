@@ -532,8 +532,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
-	unsigned int transport_proto = src_client->ipproto;
-	pexpect(dst_client->ipproto == transport_proto);
+	const struct ip_protocol *client_proto = selector_protocol(*src_client);
+	pexpect(selector_protocol(*dst_client) == client_proto);
 
 	struct {
 		struct nlmsghdr n;
@@ -659,8 +659,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * upper 8 bits and lower 8 bits and puts into source and destination
 	 * ports before passing to XFRM.
 	 */
-	if (transport_proto == IPPROTO_ICMP ||
-	    transport_proto == IPPROTO_ICMPV6) {
+	if (client_proto == &ip_protocol_icmp ||
+	    client_proto == &ip_protocol_icmpv6) {
 		uint16_t tc = ntohs(req.u.p.sel.sport);
 		uint16_t icmp_type = tc >> 8;
 		uint16_t icmp_code = tc & 0xFF;
@@ -672,7 +672,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	/* note: byte order doesn't change 0 or ~0 */
 	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
 	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
-	req.u.p.sel.proto = transport_proto;
+	req.u.p.sel.proto = client_proto->ipproto;
 	req.u.p.sel.family = family;
 
 	if (op == KP_DELETE_OUTBOUND ||
