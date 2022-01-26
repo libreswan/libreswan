@@ -178,6 +178,33 @@ VIRT_INSTALL_FLAGS = \
 	$(VIRT_POOLDIR)
 
 #
+# Platforms / OSs
+#
+
+KVM_FEDORA ?= true
+
+# so that $($*) conversts % to upper case
+debian = DEBIAN
+fedora = FEDORA
+freebsd = FREEBSD
+netbsd = NETBSD
+openbsd = OPENBSD
+
+# this is what could work
+KVM_PLATFORMS += debian
+KVM_PLATFORMS += fedora
+KVM_PLATFORMS += freebsd
+KVM_PLATFORMS += netbsd
+KVM_PLATFORMS += openbsd
+
+# this is what is enabled
+KVM_OS += $(if $(KVM_DEBIAN),  debian)
+KVM_OS += $(if $(KVM_FEDORA),  fedora)
+KVM_OS += $(if $(KVM_FREEBSD), freebsd)
+KVM_OS += $(if $(KVM_NETBSD),  netbsd)
+KVM_OS += $(if $(KVM_OPENBSD), openbsd)
+
+#
 # Hosts
 #
 
@@ -199,19 +226,6 @@ KVM_HOSTS = $(KVM_TEST_HOSTS) $(KVM_BUILD_HOSTS)
 #
 # Domains
 #
-
-# so that $($*) conversts % to upper case
-debian = DEBIAN
-fedora = FEDORA
-freebsd = FREEBSD
-netbsd = NETBSD
-openbsd = OPENBSD
-
-#KVM_PLATFORMS += debian
-KVM_PLATFORMS += fedora
-KVM_PLATFORMS += freebsd
-KVM_PLATFORMS += netbsd
-KVM_PLATFORMS += openbsd
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
@@ -738,7 +752,7 @@ endef
 ##
 
 .PHONY: kvm-base
-kvm-base: $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS))
+kvm-base: $(patsubst %, kvm-%-base, $(KVM_OS))
 
 $(patsubst %, kvm-%-base, $(KVM_PLATFORMS)): \
 kvm-%-base:
@@ -875,13 +889,13 @@ $(KVM_OPENBSD_BASE_ISO): \
 ## At this point only /pool is accessible (/source and /testing are
 ## not, see below).
 
+.PHONY: kvm-downgrade
+kvm-downgrade: $(patsubst %, kvm-%-downgrade, $(KVM_OS))
+
 $(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS)): \
 kvm-%-downgrade:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
-
-.PHONY: kvm-downgrade
-kvm-downgrade: $(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS)): \
 kvm-%-upgrade:
@@ -889,7 +903,7 @@ kvm-%-upgrade:
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 .PHONY: kvm-upgrade
-kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS))
+kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_OS))
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
@@ -925,7 +939,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 
 
 ##
-## Create the platform domain by transmogrifying the updated domain.
+## Create the os domain by transmogrifying the updated domain.
 ##
 ## This also makes /source $(KVM_SOURCEDIR) and /testing
 ## $(KVM_TESTINGDIR) available to the VM.  Setting these during
@@ -933,7 +947,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 ## and not a full domain rebuild.
 
 .PHONY: kvm-transmogrify
-kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS))
+kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_OS))
 
 $(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
 kvm-%-transmogrify:
@@ -1271,6 +1285,9 @@ Configuration:
     $(call kvm-var-value,KVM_FREEBSD_HOSTS)
     $(call kvm-var-value,KVM_NETBSD_HOSTS)
     $(call kvm-var-value,KVM_OPENBSD_HOSTS)
+
+    $(call kvm-var-value,KVM_BUILD_HOSTS)
+    $(call kvm-var-value,KVM_TEST_HOSTS)
 
     $(call kvm-var-value,KVM_DEBIAN_CLONES)
     $(call kvm-var-value,KVM_FEDORA_CLONES)
