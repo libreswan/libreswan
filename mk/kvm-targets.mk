@@ -710,8 +710,13 @@ define undefine-os-domain
 	:    path=$(strip $(1))
 	:    domain=$(notdir $(1))
 	case "$$($(VIRSH) domstate $(notdir $(1)))" in \
-	"running" ) $(VIRSH) destroy $(notdir $(1)) ; $(VIRSH) undefine $(notdir $(1)) ;; \
-	"shut off" ) $(VIRSH) undefine $(notdir $(1)) ;; \
+	"running" | "in shutdown" ) \
+		$(VIRSH) destroy $(notdir $(1)) ; \
+		$(VIRSH) undefine $(notdir $(1)) \
+		;; \
+	"shut off" ) \
+		$(VIRSH) undefine $(notdir $(1)) \
+		;; \
 	"" ) ;; \
 	esac
 	rm -f $(1)
