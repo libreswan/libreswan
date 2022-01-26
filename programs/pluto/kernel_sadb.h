@@ -21,12 +21,12 @@
 #include <netinet/in.h>		/* for IPPROTO_* */
 #include <stdint.h>		/* because pfkeyv2.h doesn't */
 
+#include "lsw-pfkeyv2.h"	/* also pulls in missing types dependencies */
 #ifdef linux
 # include <linux/ipsec.h>
 #else
 # include <netipsec/ipsec.h>
 #endif
-#include "lsw-pfkeyv2.h"
 
 #include "lswcdefs.h"
 #include "shunk.h"
