@@ -581,14 +581,14 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		const char *what;
 		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ipsec_pred = predecessor->st_serialno;
-			what = "established CHILD SA";
+			what = "established Child SA";
 		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
 			ike->sa.st_ike_pred = predecessor->st_serialno;
 			what = "established IKE SA";
 		} else if (IS_IKE_SA(predecessor)) {
 			what = "establishing IKE SA";
 		} else {
-			what = "establishing CHILD SA";
+			what = "establishing Child SA";
 		}
 		log_state(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), &ike->sa,
 			  "initiating IKEv2 connection to replace %s #%lu",
