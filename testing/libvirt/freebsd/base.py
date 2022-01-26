@@ -42,7 +42,7 @@ def i():
 
 def rs(r, s):
     '''expect R then send S'''
-    child.expect(r)
+    child.expect(r, timeout=None)
     for c in s:
         child.send(c)
 
@@ -56,4 +56,5 @@ def c(s):
 # XXX: how to fix this? scribble on /etc/rc.local?
 rs("Console type", "\n")
 
+child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
 sys.exit(child.wait())
