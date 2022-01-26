@@ -53,7 +53,7 @@ def c(s):
         child.send(c)
     child.send('\n')
 
-# XXX: how to fix this? scribble on /etc/rc.local
+# XXX: how to fix this? scribble on /etc/rc.local?
 rs("Console type", "\n")
 
-i()
+sys.exit(child.wait())
