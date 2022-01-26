@@ -545,36 +545,14 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
-	/*
-	 * ???
-	 * This enum was pointlessly copied from /usr/include/linux/ipsec.h
-	 * We don't use that header because it is for Racoon or PFKEY2
-	 * and we are neither.
-	 * Only three of the five values remain.
-	 * The values don't leak from this function (except in dbg output)
-	 * so the numerical values are no longer specified.
-	 * The value of "policy" is only used within this function and
-	 * only in two places; surely this could be simplified further.
-	 * The names should be made more appropriate and concise
-	 * for this very local and specific context.
-	 * Yet another meaning overloaded onto the word "policy".
-	 *
-	 * XXX: Another way to describe what to do with packets when
-	 * they arrive - DISCARD, tunnel through IPSEC, and what ever
-	 * NONE is.
-	 */
-	enum {
-		IPSEC_POLICY_UNSET,
-		IPSEC_POLICY_DISCARD,
-		IPSEC_POLICY_NONE,
-		IPSEC_POLICY_IPSEC,
-	} policy;
-
+	unsigned xfrm_action;
+	bool xfrm_tmpl;
 	const char *policy_name;
 	/* shunt route */
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
-		policy = IPSEC_POLICY_IPSEC;
+		xfrm_tmpl = true;
+		xfrm_action = XFRM_POLICY_ALLOW;
 		if (kernel_policy != NULL && kernel_policy->last > 0) {
 			policy_name =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
@@ -586,7 +564,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		}
 		break;
 	case SHUNT_PASS:
-		policy = IPSEC_POLICY_NONE;
+		xfrm_action = XFRM_POLICY_ALLOW;
+		xfrm_tmpl = false;
 		policy_name = "%pass(none)";
 		break;
 	case SHUNT_HOLD:
@@ -602,17 +581,20 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		return true; /* yes really */
 	case SHUNT_DROP:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-		policy = IPSEC_POLICY_DISCARD;
+		xfrm_action = XFRM_POLICY_BLOCK;
+		xfrm_tmpl = true;
 		policy_name = "%drop(discard)";
 		break;
 	case SHUNT_REJECT:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-		policy = IPSEC_POLICY_DISCARD;
+		xfrm_action = XFRM_POLICY_BLOCK;
+		xfrm_tmpl = true;
 		policy_name = "%reject(discard)";
 		break;
 	case SHUNT_NONE:
 		/* used with type=passthrough - can it not use SPI_PASS ?? */
-		policy = IPSEC_POLICY_DISCARD;
+		xfrm_action = XFRM_POLICY_BLOCK;
+		xfrm_tmpl = true;
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
@@ -620,17 +602,17 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 			return true;
 		}
-		policy = IPSEC_POLICY_IPSEC;
+		xfrm_action = XFRM_POLICY_ALLOW;
+		xfrm_tmpl = true;
 		policy_name = "%trap(ipsec)";
 		break;
 	default:
 		bad_case(shunt_policy);
 	}
 
-	const int dir = (op == KP_ADD_INBOUND ||
-			 op == KP_DELETE_INBOUND) ?
-		XFRM_POLICY_IN : XFRM_POLICY_OUT;
-	dbg("%s() policy=%s/%d dir=%d", __func__, policy_name, policy, dir);
+	const unsigned xfrm_dir = (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) ? XFRM_POLICY_IN : XFRM_POLICY_OUT;
+	dbg("%s() policy=%s action=%d templ=%s dir=%d",
+	    __func__, policy_name, xfrm_action, bool_str(xfrm_tmpl), xfrm_dir);
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -677,18 +659,17 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	if (op == KP_DELETE_OUTBOUND ||
 	    op == KP_DELETE_INBOUND) {
-		req.u.id.dir = dir;
+		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
 	} else {
-		req.u.p.dir = dir;
+		req.u.p.dir = xfrm_dir;
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
 		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
 
-		req.u.p.action = policy == IPSEC_POLICY_DISCARD ?
-			XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW;
+		req.u.p.action = xfrm_action;
 		/* req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
@@ -717,11 +698,10 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (kernel_policy != NULL &&
-	    /* XXX: see comment above, and {else} below */
-	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD) &&
+	if (kernel_policy != NULL && xfrm_tmpl &&
 	    op != KP_DELETE_OUTBOUND &&
 	    op != KP_DELETE_INBOUND) {
+		pexpect(xfrm_tmpl == true);
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
@@ -731,7 +711,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			struct xfrm_user_tmpl *tmpl = &tmpls[i-1/*remove bias*/];
 			tmpl->reqid = rule->reqid;
 			tmpl->id.proto = rule->proto;
-			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP && dir != XFRM_POLICY_OUT);
+			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
+					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
 			tmpl->family = addrtypeof(&kernel_policy->host.dst);
 			/* only the first rule gets the worm; er tunnel flag */
@@ -766,19 +747,19 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	} else if (DBGP(DBG_BASE)) {
 		if (kernel_policy == NULL) {
-			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, policy=%d op=%d",
-				__func__, policy, op);
+			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, templ=%s op=%d",
+				__func__, bool_str(xfrm_tmpl), op);
 		} else {
 			/*
 			 * Dump ignored proto_info[].
 			 */
 			for (unsigned i = 1; i <= kernel_policy->last; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because policy=%d op=%d",
+				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because tmpl=%s op=%d",
 					__func__, rule->reqid,
 					protocol_by_ipproto(rule->proto)->name,
 					encap_mode_name(kernel_policy->mode),
-					policy, op);
+					bool_str(xfrm_tmpl), op);
 			}
 		}
 	}
@@ -788,11 +769,10 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 *
 	 * XXX: again, can't the caller decide this?
 	 */
-	if (sa_marks != NULL &&
-	    /* XXX: see comment above and {else} below */
-	    (policy == IPSEC_POLICY_IPSEC || policy == IPSEC_POLICY_DISCARD)) {
+	if (sa_marks != NULL && xfrm_tmpl) {
+		pexpect(xfrm_tmpl == true);
 		if (xfrmi == NULL) {
-			struct sa_mark sa_mark = (dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
+			struct sa_mark sa_mark = (xfrm_dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
 			if (sa_mark.val != 0 && sa_mark.mask != 0) {
 				struct xfrm_mark xfrm_mark = {
@@ -826,10 +806,10 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 #endif
 		}
 	} else if (DBGP(DBG_BASE) && sa_marks != NULL) {
-		DBG_log("%s() ignoring xfrm_mark in %x/%x out %x/%x because policy=%d op=%d", __func__,
+		DBG_log("%s() ignoring xfrm_mark in %x/%x out %x/%x because tmpl=%s op=%d", __func__,
 			sa_marks->in.val, sa_marks->in.mask,
 			sa_marks->out.val, sa_marks->out.mask,
-			policy, op);
+			bool_str(xfrm_tmpl), op);
 	}
 
 	if (sec_label.len > 0) {
