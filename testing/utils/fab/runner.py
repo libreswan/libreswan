@@ -73,62 +73,41 @@ TEST_TIMEOUT = 120
 
 class TestDomain:
 
-    def __init__(self, domain_prefix, host_name, test, logger):
+    def __init__(self, domain, test, logger):
         self.test = test
         # Get the domain
-        domain_name = (domain_prefix + host_name)
-        self.logger = logger.nest(test.name + " " + domain_name)
-        self.domain = virsh.Domain(self.logger, host_name=host_name, domain_name=domain_name)
-        # A valid console indicates that the domain is up.
-        self.console = self.domain.console()
+        self.logger = logger
+        self.domain = domain
 
     def __str__(self):
         return self.domain.domain_name
 
-    def crash(self):
-        # The objective here is to cause any further operations (on
-        # another thread say) to crash!  Swap out any existing domain
-        # and console so any attempt to operate on or manipulate the
-        # target crashes.
-        domain, self.domain = self.domain, None
-        # This forces a new console to be opened kicking off any
-        # existing connection.
-        self.logger.info("closing any existing console by forcing a console re-open")
-        console = domain.console()
-        # Finally clean up.
-        self.disconnect_console(domain, console, self.logger.info)
-
     def close(self):
-        self.disconnect_console(self.domain, self.console, self.logger.debug)
-
-    def disconnect_console(self, domain, console, log):
         # disconnect the current console.
+        console = self.domain.console()
         if console:
-            log("sending ^] to close virsh; expecting EOF")
+            self.logger.debug("sending ^] to close virsh; expecting EOF")
             console.sendcontrol("]")
             console.expect([pexpect.EOF])
-        # close the old console.
-        if self.console:
-            self.console.close_output()
-            self.console.close()
-        self.console = None
+            self.domain.close()
 
     def shutdown(self):
-        remote.shutdown(self.domain)
+        self.domain.shutdown()
 
     def boot_and_login(self):
-        self.console = remote.boot_and_login(self.domain, self.console)
-        test_directory = self.domain.guest_path(self.console, host_path=self.test.directory)
+        console = remote.boot_and_login(self.domain)
+        test_directory = self.domain.guest_path(host_path=self.test.directory)
         if not test_directory:
             abspath = os.path.abspath(self.test.directory)
             self.logger.error("directory %s not mounted on %s", abspath, self.domain)
             raise Exception("directory '%s' not mounted on %s" % (abspath, self.domain))
         self.logger.info("'cd' to %s", test_directory)
-        self.console.chdir(test_directory)
+        console.chdir(test_directory)
 
     def read_file_run(self, basename):
         # child's log is in binary
-        self.console.append_output("%s %s %s", post.CUT, basename, post.TUC)
+        console = self.domain.console()
+        console.append_output("%s %s %s", post.CUT, basename, post.TUC)
         with self.logger.time("running script %s", basename):
             filename = os.path.join(self.test.directory, basename)
             with open(filename, "r") as file:
@@ -136,7 +115,7 @@ class TestDomain:
                     line = line.strip()
                     if line:
                         self.logger.info("[%s]# %s", basename, line)
-                        status = self.console.run(line, timeout=TEST_TIMEOUT)
+                        status = console.run(line, timeout=TEST_TIMEOUT)
                         if status:
                             # XXX: Can't abort as some ping commands
                             # are expected to fail.
@@ -152,7 +131,7 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
 def executor_qsize_hack(executor):
     return executor._work_queue.qsize()
 
-def _boot_test_domains(logger, test, domain_prefix):
+def _boot_test_domains(logger, test, domains):
 
     # There's a tradeoff here between speed and reliability.
     #
@@ -166,9 +145,12 @@ def _boot_test_domains(logger, test, domain_prefix):
 
     test_domains = {}
     unused_domains = set()
-    for host_name in testsuite.HOST_NAMES:
-        # Test domains have the method "crash()" used below.
-        test_domain = TestDomain(domain_prefix, host_name, test, logger)
+    for host_name in domains:
+        # hack to overriding existing loggers
+        domain = domains[host_name]
+        domain.nest(logger, test.name + " ")
+        # new test domain
+        test_domain = TestDomain(domain, test, domain.logger)
         if host_name in test.host_names:
             test_domains[host_name] = test_domain
         else:
@@ -188,7 +170,7 @@ def _boot_test_domains(logger, test, domain_prefix):
 
 
 
-def _process_test(domain_prefix, args, result_stats, task, logger):
+def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
     test = task.test
     prefix = "******"
@@ -311,7 +293,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
                     try:
-                        test_domains = _boot_test_domains(logger, test, domain_prefix)
+                        test_domains = _boot_test_domains(logger, test, domains)
                     except pexpect.TIMEOUT:
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
@@ -338,7 +320,8 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                             for test_domain in test_domains.values():
                                 output = os.path.join(test.output_directory,
                                                       test_domain.domain.host_name + ".console.verbose.txt")
-                                test_domain.console.redirect_output(open(output, "w"))
+                                test_domain_console = test_domain.domain.console()
+                                test_domain_console.redirect_output(open(output, "w"))
 
                             # If a script times out, don't try to run
                             # post-mortem.sh.
@@ -346,6 +329,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
 
                             for script in test.host_scripts:
                                 test_domain = test_domains[script.host_name]
+                                test_domain_console = test_domain.domain.console()
                                 try:
                                     test_domain.read_file_run(script.path)
                                 except pexpect.TIMEOUT as e:
@@ -354,7 +338,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                     # hung.
                                     message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                     logger.warning("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    test_domain_console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
                                     break
                                 except pexpect.EOF as e:
@@ -362,7 +346,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                     # is a sign that libvirt crashed.
                                     message = "%s while running script %s" % (post.Issues.EOF, script)
                                     logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    test_domain_console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
                                     break
                                 except FileNotFoundError as e:
@@ -370,7 +354,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                     # from under us!
                                     message = "%s while running script %s" % (post.Issues.EOF, script)
                                     logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                    test_domain_console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                     host_timed_out = script.host_name
                                     break
                                 except BaseException as e:
@@ -378,7 +362,7 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                     # it to the console
                                     message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                     logger.exception("*** %s ***" % message)
-                                    test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
+                                    test_domain_console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                     raise
 
                             if args.run_post_mortem is False:
@@ -389,21 +373,22 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                 script = "../../guestbin/post-mortem.sh"
                                 for host_name in test.host_names:
                                     test_domain = test_domains[host_name]
-                                    test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)
+                                    test_domain_console = test_domain.domain.console()
+                                    test_domain_console.append_output("%s post-mortem %s", post.LHS, post.LHS)
                                     logger.info("running %s on %s", script, host_name)
                                     try:
-                                        status = test_domain.console.run(script, timeout=TEST_TIMEOUT)
+                                        status = test_domain_console.run(script, timeout=TEST_TIMEOUT)
                                         if status:
                                             logger.error("%s failed on %s with status %s", script, host_name, status)
                                         else:
-                                            test_domain.console.append_output("%s post-mortem %s", post.RHS, post.RHS)
+                                            test_domain_console.append_output("%s post-mortem %s", post.RHS, post.RHS)
                                     except pexpect.TIMEOUT as e:
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
                                         # FAIL.
                                         message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
                                         logger.warning("*** %s ***" % message)
-                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        test_domain_console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except pexpect.EOF as e:
                                         # A post-mortem ending with an
@@ -411,25 +396,27 @@ def _process_test(domain_prefix, args, result_stats, task, logger):
                                         # unresloved.
                                         message = "%s while running script %s" % (post.Issues.EOF, script)
                                         logger.exception("*** %s ***" % message)
-                                        test_domain.console.append_output("%s %s %s", post.LHS, message, post.RHS)
+                                        test_domain_console.append_output("%s %s %s", post.LHS, message, post.RHS)
                                         continue # always teardown
                                     except BaseException as e:
                                         # if there is an exception, write
                                         # it to the console
                                         message = "%s %s while running script %s" % (post.Issues.EXCEPTION, str(e), script)
                                         logger.exception(message)
-                                        test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
+                                        test_domain_console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                         raise
 
                             for test_domain in test_domains.values():
-                                test_domain.console.append_output(post.DONE)
+                                test_domain_console = test_domain.domain.console()
+                                test_domain_console.append_output(post.DONE)
 
                         finally:
 
                             # Close the redirected test-result log files
                             logger.info("closing all the test domain log files")
                             for test_domain in test_domains.values():
-                                test_domain.console.close_output()
+                                test_domain_console = test_domain.domain.console()
+                                test_domain_console.close_output()
 
                             # Always disconnect from the test domains.
                             logger.info("closing all the test domains")
@@ -491,19 +478,34 @@ class Task:
         self.test = test
 
 
-def _process_test_queue(domain_prefix, test_queue, args, done, result_stats):
+def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
     # New (per-thread/process) logger!
     logger = logutil.getLogger(domain_prefix and domain_prefix or "kvmrunner")
-    logger.info("processing test queue") 
+
+    logger.info("preparing test domains")
+
+    domains = {}
+    for host_name in testsuite.HOST_NAMES:
+        domain_name = (domain_prefix + host_name)
+        domain = virsh.Domain(logger.nest(domain_name), host_name=host_name, domain_name=domain_name)
+        domains[host_name] = domain
+
+    logger.info("processing test queue")
     try:
         while True:
             task = test_queue.get(block=False)
             task_logger = logger.nest(task.test.name + " " + domain_prefix)
-            _process_test(domain_prefix, args, result_stats, task, task_logger)
+            _process_test(domain_prefix, domains, args, result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:
         done.release()
+        if nr_tests > 1:
+            logger.info("shutdown test domains: %s",
+                        " ".join(e.domain_name for e in domains.values()))
+            for domain in domains.values():
+                domain.nest(logger, "")
+                domain.shutdown()
 
 
 def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
@@ -515,7 +517,7 @@ def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result
                                         target=_process_test_queue,
                                         daemon=True,
                                         args=(domain_prefix, test_queue,
-                                              args, done,
+                                              nr_tests, args, done,
                                               result_stats)))
         # don't start more threads then needed
         if len(threads) >= nr_tests:
@@ -534,7 +536,7 @@ def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result
     try:
         while True:
             test = test_queue.get(block=False)
-            logger.info("discarding test %s", test)
+            logger.debug("discarding test %s", test)
     except queue.Empty:
         None
 
@@ -564,5 +566,5 @@ def run_tests(logger, args, tests, result_stats):
         domain_prefix = domain_prefixes[0]
         done = threading.Semaphore(value=0) # block
         logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-        _process_test_queue(domain_prefix, test_queue, args, done, result_stats)
+        _process_test_queue(domain_prefix, test_queue, len(tests), args, done, result_stats)
     publish.json_status(logger, args, "finished")

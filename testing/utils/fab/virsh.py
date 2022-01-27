@@ -22,6 +22,7 @@ import os
 
 from fab import shell
 from fab import logutil
+from fab import timing
 
 # Can be anything as it either matches immediately or dies with EOF.
 CONSOLE_TIMEOUT = 30
@@ -38,6 +39,9 @@ class STATE:
 
 _VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
 
+SHUTDOWN_TIMEOUT = 20
+DESTROY_TIMEOUT = 20
+
 class Domain:
 
     def __init__(self, logger, host_name=None, domain_name=None):
@@ -50,9 +54,16 @@ class Domain:
         self.logger.debug("domain created")
         self._mounts = None
         self._xml = None
+        self._console = None # or False or a real console
 
     def __str__(self):
         return "domain " + self.domain_name
+
+    def nest(self, logger, prefix):
+        self.logger = logger.nest(prefix + self.domain_name)
+        if self._console:
+            self._console.logger = domain.logger
+        return self.logger
 
     def run_status_output(self, command):
         self.logger.debug("running: %s", command)
@@ -78,26 +89,65 @@ class Domain:
         else:
             return output
 
-    def shutdown(self):
-        return self.run_status_output(_VIRSH + ["shutdown", self.domain_name])
+    def _shutdown(self):
+        self.run_status_output(_VIRSH + ["shutdown", self.domain_name])
+
+    def shutdown(self, timeout=SHUTDOWN_TIMEOUT):
+        """Use the console to detect the shutdown - if/when the domain stops
+        it will exit giving an EOF.
+
+        """
+
+        console = self.console()
+        if not console:
+            self.logger.error("domain already shutdown")
+            return True
+
+        self.logger.info("waiting %d seconds for domain to shutdown", timeout)
+        lapsed_time = timing.Lapsed()
+        self._shutdown()
+        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                          timeout=timeout) == 0:
+            self.logger.info("domain shutdown after %s", lapsed_time)
+            self._console = False
+            return True
+
+        self.logger.error("timeout shutting down domain")
+        return self.destroy()
+
+    def _destroy(self):
+        return self.run_status_output(_VIRSH + ["destroy", self.domain_name])
+
+    def destroy(self, timeout=DESTROY_TIMEOUT):
+        """Use the console to detect a destroyed domain - if/when the domain
+        stops it will exit giving an EOF.
+
+        """
+
+        console = self.console()
+        if not console:
+            self.logger.error("domain already destroyed")
+            return True
+
+        self.logger.info("waiting %d seconds for domain to be destroyed", timeout)
+        lapsed_time = timing.Lapsed()
+        self._destroy()
+        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                          timeout=timeout) == 0:
+            self.logger.info("domain destroyed after %s", lapsed_time)
+            self._console = False
+            return True
+
+        self.logger.error("timeout destroying domain, giving up")
+        self._console = None
+        return False
 
     def reboot(self):
         return self.run_status_output(_VIRSH + ["reboot", self.domain_name])
 
-    def reset(self):
-        return self.run_status_output(_VIRSH + ["reset", self.domain_name])
-
-    def destroy(self):
-        return self.run_status_output(_VIRSH + ["destroy", self.domain_name])
-
     def start(self):
+        self._console = None
         return self.run_status_output(_VIRSH + ["start", self.domain_name])
-
-    def suspend(self):
-        return self.run_status_output(_VIRSH + ["suspend", self.domain_name])
-
-    def resume(self):
-        return self.run_status_output(_VIRSH + ["resume", self.domain_name])
 
     def dumpxml(self):
         if self._xml == None:
@@ -107,24 +157,34 @@ class Domain:
         return self._xml
 
     def console(self, timeout=CONSOLE_TIMEOUT):
+        if self._console or self._console is False:
+            # !None
+            return self._console
+
         command = " ".join(_VIRSH + ["console", "--force", self.domain_name])
         self.logger.debug("opening console with: %s", command)
-        console = shell.Remote(command, self.logger, hostname=self.host_name)
+        self._console = shell.Remote(command, self.logger, hostname=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
         # will get an EOF.
-        if console.expect([pexpect.EOF,
-                           # earlier
-                           "Connected to domain %s\r\nEscape character is \\^]" % self.domain_name,
-                           # libvirt >= 7.0
-                           "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
-                           ],
-                          timeout=timeout) == 0:
-            self.logger.debug("got EOF from console")
-            console.close()
-            console = None
-        return console
+        if self._console.expect([pexpect.EOF,
+                                 # earlier
+                                 "Connected to domain %s\r\nEscape character is \\^]" % self.domain_name,
+                                 # libvirt >= 7.0
+                                 "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
+                                 ],
+                                timeout=timeout) > 0:
+            return self._console
+
+        self.logger.debug("got EOF from console")
+        self._console.close()
+        self._console = False
+
+    def close(self):
+        if self._console:
+            self._console.close()
+        self._console = None # not False
 
     def _get_mounts(self, console):
         # First extract the 9p mount points from LIBVIRT.
@@ -190,7 +250,8 @@ class Domain:
         mounts = sorted(mounts, key=lambda item: item[0], reverse=True)
         return mounts
 
-    def guest_path(self, console, host_path):
+    def guest_path(self, host_path):
+        console = self.console()
         if self._mounts is None:
             self._mounts = self._get_mounts(console)
         # Note that REMOTE_MOUNTS is sorted in reverse order so that

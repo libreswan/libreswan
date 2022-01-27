@@ -82,6 +82,7 @@ def _login(domain, console, login, password,
 # The machine is assumed to be booted; but its state is unknown.
 
 def login(domain, console, login=LOGIN, password=PASSWORD):
+
     if not console:
         domain.logger.error("domain not running")
         return None
@@ -110,7 +111,7 @@ def _start(domain, timeout):
     # Bring the machine up from scratch.
     end_time = time.time() + timeout
     first_attempt = True
-    while console == None:
+    while not console:
         if time.time() > end_time:
             raise pexpect.EOF("trying to start domain %s" % domain)
         status, output = domain.start()
@@ -126,29 +127,6 @@ def _start(domain, timeout):
     domain.logger.debug("got console")
     return console
 
-
-# Use the console to detect the shutdown - if/when the domain stops it
-# will exit giving an EOF.
-
-def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
-    lapsed_time = timing.Lapsed()
-    console = console or domain.console()
-    if not console:
-        domain.logger.error("domain already shutdown")
-        return None
-    domain.logger.info("waiting %d seconds for domain to shutdown", shutdown_timeout)
-    domain.shutdown()
-    if console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                      timeout=shutdown_timeout):
-        domain.logger.error("timeout waiting for shutdown, destroying it")
-        domain.destroy()
-        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                          timeout=shutdown_timeout):
-            domain.logger.error("timeout waiting for destroy, giving up")
-            return True
-        return False
-    domain.logger.info("domain shutdown after %s", lapsed_time)
-    return False
 
 def _reboot_to_login_prompt(domain, console):
 
@@ -219,22 +197,23 @@ def _reboot_to_login_prompt(domain, console):
     return console
 
 
-def boot_to_login_prompt(domain, console):
+def boot_to_login_prompt(domain):
 
+    console = domain.console()
     if console:
         return _reboot_to_login_prompt(domain, console)
-    else:
-        console = _start(domain, timeout=START_TIMEOUT)
-        console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
-        return console
 
+    console = _start(domain, timeout=START_TIMEOUT)
+    console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
+    return console
 
-def boot_and_login(domain, console, login=LOGIN, password=PASSWORD):
+def boot_and_login(domain, login=LOGIN, password=PASSWORD):
 
-    console = boot_to_login_prompt(domain, console)
+    console = boot_to_login_prompt(domain)
     if not console:
         domain.logger.error("domain not running")
         return None
+
     # try to login
     timeout = PASSWORD_TIMEOUT
     domain.logger.info("got login prompt; sending '%s' and waiting %s seconds for password (or shell) prompt", \

@@ -98,20 +98,22 @@ def main():
     # Get the current console, this will be None if the machine is
     # shutoff (and forced to none if a cold boot)
 
-    console = domain.console()
-    if args.boot is Boot.cold and console:
-        remote.shutdown(domain, console)
-        console = None
+    if args.boot is Boot.cold and domain.console():
+        domain.shutdown()
 
     status = 0
     if args.boot and not (interactive or batch):
-        console = remote.boot_to_login_prompt(domain, console)
+
+        console = remote.boot_to_login_prompt(domain)
 
     elif interactive or batch:
+
+        console = domain.console()
+
         if console:
             remote.login(domain, console)
         else:
-            console = remote.boot_and_login(domain, console)
+            console = remote.boot_and_login(domain)
 
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
@@ -151,7 +153,7 @@ def main():
             console.interact()
 
     if args.shutdown:
-        shutdown_status = remote.shutdown(domain)
+        shutdown_status = not domain.shutdown()
         status = status or shutdown_status
 
     sys.exit(status)
