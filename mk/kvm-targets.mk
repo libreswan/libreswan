@@ -408,12 +408,14 @@ web-pages-disabled:
 # - depends on kvm-keys-ok and not kvm-keys or $(KVM_KEYS) so that the
 #   check that the keys are up-to-date is run.
 #
-# - need local domains shutdown as, otherwise, test domains can refuse
+# - need build domains shutdown as, otherwise, test domains can refuse
 #   to boot because the domain they were cloned from is still running.
 
 define kvm-test
 .PHONY: $(1)
-$(1): $(KVM_HOST_OK) kvm-keys-ok kvm-shutdown
+$(1): $(KVM_HOST_OK) kvm-keys-ok
+	: shutdown all the build domains, kvmrunner shuts down the test domains
+	$$(foreach domain, $$(KVM_BUILD_DOMAINS), $$(call shutdown-os-domain, $$(domain)))
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
@@ -1061,17 +1063,15 @@ endef
 .PHONY: kvm-shutdown
 kvm-shutdown:
 	$(foreach domain, $(KVM_TEST_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach variant, $(platform)-base $(platform)-upgrade $(platform), \
-			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(variant))))
+	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
 
-.PHONY: kvm-uninstall kvm-clean-install
-kvm-uninstall kvm-clean-install:
+.PHONY: kvm-uninstall
+kvm-uninstall:
 	$(foreach domain, $(KVM_TEST_DOMAINS), $(call undefine-os-domain, $(domain)))
 	$(foreach os, $(KVM_OS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(os)))
 
 .PHONY: kvm-clean
-kvm-clean: kvm-clean-install
+kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
 kvm-clean:
@@ -1433,9 +1433,10 @@ Standard targets and operations:
 
     kvm-uninstall:
 
-      uninstall libreswan from the the test domains (cheats by
-      deleting the build and test domains); doesn't touch the build
-      directory or test results
+      Uninstall libreswan from the the test domains (cheats by
+      deleting the build and test domains).
+
+      Doesn't touch the test results
 
     kvm-clean:
 
