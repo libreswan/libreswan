@@ -506,7 +506,7 @@ def _process_test_queue(domain_prefix, test_queue, args, done, result_stats):
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, logger):
+def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
 
     done = threading.Semaphore(value=0) # block
     threads = []
@@ -517,6 +517,10 @@ def _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, lo
                                         args=(domain_prefix, test_queue,
                                               args, done,
                                               result_stats)))
+        # don't start more threads then needed
+        if len(threads) >= nr_tests:
+            break
+
     for thread in threads:
         thread.start()
 
@@ -554,8 +558,8 @@ def run_tests(logger, args, tests, result_stats):
 
     domain_prefixes = args.prefix or [""]
     if args.parallel or len(domain_prefixes) > 1:
-        logger.info("using the parallel test processor and domain prefixes %s", domain_prefixes)
-        _parallel_test_processor(domain_prefixes, test_queue, args, result_stats, logger)
+        logger.info("using the parallel test processor and domain prefixes %s to run %d tests", domain_prefixes, len(tests))
+        _parallel_test_processor(domain_prefixes, test_queue, len(tests), args, result_stats, logger)
     else:
         domain_prefix = domain_prefixes[0]
         done = threading.Semaphore(value=0) # block
