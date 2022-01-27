@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2021 Andrew Cagney
+# Copyright (C) 2015-2022 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -118,21 +118,6 @@ KVM_FEDORA_MAKEFLAGS = \
 	$(if $(KVM_FEDORA_NSS_LDFLAGS),NSS_LDFLAGS="$(KVM_FEDORA_NSS_LDFLAGS)") \
 	$(NULL)
 
-#
-# Generate local names using prefixes
-#
-
-strip-prefix = $(subst '',,$(subst "",,$(1)))
-# for-each-kvm-prefix = how?
-add-kvm-prefixes = \
-	$(foreach prefix, $(KVM_PREFIXES), \
-		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
-KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
-
-# targets for dumping the above
-.PHONY: print-kvm-prefixes
-print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
-
 
 # Fine-tune the BASE and BUILD machines.
 #
@@ -180,8 +165,14 @@ VIRT_INSTALL_FLAGS = \
 #
 # Platforms / OSs
 #
+# To disable an OS use something like:
+#     KVM_OPENBSD=
+# NOT ...=false
 
 KVM_FEDORA ?= true
+KVM_FREEBSD ?=
+KVM_NETBSD ?=
+KVM_OPENBSD ?=
 
 # so that $($*) conversts % to upper case
 debian = DEBIAN
@@ -208,24 +199,37 @@ KVM_OS += $(if $(KVM_OPENBSD), openbsd)
 # Hosts
 #
 
-KVM_DEBIAN_HOSTS =
-KVM_FEDORA_HOSTS = east west north road nic
-ifdef KVM_FREEBSD
-KVM_FREEBSD_HOSTS = freebsde freebsdw
-endif
-ifdef KVM_NETBSD
-KVM_NETBSD_HOSTS = netbsde netbsdw
-endif
-KVM_OPENBSD_HOSTS ?= openbsde openbsdw
+KVM_DEBIAN_HOST_NAMES = debiane debianw
+KVM_FEDORA_HOST_NAMES = east west north road nic
+KVM_FREEBSD_HOST_NAMES = freebsde freebsdw
+KVM_NETBSD_HOST_NAMES = netbsde netbsdw
+KVM_OPENBSD_HOST_NAMES = openbsde openbsdw
 
-KVM_TEST_HOSTS = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_HOSTS))
-KVM_BUILD_HOSTS = $(foreach platform, $(KVM_PLATFORMS), $(foreach variant, base upgrade build, $(platform)-$(variant)))
+KVM_TEST_HOST_NAMES = $(foreach os, $(KVM_OS), $(KVM_$($(os))_HOST_NAMES))
+KVM_BUILD_HOST_NAMES = $(foreach os, $(KVM_OS), $(os) $(os)-base $(os)-upgrade)
 
-KVM_HOSTS = $(KVM_TEST_HOSTS) $(KVM_BUILD_HOSTS)
+KVM_HOST_NAMES = $(KVM_TEST_HOST_NAMES) $(KVM_BUILD_HOST_NAMES)
 
 #
 # Domains
 #
+# Generate local names using prefixes
+#
+
+strip-prefix = $(subst '',,$(subst "",,$(1)))
+# for-each-kvm-prefix = how?
+add-kvm-prefixes = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
+KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
+
+# targets for dumping the above
+.PHONY: print-kvm-prefixes
+print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
+
+KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
+KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
+KVM_DOMAIN_NAMES =  $(sort $(KVM_TEST_DOMAIN_NAMES) $(KVM_BUILD_DOMAIN_NAMES))
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
@@ -236,19 +240,8 @@ add-kvm-localdir-prefixes = \
 	$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 		$(patsubst %, $(prefix)%, $(1)))
 
-# full path
-KVM_DEBIAN_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_DEBIAN_HOSTS))
-KVM_FEDORA_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FEDORA_HOSTS))
-KVM_FREEBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_FREEBSD_HOSTS))
-KVM_NETBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_NETBSD_HOSTS))
-KVM_OPENBSD_CLONES = $(call add-kvm-localdir-prefixes, $(KVM_OPENBSD_HOSTS))
-KVM_CLONES = $(strip $(foreach os, $(KVM_PLATFORMS), $(KVM_$($(os))_CLONES)))
-
-KVM_TEST_DOMAINS = $(call add-kvm-prefixes, $(KVM_TEST_HOSTS))
-
-KVM_LOCAL_DOMAINS = $(sort $(KVM_TEST_DOMAINS))
-
-KVM_DOMAINS =  $(sort $(KVM_LOCAL_DOMAINS) $(XXX_WHAT_ABOUT_NEW_DOMAINS))
+KVM_BUILD_DOMAINS = $(addprefix $(KVM_POOLDIR)/, $(KVM_BUILD_DOMAIN_NAMES))
+KVM_TEST_DOMAINS = $(addprefix $(KVM_LOCALDIR)/, $(KVM_TEST_DOMAIN_NAMES))
 
 #
 # Other utilities and directories
@@ -1033,9 +1026,10 @@ define define-clone-domain
 	mv $$@.tmp $$@
 endef
 
+# generate rules for all combinations, including those not enabled
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach host, $(KVM_$($(platform))_HOSTS), \
+		$(foreach host, $(KVM_$($(platform))_HOST_NAMES), \
 			$(eval $(call define-clone-domain, \
 				$(prefix), \
 				$(host), \
@@ -1066,17 +1060,15 @@ endef
 
 .PHONY: kvm-shutdown
 kvm-shutdown:
-	$(foreach clone, $(KVM_CLONES), $(call shutdown-os-domain, $(clone)))
+	$(foreach domain, $(KVM_TEST_DOMAINS), $(call shutdown-os-domain, $(domain)))
 	$(foreach platform, $(KVM_PLATFORMS), \
 		$(foreach variant, $(platform)-base $(platform)-upgrade $(platform), \
 			$(call shutdown-os-domain, $(KVM_POOLDIR_PREFIX)$(variant))))
 
 .PHONY: kvm-uninstall kvm-clean-install
 kvm-uninstall kvm-clean-install:
-	$(foreach clone, $(KVM_CLONES), $(call undefine-os-domain, $(clone)))
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
-	: redundant?
-	$(call undefine-os-domain, $(KVM_LOCALDIR)/$(KVM_KEYS_DOMAIN))
+	$(foreach domain, $(KVM_TEST_DOMAINS), $(call undefine-os-domain, $(domain)))
+	$(foreach os, $(KVM_OS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(os)))
 
 .PHONY: kvm-clean
 kvm-clean: kvm-clean-install
@@ -1154,22 +1146,20 @@ kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
 
 .PHONY: kvm-install
 kvm-install:
-	$(foreach clone, $(KVM_CLONES), $(call undefine-os-domain, $(clone)))
+	$(foreach domain, $(KVM_TEST_DOMAINS), $(call undefine-os-domain, $(domain)))
 ifeq ($(KVM_INSTALL_RPM), true)
 	$(MAKE) kvm-rpm-install
 else
 	$(MAKE) kvm-fedora-install
 endif
 ifdef KVM_NETBSD
-	$(foreach clone, $(KVM_NETBSD_CLONES), $(call undefine-os-domain, $(clone)))
 	$(MAKE) kvm-netbsd-install
 endif
 ifdef KVM_FREEBSD
-	$(foreach clone, $(KVM_FREEBSD_CLONES), $(call undefine-os-domain, $(clone)))
 	$(MAKE) kvm-freebsd-install
 endif
 	$(MAKE) $(KVM_KEYS)
-	$(MAKE) $(KVM_CLONES)
+	$(MAKE) $(KVM_TEST_DOMAINS)
 
 .PHONY: kvm-bisect
 kvm-bisect:
@@ -1191,7 +1181,7 @@ define kvm-HOST-DOMAIN
 		$$(addprefix $(1), $$(addprefix $$(KVM_FIRST_PREFIX), $(2)))
 endef
 
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOST_NAMES)), \
 	$(eval $(call kvm-HOST-DOMAIN, kvmsh-, $(host))))
 
 # the base domain only requires the raw image; not upgraded
@@ -1280,29 +1270,24 @@ Configuration:
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
 
-    $(call kvm-var-value,KVM_DEBIAN_HOSTS)
-    $(call kvm-var-value,KVM_FEDORA_HOSTS)
-    $(call kvm-var-value,KVM_FREEBSD_HOSTS)
-    $(call kvm-var-value,KVM_NETBSD_HOSTS)
-    $(call kvm-var-value,KVM_OPENBSD_HOSTS)
+    $(call kvm-var-value,KVM_DEBIAN_HOST_NAMES)
+    $(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
+    $(call kvm-var-value,KVM_FREEBSD_HOST_NAMES)
+    $(call kvm-var-value,KVM_NETBSD_HOST_NAMES)
+    $(call kvm-var-value,KVM_OPENBSD_HOST_NAMES)
 
-    $(call kvm-var-value,KVM_BUILD_HOSTS)
-    $(call kvm-var-value,KVM_TEST_HOSTS)
+    $(call kvm-var-value,KVM_TEST_HOST_NAMES)
+    $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_TEST_DOMAINS)
 
-    $(call kvm-var-value,KVM_DEBIAN_CLONES)
-    $(call kvm-var-value,KVM_FEDORA_CLONES)
-    $(call kvm-var-value,KVM_FREEBSD_CLONES)
-    $(call kvm-var-value,KVM_NETBSD_CLONES)
-    $(call kvm-var-value,KVM_OPENBSD_CLONES)
-    $(call kvm-var-value,KVM_CLONES)
+    $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
+    $(call kvm-var-value,KVM_BUILD_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_BUILD_DOMAINS)
 
     $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_GATEWAY_FILE)
     $(call kvm-var-value,KVM_TEST_SUBNETS)
     $(call kvm-var-value,KVM_TEST_NETWORKS)
-
-    $(call kvm-var-value,KVM_TEST_HOSTS)
-    $(call kvm-var-value,KVM_TEST_DOMAINS)
 
  KVM Domains:
 
@@ -1318,7 +1303,7 @@ $(foreach prefix,$(KVM_PREFIXES), \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| test group $(prefix) \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp) +-- \
-  $(foreach install,$(KVM_FEDORA_HOSTS),$(call strip-prefix,$(prefix))$(install)) \
+  $(foreach install,$(KVM_TEST_HOST_NAMES),$(call strip-prefix,$(prefix))$(install)) \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)|$(sp$)$(sp)$(sp) networks: \
   $(foreach network, $(KVM_TEST_SUBNETS),$(call strip-prefix,$(prefix))$(network)) \
@@ -1423,7 +1408,7 @@ Standard targets and operations:
   Manipulating and accessing (logging into) domains:
 
     kvmsh-build
-    kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))
+    kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOST_NAMES)))
         - use 'virsh console' to login to the given domain
 	- for HOST login to the first domain vis:
           $(addprefix $(KVM_FIRST_PREFIX), HOST)
