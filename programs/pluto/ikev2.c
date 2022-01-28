@@ -2424,6 +2424,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	bool suppress_log = ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
 			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
 	const char *sep = " ";
+	enum sa_role sa_role = 0;
 	if (transition->state == transition->next_state) {
 		/*
 		 * HACK for seemingly going around in circles
@@ -2448,6 +2449,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	} else if (IS_IKE_SA(st) && just_established) {
 		/* ike_sa_established() called elsewhere */
 		jam_details = jam_v2_ike_details;
+		sa_role = st->st_sa_role;
 		w = RC_SUCCESS; /* also triggers detach */
 	} else if (transition->state == STATE_V2_PARENT_I1 &&
 		   transition->next_state == STATE_V2_PARENT_I2) {
@@ -2464,7 +2466,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
         if (suppress_log) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam_logger_prefix(buf, st->st_logger);
-			jam(buf, "%s: %s", transition->story, st->st_state->story);
+			jam_string(buf, transition->story);
+			jam_string(buf, ": ");
+			jam_string(buf, (sa_role == SA_INITIATOR ? "initiator " :
+					 sa_role == SA_RESPONDER ? "responder " :
+					 ""));
+			jam_string(buf, st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (jam_details != NULL) {
 				jam_string(buf, sep);
@@ -2473,7 +2480,10 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		}
 	} else {
 		LLOG_JAMBUF(w, st->st_logger, buf) {
-			jam(buf, "%s", st->st_state->story);
+			jam_string(buf, (sa_role == SA_INITIATOR ? "initiator " :
+					 sa_role == SA_RESPONDER ? "responder " :
+					 ""));
+			jam_string(buf, st->st_state->story);
 			/* document SA details for admin's pleasure */
 			if (jam_details != NULL) {
 				jam_string(buf, sep);
