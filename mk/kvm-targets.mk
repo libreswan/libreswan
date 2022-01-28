@@ -182,11 +182,11 @@ netbsd = NETBSD
 openbsd = OPENBSD
 
 # this is what could work
-KVM_PLATFORMS += debian
-KVM_PLATFORMS += fedora
-KVM_PLATFORMS += freebsd
-KVM_PLATFORMS += netbsd
-KVM_PLATFORMS += openbsd
+#KVM_PLATFORM += debian
+KVM_PLATFORM += fedora
+KVM_PLATFORM += freebsd
+KVM_PLATFORM += netbsd
+KVM_PLATFORM += openbsd
 
 # this is what is enabled
 KVM_OS += $(if $(KVM_DEBIAN),  debian)
@@ -206,7 +206,9 @@ KVM_NETBSD_HOST_NAMES = netbsde netbsdw
 KVM_OPENBSD_HOST_NAMES = openbsde openbsdw
 
 KVM_TEST_HOST_NAMES = $(foreach os, $(KVM_OS), $(KVM_$($(os))_HOST_NAMES))
-KVM_BUILD_HOST_NAMES = $(foreach os, $(KVM_OS), $(os) $(os)-base $(os)-upgrade)
+KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os))
+KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-base)
+KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-upgrade)
 
 KVM_HOST_NAMES = $(KVM_TEST_HOST_NAMES) $(KVM_BUILD_HOST_NAMES)
 
@@ -227,9 +229,10 @@ KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 .PHONY: print-kvm-prefixes
 print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
 
-KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
 KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
-KVM_DOMAIN_NAMES =  $(sort $(KVM_TEST_DOMAIN_NAMES) $(KVM_BUILD_DOMAIN_NAMES))
+KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
+
+KVM_DOMAIN_NAMES = $(sort $(KVM_TEST_DOMAIN_NAMES) $(KVM_BUILD_DOMAIN_NAMES))
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
@@ -242,6 +245,16 @@ add-kvm-localdir-prefixes = \
 
 KVM_BUILD_DOMAINS = $(addprefix $(KVM_POOLDIR)/, $(KVM_BUILD_DOMAIN_NAMES))
 KVM_TEST_DOMAINS = $(addprefix $(KVM_LOCALDIR)/, $(KVM_TEST_DOMAIN_NAMES))
+
+KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform))
+KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform)-base)
+KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform)-upgrade)
+
+KVM_PLATFORM_TEST_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_HOST_NAMES))
+
+KVM_PLATFORM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_PLATFORM_BUILD_HOST_NAMES))
+KVM_PLATFORM_TEST_DOMAIN_NAMES  = $(call add-kvm-prefixes, $(KVM_PLATFORM_TEST_HOST_NAMES))
+KVM_PLATFORM_DOMAIN_NAMES = $(KVM_PLATFORM_BUILD_DOMAIN_NAMES) $(KVM_PLATFORM_TEST_DOMAIN_NAMES)
 
 #
 # Other utilities and directories
@@ -660,7 +673,7 @@ kvm-networks: $(KVM_TEST_NETWORKS)
 kvm-purge-networks:
 	$(foreach network, $(KVM_TEST_NETWORKS), \
 		$(call destroy-kvm-network, $(network)))
-kvm-purge-gateway:
+kvm-demolish-gateway:
 	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE)
 
 
@@ -714,25 +727,6 @@ $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 ##
 ##
 
-define undefine-os-domain
-	: undefine-os-domain
-	:    path=$(strip $(1))
-	:    domain=$(notdir $(1))
-	case "$$($(VIRSH) domstate $(notdir $(1)))" in \
-	"running" | "in shutdown" ) \
-		$(VIRSH) destroy $(notdir $(1)) ; \
-		$(VIRSH) undefine $(notdir $(1)) \
-		;; \
-	"shut off" ) \
-		$(VIRSH) undefine $(notdir $(1)) \
-		;; \
-	"" ) ;; \
-	esac
-	rm -f $(1)
-	rm -f $(1).qcow2
-	rm -f $(1).vm		# i.e., upgrade.vm
-endef
-
 define clone-os-disk
 	: clone-os-disk
 	:    in=$(strip $(1))
@@ -749,20 +743,20 @@ endef
 .PHONY: kvm-base
 kvm-base: $(patsubst %, kvm-%-base, $(KVM_OS))
 
-$(patsubst %, kvm-%-base, $(KVM_PLATFORMS)): \
+$(patsubst %, kvm-%-base, $(KVM_PLATFORM)): \
 kvm-%-base:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-base: | \
 		testing/libvirt/%/base.py \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY_FILE)
 	: clean up old domains
-	$(call undefine-os-domain, $@)
+	$(MAKE) kvm-undefine-$(notdir $@)
 	: use script to drive build of new domain
 	DOMAIN=$(notdir $@) \
 	GATEWAY=$(KVM_GATEWAY_ADDRESS) \
@@ -886,12 +880,12 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.sh
 .PHONY: kvm-downgrade
 kvm-downgrade: $(patsubst %, kvm-%-downgrade, $(KVM_OS))
 
-$(patsubst %, kvm-%-downgrade, $(KVM_PLATFORMS)): \
+$(patsubst %, kvm-%-downgrade, $(KVM_PLATFORM)): \
 kvm-%-downgrade:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 
-$(patsubst %, kvm-%-upgrade, $(KVM_PLATFORMS)): \
+$(patsubst %, kvm-%-upgrade, $(KVM_PLATFORM)): \
 kvm-%-upgrade:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade  # not .*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
@@ -899,12 +893,12 @@ kvm-%-upgrade:
 .PHONY: kvm-upgrade
 kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_OS))
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORMS)): \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/install.sh \
 		| $(KVM_HOST_OK)
 	: creating domain ...-upgrade, not -upgrade.vm, hence basename
-	$(call undefine-os-domain, $(basename $@))
+	$(MAKE) kvm-undefine-$(basename $(notdir $@))
 	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
@@ -920,7 +914,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
 	$(KVMSH) --shutdown $(basename $(notdir $@))
 	touch $@
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
@@ -943,18 +937,18 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
 .PHONY: kvm-transmogrify
 kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_OS))
 
-$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORMS)): \
+$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORM)): \
 kvm-%-transmogrify:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORMS)): \
+$(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
-	$(call undefine-os-domain, $@)
+	$(MAKE) kvm-undefine-$(notdir $@)
 	$(call clone-os-disk, $<.qcow2, $@.qcow2)
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
@@ -983,7 +977,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 ## Install libreswan into the build.
 ##
 
-$(patsubst %, kvm-%-install, $(KVM_PLATFORMS)): \
+$(patsubst %, kvm-%-install, $(KVM_PLATFORM)): \
 kvm-%-install: $(KVM_POOLDIR_PREFIX)%
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
@@ -1010,7 +1004,7 @@ define define-clone-domain
 			$(addprefix $(1), $$(subnet).net)) \
 		testing/libvirt/vm/$(strip $(2)).xml
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
-	$$(call undefine-os-domain, $$@)
+	$$(MAKE) kvm-undefine-$$(notdir $$@)
 	$(call clone-os-disk, $(addprefix $(3), .qcow2), $$@.qcow2)
 	sed \
 		-e "s:@@NAME@@:$$(notdir $$@):" \
@@ -1029,7 +1023,7 @@ endef
 
 # generate rules for all combinations, including those not enabled
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
-	$(foreach platform, $(KVM_PLATFORMS), \
+	$(foreach platform, $(KVM_PLATFORM), \
 		$(foreach host, $(KVM_$($(platform))_HOST_NAMES), \
 			$(eval $(call define-clone-domain, \
 				$(prefix), \
@@ -1054,40 +1048,55 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 # on 'make uninstall') the next test run also gets entirely new
 # domains.
 
-define shutdown-os-domain
-	$(KVMSH) --shutdown $(notdir $(1))
-
-endef
-
 .PHONY: kvm-shutdown
-kvm-shutdown:
-	$(foreach domain, $(KVM_TEST_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
+$(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
+kvm-shutdown-%:
+	$(KVMSH) --shutdown $*
+kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES))
+
+.PHONY: kvm-undefine
+$(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
+kvm-undefine-%:
+	case "$$($(VIRSH) domstate $*)" in \
+	"running" | "in shutdown" ) \
+		$(VIRSH) destroy $* ; \
+		$(VIRSH) undefine $* \
+		;; \
+	"shut off" ) \
+		$(VIRSH) undefine $* \
+		;; \
+	"" ) ;; \
+	esac
+	rm -f $(KVM_POOLDIR)/$*       $(KVM_LOCALDIR)/$*
+	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
+	rm -f $(KVM_POOLDIR)/$*.vm    $(KVM_LOCALDIR)/$*.vm
+kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
+
+.PHONY: kvm-define
+kvm-define: $(addprefix $(KVM_POOLDIR)/,$(KVM_PLATFORM_BUILD_DOMAIN_NAMES))
+kvm-define: $(addprefix $(KVM_LOCALDIR)/,$(KVM_PLATFORM_TEST_DOMAIN_NAMES))
 
 .PHONY: kvm-uninstall
-kvm-uninstall:
-	$(foreach domain, $(KVM_TEST_DOMAINS), $(call undefine-os-domain, $(domain)))
-	$(foreach os, $(KVM_OS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(os)))
+kvm-uninstall: $(patsubst %, kvm-undefine-%, $(KVM_TEST_DOMAIN_NAMES))
+kvm-uninstall: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%, $(KVM_OS))
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
-	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS))
+	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORM))
 	rm -rf OBJ.*.swanbase
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
 kvm-purge: kvm-purge-networks
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
+kvm-purge: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%-upgrade, $(KVM_OS))
 	rm -f $(KVM_HOST_OK)
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge
-	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
-	: Force a rebuild of the gateway, but do not delete it
-	rm -f $(KVM_GATEWAY_FILE)
+kvm-demolish: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%-base, $(KVM_OS))
+kvm-demolish: kvm-demolish-gateway
 
 #
 # Create an RPM for the test domains
@@ -1141,8 +1150,7 @@ kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
 # things barf because the build domain things its disk is in use).
 
 .PHONY: kvm-install
-kvm-install:
-	$(foreach domain, $(KVM_TEST_DOMAINS), $(call undefine-os-domain, $(domain)))
+kvm-install: $(patsubst %, kvm-undefine-%, $(KVM_TEST_DOMAIN_NAMES))
 ifeq ($(KVM_INSTALL_RPM), true)
 	$(MAKE) kvm-rpm-install
 else
@@ -1171,7 +1179,7 @@ kvm-bisect:
 # domains can be done by invoking kvmsh.py directly.
 #
 
-$(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAINS), $(KVM_HOST_NAMES))): \
+$(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAIN_NAMES), $(KVM_HOST_NAMES))): \
 kvmsh-%: kvmsh-$(KVM_FIRST_PREFIX)%
 
 $(patsubst %, kvmsh-%, $(KVM_TEST_DOMAIN_NAMES)) : \
@@ -1267,6 +1275,17 @@ Configuration:
     $(call kvm-var-value,KVM_GATEWAY_FILE)
     $(call kvm-var-value,KVM_TEST_SUBNETS)
     $(call kvm-var-value,KVM_TEST_NETWORKS)
+
+    $(call kvm-var-value,KVM_OS)
+
+    $(call kvm-var-value,KVM_PLATFORM)
+
+    $(call kvm-var-value,KVM_PLATFORM_BUILD_HOST_NAMES)
+    $(call kvm-var-value,KVM_PLATFORM_TEST_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_PLATFORM_BUILD_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_PLATFORM_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_PLATFORM_DOMAIN_NAMES)
 
  KVM Domains:
 
@@ -1373,16 +1392,14 @@ Standard targets and operations:
   Delete the installed KVMs and networks so that the next kvm-install
   will create new versions:
 
-    kvm-uninstall: force clean test and build domains
-        - delete test domains
-        - delete test build
     kvm-purge:
         - delete test domains
 	- delete test build
         - delete test results
         - delete test networks
     kvm-demolish: wipe out a directory
-        - also delete the base domain
+        - delete the base domain
+        - delete the gateway
 
   Manipulating and accessing (logging into) domains:
 
